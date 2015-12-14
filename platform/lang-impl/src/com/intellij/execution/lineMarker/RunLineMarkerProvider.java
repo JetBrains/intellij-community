@@ -82,7 +82,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
         return tooltip.length() == 0 ? null : tooltip.toString();
       }
     };
-    return new LineMarkerInfo<PsiElement>(element, element.getTextOffset(), icon, Pass.UPDATE_ALL,
+    return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.UPDATE_ALL,
                                           tooltipProvider, null,
                                           GutterIconRenderer.Alignment.CENTER) {
       @Nullable

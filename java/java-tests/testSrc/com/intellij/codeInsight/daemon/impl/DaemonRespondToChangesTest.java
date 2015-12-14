@@ -739,6 +739,55 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(lineMarkersAfter.size(), lineMarkers.size());
   }
 
+  public void testLineMarkersDoNotBlinkOnBackSpaceRightBeforeMethodIdentifier() throws Throwable {
+    configureByText(JavaFileType.INSTANCE, "package x; \n" +
+                                           "class  <caret>ToRun{\n" +
+                                           "  public static void main(String[] args) {\n"+
+                                           "  }\n"+
+                                           "}");
+
+    List<HighlightInfo> errors = highlightErrors();
+    assertEmpty(errors);
+
+    List<LineMarkerInfo> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+    assertSize(2, lineMarkers);
+
+    backspace();
+
+    final Collection<String> changed = new ArrayList<>();
+    MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
+    modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
+      @Override
+      public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
+        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("after added")));
+      }
+
+      @Override
+      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("before removed")));
+      }
+
+      @Override
+      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged) {
+        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("changed")));
+      }
+
+      private void changed(@NotNull RangeHighlighterEx highlighter, String reason) {
+        if (highlighter.getTargetArea() != HighlighterTargetArea.LINES_IN_RANGE) return; // not line marker
+        List<LineMarkerInfo> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+        if (ContainerUtil.find(lineMarkers, lm -> lm.highlighter == highlighter) == null) return; // not line marker
+
+        changed.add(highlighter+": \n"+reason);
+      }
+    });
+
+    assertEmpty(highlightErrors());
+
+    assertSize(2, DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject()));
+
+    assertEmpty(changed);
+  }
+
   public void testLineMarkersClearWhenTypingAtTheEndOfPsiComment() throws Throwable {
     configureByText(JavaFileType.INSTANCE, "class S {\n//ddd<caret>\n}");
     final LineMarkerProvider provider = new LineMarkerProvider() {
