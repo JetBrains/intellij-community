@@ -9,7 +9,7 @@ import java.util.concurrent.locks.ReentrantLock
 interface LogFileManager {
     fun println(message: String)
     fun read(): String
-    fun delete()
+    fun deleteLogFile()
     fun <R> withFileLock(block: () -> R): R
     fun dispose()
 }
@@ -76,7 +76,7 @@ class LogFileManagerImpl(private val filePathProvider: FilePathProvider): LogFil
         }
     }
 
-    override fun delete() {
+    override fun deleteLogFile() {
         withFileLock {
             writer.close()
             val file = filePathProvider.getLogFile()
