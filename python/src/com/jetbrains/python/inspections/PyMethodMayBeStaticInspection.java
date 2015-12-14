@@ -20,6 +20,8 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionFromMethodQuickFix;
@@ -33,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * User: ktisha
@@ -77,6 +80,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       if (property != null) return;
       final List<PyAssignmentStatement> attributes = node.findAttributes();
       if (!attributes.isEmpty()) return;
+      if (isTestElement(node)) return;
 
       final PyStatementList statementList = node.getStatementList();
       final PyStatement[] statements = statementList.getStatements();
@@ -130,5 +134,14 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
                         null, new PyMakeMethodStaticQuickFix(), new PyMakeFunctionFromMethodQuickFix());
       }
     }
+  }
+
+  private static boolean isTestElement(@NotNull PsiNamedElement node) {
+    final String methodName = node.getName();
+    final PyClass pyClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
+    final String className = pyClass == null ? null : pyClass.getName();
+
+    return methodName != null && className != null && methodName.toLowerCase(Locale.getDefault()).startsWith("test")
+                                                                                      && className.toLowerCase(Locale.getDefault()).startsWith("test");
   }
 }
