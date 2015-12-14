@@ -539,25 +539,9 @@
     <!-- User skeletons -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsLineMarkerProvider"/>
 
-    <!-- Buildout -->
-    <facetType implementation="com.jetbrains.python.buildout.BuildoutFacetType"/>
-    <framework.detector implementation="com.jetbrains.python.buildout.BuildoutFrameworkDetector"/>
-
-    <lang.parserDefinition language="BuildoutCfg" implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgParserDefinition"/>
-    <fileTypeFactory implementation="com.jetbrains.python.buildout.config.BuildoutCfgFileTypeFactory"/>
-    <lang.syntaxHighlighterFactory language="BuildoutCfg"
-                                   implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgHighlighterFactory"/>
-
-    <localInspection language="BuildoutCfg" shortName="BuildoutUnresolvedPartInspection" bundle="com.jetbrains.python.PyBundle"
-                     key="buildout.unresolved.part.inspection" groupKey="buildout" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.python.buildout.config.inspection.BuildoutUnresolvedPartInspection"/>
-
-    <colorSettingsPage implementation="com.jetbrains.python.buildout.config.BuildoutCfgColorsPage"/>
+    <!-- TestRunnerService -->
     <moduleService serviceInterface="com.jetbrains.python.testing.TestRunnerService"
                    serviceImplementation="com.jetbrains.python.testing.TestRunnerService"/>
-
-    <problemFileHighlightFilter implementation="com.jetbrains.python.buildout.config.BuildoutCfgProblemFileHighlightFilter"/>
-
 
     <!-- PyDocstring -->
     <languageInjector implementation="com.jetbrains.python.documentation.doctest.PyDocstringLanguageInjector"/>

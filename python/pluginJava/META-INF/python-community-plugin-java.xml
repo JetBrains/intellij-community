@@ -1,6 +1,10 @@
 <idea-plugin version="2">
   <!-- Components and extensions declared in this file work ONLY in the Python plugin,
        both Community and Professional versions. -->
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.psi.impl.PyConstructorArgumentCompletionContributor"/>
+  </extensions>
+
   <extensions defaultExtensionNs="Pythonid">
     <importResolver implementation="com.jetbrains.python.psi.impl.PyJavaImportResolver"/>
     <typeProvider implementation="com.jetbrains.python.psi.impl.PyJavaTypeProvider"/>

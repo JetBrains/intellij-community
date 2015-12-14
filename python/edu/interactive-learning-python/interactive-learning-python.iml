@@ -19,5 +19,6 @@
     <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="educational" />
     <orderEntry type="module" module-name="python-educational" />
+    <orderEntry type="module" module-name="python-configure" />
   </component>
 </module>
