@@ -89,6 +89,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   @Nullable private ChangeNodeDecorator myChangeDecorator;
   private Runnable myGenericSelectionListener;
   @NotNull private final CopyProvider myTreeCopyProvider;
+  private TreeState myNonFlatTreeState;
 
   public ChangesTreeList(@NotNull final Project project,
                          @NotNull Collection<T> initiallyIncluded,
@@ -244,10 +245,16 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
   public void setShowFlatten(final boolean showFlatten) {
     final List<T> wasSelected = getSelectedChanges();
+    if (!myAlwaysExpandList && !myShowFlatten) {
+      myNonFlatTreeState = TreeState.createOn(myTree, (DefaultMutableTreeNode)myTree.getModel().getRoot());
+    }
     myShowFlatten = showFlatten;
     setChangesToDisplay(getChanges());
     setChildIndent(showFlatten);
     myTree.setCellRenderer(myShowFlatten ? myShowFlattenNodeRenderer : myNodeRenderer);
+    if (!myAlwaysExpandList && !myShowFlatten && myNonFlatTreeState != null) {
+      myNonFlatTreeState.applyTo(myTree, (DefaultMutableTreeNode)myTree.getModel().getRoot());
+    }
     select(wasSelected);
   }
 
