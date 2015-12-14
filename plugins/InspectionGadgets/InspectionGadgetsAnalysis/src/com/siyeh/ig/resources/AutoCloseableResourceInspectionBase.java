@@ -119,7 +119,8 @@ public class AutoCloseableResourceInspectionBase extends BaseInspection {
       }
       if (MethodCallUtils.isCallToMethod(expression, "java.util.Formatter", null, "format", null) ||
           MethodCallUtils.isCallToMethod(expression, "java.io.Writer", null, "append", null) ||
-          MethodCallUtils.isCallToMethod(expression, "com.google.common.base.Preconditions", null, "checkNotNull", null)) {
+          MethodCallUtils.isCallToMethod(expression, "com.google.common.base.Preconditions", null, "checkNotNull", null) ||
+          MethodCallUtils.isCallToMethod(expression, "org.hibernate.Session", null, "close")) {
         return;
       }
       if (!isNotSafelyClosedResource(expression)) {
