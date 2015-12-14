@@ -209,4 +209,12 @@ public class IOResource {
   Reader escaped6(InputStream stream, String cs) {
     return cs == null ? new InputStreamReader(stream) : new InputStreamReader(stream, cs);
   }
+
+  void closeable() {
+    new <warning descr="'Closeable' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">Closeable</warning>() {
+      public void close() throws IOException {
+
+      }
+    };
+  }
 }
