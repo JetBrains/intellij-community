@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,8 +86,29 @@ public class AutoCloseableResourceInspectionTest extends LightInspectionTestCase
            "}");
   }
 
+  public void testFormatter() {
+    doTest("import java.util.*;" +
+           "class TryWithResourcesFalsePositiveForFormatterFormat {" +
+           "    public void useFormatter( Formatter output ) {" +
+           "        output.format( \"Hello, world!%n\" );" +
+           "    }" +
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new AutoCloseableResourceInspection();
+  }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package java.util;" +
+      "public final class Formatter implements Closeable {" +
+      "    public Formatter format(String format, Object ... args) {" +
+      "      return this;" +
+      "    }" +
+      "}"
+    };
   }
 }

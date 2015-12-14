@@ -5084,6 +5084,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private MyScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
+      setPersistentUI(createEditorScrollbarUI(EditorImpl.this));
     }
 
     void setPersistentUI(ScrollBarUI ui) {
@@ -5175,6 +5176,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myPersistentUI instanceof ButtonlessScrollBarUI) {
         ((ButtonlessScrollBarUI)myPersistentUI).registerRepaintCallback(callback);
       }
+    }
+  }
+
+  public static BasicScrollBarUI createEditorScrollbarUI(@NotNull EditorImpl editor) {
+    return new EditorScrollBarUI(editor);
+  }
+
+  private static class EditorScrollBarUI extends ButtonlessScrollBarUI.Transparent {
+    @NotNull private final EditorImpl myEditor;
+
+    public EditorScrollBarUI(@NotNull EditorImpl editor) {
+      myEditor = editor;
+    }
+
+    @Override
+    protected boolean isDark() {
+      return myEditor.isDarkEnough();
+    }
+
+    @Override
+    protected Color adjustColor(Color c) {
+      return isMacOverlayScrollbar() ? super.adjustColor(c) : adjustThumbColor(super.adjustColor(c), isDark());
     }
   }
 

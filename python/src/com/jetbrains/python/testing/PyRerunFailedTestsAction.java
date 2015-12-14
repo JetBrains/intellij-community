@@ -104,6 +104,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       return myState.getRunner();
     }
 
+    @NotNull
     @Override
     protected List<String> getTestSpecs() {
       List<String> specs = new ArrayList<String>();

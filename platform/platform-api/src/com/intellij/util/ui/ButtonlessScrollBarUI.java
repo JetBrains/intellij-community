@@ -401,12 +401,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   public static BasicScrollBarUI createTransparent() {
-    return new ButtonlessScrollBarUI() {
-      @Override
-      public boolean alwaysShowTrack() {
-        return false;
-      }
-    };
+    return new Transparent();
   }
 
   @Override
@@ -805,7 +800,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
   }
 
-  private boolean isVertical() {
+  protected boolean isVertical() {
     return scrollbar.getOrientation() == Adjustable.VERTICAL;
   }
 
@@ -1004,6 +999,41 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     private static Color getColor(int gray) {
       return Gray.get(gray < 0 ? 0 : gray > 255 ? 255 : gray);
+    }
+  }
+
+  public static class Transparent extends ButtonlessScrollBarUI {
+    @Override
+    public boolean alwaysShowTrack() {
+      return false;
+    }
+
+    @Override
+    protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+      if (!isMacOverlayScrollbar()) {
+        int half = getThickness() / 2;
+        int shiftX = isVertical() ? half - 1 : 0;
+        int shiftY = isVertical() ? 0 : half - 1;
+        g.translate(shiftX, shiftY);
+        super.paintThumb(g, c, thumbBounds);
+        g.translate(-shiftX, -shiftY);
+      }
+      else {
+        super.paintThumb(g, c, thumbBounds);
+      }
+    }
+
+    protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
+      int arc = JBUI.scale(3);
+      g.setColor(adjustColor(getGradientDarkColor()));
+      int gap = JBUI.scale(2);
+
+      if (isVertical()) {
+        g.fillRoundRect(0, gap, thumbBounds.width, thumbBounds.height - 2 * gap, arc, arc);
+      }
+      else {
+        g.fillRoundRect(gap, 0, thumbBounds.width - 2 * gap, thumbBounds.height, arc, arc);
+      }
     }
   }
 }
