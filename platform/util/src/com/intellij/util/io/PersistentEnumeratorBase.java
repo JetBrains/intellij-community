@@ -523,6 +523,10 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
     return myDirty;
   }
 
+  public synchronized boolean isCorrupted() {
+    return myCorrupted;
+  }
+
   private synchronized void flush() throws IOException {
     lockStorage();
     try {
