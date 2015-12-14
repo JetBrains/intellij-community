@@ -15,11 +15,7 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
     override fun initComponent() {
         sendStatistics()
     }
-
-    override fun disposeComponent() {
-        sendStatistics()
-    }
-
+    
     private fun sendStatistics() {
         if (ApplicationManager.getApplication().isUnitTestMode) return
         ApplicationManager.getApplication().executeOnPooledThread {
