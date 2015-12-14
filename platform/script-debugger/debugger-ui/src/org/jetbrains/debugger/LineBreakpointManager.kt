@@ -123,7 +123,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
 
     val vmBreakpoints = SmartList<Breakpoint>()
     for (location in locations) {
-      vmBreakpoints.add(doSetBreakpoint(breakpoint, location, false, promiseRef))
+      doSetBreakpoint(breakpoint, location, false, promiseRef)?.let { vmBreakpoints.add(it) }
     }
     synchronized (lock) {
       ideToVmBreakpoints.put(breakpoint, vmBreakpoints)
@@ -133,7 +133,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
     }
   }
 
-  protected fun doSetBreakpoint(breakpoint: XLineBreakpoint<*>?, location: Location, isTemporary: Boolean, promiseRef: Ref<Promise<out Breakpoint>>? = null): Breakpoint {
+  protected fun doSetBreakpoint(breakpoint: XLineBreakpoint<*>?, location: Location, isTemporary: Boolean, promiseRef: Ref<Promise<out Breakpoint>>? = null): Breakpoint? {
     if (breakpointResolvedListenerAdded.compareAndSet(false, true)) {
       breakpointManager.addBreakpointListener(object : BreakpointListener {
         override fun resolved(breakpoint: Breakpoint) {
@@ -180,7 +180,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
       })
     }
 
-    val breakpointManager = breakpointManager
+    val breakpointManager = debugProcess.vm?.breakpointManager ?: return null
     val target = createTarget(breakpoint, breakpointManager, location, isTemporary)
     val condition = breakpoint?.conditionExpression
     return breakpointManager.setBreakpoint(target, location.line, location.column, condition?.expression, promiseRef = promiseRef)
