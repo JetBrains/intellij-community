@@ -83,18 +83,23 @@ public class DirectoryGroupingRule implements UsageGroupingRule, DumbAware {
 
   private class DirectoryGroup implements UsageGroup, TypeSafeDataProvider {
     private final VirtualFile myDir;
+    private Icon myIcon;
+
+    private DirectoryGroup(@NotNull VirtualFile dir) {
+      myDir = dir; 
+      update();
+    }
 
     @Override
     public void update() {
-    }
-
-    private DirectoryGroup(@NotNull VirtualFile dir) {
-      myDir = dir;
+      if (isValid()) {
+       myIcon = IconUtil.getIcon(myDir, 0, myProject);
+      }
     }
 
     @Override
     public Icon getIcon(boolean isOpen) {
-      return IconUtil.getIcon(myDir, 0, myProject);
+      return myIcon;
     }
 
     @Override
