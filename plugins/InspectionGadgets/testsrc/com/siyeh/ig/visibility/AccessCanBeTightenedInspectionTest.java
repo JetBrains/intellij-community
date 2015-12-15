@@ -16,7 +16,7 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.visibility.AccessCanBeTightenedInspection;
+import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.siyeh.ig.LightInspectionTestCase;
 
 public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase {
@@ -90,6 +90,10 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
 
   @Override
   protected LocalInspectionTool getInspection() {
-    return new AccessCanBeTightenedInspection();
+    VisibilityInspection inspection = new VisibilityInspection();
+    inspection.SUGGEST_PRIVATE_FOR_INNERS = true;
+    inspection.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
+    inspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
+    return inspection.getSharedLocalInspectionTool();
   }
 }

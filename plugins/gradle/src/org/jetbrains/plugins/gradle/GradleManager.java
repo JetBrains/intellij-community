@@ -181,7 +181,7 @@ public class GradleManager
           LOG.info("Instructing gradle to use java from " + javaHome);
         }
         result.setJavaHome(javaHome);
-        result.setIdeProjectPath(project.getBasePath());
+        result.setIdeProjectPath(project.getBasePath() == null ? pair.second : project.getBasePath());
         return result;
       }
     };

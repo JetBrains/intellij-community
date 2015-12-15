@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -147,28 +148,14 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
-  private static boolean isTopLevelClass(final PsiElement element, PsiFile baseRootFile) {
-
+  private static boolean isTopLevelClass(final PsiElement element, @NotNull PsiFile baseRootFile) {
     if (!(element instanceof PsiClass)) {
       return false;
     }
-
-    if (element instanceof PsiAnonymousClass) {
-      return false;
-    }
-
-    final PsiFile parentFile = parentFileOf((PsiClass)element);
-                                        // do not select JspClass
-    return parentFile != null && parentFile.getLanguage() == baseRootFile.getLanguage();
-  }
-
-  @Nullable
-  private static PsiFile parentFileOf(final PsiClass psiClass) {
-    return psiClass.getContainingClass() == null ? psiClass.getContainingFile() : null;
+    return ClassUtil.isTopLevelClass((PsiClass)element);
   }
 
   private static class PsiClassOwnerTreeNode extends PsiFileNode {
-
     public PsiClassOwnerTreeNode(PsiClassOwner classOwner, ViewSettings settings) {
       super(classOwner.getProject(), classOwner, settings);
     }

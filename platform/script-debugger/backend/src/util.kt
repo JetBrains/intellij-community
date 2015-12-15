@@ -62,11 +62,7 @@ fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) ke
 
     o@ do {
       while (true) {
-        val entry = queue.poll()
-        if (entry == null) {
-          Thread.sleep(1000)
-          continue@o
-        }
+        val entry = queue.poll() ?: continue@o
 
         writer.write("""{"timestamp": "${dateFormatter.format(entry.time)}", """)
         val message = entry.message
