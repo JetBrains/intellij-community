@@ -4,18 +4,20 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.testFramework.PlatformLiteFixture
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.Time
 import org.mockito.Matchers
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.picocontainer.MutablePicoContainer
+import java.io.File
 
 
 class PerformanceTests : LightFixtureCompletionTestCase() {
     private lateinit var container: MutablePicoContainer
-    private lateinit var oldFilePathProvider: FilePathProvider
-
-    private val path = "x.txt"
+    private lateinit var oldPathProvider: FilePathProvider
+    private lateinit var path: String
+    
     private val runnable = "interface Runnable { void run();  void notify(); void wait(); void notifyAll(); }"
     private val text = """
 class Test {
@@ -27,58 +29,59 @@ class Test {
     }
 }
 """
-
+    
     override fun setUp() {
         super.setUp()
-        val pico = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
-        val path = createTempFile(path).absolutePath
+        container = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
+        path = createTempFile("x.txt").absolutePath
         val mockPathProvider = mock(FilePathProvider::class.java)
         `when`(mockPathProvider.statsFilePath).thenReturn(path)
+        
+        oldPathProvider = container.getComponentInstance(FilePathProvider::class.java.name) as FilePathProvider
+        container.replaceComponent(FilePathProvider::class.java, mockPathProvider)
+    }
 
-        val logFilePathManager = LogFileManagerImpl()
-        val oldLogFileManager = PlatformLiteFixture.registerComponentInstance(pico, LogFileManager::class.java, logFilePathManager)
+    override fun tearDown() {
+        container.replaceComponent(FilePathProvider::class.java, oldPathProvider)
+        val file = File(path)
+        if (file.exists()) {
+            file.delete()
+        }
+        super.tearDown()
     }
 
     fun `test do not block EDT on logging`() {
         myFixture.configureByText("Test.java", text)
+        myFixture.addClass(runnable)
 
 
         val urlProvider = ServiceManager.getService(UrlProvider::class.java)
         val logFileManager = ServiceManager.getService(LogFileManager::class.java)
-        val requestService = mock(RequestService::class.java)
-        `when`(requestService.post(Matchers.anyString(), Matchers.anyMapOf(String::class.java, String::class.java))).then {
-            Thread.sleep(10L * Time.SECOND)
-            println("Hoyyyyyaaa")
-        }.thenReturn(ResponseData(200))
+        val requestService: RequestService = object : RequestService() {
+            override fun post(url: String, params: Map<String, String>): ResponseData {
+                Thread.sleep(2000)
+                return ResponseData(200)
+            }
+        }
+        
+        val file = File(path)
+        file.writeText("Some existing data to send")
 
         val sender = StatisticSender(urlProvider, logFileManager, requestService)
-
-        ApplicationManager.getApplication().executeOnPooledThread {
-            sender.sendStatsData("xxx")
+        
+        ApplicationManager.getApplication().executeOnPooledThread { 
+            sender.sendStatsData("unique-installation-id")
         }
+        Thread.sleep(300)
+        
+        val start = System.currentTimeMillis()
+        myFixture.type('.')
+        myFixture.completeBasic()
+        myFixture.type("xxxx")
+        val end = System.currentTimeMillis()
 
-
-        println()
-
-
-
-        //        ApplicationManager.getApplication().executeOnPooledThread {
-        //            val logFileManager = container.getComponentInstance(LogFileManager::class.java.name) as LogFileManager
-        //            logFileManager.withFileLock {
-        //                //long send here
-        //                val start = System.currentTimeMillis()
-        //                while (start + 5L * Time.SECOND < System.currentTimeMillis()) {
-        //                }
-        //            }
-        //        }
-        //        Thread.sleep(1L * Time.SECOND)
-        //        myFixture.type('.')
-        //        val before = System.currentTimeMillis()
-        //        myFixture.completeBasic()
-        //        val after = System.currentTimeMillis()
-        //        println()
-
-
+        val delta = end - start
+        UsefulTestCase.assertTrue("Time on typing: $delta", delta < 400)
     }
 
 }
