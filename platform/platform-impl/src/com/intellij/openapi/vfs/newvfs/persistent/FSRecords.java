@@ -246,7 +246,7 @@ public class FSRecords implements Forceable {
     }
 
     private static void init() {
-      final File basePath = basePath();
+      final File basePath = basePath().getAbsoluteFile();
       basePath.mkdirs();
 
       final File namesFile = new File(basePath, "names" + VFS_FILES_EXTENSION);
@@ -258,7 +258,7 @@ public class FSRecords implements Forceable {
       final File vfsDependentEnumBaseFile = VfsDependentEnum.getBaseFile();
 
       if (!namesFile.exists()) {
-        invalidateIndex("'" + namesFile.getAbsolutePath() + "' does not exist");
+        invalidateIndex("'" + namesFile.getPath() + "' does not exist");
       }
 
       try {
@@ -270,13 +270,13 @@ public class FSRecords implements Forceable {
         PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
         myNames = new PersistentStringEnumerator(namesFile, storageLockContext);
 
-        myAttributes = new Storage(attributesFile.getCanonicalPath(), REASONABLY_SMALL) {
+        myAttributes = new Storage(attributesFile.getPath(), REASONABLY_SMALL) {
           @Override
           protected AbstractRecordsTable createRecordsTable(PagePool pool, File recordsFile) throws IOException {
             return inlineAttributes && useSmallAttrTable ? new CompactRecordsTable(recordsFile, pool, false) : super.createRecordsTable(pool, recordsFile);
           }
         };
-        myContents = new RefCountingStorage(contentsFile.getCanonicalPath(), CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH, useSnappyForCompression) {
+        myContents = new RefCountingStorage(contentsFile.getPath(), CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH, useSnappyForCompression) {
           @NotNull
           @Override
           protected ExecutorService createExecutor() {
@@ -313,8 +313,8 @@ public class FSRecords implements Forceable {
 
           boolean deleted = FileUtil.delete(getCorruptionMarkerFile());
           deleted &= deleteAllFilesStartingWith(namesFile);
-          deleted &= AbstractStorage.deleteFiles(attributesFile.getCanonicalPath());
-          deleted &= AbstractStorage.deleteFiles(contentsFile.getCanonicalPath());
+          deleted &= AbstractStorage.deleteFiles(attributesFile.getPath());
+          deleted &= AbstractStorage.deleteFiles(contentsFile.getPath());
           deleted &= deleteAllFilesStartingWith(contentsHashesFile);
           deleted &= deleteAllFilesStartingWith(recordsFile);
           deleted &= deleteAllFilesStartingWith(vfsDependentEnumBaseFile);
