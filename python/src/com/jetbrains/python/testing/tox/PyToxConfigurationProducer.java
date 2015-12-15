@@ -20,6 +20,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
@@ -62,7 +63,11 @@ public final class PyToxConfigurationProducer extends RunConfigurationProducer<P
     if (file == null) {
       return false;
     }
-    configuration.setWorkingDirectory(file.getContainingDirectory().getVirtualFile().getCanonicalPath());
+    final PsiDirectory directory = file.getContainingDirectory();
+    if (directory == null) {
+      return false;
+    }
+    configuration.setWorkingDirectory(directory.getVirtualFile().getCanonicalPath());
     if (TOX_FILE_NAME.equals(file.getName())) {
       configuration.setName("Tox");
       return true;

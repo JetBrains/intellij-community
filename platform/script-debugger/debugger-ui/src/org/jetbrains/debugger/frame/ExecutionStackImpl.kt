@@ -44,6 +44,7 @@ internal class ExecutionStackImpl(private val suspendContext: SuspendContext<out
         }
         else {
           result = ArrayList<XStackFrame>(count)
+          var prevAsyncFunctionName: String? = null
           for (i in firstFrameIndex..frames.size - 1) {
             if (i == 0) {
               result.add(topFrame!!)
@@ -51,6 +52,13 @@ internal class ExecutionStackImpl(private val suspendContext: SuspendContext<out
             }
 
             val frame = frames[i]
+            val asyncFunctionName = frame.asyncFunctionName
+            if (asyncFunctionName != null) {
+              if (!asyncFunctionName.equals(prevAsyncFunctionName)) {
+                result.add(AsyncFramesHeader(asyncFunctionName))
+              }
+              prevAsyncFunctionName = asyncFunctionName
+            }
             // if script is null, it is native function (Object.forEach for example), so, skip it
             val script = viewSupport.vm?.scriptManager?.getScript(frame)
             if (script != null) {

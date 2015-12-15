@@ -49,4 +49,6 @@ interface CallFrame {
    * @see com.intellij.xdebugger.frame.XStackFrame.getEqualityObject
    */
   val equalityObject: Any
+
+  val asyncFunctionName: String?
 }
