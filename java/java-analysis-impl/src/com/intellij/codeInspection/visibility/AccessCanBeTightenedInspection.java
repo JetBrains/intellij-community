@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
@@ -34,15 +35,18 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
-  @NonNls private static final String SHORT_NAME = "AccessCanBeTightened";
+class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
+  private final VisibilityInspection myVisibilityInspection;
+
+  AccessCanBeTightenedInspection(@NotNull VisibilityInspection visibilityInspection) {
+    myVisibilityInspection = visibilityInspection;
+  }
 
   @Override
   public boolean isEnabledByDefault() {
@@ -64,7 +68,7 @@ public class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspection
   @Override
   @NotNull
   public String getShortName() {
-    return SHORT_NAME;
+    return VisibilityInspection.SHORT_NAME;
   }
 
   @NotNull
@@ -73,7 +77,7 @@ public class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspection
     return new MyVisitor(holder);
   }
 
-  private static class MyVisitor extends JavaElementVisitor {
+  private class MyVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
     private final UnusedDeclarationInspectionBase myDeadCodeInspection;
 
@@ -162,7 +166,7 @@ public class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspection
             PsiElement element = info.getElement();
             if (element == null) return true;
             @PsiUtil.AccessLevel
-            int level = getEffectiveLevel(element, psiFile, memberFile, memberClass, memberPackage);
+            int level = getEffectiveLevel(element, psiFile, member, memberFile, memberClass, memberPackage);
             log("    ref in file " + psiFile.getName() + "; level = " + PsiUtil.getAccessModifier(level) + "; (" + element + ")");
             while (true) {
               int oldLevel = maxLevel.get();
@@ -182,7 +186,7 @@ public class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspection
       }
       int max = maxLevel.get();
       if (max == PsiUtil.ACCESS_LEVEL_PRIVATE && memberClass == null) {
-        max = PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
+        max = suggestPackageLocal(member);
       }
 
       log(member.getName()+": effective level is '" + PsiUtil.getAccessModifier(max) + "'");
@@ -205,11 +209,12 @@ public class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspection
     }
 
     @PsiUtil.AccessLevel
-    private static int getEffectiveLevel(@NotNull PsiElement element,
-                                         @NotNull PsiFile file,
-                                         @NotNull PsiFile memberFile,
-                                         PsiClass memberClass,
-                                         PsiPackage memberPackage) {
+    private int getEffectiveLevel(@NotNull PsiElement element,
+                                  @NotNull PsiFile file,
+                                  @NotNull PsiMember member,
+                                  @NotNull PsiFile memberFile,
+                                  PsiClass memberClass,
+                                  PsiPackage memberPackage) {
       PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       if (memberClass != null && PsiTreeUtil.isAncestor(aClass, memberClass, false) ||
           aClass != null && PsiTreeUtil.isAncestor(memberClass, aClass, false)) {
@@ -218,9 +223,9 @@ public class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspection
         // @Ann(value = C.VAL) class C { public static final String VAL = "xx"; }
         PsiAnnotation annotation = PsiTreeUtil.getParentOfType(element, PsiAnnotation.class);
         if (annotation != null && annotation.getParent() instanceof PsiModifierList && annotation.getParent().getParent() == aClass) {
-          return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
+          return suggestPackageLocal(member);
         }
-        return PsiUtil.ACCESS_LEVEL_PRIVATE;
+        return myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS || memberClass == aClass ? PsiUtil.ACCESS_LEVEL_PRIVATE : suggestPackageLocal(member);
       }
       //if (file == memberFile) {
       //  return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
@@ -228,7 +233,7 @@ public class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspection
       PsiDirectory directory = file.getContainingDirectory();
       PsiPackage aPackage = directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
       if (aPackage == memberPackage || aPackage != null && memberPackage != null && Comparing.strEqual(aPackage.getQualifiedName(), memberPackage.getQualifiedName())) {
-        return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
+        return suggestPackageLocal(element);
       }
       if (aClass != null && memberClass != null && aClass.isInheritor(memberClass, true)) {
         //access from subclass can be via protected, except for constructors
@@ -241,6 +246,13 @@ public class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspection
       }
       return PsiUtil.ACCESS_LEVEL_PUBLIC;
     }
+  }
+
+  private int suggestPackageLocal(@NotNull PsiElement member) {
+    boolean suggestPackageLocal = member instanceof PsiClass && ClassUtil.isTopLevelClass((PsiClass)member)
+                ? myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES
+                : myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS;
+    return suggestPackageLocal ? PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL : PsiUtil.ACCESS_LEVEL_PUBLIC;
   }
 
   private static void log(String s) {
