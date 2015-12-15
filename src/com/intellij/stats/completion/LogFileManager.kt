@@ -9,13 +9,12 @@ import java.util.concurrent.locks.ReentrantLock
 interface LogFileManager {
     fun println(message: String)
     fun read(): String
-    fun deleteLogFile()
+    fun clearLogFile()
     fun <R> withFileLock(block: () -> R): R
     fun dispose()
 }
 
-fun FilePathProvider.getLogFile(): File {
-    val path = this.statsFilePath
+fun ensureFileCreated(path: String): File {
     val file = File(path)
     if (!file.exists()) {
         file.createNewFile()
@@ -28,7 +27,7 @@ fun newFileAppender(file: File): PrintWriter {
     return PrintWriter(bufferedWriter)
 }
 
-class SelfOpeningWriter(private val filePathProvider: FilePathProvider) {
+class SelfOpeningWriter {
     private var writer: PrintWriter? = null
 
     fun println(message: String) {
@@ -38,7 +37,7 @@ class SelfOpeningWriter(private val filePathProvider: FilePathProvider) {
     
     private fun getWriter(): PrintWriter {
         if (writer == null) {
-            val file = filePathProvider.getLogFile()
+            val file = ensureFileCreated(FilePathProvider.getInstance().statsFilePath)
             writer = newFileAppender(file)
         }
         return writer!!
@@ -54,9 +53,9 @@ class SelfOpeningWriter(private val filePathProvider: FilePathProvider) {
     }
 }
 
-class LogFileManagerImpl(private val filePathProvider: FilePathProvider): LogFileManager {
+class LogFileManagerImpl: LogFileManager {
     private val lock = ReentrantLock()
-    private val writer = SelfOpeningWriter(filePathProvider)
+    private val writer = SelfOpeningWriter()
 
     override fun dispose() {
         writer.close()
@@ -71,16 +70,18 @@ class LogFileManagerImpl(private val filePathProvider: FilePathProvider): LogFil
     override fun read(): String {
         return withFileLock {
             writer.flush()
-            val file = filePathProvider.getLogFile()
-            file.readText()
+            val file = File(getLogFilePath())
+            if (file.exists()) file.readText() else ""
         }
     }
 
-    override fun deleteLogFile() {
+    override fun clearLogFile() {
         withFileLock {
             writer.close()
-            val file = filePathProvider.getLogFile()
-            file.delete()
+            val file = File(getLogFilePath())
+            if (file.exists()) {
+                file.delete()
+            }
             file.createNewFile()
         }
     }
@@ -92,5 +93,10 @@ class LogFileManagerImpl(private val filePathProvider: FilePathProvider): LogFil
         } finally {
             lock.unlock()
         }
+    }
+    
+    private fun getLogFilePath(): String {
+        val pathProvider = FilePathProvider.getInstance()
+        return pathProvider.statsFilePath
     }
 }

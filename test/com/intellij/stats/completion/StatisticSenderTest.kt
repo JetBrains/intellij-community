@@ -1,15 +1,19 @@
 package com.intellij.stats.completion
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
-import junit.framework.TestCase
+import org.picocontainer.MutablePicoContainer
 import java.io.File
 
 
-class StatisticsSenderTest: TestCase() {
+class StatisticsSenderTest: LightPlatformTestCase() {
     lateinit var file: File
     lateinit var urlProvider: UrlProvider
     lateinit var pathProvider: FilePathProvider
     lateinit var requestService: RequestService
+    lateinit var pico: MutablePicoContainer
+    lateinit var oldFilePathProvider: FilePathProvider
     
     val text = """
 1 ACTION
@@ -35,6 +39,11 @@ class StatisticsSenderTest: TestCase() {
         requestService = object : RequestService() {
             override fun post(url: String, params: Map<String, String>) = ResponseData(200)
         }
+        
+        pico = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
+        
+        oldFilePathProvider = pico.getComponentInstance(FilePathProvider::class.java.name) as FilePathProvider
+        pico.replaceComponent(FilePathProvider::class.java, pathProvider)   
     }
 
     override fun tearDown() {
@@ -45,8 +54,7 @@ class StatisticsSenderTest: TestCase() {
     }
 
     fun `test data is remove when sent`() {
-        var logFileManager = LogFileManagerImpl(pathProvider)
-        var loggerProvider = CompletionFileLoggerProvider(logFileManager)
+        var logFileManager = LogFileManagerImpl()
         val sender = StatisticSender(urlProvider, logFileManager, requestService)
         sender.sendStatsData("uuid-secret-xxx")
         UsefulTestCase.assertTrue(file.readText().isEmpty())
