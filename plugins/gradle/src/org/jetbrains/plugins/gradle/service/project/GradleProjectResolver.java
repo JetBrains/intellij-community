@@ -663,8 +663,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     private final boolean myIsBuildSrcProject;
     private DefaultProjectResolverContext myResolverContext;
 
-    public ProjectConnectionDataNodeFunction(@NotNull DefaultProjectResolverContext resolverContext,
-                                             @NotNull GradleProjectResolverExtension projectResolverChain, boolean isBuildSrcProject) {
+    private ProjectConnectionDataNodeFunction(@NotNull DefaultProjectResolverContext resolverContext,
+                                              @NotNull GradleProjectResolverExtension projectResolverChain, boolean isBuildSrcProject) {
       myResolverContext = resolverContext;
       myProjectResolverChain = projectResolverChain;
       myIsBuildSrcProject = isBuildSrcProject;
