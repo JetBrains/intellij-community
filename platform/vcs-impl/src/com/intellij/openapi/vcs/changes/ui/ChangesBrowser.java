@@ -58,7 +58,6 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   private DefaultActionGroup myToolBarGroup;
   private String myToggleActionTitle = VcsBundle.message("commit.dialog.include.action.name");
 
-  private List<AnAction> myAdditionalDiffActions;
   private JComponent myDiffBottomComponent;
 
   public static DataKey<ChangesBrowser> DATA_KEY = DataKey.create("com.intellij.openapi.vcs.changes.ui.ChangesBrowser");
@@ -145,25 +144,8 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     myToolBarGroup.add(action);
   }
 
-  public void addToolbarActions(ActionGroup group) {
-    myToolBarGroup.addSeparator();
-    myToolBarGroup.add(group);
-  }
-
-  public JComponent getDiffBottomComponent() {
-    return myDiffBottomComponent;
-  }
-
   public void setDiffBottomComponent(JComponent diffBottomComponent) {
     myDiffBottomComponent = diffBottomComponent;
-  }
-
-  public List<AnAction> getAdditionalDiffActions() {
-    return myAdditionalDiffActions;
-  }
-
-  public void setAdditionalDiffActions(List<AnAction> additionalDiffActions) {
-    myAdditionalDiffActions = additionalDiffActions;
   }
 
   public void setToggleActionTitle(final String toggleActionTitle) {
@@ -245,12 +227,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   protected void showDiffForChanges(Change[] changesArray, final int indexInSelection) {
     final ShowDiffContext context = new ShowDiffContext(isInFrame() ? DiffDialogHints.FRAME : DiffDialogHints.MODAL);
 
-    if (myAdditionalDiffActions == null) {
-      context.addActions(createDiffActions());
-    } else {
-      context.addActions(myAdditionalDiffActions);
-    }
-
+    context.addActions(createDiffActions());
     if (myDiffBottomComponent != null) {
       context.putChainContext(DiffUserDataKeysEx.BOTTOM_PANEL, myDiffBottomComponent);
     }
