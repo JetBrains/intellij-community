@@ -36,4 +36,6 @@ abstract class CallFrameBase(override val functionName: String?, override val li
 
   override val variableScopes: List<Scope>
     get() = scopes!!.value
+
+  override val asyncFunctionName: String? = null
 }

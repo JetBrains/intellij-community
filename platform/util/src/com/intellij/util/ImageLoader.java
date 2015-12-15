@@ -109,7 +109,7 @@ public class ImageLoader implements Serializable {
         try {
           Image image = desc.load();
           if (image == null) continue;
-          LOG.info("Loaded image: " + desc);
+          LOG.debug("Loaded image: " + desc);
           return converters.convert(image, desc);
         }
         catch (IOException ignore) {

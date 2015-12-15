@@ -31,41 +31,38 @@ import static junit.framework.TestCase.*;
 public class JdkBundleTest {
 
   private static final Version JDK6_VERSION = new Version(1, 6, 0);
+  private static final Version JDK7_VERSION = new Version(1, 7, 0);
 
   private static final String STANDARD_JDK_LOCATION_ON_MAC_OS_X = "/Library/Java/JavaVirtualMachines/";
   private static final String STANDARD_JDK_6_LOCATION_ON_MAC_OS_X = "/System/Library/Java/JavaVirtualMachines/";
 
-  private static File findJdkInDirectory (File locationToSearch) {
-    File[] files = locationToSearch.listFiles(pathname -> {
-      return pathname.getName().contains("1.6.0");
+  private static File[] findJdkInDirectory (File locationToSearch, String version) {
+    return locationToSearch.listFiles(pathname -> {
+      return pathname.getName().contains(version);
     });
-    if (files != null && files.length > 0) {
-      return files[0];
-    }
-    return null;
   }
 
   @Test
   public void testJdk6OnMac() throws Exception {
     if (!SystemInfo.isMac) return;
 
-    boolean testPassed = false;
+    boolean testPassed;
 
-    File jdk6File = null;
+    File [] jdk6Files = null;
 
 
     File standardJdk6LocationDirectory = new File(STANDARD_JDK_6_LOCATION_ON_MAC_OS_X);
 
     if (standardJdk6LocationDirectory.exists()) {
-        jdk6File = findJdkInDirectory(standardJdk6LocationDirectory);
+        jdk6Files = findJdkInDirectory(standardJdk6LocationDirectory, "1.6.0");
     }
 
-    if (jdk6File == null) {
+    if (jdk6Files == null || jdk6Files.length == 0) {
       File standardJdkLocationDirectory = new File(STANDARD_JDK_LOCATION_ON_MAC_OS_X);
-      jdk6File = findJdkInDirectory(standardJdkLocationDirectory);
+      jdk6Files = findJdkInDirectory(standardJdkLocationDirectory, "1.6.0");
     }
 
-    if (jdk6File == null) {
+    if (jdk6Files == null || jdk6Files.length == 0) {
       // We have not found any jdk6 installation. Nothing to test.
       return;
     }
@@ -76,15 +73,46 @@ public class JdkBundleTest {
 
     ArrayList<JdkBundle> bundles = jdkBundleList.toArrayList();
 
-    for (JdkBundle bundle : bundles) {
-      if (FileUtil.filesEqual(bundle.getBundleAsFile(), jdk6File)) {
-        testPassed = true;
+    for (File file : jdk6Files) {
+      testPassed = false;
+      for (JdkBundle bundle : bundles) {
+        if (FileUtil.filesEqual(bundle.getAbsoluteLocation(), file)) {
+          testPassed = true;
+          break;
+        }
+      }
+      assertTrue(file.getAbsolutePath() + " has not been found among jdk bundles.", testPassed);
+    }
+  }
+
+  @Test
+  public void testJre7OnMac() throws Exception {
+    if (!SystemInfo.isMac) return;
+
+    File standardJdkLocationDirectory = new File(STANDARD_JDK_LOCATION_ON_MAC_OS_X);
+    File [] jre7Files = findJdkInDirectory(standardJdkLocationDirectory, "1.7.0");
+
+    if (jre7Files == null || jre7Files.length == 0) return;
+
+    boolean hasJre7 = false;
+    for (File file : jre7Files) {
+      if (!new File(file, "Contents/Home/lib/tools.jar").exists()) {
+        hasJre7 = true;
         break;
       }
     }
 
-    assertTrue(jdk6File.getAbsolutePath() + " has not been found among jdk bundles.", testPassed);
+    if (!hasJre7) return;
 
+    JdkBundleList jdkBundleList = new JdkBundleList();
+    jdkBundleList.addBundlesFromLocation(STANDARD_JDK_LOCATION_ON_MAC_OS_X, JDK7_VERSION, JDK7_VERSION);
+
+    ArrayList<JdkBundle> bundles = jdkBundleList.toArrayList();
+
+    for (JdkBundle bundle : bundles) {
+      assertTrue("jre \"" + bundle.getAbsoluteLocation().getAbsolutePath() + "\" found among jdk bundles",
+                  new File(bundle.getAbsoluteLocation(), "Contents/Home/lib/tools.jar").exists());
+    }
   }
 
   @Test
@@ -99,15 +127,15 @@ public class JdkBundleTest {
 
     boolean macNonStandardJDK = SystemInfo.isMac && !new File(bootJDK, "Contents/Home").exists();
     JdkBundle bundle = macNonStandardJDK
-                       ? JdkBundle.createBundle(homeJDK, "", true, true) : // the test is run under jdk with non-standard layout
-                       JdkBundle.createBundle(bootJDK, true, true);
+                       ? JdkBundle.createBundle(homeJDK, "", true, false) : // the test is run under jdk with non-standard layout
+                       JdkBundle.createBundle(bootJDK, true, false);
 
     assertNotNull(bundle);
 
     assertTrue(bundle.isBoot());
-    assertTrue(bundle.isBundled());
+    assertFalse(bundle.isBundled());
 
-    assertTrue(FileUtil.filesEqual(bundle.getBundleAsFile(), macNonStandardJDK ? homeJDK : bootJDK));
+    assertTrue(FileUtil.filesEqual(bundle.getAbsoluteLocation(), macNonStandardJDK ? homeJDK : bootJDK));
     Pair<Version, Integer> verUpdate = bundle.getVersionUpdate();
 
     assertNotNull(verUpdate);
@@ -133,7 +161,7 @@ public class JdkBundleTest {
     assertTrue(bundle.isBoot());
     assertFalse(bundle.isBundled());
 
-    assertTrue(FileUtil.filesEqual(bundle.getBundleAsFile(), macNonStandardJDK ? homeJDK : bootJDK));
+    assertTrue(FileUtil.filesEqual(bundle.getAbsoluteLocation(), macNonStandardJDK ? homeJDK : bootJDK));
     Pair<Version, Integer> verUpdate = bundle.getVersionUpdate();
 
     assertNotNull(verUpdate);

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -255,5 +256,19 @@ public class ClassUtil {
   @Nullable
   public static PsiClass findPsiClassByJVMName(@NotNull PsiManager manager, @NotNull String jvmClassName) {
     return findPsiClass(manager, jvmClassName.replace('/', '.'), null, true);
+  }
+
+  public static boolean isTopLevelClass(@NotNull PsiClass aClass) {
+    if (aClass.getContainingClass() != null) {
+      return false;
+    }
+
+    if (aClass instanceof PsiAnonymousClass) {
+      return false;
+    }
+
+    final PsiFile parentFile = aClass.getContainingFile();
+                                        // do not select JspClass
+    return parentFile != null && parentFile.getLanguage() == JavaLanguage.INSTANCE;
   }
 }
