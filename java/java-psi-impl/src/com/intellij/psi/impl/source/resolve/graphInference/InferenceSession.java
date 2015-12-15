@@ -583,8 +583,9 @@ public class InferenceSession {
     return mySiteSubstitutor;
   }
 
-  public InitialInferenceState createInitialState(InferenceSessionContainer container) {
-    return new InitialInferenceState(myInferenceVariables, 
+  public InitialInferenceState createInitialState(InferenceSessionContainer container, PsiSubstitutor topInferenceSubstitutor) {
+    return new InitialInferenceState(myInferenceVariables,
+                                     topInferenceSubstitutor,
                                      myContext, 
                                      myInferenceSubstitution, 
                                      mySiteSubstitutor, 

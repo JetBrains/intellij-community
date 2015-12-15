@@ -84,7 +84,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
           @Override
           public InferenceVariable fun(PsiClassType type) {
             final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
-            return psiClass instanceof InferenceVariable && nestedSubstitutor.getSubstitutionMap().containsKey(psiClass) ? (InferenceVariable)psiClass : null;
+            return psiClass instanceof InferenceVariable && nestedSubstitutor.getSubstitutionMap().containsValue(type) ? (InferenceVariable)psiClass : null;
           }
         });
         if (!isProperType) {
