@@ -287,7 +287,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       if(mainGradleSourceSet) {
         def mainSourceDirectorySet = mainSourceSet.sources[ExternalSystemSourceType.SOURCE]
         if(mainSourceDirectorySet) {
-          mainSourceDirectorySet.srcDirs.addAll(ideaSourceDirs - mainGradleSourceSet.resources.srcDirs)
+          mainSourceDirectorySet.srcDirs.addAll(ideaSourceDirs - (mainGradleSourceSet.resources.srcDirs + generatedSourceDirs))
         }
       }
     }
@@ -298,7 +298,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       if(testGradleSourceSet) {
         def testSourceDirectorySet = testSourceSet.sources[ExternalSystemSourceType.TEST]
         if(testSourceDirectorySet) {
-          testSourceDirectorySet.srcDirs.addAll(ideaTestSourceDirs - testGradleSourceSet.resources.srcDirs)
+          testSourceDirectorySet.srcDirs.addAll(ideaTestSourceDirs - (testGradleSourceSet.resources.srcDirs + generatedSourceDirs))
         }
       }
     }
