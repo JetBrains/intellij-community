@@ -4,9 +4,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Function;
 
 import java.util.List;
 
@@ -76,9 +78,16 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
           session.registerIncompatibleErrorMessage("Incompatible types: expected not void but the lambda body is a block that is not value-compatible");
           return false;
         }
-        InferenceSession callsession = session.getInferenceSessionContainer().findNestedCallSession(myExpression, session);
-        returnType = callsession.substituteWithInferenceVariables(substitutor.substitute(returnType));
-        if (!callsession.isProperType(returnType)) {
+        final PsiSubstitutor nestedSubstitutor = session.getInferenceSessionContainer().findNestedSubstitutor(myExpression, session.getInferenceSubstitution());
+        returnType = nestedSubstitutor.substitute(substitutor.substitute(returnType));
+        boolean isProperType = InferenceSession.collectDependencies(returnType, null, new Function<PsiClassType, InferenceVariable>() {
+          @Override
+          public InferenceVariable fun(PsiClassType type) {
+            final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
+            return psiClass instanceof InferenceVariable && nestedSubstitutor.getSubstitutionMap().containsKey(psiClass) ? (InferenceVariable)psiClass : null;
+          }
+        });
+        if (!isProperType) {
           for (PsiExpression returnExpression : returnExpressions) {
             constraints.add(new ExpressionCompatibilityConstraint(returnExpression, returnType));
           }

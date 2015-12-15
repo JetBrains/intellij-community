@@ -45,15 +45,15 @@ public class InferenceSessionContainer {
   }
 
   @Contract("_, !null -> !null")
-  public InferenceSession findNestedCallSession(PsiElement arg, @Nullable InferenceSession defaultSession) {
+  public PsiSubstitutor findNestedSubstitutor(PsiElement arg, @Nullable PsiSubstitutor defaultSession) {
     InferenceSession session = myNestedSessions.get(PsiTreeUtil.getParentOfType(arg, PsiCall.class));
-    return session == null ? defaultSession : session;
+    return session == null ? defaultSession : session.getInferenceSubstitution();
   }
 
-  public void registerNestedSession(InferenceSession session,
-                                    PsiType returnType,
-                                    PsiExpression returnExpression) {
-    final InferenceSession callSession = findNestedCallSession(((PsiCallExpression)returnExpression).getArgumentList(), null);
+  void registerNestedSession(InferenceSession session,
+                             PsiType returnType,
+                             PsiExpression returnExpression) {
+    final PsiSubstitutor callSession = findNestedSubstitutor(((PsiCallExpression)returnExpression).getArgumentList(), null);
     if (callSession == null) {
       final InferenceSession inferenceSession =
         ExpressionCompatibilityConstraint.reduceExpressionCompatibilityConstraint(session, returnExpression, returnType);
@@ -124,11 +124,22 @@ public class InferenceSessionContainer {
         topLevelSession.initExpressionConstraints(topLevelParameters, topLevelArguments, topLevelCall, method, ((MethodCandidateInfo)result).isVarargs());
         topLevelSession.infer(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result).createProperties());
 
-        final InferenceSessionContainer container = topLevelSession.getInferenceSessionContainer();
-        final Map<PsiElement, InferenceSession> nestedSessions = container.myNestedSessions;
-        Map<PsiElement, InitialInferenceState> nestedStates = new LinkedHashMap<PsiElement, InitialInferenceState>();
+        
+        final Map<PsiElement, InitialInferenceState> nestedStates = new LinkedHashMap<PsiElement, InitialInferenceState>();
+
+        final InferenceSessionContainer copy = new InferenceSessionContainer() {
+          @Override
+          public PsiSubstitutor findNestedSubstitutor(PsiElement arg, @Nullable PsiSubstitutor defaultSession) {
+            final InitialInferenceState state = nestedStates.get(PsiTreeUtil.getParentOfType(arg, PsiCall.class));
+            if (state != null) {
+              return state.getInferenceSubstitutor();
+            }
+            return super.findNestedSubstitutor(arg, defaultSession);
+          }
+        };
+        final Map<PsiElement, InferenceSession> nestedSessions = topLevelSession.getInferenceSessionContainer().myNestedSessions;
         for (Map.Entry<PsiElement, InferenceSession> entry : nestedSessions.entrySet()) {
-          nestedStates.put(entry.getKey(), entry.getValue().createInitialState(container));
+          nestedStates.put(entry.getKey(), entry.getValue().createInitialState(copy));
         }
 
         PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
