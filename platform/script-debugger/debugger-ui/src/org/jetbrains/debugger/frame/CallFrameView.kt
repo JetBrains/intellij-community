@@ -77,7 +77,9 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
     val fileName = sourceInfo.file.name
     val line = sourceInfo.line + 1
 
-    val textAttributes = if (isInLibraryContent) SimpleTextAttributes.GRAYED_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES
+    val textAttributes =
+        if (isInLibraryContent || callFrame.asyncFunctionName != null) SimpleTextAttributes.GRAYED_ATTRIBUTES
+        else SimpleTextAttributes.REGULAR_ATTRIBUTES
 
     val functionName = sourceInfo.functionName
     if (functionName == null || (functionName.isEmpty() && callFrame.hasOnlyGlobalScope)) {
