@@ -50,5 +50,10 @@ interface CallFrame {
    */
   val equalityObject: Any
 
+  /**
+   * Name of function which scheduled some handler for top frames of async stack.
+   */
   val asyncFunctionName: String?
+
+  val isFromAsyncStack: Boolean
 }
