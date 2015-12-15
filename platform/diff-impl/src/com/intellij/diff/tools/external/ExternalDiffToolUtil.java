@@ -320,7 +320,7 @@ public class ExternalDiffToolUtil {
                                            "Merge In External Tool", "Mark as Resolved", "Revert", null) == Messages.YES;
       }
 
-      if (success) outputFile.finish();
+      if (success) outputFile.apply();
     }
     finally {
       request.applyResult(success ? MergeResult.RESOLVED : MergeResult.CANCEL);
@@ -335,7 +335,7 @@ public class ExternalDiffToolUtil {
     @NotNull
     String getPath();
 
-    void finish() throws IOException;
+    void apply() throws IOException;
   }
 
   private static class LocalOutputFile implements OutputFile {
@@ -352,7 +352,7 @@ public class ExternalDiffToolUtil {
     }
 
     @Override
-    public void finish() {
+    public void apply() {
       myFile.refresh(false, false);
     }
   }
@@ -373,7 +373,7 @@ public class ExternalDiffToolUtil {
     }
 
     @Override
-    public void finish() throws IOException {
+    public void apply() throws IOException {
       myFile.setBinaryContent(FileUtil.loadFileBytes(myLocalFile));
     }
   }
@@ -397,7 +397,7 @@ public class ExternalDiffToolUtil {
     }
 
     @Override
-    public void finish() throws IOException {
+    public void apply() throws IOException {
       final String content = StringUtil.convertLineSeparators(FileUtil.loadFile(myLocalFile, myCharset));
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
