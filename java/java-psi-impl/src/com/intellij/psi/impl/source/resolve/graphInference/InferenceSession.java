@@ -584,13 +584,13 @@ public class InferenceSession {
     return mySiteSubstitutor;
   }
 
-  public InitialInferenceState createInitialState() {
+  public InitialInferenceState createInitialState(InferenceSessionContainer container) {
     return new InitialInferenceState(myInferenceVariables, 
                                      myContext, 
                                      myInferenceSubstitution, 
                                      mySiteSubstitutor, 
                                      myIncorporationPhase.getCaptures(),
-                                     myInferenceSessionContainer);
+                                     container);
   }
 
   public void initBounds(PsiTypeParameter... typeParameters) {

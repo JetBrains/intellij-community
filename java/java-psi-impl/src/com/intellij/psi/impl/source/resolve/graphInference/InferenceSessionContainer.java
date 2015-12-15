@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -73,19 +72,19 @@ public class InferenceSessionContainer {
       final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
       final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
       if (properties != null && !properties.isApplicabilityCheck()) {
-        final Pair<PsiSubstitutor, Map<PsiElement, InitialInferenceState>>
+        final CompoundInitialState
           session = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(parent, false,
-                                                                         new Computable<Pair<PsiSubstitutor, Map<PsiElement, InitialInferenceState>>>() {
-                                                                                                                      @Override
-                                                                                                                      public Pair<PsiSubstitutor, Map<PsiElement, InitialInferenceState>> compute() {
-                                                                                                                        return createValue(parent);
-                                                                                                                      }
-                                                                                                                    });
+                                                                         new Computable<CompoundInitialState>() {
+                                                                           @Override
+                                                                           public CompoundInitialState compute() {
+                                                                             return createValue(parent);
+                                                                           }
+                                                                         });
         if (session != null) {
-          final InitialInferenceState initialInferenceState = session.second.get(PsiTreeUtil.getParentOfType(argumentList, PsiCall.class));
+          final InitialInferenceState initialInferenceState = session.getInitialState(PsiTreeUtil.getParentOfType(argumentList, PsiCall.class));
           if (initialInferenceState != null) {
            
-            return new InferenceSession(initialInferenceState).collectAdditionalAndInfer(parameters, arguments, properties, session.first);
+            return new InferenceSession(initialInferenceState).collectAdditionalAndInfer(parameters, arguments, properties, session.getInitialSubstitutor());
           }
         }
       }
@@ -96,22 +95,21 @@ public class InferenceSessionContainer {
     return inferenceSession.infer(parameters, arguments, parent);
   }
 
-  private static Pair<PsiSubstitutor, Map<PsiElement, InitialInferenceState>> createValue(@NotNull final PsiElement parent) {
+  private static CompoundInitialState createValue(@NotNull final PsiElement parent) {
     if (MethodCandidateInfo.isOverloadCheck()) {
       return startTopLevelInference(parent);
     }
     return CachedValuesManager.getCachedValue(parent,
-                                              new CachedValueProvider<Pair<PsiSubstitutor, Map<PsiElement, InitialInferenceState>>>() {
+                                              new CachedValueProvider<CompoundInitialState>() {
                                                 @Nullable
                                                 @Override
-                                                public Result<Pair<PsiSubstitutor, Map<PsiElement, InitialInferenceState>>> compute() {
-                                                  return new Result<Pair<PsiSubstitutor, Map<PsiElement, InitialInferenceState>>>(
-                                                    startTopLevelInference(parent), PsiModificationTracker.MODIFICATION_COUNT);
+                                                public Result<CompoundInitialState> compute() {
+                                                  return new Result<CompoundInitialState>(startTopLevelInference(parent), PsiModificationTracker.MODIFICATION_COUNT);
                                                 }
                                               });
   }
 
-  private static Pair<PsiSubstitutor, Map<PsiElement, InitialInferenceState>> startTopLevelInference(@NotNull final PsiElement parent) {
+  private static CompoundInitialState startTopLevelInference(@NotNull final PsiElement parent) {
     final PsiCall topLevelCall = treeWalkUp(parent);
     if (topLevelCall != null) {
       final JavaResolveResult result = topLevelCall.resolveMethodGenerics();
@@ -126,10 +124,11 @@ public class InferenceSessionContainer {
         topLevelSession.initExpressionConstraints(topLevelParameters, topLevelArguments, topLevelCall, method, ((MethodCandidateInfo)result).isVarargs());
         topLevelSession.infer(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result).createProperties());
 
-        final Map<PsiElement, InferenceSession> nestedSessions = topLevelSession.getInferenceSessionContainer().myNestedSessions;
+        final InferenceSessionContainer container = topLevelSession.getInferenceSessionContainer();
+        final Map<PsiElement, InferenceSession> nestedSessions = container.myNestedSessions;
         Map<PsiElement, InitialInferenceState> nestedStates = new LinkedHashMap<PsiElement, InitialInferenceState>();
         for (Map.Entry<PsiElement, InferenceSession> entry : nestedSessions.entrySet()) {
-          nestedStates.put(entry.getKey(), entry.getValue().createInitialState());
+          nestedStates.put(entry.getKey(), entry.getValue().createInitialState(container));
         }
 
         PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -140,7 +139,7 @@ public class InferenceSessionContainer {
           }
         }
         
-        return Pair.create(substitutor, nestedStates);
+        return new CompoundInitialState(substitutor, nestedStates);
       }
     }
 
