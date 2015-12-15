@@ -132,7 +132,7 @@ public class RollbackChangesDialog extends DialogWrapper {
         }
       }
     };
-    myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, getDisposable(), null, true, true, myListChangeListener, myListChangeListener);
+    myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, null, true, true, myListChangeListener, myListChangeListener);
     Disposer.register(getDisposable(), myBrowser);
 
     myOperationName = operationNameByChanges(project, myBrowser.getAllChanges());

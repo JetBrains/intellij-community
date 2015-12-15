@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,7 +53,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   private final boolean myShowingAllChangeLists;
   private final EventDispatcher<SelectedListChangeListener> myDispatcher = EventDispatcher.create(SelectedListChangeListener.class);
   private final ChangesBrowserExtender myExtender;
-  private final Disposable myParentDisposable;
   private final Runnable myRebuildListListener;
   private Collection<Change> myAllChanges;
   private Map<Change, LocalChangeList> myChangeListsMap;
@@ -64,14 +62,12 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   public MultipleChangeListBrowser(Project project,
                                    List<? extends ChangeList> changeLists,
                                    List<Change> changes,
-                                   Disposable parentDisposable,
                                    ChangeList initialListSelection,
                                    boolean capableOfExcludingChanges,
                                    boolean highlightProblems,
                                    Runnable rebuildListListener,
                                    @Nullable Runnable inclusionListener) {
     super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, inclusionListener, MyUseCase.LOCAL_CHANGES, null);
-    myParentDisposable = parentDisposable;
     myRebuildListListener = rebuildListListener;
 
     myChangeListChooser = new ChangeListChooser(changeLists);
@@ -90,7 +86,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
           rebuildList();
         }
       }
-    }, myParentDisposable);
+    }, this);
   }
 
   @Override
