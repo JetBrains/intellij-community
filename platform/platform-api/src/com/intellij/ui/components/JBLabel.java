@@ -267,6 +267,7 @@ public class JBLabel extends JLabel implements AnchorableComponent {
         checkMultiline();
         myEditorPane.setCaretPosition(0);
         UIUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
+        myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
         updateStyle(myEditorPane);
         updateLayout();
       } else {
