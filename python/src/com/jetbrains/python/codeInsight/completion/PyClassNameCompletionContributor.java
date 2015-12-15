@@ -126,9 +126,12 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
     for (final String elementName : CompletionUtil.sortMatching(resultSet.getPrefixMatcher(), keys)) {
       for (T element : StubIndex.getElements(key, elementName, project, scope, elementClass)) {
         if (condition.value(element)) {
-          resultSet.addElement(LookupElementBuilder.createWithIcon(element)
-                                 .withTailText(" " + ((NavigationItem)element).getPresentation().getLocationString(), true)
-                                 .withInsertHandler(insertHandler));
+          final String name = element.getName();
+          if (name != null) {
+            resultSet.addElement(LookupElementBuilder.createWithSmartPointer(name, element).withIcon(element.getIcon(0))
+                                   .withTailText(" " + ((NavigationItem)element).getPresentation().getLocationString(), true)
+                                   .withInsertHandler(insertHandler));
+          }
         }
       }
     }
@@ -142,7 +145,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
 
 
   private static final InsertHandler<LookupElement> FUNCTION_INSERT_HANDLER = new PyFunctionInsertHandler() {
-    public void handleInsert(final InsertionContext context, final LookupElement item) {
+    public void handleInsert(@NotNull final InsertionContext context, @NotNull final LookupElement item) {
       int tailOffset = context.getTailOffset()-1;
       super.handleInsert(context, item);  // adds parentheses, modifies tail offset
       context.commitDocument();
@@ -172,14 +175,14 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
       manager.commitDocument(document);
     }
     final PsiReference ref = context.getFile().findReferenceAt(tailOffset);
-    if (ref == null || ref.resolve() == item.getObject()) {
+    if (ref == null || ref.resolve() == item.getPsiElement()) {
       // no import statement needed
       return;
     }
     new WriteCommandAction(context.getProject(), context.getFile()) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
-        AddImportHelper.addImport((PsiNamedElement)item.getObject(), context.getFile(), (PyElement)ref.getElement());
+        AddImportHelper.addImport(PyUtil.as(item.getPsiElement(), PsiNamedElement.class), context.getFile(), (PyElement)ref.getElement());
       }
     }.execute();
   }
