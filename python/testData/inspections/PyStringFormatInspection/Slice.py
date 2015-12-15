@@ -1,5 +1,5 @@
 def foo(x):
-	return x
+    return x
 
 artist = foo(1)
 print('%s' % (artist.lower()[0:10]))

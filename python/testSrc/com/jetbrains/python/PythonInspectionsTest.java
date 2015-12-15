@@ -70,11 +70,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyRedeclarationInspection.class);
   }
 
-  public void testPyStringFormatInspection() {
-    LocalInspectionTool inspection = new PyStringFormatInspection();
-    doTest(getTestName(false), inspection);
-  }
-
   public void testPyTrailingSemicolonInspection() {
     LocalInspectionTool inspection = new PyTrailingSemicolonInspection();
     doTest(getTestName(false), inspection);
@@ -285,14 +280,6 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyListCreationInspection() {         //PY-2823
     doHighlightingTest(PyListCreationInspection.class);
-  }
-
-  public void testPyStringFormatInspection1() {    //PY-2836
-    doHighlightingTest(PyStringFormatInspection.class);
-  }
-
-  public void testPyStringFormatInspectionSlice() {    //PY-6756
-    doHighlightingTest(PyStringFormatInspection.class);
   }
 
   public void testPyUnnecessaryBackslashInspection() {    //PY-2952
