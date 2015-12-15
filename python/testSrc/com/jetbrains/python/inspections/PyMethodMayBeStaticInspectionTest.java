@@ -87,6 +87,16 @@ public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
     doMultiFileTest("abc.py");
   }
 
+  //PY-17671
+  public void testMethodWithAttributes() {
+    doTest();
+  }
+
+  //PY-17824
+  public void testTestClasses() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(true) + ".py");
     myFixture.enableInspections(PyMethodMayBeStaticInspection.class);
