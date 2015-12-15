@@ -285,7 +285,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   }
 
   protected boolean isLastStep() {
-    return myCurrentStep == mySteps.size() - 1 || isLastStep(getCurrentStep());
+    return isLastStep(getCurrentStep());
   }
 
   private boolean isLastStep(int step) {
