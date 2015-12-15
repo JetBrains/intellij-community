@@ -22,4 +22,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface PyForStatement extends PyLoopStatement, PyStatementWithElse, NameDefiner {
   @NotNull PyForPart getForPart();
+
+  boolean isAsync();
 }
