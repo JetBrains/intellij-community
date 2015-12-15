@@ -166,11 +166,8 @@ public class PatchApplier<BinaryType extends FilePatch> {
 
       final ApplyPatchStatus patchStatus = nonWriteActionPreCheck();
       if (ApplyPatchStatus.FAILURE.equals(patchStatus)) {
-        if (myShowNotification) {
-          showApplyStatus(myProject, patchStatus);
-        }
-        myStatus = patchStatus;
-        return;
+          myStatus = patchStatus;
+          return;
       }
 
       final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject);
