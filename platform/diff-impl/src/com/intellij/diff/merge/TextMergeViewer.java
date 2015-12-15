@@ -440,6 +440,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     @Override
     protected void destroyChangedBlocks() {
       super.destroyChangedBlocks();
+      myInnerDiffWorker.stop();
+
       for (TextMergeChange change : myAllMergeChanges) {
         change.destroy();
       }
@@ -491,6 +493,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
             change.setInnerFragments(null);
           }
         }
+      }
+
+      public void stop() {
+        if (myProgress != null) myProgress.cancel();
+        myProgress = null;
+        myScheduled.clear();
+        myAlarm.cancelAllRequests();
       }
 
       private void putChanges(@NotNull Collection<TextMergeChange> changes) {
@@ -555,8 +564,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           @Override
           public void run() {
-            indicator.checkCanceled();
-            if (!myEnabled) return;
+            if (!myEnabled || indicator.isCanceled()) return;
             myProgress = null;
 
             for (int i = 0; i < scheduled.size(); i++) {
