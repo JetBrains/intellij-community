@@ -272,13 +272,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
       myBrowser.addToolbarAction(editSourceAction);
 
       myBrowser.addToolbarAction(ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar"));
-
-      final List<AnAction> actions = AdditionalLocalChangeActionsInstaller.calculateActions(myProject, myBrowser.getAllChanges());
-      if (actions != null) {
-        for (AnAction action : actions) {
-          myBrowser.addToolbarAction(action);
-        }
-      }
     }
 
     public void addSelectedListChangeListener(final SelectedListChangeListener listener) {
