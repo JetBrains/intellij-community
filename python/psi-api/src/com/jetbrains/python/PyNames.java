@@ -139,6 +139,7 @@ public class PyNames {
   public static final String CALLABLE = "Callable";
   public static final String SEQUENCE = "Sequence";
   public static final String MAPPING = "Mapping";
+  public static final String ASYNC_ITERABLE = "AsyncIterable";
 
   public static final String ABC_NUMBER = "Number";
   public static final String ABC_COMPLEX = "Complex";
@@ -160,6 +161,7 @@ public class PyNames {
   public static final String NEG = "__neg__";
   public static final String DIV = "__div__";
   public static final String TRUEDIV = "__truediv__";
+  public static final String AITER = "__aiter__";
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
@@ -401,7 +403,7 @@ public class PyNames {
     .put("__await__", _only_self_descr)
     .put("__aenter__", _only_self_descr)
     .put("__aexit__", _exit_descr)
-    .put("__aiter__", _only_self_descr)
+    .put(AITER, _only_self_descr)
     .put("__anext__", _only_self_descr)
     .build();
 

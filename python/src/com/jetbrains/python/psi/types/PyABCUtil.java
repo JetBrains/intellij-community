@@ -81,6 +81,9 @@ public class PyABCUtil {
     if (PyNames.ABC_NUMBER.equals(superClassName) && "Decimal".equals(subClass.getName())) {
       return true;
     }
+    if (PyNames.ASYNC_ITERABLE.equals(superClassName)) {
+      return hasMethod(subClass, PyNames.AITER, inherited, context);
+    }
     return false;
   }
 
