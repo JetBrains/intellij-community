@@ -8,9 +8,12 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="java-psi-api" />
+    <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="python-psi-api" />
     <orderEntry type="module" module-name="python-community" />
+    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="java-psi-api" />
     <orderEntry type="module" module-name="java-indexing-api" />
+    <orderEntry type="module" module-name="idea-ui" />
   </component>
 </module>

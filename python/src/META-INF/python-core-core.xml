@@ -668,6 +668,9 @@
   </project-components>
 
   <actions>
+    <action overrides="true" id="ForceStepInto" class="com.jetbrains.python.debugger.PyForceStepIntoAction" text="Fo_rce Step Into"
+            icon="AllIcons.Debugger.Actions.Force_step_into" description="Step into, ignore stepping filters for libraries, constructors, etc."/>
+
     <group id="PyTypeHierarchyPopupMenu">
       <reference ref="TypeHierarchyBase.BaseOnThisType"/>
       <reference ref="TypeHierarchy.Class"/>
@@ -816,6 +819,9 @@
     <component>
       <implementation-class>com.jetbrains.python.testing.VFSTestFrameworkListener</implementation-class>
     </component>
+    <component>
+      <interface-class>com.jetbrains.python.console.PythonConsoleRunnerFactory</interface-class>
+      <implementation-class>com.jetbrains.python.console.PydevConsoleRunnerFactory</implementation-class>
+    </component>
   </application-components>
-
 </idea-plugin>

@@ -28,11 +28,4 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
      plugins are loaded as separate plugins) and another is used for the real release build (when auxiliary
      plugins are packed inside the Python plugin jar) -->
   <xi:include href="/META-INF/python-plugin-dependencies.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
-  <application-components>
-    <component>
-      <interface-class>com.jetbrains.python.console.PythonConsoleRunnerFactory</interface-class>
-      <implementation-class>com.jetbrains.python.console.PydevConsoleRunnerFactory</implementation-class>
-    </component>
-  </application-components>
 </idea-plugin>
