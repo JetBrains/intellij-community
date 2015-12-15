@@ -1,6 +1,7 @@
 package com.intellij.stats.completion
 
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.openapi.components.ServiceManager
 import java.io.File
 
 abstract class UrlProvider {
@@ -9,6 +10,10 @@ abstract class UrlProvider {
 
 abstract class FilePathProvider {
     abstract val statsFilePath: String
+
+    companion object {
+        fun getInstance() = ServiceManager.getService(FilePathProvider::class.java)
+    }
 }
 
 class InternalUrlProvider: UrlProvider() {

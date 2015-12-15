@@ -40,14 +40,14 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
     private val LOG = Logger.getInstance(StatisticSender::class.java)
 
     fun sendStatsData(uid: String) {
-        assert(!SwingUtilities.isEventDispatchThread())
+        assertNotEDT()
         try {
             logFileManager.withFileLock {
                 val text = logFileManager.read()
                 if (text.isNotEmpty()) {
                     val url = urlProvider.statsServerPostUrl
                     sendContent(url, uid, text, okAction = Runnable {
-                        logFileManager.deleteLogFile()
+                        logFileManager.clearLogFile()
                     })
                 }
             }
@@ -55,7 +55,12 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
             LOG.error(e)
         }
     }
-    
+
+    private fun assertNotEDT() {
+        val isInTestMode = ApplicationManager.getApplication().isUnitTestMode()
+        assert(!SwingUtilities.isEventDispatchThread() || isInTestMode)
+    }
+
     private fun sendContent(url: String, uid: String, content: String, okAction: Runnable) {
         val map = mapOf(Pair("uid", uid), Pair("content", content))
         val data = requestService.post(url, map)
