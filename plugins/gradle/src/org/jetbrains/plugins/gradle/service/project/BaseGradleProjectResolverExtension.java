@@ -846,7 +846,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     return new LibraryDependencyData(ownerModule.getData(), library, level);
   }
 
-  interface SourceSetsProcessor {
+  private interface SourceSetsProcessor {
     void process(@NotNull DataNode<GradleSourceSetData> dataNode, @NotNull ExternalSourceSet sourceSet);
   }
 }
