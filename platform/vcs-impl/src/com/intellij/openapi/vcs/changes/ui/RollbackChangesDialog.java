@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
@@ -132,6 +133,7 @@ public class RollbackChangesDialog extends DialogWrapper {
       }
     };
     myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, getDisposable(), null, true, true, myListChangeListener, myListChangeListener);
+    Disposer.register(getDisposable(), myBrowser);
 
     myOperationName = operationNameByChanges(project, myBrowser.getAllChanges());
     setOKButtonText(myOperationName);
@@ -165,12 +167,6 @@ public class RollbackChangesDialog extends DialogWrapper {
     }
 
     return RollbackUtil.getRollbackOperationName(affectedVcs);
-  }
-
-  @Override
-  protected void dispose() {
-    super.dispose();
-    myBrowser.dispose();
   }
 
   @Override

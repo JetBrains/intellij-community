@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
@@ -44,7 +45,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
+public class ChangesBrowser extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(ChangesBrowser.class);
   // for backgroundable rollback to mark
   private boolean myDataIsDirty;

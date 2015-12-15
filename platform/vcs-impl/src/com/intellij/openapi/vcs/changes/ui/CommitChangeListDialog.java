@@ -796,7 +796,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   public void dispose() {
     myDisposed = true;
-    myBrowser.dispose();
+    Disposer.dispose(myBrowser);
     Disposer.dispose(myCommitMessageArea);
     Disposer.dispose(myOKButtonUpdateAlarm);
     myUpdateButtonsRunnable.cancel();

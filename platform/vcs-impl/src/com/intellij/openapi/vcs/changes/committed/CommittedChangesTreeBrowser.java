@@ -231,7 +231,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myConnection.disconnect();
     mySplitterProportionsData.saveSplitterProportions(this);
     mySplitterProportionsData.externalizeToDimensionService("CommittedChanges.SplitterProportions");
-    myDetailsView.dispose();
+    Disposer.dispose(myDetailsView);
   }
 
   public void setItems(@NotNull List<CommittedChangeList> items, final CommittedChangesBrowserUseCase useCase) {
