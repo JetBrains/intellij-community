@@ -98,11 +98,6 @@ public class ThreadTracker {
     wellKnownOffenders.add("VM Periodic Task Thread");
     wellKnownOffenders.add("VM Thread");
     wellKnownOffenders.add("YJPAgent-Telemetry");
-    wellKnownOffenders.add("ByteRequestSink.LinesWriterThread");    // Dart Analysis Server
-    wellKnownOffenders.add("ByteResponseStream.LinesReaderThread"); // Dart Analysis Server
-    wellKnownOffenders.add("RemoteAnalysisServerImpl watcher");     // Dart Analysis Server
-    wellKnownOffenders.add("ServerErrorReaderThread");              // Dart Analysis Server
-    wellKnownOffenders.add("ServerResponseReaderThread");           // Dart Analysis Server
 
     longRunningThreadCreated(ApplicationManager.getApplication(), "Periodic tasks thread", "ApplicationImpl pooled thread");
   }
