@@ -61,7 +61,10 @@ class UpdateChannel(node: Element) {
   val evalDays: Int = node.getAttributeValue("evalDays")?.toInt() ?: 30
   private val builds = node.getChildren("build").map { BuildInfo(it) }
 
-  fun getLatestBuild(): BuildInfo? =
+  fun getLatestBuild(): BuildInfo? = latestBuild(builds)
+  fun getLatestBuild(baseline: Int): BuildInfo? = latestBuild(builds.filter { it.number.baselineVersion == baseline })
+
+  private fun latestBuild(builds: List<BuildInfo>) =
       builds.fold(null as BuildInfo?) { best, candidate -> if (best == null || best.compareTo(candidate) < 0) candidate else best }
 }
 
