@@ -63,13 +63,6 @@ public class Main {
 
   @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   public static void main(String[] args) {
-    //this property is temporary and will be removed when IntelliJ platform really migrates to Java 8
-    boolean checkVersion = !SystemProperties.getBooleanProperty("idea.no.java.version.check", false);
-    if (checkVersion && !SystemInfo.isJavaVersionAtLeast("1.8")) {
-      showMessage("Unsupported Java Version", "Cannot start under Java " + SystemInfo.JAVA_RUNTIME_VERSION + ": Java 1.8 or later is required.", true);
-      System.exit(UNSUPPORTED_JAVA_VERSION);
-    }
-
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
     }
@@ -86,6 +79,14 @@ public class Main {
     }
     else if (!checkGraphics()) {
       System.exit(NO_GRAPHICS);
+    }
+
+    //this property is temporary and will be removed when IntelliJ platform really migrates to Java 8
+    boolean checkVersion = !SystemProperties.getBooleanProperty("idea.no.java.version.check", false);
+    if (checkVersion && !SystemInfo.isJavaVersionAtLeast("1.8")) {
+      showMessage("Unsupported Java Version",
+                  "Cannot start under Java " + SystemInfo.JAVA_RUNTIME_VERSION + ": Java 1.8 or later is required.", true);
+      System.exit(UNSUPPORTED_JAVA_VERSION);
     }
 
     if (args.length == 0 || (args.length == 1 && "nosplash".equals(args[0]))) {
