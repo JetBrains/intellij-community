@@ -10,6 +10,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.Time
 import org.apache.http.client.fluent.Form
 import org.apache.http.client.fluent.Request
+import java.io.File
 import java.io.IOException
 import javax.swing.SwingUtilities
 
@@ -39,20 +40,27 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
 class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileManager, val requestService: RequestService) {
     private val LOG = Logger.getInstance(StatisticSender::class.java)
 
+    private fun prepareTextToSend(fileToSend: File): String {
+        if (fileToSend.exists()) {
+            val text = fileToSend.readText()
+            if (text.isNotEmpty()) {
+                return text
+            }
+            fileToSend.delete()
+        }
+        logFileManager.renameLogFile(fileToSend)
+        return fileToSend.readText()
+    }
+
     fun sendStatsData(uid: String) {
         assertNotEDT()
-        try {
-            logFileManager.withFileLock {
-                val text = logFileManager.read()
-                if (text.isNotEmpty()) {
-                    val url = urlProvider.statsServerPostUrl
-                    sendContent(url, uid, text, onSendAction = Runnable {
-                        logFileManager.clearLogFile()
-                    })
-                }
-            }
-        } catch (e: IOException) {
-            LOG.error(e)
+        val fileToSend = File(FilePathProvider.getInstance().swapFile)
+        var textToSend = prepareTextToSend(fileToSend)
+        if (textToSend.isNotEmpty()) {
+            val url = urlProvider.statsServerPostUrl
+            sendContent(url, uid, textToSend, onSendAction = Runnable {
+                fileToSend.delete()
+            })
         }
     }
 
