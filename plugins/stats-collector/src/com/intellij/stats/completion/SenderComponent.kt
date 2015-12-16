@@ -3,6 +3,7 @@ package com.intellij.stats.completion
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.Disposer
@@ -82,6 +83,10 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
 
 abstract class RequestService {
     abstract fun post(url: String, params: Map<String, String>): ResponseData?
+    
+    companion object {
+        fun getInstance() = ServiceManager.getService(RequestService::class.java)
+    }
 }
 
 class SimpleRequestService: RequestService() {
@@ -95,7 +100,7 @@ class SimpleRequestService: RequestService() {
             val httpResponse = response.returnResponse()
             return ResponseData(httpResponse.statusLine.statusCode)
         } catch (e: IOException) {
-            LOG.debug(e)
+            LOG.warn(e)
             return null
         }
     }

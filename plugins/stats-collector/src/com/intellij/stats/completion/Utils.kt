@@ -6,6 +6,11 @@ import java.io.File
 
 abstract class UrlProvider {
     abstract val statsServerPostUrl: String
+
+    companion object {
+        fun getInstance() = ServiceManager.getService(UrlProvider::class.java)
+    }
+
 }
 
 abstract class FilePathProvider {
