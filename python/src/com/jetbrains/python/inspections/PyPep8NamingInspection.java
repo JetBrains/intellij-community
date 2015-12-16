@@ -219,21 +219,9 @@ public class PyPep8NamingInspection extends PyInspection {
 
     private boolean isContextManager(PyClass node) {
       final String[] contextManagerFunctionNames = new String[] {"__enter__", "__exit__"};
-      PyStatementList[] statementLists = PsiTreeUtil.getChildrenOfType(node, PyStatementList.class);
-      ArrayList<String> names = new ArrayList<String>();
-      if (statementLists != null) {
-        for (PyStatementList statementList : statementLists) {
-          PyFunction[] functions = PsiTreeUtil.getChildrenOfType(statementList, PyFunction.class);
-          if (functions != null) {
-            for (PyFunction function : functions) {
-              names.add(function.getName());
-            }
-          }
-        }
-        for (String name : contextManagerFunctionNames) {
-          if (!names.contains(name)) {
-            return false;
-          }
+      for (String name: contextManagerFunctionNames) {
+        if (node.findMethodByName(name, false, myTypeEvalContext) == null) {
+          return false;
         }
       }
       return true;

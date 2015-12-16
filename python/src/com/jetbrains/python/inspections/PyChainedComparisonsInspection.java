@@ -15,18 +15,26 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionToolSession;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.ui.CheckBox;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.ChainedComparisonsQuickFix;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyLiteralExpression;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * User: catherine
@@ -35,6 +43,9 @@ import org.jetbrains.annotations.Nullable;
  * For instance, a < b and b < c  -->  a < b < c
  */
 public class PyChainedComparisonsInspection extends PyInspection {
+  private static String INSPECTION_SHORT_NAME = "PyChainedComparisonsInspection";
+  public boolean simplifyWithConstantInTheMiddle = true;
+
   @Nls
   @NotNull
   @Override
@@ -47,7 +58,17 @@ public class PyChainedComparisonsInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, session, simplifyWithConstantInTheMiddle);
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    final JPanel rootPanel = new JPanel(new BorderLayout());
+    rootPanel.add(new CheckBox("Simplify statements with a constant in the middle", this, "simplifyWithConstantInTheMiddle"),
+                  BorderLayout.PAGE_START);
+
+    return rootPanel;
   }
 
   private static class Visitor extends PyInspectionVisitor {
@@ -58,9 +79,12 @@ public class PyChainedComparisonsInspection extends PyInspection {
     boolean myIsRight;
     PyElementType myOperator;
     boolean getInnerRight;
+    boolean isConstantInTheMiddle;
+    boolean simplifyWithConstantInTheMiddle;
 
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, boolean simplifyWithConstantInTheMiddle) {
       super(holder, session);
+      this.simplifyWithConstantInTheMiddle = simplifyWithConstantInTheMiddle;
     }
 
     @Override
@@ -78,7 +102,15 @@ public class PyChainedComparisonsInspection extends PyInspection {
         if (node.getOperator() == PyTokenTypes.AND_KEYWORD) {
           if (isRightSimplified((PyBinaryExpression)leftExpression, (PyBinaryExpression)rightExpression) ||
               isLeftSimplified((PyBinaryExpression)leftExpression, (PyBinaryExpression)rightExpression)) {
-            registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight));
+            if (isConstantInTheMiddle) {
+              if(simplifyWithConstantInTheMiddle) {
+                registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight),
+                                new DontSimplifyStatementsWithConstantInTheMiddleQuickFix());
+              }
+            }
+            else {
+              registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight));
+            }
           }
         }
       }
@@ -107,6 +139,7 @@ public class PyChainedComparisonsInspection extends PyInspection {
           if (leftRight.getText().equals(getLeftExpression(rightExpression, true).getText())) {
             myIsLeft = false;
             myIsRight = true;
+            isConstantInTheMiddle = leftRight instanceof PyLiteralExpression;
             return true;
           }
 
@@ -114,6 +147,7 @@ public class PyChainedComparisonsInspection extends PyInspection {
           if (right != null && leftRight.getText().equals(right.getText())) {
             myIsLeft = false;
             myIsRight = false;
+            isConstantInTheMiddle = leftRight instanceof PyLiteralExpression;
             return true;
           }
         }
@@ -156,12 +190,14 @@ public class PyChainedComparisonsInspection extends PyInspection {
           if (leftLeft.getText().equals(getLeftExpression(rightExpression, false).getText())) {
             myIsLeft = true;
             myIsRight = true;
+            isConstantInTheMiddle = leftRight instanceof PyLiteralExpression;
             return true;
           }
           final PyExpression right = getSmallestRight(rightExpression, false);
           if (right != null && leftLeft.getText().equals(right.getText())) {
             myIsLeft = true;
             myIsRight = false;
+            isConstantInTheMiddle = leftRight instanceof PyLiteralExpression;
             return true;
           }
         }
@@ -198,6 +234,39 @@ public class PyChainedComparisonsInspection extends PyInspection {
         result = ((PyBinaryExpression)result).getRightExpression();
       }
       return result;
+    }
+  }
+
+  private static class DontSimplifyStatementsWithConstantInTheMiddleQuickFix implements LocalQuickFix {
+
+    private String myText = "Never simplify statements with constant in the middle";
+
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return myText;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return myText;
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiFile file = descriptor.getStartElement().getContainingFile();
+      InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyProfile(new Consumer<ModifiableModel>() {
+        @Override
+        public void consume(ModifiableModel model) {
+          PyChainedComparisonsInspection tool =
+            (PyChainedComparisonsInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME,
+                                                                   file);
+          tool.simplifyWithConstantInTheMiddle = false;
+        }
+      });
     }
   }
 }

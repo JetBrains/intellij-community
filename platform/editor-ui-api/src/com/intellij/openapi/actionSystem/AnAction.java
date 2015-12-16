@@ -33,9 +33,9 @@ import java.util.List;
  * Represents an entity that has a state, a presentation and can be performed.
  *
  * For an action to be useful, you need to implement {@link AnAction#actionPerformed}
- * and optionally to override {@link com.intellij.openapi.actionSystem.AnAction#update}. By overriding the
- * {@link com.intellij.openapi.actionSystem.AnAction#update} method you can dynamically change action's presentation
- * depending on the place (for more information on places see {@link ActionPlaces}.
+ * and optionally to override {@link AnAction#update}. By overriding the
+ * {@link AnAction#update} method you can dynamically change action's presentation
+ * depending on the place (for more information on places see {@link com.intellij.openapi.actionSystem.ActionPlaces}.
  *
  * The same action can have various presentations.
  *
@@ -60,7 +60,7 @@ import java.util.List;
  *
  * @see AnActionEvent
  * @see Presentation
- * @see ActionPlaces
+ * @see com.intellij.openapi.actionSystem.ActionPlaces
  */
 public abstract class AnAction implements PossiblyDumbAware {
   public static final AnAction[] EMPTY_ARRAY = new AnAction[0];

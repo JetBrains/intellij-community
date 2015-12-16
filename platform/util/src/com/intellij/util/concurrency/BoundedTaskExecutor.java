@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -105,17 +106,17 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
 
   @Override
   public void execute(@NotNull Runnable task) {
-    myTaskQueue.offer(task);
+    if (!myTaskQueue.offer(task)) throw new RejectedExecutionException();
     int inProgress = myInProgress.incrementAndGet();
 
     tryToPollAndExecuteNext(inProgress);
   }
 
   private void tryToPollAndExecuteNext(int inProgress) {
-    while (!isShutdown()) {
+    while (true) {
       assert inProgress > 0 : inProgress;
       Runnable next;
-      if (inProgress <= myMaxTasks && (next = myTaskQueue.poll()) != null) {
+      if (inProgress <= myMaxTasks && !isShutdown() && (next = myTaskQueue.poll()) != null) {
         try {
           myBackendExecutor.execute(wrap(next));
         }
@@ -158,6 +159,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
 
   @TestOnly
   public void waitAllTasksExecuted(int timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException {
+    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread(); // to make sure we are not waiting inside the pooled thread, blocking it forever
     final CountDownLatch started = new CountDownLatch(myMaxTasks);
     final CountDownLatch readyToFinish = new CountDownLatch(1);
     final StringBuffer log = new StringBuffer("waitAllTasksExecuted: " + this + "\n==="+ThreadDumper.dumpThreadsToString()+"\n===\n");

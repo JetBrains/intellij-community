@@ -61,6 +61,14 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyMethodParametersInspection.class);
   }
 
+  public void testPyMethodParametersInspectionMetacls() {
+    PyMethodParametersInspection inspection = new PyMethodParametersInspection();
+    inspection.MCS = "metacls";
+    myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
+    myFixture.enableInspections(inspection);
+    myFixture.checkHighlighting(true, false, true);
+  }
+
   public void testPyNestedDecoratorsInspection() {
     LocalInspectionTool inspection = new PyNestedDecoratorsInspection();
     doTest(getTestName(false), inspection);
@@ -258,6 +266,14 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyChainedComparisonsInspection() {
     doHighlightingTest(PyChainedComparisonsInspection.class);
+  }
+
+  public void testPyChainedComparisonsInspectionWithConstantInTheMiddle() {
+    myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
+    PyChainedComparisonsInspection inspection = new PyChainedComparisonsInspection();
+    myFixture.enableInspections(inspection);
+    inspection.simplifyWithConstantInTheMiddle = false;
+    myFixture.checkHighlighting(true, false, true);
   }
 
   public void testPyBroadExceptionInspection() {

@@ -98,6 +98,14 @@ public class PyPep8NamingInspectionTest extends PyTestCase {
     doIgnoredErrorsTest("N806");
   }
 
+  public void testContextManager() {
+    doTest();
+  }
+
+  public void testClassNameWithTwoUnderscores() {
+    doTest();
+  }
+
   public void testOverrideFromModule() {
     myFixture.configureByFiles("inspections/PyPep8NamingInspection/" + getTestName(true) + ".py",
                                "inspections/PyPep8NamingInspection/tmp1.py");
@@ -125,5 +133,4 @@ public class PyPep8NamingInspectionTest extends PyTestCase {
     myFixture.enableInspections(inspection);
     myFixture.checkHighlighting(false, false, true);
   }
-
 }
