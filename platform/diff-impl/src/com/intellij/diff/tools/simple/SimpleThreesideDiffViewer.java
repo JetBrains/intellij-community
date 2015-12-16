@@ -26,6 +26,7 @@ import com.intellij.diff.fragments.MergeLineFragmentImpl;
 import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.simple.ThreesideDiffChangeBase.ConflictType;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
@@ -50,6 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
@@ -138,7 +140,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
         }
       });
 
-      ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
+      final ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
       List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences[0], sequences[1], sequences[2],
                                                                     comparisonPolicy, indicator);
 
@@ -154,6 +156,10 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
               chunks[0] = getChunkContent(fragment, documents, ThreeSide.LEFT);
               chunks[1] = getChunkContent(fragment, documents, ThreeSide.BASE);
               chunks[2] = getChunkContent(fragment, documents, ThreeSide.RIGHT);
+
+              ConflictType type = ThreesideDiffChangeBase.calcType(fragment, Arrays.asList(documents), comparisonPolicy);
+              if (!type.isChange(Side.LEFT)) chunks[0] = null;
+              if (!type.isChange(Side.RIGHT)) chunks[2] = null;
               return chunks;
             }
           });

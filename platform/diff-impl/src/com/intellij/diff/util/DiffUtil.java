@@ -591,10 +591,6 @@ public class DiffUtil {
     CharSequence chunk1 = side1.select(chunks);
     CharSequence chunk2 = side2.select(chunks);
 
-    if (chunks[1] != null && isChunksEquals(chunk1, chunk2, comparisonPolicy)) {
-      return null; // unmodified - deleted
-    }
-
     List<DiffFragment> wordConflicts = ByWord.compare(chunk1, chunk2, comparisonPolicy, indicator);
 
     return ContainerUtil.map(wordConflicts, new Function<DiffFragment, MergeWordFragment>() {
