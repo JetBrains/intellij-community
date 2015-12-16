@@ -66,7 +66,6 @@ open class StandaloneVmHelper @JvmOverloads constructor(private val vm: Vm, priv
 
     messageProcessor.cancelWaitingRequests()
     val disconnectRequest = (vm as? VmEx)?.createDisconnectRequest()
-
     val promise = AsyncPromise<Any?>()
     if (disconnectRequest == null) {
       messageProcessor.closed()
