@@ -109,7 +109,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myStatisticsServiceKey;
   private String myThirdPartySoftwareUrl;
   private String myJetbrainsTvUrl;
-  private String myEvalLicenseUrl = "https://www.jetbrains.com/company/useterms.html";
+  private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
   private String myKeyConversionUrl = "https://www.jetbrains.com/shop/eform/keys-exchange";
 
   private Rectangle myAboutLogoRect;
