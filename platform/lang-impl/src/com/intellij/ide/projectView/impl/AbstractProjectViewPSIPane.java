@@ -34,6 +34,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -104,7 +105,9 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
             TextAttributesKey key = presentation.getTextAttributesKey();
             if (key != null) {
               TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
-              if (attributes != null) return ErrorStripe.create(attributes.getEffectColor(), 1);
+              if (attributes != null && EffectType.WAVE_UNDERSCORE == attributes.getEffectType()) {
+                return ErrorStripe.create(attributes.getEffectColor(), 1);
+              }
             }
           }
           return null;
