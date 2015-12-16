@@ -177,15 +177,17 @@ public class PyPackageRequirementsInspection extends PyInspection {
                   return;
                 }
               }
-              final PsiReference reference = packageReferenceExpression.getReference();
-              if (reference != null) {
-                final PsiElement element = reference.resolve();
-                if (element != null) {
-                  final PsiFile file = element.getContainingFile();
-                  if (file != null) {
-                    final VirtualFile virtualFile = file.getVirtualFile();
-                    if (ModuleUtilCore.moduleContainsFile(module, virtualFile, false)) {
-                      return;
+              if (!ApplicationManager.getApplication().isUnitTestMode()) {
+                final PsiReference reference = packageReferenceExpression.getReference();
+                if (reference != null) {
+                  final PsiElement element = reference.resolve();
+                  if (element != null) {
+                    final PsiFile file = element.getContainingFile();
+                    if (file != null) {
+                      final VirtualFile virtualFile = file.getVirtualFile();
+                      if (ModuleUtilCore.moduleContainsFile(module, virtualFile, false)) {
+                        return;
+                      }
                     }
                   }
                 }

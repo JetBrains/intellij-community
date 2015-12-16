@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,11 +39,21 @@ public class PyPackageRequirementsInspectionTest extends PyTestCase {
     doTest("test1.py");
   }
 
+  // PY-16753
+  public void testIpAddressNotInRequirements() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("test1.py"));
+  }
+
+  // PY-17422
+  public void testTypingNotInRequirements() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("test1.py"));
+  }
+
   private void doTest(@NotNull final String filename) {
     final String testName = getTestName(false);
     myFixture.copyDirectoryToProject("inspections/PyPackageRequirementsInspection/" + testName, "");
     myFixture.configureFromTempProjectFile(filename);
     myFixture.enableInspections(PyPackageRequirementsInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+    myFixture.checkHighlighting(true, false, true);
   }
 }
