@@ -23,7 +23,7 @@ abstract class FilePathProvider {
 }
 
 class InternalUrlProvider: UrlProvider() {
-    override val statsServerPostUrl = "http://unit-617:8080/stats/upload"
+    override val statsServerPostUrl = "http://unit-617.labs.intellij.net:8080/stats/upload"
 }
 
 class PluginDirectoryFilePathProvider: FilePathProvider() {
