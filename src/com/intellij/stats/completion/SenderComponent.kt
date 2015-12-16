@@ -46,7 +46,7 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
                 val text = logFileManager.read()
                 if (text.isNotEmpty()) {
                     val url = urlProvider.statsServerPostUrl
-                    sendContent(url, uid, text, okAction = Runnable {
+                    sendContent(url, uid, text, onSendAction = Runnable {
                         logFileManager.clearLogFile()
                     })
                 }
@@ -57,15 +57,15 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
     }
 
     private fun assertNotEDT() {
-        val isInTestMode = ApplicationManager.getApplication().isUnitTestMode()
+        val isInTestMode = ApplicationManager.getApplication().isUnitTestMode
         assert(!SwingUtilities.isEventDispatchThread() || isInTestMode)
     }
 
-    private fun sendContent(url: String, uid: String, content: String, okAction: Runnable) {
+    private fun sendContent(url: String, uid: String, content: String, onSendAction: Runnable) {
         val map = mapOf(Pair("uid", uid), Pair("content", content))
         val data = requestService.post(url, map)
-        if (data.code >= 200 && data.code < 300) {
-            okAction.run()
+        if (data != null && data.code >= 200 && data.code < 300) {
+            onSendAction.run()
         }
     }
     
@@ -73,19 +73,23 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
 
 
 abstract class RequestService {
-    abstract fun post(url: String, params: Map<String, String>): ResponseData
+    abstract fun post(url: String, params: Map<String, String>): ResponseData?
 }
 
 class SimpleRequestService: RequestService() {
+    private val LOG = Logger.getInstance(SimpleRequestService::class.java)
 
-    override fun post(url: String, params: Map<String, String>): ResponseData {
+    override fun post(url: String, params: Map<String, String>): ResponseData? {
         val form = Form.form()
-        params.forEach {
-            form.add(it.key, it.value)
+        params.forEach { form.add(it.key, it.value) }
+        try {
+            val response = Request.Post(url).bodyForm(form.build()).execute()
+            val httpResponse = response.returnResponse()
+            return ResponseData(httpResponse.statusLine.statusCode)
+        } catch (e: IOException) {
+            LOG.debug(e)
+            return null
         }
-        val response = Request.Post(url).bodyForm(form.build()).execute()
-        val httpResponse = response.returnResponse()
-        return ResponseData(httpResponse.statusLine.statusCode)
     }
 
 }
