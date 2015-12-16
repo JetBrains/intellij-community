@@ -58,7 +58,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
@@ -73,6 +72,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
@@ -416,10 +416,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           setInitialOutputContent();
 
           clearDiffPresentation();
-
           resetChangeCounters();
-          for (MergeLineFragment fragment : fragments) {
-            TextMergeChange change = new TextMergeChange(fragment, TextMergeViewer.this);
+
+          for (int index = 0; index < fragments.size(); index++) {
+            MergeLineFragment fragment = fragments.get(index);
+            TextMergeChange change = new TextMergeChange(fragment, index, TextMergeViewer.this);
             myAllMergeChanges.add(change);
             onChangeAdded(change);
           }
@@ -613,12 +614,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       int line2 = e.getDocument().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
       int shift = DiffUtil.countLinesShift(e);
 
-      final List<Pair<TextMergeChange, TextMergeChange.State>> corruptedStates = ContainerUtil.newArrayList();
-      for (TextMergeChange change : myAllMergeChanges) {
+      final List<TextMergeChange.State> corruptedStates = ContainerUtil.newArrayList();
+      for (int index = 0; index < myAllMergeChanges.size(); index++) {
+        TextMergeChange change = myAllMergeChanges.get(index);
         TextMergeChange.State oldState = change.processBaseChange(line1, line2, shift);
         if (oldState != null) {
           if (myCurrentMergeCommand == null) {
-            corruptedStates.add(Pair.create(change, oldState));
+            corruptedStates.add(oldState);
           }
           reinstallHighlighter(change); // document state is not updated yet - can't reinstall range here
         }
@@ -627,20 +629,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       if (!corruptedStates.isEmpty() && myUndoManager != null) {
         // document undo is registered inside onDocumentChange, so our undo() will be called after its undo().
         // thus thus we can avoid checks for isUndoInProgress() (to avoid modification of the same TextMergeChange by this listener)
-        myUndoManager.undoableActionPerformed(new BasicUndoableAction(getEditor().getDocument()) {
-          @Override
-          public void undo() throws UnexpectedUndoException {
-            enterBulkChangeUpdateBlock();
-            for (Pair<TextMergeChange, TextMergeChange.State> pair : corruptedStates) {
-              restoreChangeState(pair.first, pair.second);
-            }
-            exitBulkChangeUpdateBlock();
-          }
-
-          @Override
-          public void redo() throws UnexpectedUndoException {
-          }
-        });
+        myUndoManager.undoableActionPerformed(new MyUndoableAction(TextMergeViewer.this, corruptedStates, true));
       }
     }
 
@@ -781,7 +770,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     // Modification operations
     //
 
-    private void restoreChangeState(@NotNull TextMergeChange change, @NotNull TextMergeChange.State state) {
+    private void restoreChangeState(@NotNull TextMergeChange.State state) {
+      TextMergeChange change = myAllMergeChanges.get(state.myIndex);
+
       boolean wasResolved = change.isResolved();
       change.restoreState(state);
       reinstallHighlighter(change);
@@ -840,27 +831,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           states.add(change.storeState());
         }
 
-        myUndoManager.undoableActionPerformed(new BasicUndoableAction(myDocument) {
-          @Override
-          public void undo() throws UnexpectedUndoException {
-            if (undo) restoreStates(states);
-          }
-
-          @Override
-          public void redo() throws UnexpectedUndoException {
-            if (!undo) restoreStates(states);
-          }
-        });
-      }
-
-      private void restoreStates(@NotNull List<TextMergeChange.State> states) {
-        List<TextMergeChange> affectedChanges = getAffectedChanges();
-
-        enterBulkChangeUpdateBlock();
-        for (int i = 0; i < affectedChanges.size(); i++) {
-          restoreChangeState(affectedChanges.get(i), states.get(i));
-        }
-        exitBulkChangeUpdateBlock();
+        myUndoManager.undoableActionPerformed(new MyUndoableAction(TextMergeViewer.this, states, undo));
       }
 
       @NotNull
@@ -1446,6 +1417,49 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       int startLine = change.getStartLine(side);
       int endLine = change.getEndLine(side);
       return startLine != endLine ? DiffUtil.getLinesContent(side.select(documents), startLine, endLine) : null;
+    }
+  }
+
+  private static class MyUndoableAction extends BasicUndoableAction {
+    private final WeakReference<TextMergeViewer> myViewerRef;
+    @NotNull private final List<TextMergeChange.State> myStates;
+    private final boolean myUndo;
+
+    public MyUndoableAction(@NotNull TextMergeViewer viewer, @NotNull List<TextMergeChange.State> states, boolean undo) {
+      super(viewer.getViewer().getEditor().getDocument());
+      myViewerRef = new WeakReference<TextMergeViewer>(viewer);
+
+      myStates = states;
+      myUndo = undo;
+    }
+
+    @Override
+    public final void undo() throws UnexpectedUndoException {
+      TextMergeViewer mergeViewer = getViewer();
+      if (mergeViewer != null && myUndo) restoreStates(mergeViewer);
+    }
+
+    @Override
+    public final void redo() throws UnexpectedUndoException {
+      TextMergeViewer mergeViewer = getViewer();
+      if (mergeViewer != null && !myUndo) restoreStates(mergeViewer);
+    }
+
+    @Nullable
+    private TextMergeViewer getViewer() {
+      TextMergeViewer viewer = myViewerRef.get();
+      return viewer != null && !viewer.getViewer().isDisposed() ? viewer : null;
+    }
+
+    private void restoreStates(@NotNull TextMergeViewer mergeViewer) {
+      MyThreesideViewer viewer = mergeViewer.getViewer();
+      if (viewer.myAllMergeChanges.isEmpty()) return; // is possible between destroyChangedBlocks() and dispose() calls
+
+      viewer.enterBulkChangeUpdateBlock();
+      for (TextMergeChange.State state : myStates) {
+        viewer.restoreChangeState(state);
+      }
+      viewer.exitBulkChangeUpdateBlock();
     }
   }
 }

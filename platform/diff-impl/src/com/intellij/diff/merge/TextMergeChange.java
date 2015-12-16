@@ -51,6 +51,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
 
+  private final int myIndex;
   private final int[] myStartLines = new int[3];
   private final int[] myEndLines = new int[3];
   private final boolean[] myResolved = new boolean[2];
@@ -60,11 +61,12 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   private boolean myInnerFragmentsDamaged;
 
   @CalledInAwt
-  public TextMergeChange(@NotNull MergeLineFragment fragment, @NotNull TextMergeViewer viewer) {
+  public TextMergeChange(@NotNull MergeLineFragment fragment, int index, @NotNull TextMergeViewer viewer) {
     super(fragment, viewer.getViewer().getEditors(), ComparisonPolicy.DEFAULT);
     myMergeViewer = viewer;
     myViewer = viewer.getViewer();
 
+    myIndex = index;
     for (ThreeSide side : ThreeSide.values()) {
       myStartLines[side.getIndex()] = fragment.getStartLine(side);
       myEndLines[side.getIndex()] = fragment.getEndLine(side);
@@ -162,6 +164,10 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   //
   // Getters
   //
+
+  public int getIndex() {
+    return myIndex;
+  }
 
   @CalledInAwt
   void setResolved(@NotNull Side side, boolean value) {
@@ -421,6 +427,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   @NotNull
   State storeState() {
     return new State(
+      myIndex,
+
       myStartLines[0],
       myStartLines[1],
       myStartLines[2],
@@ -451,6 +459,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   public static class State {
+    public final int myIndex;
+
     private final int myStartLine1;
     private final int myStartLine2;
     private final int myStartLine3;
@@ -464,7 +474,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
     private final boolean myOnesideAppliedConflict;
 
-    public State(int startLine1,
+    public State(int index,
+                 int startLine1,
                  int startLine2,
                  int startLine3,
                  int endLine1,
@@ -473,6 +484,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
                  boolean resolved1,
                  boolean resolved2,
                  boolean onesideAppliedConflict) {
+      myIndex = index;
       myStartLine1 = startLine1;
       myStartLine2 = startLine2;
       myStartLine3 = startLine3;
