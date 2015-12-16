@@ -889,6 +889,11 @@ public class ArrayUtil extends ArrayUtilRt {
     return array != null && array.length > 0 ? array[array.length - 1] : null;
   }
 
+  @Contract(value = "null -> true", pure=true)
+  public static <T> boolean isEmpty(@Nullable T[] array) {
+    return array == null || array.length == 0;
+  }
+
   @NotNull
   @Contract(pure=true)
   public static String[] toStringArray(@Nullable Collection<String> collection) {
