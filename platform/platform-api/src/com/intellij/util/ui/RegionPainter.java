@@ -15,8 +15,6 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.Key;
-
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
@@ -47,24 +45,6 @@ public interface RegionPainter<T> {
    * @param object an optional configuration parameter
    */
   void paint(Graphics2D g, int x, int y, int width, int height, T object);
-
-  /**
-   * This key is used in the {@link ButtonlessScrollBarUI}
-   * to paint error stripes over the scrollbar track.
-   *
-   * @see ButtonlessScrollBarUI
-   * @see UIUtil#putClientProperty
-   */
-  Key<RegionPainter<Object>> BUTTONLESS_SCROLL_BAR_UI_EXTRA_TRACK = Key.create("BUTTONLESS_SCROLL_BAR_UI_EXTRA_TRACK");
-
-  /**
-   * This key is used in the {@link ButtonlessScrollBarUI}
-   * to paint the scrollbar maxi thumb.
-   *
-   * @see ButtonlessScrollBarUI
-   * @see UIUtil#putClientProperty
-   */
-  Key<RegionPainter<Integer>> BUTTONLESS_SCROLL_BAR_UI_MAXI_THUMB = Key.create("BUTTONLESS_SCROLL_BAR_UI_MAXI_THUMB");
 
   /**
    * This class provides a caching functionality for a region painter.

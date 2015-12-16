@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
@@ -43,6 +44,24 @@ import java.lang.reflect.Method;
  * @author Konstantin Bulenkov
  */
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
+  /**
+   * This key is used in the {@link ButtonlessScrollBarUI}
+   * to paint error stripes over the scrollbar track.
+   *
+   * @see RegionPainter
+   * @see UIUtil#putClientProperty
+   */
+  public static final Key<RegionPainter<Object>> EXTRA_TRACK = Key.create("BUTTONLESS_SCROLL_BAR_UI_EXTRA_TRACK");
+
+  /**
+   * This key is used in the {@link ButtonlessScrollBarUI}
+   * to paint the scrollbar maxi thumb.
+   *
+   * @see RegionPainter
+   * @see UIUtil#putClientProperty
+   */
+  public static final Key<RegionPainter<Integer>> MAXI_THUMB = Key.create("BUTTONLESS_SCROLL_BAR_UI_MAXI_THUMB");
+
   private static final Logger LOG = Logger.getInstance("#" + ButtonlessScrollBarUI.class.getName());
 
   protected JBColor getGradientLightColor() {
@@ -626,7 +645,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     if (alwaysShowTrack() || myMouseOverScrollbarExpandLevel > 0) {
       doPaintTrack(g, c, trackBounds);
     }
-    RegionPainter<Object> painter = UIUtil.getClientProperty(c, RegionPainter.BUTTONLESS_SCROLL_BAR_UI_EXTRA_TRACK);
+    RegionPainter<Object> painter = UIUtil.getClientProperty(c, EXTRA_TRACK);
     if (painter != null) {
       painter.paint((Graphics2D)g, trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height, null);
     }
@@ -688,7 +707,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       paintMacThumb(g, thumbBounds);
     }
     else {
-      RegionPainter<Integer> painter = UIUtil.getClientProperty(scrollbar, RegionPainter.BUTTONLESS_SCROLL_BAR_UI_MAXI_THUMB);
+      RegionPainter<Integer> painter = UIUtil.getClientProperty(scrollbar, MAXI_THUMB);
       if (painter != null) {
         painter.paint((Graphics2D)g, thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, myThumbFadeColorShift);
       }

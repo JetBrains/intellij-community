@@ -16,6 +16,7 @@
 package com.intellij.ui.stripe;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.ButtonlessScrollBarUI.ThumbPainter;
 import com.intellij.util.ui.UIUtil;
 
@@ -32,12 +33,12 @@ final class TranslucencyThumbPainter extends ThumbPainter implements Disposable 
     super(bar);
     myPainter = painter;
     myScrollBar = bar;
-    UIUtil.putClientProperty(myScrollBar, BUTTONLESS_SCROLL_BAR_UI_MAXI_THUMB, this);
+    UIUtil.putClientProperty(myScrollBar, ButtonlessScrollBarUI.MAXI_THUMB, this);
   }
 
   @Override
   public void dispose() {
-    UIUtil.putClientProperty(myScrollBar, BUTTONLESS_SCROLL_BAR_UI_MAXI_THUMB, null);
+    UIUtil.putClientProperty(myScrollBar, ButtonlessScrollBarUI.MAXI_THUMB, null);
   }
 
   protected float getAlpha() {
