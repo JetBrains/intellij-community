@@ -614,7 +614,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       int line2 = e.getDocument().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
       int shift = DiffUtil.countLinesShift(e);
 
-      final List<TextMergeChange.State> corruptedStates = ContainerUtil.newArrayList();
+      final List<TextMergeChange.State> corruptedStates = ContainerUtil.newSmartList();
       for (int index = 0; index < myAllMergeChanges.size(); index++) {
         TextMergeChange change = myAllMergeChanges.get(index);
         TextMergeChange.State oldState = change.processBaseChange(line1, line2, shift);
