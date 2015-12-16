@@ -21,7 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
+ * Allows user to configure visible gutter icons.
+ *
  * @author Dmitry Avdeev
+ * @since 144
  */
 public abstract class GutterIconDescriptor {
 
@@ -29,6 +32,7 @@ public abstract class GutterIconDescriptor {
 
   /**
    * Human-readable provider name for UI.
+   *
    * @return null if no configuration needed
    */
   @Nullable("null means disabled")
@@ -39,7 +43,9 @@ public abstract class GutterIconDescriptor {
     return null;
   }
 
-  public boolean isEnabledByDefault() { return true; }
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
   public String getId() {
     return getClass().getName();
