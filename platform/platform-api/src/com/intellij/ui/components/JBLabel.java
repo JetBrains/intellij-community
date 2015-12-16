@@ -263,12 +263,14 @@ public class JBLabel extends JLabel implements AnchorableComponent {
         myEditorPane.setBackground(UIUtil.TRANSPARENT_COLOR);
         myEditorPane.setOpaque(false);
         myEditorPane.setBorder(null);
+        UIUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
+
+        myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
+        updateStyle(myEditorPane);
+
+        myEditorPane.setText(getText());
         checkMultiline();
         myEditorPane.setCaretPosition(0);
-        UIUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
-        myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
-        myEditorPane.setText(getText());
-        updateStyle(myEditorPane);
         updateLayout();
       } else {
         removeAll();
