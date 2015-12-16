@@ -91,9 +91,7 @@ public class UIUtil {
   private static final StyleSheet DEFAULT_HTML_KIT_CSS;
 
   static {
-    if (SystemInfo.isLinux && Registry.is("linux.jdk.accessibility.atkwrapper.block")) {
-      blockATKWrapper();
-    }
+    blockATKWrapper();
     // save the default JRE CSS and ..
     HTMLEditorKit kit = new HTMLEditorKit();
     DEFAULT_HTML_KIT_CSS = kit.getStyleSheet();
@@ -106,8 +104,7 @@ public class UIUtil {
      * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
      * which is called from Toolkit.getDefaultToolkit().
      */
-    assert SystemInfo.isLinux;
-    assert Registry.is("linux.jdk.accessibility.atkwrapper.block");
+    if (!(SystemInfo.isLinux && Registry.is("linux.jdk.accessibility.atkwrapper.block"))) return;
 
     String ATK_WRAPPER = "org.GNOME.Accessibility.AtkWrapper";
 
@@ -127,7 +124,7 @@ public class UIUtil {
         if (classNames != null && classNames.contains(ATK_WRAPPER)) {
           // Replace AtkWrapper with a dummy Object. It'll be instantiated & GC'ed right away, a NOP.
           System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
-          LOG.info("org.GNOME.Accessibility.AtkWrapper is blocked, see IDEA-149219");
+          LOG.info(ATK_WRAPPER + " is blocked, see IDEA-149219");
         }
       }
     }
