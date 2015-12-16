@@ -9,6 +9,7 @@ abstract class UrlProvider {
 }
 
 abstract class FilePathProvider {
+    abstract val swapFile: String
     abstract val statsFilePath: String
 
     companion object {
@@ -23,6 +24,16 @@ class InternalUrlProvider: UrlProvider() {
 class PluginDirectoryFilePathProvider: FilePathProvider() {
     
     override val statsFilePath: String by lazy { 
+        val dir = getPluginsDir()
+        File(dir, "completion_stats.txt").absolutePath
+    }
+
+    override val swapFile: String by lazy {
+        val dir = getPluginsDir()
+        File(dir, "data_to_send.txt").absolutePath
+    }
+
+    private fun getPluginsDir(): File {
         val id = PluginManager.getPluginByClassName(CompletionLoggerProvider::class.java.name)
         val descriptor = PluginManager.getPlugin(id)
         val path = descriptor!!.path.parentFile
@@ -30,7 +41,7 @@ class PluginDirectoryFilePathProvider: FilePathProvider() {
         if (!dir.exists()) {
             dir.mkdir()
         }
-        File(dir, "completion_stats.txt").absolutePath
+        return dir
     }
-    
+
 }
