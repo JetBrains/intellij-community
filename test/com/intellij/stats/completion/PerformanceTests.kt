@@ -17,6 +17,7 @@ class PerformanceTests : LightFixtureCompletionTestCase() {
     private lateinit var container: MutablePicoContainer
     private lateinit var oldPathProvider: FilePathProvider
     private lateinit var path: String
+    private lateinit var tmpPath: String
     
     private val runnable = "interface Runnable { void run();  void notify(); void wait(); void notifyAll(); }"
     private val text = """
@@ -34,8 +35,11 @@ class Test {
         super.setUp()
         container = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
         path = createTempFile("x.txt").absolutePath
+        tmpPath = createTempFile("xtmp.txt").absolutePath
         val mockPathProvider = mock(FilePathProvider::class.java)
         `when`(mockPathProvider.statsFilePath).thenReturn(path)
+        `when`(mockPathProvider.swapFile).thenReturn(tmpPath)
+        
         
         oldPathProvider = container.getComponentInstance(FilePathProvider::class.java.name) as FilePathProvider
         container.replaceComponent(FilePathProvider::class.java, mockPathProvider)
@@ -46,6 +50,10 @@ class Test {
         val file = File(path)
         if (file.exists()) {
             file.delete()
+        }
+        val tmpFile = File(tmpPath)
+        if (tmpFile.exists()) {
+            tmpFile.delete()
         }
         super.tearDown()
     }
@@ -59,7 +67,7 @@ class Test {
         val logFileManager = ServiceManager.getService(LogFileManager::class.java)
         val requestService: RequestService = object : RequestService() {
             override fun post(url: String, params: Map<String, String>): ResponseData {
-                Thread.sleep(2000)
+                Thread.sleep(5000)
                 return ResponseData(200)
             }
         }
@@ -81,7 +89,7 @@ class Test {
         val end = System.currentTimeMillis()
 
         val delta = end - start
-        UsefulTestCase.assertTrue("Time on typing: $delta", delta < 400)
+        UsefulTestCase.assertTrue("Time on typing: $delta", delta < 2000)
     }
 
 }
