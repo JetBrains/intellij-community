@@ -29,6 +29,7 @@ import com.intellij.util.ArrayUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
@@ -41,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * Change related utilities
@@ -408,7 +411,8 @@ public class GitChangeUtils {
       }
     }
     String changeListName = String.format("%s(%s)", commentSubject, revisionNumber);
-    return new GitCommittedChangeList(changeListName, fullComment, committerName, thisRevision, commitDate, changes, revertable);
+    return new GitCommittedChangeList(changeListName, fullComment, committerName, thisRevision, commitDate, changes,
+                                      assertNotNull(GitVcs.getInstance(project)), revertable);
   }
 
   public static long longForSHAHash(String revisionNumber) {

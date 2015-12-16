@@ -19,25 +19,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -56,54 +45,44 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     Project project = event.getRequiredData(CommonDataKeys.PROJECT);
-    CommittedChangeList changeList = (CommittedChangeList)event.getRequiredData(VcsDataKeys.CHANGE_LISTS)[0];
-    AbstractVcs vcs = assertNotNull(getVcsForChangeList(project, changeList));
+    AbstractVcs vcs = assertNotNull(getVcs(project, event.getData(VcsDataKeys.VCS)));
     VcsHistoryProviderEx vcsHistoryProvider = assertNotNull((VcsHistoryProviderEx)vcs.getVcsHistoryProvider());
-    Change change = event.getRequiredData(VcsDataKeys.CHANGES)[0];
-    FilePath path = assertNotNull(getChangedPath(change));
-    VcsRevisionNumber revisionNumber = ((VcsRevisionNumberAware)changeList).getRevisionNumber();
 
-    assertNotNull(getVcsHelper(project)).showFileHistory(vcsHistoryProvider, path, vcs, revisionNumber);
+    Change change = event.getRequiredData(VcsDataKeys.SELECTED_CHANGES)[0];
+    ContentRevision revision = assertNotNull(getContentRevision(change));
+
+    AbstractVcsHelperImpl helper = assertNotNull(getVcsHelper(project));
+    helper.showFileHistory(vcsHistoryProvider, revision.getFile(), vcs, revision.getRevisionNumber());
   }
 
   private static boolean isVisible(@NotNull AnActionEvent event) {
     Project project = event.getProject();
     if (project == null) return false;
-    AbstractVcsHelperImpl helper = getVcsHelper(project);
-    if (helper == null) return false;
-    ChangeList[] changeLists = event.getData(VcsDataKeys.CHANGE_LISTS);
-    if (changeLists == null || changeLists.length != 1) return false;
-    ChangeList changeList = changeLists[0];
-    if (!(changeList instanceof CommittedChangeList) || !(changeList instanceof VcsRevisionNumberAware)) return false;
-    AbstractVcs vcs = getVcsForChangeList(project, changeList);
+    if (getVcsHelper(project) == null) return false;
+    if (event.getData(VcsDataKeys.CHANGES) == null) return false;
+
+    AbstractVcs vcs = getVcs(project, event.getData(VcsDataKeys.VCS));
     if (vcs == null) return false;
+
     VcsHistoryProvider vcsHistoryProvider = vcs.getVcsHistoryProvider();
     if (!(vcsHistoryProvider instanceof VcsHistoryProviderEx)) return false;
     return true;
   }
 
   private static boolean isEnabled(@NotNull AnActionEvent event) {
-    Change[] changes = event.getData(VcsDataKeys.CHANGES);
+    Change[] changes = event.getData(VcsDataKeys.SELECTED_CHANGES);
     if (changes == null || changes.length != 1) return false;
-    Change change = changes[0];
-    FilePath changedPath = getChangedPath(change);
-    if (changedPath == null) return false;
-    return true;
+    return getContentRevision(changes[0]) != null;
   }
 
   @Nullable
-  private static FilePath getChangedPath(@NotNull Change change) {
-    ContentRevision revision = change.getType() == Change.Type.DELETED ? change.getBeforeRevision() : change.getAfterRevision();
-    return revision == null ? null : revision.getFile();
+  private static ContentRevision getContentRevision(@NotNull Change change) {
+    return change.getType() == Change.Type.DELETED ? change.getBeforeRevision() : change.getAfterRevision();
   }
 
   @Nullable
-  private static AbstractVcs getVcsForChangeList(@NotNull Project project, @NotNull ChangeList changeList) {
-    Collection<Change> changes = changeList.getChanges();
-    if (changes == null || changes.isEmpty()) return null;
-    Change change = ContainerUtil.getFirstItem(changes);
-    if (change == null) return null;
-    return ChangesUtil.getVcsForChange(change, project);
+  private static AbstractVcs getVcs(@NotNull Project project, @Nullable VcsKey vcsKey) {
+    return vcsKey == null ? null : ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName());
   }
 
   @Nullable

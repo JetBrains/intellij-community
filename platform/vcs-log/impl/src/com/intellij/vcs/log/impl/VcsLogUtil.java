@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
@@ -30,22 +31,45 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class VcsLogUtil {
+
   @NotNull
   public static MultiMap<VirtualFile, VcsRef> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
-    MultiMap<VirtualFile, VcsRef> map = new MultiMap<VirtualFile, VcsRef>() {
+    return groupByRoot(refs, new Function<VcsRef, VirtualFile>() {
       @NotNull
       @Override
-      protected Map<VirtualFile, Collection<VcsRef>> createMap() {
-        return new TreeMap<VirtualFile, Collection<VcsRef>>(new Comparator<VirtualFile>() { // TODO common to VCS root sorting method
+      public VirtualFile fun(@NotNull VcsRef ref) {
+        return ref.getRoot();
+      }
+    });
+  }
+
+  @NotNull
+  public static <T extends VcsShortCommitDetails> MultiMap<VirtualFile, T> groupByRoot(@NotNull Collection<T> commits) {
+    return groupByRoot(commits, new Function<T, VirtualFile>() {
+      @NotNull
+      @Override
+      public VirtualFile fun(@NotNull T commit) {
+        return commit.getRoot();
+      }
+    });
+  }
+
+  @NotNull
+  private static <T> MultiMap<VirtualFile, T> groupByRoot(@NotNull Collection<T> items, @NotNull Function<T, VirtualFile> rootGetter) {
+    MultiMap<VirtualFile, T> map = new MultiMap<VirtualFile, T>() {
+      @NotNull
+      @Override
+      protected Map<VirtualFile, Collection<T>> createMap() {
+        return new TreeMap<VirtualFile, Collection<T>>(new Comparator<VirtualFile>() { // TODO some common VCS root sorting method
           @Override
-          public int compare(VirtualFile o1, VirtualFile o2) {
+          public int compare(@NotNull VirtualFile o1, @NotNull VirtualFile o2) {
             return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
           }
         });
       }
     };
-    for (VcsRef ref : refs) {
-      map.putValue(ref.getRoot(), ref);
+    for (T item : items) {
+      map.putValue(rootGetter.fun(item), item);
     }
     return map;
   }
