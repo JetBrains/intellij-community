@@ -675,12 +675,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
     }
 
-    final boolean raw1 = PsiUtil.isRawSubstitutor(method1, classSubstitutor1);
-    final boolean raw2 = PsiUtil.isRawSubstitutor(method2, classSubstitutor2);
-    if (raw1 ^ raw2) {
-      return raw1 ? Specifics.SECOND : Specifics.FIRST;
-    }
-
     final boolean varargs1 = info1.isVarargs();
     final boolean varargs2 = info2.isVarargs();
     if (varargs1 ^ varargs2) {

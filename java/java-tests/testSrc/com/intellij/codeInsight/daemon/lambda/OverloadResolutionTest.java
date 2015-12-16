@@ -191,6 +191,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testNoNeedToPreferGenericToRawSubstitution() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }
