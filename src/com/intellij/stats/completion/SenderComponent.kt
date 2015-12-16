@@ -28,7 +28,6 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
             }
             catch (e: Exception) {
                 LOG.error(e.message)
-                LOG.warn(e.message)
             }
             finally {
                 alarm.addRequest({ send() }, Time.MINUTE)
@@ -58,8 +57,8 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
             }
             fileToSend.delete()
         }
-        logFileManager.renameLogFile(fileToSend)
-        return fileToSend.readText()
+        val renamed = logFileManager.renameLogFile(fileToSend)
+        return if (renamed) fileToSend.readText() else ""
     }
 
     fun sendStatsData(uid: String) {

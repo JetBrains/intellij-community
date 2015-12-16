@@ -9,7 +9,7 @@ import java.util.concurrent.locks.ReentrantLock
 interface LogFileManager {
     fun println(message: String)
     fun read(): String
-    fun renameLogFile(swap: File)
+    fun renameLogFile(swap: File): Boolean
     fun <R> withFileLock(block: () -> R): R
     fun dispose()
 }
@@ -77,11 +77,11 @@ class LogFileManagerImpl: LogFileManager {
         }
     }
     
-    override fun renameLogFile(swap: File) {
-        withFileLock {
+    override fun renameLogFile(swap: File): Boolean {
+        return withFileLock {
             writer.close()
             val logFile = File(getLogFilePath())
-            logFile.renameTo(swap)
+            if (logFile.exists()) logFile.renameTo(swap) else false
         }
     }
 
