@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 
 import java.util.Random;
@@ -49,7 +50,15 @@ public class BoundedTaskExecutorTest extends TestCase {
           }
         });
       }
-      executor.waitAllTasksExecuted(5, TimeUnit.MINUTES);
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        try {
+          executor.waitAllTasksExecuted(5, TimeUnit.MINUTES);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      });
+
       assertEquals(0, executor.shutdownNow().size());
       assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
       backendExecutor.shutdownNow();
@@ -131,7 +140,14 @@ public class BoundedTaskExecutorTest extends TestCase {
             }
           });
         }
-        executor.waitAllTasksExecuted(5, TimeUnit.MINUTES);
+        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+          try {
+            executor.waitAllTasksExecuted(5, TimeUnit.MINUTES);
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        });
         for (Future future : futures) {
           assertTrue(future.isDone());
         }
