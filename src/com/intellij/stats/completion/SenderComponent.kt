@@ -16,14 +16,23 @@ import java.io.IOException
 import javax.swing.SwingUtilities
 
 class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapter() {
+    private val LOG = Logger.getInstance(SenderComponent::class.java)
     private val disposable = Disposer.newDisposable()
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
     
     private fun send() {
         if (!ApplicationManager.getApplication().isUnitTestMode) {
             val uid = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())
-            sender.sendStatsData(uid)
-            alarm.addRequest({ send() }, Time.MINUTE)
+            try {
+                sender.sendStatsData(uid)
+            }
+            catch (e: Exception) {
+                LOG.error(e.message)
+                LOG.warn(e.message)
+            }
+            finally {
+                alarm.addRequest({ send() }, Time.MINUTE)
+            }
         }
     }
     
