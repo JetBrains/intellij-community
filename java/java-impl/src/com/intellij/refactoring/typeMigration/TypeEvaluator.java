@@ -475,7 +475,15 @@ public class TypeEvaluator {
     }
 
     void bindTypeParameters(PsiType formal, final PsiType actual) {
-      if (formal instanceof PsiWildcardType) formal = ((PsiWildcardType)formal).getBound();
+      if (formal instanceof PsiWildcardType) {
+        if (actual instanceof PsiCapturedWildcardType &&
+            ((PsiWildcardType)formal).isExtends() == ((PsiCapturedWildcardType)actual).getWildcard().isExtends()) {
+          bindTypeParameters(((PsiWildcardType)formal).getBound(), ((PsiCapturedWildcardType)actual).getWildcard().getBound());
+          return;
+        } else {
+          formal = ((PsiWildcardType)formal).getBound();
+        }
+      }
 
       if (formal instanceof PsiArrayType && actual instanceof PsiArrayType) {
         bindTypeParameters(((PsiArrayType)formal).getComponentType(), ((PsiArrayType)actual).getComponentType());
