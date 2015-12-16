@@ -349,6 +349,8 @@ binding.setVariable("commonJvmArgsForTests", {
     "-XX:SoftRefLRUPolicyMSPerMB=50",
     "-XX:+UseConcMarkSweepGC",
     "-XX:-OmitStackTraceInFastThrow",
+    "-Djava.rmi.dgc.leaseValue=1000",  // reduce from the default 600000 to avoid "RMI RenewClean*" threads piling
+    "-Dsun.rmi.dgc.cleanInterval=1000",
     jdwp
   ]
 })
