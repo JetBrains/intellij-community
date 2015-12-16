@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 
 public class DeleteHandler {
   private DeleteHandler() {
@@ -192,7 +193,8 @@ public class DeleteHandler {
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
-        if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), false)) {
+        Collection<PsiElement> toCheck = CommonRefactoringUtil.mapFilesToParents(Arrays.asList(elements));
+        if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, toCheck, false)) {
           return;
         }
 

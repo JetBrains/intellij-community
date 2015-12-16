@@ -25,14 +25,13 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDirectoryContainer;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -106,12 +105,26 @@ public class CommonRefactoringUtil {
     return file != null && !ReadonlyStatusHandler.getInstance(element.getProject()).ensureFilesWritable(file).hasReadonlyFiles();
   }
 
+  @NotNull
+  public static Collection<PsiElement> mapFilesToParents(@NotNull Collection<PsiElement> elements) {
+    return JBIterable.from(elements).transform(new Function<PsiElement, PsiElement>() {
+      @Override
+      public PsiElement fun(PsiElement e) {
+        return e instanceof PsiFileSystemItem ? e.getParent() : e;
+      }
+    }).toSet();
+  }
+
   public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull PsiElement element) {
     return checkReadOnlyStatus(element, project, RefactoringBundle.message("refactoring.cannot.be.performed"));
   }
 
   public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull PsiElement... elements) {
     return checkReadOnlyStatus(Arrays.asList(elements), project, RefactoringBundle.message("refactoring.cannot.be.performed"), false, true);
+  }
+
+  public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull Collection<? extends PsiElement> elements, boolean notifyOnFail) {
+    return checkReadOnlyStatus(elements, project, RefactoringBundle.message("refactoring.cannot.be.performed"), false, notifyOnFail);
   }
 
   public static boolean checkReadOnlyStatus(@NotNull PsiElement element, @NotNull Project project, String messagePrefix) {
