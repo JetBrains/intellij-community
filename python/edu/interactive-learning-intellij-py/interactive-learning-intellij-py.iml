@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="interactive-learning-intellij" />
     <orderEntry type="module" module-name="main" />
+    <orderEntry type="module" module-name="python-community-ide-resources" />
     <orderEntry type="module" module-name="python-community" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="interactive-learning-python" />

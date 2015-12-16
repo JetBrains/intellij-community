@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="IntelliLang-java" scope="RUNTIME" />
     <orderEntry type="module" module-name="python-community-plugin-core" />
     <orderEntry type="module" module-name="python-community-plugin-java" />
+    <orderEntry type="module" module-name="python-community-ide-resources" />
     <orderEntry type="module" module-name="python-community" />
     <orderEntry type="module" module-name="IntelliLang-xml" scope="RUNTIME" />
     <orderEntry type="module" module-name="python-community-plugin-resources" scope="RUNTIME" />
