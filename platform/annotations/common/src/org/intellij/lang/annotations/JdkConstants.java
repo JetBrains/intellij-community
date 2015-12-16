@@ -40,6 +40,18 @@ public class JdkConstants {
   @MagicConstant(intValues = {Adjustable.HORIZONTAL, Adjustable.VERTICAL})
   public @interface AdjustableOrientation {}
 
+  @MagicConstant(intValues = {
+    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+    ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+    ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER})
+  public @interface VerticalScrollBarPolicy {}
+
+  @MagicConstant(intValues = {
+    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED,
+    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS,
+    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER})
+  public @interface HorizontalScrollBarPolicy {}
+
   @MagicConstant(intValues = {Calendar.JANUARY, Calendar.FEBRUARY, Calendar.MARCH, Calendar.APRIL, Calendar.MAY, Calendar.JUNE, Calendar.JULY, Calendar.AUGUST, Calendar.SEPTEMBER, Calendar.OCTOBER, Calendar.NOVEMBER, Calendar.DECEMBER})
   public @interface CalendarMonth {}
 
