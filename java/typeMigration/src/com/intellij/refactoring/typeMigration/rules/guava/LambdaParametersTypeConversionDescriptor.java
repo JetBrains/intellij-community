@@ -27,10 +27,10 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author Dmitry Batkovich
  */
-public class LambdaParametersTypeConversionDescriptor extends TypeConversionDescriptor {
+class LambdaParametersTypeConversionDescriptor extends TypeConversionDescriptor {
   private static final Logger LOG = Logger.getInstance(LambdaParametersTypeConversionDescriptor.class);
 
-  public LambdaParametersTypeConversionDescriptor(@NonNls String stringToReplace, @NonNls String replaceByString) {
+  LambdaParametersTypeConversionDescriptor(@NonNls String stringToReplace, @NonNls String replaceByString) {
     super(stringToReplace, replaceByString);
   }
 
@@ -51,16 +51,26 @@ public class LambdaParametersTypeConversionDescriptor extends TypeConversionDesc
   }
 
   private static PsiExpression addApplyReference(final PsiExpression expression) {
-    boolean isSupplier = false;
+    String samMethodName = null;
     PsiType type = expression.getType();
     if (type instanceof PsiClassType) {
       PsiClass resolvedClass = ((PsiClassType)type).resolve();
-      if (resolvedClass != null && GuavaSupplierConversionRule.GUAVA_SUPPLIER.equals(resolvedClass.getQualifiedName())) {
-        isSupplier = true;
+      if (resolvedClass != null) {
+        final String qName = resolvedClass.getQualifiedName();
+        if (GuavaSupplierConversionRule.GUAVA_SUPPLIER.equals(qName)) {
+          samMethodName = "get";
+        }
+        else if (GuavaFunctionConversionRule.GUAVA_FUNCTION.equals(qName)) {
+          samMethodName = "apply";
+        }
+        else if (GuavaPredicateConversionRule.GUAVA_PREDICATE.equals(qName)) {
+          samMethodName = "test";
+        }
       }
+      LOG.assertTrue(samMethodName != null);
     }
     return (PsiExpression)expression.replace(
-      JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::" + (isSupplier ? "get" : "apply"), null));
+      JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::" + samMethodName, null));
   }
 
   public static PsiExpression convertParameter(PsiExpression expression) {
