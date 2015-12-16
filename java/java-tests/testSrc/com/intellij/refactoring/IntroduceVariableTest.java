@@ -521,6 +521,25 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     });
   }
 
+  public void testTypesHierarchyBasedOnCalledMethod() {
+    doTest(new MockIntroduceVariableHandler("v", true, false, false, "B") {
+      @Override
+      public IntroduceVariableSettings getSettings(Project project, Editor editor,
+                                                   PsiExpression expr, PsiExpression[] occurrences,
+                                                   TypeSelectorManagerImpl typeSelectorManager,
+                                                   boolean declareFinalIfAll,
+                                                   boolean anyAssignmentLHS,
+                                                   InputValidator validator,
+                                                   PsiElement anchor, final OccurrencesChooser.ReplaceChoice replaceChoice) {
+        final PsiType[] types = typeSelectorManager.getTypesForAll();
+        assertTrue(types[0].getPresentableText(), types[0].getPresentableText().equals("B"));
+        assertTrue(types[1].getPresentableText(), types[1].getPresentableText().equals("A"));
+        return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
+                                 validator, anchor, replaceChoice);
+      }
+    });
+  }
+  
   private void doTest(IntroduceVariableBase testMe) {
     String baseName = "/refactoring/introduceVariable/" + getTestName(false);
     configureByFile(baseName + ".java");
