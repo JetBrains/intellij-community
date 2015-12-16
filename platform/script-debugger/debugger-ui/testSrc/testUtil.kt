@@ -15,8 +15,8 @@
  */
 package org.jetbrains.debugger
 
-import com.intellij.xdebugger.XDebugProcess
+import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.debugger.frame.CallFrameView
 
-val XDebugProcess.topFrameView: CallFrameView
-  get() = session.currentStackFrame as CallFrameView
+val XDebugSession.topFrameView: CallFrameView
+  get() = currentStackFrame as CallFrameView
