@@ -17,12 +17,12 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.AppTopics;
 import com.intellij.mock.MockVirtualFile;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -613,13 +613,10 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
   }
 
   private static void renameFile(VirtualFile file, String newName) throws IOException {
-    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(null);
-    try {
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
       file.rename(null, newName);
-    }
-    finally {
-      token.finish();
-    }
+      return null;
+    });
   }
 
   public void testNoPSIModificationsDuringSave() throws IOException {
