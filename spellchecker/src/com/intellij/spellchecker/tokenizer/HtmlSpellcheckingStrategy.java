@@ -18,7 +18,6 @@ package com.intellij.spellchecker.tokenizer;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 
 public class HtmlSpellcheckingStrategy extends SpellcheckingStrategy {
@@ -27,7 +26,6 @@ public class HtmlSpellcheckingStrategy extends SpellcheckingStrategy {
   public Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PsiComment) return myCommentTokenizer;
     if (element instanceof XmlAttributeValue) return myXmlAttributeTokenizer;
-    if (element instanceof XmlText) return myXmlTextTokenizer;
     return EMPTY_TOKENIZER;
   }
 }
