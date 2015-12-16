@@ -313,6 +313,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("ab", true, true, false, "boolean"));
   }
 
+  public void testSubexpressionWithSpacesInSelectionAndTailingComment() {
+    doTest(new MockIntroduceVariableHandler("ab", true, true, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
   public void testDuplicatesAnonymousClassCreationWithSimilarParameters () {
     doTest(new MockIntroduceVariableHandler("foo1", true, true, false, "Foo"));
   }
