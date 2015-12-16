@@ -60,7 +60,8 @@ target('run_tests': 'Run java tests') {
     List<String> jvmArgs = [
       "-Dclasspath.file=${classpathFile}",
       "-Didea.platform.prefix=Idea",
-      "-Dbootstrap.testcases=$testCase"
+      "-Dbootstrap.testcases=$testCase",
+      "-Djava.rmi.dgc.leaseValue=1000" // reduce from the default 600000 to avoid "RMI RenewClean*" threads piling
     ]
 
     [
