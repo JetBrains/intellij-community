@@ -63,6 +63,15 @@ public final class PyToxConfigurationProducer extends RunConfigurationProducer<P
     if (file == null) {
       return false;
     }
+
+    final String envName = PyToxTestLocator.getEnvNameFromElement(file);
+    if (envName != null) {
+      configuration.setRunOnlyEnvs(envName);
+      configuration.setName(String.format("Tox: run on %s", envName));
+      return true;
+    }
+
+
     final PsiDirectory directory = file.getContainingDirectory();
     if (directory == null) {
       return false;

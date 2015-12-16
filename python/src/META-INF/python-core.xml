@@ -625,6 +625,7 @@
   <extensions defaultExtensionNs="Pythonid">
     <testLocator implementation="com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider"/>
     <testLocator implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestUrlProvider"/>
+    <testLocator implementation="com.jetbrains.python.testing.tox.PyToxTestLocator"/>
     <pySuperMethodsSearch implementation="com.jetbrains.python.psi.search.PySuperMethodsSearchExecutor"/>
     <pyClassInheritorsSearch implementation="com.jetbrains.python.psi.search.PyClassInheritorsSearchExecutor"/>
     <pyOverridingMethodsSearch implementation="com.jetbrains.python.psi.search.PyOverridingMethodsSearchExecutor"/>

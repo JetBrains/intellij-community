@@ -48,7 +48,7 @@ class _Reporter(Reporter):
     def logaction_start(self, action):
         super(_Reporter, self).logaction_start(action)
         if action.activity == "getenv":
-            teamcity.testSuiteStarted(action.id)
+            teamcity.testSuiteStarted(action.id, location="tox_env://" + str(action.id))
             self.current_suite = action.id
 
     def logaction_finish(self, action):
