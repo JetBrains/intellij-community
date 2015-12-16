@@ -162,7 +162,7 @@ object UpdateChecker {
       incompatiblePlugins = null
     }
     else {
-      val buildNumber: BuildNumber? = result.updatedChannel?.latestBuild?.apiVersion
+      val buildNumber: BuildNumber? = result.newBuildInSelectedChannel?.apiVersion
 
       incompatiblePlugins = if (buildNumber != null) HashSet<IdeaPluginDescriptor>() else null
       try {
@@ -381,14 +381,12 @@ object UpdateChecker {
                                alwaysShowResults: Boolean) {
     val channelToPropose = checkForUpdateResult.channelToPropose
     val updatedChannel = checkForUpdateResult.updatedChannel
+    val latestBuild = checkForUpdateResult.newBuildInSelectedChannel
 
-    if (updatedChannel != null) {
+    if (updatedChannel != null && latestBuild != null) {
       val runnable = {
-        UpdateInfoDialog(updatedChannel,
-                         enableLink,
-                         updateSettings.canUseSecureConnection(),
-                         updatedPlugins,
-                         incompatiblePlugins).show()
+        val forceHttps = updateSettings.canUseSecureConnection()
+        UpdateInfoDialog(updatedChannel, latestBuild, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
       }
 
       if (alwaysShowResults) {

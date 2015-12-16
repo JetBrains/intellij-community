@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private final boolean myWriteProtected;
 
   protected UpdateInfoDialog(@NotNull UpdateChannel channel,
+                             @NotNull BuildInfo latestBuild,
                              boolean enableLink,
                              boolean forceHttps,
                              Collection<PluginDownloader> updatedPlugins,
@@ -62,13 +63,11 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myUpdatedChannel = channel;
     myForceHttps = forceHttps;
     myUpdatedPlugins = updatedPlugins;
-    myLatestBuild = channel.getLatestBuild();
-    myPatch = myLatestBuild != null ? myLatestBuild.findPatchForCurrentBuild() : null;
+    myLatestBuild = latestBuild;
+    myPatch = myLatestBuild.findPatchForCurrentBuild();
     myWriteProtected = myPatch != null && !new File(PathManager.getHomePath()).canWrite();
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
-    if (myLatestBuild != null) {
-      initLicensingInfo(myUpdatedChannel, myLatestBuild);
-    }
+    initLicensingInfo(myUpdatedChannel, myLatestBuild);
     init();
 
     if (incompatiblePlugins != null && !incompatiblePlugins.isEmpty()) {
@@ -198,7 +197,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
       String message = myLatestBuild.getMessage();
       final String fullProductName = appNames.getFullProductName();
-      if (message == null) {
+      if (StringUtil.isEmpty(message)) {
         message = IdeBundle.message("updates.new.version.available", fullProductName);
       }
       final String homePageUrl = myUpdatedChannel.getHomePageUrl();
