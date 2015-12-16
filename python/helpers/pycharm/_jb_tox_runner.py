@@ -79,7 +79,7 @@ config = tox_config.parseconfig()
 for env, tmp_config in config.envconfigs.items():
     if not tmp_config.setenv:
         tmp_config.setenv = dict()
-    tmp_config.setenv.update({"_jb_do_not_call_enter_matrix": "1"})
+    tmp_config.setenv["_jb_do_not_call_enter_matrix"] = "1"
     commands = tmp_config.commands
     if not isinstance(commands, list) or not len(commands):
         continue
