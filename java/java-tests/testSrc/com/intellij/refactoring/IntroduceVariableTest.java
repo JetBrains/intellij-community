@@ -539,7 +539,11 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
       }
     });
   }
-  
+
+  public void testChooseIntersectionConjunctBasedOnFollowingCalls() throws Exception {
+    doTest(new MockIntroduceVariableHandler("m", false, false, false, "IA"));
+  }
+
   private void doTest(IntroduceVariableBase testMe) {
     String baseName = "/refactoring/introduceVariable/" + getTestName(false);
     configureByFile(baseName + ".java");
