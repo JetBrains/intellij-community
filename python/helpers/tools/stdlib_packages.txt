@@ -73,6 +73,7 @@ ensurepip
 enum
 errno
 exceptions
+faulthandler
 fcntl
 filecmp
 fileinput
@@ -113,6 +114,7 @@ importlib
 imputil
 inspect
 io
+ipaddress
 itertools
 json
 keyword
@@ -136,6 +138,8 @@ MimeWriter
 mimify
 mmap
 modulefinder
+msilib
+msvcrt
 multifile
 multiprocessing
 mutex
@@ -265,6 +269,7 @@ tty
 turtle
 turtledemo
 types
+typing
 tzparse
 unicodedata
 unittest
@@ -281,6 +286,8 @@ warnings
 wave
 weakref
 webbrowser
+winreg
+winsound
 whichdb
 whrandom
 wsgiref
@@ -290,6 +297,7 @@ xmllib
 xmlrpc
 xmlrpclib
 xxsubtype
+zipapp
 zipfile
 zipimport
 zlib
