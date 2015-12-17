@@ -38,6 +38,8 @@ interface Breakpoint {
 
   val line: Int
 
+  val column: Int
+
   /**
    * @return whether this breakpoint is enabled
    */

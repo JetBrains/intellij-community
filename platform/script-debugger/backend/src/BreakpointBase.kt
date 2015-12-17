@@ -17,12 +17,12 @@ package org.jetbrains.debugger
 
 import com.intellij.util.containers.ContainerUtil
 
-public abstract class BreakpointBase<L : Any>(override val target: BreakpointTarget,
-                                        override var line: Int,
-                                        public val column: Int,
-                                        condition: String?,
-                                        enabled: Boolean) : Breakpoint {
-  public val actualLocations: MutableList<L> = ContainerUtil.createLockFreeCopyOnWriteList<L>()
+abstract class BreakpointBase<L : Any>(override val target: BreakpointTarget,
+                                       override var line: Int,
+                                       override val column: Int,
+                                       condition: String?,
+                                       enabled: Boolean) : Breakpoint {
+  val actualLocations: MutableList<L> = ContainerUtil.createLockFreeCopyOnWriteList<L>()
 
   /**
    * Whether the breakpoint data have changed with respect
@@ -49,21 +49,21 @@ public abstract class BreakpointBase<L : Any>(override val target: BreakpointTar
       }
     }
 
-  public fun setActualLocations(value: List<L>?) {
+  fun setActualLocations(value: List<L>?) {
     actualLocations.clear()
     if (!ContainerUtil.isEmpty(value)) {
       actualLocations.addAll(value!!)
     }
   }
 
-  public fun setActualLocation(value: L?) {
+  fun setActualLocation(value: L?) {
     actualLocations.clear()
     if (value != null) {
       actualLocations.add(value)
     }
   }
 
-  public abstract fun isVmRegistered(): Boolean
+  abstract fun isVmRegistered(): Boolean
 
   override fun hashCode(): Int {
     var result = line
@@ -76,5 +76,5 @@ public abstract class BreakpointBase<L : Any>(override val target: BreakpointTar
     return result
   }
 
-  public abstract fun flush(breakpointManager: BreakpointManager): org.jetbrains.concurrency.Promise<*>
+  abstract fun flush(breakpointManager: BreakpointManager): org.jetbrains.concurrency.Promise<*>
 }

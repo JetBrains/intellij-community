@@ -182,11 +182,16 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
 
     val breakpointManager = debugProcess.vm?.breakpointManager ?: return null
     val target = createTarget(breakpoint, breakpointManager, location, isTemporary)
-    val condition = breakpoint?.conditionExpression
-    return breakpointManager.setBreakpoint(target, location.line, location.column, condition?.expression, promiseRef = promiseRef)
+    checkDuplicates(target, location, breakpointManager)?.let {
+      promiseRef?.set(resolvedPromise(it))
+      return it
+    }
+    return breakpointManager.setBreakpoint(target, location.line, location.column, breakpoint?.conditionExpression?.expression, promiseRef = promiseRef)
   }
 
   protected abstract fun createTarget(breakpoint: XLineBreakpoint<*>?, breakpointManager: BreakpointManager, location: Location, isTemporary: Boolean): BreakpointTarget
+
+  protected open fun checkDuplicates(newTarget: BreakpointTarget, location: Location, breakpointManager: BreakpointManager): Breakpoint? = null
 
   fun runToLocation(position: XSourcePosition) {
     val addedBreakpoints = doRunToLocation(position)
