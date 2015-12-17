@@ -26,6 +26,7 @@ import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
@@ -33,7 +34,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
@@ -72,7 +72,8 @@ import java.util.jar.Attributes;
   name = "MavenVersion",
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/mavenVersion.xml")
 )
-public class MavenServerManager extends RemoteObjectWrapper<MavenServer> implements PersistentStateComponent<MavenServerManager.State> {
+public class MavenServerManager extends RemoteObjectWrapper<MavenServer> implements PersistentStateComponent<MavenServerManager.State>,
+                                                                                    Disposable {
 
   public static final String BUNDLED_MAVEN_2 = "Bundled (Maven 2)";
   public static final String BUNDLED_MAVEN_3 = "Bundled (Maven 3)";
@@ -145,13 +146,11 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         return createRunProfileState();
       }
     };
+  }
 
-    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-      @Override
-      public void run() {
-        shutdown(false);
-      }
-    });
+  @Override
+  public void dispose() {
+    shutdown(false);
   }
 
   @SuppressWarnings("ConstantConditions")
