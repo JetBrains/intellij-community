@@ -67,10 +67,13 @@ public class OpenTaskDialog extends DialogWrapper {
   private JBLabel myFromLabel;
   private ComboBox myBranchFrom;
   private TaskStateCombo myTaskStateCombo;
+  private JPanel myAdditionPanel;
 
   private final Project myProject;
   private final Task myTask;
   private VcsTaskHandler myVcsTaskHandler;
+
+  private final TaskRepository.AdditionalPanel myAddition;
 
   public OpenTaskDialog(@NotNull final Project project, @NotNull final Task task) {
     super(project, false);
@@ -79,6 +82,8 @@ public class OpenTaskDialog extends DialogWrapper {
     setTitle("Open Task");
     myTaskNameLabel.setText(TaskUtil.getTrimmedSummary(task));
     myTaskNameLabel.setIcon(task.getIcon());
+    
+    myAddition = task.getRepository() != null ? task.getRepository().createOpenTaskAdditionalPanel() : null;
 
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
     ControlBinder binder = new ControlBinder(taskManager.getState());
@@ -186,6 +191,14 @@ public class OpenTaskDialog extends DialogWrapper {
     if (myUpdateState.isSelected()) {
       myTaskStateCombo.scheduleUpdateOnce();
     }
+    
+    if (myAddition != null) {
+      myAddition.onOpen(myTask);
+      if (myAddition.getAdditionalPanel() != null) {
+        myAdditionPanel.add(myAddition.getAdditionalPanel());
+      }
+    }
+    
     init();
   }
 
@@ -205,6 +218,9 @@ public class OpenTaskDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     createTask();
+    if (myAddition != null) {
+      myAddition.onClose(myTask);
+    }
     super.doOKAction();
   }
 
