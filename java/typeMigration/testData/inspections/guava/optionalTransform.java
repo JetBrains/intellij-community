@@ -2,7 +2,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 
 class A {
-  public Optional<String> transform(Optio<caret>nal<Integer> p1) {
+  public Optional<String> transform(Optional<Integer> p<caret>1) {
     return p1.transform(new MyFunction());
   }
 

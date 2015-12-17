@@ -119,7 +119,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         final PsiType type = variable.getType();
         PsiType targetType = getConversionClassType(type);
         if (targetType != null) {
-          holder.registerProblem(variable,
+          holder.registerProblem(variable.getNameIdentifier(),
                                  PROBLEM_DESCRIPTION_FOR_VARIABLE,
                                  new MigrateGuavaTypeFix(variable, targetType, null));
         }
