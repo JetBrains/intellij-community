@@ -577,7 +577,13 @@
 
     <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.PyInspectionsSuppressor"/>
     <refactoring.invertBoolean implementation="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanDelegate"/>
+
     <backspaceHandlerDelegate implementation="com.jetbrains.python.codeInsight.editorActions.PyTripleQuoteBackspaceDelegate"/>
+
+    <!--folding-->
+    <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider"/>
+    <applicationService serviceInterface="com.jetbrains.python.PythonFoldingSettings"
+                        serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
   </extensions>
 
   <extensionPoints>
@@ -663,7 +669,7 @@
     <pyModuleMembersProvider implementation="com.jetbrains.numpy.codeInsight.NumpyModuleMembersProvider"/>
     <typeProvider implementation="com.jetbrains.numpy.codeInsight.NumpyDocStringTypeProvider"/>
     <resolveResultRater implementation="com.jetbrains.numpy.codeInsight.NumpyResolveRater"/>
-    
+
     <!-- PyDocstring -->
     <typeProvider implementation="com.jetbrains.python.documentation.docstrings.PyDocStringTypeProvider"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.python.documentation.doctest.PyDocstringTokenSetContributor"/>
