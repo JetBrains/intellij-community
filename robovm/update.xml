@@ -9,6 +9,11 @@
              url="http://robovm.com/?p=2516"
              feedback="http://robovm.com"
              majorVersion="1">
+      <build number="RS-1.12.0" version="1.12.0" releaseDate="20151217">
+        <message>RoboVM Studio 1.12 is available.</message>
+        <button name="Download" url="http://download.robovm.org/archives/robovm-studio/1.12.0/robovm-studio-1.12.0.dmg" download="true"/>
+        <button name="What's New" url="https://robovm.com/?p=3495"/>
+      </build>
       <build number="RS-1.11.0" version="1.11.0" releaseDate="20151120">
         <message>RoboVM Studio 1.11 is available.</message>
         <button name="Download" url="http://download.robovm.org/archives/robovm-studio/1.11.0/robovm-studio-1.11.0.dmg" download="true"/>
