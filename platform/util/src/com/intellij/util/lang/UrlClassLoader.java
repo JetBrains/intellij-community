@@ -53,7 +53,10 @@ public class UrlClassLoader extends ClassLoader {
     // Unless explicitly disabled, request parallel loading capability via reflection due to current platform's Java 6 baseline
     // todo[r.sh] drop condition in IDEA 15
     // todo[r.sh] drop reflection after migrating to Java 7+
-    boolean parallelLoader = Boolean.parseBoolean(System.getProperty("idea.parallel.class.loader", "true"));
+
+    // IBM's classloader breaks when overridden getClassLoadingLock() is called, see https://youtrack.jetbrains.com/issue/IDEA-149187
+    // so disallow parallel loading completely on JBM jdk
+    boolean parallelLoader = !SystemInfo.isIbmJvm && Boolean.parseBoolean(System.getProperty("idea.parallel.class.loader", "true"));
     if (parallelLoader) {
       try {
         Method registerAsParallelCapable = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
