@@ -42,7 +42,11 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   private static final boolean ourCanInspectDirs = SystemProperties.getBooleanProperty("idea.chooser.lookup.for.project.dirs", true);
 
   public OpenProjectFileChooserDescriptor(boolean chooseFiles) {
-    super(chooseFiles, true, chooseFiles, chooseFiles, false, false);
+    this(chooseFiles, chooseFiles);
+  }
+
+  public OpenProjectFileChooserDescriptor(boolean chooseFiles, boolean chooseJars) {
+    super(chooseFiles, true, chooseJars, chooseJars, false, false);
     setHideIgnored(false);
   }
 
