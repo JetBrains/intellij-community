@@ -29,7 +29,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
 
     <fileTypeFactory implementation="com.intellij.uiDesigner.FormFileTypeFactory"/>
 

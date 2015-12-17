@@ -25,7 +25,6 @@
     <coverageEngine implementation="com.intellij.coverage.JavaCoverageEngine" order = "last"/>
     <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewClassNodeDecorator"/>
 
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <projectService serviceInterface="com.intellij.coverage.JavaCoverageAnnotator"
                     serviceImplementation="com.intellij.coverage.JavaCoverageAnnotator"/>
     <programRunner implementation="com.intellij.coverage.DefaultJavaCoverageRunner"/>
