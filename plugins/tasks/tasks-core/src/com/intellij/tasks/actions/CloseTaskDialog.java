@@ -52,11 +52,16 @@ public class CloseTaskDialog extends DialogWrapper {
   private TaskStateCombo myStateCombo;
   private JBCheckBox myUpdateState;
   private final TaskManagerImpl myTaskManager;
+  private JPanel myAdditionPanel;
+
+  private final TaskRepository.AdditionalPanel myAddition;
 
   public CloseTaskDialog(Project project, final LocalTask task) {
     super(project, false);
     myProject = project;
     myTask = task;
+    
+    myAddition = task.getRepository() != null ? task.getRepository().createCloseTaskAdditionalPanel() : null;
 
     setTitle("Close Task");
     myTaskLabel.setText(TaskUtil.getTrimmedSummary(task));
@@ -105,6 +110,14 @@ public class CloseTaskDialog extends DialogWrapper {
     if (myUpdateState.isSelected()) {
       myStateCombo.scheduleUpdateOnce();
     }
+    
+    if (myAddition != null) {
+      myAddition.onOpen(myTask);
+      if (myAddition.getAdditionalPanel() != null) {
+        myAdditionPanel.add(myAddition.getAdditionalPanel());
+      }
+    }
+    
     init();
   }
 
@@ -138,6 +151,9 @@ public class CloseTaskDialog extends DialogWrapper {
     }
     if (myMergeBranches.isEnabled()) {
       myTaskManager.getState().mergeBranch = isMergeBranch();
+    }
+    if (myAddition != null) {
+      myAddition.onClose(myTask);
     }
     super.doOKAction();
   }
