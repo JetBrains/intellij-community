@@ -86,9 +86,9 @@ public class ExecutionNode extends CachingSimpleNode {
     setNameAndTooltip(getName(), null, myInfo.isUpToDate() ? "UP-TO-DATE" : null);
     setIcon(
       myInfo.isRunning() ? NodeProgressAnimator.getCurrentFrame() :
-      myInfo.isFailed() ? AllIcons.RunConfigurations.TestError :
-      myInfo.isSkipped() ? AllIcons.RunConfigurations.TestIgnored :
-      AllIcons.RunConfigurations.TestPassed
+      myInfo.isFailed() ? AllIcons.Process.State.RedExcl :
+      myInfo.isSkipped() ? AllIcons.Process.State.YellowStr :
+      AllIcons.Process.State.GreenOK
     );
   }
 

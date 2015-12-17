@@ -50,14 +50,14 @@ public class NodeProgressAnimator implements Runnable, Disposable {
   }
 
   static {
-    FRAMES[0] = AllIcons.RunConfigurations.TestInProgress1;
-    FRAMES[1] = AllIcons.RunConfigurations.TestInProgress2;
-    FRAMES[2] = AllIcons.RunConfigurations.TestInProgress3;
-    FRAMES[3] = AllIcons.RunConfigurations.TestInProgress4;
-    FRAMES[4] = AllIcons.RunConfigurations.TestInProgress5;
-    FRAMES[5] = AllIcons.RunConfigurations.TestInProgress6;
-    FRAMES[6] = AllIcons.RunConfigurations.TestInProgress7;
-    FRAMES[7] = AllIcons.RunConfigurations.TestInProgress8;
+    FRAMES[0] = AllIcons.Process.State.GreyProgr_1;
+    FRAMES[1] = AllIcons.Process.State.GreyProgr_2;
+    FRAMES[2] = AllIcons.Process.State.GreyProgr_3;
+    FRAMES[3] = AllIcons.Process.State.GreyProgr_4;
+    FRAMES[4] = AllIcons.Process.State.GreyProgr_5;
+    FRAMES[5] = AllIcons.Process.State.GreyProgr_6;
+    FRAMES[6] = AllIcons.Process.State.GreyProgr_7;
+    FRAMES[7] = AllIcons.Process.State.GreyProgr_8;
   }
 
   public static int getCurrentFrameIndex() {
