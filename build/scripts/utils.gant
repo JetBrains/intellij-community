@@ -39,6 +39,14 @@ binding.setVariable("p", {String key, String defaultValue = null ->
   }
 })
 
+binding.setVariable("versionSelector", {
+  def fullVersion = p("component.version.major") + "." + p("component.version.minor")
+  def versionParts = fullVersion.split("\\.")
+
+  def minor = versionParts[1]
+  versionParts[0] + (minor == "0" ? "": "." + minor)
+})
+
 binding.setVariable("guessJdk", {
   String javaHome = p("java.home")
 
