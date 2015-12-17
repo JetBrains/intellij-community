@@ -15,26 +15,14 @@
  */
 package com.intellij.openapi.externalSystem.model.task.event;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/27/2015
+ * @since 12/16/2015
  */
-public interface ExternalSystemProgressEvent<T extends OperationDescriptor> extends Serializable {
-  @NotNull
-  String getEventId();
-  @Nullable
-  String getParentEventId();
-
-  @NotNull
-  String getDisplayName();
-
+public interface OperationDescriptor extends Serializable {
   long getEventTime();
 
-  @NotNull
-  T getDescriptor();
+  String getDisplayName();
 }

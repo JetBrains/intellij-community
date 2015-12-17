@@ -24,12 +24,12 @@ import org.jetbrains.annotations.NotNull;
  * @since 11/27/2015
  */
 public class ExternalSystemTaskExecutionEvent extends ExternalSystemTaskNotificationEvent {
-
   private static final long serialVersionUID = 1L;
+
   @NotNull private final ExternalSystemProgressEvent myProgressEvent;
 
   public ExternalSystemTaskExecutionEvent(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemProgressEvent progressEvent) {
-    super(id, progressEvent.getDescription());
+    super(id, progressEvent.getDisplayName());
     myProgressEvent = progressEvent;
   }
 

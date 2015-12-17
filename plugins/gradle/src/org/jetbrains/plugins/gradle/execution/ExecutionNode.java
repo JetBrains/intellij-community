@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
-import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,11 +90,6 @@ public class ExecutionNode extends CachingSimpleNode {
       myInfo.isSkipped() ? AllIcons.RunConfigurations.TestIgnored :
       AllIcons.RunConfigurations.TestPassed
     );
-  }
-
-  @Override
-  public void handleSelection(SimpleTree tree) {
-    super.handleSelection(tree);
   }
 
   protected void setNameAndTooltip(String name, @Nullable String tooltip) {

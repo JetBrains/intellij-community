@@ -22,14 +22,15 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  * @since 11/27/2015
  */
-public class ExternalSystemFinishEventImpl extends BaseExternalSystemProgressEvent implements ExternalSystemFinishEvent {
+public class ExternalSystemFinishEventImpl<T extends OperationDescriptor> extends BaseExternalSystemProgressEvent<T>
+  implements ExternalSystemFinishEvent<T> {
   @NotNull
   private final OperationResult myResult;
   public ExternalSystemFinishEventImpl(@NotNull String eventId,
                                        @Nullable String parentEventId,
-                                       @NotNull String description,
+                                       @NotNull T descriptor,
                                        @NotNull OperationResult result) {
-    super(eventId, parentEventId, description, result.getEndTime());
+    super(eventId, parentEventId, descriptor);
     myResult = result;
   }
 

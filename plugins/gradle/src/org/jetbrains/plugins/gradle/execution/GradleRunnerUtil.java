@@ -15,32 +15,46 @@
  */
 package org.jetbrains.plugins.gradle.execution;
 
+import com.intellij.execution.Location;
 import com.intellij.execution.console.DuplexConsoleView;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupported;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupported;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
+import com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor;
+import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleUrlProvider;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -139,5 +153,73 @@ public class GradleRunnerUtil {
     };
     progressManager.addNotificationListener(taskId, taskListener);
     return duplexConsoleView;
+  }
+
+  @Nullable
+  public static Location<PsiMethod> getMethodLocation(@NotNull Location contextLocation) {
+    Location<PsiMethod> methodLocation = getTestMethod(contextLocation);
+    if (methodLocation == null) return null;
+
+    if (contextLocation instanceof PsiMemberParameterizedLocation) {
+      PsiClass containingClass = ((PsiMemberParameterizedLocation)contextLocation).getContainingClass();
+      if (containingClass != null) {
+        methodLocation = MethodLocation.elementInClass(methodLocation.getPsiElement(), containingClass);
+      }
+    }
+    return methodLocation;
+  }
+
+  @Nullable
+  public static Location<PsiMethod> getTestMethod(final Location<?> location) {
+    for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext(); ) {
+      final Location<PsiMethod> methodLocation = iterator.next();
+      if (JUnitUtil.isTestMethod(methodLocation, false)) return methodLocation;
+    }
+    return null;
+  }
+
+  @NotNull
+  public static String getTestLocationUrl(@Nullable String testName, @NotNull String fqClassName) {
+    return testName == null
+           ? String.format("%s://%s::%s", GradleUrlProvider.PROTOCOL_ID, GradleUrlProvider.CLASS_PREF, fqClassName)
+           : String.format("%s://%s::%s.%s", GradleUrlProvider.PROTOCOL_ID, GradleUrlProvider.METHOD_PREF, fqClassName, testName);
+  }
+
+  public static Object getData(@NotNull Project project, @NonNls String dataId, @NotNull ExecutionInfo executionInfo) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+      final Location location = getLocation(project, executionInfo);
+      final OpenFileDescriptor openFileDescriptor = location == null ? null : location.getOpenFileDescriptor();
+      if (openFileDescriptor != null && openFileDescriptor.getFile().isValid()) {
+        return openFileDescriptor;
+      }
+    }
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      final Location location = getLocation(project, executionInfo);
+      if (location != null) {
+        final PsiElement element = location.getPsiElement();
+        return element.isValid() ? element : null;
+      }
+      else {
+        return null;
+      }
+    }
+    if (Location.DATA_KEY.is(dataId)) return getLocation(project, executionInfo);
+    return null;
+  }
+
+  private static Location getLocation(Project project, ExecutionInfo executionInfo) {
+    final OperationDescriptor descriptor = executionInfo.getDescriptor();
+    if (descriptor instanceof TestOperationDescriptor) {
+      final String className = ((TestOperationDescriptor)descriptor).getClassName();
+      if (className == null) return null;
+
+      final String methodName = ((TestOperationDescriptor)descriptor).getMethodName();
+      final String testLocationUrl = VirtualFileManager.extractPath(GradleRunnerUtil.getTestLocationUrl(methodName, className));
+
+      final List<Location> locations = GradleUrlProvider.INSTANCE.getLocation(
+        GradleUrlProvider.PROTOCOL_ID, testLocationUrl, project, GlobalSearchScope.allScope(project));
+      return ContainerUtil.getFirstItem(locations);
+    }
+    return null;
   }
 }

@@ -25,5 +25,5 @@ import java.io.Serializable;
  */
 public interface ExternalSystemProgressEventUnsupported extends Serializable {
   @NotNull
-  String getDescription();
+  String getDisplayName();
 }

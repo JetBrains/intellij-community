@@ -15,7 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.execution;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor;
+import com.intellij.openapi.externalSystem.model.task.event.OperationDescriptorImpl;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,16 +25,20 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ExecutionInfo {
   private final @Nullable String id;
-  private String myDisplayName;
+  private OperationDescriptor myDescriptor;
   private long startTime;
   private long endTime;
   private boolean isFailed;
   private boolean isSkipped;
   private boolean isUpToDate;
 
-  public ExecutionInfo(@Nullable String id, String displayName) {
+  public ExecutionInfo(@Nullable String id, OperationDescriptor descriptor) {
     this.id = id;
-    this.myDisplayName = displayName;
+    this.myDescriptor = descriptor;
+  }
+
+  public ExecutionInfo(String id, String description) {
+    this(id, new OperationDescriptorImpl(description, -1));
   }
 
   @Nullable
@@ -42,11 +47,15 @@ public class ExecutionInfo {
   }
 
   public String getDisplayName() {
-    return myDisplayName;
+    return myDescriptor.getDisplayName();
   }
 
-  public void setDisplayName(String displayName) {
-    this.myDisplayName = displayName;
+  public OperationDescriptor getDescriptor() {
+    return myDescriptor;
+  }
+
+  public void setDescriptor(OperationDescriptor descriptor) {
+    this.myDescriptor = descriptor;
   }
 
   public long getStartTime() {
@@ -95,6 +104,6 @@ public class ExecutionInfo {
 
   @Override
   public String toString() {
-    return myDisplayName;
+    return myDescriptor.getDisplayName();
   }
 }
