@@ -5,6 +5,9 @@ import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -181,7 +184,21 @@ public class StudyNewProjectPanel{
   }
 
   private void refreshCoursesList() {
-    final List<CourseInfo> courses = myGenerator.getCourses(true);
+    Task.WithResult<List<CourseInfo>, Exception> refreshTask = new Task.WithResult<List<CourseInfo>, Exception>(null, "Refreshing Courses List", false) {
+      @Override
+      protected List<CourseInfo> compute(@NotNull ProgressIndicator indicator) throws Exception {
+        return myGenerator.getCourses(true);
+      }
+    };
+    final List<CourseInfo> courses;
+    try {
+      courses = ProgressManager.getInstance().run(refreshTask);
+    }
+    catch (Exception e) {
+      setError(CONNECTION_ERROR);
+      return;
+    }
+
     if (courses.isEmpty()) {
       setError(CONNECTION_ERROR);
       return;
