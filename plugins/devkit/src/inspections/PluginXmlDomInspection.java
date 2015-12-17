@@ -24,6 +24,8 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -38,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.util.PsiUtil;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.HashSet;
 import java.util.List;
@@ -100,6 +103,15 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     String pluginId = ideaPlugin.getPluginId();
     if (pluginId == null || pluginId.equals(PluginManagerCore.CORE_PLUGIN_ID)) return;
+
+    XmlTag xmlTag = ideaPlugin.getXmlTag();
+    if (xmlTag == null) return;
+
+    VirtualFile virtualFile = xmlTag.getContainingFile().getVirtualFile();
+    if (virtualFile == null ||
+        !ModuleRootManager.getInstance(module).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION)) {
+      return;
+    }
 
     final Vendor vendor = ContainerUtil.getFirstItem(ideaPlugin.getVendors());
     if (vendor == null) {

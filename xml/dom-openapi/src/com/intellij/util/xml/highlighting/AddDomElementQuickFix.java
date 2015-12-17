@@ -33,7 +33,7 @@ public class AddDomElementQuickFix<T extends DomElement> implements LocalQuickFi
   protected final String myName;
 
   public AddDomElementQuickFix(@NotNull T element) {
-    myElement = (T)element.createStableCopy();
+    myElement = element.createStableCopy();
     myName = computeName();
   }
 
@@ -45,9 +45,7 @@ public class AddDomElementQuickFix<T extends DomElement> implements LocalQuickFi
 
   private String computeName() {
     final String name = myElement.getXmlElementName();
-    return isTag() ?
-           DomBundle.message("add.element.fix.name", name) :
-           DomBundle.message("add.attribute.fix.name", name);
+    return DomBundle.message(isTag() ? "add.element.fix.name" : "add.attribute.fix.name", name);
   }
 
   private boolean isTag() {
@@ -57,7 +55,7 @@ public class AddDomElementQuickFix<T extends DomElement> implements LocalQuickFi
   @Override
   @NotNull
   public String getFamilyName() {
-    return DomBundle.message("quick.fixes.family");
+    return DomBundle.message("add.element.fix.family");
   }
 
   @Override
