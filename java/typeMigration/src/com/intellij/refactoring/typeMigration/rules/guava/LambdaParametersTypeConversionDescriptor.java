@@ -19,6 +19,7 @@ import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
@@ -56,14 +57,15 @@ class LambdaParametersTypeConversionDescriptor extends TypeConversionDescriptor 
     if (type instanceof PsiClassType) {
       PsiClass resolvedClass = ((PsiClassType)type).resolve();
       if (resolvedClass != null) {
-        final String qName = resolvedClass.getQualifiedName();
-        if (GuavaSupplierConversionRule.GUAVA_SUPPLIER.equals(qName)) {
+        final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(expression.getProject());
+        final GlobalSearchScope scope = resolvedClass.getResolveScope();
+        if (InheritanceUtil.isInheritorOrSelf(resolvedClass, javaPsiFacade.findClass(GuavaSupplierConversionRule.GUAVA_SUPPLIER, scope), true)) {
           samMethodName = "get";
         }
-        else if (GuavaFunctionConversionRule.GUAVA_FUNCTION.equals(qName)) {
+        else if (InheritanceUtil.isInheritorOrSelf(resolvedClass, javaPsiFacade.findClass(GuavaFunctionConversionRule.GUAVA_FUNCTION, scope), true)) {
           samMethodName = "apply";
         }
-        else if (GuavaPredicateConversionRule.GUAVA_PREDICATE.equals(qName)) {
+        else if (InheritanceUtil.isInheritorOrSelf(resolvedClass, javaPsiFacade.findClass(GuavaPredicateConversionRule.GUAVA_PREDICATE, scope), true)) {
           samMethodName = "test";
         }
       }
