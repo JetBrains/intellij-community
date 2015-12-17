@@ -95,9 +95,8 @@ class SourceResolver(private val rawSources: List<String>, internal val canonica
     }
 
     if (sourceFile != null) {
-      val mappings = findByFile(sourceMap, sourceFile)
-      if (mappings != null) {
-        return mappings
+      findByFile(sourceMap, sourceFile)?.let {
+        return it
       }
     }
     return null
