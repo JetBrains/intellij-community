@@ -187,4 +187,108 @@ public class BoundedTaskExecutorTest extends TestCase {
     backendExecutor.shutdownNow();
     assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
   }
+
+  public void testStressForHorribleABAProblemWhenFirstThreadFinishesTaskAndIsAboutToDecrementCountAndSecondThreadIncrementsCounterToTwoThenSkipsExecutionThenDecrementsItBackAndTheFirstThreadFinishedDecrementingSuccessfully() throws Exception {
+    ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(getName()));
+    int maxSimultaneousTasks = 1;
+    final Disposable myDisposable = Disposer.newDisposable();
+    BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, maxSimultaneousTasks, myDisposable);
+    AtomicInteger running = new AtomicInteger();
+    AtomicInteger maxThreads = new AtomicInteger();
+
+    try {
+      int N = 100000;
+      for (int i = 0; i < N; i++) {
+        final int finalI = i;
+        Future<?> future = executor.submit(new Runnable() {
+          @Override
+          public void run() {
+            maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
+
+            try {
+              if (finalI % 100 == 0) {
+                TimeoutUtil.sleep(1);
+              }
+            }
+            finally {
+              running.decrementAndGet();
+            }
+          }
+
+          @Override
+          public String toString() {
+            return "iter " + finalI;
+          }
+        });
+        CountDownLatch waitCompleted = new CountDownLatch(1);
+        CountDownLatch waitStarted = new CountDownLatch(1);
+        UIUtil.invokeLaterIfNeeded(() -> {
+          try {
+            waitStarted.countDown();
+            executor.waitAllTasksExecuted(1, TimeUnit.SECONDS);
+            waitCompleted.countDown();
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        });
+        waitStarted.await();
+        executor.execute(new Runnable() {
+          @Override
+          public void run() {
+            maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
+
+            try {
+              //TimeoutUtil.sleep(1);
+            }
+            finally {
+              running.decrementAndGet();
+            }
+          }
+
+          @Override
+          public String toString() {
+            return "check for " + finalI;
+          }
+        });
+        //TimeoutUtil.sleep(1);
+        executor.execute(new Runnable() {
+          @Override
+          public void run() {
+            maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
+
+            try {
+              //TimeoutUtil.sleep(1);
+            }
+            finally {
+              running.decrementAndGet();
+            }
+          }
+
+          @Override
+          public String toString() {
+            return "check 2 for " + finalI;
+          }
+        });
+        assertTrue(waitCompleted.await(5, TimeUnit.SECONDS));
+        assertTrue(future.isDone());
+      }
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        try {
+          executor.waitAllTasksExecuted(5, TimeUnit.SECONDS);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      });
+    }
+    finally {
+      Disposer.dispose(myDisposable);
+      assertTrue(executor.isShutdown());
+    }
+
+    assertTrue("Max threads was: "+maxThreads+" but bound was 1", maxThreads.get() == 1);
+    backendExecutor.shutdownNow();
+    assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
+  }
 }
