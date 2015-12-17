@@ -1,16 +1,19 @@
 <html>
 <body>
-Reports any <b>Channel</b> which is not safely closed in a <b>finally</b> block.
+Reports any Channel which is not safely closed in a <b>finally</b> block.
 Such resources may be inadvertently leaked
 if an exception is thrown before the resource is closed. Channel resources reported
 by this inspection include any instances created by calling
-<b>getChannel()</b> on a file or socket resource.
+getChannel() on a file or socket resource.
 <!-- tooltip end -->
 <p>
-Use the checkbox below to specify if a Channel is allowed to be opened inside a try
+Use the first checkbox below to specify if a Channel is allowed to be opened <i>inside</i> a <b>try</b>
 block. This style is less desirable because it is more verbose than opening a Channel
-in front of a try block.
+<i>in front of</i> a <b>try</b> block.
 <p>
-
+Use the second checkbox below to specify that the inspection should not warn if a Channel instance is passed as a method call argument.
+If enabled the inspection assumes the Channel is closed in the called method.
+Method calls inside a <b>finally</b> block with <i>close</i> in the name and a Channel argument will not ignored.
+<p>
 </body>
 </html>

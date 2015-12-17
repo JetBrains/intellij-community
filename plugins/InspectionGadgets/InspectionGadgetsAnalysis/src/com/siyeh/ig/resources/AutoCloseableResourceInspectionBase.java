@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -36,9 +35,9 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class AutoCloseableResourceInspectionBase extends BaseInspection {
+public class AutoCloseableResourceInspectionBase extends ResourceInspection {
 
-  public static final List<String> DEFAULT_IGNORED_TYPES =
+  private static final List<String> DEFAULT_IGNORED_TYPES =
     Arrays.asList("java.util.stream.Stream", "java.util.stream.IntStream", "java.util.stream.LongStream", "java.util.stream.DoubleStream");
   @SuppressWarnings("PublicField")
   public boolean ignoreFromMethodCall = false;
@@ -83,11 +82,18 @@ public class AutoCloseableResourceInspectionBase extends BaseInspection {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    super.writeSettings(node);
+    defaultWriteSettings(node, "anyMethodMayClose", "insideTryAllowed");
+    writeBooleanOption(node, "anyMethodMayClose", true);
     if (!DEFAULT_IGNORED_TYPES.equals(ignoredTypes)) {
       final String ignoredTypesString = formatString(ignoredTypes);
       node.addContent(new Element("option").setAttribute("name", "ignoredTypes").setAttribute("value", ignoredTypesString));
     }
+  }
+
+  @Override
+  protected boolean isResourceCreation(PsiExpression expression) {
+    return TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE) &&
+           !TypeUtils.expressionHasTypeOrSubtype(expression, ignoredTypes);
   }
 
   @Override
@@ -148,14 +154,12 @@ public class AutoCloseableResourceInspectionBase extends BaseInspection {
     }
 
     private boolean isNotSafelyClosedResource(PsiExpression expression) {
-      if (!TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE)) {
-        return false;
-      }
-      if (TypeUtils.expressionHasTypeOrSubtype(expression, ignoredTypes)) {
+      if (!isResourceCreation(expression)) {
         return false;
       }
       final PsiVariable variable = ResourceInspection.getVariable(expression);
-      return !(variable instanceof PsiResourceVariable) && !ResourceInspection.isResourceEscapingFromMethod(variable, expression);
+      return !(variable instanceof PsiResourceVariable) &&
+             !isResourceEscapingFromMethod(variable, expression);
     }
   }
 }

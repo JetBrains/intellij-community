@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.util.ui.CheckBox;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.ui.UiUtils;
 
@@ -37,10 +37,11 @@ public class AutoCloseableResourceInspection extends AutoCloseableResourceInspec
     final JPanel tablePanel =
       UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.autocloseable.type.to.ignore.title"),
                                                    "java.lang.AutoCloseable");
-    final CheckBox checkBox =
-      new CheckBox(InspectionGadgetsBundle.message("auto.closeable.resource.returned.option"), this, "ignoreFromMethodCall");
+    final MultipleCheckboxOptionsPanel checkboxPanel = new MultipleCheckboxOptionsPanel(this);
+    checkboxPanel.addCheckbox(InspectionGadgetsBundle.message("auto.closeable.resource.returned.option"), "ignoreFromMethodCall");
+    checkboxPanel.addCheckbox(InspectionGadgetsBundle.message("any.method.may.close.resource.argument"), "anyMethodMayClose");
     panel.add(tablePanel, BorderLayout.CENTER);
-    panel.add(checkBox, BorderLayout.SOUTH);
+    panel.add(checkboxPanel, BorderLayout.SOUTH);
     return panel;
   }
 }

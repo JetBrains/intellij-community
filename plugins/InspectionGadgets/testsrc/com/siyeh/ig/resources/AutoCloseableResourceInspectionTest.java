@@ -39,6 +39,42 @@ public class AutoCloseableResourceInspectionTest extends LightInspectionTestCase
            "}");
   }
 
+  public void testEscape() {
+    doTest("import java.io.*;" +
+           "class X {" +
+           "  void m() throws IOException {" +
+           "    n(new FileInputStream(\"file.name\"));" +
+           "  }" +
+           "  void n(Closeable c) {" +
+           "    System.out.println(c);" +
+           "  }" +
+           "}");
+  }
+
+  public void testEscape2() {
+    final AutoCloseableResourceInspection inspection = new AutoCloseableResourceInspection();
+    inspection.anyMethodMayClose = false;
+    myFixture.enableInspections(inspection);
+    doTest("import java.io.*;" +
+           "class X {" +
+           "  void m() throws IOException {" +
+           "    n(new /*'FileInputStream' used without 'try'-with-resources statement*/FileInputStream/**/(\"file.name\"));" +
+           "  }" +
+           "  void n(Closeable c) {" +
+           "    System.out.println(c);" +
+           "  }" +
+           "}");
+  }
+
+  public void testEscape3() {
+    doTest("import java.io.*;" +
+           "class X {" +
+           "  void m() throws IOException {" +
+           "    System.out.println(new FileInputStream(\"file.name\"));" +
+           "  }" +
+           "}");
+  }
+
   public void testARM() {
     doTest("import java.sql.*;\n" +
            "class X {\n" +
