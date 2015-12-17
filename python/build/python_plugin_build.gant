@@ -155,6 +155,7 @@ target(name: "compile", description: "Compile module python") {
     fileset(dir: "${pluginHome}/IntelliLang-python/src") {
       include(name: "resources/*.xml")
     }
+    fileset(dir: "${home}/colorSchemes/src")
     fileset(dir: "${pluginHome}/ipnb/resources") {
       patternset(refid: "resources.pt")
       type(type: "file")
