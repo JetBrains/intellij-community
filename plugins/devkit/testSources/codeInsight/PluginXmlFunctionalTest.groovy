@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 package org.jetbrains.idea.devkit.codeInsight
+
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
+import com.intellij.diagnostic.ITNReporter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.psi.ElementDescriptionUtil
@@ -61,6 +63,8 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("util", pathForClass);
     String platformApiJar = PathUtil.getJarPathForClass(JBList.class)
     moduleBuilder.addLibrary("platform-api", platformApiJar);
+    String platformImplJar = PathUtil.getJarPathForClass(ITNReporter.class)
+    moduleBuilder.addLibrary("platform-impl", platformImplJar);
   }
 
   public void testExtensionsHighlighting() throws Throwable {
@@ -340,6 +344,14 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     finally {
       PsiUtil.markAsIdeaProject(project, false)
     }
+  }
+
+  public void testErrorHandlerExtensionInJetBrainsPlugin() {
+    myFixture.addClass("""
+import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
+public class MyErrorHandler extends ErrorReportSubmitter {}
+""")
+    myFixture.testHighlighting("errorHandlerExtensionInJetBrainsPlugin.xml");
   }
 
   public void testExtensionPointPresentation() {
