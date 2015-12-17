@@ -482,16 +482,14 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     if (!deleteUsingIo) {
       val dir = getDirectory()
       if (dir != null) {
-        val token = WriteAction.start()
+        runWriteAction {
         try {
           dir.delete(this)
         }
-        catch (e: Throwable) {
+        catch (e: IOException) {
           deleteUsingIo = true
           errors.add(e)
         }
-        finally {
-          token.finish()
         }
       }
     }

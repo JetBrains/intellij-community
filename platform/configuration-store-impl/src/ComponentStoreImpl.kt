@@ -17,9 +17,9 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.runBatchUpdate
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
@@ -175,17 +175,13 @@ abstract class ComponentStoreImpl : IComponentStore {
       throw AssertionError("${component.javaClass} doesn't have @State annotation and doesn't implement ExportableApplicationComponent")
     }
 
-    val token = WriteAction.start()
-    try {
-      VfsRootAccess.allowRootAccess(file.absolutePath)
-      CompoundRuntimeException.throwIfNotEmpty(doSave(sessions))
-    }
-    finally {
+    runWriteAction {
       try {
-        VfsRootAccess.disallowRootAccess(file.absolutePath)
+        VfsRootAccess.allowRootAccess(file.absolutePath)
+        CompoundRuntimeException.throwIfNotEmpty(doSave(sessions))
       }
       finally {
-        token.finish()
+        VfsRootAccess.disallowRootAccess(file.absolutePath)
       }
     }
   }

@@ -19,7 +19,6 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
@@ -198,32 +197,30 @@ private fun isEqualContent(result: VirtualFile, lineSeparator: LineSeparator, co
 
 private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparator: LineSeparator, prependXmlProlog: Boolean) {
   LOG.debug { "Save ${file.presentableUrl}" }
-  val token = WriteAction.start()
-  try {
-    val out = file.getOutputStream(requestor)
+  runWriteAction {  ->
     try {
-      if (prependXmlProlog) {
-        out.write(XML_PROLOG)
-        out.write(lineSeparator.separatorBytes)
+      val out = file.getOutputStream(requestor)
+      try {
+        if (prependXmlProlog) {
+          out.write(XML_PROLOG)
+          out.write(lineSeparator.separatorBytes)
+        }
+        if (content is Element) {
+          JDOMUtil.writeParent(content, out, lineSeparator.separatorString)
+        }
+        else {
+          (content as BufferExposingByteArrayOutputStream).writeTo(out)
+        }
       }
-      if (content is Element) {
-        JDOMUtil.writeParent(content, out, lineSeparator.separatorString)
-      }
-      else {
-        (content as BufferExposingByteArrayOutputStream).writeTo(out)
+      finally {
+        out.close()
       }
     }
-    finally {
-      out.close()
+    catch (e: FileNotFoundException) {
+      // may be element is not long-lived, so, we must write it to byte array
+      val byteArray = if (content is Element) content.toBufferExposingByteArray(lineSeparator.separatorString) else (content as BufferExposingByteArrayOutputStream)
+      throw ReadOnlyModificationException(file, e, StateStorage.SaveSession { doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog) })
     }
-  }
-  catch (e: FileNotFoundException) {
-    // may be element is not long-lived, so, we must write it to byte array
-    val byteArray = if (content is Element) content.toBufferExposingByteArray(lineSeparator.separatorString) else (content as BufferExposingByteArrayOutputStream)
-    throw ReadOnlyModificationException(file, e, StateStorage.SaveSession { doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog) })
-  }
-  finally {
-    token.finish()
   }
 }
 
