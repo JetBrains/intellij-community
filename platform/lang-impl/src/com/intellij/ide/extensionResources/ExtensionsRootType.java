@@ -111,7 +111,7 @@ public class ExtensionsRootType extends RootType {
     Application application = ApplicationManager.getApplication();
     for (URL bundledResourceDirUrl : bundledResources) {
       VirtualFile bundledResourcesDir = VfsUtil.findFileByURL(bundledResourceDirUrl);
-      if (!bundledResourcesDir.isDirectory()) continue;
+      if (bundledResourcesDir == null || !bundledResourcesDir.isDirectory()) continue;
 
       AccessToken token = application.acquireWriteActionLock(ExtensionsRootType.class);
       try {
