@@ -99,6 +99,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
     final ListTreeTableModelOnColumns model = new ListTreeTableModelOnColumns(new DefaultMutableTreeNode(myRoot), COLUMNS);
 
     myTreeTable = new TaskExecutionTreeTable(model);
+    myTreeTable.setRowHeight(myTreeTable.getRowHeight() + 2);
     final TreeCellRenderer treeCellRenderer = myTreeTable.getTree().getCellRenderer();
 
     myTreeTable.getTree().setCellRenderer(new TreeCellRenderer() {
