@@ -36,7 +36,6 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.Converter;
@@ -90,9 +89,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private final RemoteMavenServerDownloadListener myDownloadListener = new RemoteMavenServerDownloadListener();
   private boolean myLoggerExported;
   private boolean myDownloadListenerExported;
-
-  private final Alarm myShutdownAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-
   private State myState = new State();
   private static class BundledMavenPathHolder {
     private static final File myBundledMaven2Home;
@@ -207,8 +203,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       }
       myDownloadListenerExported = false;
     }
-
-    myShutdownAlarm.cancelAllRequests();
   }
 
   @NotNull
@@ -216,10 +210,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     if (myState.embedderJdk.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
       final String javaHome = System.getenv("JAVA_HOME");
       if (!StringUtil.isEmptyOrSpaces(javaHome)) {
-        Sdk jdk = JavaSdk.getInstance().createJdk("", javaHome);
-        if (jdk != null) {
-          return jdk;
-        }
+        return JavaSdk.getInstance().createJdk("", javaHome);
       }
     }
 
