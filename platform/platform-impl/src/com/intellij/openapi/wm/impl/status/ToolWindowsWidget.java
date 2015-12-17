@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.GotItMessage;
@@ -47,6 +48,10 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -127,18 +132,25 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
       myAlarm.addRequest(new Runnable() {
         @Override
         public void run() {
-          DefaultListModel model = new DefaultListModel();
           final IdeFrameImpl frame = UIUtil.getParentOfType(IdeFrameImpl.class, ToolWindowsWidget.this);
           if (frame == null) return;
+
+          List<ToolWindow> toolWindows = new ArrayList<ToolWindow>();
           final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(frame.getProject());
           for (String id : toolWindowManager.getToolWindowIds()) {
             final ToolWindow tw = toolWindowManager.getToolWindow(id);
             if (tw.isAvailable() && tw.isShowStripeButton()) {
-              model.addElement(tw);
+              toolWindows.add(tw);
             }
           }
+          Collections.sort(toolWindows, new Comparator<ToolWindow>() {
+            @Override
+            public int compare(ToolWindow o1, ToolWindow o2) {
+              return StringUtil.naturalCompare(o1.getStripeTitle(), o2.getStripeTitle());
+            }
+          });
 
-          final JBList list = new JBList(model);
+          final JBList list = new JBList(toolWindows);
           list.setCellRenderer(new ListCellRenderer() {
             final JBLabel label = new JBLabel();
 
