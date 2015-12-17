@@ -219,7 +219,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     IElementType[] lexTypes = null;
     int lexemeCount = -1;
     // set this to true to check that re-lexing of lazy parseables produces the same sequence as cached one
-    boolean doLexingOptimizationCorrectionCheck = false;
+    boolean doLexingOptimizationCorrectionCheck = true;
 
     if (parentCachingNode instanceof LazyParseableToken) {
       final LazyParseableToken parentToken = (LazyParseableToken)parentCachingNode;
