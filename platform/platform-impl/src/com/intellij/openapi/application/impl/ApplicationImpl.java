@@ -103,6 +103,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final boolean myTestModeFlag;
   private final boolean myHeadlessMode;
   private final boolean myCommandLineMode;
+  private final boolean myIsRunningFromSources;
 
   private final boolean myIsInternal;
   private final String myName;
@@ -195,6 +196,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myTestModeFlag = isUnitTestMode;
     myHeadlessMode = isHeadless;
     myCommandLineMode = isCommandLine;
+    
+    myIsRunningFromSources = new File(PathManager.getHomePath(), ".idea").isDirectory();
 
     myDoNotSave = isUnitTestMode || isHeadless;
 
@@ -352,6 +355,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public boolean isCommandLine() {
     return myCommandLineMode;
+  }
+
+  public boolean isRunningFromSources() {
+    return myIsRunningFromSources;
   }
 
   @NotNull
