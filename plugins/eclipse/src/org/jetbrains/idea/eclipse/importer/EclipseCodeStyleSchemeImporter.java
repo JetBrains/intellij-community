@@ -47,8 +47,8 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
   @Override
   public CodeStyleScheme importScheme(@NotNull Project project,
                                       @NotNull VirtualFile selectedFile,
-                                      CodeStyleScheme currentScheme,
-                                      SchemeFactory<CodeStyleScheme> schemeFactory) throws SchemeImportException {
+                                      @NotNull CodeStyleScheme currentScheme,
+                                      @NotNull SchemeFactory<CodeStyleScheme> schemeFactory) throws SchemeImportException {
     final String[] schemeNames = readSchemeNames(selectedFile);
     final ImportSchemeChooserDialog schemeChooserDialog =
       new ImportSchemeChooserDialog(project, schemeNames, !currentScheme.isDefault() ? currentScheme.getName() : null);
@@ -68,7 +68,7 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
 
   @Nullable
   @Override
-  public String getAdditionalImportInfo(CodeStyleScheme scheme) {
+  public String getAdditionalImportInfo(@NotNull CodeStyleScheme scheme) {
     return null;
   }
 
