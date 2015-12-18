@@ -203,11 +203,11 @@ class RestHTMLTranslator(HTMLTranslator):
                 index = rawsource.index("type ")
                 name = re.sub(r'\\\*', '*', rawsource[index + len("type "):])
                 if name in fields:
-                    fields[name].type = field_body.astext()
+                    fields[name].type = self._strip_markup(field_body.astext())[1]
                     node.children.remove(n)
             if rawsource == "rtype":
                 if "return" in fields:
-                    fields["return"].type = field_body.astext()
+                    fields["return"].type = self._strip_markup(field_body.astext())[1]
                     node.children.remove(n)
 
         HTMLTranslator.visit_field_list(self, node)
@@ -219,23 +219,26 @@ class RestHTMLTranslator(HTMLTranslator):
         """ Ignore unknown nodes """
 
     def visit_problematic(self, node):
-        """Don't insert hyperlinks to nowhere for e.g. unclosed asterisks."""
+        # Don't insert hyperlinks to nowhere for e.g. unclosed asterisks
         if not self._is_text_wrapper(node):
             return HTMLTranslator.visit_problematic(self, node)
 
-        node_text = node.astext()
-        m = re.match(r'(:\w+)?(:\S+:)?`(.+?)`', node_text)
-        if m:
-            _, directive, text = m.groups('')
-            if directive[1:-1] == 'exc':
-                self.body.append(self.starttag(node, 'a', '', href='psi_element://#typename#' + text))
-                self.body.append(text)
-                self.body.append('</a>')
-            else:
-                self.body.append(text)
+        directive, text = self._strip_markup(node.astext())
+        if directive[1:-1] in ('exc', 'class'):
+            self.body.append(self.starttag(node, 'a', '', href='psi_element://#typename#' + text))
+            self.body.append(text)
+            self.body.append('</a>')
         else:
-            self.body.append(node_text)
+            self.body.append(text)
         raise nodes.SkipNode
+
+    @staticmethod
+    def _strip_markup(text):
+        m = re.match(r'(:\w+)?(:\S+:)?`(.+?)`', text)
+        if m:
+            _, directive, trimmed = m.groups('')
+            return directive, trimmed
+        return None, text
 
     def depart_problematic(self, node):
         if not self._is_text_wrapper(node):
