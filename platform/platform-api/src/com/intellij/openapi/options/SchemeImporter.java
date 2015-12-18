@@ -23,22 +23,14 @@ public interface SchemeImporter <T extends Scheme> {
    * @param project project
    * @param selectedFile  The input file to import from.
    * @param currentScheme source scheme to be updated or to base import on
-   * @param schemeFactory The factory to create a scheme with a given name. Importer implementation should use this method
-   *                      to create a scheme to which it will save imported values.
+   * @param schemeFactory
    * @return created/updated scheme, or null if action was cancelled
-   * @see SchemeFactory
    */
   @Nullable
   T importScheme(@NotNull Project project,
                  @NotNull VirtualFile selectedFile,
-                 @NotNull T currentScheme, 
-                 @NotNull SchemeFactory<T> schemeFactory) throws SchemeImportException;
+                 T currentScheme, SchemeFactory<T> schemeFactory) throws SchemeImportException;
 
-  /**
-   * Called after the scheme has been imported.
-   * @param scheme The imported scheme.
-   * @return An information message to be displayed after import.
-   */
   @Nullable
-  String getAdditionalImportInfo(@NotNull T scheme);
+  String getAdditionalImportInfo(T scheme);
 }
