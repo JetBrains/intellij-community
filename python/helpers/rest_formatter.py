@@ -203,11 +203,11 @@ class RestHTMLTranslator(HTMLTranslator):
                 index = rawsource.index("type ")
                 name = re.sub(r'\\\*', '*', rawsource[index + len("type "):])
                 if name in fields:
-                    fields[name].type = field_body[0][0] if field_body.children else ''
+                    fields[name].type = field_body.astext()
                     node.children.remove(n)
             if rawsource == "rtype":
                 if "return" in fields:
-                    fields["return"].type = field_body[0][0] if field_body.children else ''
+                    fields["return"].type = field_body.astext()
                     node.children.remove(n)
 
         HTMLTranslator.visit_field_list(self, node)
