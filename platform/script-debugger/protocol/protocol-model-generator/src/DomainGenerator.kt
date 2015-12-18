@@ -253,13 +253,24 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
     val out = fileUpdater.out
     out.newLine().newLine()
     descriptionAndRequiredImport(description, out)
-    out.append("interface ").append(className).block {
+
+    var hasNodeId = false
+    val parametersToAdd = parameters?.filter(fun(p: ProtocolMetaModel.Parameter): Boolean {
+      if (p.name() == "nodeId" && p.ref == "NodeId") {
+        hasNodeId = true
+        return false
+      }
+      else return true
+    })
+    out.append("interface ").append(className)
+    if (hasNodeId) out.append(" : ").append("org.jetbrains.wip.protocol.NodeIdentifiable")
+    out.block {
       val classScope = InputClassScope(this, NamePath(className, NamePath(getPackageName(generator.naming.inputPackage, domain.domain()))))
       if (additionalMembersText != null) {
         classScope.addMember(additionalMembersText)
       }
-      if (parameters != null) {
-        classScope.generateDeclarationBody(out, parameters)
+      if (parametersToAdd != null) {
+        classScope.generateDeclarationBody(out, parametersToAdd)
       }
       classScope.writeAdditionalMembers(out)
     }
