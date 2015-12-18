@@ -29,13 +29,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupported;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
-import com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor;
-import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
+import com.intellij.openapi.externalSystem.model.task.event.*;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskLocation;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -53,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleUrlProvider;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.Iterator;
 import java.util.List;
@@ -137,6 +137,16 @@ public class GradleRunnerUtil {
       }
 
       @Override
+      public void onQueued(@NotNull ExternalSystemTaskId id, final String workingDir) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            gradleExecutionConsole.setWorkingDir(workingDir);
+          }
+        });
+      }
+
+      @Override
       public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull final Exception e) {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
@@ -207,6 +217,38 @@ public class GradleRunnerUtil {
     return null;
   }
 
+  @Nullable
+  public static ExternalSystemTaskLocation getTaskLocation(Project project, ExecutionInfo... executionInfos) {
+    ExternalTaskExecutionInfo taskExecutionInfo = new ExternalTaskExecutionInfo();
+
+    String projectPath = null;
+    final List<String> taskNames = taskExecutionInfo.getSettings().getTaskNames();
+    for (ExecutionInfo executionInfo : executionInfos) {
+      final OperationDescriptor descriptor = executionInfo.getDescriptor();
+      if (descriptor instanceof TaskOperationDescriptor) {
+        final String taskName = ((TaskOperationDescriptor)descriptor).getTaskName();
+        if (projectPath == null) {
+          projectPath = executionInfo.getWorkingDir();
+        }
+        else if (!projectPath.equals(executionInfo.getWorkingDir())) {
+          return null;
+        }
+        taskNames.add(taskName);
+      }
+      else {
+        return null;
+      }
+    }
+
+    if (!taskNames.isEmpty()) {
+      taskExecutionInfo.getSettings().setExternalSystemIdString(GradleConstants.SYSTEM_ID.toString());
+      taskExecutionInfo.getSettings().setExternalProjectPath(projectPath);
+      return ExternalSystemTaskLocation.create(project, GradleConstants.SYSTEM_ID, projectPath, taskExecutionInfo);
+    }
+    return null;
+  }
+
+  @Nullable
   private static Location getLocation(Project project, ExecutionInfo executionInfo) {
     final OperationDescriptor descriptor = executionInfo.getDescriptor();
     if (descriptor instanceof TestOperationDescriptor) {
@@ -214,12 +256,12 @@ public class GradleRunnerUtil {
       if (className == null) return null;
 
       final String methodName = ((TestOperationDescriptor)descriptor).getMethodName();
-      final String testLocationUrl = VirtualFileManager.extractPath(GradleRunnerUtil.getTestLocationUrl(methodName, className));
+      final String testLocationUrl = VirtualFileManager.extractPath(getTestLocationUrl(methodName, className));
 
       final List<Location> locations = GradleUrlProvider.INSTANCE.getLocation(
         GradleUrlProvider.PROTOCOL_ID, testLocationUrl, project, GlobalSearchScope.allScope(project));
       return ContainerUtil.getFirstItem(locations);
     }
-    return null;
+    return getTaskLocation(project, executionInfo);
   }
 }

@@ -36,9 +36,9 @@ public class ExecutionNode extends CachingSimpleNode {
   private ExecutionInfo myInfo;
   private final List<ExecutionNode> myNodes = ContainerUtil.newArrayList();
 
-  protected ExecutionNode(Project project) {
+  protected ExecutionNode(Project project, @Nullable String workingDir) {
     super(project, null);
-    this.myInfo = new ExecutionInfo(null, "--");
+    this.myInfo = new ExecutionInfo(null, "--", workingDir);
   }
 
   public void add(ExecutionNode node) {
@@ -113,5 +113,9 @@ public class ExecutionNode extends CachingSimpleNode {
 
   private static SimpleTextAttributes prepareAttributes(SimpleTextAttributes from) {
     return new SimpleTextAttributes(from.getBgColor(), from.getFgColor(), null, from.getStyle());
+  }
+
+  public String getMenuId() {
+    return "RunContextGroup";
   }
 }

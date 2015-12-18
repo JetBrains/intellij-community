@@ -18,12 +18,13 @@ package org.jetbrains.plugins.gradle.service.execution;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.event.*;
+import com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor;
+import com.intellij.openapi.externalSystem.model.task.event.OperationResult;
 import org.gradle.tooling.events.FailureResult;
-import org.gradle.tooling.events.FinishEvent;
-import org.gradle.tooling.events.ProgressEvent;
+import org.gradle.tooling.events.*;
 import org.gradle.tooling.events.SkippedResult;
-import org.gradle.tooling.events.StartEvent;
 import org.gradle.tooling.events.internal.DefaultOperationDescriptor;
+import org.gradle.tooling.events.task.TaskOperationDescriptor;
 import org.gradle.tooling.events.task.TaskProgressEvent;
 import org.gradle.tooling.events.task.TaskSuccessResult;
 import org.gradle.tooling.events.test.JvmTestOperationDescriptor;
@@ -77,6 +78,11 @@ public class GradleProgressEventConverter {
       final JvmTestOperationDescriptor testOperationDescriptor = (JvmTestOperationDescriptor)descriptor;
       return new TestOperationDescriptorImpl(descriptor.getName(), eventTime, testOperationDescriptor.getSuiteName(),
                                              testOperationDescriptor.getClassName(), testOperationDescriptor.getMethodName());
+    }
+    else if (descriptor instanceof TaskOperationDescriptor) {
+      final TaskOperationDescriptor testOperationDescriptor =
+        (TaskOperationDescriptor)descriptor;
+      return new TaskOperationDescriptorImpl(descriptor.getName(), eventTime, testOperationDescriptor.getTaskPath());
     }
     else {
       return new OperationDescriptorImpl(descriptor.getName(), eventTime);

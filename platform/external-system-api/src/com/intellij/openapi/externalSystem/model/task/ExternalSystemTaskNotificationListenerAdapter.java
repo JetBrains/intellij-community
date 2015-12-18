@@ -11,7 +11,7 @@ public abstract class ExternalSystemTaskNotificationListenerAdapter implements E
   @NotNull public static final ExternalSystemTaskNotificationListener NULL_OBJECT = new ExternalSystemTaskNotificationListenerAdapter() { };
 
   @Override
-  public void onQueued(@NotNull ExternalSystemTaskId id) {
+  public void onQueued(@NotNull ExternalSystemTaskId id, String workingDir) {
   }
 
   @Override
@@ -36,5 +36,13 @@ public abstract class ExternalSystemTaskNotificationListenerAdapter implements E
 
   @Override
   public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
+  }
+
+  @Override
+  public void beforeCancel(@NotNull ExternalSystemTaskId id) {
+  }
+
+  @Override
+  public void onCancel(@NotNull ExternalSystemTaskId id) {
   }
 }

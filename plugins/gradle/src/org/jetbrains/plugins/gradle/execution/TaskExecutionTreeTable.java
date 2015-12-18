@@ -15,17 +15,23 @@
  */
 package org.jetbrains.plugins.gradle.execution;
 
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor;
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -34,13 +40,15 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Vladislav.Soroka
  * @since 12/17/2015
  */
 public class TaskExecutionTreeTable extends TreeTable {
-  private static final ExecutionNode NULL_NODE = new ExecutionNode(null);
+  private static final ExecutionNode NULL_NODE = new ExecutionNode(null, "");
 
   public TaskExecutionTreeTable(ListTreeTableModelOnColumns model) {
     super(model);
@@ -61,6 +69,50 @@ public class TaskExecutionTreeTable extends TreeTable {
         }
       }
     });
+
+    final ActionManager actionManager = ActionManager.getInstance();
+    addMouseListener(new PopupHandler() {
+      public void invokePopup(final Component comp, final int x, final int y) {
+        final String id = getMenuId(getSelectedNodes());
+        if (id != null) {
+          final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(id);
+          if (actionGroup != null) {
+            actionManager.createActionPopupMenu("", actionGroup).getComponent().show(comp, x, y);
+          }
+        }
+      }
+
+      @Nullable
+      private String getMenuId(Collection<? extends ExecutionNode> nodes) {
+        String id = null;
+        for (ExecutionNode node : nodes) {
+          String menuId = node.getMenuId();
+          if (menuId == null) {
+            return null;
+          }
+          if (id == null) {
+            id = menuId;
+          }
+          else if (!id.equals(menuId)) {
+            return null;
+          }
+        }
+        return id;
+      }
+    });
+  }
+
+  private Collection<? extends ExecutionNode> getSelectedNodes() {
+    final TreePath[] selectionPaths = getTree().getSelectionPaths();
+    if (selectionPaths != null) {
+      return ContainerUtil.map(selectionPaths, new Function<TreePath, ExecutionNode>() {
+        @Override
+        public ExecutionNode fun(TreePath path) {
+          return getNodeFor(path);
+        }
+      });
+    }
+    return Collections.emptyList();
   }
 
   public boolean isSelectionEmpty() {

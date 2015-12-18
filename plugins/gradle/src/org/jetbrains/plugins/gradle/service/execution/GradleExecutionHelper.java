@@ -34,6 +34,7 @@ import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
+import org.gradle.tooling.internal.consumer.ConnectionParameters;
 import org.gradle.tooling.internal.consumer.DefaultExecutorServiceFactory;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.internal.consumer.Distribution;
