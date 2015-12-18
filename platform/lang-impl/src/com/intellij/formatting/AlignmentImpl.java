@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-class AlignmentImpl extends Alignment {
+public class AlignmentImpl extends Alignment {
   private static final List<LeafBlockWrapper> EMPTY = Collections.emptyList();
   private final boolean myAllowBackwardShift;
   private final Anchor myAnchor;
@@ -110,7 +110,7 @@ class AlignmentImpl extends Alignment {
    *                  {@link #setParent(Alignment) its parent} using the algorithm above if any; <code>null</code> otherwise
    */
   @Nullable
-  LeafBlockWrapper getOffsetRespBlockBefore(@Nullable final AbstractBlockWrapper block) {
+  public LeafBlockWrapper getOffsetRespBlockBefore(@Nullable final AbstractBlockWrapper block) {
     if (!continueOffsetResponsibleBlockRetrieval(block)) {
       return null;
     }
