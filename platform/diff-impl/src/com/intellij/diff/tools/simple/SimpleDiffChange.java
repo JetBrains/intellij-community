@@ -18,6 +18,7 @@ package com.intellij.diff.tools.simple;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.util.*;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -278,6 +279,7 @@ public class SimpleDiffChange {
     return createIconRenderer(side, "Append", DiffUtil.getArrowDownIcon(side), new Runnable() {
       @Override
       public void run() {
+        UsageTrigger.trigger("diff.SimpleDiffChange.Append");
         myViewer.appendChange(SimpleDiffChange.this, side);
       }
     });
