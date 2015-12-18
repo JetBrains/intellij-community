@@ -30,6 +30,8 @@ import com.siyeh.ig.psiutils.MethodMatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+
 public class IgnoreResultOfCallInspectionBase extends BaseInspection {
 
   /**
@@ -138,13 +140,18 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         return;
       }
 
-      PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(method);
-      boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
-      if (anno != null && 
+      final PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(method);
+      final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
+      if (anno != null &&
           (honorInferred || !AnnotationUtil.isInferredAnnotation(anno)) && 
           Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"))) {
         registerMethodCallError(call, aClass);
         return;
+      }
+      final PsiAnnotation anno2 =
+        AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton("javax.annotation.CheckReturnValue"));
+      if (anno2 != null) {
+        registerMethodCallError(call, aClass);
       }
       if (!myMethodMatcher.matches(method)) {
         return;
