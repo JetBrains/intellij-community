@@ -82,7 +82,7 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    defaultWriteSettings(node, "anyMethodMayClose", "insideTryAllowed");
+    writeBooleanOption(node, "insideTryAllowed", false);
     writeBooleanOption(node, "anyMethodMayClose", true);
     if (!DEFAULT_IGNORED_TYPES.equals(ignoredTypes)) {
       final String ignoredTypesString = formatString(ignoredTypes);
