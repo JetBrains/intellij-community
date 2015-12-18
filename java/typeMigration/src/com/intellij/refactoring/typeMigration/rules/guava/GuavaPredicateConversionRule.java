@@ -18,6 +18,7 @@ package com.intellij.refactoring.typeMigration.rules.guava;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
@@ -127,7 +128,16 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
       String newExpressionString =
         adjust(((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0], true, myTargetType) + ".negate()";
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
-      return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(newExpressionString, expression));
+      PsiExpression convertedExpression =
+        (PsiExpression)expression.replace(elementFactory.createExpressionFromText(newExpressionString, expression));
+      convertedExpression = convertedExpression.getParent() instanceof PsiMethodReferenceExpression
+                            ? (PsiExpression)convertedExpression.getParent().replace(convertedExpression)
+                            : convertedExpression;
+      final PsiElement maybeTypeCast = convertedExpression.getParent();
+      if (maybeTypeCast instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)maybeTypeCast)) {
+        convertedExpression = (PsiExpression)maybeTypeCast.replace(((PsiTypeCastExpression)maybeTypeCast).getOperand());
+      }
+      return convertedExpression;
     }
   }
 
@@ -167,15 +177,14 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
 
   private static String adjust(PsiExpression expression, boolean insertTypeCase, PsiType targetType) {
     if (expression instanceof PsiFunctionalExpression) {
-      final PsiType functionalInterfaceType = ((PsiFunctionalExpression)expression).getFunctionalInterfaceType();
-      if (isUnconverted(functionalInterfaceType) && insertTypeCase) {
+      if (insertTypeCase) {
         return "((" + targetType.getCanonicalText() + ")" + expression.getText() + ")";
       }
     }
     else if (expression instanceof PsiMethodCallExpression || expression instanceof PsiReferenceExpression) {
       if (isUnconverted(expression.getType())) {
         expression = (PsiExpression)expression.replace(JavaPsiFacade.getElementFactory(expression.getProject())
-                                                         .createExpressionFromText(expression.getText() + "::apply", expression));
+                                                                    .createExpressionFromText(expression.getText() + "::apply", expression));
         return adjust(expression, insertTypeCase, targetType);
       }
     }

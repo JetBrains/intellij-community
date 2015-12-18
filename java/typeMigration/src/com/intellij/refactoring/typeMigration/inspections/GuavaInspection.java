@@ -338,10 +338,12 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
                          @NotNull ProblemDescriptor[] descriptors,
                          @NotNull List<PsiElement> psiElementsToIgnore,
                          @Nullable Runnable refreshViews) {
+      SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
+
       final List<PsiElement> elementsToFix = new ArrayList<PsiElement>();
       final List<PsiType> migrationTypes = new ArrayList<PsiType>();
 
-      final List<PsiElement> chainsToFix = new ArrayList<PsiElement>();
+      final List<SmartPsiElementPointer> chainsToFix = new ArrayList<SmartPsiElementPointer>();
       final List<PsiType> chainsMigrationTypes = new ArrayList<PsiType>();
       final List<PsiType> chainsInitialTypes = new ArrayList<PsiType>();
 
@@ -352,7 +354,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
           migrationTypes.add(fix.myTargetType);
         }
         else {
-          chainsToFix.add(fix.getStartElement());
+          chainsToFix.add(smartPointerManager.createSmartPsiElementPointer(fix.getStartElement()));
           chainsMigrationTypes.add(fix.myTargetType);
           chainsInitialTypes.add(fix.myInitialType);
         }
@@ -360,11 +362,39 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       if(!elementsToFix.isEmpty() && !performTypeMigration(elementsToFix, migrationTypes)) return;
 
       if (!chainsToFix.isEmpty()) {
-        performMethodCallTypeMigration(project, chainsToFix, chainsInitialTypes, chainsMigrationTypes);
+        filterAndPerformMethodCallTypeMigration(project, chainsToFix, chainsInitialTypes, chainsMigrationTypes);
       }
     }
 
-    private static void performMethodCallTypeMigration(@NotNull final Project project, final List<PsiElement> elements, List<PsiType> initialTypes, List<PsiType> targetTypes) {
+    private static void filterAndPerformMethodCallTypeMigration(@NotNull final Project project,
+                                                       final List<SmartPsiElementPointer> elements,
+                                                       List<PsiType> initialTypes,
+                                                       List<PsiType> targetTypes) {
+      final List<PsiElement> onlyAliveElements = new ArrayList<PsiElement>();
+      final List<PsiType> onlyAliveInitialTypes = new ArrayList<PsiType>();
+      final List<PsiType> onlyAliveTargets = new ArrayList<PsiType>();
+
+      final Iterator<PsiType> initialIterator = initialTypes.iterator();
+      final Iterator<PsiType> targetIterator = targetTypes.iterator();
+      for (SmartPsiElementPointer elementPointer : elements) {
+        final PsiType currentInitial = initialIterator.next();
+        final PsiType currentTarget = targetIterator.next();
+
+        final PsiElement currentElement = elementPointer.getElement();
+        if (currentElement != null) {
+          onlyAliveElements.add(currentElement);
+          onlyAliveInitialTypes.add(currentInitial);
+          onlyAliveTargets.add(currentTarget);
+        }
+      }
+
+      performMethodCallTypeMigration(project, onlyAliveElements, onlyAliveInitialTypes, onlyAliveTargets);
+    }
+
+    private static void performMethodCallTypeMigration(@NotNull final Project project,
+                                                       final List<PsiElement> elements,
+                                                       List<PsiType> initialTypes,
+                                                       List<PsiType> targetTypes) {
       final Iterator<PsiType> initialTypeIterator = initialTypes.iterator();
       final Iterator<PsiType> targetTypeIterator = targetTypes.iterator();
 
