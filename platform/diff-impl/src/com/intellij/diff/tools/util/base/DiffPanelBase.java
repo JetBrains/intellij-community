@@ -16,9 +16,11 @@
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,9 +36,10 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
   @NotNull protected final DiffContext myContext;
 
   @NotNull private final List<JComponent> myPersistentNotifications = new ArrayList<JComponent>();
+  @NotNull private final List<JComponent> myNotifications = new ArrayList<JComponent>();
 
   @NotNull protected final JPanel myContentPanel;
-  @NotNull protected final JPanel myNotificationsPanel;
+  @NotNull protected final Wrapper myNotificationsPanel;
 
   @NotNull private final Wrapper myNorthPanel;
   @NotNull private final Wrapper mySouthPanel;
@@ -56,9 +59,7 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
     myCardLayout = new CardLayout();
     myContentPanel = new JPanel(myCardLayout);
 
-    myNotificationsPanel = new JPanel();
-    myNotificationsPanel.setLayout(new BoxLayout(myNotificationsPanel, BoxLayout.Y_AXIS));
-
+    myNotificationsPanel = new Wrapper();
     myNorthPanel = new Wrapper();
     mySouthPanel = new Wrapper();
 
@@ -100,29 +101,23 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
   //
 
   public void setPersistentNotifications(@NotNull List<JComponent> components) {
-    for (JComponent notification : myPersistentNotifications) {
-      myNotificationsPanel.remove(notification);
-    }
-
     myPersistentNotifications.clear();
     myPersistentNotifications.addAll(components);
-
-    for (JComponent notification : myPersistentNotifications) {
-      myNotificationsPanel.add(notification);
-    }
-    myNotificationsPanel.revalidate();
+    updateNotifications();
   }
 
   public void resetNotifications() {
-    myNotificationsPanel.removeAll();
-    for (JComponent notification : myPersistentNotifications) {
-      myNotificationsPanel.add(notification);
-    }
-    myNotificationsPanel.revalidate();
+    myNotifications.clear();
+    updateNotifications();
   }
 
   public void addNotification(@NotNull JComponent notification) {
-    myNotificationsPanel.add(notification);
-    myNotificationsPanel.revalidate();
+    myNotifications.add(notification);
+    updateNotifications();
+  }
+
+  private void updateNotifications() {
+    List<JComponent> notifications = ContainerUtil.concat(myPersistentNotifications, myNotifications);
+    myNotificationsPanel.setContent(DiffUtil.createStackedComponents(notifications, DiffUtil.TITLE_GAP));
   }
 }

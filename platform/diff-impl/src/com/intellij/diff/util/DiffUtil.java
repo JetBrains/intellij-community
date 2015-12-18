@@ -99,6 +99,7 @@ public class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
 
   @NotNull public static final String DIFF_CONFIG = StoragePathMacros.APP_CONFIG + "/diff.xml";
+  public static final int TITLE_GAP = JBUI.scale(2);
 
   //
   // Editor
@@ -504,6 +505,19 @@ public class DiffUtil {
       result.add(new SyncHeightComponent(components, i));
     }
     return result;
+  }
+
+  @NotNull
+  public static JComponent createStackedComponents(@NotNull List<JComponent> components, int gap) {
+    JPanel panel = new JPanel();
+    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+    for (int i = 0; i < components.size(); i++) {
+      if (i != 0) panel.add(Box.createVerticalStrut(JBUI.scale(gap)));
+      panel.add(components.get(i));
+    }
+
+    return panel;
   }
 
   //
@@ -1047,6 +1061,7 @@ public class DiffUtil {
     }
   }
 
+  @NotNull
   public static List<JComponent> getCustomNotifications(@NotNull DiffContext context, @NotNull DiffRequest request) {
     List<JComponent> requestComponents = request.getUserData(DiffUserDataKeys.NOTIFICATIONS);
     List<JComponent> contextComponents = context.getUserData(DiffUserDataKeys.NOTIFICATIONS);
