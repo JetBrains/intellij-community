@@ -310,12 +310,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
     else {
       Application app = ApplicationManager.getApplication();
-      if (app.isDispatchThread()) {
-        runnable.run();
-      }
-      else {
-        app.invokeAndWait(runnable, ModalityState.any());
-      }
+      app.invokeAndWait(runnable, ModalityState.any());
     }
   }
 
