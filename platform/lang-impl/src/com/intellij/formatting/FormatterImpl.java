@@ -361,7 +361,7 @@ public class FormatterImpl extends FormatterEx
       final FormatProcessor processor = buildProcessorAndWrapBlocks(
         model, block, settings, indentOptions, new FormatTextRanges(affectedRange, true)
       );
-      final LeafBlockWrapper blockBefore = processor.getBlockAtOrAfter(affectedRange.getStartOffset());
+      final LeafBlockWrapper blockBefore = processor.getBlocksHelper().getBlockAtOrAfter(affectedRange.getStartOffset());
       LOG.assertTrue(blockBefore != null);
       WhiteSpace whiteSpace = blockBefore.getWhiteSpace();
       LOG.assertTrue(whiteSpace != null);
@@ -471,7 +471,7 @@ public class FormatterImpl extends FormatterEx
         documentModel, block, settings, indentOptions, new FormatTextRanges(affectedRange, true), offset
       );
 
-      final LeafBlockWrapper blockAfterOffset = processor.getBlockAtOrAfter(offset);
+      final LeafBlockWrapper blockAfterOffset = processor.getBlocksHelper().getBlockAtOrAfter(offset);
 
       if (blockAfterOffset != null && blockAfterOffset.contains(offset)) {
         return offset;
@@ -597,7 +597,7 @@ public class FormatterImpl extends FormatterEx
     final FormatProcessor processor = buildProcessorAndWrapBlocks(
       documentModel, block, settings, indentOptions, new FormatTextRanges(affectedRange, true), offset
     );
-    final LeafBlockWrapper blockAfterOffset = processor.getBlockAtOrAfter(offset);
+    final LeafBlockWrapper blockAfterOffset = processor.getBlocksHelper().getBlockAtOrAfter(offset);
 
     if (blockAfterOffset != null && !blockAfterOffset.contains(offset)) {
       final WhiteSpace whiteSpace = blockAfterOffset.getWhiteSpace();

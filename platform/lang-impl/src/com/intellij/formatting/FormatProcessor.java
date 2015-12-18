@@ -31,7 +31,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +56,8 @@ public class FormatProcessor {
 
   private Map<AbstractBlockWrapper, Block>    myInfos;
   private CompositeBlockWrapper               myRootBlockWrapper;
-  private TIntObjectHashMap<LeafBlockWrapper> myTextRangeToWrapper;
+
+  private BlocksHelper myBlocksHelper;
 
   private final BlockIndentOptions myBlockIndentOptions;
   private final CommonCodeStyleSettings.IndentOptions myDefaultIndentOption;
@@ -188,16 +188,20 @@ public class FormatProcessor {
         myFirstTokenBlockRef.set(myFirstTokenBlock);
         myLastTokenBlock = builder.getLastTokenBlock();
         myCurrentBlock = myFirstTokenBlock;
-        myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
-        int lastBlockOffset = getLastBlock().getEndOffset();
+        int lastBlockOffset = myLastTokenBlock.getEndOffset();
         myLastWhiteSpace = new WhiteSpace(lastBlockOffset, false);
         myLastWhiteSpace.append(Math.max(lastBlockOffset, builder.getEndOffset()), model, myDefaultIndentOption);
+        myBlocksHelper = new BlocksHelper(myFirstTokenBlock, myLastTokenBlock);
         myAlignmentsInsideRangesToModify = builder.getAlignmentsInsideRangeToModify();
         myTotalBlocksWithAlignments = builder.getBlocksToAlign().values().size();
         myExpandableIndents = builder.getExpandableIndentsBlocks();
       } 
     });
     myStateProcessor = new StateProcessor(wrapState);
+  }
+  
+  public BlocksHelper getBlocksHelper() {
+    return myBlocksHelper;
   }
 
   private int getRightMargin(Block rootBlock) {
@@ -215,24 +219,6 @@ public class FormatProcessor {
       }
     }
     return mySettings.getRightMargin(language);
-  }
-
-  private LeafBlockWrapper getLastBlock() {
-    LeafBlockWrapper result = myFirstTokenBlock;
-    while (result.getNextBlock() != null) {
-      result = result.getNextBlock();
-    }
-    return result;
-  }
-
-  private static TIntObjectHashMap<LeafBlockWrapper> buildTextRangeToInfoMap(final LeafBlockWrapper first) {
-    final TIntObjectHashMap<LeafBlockWrapper> result = new TIntObjectHashMap<LeafBlockWrapper>();
-    LeafBlockWrapper current = first;
-    while (current != null) {
-      result.put(current.getStartOffset(), current);
-      current = current.getNextBlock();
-    }
-    return result;
   }
 
   public void format(FormattingModel model) {
@@ -427,7 +413,7 @@ public class FormatProcessor {
         }
 
         final boolean containedLineFeeds = spacing.getMinLineFeeds() > 0;
-        final boolean containsLineFeeds = containsLineFeeds(textRange);
+        final boolean containsLineFeeds = myBlocksHelper.containsLineFeeds(textRange);
 
         if (containedLineFeeds != containsLineFeeds) {
           spacing.setDependentRegionLinefeedStatusChanged();
@@ -819,53 +805,6 @@ public class FormatProcessor {
         current = current.getParent();
         if (current == null || current.getStartOffset() != myCurrentBlock.getStartOffset()) return null;
       }
-    }
-  }
-
-  public boolean containsLineFeeds(final TextRange dependency) {
-    LeafBlockWrapper child = myTextRangeToWrapper.get(dependency.getStartOffset());
-    if (child == null) return false;
-    if (child.containsLineFeeds()) return true;
-    final int endOffset = dependency.getEndOffset();
-    while (child.getEndOffset() < endOffset) {
-      child = child.getNextBlock();
-      if (child == null) return false;
-      if (child.getWhiteSpace().containsLineFeeds()) return true;
-      if (child.containsLineFeeds()) return true;
-    }
-    return false;
-  }
-
-  @Nullable
-  public LeafBlockWrapper getBlockAtOrAfter(final int startOffset) {
-    int current = startOffset;
-    LeafBlockWrapper result = null;
-    while (current < myLastWhiteSpace.getStartOffset()) {
-      final LeafBlockWrapper currentValue = myTextRangeToWrapper.get(current);
-      if (currentValue != null) {
-        result = currentValue;
-        break;
-      }
-      current++;
-    }
-
-    LeafBlockWrapper prevBlock = getPrevBlock(result);
-
-    if (prevBlock != null && prevBlock.contains(startOffset)) {
-      return prevBlock;
-    }
-    else {
-      return result;
-    }
-  }
-
-  @Nullable
-  private LeafBlockWrapper getPrevBlock(@Nullable final LeafBlockWrapper result) {
-    if (result != null) {
-      return result.getPreviousBlock();
-    }
-    else {
-      return myLastTokenBlock;
     }
   }
 

@@ -95,7 +95,7 @@ public class DependantSpacingImpl extends SpacingImpl {
 
     boolean atLeastOneDependencyRangeContainsLf = false;
     for (TextRange dependency : myDependentRegionRanges) {
-      atLeastOneDependencyRangeContainsLf |= formatter.containsLineFeeds(dependency);
+      atLeastOneDependencyRangeContainsLf |= formatter.getBlocksHelper().containsLineFeeds(dependency);
     }
 
     if (atLeastOneDependencyRangeContainsLf) myFlags |= DEPENDENCE_CONTAINS_LF_MASK;
