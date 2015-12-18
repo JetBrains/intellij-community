@@ -516,6 +516,12 @@ public class FormatProcessor {
       myBlockIndentOptions.getIndentOptions(myCurrentBlock));
     BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
     final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock);
+    return processAlignmentResult(alignment, context, result, offsetResponsibleBlock);
+  }
+
+  private boolean processAlignmentResult(AlignmentImpl alignment, Context context,
+                                         BlockAlignmentProcessor.Result result, 
+                                         LeafBlockWrapper offsetResponsibleBlock) {
     switch (result) {
       case TARGET_BLOCK_PROCESSED_NOT_ALIGNED: return true;
       case TARGET_BLOCK_ALIGNED: storeAlignmentMapping(); return true;
