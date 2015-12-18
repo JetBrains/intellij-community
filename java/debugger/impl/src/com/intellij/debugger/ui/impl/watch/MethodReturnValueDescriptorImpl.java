@@ -26,6 +26,7 @@ import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.Method;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: lex
@@ -36,7 +37,7 @@ public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl{
   private final Method myMethod;
   private final Value myValue;
 
-  public MethodReturnValueDescriptorImpl(Project project, final Method method, Value value) {
+  public MethodReturnValueDescriptorImpl(Project project, @NotNull Method method, Value value) {
     super(project);
     myMethod = method;
     myValue = value;
@@ -44,6 +45,11 @@ public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl{
 
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     return myValue;
+  }
+
+  @NotNull
+  public Method getMethod() {
+    return myMethod;
   }
 
   public String getName() {
