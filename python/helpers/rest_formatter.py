@@ -75,7 +75,7 @@ class RestHTMLTranslator(HTMLTranslator):
             self.body.append(") ")
         elif parent_text.startswith("type "):
             index = parent_text.index("type ")
-            type_string = parent_text[index + 5]
+            type_string = parent_text[index + len("type ")]
             self.body.append(self.starttag(node, 'a', '',
                                            href='psi_element://#typename#' + type_string))
         elif parent_text.startswith("rtype"):
@@ -180,7 +180,7 @@ class RestHTMLTranslator(HTMLTranslator):
                 index = rawsource.index("param ")
                 if not child.children:
                     continue
-                param_name = rawsource[index + 6:]
+                param_name = rawsource[index + len("param "):]
                 param_type = None
                 parts = param_name.rsplit(None, 1)
                 if len(parts) == 2:
@@ -201,7 +201,7 @@ class RestHTMLTranslator(HTMLTranslator):
             rawsource = field_name.rawsource
             if rawsource.startswith("type "):
                 index = rawsource.index("type ")
-                name = re.sub(r'\\\*', '*', rawsource[index + 5:])
+                name = re.sub(r'\\\*', '*', rawsource[index + len("type "):])
                 if name in fields:
                     fields[name].type = field_body[0][0] if field_body.children else ''
                     node.children.remove(n)
