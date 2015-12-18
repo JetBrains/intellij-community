@@ -234,4 +234,8 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   public IdeaGateway getGateway() {
     return myGateway;
   }
+
+  @Override
+  public void revertToLabel(@NotNull Project project, @NotNull VirtualFile f, @NotNull Label label) {
+  }
 }
