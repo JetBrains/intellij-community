@@ -62,11 +62,9 @@ class LambdaParametersTypeConversionDescriptor extends TypeConversionDescriptor 
         if (InheritanceUtil.isInheritorOrSelf(resolvedClass, javaPsiFacade.findClass(GuavaSupplierConversionRule.GUAVA_SUPPLIER, scope), true)) {
           samMethodName = "get";
         }
-        else if (InheritanceUtil.isInheritorOrSelf(resolvedClass, javaPsiFacade.findClass(GuavaFunctionConversionRule.GUAVA_FUNCTION, scope), true)) {
+        else if (InheritanceUtil.isInheritorOrSelf(resolvedClass, javaPsiFacade.findClass(GuavaFunctionConversionRule.GUAVA_FUNCTION, scope), true) ||
+                 InheritanceUtil.isInheritorOrSelf(resolvedClass, javaPsiFacade.findClass(GuavaPredicateConversionRule.GUAVA_PREDICATE, scope), true)) {
           samMethodName = "apply";
-        }
-        else if (InheritanceUtil.isInheritorOrSelf(resolvedClass, javaPsiFacade.findClass(GuavaPredicateConversionRule.GUAVA_PREDICATE, scope), true)) {
-          samMethodName = "test";
         }
       }
       LOG.assertTrue(samMethodName != null);
