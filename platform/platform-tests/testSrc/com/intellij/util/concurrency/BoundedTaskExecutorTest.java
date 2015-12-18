@@ -225,7 +225,7 @@ public class BoundedTaskExecutorTest extends TestCase {
         UIUtil.invokeLaterIfNeeded(() -> {
           try {
             waitStarted.countDown();
-            executor.waitAllTasksExecuted(1, TimeUnit.SECONDS);
+            executor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
             waitCompleted.countDown();
           }
           catch (Exception e) {
@@ -270,12 +270,12 @@ public class BoundedTaskExecutorTest extends TestCase {
             return "check 2 for " + finalI;
           }
         });
-        assertTrue(waitCompleted.await(5, TimeUnit.SECONDS));
+        assertTrue(waitCompleted.await(1, TimeUnit.MINUTES));
         assertTrue(future.isDone());
       }
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
         try {
-          executor.waitAllTasksExecuted(5, TimeUnit.SECONDS);
+          executor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
         }
         catch (Exception e) {
           throw new RuntimeException(e);
@@ -289,6 +289,6 @@ public class BoundedTaskExecutorTest extends TestCase {
 
     assertTrue("Max threads was: "+maxThreads+" but bound was 1", maxThreads.get() == 1);
     backendExecutor.shutdownNow();
-    assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
+    assertTrue(backendExecutor.awaitTermination(1, TimeUnit.MINUTES));
   }
 }
