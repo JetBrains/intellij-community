@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.history.Label;
+import com.intellij.history.LocalHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -70,6 +71,7 @@ class UndoApplyPatchDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     super.doOKAction();
+    LocalHistory.getInstance().revertToLabel(myProject, myProject.getBaseDir(), myBeforeLabel);
   }
 
   static void rollbackApplyPatch(@NotNull Project project, @NotNull List<FilePath> filePaths,

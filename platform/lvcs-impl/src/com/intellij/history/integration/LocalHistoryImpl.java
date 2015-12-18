@@ -19,6 +19,9 @@ package com.intellij.history.integration;
 import com.intellij.history.*;
 import com.intellij.history.core.*;
 import com.intellij.history.core.tree.RootEntry;
+import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
+import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
+import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -38,7 +41,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.history.integration.LocalHistoryUtil.findRevisionIndexToRevert;
 
 public class LocalHistoryImpl extends LocalHistory implements ApplicationComponent {
   private ChangeList myChangeList;
@@ -184,6 +190,11 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   private Label label(final LabelImpl impl) {
     return new Label() {
       @Override
+      public long getLabelChangeId() {
+        return impl.getLabelChangeId();
+      }
+
+      @Override
       public ByteContent getByteContent(final String path) {
         return ApplicationManager.getApplication().runReadAction(new Computable<ByteContent>() {
           @Override
@@ -237,5 +248,21 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
   @Override
   public void revertToLabel(@NotNull Project project, @NotNull VirtualFile f, @NotNull Label label) {
+    HistoryDialogModel dirHistoryModel = f.isDirectory()
+                                         ? new DirectoryHistoryDialogModel(project, myGateway, myVcs, f)
+                                         : new EntireFileHistoryDialogModel(project, myGateway, myVcs, f);
+    int leftRev = findRevisionIndexToRevert(dirHistoryModel, label);
+    if (leftRev < 0) {
+      LocalHistoryLog.LOG.warn(
+        String.format("Couldn't find label revision. try to Use local history dialog for %s and perform revert manually.", f.getName()));
+      return;
+    }
+    try {
+      dirHistoryModel.selectRevisions(-1, leftRev - 1); //-1 because we should revert all changes up to previous one, but not label-related.
+      dirHistoryModel.createReverter().revert();
+    }
+    catch (IOException e) {
+      LocalHistoryLog.LOG.error(String.format("Couldn't revert %s to local history label.", f.getName()), e);
+    }
   }
 }

@@ -18,10 +18,18 @@ package com.intellij.history;
 
 public interface Label {
   Label NULL_INSTANCE = new Label() {
+
+    @Override
+    public long getLabelChangeId() {
+      return -1;
+    }
+
     public ByteContent getByteContent(String path) {
       return null;
     }
   };
+
+  long getLabelChangeId();
 
   ByteContent getByteContent(String path);
 }
