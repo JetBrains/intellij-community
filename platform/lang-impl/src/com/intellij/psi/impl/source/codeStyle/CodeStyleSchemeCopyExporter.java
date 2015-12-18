@@ -15,11 +15,8 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.SchemeExporter;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import org.jdom.Element;
 import org.jdom.output.Format;
