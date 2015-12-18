@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Document;
@@ -38,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.psi.util.PsiTreeUtil.skipParentsOfType;
 
 /**
  * @author Rustam Vishnyakov
@@ -86,7 +89,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     if (newStart == null || newEnd == null) {
       return PsiElement.EMPTY_ARRAY;
     }
-    final PsiElement commonParent = findCommonAncestorForWholeRange(newStart, newEnd);
+    PsiElement commonParent = findCommonAncestorForWholeRange(newStart, newEnd);
     if (commonParent != null) {
       return new PsiElement[] {commonParent};
     }
@@ -97,26 +100,35 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     // ]</selection>
     // E.g. in case shown, because of that adjustment, closing bracket and number literal won't have the same parent
     // and next test will fail.
-    if (newStart.getParent().getFirstChild() == newStart && newStart.getFirstChild() == null) {
-      newStart = newStart.getParent();
+    PsiElement newStartParent = getParent(newStart);
+    if (newStartParent != null && newStartParent.getFirstChild() == newStart && newStart.getFirstChild() == null) {
+      newStart = newStartParent;
     }
-    if (newEnd.getParent().getLastChild() == newEnd && newEnd.getFirstChild() == null) {
-      newEnd = newEnd.getParent();
+    PsiElement newEndParent = getParent(newEnd);
+    if (newEndParent != null && newEndParent.getLastChild() == newEnd && newEnd.getFirstChild() == null) {
+      newEnd = newEndParent;
     }
-    if (newStart.getParent() == newEnd.getParent()) {
+    if (getParent(newStart) == getParent(newEnd)) {
       return new PsiElement[] {newStart, newEnd};
     }
     return PsiElement.EMPTY_ARRAY;
   }
 
   @Nullable
+  private static PsiElement getParent(@Nullable PsiElement e) {
+    return e instanceof PsiFile ? e : skipParentsOfType(e, GeneratedParserUtilBase.DummyBlock.class);
+  }
+
+  @Nullable
   private static PsiElement lowerEndElementIfNeeded(@NotNull PsiElement start, @NotNull PsiElement end) {
     if (PsiTreeUtil.isAncestor(end, start, true)) {
-      PsiElement lastChild = end.getLastChild();
-      while (lastChild != null && lastChild.getParent() != start.getParent()) {
-        lastChild = lastChild.getLastChild();
+      PsiElement o = end.getLastChild();
+      while (o != null && o.getParent() != start.getParent()) {
+        PsiElement last = o.getLastChild();
+        if (last == null) return o;
+        o = last;
       }
-      return lastChild;
+      return o;
     }
     return end;
   }
@@ -124,11 +136,13 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
   @Nullable
   private static PsiElement lowerStartElementIfNeeded(@NotNull PsiElement start, @NotNull PsiElement end) {
     if (PsiTreeUtil.isAncestor(start, end, true)) {
-      PsiElement firstChild = start.getFirstChild();
-      while (firstChild != null && firstChild.getParent() != end.getParent()) {
-        firstChild = firstChild.getFirstChild();
+      PsiElement o = start.getFirstChild();
+      while (o != null && o.getParent() != end.getParent()) {
+        PsiElement first = o.getFirstChild();
+        if (first == null) return o;
+        o = first;
       }
-      return firstChild;
+      return o;
     }
     return start;
   }
