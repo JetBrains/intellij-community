@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Allows to compare files
  */
-public class FileContentImpl implements FileContent {
+public class FileContentImpl extends DiffContentBase implements FileContent {
   @NotNull private final VirtualFile myFile;
   @Nullable private final Project myProject;
   @NotNull private final FileType myType;
@@ -59,9 +59,5 @@ public class FileContentImpl implements FileContent {
   @NotNull
   public String getFilePath() {
     return myFile.getPath();
-  }
-
-  @Override
-  public void onAssigned(boolean isAssigned) {
   }
 }

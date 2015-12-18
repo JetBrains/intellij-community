@@ -15,18 +15,20 @@
  */
 package com.intellij.diff.contents;
 
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.util.UserDataHolderBase;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Represents empty content
- * <p/>
- * ex: 'Before' state for new file
- */
-public class EmptyContent extends DiffContentBase {
+public abstract class DiffContentBase extends UserDataHolderBase implements DiffContent {
   @Nullable
   @Override
-  public FileType getContentType() {
+  public OpenFileDescriptor getOpenFileDescriptor() {
     return null;
+  }
+
+  @Override
+  @CalledInAwt
+  public void onAssigned(boolean isAssigned) {
   }
 }
