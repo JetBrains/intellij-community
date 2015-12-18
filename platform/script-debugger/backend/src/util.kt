@@ -20,8 +20,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.CharsetToolkit
 import io.netty.buffer.ByteBuf
+import io.netty.channel.Channel
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.io.JsonReaderEx
+import org.jetbrains.io.addListener
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.CharBuffer
@@ -33,6 +35,8 @@ internal class LogEntry(val message: Any, val marker: String) {
 }
 
 class MessagingLogger internal constructor(private val queue: ConcurrentLinkedQueue<LogEntry>) {
+  internal @Volatile var closed = false
+
   fun add(inMessage: CharSequence, marker: String = "IN") {
     queue.add(LogEntry(inMessage, marker))
   }
@@ -40,9 +44,24 @@ class MessagingLogger internal constructor(private val queue: ConcurrentLinkedQu
   fun add(outMessage: ByteBuf, marker: String = "OUT") {
     queue.add(LogEntry(outMessage.copy(), marker))
   }
+
+  fun close() {
+    closed = true
+  }
+
+  fun closeOnChannelClose(channel: Channel) {
+    channel.closeFuture().addListener {
+      try {
+        add("\"Closed\"", "Channel")
+      }
+      finally {
+        close()
+      }
+    }
+  }
 }
 
-fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) key: String, vm: AttachStateManager): MessagingLogger? {
+fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) key: String): MessagingLogger? {
   val debugFile = Registry.stringValue(key)
   if (debugFile.isNullOrEmpty()) {
     return null
@@ -60,42 +79,44 @@ fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) ke
 
     val dateFormatter = SimpleDateFormat("HH.mm.ss,SSS")
 
-    o@ do {
-      while (true) {
-        val entry = queue.poll() ?: continue@o
+    while (true) {
+      val entry = queue.poll() ?: if (logger.closed) {
+        break
+      }
+      else {
+        continue
+      }
 
-        writer.write("""{"timestamp": "${dateFormatter.format(entry.time)}", """)
-        val message = entry.message
-        when (message) {
-          is CharSequence -> {
-            writer.write("\"${entry.marker}\": ")
-            writer.flush()
+      writer.write("""{"timestamp": "${dateFormatter.format(entry.time)}", """)
+      val message = entry.message
+      when (message) {
+        is CharSequence -> {
+          writer.write("\"${entry.marker}\": ")
+          writer.flush()
 
-            if (message is JsonReaderEx.CharSequenceBackedByChars) {
-              fileChannel.write(message.byteBuffer)
-            }
-            else {
-              fileChannel.write(CharsetToolkit.UTF8_CHARSET.encode(CharBuffer.wrap(message)))
-            }
-
-            writer.write("},\n")
-            writer.flush()
+          if (message is JsonReaderEx.CharSequenceBackedByChars) {
+            fileChannel.write(message.byteBuffer)
           }
-          is ByteBuf -> {
-            writer.write("\"${entry.marker}\": ")
-            writer.flush()
-
-            message.getBytes(message.readerIndex(), out, message.readableBytes())
-            message.release()
-
-            writer.write("},\n")
-            writer.flush()
+          else {
+            fileChannel.write(CharsetToolkit.UTF8_CHARSET.encode(CharBuffer.wrap(message)))
           }
-          else -> throw RuntimeException("Unknown message type")
+
+          writer.write("},\n")
+          writer.flush()
         }
+        is ByteBuf -> {
+          writer.write("\"${entry.marker}\": ")
+          writer.flush()
+
+          message.getBytes(message.readerIndex(), out, message.readableBytes())
+          message.release()
+
+          writer.write("},\n")
+          writer.flush()
+        }
+        else -> throw RuntimeException("Unknown message type")
       }
     }
-    while (vm.isAttached)
     writer.write("]")
     out.close()
   }
