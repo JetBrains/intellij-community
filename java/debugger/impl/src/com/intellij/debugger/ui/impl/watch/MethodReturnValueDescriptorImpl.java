@@ -73,7 +73,7 @@ public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl{
   }
 
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    throw new EvaluateException("Evaluation not supported for method return value");
+    return null;
   }
 
   public boolean canSetValue() {
