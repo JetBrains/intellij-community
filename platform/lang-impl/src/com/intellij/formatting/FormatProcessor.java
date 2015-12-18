@@ -58,6 +58,7 @@ public class FormatProcessor {
   private CompositeBlockWrapper               myRootBlockWrapper;
 
   private BlockMapperHelper myBlockMapperHelper;
+  private DependentSpacingEngine myDependentSpacingEngine;
 
   private final BlockIndentOptions myBlockIndentOptions;
   private final CommonCodeStyleSettings.IndentOptions myDefaultIndentOption;
@@ -101,44 +102,6 @@ public class FormatProcessor {
   private Ref<LeafBlockWrapper> myFirstTokenBlockRef = Ref.create(); 
   private LeafBlockWrapper myLastTokenBlock;
 
-  /**
-   * Formatter provides a notion of {@link DependantSpacingImpl dependent spacing}, i.e. spacing that insist on line feed if target
-   * dependent region contains line feed.
-   * <p/>
-   * Example:
-   * <pre>
-   *       int[] data = {1, 2, 3};
-   * </pre>
-   * We want to keep that in one line if possible but place curly braces on separate lines if the width is not enough:
-   * <pre>
-   *      int[] data = {    | &lt; right margin
-   *          1, 2, 3       |
-   *      }                 |
-   * </pre>
-   * There is a possible case that particular block has dependent spacing property that targets region that lays beyond the
-   * current block. E.g. consider example above - <code>'1'</code> block has dependent spacing that targets the whole
-   * <code>'{1, 2, 3}'</code> block. So, it's not possible to answer whether line feed should be used during processing block
-   * <code>'1'</code>.
-   * <p/>
-   * We store such 'forward dependencies' at the current collection where the key is the range of the target 'dependent forward
-   * region' and value is dependent spacing object.
-   * <p/>
-   * Every time we detect that formatter changes 'has line feeds' status of such dependent region, we
-   * {@link DependantSpacingImpl#setDependentRegionLinefeedStatusChanged() mark} the dependent spacing as changed and schedule one more
-   * formatting iteration.
-   */
-  private SortedMap<TextRange, DependantSpacingImpl> myPreviousDependencies =
-    new TreeMap<TextRange, DependantSpacingImpl>(new Comparator<TextRange>() {
-      @Override
-      public int compare(final TextRange o1, final TextRange o2) {
-        int offsetsDelta = o1.getEndOffset() - o2.getEndOffset();
-
-        if (offsetsDelta == 0) {
-          offsetsDelta = o2.getStartOffset() - o1.getStartOffset();     // starting earlier is greater
-        }
-        return offsetsDelta;
-      }
-    });
 
   private final HashSet<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
   @NotNull
@@ -192,6 +155,7 @@ public class FormatProcessor {
         myLastWhiteSpace = new WhiteSpace(lastBlockOffset, false);
         myLastWhiteSpace.append(Math.max(lastBlockOffset, builder.getEndOffset()), model, myDefaultIndentOption);
         myBlockMapperHelper = new BlockMapperHelper(myFirstTokenBlock, myLastTokenBlock);
+        myDependentSpacingEngine = new DependentSpacingEngine(myBlockMapperHelper);
         myAlignmentsInsideRangesToModify = builder.getAlignmentsInsideRangeToModify();
         myTotalBlocksWithAlignments = builder.getBlocksToAlign().values().size();
         myExpandableIndents = builder.getExpandableIndentsBlocks();
@@ -298,7 +262,7 @@ public class FormatProcessor {
   private void reset() {
     myBackwardShiftedAlignedBlocks.clear();
     myAlignmentMappings.clear();
-    myPreviousDependencies.clear();
+    myDependentSpacingEngine.clear();
     myWrapCandidate = null;
     if (myRootBlockWrapper != null) {
       myRootBlockWrapper.reset();
@@ -367,10 +331,10 @@ public class FormatProcessor {
 
     final List<TextRange> ranges = getDependentRegionRangesAfterCurrentWhiteSpace(spaceProperty, whiteSpace);
     if (!ranges.isEmpty()) {
-      registerUnresolvedDependentSpacingRanges(spaceProperty, ranges);
+      myDependentSpacingEngine.registerUnresolvedDependentSpacingRanges(spaceProperty, ranges);
     }
 
-    if (!whiteSpace.isIsReadOnly() && shouldReformatPreviouslyLocatedDependentSpacing(whiteSpace)) {
+    if (!whiteSpace.isIsReadOnly() && myDependentSpacingEngine.shouldReformatPreviouslyLocatedDependentSpacing(whiteSpace)) {
       myAlignAgain.add(whiteSpace);
     }
     else if (!myAlignAgain.isEmpty()) {
@@ -397,41 +361,6 @@ public class FormatProcessor {
     }
 
     return myAlignmentsInsideRangesToModify.contains(alignment);
-  }
-
-  private boolean shouldReformatPreviouslyLocatedDependentSpacing(WhiteSpace space) {
-    final TextRange changed = space.getTextRange();
-    final SortedMap<TextRange, DependantSpacingImpl> sortedHeadMap = myPreviousDependencies.tailMap(changed);
-
-    for (final Map.Entry<TextRange, DependantSpacingImpl> entry : sortedHeadMap.entrySet()) {
-      final TextRange textRange = entry.getKey();
-
-      if (textRange.contains(changed)) {
-        final DependantSpacingImpl spacing = entry.getValue();
-        if (spacing.isDependentRegionLinefeedStatusChanged()) {
-          continue;
-        }
-
-        final boolean containedLineFeeds = spacing.getMinLineFeeds() > 0;
-        final boolean containsLineFeeds = myBlockMapperHelper.containsLineFeeds(textRange);
-
-        if (containedLineFeeds != containsLineFeeds) {
-          spacing.setDependentRegionLinefeedStatusChanged();
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  private void registerUnresolvedDependentSpacingRanges(final SpacingImpl spaceProperty, List<TextRange> unprocessedRanges) {
-    final DependantSpacingImpl dependantSpaceProperty = (DependantSpacingImpl)spaceProperty;
-    if (dependantSpaceProperty.isDependentRegionLinefeedStatusChanged()) return;
-
-    for (TextRange range: unprocessedRanges) {
-      myPreviousDependencies.put(range, dependantSpaceProperty);
-    }
   }
 
   private static List<TextRange> getDependentRegionRangesAfterCurrentWhiteSpace(final SpacingImpl spaceProperty,
@@ -1103,7 +1032,7 @@ public class FormatProcessor {
       }
       else {
         myAlignAgain.clear();
-        myPreviousDependencies.clear();
+        myDependentSpacingEngine.clear();
         myCurrentBlock = myFirstTokenBlock;
       }
     }

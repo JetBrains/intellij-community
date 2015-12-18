@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NonNls;
  * Extends {@link Spacing} in order to keep number of additional settings like <code>'minSpaces'</code>, <code>'minLineFeeds'</code>,
  * <code>'prefLineFeeds'</code> etc.
  */
-class SpacingImpl extends Spacing {
+public class SpacingImpl extends Spacing {
   private int myMinSpaces;
   private int myKeepBlankLines;
   private int myMaxSpaces;
