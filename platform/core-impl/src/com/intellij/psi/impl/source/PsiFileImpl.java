@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
@@ -50,6 +51,7 @@ import com.intellij.psi.tree.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.containers.ContainerUtil;
@@ -708,7 +710,15 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       }
       final PsiFileStub[] stubRoots = baseRoot.getStubRoots();
       if (stubRoots.length != roots.size()) {
-        LOG.error("stubRoots.length = " + stubRoots.length + "; roots.size() = " + roots.size());
+        final Function<PsiFileStub, String> stubToString = new Function<PsiFileStub, String>() {
+          @Override
+          public String fun(PsiFileStub stub) {
+            return stub.getClass().getSimpleName();
+          }
+        };
+        LOG.error("readOrBuilt roots = " + StringUtil.join(stubRoots, stubToString, ", ") + "; " +
+                  StubTreeLoader.getFileViewProviderMismatchDiagnostics(viewProvider));
+        return stubHolder;
       }
       // set all stub trees to avoid reading file when stub tree for another psi root is accessed
       int matchingRoot = 0;

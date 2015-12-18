@@ -16,10 +16,8 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -27,7 +25,6 @@ import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,22 +77,8 @@ public abstract class StubProcessingHelperBase {
           else {
             customStubs = true;
             if (BinaryFileStubBuilders.INSTANCE.forFileType(psiFile.getFileType()) == null) {
-              final Function<Language, String> languageToString = new Function<Language, String>() {
-                @Override
-                public String fun(Language language) {
-                  return language.getID();
-                }
-              };
-              final Function<PsiFile, String> fileToString = new Function<PsiFile, String>() {
-                @Override
-                public String fun(PsiFile file) {
-                  return file.getClass().getName();
-                }
-              };
-              LOG.error("unable to get stub builder for " + psiFile.getFileType() +
-                        ", path = " + file.getPath() +
-                        ", languages = [" + StringUtil.join(viewProvider.getLanguages(), languageToString, ", ") +
-                        "], files = [" + StringUtil.join(viewProvider.getAllFiles(), fileToString, ", ") + "]"
+              LOG.error("unable to get stub builder for " + psiFile.getFileType() + ", " +
+                        StubTreeLoader.getFileViewProviderMismatchDiagnostics(viewProvider)
               );
             }
           }
