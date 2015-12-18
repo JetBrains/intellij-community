@@ -1,9 +1,7 @@
 Types:
-PsiArrayInitializerExpression:{} : java.util.Set<java.awt.Component>[]
 PsiField:f : java.util.Set<java.awt.Component>[][]
 
 Conversions:
 
 New expression type changes:
 Fails:
-new Set[][]{{}}->java.util.Set<java.awt.Component>[][]
