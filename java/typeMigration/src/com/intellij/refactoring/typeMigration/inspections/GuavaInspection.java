@@ -33,10 +33,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.*;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
-import com.intellij.refactoring.typeMigration.rules.guava.BaseGuavaTypeConversionRule;
-import com.intellij.refactoring.typeMigration.rules.guava.GuavaFluentIterableConversionRule;
-import com.intellij.refactoring.typeMigration.rules.guava.GuavaFunctionConversionRule;
-import com.intellij.refactoring.typeMigration.rules.guava.GuavaOptionalConversionRule;
+import com.intellij.refactoring.typeMigration.rules.guava.*;
 import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -142,6 +139,25 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
 
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        checkFluentIterableGenerationMethod(expression);
+        checkPredicatesUtilityMethod(expression);
+      }
+
+      private void checkPredicatesUtilityMethod(PsiMethodCallExpression expression) {
+        if (FunctionalInterfaceTypeConversionDescriptor.isPredicates(expression)) {
+          final PsiMethod method = expression.resolveMethod();
+          if (GuavaPredicateConversionRule.isConvertablePredicatesMethod(method)) {
+            final PsiClassType initialType = (PsiClassType)expression.getType();
+            PsiClassType targetType = createTargetType(initialType);
+            if (targetType == null) return;
+            holder.registerProblem(expression.getMethodExpression().getReferenceNameElement(),
+                                   PROBLEM_DESCRIPTION_FOR_VARIABLE,
+                                   new MigrateGuavaTypeFix(expression, targetType, initialType));
+          }
+        }
+      }
+
+      private void checkFluentIterableGenerationMethod(PsiMethodCallExpression expression) {
         if (!checkChains) return;
         if (!isFluentIterableFromCall(expression)) return;
 
@@ -161,14 +177,20 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
 
         PsiClassType initialType = (PsiClassType)expression.getType();
         LOG.assertTrue(initialType != null);
+        PsiClassType targetType = createTargetType(initialType);
+        if (targetType == null) return;
+
+        holder.registerProblem(chain, PROBLEM_DESCRIPTION_FOR_METHOD_CHAIN, new MigrateGuavaTypeFix(chain, targetType, initialType));
+      }
+
+      @Nullable
+      private PsiClassType createTargetType(PsiClassType initialType) {
         PsiClass resolvedClass = initialType.resolve();
         PsiClass target;
         if (resolvedClass == null || (target = myGuavaClassConversions.getValue().get(resolvedClass.getQualifiedName())) == null) {
-          return;
+          return null;
         }
-        PsiClassType targetType = addTypeParameters(initialType, initialType.resolveGenerics(), target);
-
-        holder.registerProblem(chain, PROBLEM_DESCRIPTION_FOR_METHOD_CHAIN, new MigrateGuavaTypeFix(chain, targetType, initialType));
+        return addTypeParameters(initialType, initialType.resolveGenerics(), target);
       }
 
       private PsiType getConversionClassType(PsiType initialType) {
@@ -276,10 +298,10 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       if (myInitialType == null) {
         performTypeMigration(Collections.singletonList(startElement), Collections.singletonList(myTargetType));
       } else {
-        performChainTypeMigration(project,
-                                  Collections.singletonList(startElement),
-                                  Collections.singletonList(myInitialType),
-                                  Collections.singletonList(myTargetType));
+        performMethodCallTypeMigration(project,
+                                       Collections.singletonList(startElement),
+                                       Collections.singletonList(myInitialType),
+                                       Collections.singletonList(myTargetType));
       }
     }
 
@@ -338,11 +360,11 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       if(!elementsToFix.isEmpty() && !performTypeMigration(elementsToFix, migrationTypes)) return;
 
       if (!chainsToFix.isEmpty()) {
-        performChainTypeMigration(project, chainsToFix, chainsInitialTypes, chainsMigrationTypes);
+        performMethodCallTypeMigration(project, chainsToFix, chainsInitialTypes, chainsMigrationTypes);
       }
     }
 
-    private static void performChainTypeMigration(@NotNull final Project project, final List<PsiElement> elements, List<PsiType> initialTypes, List<PsiType> targetTypes) {
+    private static void performMethodCallTypeMigration(@NotNull final Project project, final List<PsiElement> elements, List<PsiType> initialTypes, List<PsiType> targetTypes) {
       final Iterator<PsiType> initialTypeIterator = initialTypes.iterator();
       final Iterator<PsiType> targetTypeIterator = targetTypes.iterator();
 

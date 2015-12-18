@@ -15,8 +15,7 @@
  */
 package com.intellij.refactoring.typeMigration.rules.guava;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.*;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,20 +35,39 @@ public class FunctionalInterfaceTypeConversionDescriptor extends TypeConversionD
   @Override
   public PsiExpression replace(PsiExpression expression) {
     if (expression instanceof PsiMethodReferenceExpression) {
-      setAsMethodReference();
+      setAsMethodReference((PsiMethodReferenceExpression)expression);
     } else {
       setAsMethodCall();
     }
     return super.replace(expression);
   }
 
-  private void setAsMethodReference() {
+  private void setAsMethodReference(PsiMethodReferenceExpression methodReference) {
     setStringToReplace("$qualifier$::" + myMethodName);
+    if (methodReference.getParent() instanceof PsiExpressionList &&
+        methodReference.getParent().getParent() instanceof PsiMethodCallExpression &&
+        isPredicates((PsiMethodCallExpression)methodReference.getParent().getParent())) {
+      setReplaceByString("$qualifier$::" + myTargetMethodName);
+    }
     setReplaceByString("$qualifier$");
   }
 
   private void setAsMethodCall() {
     setStringToReplace("$qualifier$." + myMethodName + "($param$)");
     setReplaceByString("$qualifier$." + myTargetMethodName + "($param$)");
+  }
+
+  public static boolean isPredicates(PsiMethodCallExpression expression) {
+    final String methodName = expression.getMethodExpression().getReferenceName();
+    if (GuavaPredicateConversionRule.PREDIACTES_NOT.equals(methodName) ||
+        GuavaPredicateConversionRule.PREDICATES_AND_OR.contains(methodName)) {
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) return false;
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass != null && GuavaPredicateConversionRule.GUAVA_PREDICATES_UTILITY.equals(aClass.getQualifiedName())) {
+        return true;
+      }
+    }
+    return false;
   }
 }

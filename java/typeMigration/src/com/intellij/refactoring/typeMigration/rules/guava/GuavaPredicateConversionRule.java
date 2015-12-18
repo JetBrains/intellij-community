@@ -15,16 +15,17 @@
  */
 package com.intellij.refactoring.typeMigration.rules.guava;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -34,13 +35,20 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
-  public static final String GUAVA_PREDICATE = "com.google.common.base.Predicate";
-  public static final String JAVA_PREDICATE = "java.util.function.Predicate";
+  private static final Logger LOG = Logger.getInstance(GuavaPredicateConversionRule.class);
+
+  static final String GUAVA_PREDICATE = "com.google.common.base.Predicate";
+  static final String JAVA_PREDICATE = "java.util.function.Predicate";
+
+  public static final String GUAVA_PREDICATES_UTILITY = "com.google.common.base.Predicates";
+  public static final Set<String> PREDICATES_AND_OR = ContainerUtil.newHashSet("or", "and");
+  public static final String PREDIACTES_NOT = "not";
+
 
   @NotNull
   @Override
   protected Set<String> getAdditionalUtilityClasses() {
-    return Collections.singleton("com.google.common.base.Predicates");
+    return Collections.singleton(GUAVA_PREDICATES_UTILITY);
   }
 
   @Override
@@ -66,26 +74,112 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
     if (!(context instanceof PsiMethodCallExpression)) {
       return null;
     }
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass != null && GUAVA_PREDICATES_UTILITY.equals(aClass.getQualifiedName())) {
+      if (!isConvertablePredicatesMethod(method)) return null;
+      if (PREDICATES_AND_OR.contains(methodName) && canMigrateAndOrOr((PsiMethodCallExpression)context)) {
+        return new AndOrOrConversionDescriptor(GuavaConversionUtil.addTypeParameters(JAVA_PREDICATE, context.getType(), context));
+      }
+      else if (PREDIACTES_NOT.equals(methodName)) {
+        return new NotConversionDescriptor(GuavaConversionUtil.addTypeParameters(JAVA_PREDICATE, context.getType(), context));
+      }
+    }
+    return new TypeConversionDescriptorBase() {
+      @Override
+      public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+        return (PsiExpression)expression.replace(JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::test", expression));
+      }
+    };
+  }
+
+  public static boolean isConvertablePredicatesMethod(@NotNull PsiMethod method) {
     if (method.getParameterList().getParametersCount() == 1) {
       final PsiParameter parameter = method.getParameterList().getParameters()[0];
       final PsiClass psiClass = PsiTypesUtil.getPsiClass(parameter.getType().getDeepComponentType());
       if (psiClass == null || CommonClassNames.JAVA_LANG_ITERABLE.equals(psiClass.getQualifiedName())) {
-        return null;
+        return false;
       }
     }
-    if (methodName.equals("or")) {
-      //TODO
-      return null;
+    return true;
+  }
+
+  private static boolean canMigrateAndOrOr(PsiMethodCallExpression expr) {
+    final PsiMethod method = expr.resolveMethod();
+    if (method == null) return false;
+    final PsiParameterList parameters = method.getParameterList();
+    if (parameters.getParametersCount() != 1) {
+      return parameters.getParametersCount() != 0;
     }
-    else if (methodName.equals("and")) {
-      //TODO
-      return null;
+    final PsiParameter parameter = parameters.getParameters()[0];
+    final PsiType type = parameter.getType();
+    return type instanceof PsiEllipsisType;
+  }
+
+  private static class NotConversionDescriptor extends TypeConversionDescriptorBase {
+    private final PsiType myTargetType;
+
+    public NotConversionDescriptor(PsiType targetType) {
+      myTargetType = targetType;
     }
-    else if (methodName.equals("not")) {
-      //TODO
-      return null;
+
+    @Override
+    public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+      String newExpressionString =
+        adjust(((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0], true, myTargetType) + ".negate()";
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
+      return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(newExpressionString, expression));
     }
-    return null;
+  }
+
+  private static class AndOrOrConversionDescriptor extends TypeConversionDescriptorBase {
+    private final PsiType myTargetType;
+
+    public AndOrOrConversionDescriptor(PsiType targetType) {
+      myTargetType = targetType;
+    }
+
+    @Override
+    public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+      final String methodName = methodCall.getMethodExpression().getReferenceName();
+
+      final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
+      if (arguments.length == 1) {
+        return (PsiExpression)expression.replace(arguments[0]);
+      }
+      LOG.assertTrue(arguments.length != 0);
+      StringBuilder replaceBy = new StringBuilder();
+      for (int i = 1; i < arguments.length; i++) {
+        PsiExpression argument = arguments[i];
+        replaceBy.append(".").append(methodName).append("(").append(adjust(argument, false, myTargetType)).append(")");
+      }
+      replaceBy.insert(0, adjust(arguments[0], true, myTargetType));
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
+      return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(replaceBy.toString(), expression));
+    }
+
+  }
+
+  private static boolean isUnconverted(PsiType type) {
+    final PsiClass predicateClass = PsiTypesUtil.getPsiClass(type);
+    return predicateClass != null && !JAVA_PREDICATE.equals(predicateClass.getQualifiedName());
+  }
+
+  private static String adjust(PsiExpression expression, boolean insertTypeCase, PsiType targetType) {
+    if (expression instanceof PsiFunctionalExpression) {
+      final PsiType functionalInterfaceType = ((PsiFunctionalExpression)expression).getFunctionalInterfaceType();
+      if (isUnconverted(functionalInterfaceType) && insertTypeCase) {
+        return "((" + targetType.getCanonicalText() + ")" + expression.getText() + ")";
+      }
+    }
+    else if (expression instanceof PsiMethodCallExpression || expression instanceof PsiReferenceExpression) {
+      if (isUnconverted(expression.getType())) {
+        expression = (PsiExpression)expression.replace(JavaPsiFacade.getElementFactory(expression.getProject())
+                                                         .createExpressionFromText(expression.getText() + "::apply", expression));
+        return adjust(expression, insertTypeCase, targetType);
+      }
+    }
+    return expression.getText();
   }
 
   @NotNull
