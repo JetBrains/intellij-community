@@ -734,7 +734,7 @@ public class XDebugSessionImpl implements XDebugSession {
     // set this session active on breakpoint, update execution position will be called inside positionReached
     myDebuggerManager.setCurrentSession(this);
 
-    positionReached(suspendContext);
+    positionReachedInternal(suspendContext);
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
@@ -818,8 +818,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myPaused.set(false);
   }
 
-  @Override
-  public void positionReached(@NotNull final XSuspendContext suspendContext) {
+  private void positionReachedInternal(@NotNull final XSuspendContext suspendContext) {
     enableBreakpoints();
     mySuspendContext = suspendContext;
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
@@ -842,6 +841,11 @@ public class XDebugSessionImpl implements XDebugSession {
     }
 
     myDispatcher.getMulticaster().sessionPaused();
+  }
+
+  @Override
+  public void positionReached(@NotNull final XSuspendContext suspendContext) {
+    positionReachedInternal(suspendContext);
   }
 
   @Override
