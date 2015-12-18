@@ -41,7 +41,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
-import com.intellij.openapi.vcs.impl.VcsGlobalMessageManager;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -995,13 +994,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     } else {
       helper.doCommit(myVcs);
     }
-  }
-
-  @Nullable
-  @Override
-  protected JComponent createNorthPanel() {
-    final JComponent banner = VcsGlobalMessageManager.getInstance(myProject).getMessageBanner();
-    return banner != null ? banner : super.createNorthPanel();
   }
 
   @Override
