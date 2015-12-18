@@ -57,7 +57,7 @@ public class FormatProcessor {
   private Map<AbstractBlockWrapper, Block>    myInfos;
   private CompositeBlockWrapper               myRootBlockWrapper;
 
-  private BlocksHelper myBlocksHelper;
+  private BlockMapperHelper myBlockMapperHelper;
 
   private final BlockIndentOptions myBlockIndentOptions;
   private final CommonCodeStyleSettings.IndentOptions myDefaultIndentOption;
@@ -191,7 +191,7 @@ public class FormatProcessor {
         int lastBlockOffset = myLastTokenBlock.getEndOffset();
         myLastWhiteSpace = new WhiteSpace(lastBlockOffset, false);
         myLastWhiteSpace.append(Math.max(lastBlockOffset, builder.getEndOffset()), model, myDefaultIndentOption);
-        myBlocksHelper = new BlocksHelper(myFirstTokenBlock, myLastTokenBlock);
+        myBlockMapperHelper = new BlockMapperHelper(myFirstTokenBlock, myLastTokenBlock);
         myAlignmentsInsideRangesToModify = builder.getAlignmentsInsideRangeToModify();
         myTotalBlocksWithAlignments = builder.getBlocksToAlign().values().size();
         myExpandableIndents = builder.getExpandableIndentsBlocks();
@@ -200,8 +200,8 @@ public class FormatProcessor {
     myStateProcessor = new StateProcessor(wrapState);
   }
   
-  public BlocksHelper getBlocksHelper() {
-    return myBlocksHelper;
+  public BlockMapperHelper getBlockMapperHelper() {
+    return myBlockMapperHelper;
   }
 
   private int getRightMargin(Block rootBlock) {
@@ -413,7 +413,7 @@ public class FormatProcessor {
         }
 
         final boolean containedLineFeeds = spacing.getMinLineFeeds() > 0;
-        final boolean containsLineFeeds = myBlocksHelper.containsLineFeeds(textRange);
+        final boolean containsLineFeeds = myBlockMapperHelper.containsLineFeeds(textRange);
 
         if (containedLineFeeds != containsLineFeeds) {
           spacing.setDependentRegionLinefeedStatusChanged();

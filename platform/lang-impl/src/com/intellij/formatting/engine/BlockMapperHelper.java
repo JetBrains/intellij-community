@@ -20,11 +20,11 @@ import com.intellij.openapi.util.TextRange;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
 
-public class BlocksHelper {
+public class BlockMapperHelper {
   private final LeafBlockWrapper myLastBlock;
   private TIntObjectHashMap<LeafBlockWrapper> myTextRangeToWrapper;
 
-  public BlocksHelper(LeafBlockWrapper first, LeafBlockWrapper last) {
+  public BlockMapperHelper(LeafBlockWrapper first, LeafBlockWrapper last) {
     myLastBlock = last;
     myTextRangeToWrapper = buildTextRangeToInfoMap(first);
   }
