@@ -34,7 +34,6 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.browser.SHAHash;
-import git4idea.history.wholeTree.AbstractHash;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +49,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
  */
 public class GitChangeUtils {
   /**
-   * the pattern for committed changelist assumed by {@link #parseChangeList(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile, git4idea.util.StringScanner,boolean)}
+   * the pattern for committed changelist assumed.
    */
   public static final String COMMITTED_CHANGELIST_FORMAT = "%ct%n%H%n%P%n%an%x20%x3C%ae%x3E%n%cn%x20%x3C%ce%x3E%n%s%n%x03%n%b%n%x03";
 
@@ -122,13 +121,13 @@ public class GitChangeUtils {
    * @param ignoreNames    a set of names ignored during collection of the changes
    * @throws VcsException if the input format does not matches expected format
    */
-  public static void parseChanges(Project project,
-                                  VirtualFile vcsRoot,
-                                  @Nullable GitRevisionNumber thisRevision,
-                                  @Nullable GitRevisionNumber parentRevision,
-                                  StringScanner s,
-                                  Collection<Change> changes,
-                                  final Set<String> ignoreNames) throws VcsException {
+  private static void parseChanges(Project project,
+                                   VirtualFile vcsRoot,
+                                   @Nullable GitRevisionNumber thisRevision,
+                                   @Nullable GitRevisionNumber parentRevision,
+                                   StringScanner s,
+                                   Collection<Change> changes,
+                                   final Set<String> ignoreNames) throws VcsException {
     while (s.hasMoreData()) {
       FileStatus status = null;
       if (s.isEol()) {
@@ -266,21 +265,6 @@ public class GitChangeUtils {
   }
 
   @Nullable
-  public static String getCommitAbbreviation(final Project project, final VirtualFile root, final SHAHash hash) {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    h.setSilent(true);
-    h.addParameters("--max-count=1", "--pretty=%h", "--encoding=UTF-8", "\"" + hash.getValue() + "\"", "--");
-    try {
-      final String output = h.run().trim();
-      if (StringUtil.isEmptyOrSpaces(output)) return null;
-      return output.trim();
-    }
-    catch (VcsException e) {
-      return null;
-    }
-  }
-
-  @Nullable
   public static SHAHash commitExists(final Project project, final VirtualFile root, final String anyReference,
                                      List<VirtualFile> paths, final String... parameters) {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
@@ -294,44 +278,6 @@ public class GitChangeUtils {
       final String output = h.run().trim();
       if (StringUtil.isEmptyOrSpaces(output)) return null;
       return new SHAHash(output);
-    }
-    catch (VcsException e) {
-      return null;
-    }
-  }
-
-  public static boolean isAnyLevelChild(final Project project, final VirtualFile root, final SHAHash parent,
-                                        final String anyReferenceChild) {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.MERGE_BASE);
-    h.setSilent(true);
-    h.addParameters("\"" + parent.getValue() + "\"","\"" + anyReferenceChild + "\"",  "--");
-    try {
-      final String output = h.run().trim();
-      if (StringUtil.isEmptyOrSpaces(output)) return false;
-      return parent.getValue().equals(output.trim());
-    }
-    catch (VcsException e) {
-      return false;
-    }
-  }
-
-  @Nullable
-  public static List<AbstractHash> commitExistsByComment(final Project project, final VirtualFile root, final String anyReference) {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    h.setSilent(true);
-    String escaped = StringUtil.escapeQuotes(anyReference);
-    escaped = StringUtil.escapeSlashes(escaped);
-    final String grepParam = "--grep=" + escaped;
-    h.addParameters("--regexp-ignore-case", "--pretty=%h", "--all", "--encoding=UTF-8", grepParam, "--");
-    try {
-      final String output = h.run().trim();
-      if (StringUtil.isEmptyOrSpaces(output)) return null;
-      final String[] hashes = output.split("\n");
-      final List<AbstractHash> result = new ArrayList<AbstractHash>();
-      for (String hash : hashes) {
-        result.add(AbstractHash.create(hash));
-      }
-      return result;
     }
     catch (VcsException e) {
       return null;
