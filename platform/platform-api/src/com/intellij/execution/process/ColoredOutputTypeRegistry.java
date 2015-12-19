@@ -18,11 +18,13 @@ package com.intellij.execution.process;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -92,7 +94,9 @@ public class ColoredOutputTypeRegistry {
     if (attribute.startsWith("\u001B[")) {
       attribute = attribute.substring(2);
     }
-    else attribute = StringUtil.trimStart(attribute, "[");
+    else {
+      attribute = StringUtil.trimStart(attribute, "[");
+    }
     attribute = StringUtil.trimEnd(attribute, "m");
     if (attribute.equals("0")) {
       return ProcessOutputTypes.STDOUT;
@@ -135,7 +139,7 @@ public class ColoredOutputTypeRegistry {
         //TODO: 256 colors background
       }
       else if (value == 49) {
-        attrs.setBackgroundColor(getColorByKey(ConsoleViewContentType.NORMAL_OUTPUT_KEY));
+        attrs.setBackgroundColor(getDefaultBackgroundColor());
       }
       else if (value >= 90 && value <= 97) {
         attrs.setForegroundColor(
@@ -161,6 +165,13 @@ public class ColoredOutputTypeRegistry {
 
   private static Color getColorByKey(TextAttributesKey colorKey) {
     return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(colorKey).getForegroundColor();
+  }
+
+  @NotNull
+  private static Color getDefaultBackgroundColor() {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    Color color = scheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
+    return ObjectUtils.notNull(color, scheme.getDefaultBackground());
   }
 
   public static TextAttributesKey getAnsiColorKey(int value) {
