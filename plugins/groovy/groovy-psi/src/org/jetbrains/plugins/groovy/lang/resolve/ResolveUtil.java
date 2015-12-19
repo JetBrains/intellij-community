@@ -705,6 +705,19 @@ public class ResolveUtil {
     return processor.getCandidates();
   }
 
+  public static boolean isDefinitelyKeyOfMap(GrReferenceExpression ref) {
+    final GrExpression qualifier = getSelfOrWithQualifier(ref);
+    if (qualifier == null) return false;
+    //key in 'java.util.Map.key' is not access to map, it is access to static property of field
+    if (qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass) return false;
+
+    final PsiType type = qualifier.getType();
+    if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) return false;
+
+    final String qname = TypesUtil.getQualifiedName(type);
+    return !GroovyCommonClassNames.GROOVY_UTIL_CONFIG_OBJECT.equals(qname);
+  }
+
   public static boolean isKeyOfMap(GrReferenceExpression ref) {
     if (!(ref.getParent() instanceof GrIndexProperty) && org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCall(ref)) return false;
     if (ref.multiResolve(false).length > 0) return false;

@@ -94,26 +94,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
            parent instanceof GrReferenceExpressionImpl && ((GrReferenceExpressionImpl)parent).isMethodCallRef();
   }
 
-  private boolean isDefinitelyKeyOfMap() {
-    final GrExpression qualifier = ResolveUtil.getSelfOrWithQualifier(this);
-    if (qualifier == null) return false;
-    if (qualifier instanceof GrReferenceExpression) { //key in 'java.util.Map.key' is not access to map, it is access to static property of field
-      final PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
-      if (resolved instanceof PsiClass) return false;
-    }
-
-    final PsiType type = qualifier.getType();
-    if (type == null) return false;
-
-    if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) return false;
-
-    final String qname = TypesUtil.getQualifiedName(type);
-    return !GroovyCommonClassNames.GROOVY_UTIL_CONFIG_OBJECT.equals(qname);
-  }
-
   @NotNull
   private GroovyResolveResult[] resolveTypeOrProperty() {
-    if (isDefinitelyKeyOfMap()) return GroovyResolveResult.EMPTY_ARRAY;
+    if (ResolveUtil.isDefinitelyKeyOfMap(this)) return GroovyResolveResult.EMPTY_ARRAY;
 
     final GroovyResolveResult[] results = resolveTypeOrPropertyInner();
     if (results.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
@@ -545,7 +528,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return GrClosureType.create(multiResolve(false), this);
     }
 
-    if (isDefinitelyKeyOfMap()) {
+    if (ResolveUtil.isDefinitelyKeyOfMap(this)) {
       final PsiType type = getTypeFromMapAccess(this);
       if (type != null) {
         return type;
