@@ -16,6 +16,7 @@
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -34,19 +35,19 @@ import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewManager;
+import com.intellij.usages.Usage;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class TypeMigrationProcessor extends BaseRefactoringProcessor {
+  private final static Logger LOG = Logger.getInstance(TypeMigrationProcessor.class);
   private final static int MAX_ROOT_IN_PREVIEW_PRESENTATION = 3;
 
   private PsiElement[] myRoot;
@@ -246,6 +247,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
 
   public static void change(TypeMigrationLabeler labeler, UsageInfo[] usages) {
     final List<PsiNewExpression> newExpressionsToCheckDiamonds = new SmartList<PsiNewExpression>();
+    final TypeMigrationLabeler.MigrationProducer producer = labeler.createMigratorFor(usages);
 
     List<UsageInfo> nonCodeUsages = new ArrayList<UsageInfo>();
     for (UsageInfo usage : usages) {
@@ -255,7 +257,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
           element instanceof PsiMember ||
           element instanceof PsiExpression ||
           element instanceof PsiReferenceParameterList) {
-        labeler.change((TypeMigrationUsageInfo)usage, new Consumer<PsiNewExpression>() {
+        producer.change((TypeMigrationUsageInfo)usage, new Consumer<PsiNewExpression>() {
           @Override
           public void consume(@NotNull PsiNewExpression expression) {
             newExpressionsToCheckDiamonds.add(expression);
@@ -276,7 +278,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
       if (element != null) {
         final PsiReference reference = element.getReference();
         if (reference != null) {
-          final Object target = labeler.getConversion(element);
+          final Object target = producer.getConversion(usageInfo);
           if (target instanceof PsiMember) {
             try {
               reference.bindToElement((PsiElement)target);

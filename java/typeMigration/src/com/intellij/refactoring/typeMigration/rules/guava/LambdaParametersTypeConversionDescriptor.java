@@ -23,6 +23,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
+import com.intellij.refactoring.typeMigration.TypeEvaluator;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -35,25 +37,26 @@ class LambdaParametersTypeConversionDescriptor extends TypeConversionDescriptor 
     super(stringToReplace, replaceByString);
   }
 
+
   @Override
-  public PsiExpression replace(PsiExpression expression) {
-    LOG.assertTrue(expression instanceof PsiMethodCallExpression);
+  public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
+     LOG.assertTrue(expression instanceof PsiMethodCallExpression);
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
     final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
     if (arguments.length == 1) {
       final PsiExpression functionArg = arguments[0];
-      customizeParameter(convertParameter(functionArg));
+      customizeParameter(convertParameter(functionArg, evaluator));
     }
-    return super.replace(expression);
+    return super.replace(expression, evaluator);
   }
 
   protected void customizeParameter(PsiExpression parameter) {
 
   }
 
-  private static PsiExpression addApplyReference(final PsiExpression expression) {
+  private static PsiExpression addApplyReference(final PsiExpression expression, TypeEvaluator evaluator) {
     String samMethodName = null;
-    PsiType type = expression.getType();
+    PsiType type = evaluator.evaluateType(expression);
     if (type instanceof PsiClassType) {
       PsiClass resolvedClass = ((PsiClassType)type).resolve();
       if (resolvedClass != null) {
@@ -67,13 +70,15 @@ class LambdaParametersTypeConversionDescriptor extends TypeConversionDescriptor 
           samMethodName = "apply";
         }
       }
-      LOG.assertTrue(samMethodName != null);
+    }
+    if (samMethodName == null) {
+      return expression;
     }
     return (PsiExpression)expression.replace(
       JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::" + samMethodName, null));
   }
 
-  public static PsiExpression convertParameter(PsiExpression expression) {
+  public static PsiExpression convertParameter(PsiExpression expression, TypeEvaluator evaluator) {
     if (expression instanceof PsiNewExpression) {
       final PsiAnonymousClass anonymousClass = ((PsiNewExpression)expression).getAnonymousClass();
       if (anonymousClass != null) {
@@ -82,16 +87,16 @@ class LambdaParametersTypeConversionDescriptor extends TypeConversionDescriptor 
         }
       }
       else {
-        return addApplyReference(expression);
+        return addApplyReference(expression, evaluator);
       }
     }
     else if (!(expression instanceof PsiFunctionalExpression)) {
-      return addApplyReference(expression);
+      return addApplyReference(expression, evaluator);
     }
     else if (expression instanceof PsiMethodReferenceExpression) {
       final PsiElement qualifier = ((PsiMethodReferenceExpression)expression).getQualifier();
       PsiType qualifierType;
-      if (qualifier instanceof PsiExpression && (qualifierType = ((PsiExpression)qualifier).getType()) != null) {
+      if (qualifier instanceof PsiExpression && (qualifierType = evaluator.evaluateType((PsiExpression)qualifier)) != null) {
         final PsiClass qualifierClass = PsiTypesUtil.getPsiClass(qualifierType);
         if (qualifierClass != null && (Comparing.equal(qualifierClass.getQualifiedName(), GuavaFunctionConversionRule.JAVA_UTIL_FUNCTION_FUNCTION) ||
             Comparing.equal(qualifierClass.getQualifiedName(), GuavaOptionalConversionRule.JAVA_OPTIONAL) ||

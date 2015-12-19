@@ -41,7 +41,7 @@ import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +50,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * @author db
@@ -254,45 +256,71 @@ public class TypeMigrationLabeler {
     return infos;
   }
 
+  MigrationProducer createMigratorFor(UsageInfo[] usages) {
+    final Map<UsageInfo, Object> conversions = new com.intellij.util.containers.HashMap<UsageInfo, Object>();
+    for (UsageInfo usage : usages) {
+      final Object conversion = getConversion(usage.getElement());
+      if (conversion != null) {
+        conversions.put(usage, conversion);
+      }
+    }
+    return new MigrationProducer(conversions);
+  }
 
-  public void change(final TypeMigrationUsageInfo usageInfo, @NotNull  Consumer<PsiNewExpression> consumer) {
-    final PsiElement element = usageInfo.getElement();
-    if (element == null) return;
-    final Project project = element.getProject();
-    if (element instanceof PsiExpression) {
-      final PsiExpression expression = (PsiExpression)element;
-      if (element instanceof PsiNewExpression) {
-        for (Map.Entry<TypeMigrationUsageInfo, PsiType> info : myNewExpressionTypeChange.entrySet()) {
-          final PsiElement expressionToReplace = info.getKey().getElement();
-          if (expression.equals(expressionToReplace)) {
-            final PsiNewExpression newExpression =
-              TypeMigrationReplacementUtil.replaceNewExpressionType(project, (PsiNewExpression)expressionToReplace, info);
-            if (newExpression != null) {
-              consumer.consume(newExpression);
+  class MigrationProducer {
+    private final Map<UsageInfo, Object> myRemainConversions;
+
+    private MigrationProducer(Map<UsageInfo, Object> conversions) {
+      myRemainConversions = conversions;
+    }
+
+    public void change(final TypeMigrationUsageInfo usageInfo, @NotNull  Consumer<PsiNewExpression> consumer) {
+      final PsiElement element = usageInfo.getElement();
+      if (element == null) return;
+      final Project project = element.getProject();
+      if (element instanceof PsiExpression) {
+        final PsiExpression expression = (PsiExpression)element;
+        if (element instanceof PsiNewExpression) {
+          for (Map.Entry<TypeMigrationUsageInfo, PsiType> info : myNewExpressionTypeChange.entrySet()) {
+            final PsiElement expressionToReplace = info.getKey().getElement();
+            if (expression.equals(expressionToReplace)) {
+              final PsiNewExpression newExpression =
+                TypeMigrationReplacementUtil.replaceNewExpressionType(project, (PsiNewExpression)expressionToReplace, info);
+              if (newExpression != null) {
+                consumer.consume(newExpression);
+              }
+            }
+          }
+        }
+        final Object conversion = myRemainConversions.get(usageInfo);
+        if (conversion != null) {
+          myRemainConversions.remove(usageInfo);
+          TypeMigrationReplacementUtil.replaceExpression(expression, project, conversion, myTypeEvaluator);
+        }
+      } else if (element instanceof PsiReferenceParameterList) {
+        for (Map.Entry<TypeMigrationUsageInfo, PsiClassType> entry : myClassTypeArgumentsChange.entrySet()) {
+          if (element.equals(entry.getKey().getElement())) { //todo check null
+            final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+            try {
+              element.getParent().replace(factory.createReferenceElementByType(entry.getValue()));
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
             }
           }
         }
       }
-      final Object conversion = myConversions.get(element);
-      if (conversion != null) {
-        myConversions.remove(element);
-        TypeMigrationReplacementUtil.replaceExpression(expression, project, conversion);
-      }
-    } else if (element instanceof PsiReferenceParameterList) {
-      for (Map.Entry<TypeMigrationUsageInfo, PsiClassType> entry : myClassTypeArgumentsChange.entrySet()) {
-        if (element.equals(entry.getKey().getElement())) { //todo check null
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-          try {
-            element.getParent().replace(factory.createReferenceElementByType(entry.getValue()));
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        }
+      else {
+        TypeMigrationReplacementUtil.migratePsiMemberType(element, project, getTypeEvaluator().getType(usageInfo));
       }
     }
-    else {
-      TypeMigrationReplacementUtil.migratePsiMemberType(element, project, getTypeEvaluator().getType(usageInfo));
+
+    Object getConversion(UsageInfo info) {
+      return myRemainConversions.remove(info);
+    }
+
+    boolean allOfConversionsUsed() {
+      return myRemainConversions.isEmpty();
     }
   }
 

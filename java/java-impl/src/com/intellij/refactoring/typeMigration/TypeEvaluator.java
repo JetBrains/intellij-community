@@ -47,18 +47,19 @@ public class TypeEvaluator {
   private final TypeMigrationRules myRules;
   private final TypeMigrationLabeler myLabeler;
 
-
   public TypeEvaluator(final LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> types, final TypeMigrationLabeler labeler) {
     myLabeler = labeler;
-    myRules = labeler.getRules();
+    myRules = labeler == null ? null : labeler.getRules();
     myTypeMap = new HashMap<TypeMigrationUsageInfo, LinkedList<PsiType>>();
 
-    for (final Pair<TypeMigrationUsageInfo, PsiType> p : types) {
-      final LinkedList<PsiType> e = new LinkedList<PsiType>();
+    if (types != null) {
+      for (final Pair<TypeMigrationUsageInfo, PsiType> p : types) {
+        final LinkedList<PsiType> e = new LinkedList<PsiType>();
 
-      e.addFirst(p.getSecond());
+        e.addFirst(p.getSecond());
 
-      myTypeMap.put(p.getFirst(), e);
+        myTypeMap.put(p.getFirst(), e);
+      }
     }
 
   }

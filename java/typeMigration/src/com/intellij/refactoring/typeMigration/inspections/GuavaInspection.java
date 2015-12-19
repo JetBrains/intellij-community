@@ -424,16 +424,20 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
           public void run() {
             final Iterator<Boolean> isIterableIterator = isIterableList.iterator();
             final Iterator<TypeConversionDescriptorBase> conversionIterator = conversionList.iterator();
+            final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
             for (PsiElement element : validElement) {
-              PsiElement replacedExpression = TypeMigrationReplacementUtil.replaceExpression((PsiExpression)element, project, conversionIterator.next());
+              PsiElement replacedExpression = TypeMigrationReplacementUtil.replaceExpression((PsiExpression)element,
+                                                                                             project,
+                                                                                             conversionIterator.next(),
+                                                                                             new TypeEvaluator(null, null));
               if (isIterableIterator.next()) {
                 final String expressionText = replacedExpression.getText() + ".collect(java.util.stream.Collectors.toList())";
                 replacedExpression = replacedExpression
                   .replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(expressionText, replacedExpression));
               }
-              JavaCodeStyleManager.getInstance(project).shortenClassReferences(replacedExpression);
-
+              codeStyleManager.shortenClassReferences(replacedExpression);
             }
+            codeStyleManager.optimizeImports(file);
             UndoUtil.markPsiFileForUndo(file);
           }
         });

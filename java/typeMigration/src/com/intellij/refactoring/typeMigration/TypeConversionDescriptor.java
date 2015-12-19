@@ -80,7 +80,7 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
   }
 
   @Override
-  public PsiExpression replace(PsiExpression expression) {
+  public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
     if (getExpression() != null) expression = getExpression();
     return replaceExpression(expression, getStringToReplace(), getReplaceByString());
   }

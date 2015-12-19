@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
+import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,7 +62,7 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
   @Override
   protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
                                                                             @NotNull PsiVariable psiVariable, PsiExpression context) {
-    return new TypeConversionDescriptor("$p$", "$p$::test");
+    return new FunctionalInterfaceTypeConversionDescriptor("apply", "test");
   }
 
   @Nullable
@@ -87,7 +88,7 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
     }
     return new TypeConversionDescriptorBase() {
       @Override
-      public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+      public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
         return (PsiExpression)expression.replace(JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::test", expression));
       }
     };
@@ -124,7 +125,7 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
     }
 
     @Override
-    public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+    public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
       String newExpressionString =
         adjust(((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0], true, myTargetType) + ".negate()";
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
@@ -149,7 +150,7 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
     }
 
     @Override
-    public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+    public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
       final String methodName = methodCall.getMethodExpression().getReferenceName();
 

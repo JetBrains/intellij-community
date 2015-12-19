@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
+import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
@@ -64,7 +65,7 @@ public class RootTypeConversionRule extends TypeConversionRule {
               if (Comparing.equal(functionalInterfaceType, to) && method.isEquivalentTo(LambdaUtil.getFunctionalInterfaceMethod(from))) {
                 return new TypeConversionDescriptorBase() {
                   @Override
-                  public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+                  public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
                     final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)expression;
                     final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
                     if (qualifierExpression != null) {
@@ -139,7 +140,7 @@ public class RootTypeConversionRule extends TypeConversionRule {
     }
 
     @Override
-    public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+    public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());

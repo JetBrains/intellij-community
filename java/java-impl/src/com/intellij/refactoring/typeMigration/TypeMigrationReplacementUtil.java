@@ -39,10 +39,13 @@ public class TypeMigrationReplacementUtil {
   private TypeMigrationReplacementUtil() {
   }
 
-  public static PsiElement replaceExpression(PsiExpression expression, final Project project, Object conversion) {
+  public static PsiElement replaceExpression(PsiExpression expression,
+                                             final Project project,
+                                             Object conversion,
+                                             TypeEvaluator typeEvaluator) {
     if (conversion instanceof TypeConversionDescriptorBase) {
       try {
-        return ((TypeConversionDescriptorBase)conversion).replace(expression);
+        return ((TypeConversionDescriptorBase)conversion).replace(expression, typeEvaluator);
       } catch (IncorrectOperationException e) {
         LOG.error(e);
       }
