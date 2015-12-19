@@ -60,7 +60,7 @@ public final class NettyUtil {
     if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
       System.setProperty("io.netty.machineId", "9e43d860");
       System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
-      System.setProperty("io.netty.serviceThreadPrefix", "Netty");
+      System.setProperty("io.netty.serviceThreadPrefix", "Netty ");
     }
   }
 
