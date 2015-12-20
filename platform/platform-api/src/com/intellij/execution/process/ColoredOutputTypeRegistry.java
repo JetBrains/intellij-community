@@ -100,6 +100,7 @@ public class ColoredOutputTypeRegistry {
     if (attribute.equals("0")) {
       return ProcessOutputTypes.STDOUT;
     }
+    boolean inverse = false;
     TextAttributes attrs = new TextAttributes();
     final String[] strings = attribute.split(";");
     for (String string : strings) {
@@ -115,6 +116,9 @@ public class ColoredOutputTypeRegistry {
       }
       else if (value == 4) {
         attrs.setEffectType(EffectType.LINE_UNDERSCORE);
+      }
+      else if (value == 7) {
+        inverse = true;
       }
       else if (value == 22) {
         attrs.setFontType(Font.PLAIN);
@@ -155,6 +159,19 @@ public class ColoredOutputTypeRegistry {
         foregroundColor = getDefaultForegroundColor();
       }
       attrs.setEffectColor(foregroundColor);
+    }
+    if (inverse) {
+      Color foregroundColor = attrs.getForegroundColor();
+      if (foregroundColor == null) {
+        foregroundColor = getDefaultForegroundColor();
+      }
+      Color backgroundColor = attrs.getBackgroundColor();
+      if (backgroundColor == null) {
+        backgroundColor = getDefaultBackgroundColor();
+      }
+      attrs.setForegroundColor(backgroundColor);
+      attrs.setEffectColor(backgroundColor);
+      attrs.setBackgroundColor(foregroundColor);
     }
     Key newKey = new Key(completeAttribute);
     ConsoleViewContentType contentType = new ConsoleViewContentType(completeAttribute, attrs);
