@@ -58,8 +58,7 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
   protected YAMLValue deleteLookupTextAndRetrieveOldValue(InsertionContext context, @NotNull PsiElement elementAtCaret) {
     final YAMLValue oldValue;
     if (elementAtCaret.getNode().getElementType() != YAMLTokenTypes.SCALAR_KEY) {
-      context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
-      context.commitDocument();
+      deleteLookupPlain(context);
       return null;
     }
 
@@ -85,6 +84,28 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
       }
     });
     return oldValue;
+  }
+
+  private static void deleteLookupPlain(InsertionContext context) {
+    final Document document = context.getDocument();
+    final CharSequence sequence = document.getCharsSequence();
+    int offset = context.getStartOffset() - 1;
+    while (offset >= 0) {
+      final char c = sequence.charAt(offset);
+      if (c != ' ' && c != '\t') {
+        if (c == '\n') {
+          offset--;
+        }
+        else {
+          offset = context.getStartOffset() - 1;
+        }
+        break;
+      }
+      offset--;
+    }
+
+    document.deleteString(offset + 1, context.getTailOffset());
+    context.commitDocument();
   }
 
   public static boolean isCharAtCaret(Editor editor, char ch) {
