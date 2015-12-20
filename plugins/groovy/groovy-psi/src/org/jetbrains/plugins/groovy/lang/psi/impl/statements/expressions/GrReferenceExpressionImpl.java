@@ -18,9 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -484,13 +482,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     @Override
     @NotNull
     public GroovyResolveResult[] resolve(@NotNull final GrReferenceExpressionImpl refExpr, final boolean incompleteCode) {
-      final GroovyResolveResult[] result = RecursionManager.doPreventingRecursion(refExpr, true, new Computable<GroovyResolveResult[]>() {
-        @Override
-        public GroovyResolveResult[] compute() {
-          return refExpr.doPolyResolve(incompleteCode);
-        }
-      });
-      return result == null ? GroovyResolveResult.EMPTY_ARRAY : result;
+      return refExpr.doPolyResolve(incompleteCode);
     }
   };
   private static final OurTypesCalculator TYPES_CALCULATOR = new OurTypesCalculator();
