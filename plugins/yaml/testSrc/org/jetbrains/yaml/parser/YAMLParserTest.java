@@ -176,6 +176,15 @@ public class YAMLParserTest extends ParsingTestCase {
   public void testStringWithTag() throws IOException {
     doCodeTest("foo: ! \"tratata\"");
   }
+  
+  public void testIncompleteKeyWithWhitespace() throws IOException {
+    doCodeTest("logging:\n" +
+               "  config:\n" +
+               "  \n" +
+               "  \n" +
+               "  \n" +
+               "  \n");
+  }
 
   public void testExplicitMaps() {
     doTest(true);

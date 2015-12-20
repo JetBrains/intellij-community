@@ -291,12 +291,16 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
 
     int indentAddition = getShorthandIndentAddition();
     advanceLexer();
-    passJunk();
 
+    final PsiBuilder.Marker rollbackMarker = mark();
+    
+    passJunk();
     if (eolSeen && (eof() || myIndent + getIndentBonus(false) < indent + indentAddition)) {
-      rollBackToEol();
+      dropEolMarker();
+      rollbackMarker.rollbackTo();
     }
     else {
+      rollbackMarker.drop();
       parseBlockNode(indent + indentAddition, false);
     }
 
