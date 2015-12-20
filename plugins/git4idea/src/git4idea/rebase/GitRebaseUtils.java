@@ -134,7 +134,7 @@ public class GitRebaseUtils {
    * @return the rebase directory or null if it does not exist.
    */
   @Nullable
-  private static File getRebaseDir(VirtualFile root) {
+  private static File getRebaseDir(@NotNull VirtualFile root) {
     File gitDir = new File(VfsUtilCore.virtualToIoFile(root), GitUtil.DOT_GIT);
     File f = new File(gitDir, GitRepositoryFiles.REBASE_APPLY);
     if (f.exists()) {
@@ -154,7 +154,7 @@ public class GitRebaseUtils {
    * @return the commit information or null if no commit information could be detected
    */
   @Nullable
-  public static CommitInfo getCurrentRebaseCommit(VirtualFile root) {
+  public static CommitInfo getCurrentRebaseCommit(@NotNull VirtualFile root) {
     File rebaseDir = getRebaseDir(root);
     if (rebaseDir == null) {
       LOG.warn("No rebase dir found for " + root.getPath());
