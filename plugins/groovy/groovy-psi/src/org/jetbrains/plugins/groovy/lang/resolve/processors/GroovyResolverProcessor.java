@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -249,6 +250,9 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
         else if (element instanceof PsiField) {
           return GroovyResolveKind.FIELD;
         }
+        else if (element instanceof GrBindingVariable) {
+          return GroovyResolveKind.BINDING;
+        }
         else if (element instanceof PsiVariable) {
           return GroovyResolveKind.VARIABLE;
         }
@@ -302,7 +306,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
     if (!ResolveUtil.canBeClass(ref)) result.remove(GroovyResolveKind.CLASS);
     if (!ResolveUtil.canBePackage(ref)) result.remove(GroovyResolveKind.PACKAGE);
-    if (ref.isQualified()) result.remove(GroovyResolveKind.VARIABLE);
+    if (ref.isQualified()) result.removeAll(EnumSet.of(GroovyResolveKind.VARIABLE, GroovyResolveKind.BINDING));
     if (!(ref.getParent() instanceof GrMethodCall)) result.remove(GroovyResolveKind.METHOD);
 
     return result;

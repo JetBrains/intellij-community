@@ -28,7 +28,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -192,16 +191,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       if (lastParent != null && !(lastParent instanceof GrTypeDefinition) && scriptClass != null) {
         if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter(), state)) return false;
       }
-
-      if (isInScriptBody(lastParent, place)) {
-        if (!processBindings(processor, state, place)) return false;
-      }
     }
 
     return true;
   }
 
-  private boolean isInScriptBody(PsiElement lastParent, PsiElement place) {
+  public boolean isInScriptBody(PsiElement lastParent, PsiElement place) {
     return isScript() &&
         !(lastParent instanceof GrTypeDefinition) &&
         PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, false) == null;
@@ -216,35 +211,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return GroovyImportHelper.processImports(state, lastParent, place, processor, importStatements, onDemand);
   }
 
-  private boolean processBindings(@NotNull final PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement place) {
-    if (!isPhysical()) return true;
-
-    final NameHint nameHint = processor.getHint(NameHint.KEY);
-    if (nameHint == null) return true;
-
-    final String name = nameHint.getName(state);
-    if (name == null) return true;
-
-    if (!ResolveUtil.shouldProcessProperties(processor.getHint(ElementClassHint.KEY))) return true;
-
-    final ConcurrentMap<String, GrBindingVariable> bindings = getBindings();
-
-    GrBindingVariable variable = bindings.get(name);
-    if (variable == null) {
-      variable = ConcurrencyUtil.cacheOrGet(bindings, name, new GrBindingVariable(this, name, null));
-    }
-    variable.updateWriteAccessIfNeeded(place);
-
-    if (!variable.hasWriteAccess()) return true;
-
-    return processor.execute(variable, state);
-  }
-
   @NotNull
-  private ConcurrentMap<String, GrBindingVariable> getBindings() {
+  public ConcurrentMap<String, GrBindingVariable> getBindings() {
     return CachedValuesManager.getCachedValue(this, BINDING_PROVIDER);
   }
-
 
   @Override
   public boolean isTopControlFlowOwner() {

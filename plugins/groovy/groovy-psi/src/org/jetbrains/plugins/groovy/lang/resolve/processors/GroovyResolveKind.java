@@ -22,6 +22,7 @@ import java.util.EnumSet;
 enum GroovyResolveKind {
 
   VARIABLE(EnumSet.of(DeclarationKind.VARIABLE)),
+  BINDING(EnumSet.of(DeclarationKind.VARIABLE)),
   FIELD(EnumSet.of(DeclarationKind.FIELD, DeclarationKind.ENUM_CONST)),
   PROPERTY(EnumSet.of(DeclarationKind.METHOD, DeclarationKind.FIELD, DeclarationKind.ENUM_CONST)),
   METHOD(EnumSet.of(DeclarationKind.METHOD)),

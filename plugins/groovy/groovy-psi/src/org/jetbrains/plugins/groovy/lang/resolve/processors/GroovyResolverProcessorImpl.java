@@ -126,6 +126,11 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
       return candidates.second;
     }
 
+    candidates = getCandidates(GroovyResolveKind.BINDING);
+    if (candidates.first) {
+      return candidates.second;
+    }
+
     for (GroovyResolveKind kind : myAcceptableKinds) {
       Collection<GroovyResolveResult> results = myInapplicableCandidates.get(kind);
       if (!results.isEmpty()) {
