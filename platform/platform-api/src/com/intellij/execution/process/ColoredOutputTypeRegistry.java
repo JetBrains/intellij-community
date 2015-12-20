@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -130,7 +129,7 @@ public class ColoredOutputTypeRegistry {
         //TODO: 256 colors foreground
       }
       else if (value == 39) {
-        attrs.setForegroundColor(getColorByKey(ConsoleViewContentType.NORMAL_OUTPUT_KEY));
+        attrs.setForegroundColor(getDefaultForegroundColor());
       }
       else if (value >= 40 && value <= 47) {
         attrs.setBackgroundColor(getAnsiColor(value - 40));
@@ -151,7 +150,11 @@ public class ColoredOutputTypeRegistry {
       }
     }
     if (attrs.getEffectType() == EffectType.LINE_UNDERSCORE) {
-      attrs.setEffectColor(attrs.getForegroundColor());
+      Color foregroundColor = attrs.getForegroundColor();
+      if (foregroundColor == null) {
+        foregroundColor = getDefaultForegroundColor();
+      }
+      attrs.setEffectColor(foregroundColor);
     }
     Key newKey = new Key(completeAttribute);
     ConsoleViewContentType contentType = new ConsoleViewContentType(completeAttribute, attrs);
@@ -168,10 +171,24 @@ public class ColoredOutputTypeRegistry {
   }
 
   @NotNull
+  private static Color getDefaultForegroundColor() {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    TextAttributes attr = scheme.getAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY);
+    Color color = attr != null ? attr.getForegroundColor() : null;
+    if (color == null) {
+      color = scheme.getDefaultForeground();
+    }
+    return color;
+  }
+
+  @NotNull
   private static Color getDefaultBackgroundColor() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Color color = scheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
-    return ObjectUtils.notNull(color, scheme.getDefaultBackground());
+    if (color == null) {
+      color = scheme.getDefaultBackground();
+    }
+    return color;
   }
 
   public static TextAttributesKey getAnsiColorKey(int value) {
