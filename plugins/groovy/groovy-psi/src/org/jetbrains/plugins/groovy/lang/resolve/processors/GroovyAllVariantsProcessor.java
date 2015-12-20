@@ -23,13 +23,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.EnumSet;
 import java.util.List;
 
 class GroovyAllVariantsProcessor extends GroovyResolverProcessor {
 
   GroovyAllVariantsProcessor(@NotNull GrReferenceExpression ref,
-                                       @Nullable GrExpression myUpToArgument) {
-    super(ref, myUpToArgument);
+                             @NotNull EnumSet<GroovyResolveKind> kinds,
+                             @Nullable GrExpression myUpToArgument) {
+    super(ref, kinds, myUpToArgument);
   }
 
   @NotNull

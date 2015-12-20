@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
@@ -40,7 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper;
 
 import java.util.Arrays;
@@ -72,10 +70,12 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   private boolean myStopExecutingMethods = false;
 
-  GroovyResolverProcessor(@NotNull final GrReferenceExpression ref, @Nullable GrExpression myUpToArgument) {
+  GroovyResolverProcessor(@NotNull final GrReferenceExpression ref,
+                          @NotNull EnumSet<GroovyResolveKind> kinds,
+                          @Nullable GrExpression myUpToArgument) {
     myRef = ref;
+    myAcceptableKinds = kinds;
     myName = getReferenceName(ref);
-    myAcceptableKinds = computeKinds(ref);
 
     myIsLValue = PsiUtil.isLValue(myRef);
 
@@ -295,21 +295,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     final String name = ref.getReferenceName();
     assert name != null : "Reference name cannot be null";
     return name;
-  }
-
-  @NotNull
-  private static EnumSet<GroovyResolveKind> computeKinds(@NotNull GrReferenceExpression ref) {
-    if (ref.hasAt()) return EnumSet.of(GroovyResolveKind.FIELD);
-    if (ref.hasMemberPointer()) return EnumSet.of(GroovyResolveKind.METHOD);
-
-    final EnumSet<GroovyResolveKind> result = EnumSet.allOf(GroovyResolveKind.class);
-
-    if (!ResolveUtil.canBeClass(ref)) result.remove(GroovyResolveKind.CLASS);
-    if (!ResolveUtil.canBePackage(ref)) result.remove(GroovyResolveKind.PACKAGE);
-    if (ref.isQualified()) result.removeAll(EnumSet.of(GroovyResolveKind.VARIABLE, GroovyResolveKind.BINDING));
-    if (!(ref.getParent() instanceof GrMethodCall)) result.remove(GroovyResolveKind.METHOD);
-
-    return result;
   }
 
   @Nullable

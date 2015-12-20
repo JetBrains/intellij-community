@@ -47,8 +47,8 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
 
   private final boolean myIsPartOfFqn;
 
-  GroovyResolverProcessorImpl(@NotNull final GrReferenceExpression ref) {
-    super(ref, null);
+  GroovyResolverProcessorImpl(@NotNull final GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds) {
+    super(ref, kinds, null);
     myIsPartOfFqn = ResolveUtil.isPartOfFQN(ref);
   }
 

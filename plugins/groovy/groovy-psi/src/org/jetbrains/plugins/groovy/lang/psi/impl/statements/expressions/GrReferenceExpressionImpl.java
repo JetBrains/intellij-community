@@ -242,7 +242,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @NotNull
   public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
-    return _resolve(true, upToArgument);
+    return _resolve(false, true, upToArgument);
   }
 
   private void processMethods(GrReferenceResolveRunner runner, @NotNull MethodResolverProcessor methodResolver) {
@@ -752,16 +752,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @NotNull
-  private GroovyResolveResult[] doPolyResolve(boolean incompleteCode) {
+  private GroovyResolveResult[] doPolyResolve(@SuppressWarnings("UnusedParameters") boolean incompleteCode) {
     final PsiElement nameElement = getReferenceNameElement();
     final String name = getReferenceName();
     if (name == null || nameElement == null) return GroovyResolveResult.EMPTY_ARRAY;
-    if (incompleteCode) {
-      ResolverProcessor processor = CompletionProcessor.createRefSameNameProcessor(this, name);
-      new GrReferenceResolveRunner(this).resolveImpl(processor);
-      GroovyResolveResult[] propertyCandidates = processor.getCandidates();
-      if (propertyCandidates.length > 0 && !PsiUtil.isSingleBindingVariant(propertyCandidates)) return propertyCandidates;
-    }
 
     try {
       ResolveProfiler.start();
@@ -779,7 +773,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         }
       }
 
-      final GroovyResolveResult[] results = _resolve(false, null);
+      final GroovyResolveResult[] results = _resolve(incompleteCode, false, null);
       if (results.length == 0) {
         return GroovyResolveResult.EMPTY_ARRAY;
       }
@@ -804,9 +798,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @NotNull
-  private GroovyResolveResult[] _resolve(boolean allVariants, @Nullable GrExpression upToArgument) {
+  private GroovyResolveResult[] _resolve(boolean incomplete, boolean allVariants, @Nullable GrExpression upToArgument) {
     final GroovyResolverProcessor processor = GroovyResolverProcessorBuilder.builder()
-      .setAllVariants(allVariants).setUpToArgument(upToArgument).build(this);
+      .setIncomplete(incomplete)
+      .setAllVariants(allVariants)
+      .setUpToArgument(upToArgument)
+      .build(this);
     new GrReferenceResolveRunner(this).resolveImpl(processor);
     return processor.getCandidatesArray();
   }
