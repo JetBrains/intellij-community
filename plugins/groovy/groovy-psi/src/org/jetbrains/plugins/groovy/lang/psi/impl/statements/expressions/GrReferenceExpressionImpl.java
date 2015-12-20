@@ -95,15 +95,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @NotNull
-  private GroovyResolveResult[] resolveTypeOrProperty() {
-    if (ResolveUtil.isDefinitelyKeyOfMap(this)) return GroovyResolveResult.EMPTY_ARRAY;
-
-    final GroovyResolveResult[] results = resolveTypeOrPropertyInner();
-    if (results.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
-
-    if (!ResolveUtil.mayBeKeyOfMap(this)) return results;
-
-    //filter out all members from super classes. We should return only accessible members from map classes
+  private static List<GroovyResolveResult> filterMembersFromSuperClasses(GroovyResolveResult[] results) {
     List<GroovyResolveResult> filtered = new ArrayList<GroovyResolveResult>();
     for (GroovyResolveResult result : results) {
       final PsiElement element = result.getElement();
@@ -122,8 +114,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
       filtered.add(result);
     }
-
-    return ContainerUtil.toArray(filtered, new GroovyResolveResult[filtered.size()]);
+    return filtered;
   }
 
   @NotNull
@@ -251,7 +242,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @NotNull
   public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
-    return resolveMethodOrProperty(true, upToArgument);
+    return _resolve(true, upToArgument);
   }
 
   private void processMethods(GrReferenceResolveRunner runner, @NotNull MethodResolverProcessor methodResolver) {
@@ -272,12 +263,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
    */
   @NotNull
   private GroovyResolveResult[] resolveMethodOrProperty(boolean allVariants, @Nullable GrExpression upToArgument) {
-    if (true) {
-      final GroovyResolverProcessor processor = GroovyResolverProcessorBuilder.builder()
-        .setAllVariants(allVariants).setUpToArgument(upToArgument).build(this);
-      new GrReferenceResolveRunner(this).resolveImpl(processor);
-      return processor.getCandidatesArray();
-    }
     final String name = getReferenceName();
     if (name == null) return GroovyResolveResult.EMPTY_ARRAY;
 
@@ -768,9 +753,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @NotNull
   private GroovyResolveResult[] doPolyResolve(boolean incompleteCode) {
-    String name = getReferenceName();
-    if (name == null) return GroovyResolveResult.EMPTY_ARRAY;
-
+    final PsiElement nameElement = getReferenceNameElement();
+    final String name = getReferenceName();
+    if (name == null || nameElement == null) return GroovyResolveResult.EMPTY_ARRAY;
     if (incompleteCode) {
       ResolverProcessor processor = CompletionProcessor.createRefSameNameProcessor(this, name);
       new GrReferenceResolveRunner(this).resolveImpl(processor);
@@ -780,23 +765,50 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     try {
       ResolveProfiler.start();
-      switch (getKind()) {
-        case METHOD_OR_PROPERTY:
-          return resolveMethodOrProperty(false, null);
-        case TYPE_OR_PROPERTY:
-          return resolveTypeOrProperty();
-        case METHOD_OR_PROPERTY_OR_TYPE:
-          GroovyResolveResult[] results = resolveMethodOrProperty(false, null);
-          if (results.length == 0) results = resolveTypeOrProperty();
+      boolean canBeMethod = getKind() != Kind.TYPE_OR_PROPERTY;
+      if (!canBeMethod) {
+        if (ResolveUtil.isDefinitelyKeyOfMap(this)) return GroovyResolveResult.EMPTY_ARRAY;
+        final IElementType nameType = nameElement.getNode().getElementType();
+        if (nameType == GroovyTokenTypes.kTHIS) {
+          final GroovyResolveResult[] results = GrThisReferenceResolver.resolveThisExpression(this);
+          if (results != null) return results;
+        }
+        else if (nameType == GroovyTokenTypes.kSUPER) {
+          final GroovyResolveResult[] results = GrSuperReferenceResolver.resolveSuperExpression(this);
+          if (results != null) return results;
+        }
+      }
+
+      final GroovyResolveResult[] results = _resolve(false, null);
+      if (results.length == 0) {
+        return GroovyResolveResult.EMPTY_ARRAY;
+      }
+      else if (!canBeMethod) {
+        if (!ResolveUtil.mayBeKeyOfMap(this)) {
           return results;
-        default:
-          return GroovyResolveResult.EMPTY_ARRAY;
+        }
+        else {
+          //filter out all members from super classes. We should return only accessible members from map classes
+          final List<GroovyResolveResult> filtered = filterMembersFromSuperClasses(results);
+          return ContainerUtil.toArray(filtered, new GroovyResolveResult[filtered.size()]);
+        }
+      }
+      else {
+        return results;
       }
     }
     finally {
       final long time = ResolveProfiler.finish();
       ResolveProfiler.write("ref", this, time);
     }
+  }
+
+  @NotNull
+  private GroovyResolveResult[] _resolve(boolean allVariants, @Nullable GrExpression upToArgument) {
+    final GroovyResolverProcessor processor = GroovyResolverProcessorBuilder.builder()
+      .setAllVariants(allVariants).setUpToArgument(upToArgument).build(this);
+    new GrReferenceResolveRunner(this).resolveImpl(processor);
+    return processor.getCandidatesArray();
   }
 
   enum Kind {
