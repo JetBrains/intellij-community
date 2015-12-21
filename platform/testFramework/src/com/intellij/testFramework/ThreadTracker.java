@@ -89,7 +89,7 @@ public class ThreadTracker {
     wellKnownOffenders.add("Reference Handler");
     wellKnownOffenders.add("RMI TCP Connection");
     wellKnownOffenders.add("Signal Dispatcher");
-    wellKnownOffenders.add("Netty");
+    wellKnownOffenders.add("Netty ");
         wellKnownOffenders.add("timed reference disposer");
     wellKnownOffenders.add("timer-int"); //serverImpl
     wellKnownOffenders.add("timer-sys"); //clientimpl
