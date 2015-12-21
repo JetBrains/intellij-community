@@ -24,6 +24,8 @@ import com.intellij.diff.util.TextDiffType;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -34,7 +36,13 @@ public abstract class ThreesideDiffChangeBase {
   public ThreesideDiffChangeBase(@NotNull MergeLineFragment fragment,
                                  @NotNull List<? extends EditorEx> editors,
                                  @NotNull ComparisonPolicy policy) {
-    myType = calcType(fragment, editors, policy);
+    List<Document> documents = ContainerUtil.map(editors, new Function<EditorEx, Document>() {
+      @Override
+      public Document fun(EditorEx editorEx) {
+        return editorEx.getDocument();
+      }
+    });
+    myType = calcType(fragment, documents, policy);
   }
 
   //
@@ -81,9 +89,9 @@ public abstract class ThreesideDiffChangeBase {
   //
 
   @NotNull
-  private static ConflictType calcType(@NotNull MergeLineFragment fragment,
-                                       @NotNull List<? extends EditorEx> editors,
-                                       @NotNull ComparisonPolicy policy) {
+  public static ConflictType calcType(@NotNull MergeLineFragment fragment,
+                                      @NotNull List<? extends Document> documents,
+                                      @NotNull ComparisonPolicy policy) {
     boolean isLeftEmpty = isIntervalEmpty(fragment, ThreeSide.LEFT);
     boolean isBaseEmpty = isIntervalEmpty(fragment, ThreeSide.BASE);
     boolean isRightEmpty = isIntervalEmpty(fragment, ThreeSide.RIGHT);
@@ -97,7 +105,7 @@ public abstract class ThreesideDiffChangeBase {
         return new ConflictType(TextDiffType.INSERTED, true, false);
       }
       else { // =-=
-        boolean equalModifications = compareContents(fragment, editors, policy, ThreeSide.LEFT, ThreeSide.RIGHT);
+        boolean equalModifications = compareContents(fragment, documents, policy, ThreeSide.LEFT, ThreeSide.RIGHT);
         return new ConflictType(equalModifications ? TextDiffType.INSERTED : TextDiffType.CONFLICT);
       }
     }
@@ -106,21 +114,21 @@ public abstract class ThreesideDiffChangeBase {
         return new ConflictType(TextDiffType.DELETED);
       }
       else { // -==, ==-, ===
-        boolean unchangedLeft = compareContents(fragment, editors, policy, ThreeSide.BASE, ThreeSide.LEFT);
-        boolean unchangedRight = compareContents(fragment, editors, policy, ThreeSide.BASE, ThreeSide.RIGHT);
+        boolean unchangedLeft = compareContents(fragment, documents, policy, ThreeSide.BASE, ThreeSide.LEFT);
+        boolean unchangedRight = compareContents(fragment, documents, policy, ThreeSide.BASE, ThreeSide.RIGHT);
         assert !unchangedLeft || !unchangedRight;
 
         if (unchangedLeft) return new ConflictType(isRightEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, false, true);
         if (unchangedRight) return new ConflictType(isLeftEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, true, false);
 
-        boolean equalModifications = compareContents(fragment, editors, policy, ThreeSide.LEFT, ThreeSide.RIGHT);
+        boolean equalModifications = compareContents(fragment, documents, policy, ThreeSide.LEFT, ThreeSide.RIGHT);
         return new ConflictType(equalModifications ? TextDiffType.MODIFIED : TextDiffType.CONFLICT);
       }
     }
   }
 
   private static boolean compareContents(@NotNull MergeLineFragment fragment,
-                                         @NotNull List<? extends EditorEx> editors,
+                                         @NotNull List<? extends Document> documents,
                                          @NotNull ComparisonPolicy policy,
                                          @NotNull ThreeSide side1,
                                          @NotNull ThreeSide side2) {
@@ -131,8 +139,8 @@ public abstract class ThreesideDiffChangeBase {
 
     if (end2 - start2 != end1 - start1) return false;
 
-    Document document1 = side1.select(editors).getDocument();
-    Document document2 = side2.select(editors).getDocument();
+    Document document1 = side1.select(documents);
+    Document document2 = side2.select(documents);
 
     for (int i = 0; i < end1 - start1; i++) {
       int line1 = start1 + i;
