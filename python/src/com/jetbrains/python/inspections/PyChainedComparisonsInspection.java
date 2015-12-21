@@ -44,7 +44,8 @@ import java.awt.*;
  */
 public class PyChainedComparisonsInspection extends PyInspection {
   private static String INSPECTION_SHORT_NAME = "PyChainedComparisonsInspection";
-  public boolean simplifyWithConstantInTheMiddle = true;
+  public boolean ignoreConstantInTheMiddle = false;
+  private static String ourIgnoreConstantOptionText = "Ignore statements with a constant in the middle";
 
   @Nls
   @NotNull
@@ -58,14 +59,14 @@ public class PyChainedComparisonsInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session, simplifyWithConstantInTheMiddle);
+    return new Visitor(holder, session, ignoreConstantInTheMiddle);
   }
 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
     final JPanel rootPanel = new JPanel(new BorderLayout());
-    rootPanel.add(new CheckBox("Simplify statements with a constant in the middle", this, "simplifyWithConstantInTheMiddle"),
+    rootPanel.add(new CheckBox(ourIgnoreConstantOptionText, this, "ignoreConstantInTheMiddle"),
                   BorderLayout.PAGE_START);
 
     return rootPanel;
@@ -80,11 +81,11 @@ public class PyChainedComparisonsInspection extends PyInspection {
     PyElementType myOperator;
     boolean getInnerRight;
     boolean isConstantInTheMiddle;
-    boolean simplifyWithConstantInTheMiddle;
+    boolean ignoreConstantInTheMiddle;
 
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, boolean simplifyWithConstantInTheMiddle) {
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, boolean ignoreConstantInTheMiddle) {
       super(holder, session);
-      this.simplifyWithConstantInTheMiddle = simplifyWithConstantInTheMiddle;
+      this.ignoreConstantInTheMiddle = ignoreConstantInTheMiddle;
     }
 
     @Override
@@ -103,7 +104,7 @@ public class PyChainedComparisonsInspection extends PyInspection {
           if (isRightSimplified((PyBinaryExpression)leftExpression, (PyBinaryExpression)rightExpression) ||
               isLeftSimplified((PyBinaryExpression)leftExpression, (PyBinaryExpression)rightExpression)) {
             if (isConstantInTheMiddle) {
-              if(simplifyWithConstantInTheMiddle) {
+              if(!ignoreConstantInTheMiddle) {
                 registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight),
                                 new DontSimplifyStatementsWithConstantInTheMiddleQuickFix());
               }
@@ -239,20 +240,18 @@ public class PyChainedComparisonsInspection extends PyInspection {
 
   private static class DontSimplifyStatementsWithConstantInTheMiddleQuickFix implements LocalQuickFix {
 
-    private String myText = "Never simplify statements with constant in the middle";
-
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return myText;
+      return ourIgnoreConstantOptionText;
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return myText;
+      return ourIgnoreConstantOptionText;
     }
 
     @Override
@@ -264,7 +263,7 @@ public class PyChainedComparisonsInspection extends PyInspection {
           PyChainedComparisonsInspection tool =
             (PyChainedComparisonsInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME,
                                                                    file);
-          tool.simplifyWithConstantInTheMiddle = false;
+          tool.ignoreConstantInTheMiddle = false;
         }
       });
     }
