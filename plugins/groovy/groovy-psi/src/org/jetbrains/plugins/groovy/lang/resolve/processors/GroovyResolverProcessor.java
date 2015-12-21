@@ -61,16 +61,30 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   final @Nullable PsiType myThisType;
   final @NotNull PsiType[] myTypeArguments;
+  final @Nullable PsiType[] myArgumentTypesNonErased;
   final @Nullable PsiType[] myArgumentTypes;
-  private final NotNullLazyValue<SubstitutorComputer> myPropertySubstitutorComputer;
-  private final NotNullLazyValue<SubstitutorComputer> myMethodSubstitutorComputer;
+
+  private final NotNullLazyValue<SubstitutorComputer> myPropertySubstitutorComputer = new NotNullLazyValue<SubstitutorComputer>() {
+    @NotNull
+    @Override
+    protected SubstitutorComputer compute() {
+      return new SubstitutorComputer(myThisType, PsiType.EMPTY_ARRAY, myTypeArguments, myRef, myRef);
+    }
+  };
+  private final NotNullLazyValue<SubstitutorComputer> myMethodSubstitutorComputer = new NotNullLazyValue<SubstitutorComputer>() {
+    @NotNull
+    @Override
+    protected SubstitutorComputer compute() {
+      return new SubstitutorComputer(myThisType, myArgumentTypesNonErased, myTypeArguments, myRef, myRef.getParent());
+    }
+  };
 
   final MultiMap<GroovyResolveKind, GroovyResolveResult> myCandidates = MultiMap.create();
   final MultiMap<GroovyResolveKind, GroovyResolveResult> myInapplicableCandidates = MultiMap.create();
 
   private boolean myStopExecutingMethods = false;
 
-  GroovyResolverProcessor(@NotNull final GrReferenceExpression ref,
+  GroovyResolverProcessor(@NotNull GrReferenceExpression ref,
                           @NotNull EnumSet<GroovyResolveKind> kinds,
                           @Nullable GrExpression myUpToArgument) {
     myRef = ref;
@@ -80,23 +94,14 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     myIsLValue = PsiUtil.isLValue(myRef);
 
     myThisType = PsiImplUtil.getQualifierType(ref);
-    final PsiType[] argumentTypes = PsiUtil.getArgumentTypes(ref, false, myUpToArgument, false);
-    myArgumentTypes = eraseTypes(argumentTypes);
     myTypeArguments = ref.getTypeArguments();
-    myPropertySubstitutorComputer = new NotNullLazyValue<SubstitutorComputer>() {
-      @NotNull
-      @Override
-      protected SubstitutorComputer compute() {
-        return new SubstitutorComputer(myThisType, PsiType.EMPTY_ARRAY, myTypeArguments, ref, ref);
-      }
-    };
-    myMethodSubstitutorComputer = new NotNullLazyValue<SubstitutorComputer>() {
-      @NotNull
-      @Override
-      protected SubstitutorComputer compute() {
-        return new SubstitutorComputer(myThisType, argumentTypes, myTypeArguments, ref, ref.getParent());
-      }
-    };
+    if (kinds.contains(GroovyResolveKind.METHOD)) {
+      myArgumentTypesNonErased = PsiUtil.getArgumentTypes(ref, false, myUpToArgument, false);
+      myArgumentTypes = eraseTypes(myArgumentTypesNonErased);
+    }
+    else {
+      myArgumentTypes = myArgumentTypesNonErased = null;
+    }
   }
 
   @Override
