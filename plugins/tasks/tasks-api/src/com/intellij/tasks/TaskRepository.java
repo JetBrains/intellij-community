@@ -364,35 +364,14 @@ public abstract class TaskRepository {
     throw new UnsupportedOperationException();
   }
 
-  @Nullable
-  public AdditionalPanel createOpenTaskAdditionalPanel() {
-    return null;
+  @NotNull
+  public TaskControlPanelProvider getOpenTaskControlPanelProvider(){
+    return new BaseOpenTaskControlPanelProvider();
   }
 
-  @Nullable
-  public AdditionalPanel createCloseTaskAdditionalPanel() {
-    return null;
-  }
-
-  public abstract static class AdditionalPanel {
-
-    protected final JPanel mainPanel;
-
-    public AdditionalPanel() {
-      mainPanel = createAdditionalPanel();
-    }
-
-    public JPanel createAdditionalPanel() {
-      return new JPanel();
-    }
-
-    public JPanel getAdditionalPanel() {
-      return mainPanel;
-    }
-
-    public abstract void onOpen(final Task task);
-    public abstract void onClose(final Task task);
-
+  @NotNull
+  public TaskControlPanelProvider getCloseTaskControlPanelProvider(){
+    return new BaseCloseTaskControlPanelProvider();
   }
 
   public abstract static class CancellableConnection implements Callable<Exception> {

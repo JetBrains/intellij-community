@@ -16,25 +16,23 @@
 
 package com.intellij.tasks.actions;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsType;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.TaskControlPanelProvider;
 import com.intellij.tasks.TaskManager;
-import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.tasks.impl.TaskStateCombo;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.components.JBCheckBox;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.uiDesigner.core.GridConstraints;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Collection;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
+import javax.swing.JLabel;
+import javax.swing.JComponent;
 
 /**
  * @author Dmitry Avdeev
@@ -49,43 +47,25 @@ public class CloseTaskDialog extends DialogWrapper {
   private JLabel myTaskLabel;
   private JBCheckBox myMergeBranches;
   private JPanel myVcsPanel;
-  private TaskStateCombo myStateCombo;
-  private JBCheckBox myUpdateState;
   private final TaskManagerImpl myTaskManager;
-  private JPanel myAdditionPanel;
+  private final TaskControlPanelProvider myCloseTaskPanelControlProvider;
 
-  private final TaskRepository.AdditionalPanel myAddition;
+  private JPanel myControlPanel;
 
   public CloseTaskDialog(Project project, final LocalTask task) {
     super(project, false);
     myProject = project;
     myTask = task;
-    
-    myAddition = task.getRepository() != null ? task.getRepository().createCloseTaskAdditionalPanel() : null;
 
     setTitle("Close Task");
     myTaskLabel.setText(TaskUtil.getTrimmedSummary(task));
     myTaskLabel.setIcon(task.getIcon());
 
-    if (!TaskStateCombo.stateUpdatesSupportedFor(task)) {
-      myUpdateState.setVisible(false);
-      myStateCombo.setVisible(false);
+    if (myTask.getRepository() != null) {
+      myCloseTaskPanelControlProvider = myTask.getRepository().getCloseTaskControlPanelProvider();
+    } else {
+      myCloseTaskPanelControlProvider = null;
     }
-
-    final boolean stateUpdatesEnabled = PropertiesComponent.getInstance(myProject).getBoolean(UPDATE_STATE_ENABLED);
-    myUpdateState.setSelected(stateUpdatesEnabled);
-    myStateCombo.setEnabled(stateUpdatesEnabled);
-    myUpdateState.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final boolean selected = myUpdateState.isSelected();
-        myStateCombo.setEnabled(selected);
-        PropertiesComponent.getInstance(myProject).setValue(UPDATE_STATE_ENABLED, String.valueOf(selected));
-        if (selected) {
-          myStateCombo.scheduleUpdateOnce();
-        }
-      }
-    });
 
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(project);
 
@@ -106,19 +86,28 @@ public class CloseTaskDialog extends DialogWrapper {
       myVcsPanel.setVisible(false);
     }
 
-    myStateCombo.showHintLabel(false);
-    if (myUpdateState.isSelected()) {
-      myStateCombo.scheduleUpdateOnce();
-    }
-    
-    if (myAddition != null) {
-      myAddition.onOpen(myTask);
-      if (myAddition.getAdditionalPanel() != null) {
-        myAdditionPanel.add(myAddition.getAdditionalPanel());
-      }
-    }
-    
     init();
+
+    final GridConstraints gridConstraints = new GridConstraints();
+
+    gridConstraints.setRow(0);
+    gridConstraints.setColumn(0);
+    gridConstraints.setRowSpan(1);
+    gridConstraints.setColSpan(1);
+    gridConstraints.setVSizePolicy(1);
+    gridConstraints.setHSizePolicy(6);
+    gridConstraints.setAnchor(0);
+    gridConstraints.setFill(1);
+    gridConstraints.setIndent(0);
+    gridConstraints.setUseParentLayout(false);
+
+    if (myCloseTaskPanelControlProvider != null) {
+      final JPanel closeControlPanel = myCloseTaskPanelControlProvider.createControlPanel();
+      if (closeControlPanel != null) {
+        myControlPanel.add(closeControlPanel);
+      }
+      myCloseTaskPanelControlProvider.doOpenDialog(myTask, myProject);
+    }
   }
 
   protected JComponent createCenterPanel() {
@@ -128,12 +117,12 @@ public class CloseTaskDialog extends DialogWrapper {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myStateCombo.isVisible() && myUpdateState.isSelected() ? myStateCombo.getComboBox() : null;
+    return null;
   }
 
   @Nullable
   CustomTaskState getCloseIssueState() {
-    return myUpdateState.isSelected() ? myStateCombo.getSelectedState() : null;
+    return null;
   }
 
   boolean isCommitChanges() {
@@ -152,19 +141,9 @@ public class CloseTaskDialog extends DialogWrapper {
     if (myMergeBranches.isEnabled()) {
       myTaskManager.getState().mergeBranch = isMergeBranch();
     }
-    if (myAddition != null) {
-      myAddition.onClose(myTask);
+    if (myCloseTaskPanelControlProvider != null) {
+      myCloseTaskPanelControlProvider.doOKAction(myTask, myProject);
     }
     super.doOKAction();
-  }
-
-  private void createUIComponents() {
-    myStateCombo = new TaskStateCombo(myProject, myTask) {
-      @Nullable
-      @Override
-      protected CustomTaskState getPreferredState(@NotNull TaskRepository repository, @NotNull Collection<CustomTaskState> available) {
-        return repository.getPreferredCloseTaskState();
-      }
-    };
   }
 }
