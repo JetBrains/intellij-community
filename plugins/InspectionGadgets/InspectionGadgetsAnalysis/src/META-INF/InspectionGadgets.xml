@@ -2529,6 +2529,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="AwaitNotInLoop" bundle="com.siyeh.InspectionGadgetsBundle" key="await.not.in.loop.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.threading.AwaitNotInLoopInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="AtomicFieldUpdaterNotStaticFinal" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="atomic.field.updater.not.static.final.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.threading.AtomicFieldUpdaterNotStaticFinalInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AwaitWithoutCorrespondingSignal" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="await.without.corresponding.signal.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
