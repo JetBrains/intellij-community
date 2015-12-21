@@ -56,7 +56,6 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.platform.DirectoryProjectConfigurator;
@@ -153,8 +152,6 @@ public class PyCharmEduInitialConfigurator {
       uiSettings.SHOW_MAIN_TOOLBAR = false;
 
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
-
-      Registry.get("ide.new.settings.dialog").setValue(true);
 
       GeneralSettings.getInstance().setShowTipsOnStartup(false);
 
