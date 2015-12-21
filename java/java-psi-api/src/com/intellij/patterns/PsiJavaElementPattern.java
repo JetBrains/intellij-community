@@ -17,8 +17,10 @@ package com.intellij.patterns;
 
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -97,6 +99,9 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
   }
 
   public Self methodCallParameter(final int index, final ElementPattern<? extends PsiMethod> methodPattern) {
+    //noinspection unchecked
+    final PsiNamePatternCondition nameCondition = ContainerUtil.findInstance(methodPattern.getCondition().getConditions(), PsiNamePatternCondition.class);
+
     return with(new PatternCondition<T>("methodCallParameter") {
       @Override
       public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
@@ -106,16 +111,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
           final PsiExpression[] psiExpressions = psiExpressionList.getExpressions();
           if (!(psiExpressions.length > index && psiExpressions[index] == literal)) return false;
 
-          final PsiElement element = psiExpressionList.getParent();
-          if (element instanceof PsiMethodCallExpression) {
-            final JavaResolveResult[] results = ((PsiMethodCallExpression)element).getMethodExpression().multiResolve(false);
-            for (JavaResolveResult result : results) {
-              final PsiElement psiElement = result.getElement();
-              if (methodPattern.accepts(psiElement, context)) {
-                return true;
-              }
-            }
-          }
+          return checkCall(context, psiExpressionList, methodPattern, nameCondition);
         }
         return false;
       }
@@ -123,31 +119,40 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
   }
 
   public Self methodCallParameter(@NotNull final ElementPattern<? extends PsiMethod> methodPattern) {
+    //noinspection unchecked
+    final PsiNamePatternCondition nameCondition = ContainerUtil.findInstance(methodPattern.getCondition().getConditions(), PsiNamePatternCondition.class);
+
     return with(new PatternCondition<T>("methodCallParameter") {
       @Override
       public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
         final PsiElement parent = literal.getParent();
-        if (parent instanceof PsiExpressionList) {
-          final PsiExpressionList psiExpressionList = (PsiExpressionList)parent;
-
-          final PsiElement element = psiExpressionList.getParent();
-          if (element instanceof PsiMethodCallExpression) {
-            final JavaResolveResult[] results = ((PsiMethodCallExpression)element).getMethodExpression().multiResolve(false);
-            for (JavaResolveResult result : results) {
-              final PsiElement psiElement = result.getElement();
-              if (methodPattern.accepts(psiElement, context)) {
-                return true;
-              }
-            }
-          }
-        }
-        return false;
+        return parent instanceof PsiExpressionList && checkCall(context, (PsiExpressionList)parent, methodPattern, nameCondition);
       }
     });
   }
 
+  private static boolean checkCall(ProcessingContext context,
+                                   PsiExpressionList psiExpressionList,
+                                   ElementPattern<? extends PsiMethod> methodPattern,
+                                   @Nullable PsiNamePatternCondition nameCondition) {
+    final PsiElement element = psiExpressionList.getParent();
+    if (element instanceof PsiMethodCallExpression) {
+      PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
+      if (nameCondition != null && !nameCondition.getNamePattern().accepts(methodExpression.getReferenceName())) {
+        return false;
+      }
+
+      for (JavaResolveResult result : methodExpression.multiResolve(false)) {
+        if (methodPattern.accepts(result.getElement(), context)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   public Self constructorParameter(final int index, final String... fqns) {
-    return with(new PatternCondition<T>("methodCallParameter") {
+    return with(new PatternCondition<T>("constructorParameter") {
       @Override
       public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
         final PsiElement parent = literal.getParent();
