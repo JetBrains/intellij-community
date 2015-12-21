@@ -57,7 +57,10 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.*;
+import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -65,7 +68,6 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntFunction;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectProcedure;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,6 +146,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private TIntObjectHashMap<Color> myTextFgColors = new TIntObjectHashMap<Color>();
   private boolean myPaintBackground = true;
   private boolean myLeftFreePaintersAreaShown;
+  private int myLastNonDumbModeIconAreaWidth = 0;
 
   @SuppressWarnings("unchecked")
   public EditorGutterComponentImpl(EditorImpl editor) {
@@ -189,7 +192,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         @Override
         public void drop(DnDEvent e) {
           final Object attachedObject = e.getAttachedObject();
-          if (attachedObject instanceof GutterIconRenderer && checkDumbAware(attachedObject, myEditor.getProject())) {
+          if (attachedObject instanceof GutterIconRenderer && checkDumbAware(attachedObject)) {
             final GutterDraggableObject draggableObject = ((GutterIconRenderer)attachedObject).getDraggableObject();
             if (draggableObject != null) {
               final int line = convertPointToLineNumber(e.getPoint());
@@ -204,7 +207,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         @Override
         public boolean update(DnDEvent e) {
           final Object attachedObject = e.getAttachedObject();
-          if (attachedObject instanceof GutterIconRenderer && checkDumbAware(attachedObject, myEditor.getProject())) {
+          if (attachedObject instanceof GutterIconRenderer && checkDumbAware(attachedObject)) {
             final GutterDraggableObject draggableObject = ((GutterIconRenderer)attachedObject).getDraggableObject();
             if (draggableObject != null) {
               final int line = convertPointToLineNumber(e.getPoint());
@@ -763,7 +766,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         int width = 1;
         for (int i = 0; i < renderers.size(); i++) {
           GutterMark renderer = renderers.get(i);
-          if (!checkDumbAware(renderer, myEditor.getProject())) continue;
+          if (!checkDumbAware(renderer)) continue;
           width += scaleIcon(renderer.getIcon()).getIconWidth();
           if (i > 0) width += GAP_BETWEEN_ICONS;
         }
@@ -773,6 +776,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         return true;
       }
     });
+    
+    if (isDumbMode()) {
+      myIconsAreaWidth = Math.max(myIconsAreaWidth, myLastNonDumbModeIconAreaWidth);
+    }
+    else {
+      myLastNonDumbModeIconAreaWidth = myIconsAreaWidth;
+    }
   }
 
   private boolean isHighlighterVisible(RangeHighlighter highlighter) {
@@ -905,7 +915,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     final int y = myEditor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
 
     for (GutterMark r : row) {
-      if (!checkDumbAware(r, myEditor.getProject())) continue;
+      if (!checkDumbAware(r)) continue;
       final GutterIconRenderer.Alignment alignment = ((GutterIconRenderer)r).getAlignment();
       final Icon icon = scaleIcon(r.getIcon());
       if (alignment == GutterIconRenderer.Alignment.LEFT) {
@@ -922,7 +932,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     x = getIconAreaOffset() + myIconsAreaWidth - 2; // because of 2px LineMarkerRenderers
     for (GutterMark r : row) {
-      if (!checkDumbAware(r, myEditor.getProject())) continue;
+      if (!checkDumbAware(r)) continue;
       if (((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.RIGHT) {
         Icon icon = scaleIcon(r.getIcon());
         x -= icon.getIconWidth();
@@ -937,7 +947,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       middleSize -= GAP_BETWEEN_ICONS;
       x = getIconAreaOffset() + leftSize + (myIconsAreaWidth - leftSize - rightSize - middleSize) / 2;
       for (GutterMark r : row) {
-        if (!checkDumbAware(r, myEditor.getProject())) continue;
+        if (!checkDumbAware(r)) continue;
         if (((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.CENTER) {
           Icon icon = scaleIcon(r.getIcon());
           processor.process(x, y + getTextAlignmentShift(icon), r);
@@ -1487,8 +1497,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     GutterIconRenderer renderer = getGutterRenderer(e);
-    final Project project = myEditor.getProject();
-
     AnAction clickAction = null;
     if (renderer != null && e.getButton() < 4) {
       clickAction = (InputEvent.BUTTON2_MASK & e.getModifiers()) > 0
@@ -1496,12 +1504,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                     : renderer.getClickAction();
     }
     if (clickAction != null) {
-      if (checkDumbAware(clickAction, project)) {
+      if (checkDumbAware(clickAction)) {
         performAction(clickAction, e, "ICON_NAVIGATION", myEditor.getDataContext());
         repaint();
       }
       else {
-        notifyNotDumbAware(project);
+        notifyNotDumbAware();
       }
       e.consume();
     }
@@ -1515,13 +1523,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  @Contract("_, null -> true")
-  private static boolean checkDumbAware(@NotNull Object possiblyDumbAware, @Nullable Project project) {
-    return project == null || !DumbService.isDumb(project) || DumbService.isDumbAware(possiblyDumbAware);
+  private boolean isDumbMode() {
+    Project project = myEditor.getProject();
+    return project != null && DumbService.isDumb(project);
+  }
+  
+  private boolean checkDumbAware(@NotNull Object possiblyDumbAware) {
+    return !isDumbMode() || DumbService.isDumbAware(possiblyDumbAware);
   }
 
-  private static void notifyNotDumbAware(@NotNull Project project) {
-    DumbService.getInstance(project).showDumbModeNotification("This functionality is not available during indexing");
+  private void notifyNotDumbAware() {
+    Project project = myEditor.getProject();
+    if (project != null) {
+      DumbService.getInstance(project).showDumbModeNotification("This functionality is not available during indexing");
+    }
   }
 
   private static void performAction(@NotNull AnAction action, @NotNull InputEvent e, @NotNull String place, @NotNull DataContext context) {
@@ -1673,26 +1688,24 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     else {
       GutterIconRenderer renderer = getGutterRenderer(e);
       if (renderer != null) {
-        Project project = myEditor.getProject();
-
         ActionGroup actionGroup = renderer.getPopupMenuActions();
           if (actionGroup != null) {
-          if (checkDumbAware(actionGroup, project)) {
+          if (checkDumbAware(actionGroup)) {
             ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN,
                                                                             actionGroup);
             popupMenu.getComponent().show(this, e.getX(), e.getY());
           } else {
-            notifyNotDumbAware(project);
+            notifyNotDumbAware();
           }
           e.consume();
         }
         else {
           AnAction rightButtonAction = renderer.getRightButtonClickAction();
           if (rightButtonAction != null) {
-            if (checkDumbAware(rightButtonAction, project)) {
+            if (checkDumbAware(rightButtonAction)) {
               performAction(rightButtonAction, e, "ICON_NAVIGATION_SECONDARY_BUTTON", myEditor.getDataContext());
             } else {
-              notifyNotDumbAware(project);
+              notifyNotDumbAware();
             }
             e.consume();
           }
