@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.messages.MessageBusConnection;
+import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import org.jetbrains.annotations.NotNull;
@@ -88,6 +89,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
   private final Project myProject;
   private final VirtualFile myRoot;
+  private final GitRepository myRepository;
   private final ChangeListManager myChangeListManager;
   private final VcsDirtyScopeManager myDirtyScopeManager;
   private final ProjectLevelVcsManager myVcsManager;
@@ -102,6 +104,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
   GitUntrackedFilesHolder(@NotNull GitRepository repository) {
     myProject = repository.getProject();
+    myRepository = repository;
     myRoot = repository.getRoot();
     myChangeListManager = ChangeListManager.getInstance(myProject);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
@@ -266,7 +269,21 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   private boolean totalRefreshNeeded(@NotNull String path) {
-    return indexChanged(path) || externallyCommitted(path) || gitignoreChanged(path);
+    return indexChanged(path) || externallyCommitted(path) || headMoved(path) ||
+           headChanged(path) || currentBranchChanged(path) || gitignoreChanged(path);
+  }
+
+  private boolean headChanged(@NotNull String path) {
+    return myRepositoryFiles.isHeadFile(path);
+  }
+
+  private boolean currentBranchChanged(@NotNull String path) {
+    GitLocalBranch currentBranch = myRepository.getCurrentBranch();
+    return currentBranch != null && myRepositoryFiles.isBranchFile(path, currentBranch.getFullName());
+  }
+
+  private boolean headMoved(@NotNull String path) {
+    return myRepositoryFiles.isOrigHeadFile(path);
   }
 
   private boolean indexChanged(@NotNull String path) {

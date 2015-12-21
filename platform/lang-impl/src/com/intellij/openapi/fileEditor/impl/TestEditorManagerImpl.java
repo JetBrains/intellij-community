@@ -18,7 +18,6 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -31,6 +30,8 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,7 +42,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,8 +51,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-@NonNls
-public class TestEditorManagerImpl extends FileEditorManagerEx implements ProjectComponent {
+final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.test.TestEditorManagerImpl");
 
   private final Project myProject;
@@ -61,9 +60,18 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Projec
   private VirtualFile myActiveFile;
   private static final LightVirtualFile LIGHT_VIRTUAL_FILE = new LightVirtualFile("Dummy.java");
 
-  public TestEditorManagerImpl(Project project) {
+  public TestEditorManagerImpl(@NotNull Project project) {
     myProject = project;
     registerExtraEditorDataProvider(new TextEditorPsiDataProvider(), null);
+
+    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
+      @Override
+      public void projectClosed(Project project) {
+        if (project == myProject) {
+          closeAllFiles();
+        }
+      }
+    });
   }
 
   @Override
@@ -319,20 +327,8 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     closeAllFiles();
-  }
-
-  @Override
-  public void initComponent() { }
-
-  @Override
-  public void projectClosed() {
-    closeAllFiles();
-  }
-
-  @Override
-  public void projectOpened() {
   }
 
   @Override
@@ -398,12 +394,12 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   @Override
-  public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
+  public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
   }
 
 
   @Override
-  public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
+  public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
   }
 
   @Override
@@ -479,12 +475,6 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Projec
   @Override
   public boolean hasSplitOrUndockedWindows() {
     return false;
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "TestEditorManager";
   }
 
   @NotNull

@@ -34,4 +34,13 @@ public class ParameterHidingMemberVariable
     public static void setBar2(int bar) {
         System.out.println(bar);
     }
+
+    int i;
+
+    class X {
+        void m(int <warning descr="Parameter 'i' hides field in class 'ParameterHidingMemberVariable'">i</warning>) {}
+    }
+    static class Y {
+        void a(int i) {}
+    }
 }

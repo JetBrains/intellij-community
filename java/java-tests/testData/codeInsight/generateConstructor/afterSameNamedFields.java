@@ -3,7 +3,7 @@ public class Clas extends Clas2{
 
     public Clas(int foo, int foo1) {<caret>
         super(foo);
-        foo = foo1;
+        this.foo = foo1;
     }
 }
 

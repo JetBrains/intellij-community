@@ -35,8 +35,8 @@ public final class ShellCommand {
 
   private final GeneralCommandLine myCommandLine;
 
-  public ShellCommand(@Nullable List<String> commandLine, @Nullable String dir, @Nullable Charset charset) {
-    if (commandLine == null || commandLine.isEmpty()) {
+  public ShellCommand(@NotNull List<String> commandLine, @Nullable String dir, @Nullable Charset charset) {
+    if (commandLine.isEmpty()) {
       throw new IllegalArgumentException("commandLine is empty");
     }
     myCommandLine = new GeneralCommandLine(commandLine);

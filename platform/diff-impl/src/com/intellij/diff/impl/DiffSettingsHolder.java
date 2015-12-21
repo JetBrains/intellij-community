@@ -44,6 +44,7 @@ public class DiffSettingsHolder implements PersistentStateComponent<DiffSettings
 
   private static class PlaceSettings {
     @NotNull public List<String> DIFF_TOOLS_ORDER = new ArrayList<String>();
+    public boolean SYNC_BINARY_EDITOR_SETTINGS = true;
   }
 
   public static class DiffSettings {
@@ -74,6 +75,14 @@ public class DiffSettingsHolder implements PersistentStateComponent<DiffSettings
 
     public void setGoToNextFileOnNextDifference(boolean value) {
       SHARED_SETTINGS.GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE = value;
+    }
+
+    public boolean isSyncBinaryEditorSettings() {
+      return PLACE_SETTINGS.SYNC_BINARY_EDITOR_SETTINGS;
+    }
+
+    public void setSyncBinaryEditorSettings(boolean value) {
+      PLACE_SETTINGS.SYNC_BINARY_EDITOR_SETTINGS= value;
     }
 
     //
@@ -112,10 +121,12 @@ public class DiffSettingsHolder implements PersistentStateComponent<DiffSettings
   private State myState = new State();
 
   @NotNull
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(State state) {
     myState = state;
   }

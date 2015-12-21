@@ -29,11 +29,11 @@ import com.intellij.util.ArrayUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.browser.SHAHash;
-import git4idea.history.wholeTree.AbstractHash;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,12 +42,14 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
 /**
  * Change related utilities
  */
 public class GitChangeUtils {
   /**
-   * the pattern for committed changelist assumed by {@link #parseChangeList(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile, git4idea.util.StringScanner,boolean)}
+   * the pattern for committed changelist assumed.
    */
   public static final String COMMITTED_CHANGELIST_FORMAT = "%ct%n%H%n%P%n%an%x20%x3C%ae%x3E%n%cn%x20%x3C%ce%x3E%n%s%n%x03%n%b%n%x03";
 
@@ -119,13 +121,13 @@ public class GitChangeUtils {
    * @param ignoreNames    a set of names ignored during collection of the changes
    * @throws VcsException if the input format does not matches expected format
    */
-  public static void parseChanges(Project project,
-                                  VirtualFile vcsRoot,
-                                  @Nullable GitRevisionNumber thisRevision,
-                                  @Nullable GitRevisionNumber parentRevision,
-                                  StringScanner s,
-                                  Collection<Change> changes,
-                                  final Set<String> ignoreNames) throws VcsException {
+  private static void parseChanges(Project project,
+                                   VirtualFile vcsRoot,
+                                   @Nullable GitRevisionNumber thisRevision,
+                                   @Nullable GitRevisionNumber parentRevision,
+                                   StringScanner s,
+                                   Collection<Change> changes,
+                                   final Set<String> ignoreNames) throws VcsException {
     while (s.hasMoreData()) {
       FileStatus status = null;
       if (s.isEol()) {
@@ -263,21 +265,6 @@ public class GitChangeUtils {
   }
 
   @Nullable
-  public static String getCommitAbbreviation(final Project project, final VirtualFile root, final SHAHash hash) {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    h.setSilent(true);
-    h.addParameters("--max-count=1", "--pretty=%h", "--encoding=UTF-8", "\"" + hash.getValue() + "\"", "--");
-    try {
-      final String output = h.run().trim();
-      if (StringUtil.isEmptyOrSpaces(output)) return null;
-      return output.trim();
-    }
-    catch (VcsException e) {
-      return null;
-    }
-  }
-
-  @Nullable
   public static SHAHash commitExists(final Project project, final VirtualFile root, final String anyReference,
                                      List<VirtualFile> paths, final String... parameters) {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
@@ -291,44 +278,6 @@ public class GitChangeUtils {
       final String output = h.run().trim();
       if (StringUtil.isEmptyOrSpaces(output)) return null;
       return new SHAHash(output);
-    }
-    catch (VcsException e) {
-      return null;
-    }
-  }
-
-  public static boolean isAnyLevelChild(final Project project, final VirtualFile root, final SHAHash parent,
-                                        final String anyReferenceChild) {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.MERGE_BASE);
-    h.setSilent(true);
-    h.addParameters("\"" + parent.getValue() + "\"","\"" + anyReferenceChild + "\"",  "--");
-    try {
-      final String output = h.run().trim();
-      if (StringUtil.isEmptyOrSpaces(output)) return false;
-      return parent.getValue().equals(output.trim());
-    }
-    catch (VcsException e) {
-      return false;
-    }
-  }
-
-  @Nullable
-  public static List<AbstractHash> commitExistsByComment(final Project project, final VirtualFile root, final String anyReference) {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    h.setSilent(true);
-    String escaped = StringUtil.escapeQuotes(anyReference);
-    escaped = StringUtil.escapeSlashes(escaped);
-    final String grepParam = "--grep=" + escaped;
-    h.addParameters("--regexp-ignore-case", "--pretty=%h", "--all", "--encoding=UTF-8", grepParam, "--");
-    try {
-      final String output = h.run().trim();
-      if (StringUtil.isEmptyOrSpaces(output)) return null;
-      final String[] hashes = output.split("\n");
-      final List<AbstractHash> result = new ArrayList<AbstractHash>();
-      for (String hash : hashes) {
-        result.add(AbstractHash.create(hash));
-      }
-      return result;
     }
     catch (VcsException e) {
       return null;
@@ -408,7 +357,8 @@ public class GitChangeUtils {
       }
     }
     String changeListName = String.format("%s(%s)", commentSubject, revisionNumber);
-    return new GitCommittedChangeList(changeListName, fullComment, committerName, thisRevision, commitDate, changes, revertable);
+    return new GitCommittedChangeList(changeListName, fullComment, committerName, thisRevision, commitDate, changes,
+                                      assertNotNull(GitVcs.getInstance(project)), revertable);
   }
 
   public static long longForSHAHash(String revisionNumber) {
@@ -445,30 +395,55 @@ public class GitChangeUtils {
     return changes;
   }
 
+  @NotNull
+  public static Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
+                                                         @NotNull VirtualFile root,
+                                                         @NotNull String oldRevision,
+                                                         @Nullable Collection<FilePath> dirtyPaths, boolean reverse) throws VcsException {
+    String output = getDiffOutput(project, root, oldRevision, dirtyPaths, reverse);
+    Collection<Change> changes = new ArrayList<Change>();
+    final GitRevisionNumber revisionNumber = resolveReference(project, root, oldRevision);
+    parseChanges(project, root, reverse ? revisionNumber : null, reverse ? null : revisionNumber, output, changes,
+                 Collections.<String>emptySet());
+    return changes;
+  }
+
   /**
    * Calls {@code git diff} on the given range.
    * @param project
    * @param root
    * @param diffRange  range or just revision (will be compared with current working tree).
    * @param dirtyPaths limit the command by paths if needed or pass null.
+   * @param reverse    swap two revision; that is, show differences from index or on-disk file to tree contents.
    * @return output of the 'git diff' command.
    * @throws VcsException
    */
   @NotNull
-  public static String getDiffOutput(@NotNull Project project, @NotNull VirtualFile root,
-                                     @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
-    GitSimpleHandler handler = getDiffHandler(project, root, diffRange, dirtyPaths);
+  private static String getDiffOutput(@NotNull Project project, @NotNull VirtualFile root,
+                                      @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths, boolean reverse)
+    throws VcsException {
+    GitSimpleHandler handler = getDiffHandler(project, root, diffRange, dirtyPaths, reverse);
     if (handler.isLargeCommandLine()) {
       // if there are too much files, just get all changes for the project
-      handler = getDiffHandler(project, root, diffRange, null);
+      handler = getDiffHandler(project, root, diffRange, null, reverse);
     }
     return handler.run();
   }
 
   @NotNull
+  public static String getDiffOutput(@NotNull Project project, @NotNull VirtualFile root,
+                                     @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
+    return getDiffOutput(project, root, diffRange, dirtyPaths, false);
+  }
+
+
+  @NotNull
   private static GitSimpleHandler getDiffHandler(@NotNull Project project, @NotNull VirtualFile root,
-                                                 @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths) {
+                                                 @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths, boolean reverse) {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.DIFF);
+    if (reverse) {
+      handler.addParameters("-R");
+    }
     handler.addParameters("--name-status", "--diff-filter=ADCMRUXT", "-M", diffRange);
     handler.setSilent(true);
     handler.setStdoutSuppressed(true);

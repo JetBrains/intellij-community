@@ -58,7 +58,7 @@ public class ClassPresentationUtil {
       return ((PsiFile)element).getName();
     }
     else if (element instanceof PsiField) {
-      return ((PsiField)element).getName();
+      return ((PsiField)element).getName() + " in " + getContextName(element, qualified);
     }
     else{
       return null;

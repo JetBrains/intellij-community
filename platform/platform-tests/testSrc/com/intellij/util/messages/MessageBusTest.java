@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,8 @@ public class MessageBusTest extends TestCase {
     void t22();
   }
 
-  private static final Topic<T1Listener> TOPIC1 = new Topic<T1Listener>("T1", T1Listener.class);
-  private static final Topic<T2Listener> TOPIC2 = new Topic<T2Listener>("T2", T2Listener.class);
+  private static final Topic<T1Listener> TOPIC1 = new Topic<>("T1", T1Listener.class);
+  private static final Topic<T2Listener> TOPIC2 = new Topic<>("T2", T2Listener.class);
 
   private class T1Handler implements T1Listener {
     private final String id;
@@ -86,7 +86,17 @@ public class MessageBusTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myBus = MessageBusFactory.newMessageBus(this);
-    myLog = new ArrayList<String>();
+    myLog = new ArrayList<>();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      myBus.dispose();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testNoListenersSubscribed() {
@@ -217,13 +227,10 @@ public class MessageBusTest extends TestCase {
       new MessageBusImpl(this, childBus);
     }
 
-    PlatformTestUtil.assertTiming("Too long", 3000, new Runnable() {
-      @Override
-      public void run() {
-        T1Listener publisher = myBus.syncPublisher(TOPIC1);
-        for (int i = 0; i < 1000000; i++) {
-          publisher.t11();
-        }
+    PlatformTestUtil.assertTiming("Too long", 3000, () -> {
+      T1Listener publisher = myBus.syncPublisher(TOPIC1);
+      for (int i = 0; i < 1000000; i++) {
+        publisher.t11();
       }
     });
   }
@@ -231,15 +238,16 @@ public class MessageBusTest extends TestCase {
   public void testStress() throws Throwable {
     final int threadsNumber = 10;
     final int iterationsNumber = 100;
-    final AtomicReference<Throwable> exception = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> exception = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(threadsNumber);
     final MessageBus parentBus = MessageBusFactory.newMessageBus("parent");
+    List<Thread> threads = new ArrayList<>();
     for (int i = 0; i < threadsNumber; i++) {
-      new Thread(String.valueOf(i)) {
+      Thread thread = new Thread(String.valueOf(i)) {
         @Override
         public void run() {
-          int remains = iterationsNumber;
           try {
+            int remains = iterationsNumber;
             while (remains-- > 0) {
               //noinspection ThrowableResultOfMethodCallIgnored
               if (exception.get() != null) {
@@ -255,12 +263,17 @@ public class MessageBusTest extends TestCase {
             latch.countDown();
           }
         }
-      }.start();
+      };
+      thread.start();
+      threads.add(thread);
     }
     latch.await();
     final Throwable e = exception.get();
     if (e != null) {
       throw e;
+    }
+    for (Thread thread : threads) {
+      thread.join();
     }
   }
 

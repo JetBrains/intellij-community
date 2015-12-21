@@ -55,6 +55,7 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
     return PythonHelper.PYTEST;
   }
 
+  @NotNull
   @Override
   protected List<String> getTestSpecs() {
     List<String> specs = new ArrayList<String>();

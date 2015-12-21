@@ -1,5 +1,6 @@
 Types:
 PsiField:foo : int
+PsiMethod:getFoo : int
 PsiParameter:foo : int
 PsiReferenceExpression:foo : int
 PsiReferenceExpression:foo : int

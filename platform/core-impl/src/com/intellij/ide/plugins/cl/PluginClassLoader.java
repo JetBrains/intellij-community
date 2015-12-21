@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,17 +23,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.CompoundEnumeration;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -87,7 +83,6 @@ public class PluginClassLoader extends UrlClassLoader {
       return c;
     }
 
-    PluginManagerCore.addPluginClass(name, myPluginId, false);
     return null;
   }
 
@@ -130,7 +125,7 @@ public class PluginClassLoader extends UrlClassLoader {
       throw new PluginException(e, myPluginId);
     }
     if (c != null) {
-      PluginManagerCore.addPluginClass(c.getName(), myPluginId, true);
+      PluginManagerCore.addPluginClass(myPluginId);
     }
 
     return c;
@@ -170,12 +165,12 @@ public class PluginClassLoader extends UrlClassLoader {
 
   @Override
   public Enumeration<URL> findResources(final String name) throws IOException {
-    final Enumeration[] resources = new Enumeration[myParents.length + 1];
+    @SuppressWarnings("unchecked") Enumeration<URL>[] resources = new Enumeration[myParents.length + 1];
     resources[0] = super.findResources(name);
     for (int idx = 0; idx < myParents.length; idx++) {
       resources[idx + 1] = fetchResources(myParents[idx], name);
     }
-    return new CompoundEnumeration<URL>(resources);
+    return new DeepEnumeration(resources);
   }
 
   @SuppressWarnings("UnusedDeclaration")
@@ -201,8 +196,8 @@ public class PluginClassLoader extends UrlClassLoader {
 
   private static URL fetchResource(ClassLoader cl, String resourceName) {
     try {
-      final Method findResourceMethod = getFindResourceMethod(cl.getClass(), "findResource");
-      return (URL)findResourceMethod.invoke(cl, resourceName);
+      Method findResource = getFindResourceMethod(cl.getClass(), "findResource");
+      return findResource != null ? (URL)findResource.invoke(cl, resourceName) : null;
     }
     catch (Exception e) {
       Logger.getInstance(PluginClassLoader.class).error(e);
@@ -210,10 +205,11 @@ public class PluginClassLoader extends UrlClassLoader {
     }
   }
 
-  private static Enumeration fetchResources(ClassLoader cl, String resourceName) {
+  private static Enumeration<URL> fetchResources(ClassLoader cl, String resourceName) {
     try {
-      final Method findResourceMethod = getFindResourceMethod(cl.getClass(), "findResources");
-      return findResourceMethod == null ? null : (Enumeration)findResourceMethod.invoke(cl, resourceName);
+      Method findResources = getFindResourceMethod(cl.getClass(), "findResources");
+      @SuppressWarnings("unchecked") Enumeration<URL> e = findResources == null ? null : (Enumeration)findResources.invoke(cl, resourceName);
+      return e;
     }
     catch (Exception e) {
       Logger.getInstance(PluginClassLoader.class).error(e);
@@ -243,5 +239,32 @@ public class PluginClassLoader extends UrlClassLoader {
   @Override
   public String toString() {
     return "PluginClassLoader[" + myPluginId + ", " + myPluginVersion + "]";
+  }
+
+  private static class DeepEnumeration implements Enumeration<URL> {
+    private final Enumeration<URL>[] myEnumerations;
+    private int myIndex = 0;
+
+    public DeepEnumeration(Enumeration<URL>[] enumerations) {
+      myEnumerations = enumerations;
+    }
+
+    @Override
+    public boolean hasMoreElements() {
+      while (myIndex < myEnumerations.length) {
+        Enumeration<URL> e = myEnumerations[myIndex];
+        if (e != null && e.hasMoreElements()) return true;
+        myIndex++;
+      }
+      return false;
+    }
+
+    @Override
+    public URL nextElement() {
+      if (!hasMoreElements()) {
+        throw new NoSuchElementException();
+      }
+      return myEnumerations[myIndex].nextElement();
+    }
   }
 }

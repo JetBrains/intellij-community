@@ -96,7 +96,7 @@ class ForkedGroovyc implements GroovycFlavor {
       getProgramParams(tempFile, settings, forStubs)
     );
     final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
-    ProcessHandler handler = new BaseOSProcessHandler(process, null, null) {
+    ProcessHandler handler = new BaseOSProcessHandler(process, StringUtil.join(cmd, " "), null) {
       @NotNull
       @Override
       protected Future<?> executeOnPooledThread(@NotNull Runnable task) {

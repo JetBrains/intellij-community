@@ -20,7 +20,6 @@
   </change-notes>
 
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
     <xdebugger.breakpointType implementation="org.intellij.plugins.xsltDebugger.XsltBreakpointType"/>
 
     <programRunner implementation="org.intellij.plugins.xsltDebugger.XsltDebuggerRunner"/>

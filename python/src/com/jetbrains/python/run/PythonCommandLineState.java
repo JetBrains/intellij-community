@@ -254,8 +254,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
     
     initEnvironment(project, commandLine, config, isDebug);
 
-    commandLine.withCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
-
     setRunnerPath(project, commandLine, config);
 
     return commandLine;
@@ -495,8 +493,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
       Module module = getModule(project, config);
 
       Sdk sdk = PythonSdkType.findPythonSdk(module);
-      if (sdk == null) return null;
-      sdkHome = sdk.getHomePath();
+      
+      if (sdk != null) {
+        sdkHome = sdk.getHomePath();
+      }
     }
 
     return sdkHome;

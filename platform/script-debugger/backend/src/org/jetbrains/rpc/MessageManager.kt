@@ -16,8 +16,18 @@
 package org.jetbrains.rpc
 
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.jsonProtocol.Request
 import java.io.IOException
 import java.util.*
+
+interface MessageProcessor {
+  fun cancelWaitingRequests()
+
+  fun closed()
+
+  fun <RESULT> send(message: Request<RESULT>): Promise<RESULT>
+}
 
 class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(private val handler: MessageManager.Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS>) : MessageManagerBase() {
   private val callbackMap = ContainerUtil.createConcurrentIntObjectMap<RequestCallback<SUCCESS>>()
@@ -30,7 +40,9 @@ class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(privat
 
     fun readIfHasSequence(incoming: INCOMING): INCOMING_WITH_SEQ?
 
-    fun getSequence(incomingWithSeq: INCOMING_WITH_SEQ): Int
+    fun getSequence(incomingWithSeq: INCOMING_WITH_SEQ): Int = throw AbstractMethodError()
+
+    fun getSequence(incomingWithSeq: INCOMING_WITH_SEQ, incoming: INCOMING) = getSequence(incomingWithSeq)
 
     fun acceptNonSequence(incoming: INCOMING)
 
@@ -81,7 +93,7 @@ class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(privat
       return
     }
 
-    val callback = getCallbackAndRemove(handler.getSequence(commandResponse))
+    val callback = getCallbackAndRemove(handler.getSequence(commandResponse, incomingParsed))
     if (rejectIfClosed(callback)) {
       return
     }

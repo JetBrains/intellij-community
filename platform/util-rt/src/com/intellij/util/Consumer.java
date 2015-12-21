@@ -17,9 +17,7 @@ package com.intellij.util;
 
 public interface Consumer<T> {
   Consumer EMPTY_CONSUMER = new Consumer() {
-    @Override
-    public void consume(final Object t) {
-    }
+    public void consume(Object t) { }
   };
 
   /**
@@ -27,5 +25,4 @@ public interface Consumer<T> {
    * t is supposed to be a not-null value. If you need to pass {@code null}s to the consumer use {@link NullableConsumer} instead
    */
   void consume(T t);
-
 }

@@ -115,13 +115,12 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
                                                                                             classType.getPresentableText()));
                   return;
                 }
-                final TypeMigrationRules myRules = new TypeMigrationRules(((PsiAnonymousClass)aClass).getBaseClassType());
+                final TypeMigrationRules myRules = new TypeMigrationRules();
                 final PsiSubstitutor substitutor = result.getSubstitutor().put(typeParameter, targetParam);
                 final PsiType targetClassType = elementFactory.createType(baseClass, substitutor);
-                myRules.setMigrationRootType(targetClassType);
                 myRules.setBoundScope(new LocalSearchScope(aClass));
                 TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, myRules,
-                                                                    ((PsiAnonymousClass)aClass).getBaseClassReference().getParameterList());
+                                                                    ((PsiAnonymousClass)aClass).getBaseClassReference().getParameterList(), targetClassType);
               }
               catch (IncorrectOperationException e) {
                 HintManager.getInstance().showErrorHint(editor, "Incorrect type");

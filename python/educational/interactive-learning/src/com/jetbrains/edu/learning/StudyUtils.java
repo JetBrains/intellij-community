@@ -38,6 +38,7 @@ import com.jetbrains.edu.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.learning.actions.StudyCheckAction;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.run.StudyExecutor;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
@@ -171,6 +172,11 @@ public class StudyUtils {
                                                @NotNull final ProcessHandler handler) {
     final Language language = currentTask.getLesson().getCourse().getLanguageById();
     return StudyExecutor.INSTANCE.forLanguage(language).getExecutor(project, handler);
+  }
+
+  public static StudyCheckAction getCheckAction(@NotNull final Course course) {
+    final Language language = course.getLanguageById();
+    return StudyExecutor.INSTANCE.forLanguage(language).getCheckAction();
   }
 
   public static void setCommandLineParameters(@NotNull final GeneralCommandLine cmd,

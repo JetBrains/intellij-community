@@ -20,6 +20,7 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
@@ -48,10 +49,12 @@ public class TestClassNode extends ClassNode {
   protected MethodNode createNodeForMethod(final Module module, final GrMethod method, final String parentLocationRootMark) {
     if (method == null) return null;
 
-    final boolean isTestMethod = JUnitUtil.isTestMethod(new PsiLocation<PsiMethod>(getProject(), method));
+    if (!DumbService.isDumb(module.getProject())) {
+      final boolean isTestMethod = JUnitUtil.isTestMethod(new PsiLocation<PsiMethod>(module.getProject(), method));
 
-    if (isTestMethod) {
-      return new TestMethodNode(module, method, NodeId.TEST_CLASS_IN_TESTS_SUBTREE, getSettings(), myMethodIcon);
+      if (isTestMethod) {
+        return new TestMethodNode(module, method, NodeId.TEST_CLASS_IN_TESTS_SUBTREE, getSettings(), myMethodIcon);
+      }
     }
 
     return new MethodNode(module, method, NodeId.TEST_CLASS_IN_TESTS_SUBTREE, getSettings());

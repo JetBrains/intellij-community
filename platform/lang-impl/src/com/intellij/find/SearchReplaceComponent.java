@@ -342,7 +342,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          mySearchTextComponent.setCaretPosition(oldCaretPosition);
+          mySearchTextComponent.setCaretPosition(Math.min(oldCaretPosition, mySearchTextComponent.getText().length()));
         }
       });
     }

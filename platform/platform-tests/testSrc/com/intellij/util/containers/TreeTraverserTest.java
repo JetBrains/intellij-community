@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -146,6 +147,21 @@ public class TreeTraverserTest extends TestCase {
     };
   }
 
+  @NotNull
+  private static <E> JBIterable.StatefulFilter<E> UP_TO(final E o) {
+    return new JBIterable.StatefulFilter<E>() {
+      boolean b;
+
+      @Override
+      public boolean value(E e) {
+        if (b) return false;
+        b = Comparing.equal(e, o);
+        return true;
+      }
+    };
+  }
+
+
   // JBIterable ----------------------------------------------
 
   public void testAppend() {
@@ -175,6 +191,17 @@ public class TreeTraverserTest extends TestCase {
   public void testTakeWhile() {
     JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).takeWhile(LESS_THAN_MOD(10)).take(10);
     assertEquals(Arrays.asList(1, 2, 3, 4), it.toList());
+  }
+
+  public void testGetAt() {
+    JBIterable<Integer> it = JBIterable.of(1, 2, 3, 4);
+    assertEquals((Integer)4, it.get(3));
+    assertNull(it.get(4));
+    assertNull(it.get(5));
+    JBIterable<Integer> it2 = JBIterable.generate(1, INCREMENT).take(4);
+    assertEquals((Integer)4, it2.get(3));
+    assertNull(it2.get(4));
+    assertNull(it2.get(5));
   }
 
   public void testFilterTransformTakeWhile() {
@@ -235,6 +262,47 @@ public class TreeTraverserTest extends TestCase {
 
   public void testSimplePreOrderDfs() {
     assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 8, 9, 10, 4, 11, 12, 13), numTraverser(TreeTraversal.PRE_ORDER_DFS).fun(1).toList());
+  }
+
+  public void testSimpleInterlacedDfs() {
+    assertEquals(Arrays.asList(1, 2, 5, 3, 6, 4, 8, 7, 9, 11, 10, 12, 13), numTraverser(TreeTraversal.INTERLEAVED_DFS).fun(1).toList());
+  }
+
+  public void testCyclicInterlacedDfs() {
+    Function<Integer, JBIterable<Integer>> traversal = TreeTraversal.INTERLEAVED_DFS.traversal(Functions.fromMap(
+      ContainerUtil.<Integer, Collection<Integer>>immutableMapBuilder()
+        .put(1, Arrays.asList(1, 2))
+        .put(2, Arrays.asList(1, 2, 3))
+        .put(3, Arrays.asList()).build()));
+    assertEquals(Arrays.asList(1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 3), traversal.fun(1).takeWhile(UP_TO(3)).toList());
+  }
+
+  public void testIndefiniteCyclicInterlacedDfs() {
+    Function<Integer, JBIterable<Integer>> traversal = TreeTraversal.INTERLEAVED_DFS.traversal(
+      new Function<Integer, Iterable<Integer>>() {
+        @Override
+        public Iterable<Integer> fun(Integer integer) {
+          JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).takeWhile(UP_TO(integer + 1));
+          // 1: no repeat
+          return it;
+          // 2: repeat indefinitely: all seq
+          //return JBIterable.generate(it, Functions.id()).flatten(Functions.id());
+          // 3: repeat indefinitely: self-cycle
+          //return it.append(JBIterable.generate(integer, Functions.id()));
+        }
+      });
+    JBIterable<Integer> counts = JBIterable.generate(1, INCREMENT).transform(new Function<Integer, Integer>() {
+      @Override
+      public Integer fun(Integer integer) {
+        return traversal.fun(1).takeWhile(UP_TO(integer)).size();
+      }
+    });
+    // 1: no repeat
+    assertEquals(Arrays.asList(1, 4, 13, 39, 117, 359, 1134, 3686, 12276, 41708), counts.take(10).toList());
+    // 2: repeat all seq
+    //assertEquals(Arrays.asList(1, 4, 19, 236), counts.take(4).toList());
+    // 2: repeat self-cycle
+    //assertEquals(Arrays.asList(1, 4, 19, 236), counts.take(4).toList());
   }
 
   public void testSimplePreOrderDfsBacktrace() {

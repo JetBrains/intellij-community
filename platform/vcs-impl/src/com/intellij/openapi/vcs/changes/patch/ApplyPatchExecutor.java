@@ -21,6 +21,8 @@ import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -33,8 +35,8 @@ public interface ApplyPatchExecutor<T extends AbstractFilePatchInProgress> {
   @Nls(capitalization = Nls.Capitalization.Title)
   String getName();
 
-  void apply(final MultiMap<VirtualFile, T> patchGroups,
-             final LocalChangeList localList,
-             String fileName,
-             TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo);
+  void apply(@NotNull final MultiMap<VirtualFile, T> patchGroups,
+             @Nullable final LocalChangeList localList,
+             @Nullable String fileName,
+             @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo);
 }

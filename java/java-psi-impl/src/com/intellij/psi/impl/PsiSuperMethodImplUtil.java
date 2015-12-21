@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -30,6 +31,8 @@ import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.hash.EqualityPolicy;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -134,7 +137,37 @@ public class PsiSuperMethodImplUtil {
                                                                                         boolean isInRawContext,
                                                                                         GlobalSearchScope resolveScope) {
     ProgressManager.checkCanceled();
-    Map<MethodSignature, HierarchicalMethodSignature> result = new LinkedHashMap<MethodSignature, HierarchicalMethodSignature>();
+    Map<MethodSignature, HierarchicalMethodSignature> result = new LinkedHashMap<MethodSignature, HierarchicalMethodSignature>(
+      new EqualityPolicy<MethodSignature>() {
+        @Override
+        public int getHashCode(MethodSignature object) {
+          return object.hashCode();
+        }
+
+        @Override
+        public boolean isEqual(MethodSignature o1, MethodSignature o2) {
+          if (o1.equals(o2)) {
+            final PsiMethod method1 = ((MethodSignatureBackedByPsiMethod)o1).getMethod();
+            final PsiType returnType1 = method1.getReturnType();
+            final PsiMethod method2 = ((MethodSignatureBackedByPsiMethod)o2).getMethod();
+            final PsiType returnType2 = method2.getReturnType();
+            if (method1.hasModifierProperty(PsiModifier.STATIC) || method2.hasModifierProperty(PsiModifier.STATIC)) {
+              return true;
+            }
+
+            if (MethodSignatureUtil.isReturnTypeSubstitutable(o1, o2, returnType1, returnType2)) {
+              return true;
+            }
+
+            final PsiClass containingClass1 = method1.getContainingClass();
+            final PsiClass containingClass2 = method2.getContainingClass();
+            if (containingClass1 != null && containingClass2 != null) {
+              return containingClass1.isAnnotationType() || containingClass2.isAnnotationType();
+            }
+          }
+          return false;
+        }
+      });
     final Map<MethodSignature, List<PsiMethod>> sameParameterErasureMethods = new THashMap<MethodSignature, List<PsiMethod>>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
 
     Map<MethodSignature, HierarchicalMethodSignatureImpl> map = new THashMap<MethodSignature, HierarchicalMethodSignatureImpl>(new TObjectHashingStrategy<MethodSignature>() {
@@ -189,10 +222,9 @@ public class PsiSuperMethodImplUtil {
       map.put(signature, newH);
     }
 
-    for (PsiClassType superType : aClass.getSuperTypes()) {
-      superType = PsiClassImplUtil.correctType(superType, resolveScope);
-      if (superType == null) continue; //super class doesn't belong to resolve scope
-      PsiClassType.ClassResolveResult superTypeResolveResult = superType.resolveGenerics();
+    final List<PsiClassType.ClassResolveResult> superTypes = PsiClassImplUtil.getScopeCorrectedSuperTypes(aClass, resolveScope);
+
+    for (PsiClassType.ClassResolveResult superTypeResolveResult : superTypes) {
       PsiClass superClass = superTypeResolveResult.getElement();
       if (superClass == null) continue;
       if (!visited.add(superClass)) continue; // cyclic inheritance
@@ -391,7 +423,7 @@ public class PsiSuperMethodImplUtil {
           result = new HierarchicalMethodSignatureImpl((MethodSignatureBackedByPsiMethod)method.getSignature(PsiSubstitutor.EMPTY));
         }
 
-        if (!method.isPhysical() && !(method instanceof SyntheticElement)) {
+        if (!method.isPhysical() && !(method instanceof SyntheticElement) && !(method instanceof LightElement)) {
           return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, method);
         }
         return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);

@@ -104,6 +104,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
 
     TaskRepository[] repositories = myTaskManager.getAllRepositories();
     assertEquals(1, repositories.length);
+    assertTrue(repositories[0].isShared());
   }
 
   public void testIssuesCacheSurvival() throws Exception {

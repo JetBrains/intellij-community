@@ -200,11 +200,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         return returnType;
       }
     }
-    final PyType docStringType = getReturnTypeFromDocString();
-    if (docStringType != null) {
-      docStringType.assertValid("from docstring");
-      return docStringType;
-    }
     if (context.allowReturnTypes(this)) {
       final Ref<? extends PyType> yieldTypeRef = getYieldStatementType(context);
       if (yieldTypeRef != null) {

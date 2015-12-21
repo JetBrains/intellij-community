@@ -55,8 +55,40 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     myUpperBound = PsiType.getJavaLangObject(myContext.getManager(), getResolveScope());
   }
 
-  private static RecursionGuard guard = RecursionManager.createGuard("captureGuard");
-  
+  public static RecursionGuard guard = RecursionManager.createGuard("captureGuard");
+
+  public static boolean isCapture() {
+    return guard.currentStack().isEmpty();
+  }
+
+  @Nullable
+  public static PsiType captureUpperBound(@NotNull PsiTypeParameter typeParameter,
+                                          @NotNull PsiWildcardType wildcardType,
+                                          @NotNull PsiSubstitutor captureSubstitutor) {
+    final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
+    PsiType originalBound = !wildcardType.isSuper() ? wildcardType.getBound() : null;
+    PsiType glb = originalBound;
+    for (PsiType boundType : boundTypes) {
+      final PsiType substitutedBoundType = captureSubstitutor.substitute(boundType);
+      //glb for array types is not specified yet
+      if (originalBound instanceof PsiArrayType &&
+          substitutedBoundType instanceof PsiArrayType &&
+          !originalBound.isAssignableFrom(substitutedBoundType) &&
+          !substitutedBoundType.isAssignableFrom(originalBound)) {
+        continue;
+      }
+
+      if (glb == null) {
+        glb = substitutedBoundType;
+      }
+      else {
+        glb = GenericsUtil.getGreatestLowerBound(glb, substitutedBoundType);
+      }
+    }
+
+    return glb;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof PsiCapturedWildcardType)) {
@@ -86,7 +118,7 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
         }
       });
 
-      if (sameUpperBounds != null && sameUpperBounds) {
+      if (sameUpperBounds == null || sameUpperBounds) {
         return true;
       }
     }

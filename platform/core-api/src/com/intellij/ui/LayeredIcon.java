@@ -22,15 +22,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
-public class LayeredIcon implements Icon {
+public class LayeredIcon extends AbstractSizeAdjustingIcon {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LayeredIcon");
   private final Icon[] myIcons;
   private final boolean[] myDisabledLayers;
   private final int[] myHShifts;
   private final int[] myVShifts;
 
-  private int myWidth;
-  private int myHeight;
   private int myXShift;
   private int myYShift;
 
@@ -104,7 +102,7 @@ public class LayeredIcon implements Icon {
     myIcons[layer] = icon;
     myHShifts[layer] = hShift;
     myVShifts[layer] = vShift;
-    recalculateSize();
+    adjustSize();
   }
 
   public void setIcon(Icon icon, int layer, int constraint) {
@@ -185,20 +183,23 @@ public class LayeredIcon implements Icon {
   @Override
   public int getIconWidth() {
     if (myWidth <= 1) { //icon is not loaded yet
-      recalculateSize();
+      adjustSize();
+      return myWidth;
     }
-    return myWidth;
+    return super.getIconWidth();
   }
 
   @Override
   public int getIconHeight() {
     if (myHeight <= 1) { //icon is not loaded yet
-      recalculateSize();
+      adjustSize();
+      return myHeight;
     }
-    return myHeight;
+    return super.getIconHeight();
   }
 
-  private void recalculateSize() {
+  @Override
+  protected void adjustSize() {
     int minX = Integer.MAX_VALUE;
     int maxX = Integer.MIN_VALUE;
     int minY = Integer.MAX_VALUE;

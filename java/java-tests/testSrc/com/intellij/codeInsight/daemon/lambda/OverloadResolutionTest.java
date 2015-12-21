@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
       public void run() throws Throwable {
         doTest(false);
       }
-    }).assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   public void testConstructorOverloadsWithDiamonds() throws Exception {
@@ -112,7 +112,7 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
       public void run() throws Throwable {
         doTest(false);
       }
-    }).assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   public void testMultipleOverloadsWithNestedGeneric() throws Exception {
@@ -169,6 +169,26 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
 
   public void testChooseAbstractMethodArbitrarily() throws Exception {
     doTest();
+  }
+
+  public void testFunctionalInterfaceIncompatibilityBasedOnAbsenceOfVoidToTypeConvertion() throws Exception {
+    doTest();
+  }
+
+  public void testNoBoxingWithNullType() throws Exception {
+    doTest();
+  }
+
+  public void testFunctionalInterfacesAtVarargsPositionMostSpecificCheck() throws Exception {
+    doTest();
+  }
+
+  public void testIgnoreNumberOfParametersInPotentiallyCompatibleCheckNotToExcludeAllConflicts() throws Exception {
+    doTest(false);
+  }
+
+  public void testPotentialCompatibilityInCaseWhenNoMethodHasValidNumberOfParameters() throws Exception {
+    doTest(false);
   }
 
   private void doTest() {

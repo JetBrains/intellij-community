@@ -20,6 +20,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -566,6 +567,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     if (!StdLanguages.JAVA.equals(changeInfo.getLanguage()) || !(changeInfo instanceof JavaChangeInfo)) return false;
     final PsiElement element = changeInfo.getMethod();
     LOG.assertTrue(element instanceof PsiMethod);
+    if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) return false;
     if (changeInfo.isGenerateDelegate()) {
       generateDelegate((JavaChangeInfo)changeInfo);
     }

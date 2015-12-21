@@ -21,7 +21,7 @@ import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import org.jetbrains.debugger.*
 import java.util.*
 
-internal class ExecutionStackImpl(private val suspendContext: SuspendContext, private val viewSupport: DebuggerViewSupport, private val topFrameScript: Script?, private val topFrameSourceInfo: SourceInfo? = null) : XExecutionStack("") {
+internal class ExecutionStackImpl(private val suspendContext: SuspendContext<out CallFrame>, private val viewSupport: DebuggerViewSupport, private val topFrameScript: Script?, private val topFrameSourceInfo: SourceInfo? = null) : XExecutionStack("") {
   private var topCallFrameView: CallFrameView? = null
 
   override fun getTopFrame(): CallFrameView? {
@@ -51,8 +51,12 @@ internal class ExecutionStackImpl(private val suspendContext: SuspendContext, pr
             }
 
             val frame = frames[i]
+            val asyncFunctionName = frame.asyncFunctionName
+            if (asyncFunctionName != null) {
+              result.add(AsyncFramesHeader(asyncFunctionName))
+            }
             // if script is null, it is native function (Object.forEach for example), so, skip it
-            val script = suspendContext.valueManager.vm.scriptManager.getScript(frame)
+            val script = viewSupport.vm?.scriptManager?.getScript(frame)
             if (script != null) {
               val sourceInfo = viewSupport.getSourceInfo(script, frame)
               val isInLibraryContent = sourceInfo != null && viewSupport.isInLibraryContent(sourceInfo, script)

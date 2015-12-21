@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
+import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -152,13 +153,13 @@ public abstract class UsefulTestCase extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    Disposer.setDebugMode(oldDisposerDebug);
     try {
       Disposer.dispose(myTestRootDisposable);
       cleanupSwingDataStructures();
       cleanupDeleteOnExitHookList();
     }
     finally {
+      Disposer.setDebugMode(oldDisposerDebug);
       if (shouldContainTempFiles()) {
         FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
         if (hasTmpFilesToKeep()) {
@@ -310,7 +311,7 @@ public abstract class UsefulTestCase extends TestCase {
     return CodeStyleSettingsManager.getInstance().getCurrentSettings();
   }
 
-  public Disposable getTestRootDisposable() {
+  public final Disposable getTestRootDisposable() {
     return myTestRootDisposable;
   }
 

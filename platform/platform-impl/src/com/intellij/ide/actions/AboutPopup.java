@@ -48,10 +48,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.*;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * @author Konstantin Bulenkov
@@ -264,15 +262,15 @@ public class AboutPopup {
         g2.setColor(Gray.x33);
         g2.setFont(JBUI.Fonts.label(12));
       }
-      final int copyrightX = Registry.is("ide.new.about") ? JBUI.scale(100) : JBUI.scale(30);
+      final int copyrightX = Registry.is("ide.new.about") ? JBUI.scale(140) : JBUI.scale(30);
       final int copyrightY = Registry.is("ide.new.about") ? JBUI.scale(390) : JBUI.scale(284);
-      g2.drawString("\u00A9 2000\u2013" + Calendar.getInstance().get(Calendar.YEAR) + " JetBrains s.r.o. All rights reserved.", copyrightX, copyrightY);
+      g2.drawString("\u00A9 2000\u2013" + Calendar.getInstance(Locale.US).get(Calendar.YEAR) + " JetBrains s.r.o. All rights reserved.", copyrightX, copyrightY);
     }
 
     @NotNull
     private TextRenderer createTextRenderer(Graphics2D g) {
       if (Registry.is("ide.new.about")) {
-        return new TextRenderer(70, 200, 450, 220, g);
+        return new TextRenderer(18, 200, 500, 220, g);
       }
       return new TextRenderer(0, 165, 398, 120, g);
     }
@@ -319,7 +317,7 @@ public class AboutPopup {
           if (line.getUrl() != null) {
             g2.setColor(myLinkColor);
             FontMetrics metrics = g2.getFontMetrics(font);
-            myLinks.add(new Link(new Rectangle(x, yBase + y - fontAscent, metrics.stringWidth(s), fontHeight), line.getUrl()));
+            myLinks.add(new Link(new Rectangle(xBase + x, yBase + y - fontAscent, metrics.stringWidth(s + " "), fontHeight), line.getUrl()));
           }
           else {
             g2.setColor(Registry.is("ide.new.about") ? Gray.x33 : appInfo.getAboutForeground());

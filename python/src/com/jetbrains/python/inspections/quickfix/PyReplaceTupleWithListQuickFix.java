@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 public class PyReplaceTupleWithListQuickFix implements LocalQuickFix {
@@ -46,7 +47,9 @@ public class PyReplaceTupleWithListQuickFix implements LocalQuickFix {
       PySubscriptionExpression subscriptionExpression = (PySubscriptionExpression)targets[0];
       if (subscriptionExpression.getOperand() instanceof PyReferenceExpression) {
         PyReferenceExpression referenceExpression = (PyReferenceExpression)subscriptionExpression.getOperand();
-        element = referenceExpression.followAssignmentsChain(PyResolveContext.defaultContext()).getElement();
+        final TypeEvalContext context = TypeEvalContext.userInitiated(project, element.getContainingFile());
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        element = referenceExpression.followAssignmentsChain(resolveContext).getElement();
         if (element instanceof PyParenthesizedExpression) {
           final PyExpression expression = ((PyParenthesizedExpression)element).getContainedExpression();
           replaceWithListLiteral(element, (PyTupleExpression)expression);

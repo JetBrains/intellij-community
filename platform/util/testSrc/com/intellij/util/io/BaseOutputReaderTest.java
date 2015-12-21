@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -41,16 +42,16 @@ import static org.junit.Assert.assertNotNull;
 
 public class BaseOutputReaderTest {
   private static final String[] TEST_DATA = {"first\n", "incomplete", "-continuation\n", "last\n"};
-  private static final int TIMEOUT = 100;
+  private static final int TIMEOUT = 500;
 
   private static ThreadPoolExecutor ourExecutor;
 
   private static class TestOutputReader extends BaseOutputReader {
     private final List<String> myLines = Collections.synchronizedList(new ArrayList<String>());
 
-    public TestOutputReader(InputStream stream, SleepingPolicy sleepingPolicy) {
+    public TestOutputReader(InputStream stream, SleepingPolicy sleepingPolicy, String commandLine) {
       super(stream, null, sleepingPolicy);
-      start();
+      start(CommandLineUtil.extractPresentableName(commandLine));
     }
 
     @Override
@@ -71,14 +72,9 @@ public class BaseOutputReaderTest {
   }
 
   @AfterClass
-  public static void tearDown() {
+  public static void tearDown() throws InterruptedException {
     ourExecutor.shutdown();
-    try {
-      ourExecutor.awaitTermination(1000, TimeUnit.SECONDS);
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
+    ourExecutor.awaitTermination(120, TimeUnit.SECONDS);
     ourExecutor = null;
   }
 
@@ -101,8 +97,9 @@ public class BaseOutputReaderTest {
     File dir = new File(url.toURI());
     for (int i = 0; i < StringUtil.countChars(className, '.') + 1; i++) dir = dir.getParentFile();
 
-    Process process = new ProcessBuilder(java, "-cp", dir.getPath(), className).redirectErrorStream(true).start();
-    TestOutputReader reader = new TestOutputReader(process.getInputStream(), policy);
+    String[] cmd = {java, "-cp", dir.getPath(), className};
+    Process process = new ProcessBuilder(cmd).redirectErrorStream(true).start();
+    TestOutputReader reader = new TestOutputReader(process.getInputStream(), policy, StringUtil.join(cmd, " "));
     process.waitFor();
     reader.stop();
     reader.waitFor();

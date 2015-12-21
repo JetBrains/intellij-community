@@ -214,6 +214,11 @@ public class FieldEvaluator implements Evaluator {
     return modifier;
   }
 
+  @Override
+  public String toString() {
+    return "field " + myFieldName;
+  }
+
   private static final class FQNameClassFilter implements TargetClassFilter {
     private final String myQName;
 

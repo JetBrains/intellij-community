@@ -653,7 +653,9 @@ public class RadContainer extends RadComponent implements IContainer {
         setBorderTitleJustification(titledBorder.getTitleJustification());
         setBorderTitlePosition(titledBorder.getTitlePosition());
         final Font titleFont = titledBorder.getTitleFont();
-        setBorderTitleFont(new FontDescriptor(titleFont.getName(), titleFont.getStyle(), titleFont.getSize()));
+        if (titleFont != null) {
+          setBorderTitleFont(new FontDescriptor(titleFont.getName(), titleFont.getStyle(), titleFont.getSize()));
+        }
         setBorderTitleColor(new ColorDescriptor(titledBorder.getTitleColor()));
         border = titledBorder.getBorder();
       }

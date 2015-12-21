@@ -38,13 +38,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -62,20 +62,16 @@ import java.util.regex.Pattern;
 public class ExpectedHighlightingData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.ExpectedHighlightingData");
 
-  @NonNls private static final String ERROR_MARKER = "error";
-  @NonNls private static final String WARNING_MARKER = "warning";
-  @NonNls private static final String WEAK_WARNING_MARKER = "weak_warning";
-  @NonNls private static final String INFO_MARKER = "info";
-  @NonNls private static final String END_LINE_HIGHLIGHT_MARKER = "EOLError";
-  @NonNls private static final String END_LINE_WARNING_MARKER = "EOLWarning";
-  @NonNls private static final String LINE_MARKER = "lineMarker";
-
-  @NotNull private final Document myDocument;
-  private final PsiFile myFile;
-  @NonNls private static final String ANY_TEXT = "*";
-  private final String myText;
-  
-  private boolean myIgnoreExtraHighlighting; 
+  private static final String ERROR_MARKER = CodeInsightTestFixture.ERROR_MARKER;
+  private static final String WARNING_MARKER = CodeInsightTestFixture.WARNING_MARKER;
+  private static final String WEAK_WARNING_MARKER = CodeInsightTestFixture.WEAK_WARNING_MARKER;
+  private static final String INFO_MARKER = CodeInsightTestFixture.INFO_MARKER;
+  private static final String END_LINE_HIGHLIGHT_MARKER = CodeInsightTestFixture.END_LINE_HIGHLIGHT_MARKER;
+  private static final String END_LINE_WARNING_MARKER = CodeInsightTestFixture.END_LINE_WARNING_MARKER;
+  private static final String INJECT_MARKER = "inject";
+  private static final String SYMBOL_NAME_MARKER = "symbolName";
+  private static final String LINE_MARKER = "lineMarker";
+  private static final String ANY_TEXT = "*";
 
   public static class ExpectedHighlightingSet {
     private final HighlightSeverity severity;
@@ -87,79 +83,39 @@ public class ExpectedHighlightingData {
       this.severity = severity;
       this.endOfLine = endOfLine;
       this.enabled = enabled;
-      infos = new THashSet<HighlightInfo>();
+      this.infos = new THashSet<HighlightInfo>();
     }
   }
-  @SuppressWarnings("WeakerAccess")
-  protected final Map<String,ExpectedHighlightingSet> highlightingTypes;
-  private final Map<RangeMarker, LineMarkerInfo> lineMarkerInfos = new THashMap<RangeMarker, LineMarkerInfo>();
 
-  public void init() {
-    new WriteCommandAction(null){
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        extractExpectedLineMarkerSet(myDocument);
-        extractExpectedHighlightsSet(myDocument);
-        refreshLineMarkers();
-      }
-    }.execute();
-  }
+  private final Map<String, ExpectedHighlightingSet> myHighlightingTypes = new LinkedHashMap<String, ExpectedHighlightingSet>();
+  private final Map<RangeMarker, LineMarkerInfo> myLineMarkerInfos = new THashMap<RangeMarker, LineMarkerInfo>();
+  private final Document myDocument;
+  @SuppressWarnings("StatefulEp") private final PsiFile myFile;
+  private final String myText;
+  private boolean myIgnoreExtraHighlighting;
 
   public ExpectedHighlightingData(@NotNull Document document,boolean checkWarnings, boolean checkInfos) {
     this(document, checkWarnings, false, checkInfos);
   }
 
-  public ExpectedHighlightingData(@NotNull Document document,
-                                  boolean checkWarnings,
-                                  boolean checkWeakWarnings,
-                                  boolean checkInfos) {
+  public ExpectedHighlightingData(@NotNull Document document, boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos) {
     this(document, checkWarnings, checkWeakWarnings, checkInfos, null);
   }
 
-  public ExpectedHighlightingData(@NotNull final Document document, PsiFile file) {
-    myDocument = document;
-    myFile = file;
-    myText = document.getText();
-    highlightingTypes = new LinkedHashMap<String, ExpectedHighlightingSet>();
-    new WriteCommandAction.Simple(file == null ? null : file.getProject()) {
-      public void run() {
-        boolean checkWarnings = false;
-        boolean checkWeakWarnings = false;
-        boolean checkInfos = false;
-
-        highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(HighlightSeverity.ERROR, false, true));
-        highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, false, checkWarnings));
-        highlightingTypes.put(WEAK_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WEAK_WARNING, false, checkWeakWarnings));
-        highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, checkInfos));
-        highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, checkInfos));
-        highlightingTypes.put("symbolName", new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, false));
-        for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
-          for (HighlightInfoType type : provider.getSeveritiesHighlightInfoTypes()) {
-            final HighlightSeverity severity = type.getSeverity(null);
-            highlightingTypes.put(severity.getName(), new ExpectedHighlightingSet(severity, false, true));
-          }
-        }
-        highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(HighlightSeverity.ERROR, true, true));
-        highlightingTypes.put(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, true, checkWarnings));
-        initAdditionalHighlightingTypes();
-      }
-    }.execute().throwException();
-  }
-
-  public ExpectedHighlightingData(@NotNull final Document document,
-                                  final boolean checkWarnings,
-                                  final boolean checkWeakWarnings,
-                                  final boolean checkInfos,
-                                  @Nullable final PsiFile file) {
+  public ExpectedHighlightingData(@NotNull Document document,
+                                  boolean checkWarnings,
+                                  boolean checkWeakWarnings,
+                                  boolean checkInfos,
+                                  @Nullable PsiFile file) {
     this(document, checkWarnings, checkWeakWarnings, checkInfos, false, file);
   }
 
-  public ExpectedHighlightingData(@NotNull final Document document,
-                                  final boolean checkWarnings,
-                                  final boolean checkWeakWarnings,
-                                  final boolean checkInfos,
-                                  final boolean ignoreExtraHighlighting,
-                                  @Nullable final PsiFile file) {
+  public ExpectedHighlightingData(@NotNull Document document,
+                                  boolean checkWarnings,
+                                  boolean checkWeakWarnings,
+                                  boolean checkInfos,
+                                  boolean ignoreExtraHighlighting,
+                                  @Nullable PsiFile file) {
     this(document, file);
     myIgnoreExtraHighlighting = ignoreExtraHighlighting;
     if (checkWarnings) checkWarnings();
@@ -167,32 +123,77 @@ public class ExpectedHighlightingData {
     if (checkInfos) checkInfos();
   }
 
-  public void checkWarnings() {
-    highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, false, true));
-    highlightingTypes.put(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, true, true));
+  @SuppressWarnings("deprecation")
+  public ExpectedHighlightingData(@NotNull Document document, @Nullable PsiFile file) {
+    myDocument = document;
+    myFile = file;
+    myText = document.getText();
 
+    registerHighlightingType(ERROR_MARKER, new ExpectedHighlightingSet(HighlightSeverity.ERROR, false, true));
+    registerHighlightingType(WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, false, false));
+    registerHighlightingType(WEAK_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WEAK_WARNING, false, false));
+    registerHighlightingType(INJECT_MARKER, new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, false));
+    registerHighlightingType(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, false));
+    registerHighlightingType(SYMBOL_NAME_MARKER, new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, false));
+    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+      for (HighlightInfoType type : provider.getSeveritiesHighlightInfoTypes()) {
+        HighlightSeverity severity = type.getSeverity(null);
+        registerHighlightingType(severity.getName(), new ExpectedHighlightingSet(severity, false, true));
+      }
+    }
+    registerHighlightingType(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(HighlightSeverity.ERROR, true, true));
+    registerHighlightingType(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, true, false));
+
+    initAdditionalHighlightingTypes();
   }
+
+  public void init() {
+    new WriteCommandAction(null) {
+      @Override
+      protected void run(@NotNull Result result) {
+        extractExpectedLineMarkerSet(myDocument);
+        extractExpectedHighlightsSet(myDocument);
+        refreshLineMarkers();
+      }
+    }.execute();
+  }
+
+  public void checkWarnings() {
+    registerHighlightingType(WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, false, true));
+    registerHighlightingType(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, true, true));
+  }
+
   public void checkWeakWarnings() {
-    highlightingTypes.put(WEAK_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WEAK_WARNING, false, true));
+    registerHighlightingType(WEAK_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WEAK_WARNING, false, true));
   }
+
   public void checkInfos() {
-    highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, true));
-    highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, true));
+    registerHighlightingType(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, true));
+    registerHighlightingType(INJECT_MARKER, new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, true));
   }
+
   public void checkSymbolNames() {
-    highlightingTypes.put("symbolName", new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, true));
+    registerHighlightingType(SYMBOL_NAME_MARKER, new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, true));
+  }
+
+  public void registerHighlightingType(@NotNull String key, @NotNull ExpectedHighlightingSet highlightingSet) {
+    myHighlightingTypes.put(key, highlightingSet);
   }
 
   private void refreshLineMarkers() {
-    for (Map.Entry<RangeMarker, LineMarkerInfo> entry : lineMarkerInfos.entrySet()) {
+    for (Map.Entry<RangeMarker, LineMarkerInfo> entry : myLineMarkerInfos.entrySet()) {
       RangeMarker rangeMarker = entry.getKey();
       int startOffset = rangeMarker.getStartOffset();
       int endOffset = rangeMarker.getEndOffset();
-      final LineMarkerInfo value = entry.getValue();
-      LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(value.getElement(), new TextRange(startOffset,endOffset), null, value.updatePass, new Function<PsiElement,String>() {
+      LineMarkerInfo value = entry.getValue();
+      PsiElement element = value.getElement();
+      assert element != null : value;
+      TextRange range = new TextRange(startOffset, endOffset);
+      final String tooltip = value.getLineMarkerTooltip();
+      LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(element, range, null, value.updatePass, new Function<PsiElement, String>() {
         @Override
-        public String fun(PsiElement psiElement) {
-          return value.getLineMarkerTooltip();
+        public String fun(PsiElement e) {
+          return tooltip;
         }
       }, null, GutterIconRenderer.Alignment.RIGHT);
       entry.setValue(markerInfo);
@@ -202,7 +203,7 @@ public class ExpectedHighlightingData {
   private void extractExpectedLineMarkerSet(Document document) {
     String text = document.getText();
 
-    @NonNls String pat = ".*?((<" + LINE_MARKER + ")(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?>)(.*)";
+    String pat = ".*?((<" + LINE_MARKER + ")(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?>)(.*)";
     final Pattern p = Pattern.compile(pat, Pattern.DOTALL);
     final Pattern pat2 = Pattern.compile("(.*?)(</" + LINE_MARKER + ">)(.*)", Pattern.DOTALL);
 
@@ -228,15 +229,10 @@ public class ExpectedHighlightingData {
                                                                  new ConstantFunction<PsiElement, String>(descr), null,
                                                                  GutterIconRenderer.Alignment.RIGHT);
 
-      lineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);
+      myLineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);
       text = document.getText();
     }
   }
-
-  /**
-   * Override in order to register special highlighting
-   */
-  protected void initAdditionalHighlightingTypes() {}
 
   /**
    * remove highlights (bounded with <marker>...</marker>) from test case file
@@ -245,7 +241,7 @@ public class ExpectedHighlightingData {
   private void extractExpectedHighlightsSet(final Document document) {
     final String text = document.getText();
 
-    final Set<String> markers = highlightingTypes.keySet();
+    final Set<String> markers = myHighlightingTypes.keySet();
     final String typesRx = "(?:" + StringUtil.join(markers, ")|(?:") + ")";
     final String openingTagRx = "<(" + typesRx + ")" +
                                 "(?:\\s+descr=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\\\])*)\")?" +
@@ -272,7 +268,7 @@ public class ExpectedHighlightingData {
 
     int groupIdx = 1;
     final String marker = matcher.group(groupIdx++);
-    @NonNls String descr = matcher.group(groupIdx++);
+    String descr = matcher.group(groupIdx++);
     final String typeString = matcher.group(groupIdx++);
     final String foregroundColor = matcher.group(groupIdx++);
     final String backgroundColor = matcher.group(groupIdx++);
@@ -338,7 +334,7 @@ public class ExpectedHighlightingData {
       }
     }
 
-    final ExpectedHighlightingSet expectedHighlightingSet = highlightingTypes.get(marker);
+    final ExpectedHighlightingSet expectedHighlightingSet = myHighlightingTypes.get(marker);
     if (expectedHighlightingSet.enabled) {
       TextAttributesKey forcedTextAttributesKey = attrKey == null ? null : TextAttributesKey.createTextAttributesKey(attrKey);
       HighlightInfo.Builder builder =
@@ -363,7 +359,7 @@ public class ExpectedHighlightingData {
     String failMessage = "";
 
     for (LineMarkerInfo info : markerInfos) {
-      if (!containsLineMarker(info, lineMarkerInfos.values())) {
+      if (!containsLineMarker(info, myLineMarkerInfos.values())) {
         if (!failMessage.isEmpty()) failMessage += '\n';
         failMessage += fileName + "Extra line marker highlighted " +
                           rangeString(text, info.startOffset, info.endOffset)
@@ -372,7 +368,7 @@ public class ExpectedHighlightingData {
       }
     }
 
-    for (LineMarkerInfo expectedLineMarker : lineMarkerInfos.values()) {
+    for (LineMarkerInfo expectedLineMarker : myLineMarkerInfos.values()) {
       if (!markerInfos.isEmpty() && !containsLineMarker(expectedLineMarker, markerInfos)) {
         if (!failMessage.isEmpty()) failMessage += '\n';
         failMessage += fileName + "Line marker was not highlighted " +
@@ -432,7 +428,7 @@ public class ExpectedHighlightingData {
       }
     }
 
-    final Collection<ExpectedHighlightingSet> expectedHighlights = highlightingTypes.values();
+    final Collection<ExpectedHighlightingSet> expectedHighlights = myHighlightingTypes.values();
     for (ExpectedHighlightingSet highlightingSet : reverseCollection(expectedHighlights)) {
       final Set<HighlightInfo> expInfos = highlightingSet.infos;
       for (HighlightInfo expectedInfo : expInfos) {
@@ -462,7 +458,7 @@ public class ExpectedHighlightingData {
   }
 
   private void compareTexts(Collection<HighlightInfo> infos, String text, String failMessage, @Nullable String filePath) {
-    String actual = composeText(highlightingTypes,  infos, text);
+    String actual = composeText(myHighlightingTypes, infos, text);
     if (filePath != null && !myText.equals(actual)) {
       // uncomment to overwrite, don't forget to revert on commit!
       //VfsTestUtil.overwriteTestData(filePath, actual);
@@ -580,7 +576,7 @@ public class ExpectedHighlightingData {
 
   private boolean expectedInfosContainsInfo(HighlightInfo info) {
     if (info.getTextAttributes(null, null) == TextAttributes.ERASE_MARKER) return true;
-    final Collection<ExpectedHighlightingSet> expectedHighlights = highlightingTypes.values();
+    final Collection<ExpectedHighlightingSet> expectedHighlights = myHighlightingTypes.values();
     for (ExpectedHighlightingSet highlightingSet : expectedHighlights) {
       if (highlightingSet.severity != info.getSeverity()) continue;
       if (!highlightingSet.enabled) return true;
@@ -602,10 +598,8 @@ public class ExpectedHighlightingData {
       info.endOffset == expectedInfo.endOffset &&
       info.isAfterEndOfLine() == expectedInfo.isAfterEndOfLine() &&
       (expectedInfo.type == WHATEVER || expectedInfo.type.equals(info.type)) &&
-      (Comparing.strEqual(ANY_TEXT, expectedInfo.getDescription()) || Comparing.strEqual(info.getDescription(),
-                                                                                         expectedInfo.getDescription())) &&
-      (expectedInfo.forcedTextAttributes == null || Comparing.equal(expectedInfo.getTextAttributes(null, null),
-                                                                    info.getTextAttributes(null, null))) &&
+      (Comparing.strEqual(ANY_TEXT, expectedInfo.getDescription()) || Comparing.strEqual(info.getDescription(), expectedInfo.getDescription())) &&
+      (expectedInfo.forcedTextAttributes == null || Comparing.equal(expectedInfo.getTextAttributes(null, null), info.getTextAttributes(null, null))) &&
       (expectedInfo.forcedTextAttributesKey == null || expectedInfo.forcedTextAttributesKey.equals(info.forcedTextAttributesKey));
   }
 
@@ -621,4 +615,12 @@ public class ExpectedHighlightingData {
     }
     return String.format("(%d:%d..%d:%d)", startLine + 1, endLine + 1, startCol + 1, endCol + 1);
   }
+
+  /** @deprecated use {@link #registerHighlightingType(String, ExpectedHighlightingSet)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
+  protected final Map<String, ExpectedHighlightingSet> highlightingTypes = myHighlightingTypes;
+
+  /** @deprecated use {@link #registerHighlightingType(String, ExpectedHighlightingSet)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
+  protected void initAdditionalHighlightingTypes() { }
 }

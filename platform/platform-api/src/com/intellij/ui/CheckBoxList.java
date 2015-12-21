@@ -42,7 +42,8 @@ public class CheckBoxList<T> extends JBList {
     super();
     //noinspection unchecked
     setModel(dataModel);
-    setCellRenderer(new CellRenderer());
+    final CellRenderer cellRenderer = new CellRenderer();
+    setCellRenderer(cellRenderer);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     setBorder(BorderFactory.createEtchedBorder());
     addKeyListener(new KeyAdapter() {
@@ -75,7 +76,8 @@ public class CheckBoxList<T> extends JBList {
             catch (ClassCastException c) {
               iconArea = DEFAULT_CHECK_BOX_WIDTH;
             }
-            if (e.getX() < iconArea) {
+            int checkboxX = e.getX() - cellRenderer.getLeftBorderThickness();
+            if (checkboxX >= 0 && checkboxX < iconArea) {
               setSelected(checkbox, index);
               return true;
             }
@@ -169,17 +171,24 @@ public class CheckBoxList<T> extends JBList {
     this.checkBoxListListener = checkBoxListListener;
   }
 
-  protected void adjustRendering(final JCheckBox checkBox, int index, final boolean selected, final boolean hasFocus) {
+  protected JComponent adjustRendering(JComponent rootComponent,
+                                       final JCheckBox checkBox,
+                                       int index,
+                                       final boolean selected,
+                                       final boolean hasFocus) {
+    return rootComponent;
   }
 
   private class CellRenderer implements ListCellRenderer {
     private final Border mySelectedBorder;
     private final Border myBorder;
+    private final int myLeftBorderThickness;
 
     private CellRenderer() {
       mySelectedBorder = UIManager.getBorder("List.focusCellHighlightBorder");
       final Insets borderInsets = mySelectedBorder.getBorderInsets(new JCheckBox());
       myBorder = new EmptyBorder(borderInsets);
+      myLeftBorderThickness = borderInsets.left;
     }
 
     @Override
@@ -230,8 +239,13 @@ public class CheckBoxList<T> extends JBList {
 
       rootComponent.setBorder(isSelected ? mySelectedBorder : myBorder);
 
-      adjustRendering(checkbox, index, isSelected, cellHasFocus);
+      rootComponent = adjustRendering(rootComponent, checkbox, index, isSelected, cellHasFocus);
+
       return rootComponent;
+    }
+
+    private int getLeftBorderThickness() {
+      return myLeftBorderThickness;
     }
   }
 

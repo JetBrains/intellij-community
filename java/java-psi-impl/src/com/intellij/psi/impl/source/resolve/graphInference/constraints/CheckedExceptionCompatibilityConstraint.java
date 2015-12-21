@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -67,10 +68,15 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
     }
     if (myExpression instanceof PsiLambdaExpression || myExpression instanceof PsiMethodReferenceExpression) {
       if (!LambdaUtil.isFunctionalType(myT)) {
+        session.registerIncompatibleErrorMessage(myT.getPresentableText() + " is not a functional interface");
         return false;
       }
-      final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(myT);
+
+      final PsiType groundTargetType = myExpression instanceof PsiLambdaExpression ? FunctionalInterfaceParameterizationUtil.getGroundTargetType(myT, (PsiLambdaExpression)myExpression, false) 
+                                                                                   : FunctionalInterfaceParameterizationUtil.getGroundTargetType(myT);
+      final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(groundTargetType);
       if (interfaceMethod == null) {
+        session.registerIncompatibleErrorMessage("No valid function type can be found for " + myT.getPresentableText());
         return false;
       }
 
@@ -78,20 +84,28 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       if (myExpression instanceof PsiLambdaExpression && !((PsiLambdaExpression)myExpression).hasFormalParameterTypes() ||
           myExpression instanceof PsiMethodReferenceExpression && !((PsiMethodReferenceExpression)myExpression).isExact()) {
         for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
-          if (!session.isProperType(substitutor.substitute(parameter.getType()))) return false;
+          final PsiType type = session.substituteWithInferenceVariables(substitutor.substitute(parameter.getType()));
+          if (!session.isProperType(type)) {
+            session.registerIncompatibleErrorMessage("Parameter type is not yet inferred: " + type.getPresentableText());
+            return false;
+          }
         }
       }
 
       final PsiType returnType = interfaceMethod.getReturnType();
       if (myExpression instanceof PsiLambdaExpression || !((PsiMethodReferenceExpression)myExpression).isExact()) {
-        if (!session.isProperType(substitutor.substitute(returnType))) return false;
+        final PsiType type = session.substituteWithInferenceVariables(substitutor.substitute(returnType));
+        if (!session.isProperType(type)) {
+          session.registerIncompatibleErrorMessage("Return type is not yet inferred: " + type.getPresentableText());
+          return false;
+        }
       }
 
       final List<PsiType>
         expectedThrownTypes = ContainerUtil.map(interfaceMethod.getThrowsList().getReferencedTypes(), new Function<PsiType, PsiType>() {
         @Override
         public PsiType fun(PsiType type) {
-          return substitutor.substitute(type);
+          return session.substituteWithInferenceVariables(substitutor.substitute(type));
         }
       });
       final List<PsiType> expectedNonProperThrownTypes = new ArrayList<PsiType>();
@@ -122,7 +136,10 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
 
       if (expectedNonProperThrownTypes.isEmpty()) {
         for (PsiType thrownType : thrownTypes) {
-          if (!isAddressed(expectedThrownTypes, thrownType)) return false;
+          if (!isAddressed(expectedThrownTypes, thrownType)) {
+            session.registerIncompatibleErrorMessage("Unhandled exception: " + thrownType.getPresentableText());
+            return false;
+          }
         }
       } else {
         final ArrayList<PsiType> expectedProperTypes = new ArrayList<PsiType>(expectedThrownTypes);

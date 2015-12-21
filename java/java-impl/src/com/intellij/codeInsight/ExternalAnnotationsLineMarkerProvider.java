@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.codeInsight;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.AddAnnotationIntention;
@@ -47,11 +47,12 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 
-public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider {
+public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDescriptor {
   private static final Function<PsiElement, String> ourTooltipProvider = new Function<PsiElement, String>() {
     @Override
     public String fun(PsiElement nameIdentifier) {
@@ -85,7 +86,7 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
       return null;
     }
 
-    return new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(),
+    return new LineMarkerInfo<PsiElement>(element, element.getTextRange(),
                                           AllIcons.Gutter.ExtAnnotation,
                                           Pass.UPDATE_ALL,
                                           ourTooltipProvider, MyIconGutterHandler.INSTANCE,
@@ -153,6 +154,18 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
 
   @Override
   public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {}
+
+  @NotNull
+  @Override
+  public String getName() {
+    return "External annotations";
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon() {
+    return AllIcons.Gutter.ExtAnnotation;
+  }
 
   private static class MyIconGutterHandler implements GutterIconNavigationHandler<PsiElement> {
     static final MyIconGutterHandler INSTANCE = new MyIconGutterHandler();

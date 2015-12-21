@@ -59,7 +59,7 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
   protected void processIntention(final Editor editor, @NotNull PsiElement element) {
     final PsiMethodReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(element, PsiMethodReferenceExpression.class);
     LOG.assertTrue(referenceExpression != null);
-    final PsiLambdaExpression expr = convertMethodReferenceToLambda(referenceExpression);
+    final PsiLambdaExpression expr = convertMethodReferenceToLambda(referenceExpression, false);
     final Runnable runnable = new Runnable() {
       public void run() {
         introduceQualifierAsLocalVariable(editor, expr);
@@ -73,7 +73,7 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
     }
   }
 
-  public static PsiLambdaExpression convertMethodReferenceToLambda(final PsiMethodReferenceExpression referenceExpression) {
+  public static PsiLambdaExpression convertMethodReferenceToLambda(final PsiMethodReferenceExpression referenceExpression, final boolean ignoreCast) {
     final PsiElement resolve = referenceExpression.resolve();
     final PsiType functionalInterfaceType = referenceExpression.getFunctionalInterfaceType();
     final PsiClassType.ClassResolveResult functionalInterfaceResolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
@@ -114,7 +114,14 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
           baseName = nameInfo.names.length > 0 ? nameInfo.names[0] : parameter.getName();
         }
         else {
-          final String initialName = psiParameters != null ? psiParameters[parameterIndex - (isReceiver ? 1 : 0)].getName() : parameter.getName();
+          final String initialName;
+          if (psiParameters != null) {
+            final int idx = parameterIndex - (isReceiver ? 1 : 0);
+            initialName = psiParameters[idx < psiParameters.length ? idx : psiParameters.length - 1].getName();
+          }
+          else {
+            initialName = parameter.getName();
+          }
           baseName = codeStyleManager.variableNameToPropertyName(initialName, VariableKind.PARAMETER);
         }
 
@@ -227,7 +234,7 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
     final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)referenceExpression
       .replace(JavaPsiFacade.getElementFactory(referenceExpression.getProject()).createExpressionFromText(buf.toString(), referenceExpression));
     PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)typeCastExpression.getOperand();
-    if (RedundantCastUtil.isCastRedundant(typeCastExpression)) {
+    if (RedundantCastUtil.isCastRedundant(typeCastExpression) || ignoreCast) {
       final PsiExpression operand = typeCastExpression.getOperand();
       LOG.assertTrue(operand != null);
       lambdaExpression = (PsiLambdaExpression)typeCastExpression.replace(operand);

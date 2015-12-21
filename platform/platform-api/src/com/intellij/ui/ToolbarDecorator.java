@@ -347,7 +347,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
       }
     };
     panel.add(scrollPane, BorderLayout.CENTER);
-    panel.add(myActionsPanel, getPlacement());
+    panel.add(myActionsPanel, getPlacement(myToolbarPosition));
     installUpdaters();
     updateButtons();
     installDnD();
@@ -394,8 +394,9 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
 
   protected abstract boolean isModelEditable();
 
-  private Object getPlacement() {
-    switch (myToolbarPosition) {
+  @NotNull
+  static Object getPlacement(ActionToolbarPosition position) {
+    switch (position) {
       case TOP: return BorderLayout.NORTH;
       case LEFT: return BorderLayout.WEST;
       case BOTTOM: return BorderLayout.SOUTH;

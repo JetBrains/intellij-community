@@ -669,21 +669,21 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertNotNull(node);
   }
 
-  public void testLargeFileWithManyChangesPerformance() {
-    configureByText(PlainTextFileType.INSTANCE, StringUtil.repeat("foo foo \n", 50000));
+  public void testLargeFileWithManyChangesPerformance() throws Exception {
+    PsiFile file = createFile("a.txt", StringUtil.repeat("foo foo \n", 50000));
     final TextRange range = TextRange.from(10, 10);
-    final SmartPsiFileRange pointer = getPointerManager().createSmartPsiFileRangePointer(myFile, range);
+    final SmartPsiFileRange pointer = getPointerManager().createSmartPsiFileRangePointer(file, range);
 
-    final Document document = myFile.getViewProvider().getDocument();
+    final Document document = file.getViewProvider().getDocument();
     assertNotNull(document);
 
-    PlatformTestUtil.startPerformanceTest("smart pointer range update", 25000, () -> {
+    PlatformTestUtil.startPerformanceTest("smart pointer range update", 10000, () -> {
       for (int i = 0; i < 10000; i++) {
         document.insertString(i * 20 + 100, "x\n");
         assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
         assertEquals(range, pointer.getRange());
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertEquals(range, pointer.getRange());
@@ -849,9 +849,9 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertNotNull(pointer.getElement());
   }
 
-  public void testManyPsiChangesWithManySmartPointersPerformance() {
+  public void testManyPsiChangesWithManySmartPointersPerformance() throws Exception {
     String eachTag = "<a>\n" + StringUtil.repeat("   <a> </a>\n", 9) + "</a>\n";
-    XmlFile file = (XmlFile)configureByText(XmlFileType.INSTANCE, "<root>\n" + StringUtil.repeat(eachTag, 500) + "</root>");
+    XmlFile file = (XmlFile)createFile("a.xml", "<root>\n" + StringUtil.repeat(eachTag, 500) + "</root>");
     List<XmlTag> tags = ContainerUtil.newArrayList(PsiTreeUtil.findChildrenOfType(file.getDocument(), XmlTag.class));
     List<SmartPsiElementPointer> pointers = tags.stream().map(this::createPointer).collect(Collectors.toList());
     Random random = new Random();
@@ -867,7 +867,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
         assertEquals(tag.getName().length(), TextRange.create(pointer.getPsiRange()).getLength());
       }
       PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 
   @NotNull

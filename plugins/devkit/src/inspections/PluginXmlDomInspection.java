@@ -15,13 +15,17 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.diagnostic.ITNReporter;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -36,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.util.PsiUtil;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.HashSet;
 import java.util.List;
@@ -99,6 +104,15 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     String pluginId = ideaPlugin.getPluginId();
     if (pluginId == null || pluginId.equals(PluginManagerCore.CORE_PLUGIN_ID)) return;
 
+    XmlTag xmlTag = ideaPlugin.getXmlTag();
+    if (xmlTag == null) return;
+
+    VirtualFile virtualFile = xmlTag.getContainingFile().getVirtualFile();
+    if (virtualFile == null ||
+        !ModuleRootManager.getInstance(module).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION)) {
+      return;
+    }
+
     final Vendor vendor = ContainerUtil.getFirstItem(ideaPlugin.getVendors());
     if (vendor == null) {
       holder.createProblem(DomUtil.getFileElement(ideaPlugin),
@@ -148,6 +162,21 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         holder.createProblem(extension, ProblemHighlightType.LIKE_DEPRECATED,
                              "Deprecated EP '" + extensionPoint.getEffectiveQualifiedName() + "'", null);
         return;
+      }
+    }
+
+    if (ExtensionPoints.ERROR_HANDLER.equals(extensionPoint.getEffectiveQualifiedName()) && extension.exists()) {
+      String implementation = extension.getXmlTag().getAttributeValue("implementation");
+      if (ITNReporter.class.getName().equals(implementation)) {
+        IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);
+        if (plugin != null) {
+          Vendor vendor = ContainerUtil.getFirstItem(plugin.getVendors());
+          if (vendor != null && PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
+            LocalQuickFix fix = new RemoveDomElementQuickFix(extension);
+            holder.createProblem(extension, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                 "Exceptions from plugins developed by JetBrains are reported via ITNReporter automatically, there is no need to specify it explicitly", null, fix).highlightWholeElement();
+          }
+        }
       }
     }
 

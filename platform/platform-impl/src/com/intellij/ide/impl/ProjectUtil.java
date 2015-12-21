@@ -101,6 +101,9 @@ public class ProjectUtil {
     if (virtualFile == null) return null;
     virtualFile.refresh(false, false);
 
+    Project existing = findAndFocusExistingProjectForPath(path);
+    if (existing != null) return existing;
+
     ProjectOpenProcessor strong = ProjectOpenProcessor.getStrongImportProvider(virtualFile);
     if (strong != null) {
       return strong.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
@@ -158,14 +161,10 @@ public class ProjectUtil {
       return null;
     }
 
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    for (Project project : openProjects) {
-      if (!project.isDefault() && isSameProject(path, project)) {
-        focusProjectWindow(project, false);
-        return project;
-      }
-    }
+    Project existing = findAndFocusExistingProjectForPath(path);
+    if (existing != null) return existing;
 
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (!forceOpenInNewFrame && openProjects.length > 0) {
       int exitCode = confirmOpenNewProject(false);
       if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
@@ -197,6 +196,18 @@ public class ProjectUtil {
                                  Messages.getErrorIcon());
     }
     return project;
+  }
+
+  @Nullable
+  private static Project findAndFocusExistingProjectForPath(String path) {
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : openProjects) {
+      if (!project.isDefault() && isSameProject(path, project)) {
+        focusProjectWindow(project, false);
+        return project;
+      }
+    }
+    return null;
   }
 
   /**
@@ -233,7 +244,7 @@ public class ProjectUtil {
     return confirmOpenNewProject;
   }
 
-  private static boolean isSameProject(String path, @NotNull Project project) {
+  public static boolean isSameProject(String path, @NotNull Project project) {
     IProjectStore projectStore = (IProjectStore)ServiceKt.getStateStore(project);
 
     String toOpen = FileUtil.toSystemIndependentName(path);

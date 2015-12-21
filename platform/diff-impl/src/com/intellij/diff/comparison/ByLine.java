@@ -156,12 +156,12 @@ public class ByLine {
             Line line1 = lines1.get(index1);
             Line line2 = lines2.get(index2);
 
-            if (line1.equals(line2)) {
-              flush(index1, index2);
-              builder.markEqual(index1, index2);
-            }
-            else {
-              if (!StringUtil.equalsIgnoreWhitespaces(sample, line1.getContent())) {
+            if (!StringUtil.equalsIgnoreWhitespaces(sample, line1.getContent())) {
+              if (line1.equals(line2)) {
+                flush(index1, index2);
+                builder.markEqual(index1, index2);
+              }
+              else {
                 flush(index1, index2);
                 sample = line1.getContent();
                 last1 = index1;
@@ -448,6 +448,7 @@ public class ByLine {
     }
 
     @NotNull
+    @Override
     public CharSequence getContent() {
       return getOriginalText().subSequence(getOffset1(), getOffset2() - (myNewline ? 1 : 0));
     }

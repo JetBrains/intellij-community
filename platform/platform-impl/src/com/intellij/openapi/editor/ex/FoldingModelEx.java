@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author max
@@ -60,4 +61,7 @@ public interface FoldingModelEx extends FoldingModel {
   void clearFoldRegions();
 
   void rebuild();
+  
+  @NotNull
+  List<FoldRegion> getGroupedRegions(FoldingGroup group);
 }

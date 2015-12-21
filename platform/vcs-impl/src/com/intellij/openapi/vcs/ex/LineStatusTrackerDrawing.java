@@ -71,6 +71,7 @@ import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 
+import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 import static com.intellij.diff.util.DiffUtil.getDiffType;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
@@ -152,15 +153,6 @@ public class LineStatusTrackerDrawing {
     }
   }
 
-  private static int lineToY(@NotNull Editor editor, int line) {
-    Document document = editor.getDocument();
-    if (line >= getLineCount(document)) {
-      int y = lineToY(editor, getLineCount(document) - 1);
-      return y + editor.getLineHeight() * (line - getLineCount(document) + 1);
-    }
-    return editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getLineStartOffset(line))).y;
-  }
-
   private static void paintRect(@NotNull Graphics g, @Nullable Color color, @Nullable Color borderColor, int x1, int y1, int x2, int y2) {
     if (color != null) {
       g.setColor(color);
@@ -215,7 +207,7 @@ public class LineStatusTrackerDrawing {
                                     @NotNull Editor editor,
                                     @NotNull LineStatusTracker tracker,
                                     @Nullable Point mousePosition) {
-    if (tracker.isReleased()) return;
+    if (!tracker.isValid()) return;
     final Disposable disposable = Disposer.newDisposable();
 
     List<DiffFragment> wordDiff = computeWordDiff(range, tracker);
@@ -386,7 +378,7 @@ public class LineStatusTrackerDrawing {
   }
 
   public static void moveToRange(final Range range, final Editor editor, final LineStatusTracker tracker) {
-    if (tracker.isReleased()) return;
+    if (!tracker.isValid()) return;
     final Document document = tracker.getDocument();
     int line = Math.min(range.getType() == Range.DELETED ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
     final int lastOffset = document.getLineStartOffset(line);

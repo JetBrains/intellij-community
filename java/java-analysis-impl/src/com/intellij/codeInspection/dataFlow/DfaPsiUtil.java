@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class DfaPsiUtil {
 
   @NotNull
   public static Nullness getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
-    if (owner == null) {
+    if (owner == null || resultType instanceof PsiPrimitiveType) {
       return Nullness.UNKNOWN;
     }
 
@@ -155,8 +155,9 @@ public class DfaPsiUtil {
             return false;
           }
 
+          @NotNull
           @Override
-          protected DfaInstructionState[] acceptInstruction(InstructionVisitor visitor, DfaInstructionState instructionState) {
+          protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
             Instruction instruction = instructionState.getInstruction();
             if (isCallExposingNonInitializedFields(instruction) ||
                 instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {

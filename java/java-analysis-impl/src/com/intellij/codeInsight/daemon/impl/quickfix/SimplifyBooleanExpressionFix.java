@@ -44,11 +44,11 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpression");
   public static final String FAMILY_NAME = QuickFixBundle.message("simplify.boolean.expression.family");
 
-  private final Boolean mySubExpressionValue;
+  private final boolean mySubExpressionValue;
 
   // subExpressionValue == Boolean.TRUE or Boolean.FALSE if subExpression evaluates to boolean constant and needs to be replaced
   //   otherwise subExpressionValue= null and we starting to simplify expression without any further knowledge
-  public SimplifyBooleanExpressionFix(@NotNull PsiExpression subExpression, Boolean subExpressionValue) {
+  public SimplifyBooleanExpressionFix(@NotNull PsiExpression subExpression, boolean subExpressionValue) {
     super(subExpression);
     mySubExpressionValue = subExpressionValue;
   }
@@ -57,7 +57,11 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   @NotNull
   public String getText() {
     PsiExpression expression = getSubExpression();
-    return QuickFixBundle.message("simplify.boolean.expression.text", expression.getText(), mySubExpressionValue);
+    assert expression != null;
+    if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) instanceof PsiIfStatement) {
+      return mySubExpressionValue ? "Unwrap 'if' statement" : "Remove 'if' statement";
+    }
+    return QuickFixBundle.message("simplify.boolean.expression.text", expression.getText(),  mySubExpressionValue);
   }
 
   @Override
@@ -71,7 +75,6 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     PsiExpression expression = getSubExpression();
     return super.isAvailable()
            && expression != null
-           && expression.isValid()
            && expression.getManager().isInProject(expression)
            && !PsiUtil.isAccessedForWriting(expression);
   }
@@ -80,7 +83,6 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   public void invoke(@NotNull final Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     if (!isAvailable()) return;
     final PsiExpression expression = getSubExpression();
-    LOG.assertTrue(expression.isValid());
     if (!FileModificationService.getInstance().preparePsiElementForWrite(expression)) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -167,7 +169,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     result[0].accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        // read in all children in advance since due to Igorek's exercises element replace involves its siblings invalidation
+        // read in all children in advance since due to element replacement involving its siblings invalidation
         PsiElement[] children = element.getChildren();
         for (PsiElement child : children) {
           child.accept(this);
@@ -382,8 +384,11 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
 
     private static PsiPrefixExpression createNegatedExpression(PsiExpression otherOperand) {
       PsiPrefixExpression expression = (PsiPrefixExpression)createExpression(otherOperand.getManager(), "!(xxx)");
+      assert expression != null;
+      PsiExpression operand = expression.getOperand();
+      assert operand != null;
       try {
-        expression.getOperand().replace(otherOperand);
+        operand.replace(otherOperand);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -408,8 +413,8 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
 
     @Override
     public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
-      PsiExpression subexpr = expression.getExpression();
-      Boolean constBoolean = getConstBoolean(subexpr);
+      PsiExpression subExpr = expression.getExpression();
+      Boolean constBoolean = getConstBoolean(subExpr);
       if (constBoolean == null) return;
       if (!markAndCheckCreateResult()) {
         return;

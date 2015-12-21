@@ -19,15 +19,17 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.ImageLoader;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -37,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.*;
@@ -46,8 +47,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class ApplicationInfoImpl extends ApplicationInfoEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.ApplicationInfoImpl");
-
   private String myCodeName = null;
   private String myMajorVersion = null;
   private String myMinorVersion = null;
@@ -68,9 +67,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private int myProgressHeight = 2;
   private int myProgressX = 1;
   private int myProgressY = 350;
+  private int myLicenseOffsetY = Registry.is("ide.new.about") ? 85 : 30;
   private String mySplashImageUrl = null;
   private String myAboutImageUrl = null;
-  private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
+  @SuppressWarnings("UseJBColor") private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
   private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
   private String myBigIconUrl = null;
@@ -109,7 +109,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myStatisticsServiceKey;
   private String myThirdPartySoftwareUrl;
   private String myJetbrainsTvUrl;
-  private String myEvalLicenseUrl = "https://www.jetbrains.com/company/useterms.html";
+  private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
   private String myKeyConversionUrl = "https://www.jetbrains.com/shop/eform/keys-exchange";
 
   private Rectangle myAboutLogoRect;
@@ -139,6 +139,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_PROGRESS_HEIGHT = "progressHeight";
   private static final String ATTRIBUTE_PROGRESS_X = "progressX";
   private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
+  private static final String ATTRIBUTE_LICENSE_TEXT_OFFSET_Y = "licenseOffsetY";
   private static final String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
   private static final String ELEMENT_ABOUT = "about";
   private static final String ELEMENT_ICON = "icon";
@@ -195,15 +196,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
 
   ApplicationInfoImpl() {
+    String resource = IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION;
     try {
-      Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class, IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION);
+      Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class, resource);
       loadState(doc.getRootElement());
     }
-    catch (FileNotFoundException e) {
-      LOG.error("Resource is not in classpath or wrong platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY), e);
-    }
     catch (Exception e) {
-      LOG.error(e);
+      throw new RuntimeException("Cannot load resource: " + resource, e);
     }
   }
 
@@ -344,6 +343,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myProgressY;
   }
 
+  public int getLicenseOffsetY() {
+    return myLicenseOffsetY;
+  }
+
   public int getProgressX() {
     return myProgressX;
   }
@@ -353,7 +356,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     if (myProgressTailIcon == null && myProgressTailIconName != null) {
       try {
         final URL url = getClass().getResource(myProgressTailIconName);
-        final Image image = ImageLoader.loadFromUrl(url, false);
+        @SuppressWarnings({"deprecation", "UnnecessaryFullyQualifiedName"}) final Image image = com.intellij.util.ImageLoader.loadFromUrl(url, false);
         if (image != null) {
           myProgressTailIcon = new ImageIcon(image);
         }
@@ -622,7 +625,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     }
 
     Thread currentThread = Thread.currentThread();
-    currentThread.setName(currentThread.getName() + " " + myMajorVersion + "." + myMinorVersion + "#" + myBuildNumber + ", eap:" + myEAP);
+    currentThread.setName(
+      currentThread.getName() + " " +
+      myMajorVersion + "." + myMinorVersion + "#" + myBuildNumber +
+      " " + ApplicationNamesInfo.getInstance().getProductName() +
+      ", eap:" + myEAP + ", os:" + SystemInfoRt.OS_NAME + " " + SystemInfoRt.OS_VERSION +
+      ", java-version:" + SystemProperties.getJavaVendor() + " " + SystemInfo.JAVA_RUNTIME_VERSION);
 
     Element logoElement = parentNode.getChild(ELEMENT_LOGO);
     if (logoElement != null) {
@@ -651,6 +659,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_Y);
       if (v != null) {
         myProgressY = Integer.parseInt(v);
+      }
+
+      v = logoElement.getAttributeValue(ATTRIBUTE_LICENSE_TEXT_OFFSET_Y);
+      if (v != null) {
+        myLicenseOffsetY = Integer.parseInt(v);
       }
     }
 

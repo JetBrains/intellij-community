@@ -4,16 +4,19 @@
 ; each line represent a patching rule
 ;
 ;  - => path
-;     this is exclude rule. It excludes all paths that starts with given prefix
+;     this is exclude rule. It excludes all paths that starts with given prefix,
+;     longer path include rule overcomes exclude rule
 ;  xx => path
-;     this is the rule to enforce check of java classes of version xx, where xx could
-;     be one of the following: 1.2, 1.3, 1.4, 1.5, 1.6, 1.7
+;     this is the rule to check that java classes under given path of version xx or older, where xx could
+;     be one of the following: 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8
 ;  check static => path
 ;     this is the rule to check static class usages in classes under given path
 ;  - check static => path
 ;     exclude following paths from the check
 ;  allow static class NAME
 ;     allow use of given class (by starts-with) from static context
+;  include path
+;     include content of path (it is relative to the parent directory of current config file) into this file
 ;
 ;  see example below
 ;
@@ -25,17 +28,29 @@
 ;  have fun
 ;
 
-
 1.6 =>
 
 1.3 => lib/idea_rt.jar
+1.4 => lib/forms_rt.jar
+
+1.6 => lib/util.jar
 
 1.7 => lib/optimizedFileManager.jar
 
 1.5 => plugins/Groovy/lib/groovy_rt.jar
+1.5 => plugins/Groovy/lib/groovy-rt-constants.jar
+1.5 => plugins/coverage/lib/coverage_rt.jar
 1.5 => lib/annotations.jar
 1.8 => redist/annotations-java8.jar
-
-1.6 => plugins/gradle/lib/gradle-jps-plugin.jar
-
 1.3 => plugins/junit/lib/junit-rt.jar
+
+1.6 => lib/external-system-rt.jar
+
+1.6 => plugins/gradle/lib/gradle-tooling-extension-api.jar
+1.6 => plugins/gradle/lib/gradle-tooling-extension-impl.jar
+
+1.4 => plugins/xpath/lib/rt/xslt-rt.jar
+1.5 => plugins/xslt-debugger/lib/xslt-debugger-engine.jar
+1.5 => plugins/xslt-debugger/lib/rt/xslt-debugger-engine-impl.jar
+
+1.6 => plugins/android/lib/android-rt.jar

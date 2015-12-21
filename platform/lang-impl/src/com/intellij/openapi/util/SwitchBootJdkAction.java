@@ -27,20 +27,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.JdkBundle;
+import com.intellij.util.JdkBundleList;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import java.io.*;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author denis
@@ -49,52 +52,46 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
   @NonNls private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.SwitchBootJdkAction");
   @NonNls private static final String productJdkConfigFileName = getExecutable() + ".jdk";
   @NonNls private static final File productJdkConfigFile = new File(PathManager.getConfigPath(), productJdkConfigFileName);
-  @NonNls private static final File customJdkFile = new File(PathManager.getHomePath() + File.separator + "jre" + File.separator + "jdk");
+  @NonNls private static final File bundledJdkFile = getBundledJDKFile();
+
+
+
+  @NotNull
+  private static File getBundledJDKFile() {
+    StringBuilder bundledJDKPath = new StringBuilder("jre");
+    if (SystemInfo.isMac) {
+      bundledJDKPath.append(File.separator).append("jdk");
+    }
+    return new File(bundledJDKPath.toString());
+  }
 
   @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    if (!SystemInfo.isMac || !customJdkFile.exists()) {
+    if (!(SystemInfo.isMac || (SystemInfo.isLinux && PlatformUtils.isIntelliJ()))) {
       presentation.setEnabledAndVisible(false);
       return;
     }
     e.getPresentation().setText("Switch Boot JDK");
   }
 
-  public static List<JdkBundleDescriptor> getBundlesFromFile(@NotNull File fileWithBundles) {
-    InputStream stream = null;
-    InputStreamReader inputStream;
-    BufferedReader bufferedReader;
-
-    List<JdkBundleDescriptor> list = new ArrayList<JdkBundleDescriptor>();
-
-
+  private static List<JdkBundle> getBundlesFromFile(@NotNull File fileWithBundles) {
+    List<JdkBundle> list = new ArrayList<JdkBundle>();
     try {
-      stream = new FileInputStream(fileWithBundles);
-      inputStream = new InputStreamReader(stream, Charset.forName("UTF-8"));
-      bufferedReader = new BufferedReader(inputStream);
-
-      String line;
-
-      while ((line = bufferedReader.readLine()) != null) {
-        File file = new File(line);
-        if (file.exists()) {
-          list.add(new JdkBundleDescriptor(file, file.getName()));
+      for (String line : FileUtil.loadLines(fileWithBundles, "UTF-8")) {
+        File storedFile = new File(line);
+        final boolean isBundled = !storedFile.isAbsolute();
+        File actualFile = isBundled ? new File(PathManager.getHomePath(), storedFile.getPath()) : storedFile;
+        if (actualFile.exists()) {
+          list.add(JdkBundle.createBundle(storedFile, false, isBundled));
         }
       }
-
     } catch (IllegalStateException e) {
       // The device builders can throw IllegalStateExceptions if
       // build gets called before everything is properly setup
       LOG.error(e);
-    } catch (Exception e) {
+    } catch (IOException e) {
       LOG.error("Error reading JDK bundles", e);
-    } finally {
-      if (stream != null) {
-        try {
-          stream.close();
-        } catch (IOException ignore) {}
-      }
     }
     return list;
   }
@@ -120,8 +117,9 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       File selectedJdkBundleFile = dialog.getSelectedFile();
       FileWriter fooWriter = null;
       try {
+        //noinspection IOResourceOpenedButNotSafelyClosed
         fooWriter = new FileWriter(productJdkConfigFile, false);
-        fooWriter.write(selectedJdkBundleFile.getAbsolutePath());
+        fooWriter.write(selectedJdkBundleFile.getPath());
       }
       catch (IOException e) {
         LOG.error(e);
@@ -140,67 +138,55 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     }
   }
 
-  private static class JdkBundleDescriptor {
-    private File bundleAsFile;
-    private String visualRepresentation;
-
-    public JdkBundleDescriptor(@NotNull File bundleAsFile, @NotNull String visualRepresentation) {
-      this.bundleAsFile = bundleAsFile;
-      this.visualRepresentation = visualRepresentation;
-    }
-
-    public File getBundleAsFile() {
-      return bundleAsFile;
-    }
-
-    public String getVisualRepresentation() {
-      return visualRepresentation;
-    }
-  }
-
   private static class SwitchBootJdkDialog extends DialogWrapper {
 
     @NotNull private final ComboBox myComboBox;
 
-    protected SwitchBootJdkDialog(@Nullable Project project, final List<JdkBundleDescriptor> jdkBundlesList) {
+    private SwitchBootJdkDialog(@Nullable Project project, final List<JdkBundle> jdkBundlesList) {
       super(project, false);
 
-      final ArrayList<JdkBundleDescriptor> pathsList = JdkUtil.findJdkPaths();
-      if (!jdkBundlesList.isEmpty()) {
-        JdkBundleDescriptor jdkBundleDescription = jdkBundlesList.get(0);
-        pathsList.add(0, jdkBundleDescription);
-      }
+      final JdkBundleList pathsList = findJdkPaths();
 
       myComboBox = new ComboBox();
 
       DefaultComboBoxModel model = new DefaultComboBoxModel();
 
-      for (JdkBundleDescriptor jdkBundlePath : pathsList) {
-        if (!(jdkBundlesList.isEmpty() || jdkBundlePath == null)
-            && FileUtil.filesEqual(jdkBundlePath.getBundleAsFile(),jdkBundlesList.get(0).getBundleAsFile()))
-        {
-          continue;
-        }
+      for (JdkBundle jdkBundlePath : pathsList.toArrayList()) {
+        //noinspection unchecked
         model.addElement(jdkBundlePath);
       }
 
-      myComboBox.setModel(model);
+      model.addListDataListener(new ListDataListener() {
+        @Override
+        public void intervalAdded(ListDataEvent e) { }
 
-      if (pathsList.isEmpty()) {
-        myComboBox.setEnabled(false);
-      }
+        @Override
+        public void intervalRemoved(ListDataEvent e) { }
+
+        @Override
+        public void contentsChanged(ListDataEvent e) {
+          setOKActionEnabled(!((JdkBundle)myComboBox.getSelectedItem()).isBoot());
+        }
+      });
+
+      //noinspection unchecked
+      myComboBox.setModel(model);
 
       myComboBox.setRenderer(new ListCellRendererWrapper() {
         @Override
         public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           if (value != null) {
-            JdkBundleDescriptor jdkBundleDescriptor = ((JdkBundleDescriptor)value);
+            JdkBundle jdkBundleDescriptor = ((JdkBundle)value);
+            if (jdkBundleDescriptor.isBoot()) {
+              setForeground(JBColor.DARK_GRAY);
+            }
             setText(jdkBundleDescriptor.getVisualRepresentation());
-          } else {
+          }
+          else {
             if (LOG.isDebugEnabled()) {
-              LOG.debug("Null value has been passed to a cell renderer. Available JDKs count: " + pathsList.size());
+              LOG.debug("Null value has been passed to a cell renderer. Available JDKs count: " + pathsList.toArrayList().size());
               StringBuilder jdkNames = new StringBuilder();
-              for (JdkBundleDescriptor jdkBundlePath : pathsList) {
+              for (JdkBundle jdkBundlePath : pathsList.toArrayList()) {
                 if (!jdkBundlesList.isEmpty()) {
                   continue;
                 }
@@ -215,6 +201,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       });
 
       setTitle("Switch IDE Boot JDK");
+      setOKActionEnabled(false); // First item is a boot jdk
       init();
     }
 
@@ -237,88 +224,49 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     }
 
     public File getSelectedFile() {
-      return ((JdkBundleDescriptor)myComboBox.getSelectedItem()).bundleAsFile;
+      return ((JdkBundle)myComboBox.getSelectedItem()).getLocation();
     }
   }
 
   private static final String STANDARD_JDK_LOCATION_ON_MAC_OS_X = "/Library/Java/JavaVirtualMachines/";
   private static final String STANDARD_JDK_6_LOCATION_ON_MAC_OS_X = "/System/Library/Java/JavaVirtualMachines/";
+  private static final String [] STANDARD_JVM_LOCATIONS_ON_LINUX = new String[] {
+    "/usr/lib/jvm/", // Ubuntu
+    "/usr/java/"     // Fedora
+  };
 
-  private static class JdkUtil {
-    private static ArrayList <JdkBundleDescriptor> findJdkPaths () {
-      ArrayList<JdkBundleDescriptor> jdkPathsList = new ArrayList<JdkBundleDescriptor>();
-      if (!SystemInfo.isMac) return jdkPathsList;
+  private static final Version JDK6_VERSION = new Version(1, 6, 0);
+  private static final Version JDK8_VERSION = new Version(1, 8, 0);
 
-      if (customJdkFile.exists()) {
-          jdkPathsList.add(new JdkBundleDescriptor(customJdkFile, "JDK bundled with IDE"));
-      }
 
-      ArrayList<JdkBundleDescriptor> jdk6List = jdkBundlesFromLocation(STANDARD_JDK_6_LOCATION_ON_MAC_OS_X, "1.6.0");
+  @NotNull
+  private static JdkBundleList findJdkPaths() {
+    JdkBundle bootJdk = JdkBundle.createBoot();
 
-      if (jdk6List.isEmpty()) {
-        jdkPathsList.addAll(jdkBundlesFromLocation(STANDARD_JDK_LOCATION_ON_MAC_OS_X, "1.6.0"));
-      }
-
-      jdkPathsList.addAll(jdkBundlesFromLocation(STANDARD_JDK_LOCATION_ON_MAC_OS_X, "jdk1.8.0_(\\d*).jdk"));
-
-      return jdkPathsList;
+    JdkBundleList jdkBundleList = new JdkBundleList();
+    if (bootJdk != null) {
+      jdkBundleList.addBundle(bootJdk, true);
     }
 
-    private static ArrayList<JdkBundleDescriptor> jdkBundlesFromLocation(String jdkLocationOnMacOsX, String filter) {
-
-      ArrayList<JdkBundleDescriptor> localJdkPathsList = new ArrayList<JdkBundleDescriptor>();
-
-      File standardJdkLocationOnMacFile = new File(jdkLocationOnMacOsX);
-
-      if (!standardJdkLocationOnMacFile.exists()) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Location does not exists: " + jdkLocationOnMacOsX);
-        }
-        return localJdkPathsList;
+    if (new File(PathManager.getHomePath() + File.separator + bundledJdkFile).exists()) {
+      JdkBundle bundledJdk = JdkBundle.createBundle(bundledJdkFile, false, true);
+      if (bundledJdk != null) {
+        jdkBundleList.addBundle(bundledJdk, true);
       }
-
-      File[] filesInStandardJdkLocation = standardJdkLocationOnMacFile.listFiles();
-
-      if (filesInStandardJdkLocation == null) {
-        LOG.debug("Some IO  exception happened.");
-        return localJdkPathsList;
-      }
-
-      int latestUpdateNumber = 0;
-      JdkBundleDescriptor latestBundle = null;
-
-      Pattern p = Pattern.compile(filter);
-
-      for (File possibleJdkBundle : filesInStandardJdkLocation) {
-        // todo add some logic to verify the bundle
-
-        Matcher m = p.matcher(possibleJdkBundle.getName());
-
-        while (m.find()) {
-          try {
-            if (m.groupCount() > 0) {
-              int updateNumber = Integer.parseInt(m.group(1));
-              if (latestUpdateNumber < updateNumber) {
-                latestBundle = new JdkBundleDescriptor(possibleJdkBundle, possibleJdkBundle.getName());
-              }
-            } else {
-              latestBundle = new JdkBundleDescriptor(possibleJdkBundle, possibleJdkBundle.getName());
-            }
-          } catch (NumberFormatException nfe) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Fail parsing update number");
-            }
-          }
-        }
-
-      }
-
-      if (latestBundle != null) {
-        localJdkPathsList.add(latestBundle);
-      }
-
-      return localJdkPathsList;
     }
+
+    if (SystemInfo.isMac) {
+      jdkBundleList.addBundlesFromLocation(STANDARD_JDK_6_LOCATION_ON_MAC_OS_X, JDK6_VERSION, JDK6_VERSION);
+      jdkBundleList.addBundlesFromLocation(STANDARD_JDK_LOCATION_ON_MAC_OS_X, JDK6_VERSION, JDK6_VERSION);
+      jdkBundleList.addBundlesFromLocation(STANDARD_JDK_LOCATION_ON_MAC_OS_X, JDK8_VERSION, null);
+    }
+    else if (SystemInfo.isLinux) {
+      for (String location : STANDARD_JVM_LOCATIONS_ON_LINUX) {
+        jdkBundleList.addBundlesFromLocation(location, JDK8_VERSION, null);
+      }
+    }
+
+    return jdkBundleList;
   }
 
   @NotNull

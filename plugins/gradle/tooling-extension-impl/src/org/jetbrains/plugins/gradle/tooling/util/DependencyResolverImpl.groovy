@@ -57,10 +57,21 @@ class DependencyResolverImpl implements DependencyResolver {
   @NotNull
   private final Project myProject
   private final boolean myIsPreview
+  private final boolean myDownloadJavadoc
+  private final boolean myDownloadSources
 
   DependencyResolverImpl(@NotNull Project project, boolean isPreview) {
     myProject = project
-    myIsPreview = isPreview;
+    myIsPreview = isPreview
+    myDownloadJavadoc = false
+    myDownloadSources = false
+  }
+
+  DependencyResolverImpl(@NotNull Project project, boolean isPreview, boolean downloadJavadoc, boolean downloadSources) {
+    myProject = project
+    myIsPreview = isPreview
+    myDownloadJavadoc = downloadJavadoc
+    myDownloadSources = downloadSources
   }
 
   @Override
@@ -102,14 +113,14 @@ class DependencyResolverImpl implements DependencyResolver {
         }
       }
       if (jvmLibrary != null) {
+        Class[] artifactTypes = ([myDownloadSources?SourcesArtifact:null, myDownloadJavadoc?JavadocArtifact:null] - null) as Class[];
         Set<ResolvedArtifact> resolvedArtifacts = configuration.resolvedConfiguration.lenientConfiguration.getArtifacts(Specs.SATISFIES_ALL)
 
         Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap = ArrayListMultimap.create()
         resolvedArtifacts.each { artifactMap.put(it.moduleVersion.id, it) }
         Set<ComponentArtifactsResult> componentResults = myProject.dependencies.createArtifactResolutionQuery()
           .forComponents(resolvedArtifacts.collect { toComponentIdentifier(it.moduleVersion.id) })
-        //.withArtifacts(JvmLibrary, SourcesArtifact, JavadocArtifact)
-          .withArtifacts(jvmLibrary, SourcesArtifact)
+          .withArtifacts(jvmLibrary, artifactTypes)
           .execute()
           .getResolvedComponents()
 
@@ -117,6 +128,17 @@ class DependencyResolverImpl implements DependencyResolver {
         componentResults.each { componentResultsMap.put(it.id, it) }
 
         ResolutionResult resolutionResult = configuration.incoming.resolutionResult
+        if(!configuration.resolvedConfiguration.hasError()) {
+          def fileDeps = new LinkedHashSet<File>(configuration.incoming.files.files);
+          artifactMap.values().each {
+            fileDeps.remove(it.file)
+          }
+          fileDeps.each {
+            def fileCollectionDependency = new DefaultFileCollectionDependency([it])
+            fileCollectionDependency.scope = scope
+            result.add(fileCollectionDependency)
+          }
+        }
         result.addAll(transform(Lists.newArrayList(), resolutionResult.root.dependencies, artifactMap, componentResultsMap, scope))
       }
     }
@@ -151,12 +173,9 @@ class DependencyResolverImpl implements DependencyResolver {
     def providedScope = 'PROVIDED'
 
     Multimap<ExternalDependencyId, ExternalDependency> resolvedMap = ArrayListMultimap.create()
-    new Traverser(compileDependencies).each { resolvedMap.put(it.id, it) }
+    new DependencyTraverser(compileDependencies).each { resolvedMap.put(it.id, it) }
 
-    Multimap<ExternalDependencyId, ExternalDependency> toDelete = ArrayListMultimap.create()
-    new Traverser(runtimeDependencies).each { toDelete.put(it.id, it) }
-
-    new Traverser(runtimeDependencies).each {
+    new DependencyTraverser(runtimeDependencies).each {
       Collection<ExternalDependency> dependencies = resolvedMap.get(it.id);
       if (dependencies && !dependencies.isEmpty()) {
         if (it.dependencies.isEmpty()) {
@@ -169,15 +188,9 @@ class DependencyResolverImpl implements DependencyResolver {
       }
     }
 
-    toDelete = ArrayListMultimap.create()
-    new Traverser(runtimeDependencies).each { toDelete.put(it.id, it) }
-
     result.addAll(compileDependencies)
     result.addAll(runtimeDependencies)
     result.unique()
-
-    toDelete = ArrayListMultimap.create()
-    new Traverser(result).each { toDelete.put(it.id, it) }
 
     // merge file dependencies
     def jvmLanguages = ['Java', 'Groovy', 'Scala']
@@ -229,7 +242,7 @@ class DependencyResolverImpl implements DependencyResolver {
     Multimap<String, File> resolvedDependenciesMap = ArrayListMultimap.create()
     Project rootProject = myProject.rootProject
 
-    new Traverser(result).each {
+    new DependencyTraverser(result).each {
       def dependency = it
       def scope = dependency.scope
       order = -1;
@@ -354,7 +367,7 @@ class DependencyResolverImpl implements DependencyResolver {
     def providedConfigurations = new LinkedHashSet<Configuration>()
     if (sourceSet.name == 'main' || sourceSet.name == 'test') {
       resolvedMap = ArrayListMultimap.create()
-      new Traverser(result).each { resolvedMap.put(it.id, it) }
+      new DependencyTraverser(result).each { resolvedMap.put(it.id, it) }
       final IdeaPlugin ideaPlugin = myProject.getPlugins().findPlugin(IdeaPlugin.class);
       if (ideaPlugin) {
         def scopes = ideaPlugin.model.module.scopes
@@ -370,7 +383,7 @@ class DependencyResolverImpl implements DependencyResolver {
     }
     providedConfigurations.each {
       def providedDependencies = resolveDependencies(it, providedScope)
-      new Traverser(providedDependencies).each {
+      new DependencyTraverser(providedDependencies).each {
         Collection<ExternalDependency> dependencies = resolvedMap.get(it.id);
         if (!dependencies.isEmpty()) {
           dependencies.each { ((AbstractExternalDependency)it).scope = providedScope }
@@ -554,8 +567,9 @@ class DependencyResolverImpl implements DependencyResolver {
             group: project.group,
             version: project.version,
             scope: scope,
-            projectPath: project.path
+            projectPath: project.path,
           )
+          projectDependency.projectDependencyArtifacts = it.projectConfiguration.allArtifacts.files.collect {it.path}
           result.add(projectDependency)
         }
         else if (it instanceof Dependency) {
@@ -628,6 +642,7 @@ class DependencyResolverImpl implements DependencyResolver {
               selectionReason: selectionReason,
               projectPath: componentSelector.projectPath
             )
+            dependency.projectDependencyArtifacts = artifactMap.get(componentResult.moduleVersion).collect {it.file.path}
             if (componentResult != dependencyResult.from) {
               dependency.dependencies.addAll(
                 transform(handledDependencyResults, componentResult.dependencies, artifactMap, componentResultsMap, scope)
@@ -696,39 +711,6 @@ class DependencyResolverImpl implements DependencyResolver {
     }
 
     return dependencies
-  }
-
-  class Traverser implements Iterable {
-    private Collection<ExternalDependency> collection
-
-    Traverser(Collection<ExternalDependency> c) {
-      collection = c
-    }
-
-    @Override
-    Iterator<ExternalDependency> iterator() {
-      return new Itr(collection)
-    }
-
-    private class Itr implements Iterator<ExternalDependency> {
-      Queue<ExternalDependency> queue
-
-      Itr(Collection<ExternalDependency> c) {
-        queue = new LinkedList<>(c);
-      }
-
-      @Override
-      boolean hasNext() {
-        return !queue.isEmpty()
-      }
-
-      @Override
-      ExternalDependency next() {
-        def dependency = queue.remove()
-        queue.addAll(dependency.dependencies)
-        return dependency
-      }
-    }
   }
 
   private static toMyModuleIdentifier(ModuleVersionIdentifier id) {

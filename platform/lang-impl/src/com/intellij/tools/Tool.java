@@ -293,7 +293,7 @@ public class Tool implements SchemeElement {
         if (commandLine == null) {
           return;
         }
-        OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
+        OSProcessHandler handler = new OSProcessHandler(commandLine);
         handler.addProcessListener(new ToolProcessAdapter(project, synchronizeAfterExecution(), getName()));
         if (processListener != null) {
           handler.addProcessListener(processListener);

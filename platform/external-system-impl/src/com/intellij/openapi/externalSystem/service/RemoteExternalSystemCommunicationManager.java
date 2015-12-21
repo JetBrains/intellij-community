@@ -37,6 +37,7 @@ import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
@@ -152,6 +153,8 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
 
         // External system module jars
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(getClass()), classPath);
+        // external-system-rt.jar
+        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ExternalSystemException.class), classPath);
         ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.CommonBundle", CommonBundle.class);
         params.getClassPath().addAll(classPath);
 

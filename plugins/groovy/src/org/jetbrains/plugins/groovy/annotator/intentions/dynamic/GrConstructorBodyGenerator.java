@@ -15,58 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
-import com.intellij.codeInsight.generation.ConstructorBodyGenerator;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiParameter;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInsight.generation.ConstructorBodyGeneratorBase;
+import com.intellij.codeInsight.generation.ConstructorBodyGeneratorEx;
 
-/**
- * @author Max Medvedev
- */
-public class GrConstructorBodyGenerator implements ConstructorBodyGenerator {
-  @Override
-  public void generateFieldInitialization(@NotNull StringBuilder buffer,
-                                          @NotNull PsiField[] fields,
-                                          @NotNull PsiParameter[] parameters) {
-    for (int i = 0, length = fields.length; i < length; i++) {
-      String fieldName = fields[i].getName();
-      String paramName = parameters[i].getName();
-      if (fieldName.equals(paramName)) {
-        buffer.append("this.");
-      }
-      buffer.append(fieldName);
-      buffer.append("=");
-      buffer.append(paramName);
-      buffer.append("\n");
-    }
-  }
 
-  @Override
-  public void generateSuperCallIfNeeded(@NotNull StringBuilder buffer, @NotNull PsiParameter[] parameters) {
-    if (parameters.length > 0) {
-      buffer.append("super(");
-      for (int j = 0; j < parameters.length; j++) {
-        PsiParameter param = parameters[j];
-        buffer.append(param.getName());
-        if (j < parameters.length - 1) buffer.append(",");
-      }
-      buffer.append(")\n");
-    }
-  }
-
-  @Override
-  public StringBuilder start(StringBuilder buffer, @NotNull String name, @NotNull PsiParameter[] parameters) {
-    buffer.append("public ").append(name).append("(");
-    for (PsiParameter parameter : parameters) {
-      buffer.append(parameter.getType().getPresentableText()).append(' ').append(parameter.getName()).append(',');
-    }
-    if (parameters.length > 0) {
-      buffer.delete(buffer.length() - 1, buffer.length());
-    }
-    buffer.append("){\n");
-    return buffer;
-  }
-
+public class GrConstructorBodyGenerator extends ConstructorBodyGeneratorBase implements ConstructorBodyGeneratorEx{
+  
   @Override
   public void finish(StringBuilder buffer) {
     buffer.append('}');

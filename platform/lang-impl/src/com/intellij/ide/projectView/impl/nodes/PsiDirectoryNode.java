@@ -24,6 +24,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -32,12 +33,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
-import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -50,12 +48,14 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.*;
+import com.intellij.util.IconUtil;
+import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformIcons;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.Locale;
 
 public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText {
   public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
@@ -101,21 +101,10 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
           data.addText(directoryFile.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
 
-        if (parentValue instanceof Module || parentValue instanceof Project) {
-          final String location = FileUtil.getLocationRelativeToUserHome(directoryFile.getPresentableUrl());
-          data.addText(FontUtil.spaceAndThinSpace() + location, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        }
-        else if (shouldShowSourcesRoot()) {
-          SourceFolder sourceRoot = ProjectRootsUtil.getModuleSourceRoot(directoryFile, project);
-          if (sourceRoot != null) {
-            ModuleSourceRootEditHandler<?> handler = ModuleSourceRootEditHandler.getEditHandler(sourceRoot.getRootType());
-            if (handler != null) {
-              String rootTypeName = handler.getRootTypeName();
-              data.addText(FontUtil.spaceAndThinSpace() + rootTypeName.toLowerCase(Locale.getDefault()) + " root",  SimpleTextAttributes.GRAYED_ATTRIBUTES);
-            }
-          }
-        }
-
+        boolean shouldShowUrl = parentValue instanceof Module || parentValue instanceof Project;
+        data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory, 
+                                                                                                 shouldShowUrl, 
+                                                                                                 shouldShowSourcesRoot()));
         setupIcon(data, psiDirectory);
 
         return;
@@ -131,7 +120,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     }
 
     data.setPresentableText(name);
-    data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory));
+    data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory, false, false));
 
     setupIcon(data, psiDirectory);
   }
@@ -256,10 +245,10 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
     if (file != null && project != null) {
       if (ProjectRootsUtil.isModuleContentRoot(file, project) || ProjectRootsUtil.isModuleSourceRoot(file, project)) {
-        return "Open Module Settings";
+        return ActionsBundle.message("action.ModuleSettings.navigate");
       }
       if (ProjectRootsUtil.isLibraryRoot(file, project)) {
-        return "Open Library Settings";
+        return ActionsBundle.message("action.LibrarySettings.navigate");
       }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.nio.charset.Charset;
  * @author traff
  */
 public class PythonProcessHandler extends KillableColoredProcessHandler {
-  public static final boolean SOFT_KILL_ON_WIN = Registry.get("kill.windows.processes.softly").asBoolean();
+  public static final boolean SOFT_KILL_ON_WIN = Registry.is("kill.windows.processes.softly", false);
 
   public PythonProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     this(commandLine, SOFT_KILL_ON_WIN);
@@ -37,7 +37,7 @@ public class PythonProcessHandler extends KillableColoredProcessHandler {
     super(commandLine, softKillOnWin);
   }
 
-  public PythonProcessHandler(Process process, String commandLine, @NotNull Charset charset) {
+  public PythonProcessHandler(Process process, @NotNull String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
   }
 

@@ -30,39 +30,9 @@
         <processorPath useClasspath="true" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="1.6">
-      <module name="annotations" target="1.5" />
-      <module name="annotations-common" target="1.5" />
-      <module name="annotations-java8" target="1.8" />
-      <module name="community-tests" target="1.8" />
-      <module name="configuration-store-tests" target="1.8" />
-      <module name="diff-tests" target="1.8" />
-      <module name="gradle-jps-plugin" target="1.6" />
-      <module name="groovy-rt-constants" target="1.5" />
-      <module name="groovy_rt" target="1.5" />
-      <module name="intellilang-jps-plugin" target="1.6" />
-      <module name="IntelliLang-tests" target="1.8" />
+    <bytecodeTargetLevel>
       <module name="java-runtime" target="1.1" />
-      <module name="java-tests" target="1.8" />
-      <module name="javac2" target="1.5" />
-      <module name="javaFX-jps-plugin" target="1.6" />
-      <module name="jps-builders" target="1.6" />
-      <module name="jps-launcher" target="1.6" />
-      <module name="jps-model-api" target="1.6" />
-      <module name="jps-model-impl" target="1.6" />
-      <module name="jps-model-serialization" target="1.6" />
-      <module name="jps-standalone-builder" target="1.6" />
-      <module name="json-tests" target="1.8" />
       <module name="junit_rt" target="1.1" />
-      <module name="lang-tests" target="1.8" />
-      <module name="maven-jps-plugin" target="1.6" />
-      <module name="platform-tests" target="1.8" />
-      <module name="remote-servers-agent-rt" target="1.5" />
-      <module name="svn4idea-tests" target="1.8" />
-      <module name="tasks-tests" target="1.8" />
-      <module name="testng_rt" target="1.5" />
-      <module name="ui-designer-jps-plugin" target="1.6" />
-      <module name="util-rt" target="1.6" />
     </bytecodeTargetLevel>
   </component>
   <component name="EclipseCompilerSettings">

@@ -28,7 +28,6 @@ import com.intellij.semantic.SemService;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.Function;
-import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.impl.DomFileElementImpl;
@@ -121,32 +120,22 @@ public class DomConcurrencyStressTest extends DomTestCase {
 
       int N = 8;
       final CountDownLatch reads = new CountDownLatch(N);
-      List<Thread> threads = ContainerUtil.map(Collections.nCopies(N, ""), new Function<String, Thread>() {
+      List<Thread> threads = ContainerUtil.map(Collections.nCopies(N, ""), (Function<String, Thread>)s -> new Thread("dom concurrency") {
         @Override
-        public Thread fun(String s) {
-          return new Thread("dom concurrency") {
-            @Override
-            public void run() {
-              try {
-                runnable.run();
-              }
-              catch (Throwable e) {
-                exc.set(e);
-              }
-              finally {
-                reads.countDown();
-              }
-            }
-          };
+        public void run() {
+          try {
+            runnable.run();
+          }
+          catch (Throwable e) {
+            exc.set(e);
+          }
+          finally {
+            reads.countDown();
+          }
         }
       });
-      ContainerUtil.process(threads, new Processor<Thread>() {
-        @Override
-        public boolean process(Thread thread) {
-          thread.start();
-          return true;
-        }
-      });
+
+      threads.forEach(Thread::start);
 
       reads.await();
       if (!exc.isNull()) {
@@ -207,26 +196,19 @@ public class DomConcurrencyStressTest extends DomTestCase {
     assert bigXml != null;
     final XmlFile file = (XmlFile)PsiManager.getInstance(ourProject).findFile(bigXml);
 
-    runThreads(42, new Runnable() {
+    runThreads(42, () -> {
+      final Random random = new Random();
+      for (int i = 0; i < ITERATIONS; i++) {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          int offset = random.nextInt(file.getTextLength() - 10);
+          XmlTag tag = PsiTreeUtil.findElementOfClassAtOffset(file, offset, XmlTag.class, false);
+          assert tag != null : offset;
+          DomElement element = DomUtil.getDomElement(tag);
+          assert element instanceof MyAllCustomElement : element;
+        });
 
-      @Override
-      public void run() {
-        final Random random = new Random();
-        for (int i = 0; i < ITERATIONS; i++) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              int offset = random.nextInt(file.getTextLength() - 10);
-              XmlTag tag = PsiTreeUtil.findElementOfClassAtOffset(file, offset, XmlTag.class, false);
-              assert tag != null : offset;
-              DomElement element = DomUtil.getDomElement(tag);
-              assert element instanceof MyAllCustomElement : element;
-            }
-          });
-
-          if (random.nextInt(50) == 0) {
-            SemService.getSemService(getProject()).clearCache();
-          }
+        if (random.nextInt(50) == 0) {
+          SemService.getSemService(getProject()).clearCache();
         }
       }
     });

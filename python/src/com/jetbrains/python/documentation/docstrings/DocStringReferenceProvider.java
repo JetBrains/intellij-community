@@ -21,8 +21,10 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.documentation.docstrings.DocStringParameterReference.ReferenceType;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import com.jetbrains.python.psi.types.PyType;
@@ -59,29 +61,30 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
           final TagBasedDocString taggedDocString = (TagBasedDocString)docString;
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments(TagBasedDocString.PARAM_TAGS),
-                                            DocStringParameterReference.ReferenceType.PARAMETER));
+                                            ReferenceType.PARAMETER));
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments(TagBasedDocString.PARAM_TYPE_TAGS),
-                                            DocStringParameterReference.ReferenceType.PARAMETER_TYPE));
+                                            ReferenceType.PARAMETER_TYPE));
           result.addAll(referencesFromNames(expr, offset, docString,
-                                            docString.getKeywordArgumentSubstrings(), DocStringParameterReference.ReferenceType.KEYWORD));
+                                            docString.getKeywordArgumentSubstrings(), ReferenceType.KEYWORD));
 
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments("var"),
-                                            DocStringParameterReference.ReferenceType.VARIABLE));
+                                            ReferenceType.VARIABLE));
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments("cvar"),
-                                            DocStringParameterReference.ReferenceType.CLASS_VARIABLE));
+                                            ReferenceType.CLASS_VARIABLE));
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments("ivar"),
-                                            DocStringParameterReference.ReferenceType.INSTANCE_VARIABLE));
+                                            ReferenceType.INSTANCE_VARIABLE));
           result.addAll(returnTypes(element, docString, offset));
         }
         else if (docString instanceof SectionBasedDocString) {
           final SectionBasedDocString sectioned = (SectionBasedDocString)docString;
-          result.addAll(referencesFromFields(expr, offset, sectioned.getParameterFields(), DocStringParameterReference.ReferenceType.PARAMETER));
-          result.addAll(referencesFromFields(expr, offset, sectioned.getKeywordArgumentFields(), DocStringParameterReference.ReferenceType.KEYWORD));
-          result.addAll(referencesFromFields(expr, offset, sectioned.getAttributeFields(), DocStringParameterReference.ReferenceType.INSTANCE_VARIABLE));
+          result.addAll(referencesFromFields(expr, offset, sectioned.getParameterFields(), ReferenceType.PARAMETER));
+          result.addAll(referencesFromFields(expr, offset, sectioned.getKeywordArgumentFields(), ReferenceType.KEYWORD));
+          result.addAll(referencesFromFields(expr, offset, sectioned.getAttributeFields(), 
+                                             PyUtil.isTopLevel(element) ? ReferenceType.GLOBAL_VARIABLE : ReferenceType.INSTANCE_VARIABLE));
           result.addAll(referencesFromFields(expr, offset, sectioned.getReturnFields(), null));
         }
         return result.toArray(new PsiReference[result.size()]);
@@ -105,7 +108,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
                                                         int offset,
                                                         @NotNull StructuredDocString docString,
                                                         @NotNull List<Substring> paramNames,
-                                                        @NotNull DocStringParameterReference.ReferenceType refType) {
+                                                        @NotNull ReferenceType refType) {
     List<PsiReference> result = new ArrayList<PsiReference>();
     for (Substring name : paramNames) {
       final String s = name.toString();
@@ -113,7 +116,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         final TextRange range = name.getTextRange().shiftRight(offset);
         result.add(new DocStringParameterReference(element, range, refType));
       }
-      if (refType.equals(DocStringParameterReference.ReferenceType.PARAMETER_TYPE)) {
+      if (refType.equals(ReferenceType.PARAMETER_TYPE)) {
         final Substring type = docString.getParamTypeSubstring(s);
         if (type != null) {
           result.addAll(parseTypeReferences(element, type, offset));
@@ -127,7 +130,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
   private static List<PsiReference> referencesFromFields(@NotNull PyStringLiteralExpression element,
                                                          int offset,
                                                          @NotNull List<SectionBasedDocString.SectionField> fields,
-                                                         @Nullable DocStringParameterReference.ReferenceType nameRefType) {
+                                                         @Nullable ReferenceType nameRefType) {
     final List<PsiReference> result = new ArrayList<PsiReference>();
     for (SectionBasedDocString.SectionField field : fields) {
       for (Substring nameSub: field.getNamesAsSubstrings()) {

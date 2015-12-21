@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
@@ -38,7 +39,7 @@ import java.util.Collection;
 
 public class PropertyGroup implements Group, ColoredItemPresentation, AccessLevelProvider, WeighedItem {
   private final String myPropertyName;
-  private final PsiType myPropertyType;
+  private final SmartTypePointer myPropertyType;
 
   private SmartPsiElementPointer myFieldPointer;
   private SmartPsiElementPointer myGetterPointer;
@@ -55,7 +56,7 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
 
   private PropertyGroup(String propertyName, PsiType propertyType, boolean isStatic, @NotNull Project project) {
     myPropertyName = propertyName;
-    myPropertyType = propertyType;
+    myPropertyType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(propertyType);
     myIsStatic = isStatic;
     myProject = project;
   }
@@ -140,7 +141,8 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
 
   @Override
   public String getPresentableText() {
-    return myPropertyName + ": " + myPropertyType.getPresentableText();
+    final PsiType type = getPropertyType();
+    return myPropertyName + (type != null ? ": " + type.getPresentableText() : "");
   }
 
   public String toString() {
@@ -156,12 +158,10 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
 
     if (myPropertyName != null ? !myPropertyName.equals(propertyGroup.myPropertyName) : propertyGroup.myPropertyName != null) return false;
 
-    if (myPropertyType != null && !myPropertyType.isValid()) return false;
-    if (propertyGroup.myPropertyType != null && !propertyGroup.myPropertyType.isValid()) return false;
+    final PsiType propertyType = getPropertyType();
+    final PsiType otherPropertyType = propertyGroup.getPropertyType();
 
-    if (myPropertyType != null && myPropertyType.isValid()
-        ? !myPropertyType.equals(propertyGroup.myPropertyType) 
-        : propertyGroup.myPropertyType != null) {
+    if (!Comparing.equal(propertyType, otherPropertyType)) {
       return false;
     }
     return true;
@@ -172,7 +172,14 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
   }
 
   public String getGetterName() {
-    return PropertyUtil.suggestGetterName(myPropertyName, myPropertyType);
+    return PropertyUtil.suggestGetterName(myPropertyName, getPropertyType());
+  }
+
+  private PsiType getPropertyType() {
+    if (myPropertyType == null) {
+      return null;
+    }
+    return myPropertyType.getType();
   }
 
   @Override

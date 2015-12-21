@@ -27,6 +27,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.typeMigration.ui.TypeMigrationDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
@@ -42,7 +43,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
     while (typeElement != null) {
       final PsiElement parent = typeElement.getParent();
       if (parent instanceof PsiVariable || (parent instanceof PsiMember && !(parent instanceof PsiClass)) || isClassArgument(parent)) {
-        invoke(project, parent, null, editor);
+        invoke(project, parent, null, null, editor);
         return;
       }
       typeElement = PsiTreeUtil.getParentOfType(parent, PsiTypeElement.class, false);
@@ -61,11 +62,11 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
 
   public static boolean invokeOnElement(final Project project, final PsiElement element) {
     if (element instanceof PsiVariable || (element instanceof PsiMember && !(element instanceof PsiClass)) || element instanceof PsiFile) {
-      invoke(project, element, null, null);
+      invoke(project, element, null, null, null);
       return true;
     }
     if (isClassArgument(element)) {
-      invoke(project, element, null, null);
+      invoke(project, element, null, null, null);
       return true;
     }
     return false;
@@ -87,9 +88,9 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
     return false;
   }
 
-  public static void invoke(final Project project, final PsiElement root, final TypeMigrationRules rules, final Editor editor) {
+  public static void invoke(final Project project, final PsiElement root, final PsiType type, final TypeMigrationRules rules, final Editor editor) {
     if (Util.canBeMigrated(root)) {
-      TypeMigrationDialog dialog = new TypeMigrationDialog(project, root, rules);
+      TypeMigrationDialog dialog = new TypeMigrationDialog.SingleElement(project, root, type, rules);
       dialog.show();
       return;
     }

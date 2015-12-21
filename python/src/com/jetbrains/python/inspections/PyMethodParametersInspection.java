@@ -21,26 +21,55 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.AddSelfQuickFix;
 import com.jetbrains.python.inspections.quickfix.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
 /**
  * Looks for the 'self' or its equivalents.
  * @author dcheryasov
  */
 public class PyMethodParametersInspection extends PyInspection {
+  public String MCS = "mcs";
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    ComboBox comboBox = new ComboBox(new String[] {"mcs", "metacls"});
+    comboBox.setSelectedItem(MCS);
+    comboBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ComboBox cb = (ComboBox)e.getSource();
+        MCS = (String)cb.getSelectedItem();
+      }
+    });
+
+    JPanel option = new JPanel(new BorderLayout());
+    option.add(new JLabel("Metaclass method first argument name"), BorderLayout.WEST);
+    option.add(comboBox, BorderLayout.EAST);
+
+    final JPanel root = new JPanel(new BorderLayout());
+    root.add(option, BorderLayout.PAGE_START);
+    return root;
+  }
+
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -60,7 +89,7 @@ public class PyMethodParametersInspection extends PyInspection {
     return new Visitor(holder, session);
   }
 
-  public static class Visitor extends PyInspectionVisitor {
+  public class Visitor extends PyInspectionVisitor {
     private Ref<PsiElement> myPossibleZopeRef = null;
 
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
@@ -101,7 +130,6 @@ public class PyMethodParametersInspection extends PyInspection {
         PyParameter[] params = plist.getParameters();
         final String methodName = node.getName();
         final String CLS = "cls"; // TODO: move to style settings
-        final String MCS = "mcs"; // as per pylint inspection C0203
         if (params.length == 0) { // fix: add
           // check for "staticmetod"
           if (flags.isStaticMethod()) return; // no params may be fine

@@ -15,18 +15,23 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
@@ -57,18 +62,16 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.EditorAdapter;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -88,7 +91,16 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final MappingsToRoots myMappingsToRoots;
 
   private ContentManager myContentManager;
-  private EditorAdapter myEditorAdapter;
+  private ConsoleView myConsole;
+  private Disposable myConsoleDisposer = new Disposable() {
+    @Override
+    public void dispose() {
+      if (myConsole != null) {
+        Disposer.dispose(myConsole);
+        myConsole = null;
+      }
+    }
+  };
 
   private final VcsInitialization myInitialization;
 
@@ -105,9 +117,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private volatile int myBackgroundOperationCounter = 0;
 
-  private final Map<VcsBackgroundableActions, BackgroundableActionEnabledHandler> myBackgroundableActionHandlerMap;
+  private final Set<ActionKey> myBackgroundRunningTasks = ContainerUtil.newHashSet();
 
-  private final List<Pair<String, TextAttributes>> myPendingOutput = new ArrayList<Pair<String, TextAttributes>>();
+  private final List<Pair<String, ConsoleViewContentType>> myPendingOutput = ContainerUtil.newArrayList();
 
   private final VcsHistoryCache myVcsHistoryCache;
   private final ContentRevisionCache myContentRevisionCache;
@@ -125,7 +137,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
 
-    myBackgroundableActionHandlerMap = new EnumMap<VcsBackgroundableActions, BackgroundableActionEnabledHandler>(VcsBackgroundableActions.class);
     myInitialization = new VcsInitialization(myProject);
     myMappings = new NewMappings(myProject, myMessageBus, this, manager);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
@@ -171,8 +182,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Nullable
   public AbstractVcs findVcsByName(String name) {
     if (name == null) return null;
-    if (myProject.isDisposed()) return null;
-    return AllVcses.getInstance(myProject).getByName(name);
+    AbstractVcs result = myProject.isDisposed() ? null : AllVcses.getInstance(myProject).getByName(name);
+    ProgressManager.checkCanceled();
+    return result;
   }
 
   @Override
@@ -199,7 +211,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public void disposeComponent() {
-    releaseEditor();
+    releaseConsole();
     myMappings.disposeMe();
     myConnect.disconnect();
     Disposer.dispose(myAnnotationLocalChangesListener);
@@ -234,7 +246,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public void projectClosed() {
-    releaseEditor();
+    releaseConsole();
   }
 
   @Override
@@ -377,8 +389,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return !myMappings.isEmpty();
   }
 
+  @Deprecated
   @Override
   public void addMessageToConsoleWindow(final String message, final TextAttributes attributes) {
+    addMessageToConsoleWindow(message, new ConsoleViewContentType("", attributes));
+  }
+
+  @Override
+  public void addMessageToConsoleWindow(@Nullable final String message, @NotNull final ConsoleViewContentType contentType) {
     if (!Registry.is("vcs.showConsole")) {
       return;
     }
@@ -393,11 +411,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         if (myProject.isDisposed() || myProject.isDefault()) return;
         final ContentManager contentManager = getContentManager();
         if (contentManager == null) {
-          myPendingOutput.add(Pair.create(message, attributes));
+          myPendingOutput.add(Pair.create(message, contentType));
         }
         else {
           getOrCreateConsoleContent(contentManager);
-          myEditorAdapter.appendString(message, attributes);
+          printToConsole(message, contentType);
         }
       }
     }, ModalityState.defaultModalityState());
@@ -407,38 +425,35 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     final String displayName = VcsBundle.message("vcs.console.toolwindow.display.name");
     Content content = contentManager.findContent(displayName);
     if (content == null) {
-      releaseEditor();
-      final EditorFactory editorFactory = EditorFactory.getInstance();
-      final Editor editor = editorFactory.createViewer(editorFactory.createDocument(""), myProject);
-      EditorSettings editorSettings = editor.getSettings();
-      editorSettings.setLineMarkerAreaShown(false);
-      editorSettings.setIndentGuidesShown(false);
-      editorSettings.setLineNumbersShown(false);
-      editorSettings.setFoldingOutlineShown(false);
+      releaseConsole();
 
-      ((EditorEx)editor).getScrollPane().setBorder(null);
-      myEditorAdapter = new EditorAdapter(editor, myProject, false);
-      final JPanel panel = new JPanel(new BorderLayout());
-      panel.add(editor.getComponent(), BorderLayout.CENTER);
+      myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
+
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.add(myConsole.getComponent(), BorderLayout.CENTER);
+
+      ActionToolbar toolbar = ActionManager.getInstance()
+        .createActionToolbar(ActionPlaces.UNKNOWN, new DefaultActionGroup(myConsole.createConsoleActions()), false);
+      panel.add(toolbar.getComponent(), BorderLayout.WEST);
 
       content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, true);
+      content.setDisposer(myConsoleDisposer);
       contentManager.addContent(content);
 
-      for (Pair<String, TextAttributes> pair : myPendingOutput) {
-        myEditorAdapter.appendString(pair.first, pair.second);
+      for (Pair<String, ConsoleViewContentType> pair : myPendingOutput) {
+        printToConsole(pair.first, pair.second);
       }
       myPendingOutput.clear();
     }
     return content;
   }
 
-  private void releaseEditor() {
-    if (myEditorAdapter != null) {
-      final Editor editor = myEditorAdapter.getEditor();
-      if (!editor.isDisposed()) {
-        EditorFactory.getInstance().releaseEditor(editor);
-      }
-    }
+  private void printToConsole(@NotNull String message, @NotNull ConsoleViewContentType contentType) {
+    myConsole.print(message + "\n", contentType);
+  }
+
+  private void releaseConsole() {
+    Disposer.dispose(myConsoleDisposer);
   }
 
   @Override
@@ -796,15 +811,31 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myMappings.haveDefaultMapping();
   }
 
+  /**
+   * @deprecated {@link BackgroundableActionLock}
+   */
+  @Deprecated
   public BackgroundableActionEnabledHandler getBackgroundableActionHandler(final VcsBackgroundableActions action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    return new BackgroundableActionEnabledHandler(myProject, action);
+  }
 
-    BackgroundableActionEnabledHandler result = myBackgroundableActionHandlerMap.get(action);
-    if (result == null) {
-      result = new BackgroundableActionEnabledHandler();
-      myBackgroundableActionHandlerMap.put(action, result);
-    }
-    return result;
+  @CalledInAwt
+  boolean isBackgroundTaskRunning(@NotNull Object... keys) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return myBackgroundRunningTasks.contains(new ActionKey(keys));
+  }
+
+  @CalledInAwt
+  void startBackgroundTask(@NotNull Object... keys) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    LOG.assertTrue(myBackgroundRunningTasks.add(new ActionKey(keys)));
+  }
+
+  @CalledInAwt
+  void stopBackgroundTask(@NotNull Object... keys) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    LOG.assertTrue(myBackgroundRunningTasks.remove(new ActionKey(keys)));
   }
 
   public void addInitializationRequest(final VcsInitObject vcsInitObject, final Runnable runnable) {
@@ -890,5 +921,29 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @TestOnly
   public void waitForInitialized() {
     myInitialization.waitForInitialized();
+  }
+
+  private static class ActionKey {
+    private final Object[] myObjects;
+
+    public ActionKey(@NotNull Object... objects) {
+      myObjects = objects;
+    }
+
+    @Override
+    public final boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) return false;
+      return Arrays.equals(myObjects, ((ActionKey)o).myObjects);
+    }
+
+    @Override
+    public final int hashCode() {
+      return Arrays.hashCode(myObjects);
+    }
+
+    @Override
+    public String toString() {
+      return getClass() + " - " + Arrays.toString(myObjects);
+    }
   }
 }

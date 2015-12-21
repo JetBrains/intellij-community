@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
@@ -40,7 +41,6 @@ import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
 import gnu.trove.TIntHashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +58,7 @@ import java.util.List;
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl");
 
-  public static boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
+  private static final boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
 
   private static final VirtualDirectoryImpl NULL_VIRTUAL_FILE =
     new VirtualDirectoryImpl(-42, null, null, null, LocalFileSystem.getInstance()) {
@@ -67,6 +67,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         return "NULL";
       }
     };
+
   private final VfsData.DirectoryData myData;
   private final NewVirtualFileSystem myFs;
 
@@ -138,6 +139,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                              boolean ignoreCase) {
     if (name.isEmpty()) {
       return null;
+    }
+    if (!isValid()) {
+      throw new InvalidVirtualFileAccessException(this);
     }
 
     VirtualFileSystemEntry found = doFindChildInArray(name, ignoreCase);
@@ -286,6 +290,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Override
   @NotNull
   public VirtualFile[] getChildren() {
+    if (!isValid()) {
+      throw new InvalidVirtualFileAccessException(this);
+    }
     NewVirtualFileSystem delegate = getFileSystem();
     final boolean ignoreCase = !delegate.isCaseSensitive();
     synchronized (myData) {
@@ -359,7 +366,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       CharSequence prevName = VfsData.getNameByFileId(prev);
       int cmp = compareNames(name, prevName, ignoreCase);
       if (cmp <= 0) {
-        error(verboseToString.fun(VfsData.getFileById(prev, this)) + " is wrongly placed before " + verboseToString.fun(VfsData.getFileById(id, this)), getArraySafely(), details);
+        error(verboseToString.fun(VfsData.getFileById(prev, this)) +
+              " is wrongly placed before " +
+              verboseToString.fun(VfsData.getFileById(id, this)), getArraySafely(), details);
       }
     }
   }
@@ -368,7 +377,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     @Override
     public String fun(VirtualFileSystemEntry file) {
       if (file == null) return "null";
-      //noinspection HardCodedStringLiteral
       return file + " (name: '" + file.getName()
              + "', " + file.getClass()
              + ", parent: "+file.getParent()
@@ -380,7 +388,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
              + ") ";
     }
   };
-  private static void error(@NonNls String message, VirtualFileSystemEntry[] array, Object... details) {
+
+  private static void error(String message, VirtualFileSystemEntry[] array, Object... details) {
     String children = StringUtil.join(array, verboseToString, ",");
     throw new AssertionError(
       message + "; children: " + children + "\nDetails: " + ContainerUtil.map(
@@ -470,6 +479,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
+  @SuppressWarnings("Duplicates")
   private static int findIndex(final int[] array, @NotNull CharSequence name, boolean ignoreCase) {
     int low = 0;
     int high = array.length - 1;
@@ -477,17 +487,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     while (low <= high) {
       int mid = low + high >>> 1;
       int cmp = -compareNames(VfsData.getNameByFileId(array[mid]), name, ignoreCase);
-      if (cmp > 0) {
-        low = mid + 1;
-      }
-      else if (cmp < 0) {
-        high = mid - 1;
-      }
-      else {
-        return mid; // key found
-      }
+      if (cmp > 0) low = mid + 1;
+      else if (cmp < 0) high = mid - 1;
+      else return mid;
     }
-    return -(low + 1);  // key not found.
+
+    return -(low + 1);
   }
 
   private static int compareNames(@NotNull CharSequence name1, @NotNull CharSequence name2, boolean ignoreCase) {

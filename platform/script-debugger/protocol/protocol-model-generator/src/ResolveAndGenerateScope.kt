@@ -3,7 +3,7 @@ package org.jetbrains.protocolModelGenerator
 import org.jetbrains.jsonProtocol.ItemDescriptor
 import org.jetbrains.jsonProtocol.ProtocolMetaModel
 
-interface ResolveAndGenerateScope {
+internal interface ResolveAndGenerateScope {
   fun getDomainName(): String
   fun getTypeDirection(): TypeData.Direction
 

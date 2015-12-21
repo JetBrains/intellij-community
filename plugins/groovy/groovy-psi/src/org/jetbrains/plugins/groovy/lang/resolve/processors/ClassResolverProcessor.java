@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
 import java.util.EnumSet;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_CLASS;
+
 /**
  * @author ven
  */
-public class ClassResolverProcessor extends ResolverProcessor {
-  public ClassResolverProcessor(String refName, GrReferenceElement ref, EnumSet<ResolveKind> kinds) {
+public class ClassResolverProcessor extends ResolverProcessorImpl {
+  public ClassResolverProcessor(String refName, GrReferenceElement ref, EnumSet<DeclarationKind> kinds) {
     super(refName, kinds, ref, ref.getTypeArguments());
   }
 

@@ -25,6 +25,8 @@ import com.intellij.util.PathsList;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * Interface for convenient processing dependencies of a module or a project. Allows to process {@link OrderEntry}s and collect classes
  * and source roots.<p>
@@ -117,6 +119,16 @@ public abstract class OrderEnumerator {
    * @return this instance
    */
   public abstract OrderEnumerator using(@NotNull RootModelProvider provider);
+
+  /**
+   * Determine if, given the current enumerator settings and handlers for a module, should the
+   * enumerator recurse to further modules based on the given ModuleOrderEntry?
+   *
+   * @param entry the ModuleOrderEntry in question (m1 -> m2)
+   * @param handlers custom handlers registered to the module
+   * @return true if the enumerator would have recursively processed the given ModuleOrderEntry.
+   */
+  public abstract boolean shouldRecurse(@NotNull ModuleOrderEntry entry, @NotNull List<OrderEnumerationHandler> handlers);
 
   /**
    * @return {@link OrderRootsEnumerator} instance for processing classes roots

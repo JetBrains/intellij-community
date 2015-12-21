@@ -1,13 +1,13 @@
 package org.jetbrains.protocolModelGenerator
 
 import gnu.trove.THashMap
-import java.util.ArrayList
+import java.util.*
 
 /**
  * Keeps track of all referenced types.
  * A type may be used and resolved (generated or hard-coded).
  */
-class TypeMap {
+internal class TypeMap {
   private val map = THashMap<Pair<String, String>, TypeData>()
 
   var domainGeneratorMap: Map<String, DomainGenerator>? = null
@@ -15,7 +15,12 @@ class TypeMap {
   private val typesToGenerate = ArrayList<StandaloneTypeBinding>()
 
   fun resolve(domainName: String, typeName: String, direction: TypeData.Direction): BoxableType? {
-    val domainGenerator = domainGeneratorMap!!.get(domainName) ?: throw RuntimeException("Failed to find domain generator: " + domainName)
+    val domainGenerator = domainGeneratorMap!!.get(domainName)
+    if (domainGenerator == null) {
+      val qName = "$domainName.$typeName";
+      if (qName == "IO.StreamHandle" || qName == "Security.SecurityState") return BoxableType.ANY_STRING // ignore
+      throw RuntimeException("Failed to find domain generator: $domainName for type $typeName")
+    }
     return direction.get(getTypeData(domainName, typeName)).resolve(this, domainGenerator)
   }
 
@@ -42,13 +47,5 @@ class TypeMap {
     }
   }
 
-  fun getTypeData(domainName: String, typeName: String): TypeData {
-    val key = Pair(domainName, typeName)
-    var result: TypeData? = map.get(key)
-    if (result == null) {
-      result = TypeData(typeName)
-      map.put(key, result)
-    }
-    return result
-  }
+  fun getTypeData(domainName: String, typeName: String) = map.getOrPut(Pair(domainName, typeName)) { TypeData(typeName) }
 }

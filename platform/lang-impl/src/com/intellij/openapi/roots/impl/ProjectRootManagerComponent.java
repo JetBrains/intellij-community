@@ -167,7 +167,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       return;
     }
 
-    if (myDoLogCachesUpdate) LOG.info("refresh");
+    if (myDoLogCachesUpdate) LOG.debug("refresh");
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(myProject);
     if (task != null) {
@@ -290,7 +290,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   protected void doSynchronizeRoots() {
     if (!myStartupActivityPerformed) return;
 
-    if (myDoLogCachesUpdate) LOG.info(new Throwable("sync roots"));
+    if (myDoLogCachesUpdate) LOG.debug(new Throwable("sync roots"));
     else LOG.info("project roots have changed");
 
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
@@ -342,7 +342,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
         if (myInsideRefresh == 0) {
           if (affectsRoots(pointers)) {
             beforeRootsChange(false);
-            if (myDoLogCachesUpdate) LOG.info(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
+            if (myDoLogCachesUpdate) LOG.debug(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
           }
         }
         else if (!myPointerChangesDetected) {
@@ -350,7 +350,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
           if (affectsRoots(pointers)) {
             myPointerChangesDetected = true;
             myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, false));
-            if (myDoLogCachesUpdate) LOG.info(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
+            if (myDoLogCachesUpdate) LOG.debug(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
           }
         }
       }

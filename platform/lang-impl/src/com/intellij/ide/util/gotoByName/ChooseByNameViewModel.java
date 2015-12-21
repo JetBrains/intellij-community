@@ -27,6 +27,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -34,6 +35,7 @@ import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -766,26 +768,22 @@ public abstract class ChooseByNameViewModel {
       ProgressIndicatorUtils.scheduleWithWriteActionPriority(myProgress, this);
     }
 
-    @Override
-    public void runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
-      Runnable r = new Runnable() {
+    public Continuation runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
+      if (DumbService.isDumbAware(myModel)) return super.runBackgroundProcess(indicator);
+
+      return DumbService.getInstance(myProject).runReadActionInSmartMode(new Computable<Continuation>() {
         @Override
-        public void run() {
-          computeInReadAction(indicator);
+        public Continuation compute() {
+          return performInReadAction(indicator);
         }
-      };
-      if (DumbService.isDumbAware(myModel)) {
-        ApplicationManager.getApplication().runReadAction(r);
-      }
-      else {
-        DumbService.getInstance(myProject).runReadActionInSmartMode(r);
-      }
+      });
     }
 
 
+    @Nullable
     @Override
-    public void computeInReadAction(@NotNull ProgressIndicator indicator) {
-      if (myProject != null && myProject.isDisposed()) return;
+    public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+      if (myProject != null && myProject.isDisposed()) return null;
 
       final Set<Object> elements = new LinkedHashSet<Object>();
 
@@ -795,19 +793,19 @@ public abstract class ChooseByNameViewModel {
       if (elements.isEmpty() && !lowerCased.equals(myPattern)) {
         scopeExpanded = fillWithScopeExpansion(elements, lowerCased);
       }
-
-
       final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : scopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
 
       final boolean edt = myModel instanceof EdtSortingModel;
       final Set<Object> filtered = !edt ? filter(elements) : Collections.emptySet();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      return new Continuation(new Runnable() {
         @Override
         public void run() {
           if (!checkDisposed() && !myProgress.isCanceled()) {
-            ChooseByNameBase.CalcElementsThread currentBgProcess = myCalcElementsThread;
-            LOG.assertTrue(currentBgProcess == ChooseByNameBase.CalcElementsThread.this, currentBgProcess);
+            CalcElementsThread currentBgProcess = myCalcElementsThread;
+            LOG.assertTrue(currentBgProcess == CalcElementsThread.this, currentBgProcess);
+
             showCard(cardToShow, 0);
+
             myCallback.consume(edt ? filter(elements) : filtered);
           }
         }

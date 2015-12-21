@@ -105,12 +105,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     CacheUpdateRunner.processFiles(indicator, true, files, myProject, new Consumer<FileContent>() {
       @Override
       public void consume(FileContent content) {
-        try {
-          myIndex.indexFileContent(myProject, content);
-        }
-        finally {
-          IndexingStamp.flushCache(content.getVirtualFile());
-        }
+        myIndex.indexFileContent(myProject, content);
       }
     });
   }

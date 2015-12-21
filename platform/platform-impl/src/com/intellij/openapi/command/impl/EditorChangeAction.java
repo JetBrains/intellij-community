@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
@@ -34,6 +35,8 @@ public class EditorChangeAction extends BasicUndoableAction {
   private final Object myNewString;
   private final long myOldTimeStamp;
   private final long myNewTimeStamp;
+  private final int myOldLength;
+  private final int myNewLength;
 
   public EditorChangeAction(DocumentEvent e) {
     this((DocumentEx)e.getDocument(), e.getOffset(), e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp());
@@ -50,10 +53,13 @@ public class EditorChangeAction extends BasicUndoableAction {
     myNewString = CompressionUtil.compressStringRawBytes(newString);
     myOldTimeStamp = oldTimeStamp;
     myNewTimeStamp = document.getModificationStamp();
+    myNewLength = document.getTextLength();
+    myOldLength = myNewLength - newString.length() + oldString.length();
   }
 
   @Override
-  public void undo() {
+  public void undo() throws UnexpectedUndoException {
+    validateDocumentLength(myNewLength);
     DocumentUndoProvider.startDocumentUndo(getDocument());
     try {
       performUndo();
@@ -73,7 +79,8 @@ public class EditorChangeAction extends BasicUndoableAction {
   }
 
   @Override
-  public void redo() {
+  public void redo() throws UnexpectedUndoException {
+    validateDocumentLength(myOldLength);
     DocumentUndoProvider.startDocumentUndo(getDocument());
     try {
       CharSequence oldString = CompressionUtil.uncompressStringRawBytes(myOldString);
@@ -99,6 +106,10 @@ public class EditorChangeAction extends BasicUndoableAction {
     else if (oldString.length() > 0 && newString.length() > 0) {
       d.replaceString(myOffset, myOffset + newString.length(), oldString);
     }
+  }
+  
+  private void validateDocumentLength(int expectedLength) throws UnexpectedUndoException {
+    if (getDocument().getTextLength() != expectedLength) throw new UnexpectedUndoException("Unexpected document state");
   }
 
   private void refreshFileStatus() {

@@ -269,12 +269,12 @@ public abstract class AbstractExternalFilter {
 
       StringBuilder classDetails = new StringBuilder();
       while (((read = buf.readLine()) != null) && !StringUtil.toUpperCase(read).equals(HR) && !StringUtil.toUpperCase(read).equals(P)) {
-        if (reachTheEnd(data, read, classDetails)) return;
+        if (reachTheEnd(data, read, classDetails, endSection)) return;
         appendLine(classDetails, read);
       }
 
       while (((read = buf.readLine()) != null) && !StringUtil.toUpperCase(read).equals(P) && !StringUtil.toUpperCase(read).equals(HR)) {
-        if (reachTheEnd(data, read, classDetails)) return;
+        if (reachTheEnd(data, read, classDetails, endSection)) return;
         appendLine(data, read.replaceAll(DT, DT + BR));
       }
 
@@ -313,10 +313,11 @@ public abstract class AbstractExternalFilter {
     return new ParseSettings(startSection, endSection, !anchorPresent, anchorPresent);
   }
 
-  private static boolean reachTheEnd(StringBuilder data, String read, StringBuilder classDetails) {
+  private static boolean reachTheEnd(StringBuilder data, String read, StringBuilder classDetails, Pattern endSection) {
     if (StringUtil.indexOfIgnoreCase(read, FIELD_SUMMARY, 0) != -1 ||
         StringUtil.indexOfIgnoreCase(read, CLASS_SUMMARY, 0) != -1 ||
-        StringUtil.indexOfIgnoreCase(read, GREATEST_END_SECTION, 0) != -1) {
+        StringUtil.indexOfIgnoreCase(read, GREATEST_END_SECTION, 0) != -1 ||
+        endSection.matcher(read).find()) {
       data.append(classDetails);
       data.append(HTML_CLOSE);
       return true;

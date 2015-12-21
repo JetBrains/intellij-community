@@ -20,12 +20,12 @@ import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.NodePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
+import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
 import java.util.Collection;
 
 /**
@@ -34,19 +34,9 @@ import java.util.Collection;
 public class SimpleGraphCellPainter implements GraphCellPainter {
 
   private static final Color MARK_COLOR = JBColor.BLACK;
-  private static final int ROW_HEIGHT = 24;
   private static final double ARROW_ANGLE_COS2 = 0.7;
   private static final double ARROW_LENGTH = 0.3;
-
-  private final Stroke usual = new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
-  private final Stroke hide =
-    new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
-  private final Stroke selectUsual = new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
-  private final Stroke selectHide =
-    new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
-
   private Graphics2D g2;
-
   @NotNull private final ColorGenerator myColorGenerator;
 
   public SimpleGraphCellPainter(@NotNull ColorGenerator colorGenerator) {
@@ -54,45 +44,94 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   protected int getRowHeight() {
-    return ROW_HEIGHT;
+    return PrintParameters.ROW_HEIGHT;
   }
 
-  private void paintUpLine(int from, int to, Color color, boolean hasArrow) {
+  private float[] getDashLength(int edgeLength) {
+    int space = getRowHeight() / 4 - 1;
+    int dash = getRowHeight() / 4 + 1;
+    int count = edgeLength / (2 * (dash + space));
+    assert count != 0;
+    int dashApprox = (edgeLength / 2 - count * space) / count;
+
+    return new float[]{2 * dashApprox, 2 * space};
+  }
+
+  @NotNull
+  private BasicStroke getOrdinaryStroke() {
+    return new BasicStroke(PrintParameters.getLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
+  }
+
+  @NotNull
+  private BasicStroke getSelectedStroke() {
+    return new BasicStroke(PrintParameters.getSelectedLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
+  }
+
+  @NotNull
+  private Stroke getDashedStroke(float[] dash) {
+    return new BasicStroke(PrintParameters.getLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, dash,
+                           dash[0] / 2);
+  }
+
+  @NotNull
+  private Stroke getSelectedDashedStroke(float[] dash) {
+    return new BasicStroke(PrintParameters.getSelectedLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, dash,
+                           dash[0] / 2);
+  }
+
+  private void paintUpLine(int from, int to, Color color, boolean hasArrow, boolean isUsual, boolean isSelected, boolean isTerminal) {
     // paint vertical lines normal size
     // paint non-vertical lines twice the size to make them dock with each other well
+    int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
     if (from == to) {
-      int x = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+      int x = nodeWidth * from + nodeWidth / 2;
       int y1 = getRowHeight() / 2 - 1;
-      int y2 = 0;
-      paintLine(color, hasArrow, x, y1, x, y2, x, y2);
+      int y2 = isTerminal ? PrintParameters.getCircleRadius(getRowHeight()) / 2 + 1 : 0;
+      paintLine(color, hasArrow, x, y1, x, y2, x, y2, isUsual, isSelected);
     }
     else {
-      int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+      assert !isTerminal;
+      int x1 = nodeWidth * from + nodeWidth / 2;
       int y1 = getRowHeight() / 2;
-      int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
+      int x2 = nodeWidth * to + nodeWidth / 2;
       int y2 = -getRowHeight() / 2;
-      paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2);
+      paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2, isUsual, isSelected);
     }
   }
 
-  private void paintDownLine(int from, int to, Color color, boolean hasArrow) {
+  private void paintDownLine(int from, int to, Color color, boolean hasArrow, boolean isUsual, boolean isSelected, boolean isTerminal) {
+    int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
     if (from == to) {
-      int y2 = getRowHeight() - 1;
+      int y2 = getRowHeight() - 1 - (isTerminal ? PrintParameters.getCircleRadius(getRowHeight()) / 2 + 1 : 0);
       int y1 = getRowHeight() / 2;
-      int x = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
-      paintLine(color, hasArrow, x, y1, x, y2, x, y2);
+      int x = nodeWidth * from + nodeWidth / 2;
+      paintLine(color, hasArrow, x, y1, x, y2, x, y2, isUsual, isSelected);
     }
     else {
-      int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+      assert !isTerminal;
+      int x1 = nodeWidth * from + nodeWidth / 2;
       int y1 = getRowHeight() / 2;
-      int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
+      int x2 = nodeWidth * to + nodeWidth / 2;
       int y2 = getRowHeight() + getRowHeight() / 2;
-      paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2);
+      paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2, isUsual, isSelected);
     }
   }
 
-  private void paintLine(Color color, boolean hasArrow, int x1, int y1, int x2, int y2, int startArrowX, int startArrowY) {
+  private void paintLine(Color color,
+                         boolean hasArrow,
+                         int x1,
+                         int y1,
+                         int x2,
+                         int y2,
+                         int startArrowX,
+                         int startArrowY,
+                         boolean isUsual,
+                         boolean isSelected) {
     g2.setColor(color);
+
+    int length = (x1 == x2) ? getRowHeight() : (int)Math.ceil(Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)));
+    setStroke(isUsual || hasArrow, isSelected, length);
+
     g2.drawLine(x1, y1, x2, y2);
     if (hasArrow) {
       Pair<Integer, Integer> rotate1 =
@@ -120,50 +159,37 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   private void paintCircle(int position, Color color, boolean select) {
-    int x0 = PrintParameters.WIDTH_NODE * position + PrintParameters.WIDTH_NODE / 2;
+    int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
+    int circleRadius = PrintParameters.getCircleRadius(getRowHeight());
+    int selectedCircleRadius = PrintParameters.getSelectedCircleRadius(getRowHeight());
+
+    int x0 = nodeWidth * position + nodeWidth / 2;
     int y0 = getRowHeight() / 2;
-    int r = PrintParameters.CIRCLE_RADIUS;
+    int r = circleRadius;
     if (select) {
-      r = PrintParameters.SELECT_CIRCLE_RADIUS;
+      r = selectedCircleRadius;
     }
     Ellipse2D.Double circle = new Ellipse2D.Double(x0 - r + 0.5, y0 - r + 0.5, 2 * r, 2 * r);
     g2.setColor(color);
     g2.fill(circle);
   }
 
-  private void setStroke(boolean usual, boolean select) {
+  private void setStroke(boolean usual, boolean select, int edgeLength) {
     if (usual) {
       if (select) {
-        g2.setStroke(selectUsual);
+        g2.setStroke(getSelectedStroke());
       }
       else {
-        g2.setStroke(this.usual);
+        g2.setStroke(getOrdinaryStroke());
       }
     }
     else {
       if (select) {
-        g2.setStroke(selectHide);
+        g2.setStroke(getSelectedDashedStroke(getDashLength(edgeLength)));
       }
       else {
-        g2.setStroke(hide);
+        g2.setStroke(getDashedStroke(getDashLength(edgeLength)));
       }
-    }
-  }
-
-  private interface LitePrinter {
-    void print(Color color);
-  }
-
-  private void drawLogic(boolean isSelected, boolean isUsual, Color usualColor, LitePrinter printer) {
-    if (isSelected) {
-      setStroke(isUsual, true);
-      printer.print(MARK_COLOR);
-      setStroke(isUsual, false);
-      printer.print(usualColor);
-    }
-    else {
-      setStroke(isUsual, false);
-      printer.print(usualColor);
     }
   }
 
@@ -183,24 +209,19 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     this.g2 = g2;
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    for (final PrintElement printElement : printElements) {
-      LitePrinter printer = null;
+    for (PrintElement printElement : printElements) {
       if (printElement instanceof EdgePrintElement) {
-        printer = new LitePrinter() {
-          @Override
-          public void print(Color color) {
-            EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
-            int from = edgePrintElement.getPositionInCurrentRow();
-            int to = edgePrintElement.getPositionInOtherRow();
 
-            if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-              paintDownLine(from, to, color, edgePrintElement.hasArrow());
-            }
-            else {
-              paintUpLine(from, to, color, edgePrintElement.hasArrow());
-            }
-          }
-        };
+        EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
+        Color usualColor = getColor(edgePrintElement);
+
+        if (printElement.isSelected()) {
+          printEdge(MARK_COLOR, true, edgePrintElement);
+          printEdge(usualColor, false, edgePrintElement);
+        }
+        else {
+          printEdge(usualColor, false, edgePrintElement);
+        }
       }
 
       if (printElement instanceof NodePrintElement) {
@@ -213,17 +234,31 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
           paintCircle(position, getColor(printElement), false);
         }
       }
+    }
+  }
 
-      if (printer != null) drawLogic(printElement.isSelected(), isUsual(printElement), getColor(printElement), printer);
+  private void printEdge(Color color, boolean isSelected, EdgePrintElement edgePrintElement) {
+    int from = edgePrintElement.getPositionInCurrentRow();
+    int to = edgePrintElement.getPositionInOtherRow();
+    boolean isUsual = isUsual(edgePrintElement);
+
+    if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
+      paintDownLine(from, to, color, edgePrintElement.hasArrow(), isUsual, isSelected,
+                    edgePrintElement instanceof TerminalEdgePrintElement);
+    }
+    else {
+      paintUpLine(from, to, color, edgePrintElement.hasArrow(), isUsual, isSelected, edgePrintElement instanceof TerminalEdgePrintElement);
     }
   }
 
   @Nullable
   @Override
   public PrintElement mouseOver(@NotNull Collection<? extends PrintElement> printElements, int x, int y) {
+    int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
     for (PrintElement printElement : printElements) {
       if (printElement instanceof NodePrintElement) {
-        if (PositionUtil.overNode(printElement.getPositionInCurrentRow(), x, y, getRowHeight())) {
+        int circleRadius = PrintParameters.getCircleRadius(getRowHeight());
+        if (PositionUtil.overNode(printElement.getPositionInCurrentRow(), x, y, getRowHeight(), nodeWidth, circleRadius)) {
           return printElement;
         }
       }
@@ -232,13 +267,18 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     for (PrintElement printElement : printElements) {
       if (printElement instanceof EdgePrintElement) {
         EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
+        float lineThickness = PrintParameters.getLineThickness(getRowHeight());
         if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-          if (PositionUtil.overDownEdge(edgePrintElement.getPositionInCurrentRow(), edgePrintElement.getPositionInOtherRow(), x, y, getRowHeight())) {
+          if (PositionUtil
+            .overDownEdge(edgePrintElement.getPositionInCurrentRow(), edgePrintElement.getPositionInOtherRow(), x, y, getRowHeight(),
+                          nodeWidth, lineThickness)) {
             return printElement;
           }
         }
         else {
-          if (PositionUtil.overUpEdge(edgePrintElement.getPositionInOtherRow(), edgePrintElement.getPositionInCurrentRow(), x, y, getRowHeight())) {
+          if (PositionUtil
+            .overUpEdge(edgePrintElement.getPositionInOtherRow(), edgePrintElement.getPositionInCurrentRow(), x, y, getRowHeight(),
+                        nodeWidth, lineThickness)) {
             return printElement;
           }
         }

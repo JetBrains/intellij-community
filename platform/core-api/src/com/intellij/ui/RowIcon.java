@@ -25,14 +25,12 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class RowIcon implements Icon {
+public class RowIcon extends AbstractSizeAdjustingIcon {
   private final Alignment myAlignment;
 
   public enum Alignment {TOP, CENTER, BOTTOM}
 
   private final Icon[] myIcons;
-  private int myWidth;
-  private int myHeight;
 
   public RowIcon(int iconCount/*, int orientation*/) {
     this(iconCount, Alignment.TOP);
@@ -47,7 +45,7 @@ public class RowIcon implements Icon {
   public RowIcon(Icon... icons) {
     this(icons.length);
     System.arraycopy(icons, 0, myIcons, 0, icons.length);
-    recalculateSize();
+    adjustSize();
   }
 
   @TestOnly
@@ -71,7 +69,7 @@ public class RowIcon implements Icon {
 
   public void setIcon(Icon icon, int layer) {
     myIcons[layer] = icon;
-    recalculateSize();
+    adjustSize();
   }
 
   public Icon getIcon(int index) {
@@ -99,16 +97,7 @@ public class RowIcon implements Icon {
   }
 
   @Override
-  public int getIconWidth() {
-    return myWidth;
-  }
-
-  @Override
-  public int getIconHeight() {
-    return myHeight;
-  }
-
-  private void recalculateSize() {
+  protected void adjustSize() {
     int width = 0;
     int height = 0;
     for (Icon icon : myIcons) {

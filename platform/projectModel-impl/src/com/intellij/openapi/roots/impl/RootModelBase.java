@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,18 +205,17 @@ public abstract class RootModelBase implements ModuleRootModel {
   @Override
   @NotNull
   public Module[] getModuleDependencies(boolean includeTests) {
-    final List<Module> result = new ArrayList<Module>();
+    OrderEntry[] entries = getOrderEntries();
+    List<Module> result = new ArrayList<Module>(entries.length);
 
-    for (OrderEntry entry : getOrderEntries()) {
+    for (OrderEntry entry : entries) {
       if (entry instanceof ModuleOrderEntry) {
-        ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
-        final DependencyScope scope = moduleOrderEntry.getScope();
-        if (!includeTests && !scope.isForProductionCompile() && !scope.isForProductionRuntime()) {
-          continue;
-        }
-        final Module module1 = moduleOrderEntry.getModule();
-        if (module1 != null) {
-          result.add(module1);
+        DependencyScope scope = ((ModuleOrderEntry)entry).getScope();
+        if (includeTests || scope.isForProductionCompile() || scope.isForProductionRuntime()) {
+          Module module = ((ModuleOrderEntry)entry).getModule();
+          if (module != null) {
+            result.add(module);
+          }
         }
       }
     }

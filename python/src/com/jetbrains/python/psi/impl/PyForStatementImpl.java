@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,5 +58,10 @@ public class PyForStatementImpl extends PyPartitionedElementImpl implements PyFo
 
   public boolean mustResolveOutside() {
     return false; 
+  }
+
+  @Override
+  public boolean isAsync() {
+    return getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD) != null;
   }
 }

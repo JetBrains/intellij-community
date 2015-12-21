@@ -118,12 +118,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private static class Context {
     private final SmartPsiElementPointer element;
     private final String text;
+    private final String externalUrl;
     private final Rectangle viewRect;
     private final int highlightedLink;
 
-    public Context(SmartPsiElementPointer element, String text, Rectangle viewRect, int highlightedLink) {
+    public Context(SmartPsiElementPointer element, String text, String externalUrl, Rectangle viewRect, int highlightedLink) {
       this.element = element;
       this.text = text;
+      this.externalUrl = externalUrl;
       this.viewRect = viewRect;
       this.highlightedLink = highlightedLink;
     }
@@ -554,11 +556,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
   
   public void setData(PsiElement _element, String text, final boolean clearHistory, String effectiveExternalUrl, String ref) {
-    myEffectiveExternalUrl = effectiveExternalUrl;
     if (myElement != null) {
       myBackStack.push(saveContext());
       myForwardStack.clear();
     }
+    myEffectiveExternalUrl = effectiveExternalUrl;
 
     final SmartPsiElementPointer element = _element != null && _element.isValid()
                                            ? SmartPointerManager.getInstance(_element.getProject()).createSmartPsiElementPointer(_element)
@@ -643,11 +645,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private Context saveContext() {
     Rectangle rect = myScrollPane.getViewport().getViewRect();
-    return new Context(myElement, myText, rect, myHighlightedLink);
+    return new Context(myElement, myText, myEffectiveExternalUrl, rect, myHighlightedLink);
   }
 
   private void restoreContext(Context context) {
     setDataInternal(context.element, context.text, context.viewRect, null);
+    myEffectiveExternalUrl = context.externalUrl;
     if (myNavigateCallback != null) {
       final PsiElement element = context.element.getElement();
       if (element != null) {

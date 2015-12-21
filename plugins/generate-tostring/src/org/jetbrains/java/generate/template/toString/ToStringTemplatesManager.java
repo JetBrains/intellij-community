@@ -36,6 +36,7 @@ public class ToStringTemplatesManager extends TemplatesManager {
   private static final String DEFAULT_CONCAT = "DefaultConcatMember.vm";
   private static final String DEFAULT_CONCAT_GROOVY = "/org/jetbrains/java/generate/template/toString/DefaultConcatMemberGroovy.vm";
   private static final String DEFAULT_CONCAT_SUPER = "/org/jetbrains/java/generate/template/toString/DefaultConcatMemberSuper.vm";
+  private static final String DEFAULT_CONCAT_SUPER_GROOVY = "/org/jetbrains/java/generate/template/toString/DefaultConcatMemberSuperGroovy.vm";
   private static final String DEFAULT_BUFFER = "/org/jetbrains/java/generate/template/toString/DefaultBuffer.vm";
   private static final String DEFAULT_BUILDER = "/org/jetbrains/java/generate/template/toString/DefaultBuilder.vm";
   private static final String DEFAULT_TOSTRINGBUILDER = "/org/jetbrains/java/generate/template/toString/DefaultToStringBuilder.vm";
@@ -60,6 +61,7 @@ public class ToStringTemplatesManager extends TemplatesManager {
         new TemplateResource("Objects.toStringHelper (Guava)", readFile(DEFAULT_GUAVA), true),
         new TemplateResource("MoreObjects.toStringHelper (Guava 18+)", readFile(DEFAULT_GUAVA_18), true),
         new TemplateResource("Groovy: String concat (+)", readFile(DEFAULT_CONCAT_GROOVY), true),
+        new TemplateResource("Groovy: String concat (+) and super.toString()", readFile(DEFAULT_CONCAT_SUPER_GROOVY), true),
       };
     }
     catch (IOException e) {

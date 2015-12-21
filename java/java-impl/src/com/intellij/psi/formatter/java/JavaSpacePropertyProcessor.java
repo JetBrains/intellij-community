@@ -755,7 +755,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
 
     if (myRole2 == ChildRole.TRY_BLOCK) {
-      myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_TRY_LBRACE, null);
+      TextRange dependentRange = null;
+      if (myChild1 instanceof PsiResourceList && mySettings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
+          dependentRange = myChild1.getTextRange();
+      }
+      myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_TRY_LBRACE, dependentRange);
     }
     else if (myRole2 == ChildRole.FINALLY_BLOCK) {
       myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_FINALLY_LBRACE, null);
@@ -906,9 +910,16 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (block.getParent() instanceof PsiMethod) {
       return shouldHandleAsSimpleMethod((PsiMethod)block.getParent());
     }
+    else if (block.getParent() instanceof PsiLambdaExpression) {
+      return shouldHandleAsSimpleLambda((PsiLambdaExpression)block.getParent());
+    }
     else {
       return shouldHandleAsSimpleBlock(block.getNode());
-   }
+    }
+  }
+
+  private boolean shouldHandleAsSimpleLambda(PsiLambdaExpression lambda) {
+    return mySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE && !lambda.textContains('\n');
   }
 
   @Override

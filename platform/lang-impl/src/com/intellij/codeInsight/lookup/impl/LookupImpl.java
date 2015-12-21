@@ -65,8 +65,10 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable, WeighingContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
@@ -100,6 +102,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   final LookupCellRenderer myCellRenderer;
 
   private final List<LookupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private PrefixChangeListener myPrefixChangeListener = new PrefixChangeListener.Adapter() {};
 
   private long myStampShown = 0;
   private boolean myShown = false;
@@ -305,6 +308,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     requestResize();
     refreshUi(false, true);
     ensureSelectionVisible(true);
+    myPrefixChangeListener.afterAppend(c);
   }
 
   public void setStartCompletionWhenNothingMatches(boolean startCompletionWhenNothingMatches) {
@@ -1147,6 +1151,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     synchronized (myList) {
       return myPresentableArranger.getRelevanceObjects(items, hideSingleValued);
     }
+  }
+
+  public void setPrefixChangeListener(PrefixChangeListener listener) {
+    myPrefixChangeListener = listener;
   }
 
   public enum FocusDegree { FOCUSED, SEMI_FOCUSED, UNFOCUSED }

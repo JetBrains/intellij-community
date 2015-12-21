@@ -15,9 +15,9 @@
  */
 package com.intellij.refactoring.typeMigration.rules.guava;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.*;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
+import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,29 +27,61 @@ public class FunctionalInterfaceTypeConversionDescriptor extends TypeConversionD
   @NotNull private final String myMethodName;
   @NotNull private final String myTargetMethodName;
 
-  public FunctionalInterfaceTypeConversionDescriptor(@NotNull String methodName, @NotNull String targetMethodName) {
+  FunctionalInterfaceTypeConversionDescriptor(@NotNull String methodName, @NotNull String targetMethodName) {
     super(null, null);
     myMethodName = methodName;
     myTargetMethodName = targetMethodName;
   }
 
   @Override
-  public PsiExpression replace(PsiExpression expression) {
+  public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+    if (expression.getParent() instanceof PsiMethodReferenceExpression) {
+      expression = (PsiExpression)expression.getParent();
+    }
     if (expression instanceof PsiMethodReferenceExpression) {
-      setAsMethodReference();
-    } else {
+      setAsMethodReference((PsiMethodReferenceExpression)expression);
+    }
+    else if (expression instanceof PsiReferenceExpression) {
+      setAsReference();
+    }
+    else {
       setAsMethodCall();
     }
-    return super.replace(expression);
+    return super.replace(expression, evaluator);
   }
 
-  private void setAsMethodReference() {
+  private void setAsReference() {
+    setStringToReplace("$ref$");
+    setReplaceByString("$ref$::" + myTargetMethodName);
+  }
+
+  private void setAsMethodReference(PsiMethodReferenceExpression methodReference) {
     setStringToReplace("$qualifier$::" + myMethodName);
+    if (methodReference.getParent() instanceof PsiExpressionList &&
+        methodReference.getParent().getParent() instanceof PsiMethodCallExpression &&
+        isPredicates((PsiMethodCallExpression)methodReference.getParent().getParent())) {
+      setReplaceByString("$qualifier$::" + myTargetMethodName);
+      return;
+    }
     setReplaceByString("$qualifier$");
   }
 
   private void setAsMethodCall() {
     setStringToReplace("$qualifier$." + myMethodName + "($param$)");
     setReplaceByString("$qualifier$." + myTargetMethodName + "($param$)");
+  }
+
+  public static boolean isPredicates(PsiMethodCallExpression expression) {
+    final String methodName = expression.getMethodExpression().getReferenceName();
+    if (GuavaPredicateConversionRule.PREDICATES_NOT.equals(methodName) ||
+        GuavaPredicateConversionRule.PREDICATES_AND_OR.contains(methodName)) {
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) return false;
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass != null && GuavaPredicateConversionRule.GUAVA_PREDICATES_UTILITY.equals(aClass.getQualifiedName())) {
+        return true;
+      }
+    }
+    return false;
   }
 }

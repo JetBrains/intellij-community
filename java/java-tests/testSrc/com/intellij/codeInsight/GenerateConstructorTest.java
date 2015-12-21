@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,70 +15,87 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.GenerateConstructorHandler;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
  * @author ven
  */
-public class GenerateConstructorTest extends LightCodeInsightTestCase {
-  public void testAbstractClass() throws Exception { doTest(); }
-  public void testPackageLocalClass() throws Exception { doTest(); }
-  public void testPrivateClass() throws Exception { doTest(); }
-  public void testBoundComments() throws Exception { doTest(); }
-  public void testSameNamedFields() throws Exception { doTest(); }
-  public void testEnumWithAbstractMethod() throws Exception { doTest(); }
-  public void testNoMoreConstructorsCanBeGenerated() throws Exception { doTest(); }
-  public void testBaseVarargs() throws Exception { doTest(); }
+public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
 
-  public void testImmediatelyAfterRBrace() throws Exception {    // IDEADEV-28811
+  @Override
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/generateConstructor";
+  }
+
+  public void testAbstractClass() { doTest(); }
+  public void testPackageLocalClass() { doTest(); }
+  public void testPrivateClass() { doTest(); }
+  public void testBoundComments() { doTest(); }
+  public void testSameNamedFields() { doTest(); }
+  public void testEnumWithAbstractMethod() { doTest(); }
+  public void testNoMoreConstructorsCanBeGenerated() { doTest(); }
+  public void testBaseVarargs() { doTest(); }
+  public void testFinalFieldPreselection() { doTest(true); }
+  public void testSubstitution() { doTest(true); }
+
+  public void testImmediatelyAfterRBrace() {    // IDEADEV-28811
     CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTest();
   }
 
-  public void testBoundCommentsKeepsBlankLine() throws Exception {
-    CommonCodeStyleSettings javaSettings =
-      CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCommonSettings(JavaLanguage.INSTANCE);
-    javaSettings.BLANK_LINES_AFTER_CLASS_HEADER = 1;
+  public void testBoundCommentsKeepsBlankLine() {
+    CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCommonSettings(JavaLanguage.INSTANCE).BLANK_LINES_AFTER_CLASS_HEADER = 1;
     doTest();
   }
 
-  public void testFinalFieldPreselection() throws Exception { doTest(true); }
-  public void testSubstitution() throws Exception { doTest(true); }
-
-  public void testFieldPrefixCoincidence() throws Exception {
+  public void testFieldPrefixCoincidence() {
     CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().FIELD_NAME_PREFIX = "m";
     doTest();
   }
 
-  public void testFieldPrefixCoincidence1() throws Exception {
+  public void testFieldPrefixCoincidence1() {
     CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().FIELD_NAME_PREFIX = "_";
     doTest();
   }
 
-  private void doTest() throws Exception {
+  public void testTypeAnnotatedField() {
+    myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target(ElementType.TYPE_USE) public @interface TestNotNull { }");
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());
+    manager.setNotNulls("foo.TestNotNull");
+    Disposer.register(myTestRootDisposable, manager::setNotNulls);
+    doTest();
+  }
+
+  private void doTest() {
     doTest(false);
   }
 
-  private void doTest(final boolean preSelect) throws Exception {
+  private void doTest(boolean preSelect) {
     String name = getTestName(false);
-    configureByFile("/codeInsight/generateConstructor/before" + name + ".java");
+    myFixture.configureByFile("before" + name + ".java");
     new GenerateConstructorHandler() {
       @Override
-      protected ClassMember[] chooseMembers(ClassMember[] members,
-                                            boolean allowEmptySelection,
-                                            boolean copyJavadocCheckbox,
-                                            Project project, Editor editor) {
+      protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmpty, boolean copyJavadoc, Project project, Editor editor) {
         if (preSelect) {
-          final List<ClassMember> preselection = GenerateConstructorHandler.preselect(members);
+          List<ClassMember> preselection = GenerateConstructorHandler.preselect(members);
           return preselection.toArray(new ClassMember[preselection.size()]);
         }
         else {
@@ -86,6 +103,6 @@ public class GenerateConstructorTest extends LightCodeInsightTestCase {
         }
       }
     }.invoke(getProject(), getEditor(), getFile());
-    checkResultByFile("/codeInsight/generateConstructor/after" + name + ".java");
+    myFixture.checkResultByFile("after" + name + ".java");
   }
 }

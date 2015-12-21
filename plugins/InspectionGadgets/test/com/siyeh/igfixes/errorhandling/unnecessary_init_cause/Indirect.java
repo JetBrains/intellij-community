@@ -8,7 +8,7 @@ class Indirect {
         } catch (FileNotFoundException e) {
             final RuntimeException exception = new RuntimeException();
             exception.<caret>initCause(e);
-            throw e;
+            throw exception;
         }
     }
 }

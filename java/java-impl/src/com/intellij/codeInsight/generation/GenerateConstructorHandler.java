@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +42,7 @@ import java.util.List;
 
 public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateConstructorHandler");
+
   private boolean myCopyJavadoc;
 
   public GenerateConstructorHandler() {
@@ -54,12 +54,13 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     PsiField[] fields = aClass.getFields();
     ArrayList<ClassMember> array = new ArrayList<ClassMember>();
     ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
-    fieldLoop: for (PsiField field : fields) {
+    fieldLoop:
+    for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
 
       if (field.hasModifierProperty(PsiModifier.FINAL) && field.getInitializer() != null) continue;
 
-      for(ImplicitUsageProvider provider: implicitUsageProviders) {
+      for (ImplicitUsageProvider provider : implicitUsageProviders) {
         if (provider.isImplicitWrite(field)) continue fieldLoop;
       }
       array.add(new PsiFieldMember(field));
@@ -70,7 +71,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   @Override
   @Nullable
   protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
-    if (aClass instanceof PsiAnonymousClass){
+    if (aClass instanceof PsiAnonymousClass) {
       Messages.showMessageDialog(project,
                                  CodeInsightBundle.message("error.attempt.to.generate.constructor.for.anonymous.class"),
                                  CommonBundle.getErrorTitle(),
@@ -81,18 +82,18 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     myCopyJavadoc = false;
     PsiMethod[] baseConstructors = null;
     PsiClass baseClass = aClass.getSuperClass();
-    if (baseClass != null){
-      ArrayList<PsiMethod> array = new ArrayList<PsiMethod>();
+    if (baseClass != null) {
+      List<PsiMethod> array = new ArrayList<PsiMethod>();
       for (PsiMethod method : baseClass.getConstructors()) {
         if (JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(method, aClass, null)) {
           array.add(method);
         }
       }
-      if (!array.isEmpty()){
-        if (array.size() == 1){
+      if (!array.isEmpty()) {
+        if (array.size() == 1) {
           baseConstructors = new PsiMethod[]{array.get(0)};
         }
-        else{
+        else {
           final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
           PsiMethodMember[] constructors = ContainerUtil.map2Array(array, PsiMethodMember.class, new Function<PsiMethod, PsiMethodMember>() {
             @Override
@@ -106,7 +107,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
           List<PsiMethodMember> elements = chooser.getSelectedElements();
           if (elements == null || elements.isEmpty()) return null;
           baseConstructors = new PsiMethod[elements.size()];
-          for(int i = 0; i < elements.size(); i++){
+          for (int i = 0; i < elements.size(); i++) {
             final ClassMember member = elements.get(i);
             baseConstructors[i] = ((PsiMethodMember)member).getElement();
           }
@@ -120,12 +121,13 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     if (allMembers.length == 0) {
       members = ClassMember.EMPTY_ARRAY;
     }
-    else{
+    else {
       members = chooseMembers(allMembers, true, false, project, null);
       if (members == null) return null;
     }
+
     if (baseConstructors != null) {
-      ArrayList<ClassMember> array = new ArrayList<ClassMember>();
+      List<ClassMember> array = new ArrayList<ClassMember>();
       for (PsiMethod baseConstructor : baseConstructors) {
         array.add(new PsiMethodMember(baseConstructor));
       }
@@ -210,89 +212,111 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return "Constructor already exist";
   }
 
-  public static PsiMethod generateConstructorPrototype(PsiClass aClass, PsiMethod baseConstructor, boolean copyJavaDoc, PsiField[] fields) throws IncorrectOperationException {
+  public static PsiMethod generateConstructorPrototype(PsiClass aClass,
+                                                       PsiMethod baseConstructor,
+                                                       boolean copyJavaDoc,
+                                                       PsiField[] fields) throws IncorrectOperationException {
     PsiManager manager = aClass.getManager();
-    JVMElementFactory factory = JVMElementFactories.requireFactory(aClass.getLanguage(), aClass.getProject());
+    Project project = aClass.getProject();
+    JVMElementFactory factory = JVMElementFactories.requireFactory(aClass.getLanguage(), project);
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
 
-    PsiMethod constructor = factory.createConstructor(aClass.getName(), aClass);
+    String className = aClass.getName();
+    assert className != null : aClass;
+    PsiMethod constructor = factory.createConstructor(className, aClass);
 
     GenerateMembersUtil.setVisibility(aClass, constructor);
 
-    if (baseConstructor != null){
+    if (baseConstructor != null) {
       PsiJavaCodeReferenceElement[] throwRefs = baseConstructor.getThrowsList().getReferenceElements();
       for (PsiJavaCodeReferenceElement ref : throwRefs) {
         constructor.getThrowsList().add(ref);
       }
 
-      if(copyJavaDoc) {
+      if (copyJavaDoc) {
         final PsiDocComment docComment = ((PsiMethod)baseConstructor.getNavigationElement()).getDocComment();
-        if(docComment != null) {
+        if (docComment != null) {
           constructor.addAfter(docComment, null);
         }
       }
     }
 
     boolean isNotEnum = false;
-    if (baseConstructor != null){
+    if (baseConstructor != null) {
       PsiClass superClass = aClass.getSuperClass();
       LOG.assertTrue(superClass != null);
       if (!CommonClassNames.JAVA_LANG_ENUM.equals(superClass.getQualifiedName())) {
         isNotEnum = true;
-        if (baseConstructor instanceof PsiCompiledElement){ // to get some parameter names
-          PsiClass dummyClass = JVMElementFactories.requireFactory(baseConstructor.getLanguage(), baseConstructor.getProject()).createClass("Dummy");
+        if (baseConstructor instanceof PsiCompiledElement) { // to get some parameter names
+          PsiClass dummyClass = JVMElementFactories.requireFactory(baseConstructor.getLanguage(), project).createClass("Dummy");
           baseConstructor = (PsiMethod)dummyClass.add(baseConstructor);
         }
         PsiParameter[] params = baseConstructor.getParameterList().getParameters();
         for (PsiParameter param : params) {
-          PsiParameter newParam = factory.createParameter(param.getName(), param.getType(), aClass);
+          String name = param.getName();
+          assert name != null : param;
+          PsiParameter newParam = factory.createParameter(name, param.getType(), aClass);
           GenerateMembersUtil.copyOrReplaceModifierList(param, newParam);
           constructor.getParameterList().add(newParam);
         }
       }
     }
 
-    JavaCodeStyleManager javaStyle = JavaCodeStyleManager.getInstance(aClass.getProject());
+    JavaCodeStyleManager javaStyle = JavaCodeStyleManager.getInstance(project);
 
-    final PsiMethod dummyConstructor = factory.createConstructor(aClass.getName());
+    final PsiMethod dummyConstructor = factory.createConstructor(className);
     dummyConstructor.getParameterList().replace(constructor.getParameterList().copy());
     List<PsiParameter> fieldParams = new ArrayList<PsiParameter>();
     for (PsiField field : fields) {
       String fieldName = field.getName();
+      assert fieldName != null : field;
       String name = javaStyle.variableNameToPropertyName(fieldName, VariableKind.FIELD);
       String parmName = javaStyle.propertyNameToVariableName(name, VariableKind.PARAMETER);
       parmName = javaStyle.suggestUniqueVariableName(parmName, dummyConstructor, true);
       PsiParameter parm = factory.createParameter(parmName, field.getType(), aClass);
 
-      final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(field.getProject());
-      final PsiAnnotation notNull = nullableManager.copyNotNullAnnotation(field);
-      if (notNull != null) {
-        parm.getModifierList().addAfter(notNull, null);
-      }
+      NullableNotNullManager.getInstance(project).copyNotNullAnnotation(field, parm);
 
       if (constructor.isVarArgs()) {
         final PsiParameterList parameterList = constructor.getParameterList();
         parameterList.addBefore(parm, parameterList.getParameters()[parameterList.getParametersCount() - 1]);
-        final PsiParameterList dummyParameterlist = dummyConstructor.getParameterList();
-        dummyParameterlist.addBefore(parm.copy(), dummyParameterlist.getParameters()[dummyParameterlist.getParametersCount() - 1]);
-      } else {
+        final PsiParameterList dummyParameterList = dummyConstructor.getParameterList();
+        dummyParameterList.addBefore(parm.copy(), dummyParameterList.getParameters()[dummyParameterList.getParametersCount() - 1]);
+      }
+      else {
         constructor.getParameterList().add(parm);
         dummyConstructor.getParameterList().add(parm.copy());
       }
+
       fieldParams.add(parm);
     }
 
     ConstructorBodyGenerator generator = ConstructorBodyGenerator.INSTANCE.forLanguage(aClass.getLanguage());
     if (generator != null) {
-      @NonNls StringBuilder buffer = new StringBuilder();
+      StringBuilder buffer = new StringBuilder();
       generator.start(buffer, constructor.getName(), PsiParameter.EMPTY_ARRAY);
       if (isNotEnum) {
         generator.generateSuperCallIfNeeded(buffer, baseConstructor.getParameterList().getParameters());
       }
-      generator.generateFieldInitialization(buffer, fields, fieldParams.toArray(new PsiParameter[fieldParams.size()]));
+      final PsiParameter[] parameters = fieldParams.toArray(new PsiParameter[fieldParams.size()]);
+      final List<String> existingNames = ContainerUtil.map(dummyConstructor.getParameterList().getParameters(), new Function<PsiParameter, String>() {
+        @Override
+        public String fun(PsiParameter parameter) {
+          return parameter.getName();
+        }
+      });
+      if (generator instanceof ConstructorBodyGeneratorEx) {
+        ((ConstructorBodyGeneratorEx)generator).generateFieldInitialization(buffer, fields, parameters, existingNames);
+      }
+      else {
+        generator.generateFieldInitialization(buffer, fields, parameters);
+      }
       generator.finish(buffer);
       PsiMethod stub = factory.createMethodFromText(buffer.toString(), aClass);
-      constructor.getBody().replace(stub.getBody());
+      PsiCodeBlock original = constructor.getBody(), replacement = stub.getBody();
+      assert original != null : constructor;
+      assert replacement != null : stub;
+      original.replace(replacement);
     }
 
     constructor = (PsiMethod)codeStyleManager.reformat(constructor);

@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +55,11 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
 
   @NotNull
   public abstract String getRootTypeName();
+
+  @NotNull
+  public String getFullRootTypeName() {
+    return ProjectBundle.message("module.paths.root.node", getRootTypeName());
+  }
 
   @NotNull
   public abstract Icon getRootIcon();

@@ -184,9 +184,8 @@ public class AppEngineUploader {
   }
 
   private void startUploadingProcess() {
-    final Process process;
-    final GeneralCommandLine commandLine;
 
+    final ProcessHandler processHandler;
     try {
       JavaParameters parameters = new JavaParameters();
       parameters.configureByModule(myAppEngineFacet.getModule(), JavaParameters.JDK_ONLY);
@@ -213,15 +212,14 @@ public class AppEngineUploader {
       programParameters.add("update");
       programParameters.add(FileUtil.toSystemDependentName(myArtifact.getOutputPath()));
 
-      commandLine = CommandLineBuilder.createFromJavaParameters(parameters);
-      process = commandLine.createProcess();
+      final GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(parameters);
+      processHandler = new OSProcessHandler(commandLine);
     }
     catch (ExecutionException e) {
       myCallback.errorOccurred("Cannot start uploading: " + e.getMessage());
       return;
     }
 
-    final ProcessHandler processHandler = new OSProcessHandler(process, commandLine.getCommandLineString());
     processHandler.addProcessListener(new MyProcessListener(processHandler, null, myLoggingHandler));
     myLoggingHandler.attachToProcess(processHandler);
     processHandler.startNotify();

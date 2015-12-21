@@ -30,10 +30,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -63,7 +60,6 @@ public class FileUtilRt {
   };
 
   protected static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
-    @Override
     protected byte[] initialValue() {
       return new byte[1024 * 20];
     }
@@ -99,7 +95,6 @@ public class FileUtilRt {
         ourFilesDeleteIfExistsMethod = filesClass.getMethod("deleteIfExists", pathClass);
         final Object Result_Continue = Class.forName("java.nio.file.FileVisitResult").getDeclaredField("CONTINUE").get(null);
         ourDeletionVisitor = Proxy.newProxyInstance(FileUtilRt.class.getClassLoader(), new Class[]{visitorClass}, new InvocationHandler() {
-          @Override
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             if (args.length == 2) {
               final Object second = args[1];
@@ -400,7 +395,8 @@ public class FileUtilRt {
 
         boolean success = isDirectory ? f.mkdir() : f.createNewFile();
         if (!success) {
-          throw new IOException("Unable to create temporary file " + f);
+          throw new IOException("Unable to create temporary file " + f + "\nDirectory '" +f.getParentFile()+
+                                "' list: " + Arrays.asList(f.getParentFile().list()));
         }
 
         return normalizeFile(f);
@@ -485,10 +481,14 @@ public class FileUtilRt {
    * @throws IOException if there is a problem with setting the flag
    */
   public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
-    final File file = new File(path);
-    if (!file.setExecutable(executableFlag) && file.canExecute() != executableFlag) {
-      logger().warn("Can't set executable attribute of '" + path + "' to " + executableFlag);
+    try {
+      File file = new File(path);
+      //noinspection Since15
+      if (!file.setExecutable(executableFlag) && file.canExecute() != executableFlag) {
+        logger().warn("Can't set executable attribute of '" + path + "' to " + executableFlag);
+      }
     }
+    catch (LinkageError ignored) { }
   }
 
   @NotNull
@@ -852,13 +852,11 @@ public class FileUtilRt {
 
   private interface CharComparingStrategy {
     CharComparingStrategy IDENTITY = new CharComparingStrategy() {
-      @Override
       public boolean charsEqual(char ch1, char ch2) {
         return ch1 == ch2;
       }
     };
     CharComparingStrategy CASE_INSENSITIVE = new CharComparingStrategy() {
-      @Override
       public boolean charsEqual(char ch1, char ch2) {
         return StringUtilRt.charsEqualIgnoreCase(ch1, ch2);
       }

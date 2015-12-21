@@ -22,12 +22,9 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.Reference;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -36,11 +33,12 @@ import java.util.List;
  * @author peter
  */
 class MarkerCache {
-  private static final Comparator<SelfElementInfo> BY_RANGE_KEY = new Comparator<SelfElementInfo>() {
+  static final Comparator<SelfElementInfo> INFO_COMPARATOR = new Comparator<SelfElementInfo>() {
     @Override
     public int compare(SelfElementInfo info1, SelfElementInfo info2) {
       int o1 = info1.getPsiStartOffset();
       int o2 = info2.getPsiStartOffset();
+      if (o1 < 0 || o2 < 0) return o1 >= 0 ? -1 : o2 >= 0 ? 1 : 0; // infos without range go after infos with range
       if (o1 != o2) return o1 > o2 ? 1 : -1;
 
       o1 = info1.getPsiEndOffset();
@@ -51,12 +49,10 @@ class MarkerCache {
     }
   };
   private final SmartPointerManagerImpl.FilePointersList myPointers;
-  private final VirtualFile myVirtualFile;
   private volatile UpdatedRanges myUpdatedRanges;
 
-  MarkerCache(SmartPointerManagerImpl.FilePointersList pointers, VirtualFile virtualFile) {
+  MarkerCache(SmartPointerManagerImpl.FilePointersList pointers) {
     myPointers = pointers;
-    myVirtualFile = virtualFile;
   }
 
   private UpdatedRanges getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
@@ -77,7 +73,7 @@ class MarkerCache {
         answer = applyEvents(events.subList(cache.myEventCount, eventCount), cache);
       }
       else {
-        List<SelfElementInfo> infos = getSortedInfos();
+        List<SelfElementInfo> infos = myPointers.getSortedInfos();
         ManualRangeMarker[] markers = createMarkers(infos);
         answer = applyEvents(events, new UpdatedRanges(0, frozen, infos, markers));
       }
@@ -150,45 +146,33 @@ class MarkerCache {
   synchronized void updateMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
     UpdatedRanges updated = getUpdatedMarkers(frozen, events);
 
+    boolean sorted = true;
     for (int i = 0; i < updated.myMarkers.length; i++) {
-      updated.mySortedInfos.get(i).setRange(updated.myMarkers[i]);
+      SelfElementInfo info = updated.mySortedInfos.get(i);
+      info.setRange(updated.myMarkers[i]);
+      if (sorted && i > 0 && INFO_COMPARATOR.compare(updated.mySortedInfos.get(i - 1), info) > 0) {
+        sorted = false;
+      }
+    }
+
+    if (!sorted) {
+      myPointers.markUnsorted();
     }
 
     myUpdatedRanges = null;
   }
 
-  @NotNull
-  private List<SelfElementInfo> getSortedInfos() {
-    List<SelfElementInfo> infos = ContainerUtil.newArrayListWithCapacity(myPointers.getSize());
-    for (Reference<SmartPsiElementPointerImpl> reference : myPointers.getReferences()) {
-      if (reference != null) {
-        SmartPsiElementPointerImpl pointer = reference.get();
-        if (pointer != null) {
-          SmartPointerElementInfo info = pointer.getElementInfo();
-          if (info instanceof SelfElementInfo && ((SelfElementInfo)info).hasRange()) {
-            infos.add((SelfElementInfo)info);
-          }
-        }
-      }
-    }
-    Collections.sort(infos, BY_RANGE_KEY);
-    return infos;
-  }
-
   @Nullable
   TextRange getUpdatedRange(@NotNull SelfElementInfo info, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
     UpdatedRanges struct = getUpdatedMarkers(frozen, events);
-    int i = Collections.binarySearch(struct.mySortedInfos, info, BY_RANGE_KEY);
+    int i = Collections.binarySearch(struct.mySortedInfos, info, INFO_COMPARATOR);
     ManualRangeMarker updated = i >= 0 ? struct.myMarkers[i] : null;
     return updated == null ? null : new UnfairTextRange(updated.getStartOffset(), updated.getEndOffset());
   }
 
   void rangeChanged() {
     myUpdatedRanges = null;
-  }
-
-  VirtualFile getVirtualFile() {
-    return myVirtualFile;
+    myPointers.markUnsorted();
   }
 
   private static class UpdatedRanges {

@@ -16,6 +16,10 @@
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -494,6 +498,7 @@ public class PlatformTestUtil {
     private final String message;         // to print on fail
     private boolean adjustForIO = true;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
     private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
+    private boolean useLegacyScaling = false;
 
     private TestInfo(@NotNull ThrowableRunnable test, int expectedMs, String message) {
       this.test = test;
@@ -507,6 +512,12 @@ public class PlatformTestUtil {
     public TestInfo cpuBound() { adjustForIO = false; adjustForCPU = true; return this; }
     public TestInfo ioBound() { adjustForIO = true; adjustForCPU = false; return this; }
     public TestInfo attempts(int attempts) { this.attempts = attempts; return this; }
+    /**
+     * @deprecated Enables procedure for nonlinear scaling of results between different machines. This was historically enabled, but doesn't
+     * seem to be meaningful, and is known to make results worse in some cases. Consider migration off this setting, recalibrating
+     * expected execution time accordingly.
+     */
+    public TestInfo useLegacyScaling() { useLegacyScaling = true; return this; }
 
     public void assertTiming() {
       assert expectedMs != 0 : "Must call .expect() before run test";
@@ -529,12 +540,12 @@ public class PlatformTestUtil {
 
         int expectedOnMyMachine = expectedMs;
         if (adjustForCPU) {
-          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.ETALON_CPU_TIMING);
+          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.ETALON_CPU_TIMING, useLegacyScaling);
 
           expectedOnMyMachine = usesAllCPUCores ? expectedOnMyMachine * 8 / JobSchedulerImpl.CORES_COUNT : expectedOnMyMachine;
         }
         if (adjustForIO) {
-          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.IO_TIMING, Timings.ETALON_IO_TIMING);
+          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.IO_TIMING, Timings.ETALON_IO_TIMING, useLegacyScaling);
         }
 
         // Allow 10% more in case of test machine is busy.
@@ -600,14 +611,18 @@ public class PlatformTestUtil {
       return result;
     }
 
-    private static int adjust(int expectedOnMyMachine, long thisTiming, long ethanolTiming) {
-      // most of our algorithms are quadratic. sad but true.
-      double speed = 1.0 * thisTiming / ethanolTiming;
-      double delta = speed < 1
-                 ? 0.9 + Math.pow(speed - 0.7, 2)
-                 : 0.45 + Math.pow(speed - 0.25, 2);
-      expectedOnMyMachine *= delta;
-      return expectedOnMyMachine;
+    private static int adjust(int expectedOnMyMachine, long thisTiming, long etalonTiming, boolean useLegacyScaling) {
+      if (useLegacyScaling) {
+        double speed = 1.0 * thisTiming / etalonTiming;
+        double delta = speed < 1
+                       ? 0.9 + Math.pow(speed - 0.7, 2)
+                       : 0.45 + Math.pow(speed - 0.25, 2);
+        expectedOnMyMachine *= delta;
+        return expectedOnMyMachine;
+      }
+      else {
+        return (int)(expectedOnMyMachine * thisTiming / etalonTiming);
+      }
     }
   }
 
@@ -894,4 +909,14 @@ public class PlatformTestUtil {
     @Override
     public void write(int b) throws IOException { }
   };
+
+  public static void assertSuccessful(@NotNull GeneralCommandLine command) {
+    try {
+      ProcessOutput output = ExecUtil.execAndGetOutput(command.withRedirectErrorStream(true));
+      assertEquals(output.getStdout(), 0, output.getExitCode());
+    }
+    catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+  }
 }

@@ -47,7 +47,7 @@ abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
 
       var empty = true
       var squashed = true
-      ThreeSide.values.forEach {
+      ThreeSide.values().forEach {
         val start = starts(it)
         val end = ends(it)
         val last = lasts(it)
@@ -91,11 +91,11 @@ abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
   }
 
 
-  private enum class TestType {
+  internal enum class TestType {
     CHAR
   }
 
-  inner class MergeTestBuilder(val type: TestType) {
+  internal inner class MergeTestBuilder(val type: TestType) {
     private var isExecuted: Boolean = false
 
     private var texts: Trio<Document>? = null
@@ -150,11 +150,11 @@ abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
     }
   }
 
-  fun chars(f: MergeTestBuilder.() -> Unit) {
+  internal fun chars(f: MergeTestBuilder.() -> Unit) {
     doTest(TestType.CHAR, f)
   }
 
-  private fun doTest(type: TestType, f: MergeTestBuilder.() -> Unit) {
+  internal fun doTest(type: TestType, f: MergeTestBuilder.() -> Unit) {
     val builder = MergeTestBuilder(type)
     builder.f()
     builder.assertExecuted()

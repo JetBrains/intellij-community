@@ -33,8 +33,10 @@ abstract class PersistentMapTestBase extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFile = FileUtil.createTempFile("persistent", "map");
-    myDataFile = new File(myFile.getParentFile(), myFile.getName() + PersistentHashMap.DATA_FILE_EXTENSION);
+    File directory = FileUtil.createTempDirectory("persistent", "map");
+    myFile = new File(directory, "map");
+    assertTrue(myFile.createNewFile());
+    myDataFile = new File(directory, myFile.getName() + PersistentHashMap.DATA_FILE_EXTENSION);
     myMap = new PersistentHashMap<>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
   }
 

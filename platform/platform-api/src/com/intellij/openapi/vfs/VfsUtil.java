@@ -214,11 +214,13 @@ public class VfsUtil extends VfsUtilCore {
    * @param url the URL to find file by
    * @return <code>{@link VirtualFile}</code> if the file was found, <code>null</code> otherwise
    */
+  @Nullable
   public static VirtualFile findFileByURL(@NotNull URL url) {
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
     return findFileByURL(url, virtualFileManager);
   }
 
+  @Nullable
   public static VirtualFile findFileByURL(@NotNull URL url, @NotNull VirtualFileManager virtualFileManager) {
     String vfUrl = convertFromUrl(url);
     return virtualFileManager.findFileByUrl(vfUrl);

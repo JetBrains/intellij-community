@@ -30,6 +30,7 @@ import com.intellij.diff.tools.util.base.*;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,6 +53,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,6 +64,7 @@ import javax.swing.*;
 import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
+import static com.intellij.diff.util.DiffUtil.getLinesContent;
 
 public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(UnifiedDiffViewer.class);
@@ -178,8 +181,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myDocument.addDocumentListener(new MyOnesideDocumentListener());
   }
 
-  @CalledInAwt
   @NotNull
+  @Override
+  @CalledInAwt
   public List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
@@ -196,8 +200,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return group;
   }
 
-  @CalledInAwt
   @NotNull
+  @Override
+  @CalledInAwt
   public List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
@@ -218,10 +223,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   protected List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
-    group.add(new ReplaceSelectedChangesAction(Side.LEFT, false));
-    group.add(new ReplaceSelectedChangesAction(Side.RIGHT, false));
-    group.add(new AppendSelectedChangesAction(Side.LEFT, false));
-    group.add(new AppendSelectedChangesAction(Side.RIGHT, false));
+    if (isEditable(Side.RIGHT, false)) {
+      group.add(new ReplaceSelectedChangesAction(Side.LEFT, false));
+      group.add(new ReplaceSelectedChangesAction(Side.RIGHT, false));
+    }
 
     group.add(Separator.getInstance());
     group.addAll(TextDiffViewerUtil.createEditorPopupActions());
@@ -412,10 +417,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         List<RangeMarker> guarderRangeBlocks = new ArrayList<RangeMarker>();
         if (!myEditor.isViewer()) {
           for (ChangedBlock block : blocks) {
-            int start = myMasterSide.select(block.getStartOffset2(), block.getStartOffset1());
-            int end = myMasterSide.select(block.getEndOffset2() - 1, block.getEndOffset1() - 1);
-            if (start >= end) continue;
-            guarderRangeBlocks.add(createGuardedBlock(start, end));
+            LineRange range = myMasterSide.select(block.getRange2(), block.getRange1());
+            TextRange textRange = DiffUtil.getLinesRange(myDocument, range.start, range.end);
+            if (textRange.isEmpty()) continue;
+            guarderRangeBlocks.add(createGuardedBlock(textRange.getStartOffset(), textRange.getEndOffset()));
           }
           int textLength = myDocument.getTextLength(); // there are 'fake' newline at the very end
           guarderRangeBlocks.add(createGuardedBlock(textLength, textLength));
@@ -670,7 +675,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         return;
       }
 
-      e.getPresentation().setText(getText());
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(isSomeChangeSelected());
     }
@@ -711,9 +715,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       return false;
     }
 
-    @NotNull
-    public abstract String getText();
-
     @CalledWithWriteLock
     protected abstract void apply(@NotNull List<UnifiedDiffChange> changes);
   }
@@ -723,19 +724,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(focusedSide.other(), shortcut);
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
-      getTemplatePresentation().setIcon(DiffUtil.getArrowIcon(focusedSide));
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      boolean bothEditable = isEditable(Side.LEFT, true) && isEditable(Side.RIGHT, true);
-      if (bothEditable) {
-        return myModifiedSide.select("Apply After", "Apply Before");
-      }
-      else {
-        return "Apply";
-      }
+      getTemplatePresentation().setText(focusedSide.select("Revert", "Accept"));
+      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.Remove, AllIcons.Actions.Checked));
     }
 
     @Override
@@ -751,19 +741,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(focusedSide.other(), shortcut);
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")).getShortcutSet());
+      getTemplatePresentation().setText("Append");
       getTemplatePresentation().setIcon(DiffUtil.getArrowDownIcon(focusedSide));
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      boolean bothEditable = isEditable(Side.LEFT, true) && isEditable(Side.RIGHT, true);
-      if (bothEditable) {
-        return myModifiedSide.select("Append Right Side", "Append Left Side");
-      }
-      else {
-        return "Append";
-      }
     }
 
     @Override
@@ -1180,9 +1159,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       LineFragment lineFragment = change.getLineFragment();
 
-      int insertedStart = lineFragment.getStartOffset2();
-      int insertedEnd = lineFragment.getEndOffset2();
-      CharSequence insertedText = getContent(mySide).getDocument().getCharsSequence().subSequence(insertedStart, insertedEnd);
+      Document document = getContent(mySide).getDocument();
+      CharSequence insertedText = getLinesContent(document, lineFragment.getStartLine2(), lineFragment.getEndLine2());
 
       int lineNumber = lineFragment.getStartLine2();
 

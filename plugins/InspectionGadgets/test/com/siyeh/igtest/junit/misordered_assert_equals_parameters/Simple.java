@@ -20,12 +20,19 @@ class Simple {
       Assert.<warning descr="Arguments to 'assertEquals()' in wrong order">assertEquals</warning>(timeUnit, TimeUnit.HOURS);
       Assert.<warning descr="Arguments to 'assertEquals()' in wrong order">assertEquals</warning>(test, map);
 
-      Assert.<warning descr="Arguments to 'assertEquals()' in wrong order">assertEquals</warning><error descr="'assertEquals(java.lang.String, long, long)' in 'org.junit.Assert' cannot be applied to '(java.lang.String, java.lang.Object, null)'">("message", new Object(), null)</error>;
+      Assert.<warning descr="Arguments to 'assertEquals()' in wrong order">assertEquals</warning>("message", test, null);
+      Assert.<warning descr="Arguments to 'assertEquals()' in wrong order">assertEquals</warning>(new X().m(), new Integer(10));
       return null;
     }
   }
 
   enum TimeUnit {
     HOURS
+  }
+
+  class X {
+    Integer m() {
+      return null;
+    }
   }
 }

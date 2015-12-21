@@ -65,10 +65,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(JdkPath)\include;$(JdkPath)\include\win32;$(IncludePath)</IncludePath>
+    <OutDir>..\..\..\bin\WinLauncher</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(JdkPath)\include;$(JdkPath)\include\win32;$(IncludePath)</IncludePath>
+    <TargetName>$(ProjectName)64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -77,6 +79,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(JdkPath)\include;$(JdkPath)\include\win32;$(IncludePath)</IncludePath>
+    <TargetName>$(ProjectName)64</TargetName>
+    <OutDir>..\..\..\bin\WinLauncher</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -143,7 +147,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <OutputFile>$(OutDir)WinLauncher64.exe</OutputFile>
     </Link>
     <Manifest>
       <EnableDPIAwareness>true</EnableDPIAwareness>

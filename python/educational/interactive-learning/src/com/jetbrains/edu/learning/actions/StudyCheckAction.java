@@ -37,19 +37,16 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.jetbrains.edu.EduDocumentListener;
 import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.run.StudySmartChecker;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
-import com.jetbrains.edu.stepic.StudySettings;
 import com.jetbrains.edu.stepic.EduStepicConnector;
+import com.jetbrains.edu.stepic.StudySettings;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,11 +66,17 @@ public class StudyCheckAction extends DumbAwareAction {
 
   boolean checkInProgress = false;
 
-  public StudyCheckAction() {
+  protected StudyCheckAction() {
     super("Check Task (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Check current task", InteractiveLearningIcons.Resolve);
   }
 
-  private static void flushWindows(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
+
+  public static StudyCheckAction createCheckAction(final Course course) {
+    StudyCheckAction checkAction = StudyUtils.getCheckAction(course);
+    return checkAction != null ? checkAction : new StudyCheckAction();
+  }
+
+  protected static void flushWindows(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
       TaskFile taskFile = entry.getValue();
@@ -102,7 +105,7 @@ public class StudyCheckAction extends DumbAwareAction {
   }
 
 
-  public void check(@NotNull final Project project) {
+  protected void check(@NotNull final Project project) {
     if (DumbService.isDumb(project)) {
       DumbService.getInstance(project).showDumbModeNotification("Check Action is not available while indexing is in progress");
       return;
@@ -144,10 +147,12 @@ public class StudyCheckAction extends DumbAwareAction {
 
             final StudyTestRunner testRunner = StudyUtils.getTestRunner(task, taskDir);
             Process testProcess = null;
+            String commandLine = "";
             try {
               final VirtualFile executablePath = getTaskVirtualFile(studyState, task, taskDir);
               if (executablePath != null) {
-                testProcess = testRunner.createCheckProcess(project, executablePath.getPath());
+                commandLine = executablePath.getPath();
+                testProcess = testRunner.createCheckProcess(project, commandLine);
               }
             }
             catch (ExecutionException e) {
@@ -157,7 +162,7 @@ public class StudyCheckAction extends DumbAwareAction {
               return;
             }
             checkInProgress = true;
-            ProgressManager.getInstance().run(getCheckTask(studyState, testRunner, testProcess, project, selectedEditor));
+            ProgressManager.getInstance().run(getCheckTask(studyState, testRunner, testProcess, commandLine, project, selectedEditor));
           }
         });
       }
@@ -183,10 +188,10 @@ public class StudyCheckAction extends DumbAwareAction {
   }
 
   @NotNull
-  private com.intellij.openapi.progress.Task.Backgroundable getCheckTask(final StudyState studyState,
+  protected com.intellij.openapi.progress.Task.Backgroundable getCheckTask(final StudyState studyState,
                                                                          final StudyTestRunner testRunner,
                                                                          final Process testProcess,
-                                                                         @NotNull final Project project,
+                                                                         @NotNull final String commandLine, @NotNull final Project project,
                                                                          final StudyEditor selectedEditor) {
     final Task task = studyState.getTask();
     final VirtualFile taskDir = studyState.getTaskDir();
@@ -213,7 +218,7 @@ public class StudyCheckAction extends DumbAwareAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final Map<String, TaskFile> taskFiles = task.getTaskFiles();
-        final CapturingProcessHandler handler = new CapturingProcessHandler(testProcess);
+        final CapturingProcessHandler handler = new CapturingProcessHandler(testProcess, null, commandLine);
         final ProcessOutput output = handler.runProcessWithProgressIndicator(indicator);
         if (indicator.isCanceled()) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -321,7 +326,7 @@ public class StudyCheckAction extends DumbAwareAction {
     StudyNavigator.navigateToFirstFailedAnswerPlaceholder(editor, taskFileToNavigate);
   }
 
-  private void runSmartTestProcess(@NotNull final VirtualFile taskDir,
+  protected void runSmartTestProcess(@NotNull final VirtualFile taskDir,
                                    @NotNull final StudyTestRunner testRunner,
                                    final String taskFileName,
                                    @NotNull final TaskFile taskFile,
@@ -384,7 +389,7 @@ public class StudyCheckAction extends DumbAwareAction {
     return copy;
   }
 
-  private static void showTestResultPopUp(final String text, Color color, @NotNull final Project project) {
+  protected static void showTestResultPopUp(final String text, Color color, @NotNull final Project project) {
     BalloonBuilder balloonBuilder =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, null, color, null);
     final Balloon balloon = balloonBuilder.createBalloon();

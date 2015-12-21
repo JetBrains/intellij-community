@@ -118,7 +118,8 @@ public class FoldingUpdate {
 
     final FoldingMap elementsToFoldMap = getFoldingsFor(file, document, quick);
     final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, file, elementsToFoldMap,
-                                                                                applyDefaultState ? EXCEPT_CARET_REGION : NO, false);
+                                                                                applyDefaultState ? EXCEPT_CARET_REGION : NO, 
+                                                                                !applyDefaultState, false);
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
@@ -127,6 +128,7 @@ public class FoldingUpdate {
     };
     Set<Object> dependencies = new HashSet<Object>();
     dependencies.add(document);
+    dependencies.add(editor.getFoldingModel());
     for (FoldingDescriptor descriptor : elementsToFoldMap.values()) {
       dependencies.addAll(descriptor.getDependencies());
     }
@@ -183,7 +185,7 @@ public class FoldingUpdate {
           if (!injectedEditor.getDocument().isValid()) continue;
           FoldingMap map = maps.get(i);
           updateOperations.add(new UpdateFoldRegionsOperation(project, injectedEditor, injectedFile, map,
-                                                              applyDefaultState ? EXCEPT_CARET_REGION : NO, true));
+                                                              applyDefaultState ? EXCEPT_CARET_REGION : NO, !applyDefaultState, true));
         }
         foldingModel.runBatchFoldingOperation(new Runnable() {
           @Override

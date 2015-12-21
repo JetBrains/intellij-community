@@ -22,19 +22,30 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.ide.util.treeView.TreeBuilderUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.stripe.ErrorStripe;
+import com.intellij.ui.stripe.ErrorStripePainter;
+import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.UIUtil;
@@ -71,6 +82,38 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     myTree = createTree(treeModel);
     enableDnD();
     myComponent = ScrollPaneFactory.createScrollPane(myTree);
+    if (Registry.is("error.stripe.enabled")) {
+      ErrorStripePainter painter = new ErrorStripePainter(true);
+      Disposer.register(this, new TreeUpdater<ErrorStripePainter>(painter, myComponent, myTree) {
+        @Override
+        protected void update(ErrorStripePainter painter, int index, Object object) {
+          if (object instanceof DefaultMutableTreeNode) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode)object;
+            object = node.getUserObject();
+          }
+          if (object instanceof PsiDirectoryNode && !myTree.isCollapsed(index)) {
+            object = null;
+          }
+          super.update(painter, index, object);
+        }
+
+        @Override
+        protected ErrorStripe getErrorStripe(Object object) {
+          if (object instanceof PresentableNodeDescriptor) {
+            PresentableNodeDescriptor node = (PresentableNodeDescriptor)object;
+            PresentationData presentation = node.getPresentation();
+            TextAttributesKey key = presentation.getTextAttributesKey();
+            if (key != null) {
+              TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
+              if (attributes != null && EffectType.WAVE_UNDERSCORE == attributes.getEffectType()) {
+                return ErrorStripe.create(attributes.getEffectColor(), 1);
+              }
+            }
+          }
+          return null;
+        }
+      });
+    }
     myTreeStructure = createStructure();
     setTreeBuilder(createBuilder(treeModel));
 

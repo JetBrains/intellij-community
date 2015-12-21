@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
       }
       PsiType thisType = factory.createType(clazz, substitutor);
       MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY,
-                                                                      incompleteCode, false);
+                                                                      incompleteCode);
       final ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
       clazz.processDeclarations(processor, state, null, this);
       ResolveUtil.processNonCodeMembers(thisType, processor, getInvokedExpression(), state);

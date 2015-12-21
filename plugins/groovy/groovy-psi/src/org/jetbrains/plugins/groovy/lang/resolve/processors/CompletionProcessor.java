@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,14 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.EnumSet;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_CLASS_PACKAGE;
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_METHOD_PROPERTY;
+
 /**
  * @author ven
  */
-public class CompletionProcessor extends ResolverProcessor {
-  private CompletionProcessor(PsiElement place, final EnumSet<ResolveKind> resolveTargets, final String name) {
+public class CompletionProcessor extends ResolverProcessorImpl {
+  private CompletionProcessor(PsiElement place, final EnumSet<DeclarationKind> resolveTargets, final String name) {
     super(name, resolveTargets, place, PsiType.EMPTY_ARRAY);
   }
 

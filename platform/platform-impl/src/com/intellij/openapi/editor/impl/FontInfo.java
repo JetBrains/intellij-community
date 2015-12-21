@@ -51,7 +51,6 @@ public class FontInfo {
   @JdkConstants.FontStyle private final int myStyle;
   private final TIntHashSet mySafeCharacters = new TIntHashSet();
   private FontMetrics myFontMetrics = null;
-  private final int[] charWidth = new int[128];
   private boolean myHasGlyphsToBreakDrawingIteration;
   private boolean myCheckedForProblemGlyphs;
 
@@ -157,12 +156,12 @@ public class FontInfo {
     return mySymbolsToBreakDrawingIteration;
   }
 
-  public boolean canDisplay(char c) {
+  public boolean canDisplay(int codePoint) {
     try {
-      if (c < 128) return true;
-      if (mySafeCharacters.contains(c)) return true;
-      if (canDisplayImpl(c)) {
-        mySafeCharacters.add(c);
+      if (codePoint < 128) return true;
+      if (mySafeCharacters.contains(codePoint)) return true;
+      if (canDisplayImpl(codePoint)) {
+        mySafeCharacters.add(codePoint);
         return true;
       }
       return false;
@@ -173,12 +172,13 @@ public class FontInfo {
     }
   }
 
-  private boolean canDisplayImpl(char c) {
+  private boolean canDisplayImpl(int codePoint) {
+    if (!Character.isValidCodePoint(codePoint)) return false;
     if (USE_ALTERNATIVE_CAN_DISPLAY_PROCEDURE) {
-      return myFont.createGlyphVector(DUMMY_CONTEXT, new char[]{c}).getGlyphCode(0) > 0;
+      return myFont.createGlyphVector(DUMMY_CONTEXT, new String(new int[]{codePoint}, 0, 1)).getGlyphCode(0) > 0;
     }
     else {
-      return myFont.canDisplay(c);
+      return myFont.canDisplay(codePoint);
     }
   }
 
@@ -188,7 +188,6 @@ public class FontInfo {
 
   public int charWidth(char c) {
     final FontMetrics metrics = fontMetrics();
-    if (c < 128) return charWidth[c];
     return FontLayoutService.getInstance().charWidth(metrics, c);
   }
 
@@ -196,17 +195,19 @@ public class FontInfo {
     if (myFontMetrics == null) {
       // We need to use antialising-aware font metrics because we've alrady encountered a situation when non-antialiased symbol
       // width is not equal to the antialiased one (IDEA-81539).
-      final Graphics graphics = UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_RGB).getGraphics();
-      EditorUIUtil.setupAntialiasing(graphics);
+      final Graphics graphics = createReferenceGraphics();
       graphics.setFont(myFont);
       myFontMetrics = graphics.getFontMetrics();
-      for (char c = 0; c < 128; c++) {
-        charWidth[c] = FontLayoutService.getInstance().charWidth(myFontMetrics, c);
-      }
     }
     return myFontMetrics;
   }
 
+  public static Graphics2D createReferenceGraphics() {
+    Graphics2D graphics = (Graphics2D)UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_RGB).getGraphics();
+    EditorUIUtil.setupAntialiasing(graphics);
+    return graphics;
+  }
+  
   void reset() {
     myFontMetrics = null;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignatureVisitor;
@@ -90,9 +90,8 @@ public class GdkMethodUtil {
   }
 
   public static boolean categoryIteration(GrClosableBlock place, final PsiScopeProcessor processor, ResolveState state) {
-    final ClassHint classHint = processor.getHint(ClassHint.KEY);
-    if (classHint != null && !classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) return true;
-    
+    if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return true;
+
     final GrMethodCall call = checkMethodCall(place, USE);
     if (call == null) return true;
 
@@ -550,9 +549,7 @@ public class GdkMethodUtil {
     });
   }
 
-  public static boolean isWithOrIdentity(@NotNull GroovyResolveResult result) {
-    PsiElement element = result.getElement();
-
+  public static boolean isWithOrIdentity(@Nullable PsiElement element) {
     if (element instanceof PsiMethod && isWithName(((PsiMethod)element).getName())) {
       if (element instanceof GrGdkMethod) {
         element = ((GrGdkMethod)element).getStaticMethod();

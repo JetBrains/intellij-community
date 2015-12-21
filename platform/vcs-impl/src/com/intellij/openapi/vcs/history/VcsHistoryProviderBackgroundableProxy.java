@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.impl.VcsBackgroundableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,6 +98,22 @@ public class VcsHistoryProviderBackgroundableProxy {
 
   public void executeAppendableSession(final VcsKey vcsKey, final FilePath filePath, final VcsAppendableHistorySessionPartner partner,
                                        @Nullable VcsBackgroundableActions actionKey, boolean canUseCache, boolean canUseLastRevisionCheck) {
+    doExecuteAppendableSession(vcsKey, filePath, null, partner, actionKey, canUseCache, canUseLastRevisionCheck);
+  }
+
+  /**
+   * @throws UnsupportedOperationException if this proxy was created for {@link VcsHistoryProvider} instance, 
+   * that doesn't implement {@link VcsHistoryProviderEx}
+   */
+  public void executeAppendableSession(final VcsKey vcsKey, final FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
+                                       final VcsAppendableHistorySessionPartner partner, @Nullable VcsBackgroundableActions actionKey) {
+    if (!(myDelegate instanceof VcsHistoryProviderEx)) throw new UnsupportedOperationException();
+    doExecuteAppendableSession(vcsKey, filePath, startRevisionNumber, partner, actionKey, false, false);
+  }
+  
+  private void doExecuteAppendableSession(final VcsKey vcsKey, final FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
+                                       final VcsAppendableHistorySessionPartner partner, @Nullable VcsBackgroundableActions actionKey,
+                                       boolean canUseCache, boolean canUseLastRevisionCheck) {
     if (myCachesHistory && canUseCache) {
       final VcsAbstractHistorySession session = getFullHistoryFromCache(vcsKey, filePath);
       if (session != null) {
@@ -118,7 +135,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     handler.register(resultingActionKey);
 
     final VcsAppendableHistorySessionPartner cachedPartner;
-    if (myCachesHistory) {
+    if (myCachesHistory && startRevisionNumber == null) {
       cachedPartner = new HistoryPartnerProxy(partner, new Consumer<VcsAbstractHistorySession>() {
         @Override
         public void consume(VcsAbstractHistorySession session) {
@@ -132,7 +149,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     } else {
       cachedPartner = partner;
     }
-    reportHistory(filePath, vcsKey, resultingActionKey, handler, cachedPartner, canUseLastRevisionCheck);
+    reportHistory(filePath, startRevisionNumber, vcsKey, resultingActionKey, handler, cachedPartner, canUseLastRevisionCheck);
   }
 
   private VcsAbstractHistorySession getFullHistoryFromCache(VcsKey vcsKey, FilePath filePath) {
@@ -151,7 +168,8 @@ public class VcsHistoryProviderBackgroundableProxy {
     return full;
   }
 
-  private void reportHistory(final FilePath filePath, final VcsKey vcsKey,
+  private void reportHistory(final FilePath filePath, @Nullable final VcsRevisionNumber startRevisionNumber, 
+                             final VcsKey vcsKey,
                              final VcsBackgroundableActions resultingActionKey,
                              final BackgroundableActionEnabledHandler handler,
                              final VcsAppendableHistorySessionPartner cachedPartner, final boolean canUseLastRevisionCheck) {
@@ -164,7 +182,10 @@ public class VcsHistoryProviderBackgroundableProxy {
           VcsHistorySession cachedSession = null;
           if (canUseLastRevisionCheck && myCachesHistory && ((cachedSession = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey))) != null) {
             cachedPartner.reportCreatedEmptySession((VcsAbstractHistorySession)cachedSession);
-          } else {
+          } else if (myDelegate instanceof VcsHistoryProviderEx) {
+            ((VcsHistoryProviderEx)myDelegate).reportAppendableHistory(filePath, startRevisionNumber, cachedPartner);
+          }
+          else {
             myDelegate.reportAppendableHistory(filePath, cachedPartner);
           }
         }

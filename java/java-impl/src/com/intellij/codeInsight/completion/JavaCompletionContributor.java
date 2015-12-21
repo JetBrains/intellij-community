@@ -390,7 +390,7 @@ public class JavaCompletionContributor extends CompletionContributor {
                         return type.isAssignableFrom(returned);
                       }
                     });
-                    if (matchingExpectation != null && SmartCompletionDecorator.hasUnboundTypeParams(method, matchingExpectation)) {
+                    if (matchingExpectation != null) {
                       call.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, matchingExpectation), position);
                     }
                   }

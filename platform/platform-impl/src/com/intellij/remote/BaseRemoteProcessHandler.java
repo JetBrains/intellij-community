@@ -15,11 +15,13 @@
  */
 package com.intellij.remote;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
@@ -36,22 +38,23 @@ import java.util.concurrent.Future;
  */
 public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractRemoteProcessHandler<T> implements TaskExecutor {
   private static final Logger LOG = Logger.getInstance(BaseRemoteProcessHandler.class);
-  @Nullable
+
   protected final String myCommandLine;
   protected final ProcessWaitFor myWaitFor;
-  @Nullable
   protected final Charset myCharset;
   protected T myProcess;
 
-  public BaseRemoteProcessHandler(@NotNull T process,
-                                  @Nullable String commandLine,
-                                  @Nullable Charset charset) {
+  public BaseRemoteProcessHandler(@NotNull T process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     myProcess = process;
     myCommandLine = commandLine;
-    myWaitFor = new ProcessWaitFor(process, this);
+    myWaitFor = new ProcessWaitFor(process, this, CommandLineUtil.extractPresentableName(commandLine));
     myCharset = charset;
+    if (StringUtil.isEmpty(commandLine)) {
+      LOG.warn(new IllegalArgumentException("Must specify non-empty 'commandLine' parameter"));
+    }
   }
 
+  @Override
   public T getProcess() {
     return myProcess;
   }
@@ -65,15 +68,13 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
 
   @Override
   public void startNotify() {
-    if (myCommandLine != null) {
-      notifyTextAvailable(myCommandLine + '\n', ProcessOutputTypes.SYSTEM);
-    }
+    notifyTextAvailable(myCommandLine + '\n', ProcessOutputTypes.SYSTEM);
 
     addProcessListener(new ProcessAdapter() {
       @Override
       public void startNotified(final ProcessEvent event) {
         try {
-          final RemoteOutputReader stdoutReader = new RemoteOutputReader(myProcess.getInputStream(), getCharset(), myProcess) {
+          final RemoteOutputReader stdoutReader = new RemoteOutputReader(myProcess.getInputStream(), getCharset(), myProcess, myCommandLine) {
             @Override
             protected void onTextAvailable(@NotNull String text) {
               notifyTextAvailable(text, ProcessOutputTypes.STDOUT);
@@ -86,7 +87,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
             }
           };
 
-          final RemoteOutputReader stderrReader = new RemoteOutputReader(myProcess.getErrorStream(), getCharset(), myProcess) {
+          final RemoteOutputReader stderrReader = new RemoteOutputReader(myProcess.getErrorStream(), getCharset(), myProcess, myCommandLine) {
             @Override
             protected void onTextAvailable(@NotNull String text) {
               notifyTextAvailable(text, ProcessOutputTypes.STDERR);
@@ -141,6 +142,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
     getProcess().destroy();
   }
 
+  @Override
   protected void detachProcessImpl() {
     final Runnable runnable = new Runnable() {
       @Override
@@ -186,27 +188,28 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
       return application.executeOnPooledThread(task);
     }
 
-    return BaseOSProcessHandler.ExecutorServiceHolder.submit(task);
+    return BaseOSProcessHandler.submit(task);
   }
 
+  @NotNull
   @Override
-  public Future<?> executeTask(Runnable task) {
+  public Future<?> executeTask(@NotNull Runnable task) {
     return executeOnPooledThread(task);
   }
 
   private abstract static class RemoteOutputReader extends BaseOutputReader {
-
     @NotNull private final RemoteProcess myRemoteProcess;
     private boolean myClosed;
 
-    public RemoteOutputReader(@NotNull InputStream inputStream, Charset charset, @NotNull RemoteProcess remoteProcess) {
+    RemoteOutputReader(@NotNull InputStream inputStream, Charset charset, @NotNull RemoteProcess remoteProcess, @NotNull String commandLine) {
       super(inputStream, charset);
 
       myRemoteProcess = remoteProcess;
 
-      start();
+      start(CommandLineUtil.extractPresentableName(commandLine));
     }
 
+    @Override
     protected void doRun() {
 
       try {
@@ -243,6 +246,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
       myClosed = closed;
     }
 
+    @Override
     public void waitFor() throws InterruptedException {
       while (!isClosed()) {
         Thread.sleep(100);

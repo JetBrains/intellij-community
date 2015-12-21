@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -99,7 +100,10 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
         file.putUserData(CURRENT_UPDATES, new WeakReference<ProgressIndicator>(indicator));
         if (ApplicationManager.getApplication().isUnitTestMode()) {
-          task.computeInReadAction(indicator);
+          ReadTask.Continuation continuation = task.performInReadAction(indicator);
+          if (continuation != null) {
+            continuation.getAction().run();
+          }
         }
         else {
           ProgressIndicatorUtils.scheduleWithWriteActionPriority(indicator, ourExecutor, task);
@@ -128,9 +132,10 @@ public class EditorNotificationsImpl extends EditorNotifications {
         return false;
       }
 
+      @Nullable
       @Override
-      public void computeInReadAction(@NotNull final ProgressIndicator indicator) {
-        if (isOutdated()) return;
+      public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+        if (isOutdated()) return null;
 
         final List<Provider> providers = DumbService.getInstance(myProject).
           filterByDumbAwareness(EXTENSION_POINT_NAME.getExtensions(myProject));
@@ -148,7 +153,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
           }
         }
 
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
+        return new Continuation(new Runnable() {
           @Override
           public void run() {
             if (!isOutdated()) {

@@ -21,14 +21,13 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.scratch.ScratchFileService.Option;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ObjectUtils;
@@ -105,22 +104,21 @@ public class ExtensionsRootType extends RootType {
     List<URL> bundledResources = getBundledResourceUrls(pluginId, path);
     if (bundledResources.isEmpty()) return;
 
-    VirtualFile resourcesDirectory = findExtensionsDirectoryImpl(pluginId, path, true);
+    final VirtualFile resourcesDirectory = findExtensionsDirectoryImpl(pluginId, path, true);
     if (resourcesDirectory == null) return;
 
-    Application application = ApplicationManager.getApplication();
     for (URL bundledResourceDirUrl : bundledResources) {
-      VirtualFile bundledResourcesDir = VfsUtil.findFileByURL(bundledResourceDirUrl);
-      if (!bundledResourcesDir.isDirectory()) continue;
+      final VirtualFile bundledResourcesDir = VfsUtil.findFileByURL(bundledResourceDirUrl);
+      if (bundledResourcesDir == null || !bundledResourcesDir.isDirectory()) continue;
 
-      AccessToken token = application.acquireWriteActionLock(ExtensionsRootType.class);
-      try {
-        FileDocumentManager.getInstance().saveAllDocuments();
-        extractResources(bundledResourcesDir, resourcesDirectory);
-      }
-      finally {
-        token.finish();
-      }
+      ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
+        @Override
+        public Object compute() throws IOException {
+          FileDocumentManager.getInstance().saveAllDocuments();
+          extractResources(bundledResourcesDir, resourcesDirectory);
+          return null;
+        }
+      });
     }
   }
 

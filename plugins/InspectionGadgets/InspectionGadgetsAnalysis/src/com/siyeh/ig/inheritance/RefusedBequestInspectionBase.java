@@ -19,8 +19,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -130,12 +128,8 @@ public class RefusedBequestInspectionBase extends BaseInspection {
 
     @Nullable
     private PsiMethod getDirectSuperMethod(PsiMethod method) {
-      final MethodSignatureBackedByPsiMethod superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
-      if (superSignature == null) {
-        return null;
-      }
-      final PsiMethod superMethod = superSignature.getMethod();
-      if (superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      final PsiMethod superMethod = MethodUtils.getSuper(method);
+      if (superMethod ==  null || superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return null;
       }
       final PsiClass containingClass = superMethod.getContainingClass();

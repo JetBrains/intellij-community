@@ -158,7 +158,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
   }
 
   private boolean areSoftWrapsEnabledInEditor() {
-    return myEditor.getSettings().isUseSoftWraps()
+    return myEditor.getSettings().isUseSoftWraps() && (!myEditor.myUseNewRendering || !myEditor.isOneLineMode())
            && (!(myEditor.getDocument() instanceof DocumentImpl) || !((DocumentImpl)myEditor.getDocument()).acceptsSlashR());
   }
 
@@ -185,6 +185,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
       myApplianceManager.reset();
       myDeferredFoldRegions.clear();
       myStorage.removeAll();
+      if (myEditor.myUseNewRendering) {
+        myEditor.myView.reinitSettings();
+      }
       myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
   }
@@ -201,7 +204,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
 
   @Override
   public boolean isSoftWrappingEnabled() {
-    if (!myUseSoftWraps || myEditor.isOneLineMode() || myEditor.isPurePaintingMode()) {
+    if (!myUseSoftWraps || (!myEditor.myUseNewRendering && myEditor.isOneLineMode()) || myEditor.isPurePaintingMode()) {
       return false;
     }
     
@@ -338,6 +341,17 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
     if (!isSoftWrappingEnabled()) {
       return 0;
     }
+    if (!myEditor.getSettings().isAllSoftWrapsShown()) {
+      int visualLine = y / lineHeight;
+      LogicalPosition position = myEditor.visualToLogicalPosition(new VisualPosition(visualLine, 0));
+      if (position.line != myEditor.getCaretModel().getLogicalPosition().line) {
+        return myPainter.getDrawingHorizontalOffset(g, drawingType, x, y, lineHeight);
+      }
+    }
+    return doPaint(g, drawingType, x, y, lineHeight);
+  }
+  
+  public int doPaint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
     return myPainter.paint(g, drawingType, x, y, lineHeight);
   }
 
@@ -740,6 +754,10 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
     return dumpState();
   }
 
+  public boolean isDirty() {
+    return myUseSoftWraps && myDirty;
+  }
+  
   /**
    * Defines generic interface for the command that may be proceeded in both <code>'soft wraps aware'</code> and
    * <code>'soft wraps unaware'</code> modes.

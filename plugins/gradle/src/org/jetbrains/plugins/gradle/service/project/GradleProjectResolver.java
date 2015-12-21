@@ -43,6 +43,7 @@ import com.intellij.util.containers.MultiMap;
 import org.gradle.tooling.*;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.BasicIdeaProject;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
@@ -52,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.settings.ClassHolder;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -105,18 +107,17 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     final GradleProjectResolverExtension projectResolverChain = createProjectResolverChain(settings);
+    DefaultProjectResolverContext resolverContext = new DefaultProjectResolverContext(id, projectPath, settings, listener, isPreviewMode);
     final DataNode<ProjectData> resultProjectDataNode = myHelper.execute(
-      projectPath, settings,
-      new ProjectConnectionDataNodeFunction(
-        id, projectPath, settings, listener, isPreviewMode, projectResolverChain, false)
+      projectPath, settings, new ProjectConnectionDataNodeFunction(resolverContext, projectResolverChain, false)
     );
 
     // auto-discover buildSrc project if needed
     final String buildSrcProjectPath = projectPath + "/buildSrc";
-    handleBuildSrcProject(
-      resultProjectDataNode,
-      new ProjectConnectionDataNodeFunction(id, buildSrcProjectPath, settings, listener, isPreviewMode, projectResolverChain, true)
-    );
+    DefaultProjectResolverContext buildSrcResolverCtx =
+      new DefaultProjectResolverContext(id, buildSrcProjectPath, settings, listener, isPreviewMode);
+    resolverContext.copyUserDataTo(buildSrcResolverCtx);
+    handleBuildSrcProject(resultProjectDataNode, new ProjectConnectionDataNodeFunction(buildSrcResolverCtx, projectResolverChain, true));
     return resultProjectDataNode;
   }
 
@@ -131,7 +132,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   @NotNull
-  private DataNode<ProjectData> doResolveProjectInfo(@NotNull final ProjectResolverContext resolverCtx,
+  private DataNode<ProjectData> doResolveProjectInfo(@NotNull final DefaultProjectResolverContext resolverCtx,
                                                      @NotNull final GradleProjectResolverExtension projectResolverChain,
                                                      boolean isBuildSrcProject)
     throws IllegalArgumentException, IllegalStateException {
@@ -142,6 +143,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final List<String> commandLineArgs = ContainerUtil.newArrayList();
     final Set<Class> toolingExtensionClasses = ContainerUtil.newHashSet();
 
+    if(resolverCtx.isPreviewMode()){
+      commandLineArgs.add("-Didea.isPreviewMode=true");
+      final Set<Class> previewLightWeightToolingModels = ContainerUtil.<Class>set(ExternalProjectPreview.class, GradleBuild.class);
+      projectImportAction.addExtraProjectModelClasses(previewLightWeightToolingModels);
+    }
+
     final GradleImportCustomizer importCustomizer = GradleImportCustomizer.get();
     for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
          resolverExtension != null;
@@ -150,8 +157,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       resolverExtension.setProjectResolverContext(resolverCtx);
       // pre-import checks
       resolverExtension.preImportCheck();
-      // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
-      projectImportAction.addExtraProjectModelClasses(resolverExtension.getExtraProjectModelClasses());
+
+      if(!resolverCtx.isPreviewMode()){
+        // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
+        projectImportAction.addExtraProjectModelClasses(resolverExtension.getExtraProjectModelClasses());
+      }
 
       if (importCustomizer == null || importCustomizer.useExtraJvmArgs()) {
         // collect extra JVM arguments provided by gradle project resolver extensions
@@ -191,6 +201,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     ProjectImportAction.AllModels allModels;
     final CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
     try {
+      resolverCtx.setCancellationTokenSource(cancellationTokenSource);
       buildActionExecutor.withCancellationToken(cancellationTokenSource.token());
       synchronized (myCancellationMap) {
         myCancellationMap.putValue(resolverCtx.getExternalSystemTaskId(), cancellationTokenSource);
@@ -295,7 +306,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
       }
 
-      projectResolverChain.populateModuleExtraModels(ideaModule, moduleDataNode);
       projectResolverChain.populateModuleContentRoots(ideaModule, moduleDataNode);
       projectResolverChain.populateModuleCompileOutputSettings(ideaModule, moduleDataNode);
       if (!isBuildSrcProject) {
@@ -333,6 +343,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       final DataNode<ModuleData> moduleDataNode = pair.first;
       final IdeaModule ideaModule = pair.second;
       projectResolverChain.populateModuleDependencies(ideaModule, moduleDataNode, projectDataNode);
+      projectResolverChain.populateModuleExtraModels(ideaModule, moduleDataNode);
     }
     mergeSourceSetContentRoots(moduleMap, resolverCtx);
     mergeLibraryAndModuleDependencyData(projectDataNode, gradleHomeDir, gradleVersion);
@@ -403,7 +414,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           ContainerUtil.addAllNotNull(compileSet,
                                       moduleData.getCompileOutputPath(ExternalSystemSourceType.SOURCE),
                                       moduleData.getCompileOutputPath(ExternalSystemSourceType.RESOURCE));
-          if (!compileSet.isEmpty() && libraryPaths.containsAll(compileSet)) {
+          if (!compileSet.isEmpty() && ContainerUtil.intersects(libraryPaths, compileSet)) {
             targetModuleOutputPaths = compileSet;
           }
           else {
@@ -411,7 +422,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
             ContainerUtil.addAllNotNull(testSet,
                                         moduleData.getCompileOutputPath(ExternalSystemSourceType.TEST),
                                         moduleData.getCompileOutputPath(ExternalSystemSourceType.TEST_RESOURCE));
-            if (compileSet.isEmpty() && libraryPaths.containsAll(testSet)) {
+            if (compileSet.isEmpty() && ContainerUtil.intersects(libraryPaths, testSet)) {
               targetModuleOutputPaths = testSet;
             }
           }
@@ -609,26 +620,26 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private void handleBuildSrcProject(@NotNull final DataNode<ProjectData> resultProjectDataNode,
                                      @NotNull final ProjectConnectionDataNodeFunction projectConnectionDataNodeFunction) {
 
-    if (!new File(projectConnectionDataNodeFunction.myProjectPath).isDirectory()) {
+    final String projectPath = projectConnectionDataNodeFunction.myResolverContext.getProjectPath();
+    if (!new File(projectPath).isDirectory()) {
       return;
     }
 
-    if (projectConnectionDataNodeFunction.myIsPreviewMode) {
+    if (projectConnectionDataNodeFunction.myResolverContext.isPreviewMode()) {
       ModuleData buildSrcModuleData =
-        new ModuleData(":buildSrc", GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), "buildSrc",
-                       projectConnectionDataNodeFunction.myProjectPath, projectConnectionDataNodeFunction.myProjectPath);
+        new ModuleData(":buildSrc", GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), "buildSrc", projectPath, projectPath);
       resultProjectDataNode.createChild(ProjectKeys.MODULE, buildSrcModuleData);
       return;
     }
 
     final DataNode<ModuleData> buildSrcModuleDataNode =
-      GradleProjectResolverUtil.findModule(resultProjectDataNode, projectConnectionDataNodeFunction.myProjectPath);
+      GradleProjectResolverUtil.findModule(resultProjectDataNode, projectPath);
 
     // check if buildSrc project was already exposed in settings.gradle file
     if (buildSrcModuleDataNode != null) return;
 
     final DataNode<ProjectData> buildSrcProjectDataDataNode = myHelper.execute(
-      projectConnectionDataNodeFunction.myProjectPath, projectConnectionDataNodeFunction.mySettings, projectConnectionDataNodeFunction);
+      projectPath, projectConnectionDataNodeFunction.myResolverContext.getSettings(), projectConnectionDataNodeFunction);
 
     if (buildSrcProjectDataDataNode != null) {
       for (DataNode<ModuleData> moduleNode : ExternalSystemApiUtil.getChildren(buildSrcProjectDataDataNode, ProjectKeys.MODULE)) {
@@ -649,26 +660,13 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   private class ProjectConnectionDataNodeFunction implements Function<ProjectConnection, DataNode<ProjectData>> {
-    @NotNull private final ExternalSystemTaskId myId;
-    @NotNull private final String myProjectPath;
-    @Nullable private final GradleExecutionSettings mySettings;
-    @NotNull private final ExternalSystemTaskNotificationListener myListener;
-    private final boolean myIsPreviewMode;
     @NotNull private final GradleProjectResolverExtension myProjectResolverChain;
     private final boolean myIsBuildSrcProject;
+    private DefaultProjectResolverContext myResolverContext;
 
-    public ProjectConnectionDataNodeFunction(@NotNull ExternalSystemTaskId id,
-                                             @NotNull String projectPath,
-                                             @Nullable GradleExecutionSettings settings,
-                                             @NotNull ExternalSystemTaskNotificationListener listener,
-                                             boolean isPreviewMode,
-                                             @NotNull GradleProjectResolverExtension projectResolverChain,
-                                             boolean isBuildSrcProject) {
-      myId = id;
-      myProjectPath = projectPath;
-      mySettings = settings;
-      myListener = listener;
-      myIsPreviewMode = isPreviewMode;
+    private ProjectConnectionDataNodeFunction(@NotNull DefaultProjectResolverContext resolverContext,
+                                              @NotNull GradleProjectResolverExtension projectResolverChain, boolean isBuildSrcProject) {
+      myResolverContext = resolverContext;
       myProjectResolverChain = projectResolverChain;
       myIsBuildSrcProject = isBuildSrcProject;
     }
@@ -676,13 +674,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     @Override
     public DataNode<ProjectData> fun(ProjectConnection connection) {
       try {
-        return doResolveProjectInfo(
-          new ProjectResolverContext(myId, myProjectPath, mySettings, connection, myListener, myIsPreviewMode),
-          myProjectResolverChain, myIsBuildSrcProject);
+        myResolverContext.setConnection(connection);
+        return doResolveProjectInfo(myResolverContext, myProjectResolverChain, myIsBuildSrcProject);
       }
       catch (RuntimeException e) {
         LOG.info("Gradle project resolve error", e);
-        throw myProjectResolverChain.getUserFriendlyError(e, myProjectPath, null);
+        throw myProjectResolverChain.getUserFriendlyError(e, myResolverContext.getProjectPath(), null);
       }
     }
   }

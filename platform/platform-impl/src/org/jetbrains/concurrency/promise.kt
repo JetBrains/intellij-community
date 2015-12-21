@@ -34,9 +34,7 @@ abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Ob
 }
 
 
-inline fun <T, SUB_RESULT> Promise<T>.then(crossinline handler: (T) -> SUB_RESULT) = then(object : Function<T, SUB_RESULT> {
-  override fun `fun`(param: T) = handler(param)
-})
+inline fun <T, SUB_RESULT> Promise<T>.then(crossinline handler: (T) -> SUB_RESULT) = then(Function<T, SUB_RESULT> { param -> handler(param) })
 
 inline fun <T, SUB_RESULT> Promise<T>.then(obsolescent: Obsolescent, crossinline handler: (T) -> SUB_RESULT) = then(object : ObsolescentFunction<T, SUB_RESULT> {
   override fun `fun`(param: T) = handler(param)
@@ -50,24 +48,20 @@ inline fun <T> Promise<T>.done(node: Obsolescent, crossinline handler: (T) -> Un
 })
 
 
-inline fun <T, SUB_RESULT> Promise<T>.thenAsync(crossinline handler: (T) -> Promise<SUB_RESULT>) = then(object : AsyncFunction<T, SUB_RESULT> {
-  override fun `fun`(param: T) = handler(param)
-})
+inline fun <T, SUB_RESULT> Promise<T>.thenAsync(crossinline handler: (T) -> Promise<SUB_RESULT>) = then(AsyncFunction<T, SUB_RESULT> { param -> handler(param) })
 
 inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline handler: (T) -> Promise<SUB_RESULT>) = then(object : ValueNodeAsyncFunction<T, SUB_RESULT>(node) {
   override fun `fun`(param: T) = handler(param)
 })
 
 @Suppress("UNCHECKED_CAST")
-inline fun <T> Promise<T>.thenAsyncVoid(node: Obsolescent, crossinline handler: (T) -> Promise<*>) = then(object : ValueNodeAsyncFunction<T, Any?>(node) {
+inline fun <T> Promise<T>.thenAsyncAccept(node: Obsolescent, crossinline handler: (T) -> Promise<*>) = then(object : ValueNodeAsyncFunction<T, Any?>(node) {
   override fun `fun`(param: T) = handler(param) as Promise<Any?>
 })
 
-inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = then(object : AsyncFunction<T, Any?> {
-  override fun `fun`(param: T): Promise<Any?> {
-    @Suppress("UNCHECKED_CAST")
-    return handler(param) as Promise<Any?>
-  }
+inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = then(AsyncFunction<T, kotlin.Any?> { param ->
+  @Suppress("UNCHECKED_CAST")
+  (return@AsyncFunction handler(param) as Promise<Any?>)
 })
 
 
@@ -82,6 +76,8 @@ fun <T> resolvedPromise(result: T) = Promise.resolve(result)
 
 fun <T> rejectedPromise(error: String): Promise<T> = Promise.reject(error)
 
+fun <T> rejectedPromise(error: Throwable): Promise<T> = Promise.reject(error)
+
 @Suppress("CAST_NEVER_SUCCEEDS")
 fun <T> rejectedPromise(): Promise<T> = rejectedPromise as Promise<T>
 
@@ -91,12 +87,16 @@ val Promise<*>.isRejected: Boolean
 val Promise<*>.isPending: Boolean
   get() = state == Promise.State.PENDING
 
-inline fun AsyncPromise<out Any?>.catchError(task: () -> Unit) {
+val Promise<*>.isFulfilled: Boolean
+  get() = state == Promise.State.FULFILLED
+
+inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {
   try {
-    task()
+    return runnable()
   }
   catch (e: Throwable) {
     setError(e)
+    return null
   }
 }
 
@@ -110,4 +110,13 @@ fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
     promise.done { results.add(it) }
   }
   return Promise.all(promises, results)
+}
+
+fun createError(error: String, log: Boolean): RuntimeException = Promise.MessageError(error, log)
+
+inline fun <T> AsyncPromise<T>.compute(runnable: () -> T) {
+  val result = catchError(runnable)
+  if (!isRejected) {
+    setResult(result)
+  }
 }

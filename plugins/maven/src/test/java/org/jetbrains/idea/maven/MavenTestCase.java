@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.awt.*;
@@ -49,6 +50,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public abstract class MavenTestCase extends UsefulTestCase {
   protected static final MavenConsole NULL_MAVEN_CONSOLE = new NullMavenConsole();
@@ -141,6 +143,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      MavenServerManager.getInstance().shutdown(true);
+      MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS);
       myProject = null;
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
@@ -323,7 +327,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     String mirror = System.getProperty("idea.maven.test.mirror",
                                        // use JB maven proxy server for internal use by default, see details at
                                        // https://confluence.jetbrains.com/display/JBINT/Maven+proxy+server
-                                       "http://maven.labs.intellij.net/repo");
+                                       "http://maven.labs.intellij.net/repo1");
     return "<settings>" +
            content +
            "<mirrors>" +

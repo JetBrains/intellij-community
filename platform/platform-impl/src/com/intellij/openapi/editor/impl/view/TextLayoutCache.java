@@ -61,7 +61,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     myView = view;
     myDocument = view.getEditor().getDocument();
     myDocument.addDocumentListener(this, this);
-    myBidiNotRequiredMarker = new LineLayout(view, "", Font.PLAIN);
+    myBidiNotRequiredMarker = LineLayout.create(view, "", Font.PLAIN);
     Disposer.register(this, new UiNotifyConnector(view.getEditor().getContentComponent(), new Activatable.Adapter() {
       @Override
       public void hideNotify() {
@@ -127,7 +127,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     checkDisposed();
     LineLayout result = myLines.get(line);
     if (result == null || result == myBidiNotRequiredMarker) {
-      result = new LineLayout(myView, line, result == myBidiNotRequiredMarker);
+      result = LineLayout.create(myView, line, result == myBidiNotRequiredMarker);
       myLines.set(line, result);
     }
     return result;
@@ -159,6 +159,6 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   }
 
   private void checkDisposed() {
-    if (myLines == null) throw new IllegalStateException("Editor is already disposed");
+    if (myLines == null) myView.getEditor().throwDisposalError("Editor is already disposed");
   }
 }

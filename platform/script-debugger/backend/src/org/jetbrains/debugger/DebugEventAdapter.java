@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class DebugEventAdapter implements DebugEventListener {
   @Override
-  public void suspended(@NotNull SuspendContext context) {
+  public void suspended(@NotNull SuspendContext<?> context) {
   }
 
   @Override

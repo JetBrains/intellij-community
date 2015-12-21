@@ -67,6 +67,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
@@ -141,7 +142,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final JScrollPane myScrollPane;
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
-  private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(new Throwable());
+  private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
   private int myLinePaintersWidth;
 
   static {
@@ -790,7 +791,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFoldingModel.rebuild();
 
     if (softWrapsUsedBefore ^ mySoftWrapModel.isSoftWrappingEnabled()) {
-      mySizeContainer.reset();
+      if (!myUseNewRendering) {
+        mySizeContainer.reset();
+      }
       validateSize();
     }
 
@@ -1846,16 +1849,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void bulkUpdateFinished() {
     myFoldingModel.onBulkDocumentUpdateFinished();
     mySoftWrapModel.onBulkDocumentUpdateFinished();
+    if (myUseNewRendering) {
+      myView.reset();
+    }
     myCaretModel.onBulkDocumentUpdateFinished();
 
     clearTextWidthCache();
 
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
-    if (myUseNewRendering) {
-      myView.reset();
-    }
-    else {
+    if (!myUseNewRendering) {
       mySizeContainer.reset();
     }
     validateSize();
@@ -3149,10 +3152,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            + "', allow caret inside tab: " + mySettings.isCaretInsideTabs()
            + ", allow caret after line end: " + mySettings.isVirtualSpace()
            + ", soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off")
+           + ", caret model: " + getCaretModel().dumpState()
            + ", soft wraps data: " + getSoftWrapModel().dumpState()
            + "\n\nfolding data: " + getFoldingModel().dumpState()
            + (myDocument instanceof DocumentImpl ? "\n\ndocument info: " + ((DocumentImpl)myDocument).dumpState() : "")
-           + "\nfont preferences: " + myScheme.getFontPreferences();
+           + "\nfont preferences: " + myScheme.getFontPreferences()
+           + "\npure painting mode: " + myPurePaintingMode
+           + (myView == null ? "" : "\nview: " + myView.dumpState());
   }
 
   private class CachedFontContent {
@@ -3770,7 +3776,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int getPreferredHeight() {
-    if (ourIsUnitTestMode && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
+    if (ourIsUnitTestMode && !myUseNewRendering && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
       return 1;
     }
 
@@ -4228,6 +4234,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (logicalPosition.column > lineEndPosition.column) {
         visualPosition = logicalToVisualPosition(lineEndPosition.leanForward(true));
       }
+      else if (mySoftWrapModel.isInsideSoftWrap(visualPosition)) {
+        VisualPosition beforeSoftWrapPosition = myView.logicalToVisualPosition(logicalPosition, true);
+        if (visualPosition.line == beforeSoftWrapPosition.line) {
+          visualPosition = beforeSoftWrapPosition;
+        }
+        else {
+          visualPosition = myView.logicalToVisualPosition(logicalPosition, false);
+        }
+      }
     }
     return visualPosition;
   }
@@ -4314,10 +4329,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     };
   }
 
-  private boolean isInsideGutterOnlyFoldingArea(@NotNull MouseEvent e) {
+  private boolean isInsideGutterWhitespaceArea(@NotNull MouseEvent e) {
     EditorMouseEventArea area = getMouseEventArea(e);
     return area == EditorMouseEventArea.FOLDING_OUTLINE_AREA &&
-           myGutterComponent.convertX(e.getX()) <= myGutterComponent.getWhitespaceSeparatorOffset();
+           myGutterComponent.convertX(e.getX()) > myGutterComponent.getWhitespaceSeparatorOffset();
   }
 
   @Override
@@ -4349,7 +4364,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           return;
         }
       }
-      myEditorComponent.setCursor(UIUtil.getTextCursor(getBackgroundColor()));
+      if (!IdeGlassPaneImpl.hasPreProcessedCursor(myEditorComponent)) {
+        myEditorComponent.setCursor(UIUtil.getTextCursor(getBackgroundColor()));
+      }
     }
   }
 
@@ -5070,6 +5087,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private MyScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
+      setPersistentUI(createEditorScrollbarUI(EditorImpl.this));
     }
 
     void setPersistentUI(ScrollBarUI ui) {
@@ -5161,6 +5179,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myPersistentUI instanceof ButtonlessScrollBarUI) {
         ((ButtonlessScrollBarUI)myPersistentUI).registerRepaintCallback(callback);
       }
+    }
+  }
+
+  public static BasicScrollBarUI createEditorScrollbarUI(@NotNull EditorImpl editor) {
+    return new EditorScrollBarUI(editor);
+  }
+
+  private static class EditorScrollBarUI extends ButtonlessScrollBarUI.Transparent {
+    @NotNull private final EditorImpl myEditor;
+
+    public EditorScrollBarUI(@NotNull EditorImpl editor) {
+      myEditor = editor;
+    }
+
+    @Override
+    protected boolean isDark() {
+      return myEditor.isDarkEnough();
+    }
+
+    @Override
+    protected Color adjustColor(Color c) {
+      return isMacOverlayScrollbar() ? super.adjustColor(c) : adjustThumbColor(super.adjustColor(c), isDark());
     }
   }
 
@@ -5950,10 +5990,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Don't move caret on mouse press above gutter line markers area (a place where break points, 'override', 'implements' etc icons
       // are drawn) and annotations area. E.g. we don't want to change caret position if a user sets new break point (clicks
       // at 'line markers' area).
-      if (e.getSource() != myGutterComponent ||
-          (eventArea != EditorMouseEventArea.LINE_MARKERS_AREA &&
-          eventArea != EditorMouseEventArea.ANNOTATIONS_AREA &&
-          !isInsideGutterOnlyFoldingArea(e)))
+      if (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA ||
+          eventArea == EditorMouseEventArea.EDITING_AREA ||
+          isInsideGutterWhitespaceArea(e))
       {
         VisualPosition visualPosition = myUseNewRendering ? getTargetPosition(x, y, true) : null;
         LogicalPosition pos = myUseNewRendering ? visualToLogicalPosition(visualPosition) : getLogicalPositionForScreenPos(x, y, true);

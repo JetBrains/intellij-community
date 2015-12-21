@@ -21,6 +21,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.VariableSearchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,7 +81,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
       final PsiElement target = referenceExpression.resolve();
       if (target instanceof PsiLocalVariable) {
         final PsiLocalVariable variable = (PsiLocalVariable)target;
-        if (!reportLocalVariables || isSynchronizedCollection(variable)) {
+        if (!reportLocalVariables || isSynchronizedCollection(variable, referenceExpression)) {
           return;
         }
         localVariable = true;
@@ -105,7 +106,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
       }
       final PsiElement statementScope = getScope(statement);
       final PsiElement targetScope = getScope(target);
-      if (statementScope != targetScope) {
+      if (statementScope != targetScope || isEscaping((PsiVariable)target)) {
         return;
       }
       registerError(referenceExpression, Boolean.valueOf(localVariable));
@@ -115,12 +116,12 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class, PsiClassInitializer.class);
     }
 
-    private boolean isSynchronizedCollection(@NotNull PsiVariable variable) {
-      final PsiExpression initializer = ParenthesesUtils.stripParentheses(variable.getInitializer());
-      if (!(initializer instanceof PsiMethodCallExpression)) {
+    private boolean isSynchronizedCollection(@NotNull PsiVariable variable, PsiReferenceExpression referenceExpression) {
+      final PsiExpression definition = VariableSearchUtils.findDefinition(referenceExpression, variable);
+      if (!(definition instanceof PsiMethodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)initializer;
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)definition;
       final PsiMethod method = methodCallExpression.resolveMethod();
       if (method == null) {
         return false;
@@ -131,6 +132,62 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
       }
       final PsiClass containingClass = method.getContainingClass();
       return containingClass != null && "java.util.Collections".equals(containingClass.getQualifiedName());
+    }
+  }
+
+  private static boolean isEscaping(PsiVariable variable) {
+    final PsiElement scope;
+    if (variable instanceof PsiParameter) {
+      final PsiParameter parameter = (PsiParameter)variable;
+      scope = parameter.getDeclarationScope();
+    }
+    else if (variable instanceof PsiLocalVariable) {
+      scope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+    }
+    else {
+      throw new AssertionError();
+    }
+    if (scope == null) {
+      // incomplete code
+      return true;
+    }
+    final EscapeVisitor visitor = new EscapeVisitor(variable, scope);
+    scope.accept(visitor);
+    return visitor.isEscaping();
+  }
+
+  private static class EscapeVisitor extends JavaRecursiveElementWalkingVisitor {
+
+    private final PsiVariable myVariable;
+    private final PsiElement myContext;
+    private boolean escaping = false;
+
+    public EscapeVisitor(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+      myVariable = variable;
+      myContext = context;
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      if (escaping) {
+        return;
+      }
+      super.visitReferenceExpression(expression);
+      final PsiElement target = expression.resolve();
+      if (!myVariable.equals(target)) {
+        return;
+      }
+      final PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiMember.class, PsiLambdaExpression.class);
+      if (context != null && PsiTreeUtil.isAncestor(myContext, context, true)) {
+        // strictly speaking a value can also escape via method call or return statement, but
+        // since it is difficult to guarantee synchronization and thus correctness on accessing such values,
+        // we want to warn on those cases and don't detect them here.
+        escaping = true;
+      }
+    }
+
+    public boolean isEscaping() {
+      return escaping;
     }
   }
 }

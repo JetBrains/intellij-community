@@ -7,7 +7,7 @@ import java.util.ArrayList;
 public class Main7 {
 
   public static void main(String[] args) {
-    Optional<? extends String> image = FluentIterable.fr<caret>om(new ArrayList<String>()).firstMatch(getPredicate());
+    Optional<? extends String> im<caret>age = FluentIterable.from(new ArrayList<String>()).firstMatch(getPredicate());
     if (image.isPresent()) {
       System.out.println(image.get());
     }

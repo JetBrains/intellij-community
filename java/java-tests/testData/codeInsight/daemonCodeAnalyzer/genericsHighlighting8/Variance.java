@@ -39,13 +39,13 @@ class VarianceTesting {
         k[0] = new VarianceTesting();
         x.method()[0] = new VarianceTesting();
         <error descr="Incompatible types. Found: 'VarianceTesting[]', required: 'capture<? extends VarianceTesting>[]'">x.arrayField = new VarianceTesting[10]</error>;
-        l1.addAll<error descr="'addAll(java.util.Collection<capture<? extends VarianceTesting>>)' in 'java.util.List' cannot be applied to '(java.util.ArrayList<VarianceTesting>)'">(new ArrayList<VarianceTesting>())</error>;
+        l1.addAll<error descr="'addAll(java.util.Collection<? extends capture<? extends VarianceTesting>>)' in 'java.util.List' cannot be applied to '(java.util.ArrayList<VarianceTesting>)'">(new ArrayList<VarianceTesting>())</error>;
         <error descr="Incompatible types. Found: 'java.util.ArrayList<java.lang.String>', required: 'java.util.List<? extends VarianceTesting>'">List<? extends VarianceTesting> l2 = new ArrayList<String>();</error>
         List<? extends VarianceTesting> l3 = l2;
         VarianceTesting t = l1.get(0);
         l.add(new VarianceTesting());
         l.add(null);
-        <error descr="Incompatible types. Found: 'java.lang.Object', required: 'VarianceTesting'">VarianceTesting t1 = l.get(0);</error>
+        <error descr="Incompatible types. Found: 'capture<? super VarianceTesting>', required: 'VarianceTesting'">VarianceTesting t1 = l.get(0);</error>
         X<? extends VarianceTesting> x1 = null;
         x1.putAll(new ArrayList<VarianceTesting>());
         List<?> unknownlist = l;
@@ -87,7 +87,7 @@ class CaptureTest {
    }
 
    void foo (Class<? extends Emum<CaptureTest>> clazz) {
-     <error descr="Inferred type 'capture<? extends CaptureTest.Emum<CaptureTest>>' for type parameter 'T' is not within its bound; should extend 'CaptureTest.Emum<capture<? extends CaptureTest.Emum<CaptureTest>>>'">Emum.valueOf(clazz, "CCC")</error>;
+     Emum.valueOf<error descr="'valueOf(java.lang.Class<T>, java.lang.String)' in 'CaptureTest.Emum' cannot be applied to '(java.lang.Class<capture<? extends CaptureTest.Emum<CaptureTest>>>, java.lang.String)'">(clazz, "CCC")</error>;
    }
 }
 
@@ -142,7 +142,7 @@ class S1 {
     }
 
     void bar(List<? extends S1> k) {
-        f<error descr="'f(java.util.List<T>, T)' in 'S1' cannot be applied to '(java.util.List<capture<? extends S1>>, S1)'">(k,  k.get(0))</error>;
+        f<error descr="'f(java.util.List<T>, T)' in 'S1' cannot be applied to '(java.util.List<capture<? extends S1>>, capture<? extends S1>)'">(k,  k.get(0))</error>;
     }
 }
 
@@ -152,7 +152,7 @@ class S2 {
     }
 
     void bar(List<? extends S2> k) {
-        f<error descr="'f(java.util.List<java.lang.Object>, java.util.List<java.lang.Object>)' in 'S2' cannot be applied to '(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)'">(k, k)</error>;
+        f<error descr="'f(java.util.List<T>, java.util.List<T>)' in 'S2' cannot be applied to '(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)'">(k, k)</error>;
     }
 }
 
@@ -162,7 +162,7 @@ class S3 {
     }
 
     void bar(Map<? extends S3, ? extends S3> k) {
-        f<error descr="'f(java.util.Map<java.lang.Object,java.lang.Object>)' in 'S3' cannot be applied to '(java.util.Map<capture<? extends S3>,capture<? extends S3>>)'">(k)</error>;
+        f<error descr="'f(java.util.Map<T,T>)' in 'S3' cannot be applied to '(java.util.Map<capture<? extends S3>,capture<? extends S3>>)'">(k)</error>;
     }
 }
 
@@ -182,7 +182,7 @@ class TypeBug {
 
         multiList.add(intHolder);
         multiList.add(doubleHolder);
-        swapFirstTwoValues<error descr="'swapFirstTwoValues(java.util.List<TypeBug.ValueHolder<java.lang.Object>>)' in 'TypeBug' cannot be applied to '(java.util.List<TypeBug.ValueHolder<?>>)'">(multiList)</error>; //need to be highlighted
+        swapFirstTwoValues<error descr="'swapFirstTwoValues(java.util.List<TypeBug.ValueHolder<T>>)' in 'TypeBug' cannot be applied to '(java.util.List<TypeBug.ValueHolder<?>>)'">(multiList)</error>; //need to be highlighted
 
         // this line causes a ClassCastException when checked.
         Integer value = intHolder.value;

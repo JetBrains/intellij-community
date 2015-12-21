@@ -59,10 +59,15 @@ def varagrs_dont_exist():
     **<weak_warning descr="Unexpected parameter kwargs in docstring">kwargs</weak_warning>:
   """
   
-def varagrs_undefined(x, <weak_warning descr="Missing parameter args in docstring">*args</weak_warning>, y, <weak_warning descr="Missing parameter kwargs in docstring">**kwargs</weak_warning>):
+def varagrs_undefined(x, *args, y, **kwargs):
   """
   Args:
     x:
     y:
   """
+  
+
+def no_parameters_declared(x, y):
+    """ 
+    """
     

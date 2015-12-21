@@ -20,14 +20,21 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.Futures;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Future;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -50,18 +57,41 @@ class CanonicalPathMap {
     myFlatWatchRoots = ContainerUtil.newArrayList(flat);
 
     List<Pair<String, String>> mapping = ContainerUtil.newSmartList();
-    myCanonicalRecursiveWatchRoots = mapPaths(recursive, mapping);
-    myCanonicalFlatWatchRoots = mapPaths(flat, mapping);
+    Map<String, String> resolvedPaths = resolvePaths(recursive, flat);
+    myCanonicalRecursiveWatchRoots = mapPaths(resolvedPaths, recursive, mapping);
+    myCanonicalFlatWatchRoots = mapPaths(resolvedPaths, flat, mapping);
 
     myPathMapping = MultiMap.createConcurrentSet();
     addMapping(mapping);
   }
 
-  private static List<String> mapPaths(List<String> paths, Collection<Pair<String, String>> mapping) {
+  private static Map<String, String> resolvePaths(Collection<String> recursiveRoots, Collection<String> flatRoots) {
+    final Map<String, String> resolvedPaths = ContainerUtil.newConcurrentMap();
+
+    final BoundedTaskExecutor executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, Runtime.getRuntime().availableProcessors());
+    Futures.invokeAll(JBIterable.from(recursiveRoots).append(flatRoots).transform(new Function<String, Future<?>>() {
+      @Override
+      public Future<?> fun(final String root) {
+        return executor.submit(new Runnable() {
+          @Override
+          public void run() {
+            String canonicalPath = FileSystemUtil.resolveSymLink(root);
+            if (canonicalPath != null) {
+              resolvedPaths.put(root, canonicalPath);
+            }
+          }
+        });
+      }
+    }).toList());
+
+    return resolvedPaths;
+  }
+
+  private static List<String> mapPaths(Map<String, String> resolvedPaths, List<String> paths, Collection<Pair<String, String>> mapping) {
     List<String> canonicalPaths = ContainerUtil.newArrayList(paths);
     for (int i = 0; i < paths.size(); i++) {
       String path = paths.get(i);
-      String canonicalPath = FileSystemUtil.resolveSymLink(path);
+      String canonicalPath = resolvedPaths.get(path);
       if (canonicalPath != null && !path.equals(canonicalPath)) {
         canonicalPaths.set(i, canonicalPath);
         mapping.add(pair(canonicalPath, path));

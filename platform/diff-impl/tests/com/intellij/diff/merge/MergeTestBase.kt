@@ -19,8 +19,8 @@ import com.intellij.diff.DiffContentFactoryImpl
 import com.intellij.diff.DiffTestCase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
-import com.intellij.diff.merge.TextMergeTool.TextMergeViewer
-import com.intellij.diff.merge.TextMergeTool.TextMergeViewer.MyThreesideViewer
+import com.intellij.diff.merge.TextMergeViewer
+import com.intellij.diff.merge.TextMergeViewer.MyThreesideViewer
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.TextDiffType
@@ -98,7 +98,7 @@ abstract class MergeTestBase : DiffTestCase() {
   inner class TestBuilder(val mergeViewer: TextMergeViewer, private val actions: List<AnAction>) {
     val viewer: MyThreesideViewer = mergeViewer.viewer
     val changes: List<TextMergeChange> = viewer.getAllChanges()
-    val editor: EditorEx = viewer.getEditor(ThreeSide.BASE)
+    val editor: EditorEx = viewer.editor
     val document: Document = editor.document
 
     private val textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
@@ -305,7 +305,7 @@ abstract class MergeTestBase : DiffTestCase() {
 
     fun Int.assertRange(start: Int, end: Int) {
       val change = change(this)
-      assertEquals(Pair(start, end), Pair(change.getStartLine(ThreeSide.BASE), change.getEndLine(ThreeSide.BASE)))
+      assertEquals(Pair(start, end), Pair(change.startLine, change.endLine))
     }
 
     fun Int.assertContent(expected: String, start: Int, end: Int) {
@@ -316,12 +316,12 @@ abstract class MergeTestBase : DiffTestCase() {
     fun Int.assertContent(expected: String) {
       val change = change(this)
       val document = editor.document
-      val actual = DiffUtil.getLinesContent(document, change.getStartLine(ThreeSide.BASE), change.getEndLine(ThreeSide.BASE))
+      val actual = DiffUtil.getLinesContent(document, change.startLine, change.endLine)
       assertEquals(parseSource(expected), actual)
     }
 
     fun assertContent(expected: String) {
-      val actual = viewer.getEditor(ThreeSide.BASE).document.charsSequence
+      val actual = viewer.editor.document.charsSequence
       assertEquals(parseSource(expected), actual)
     }
 
@@ -376,14 +376,14 @@ abstract class MergeTestBase : DiffTestCase() {
                                                      private val changes: List<ViewerState.ChangeState>) {
     companion object {
       fun recordState(viewer: MyThreesideViewer): ViewerState {
-        val content = viewer.getEditor(ThreeSide.BASE).document.getImmutableCharSequence()
+        val content = viewer.editor.document.getImmutableCharSequence()
         val changes = viewer.getAllChanges().map { recordChangeState(viewer, it) }
         return ViewerState(content, changes)
       }
 
       private fun recordChangeState(viewer: MyThreesideViewer, change: TextMergeChange): ChangeState {
-        val document = viewer.getEditor(ThreeSide.BASE).document;
-        val content = DiffUtil.getLinesContent(document, change.getStartLine(ThreeSide.BASE), change.getEndLine(ThreeSide.BASE))
+        val document = viewer.editor.document;
+        val content = DiffUtil.getLinesContent(document, change.startLine, change.endLine)
 
         val resolved = if (change.isResolved()) BOTH else if (change.isResolved(Side.LEFT)) LEFT else if (change.isResolved(Side.RIGHT)) RIGHT else NONE
 

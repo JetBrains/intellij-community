@@ -200,6 +200,17 @@ public final class EditorUtil {
     editor.getScrollingModel().scrollVertically(yPos);
   }
 
+  public static int calcRelativeCaretPosition(@NotNull Editor editor) {
+    int caretY = editor.getCaretModel().getVisualPosition().line * editor.getLineHeight();
+    int viewAreaPosition = editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
+    return caretY - viewAreaPosition;
+  }
+
+  public static void setRelativeCaretPosition(@NotNull Editor editor, int position) {
+    int caretY = editor.getCaretModel().getVisualPosition().line * editor.getLineHeight();
+    editor.getScrollingModel().scrollVertically(caretY - position);
+  }
+
   public static void fillVirtualSpaceUntilCaret(@NotNull Editor editor) {
     final LogicalPosition position = editor.getCaretModel().getLogicalPosition();
     fillVirtualSpaceUntil(editor, position.column, position.line);

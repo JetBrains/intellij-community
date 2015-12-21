@@ -29,6 +29,7 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsModel;
 
 import java.io.File;
@@ -214,12 +215,28 @@ public class Standalone {
 
     @Override
     public void processMessage(BuildMessage msg) {
-      String messageText = msg.getMessageText();
+      String messageText;
+      if (msg instanceof CompilerMessage) {
+        CompilerMessage compilerMessage = (CompilerMessage) msg;
+        if (compilerMessage.getSourcePath() == null) {
+          messageText = msg.getMessageText();
+        }
+        else if (compilerMessage.getLine() < 0) {
+          messageText = compilerMessage.getSourcePath() + ": " +  msg.getMessageText();
+        }
+        else {
+          messageText = compilerMessage.getSourcePath() + "(" + compilerMessage.getLine() + ":" + compilerMessage.getColumn() + "): " +  msg.getMessageText();
+        }
+      }
+      else {
+        messageText = msg.getMessageText();
+      }
       if (messageText.isEmpty()) return;
       if (msg.getKind() == BuildMessage.Kind.ERROR) {
         System.err.println("Error: " + messageText);
         hasErrors = true;
       }
+
       else if (msg.getKind() != BuildMessage.Kind.PROGRESS || !messageText.startsWith("Compiled") && !messageText.startsWith("Copying")) {
         System.out.println(messageText);
       }

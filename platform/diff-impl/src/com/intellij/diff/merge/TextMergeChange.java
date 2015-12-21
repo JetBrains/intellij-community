@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -45,15 +44,18 @@ import java.util.List;
 public class TextMergeChange extends ThreesideDiffChangeBase {
   private static final String CTRL_CLICK_TO_RESOLVE = "Ctrl+click to resolve conflict";
 
-  @NotNull private final TextMergeTool.TextMergeViewer myMergeViewer;
-  @NotNull private final TextMergeTool.TextMergeViewer.MyThreesideViewer myViewer;
+  @NotNull private final TextMergeViewer myMergeViewer;
+  @NotNull private final TextMergeViewer.MyThreesideViewer myViewer;
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
   @NotNull private final List<RangeHighlighter> myInnerHighlighters = new ArrayList<RangeHighlighter>();
 
   @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
 
-  private final int[] myStartLines = new int[3];
-  private final int[] myEndLines = new int[3];
+  @NotNull private final MergeLineFragment myFragment;
+
+  private final int myIndex;
+  private int myStartLine;
+  private int myEndLine;
   private final boolean[] myResolved = new boolean[2];
   private boolean myOnesideAppliedConflict;
 
@@ -61,15 +63,15 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   private boolean myInnerFragmentsDamaged;
 
   @CalledInAwt
-  public TextMergeChange(@NotNull MergeLineFragment fragment, @NotNull TextMergeTool.TextMergeViewer viewer) {
+  public TextMergeChange(@NotNull MergeLineFragment fragment, int index, @NotNull TextMergeViewer viewer) {
     super(fragment, viewer.getViewer().getEditors(), ComparisonPolicy.DEFAULT);
     myMergeViewer = viewer;
     myViewer = viewer.getViewer();
 
-    for (ThreeSide side : ThreeSide.values()) {
-      myStartLines[side.getIndex()] = fragment.getStartLine(side);
-      myEndLines[side.getIndex()] = fragment.getEndLine(side);
-    }
+    myIndex = index;
+    myFragment = fragment;
+    myStartLine = myFragment.getStartLine(ThreeSide.BASE);
+    myEndLine = myFragment.getEndLine(ThreeSide.BASE);
 
     installHighlighter();
   }
@@ -142,12 +144,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     int startLine = getStartLine(side);
     int endLine = getEndLine(side);
 
-    TextRange range = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine, true);
-    int start = range.getStartOffset();
-    int end = range.getEndOffset();
-
     boolean ignored = !resolved && myInnerFragments != null;
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type, ignored, HighlighterTargetArea.EXACT_RANGE, resolved));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, resolved));
     myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, resolved));
   }
 
@@ -167,6 +165,10 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   //
   // Getters
   //
+
+  public int getIndex() {
+    return myIndex;
+  }
 
   @CalledInAwt
   void setResolved(@NotNull Side side, boolean value) {
@@ -216,20 +218,32 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     }
   }
 
+  public int getStartLine() {
+    return myStartLine;
+  }
+
+  public int getEndLine() {
+    return myEndLine;
+  }
+
+  @Override
   public int getStartLine(@NotNull ThreeSide side) {
-    return side.select(myStartLines);
+    if (side == ThreeSide.BASE) return getStartLine();
+    return myFragment.getStartLine(side);
   }
 
+  @Override
   public int getEndLine(@NotNull ThreeSide side) {
-    return side.select(myEndLines);
+    if (side == ThreeSide.BASE) return getEndLine();
+    return myFragment.getEndLine(side);
   }
 
-  public void setStartLine(@NotNull ThreeSide side, int value) {
-    myStartLines[side.getIndex()] = value;
+  public void setStartLine(int value) {
+    myStartLine = value;
   }
 
-  public void setEndLine(@NotNull ThreeSide side, int value) {
-    myEndLines[side.getIndex()] = value;
+  public void setEndLine(int value) {
+    myEndLine = value;
   }
 
   public void markInnerFragmentsDamaged() {
@@ -250,8 +264,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @Nullable
   State processBaseChange(int oldLine1, int oldLine2, int shift) {
-    int line1 = getStartLine(ThreeSide.BASE);
-    int line2 = getEndLine(ThreeSide.BASE);
+    int line1 = getStartLine();
+    int line2 = getEndLine();
 
     UpdatedLineRange newRange = DiffUtil.updateRangeOnModification(line1, line2, oldLine1, oldLine2, shift);
 
@@ -264,8 +278,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       myViewer.markChangeResolved(this);
     }
 
-    setStartLine(ThreeSide.BASE, newRange.startLine);
-    setEndLine(ThreeSide.BASE, newRange.endLine);
+    setStartLine(newRange.startLine);
+    setEndLine(newRange.endLine);
 
     return oldState;
   }
@@ -365,7 +379,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, isConflict(), new Runnable() {
       @Override
       public void run() {
-        myViewer.executeMergeCommand("Apply change", Collections.singletonList(TextMergeChange.this), new Runnable() {
+        myViewer.executeMergeCommand("Accept change", Collections.singletonList(TextMergeChange.this), new Runnable() {
           @Override
           public void run() {
             myViewer.replaceChange(TextMergeChange.this, side, modifier);
@@ -381,7 +395,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, isConflict(), new Runnable() {
       @Override
       public void run() {
-        myViewer.executeMergeCommand(null, Collections.singletonList(TextMergeChange.this), new Runnable() {
+        myViewer.executeMergeCommand("Ignore change", Collections.singletonList(TextMergeChange.this), new Runnable() {
           @Override
           public void run() {
             myViewer.ignoreChange(TextMergeChange.this, side, modifier);
@@ -416,13 +430,10 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   @NotNull
   State storeState() {
     return new State(
-      myStartLines[0],
-      myStartLines[1],
-      myStartLines[2],
+      myIndex,
 
-      myEndLines[0],
-      myEndLines[1],
-      myEndLines[2],
+      myStartLine,
+      myEndLine,
 
       myResolved[0],
       myResolved[1],
@@ -431,13 +442,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   void restoreState(@NotNull State state) {
-    myStartLines[0] = state.myStartLine1;
-    myStartLines[1] = state.myStartLine2;
-    myStartLines[2] = state.myStartLine3;
-
-    myEndLines[0] = state.myEndLine1;
-    myEndLines[1] = state.myEndLine2;
-    myEndLines[2] = state.myEndLine3;
+    myStartLine = state.myStartLine;
+    myEndLine = state.myEndLine;
 
     myResolved[0] = state.myResolved1;
     myResolved[1] = state.myResolved2;
@@ -446,34 +452,25 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   public static class State {
-    private final int myStartLine1;
-    private final int myStartLine2;
-    private final int myStartLine3;
+    public final int myIndex;
 
-    private final int myEndLine1;
-    private final int myEndLine2;
-    private final int myEndLine3;
+    private final int myStartLine;
+    private final int myEndLine;
 
     private final boolean myResolved1;
     private final boolean myResolved2;
 
     private final boolean myOnesideAppliedConflict;
 
-    public State(int startLine1,
-                 int startLine2,
-                 int startLine3,
-                 int endLine1,
-                 int endLine2,
-                 int endLine3,
+    public State(int index,
+                 int startLine,
+                 int endLine,
                  boolean resolved1,
                  boolean resolved2,
                  boolean onesideAppliedConflict) {
-      myStartLine1 = startLine1;
-      myStartLine2 = startLine2;
-      myStartLine3 = startLine3;
-      myEndLine1 = endLine1;
-      myEndLine2 = endLine2;
-      myEndLine3 = endLine3;
+      myIndex = index;
+      myStartLine = startLine;
+      myEndLine = endLine;
       myResolved1 = resolved1;
       myResolved2 = resolved2;
       myOnesideAppliedConflict = onesideAppliedConflict;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -407,7 +407,9 @@ public class WideSelectionTreeUI extends BasicTreeUI {
       @Override
       public void paintComponent(Graphics g, Component c, Container p, int x, int y, int w, int h, boolean shouldValidate) {
         if (c instanceof JComponent && myWideSelection) {
-          ((JComponent)c).setOpaque(false);
+          if (c.isOpaque()) {
+            ((JComponent)c).setOpaque(false);
+          }
         }
 
         super.paintComponent(g, c, p, x, y, w, h, shouldValidate);

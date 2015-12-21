@@ -51,6 +51,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.patterns.StringPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -649,7 +650,7 @@ public class FindManagerImpl extends FindManager {
               }
             }
           } else {
-            data.matcher.reset(text.subSequence(start, end));
+            data.matcher.reset(StringPattern.newBombedCharSequence(text.subSequence(start, end)));
             if (data.matcher.find()) {
               final int matchEnd = start + data.matcher.end();
               int matchStart = start + data.matcher.start();
@@ -739,7 +740,9 @@ public class FindManagerImpl extends FindManager {
 
   private static Matcher compileRegExp(FindModel model, CharSequence text) {
     Pattern pattern = model.compileRegExp();
-    return pattern == null ? null : pattern.matcher(text);
+    return pattern == null ?
+           null :
+           pattern.matcher( StringPattern.newBombedCharSequence(text) );
   }
 
   @Override
@@ -861,7 +864,7 @@ public class FindManagerImpl extends FindManager {
     }
 
     boolean isReplacementLowercase = true;
-    for (int i = 0; i < toReplace.length(); i++) {
+    for (int i = 1; i < toReplace.length(); i++) {
       isReplacementLowercase = Character.isLowerCase(toReplace.charAt(i));
       if (!isReplacementLowercase) break;
     }
@@ -951,6 +954,7 @@ public class FindManagerImpl extends FindManager {
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
       Editor editor = textEditor.getEditor();
+      editor.getCaretModel().removeSecondaryCarets();
       if (tryToFindNextUsageViaEditorSearchComponent(editor, direction)) {
         return true;
       }

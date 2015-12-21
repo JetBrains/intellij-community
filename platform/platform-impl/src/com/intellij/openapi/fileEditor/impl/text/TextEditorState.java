@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public final class TextEditorState implements FileEditorState {
 
   public CaretState[] CARETS;
 
-  public float VERTICAL_SCROLL_PROPORTION;
+  public int RELATIVE_CARET_POSITION; // distance from primary caret to the top of editor's viewable area in pixels
 
   /**
    * State which describes how editor is folded.
@@ -83,7 +83,7 @@ public final class TextEditorState implements FileEditorState {
     final TextEditorState textEditorState = (TextEditorState)o;
 
     if (!Arrays.equals(CARETS, textEditorState.CARETS)) return false;
-    if (VERTICAL_SCROLL_PROPORTION != textEditorState.VERTICAL_SCROLL_PROPORTION) return false;
+    if (RELATIVE_CARET_POSITION != textEditorState.RELATIVE_CARET_POSITION) return false;
     CodeFoldingState localFoldingState = getFoldingState();
     CodeFoldingState theirFoldingState = textEditorState.getFoldingState();
     if (localFoldingState == null ? theirFoldingState != null : !localFoldingState.equals(theirFoldingState)) return false;

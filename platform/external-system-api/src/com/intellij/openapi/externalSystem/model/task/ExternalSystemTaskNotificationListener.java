@@ -21,8 +21,9 @@ public interface ExternalSystemTaskNotificationListener {
    * sent it to the slave gradle api process.
    *
    * @param id  target task's id
+   * @param workingDir
    */
-  void onQueued(@NotNull ExternalSystemTaskId id);
+  void onQueued(@NotNull ExternalSystemTaskId id, String workingDir);
   
   /**
    * Notifies that task with the given id is about to be started.
@@ -77,4 +78,21 @@ public interface ExternalSystemTaskNotificationListener {
    * @param e  failure exception
    */
   void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e);
+
+  /**
+   * Notifies that task with the given id is queued for the cancellation.
+   * <p/>
+   * 'Queued' here means that intellij process-local codebase receives request to cancel the target task and even has not been
+   * sent it to the slave gradle api process.
+   *
+   * @param id  target task's id
+   */
+  void beforeCancel(@NotNull ExternalSystemTaskId id);
+
+  /**
+   * Notifies that task with the given id is cancelled.
+   *
+   * @param id  target task's id
+   */
+  void onCancel(@NotNull ExternalSystemTaskId id);
 }

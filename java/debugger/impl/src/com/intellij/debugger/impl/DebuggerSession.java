@@ -388,7 +388,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public void dispose() {
     getProcess().dispose();
     Disposer.dispose(myUpdateAlarm);
-    DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+    DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
       @Override
       public void run() {
         getContextManager().setState(SESSION_EMPTY_CONTEXT, State.DISPOSED, Event.DISPOSE, null);

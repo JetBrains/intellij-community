@@ -21,7 +21,6 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BinaryOutputReader;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -32,7 +31,7 @@ class HgCommandProcessHandler extends OSProcessHandler {
   private final boolean myBinary;
   private final ByteArrayOutputStream myBinaryOutput;
 
-  public HgCommandProcessHandler(@NotNull GeneralCommandLine commandLine, boolean binary) throws ExecutionException {
+  HgCommandProcessHandler(@NotNull GeneralCommandLine commandLine, boolean binary) throws ExecutionException {
     super(commandLine);
     myBinary = binary;
     myBinaryOutput = new ByteArrayOutputStream();
@@ -40,7 +39,7 @@ class HgCommandProcessHandler extends OSProcessHandler {
 
   @NotNull
   @Override
-  protected BaseDataReader createOutputDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
+  protected BaseDataReader createOutputDataReader(@NotNull BaseDataReader.SleepingPolicy sleepingPolicy) {
     return myBinary ? new MyBinaryOutputReader(myProcess.getInputStream(), sleepingPolicy) : super.createOutputDataReader(sleepingPolicy);
   }
 
@@ -50,10 +49,9 @@ class HgCommandProcessHandler extends OSProcessHandler {
   }
 
   private class MyBinaryOutputReader extends BinaryOutputReader {
-
-    public MyBinaryOutputReader(@NotNull InputStream stream, @Nullable BaseDataReader.SleepingPolicy simple) {
+    private MyBinaryOutputReader(@NotNull InputStream stream, @NotNull BaseDataReader.SleepingPolicy simple) {
       super(stream, simple);
-      start();
+      start(myPresentableName);
     }
 
     @Override

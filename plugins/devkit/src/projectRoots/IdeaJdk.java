@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.projectRoots;
 
+import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.*;
@@ -32,7 +33,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.ArrayUtil;
 import icons.DevkitIcons;
@@ -288,7 +288,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     try {
       ZipFile zipFile = new ZipFile(apiJar);
       try {
-        ZipEntry entry = zipFile.getEntry(PsiManager.class.getName().replace('.', '/') + ".class");
+        ZipEntry entry = zipFile.getEntry(ApplicationStarter.class.getName().replace('.', '/') + ".class");
         if (entry != null) {
           DataInputStream stream = new DataInputStream(zipFile.getInputStream(entry));
           try {

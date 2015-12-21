@@ -16,15 +16,18 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.ui.ExternalizableStringSet;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +38,14 @@ public class EmptyClassInspectionBase extends BaseInspection {
   public boolean ignoreClassWithParameterization = false;
   @SuppressWarnings("PublicField")
   public boolean ignoreThrowables = true;
+  @SuppressWarnings("PublicField")
+  public boolean commentsAreContent = false;
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    defaultWriteSettings(node, "commentsAreContent");
+    writeBooleanOption(node, "commentsAreContent", false);
+  }
 
   @Override
   @NotNull
@@ -124,6 +135,9 @@ public class EmptyClassInspectionBase extends BaseInspection {
       }
       final PsiClassInitializer[] initializers = aClass.getInitializers();
       if (initializers.length > 0) {
+        return;
+      }
+      if (commentsAreContent && PsiTreeUtil.getChildOfType(aClass, PsiComment.class) != null) {
         return;
       }
       if (ignoreClassWithParameterization && isSuperParametrization(aClass)) {

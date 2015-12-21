@@ -31,7 +31,6 @@
   <version>1.0</version>
   <vendor>JetBrains</vendor>
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.AllInDirectoryConfigurationProducer"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.AllInPackageConfigurationProducer"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.PatternConfigurationProducer"/>

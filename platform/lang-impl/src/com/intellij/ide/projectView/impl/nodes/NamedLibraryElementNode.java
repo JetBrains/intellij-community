@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.icons.AllIcons;
@@ -22,6 +21,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
@@ -47,14 +47,12 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
-    LibraryGroupNode.addLibraryChildren(getValue().getOrderEntry(), children, getProject(), this);
+    List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    NamedLibraryElement libraryElement = getValue();
+    if (libraryElement != null) {
+      LibraryGroupNode.addLibraryChildren(libraryElement.getOrderEntry(), children, getProject(), this);
+    }
     return children;
-  }
-
-  @Override
-  public String getTestPresentation() {
-    return "Library: " + getValue().getName();
   }
 
   private static Icon getJdkIcon(JdkOrderEntry entry) {
@@ -68,40 +66,39 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
 
   @Override
   public String getName() {
-    return getValue().getName();
+    NamedLibraryElement library = getValue();
+    return library != null ? library.getName() : "";
   }
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return orderEntryContainsFile(getValue().getOrderEntry(), file);
-  }
+    NamedLibraryElement library = getValue();
+    if (library == null) return false;
 
-  private static boolean orderEntryContainsFile(LibraryOrSdkOrderEntry orderEntry, VirtualFile file) {
-    for(OrderRootType rootType: OrderRootType.getAllTypes()) {
-      if (containsFileInOrderType(orderEntry, rootType, file)) return true;
+    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
+      LibraryOrSdkOrderEntry orderEntry = library.getOrderEntry();
+      if (orderEntry.isValid()) {
+        for (VirtualFile virtualFile : orderEntry.getRootFiles(rootType)) {
+          if (VfsUtilCore.isAncestor(virtualFile, file, false)) return true;
+        }
+      }
     }
-    return false;
-  }
 
-  private static boolean containsFileInOrderType(final LibraryOrSdkOrderEntry orderEntry, final OrderRootType orderType, final VirtualFile file) {
-    if (!orderEntry.isValid()) return false;
-    VirtualFile[] files = orderEntry.getRootFiles(orderType);
-    for (VirtualFile virtualFile : files) {
-      boolean ancestor = VfsUtilCore.isAncestor(virtualFile, file, false);
-      if (ancestor) return true;
-    }
     return false;
   }
 
   @Override
   public void update(PresentationData presentation) {
-    presentation.setPresentableText(getValue().getName());
-    final OrderEntry orderEntry = getValue().getOrderEntry();
+    NamedLibraryElement library = getValue();
+    if (library == null) return;
+
+    OrderEntry orderEntry = library.getOrderEntry();
+    presentation.setPresentableText(library.getName());
     Icon closedIcon = orderEntry instanceof JdkOrderEntry ? getJdkIcon((JdkOrderEntry)orderEntry) : AllIcons.Nodes.PpLibFolder;
     presentation.setIcon(closedIcon);
     if (orderEntry instanceof JdkOrderEntry) {
-      final JdkOrderEntry jdkOrderEntry = (JdkOrderEntry)orderEntry;
-      final Sdk projectJdk = jdkOrderEntry.getJdk();
+      JdkOrderEntry jdkOrderEntry = (JdkOrderEntry)orderEntry;
+      Sdk projectJdk = jdkOrderEntry.getJdk();
       if (projectJdk != null) { //jdk not specified
         final String path = projectJdk.getHomePath();
         if (path != null) {
@@ -117,16 +114,27 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
 
   @Override
   public void navigate(final boolean requestFocus) {
-    ProjectSettingsService.getInstance(myProject).openLibraryOrSdkSettings(getValue().getOrderEntry());
+    NamedLibraryElement library = getValue();
+    if (library != null) {
+      ProjectSettingsService.getInstance(myProject).openLibraryOrSdkSettings(library.getOrderEntry());
+    }
   }
 
   @Override
   public boolean canNavigate() {
-    return ProjectSettingsService.getInstance(myProject).canOpenLibraryOrSdkSettings(getValue().getOrderEntry());
+    NamedLibraryElement library = getValue();
+    return library != null && ProjectSettingsService.getInstance(myProject).canOpenLibraryOrSdkSettings(library.getOrderEntry());
   }
 
   @Override
   public String getNavigateActionText(boolean focusEditor) {
-    return "Open Library Settings";
+    return ActionsBundle.message("action.LibrarySettings.navigate");
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
+  public String getTestPresentation() {
+    NamedLibraryElement library = getValue();
+    return "Library: " + (library != null ? library.getName() : "(null)");
   }
 }

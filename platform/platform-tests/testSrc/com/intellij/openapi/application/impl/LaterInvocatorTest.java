@@ -417,6 +417,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
       flushSwingQueue();
       checkOrder(1);
     });
+    thread.join();
   }
 
   private static void flushSwingQueue() {

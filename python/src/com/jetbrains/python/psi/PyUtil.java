@@ -101,6 +101,8 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 
 public class PyUtil {
 
+  public static final String PY_EXTENSION = ".py";
+
   private PyUtil() {
   }
 
@@ -482,7 +484,7 @@ public class PyUtil {
   }
 
   public static void deletePycFiles(String pyFilePath) {
-    if (pyFilePath.endsWith(".py")) {
+    if (pyFilePath.endsWith(PY_EXTENSION)) {
       List<File> filesToDelete = new ArrayList<File>();
       File pyc = new File(pyFilePath + "c");
       if (pyc.exists()) {

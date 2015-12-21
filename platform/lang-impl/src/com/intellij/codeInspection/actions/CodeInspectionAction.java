@@ -24,6 +24,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -33,7 +34,7 @@ import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
-import com.intellij.profile.codeInspection.ui.IDEInspectionToolsConfigurable;
+import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NonNls;
@@ -118,9 +119,8 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     panel.myBrowseProfilesCombo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final IDEInspectionToolsConfigurable errorConfigurable = createConfigurable(projectProfileManager, profileManager);
+        final InspectionToolsConfigurable errorConfigurable = createConfigurable(projectProfileManager, profileManager, profiles);
         final MySingleConfigurableEditor editor = new MySingleConfigurableEditor(project, errorConfigurable, manager);
-        errorConfigurable.selectProfile(((Profile)profiles.getSelectedItem()));
         if (editor.showAndGet()) {
           reloadProfiles(profiles, profileManager, projectProfileManager, manager);
         }
@@ -148,10 +148,39 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     return panel.myAdditionalPanel;
   }
 
-  protected IDEInspectionToolsConfigurable createConfigurable(InspectionProjectProfileManager projectProfileManager,
-                                                              InspectionProfileManager profileManager) {
-    return new IDEInspectionToolsConfigurable(projectProfileManager, profileManager);
+  protected InspectionToolsConfigurable createConfigurable(InspectionProjectProfileManager projectProfileManager,
+                                                           InspectionProfileManager profileManager,
+                                                           final JComboBox profilesCombo) {
+    return new ExternalProfilesComboboxAwareInspectionToolsConfigurable(projectProfileManager, profileManager, profilesCombo);
   }
+
+  protected static class ExternalProfilesComboboxAwareInspectionToolsConfigurable extends InspectionToolsConfigurable {
+    private final JComboBox myProfilesCombo;
+
+    public ExternalProfilesComboboxAwareInspectionToolsConfigurable(@NotNull InspectionProjectProfileManager projectProfileManager,
+                                                                    InspectionProfileManager profileManager,
+                                                                    JComboBox profilesCombo) {
+      super(projectProfileManager, profileManager);
+      myProfilesCombo = profilesCombo;
+    }
+
+    @Override
+    protected InspectionProfileImpl getCurrentProfile() {
+      return (InspectionProfileImpl)myProfilesCombo.getSelectedItem();
+    }
+
+    @Override
+    protected void applyRootProfile(@NotNull String name, boolean isProjectLevel) {
+      for (int i = 0; i < myProfilesCombo.getItemCount(); i++) {
+        final InspectionProfileImpl profile = (InspectionProfileImpl)myProfilesCombo.getItemAt(i);
+        if (name.equals(profile.getName())) {
+          myProfilesCombo.setSelectedIndex(i);
+          break;
+        }
+      }
+    }
+  }
+
 
   private void reloadProfiles(JComboBox profiles,
                               InspectionProfileManager inspectionProfileManager,

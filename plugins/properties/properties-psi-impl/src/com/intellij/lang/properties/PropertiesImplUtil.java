@@ -183,7 +183,7 @@ public class PropertiesImplUtil extends PropertiesUtil {
       if (key == null) {
         return false;
       }
-      if (previousKey != null && previousKey.compareTo(key) > 0) {
+      if (previousKey != null && String.CASE_INSENSITIVE_ORDER.compare(previousKey, key) > 0) {
         return false;
       }
       previousKey = key;

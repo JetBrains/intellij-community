@@ -146,7 +146,7 @@ public class ParameterInfoTest extends LightCodeInsightTestCase {
   }
 
   public void testIgnoreVarargs() throws Exception {
-    doTestPresentation("<html>Class&lt;CharSequence&gt; a, <b>Class&lt;? extends CharSequence&gt;... stopAt</b></html>", 1);
+    doTestPresentation("<html>Class&lt;T&gt; a, <b>Class&lt;? extends CharSequence&gt;... stopAt</b></html>", 1);
   }
 
   private void doTestPresentation(String expectedString) {

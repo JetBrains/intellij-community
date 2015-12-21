@@ -118,8 +118,8 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   @Override
   public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<LookupElement> items, @NotNull ProcessingContext context) {
     final THashSet<LookupElement> lifted = newIdentityTroveSet();
-    liftShorterElements(ContainerUtil.newArrayList(items), lifted, context);
-    return ContainerUtil.map(items, new Function<LookupElement, Pair<LookupElement, Object>>() {
+    Iterable<LookupElement> iterable = liftShorterElements(ContainerUtil.newArrayList(items), lifted, context);
+    return ContainerUtil.map(iterable, new Function<LookupElement, Pair<LookupElement, Object>>() {
       @Override
       public Pair<LookupElement, Object> fun(LookupElement element) {
         return new Pair<LookupElement, Object>(element, lifted.contains(element));

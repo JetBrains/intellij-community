@@ -214,6 +214,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       notification = null;
     }
     ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
+    myPrintStream.println();
     myPrintStream.println(MapSerializerUtil.asString("testFailed", attrs));
     onTestFinished(result);
   }

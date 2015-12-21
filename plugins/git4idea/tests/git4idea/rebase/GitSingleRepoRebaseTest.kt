@@ -19,7 +19,6 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.Messages
 import git4idea.branch.GitRebaseParams
-import git4idea.rebase.GitRebaseBaseTest.LocalChange
 import git4idea.repo.GitRepository
 import git4idea.test.GitExecutor.file
 import git4idea.test.GitExecutor.git
@@ -27,9 +26,6 @@ import git4idea.test.RepoBuilder
 import git4idea.test.UNKNOWN_ERROR_TEXT
 import git4idea.test.build
 import kotlin.properties.Delegates
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 public class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
@@ -108,7 +104,7 @@ public class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     rebaseOnMaster()
 
-    assertEquals(2, conflicts, "Incorrect number of conflicting patches")
+    assertEquals("Incorrect number of conflicting patches", 2, conflicts)
     myRepo.`assert feature rebased on master`()
     assertSuccessfulNotification("Rebased feature on master")
   }
@@ -137,7 +133,7 @@ public class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
   fun `test rebase failed for unknown reason`() {
     myRepo.`diverge feature and master`()
-    myFailingGit.setShouldFail { true }
+    myGit.setShouldRebaseFail { true }
     rebaseOnMaster()
     `assert unknown error notification`()
   }
@@ -152,7 +148,7 @@ public class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     myRepo.assertRebaseInProgress()
     resolveConflicts(myRepo)
 
-    myFailingGit.setShouldFail { true }
+    myGit.setShouldRebaseFail { true }
     val continueRebase = GitRebaseParams("master").withMode(GitRebaseParams.Mode.CONTINUE)
     GitTestingRebaseProcess(continueRebase).rebase()
 
@@ -193,7 +189,7 @@ public class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     myRepo.`diverge feature and master`()
     LocalChange(myRepo, "new.txt", "content").generate()
 
-    myFailingGit.setShouldFail { true }
+    myGit.setShouldRebaseFail { true }
 
     rebaseOnMaster()
 
@@ -211,7 +207,7 @@ public class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   fun `test critical error should show notification and not restore local changes`() {
     myRepo.`diverge feature and master`()
     LocalChange(myRepo, "new.txt", "content").generate()
-    myFailingGit.setShouldFail { true }
+    myGit.setShouldRebaseFail { true }
 
     rebaseOnMaster()
 
@@ -224,7 +220,7 @@ public class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     val localChange = LocalChange(myRepo, "new.txt", "content").generate()
 
     var attempt = 0
-    myFailingGit.setShouldFail { attempt == 0 }
+    myGit.setShouldRebaseFail { attempt == 0 }
 
     val rebaseProcess = rebaseOnMaster()
 
@@ -265,7 +261,7 @@ public class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     `assert conflict not resolved notification with link to stash`()
 
-    myFailingGit.setShouldFail { true }
+    myGit.setShouldRebaseFail { true }
     rebaseProcess.abort(myRepo, emptyList(), EmptyProgressIndicator())
 
     myRepo.assertRebaseInProgress()

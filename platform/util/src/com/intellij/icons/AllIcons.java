@@ -34,6 +34,7 @@ public class AllIcons {
     public static final Icon Back = IconLoader.getIcon("/actions/back.png"); // 16x16
     public static final Icon Browser_externalJavaDoc = IconLoader.getIcon("/actions/browser-externalJavaDoc.png"); // 16x16
     public static final Icon Cancel = IconLoader.getIcon("/actions/cancel.png"); // 16x16
+    public static final Icon ChangeView = IconLoader.getIcon("/actions/changeView.png"); // 16x16
     public static final Icon Checked = IconLoader.getIcon("/actions/checked.png"); // 12x12
     public static final Icon Checked_selected = IconLoader.getIcon("/actions/checked_selected.png"); // 12x12
     public static final Icon Checked_small = IconLoader.getIcon("/actions/checked_small.png"); // 11x11
@@ -809,6 +810,7 @@ public class AllIcons {
     public static final Icon DataView = IconLoader.getIcon("/nodes/dataView.png"); // 16x16
     public static final Icon Deploy = IconLoader.getIcon("/nodes/deploy.png"); // 16x16
     public static final Icon Desktop = IconLoader.getIcon("/nodes/desktop.png"); // 16x16
+    public static final Icon DisabledPointcut = IconLoader.getIcon("/nodes/disabledPointcut.png"); // 16x16
     public static final Icon Ejb = IconLoader.getIcon("/nodes/ejb.png"); // 16x16
     public static final Icon EjbBusinessMethod = IconLoader.getIcon("/nodes/ejbBusinessMethod.png"); // 16x16
     public static final Icon EjbCmpField = IconLoader.getIcon("/nodes/ejbCmpField.png"); // 16x16
@@ -1008,6 +1010,22 @@ public class AllIcons {
       public static final Icon Step_passive = IconLoader.getIcon("/process/fs/step_passive.png"); // 16x16
 
     }
+    
+    public static class State {
+      public static final Icon GreenOK = IconLoader.getIcon("/process/state/GreenOK.png"); // 16x16
+      public static final Icon GreyProgr = IconLoader.getIcon("/process/state/GreyProgr.png"); // 16x16
+      public static final Icon GreyProgr_1 = IconLoader.getIcon("/process/state/GreyProgr_1.png"); // 16x16
+      public static final Icon GreyProgr_2 = IconLoader.getIcon("/process/state/GreyProgr_2.png"); // 16x16
+      public static final Icon GreyProgr_3 = IconLoader.getIcon("/process/state/GreyProgr_3.png"); // 16x16
+      public static final Icon GreyProgr_4 = IconLoader.getIcon("/process/state/GreyProgr_4.png"); // 16x16
+      public static final Icon GreyProgr_5 = IconLoader.getIcon("/process/state/GreyProgr_5.png"); // 16x16
+      public static final Icon GreyProgr_6 = IconLoader.getIcon("/process/state/GreyProgr_6.png"); // 16x16
+      public static final Icon GreyProgr_7 = IconLoader.getIcon("/process/state/GreyProgr_7.png"); // 16x16
+      public static final Icon GreyProgr_8 = IconLoader.getIcon("/process/state/GreyProgr_8.png"); // 16x16
+      public static final Icon RedExcl = IconLoader.getIcon("/process/state/RedExcl.png"); // 16x16
+      public static final Icon YellowStr = IconLoader.getIcon("/process/state/YellowStr.png"); // 16x16
+
+    }
     public static final Icon Step_1 = IconLoader.getIcon("/process/step_1.png"); // 16x16
     public static final Icon Step_10 = IconLoader.getIcon("/process/step_10.png"); // 16x16
     public static final Icon Step_11 = IconLoader.getIcon("/process/step_11.png"); // 16x16
@@ -1088,6 +1106,7 @@ public class AllIcons {
       public static final Icon Green2 = IconLoader.getIcon("/runConfigurations/testState/green2.png"); // 12x12
       public static final Icon Red2 = IconLoader.getIcon("/runConfigurations/testState/red2.png"); // 12x12
       public static final Icon Run = IconLoader.getIcon("/runConfigurations/testState/run.png"); // 12x12
+      public static final Icon Run_run = IconLoader.getIcon("/runConfigurations/testState/run_run.png"); // 12x12
       public static final Icon Yellow2 = IconLoader.getIcon("/runConfigurations/testState/yellow2.png"); // 12x12
 
     }

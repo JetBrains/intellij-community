@@ -29,6 +29,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -89,9 +90,7 @@ public class UsedIconsListingAction extends AnAction {
           String str = (String)value;
           if (str.startsWith("\"")) {
             str = str.substring(0);
-            if (str.endsWith("\"")) {
-              str = str.substring(0, str.length() - 1);
-            }
+            str = StringUtil.trimEnd(str, "\"");
           }
 
           if (!str.startsWith("/")) {

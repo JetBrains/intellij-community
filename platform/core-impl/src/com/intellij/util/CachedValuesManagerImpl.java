@@ -54,7 +54,7 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
                                                         @NotNull Key<CachedValue<T>> key,
                                                         @NotNull CachedValueProvider<T> provider,
                                                         boolean trackValue) {
-    CachedValueChecker.checkProvider(provider, dataHolder);
+    CachedValueChecker.checkProvider(provider, key, dataHolder);
     CachedValue<T> value;
     if (dataHolder instanceof UserDataHolderEx) {
       UserDataHolderEx dh = (UserDataHolderEx)dataHolder;

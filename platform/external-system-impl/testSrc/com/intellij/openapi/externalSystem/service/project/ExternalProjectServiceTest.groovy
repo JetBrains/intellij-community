@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.service.project
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Result
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -28,7 +27,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.*
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -40,7 +38,6 @@ import org.jetbrains.annotations.NotNull
 
 import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
 import static com.intellij.openapi.externalSystem.test.ExternalSystemTestCase.collectRootsInside
-
 /**
  * @author Denis Zhdanov
  * @since 8/8/13 5:17 PM
@@ -208,14 +205,7 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
     List<String> allowedRoots = new ArrayList<String>();
     allowedRoots.add(myJdkHome);
     allowedRoots.addAll(collectRootsInside(myJdkHome));
-    final String[] newRootsArray = ArrayUtil.toStringArray(allowedRoots);
-    VfsRootAccess.allowRootAccess(newRootsArray);
-    Disposer.register(myTestRootDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        VfsRootAccess.disallowRootAccess(newRootsArray);
-      }
-    });
+    VfsRootAccess.allowRootAccess(myTestRootDisposable, ArrayUtil.toStringArray(allowedRoots));
 
     new WriteAction() {
       @Override

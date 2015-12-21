@@ -113,7 +113,7 @@ public class PyDocumentationBuilder {
         buildForKeyword(elementDefinition.getText());
       }
     }
-    final String url = PythonDocumentationProvider.getUrlFor(myElement, myOriginalElement, true);
+    final String url = PythonDocumentationProvider.getUrlFor(myElement, myOriginalElement, false);
     if (url != null) {
       myEpilog.addItem(BR);
       myEpilog.addWith(TagBold, $("External documentation:"));

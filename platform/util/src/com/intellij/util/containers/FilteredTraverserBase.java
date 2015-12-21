@@ -152,8 +152,8 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   @NotNull
-  public JBIterable<T> children(@NotNull T node) {
-    if (isAlwaysLeaf(node)) {
+  public JBIterable<T> children(@Nullable T node) {
+    if (node == null || isAlwaysLeaf(node)) {
       return JBIterable.empty();
     }
     else if (meta.regard.next == null && meta.forceDisregard.next == null) {

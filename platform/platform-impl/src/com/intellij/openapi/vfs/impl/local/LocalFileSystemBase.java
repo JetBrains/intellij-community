@@ -158,9 +158,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         final String[] names = new String[roots.length];
         for (int i = 0; i < names.length; i++) {
           String name = roots[i].getPath();
-          if (name.endsWith(File.separator)) {
-            name = name.substring(0, name.length() - File.separator.length());
-          }
+          name = StringUtil.trimEnd(name, File.separator);
           names[i] = name;
         }
         return names;
@@ -665,11 +663,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {
-    FileUtil.setReadOnlyAttribute(file.getPath(), !writableFlag);
-    final File ioFile = convertToIOFile(file);
-    if (ioFile.canWrite() != writableFlag) {
-      throw new IOException("Failed to change read-only flag for " + ioFile.getPath());
+  public void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException {
+    String path = FileUtil.toSystemDependentName(file.getPath());
+    FileUtil.setReadOnlyAttribute(path, !writableFlag);
+    if (FileUtil.canWrite(path) != writableFlag) {
+      throw new IOException("Failed to change read-only flag for " + path);
     }
   }
 

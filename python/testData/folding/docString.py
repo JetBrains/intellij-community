@@ -3,5 +3,5 @@ def foo():<fold text='...'>
     This is a docstring.
 
     It spans several lines.
-    """</fold>:
+    """</fold>
     pass</fold>

@@ -17,24 +17,27 @@ package com.intellij.execution.lineMarker;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public class RunLineMarkerProvider implements LineMarkerProvider {
+public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Nullable
   @Override
@@ -42,6 +45,7 @@ public class RunLineMarkerProvider implements LineMarkerProvider {
     List<RunLineMarkerContributor> contributors = RunLineMarkerContributor.EXTENSION.allForLanguage(element.getLanguage());
     DefaultActionGroup actionGroup = null;
     Icon icon = null;
+    final List<RunLineMarkerContributor.Info> infos = new ArrayList<RunLineMarkerContributor.Info>();
     for (RunLineMarkerContributor contributor : contributors) {
       RunLineMarkerContributor.Info info = contributor.getInfo(element);
       if (info == null) {
@@ -53,6 +57,7 @@ public class RunLineMarkerProvider implements LineMarkerProvider {
       if (actionGroup == null) {
         actionGroup = new DefaultActionGroup();
       }
+      infos.add(info);
       for (AnAction action : info.actions) {
         actionGroup.add(new LineMarkerActionWrapper(element, action));
       }
@@ -61,7 +66,24 @@ public class RunLineMarkerProvider implements LineMarkerProvider {
     if (icon == null) return null;
 
     final DefaultActionGroup finalActionGroup = actionGroup;
-    return new LineMarkerInfo<PsiElement>(element, element.getTextOffset(), icon, Pass.UPDATE_ALL, null, null,
+    Function<PsiElement, String> tooltipProvider = new Function<PsiElement, String>() {
+      @Override
+      public String fun(PsiElement element) {
+        final StringBuilder tooltip = new StringBuilder();
+        for (RunLineMarkerContributor.Info info : infos) {
+          if (info.tooltipProvider != null) {
+            if (tooltip.length() != 0) {
+              tooltip.append("\n");
+            }
+            tooltip.append(info.tooltipProvider.fun(element));
+          }
+        }
+
+        return tooltip.length() == 0 ? null : tooltip.toString();
+      }
+    };
+    return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.UPDATE_ALL,
+                                          tooltipProvider, null,
                                           GutterIconRenderer.Alignment.CENTER) {
       @Nullable
       @Override
@@ -89,5 +111,17 @@ public class RunLineMarkerProvider implements LineMarkerProvider {
 
   @Override
   public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return "Run line marker";
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon() {
+    return AllIcons.RunConfigurations.TestState.Run;
   }
 }

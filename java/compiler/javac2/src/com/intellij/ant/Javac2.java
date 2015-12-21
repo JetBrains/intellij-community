@@ -432,12 +432,12 @@ public class Javac2 extends Javac {
         try {
           final FileInputStream inputStream = new FileInputStream(file);
           try {
-            ClassReader reader = new FailSafeClassReader(inputStream);
+            FailSafeClassReader reader = new FailSafeClassReader(inputStream);
 
             int version = getClassFileVersion(reader);
             
             if (version >= Opcodes.V1_5 && !shouldBeSkippedByAnnotationPattern(reader)) {
-              ClassWriter writer = new InstrumenterClassWriter(getAsmClassWriterFlags(version), finder);
+              ClassWriter writer = new InstrumenterClassWriter(reader, getAsmClassWriterFlags(version), finder);
 
               if (NotNullVerifyingInstrumenter.processClassFile(reader, writer)) {
                 final FileOutputStream fileOutputStream = new FileOutputStream(path);

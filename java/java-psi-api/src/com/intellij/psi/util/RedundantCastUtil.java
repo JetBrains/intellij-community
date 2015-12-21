@@ -339,7 +339,17 @@ public class RedundantCastUtil {
               //do not mark cast to resolve ambiguity for calling varargs method with inexact argument
               continue;
             }
-            PsiCall newCall = (PsiCall) expression.copy();
+            final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
+            final PsiCall newCall;
+            if (typeByParent != null) {
+              final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
+              final String arrayCreationText = "new " + typeByParent.getCanonicalText() + "[] {" + expression.getText() + "}";
+              final PsiExpression arrayDeclaration = elementFactory.createExpressionFromText(arrayCreationText, expression);
+              newCall = (PsiCall)((PsiNewExpression)arrayDeclaration).getArrayInitializer().getInitializers()[0];
+            }
+            else {
+              newCall = (PsiCall)expression.copy();
+            }
             final PsiExpressionList argList = newCall.getArgumentList();
             LOG.assertTrue(argList != null);
             PsiExpression[] newArgs = argList.getExpressions();
@@ -475,7 +485,7 @@ public class RedundantCastUtil {
           if (operandType != null && topCastType != null && TypeConversionUtil.areTypesConvertible(operandType, topCastType)) {
             addToResults((PsiTypeCastExpression)expr);
           }
-        } else if (PsiPrimitiveType.getUnboxedType(operandType) == topCastType) {
+        } else if (Comparing.equal(PsiPrimitiveType.getUnboxedType(operandType), topCastType)) {
           addToResults((PsiTypeCastExpression)expr);
         }
       }

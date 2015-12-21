@@ -185,7 +185,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
           moduleLibraryKey.add(ExternalSystemApiUtil.getLocalFileSystemPath(file) + moduleLibraryOrderEntry.getScope().name());
         }
         LibraryDependencyData existing = moduleLibrariesToImport.remove(moduleLibraryKey);
-        if (existing == null || !StringUtil.equals(existing.getInternalName(), library.getName())) {
+        if (existing == null || !StringUtil.equals(StringUtil.nullize(existing.getInternalName()), library.getName())) {
           moduleRootModel.removeOrderEntry(entry);
         }
         else {

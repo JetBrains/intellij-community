@@ -53,7 +53,7 @@ public class PropertiesEnterTest extends LightPlatformCodeInsightTestCase {
         type("aaaa=bbb");
         PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 
   private void doTest() throws Exception {

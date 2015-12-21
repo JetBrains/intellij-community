@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,13 +45,13 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
  */
 public class GrDelegatesToUtil {
   @Nullable
-  static DelegatesToInfo getDelegatesToInfo(@NotNull PsiElement place, @NotNull final GrClosableBlock closableBlock) {
+  public static DelegatesToInfo getDelegatesToInfo(@NotNull PsiElement place, @NotNull final GrClosableBlock closableBlock) {
     GrCall call = getContainingCall(closableBlock);
     if (call == null) return null;
 
-    GroovyResolveResult result = resolveCall(call);
+    GroovyResolveResult result = call.advancedResolve();
 
-    if (GdkMethodUtil.isWithOrIdentity(result)) {
+    if (GdkMethodUtil.isWithOrIdentity(result.getElement())) {
       final GrExpression qualifier = inferCallQualifier((GrMethodCall)call);
       if (qualifier == null) return null;
 
@@ -207,25 +207,6 @@ public class GrDelegatesToUtil {
     final GrExpression expression = call.getInvokedExpression();
     if (!(expression instanceof GrReferenceExpression)) return null;
     return ((GrReferenceExpression)expression).getQualifier();
-  }
-
-  @NotNull
-  private static GroovyResolveResult resolveCall(@NotNull GrCall call) {
-    GroovyResolveResult result = GroovyResolveResult.EMPTY_RESULT;
-
-    if (call instanceof GrMethodCall) {
-      final GrExpression invoked = ((GrMethodCall)call).getInvokedExpression();
-      if (invoked instanceof GrReferenceExpression) {
-        final GroovyResolveResult[] results = ((GrReferenceExpression)invoked).resolveByShape();
-        if (results.length == 1) {
-          result = results[0];
-        }
-      }
-    }
-    else {
-      result = call.advancedResolve();
-    }
-    return result;
   }
 
   @Nullable

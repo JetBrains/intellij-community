@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,10 @@ import java.io.InputStream;
 * @author Konstantin Kolosovsky.
 */
 public abstract class BinaryOutputReader extends BaseDataReader {
-
   @NotNull private final InputStream myStream;
   @NotNull private final byte[] myBuffer = new byte[8192];
 
-  public BinaryOutputReader(@NotNull InputStream stream, SleepingPolicy sleepingPolicy) {
+  public BinaryOutputReader(@NotNull InputStream stream, @NotNull SleepingPolicy sleepingPolicy) {
     super(sleepingPolicy);
     myStream = stream;
   }

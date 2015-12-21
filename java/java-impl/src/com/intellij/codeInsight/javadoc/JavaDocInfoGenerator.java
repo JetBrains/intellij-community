@@ -24,6 +24,7 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.javadoc.JavadocGeneratorRunProfile;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -320,30 +321,36 @@ public class JavaDocInfoGenerator {
 
       relativeLink = relativeLink.replace('/', '.');
 
-      String qualifiedTargetClassName = packageName.isEmpty() ? relativeLink : packageName + "." + relativeLink;
-      targetElement = JavaPsiFacade.getInstance(contextElement.getProject()).findClass(qualifiedTargetClassName, 
-                                                                                       contextElement.getResolveScope());
+      String qualifiedTargetName = packageName.isEmpty() ? relativeLink : packageName + "." + relativeLink;
+      JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(contextElement.getProject());
+      targetElement = "package-summary".equals(StringUtil.getShortName(qualifiedTargetName))
+                      ? javaPsiFacade.findPackage(StringUtil.getPackageName(qualifiedTargetName))
+                      : javaPsiFacade.findClass(qualifiedTargetName, contextElement.getResolveScope());
     }
     if (targetElement == null) return null;
     
-    String rawFragment = null;
     if (fragment != null && targetElement instanceof PsiClass) {
       if (fragment.contains("-") || fragment.contains("(")) {
-        rawFragment = fragment;
-        fragment = null; // reference to a method
+        for (PsiMethod method : ((PsiClass)targetElement).getMethods()) {
+          Set<String> signatures = JavaDocumentationProvider.getHtmlMethodSignatures(method, true);
+          if (signatures.contains(fragment)) {
+            targetElement = method;
+            fragment = null;
+            break;
+          }
+        }
       }
       else  {
         for (PsiField field : ((PsiClass)targetElement).getFields()) {
-          if (field.getName().equals(fragment)) {
-            rawFragment = fragment;
-            fragment = null; // reference to a field
+          if (fragment.equals(field.getName())) {
+            targetElement = field;
+            fragment = null;
             break;
           }
         }
       }
     }
     return DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + JavaDocUtil.getReferenceText(targetElement.getProject(), targetElement) +
-           (rawFragment == null ? "" : ('#' + rawFragment)) +
            (fragment == null ? "" : DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR + fragment);
   }
 
@@ -1474,7 +1481,7 @@ public class JavaDocInfoGenerator {
   private void generateLiteralValue(StringBuilder buffer, PsiDocTag tag) {
     StringBuilder tmpBuffer = new StringBuilder();
     for (PsiElement element : tag.getDataElements()) {
-      appendPlainText(element.getText(), tmpBuffer);
+      appendPlainText(StringUtil.escapeXml(element.getText()), tmpBuffer);
     }
     if ((mySdkVersion == null || mySdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8)) && isInPre(tag)) {
       buffer.append(tmpBuffer);
@@ -1503,9 +1510,6 @@ public class JavaDocInfoGenerator {
   }
 
   private static void appendPlainText(@NonNls String text, final StringBuilder buffer) {
-    text = text.replaceAll("<", LT);
-    text = text.replaceAll(">", GT);
-
     buffer.append(StringUtil.replaceUnicodeEscapeSequences(text));
   }
 

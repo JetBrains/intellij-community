@@ -724,23 +724,36 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       for (RunnerAndConfigurationSettings settings : myConfigurations) {
         steps.add(new ConfigurationActionsStep(project, action, settings, false));
       }
-      return new FolderStep(myProject, myExecutorProvider, null, steps);
+      return new FolderStep(myProject, myExecutorProvider, null, steps, action);
     }
   }
 
   private static final class FolderStep extends BaseListPopupStep<ConfigurationActionsStep> {
     private final Project myProject;
+    private final ChooseRunConfigurationPopup myPopup;
     private final ExecutorProvider myExecutorProvider;
 
-    private FolderStep(Project project, ExecutorProvider executorProvider, String folderName, List<ConfigurationActionsStep> children) {
+    private FolderStep(Project project, ExecutorProvider executorProvider, String folderName, List<ConfigurationActionsStep> children,
+                       ChooseRunConfigurationPopup popup) {
       super(folderName, children, new ArrayList<Icon>());
       myProject = project;
       myExecutorProvider = executorProvider;
+      myPopup = popup;
     }
 
     @Override
     public PopupStep onChosen(final ConfigurationActionsStep selectedValue, boolean finalChoice) {
       if (finalChoice) {
+        if (myPopup.myEditConfiguration) {
+          final RunnerAndConfigurationSettings settings = selectedValue.getSettings();
+          return doFinalStep(new Runnable() {
+            @Override
+            public void run() {
+              myPopup.editConfiguration(myProject, settings);
+            }
+          });
+        }
+
         return doFinalStep(new Runnable() {
           @Override
           public void run() {

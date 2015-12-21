@@ -55,7 +55,7 @@ public class SMTestProxy extends AbstractTestProxy {
   private static final Logger LOG = Logger.getInstance(SMTestProxy.class.getName());
 
   private final String myName;
-  private final boolean myIsSuite;
+  private boolean myIsSuite;
   private final String myLocationUrl;
   private final boolean myPreservePresentableName;
 
@@ -66,7 +66,6 @@ public class SMTestProxy extends AbstractTestProxy {
   private Long myDuration = null; // duration is unknown
   private boolean myDurationIsCached = false; // is used for separating unknown and unset duration
   private boolean myHasCriticalErrors = false;
-  private boolean myHasErrorsCached = false;
   private boolean myHasPassedTests = false;
   private boolean myHasPassedTestsCached = false;
 
@@ -144,32 +143,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public boolean hasErrors() {
-    // if already cached
-    if (myHasErrorsCached) {
-      return myHasCriticalErrors;
-    }
-
-    final boolean canCacheErrors = !myState.isInProgress();
-    // calculate
-    final boolean hasErrors = calcHasErrors();
-    if (canCacheErrors || hasErrors) {
-      myHasCriticalErrors = hasErrors;
-      myHasErrorsCached = true;
-    }
-    return hasErrors;
-  }
-
-  private boolean calcHasErrors() {
-    if (myHasCriticalErrors) {
-      return true;
-    }
-
-    for (SMTestProxy child : getChildren()) {
-      if (child.hasErrors()) {
-        return true;
-      }
-    }
-    return false;
+    return myHasCriticalErrors;
   }
 
   /**
@@ -346,6 +320,13 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public void setStarted() {
     myState = !myIsSuite ? TestInProgressState.TEST : new SuiteInProgressState(this);
+  }
+
+  public void setSuiteStarted() {
+    myState = new SuiteInProgressState(this);
+    if (!myIsSuite) {
+      myIsSuite = true;
+    }
   }
 
   /**
@@ -601,6 +582,9 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public void addError(final String output, @Nullable final String stackTrace, boolean isCritical) {
     myHasCriticalErrors = isCritical;
+    if (isCritical) {
+      invalidateCachedHasErrorMark();
+    }
     setStacktraceIfNotSet(stackTrace);
 
     addLast(new Printable() {
@@ -610,6 +594,15 @@ public class SMTestProxy extends AbstractTestProxy {
         TestFailedState.printError(printer, Collections.singletonList(errorText));
       }
     });
+  }
+
+  private void invalidateCachedHasErrorMark() {
+    myHasCriticalErrors = true;
+    // Invalidates hasError state of container suite
+    final SMTestProxy containerSuite = getParent();
+    if (containerSuite != null && !containerSuite.hasErrors()) {
+      containerSuite.invalidateCachedHasErrorMark();
+    }
   }
 
   public void addSystemOutput(final String output) {

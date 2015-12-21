@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -27,7 +28,7 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class DirDiffAction extends ToggleAction implements ShortcutProvider {
+public abstract class DirDiffAction extends ToggleAction implements ShortcutProvider, DumbAware {
   private final DirDiffTableModel myModel;
 
   protected DirDiffAction(DirDiffTableModel model) {

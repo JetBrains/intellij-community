@@ -41,9 +41,10 @@ import java.awt.image.ImageFilter;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.util.*;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 public final class IconLoader {
@@ -163,7 +164,7 @@ public final class IconLoader {
   @Nullable
   /**
    * Might return null if icon was not found.
-   * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(java.lang.String)}
+   * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String)}
    */
   public static Icon findIcon(@NonNls @NotNull String path) {
     Class callerClass = ReflectionUtil.getGrandCallerClass();
@@ -190,7 +191,7 @@ public final class IconLoader {
 
   /**
    * Might return null if icon was not found.
-   * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(java.lang.String, java.lang.Class)}
+   * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, Class)}
    */
   @Nullable
   public static Icon findIcon(@NotNull final String path, @NotNull final Class aClass) {
@@ -199,12 +200,17 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull final Class aClass, boolean computeNow) {
+    return findIcon(path, aClass, computeNow, STRICT);
+  }
+
+  @Nullable
+  public static Icon findIcon(@NotNull String path, @NotNull final Class aClass, boolean computeNow, boolean strict) {
     path = undeprecate(path);
     if (isReflectivePath(path)) return getReflectiveIcon(path, aClass.getClassLoader());
 
     URL myURL = aClass.getResource(path);
     if (myURL == null) {
-      if (STRICT) throw new RuntimeException("Can't find icon in '" + path + "' near "+aClass);
+      if (strict) throw new RuntimeException("Can't find icon in '" + path + "' near " + aClass);
       return null;
     }
     return findIcon(myURL);
@@ -330,13 +336,15 @@ public final class IconLoader {
   }
 
   public static final class CachedImageIcon implements ScalableIcon {
-    private Object myRealIcon;
+    private volatile Object myRealIcon;
     @NotNull
     private final URL myUrl;
-    private boolean dark;
-    private float scale;
-    private ImageFilter filter;
-    private HashMap<Float, Icon> scaledIcons;
+    private volatile boolean dark;
+    private volatile float scale;
+    private volatile ImageFilter filter;
+
+    private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
+
     public CachedImageIcon(@NotNull URL url) {
       myUrl = url;
       dark = USE_DARK_ICONS;
@@ -348,11 +356,12 @@ public final class IconLoader {
     private synchronized Icon getRealIcon() {
       if (isLoaderDisabled() && (myRealIcon == null || dark != USE_DARK_ICONS || scale != SCALE || filter != IMAGE_FILTER)) return EMPTY_ICON;
 
-      if (dark != USE_DARK_ICONS || scale != SCALE || filter != IMAGE_FILTER) {
+      if (!isValid()) {
         myRealIcon = null;
         dark = USE_DARK_ICONS;
         scale = SCALE;
         filter = IMAGE_FILTER;
+        myScaledIconsCache.clear();
       }
       Object realIcon = myRealIcon;
       if (realIcon instanceof Icon) return (Icon)realIcon;
@@ -379,9 +388,14 @@ public final class IconLoader {
       return icon == null ? EMPTY_ICON : icon;
     }
 
+
     @NotNull
     public URL getUrl() {
       return myUrl;
+    }
+
+    private boolean isValid() {
+      return dark == USE_DARK_ICONS && scale == SCALE && filter == IMAGE_FILTER;
     }
 
     @Override
@@ -409,26 +423,63 @@ public final class IconLoader {
       if (scaleFactor == 1f) {
         return this;
       }
-      if (scaledIcons == null) {
-        scaledIcons = new HashMap<Float, Icon>(1);
-      }
 
-      Icon result = scaledIcons.get(scaleFactor);
-      if (result != null) {
-        return result;
-      }
+      if (!isValid()) getRealIcon(); // force state update & cache reset
 
-      final Image image = ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), scaleFactor >= 1.5f, filter);
-      if (image != null) {
-        int width = (int)(getIconWidth() * scaleFactor);
-        int height = (int)(getIconHeight() * scaleFactor);
-        final BufferedImage resizedImage = Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
-        result = getIcon(resizedImage);
-        scaledIcons.put(scaleFactor, result);
-        return result;
+      Icon icon = myScaledIconsCache.getScaledIcon(scaleFactor);
+      if (icon != null) {
+        return icon;
       }
-
       return this;
+    }
+
+    private class MyScaledIconsCache {
+      // Map {false -> image}, {true -> image@2x}
+      private Map<Boolean, SoftReference<Image>> origImagesCache = Collections.synchronizedMap(new HashMap<Boolean, SoftReference<Image>>(2));
+
+      private static final int SCALED_ICONS_CACHE_LIMIT = 5;
+
+      // Map {effective scale -> icon}
+      private Map<Float, SoftReference<Icon>> scaledIconsCache = Collections.synchronizedMap(new LinkedHashMap<Float, SoftReference<Icon>>(SCALED_ICONS_CACHE_LIMIT) {
+        @Override
+        public boolean removeEldestEntry(Map.Entry<Float, SoftReference<Icon>> entry) {
+          return size() > SCALED_ICONS_CACHE_LIMIT;
+        }
+      });
+
+      public Image getOrigImage(boolean retina) {
+        Image img = SoftReference.dereference(origImagesCache.get(retina));
+
+        if (img == null) {
+          img = ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), retina, filter);
+          origImagesCache.put(retina, new SoftReference<Image>(img));
+        }
+        return img;
+      }
+
+      public Icon getScaledIcon(float scale) {
+        float effectiveScale = scale * JBUI.scale(1f);
+        Icon icon = SoftReference.dereference(scaledIconsCache.get(effectiveScale));
+
+        if (icon == null) {
+          boolean needRetinaImage = (effectiveScale >= 1.5f || UIUtil.isRetina());
+          Image image = getOrigImage(needRetinaImage);
+
+          if (image != null) {
+            Icon realIcon = getRealIcon();
+            int width = (int)(realIcon.getIconWidth() * scale);
+            int height = (int)(realIcon.getIconHeight() * scale);
+            icon = getIcon(Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height));
+            scaledIconsCache.put(effectiveScale, new SoftReference<Icon>(icon));
+          }
+        }
+        return icon;
+      }
+
+      public void clear() {
+        scaledIconsCache.clear();
+        origImagesCache.clear();
+      }
     }
   }
 

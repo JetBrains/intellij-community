@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,6 +41,17 @@ import java.util.List;
  * @author yole
  */
 public abstract class MarkRootActionBase extends DumbAwareAction {
+  public MarkRootActionBase() {
+  }
+
+  public MarkRootActionBase(@Nullable String text) {
+    super(text);
+  }
+
+  public MarkRootActionBase(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+    super(text, description, icon);
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
@@ -47,7 +59,10 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
     if (module == null) {
       return;
     }
+    modifyRoots(e, module, files);
+  }
 
+  protected void modifyRoots(@NotNull  AnActionEvent e, @NotNull final Module module, @NotNull VirtualFile[] files) {
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     for (VirtualFile file : files) {
       ContentEntry entry = findContentEntry(model, file);
@@ -125,8 +140,8 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
           return RootsSelection.EMPTY;
         }
       }
-      SourceFolder folder;
-      if (Comparing.equal(fileIndex.getSourceRootForFile(file), file) && ((folder = ProjectRootsUtil.findSourceFolder(module, file)) != null)) {
+      SourceFolder folder = ProjectRootsUtil.findSourceFolder(module, file);
+      if (folder != null) {
         selection.mySelectedRoots.add(folder);
       }
       else {
@@ -167,7 +182,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
     return result;
   }
 
-  protected static class RootsSelection {
+  public static class RootsSelection {
     public static final RootsSelection EMPTY = new RootsSelection();
 
     public List<SourceFolder> mySelectedRoots = new ArrayList<SourceFolder>();

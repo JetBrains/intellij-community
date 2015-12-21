@@ -19,7 +19,7 @@ class Test {
 
 
   public static <T> BigDecimal add(Collection<T> objectsThatHaveBigDecimals, Function<T, ? extends BigDecimal> functionToGet) {
-    return objectsThatHaveBigDecimals == null ? null : objectsThatHaveBigDecimals.stream().map(functionToGet).reduce(null, Test::add);
+    return objectsThatHaveBigDecimals == null ? null : objectsThatHaveBigDecimals.stream().map(functionToGet).reduce(null, <error descr="Bad return type in method reference: cannot convert java.math.BigDecimal to ? extends java.math.BigDecimal">Test::add</error>);
   }
 
   public static BigDecimal add(BigDecimal... sequence) {

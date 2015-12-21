@@ -27,7 +27,6 @@
     <vcsRepositoryCreator implementation="org.zmlx.hg4idea.repo.HgRepositoryCreator"/>
     <pushSupport implementation="org.zmlx.hg4idea.push.HgPushSupport"/>
     <cherryPicker implementation="org.zmlx.hg4idea.cherrypick.HgCherryPicker"/>
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <vcsPopupProvider implementation="org.zmlx.hg4idea.provider.HgQuickListProvider"/>
     <logProvider implementation="org.zmlx.hg4idea.log.HgLogProvider"/>
     <vcs.taskHandler implementation="org.zmlx.hg4idea.HgTaskHandler"/>
@@ -65,6 +64,8 @@
 
       <reference ref="Compare.SameVersion"/>
       <reference ref="Compare.Selected"/>
+      <action id="hg4idea.CompareWithBranch" class="org.zmlx.hg4idea.action.HgCompareWithBranchAction"
+              text="Compare with Branch/Bookmark..."/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference ref="Vcs.ShowHistoryForBlock"/>
       <reference ref="Annotate"/>
@@ -101,6 +102,8 @@
             description="Create new tag pointing to this commit"/>
     <action class="org.zmlx.hg4idea.action.HgCreateNewBranchFromLogAction" id="hg4idea.CreateNewBranch" text="New Branch..."
             description="Create new branch starting from the selected commit"/>
+    <action class="org.zmlx.hg4idea.action.HgMergeWithRevisionFromLog" id="hg4idea.MergeWithRevision" text="Merge With"
+            description="Merge with selected revision"/>
     <group id="Hg.Mq" class="com.intellij.ide.actions.NonTrivialActionGroup" text="MQ" popup="true"
            icon="AllIcons.Modules.Edit">
       <action class="org.zmlx.hg4idea.action.mq.HgQImportFromLogAction" id="hg4idea.QImport" text="Import"
@@ -137,6 +140,7 @@
       <reference id="hg4idea.UpdateToRevision"/>
       <reference id="hg4idea.CreateNewBranch"/>
       <reference id="hg4idea.CreateNewTag"/>
+      <reference id="hg4idea.MergeWithRevision"/>
       <separator/>
       <reference id="Hg.Mq"/>
       <add-to-group group-id="Vcs.Log.ContextMenu"/>

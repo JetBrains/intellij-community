@@ -21,35 +21,40 @@ import java.awt.*;
 
 public class AppIconScheme {
 
+  private static Color TESTS_OK_COLOR = new Color(46, 191, 38);
+  private static Color BUILD_OK_COLOR = new Color(51, 153, 255);
+  private static Color INDEXING_OK_COLOR = new Color(255, 170, 0);
+  private static Color ERROR_COLOR = Color.red;
+
   public interface Progress {
 
     static final Progress TESTS = new Progress() {
       public Color getOkColor() {
-        return JBColor.GREEN;
+        return TESTS_OK_COLOR;
       }
 
       public Color getErrorColor() {
-        return JBColor.RED;
+        return ERROR_COLOR;
       }
     };
 
     static final Progress BUILD = new Progress() {
       public Color getOkColor() {
-        return new Color(43, 104, 184);
+        return BUILD_OK_COLOR;
       }
 
       public Color getErrorColor() {
-        return JBColor.RED;
+        return ERROR_COLOR;
       }
     };
 
     static final Progress INDEXING = new Progress() {
       public Color getOkColor() {
-        return new Color(255, 153, 0);
+        return INDEXING_OK_COLOR;
       }
 
       public Color getErrorColor() {
-        return JBColor.RED;
+        return ERROR_COLOR;
       }
     };
 

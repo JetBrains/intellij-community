@@ -16,14 +16,14 @@
 package org.jetbrains.rpc
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.vfs.CharsetToolkit
 import io.netty.buffer.ByteBuf
+import org.jetbrains.concurrency.Promise
 import org.jetbrains.jsonProtocol.Request
 import java.util.concurrent.atomic.AtomicInteger
 
 val LOG = Logger.getInstance(CommandProcessor::class.java)
 
-abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS_RESPONSE>() : CommandSenderBase<SUCCESS_RESPONSE>(), MessageManager.Handler<Request<out Any>, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE>, ResultReader<SUCCESS_RESPONSE>, MessageProcessor {
+abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS_RESPONSE>() : CommandSenderBase<SUCCESS_RESPONSE>(), MessageManager.Handler<Request<*>, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE>, ResultReader<SUCCESS_RESPONSE>, MessageProcessor {
   private val currentSequence = AtomicInteger()
   protected val messageManager = MessageManager(this)
 
@@ -35,21 +35,33 @@ abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS_RESPO
     messageManager.closed()
   }
 
-  override fun getUpdatedSequence(message: Request<out Any>): Int {
+  override fun getUpdatedSequence(message: Request<*>): Int {
     val id = currentSequence.incrementAndGet()
     message.finalize(id)
     return id
   }
 
-  override final fun <RESULT : Any> doSend(message: Request<RESULT>, callback: CommandSenderBase.RequestPromise<SUCCESS_RESPONSE, RESULT>) {
+  override final fun <RESULT> doSend(message: Request<RESULT>, callback: RequestPromise<SUCCESS_RESPONSE, RESULT>) {
     messageManager.send(message, callback)
   }
 }
 
-fun requestToByteBuf(message: Request<out Any>, isDebugEnabled: Boolean = LOG.isDebugEnabled): ByteBuf {
+fun requestToByteBuf(message: Request<*>, isDebugEnabled: Boolean = LOG.isDebugEnabled): ByteBuf {
   val content = message.buffer
   if (isDebugEnabled) {
-    LOG.debug("OUT: ${content.toString(CharsetToolkit.UTF8_CHARSET)}")
+    LOG.debug("OUT: ${content.toString(Charsets.UTF_8)}")
   }
   return content
+}
+
+interface ResultReader<RESPONSE> {
+  fun <RESULT> readResult(readMethodName: String, successResponse: RESPONSE): RESULT?
+}
+
+interface RequestCallback<SUCCESS_RESPONSE> {
+  fun onSuccess(response: SUCCESS_RESPONSE?, resultReader: ResultReader<SUCCESS_RESPONSE>?)
+
+  fun onError(error: Throwable)
+
+  fun onError(error: String) = onError(Promise.createError(error))
 }

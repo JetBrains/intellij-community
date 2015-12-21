@@ -31,8 +31,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.Collection;
 import java.util.Set;
@@ -92,6 +94,11 @@ public class CacheUpdateRunner {
     }
   }
 
+  private static final BoundedTaskExecutor ourCacheUpdateExecutor = new BoundedTaskExecutor(
+    PooledThreadExecutor.INSTANCE,
+    indexingThreadCount()
+  );
+
   private static boolean processSomeFilesWhileUserIsInactive(@NotNull FileContentQueue queue,
                                                              @NotNull Consumer<VirtualFile> progressUpdater,
                                                              final boolean processInReadAction,
@@ -131,7 +138,7 @@ public class CacheUpdateRunner {
           AtomicBoolean ref = new AtomicBoolean();
           finishedRefs[i] = ref;
           Runnable process = new MyRunnable(innerIndicator, queue, ref, progressUpdater, processInReadAction, project, fileProcessor);
-          futures[i] = ApplicationManager.getApplication().executeOnPooledThread(process);
+          futures[i] = ourCacheUpdateExecutor.submit(process);
         }
         isFinished.set(waitForAll(finishedRefs, futures));
       }
@@ -146,7 +153,8 @@ public class CacheUpdateRunner {
   public static int indexingThreadCount() {
     int threadsCount = Registry.intValue("caches.indexerThreadsCount");
     if (threadsCount <= 0) {
-      threadsCount = Math.max(1, Math.min(PROC_COUNT - 1, 4));
+      int coresToLeaveForOtherActivity = ApplicationManager.getApplication().isUnitTestMode() ? 0 : 1;
+      threadsCount = Math.max(1, Math.min(PROC_COUNT - coresToLeaveForOtherActivity, 4));
     }
     return threadsCount;
   }
@@ -221,7 +229,7 @@ public class CacheUpdateRunner {
                 final VirtualFile file = fileContent.getVirtualFile();
                 try {
                   myProgressUpdater.consume(file);
-                  if (file.isValid() && !file.isDirectory() && !Boolean.TRUE.equals(file.getUserData(FAILED_TO_INDEX))) {
+                  if (!file.isDirectory() && !Boolean.TRUE.equals(file.getUserData(FAILED_TO_INDEX))) {
                     myProcessor.consume(fileContent);
                   }
                 }

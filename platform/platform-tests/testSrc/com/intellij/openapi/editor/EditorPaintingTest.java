@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -123,7 +122,6 @@ public class EditorPaintingTest extends AbstractEditorTest {
   }
 
   private void checkResult(@TestDataFile String expectedResultFileName) throws IOException {
-    myEditor.putUserData(EditorImpl.DO_DOCUMENT_UPDATE_TEST, Boolean.TRUE);
     myEditor.getSettings().setAdditionalLinesCount(0);
     myEditor.getSettings().setAdditionalColumnsCount(1);
     JComponent editorComponent = myEditor.getContentComponent();

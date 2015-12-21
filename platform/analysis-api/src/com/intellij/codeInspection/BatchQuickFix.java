@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -36,6 +37,6 @@ public interface BatchQuickFix<D extends CommonProblemDescriptor> {
    */
   void applyFix(@NotNull final Project project,
                 @NotNull final D[] descriptors,
-                final List<PsiElement> psiElementsToIgnore,
-                final Runnable refreshViews);
+                @NotNull final List<PsiElement> psiElementsToIgnore,
+                @Nullable final Runnable refreshViews);
 }

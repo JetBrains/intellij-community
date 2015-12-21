@@ -21,6 +21,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,6 +40,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -316,20 +318,16 @@ public class LocalFileSystemTest extends PlatformTestCase {
     }
 
     String parent = FileUtil.toSystemIndependentName(file.getParent());
-    VfsRootAccess.allowRootAccess(parent);
-    try {
-      VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
-      assertNotNull(virtualFile);
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), parent);
 
-      NewVirtualFileSystem fs = (NewVirtualFileSystem)virtualFile.getFileSystem();
-      FileAttributes attributes = fs.getAttributes(virtualFile);
-      assertNotNull(attributes);
-      assertEquals(FileAttributes.Type.FILE, attributes.type);
-      assertEquals(FileAttributes.HIDDEN, attributes.flags);
-    }
-    finally {
-      VfsRootAccess.disallowRootAccess(parent);
-    }
+    VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
+    assertNotNull(virtualFile);
+
+    NewVirtualFileSystem fs = (NewVirtualFileSystem)virtualFile.getFileSystem();
+    FileAttributes attributes = fs.getAttributes(virtualFile);
+    assertNotNull(attributes);
+    assertEquals(FileAttributes.Type.FILE, attributes.type);
+    assertEquals(FileAttributes.HIDDEN, attributes.flags);
   }
 
   public void testRefreshSeesLatestDirectoryContents() throws Exception {
@@ -692,5 +690,28 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertTrue(file.setLastModified(stamp));
     vFile.refresh(false, false);
     assertEquals(2, updated[0]);
+  }
+
+  public void testReadOnly() throws IOException {
+    File file = IoTestUtil.createTestFile("file.txt");
+    VirtualFile vFile = myFS.refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+    assertWritable(file, vFile, true);
+
+    vFile.setWritable(false);
+    assertWritable(file, vFile, false);
+    vFile.refresh(false, false);
+    assertWritable(file, vFile, false);
+
+    vFile.setWritable(true);
+    assertWritable(file, vFile, true);
+    vFile.refresh(false, false);
+    assertWritable(file, vFile, true);
+  }
+
+  private static void assertWritable(File file, VirtualFile vFile, boolean expected) {
+    assertEquals(expected, file.canWrite());
+    assertEquals(expected, ObjectUtils.assertNotNull(FileSystemUtil.getAttributes(file)).isWritable());
+    assertEquals(expected, vFile.isWritable());
   }
 }

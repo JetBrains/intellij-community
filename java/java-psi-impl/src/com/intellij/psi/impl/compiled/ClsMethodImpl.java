@@ -18,7 +18,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -307,17 +307,23 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   @Override
   @NotNull
   public PsiElement getNavigationElement() {
-    if (DumbService.isDumb(getProject())) return this;
-    
     for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
-      PsiElement navigationElement = customNavigationPolicy.getNavigationElement(this);
-      if (navigationElement != null) {
-        return navigationElement;
+      try {
+        PsiElement navigationElement = customNavigationPolicy.getNavigationElement(this);
+        if (navigationElement != null) {
+          return navigationElement;
+        }
       }
+      catch (IndexNotReadyException ignore) { }
     }
 
-    final PsiMethod method = getSourceMirrorMethod();
-    return method != null ? method.getNavigationElement() : this;
+    try {
+      final PsiMethod method = getSourceMirrorMethod();
+      return method != null ? method.getNavigationElement() : this;
+    }
+    catch (IndexNotReadyException e) {
+      return this;
+    }
   }
 
   @Override

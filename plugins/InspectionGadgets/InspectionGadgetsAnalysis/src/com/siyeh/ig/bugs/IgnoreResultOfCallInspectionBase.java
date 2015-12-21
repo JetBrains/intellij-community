@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,60 +21,51 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.MethodMatcher;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
+import java.util.Collections;
 
 public class IgnoreResultOfCallInspectionBase extends BaseInspection {
 
-  final List<String> methodNamePatterns = ContainerUtil.newArrayList();
-  final List<String> classNames = ContainerUtil.newArrayList();
   /**
    * @noinspection PublicField
    */
   public boolean m_reportAllNonLibraryCalls = false;
-  /**
-   * @noinspection PublicField
-   */
-  @NonNls public String callCheckString = "java.io.File,.*," +
-                                          "java.io.InputStream,read|skip|available|markSupported," +
-                                          "java.io.Writer,read|skip|ready|markSupported," +
-                                          "java.lang.Boolean,.*," +
-                                          "java.lang.Byte,.*," +
-                                          "java.lang.Character,.*," +
-                                          "java.lang.Double,.*," +
-                                          "java.lang.Float,.*," +
-                                          "java.lang.Integer,.*," +
-                                          "java.lang.Long,.*," +
-                                          "java.lang.Math,.*," +
-                                          "java.lang.Object,equals|hashCode|toString," +
-                                          "java.lang.Short,.*," +
-                                          "java.lang.StrictMath,.*," +
-                                          "java.lang.String,.*," +
-                                          "java.math.BigInteger,.*," +
-                                          "java.math.BigDecimal,.*," +
-                                          "java.net.InetAddress,.*," +
-                                          "java.net.URI,.*," +
-                                          "java.util.UUID,.*," +
-                                          "java.util.regex.Matcher,pattern|toMatchResult|start|end|group|groupCount|matches|find|lookingAt|quoteReplacement|replaceAll|replaceFirst|regionStart|regionEnd|hasTransparantBounds|hasAnchoringBounds|hitEnd|requireEnd," +
-                                          "java.util.regex.Pattern,.*";
-  Map<String, Pattern> patternCache = null;
+
+  protected final MethodMatcher myMethodMatcher;
 
   public IgnoreResultOfCallInspectionBase() {
-    parseString(callCheckString, classNames, methodNamePatterns);
+    myMethodMatcher = new MethodMatcher(true, "callCheckString")
+      .add("java.io.File", ".*")
+      .add("java.io.InputStream","read|skip|available|markSupported")
+      .add("java.io.Reader","read|skip|ready|markSupported")
+      .add("java.lang.Boolean",".*")
+      .add("java.lang.Byte",".*")
+      .add("java.lang.Character",".*")
+      .add("java.lang.Double",".*")
+      .add("java.lang.Float",".*")
+      .add("java.lang.Integer",".*")
+      .add("java.lang.Long",".*")
+      .add("java.lang.Math",".*")
+      .add("java.lang.Object","equals|hashCode|toString")
+      .add("java.lang.Short",".*")
+      .add("java.lang.StrictMath",".*")
+      .add("java.lang.String",".*")
+      .add("java.math.BigInteger",".*")
+      .add("java.math.BigDecimal",".*")
+      .add("java.net.InetAddress",".*")
+      .add("java.net.URI",".*")
+      .add("java.util.UUID",".*")
+      .add("java.util.regex.Matcher","pattern|toMatchResult|start|end|group|groupCount|matches|find|lookingAt|quoteReplacement|replaceAll|replaceFirst|regionStart|regionEnd|hasTransparantBounds|hasAnchoringBounds|hitEnd|requireEnd")
+      .add("java.util.regex.Pattern",".*")
+      .finishDefault();
   }
 
   @Override
@@ -100,13 +91,13 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
   @Override
   public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
-    parseString(callCheckString, classNames, methodNamePatterns);
+    myMethodMatcher.readSettings(element);
   }
 
   @Override
   public void writeSettings(@NotNull Element element) throws WriteExternalException {
-    callCheckString = formatString(classNames, methodNamePatterns);
     super.writeSettings(element);
+    myMethodMatcher.writeSettings(element);
   }
 
   @Override
@@ -149,56 +140,23 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         return;
       }
 
-      PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(method);
-      boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
-      if (anno != null && 
+      final PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(method);
+      final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
+      if (anno != null &&
           (honorInferred || !AnnotationUtil.isInferredAnnotation(anno)) && 
           Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"))) {
         registerMethodCallError(call, aClass);
         return;
       }
-
-      final PsiReferenceExpression methodExpression = call.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
-      if (methodName == null) {
-        return;
-      }
-      for (int i = 0; i < methodNamePatterns.size(); i++) {
-        final String methodNamePattern = methodNamePatterns.get(i);
-        if (!methodNamesMatch(methodName, methodNamePattern)) {
-          continue;
-        }
-        final String className = classNames.get(i);
-        if (!InheritanceUtil.isInheritor(aClass, className)) {
-          continue;
-        }
+      final PsiAnnotation anno2 =
+        AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton("javax.annotation.CheckReturnValue"));
+      if (anno2 != null) {
         registerMethodCallError(call, aClass);
+      }
+      if (!myMethodMatcher.matches(method)) {
         return;
       }
-    }
-
-    private boolean methodNamesMatch(String methodName, String methodNamePattern) {
-      Pattern pattern;
-      if (patternCache != null) {
-        pattern = patternCache.get(methodNamePattern);
-      }
-      else {
-        patternCache = ContainerUtilRt.newHashMap(methodNamePatterns.size());
-        pattern = null;
-      }
-      if (pattern == null) {
-        try {
-          pattern = Pattern.compile(methodNamePattern);
-          patternCache.put(methodNamePattern, pattern);
-        }
-        catch (PatternSyntaxException ignore) {
-          return false;
-        }
-        catch (NullPointerException ignore) {
-          return false;
-        }
-      }
-      return pattern.matcher(methodName).matches();
+      registerMethodCallError(call, aClass);
     }
   }
 }

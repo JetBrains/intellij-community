@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -30,6 +29,7 @@ import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -49,50 +49,82 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
-        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
         boolean hideExcludedFiles = Registry.is("ide.hide.excluded.files");
+        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+
         Module module = fileIndex.getModuleForFile(file, hideExcludedFiles);
         VirtualFile contentRoot = fileIndex.getContentRootForFile(file, hideExcludedFiles);
         if (module == null || contentRoot == null) return file.getPresentableUrl();
-        StringBuffer result = new StringBuffer();
-        result.append("[");
-        result.append(module.getName());
-        result.append("] ");
-        result.append(contentRoot.getName());
+
         String relativePath = VfsUtilCore.getRelativePath(file, contentRoot, File.separatorChar);
-        if (!relativePath.isEmpty()) {
-          result.append(File.separatorChar);
-          result.append(relativePath);
-        }
-        return result.toString();
+        assert relativePath != null;
+
+        return getPresentableRelativePathFor(module, contentRoot, relativePath);
       }
     });
   }
 
   @Override
   public String getPresentableRelativePath(@NotNull final ContentRevision fromRevision, @NotNull final ContentRevision toRevision) {
+    final FilePath fromPath = fromRevision.getFile();
+    final FilePath toPath = toRevision.getFile();
+
     // need to use parent path because the old file is already not there
-    FilePath fromPath = fromRevision.getFile();
-    FilePath toPath = toRevision.getFile();
+    final VirtualFile fromParent = getParentFile(fromPath);
+    final VirtualFile toParent = getParentFile(toPath);
 
-    if ((fromPath.getParentPath() == null) || (toPath.getParentPath() == null)) {
-      return null;
+    if (fromParent != null && toParent != null) {
+      String moduleResult = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Override
+        public String compute() {
+          final boolean hideExcludedFiles = Registry.is("ide.hide.excluded.files");
+          ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+
+          Module fromModule = fileIndex.getModuleForFile(fromParent, hideExcludedFiles);
+          Module toModule = fileIndex.getModuleForFile(toParent, hideExcludedFiles);
+          if (fromModule == null || toModule == null || fromModule.equals(toModule)) return null;
+
+          VirtualFile fromContentRoot = fileIndex.getContentRootForFile(fromParent, hideExcludedFiles);
+          if (fromContentRoot == null) return null;
+
+          String relativePath = VfsUtilCore.getRelativePath(fromParent, fromContentRoot, File.separatorChar);
+          assert relativePath != null;
+
+          relativePath += File.separatorChar;
+          if (!fromPath.getName().equals(toPath.getName())) {
+            relativePath += fromPath.getName();
+          }
+          return getPresentableRelativePathFor(fromModule, fromContentRoot, relativePath);
+        }
+      });
+      if (moduleResult != null) return moduleResult;
     }
 
-    final VirtualFile oldFile = fromPath.getParentPath().getVirtualFile();
-    final VirtualFile newFile = toPath.getParentPath().getVirtualFile();
-    if (oldFile != null && newFile != null) {
-      Module oldModule = ModuleUtilCore.findModuleForFile(oldFile, myProject);
-      Module newModule = ModuleUtilCore.findModuleForFile(newFile, myProject);
-      if (oldModule != newModule) {
-        return getPresentableRelativePathFor(oldFile);
-      }
-    }
-    final RelativePathCalculator calculator =
-      new RelativePathCalculator(toPath.getIOFile().getAbsolutePath(), fromPath.getIOFile().getAbsolutePath());
+    final RelativePathCalculator calculator = new RelativePathCalculator(toPath.getPath(), fromPath.getPath());
     calculator.execute();
     final String result = calculator.getResult();
-    return (result == null) ? null : result.replace("/", File.separator);
+    return result != null ? result.replace("/", File.separator) : null;
   }
 
+  @Nullable
+  private static VirtualFile getParentFile(@NotNull FilePath path) {
+    FilePath parentPath = path.getParentPath();
+    return parentPath != null ? parentPath.getVirtualFile() : null;
+  }
+
+  @NotNull
+  private static String getPresentableRelativePathFor(@NotNull final Module module,
+                                                      @NotNull final VirtualFile contentRoot,
+                                                      @NotNull final String relativePath) {
+    StringBuilder result = new StringBuilder();
+    result.append("[");
+    result.append(module.getName());
+    result.append("] ");
+    result.append(contentRoot.getName());
+    if (!relativePath.isEmpty()) {
+      result.append(File.separatorChar);
+      result.append(relativePath);
+    }
+    return result.toString();
+  }
 }

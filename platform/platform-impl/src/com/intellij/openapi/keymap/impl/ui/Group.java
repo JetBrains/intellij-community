@@ -151,6 +151,9 @@ public class Group implements KeymapGroup {
   }
 
   private String calcActionQualifiedPath(String id) {
+    if (!isRoot() && StringUtil.equals(id, myId)) {
+      return getName();
+    }
     for (Object child : myChildren) {
       if (child instanceof QuickList) {
         child = ((QuickList)child).getActionId();

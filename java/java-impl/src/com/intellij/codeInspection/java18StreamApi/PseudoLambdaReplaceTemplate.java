@@ -386,7 +386,9 @@ public class PseudoLambdaReplaceTemplate {
       lambdaExpression = convertClassTypeExpression(lambdaExpression);
       lambdaExpression = convertToJavaLambda(lambdaExpression);
     }
-    LOG.assertTrue(lambdaExpression != null);
+    if (lambdaExpression == null) {
+      return expression;
+    }
 
     final String lambdaExpressionText;
     final String elementText;

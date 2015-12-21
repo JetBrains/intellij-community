@@ -132,7 +132,10 @@ class AnchorElementInfo extends SelfElementInfo {
       if (anchor == null) anchor = element;
       myType = AnchorTypeInfo.obtainInfo(anchor, myType.getFileLanguage());
       setRange(anchor.getTextRange());
-      myMarkerCache.rangeChanged();
+      MarkerCache cache = myManager.getMarkerCache(getVirtualFile());
+      if (cache != null) {
+        cache.rangeChanged();
+      }
       myStubElementTypeAndId = pack(-1, null);
     }
   }
@@ -152,5 +155,10 @@ class AnchorElementInfo extends SelfElementInfo {
       switchToTree();
     }
     return super.getPsiRange();
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + ",stubId=" + getStubId();
   }
 }

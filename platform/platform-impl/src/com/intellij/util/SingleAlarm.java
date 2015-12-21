@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class SingleAlarm extends Alarm {
   private final Runnable task;
@@ -33,7 +32,7 @@ public class SingleAlarm extends Alarm {
     this(task, delay, Alarm.ThreadToUse.SWING_THREAD, parentDisposable);
   }
 
-  public SingleAlarm(@NotNull Runnable task, int delay, @NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
+  public SingleAlarm(@NotNull Runnable task, int delay, @NotNull ThreadToUse threadToUse, @NotNull Disposable parentDisposable) {
     super(threadToUse, parentDisposable);
 
     this.task = task;

@@ -480,7 +480,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       manager.addContent(content, index++);
       first = false;
     }
-    Disposer.register(this, newPane);
   }
 
   private void showPane(@NotNull AbstractProjectViewPane newPane) {
@@ -604,7 +603,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (pane.isInitiallyVisible() && !myId2Pane.containsKey(pane.getId())) {
         addProjectPane(pane);
       }
-      Disposer.register(this, pane);
     }
   }
 

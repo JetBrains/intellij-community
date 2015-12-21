@@ -30,12 +30,15 @@ import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
+import com.intellij.diff.impl.DiffSettingsHolder;
+import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,6 +48,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -73,6 +77,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
@@ -94,6 +99,7 @@ public class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
 
   @NotNull public static final String DIFF_CONFIG = StoragePathMacros.APP_CONFIG + "/diff.xml";
+  public static final int TITLE_GAP = JBUI.scale(2);
 
   //
   // Editor
@@ -169,7 +175,7 @@ public class DiffUtil {
 
     editor.putUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY, Boolean.TRUE);
 
-    editor.getSettings().setLineNumbersShown(true);
+    editor.getSettings().setShowIntentionBulb(false);
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
     editor.getGutterComponentEx().setShowDefaultGutterPopup(false);
 
@@ -338,15 +344,21 @@ public class DiffUtil {
     return result.toString();
   }
 
+  //
   // Titles
+  //
 
   @NotNull
   public static List<JComponent> createSimpleTitles(@NotNull ContentDiffRequest request) {
     List<String> titles = request.getContentTitles();
 
+    if (!ContainerUtil.exists(titles, Condition.NOT_NULL)) {
+      return Collections.nCopies(titles.size(), null);
+    }
+
     List<JComponent> components = new ArrayList<JComponent>(titles.size());
     for (String title : titles) {
-      components.add(createTitle(title));
+      components.add(createTitle(StringUtil.notNullize(title)));
     }
 
     return components;
@@ -377,7 +389,7 @@ public class DiffUtil {
 
     List<JComponent> result = new ArrayList<JComponent>(contents.size());
 
-    if (equalCharsets && equalSeparators && ContainerUtil.find(titles, Condition.NOT_NULL) == null) {
+    if (equalCharsets && equalSeparators && !ContainerUtil.exists(titles, Condition.NOT_NULL)) {
       return Collections.nCopies(titles.size(), null);
     }
 
@@ -431,7 +443,7 @@ public class DiffUtil {
 
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 4));
-    panel.add(createTitlePanel(title), BorderLayout.CENTER);
+    panel.add(new JBLabel(title).setCopyable(true), BorderLayout.CENTER);
     if (charset != null && separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
@@ -447,11 +459,6 @@ public class DiffUtil {
       panel.add(createSeparatorPanel(separator), BorderLayout.EAST);
     }
     return panel;
-  }
-
-  @NotNull
-  private static JComponent createTitlePanel(@NotNull String title) {
-    return CopyableLabel.create(title);
   }
 
   @NotNull
@@ -488,6 +495,29 @@ public class DiffUtil {
     }
     label.setForeground(color);
     return label;
+  }
+
+  @NotNull
+  public static List<JComponent> createSyncHeightComponents(@NotNull final List<JComponent> components) {
+    if (!ContainerUtil.exists(components, Condition.NOT_NULL)) return components;
+    List<JComponent> result = new ArrayList<JComponent>();
+    for (int i = 0; i < components.size(); i++) {
+      result.add(new SyncHeightComponent(components, i));
+    }
+    return result;
+  }
+
+  @NotNull
+  public static JComponent createStackedComponents(@NotNull List<JComponent> components, int gap) {
+    JPanel panel = new JPanel();
+    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+    for (int i = 0; i < components.size(); i++) {
+      if (i != 0) panel.add(Box.createVerticalStrut(JBUI.scale(gap)));
+      panel.add(components.get(i));
+    }
+
+    return panel;
   }
 
   //
@@ -560,10 +590,6 @@ public class DiffUtil {
     final ThreeSide side2 = chunks[2] != null ? ThreeSide.RIGHT : ThreeSide.BASE;
     CharSequence chunk1 = side1.select(chunks);
     CharSequence chunk2 = side2.select(chunks);
-
-    if (chunks[1] != null && isChunksEquals(chunk1, chunk2, comparisonPolicy)) {
-      return null; // unmodified - deleted
-    }
 
     List<DiffFragment> wordConflicts = ByWord.compare(chunk1, chunk2, comparisonPolicy, indicator);
 
@@ -791,8 +817,8 @@ public class DiffUtil {
 
   @NotNull
   public static TextDiffType getLineDiffType(@NotNull LineFragment fragment) {
-    boolean left = fragment.getEndOffset1() != fragment.getStartOffset1() || fragment.getStartLine1() != fragment.getEndLine1();
-    boolean right = fragment.getEndOffset2() != fragment.getStartOffset2() || fragment.getStartLine2() != fragment.getEndLine2();
+    boolean left = fragment.getStartLine1() != fragment.getEndLine1();
+    boolean right = fragment.getStartLine2() != fragment.getEndLine2();
     return getType(left, right);
   }
 
@@ -859,6 +885,7 @@ public class DiffUtil {
       myUnderBulkUpdate = underBulkUpdate;
     }
 
+    @Override
     @CalledInAwt
     public final void run() {
       if (!makeWritable(myProject, myDocument)) {
@@ -868,6 +895,7 @@ public class DiffUtil {
       }
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
             @Override
@@ -915,8 +943,9 @@ public class DiffUtil {
       return true;
     }
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file != null && file.isInLocalFileSystem()) {
-      return true;
+    if (file != null && file.isValid() && file.isInLocalFileSystem()) {
+      // decompiled file can be writable, but Document with decompiled content is still read-only
+      return !file.isWritable();
     }
     return false;
   }
@@ -925,8 +954,8 @@ public class DiffUtil {
   public static boolean makeWritable(@Nullable Project project, @NotNull Document document) {
     if (document.isWritable()) return true;
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file == null) return false;
-    return makeWritable(project, file);
+    if (file == null || !file.isValid()) return false;
+    return makeWritable(project, file) && document.isWritable();
   }
 
   @CalledInAwt
@@ -1028,6 +1057,7 @@ public class DiffUtil {
     }
   }
 
+  @NotNull
   public static List<JComponent> getCustomNotifications(@NotNull DiffContext context, @NotNull DiffRequest request) {
     List<JComponent> requestComponents = request.getUserData(DiffUserDataKeys.NOTIFICATIONS);
     List<JComponent> contextComponents = context.getUserData(DiffUserDataKeys.NOTIFICATIONS);
@@ -1071,6 +1101,25 @@ public class DiffUtil {
       if (data != null) return data;
     }
     return null;
+  }
+
+  public static <T> void putDataKey(@NotNull UserDataHolder holder, @NotNull DataKey<T> key, @Nullable T value) {
+    DataProvider dataProvider = holder.getUserData(DiffUserDataKeys.DATA_PROVIDER);
+    if (!(dataProvider instanceof GenericDataProvider)) {
+      dataProvider = new GenericDataProvider(dataProvider);
+      holder.putUserData(DiffUserDataKeys.DATA_PROVIDER, dataProvider);
+    }
+    ((GenericDataProvider)dataProvider).putData(key, value);
+  }
+
+  @NotNull
+  public static DiffSettings getDiffSettings(@NotNull DiffContext context) {
+    DiffSettings settings = context.getUserData(DiffSettingsHolder.KEY);
+    if (settings == null) {
+      settings = DiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE));
+      context.putUserData(DiffSettingsHolder.KEY, settings);
+    }
+    return settings;
   }
 
   //
@@ -1152,6 +1201,33 @@ public class DiffUtil {
       if (side == mySide1) return myFragment.getEndOffset1();
       if (side == mySide2) return myFragment.getEndOffset2();
       return 0;
+    }
+  }
+
+  private static class SyncHeightComponent extends JPanel {
+    @NotNull private final List<JComponent> myComponents;
+
+    public SyncHeightComponent(@NotNull List<JComponent> components, int index) {
+      super(new BorderLayout());
+      myComponents = components;
+      JComponent delegate = components.get(index);
+      if (delegate != null) add(delegate, BorderLayout.CENTER);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      size.height = getPreferredHeight();
+      return size;
+    }
+
+    private int getPreferredHeight() {
+      int height = 0;
+      for (JComponent component : myComponents) {
+        if (component == null) continue;
+        height = Math.max(height, component.getPreferredSize().height);
+      }
+      return height;
     }
   }
 }

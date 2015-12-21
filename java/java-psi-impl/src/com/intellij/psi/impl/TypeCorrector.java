@@ -167,7 +167,7 @@ class TypeCorrector extends PsiTypeMapper {
     public PsiCorrectedClassType(LanguageLevel languageLevel,
                                  PsiClassType delegate,
                                  CorrectedResolveResult resolveResult) {
-      super(languageLevel, delegate.getAnnotations());
+      super(languageLevel, delegate.getAnnotationProvider());
       myDelegate = delegate;
       myResolveResult = resolveResult;
     }

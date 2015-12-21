@@ -24,8 +24,9 @@ import org.jetbrains.annotations.NonNls;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DisposerTest extends TestCase {
+import static com.intellij.openapi.util.Disposer.newDisposable;
 
+public class DisposerTest extends TestCase {
   private MyDisposable myRoot;
 
   private MyDisposable myFolder1;
@@ -220,7 +221,7 @@ public class DisposerTest extends TestCase {
     private boolean myDisposed;
     protected String myName;
 
-    MyDisposable(@NonNls String aName) {
+    private MyDisposable(@NonNls String aName) {
       myName = aName;
     }
 
@@ -299,17 +300,28 @@ public class DisposerTest extends TestCase {
     }
   }
 
-  private static Disposable newDisposable(final String name) {
-    return new Disposable() {
-      @Override
-      public void dispose() {
 
-      }
+  public void testMustNotRegisterWithAlreadyDisposed() {
+    Disposable disposable = Disposer.newDisposable();
+    Disposer.register(myRoot, disposable);
 
-      @Override
-      public String toString() {
-        return name;
-      }
-    };
+    Disposer.dispose(disposable);
+
+    try {
+      Disposer.register(disposable, Disposer.newDisposable());
+      fail("Must not be able to register with already disposed parent");
+    }
+    catch (IncorrectOperationException ignored) {
+
+    }
+  }
+
+  public void testRegisterThenDisposeThenRegisterAgain() {
+    Disposable disposable = Disposer.newDisposable();
+    Disposer.register(myRoot, disposable);
+
+    Disposer.dispose(disposable);
+    Disposer.register(myRoot, disposable);
+    Disposer.register(disposable, Disposer.newDisposable());
   }
 }

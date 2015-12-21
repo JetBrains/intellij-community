@@ -65,7 +65,8 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
   public void evaluate(@NotNull final XExpression expression,
                        @NotNull final XEvaluationCallback callback,
                        @Nullable XSourcePosition expressionPosition) {
-    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext()) {
+    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext(),
+                                                                              myStackFrame.getStackFrameProxy().threadProxy()) {
       @Override
       public Priority getPriority() {
         return Priority.NORMAL;

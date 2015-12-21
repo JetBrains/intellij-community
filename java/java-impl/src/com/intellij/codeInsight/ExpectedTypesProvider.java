@@ -627,7 +627,7 @@ public class ExpectedTypesProvider {
     public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expr) {
       PsiExpression[] operands = expr.getOperands();
       final int index = Arrays.asList(operands).indexOf(myExpr);
-      assert index >= 0;
+      if (index < 0) return; // broken syntax
 
       if (myForCompletion && index == 0) {
         final MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider, myVoidable, myUsedAfter);

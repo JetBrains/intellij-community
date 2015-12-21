@@ -100,7 +100,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     interval.setValid(true);
     RMNode<T> node = (RMNode<T>)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, layer);
 
-    if (DEBUG && !ApplicationInfoImpl.isInPerformanceTest() && node.intervals.size() > DUPLICATE_LIMIT) {
+    if (DEBUG && node.intervals.size() > DUPLICATE_LIMIT && !ApplicationInfoImpl.isInPerformanceTest() && ApplicationManager.getApplication().isUnitTestMode()) {
       l.readLock().lock();
       try {
         String msg = errMsg(node);
@@ -115,6 +115,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return node;
   }
   private String errMsg(@NotNull RMNode<T> node) {
+    System.gc();
     final AtomicInteger alive = new AtomicInteger();
     node.processAliveKeys(new Processor<Object>() {
       @Override
@@ -237,8 +238,9 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
               // merge happened
               for (Getter<T> key : keys) {
                 T interval = key.get();
-                if (interval == null) continue;
-                insertedNode.addInterval(interval);
+                if (interval != null) {
+                  insertedNode.addInterval(interval);
+                }
               }
             }
             assert marker.isValid();
@@ -385,7 +387,16 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
         node.changeDelta(shift);
         node.setValid(true);
         pushDelta(node);
-        findOrInsert(node);
+        IntervalNode<T> inserted = findOrInsert(node);
+        if (inserted != node) {
+          // the node already exists, reuse
+          for (Getter<T> interval : node.intervals) {
+            T t = interval.get();
+            if (t != null) {
+              inserted.addInterval(t);
+            }
+          }
+        }
       }
     }
     finally {

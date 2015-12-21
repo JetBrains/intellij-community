@@ -43,10 +43,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.containers.ContainerUtilRt.newHashSet;
@@ -111,15 +108,18 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
           final boolean varArgs = psiMethod.isVarArgs();
           final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
           final GlobalSearchScope methodUseScope = convertToGlobalScope(project, psiMethod.getUseScope());
-          fileBasedIndex.processValues(JavaFunctionalExpressionIndex.JAVA_FUNCTIONAL_EXPRESSION_INDEX_ID, psiMethod.getName(), null,
-                                       //functional expressions checker: number and type of parameters at call site should correspond to
-                                       //candidate method currently check
-                                       new SuitableFilesProcessor(filesToProcess,
-                                                                  expectedFunExprParamsCount,
-                                                                  parametersCount,
-                                                                  varArgs,
-                                                                  parameters),
-                                       useScope.intersectWith(methodUseScope));
+          final LinkedHashMap<VirtualFile, Set<JavaFunctionalExpressionIndex.IndexHolder>> holders = new LinkedHashMap<VirtualFile, Set<JavaFunctionalExpressionIndex.IndexHolder>>();
+          //functional expressions checker: number and type of parameters at call site should correspond to candidate method currently check
+          final SuitableFilesProcessor processor = new SuitableFilesProcessor(holders, expectedFunExprParamsCount, parametersCount, varArgs, parameters);
+          fileBasedIndex.processValues(JavaFunctionalExpressionIndex.JAVA_FUNCTIONAL_EXPRESSION_INDEX_ID, psiMethod.getName(), null, processor, useScope.intersectWith(methodUseScope));
+          for (Map.Entry<VirtualFile, Set<JavaFunctionalExpressionIndex.IndexHolder>> entry : holders.entrySet()) {
+            for (JavaFunctionalExpressionIndex.IndexHolder holder : entry.getValue()) {
+              if (processor.canBeFunctional(holder)) {
+                filesToProcess.add(entry.getKey());
+                break;
+              }
+            }
+          }
         }
       });
     }
@@ -343,18 +343,18 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   }
 
   private static class SuitableFilesProcessor implements FileBasedIndex.ValueProcessor<Collection<JavaFunctionalExpressionIndex.IndexHolder>> {
-    private final LinkedHashSet<VirtualFile> myFilesToProcess;
+    private final Map<VirtualFile, Set<JavaFunctionalExpressionIndex.IndexHolder>> myHolders;
     private final int myExpectedFunExprParamsCount;
     private final int myParametersCount;
     private final boolean myVarArgs;
     private final PsiParameter[] myParameters;
 
-    public SuitableFilesProcessor(LinkedHashSet<VirtualFile> filesToProcess,
+    public SuitableFilesProcessor(Map<VirtualFile, Set<JavaFunctionalExpressionIndex.IndexHolder>> holders,
                                   int expectedFunExprParamsCount,
                                   int parametersCount,
                                   boolean varArgs,
                                   PsiParameter[] parameters) {
-      myFilesToProcess = filesToProcess;
+      myHolders = holders;
       myExpectedFunExprParamsCount = expectedFunExprParamsCount;
       myParametersCount = parametersCount;
       myVarArgs = varArgs;
@@ -363,8 +363,10 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
     @Override
     public boolean process(VirtualFile file, Collection<JavaFunctionalExpressionIndex.IndexHolder> holders) {
+      Set<JavaFunctionalExpressionIndex.IndexHolder> savedHolders = myHolders.get(file);
       for (JavaFunctionalExpressionIndex.IndexHolder holder : holders) {
-        if (holder.getLambdaParamsNumber() == myExpectedFunExprParamsCount) {
+        final int lambdaParamsNumber = holder.getLambdaParamsNumber();
+        if (lambdaParamsNumber == myExpectedFunExprParamsCount || lambdaParamsNumber == -1) {
           final boolean suitableParamNumbers;
           if (myVarArgs) {
             suitableParamNumbers = holder.getMethodArgsLength() >= myParametersCount - 1;
@@ -372,8 +374,12 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
           else {
             suitableParamNumbers = holder.getMethodArgsLength() == myParametersCount;
           }
-          if (suitableParamNumbers && canBeFunctional(holder)) {
-            myFilesToProcess.add(file);
+          if (suitableParamNumbers) {
+            if (savedHolders == null) {
+              savedHolders = new LinkedHashSet<JavaFunctionalExpressionIndex.IndexHolder>();
+              myHolders.put(file, savedHolders);
+            }
+            savedHolders.add(holder);
             break;
           }
         }

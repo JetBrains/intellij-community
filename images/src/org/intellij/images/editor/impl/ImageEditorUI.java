@@ -74,6 +74,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   private static final String IMAGE_PANEL = "image";
   @NonNls
   private static final String ERROR_PANEL = "error";
+  @NonNls
+  private static final String ZOOM_FACTOR_PROP = "ImageEditor.zoomFactor";
 
   private final @Nullable ImageEditor editor;
   private final DeleteProvider deleteProvider;
@@ -143,6 +145,11 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     ActionToolbar actionToolbar = actionManager.createActionToolbar(
       ImageEditorActions.ACTION_PLACE, actionGroup, true
     );
+    
+    // Make sure toolbar is 'ready' before it's added to component hierarchy 
+    // to prevent ActionToolbarImpl.updateActionsImpl(boolean, boolean) from increasing popup size unnecessarily
+    actionToolbar.updateActionsImmediately();
+    
     actionToolbar.setTargetComponent(this);
 
     JComponent toolbarPanel = actionToolbar.getComponent();
@@ -343,6 +350,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     }
 
     public void setZoomFactor(double zoomFactor) {
+      double oldZoomFactor = getZoomFactor();
+
       // Change current size
       Dimension size = imageComponent.getCanvasSize();
       BufferedImage image = imageComponent.getDocument().getValue();
@@ -354,6 +363,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       revalidate();
       repaint();
       myZoomLevelChanged = false;
+
+      imageComponent.firePropertyChange(ZOOM_FACTOR_PROP, oldZoomFactor, zoomFactor);
     }
 
     private double getMinimumZoomFactor() {

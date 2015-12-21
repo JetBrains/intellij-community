@@ -21,13 +21,10 @@ import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * User: anna
@@ -46,15 +43,6 @@ public class EditScopesDialog extends SettingsDialog {
     myProject = project;
     myConfigurable = configurable;
     myCheckShared = checkShared;
-  }
-
-  @Override
-  protected JComponent createCenterPanel() {
-    JComponent component = super.createCenterPanel();
-    if (!Registry.is("ide.new.settings.view")) {
-      component.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    }
-    return component;
   }
 
   @Override

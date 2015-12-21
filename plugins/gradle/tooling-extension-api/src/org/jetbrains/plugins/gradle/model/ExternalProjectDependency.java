@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
+import java.util.Collection;
+
 /**
  * @author Vladislav.Soroka
  * @since 7/14/2014
@@ -23,4 +25,5 @@ public interface ExternalProjectDependency extends ExternalDependency {
 
   String getProjectPath();
 
+  Collection<String> getProjectDependencyArtifacts();
 }

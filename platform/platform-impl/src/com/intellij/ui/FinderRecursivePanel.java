@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -409,6 +410,10 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     if (CommonDataKeys.NAVIGATABLE.is(dataId) && selectedValue instanceof Navigatable) {
       return selectedValue;
     }
+    if (LangDataKeys.MODULE.is(dataId) && selectedValue instanceof Module) {
+      return selectedValue;
+    }
+
     if (selectedValue instanceof DataProvider) {
       return ((DataProvider)selectedValue).getData(dataId);
     }

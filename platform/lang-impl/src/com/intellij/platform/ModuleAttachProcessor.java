@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
   @Override
   public boolean attachToProject(Project project, File projectDir, @Nullable ProjectOpenedCallback callback) {
     if (!projectDir.exists()) {
-      Project newProject = ((ProjectManagerEx)ProjectManager.getInstance())
+      final Project newProject = ((ProjectManagerEx)ProjectManager.getInstance())
         .newProject(projectDir.getParentFile().getName(), projectDir.getParent(), true, false);
       if (newProject == null) {
         return false;
@@ -63,13 +63,12 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
       final VirtualFile baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDir.getParent());
       PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir, newProject);
       newProject.save();
-      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(null);
-      try {
-        Disposer.dispose(newProject);
-      }
-      finally {
-        token.finish();
-      }
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          Disposer.dispose(newProject);
+        }
+      });
     }
     final String[] files = projectDir.list();
     if (files != null) {

@@ -155,12 +155,7 @@ public class MavenUtil {
       r.run();
     }
     else {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        r.run();
-      }
-      else {
-        ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(r, p), state);
-      }
+      ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(r, p), state);
     }
   }
   
@@ -330,7 +325,7 @@ public class MavenUtil {
         if (!Comparing.equal(modulePath.getParent(), parentModulePath)) {
           String relativePath = VfsUtil.getPath(file, parentModulePath, '/');
           if (relativePath != null) {
-            if (relativePath.endsWith("/")) relativePath = relativePath.substring(0, relativePath.length() - 1);
+            relativePath = StringUtil.trimEnd(relativePath, "/");
 
             conditions.setProperty("HAS_RELATIVE_PATH", "true");
             properties.setProperty("PARENT_RELATIVE_PATH", relativePath);

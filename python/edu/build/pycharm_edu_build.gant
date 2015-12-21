@@ -116,6 +116,10 @@ target('default': "Build artifacts") {
   }
 
   bundledJDKs()
+  //EDU installation with a custom page dialog
+  ant.copy(file: "$ch/python/edu/build/desktop.ini", tofile: "$ch/build/conf/nsis/desktop.ini", overwrite: "true")
+  ant.copy(file: "$ch/python/edu/build/idea.nsi",    tofile: "$ch/build/conf/nsis/idea.nsi", overwrite: "true")
+
   ant.patternset(id: "resources.included") {
     include(name: "**/*.properties")
     include(name: "fileTemplates/**/*")
@@ -147,22 +151,13 @@ target('default': "Build artifacts") {
 
   def extraArgs = ["build.code": "pycharm${buildName}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
   def sitFileName = "pycharm${buildName}"
-  ant.copy(file: "${paths.artifacts}/pycharm${buildName}.mac.zip", tofile: "${paths.artifacts}/${sitFileName}.sit")
+  ant.copy(file: "${paths.artifacts}/pycharm${buildName}.mac.zip", tofile: "${paths.artifacts}/${sitFileName}-no-jdk.sit")
 
-  signMacZip("pycharm", extraArgs)
-  notifyArtifactBuilt("${paths.artifacts}/${sitFileName}.sit")
-  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs)
+  signMacZip("pycharm", extraArgs + ["sitFileName": "${sitFileName}-no-jdk"])
+  notifyArtifactBuilt("${paths.artifacts}/${sitFileName}-no-jdk.sit")
+  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "${sitFileName}-no-jdk"])
 
-  if (p("jdk.bundled.mac") != "false" && new File(macJDK).exists()) {
-    sitFileName = "${sitFileName}-jdk-bundled"
-    ant.copy(file: "${paths.artifacts}/pycharm${buildName}.mac.zip", tofile: "${paths.artifacts}/${sitFileName}.sit")
-    signMacZip("pycharm", extraArgs + ["sitFileName": "${sitFileName}", "jdk_archive_name": macJDK])
-    buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "${sitFileName}"])
-  }
-
-  //custom jdk bundled
-  if (p("jdk.custom.mac") == "true" && new File(macCustomJDK).exists()) {
-    sitFileName = "pycharm${buildName}-custom-jdk-bundled"
+  if (p("jdk.mac") != "false" && new File(macCustomJDK).exists()) {
     ant.copy(file: "${paths.artifacts}/pycharm${buildName}.mac.zip", tofile: "${paths.artifacts}/${sitFileName}.sit")
     signMacZip("pycharm", extraArgs + ["sitFileName": "${sitFileName}", "jdk_archive_name": macCustomJDK])
     buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "${sitFileName}"])
@@ -213,16 +208,16 @@ public layoutEducational(String classesPath, Set usedJars) {
                    appInfo, "$pythonEduHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
   signExecutableFiles("${paths.distWin}/bin")
 
-  buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/bundled.win.jdk"])
+  buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.win"])
 
   buildNSIS([paths.distAll, paths.distWin],
             "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
             "pycharmEDU-", false, true, system_selector)
 
   String tarRoot = isEap() ? "pycharm-edu-$buildNumber" : "pycharm-edu-${p("component.version.major")}.${p("component.version.minor")}"
-  buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
-  if (p("jdk.bundled.linux") != "false") {
-    buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}-jdk-bundled.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/bundled.linux.jdk"], ["jre/jre/bin/*"])
+  buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}-no-jdk.tar", [paths.distAll, paths.distUnix])
+  if (p("jdk.linux") != "false") {
+    buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/jdk.linux"], ["jre/jre/bin/*"])
   }
 
 
@@ -440,7 +435,7 @@ private layoutMac(Map _args, String target) {
   }
 
   Map args = new HashMap(_args)
-  args.icns = "$pythonCommunityHome/resources/PyCharmCore.icns"
+  args.icns = "$pythonCommunityHome/edu/resources/PyCharmEdu.icns"
   args.bundleIdentifier = "com.jetbrains.pycharm"
   args.platform_prefix = "PyCharmEdu"
   args.help_id = "PE"

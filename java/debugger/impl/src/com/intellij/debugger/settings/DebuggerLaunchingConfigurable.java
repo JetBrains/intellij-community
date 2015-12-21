@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
   private JRadioButton myRbShmem;
   private StateRestoringCheckBox myCbForceClassicVM;
   private JCheckBox myCbDisableJIT;
+  private JCheckBox myCbShowAlternativeSource;
 
   @Override
   public void reset(@NotNull DebuggerSettings settings) {
@@ -48,6 +49,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     }
     myCbForceClassicVM.setSelected(settings.FORCE_CLASSIC_VM);
     myCbDisableJIT.setSelected(settings.DISABLE_JIT);
+    myCbShowAlternativeSource.setSelected(settings.SHOW_ALTERNATIVE_SOURCE);
   }
 
   @Override
@@ -64,6 +66,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     }
     settings.FORCE_CLASSIC_VM = myCbForceClassicVM.isSelectedWhenSelectable();
     settings.DISABLE_JIT = myCbDisableJIT.isSelected();
+    settings.SHOW_ALTERNATIVE_SOURCE = myCbShowAlternativeSource.isSelected();
   }
 
   @Override
@@ -78,6 +81,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
   public JComponent getComponent() {
     myCbForceClassicVM = new StateRestoringCheckBox(DebuggerBundle.message("label.debugger.launching.configurable.force.classic.vm"));
     myCbDisableJIT = new JCheckBox(DebuggerBundle.message("label.debugger.launching.configurable.disable.jit"));
+    myCbShowAlternativeSource = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.show.alternative.source"));
     myRbSocket = new JRadioButton(DebuggerBundle.message("label.debugger.launching.configurable.socket"));
     myRbShmem = new JRadioButton(DebuggerBundle.message("label.debugger.launching.configurable.shmem"));
 
@@ -96,6 +100,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     panel.add(transportPanel);
     panel.add(myCbForceClassicVM);
     panel.add(myCbDisableJIT);
+    panel.add(myCbShowAlternativeSource);
 
     JPanel result = new JPanel(new BorderLayout());
     result.add(panel, BorderLayout.NORTH);

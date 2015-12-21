@@ -400,16 +400,18 @@ class PyDBFrame:
                                 if val is not None:
                                     thread.additionalInfo.message = val
 
-                        if event == 'call':
-                            if hasattr(frame, 'f_back'):
-                                back = frame.f_back
-                                if back is not None:
-                                    # When we start debug session, we call execfile in pydevd run function. It produces an additional
-                                    # 'call' event for tracing and we stop on the first line of code twice.
-                                    base = basename(back.f_code.co_filename)
-                                    if (base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]) or \
-                                            (base == DEBUG_START_PY3K[0] and back.f_code.co_name == DEBUG_START_PY3K[1]):
-                                        stop = False
+                        if not main_debugger.first_breakpoint_reached:
+                            if event == 'call':
+                                if hasattr(frame, 'f_back'):
+                                    back = frame.f_back
+                                    if back is not None:
+                                        # When we start debug session, we call execfile in pydevd run function. It produces an additional
+                                        # 'call' event for tracing and we stop on the first line of code twice.
+                                        back_filename, base = GetFilenameAndBase(back)
+                                        if (base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]) or \
+                                                (base == DEBUG_START_PY3K[0] and back.f_code.co_name == DEBUG_START_PY3K[1]):
+                                            stop = False
+                                            main_debugger.first_breakpoint_reached = True
                 if stop:
                     self.setSuspend(thread, CMD_SET_BREAK)
                 elif flag and plugin_manager is not None:
@@ -518,7 +520,7 @@ class PyDBFrame:
                             #When we get to the pydevd run function, the debugging has actually finished for the main thread
                             #(note that it can still go on for other threads, but for this one, we just make it finish)
                             #So, just setting it to None should be OK
-                            base = basename(back.f_code.co_filename)
+                            back_filename, base = GetFilenameAndBase(back)
                             if base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]:
                                 back = None
 
@@ -537,6 +539,8 @@ class PyDBFrame:
                             info.pydev_step_cmd = None
                             info.pydev_state = STATE_RUN
 
+            except KeyboardInterrupt:
+                raise
             except:
                 try:
                     traceback.print_exc()

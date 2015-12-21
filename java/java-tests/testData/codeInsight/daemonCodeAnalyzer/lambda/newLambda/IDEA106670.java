@@ -34,7 +34,7 @@ class Test1111 {
   }
 
   public void test(I<?> i) {
-      bar<error descr="'bar(Test1111.I<? super java.lang.Object>)' in 'Test1111' cannot be applied to '(Test1111.I<capture<?>>)'">(i)</error>;
+      bar(i);
   }
 
   public static <A> void bar(I<? super A> i) {}

@@ -1,12 +1,20 @@
 package com.siyeh.ig.abstraction;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class CastToConcreteClassInspectionTest extends IGInspectionTestCase {
+public class CastToConcreteClassInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    final CastToConcreteClassInspection tool = new CastToConcreteClassInspection();
-    tool.ignoreInEquals = true;
-    doTest("com/siyeh/igtest/abstraction/cast_to_concrete_class", tool);
+  public void testCastToConcreteClass() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    final CastToConcreteClassInspection inspection = new CastToConcreteClassInspection();
+    inspection.ignoreInEquals = true;
+    return inspection;
   }
 }

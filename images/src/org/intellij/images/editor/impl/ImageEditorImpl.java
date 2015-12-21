@@ -15,15 +15,18 @@
  */
 package org.intellij.images.editor.impl;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
+import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,125 +37,134 @@ import javax.swing.*;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
-    private final Project project;
-    private final VirtualFile file;
-    private final ImageEditorUI editorUI;
-    private boolean disposed;
+final class ImageEditorImpl implements ImageEditor {
+  private final Project project;
+  private final VirtualFile file;
+  private final ImageEditorUI editorUI;
+  private boolean disposed;
 
-    ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file) {
-        this.project = project;
-        this.file = file;
+  ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file) {
+    this.project = project;
+    this.file = file;
 
-        editorUI = new ImageEditorUI(this);
+    editorUI = new ImageEditorUI(this);
+    Disposer.register(this, editorUI);
 
-        VirtualFileManager.getInstance().addVirtualFileListener(this);
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+      @Override
+      public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
+        ImageEditorImpl.this.propertyChanged(event);
+      }
 
-        setValue(file);
+      @Override
+      public void contentsChanged(@NotNull VirtualFileEvent event) {
+        ImageEditorImpl.this.contentsChanged(event);
+      }
+    }, this);
+
+    setValue(file);
+  }
+
+  private void setValue(VirtualFile file) {
+    try {
+      editorUI.setImage(IfsUtil.getImage(file), IfsUtil.getFormat(file));
     }
+    catch (Exception e) {
+      //     Error loading image file
+      editorUI.setImage(null, null);
+    }
+  }
 
-    private void setValue(VirtualFile file) {
-        try {
-            editorUI.setImage(IfsUtil.getImage(file), IfsUtil.getFormat(file));
+  public boolean isValid() {
+    ImageDocument document = editorUI.getImageComponent().getDocument();
+    return document.getValue() != null;
+  }
+
+  public ImageEditorUI getComponent() {
+    return editorUI;
+  }
+
+  public JComponent getContentComponent() {
+    return editorUI.getImageComponent();
+  }
+
+  @NotNull
+  public VirtualFile getFile() {
+    return file;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return project;
+  }
+
+  public ImageDocument getDocument() {
+    return editorUI.getImageComponent().getDocument();
+  }
+
+  public void setTransparencyChessboardVisible(boolean visible) {
+    editorUI.getImageComponent().setTransparencyChessboardVisible(visible);
+    editorUI.repaint();
+  }
+
+  public boolean isTransparencyChessboardVisible() {
+    return editorUI.getImageComponent().isTransparencyChessboardVisible();
+  }
+
+  public boolean isEnabledForActionPlace(String place) {
+    // Disable for thumbnails action
+    return !ThumbnailViewActions.ACTION_PLACE.equals(place);
+  }
+
+  public void setGridVisible(boolean visible) {
+    editorUI.getImageComponent().setGridVisible(visible);
+    editorUI.repaint();
+  }
+
+  public boolean isGridVisible() {
+    return editorUI.getImageComponent().isGridVisible();
+  }
+
+  public boolean isDisposed() {
+    return disposed;
+  }
+
+  public ImageZoomModel getZoomModel() {
+    return editorUI.getZoomModel();
+  }
+
+  public void dispose() {
+    disposed = true;
+  }
+
+  void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
+    if (file.equals(event.getFile())) {
+      // Change document
+      file.refresh(true, false, new Runnable() {
+        public void run() {
+          if (ImageFileTypeManager.getInstance().isImage(file)) {
+            setValue(file);
+          }
+          else {
+            setValue(null);
+            // Close editor
+            FileEditorManager editorManager = FileEditorManager.getInstance(project);
+            editorManager.closeFile(file);
+          }
         }
-        catch (Exception e) {
-            //     Error loading image file
-            editorUI.setImage(null, null);
+      });
+    }
+  }
+
+  void contentsChanged(@NotNull VirtualFileEvent event) {
+    if (file.equals(event.getFile())) {
+      // Change document
+      Runnable postRunnable = new Runnable() {
+        public void run() {
+          setValue(file);
         }
+      };
+      RefreshQueue.getInstance().refresh(true, false, postRunnable, ModalityState.current(), file);
     }
-
-    public boolean isValid() {
-        ImageDocument document = editorUI.getImageComponent().getDocument();
-        return document.getValue() != null;
-    }
-
-    public JComponent getComponent() {
-        return editorUI;
-    }
-
-    public JComponent getContentComponent() {
-        return editorUI.getImageComponent();
-    }
-
-    @NotNull
-    public VirtualFile getFile() {
-        return file;
-    }
-
-    @NotNull
-    public Project getProject() {
-        return project;
-    }
-
-    public ImageDocument getDocument() {
-        return editorUI.getImageComponent().getDocument();
-    }
-
-    public void setTransparencyChessboardVisible(boolean visible) {
-        editorUI.getImageComponent().setTransparencyChessboardVisible(visible);
-        editorUI.repaint();
-    }
-
-    public boolean isTransparencyChessboardVisible() {
-        return editorUI.getImageComponent().isTransparencyChessboardVisible();
-    }
-
-    public boolean isEnabledForActionPlace(String place) {
-        // Disable for thumbnails action
-        return !ThumbnailViewActions.ACTION_PLACE.equals(place);
-    }
-
-    public void setGridVisible(boolean visible) {
-        editorUI.getImageComponent().setGridVisible(visible);
-        editorUI.repaint();
-    }
-
-    public boolean isGridVisible() {
-        return editorUI.getImageComponent().isGridVisible();
-    }
-
-    public boolean isDisposed() {
-        return disposed;
-    }
-
-    public ImageZoomModel getZoomModel() {
-        return editorUI.getZoomModel();
-    }
-
-    public void dispose() {
-        Disposer.dispose(editorUI);
-        VirtualFileManager.getInstance().removeVirtualFileListener(this);
-        disposed = true;
-    }
-
-    public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-        super.propertyChanged(event);
-        if (file.equals(event.getFile())) {
-            // Change document
-            file.refresh(true, false, new Runnable() {
-                public void run() {
-                    if (ImageFileTypeManager.getInstance().isImage(file)) {
-                        setValue(file);
-                    } else {
-                        setValue(null);
-                        // Close editor
-                        FileEditorManager editorManager = FileEditorManager.getInstance(project);
-                        editorManager.closeFile(file);
-                    }
-                }
-            });
-        }
-    }
-
-    public void contentsChanged(@NotNull VirtualFileEvent event) {
-        super.contentsChanged(event);
-        if (file.equals(event.getFile())) {
-            // Change document
-            file.refresh(true, false, new Runnable() {
-                public void run() {
-                    setValue(file);
-                }
-            });
-        }
-    }
+  }
 }

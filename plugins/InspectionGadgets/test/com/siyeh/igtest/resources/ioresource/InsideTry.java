@@ -18,4 +18,16 @@ public class InsideTry {
             }
         }
     }
+
+    public void correct() throws IOException {
+        FileInputStream str = null;
+        InputStreamReader reader = null;
+        try {
+            str = new FileInputStream("xxxx");
+            reader = new InputStreamReader(str);
+        }
+        finally {
+            reader.close();
+        }
+    }
 }

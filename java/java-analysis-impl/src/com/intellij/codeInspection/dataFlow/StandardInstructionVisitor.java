@@ -66,10 +66,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (dfaDest instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
 
-      if (var.getInherentNullability() == Nullness.NOT_NULL) {
+      final PsiModifierListOwner psi = var.getPsiVariable();
+      boolean forceDeclaredNullity = !(psi instanceof PsiParameter && psi.getParent() instanceof PsiParameterList);
+      if (forceDeclaredNullity && var.getInherentNullability() == Nullness.NOT_NULL) {
         checkNotNullable(memState, dfaSource, NullabilityProblem.assigningToNotNull, instruction.getRExpression());
       }
-      final PsiModifierListOwner psi = var.getPsiVariable();
       if (!(psi instanceof PsiField) || !psi.hasModifierProperty(PsiModifier.VOLATILE)) {
         memState.setVarValue(var, dfaSource);
       }
@@ -199,11 +200,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (method == null || instruction.getContracts().isEmpty()) {
       argValues = null;
     } else {
-      int paramCount = method.getParameterList().getParametersCount();
+      PsiParameterList paramList = method.getParameterList();
+      int paramCount = paramList.getParametersCount();
       if (paramCount == args.length || method.isVarArgs() && args.length >= paramCount - 1) {
         argValues = new DfaValue[paramCount];
         if (varargCall) {
-          argValues[paramCount - 1] = DfaUnknownValue.getInstance();
+          argValues[paramCount - 1] = runner.getFactory().createTypeValue(paramList.getParameters()[paramCount - 1].getType(), Nullness.NOT_NULL);
         }
       } else {
         argValues = null;

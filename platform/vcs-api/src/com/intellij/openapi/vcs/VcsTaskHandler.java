@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,7 @@ public abstract class VcsTaskHandler {
     return handlers.toArray(new VcsTaskHandler[handlers.size()]);
   }
 
-  public static class TaskInfo {
+  public static class TaskInfo implements Comparable<TaskInfo> {
 
     private final String myBranch;
     private final Collection<String> myRepositories;
@@ -60,6 +61,11 @@ public abstract class VcsTaskHandler {
     @Override
     public String toString() {
       return getName();
+    }
+
+    @Override
+    public int compareTo(TaskInfo o) {
+      return Comparing.compare(myBranch, o.myBranch);
     }
   }
 

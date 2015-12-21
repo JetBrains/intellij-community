@@ -39,8 +39,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
                                                      val connection: C,
                                                      private val editorsProvider: XDebuggerEditorsProvider,
-                                                     private val smartStepIntoHandler: XSmartStepIntoHandler<*>?,
-                                                     protected val executionResult: ExecutionResult?) : XDebugProcess(session) {
+                                                     private val smartStepIntoHandler: XSmartStepIntoHandler<*>? = null,
+                                                     protected val executionResult: ExecutionResult? = null) : XDebugProcess(session) {
   protected val repeatStepInto: AtomicBoolean = AtomicBoolean()
   @Volatile protected var lastStep: StepAction? = null
   @Volatile protected var lastCallFrame: CallFrame? = null
@@ -113,7 +113,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
 
   override final fun startStepInto() {
     updateLastCallFrame()
-    continueVm(StepAction.IN)
+    continueVm(if (vm!!.captureAsyncStackTraces) StepAction.IN_ASYNC else StepAction.IN)
   }
 
   override final fun startStepOut() {
@@ -159,7 +159,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     vm!!.suspendContextManager.setOverlayMessage("Paused in debugger")
   }
 
-  protected fun processBreakpoint(suspendContext: SuspendContext, breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl) {
+  protected fun processBreakpoint(suspendContext: SuspendContext<*>, breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl) {
     val condition = breakpoint.conditionExpression?.expression
     if (!processBreakpointConditionsAtIdeSide || condition == null) {
       processBreakpointLogExpressionAndSuspend(breakpoint, xSuspendContext, suspendContext)
@@ -178,7 +178,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     }
   }
 
-  private fun processBreakpointLogExpressionAndSuspend(breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl, suspendContext: SuspendContext) {
+  private fun processBreakpointLogExpressionAndSuspend(breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl, suspendContext: SuspendContext<*>) {
     val logExpression = breakpoint.logExpressionObject?.expression
     if (logExpression == null) {
       breakpointReached(breakpoint, null, xSuspendContext)

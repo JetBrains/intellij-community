@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DefaultProjectFactory;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
@@ -301,10 +302,13 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   public PsiElement getNavigationElement() {
     for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
       if (customNavigationPolicy instanceof ClsCustomNavigationPolicyEx) {
-        PsiFile navigationElement = ((ClsCustomNavigationPolicyEx)customNavigationPolicy).getFileNavigationElement(this);
-        if (navigationElement != null) {
-          return navigationElement;
+        try {
+          PsiFile navigationElement = ((ClsCustomNavigationPolicyEx)customNavigationPolicy).getFileNavigationElement(this);
+          if (navigationElement != null) {
+            return navigationElement;
+          }
         }
+        catch (IndexNotReadyException ignore) { }
       }
     }
 
@@ -620,7 +624,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     @Override
     public void accept(VirtualFile innerClass, StubBuildingVisitor<VirtualFile> visitor) {
       try {
-        byte[] bytes = innerClass.contentsToByteArray();
+        byte[] bytes = innerClass.contentsToByteArray(false);
         new ClassReader(bytes).accept(visitor, ClassReader.SKIP_FRAMES);
       }
       catch (IOException ignored) { }

@@ -42,6 +42,7 @@ import java.util.List;
 
 @Deprecated
 public class ImageLoader implements Serializable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
 
   private static class ImageDesc {
     public enum Type {
@@ -87,6 +88,11 @@ public class ImageLoader implements Serializable {
       }
       return type.load(url, stream, scale);
     }
+
+    @Override
+    public String toString() {
+      return path + ", scale: " + scale + ", type: " + type;
+    }
   }
 
   private static class ImageDescList extends ArrayList<ImageDesc> {
@@ -103,6 +109,7 @@ public class ImageLoader implements Serializable {
         try {
           Image image = desc.load();
           if (image == null) continue;
+          LOG.debug("Loaded image: " + desc);
           return converters.convert(image, desc);
         }
         catch (IOException ignore) {
@@ -198,8 +205,6 @@ public class ImageLoader implements Serializable {
 
   public static final Component ourComponent = new Component() {
   };
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
 
   private static boolean waitForImage(Image image) {
     if (image == null) return false;

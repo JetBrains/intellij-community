@@ -49,7 +49,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     myType = refType;
   }
 
-  public enum ReferenceType {PARAMETER, PARAMETER_TYPE, KEYWORD, VARIABLE, CLASS_VARIABLE, INSTANCE_VARIABLE}
+  public enum ReferenceType {PARAMETER, PARAMETER_TYPE, KEYWORD, VARIABLE, CLASS_VARIABLE, INSTANCE_VARIABLE, GLOBAL_VARIABLE}
 
   @Override
   public PsiElement resolve() {
@@ -76,6 +76,19 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
         if (myType.equals(ReferenceType.INSTANCE_VARIABLE) ||
             myType.equals(ReferenceType.PARAMETER_TYPE))
           return resolveInstanceVariable((PyClass)owner);
+      }
+    }
+    if (owner instanceof PyFile && myType == ReferenceType.GLOBAL_VARIABLE) {
+      return resolveGlobalVariable(((PyFile)owner));
+    }
+    return null;
+  }
+
+  @Nullable
+  private PsiElement resolveGlobalVariable(@NotNull PyFile owner) {
+    for (PyTargetExpression assignment : owner.getTopLevelAttributes()) {
+      if (getCanonicalText().equals(assignment.getName())) {
+        return assignment;
       }
     }
     return null;

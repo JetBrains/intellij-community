@@ -50,12 +50,6 @@ public abstract class ArchiveHandler {
       this(shortName, isDirectory, length, timestamp, parent);
     }
 
-    /** @deprecated use {@link EntryInfo#EntryInfo(CharSequence, boolean, long, long, EntryInfo)} instead (to be removed in IDEA 16) */
-    @SuppressWarnings("unused")
-    public EntryInfo(EntryInfo parent, @NotNull CharSequence shortName, boolean isDirectory, long length, long timestamp) {
-      this(shortName, isDirectory, length, timestamp, parent);
-    }
-
     public EntryInfo(@NotNull CharSequence shortName, boolean isDirectory, long length, long timestamp, @Nullable EntryInfo parent) {
       this.parent = parent;
       this.shortName = shortName;

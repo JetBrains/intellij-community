@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Producer;
@@ -135,7 +136,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider implements As
     final TextEditorState state = super.getStateImpl(project, editor, level);
     // Save folding only on FULL level. It's very expensive to commit document on every
     // type (caused by undo).
-    if(FileEditorStateLevel.FULL == level){
+    if (FileEditorStateLevel.FULL == level) {
       // Folding
       if (project != null && !project.isDisposed() && !editor.isDisposed() && project.isInitialized()) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
@@ -192,6 +193,11 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider implements As
     @Override
     public BackgroundEditorHighlighter getBackgroundHighlighter() {
       return myBackgroundHighlighter;
+    }
+
+    @Override
+    public boolean isValid() {
+      return !Registry.is("editor.new.rendering") || !getEditor().isDisposed();
     }
   }
 }

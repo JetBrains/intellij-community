@@ -4,7 +4,9 @@ import org.jetbrains.jsonProtocol.JsonObjectBased
 import java.lang.reflect.Method
 import java.util.*
 
-val FIELD_PREFIX: Char = '_'
+internal val FIELD_PREFIX = '_'
+
+internal val NAME_VAR_NAME = "_n"
 
 private fun assignField(out: TextOutput, fieldName: String) = out.append(FIELD_PREFIX).append(fieldName).append(" = ")
 
@@ -36,10 +38,12 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
   fun write(fileScope: FileScope) {
     val out = fileScope.output
     val valueImplClassName = fileScope.getTypeImplShortName(this)
-    out.append("private class ").append(valueImplClassName).append('(').append(JSON_READER_PARAMETER_DEF).comma().append("preReadName: String?").append(") : ").append(typeClass.canonicalName).openBlock()
+    out.append("private class ").append(valueImplClassName).append('(').append(JSON_READER_PARAMETER_DEF).comma().append("preReadName: String?")
+    subtypeAspect?.writeSuperFieldJava(out)
+    out.append(") : ").append(typeClass.canonicalName).openBlock()
 
     if (hasLazyFields || JsonObjectBased::class.java.isAssignableFrom(typeClass)) {
-      out.append("private var ").append(PENDING_INPUT_READER_NAME).append(": ").append(JSON_READER_CLASS_NAME).append("?").newLine()
+      out.append("private var ").append(PENDING_INPUT_READER_NAME).append(": ").append(JSON_READER_CLASS_NAME).append("? = reader.subReader()!!").newLine()
     }
 
     val classScope = fileScope.newClassScope()
@@ -49,8 +53,13 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
     }
 
     for (loader in fieldLoaders) {
-      out.append("private var ")
-      out.append(FIELD_PREFIX).append(loader.name)
+      if (loader.asImpl) {
+        out.append("override")
+      }
+      else {
+        out.append("private")
+      }
+      out.append(" var ").appendName(loader)
 
       fun addType() {
         out.append(": ")
@@ -59,7 +68,7 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
       }
 
       if (loader.valueReader is PrimitiveValueReader) {
-        val defaultValue = loader.valueReader.defaultValue
+        val defaultValue = loader.defaultValue ?: loader.valueReader.defaultValue
         if (defaultValue != null) {
           out.append(" = ").append(defaultValue)
         }
@@ -73,15 +82,13 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
       out.newLine()
     }
 
-    subtypeAspect?.writeSuperFieldJava(out)
-
     if (fieldLoaders.isNotEmpty()) {
       out.newLine()
     }
     writeConstructorMethod(classScope, out)
     out.newLine()
 
-    subtypeAspect?.writeParseMethod(valueImplClassName, classScope, out)
+    subtypeAspect?.writeParseMethod(classScope, out)
 
     for ((key, value) in methodHandlerMap.entries) {
       out.newLine()
@@ -142,38 +149,31 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
 
     for (loader in fieldLoaders.sortedWith(comparator {f1, f2 -> fieldWeight((f1.valueReader)) - fieldWeight((f2.valueReader))})) {
       out.append(" && ")
-      out.append(FIELD_PREFIX).append(loader.name).append(" == ").append("other.").append(FIELD_PREFIX).append(loader.name)
+      out.appendName(loader).append(" == ").append("other.").appendName(loader)
     }
     out.newLine()
   }
 
   private fun writeConstructorMethod(classScope: ClassScope, out: TextOutput) {
-    out.append("init").openBlock()
-
-    subtypeAspect?.writeSuperConstructorInitialization(out)
-
-    if (JsonObjectBased::class.java.isAssignableFrom(typeClass) || hasLazyFields) {
-      out.append(PENDING_INPUT_READER_NAME).append(" = ").append(READER_NAME).append(".subReader()!!").newLine()
-    }
-
-    if (fieldLoaders.isEmpty()) {
-      out.append(READER_NAME).append(".skipValue()").semi()
-    }
-    else {
-      out.append("var name = preReadName")
-      out.newLine().append("if (name == null && reader.hasNext() && reader.beginObject().hasNext())").block {
-        out.append("name = reader.nextName()")
+    out.append("init").block {
+      if (fieldLoaders.isEmpty()) {
+        out.append(READER_NAME).append(".skipValue()")
       }
-      out.newLine()
+      else {
+        out.append("var ").append(NAME_VAR_NAME).append(" = preReadName")
+        out.newLine().append("if (").append(NAME_VAR_NAME).append(" == null && reader.hasNext() && reader.beginObject().hasNext())").block {
+          out.append(NAME_VAR_NAME).append(" = reader.nextName()")
+        }
+        out.newLine()
 
-      writeReadFields(out, classScope)
+        writeReadFields(out, classScope)
 
-      // we don't read all data if we have lazy fields, so, we should not check end of stream
-      //if (!hasLazyFields) {
-      out.newLine().newLine().append(READER_NAME).append(".endObject()")
-      //}
+        // we don't read all data if we have lazy fields, so, we should not check end of stream
+        //if (!hasLazyFields) {
+        out.newLine().newLine().append(READER_NAME).append(".endObject()")
+        //}
+      }
     }
-    out.closeBlock()
   }
 
   private fun writeReadFields(out: TextOutput, classScope: ClassScope) {
@@ -181,11 +181,11 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
     val hasOnlyOneFieldLoader = fieldLoaders.size == 1
     val isTracedStop = stopIfAllFieldsWereRead && !hasOnlyOneFieldLoader
     if (isTracedStop) {
-      out.newLine().append("int i = 0").semi()
+      out.newLine().append("var i = 0")
     }
 
-    out.newLine().append("loop@ while (name != null)").block {
-      out.append("when (name)").block {
+    out.newLine().append("loop@ while (").append(NAME_VAR_NAME).append(" != null)").block {
+      (out + "when (" + NAME_VAR_NAME + ")").block {
         var isFirst = true
         for (fieldLoader in fieldLoaders) {
           if (fieldLoader.skipRead) {
@@ -196,7 +196,11 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
             out.newLine()
           }
 
-          out.append('"').append(fieldLoader.jsonName).append('"').append(" -> ")
+          out.append('"')
+          if (fieldLoader.jsonName.first() == '$') {
+            out.append('\\')
+          }
+          out.append(fieldLoader.jsonName).append('"').append(" -> ")
 
           if (stopIfAllFieldsWereRead && !isTracedStop) {
             out.openBlock()
@@ -206,7 +210,7 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
           if (primitiveValueName != null) {
             out.append("if (reader.peek() == com.google.gson.stream.JsonToken.BEGIN_OBJECT)").openBlock()
           }
-          assignField(out, fieldLoader.name)
+          out.appendName(fieldLoader).append(" = ")
 
           fieldLoader.valueReader.writeReadCode(classScope, false, out)
 
@@ -214,10 +218,10 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
             out.newLine().append("else").openBlock()
 
             assignField(out, "${primitiveValueName}Type")
-            out.append("reader.peek()").semi().newLine()
+            out.append("reader.peek()").newLine()
 
             assignField(out, primitiveValueName)
-            out.append("reader.nextString(true)")
+            out + "reader.nextString(true)"
           }
 
           if (stopIfAllFieldsWereRead && !isTracedStop) {
@@ -229,17 +233,25 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
           }
         }
 
-        out.newLine().append("else -> reader.skipValue()")
+        out.newLine().append("else ->")
+        if (isTracedStop) {
+          out.block {
+            out.append("reader.skipValue()")
+            out.newLine() + NAME_VAR_NAME + " = reader.nextNameOrNull()"
+            out.newLine() + "continue@loop"
+          }
+        }
+        else {
+          out.space().append("reader.skipValue()")
+        }
       }
 
-      out.newLine().append("name = reader.nextNameOrNull()")
+      out.newLine() + NAME_VAR_NAME + " = reader.nextNameOrNull()"
+
       if (isTracedStop) {
-        out.newLine().append("continue").semi()
-      }
-      if (isTracedStop) {
-        out.newLine().newLine().append("if (i == ").append(fieldLoaders.size - 1).append(")").openBlock()
-        out.append(READER_NAME).append(".skipValues()").semi().newLine().append("break").semi().closeBlock()
-        out.newLine().append("else").openBlock().append("i++").semi().closeBlock()
+        out.newLine().newLine().append("if (i++ == ").append(fieldLoaders.size - 1).append(")").block {
+          (out + READER_NAME + ".skipValues()").newLine() + "break"
+        }
       }
     }
   }

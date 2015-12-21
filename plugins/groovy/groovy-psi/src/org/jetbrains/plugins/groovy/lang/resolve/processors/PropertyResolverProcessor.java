@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 
 import java.util.List;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_PROPERTY;
+
 /**
  * @author ven
  */
-public class PropertyResolverProcessor extends ResolverProcessor {
+public class PropertyResolverProcessor extends ResolverProcessorImpl {
 
   public PropertyResolverProcessor(String name, PsiElement place) {
     super(name, RESOLVE_KINDS_PROPERTY, place, PsiType.EMPTY_ARRAY);

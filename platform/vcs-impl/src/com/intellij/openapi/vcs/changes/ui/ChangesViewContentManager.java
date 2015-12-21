@@ -162,9 +162,6 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
         addExtensionTab(ep);
       }
       else if (predicateResult.equals(Boolean.FALSE) && epContent != null) {
-        if (!(epContent.getComponent() instanceof ContentStub)) {
-          ep.getInstance(myProject).disposeContent();
-        }
         myContentManager.removeContent(epContent, true);
       }
     }
@@ -228,14 +225,20 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
     return null;
   }
   
-  public boolean isContentSelected(final Content content) {
-    return Comparing.equal(content, myContentManager.getSelectedContent());
+  public boolean isContentSelected(@NotNull String contentName) {
+    Content selectedContent = myContentManager.getSelectedContent();
+    if (selectedContent == null) return false;
+    return Comparing.equal(contentName, selectedContent.getTabName());
   }
 
-  public void selectContent(final String tabName) {
+  public void selectContent(@NotNull String tabName) {
+    selectContent(tabName, false);
+  }
+
+  public void selectContent(@NotNull String tabName, boolean requestFocus) {
     for(Content content: myContentManager.getContents()) {
       if (content.getDisplayName().equals(tabName)) {
-        myContentManager.setSelectedContent(content);
+        myContentManager.setSelectedContent(content, requestFocus);
         break;
       }
     }
@@ -271,12 +274,15 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
       Content content = event.getContent();
       if (content.getComponent() instanceof ContentStub) {
         ChangesViewContentEP ep = ((ContentStub) content.getComponent()).getEP();
-        ChangesViewContentProvider provider = ep.getInstance(myProject);
+        final ChangesViewContentProvider provider = ep.getInstance(myProject);
         final JComponent contentComponent = provider.initContent();
         content.setComponent(contentComponent);
-        if (contentComponent instanceof Disposable) {
-          content.setDisposer((Disposable) contentComponent);
-        }
+        content.setDisposer(new Disposable() {
+          @Override
+          public void dispose() {
+            provider.disposeContent();
+          }
+        });
       }
     }
   }

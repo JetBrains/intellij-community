@@ -2717,8 +2717,9 @@ public class AbstractTreeUi {
             @Override
             public void perform() {
               Promise<Boolean> promise = update(eachChildDescriptor, true);
-              //noinspection unchecked,ConstantConditions
-              loaded.putDescriptor(each, eachChildDescriptor, promise instanceof Getter ? ((Getter<Boolean>)promise).get() : null);
+              LOG.assertTrue(promise instanceof Getter);
+              //noinspection unchecked
+              loaded.putDescriptor(each, eachChildDescriptor, ((Getter<Boolean>)promise).get());
             }
           });
         }
@@ -4120,20 +4121,23 @@ public class AbstractTreeUi {
   }
 
   private int getRowIfUnderSelection(@NotNull Object element) {
-    int preselectedRow = -1;
-
     final Set<Object> selection = getSelectedElements();
 
     if (selection.contains(element)) {
       final TreePath[] paths = getTree().getSelectionPaths();
       for (TreePath each : paths) {
         if (element.equals(getElementFor(each.getLastPathComponent()))) {
-          preselectedRow = getTree().getRowForPath(each);
-          break;
+          return getTree().getRowForPath(each);
         }
       }
+      return -1;
     }
-    else if (myElementToNodeMap.get(TreeAnchorizer.getService().createAnchor(element)) instanceof List) {
+
+    Object anchor = TreeAnchorizer.getService().createAnchor(element);
+    Object o = myElementToNodeMap.get(anchor);
+    TreeAnchorizer.getService().freeAnchor(element);
+
+    if (o instanceof List) {
       final TreePath[] paths = getTree().getSelectionPaths();
       if (paths != null && paths.length > 0) {
         Set<DefaultMutableTreeNode> selectedNodes = new HashSet<DefaultMutableTreeNode>();
@@ -4144,25 +4148,19 @@ public class AbstractTreeUi {
         }
 
 
-        final List nodes = (List)myElementToNodeMap.get(TreeAnchorizer.getService().createAnchor(element));
-        for (Object each : nodes) {
-          DefaultMutableTreeNode eachNode = (DefaultMutableTreeNode)each;
+        //noinspection unchecked
+        for (DefaultMutableTreeNode eachNode : (List<DefaultMutableTreeNode>)o) {
           while (eachNode != null) {
             if (selectedNodes.contains(eachNode)) {
-              preselectedRow = getTree().getRowForPath(getPathFor(eachNode));
-              break;
+              return getTree().getRowForPath(getPathFor(eachNode));
             }
             eachNode = (DefaultMutableTreeNode)eachNode.getParent();
           }
-
-          if (preselectedRow >= 0) break;
         }
       }
-
     }
 
-
-    return preselectedRow;
+    return -1;
   }
 
   public void expandAllWithoutRecursion(@Nullable final Runnable onDone) {
@@ -4636,6 +4634,7 @@ public class AbstractTreeUi {
     }
 
     remapNodeActions(element, elementToPutNodeActionsFor);
+    TreeAnchorizer.getService().freeAnchor(element);
   }
 
   private void remapNodeActions(Object element, Object elementToPutNodeActionsFor) {
@@ -4672,23 +4671,25 @@ public class AbstractTreeUi {
 
   protected Object findNodeByElement(Object element) {
     element = TreeAnchorizer.getService().createAnchor(element);
-    if (myElementToNodeMap.containsKey(element)) {
-      return myElementToNodeMap.get(element);
-    }
-
     try {
+      if (myElementToNodeMap.containsKey(element)) {
+        return myElementToNodeMap.get(element);
+      }
+
       TREE_NODE_WRAPPER.setValue(element);
       return myElementToNodeMap.get(TREE_NODE_WRAPPER);
     }
     finally {
       TREE_NODE_WRAPPER.setValue(null);
+      TreeAnchorizer.getService().freeAnchor(element);
     }
   }
 
   @Nullable
   private DefaultMutableTreeNode findNodeForChildElement(@NotNull DefaultMutableTreeNode parentNode, Object element) {
-    element = TreeAnchorizer.getService().createAnchor(element);
-    final Object value = myElementToNodeMap.get(element);
+    Object anchor = TreeAnchorizer.getService().createAnchor(element);
+    final Object value = myElementToNodeMap.get(anchor);
+    TreeAnchorizer.getService().freeAnchor(anchor);
     if (value == null) {
       return null;
     }

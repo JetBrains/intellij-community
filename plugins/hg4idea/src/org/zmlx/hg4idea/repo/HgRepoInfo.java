@@ -30,7 +30,7 @@ public class HgRepoInfo {
   @Nullable private final String myCurrentRevision;
   @NotNull private final Repository.State myState;
   @Nullable private String myCurrentBookmark = null;
-  @NotNull private Map<String, Set<Hash>> myBranches = Collections.emptyMap();
+  @NotNull private Map<String, LinkedHashSet<Hash>> myBranches = Collections.emptyMap();
   @NotNull private Set<HgNameWithHashInfo> myBookmarks = Collections.emptySet();
   @NotNull private Set<HgNameWithHashInfo> myTags = Collections.emptySet();
   @NotNull private Set<HgNameWithHashInfo> myLocalTags = Collections.emptySet();
@@ -42,7 +42,7 @@ public class HgRepoInfo {
                     @Nullable String currentRevision,
                     @Nullable String currentTipRevision,
                     @NotNull Repository.State state,
-                    @NotNull Map<String, Set<Hash>> branches,
+                    @NotNull Map<String, LinkedHashSet<Hash>> branches,
                     @NotNull Collection<HgNameWithHashInfo> bookmarks,
                     @Nullable String currentBookmark,
                     @NotNull Collection<HgNameWithHashInfo> tags,
@@ -68,7 +68,7 @@ public class HgRepoInfo {
   }
 
   @NotNull
-  public Map<String, Set<Hash>> getBranches() {
+  public Map<String, LinkedHashSet<Hash>> getBranches() {
     return myBranches;
   }
 

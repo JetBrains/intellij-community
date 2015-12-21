@@ -318,8 +318,8 @@ public class ExecUtil {
   /** @deprecated use {@link #execAndGetOutput(GeneralCommandLine)} instead (to be removed in IDEA 16) */
   @SuppressWarnings("unused")
   public static ProcessOutput execAndGetOutput(@NotNull List<String> command, @Nullable String workDir) throws ExecutionException {
-    Process process = new GeneralCommandLine(command).withWorkDirectory(workDir).createProcess();
-    return new CapturingProcessHandler(process).runProcess();
+    GeneralCommandLine commandLine = new GeneralCommandLine(command).withWorkDirectory(workDir);
+    return new CapturingProcessHandler(commandLine).runProcess();
   }
 
   /** @deprecated use {@link #execAndReadLine(GeneralCommandLine)} instead (to be removed in IDEA 16) */

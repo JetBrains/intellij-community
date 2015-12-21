@@ -41,7 +41,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
   }
 
   fun remove(processor: (TrackedStorage) -> Boolean) {
-    val iterator = filePathToStorage.values().iterator()
+    val iterator = filePathToStorage.values.iterator()
     for (storage in iterator) {
       if (processor(storage)) {
         iterator.remove()

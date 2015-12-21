@@ -3,14 +3,55 @@ import sys
 
 from docutils import nodes
 from docutils.core import publish_string
+from docutils.frontend import OptionParser
 from docutils.nodes import Text, field_body, field_name, rubric
-from docutils.writers.html4css1 import HTMLTranslator
-from epydoc.markup import DocstringLinker
-from epydoc.markup.restructuredtext import ParsedRstDocstring, _EpydocHTMLTranslator, \
-    _DocumentPseudoWriter, _EpydocReader
+from docutils.parsers.rst import directives
+from docutils.parsers.rst.directives.admonitions import BaseAdmonition
+from docutils.writers.html4css1 import HTMLTranslator, Writer as HTMLWriter
+from docutils.writers import Writer
 
 
-class RestHTMLTranslator(_EpydocHTMLTranslator):
+# Copied from the Sphinx' sources. Docutils doesn't handle "seealso" directives by default.
+class seealso(nodes.Admonition, nodes.Element):
+    """Custom "see also" admonition."""
+
+
+class SeeAlso(BaseAdmonition):
+    """
+    An admonition mentioning things to look at as reference.
+    """
+    node_class = seealso
+
+directives.register_directive('seealso', SeeAlso)
+
+
+class RestHTMLTranslator(HTMLTranslator):
+    settings = None
+
+    def __init__(self, document):
+        # Copied from epydoc.markup.restructuredtext._EpydocHTMLTranslator
+        if self.settings is None:
+            settings = OptionParser([HTMLWriter()]).get_default_values()
+            self.__class__.settings = settings
+        document.settings = self.settings
+
+        HTMLTranslator.__init__(self, document)
+
+    def visit_document(self, node):
+        pass
+
+    def depart_document(self, node):
+        pass
+
+    def visit_docinfo(self, node):
+        pass
+
+    def depart_docinfo(self, node):
+        pass
+
+    def unimplemented_visit(self, node):
+        pass
+
     def visit_field_name(self, node):
         atts = {}
         if self.in_docinfo:
@@ -34,7 +75,7 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
             self.body.append(") ")
         elif parent_text.startswith("type "):
             index = parent_text.index("type ")
-            type_string = parent_text[index + 5]
+            type_string = parent_text[index + len("type ")]
             self.body.append(self.starttag(node, 'a', '',
                                            href='psi_element://#typename#' + type_string))
         elif parent_text.startswith("rtype"):
@@ -105,14 +146,28 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
         if tagname == 'th' and isinstance(node, field_name):
             attributes['valign'] = 'top'
 
-        # Render rubric start as HTML header
-        if tagname == 'p' and isinstance(node, rubric):
-            tagname = 'h1'
-
         # For headings, use class="heading"
         if re.match(r'^h\d+$', tagname):
             attributes['class'] = ' '.join([attributes.get('class', ''), 'heading']).strip()
         return HTMLTranslator.starttag(self, node, tagname, suffix, **attributes)
+
+    def visit_rubric(self, node):
+        self.body.append(self.starttag(node, 'h1', '', CLASS='rubric'))
+
+    def depart_rubric(self, node):
+        self.body.append('</h1>\n')
+
+    def visit_note(self, node):
+        self.body.append('<h1 class="heading">Note</h1>\n')
+
+    def depart_note(self, node):
+        pass
+
+    def visit_seealso(self, node):
+        self.body.append('<h1 class="heading">See Also</h1>\n')
+
+    def depart_seealso(self, node):
+        pass
 
     def visit_field_list(self, node):
         fields = {}
@@ -125,10 +180,17 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
                 index = rawsource.index("param ")
                 if not child.children:
                     continue
+                param_name = rawsource[index + len("param "):]
+                param_type = None
+                parts = param_name.rsplit(None, 1)
+                if len(parts) == 2:
+                    param_type, param_name = parts
                 # Strip leading escaped asterisks for vararg parameters in Google code style docstrings
-                trimmed_name = re.sub(r'\\\*', '*', rawsource[index + 6:])
-                child.children[0] = Text(trimmed_name)
-                fields[trimmed_name] = n
+                param_name = re.sub(r'\\\*', '*', param_name)
+                child.children[0] = Text(param_name)
+                fields[param_name] = n
+                if param_type:
+                    n.type = param_type
             if rawsource == "return":
                 fields["return"] = n
 
@@ -139,13 +201,13 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
             rawsource = field_name.rawsource
             if rawsource.startswith("type "):
                 index = rawsource.index("type ")
-                name = re.sub(r'\\\*', '*', rawsource[index + 5:])
+                name = re.sub(r'\\\*', '*', rawsource[index + len("type "):])
                 if name in fields:
-                    fields[name].type = field_body[0][0] if field_body.children else ''
+                    fields[name].type = self._strip_markup(field_body.astext())[1]
                     node.children.remove(n)
             if rawsource == "rtype":
                 if "return" in fields:
-                    fields["return"].type = field_body[0][0] if field_body.children else ''
+                    fields["return"].type = self._strip_markup(field_body.astext())[1]
                     node.children.remove(n)
 
         HTMLTranslator.visit_field_list(self, node)
@@ -157,23 +219,26 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
         """ Ignore unknown nodes """
 
     def visit_problematic(self, node):
-        """Don't insert hyperlinks to nowhere for e.g. unclosed asterisks."""
+        # Don't insert hyperlinks to nowhere for e.g. unclosed asterisks
         if not self._is_text_wrapper(node):
             return HTMLTranslator.visit_problematic(self, node)
 
-        node_text = node.astext()
-        m = re.match(r'(:\w+)?(:\S+:)?`(.+?)`', node_text)
-        if m:
-            _, directive, text = m.groups('')
-            if directive[1:-1] == 'exc':
-                self.body.append(self.starttag(node, 'a', '', href = 'psi_element://#typename#' + text))
-                self.body.append(text)
-                self.body.append('</a>')
-            else:
-                self.body.append(text)
+        directive, text = self._strip_markup(node.astext())
+        if directive[1:-1] in ('exc', 'class'):
+            self.body.append(self.starttag(node, 'a', '', href='psi_element://#typename#' + text))
+            self.body.append(text)
+            self.body.append('</a>')
         else:
-            self.body.append(node_text)
+            self.body.append(text)
         raise nodes.SkipNode
+
+    @staticmethod
+    def _strip_markup(text):
+        m = re.match(r'(:\w+)?(:\S+:)?`(.+?)`', text)
+        if m:
+            _, directive, trimmed = m.groups('')
+            return directive, trimmed
+        return None, text
 
     def depart_problematic(self, node):
         if not self._is_text_wrapper(node):
@@ -215,51 +280,35 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
         raise nodes.SkipNode
 
 
-class MyParsedRstDocstring(ParsedRstDocstring):
-    def __init__(self, document):
-        ParsedRstDocstring.__init__(self, document)
+def format_docstring(docstring):
+    class _DocumentPseudoWriter(Writer):
+        def __init__(self):
+            self.document = None
+            Writer.__init__(self)
 
-    def to_html(self, docstring_linker, directory=None,
-                docindex=None, context=None, **options):
-        visitor = RestHTMLTranslator(self._document, docstring_linker,
-                                     directory, docindex, context)
-        self._document.walkabout(visitor)
-        return ''.join(visitor.body)
+        def translate(self):
+            self.output = ''
 
-
-def parse_docstring(docstring, errors, **options):
     writer = _DocumentPseudoWriter()
-    reader = _EpydocReader(errors)  # Outputs errors to the list.
-    publish_string(docstring, writer=writer, reader=reader,
-                   settings_overrides={'report_level': 10000,
-                                       'halt_level': 10000,
-                                       'warning_stream': None})
-    return MyParsedRstDocstring(writer.document)
+    publish_string(docstring, writer=writer, settings_overrides={'report_level': 10000,
+                                                                 'halt_level': 10000,
+                                                                 'warning_stream': None,
+                                                                 'docinfo_xform': False})
+    document = writer.document
+    document.settings.xml_declaration = None
+    visitor = RestHTMLTranslator(document)
+    document.walkabout(visitor)
+    return ''.join(visitor.body)
 
 
 def main(text=None):
     src = sys.stdin.read() if text is None else text
 
-    errors = []
-
-    class EmptyLinker(DocstringLinker):
-        def translate_indexterm(self, indexterm):
-            return ""
-
-        def translate_identifier_xref(self, identifier, label=None):
-            return identifier
-
-    docstring = parse_docstring(src, errors)
-    html = docstring.to_html(EmptyLinker())
-
-    if errors and not html:
-        sys.stderr.write("Error parsing docstring:\n")
-        for error in errors:
-            sys.stderr.write(str(error) + "\n")
-        sys.exit(1)
+    html = format_docstring(src)
 
     sys.stdout.write(html)
     sys.stdout.flush()
+
 
 if __name__ == '__main__':
     main()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
 import com.intellij.openapi.util.Disposer;
@@ -59,23 +58,27 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
     super.setUp();
     DockManager dockManager = DockManager.getInstance(getProject());
     myOldDockContainers = dockManager.getContainers();
-    myManager = new FileEditorManagerImpl(getProject(), dockManager, EditorHistoryManager.getInstance(getProject()));
+    myManager = new FileEditorManagerImpl(getProject(), dockManager);
     myOldManager = ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myManager);
     ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
   }
 
   @Override
   protected void tearDown() throws Exception {
-    for (DockContainer container : DockManager.getInstance(getProject()).getContainers()) {
-      if (!myOldDockContainers.contains(container)) {
-        Disposer.dispose(container);
+    try {
+      for (DockContainer container : DockManager.getInstance(getProject()).getContainers()) {
+        if (!myOldDockContainers.contains(container)) {
+          Disposer.dispose(container);
+        }
       }
+      myOldDockContainers = null;
+      ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myOldManager);
+      myManager.closeAllFiles();
+      ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
     }
-    myOldDockContainers = null;
-    ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myOldManager);
-    myManager.closeAllFiles();
-    ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
-    super.tearDown();
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
@@ -97,7 +100,7 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
     map.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, getTestDataPath());
     map.substitute(rootElement, true, true);
 
-    myManager.readExternal(rootElement);
+    myManager.loadState(rootElement);
 
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override

@@ -1,4 +1,4 @@
 import java.util.*;
 class Test {
-   Set<String>[] f = new double[0];
+   Set<String>[] f = new Set[0];
 }

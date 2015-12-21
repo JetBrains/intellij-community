@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnchor;
@@ -47,10 +46,7 @@ public class ClsElementInfo extends SmartPointerElementInfo {
 
   @Override
   public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
-    if (other instanceof ClsElementInfo) {
-      return myStubIndexReference.equals(((ClsElementInfo)other).myStubIndexReference);
-    }
-    return Comparing.equal(restoreElement(), other.restoreElement());
+    return other instanceof ClsElementInfo && myStubIndexReference.equals(((ClsElementInfo)other).myStubIndexReference);
   }
 
   @Override
@@ -78,5 +74,10 @@ public class ClsElementInfo extends SmartPointerElementInfo {
   @Override
   public PsiFile restoreFile() {
     return myStubIndexReference.getFile();
+  }
+
+  @Override
+  public String toString() {
+    return myStubIndexReference.toString();
   }
 }

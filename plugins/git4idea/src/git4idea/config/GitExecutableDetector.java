@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -216,8 +216,9 @@ public class GitExecutableDetector {
   protected boolean runs(@NotNull String exec) {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(exec);
+    commandLine.setCharset(CharsetToolkit.getDefaultSystemCharset());
     try {
-      CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
+      CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
       ProcessOutput result = handler.runProcess((int)TimeUnit.SECONDS.toMillis(5));
       return !result.isTimeout();
     }

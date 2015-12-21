@@ -19,6 +19,23 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
       "}",
       "package java.util.regex; public class Matcher {" +
       "  public boolean find() {return true;}" +
+      "}",
+      "package javax.annotation;\n" +
+      "\n" +
+      "import java.lang.annotation.Documented;\n" +
+      "import java.lang.annotation.ElementType;\n" +
+      "import java.lang.annotation.Retention;\n" +
+      "import java.lang.annotation.RetentionPolicy;\n" +
+      "import java.lang.annotation.Target;\n" +
+      "\n" +
+      "import javax.annotation.meta.When;\n" +
+      "\n" +
+      "@Documented\n" +
+      "@Target( { ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.TYPE,\n" +
+      "        ElementType.PACKAGE })\n" +
+      "@Retention(RetentionPolicy.RUNTIME)\n" +
+      "public @interface CheckReturnValue {\n" +
+      "    When when() default When.ALWAYS;\n" +
       "}"
     ] as String[]
   }
@@ -40,6 +57,29 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "    matcher.notify();\n" +
            "  }\n" +
            "}\n");
+  }
+
+  public void testReader() {
+    doTest("import java.io.Reader;" +
+           "import java.io.IOException;" +
+           "class U {" +
+           "  void m(Reader r) throws IOException {" +
+           "    r./*Result of 'Reader.read()' is ignored*/read/**/();" +
+           "  }" +
+           "}")
+  }
+
+  public void testJSR305Annotation() {
+    doTest("import javax.annotation.CheckReturnValue;" +
+           "class A {" +
+           "  @CheckReturnValue" +
+           "  static Object a() {" +
+           "    return null;" +
+           "  }" +
+           "  void b() {" +
+           "    /*Result of 'A.a()' is ignored*/a/**/();" +
+           "  }" +
+           "}");
   }
 
   public void testPureMethod() {

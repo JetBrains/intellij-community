@@ -344,7 +344,7 @@ public class FileStatusMap implements Disposable {
 
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
-      throw new UnsupportedOperationException();
+      return null;
     }
 
     @Override

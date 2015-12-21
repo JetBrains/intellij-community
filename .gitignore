@@ -7,3 +7,4 @@
 /test-system
 /test-config
 .jps-build-data
+*.pyc

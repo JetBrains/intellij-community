@@ -45,6 +45,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
@@ -405,7 +406,7 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
 
     if (checkBoxName != null) {
       if (myCheckBox != null && myCheckBoxShortcut != null) {
-        new AnAction("change goto check box", null, null) {
+        new DumbAwareAction("change goto check box", null, null) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             myCheckBox.setSelected(!isCheckboxSelected());
@@ -926,11 +927,8 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
     }
 
     private void fillInCommonPrefix(@NotNull final String pattern) {
-      if (StringUtil.isEmpty(pattern) && !canShowListForEmptyPattern()) {
-        return;
-      }
-
       final List<String> list = myProvider.filterNames(ChooseByNameBase.this, getNames(isCheckboxSelected()), pattern);
+      if (list.isEmpty()) return;
 
       if (isComplexPattern(pattern)) return; //TODO: support '*'
       final String oldText = getTrimmedText();
@@ -1041,7 +1039,7 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
     }
   }
 
-  private abstract class ShowFindUsagesAction extends AnAction {
+  private abstract class ShowFindUsagesAction extends DumbAwareAction {
     public ShowFindUsagesAction() {
       super(ACTION_NAME, ACTION_NAME, AllIcons.General.AutohideOff);
     }

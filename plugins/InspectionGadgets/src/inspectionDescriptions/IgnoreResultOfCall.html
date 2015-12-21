@@ -11,10 +11,10 @@ which returns the number of bytes actually read, any method on
 as all of those methods are side-effect free and thus pointless if ignored.
 <!-- tooltip end -->
 <p>
-Use the panel below to enter the class names and method names of the methods you wish to check for
-ignored returns. Class names must be specified as a simple string, while method names may be
-specified using a standard Java regular expression. Specifying a class names implicitly specifies
-that class and all of its subclasses.
+Use the panel below to enter the class names and method name patterns of the methods you wish to check for
+ignored returns when called.
+Class names must be specified as a fully qualified name string and will match a class and all its inheritors.
+Method name patterns must be specified using a Java regular expression.
 <p>
 Use the checkbox below to report all
 calls to non-library methods where the result of that call is ignored

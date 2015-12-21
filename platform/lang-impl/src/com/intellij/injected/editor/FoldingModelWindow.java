@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,8 +95,8 @@ class FoldingModelWindow implements FoldingModelEx{
     FoldRegion[] all = myDelegate.getAllFoldRegions();
     List<FoldRegion> result = new ArrayList<FoldRegion>();
     for (FoldRegion region : all) {
-      FoldingRegionWindow window = region.getUserData(FOLD_REGION_WINDOW);
-      if (window != null && window.getEditor() == myEditorWindow) {
+      FoldingRegionWindow window = getWindowRegion(region);
+      if (window != null) {
         result.add(window);
       }
     }
@@ -120,9 +120,11 @@ class FoldingModelWindow implements FoldingModelEx{
     TextRange range = new TextRange(startOffset, endOffset);
     TextRange hostRange = myDocumentWindow.injectedToHost(range);
     FoldRegion hostRegion = myDelegate.getFoldRegion(hostRange.getStartOffset(), hostRange.getEndOffset());
-    if (hostRegion == null) {
-      return null;
-    }
+    return hostRegion == null ? null : getWindowRegion(hostRegion);
+  }
+  
+  @Nullable
+  private FoldingRegionWindow getWindowRegion(@NotNull FoldRegion hostRegion) {
     FoldingRegionWindow window = hostRegion.getUserData(FOLD_REGION_WINDOW);
     return window != null && window.getEditor() == myEditorWindow ? window : null;
   }
@@ -184,6 +186,18 @@ class FoldingModelWindow implements FoldingModelEx{
   @Override
   public void rebuild() {
     myDelegate.rebuild();
+  }
+
+  @NotNull
+  @Override
+  public List<FoldRegion> getGroupedRegions(FoldingGroup group) {
+    List<FoldRegion> hostRegions = myDelegate.getGroupedRegions(group);
+    List<FoldRegion> result = new ArrayList<FoldRegion>();
+    for (FoldRegion hostRegion : hostRegions) {
+      FoldingRegionWindow window = getWindowRegion(hostRegion);
+      if (window != null) result.add(window);
+    }
+    return result;
   }
 
   @Override

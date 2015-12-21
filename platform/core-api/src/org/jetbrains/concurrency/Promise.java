@@ -22,6 +22,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -158,8 +159,18 @@ public abstract class Promise<T> {
 
   @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
   public static class MessageError extends RuntimeException {
+    private final ThreeState log;
+
     public MessageError(@NotNull String error) {
       super(error);
+
+      log = ThreeState.UNSURE;
+    }
+
+    public MessageError(@NotNull String error, boolean log) {
+      super(error);
+
+      this.log = ThreeState.fromBoolean(log);
     }
 
     @NotNull
@@ -173,8 +184,13 @@ public abstract class Promise<T> {
    * Log error if not message error
    */
   public static void logError(@NotNull Logger logger, @NotNull Throwable e) {
-    if (!(e instanceof ProcessCanceledException) &&
-        (!(e instanceof MessageError) || ApplicationManager.getApplication().isUnitTestMode())) {
+    if (e instanceof MessageError) {
+      ThreeState log = ((MessageError)e).log;
+      if (log == ThreeState.YES || (log == ThreeState.UNSURE && ApplicationManager.getApplication().isUnitTestMode())) {
+        logger.error(e);
+      }
+    }
+    else if (!(e instanceof ProcessCanceledException)) {
       logger.error(e);
     }
   }

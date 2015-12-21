@@ -125,19 +125,19 @@ public class GitPreservingProcess {
     GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myFacade, myGit, myProgressIndicator, myStashMessage, saveMethod);
     MergeDialogCustomizer mergeDialogCustomizer = new MergeDialogCustomizer() {
       @Override
-      public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
+      public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
         return String.format(
           "<html>Uncommitted changes that were saved before %s have conflicts with files from <code>%s</code></html>",
           myOperationTitle, myDestinationName);
       }
 
       @Override
-      public String getLeftPanelTitle(VirtualFile file) {
+      public String getLeftPanelTitle(@NotNull VirtualFile file) {
         return "Uncommitted changes from stash";
       }
 
       @Override
-      public String getRightPanelTitle(VirtualFile file, VcsRevisionNumber lastRevisionNumber) {
+      public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
         return String.format("<html>Changes from <b><code>%s</code></b></html>", myDestinationName);
       }
     };

@@ -114,13 +114,7 @@ public class VfsUtilCore {
   }
 
   public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {
-    File parent = strict ? file.getParentFile() : file;
-    while (parent != null) {
-      if (parent.equals(ancestor)) return true;
-      parent = parent.getParentFile();
-    }
-
-    return false;
+    return FileUtil.isAncestor(ancestor, file, strict);
   }
 
   @Nullable
@@ -556,9 +550,7 @@ public class VfsUtilCore {
       uri = uri.substring("file:/".length());
       if (!SystemInfo.isWindows) uri = "/" + uri;
     }
-    else if (uri.startsWith("file:")) {
-      uri = uri.substring("file:".length());
-    }
+    else uri = StringUtil.trimStart(uri, "file:");
 
     VirtualFile file = null;
 

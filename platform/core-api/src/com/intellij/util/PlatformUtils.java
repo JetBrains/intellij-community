@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.application.ApplicationInfo;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -33,7 +35,7 @@ public class PlatformUtils {
   public static final String RUBY_PREFIX = "Ruby";
   public static final String PHP_PREFIX = "PhpStorm";
   public static final String WEB_PREFIX = "WebStorm";
-  public static final String DBE_PREFIX = "0xDBE";
+  public static final String DBE_PREFIX = "DataGrip";
 
   public static String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);
@@ -41,6 +43,11 @@ public class PlatformUtils {
 
   public static String getPlatformPrefix(String defaultPrefix) {
     return System.getProperty(PLATFORM_PREFIX_KEY, defaultPrefix);
+  }
+
+  public static boolean isJetBrainsProduct() {
+    final ApplicationInfo appInfo = ApplicationInfo.getInstance();
+    return appInfo != null && appInfo.getCompanyName().contains("JetBrains");
   }
 
   public static boolean isIntelliJ() {

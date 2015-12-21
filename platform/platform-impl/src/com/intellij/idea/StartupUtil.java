@@ -16,6 +16,7 @@
 package com.intellij.idea;
 
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
+import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startupWizard.StartupWizard;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -37,6 +38,9 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.Native;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.PatternLayout;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 
@@ -56,7 +60,7 @@ import java.util.Locale;
 public class StartupUtil {
   public static final String NO_SPLASH = "nosplash";
 
-  private static SocketLock ourLock;
+  private static SocketLock ourSocketLock;
 
   private StartupUtil() { }
 
@@ -66,17 +70,19 @@ public class StartupUtil {
 
   public synchronized static void addExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
     // method called by app after startup
-    ourLock.setExternalInstanceListener(consumer);
+    if (ourSocketLock != null) {
+      ourSocketLock.setExternalInstanceListener(consumer);
+    }
   }
 
-  public synchronized static int getAcquiredPort() {
-    BuiltInServer server = ourLock.getServer();
+  public static int getAcquiredPort() {
+    BuiltInServer server = getServer();
     return server == null ? -1 : server.getPort();
   }
 
   @Nullable
   public synchronized static BuiltInServer getServer() {
-    return ourLock == null ? null : ourLock.getServer();
+    return ourSocketLock == null ? null : ourSocketLock.getServer();
   }
 
   interface AppStarter {
@@ -94,6 +100,21 @@ public class StartupUtil {
     if (!checkJdkVersion()) {
       System.exit(Main.JDK_CHECK_FAILED);
     }
+
+    // avoiding "log4j:WARN No appenders could be found"
+    System.setProperty("log4j.defaultInitOverride", "true");
+    try {
+      org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
+      if (!root.getAllAppenders().hasMoreElements()) {
+        root.setLevel(Level.WARN);
+        root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
+      }
+    }
+    catch (Throwable e) {
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
+    }
+
     // note: uses config folder!
     if (!checkSystemFolders()) {
       System.exit(Main.DIR_CHECK_FAILED);
@@ -252,15 +273,15 @@ public class StartupUtil {
   }
 
   private synchronized static boolean lockSystemFolders(String[] args) {
-    if (ourLock != null) {
+    if (ourSocketLock != null) {
       throw new AssertionError();
     }
 
-    ourLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
+    ourSocketLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
 
     SocketLock.ActivateStatus status;
     try {
-      status = ourLock.lock(args);
+      status = ourSocketLock.lock(args);
     }
     catch (Exception e) {
       Main.showMessage("Cannot Lock System Folders", e);
@@ -269,9 +290,13 @@ public class StartupUtil {
 
     if (status == SocketLock.ActivateStatus.NO_INSTANCE) {
       ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+        @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
         @Override
         public void run() {
-          ourLock.dispose();
+          synchronized (StartupUtil.class) {
+            ourSocketLock.dispose();
+            ourSocketLock = null;
+          }
         }
       });
       return true;
@@ -369,29 +394,42 @@ public class StartupUtil {
     if (arguments != null) {
       log.info("JVM Args: " + StringUtil.join(arguments, " "));
     }
+
+    String extDirs = System.getProperty("java.ext.dirs");
+    if (extDirs != null) {
+      for (String dir : StringUtil.split(extDirs, File.pathSeparator)) {
+        String[] content = new File(dir).list();
+        if (content != null && content.length > 0) {
+          log.info("ext: " + dir + ": " + Arrays.toString(content));
+        }
+      }
+    }
   }
 
   static void runStartupWizard() {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
 
-    String stepsProvider = appInfo.getCustomizeIDEWizardStepsProvider();
-    if (stepsProvider != null) {
-      CustomizeIDEWizardDialog.showCustomSteps(stepsProvider);
-      PluginManagerCore.invalidatePlugins();
-      return;
-    }
+    String stepsProviderName = appInfo.getCustomizeIDEWizardStepsProvider();
+    if (stepsProviderName != null) {
+      CustomizeIDEWizardStepsProvider provider;
 
-    if (PlatformUtils.isIntelliJ()) {
-      new CustomizeIDEWizardDialog().show();
+      try {
+        Class<?> providerClass = Class.forName(stepsProviderName);
+        provider = (CustomizeIDEWizardStepsProvider)providerClass.newInstance();
+      }
+      catch (Throwable e) {
+        Main.showMessage("Configuration Wizard Failed", e);
+        return;
+      }
+
+      new CustomizeIDEWizardDialog(provider).show();
       PluginManagerCore.invalidatePlugins();
       return;
     }
 
     List<ApplicationInfoEx.PluginChooserPage> pages = appInfo.getPluginChooserPages();
     if (!pages.isEmpty()) {
-      StartupWizard startupWizard = new StartupWizard(pages);
-      startupWizard.setCancelText("Skip");
-      startupWizard.show();
+      new StartupWizard(pages).show();
       PluginManagerCore.invalidatePlugins();
     }
   }

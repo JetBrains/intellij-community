@@ -660,22 +660,17 @@ public class CvsUtil {
 
   }
 
-  public static String getRelativeRepositoryPath(String repository, String serverRoot) {    
+  public static String getRelativeRepositoryPath(String repository, String serverRoot) {
     repository = repository.replace(File.separatorChar, '/');
     serverRoot = serverRoot.replace(File.separatorChar, '/');
 
     if (repository.startsWith(serverRoot)) {
       repository = repository.substring(serverRoot.length());
 
-      if (repository.startsWith("/")) {
-        repository = repository.substring(1);
-      }
-
+      repository = StringUtil.trimStart(repository, "/");
     }
 
-    if (repository.startsWith("./")) {
-      repository = repository.substring(2);
-    }
+    repository = StringUtil.trimStart(repository, "./");
 
     return repository;
   }

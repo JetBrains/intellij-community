@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,11 +30,10 @@ import java.awt.*;
 
 public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
-  @SuppressWarnings({"UnresolvedPropertyKey"})
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static final String METHOD_TYPE = IdeBundle.message("title.hierarchy.method");
 
   public static final DataKey<MethodHierarchyBrowserBase> DATA_KEY = DataKey.create("com.intellij.ide.hierarchy.MethodHierarchyBrowserBase");
-  @Deprecated @NonNls public static final String METHOD_HIERARCHY_BROWSER_DATA_KEY = DATA_KEY.getName();
 
   public MethodHierarchyBrowserBase(final Project project, final PsiElement method) {
     super(project, method);
@@ -58,11 +56,10 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
                                                     final String methodShouldBeDefined) {
     final JPanel panel = new JPanel(new GridBagLayout());
 
-    JLabel label;
     final GridBagConstraints gc =
       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(3, 5, 0, 5), 0, 0);
 
-    label = new JLabel(methodDefinedText, AllIcons.Hierarchy.MethodDefined, SwingConstants.LEFT);
+    JLabel label = new JLabel(methodDefinedText, AllIcons.Hierarchy.MethodDefined, SwingConstants.LEFT);
     label.setUI(new MultiLineLabelUI());
     label.setIconTextGap(10);
     panel.add(label, gc);
@@ -100,8 +97,8 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
     return ActionPlaces.METHOD_HIERARCHY_VIEW_TOOLBAR;
   }
 
-  final class ShowImplementationsOnlyAction extends ToggleAction {
-    public ShowImplementationsOnlyAction() {
+  private final class ShowImplementationsOnlyAction extends ToggleAction {
+    private ShowImplementationsOnlyAction() {
       super(IdeBundle.message("action.hide.non.implementations"), null,
             AllIcons.General.Filter); // TODO[anton] use own icon!!!
     }
@@ -125,7 +122,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
     }
 
     @Override
-    public final void update(final AnActionEvent event) {
+    public final void update(@NotNull final AnActionEvent event) {
       super.update(event);
       final Presentation presentation = event.getPresentation();
       presentation.setEnabled(isValidBase());
@@ -134,7 +131,8 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
 
   public static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.message("action.base.on.this.method"), IdeActions.ACTION_METHOD_HIERARCHY, DATA_KEY.getName());
+      super(IdeBundle.message("action.base.on.this.method"), IdeActions.ACTION_METHOD_HIERARCHY, DATA_KEY.getName(),
+            LanguageMethodHierarchy.INSTANCE);
     }
   }
 

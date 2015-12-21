@@ -27,10 +27,10 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -44,7 +44,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.merge.MergeData;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
@@ -219,18 +218,13 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
       request.putUserData(entry.getKey(), entry.getValue());
     }
 
-    DataProvider dataProvider = request.getUserData(DiffUserDataKeys.DATA_PROVIDER);
-    if (dataProvider == null) {
-      dataProvider = new GenericDataProvider();
-      request.putUserData(DiffUserDataKeys.DATA_PROVIDER, dataProvider);
-    }
-    if (dataProvider instanceof GenericDataProvider) ((GenericDataProvider)dataProvider).putData(VcsDataKeys.CURRENT_CHANGE, myChange);
+    DiffUtil.putDataKey(request, VcsDataKeys.CURRENT_CHANGE, myChange);
 
     return request;
   }
 
   @NotNull
-  private static DiffRequest createRequest(@Nullable Project project,
+  private DiffRequest createRequest(@Nullable Project project,
                                            @NotNull Change change,
                                            @NotNull UserDataHolder context,
                                            @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
@@ -319,8 +313,10 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
       DiffContent content1 = createContent(project, bRev, context, indicator);
       DiffContent content2 = createContent(project, aRev, context, indicator);
 
-      String beforeRevisionTitle = getRevisionTitle(bRev, "Base version");
-      String afterRevisionTitle = getRevisionTitle(aRev, "Your version");
+      final String userLeftRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE);
+      String beforeRevisionTitle = userLeftRevisionTitle != null ? userLeftRevisionTitle : getRevisionTitle(bRev, "Base version");
+      final String userRightRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE);
+      String afterRevisionTitle = userRightRevisionTitle != null ? userRightRevisionTitle : getRevisionTitle(aRev, "Your version");
 
       SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, beforeRevisionTitle, afterRevisionTitle);
 

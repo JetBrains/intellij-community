@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -22,17 +21,19 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDirectoryContainer;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,25 +46,22 @@ import java.util.Comparator;
  * @author ven
  */
 public class CommonRefactoringUtil {
-  private CommonRefactoringUtil() {}
+  private CommonRefactoringUtil() { }
 
-  public static void showErrorMessage(String title, String message, @Nullable @NonNls String helpId, @NotNull Project project) {
+  public static void showErrorMessage(String title, String message, @Nullable String helpId, @NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
     RefactoringMessageDialog dialog = RefactoringMessageDialogService.getInstance()
       .createDialog(title, message, helpId, "OptionPane.errorIcon", false, project);
     dialog.show();
   }
 
-  //order of usages accross different files is irrelevant
+  // order of usages across different files is irrelevant
   public static void sortDepthFirstRightLeftOrder(final UsageInfo[] usages) {
     Arrays.sort(usages, new Comparator<UsageInfo>() {
       public int compare(final UsageInfo usage1, final UsageInfo usage2) {
-        final PsiElement element1 = usage1.getElement();
-        final PsiElement element2 = usage2.getElement();
-        if (element1 == null) {
-          if (element2 == null) return 0;
-          return 1;
-        }
+        PsiElement element1 = usage1.getElement(), element2 = usage2.getElement();
+        if (element1 == element2) return 0;
+        if (element1 == null) return 1;
         if (element2 == null) return -1;
         return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
       }
@@ -79,7 +77,11 @@ public class CommonRefactoringUtil {
     }
   }
 
-  public static void showErrorHint(final Project project, @Nullable final Editor editor, final String message, final String title, @Nullable @NonNls final String helpId) {
+  public static void showErrorHint(final Project project,
+                                   @Nullable final Editor editor,
+                                   @Nls final String message,
+                                   @Nls final String title,
+                                   @Nullable final String helpId) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RefactoringErrorHintException(message);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -95,7 +97,6 @@ public class CommonRefactoringUtil {
     });
   }
 
-  @NonNls
   public static String htmlEmphasize(String text) {
     return StringUtil.htmlEmphasize(text);
   }
@@ -103,6 +104,16 @@ public class CommonRefactoringUtil {
   public static boolean checkReadOnlyStatus(@NotNull PsiElement element) {
     final VirtualFile file = element.getContainingFile().getVirtualFile();
     return file != null && !ReadonlyStatusHandler.getInstance(element.getProject()).ensureFilesWritable(file).hasReadonlyFiles();
+  }
+
+  @NotNull
+  public static Collection<PsiElement> mapFilesToParents(@NotNull Collection<PsiElement> elements) {
+    return JBIterable.from(elements).transform(new Function<PsiElement, PsiElement>() {
+      @Override
+      public PsiElement fun(PsiElement e) {
+        return e instanceof PsiFileSystemItem ? e.getParent() : e;
+      }
+    }).toSet();
   }
 
   public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull PsiElement element) {
@@ -113,41 +124,43 @@ public class CommonRefactoringUtil {
     return checkReadOnlyStatus(Arrays.asList(elements), project, RefactoringBundle.message("refactoring.cannot.be.performed"), false, true);
   }
 
+  public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull Collection<? extends PsiElement> elements, boolean notifyOnFail) {
+    return checkReadOnlyStatus(elements, project, RefactoringBundle.message("refactoring.cannot.be.performed"), false, notifyOnFail);
+  }
+
   public static boolean checkReadOnlyStatus(@NotNull PsiElement element, @NotNull Project project, String messagePrefix) {
-    return element.isWritable() ||
-           checkReadOnlyStatus(Collections.singleton(element), project, messagePrefix, false, true);
+    return element.isWritable() || checkReadOnlyStatus(Collections.singleton(element), project, messagePrefix, false, true);
   }
 
   public static boolean checkReadOnlyStatusRecursively(@NotNull Project project, @NotNull Collection<? extends PsiElement> elements) {
     return checkReadOnlyStatus(elements, project, RefactoringBundle.message("refactoring.cannot.be.performed"), true, false);
   }
+
   public static boolean checkReadOnlyStatusRecursively(@NotNull Project project, @NotNull Collection<? extends PsiElement> elements, boolean notifyOnFail) {
     return checkReadOnlyStatus(elements, project, RefactoringBundle.message("refactoring.cannot.be.performed"), true, notifyOnFail);
   }
 
   private static boolean checkReadOnlyStatus(@NotNull Collection<? extends PsiElement> elements,
                                              @NotNull Project project,
-                                             final String messagePrefix,
+                                             @NotNull String messagePrefix,
                                              boolean recursively,
-                                             final boolean notifyOnFail) {
-    final Collection<VirtualFile> readonly = new THashSet<VirtualFile>(); // not writable, but could be checked out
-    final Collection<VirtualFile> failed = new THashSet<VirtualFile>();   // those located in jars
+                                             boolean notifyOnFail) {
+    final Collection<VirtualFile> readonly = new THashSet<VirtualFile>();  // not writable, but could be checked out
+    final Collection<VirtualFile> failed = new THashSet<VirtualFile>();  // those located in read-only filesystem
     boolean seenNonWritablePsiFilesWithoutVirtualFile = false;
 
     for (PsiElement element : elements) {
       if (element instanceof PsiDirectory) {
         final PsiDirectory dir = (PsiDirectory)element;
         final VirtualFile vFile = dir.getVirtualFile();
-        if (vFile.getFileSystem() instanceof JarFileSystem) {
+        if (vFile.getFileSystem().isReadOnly()) {
           failed.add(vFile);
         }
+        else if (recursively) {
+          collectReadOnlyFiles(vFile, readonly);
+        }
         else {
-          if (recursively) {
-            collectReadOnlyFiles(vFile, readonly);
-          }
-          else {
-            readonly.add(vFile);
-          }
+          readonly.add(vFile);
         }
       }
       else if (element instanceof PsiDirectoryContainer) {
@@ -155,20 +168,18 @@ public class CommonRefactoringUtil {
         for (PsiDirectory directory : directories) {
           VirtualFile virtualFile = directory.getVirtualFile();
           if (recursively) {
-            if (virtualFile.getFileSystem() instanceof JarFileSystem) {
+            if (virtualFile.getFileSystem().isReadOnly()) {
               failed.add(virtualFile);
             }
             else {
               collectReadOnlyFiles(virtualFile, readonly);
             }
           }
+          else if (virtualFile.getFileSystem().isReadOnly()) {
+            failed.add(virtualFile);
+          }
           else {
-            if (virtualFile.getFileSystem() instanceof JarFileSystem) {
-              failed.add(virtualFile);
-            }
-            else {
-              readonly.add(virtualFile);
-            }
+            readonly.add(virtualFile);
           }
         }
       }
@@ -184,32 +195,26 @@ public class CommonRefactoringUtil {
           if (vFile != null) {
             readonly.add(vFile);
           }
-          else {
-            if (!element.isWritable()) {
-              seenNonWritablePsiFilesWithoutVirtualFile = true;
-            }
+          else if (!element.isWritable()) {
+            seenNonWritablePsiFilesWithoutVirtualFile = true;
           }
         }
       }
     }
 
-    final VirtualFile[] files = VfsUtilCore.toVirtualFileArray(readonly);
-    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
+    ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readonly);
     ContainerUtil.addAll(failed, status.getReadonlyFiles());
+
     if (notifyOnFail && (!failed.isEmpty() || seenNonWritablePsiFilesWithoutVirtualFile && readonly.isEmpty())) {
-      StringBuilder message = new StringBuilder(messagePrefix);
-      message.append('\n');
+      StringBuilder message = new StringBuilder(messagePrefix).append('\n');
       int i = 0;
       for (VirtualFile virtualFile : failed) {
-        final String presentableUrl = virtualFile.getPresentableUrl();
-        final String subj = virtualFile.isDirectory()
-                            ? RefactoringBundle.message("directory.description", presentableUrl)
-                            : RefactoringBundle.message("file.description", presentableUrl);
-        if (virtualFile.getFileSystem() instanceof JarFileSystem) {
-          message.append(RefactoringBundle.message("0.is.located.in.a.jar.file", subj));
+        String subj = RefactoringBundle.message(virtualFile.isDirectory() ? "directory.description" : "file.description", virtualFile.getPresentableUrl());
+        if (virtualFile.getFileSystem().isReadOnly()) {
+          message.append(RefactoringBundle.message("0.is.located.in.a.jar.file", subj)).append('\n');
         }
         else {
-          message.append(RefactoringBundle.message("0.is.read.only", subj));
+          message.append(RefactoringBundle.message("0.is.read.only", subj)).append('\n');
         }
         if (i++ > 20) {
           message.append("...\n");
@@ -223,23 +228,23 @@ public class CommonRefactoringUtil {
     return failed.isEmpty();
   }
 
-  public static void collectReadOnlyFiles(final VirtualFile vFile, final Collection<VirtualFile> list) {
+  public static void collectReadOnlyFiles(@NotNull VirtualFile vFile, @NotNull final Collection<VirtualFile> list) {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
 
     VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         final boolean ignored = fileTypeManager.isFileIgnored(file);
-        if (! file.isWritable() && ! ignored) {
+        if (!file.isWritable() && !ignored) {
           list.add(file);
         }
-        return ! ignored;
+        return !ignored;
       }
     });
   }
 
   public static String capitalize(String text) {
-    return Character.toUpperCase(text.charAt(0)) + text.substring(1);
+    return StringUtil.capitalize(text);
   }
 
   public static boolean isAncestor(final PsiElement resolved, final Collection<? extends PsiElement> scopes) {

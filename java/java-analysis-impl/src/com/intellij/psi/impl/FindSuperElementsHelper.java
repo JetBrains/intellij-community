@@ -96,7 +96,9 @@ public class FindSuperElementsHelper {
           PsiClass anInterface = resolved.getElement();
           if (anInterface == null || !checkedInterfaces.add(PsiAnchor.create(anInterface))) continue;
           for (PsiMethod superMethod : anInterface.findMethodsByName(method.getName(), true)) {
-            superMethod = (PsiMethod)superMethod.getNavigationElement();
+            PsiElement navigationElement = superMethod.getNavigationElement();
+            if (!(navigationElement instanceof PsiMethod)) continue; // Kotlin
+            superMethod = (PsiMethod)navigationElement;
             ProgressManager.checkCanceled();
             PsiClass superInterface = superMethod.getContainingClass();
             if (superInterface == null) {

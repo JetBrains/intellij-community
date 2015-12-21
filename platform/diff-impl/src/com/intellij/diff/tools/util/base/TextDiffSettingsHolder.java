@@ -95,7 +95,6 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
     public void setHighlightPolicy(@NotNull HighlightPolicy value) {
       PLACE_SETTINGS.HIGHLIGHT_POLICY = value;
-      UsageTrigger.trigger("diff.TextDiffSettings.HighlightPolicy." + value.name());
     }
 
     @NotNull
@@ -105,7 +104,6 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
     public void setIgnorePolicy(@NotNull IgnorePolicy policy) {
       PLACE_SETTINGS.IGNORE_POLICY = policy;
-      UsageTrigger.trigger("diff.TextDiffSettings.IgnorePolicy." + policy.name());
     }
 
     // Editor settings
@@ -194,10 +192,12 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
   private State myState = new State();
 
   @NotNull
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(State state) {
     myState = state;
   }

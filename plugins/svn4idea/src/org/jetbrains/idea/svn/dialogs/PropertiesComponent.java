@@ -69,7 +69,6 @@ public class PropertiesComponent extends JPanel {
   private File myFile;
   private SvnVcs myVcs;
   private JSplitPane mySplitPane;
-  private static final String CONTEXT_ID = "context";
   private final CloseAction myCloseAction = new CloseAction();
   private final RefreshAction myRefreshAction = new RefreshAction();
   private ActionGroup myPopupActionGroup;
@@ -297,9 +296,7 @@ public class PropertiesComponent extends JPanel {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Edit Keywords");
       e.getPresentation().setDescription("Manage svn:keywords property");
-      if (!CONTEXT_ID.equals(e.getPlace())) {
-        e.getPresentation().setIcon(AllIcons.Actions.Properties);
-      }
+      e.getPresentation().setIcon(AllIcons.Actions.Properties);
       e.getPresentation().setEnabled(myFile != null && myFile.isFile());
     }
 
@@ -326,9 +323,7 @@ public class PropertiesComponent extends JPanel {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Delete Property");
       e.getPresentation().setDescription("Delete selected property");
-      if (!CONTEXT_ID.equals(e.getPlace())) {
-        e.getPresentation().setIcon(AllIcons.General.Remove);
-      }
+      e.getPresentation().setIcon(AllIcons.General.Remove);
       e.getPresentation().setEnabled(myFile != null && getSelectedPropertyName() != null);
     }
 
@@ -343,9 +338,7 @@ public class PropertiesComponent extends JPanel {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Add Property");
       e.getPresentation().setDescription("Add new property");
-      if (!CONTEXT_ID.equals(e.getPlace())) {
-        e.getPresentation().setIcon(IconUtil.getAddIcon());
-      }
+      e.getPresentation().setIcon(IconUtil.getAddIcon());
       e.getPresentation().setEnabled(myFile != null);
     }
 
@@ -366,9 +359,7 @@ public class PropertiesComponent extends JPanel {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Edit Property");
       e.getPresentation().setDescription("Edit selected property value");
-      if (!CONTEXT_ID.equals(e.getPlace())) {
-        e.getPresentation().setIcon(AllIcons.Actions.EditSource);
-      }
+      e.getPresentation().setIcon(AllIcons.Actions.EditSource);
       e.getPresentation().setEnabled(myFile != null && getSelectedPropertyName() != null);
     }
 

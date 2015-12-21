@@ -41,7 +41,9 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -56,11 +58,11 @@ import java.util.*;
 public class PatchApplier<BinaryType extends FilePatch> {
   private final Project myProject;
   private final VirtualFile myBaseDirectory;
-  private final List<FilePatch> myPatches;
+  @NotNull private final List<FilePatch> myPatches;
   private final CustomBinaryPatchApplier<BinaryType> myCustomForBinaries;
   private final CommitContext myCommitContext;
   private final Consumer<Collection<FilePath>> myToTargetListsMover;
-  private final List<FilePatch> myRemainingPatches;
+  @NotNull private final List<FilePatch> myRemainingPatches;
   private final PathsVerifier<BinaryType> myVerifier;
   private boolean mySystemOperation;
 
@@ -68,7 +70,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
   @Nullable private final String myLeftConflictPanelTitle;
   @Nullable private final String myRightConflictPanelTitle;
 
-  public PatchApplier(@NotNull Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
+  public PatchApplier(@NotNull Project project, final VirtualFile baseDirectory, @NotNull  final List<FilePatch> patches,
                       @Nullable final Consumer<Collection<FilePath>> toTargetListsMover,
                       final CustomBinaryPatchApplier<BinaryType> customForBinaries, final CommitContext commitContext,
                       boolean reverseConflict, @Nullable String leftConflictPanelTitle, @Nullable String rightConflictPanelTitle) {
@@ -96,7 +98,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     });
   }
 
-  public PatchApplier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
+  public PatchApplier(final Project project, final VirtualFile baseDirectory, @NotNull final List<FilePatch> patches,
                       final LocalChangeList targetChangeList, final CustomBinaryPatchApplier<BinaryType> customForBinaries,
                       final CommitContext commitContext,
                       boolean reverseConflict, @Nullable String leftConflictPanelTitle, @Nullable String rightConflictPanelTitle) {
@@ -108,7 +110,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     myVerifier.setIgnoreContentRootsCheck(true);
   }
 
-  public PatchApplier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
+  public PatchApplier(final Project project, final VirtualFile baseDirectory, @NotNull final List<FilePatch> patches,
                         final LocalChangeList targetChangeList, final CustomBinaryPatchApplier<BinaryType> customForBinaries,
                         final CommitContext commitContext) {
     this(project, baseDirectory, patches, targetChangeList, customForBinaries, commitContext, false, null, null);
@@ -123,6 +125,22 @@ public class PatchApplier<BinaryType extends FilePatch> {
     final ChangeListManager clm = ChangeListManager.getInstance(project);
     if (targetChangeList == null || clm.getDefaultListName().equals(targetChangeList.getName())) return null;
     return new FilesMover(clm, targetChangeList);
+  }
+
+  @NotNull
+  public List<FilePatch> getPatches() {
+    return myPatches;
+  }
+
+  @NotNull
+  public List<BinaryType> getBinaryPatches() {
+    return ContainerUtil.mapNotNull(myVerifier.getBinaryPatches(),
+                                    new Function<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>, BinaryType>() {
+                                      @Override
+                                      public BinaryType fun(Pair<VirtualFile, ApplyFilePatchBase<BinaryType>> patchInfo) {
+                                        return patchInfo.getSecond().getPatch();
+                                      }
+                                    });
   }
 
   @CalledInAwt
@@ -296,7 +314,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
   }
 
   protected ApplyPatchStatus executeWritable() {
-    if (!makeWritable(myVerifier.getWritableFiles())) {
+    final ReadonlyStatusHandler.OperationStatus readOnlyFilesStatus = getReadOnlyFilesStatus(myVerifier.getWritableFiles());
+    if (readOnlyFilesStatus.hasReadonlyFiles()) {
+      showError(myProject, readOnlyFilesStatus.getReadonlyFilesMessage(), true);
       return ApplyPatchStatus.FAILURE;
     }
 
@@ -456,14 +476,14 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
   }
 
+  @NotNull
   public List<FilePatch> getRemainingPatches() {
     return myRemainingPatches;
   }
 
-  private boolean makeWritable(final List<VirtualFile> filesToMakeWritable) {
+  private ReadonlyStatusHandler.OperationStatus getReadOnlyFilesStatus(@NotNull final List<VirtualFile> filesToMakeWritable) {
     final VirtualFile[] fileArray = VfsUtilCore.toVirtualFileArray(filesToMakeWritable);
-    final ReadonlyStatusHandler.OperationStatus readonlyStatus = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(fileArray);
-    return (! readonlyStatus.hasReadonlyFiles());
+    return ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(fileArray);
   }
 
   private boolean fileTypesAreOk(final List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches) {
@@ -477,6 +497,10 @@ public class PatchApplier<BinaryType extends FilePatch> {
             showError(myProject, "Cannot apply patch. File " + file.getPresentableName() + " type not defined.", true);
             return false;
           }
+        }
+        if (fileType.isBinary()) {
+          showError(myProject, "Cannot apply patch because it contains binary file " + file.getPresentableName(), true);
+          return false;
         }
       }
     }

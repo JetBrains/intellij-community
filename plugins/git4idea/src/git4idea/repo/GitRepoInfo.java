@@ -16,6 +16,7 @@
 package git4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.vcs.log.Hash;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -24,9 +25,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Kirill Likhodedov
@@ -37,19 +36,23 @@ public class GitRepoInfo {
   @Nullable private final String myCurrentRevision;
   @NotNull private final Repository.State myState;
   @NotNull private final Set<GitRemote> myRemotes;
-  @NotNull private final Set<GitLocalBranch> myLocalBranches;
-  @NotNull private final Set<GitRemoteBranch> myRemoteBranches;
+  @NotNull private final Map<GitLocalBranch, Hash> myLocalBranches;
+  @NotNull private final Map<GitRemoteBranch, Hash> myRemoteBranches;
   @NotNull private final Set<GitBranchTrackInfo> myBranchTrackInfos;
 
-  public GitRepoInfo(@Nullable GitLocalBranch currentBranch, @Nullable String currentRevision, @NotNull Repository.State state,
-                     @NotNull Collection<GitRemote> remotes, @NotNull Collection<GitLocalBranch> localBranches,
-                     @NotNull Collection<GitRemoteBranch> remoteBranches, @NotNull Collection<GitBranchTrackInfo> branchTrackInfos) {
+  public GitRepoInfo(@Nullable GitLocalBranch currentBranch,
+                     @Nullable String currentRevision,
+                     @NotNull Repository.State state,
+                     @NotNull Collection<GitRemote> remotes,
+                     @NotNull Map<GitLocalBranch, Hash> localBranches,
+                     @NotNull Map<GitRemoteBranch, Hash> remoteBranches,
+                     @NotNull Collection<GitBranchTrackInfo> branchTrackInfos) {
     myCurrentBranch = currentBranch;
     myCurrentRevision = currentRevision;
     myState = state;
     myRemotes = new LinkedHashSet<GitRemote>(remotes);
-    myLocalBranches = new LinkedHashSet<GitLocalBranch>(localBranches);
-    myRemoteBranches = new LinkedHashSet<GitRemoteBranch>(remoteBranches);
+    myLocalBranches = new LinkedHashMap<GitLocalBranch, Hash>(localBranches);
+    myRemoteBranches = new LinkedHashMap<GitRemoteBranch, Hash>(remoteBranches);
     myBranchTrackInfos = new LinkedHashSet<GitBranchTrackInfo>(branchTrackInfos);
   }
 
@@ -64,13 +67,19 @@ public class GitRepoInfo {
   }
 
   @NotNull
-  public Collection<GitLocalBranch> getLocalBranches() {
+  public Map<GitLocalBranch, Hash> getLocalBranchesWithHashes() {
     return myLocalBranches;
   }
 
   @NotNull
-  public Collection<GitRemoteBranch> getRemoteBranches() {
+  public Map<GitRemoteBranch, Hash> getRemoteBranchesWithHashes() {
     return myRemoteBranches;
+  }
+
+  @NotNull
+  @Deprecated
+  public Collection<GitRemoteBranch> getRemoteBranches() {
+    return myRemoteBranches.keySet();
   }
 
   @NotNull
@@ -120,34 +129,37 @@ public class GitRepoInfo {
 
   @Override
   public String toString() {
-    return String.format("GitRepoInfo{current=%s, remotes=%s, localBranches=%s, remoteBranches=%s, trackInfos=%s}",
-                         myCurrentBranch, myRemotes, myLocalBranches, myRemoteBranches, myBranchTrackInfos);
+    return String
+      .format("GitRepoInfo{current=%s, remotes=%s, localBranches=%s, remoteBranches=%s, trackInfos=%s}", myCurrentBranch, myRemotes,
+              myLocalBranches, myRemoteBranches, myBranchTrackInfos);
   }
 
-  private static <T extends GitBranch> boolean areEqual(Collection<T> c1, Collection<T> c2) {
+  private static <T extends GitBranch> boolean areEqual(Map<T, Hash> c1, Map<T, Hash> c2) {
     // GitBranch has perverted equals contract (see the comment there)
     // until GitBranch is created only from a single place with correctly defined Hash, we can't change its equals
-    THashSet<GitBranch> set1 = new THashSet<GitBranch>(c1, new BranchesComparingStrategy());
-    THashSet<GitBranch> set2 = new THashSet<GitBranch>(c2, new BranchesComparingStrategy());
+    THashSet<Map.Entry<? extends GitBranch, Hash>> set1 =
+      new THashSet<Map.Entry<? extends GitBranch, Hash>>(c1.entrySet(), new BranchesComparingStrategy());
+    THashSet<Map.Entry<? extends GitBranch, Hash>> set2 =
+      new THashSet<Map.Entry<? extends GitBranch, Hash>>(c2.entrySet(), new BranchesComparingStrategy());
     return set1.equals(set2);
   }
 
-  private static class BranchesComparingStrategy implements TObjectHashingStrategy<GitBranch> {
+  private static class BranchesComparingStrategy implements TObjectHashingStrategy<Map.Entry<? extends GitBranch, Hash>> {
 
     @Override
-    public int computeHashCode(@NotNull GitBranch branch) {
-      return 31 * branch.getName().hashCode() + branch.getHash().hashCode();
+    public int computeHashCode(@NotNull Map.Entry<? extends GitBranch, Hash> branchEntry) {
+      return 31 * branchEntry.getKey().getName().hashCode() + branchEntry.getValue().hashCode();
     }
 
     @Override
-    public boolean equals(@NotNull GitBranch b1, @NotNull GitBranch b2) {
+    public boolean equals(@NotNull Map.Entry<? extends GitBranch, Hash> b1, @NotNull Map.Entry<? extends GitBranch, Hash> b2) {
       if (b1 == b2) {
         return true;
       }
       if (b1.getClass() != b2.getClass()) {
         return false;
       }
-      return b1.getName().equals(b2.getName()) && b1.getHash().equals(b2.getHash());
+      return b1.getKey().getName().equals(b2.getKey().getName()) && b2.getValue().equals(b2.getValue());
     }
   }
 

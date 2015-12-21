@@ -39,6 +39,14 @@ binding.setVariable("p", {String key, String defaultValue = null ->
   }
 })
 
+binding.setVariable("versionSelector", {
+  def fullVersion = p("component.version.major") + "." + p("component.version.minor")
+  def versionParts = fullVersion.split("\\.")
+
+  def minor = versionParts[1]
+  versionParts[0] + (minor == "0" ? "": "." + minor)
+})
+
 binding.setVariable("guessJdk", {
   String javaHome = p("java.home")
 
@@ -139,7 +147,7 @@ binding.setVariable("loadProject", {
     bundledKotlinPath = "$home/community/build/kotlinc"
   }
   if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
-    projectBuilder.error("Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar")
+    projectBuilder.error("Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar: run download_kotlin.gant script to download Kotlin JARs")
     return
   }
   setPathVariable("KOTLIN_BUNDLED", bundledKotlinPath)
@@ -326,8 +334,7 @@ binding.setVariable("copyAndPatchFiles", { Closure files, String target, Map arg
 
 binding.setVariable("wireBuildDate", { String buildNumber, String appInfoFile ->
   ant.tstamp()
-  patchFiles([appInfoFile], ["BUILD_NUMBER": buildNumber, "BUILD_DATE": DSTAMP,
-          "PACKAGE_CODE": buildNumber.substring(0, buildNumber.indexOf('-'))])
+  patchFiles([appInfoFile], ["BUILD_NUMBER": buildNumber, "BUILD_DATE": DSTAMP])
 })
 
 binding.setVariable("commonJvmArgsForTests", {
@@ -338,6 +345,7 @@ binding.setVariable("commonJvmArgsForTests", {
     "-ea",
     "-Dfile.encoding=UTF-8",
     "-Dio.netty.leakDetectionLevel=PARANOID",
+//    yjpOptions("junit", "64"), // uncomment to start tests with a profiling agent (e.g. in a personal build)
     "-server",
     "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
     "-XX:+HeapDumpOnOutOfMemoryError",
@@ -346,6 +354,8 @@ binding.setVariable("commonJvmArgsForTests", {
     "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
     "-Xdebug",
     "-XX:ReservedCodeCacheSize=240m",
+    "-XX:SoftRefLRUPolicyMSPerMB=50",
+    "-XX:+UseConcMarkSweepGC",
     "-XX:-OmitStackTraceInFastThrow",
     jdwp
   ]
@@ -377,7 +387,6 @@ binding.setVariable("platformApiModules", [
   "projectModel-api",
   "remote-servers-agent-rt",
   "remote-servers-api",
-  "structure-view-api",
   "usageView",
   "vcs-api-core",
   "vcs-api",
@@ -869,33 +878,34 @@ binding.setVariable("signExecutableFiles", { String binDir ->
 })
 
 binding.setVariable("bundledJDKs"){
-  requireProperty("jdk16.mac", "true")
-  requireProperty("jdk.bundled.win", "1.8")
-  requireProperty("jdk.bundled.linux", "false")
-  requireProperty("jdk.bundled.mac", "1.8")
-  requireProperty("jdk.custom.mac", "true")
-  requireProperty("jdk.custom.linux", "false")
+  requireProperty("artifact.linux.no.jdk", "true")
+  requireProperty("artifact.mac.no.jdk", "true")
+  requireProperty("jdk.win", "1.8")
+  requireProperty("jdk.mac", "1.8")
+  requireProperty("jdk.linux", "1.8")
+  requireProperty("jdk.custom.linux", "1.8")
+
   if (new File("${home}/build/jdk").exists()) {
-    if (p("jdk.bundled.win") != "false") {
-      setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.bundled.win"), "x32.zip"))
-      extractRedistJre(winJDK, "${paths.sandbox}/bundled.win.jdk/jre")
+    if (p("jdk.win") != "false") {
+      setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.win"), "x32.zip"))
+      extractRedistJre(winJDK, "${paths.sandbox}/jdk.win/jre")
     }
-    if (p("jdk.bundled.linux") != "false") {
-      setProperty("linuxJDK", getPathToBundledJDK(new File("${home}/build/jdk/linux"), "jdk" + p("jdk.bundled.linux"), ".tar"))
-      extractRedistJre(linuxJDK, "${paths.sandbox}/bundled.linux.jdk/jre")
-    }
-    def customLinuxJdkDir = new File("${home}/build/jdk/custom/linux")
-    if (p("jdk.custom.linux") == "true" && (customLinuxJdkDir.exists() && customLinuxJdkDir.isDirectory())) {
-      setProperty("linuxCustomJDK", getPathToBundledJDK(customLinuxJdkDir, "openjdk.1.8", ".tar.gz"))
-      extractRedistJre(linuxCustomJDK, "${paths.sandbox}/custom.linux.jdk")
-    }
-    if (p("jdk.bundled.mac") != "false") {
-      setProperty("macJDK", getPathToBundledJDK(new File("${home}/build/jdk/mac"), "jdk" + p("jdk.bundled.mac"), ".tar"))
+    if (p("jdk.linux") != "false") {
+      setProperty("linuxJDK", getPathToBundledJDK(new File("${home}/build/jdk/linux"), "jdk" + p("jdk.linux"), ".tar"))
+      extractRedistJre(linuxJDK, "${paths.sandbox}/jdk.linux/jre")
     }
     def customJdkDir = new File("${home}/build/jdk/custom")
-    if (p("jdk.custom.mac") == "true" && (customJdkDir.exists() && customJdkDir.isDirectory())) {
+    if (p("jdk.mac") != "false" && (customJdkDir.exists() && customJdkDir.isDirectory())) {
       setProperty("macCustomJDK", getPathToBundledJDK(customJdkDir, "openjdk.1.8", ".tar.gz"))
     }
+    customJdkDir = new File("${home}/build/jdk/custom/linux")
+    if (p("jdk.custom.linux") != "false" && (customJdkDir.exists() && customJdkDir.isDirectory())) {
+      setProperty("linuxCustomJDK", getPathToBundledJDK(customJdkDir, "openjdk.1.8", ".tar.gz"))
+      extractRedistJre(linuxCustomJDK, "${paths.sandbox}/jdk.custom.linux")
+    }
+/*    if (p("jdk.bundled.mac") != "false") {
+      setProperty("macJDK", getPathToBundledJDK(new File("${home}/build/jdk/mac"), "jdk" + p("jdk.bundled.mac"), ".tar"))
+    } */
   }
 }
 
@@ -1257,7 +1267,6 @@ binding.setVariable("analysisApiModules", [
     "jps-model-api",
     "jps-model-serialization",
     "projectModel-api",
-    "structure-view-api",
     "util",
     "util-rt",
     "xml-analysis-api",

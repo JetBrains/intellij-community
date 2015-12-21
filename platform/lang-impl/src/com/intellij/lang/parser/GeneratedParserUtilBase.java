@@ -248,6 +248,14 @@ public class GeneratedParserUtilBase {
     return false;
   }
 
+  public static boolean nextTokenIsSmart(PsiBuilder builder, IElementType token) {
+    return nextTokenIsFast(builder, token) || ErrorState.get(builder).completionState != null;
+  }
+
+  public static boolean nextTokenIsSmart(PsiBuilder builder, IElementType... tokens) {
+    return nextTokenIsFast(builder, tokens) || ErrorState.get(builder).completionState != null;
+  }
+
   public static boolean nextTokenIs(PsiBuilder builder, String frameName, IElementType... tokens) {
     ErrorState state = ErrorState.get(builder);
     if (state.completionState != null) return true;
@@ -353,37 +361,9 @@ public class GeneratedParserUtilBase {
   private static void addCompletionVariant(@NotNull PsiBuilder builder, @NotNull CompletionState completionState, Object o) {
     int offset = builder.getCurrentOffset();
     if (!builder.eof() && offset == builder.rawTokenTypeStart(1)) return; // suppress for zero-length tokens
-
-    boolean add = false;
-    int diff = completionState.offset - offset;
     String text = completionState.convertItem(o);
     int length = text == null? 0 : text.length();
-    if (length == 0) return;
-    if (diff == 0) {
-      add = true;
-    }
-    else if (diff > 0 && diff <= length) {
-      CharSequence fragment = builder.getOriginalText().subSequence(offset, completionState.offset);
-      add = completionState.prefixMatches(fragment.toString(), text);
-    }
-    else if (diff < 0) {
-      for (int i=-1; ; i--) {
-        IElementType type = builder.rawLookup(i);
-        int tokenStart = builder.rawTokenTypeStart(i);
-        if (isWhitespaceOrComment(builder, type)) {
-          diff = completionState.offset - tokenStart;
-        }
-        else if (type != null && tokenStart < completionState.offset) {
-          CharSequence fragment = builder.getOriginalText().subSequence(tokenStart, completionState.offset);
-          if (completionState.prefixMatches(fragment.toString(), text)) {
-            diff = completionState.offset - tokenStart;
-          }
-          break;
-        }
-        else break;
-      }
-      add = diff >= 0 && diff < length;
-    }
+    boolean add = length != 0 && completionState.prefixMatches(builder, text);
     add = add && length > 1 && !(text.charAt(0) == '<' && text.charAt(length - 1) == '>') &&
           !(text.charAt(0) == '\'' && text.charAt(length - 1) == '\'' && length < 5);
     if (add) {
@@ -689,6 +669,14 @@ public class GeneratedParserUtilBase {
     }
   }
 
+  public static boolean withProtectedLastVariantPos(PsiBuilder builder, int level, Parser parser) {
+    ErrorState state = ErrorState.get(builder);
+    int backup = state.lastExpectedVariantPos;
+    boolean result = parser.parse(builder, level);
+    state.lastExpectedVariantPos = backup;
+    return result;
+  }
+
   private static int getLastVariantPos(ErrorState state, int defValue) {
     return state.lastExpectedVariantPos < 0? defValue : state.lastExpectedVariantPos;
   }
@@ -757,6 +745,38 @@ public class GeneratedParserUtilBase {
 
     public void addItem(@NotNull PsiBuilder builder, @NotNull String text) {
       items.add(text);
+    }
+
+    public boolean prefixMatches(@NotNull PsiBuilder builder, @NotNull String text) {
+      int builderOffset = builder.getCurrentOffset();
+      int diff = offset - builderOffset;
+      int length = text.length();
+      if (diff == 0) {
+        return true;
+      }
+      else if (diff > 0 && diff <= length) {
+        CharSequence fragment = builder.getOriginalText().subSequence(builderOffset, offset);
+        return prefixMatches(fragment.toString(), text);
+      }
+      else if (diff < 0) {
+        for (int i=-1; ; i--) {
+          IElementType type = builder.rawLookup(i);
+          int tokenStart = builder.rawTokenTypeStart(i);
+          if (isWhitespaceOrComment(builder, type)) {
+            diff = offset - tokenStart;
+          }
+          else if (type != null && tokenStart < offset) {
+            CharSequence fragment = builder.getOriginalText().subSequence(tokenStart, offset);
+            if (prefixMatches(fragment.toString(), text)) {
+              diff = offset - tokenStart;
+            }
+            break;
+          }
+          else break;
+        }
+        return diff >= 0 && diff < length;
+      }
+      return false;
     }
 
     public boolean prefixMatches(@NotNull String prefix, @NotNull String variant) {

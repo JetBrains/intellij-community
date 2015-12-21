@@ -59,16 +59,14 @@ import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
+import java.awt.font.GlyphVector;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -87,17 +85,50 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public class UIUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
 
   public static final String BORDER_LINE = "<hr size=1 noshade>";
 
   private static final StyleSheet DEFAULT_HTML_KIT_CSS;
 
   static {
+    blockATKWrapper();
     // save the default JRE CSS and ..
     HTMLEditorKit kit = new HTMLEditorKit();
     DEFAULT_HTML_KIT_CSS = kit.getStyleSheet();
     // .. erase global ref to this CSS so no one can alter it
     kit.setStyleSheet(null);
+  }
+
+  private static void blockATKWrapper() {
+    /*
+     * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
+     * which is called from Toolkit.getDefaultToolkit().
+     */
+    if (!(SystemInfo.isLinux && Registry.is("linux.jdk.accessibility.atkwrapper.block"))) return;
+
+    String ATK_WRAPPER = "org.GNOME.Accessibility.AtkWrapper";
+
+    Properties properties = new Properties();
+    try {
+      File propsFile = new File(System.getProperty("java.home") + File.separator + "lib" + File.separator + "accessibility.properties");
+      FileInputStream in = new FileInputStream(propsFile);
+      properties.load(in);
+      in.close();
+    } catch (Exception ignore) {
+    }
+    if (!properties.isEmpty()) {
+      String classNames = System.getProperty("javax.accessibility.assistive_technologies");
+      if (classNames == null) {
+        // If the system property is not set, Toolkit will try to use the properties file.
+        classNames = properties.getProperty("assistive_technologies", null);
+        if (classNames != null && classNames.contains(ATK_WRAPPER)) {
+          // Replace AtkWrapper with a dummy Object. It'll be instantiated & GC'ed right away, a NOP.
+          System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
+          LOG.info(ATK_WRAPPER + " is blocked, see IDEA-149219");
+        }
+      }
+    }
   }
 
   public static int getMultiClickInterval() {
@@ -217,8 +248,6 @@ public class UIUtil {
       }
     }
   };
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
 
   private static final Color UNFOCUSED_SELECTION_COLOR = Gray._212;
   private static final Color ACTIVE_HEADER_COLOR = new Color(160, 186, 213);
@@ -548,6 +577,22 @@ public class UIUtil {
     final Rectangle stringBounds = font.getStringBounds(string, frc).getBounds();
 
     return (int)(centerY - stringBounds.height / 2.0 - stringBounds.y);
+  }
+
+  /**
+   * @param string {@code String} to examine
+   * @param font {@code Font} that is used to render the string
+   * @param graphics {@link Graphics} that should be used to render the string
+   * @return height of the tallest glyph in a string. If string is empty, returns 0
+   */
+  public static int getHighestGlyphHeight(@NotNull String string, @NotNull Font font, @NotNull Graphics graphics) {
+    FontRenderContext frc = ((Graphics2D)graphics).getFontRenderContext();
+    GlyphVector gv = font.createGlyphVector(frc, string);
+    int maxHeight = 0;
+    for (int i = 0; i < string.length(); i ++) {
+      maxHeight = Math.max(maxHeight, (int)gv.getGlyphMetrics(i).getBounds2D().getHeight());
+    }
+    return maxHeight;
   }
 
   public static void setEnabled(Component component, boolean enabled, boolean recursively) {
@@ -1626,6 +1671,9 @@ public class UIUtil {
       g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
 
+      if (isRetina()) {
+        ((Graphics2D)g).setStroke(new BasicStroke(2f));
+      }
       ((Graphics2D)g).setPaint(getGradientPaint(0, 0, Gray.x00.withAlpha(5), 0, height, Gray.x00.withAlpha(20)));
       g.fillRect(x, 0, width, height);
 
@@ -1633,8 +1681,8 @@ public class UIUtil {
         g.setColor(new Color(100, 150, 230, toolWindow ? 50 : 30));
         g.fillRect(x, 0, width, height);
       }
-      g.setColor(Gray.x00.withAlpha(toolWindow ? 90 : 50));
-      if (drawTopLine && !(SystemInfo.isMac && isUnderIntelliJLaF())) g.drawLine(x, 0, width, 0);
+      g.setColor(SystemInfo.isMac && isUnderIntelliJLaF() ? Gray.xC9 : Gray.x00.withAlpha(toolWindow ? 90 : 50));
+      if (drawTopLine) g.drawLine(x, 0, width, 0);
       if (drawBottomLine) g.drawLine(x, height - (isRetina() ? 1 : 2), width, height - (isRetina() ? 1 : 2));
 
       if (SystemInfo.isMac && isUnderIntelliJLaF()) {
@@ -1643,7 +1691,7 @@ public class UIUtil {
         g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : Gray.xFF.withAlpha(100));
       }
 
-      g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
+      g.drawLine(x, 0, width, 0);
     } finally {
       config.restore();
     }
@@ -1728,7 +1776,7 @@ public class UIUtil {
         img = image;
       }
       newG.drawImage(img, 0, 0, observer);
-      newG.scale(1, 1);
+      //newG.scale(1, 1);
       newG.dispose();
     } else {
       g.drawImage(image, x, y, observer);
@@ -1744,7 +1792,7 @@ public class UIUtil {
         img = image;
       }
       newG.drawImage((BufferedImage)img, op, 0, 0);
-      newG.scale(1, 1);
+      //newG.scale(1, 1);
       newG.dispose();
     } else {
       ((Graphics2D)g).drawImage(image, op, x, y);
@@ -1802,22 +1850,28 @@ public class UIUtil {
   /** @see #pump() */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
+    //noinspection StatementWithEmptyBody
+    while(dispatchInvocationEvent());
+  }
+  
+  @TestOnly
+  public static boolean dispatchInvocationEvent() {
     assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    while (true) {
-      AWTEvent event = eventQueue.peekEvent();
-      if (event == null) break;
-      try {
-        AWTEvent event1 = eventQueue.getNextEvent();
-        if (event1 instanceof InvocationEvent) {
-          ((InvocationEvent)event1).dispatch();
-        }
-      }
-      catch (Exception e) {
-        LOG.error(e); //?
+    AWTEvent event = eventQueue.peekEvent();
+    if (event == null) return false;
+    try {
+      AWTEvent event1 = eventQueue.getNextEvent();
+      if (event1 instanceof InvocationEvent) {
+        ((InvocationEvent)event1).dispatch();
       }
     }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    return true;
   }
+  
   private static Thread getEventQueueThread() {
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     try {
@@ -2432,23 +2486,26 @@ public class UIUtil {
   public static void initDefaultLAF() {
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-
-      if (ourSystemFontData == null) {
-        Font font = getLabelFont();
-        if (SystemInfo.isWindows) {
-          //noinspection HardCodedStringLiteral
-          Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
-          if (winFont != null) font = winFont;
-        }
-        else if (SystemInfo.isLinux && JBUI.isHiDPI()) {
-          // We don't expect the default GUI font to be scaled on Linux and do it ourselves.
-          // TODO: this is valid until HIDPI support comes to J2D/Swing on Linux.
-          font = JBFont.create(font);
-        }
-        ourSystemFontData = Pair.create(font.getName(), font.getSize());
-      }
+      initSystemFontData();
     }
-    catch (Exception ignored) { }
+    catch (Exception ignore) {}
+  }
+
+  public static void initSystemFontData() {
+    if (ourSystemFontData != null) return;
+
+    Font font = getLabelFont();
+    if (SystemInfo.isWindows) {
+      //noinspection HardCodedStringLiteral
+      Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
+      if (winFont != null) font = winFont;
+    }
+    else if (SystemInfo.isLinux && JBUI.isHiDPI()) {
+      // We don't expect the default GUI font to be scaled on Linux and do it ourselves.
+      // TODO: this is valid until HIDPI support comes to J2D/Swing on Linux.
+      font = JBFont.create(font);
+    }
+    ourSystemFontData = Pair.create(font.getName(), font.getSize());
   }
 
   @Nullable

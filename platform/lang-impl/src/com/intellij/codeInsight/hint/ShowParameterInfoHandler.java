@@ -50,12 +50,19 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     return false;
   }
 
+  @Nullable
+  private static PsiElement findAnyElementAt(@NotNull PsiFile file, int offset) {
+    PsiElement element = file.findElementAt(offset);
+    if (element == null && offset > 0) element = file.findElementAt(offset - 1);
+    return element;
+  }
+
   public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final int offset = editor.getCaretModel().getOffset();
-    final PsiElement psiElement = file.findElementAt(offset);
+    final PsiElement psiElement = findAnyElementAt(file, offset);
     if (psiElement == null) return;
 
     final ShowParameterInfoContext context = new ShowParameterInfoContext(

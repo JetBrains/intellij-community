@@ -127,7 +127,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
 
   @Nullable
   public T getRawDeepestLast() {
-    for (T result = getRoot(), last; result != null; result = last) {
+    for (T result = JBIterable.from(getRoots()).last(), last; result != null; result = last) {
       JBIterable<T> children = children(result);
       if (children.isEmpty()) return result;
       //noinspection AssignmentToForLoopParameter
@@ -398,12 +398,8 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
           for (int i = 0; i < count; i++) {
             T child = array[i];
             IElementType childType = typeOf(child);
-            // skip TokenType.* types, errors cannot be properly handled (no parents)
-            if (childType == TokenType.ERROR_ELEMENT) {
-              // todo remember error
-              continue;
-            }
-            else if (childType == TokenType.WHITE_SPACE || childType == TokenType.BAD_CHARACTER) {
+            // tokens and errors getParent() == null
+            if (childType == TokenType.WHITE_SPACE || childType == TokenType.BAD_CHARACTER) {
               continue;
             }
             array[i] = null; // do not dispose meaningful TokenNodes

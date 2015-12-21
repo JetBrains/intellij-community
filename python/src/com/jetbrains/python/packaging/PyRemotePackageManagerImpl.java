@@ -44,19 +44,21 @@ import java.util.List;
 public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
   private static final Logger LOG = Logger.getInstance(PyRemotePackageManagerImpl.class);
 
-  PyRemotePackageManagerImpl(@NotNull Sdk sdk) {
+  PyRemotePackageManagerImpl(@NotNull final Sdk sdk) {
     super(sdk);
   }
 
   @Nullable
   @Override
   protected String getHelperPath(String helper) throws ExecutionException {
-    final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
+    final Sdk sdk = getSdk();
+
+    final SdkAdditionalData sdkData = sdk.getSdkAdditionalData();
     if (sdkData instanceof PyRemoteSdkAdditionalDataBase) {
       final PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase) sdkData;
       try {
         String helpersPath;
-        if (remoteSdkData.getRemoteConnectionType() != CredentialsType.DOCKER) {
+        if (remoteSdkData.connectionCredentials().getRemoteConnectionType() != CredentialsType.DOCKER) {
           final RemoteSdkCredentials remoteSdkCredentials = remoteSdkData.getRemoteSdkCredentials(false);
           helpersPath = remoteSdkCredentials.getHelpersPath();
         }
@@ -86,16 +88,17 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
                                                  @NotNull List<String> args,
                                                  boolean askForSudo,
                                                  boolean showProgress, @Nullable final String workingDir) throws ExecutionException {
-    final String homePath = mySdk.getHomePath();
+    final Sdk sdk = getSdk();
+    final String homePath = sdk.getHomePath();
     if (homePath == null) {
-      throw new ExecutionException("Cannot find Python interpreter for SDK " + mySdk.getName());
+      throw new ExecutionException("Cannot find Python interpreter for SDK " + sdk.getName());
     }
-    final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
+    final SdkAdditionalData sdkData = sdk.getSdkAdditionalData();
     if (sdkData instanceof PyRemoteSdkAdditionalDataBase) { //remote interpreter
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
 
       RemoteSdkCredentials remoteSdkCredentials;
-      if (((PyRemoteSdkAdditionalDataBase)sdkData).getRemoteConnectionType() != CredentialsType.DOCKER) {
+      if (((PyRemoteSdkAdditionalDataBase)sdkData).connectionCredentials().getRemoteConnectionType() != CredentialsType.DOCKER) {
         try {
           remoteSdkCredentials = ((RemoteSdkAdditionalData)sdkData).getRemoteSdkCredentials(false);
         }
@@ -171,7 +174,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
   }
 
   @Override
-  protected void subscribeToLocalChanges(Sdk sdk) {
+  protected void subscribeToLocalChanges() {
     // Local VFS changes aren't needed
   }
 
@@ -206,7 +209,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
       if (manager != null) {
         try {
           manager.runVagrant(myVagrantFolder, myMachineName);
-          PythonSdkType.getInstance().setupSdkPaths(mySdk);
+          PythonSdkType.getInstance().setupSdkPaths(sdk);
           clearCaches();
         }
         catch (ExecutionException e) {

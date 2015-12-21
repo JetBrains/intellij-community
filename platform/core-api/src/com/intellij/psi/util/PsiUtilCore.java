@@ -602,7 +602,9 @@ public class PsiUtilCore {
 
   @Contract("null -> null")
   public static IElementType getElementType(@Nullable PsiElement element) {
-    return element == null ? null : getElementType(element.getNode());
+    return element == null ? null :
+           element instanceof StubBasedPsiElement ? ((StubBasedPsiElement)element).getElementType() :
+           getElementType(element.getNode());
   }
 
   public static final PsiFile NULL_PSI_FILE = new NullPsiFile();

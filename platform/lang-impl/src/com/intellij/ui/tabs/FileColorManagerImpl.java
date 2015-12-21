@@ -197,6 +197,11 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   }
 
   @Override
+  public void addScopeColor(@NotNull String scopeName, @NotNull String colorName, boolean isProjectLevel) {
+    myModel.add(scopeName, colorName, isProjectLevel);
+  }
+
+  @Override
   @Nullable
   public Color getFileColor(@NotNull final PsiFile file) {
     initProjectLevelConfigurations();

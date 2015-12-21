@@ -61,7 +61,7 @@ public class EditorImplTest extends AbstractEditorTest {
                           "\t}\n" +
                           "}</selection>");
     CodeFoldingManager.getInstance(ourProject).buildInitialFoldings(myEditor);
-    EditorTestUtil.configureSoftWraps(myEditor, 232, 7); // wrap after 32 characters
+    configureSoftWraps(32);
 
     // verify initial state
     assertEquals(4, EditorUtil.getTabSize(myEditor));
@@ -194,7 +194,6 @@ public class EditorImplTest extends AbstractEditorTest {
   
   public void testEditorSizeCalculationOnOpening() throws Exception {
     initText("a\nbbb\nccccc");
-    myEditor.putUserData(EditorImpl.DO_DOCUMENT_UPDATE_TEST, Boolean.TRUE);
     myEditor.getSettings().setAdditionalColumnsCount(0);
     myEditor.getSettings().setAdditionalLinesCount(0);
     assertEquals(new Dimension(50, 30), myEditor.getContentComponent().getPreferredSize());
@@ -205,5 +204,30 @@ public class EditorImplTest extends AbstractEditorTest {
     configureSoftWraps(10);
     addCollapsedFoldRegion(0, 13, "...");
     assertEquals(new VisualPosition(0, 3), myEditor.offsetToVisualPosition(13));
+  }
+  
+  public void testSizeRecalculationOnTurningSoftWrapsOff() throws Exception {
+    initText("abc def");
+    myEditor.getSettings().setAdditionalColumnsCount(0);
+    myEditor.getSettings().setAdditionalLinesCount(0);
+    configureSoftWraps(4);
+    myEditor.getSettings().setUseSoftWraps(false);
+    assertEquals(new Dimension(70, 10), myEditor.getContentComponent().getPreferredSize());
+  }
+  
+  public void testUpdatingCaretPositionAfterBulkMode() throws Exception {
+    initText("a<caret>bc");
+    DocumentEx document = (DocumentEx)myEditor.getDocument();
+    document.setInBulkUpdate(true);
+    document.insertString(0, "\n "); // we're changing number of visual lines, and invalidating text layout for caret line
+    document.setInBulkUpdate(false);
+    checkResultByText("\n a<caret>bc");
+  }
+  
+  public void testAllowCaretPositioningInsideSoftWrapOnlyIfVirtualSpaceIsEnabled() throws Exception {
+    initText("abcdef abcdef");
+    configureSoftWraps(10);
+    mouse().clickAt(0, 10);
+    assertEquals(new VisualPosition(0, 7), myEditor.getCaretModel().getVisualPosition());
   }
 }

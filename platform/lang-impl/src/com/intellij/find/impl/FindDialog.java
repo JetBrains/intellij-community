@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -44,6 +45,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -80,6 +82,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -112,6 +115,7 @@ public class FindDialog extends DialogWrapper {
   private StateRestoringCheckBox myCbWithSubdirectories;
   private JCheckBox myCbToOpenInNewTab;
   private FindModel myModel;
+  private FindModel myPreviousModel;
   private Consumer<FindModel> myOkHandler;
   private FixedSizeButton mySelectDirectoryButton;
   private StateRestoringCheckBox myUseFileFilter;
@@ -149,6 +153,7 @@ public class FindDialog extends DialogWrapper {
     init();
     initByModel();
     updateReplaceVisibility();
+    validateFindButton();
 
     if (haveResultsPreview()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -290,6 +295,7 @@ public class FindDialog extends DialogWrapper {
   }
 
   private void initCombobox(@NotNull final ComboBox comboBox) {
+    comboBox.setSwingPopup(false);
     comboBox.setEditable(true);
     comboBox.setMaximumRowCount(8);
 
@@ -315,23 +321,24 @@ public class FindDialog extends DialogWrapper {
       myComboBoxListeners.put(etf, listener);
     }
     else {
-      editorComponent.addKeyListener(
-        new KeyAdapter() {
+      if (editorComponent instanceof JTextComponent) {
+        final javax.swing.text.Document document = ((JTextComponent)editorComponent).getDocument();
+        final com.intellij.ui.DocumentAdapter documentAdapter = new com.intellij.ui.DocumentAdapter() {
           @Override
-          public void keyReleased(KeyEvent e) {
-            handleComboBoxValueChanged(comboBox);
+          protected void textChanged(javax.swing.event.DocumentEvent e) {
+            handleAnyComboBoxValueChanged(comboBox);
           }
-        }
-      );
-      Disposer.register(myDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          final KeyListener[] listeners = editorComponent.getKeyListeners();
-          for (KeyListener listener : listeners) {
-            editorComponent.removeKeyListener(listener);
+        };
+        document.addDocumentListener(documentAdapter);
+        Disposer.register(myDisposable, new Disposable() {
+          @Override
+          public void dispose() {
+            document.removeDocumentListener(documentAdapter);
           }
-        }
-      });
+        });
+      } else {
+        assert false;
+      }
     }
 
     if (!myModel.isReplaceState()) {
@@ -404,11 +411,13 @@ public class FindDialog extends DialogWrapper {
   private void handleComboBoxValueChanged(@NotNull ComboBox comboBox) {
     Object item = comboBox.getEditor().getItem();
     if (item != null && !item.equals(comboBox.getSelectedItem())){
-      int caretPosition = getCaretPosition(comboBox);
       comboBox.setSelectedItem(item);
-      setCaretPosition(comboBox, caretPosition);
     }
 
+    handleAnyComboBoxValueChanged(comboBox);
+  }
+
+  private void handleAnyComboBoxValueChanged(@NotNull ComboBox comboBox) {
     if (comboBox != myReplaceComboBox) scheduleResultsUpdate();
     validateFindButton();
   }
@@ -435,16 +444,26 @@ public class FindDialog extends DialogWrapper {
         }
       };
 
+      // Use previously shown usage files as hint for faster search and better usage preview performance if pattern length increased
+      final LinkedHashSet<VirtualFile> filesToScanInitially = new LinkedHashSet<VirtualFile>();
+
+      if (myPreviousModel != null && myPreviousModel.getStringToFind().length() < findModel.getStringToFind().length()) {
+        final DefaultTableModel previousModel = (DefaultTableModel)myResultsPreviewTable.getModel();
+        for (int i = 0, len = previousModel.getRowCount(); i < len; ++i) {
+          final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)previousModel.getValueAt(i, 0);
+          final VirtualFile file = usage.getFile();
+          if (file != null) filesToScanInitially.add(file);
+        }
+      }
+
+      myPreviousModel = findModel;
+
       model.addColumn("Usages");
 
       myResultsPreviewTable.setModel(model);
 
       if (result != null) {
         myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
-        myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE);
-        return;
-      } else if (findModel.isRegularExpressions()) {
-        myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.canNotPreviewRegExpSearch"));
         myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE);
         return;
       }
@@ -468,8 +487,10 @@ public class FindDialog extends DialogWrapper {
       final AtomicInteger resultsCount = new AtomicInteger();
 
       ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
+
+        @Nullable
         @Override
-        public void computeInReadAction(@NotNull ProgressIndicator indicator) {
+        public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
           final UsageViewPresentation presentation =
             FindInProjectUtil.setupViewPresentation(FindSettings.getInstance().isShowResultsInSeparateView(), findModel);
           final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
@@ -493,10 +514,10 @@ public class FindDialog extends DialogWrapper {
               }, state);
               return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
             }
-          }, processPresentation);
+          }, processPresentation, filesToScanInitially);
           boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
           if (succeeded) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
+            return new Continuation(new Runnable() {
               @Override
               public void run() {
                 if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && !myResultsPreviewSearchProgress.isCanceled()) {
@@ -507,6 +528,7 @@ public class FindDialog extends DialogWrapper {
               }
             }, state);
           }
+          return null;
         }
 
         @Override
@@ -550,23 +572,6 @@ public class FindDialog extends DialogWrapper {
     myModel = model;
     updateReplaceVisibility();
     updateTitle();
-  }
-
-  private static int getCaretPosition(@NotNull JComboBox comboBox) {
-    Component editorComponent = comboBox.getEditor().getEditorComponent();
-    if (editorComponent instanceof JTextField){
-      JTextField textField = (JTextField)editorComponent;
-      return textField.getCaretPosition();
-    }
-    return 0;
-  }
-
-  private static void setCaretPosition(@NotNull JComboBox comboBox, int position) {
-    Component editorComponent = comboBox.getEditor().getEditorComponent();
-    if (editorComponent instanceof JTextField){
-      JTextField textField = (JTextField)editorComponent;
-      textField.setCaretPosition(position);
-    }
   }
 
   private void validateFindButton() {
@@ -631,7 +636,13 @@ public class FindDialog extends DialogWrapper {
         new NavigateToSourceListener().installOn(table);
 
         Splitter previewSplitter = new Splitter(true, 0.5f, 0.1f, 0.9f);
-        myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation());
+        myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation(), true) {
+          @Override
+          protected void customizeEditorSettings(EditorSettings settings) {
+            super.customizeEditorSettings(settings);
+            settings.setUseSoftWraps(true);
+          }
+        };
         myResultsPreviewTable = table;
         myResultsPreviewTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
           @Override
@@ -833,11 +844,6 @@ public class FindDialog extends DialogWrapper {
     findSettings.setFileMask(myModel.getFileFilter());
   }
 
-  @Override
-  protected boolean postponeValidation() {
-    return true;
-  }
-
   @Nullable("null means OK")
   private ValidationInfo getValidationInfo(@NotNull FindModel model) {
     if (myRbDirectory != null && myRbDirectory.isEnabled() && myRbDirectory.isSelected()) {
@@ -879,7 +885,7 @@ public class FindDialog extends DialogWrapper {
 
       else {
         try {
-          FindInProjectUtil.createFileMaskRegExp(mask);   // verify that the regexp compiles
+          FindInProjectUtil.createFileMaskCondition(mask);   // verify that the regexp compiles
         }
         catch (PatternSyntaxException ex) {
           return new ValidationInfo(FindBundle.message("find.filter.invalid.file.mask.error", mask), myFileFilter);
@@ -1208,7 +1214,7 @@ public class FindDialog extends DialogWrapper {
     myScopeCombo = new ScopeChooserCombo();
     myScopeCombo.init(myProject, true, true, FindSettings.getInstance().getDefaultScopeName(), new Condition<ScopeDescriptor>() {
       //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
-      final String moduleFilesScopeName;
+      private final String moduleFilesScopeName;
       {
         String moduleScopeName = PsiBundle.message("search.scope.module", "");
         final int ind = moduleScopeName.indexOf(' ');
@@ -1238,15 +1244,21 @@ public class FindDialog extends DialogWrapper {
     bgScope.add(myRbDirectory);
     bgScope.add(myRbCustomScope);
 
-    ActionListener validateAll = new ActionListener() {
+    myRbProject.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         validateScopeControls();
         validateFindButton();
       }
-    };
-    myRbProject.addActionListener(validateAll);
-    myRbCustomScope.addActionListener(validateAll);
+    });
+    myRbCustomScope.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        validateScopeControls();
+        validateFindButton();
+        myScopeCombo.getComboBox().requestFocusInWindow();
+      }
+    });
 
     myRbDirectory.addActionListener(new ActionListener() {
       @Override
@@ -1366,7 +1378,7 @@ public class FindDialog extends DialogWrapper {
   }
 
   private String getDirectory() {
-    return (String)myDirectoryComboBox.getSelectedItem();
+    return (String)myDirectoryComboBox.getEditor().getItem();
   }
 
   private static void setStringsToComboBox(@NotNull String[] strings, @NotNull ComboBox combo, String selected) {
@@ -1484,7 +1496,7 @@ public class FindDialog extends DialogWrapper {
   private String getFileTypeMask() {
     String mask = null;
     if (myUseFileFilter !=null && myUseFileFilter.isSelected()) {
-      mask = (String)myFileFilter.getSelectedItem();
+      mask = (String)myFileFilter.getEditor().getItem();
     }
     return mask;
   }
@@ -1621,7 +1633,7 @@ public class FindDialog extends DialogWrapper {
   }
 
   private static class UsageTableCellRenderer extends JPanel implements TableCellRenderer {
-    private ColoredTableCellRenderer myUsageRenderer = new ColoredTableCellRenderer() {
+    private final ColoredTableCellRenderer myUsageRenderer = new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         if (value instanceof UsageInfo2UsageAdapter) {
@@ -1636,7 +1648,7 @@ public class FindDialog extends DialogWrapper {
         setBorder(null);
       }
     };
-    private ColoredTableCellRenderer myFileAndLineNumber = new ColoredTableCellRenderer() {
+    private final ColoredTableCellRenderer myFileAndLineNumber = new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         if (value instanceof UsageInfo2UsageAdapter) {
@@ -1651,7 +1663,7 @@ public class FindDialog extends DialogWrapper {
       }
     };
 
-    UsageTableCellRenderer() {
+    private UsageTableCellRenderer() {
       setLayout(new BorderLayout());
 
       add(myUsageRenderer, BorderLayout.WEST);

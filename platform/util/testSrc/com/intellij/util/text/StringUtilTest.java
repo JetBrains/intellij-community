@@ -89,6 +89,7 @@ public class StringUtilTest {
     assertEquals("values", StringUtil.pluralize("values"));
     assertEquals("indices", StringUtil.pluralize("index"));
     assertEquals("matrices", StringUtil.pluralize("matrix"));
+    assertEquals("fixes", StringUtil.pluralize("fix"));
     assertEquals("men", StringUtil.pluralize("man"));
     assertEquals("media", StringUtil.pluralize("medium"));
   }

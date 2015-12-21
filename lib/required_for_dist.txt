@@ -16,7 +16,7 @@ httpcore-4.4.1.jar
 httpclient-4.4.1.jar
 fluent-hc-4.4.1.jar
 httpmime-4.4.1.jar
-ecj-4.4.jar
+ecj-4.4.2.jar
 groovy-all-2.3.9.jar
 gson-2.3.1.jar
 guava-17.0.jar
@@ -54,7 +54,7 @@ microba.jar
 miglayout-swing.jar
 nanoxml-2.2.3.jar
 nekohtml-1.9.14.jar
-netty-all-4.1.0.Beta7.jar
+netty-all-4.1.0.Beta8.jar
 oromatcher.jar
 picocontainer.jar
 protobuf-2.5.0.jar

@@ -45,10 +45,12 @@ public class MergeWordFragmentImpl implements MergeWordFragment {
     this(range.start1, range.end1, range.start2, range.end2, range.start3, range.end3);
   }
 
+  @Override
   public int getStartOffset(@NotNull ThreeSide side) {
     return side.select(myStartOffset1, myStartOffset2, myStartOffset3);
   }
 
+  @Override
   public int getEndOffset(@NotNull ThreeSide side) {
     return side.select(myEndOffset1, myEndOffset2, myEndOffset3);
   }

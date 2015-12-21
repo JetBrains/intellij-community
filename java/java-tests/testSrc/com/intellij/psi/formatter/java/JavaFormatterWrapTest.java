@@ -629,4 +629,32 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "obj.call()"
     );
   }
+  
+  public void test_TryWithResource_NextLineIfWrapped() {
+    getSettings().RESOURCE_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().ALIGN_MULTILINE_RESOURCES = false;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    doMethodTest(
+      "try (Foo foo = createAFoo(); Bar bar = createABar(foo); Bar bar = createABar(foo); Bar bar = createABar(foo); Bar bar = createABar(foo)) {\n" +
+      "    useThem();\n"                                                                                                                             +
+      "}",
+      "try (Foo foo = createAFoo(); Bar bar = createABar(foo); Bar bar = createABar(foo); Bar bar = createABar(foo);\n" +
+      "        Bar bar = createABar(foo))\n" +
+      "{\n" +
+      "    useThem();\n"                                                                                                                             +
+      "}"
+    );
+  }
+  
+  public void test_KeepSimpleLambdasInOneLine() {
+    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    doMethodTest("      execute(  () -> {});", 
+                 "execute(() -> {});");
+    
+    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false;
+    doMethodTest("execute(() -> {});", 
+                 "execute(() -> {\n" +
+                 "});");
+  }
+  
 }

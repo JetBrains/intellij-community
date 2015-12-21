@@ -36,15 +36,17 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
 
   @Nullable private PaintInfo myGraphImage;
   @Nullable private Collection<VcsRef> myRefs;
+  @NotNull private Font myFont;
+  private int myHeight;
 
-  public GraphCommitCellRender(@NotNull VcsLogDataHolder dataHolder,
-                               @NotNull GraphCellPainter painter,
-                               @NotNull VcsLogGraphTable table) {
+  public GraphCommitCellRender(@NotNull VcsLogDataHolder dataHolder, @NotNull GraphCellPainter painter, @NotNull VcsLogGraphTable table) {
     myDataHolder = dataHolder;
     myPainter = painter;
     myGraphTable = table;
     myTextLabelPainter = TextLabelPainter.createPainter(false);
     myIssueLinkRenderer = new IssueLinkRenderer(dataHolder.getProject(), this);
+    myFont = TextLabelPainter.getFont();
+    myHeight = calculateHeight();
   }
 
   @NotNull
@@ -55,7 +57,16 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
   }
 
   public int getPreferredHeight() {
-    return myTextLabelPainter.calculateSize("", getFontMetrics(TextLabelPainter.getFont())).height + 4;
+    Font font = TextLabelPainter.getFont();
+    if (myFont != font) {
+      myFont = font;
+      myHeight = calculateHeight();
+    }
+    return myHeight;
+  }
+
+  private int calculateHeight() {
+    return myTextLabelPainter.calculateSize("", getFontMetrics(myFont)).height + 4;
   }
 
   @Override
@@ -117,12 +128,13 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
       maxIndex = Math.max(maxIndex, printElement.getPositionInCurrentRow());
     }
     maxIndex++;
-    final BufferedImage image =
-      UIUtil.createImage(PrintParameters.WIDTH_NODE * (maxIndex + 4), myGraphTable.getRowHeight(), BufferedImage.TYPE_INT_ARGB);
+    final BufferedImage image = UIUtil
+      .createImage(PrintParameters.getNodeWidth(myGraphTable.getRowHeight()) * (maxIndex + 4), myGraphTable.getRowHeight(),
+                   BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = image.createGraphics();
     myPainter.draw(g2, printElements);
 
-    final int width = maxIndex * PrintParameters.WIDTH_NODE;
+    final int width = maxIndex * PrintParameters.getNodeWidth(myGraphTable.getRowHeight());
     return new PaintInfo(image, width);
   }
 

@@ -20,7 +20,6 @@ import com.intellij.idea.Main;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -52,9 +52,10 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     PathManager.loadProperties();
 
     Collection<URL> classpath = new LinkedHashSet<URL>();
-    addParentClasspath(classpath);
+    addParentClasspath(classpath, false);
     addIDEALibraries(classpath);
     addAdditionalClassPath(classpath);
+    addParentClasspath(classpath, true);
 
     UrlClassLoader.Builder builder = UrlClassLoader.build()
       .urls(filterClassPath(new ArrayList<URL>(classpath)))
@@ -81,7 +82,10 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     return newClassLoader;
   }
 
-  private static void addParentClasspath(Collection<URL> classpath) throws MalformedURLException {
+  private static void addParentClasspath(Collection<URL> classpath, boolean ext) throws MalformedURLException {
+    String[] extDirs = System.getProperty("java.ext.dirs", "").split(File.pathSeparator);
+    if (ext && extDirs.length == 0) return;
+
     List<URLClassLoader> loaders = new ArrayList<URLClassLoader>(2);
     for (ClassLoader loader = BootstrapClassLoaderUtil.class.getClassLoader(); loader != null; loader = loader.getParent()) {
       if (loader instanceof URLClassLoader) {
@@ -91,8 +95,34 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
         getLogger().warn("Unknown class loader: " + loader.getClass().getName());
       }
     }
+
+    // todo[r.sh] drop after migration to Java 9
     for (URLClassLoader loader : loaders) {
-      ContainerUtil.addAll(classpath, loader.getURLs());
+      URL[] urls = loader.getURLs();
+      for (URL url : urls) {
+        String path = urlToPath(url);
+
+        boolean isExt = false;
+        for (String extDir : extDirs) {
+          if (path.startsWith(extDir) && path.length() > extDir.length() && path.charAt(extDir.length()) == File.separatorChar) {
+            isExt = true;
+            break;
+          }
+        }
+
+        if (isExt == ext) {
+          classpath.add(url);
+        }
+      }
+    }
+  }
+
+  private static String urlToPath(URL url) throws MalformedURLException {
+    try {
+      return new File(url.toURI()).getPath();
+    }
+    catch (URISyntaxException e) {
+      throw new MalformedURLException(url.toString());
     }
   }
 
@@ -136,6 +166,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     }
   }
 
+  @SuppressWarnings("Duplicates")
   private static List<URL> filterClassPath(List<URL> classpath) {
     String ignoreProperty = System.getProperty(PROPERTY_IGNORE_CLASSPATH);
     if (ignoreProperty != null) {

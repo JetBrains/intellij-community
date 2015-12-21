@@ -4,7 +4,7 @@ fun getPackageName(rootPackage: String, domain: String): String {
   if (domain.isEmpty()) {
     return rootPackage
   }
-  return rootPackage + '.' + domain.toLowerCase()
+  return "$rootPackage.${domain.toLowerCase()}"
 }
 
 abstract class ClassNameScheme(private val suffix: String, private val rootPackage: String) {
@@ -17,26 +17,24 @@ abstract class ClassNameScheme(private val suffix: String, private val rootPacka
   }
 
   private fun getShortNameChars(baseName: String): CharArray {
-    val name = CharArray(baseName.length() + suffix.length())
-    baseName.getChars(0, baseName.length(), name, 0)
+    val name = CharArray(baseName.length + suffix.length)
+    baseName.getChars(0, baseName.length, name, 0)
     if (!suffix.isEmpty()) {
-      suffix.getChars(0, suffix.length(), name, baseName.length())
+      suffix.getChars(0, suffix.length, name, baseName.length)
     }
     if (Character.isLowerCase(name[0])) {
       name[0] = Character.toUpperCase(name[0])
     }
     if (baseName.endsWith("breakpoint")) {
-      name[baseName.length() - "breakpoint".length()] = 'B'
+      name[baseName.length - "breakpoint".length] = 'B'
     }
     else if (baseName.endsWith("breakpoints")) {
-      name[baseName.length() - "breakpoints".length()] = 'B'
+      name[baseName.length - "breakpoints".length] = 'B'
     }
     return name
   }
 
-  fun getPackageNameVirtual(domainName: String): String {
-    return getPackageName(rootPackage, domainName)
-  }
+  fun getPackageNameVirtual(domainName: String) = getPackageName(rootPackage, domainName)
 
   class Input(suffix: String, rootPackage: String) : ClassNameScheme(suffix, rootPackage) {
     fun getParseMethodName(domain: String, name: String): String {

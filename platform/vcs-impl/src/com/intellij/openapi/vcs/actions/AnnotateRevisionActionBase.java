@@ -7,15 +7,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -57,8 +59,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
     AnnotationProvider provider = vcs.getCachingAnnotationProvider();
     if (provider == null || !provider.isAnnotationValid(fileRevision)) return false;
 
-    final ProjectLevelVcsManagerImpl plVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(vcs.getProject());
-    if (plVcsManager.getBackgroundableActionHandler(VcsBackgroundableActions.ANNOTATE).isInProgress(key(file))) return false;
+    if (getBackgroundableLock(vcs.getProject(), file).isLocked()) return false;
 
     return true;
   }
@@ -83,9 +84,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
     final Ref<Integer> newLineRef = new Ref<Integer>();
     final Ref<VcsException> exceptionRef = new Ref<VcsException>();
 
-    final ProjectLevelVcsManagerImpl plVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(vcs.getProject());
-    final BackgroundableActionEnabledHandler handler = plVcsManager.getBackgroundableActionHandler(VcsBackgroundableActions.ANNOTATE);
-    handler.register(key(file));
+    getBackgroundableLock(vcs.getProject(), file).lock();
 
     ProgressManager.getInstance().run(new Task.Backgroundable(vcs.getProject(), VcsBundle.message("retrieving.annotations"), true,
                                                               BackgroundFromStartOption.getInstance()) {
@@ -118,7 +117,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
 
       @Override
       public void onSuccess() {
-        handler.completed(key(file));
+        getBackgroundableLock(vcs.getProject(), file).unlock();
 
         if (!exceptionRef.isNull()) {
           AbstractVcsHelper.getInstance(myProject).showError(exceptionRef.get(), VcsBundle.message("operation.name.annotate"));
@@ -131,7 +130,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
   }
 
   @NotNull
-  private static String key(@NotNull VirtualFile vf) {
-    return vf.getPath();
+  private static BackgroundableActionLock getBackgroundableLock(@NotNull Project project, @NotNull VirtualFile file) {
+    return AnnotateToggleAction.getBackgroundableLock(project, file);
   }
 }

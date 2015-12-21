@@ -93,6 +93,18 @@ public abstract class Logger {
     }
   }
 
+  public boolean isTraceEnabled() {
+    return isDebugEnabled();
+  }
+
+  /**
+   * Log a message with 'trace' level which finer-grained than 'debug' level. Use this method instead of {@link #debug(String)} for internal
+   * events of a subsystem to avoid overwhelming the log if 'debug' level is enabled.
+   */
+  public void trace(String message) {
+    debug(message);
+  }
+
   public void info(@NotNull Throwable t) {
     info(t.getMessage(), t);
   }

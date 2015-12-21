@@ -184,7 +184,7 @@ public abstract class ToolbarUpdater implements Activatable {
       ToolbarUpdater updater = myUpdaterRef.get();
       if (updater == null) return;
 
-      if (!updater.myComponent.isShowing() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!updater.myComponent.isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
         return;
       }
 

@@ -30,9 +30,11 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -265,7 +267,15 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     @NotNull
     @Override
     protected List<? extends ThreesideDiffChangeBase> getChanges() {
-      return ThreesideTextDiffViewerEx.this.getChanges();
+      List<? extends ThreesideDiffChangeBase> changes = ThreesideTextDiffViewerEx.this.getChanges();
+      final ThreeSide currentSide = getCurrentSide();
+      if (currentSide == ThreeSide.BASE) return changes;
+      return ContainerUtil.filter(changes, new Condition<ThreesideDiffChangeBase>() {
+        @Override
+        public boolean value(ThreesideDiffChangeBase change) {
+          return change.isChange(currentSide);
+        }
+      });
     }
 
     @NotNull

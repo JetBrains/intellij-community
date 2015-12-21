@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports synchronization on a local variable or parameter. Such
-synchronization has little effect, since different threads usually will have
-different values for the local variable or parameter. The intent of the code
-will usually be clearer if synchronization on a field is used.
+Reports synchronization on a local variable or parameter.
+It is very difficult to guarantee correctness when such synchronization is used.
+It may be possible to improve code like this by controlling access through e.g. a synchronized wrapper class,
+or by synchronizing on a field.
 <!-- tooltip end -->
 <p>
 </body>

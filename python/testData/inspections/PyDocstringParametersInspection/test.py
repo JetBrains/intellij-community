@@ -42,3 +42,15 @@ def foo(a, <weak_warning descr="Missing parameter c in docstring">c</weak_warnin
   """
   pass
   
+  
+def varargs_undefined(x, *args, y, **kwargs):
+    """
+    @param x:
+    @param y:
+    """
+    pass
+
+
+def no_parameters_declared(x, y):
+    """ 
+    """

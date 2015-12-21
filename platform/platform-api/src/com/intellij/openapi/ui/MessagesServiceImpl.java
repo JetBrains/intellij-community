@@ -673,7 +673,7 @@ public class MessagesServiceImpl implements MessagesService {
       }
       if (myMessage != null) {
         final JTextPane messageComponent = createMessageComponent(myMessage);
-        panel.add(Messages.wrapToScrollPaneIfNeeded(messageComponent, 50, 10), BorderLayout.CENTER);
+        panel.add(Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 10), BorderLayout.CENTER);
       }
       return panel;
     }

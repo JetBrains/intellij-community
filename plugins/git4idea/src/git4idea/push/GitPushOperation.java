@@ -133,8 +133,8 @@ public class GitPushOperation {
 
         GroupedPushResult result = GroupedPushResult.group(resultMap);
 
-        // stop on first error
-        if (!result.errors.isEmpty()) {
+        // stop if error happens, or if push is rejected for a custom reason (not because a pull is needed)
+        if (!result.errors.isEmpty() || !result.customRejected.isEmpty()) {
           break;
         }
 
@@ -234,7 +234,7 @@ public class GitPushOperation {
     return ContainerUtil.filter(results.keySet(), new Condition<GitRepository>() {
       @Override
       public boolean value(GitRepository repository) {
-        return results.get(repository).getType() == GitPushRepoResult.Type.REJECTED ||
+        return results.get(repository).getType() == GitPushRepoResult.Type.REJECTED_NO_FF ||
                results.get(repository).getType() == GitPushRepoResult.Type.NOT_PUSHED;
       }
     });

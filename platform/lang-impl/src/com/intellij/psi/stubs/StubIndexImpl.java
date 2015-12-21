@@ -73,6 +73,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
 
   private final StubProcessingHelper myStubProcessingHelper;
+  private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
 
   private StubIndexState myPreviouslyRegistered;
 
@@ -244,14 +245,20 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     final MyIndex<Key> index = (MyIndex<Key>)myIndices.get(indexKey);
 
     try {
+      myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(indexKey);
+
       try {
         // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
         FileBasedIndexImpl.disableUpToDateCheckForCurrentThread();
+
         index.getReadLock().lock();
+
+        myAccessValidator.startedProcessingActivityForIndex(indexKey);
 
         return index.getData(key).forEach(action);
       }
       finally {
+        myAccessValidator.stoppedProcessingActivityForIndex(indexKey);
         index.getReadLock().unlock();
         FileBasedIndexImpl.enableUpToDateCheckForCurrentThread();
       }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
+import com.google.common.collect.Multimap;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,11 +32,11 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.VersionMatcherRule;
+import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
-import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelper;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.After;
 import org.junit.Before;
@@ -66,7 +67,7 @@ public abstract class AbstractModelBuilderTest {
 
   public static final Object[][] SUPPORTED_GRADLE_VERSIONS = {
     {"1.9"}, {"1.10"}, {"1.11"}, {"1.12"},
-    {"2.0"}, {"2.1"}, {"2.2"} , {"2.3"}, {"2.4"}, {"2.5"}, {"2.6"}, {"2.7"}, {"2.8"}
+    {"2.0"}, {"2.1"}, {"2.2"} , {"2.3"}, {"2.4"}, {"2.5"}, {"2.6"}, {"2.7"}, {"2.8"}, {"2.9"}
   };
   public static final String BASE_GRADLE_VERSION = String.valueOf(SUPPORTED_GRADLE_VERSIONS[SUPPORTED_GRADLE_VERSIONS.length - 1][0]);
 
@@ -156,6 +157,7 @@ public abstract class AbstractModelBuilderTest {
       ProjectImportAction.class,
       // gradle-tooling-extension-impl jar
       ModelBuildScriptClasspathBuilderImpl.class,
+      Multimap.class,
       ShortTypeHandling.class
     );
 

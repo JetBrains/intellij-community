@@ -35,7 +35,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.WeakValueHashMap;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,12 +45,13 @@ import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class DataManagerImpl extends DataManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataManagerImpl");
-  private final Map<String, GetDataRule> myDataConstantToRuleMap = new THashMap<String, GetDataRule>();
+  private final ConcurrentMap<String, GetDataRule> myDataConstantToRuleMap = new ConcurrentHashMap<String, GetDataRule>();
   private WindowManagerEx myWindowManager;
 
   public DataManagerImpl() {
@@ -151,7 +151,9 @@ public class DataManagerImpl extends DataManager {
           rule = ruleEP.getInstance();
         }
       }
-      myDataConstantToRuleMap.put(dataId, rule);
+      if (rule != null) {
+        myDataConstantToRuleMap.putIfAbsent(dataId, rule);
+      }
     }
     return rule;
   }

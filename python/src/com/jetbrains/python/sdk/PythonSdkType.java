@@ -31,23 +31,18 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
@@ -64,12 +59,10 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelper;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -93,7 +86,6 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * @author yole
@@ -110,8 +102,6 @@ public class PythonSdkType extends SdkType {
   private static final String[] WIN_BINARY_NAMES = new String[]{"jython.bat", "ipy.exe", "pypy.exe", "python.exe"};
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
-
-  private Set<String> scheduledToRefresh = ContainerUtil.newConcurrentSet();
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -250,15 +240,14 @@ public class PythonSdkType extends SdkType {
     if (sdk != null && sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
       PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
 
-      return data.getRemoteConnectionType() == CredentialsType.VAGRANT;
+      return data.connectionCredentials().getRemoteConnectionType() == CredentialsType.VAGRANT;
     }
     return false;
   }
 
   public static boolean isDocker(@Nullable final Sdk sdk) {
-    return sdk != null && sdk.getSdkAdditionalData() instanceof  RemoteSdkAdditionalData &&
-           ((RemoteSdkAdditionalData) sdk.getSdkAdditionalData()).getRemoteConnectionType() == CredentialsType.DOCKER;
-
+    return sdk != null && sdk.getSdkAdditionalData() instanceof RemoteSdkAdditionalData &&
+           ((RemoteSdkAdditionalData)sdk.getSdkAdditionalData()).connectionCredentials().getRemoteConnectionType() == CredentialsType.DOCKER;
   }
 
   public static boolean isRemote(@Nullable String sdkPath) {
@@ -304,7 +293,9 @@ public class PythonSdkType extends SdkType {
     return true;
   }
 
-  public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull final JComponent parentComponent, @NotNull final Consumer<Sdk> sdkCreatedCallback) {
+  public void showCustomCreateUI(@NotNull SdkModel sdkModel,
+                                 @NotNull final JComponent parentComponent,
+                                 @NotNull final Consumer<Sdk> sdkCreatedCallback) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
     final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
     if (pointerInfo == null) return;
@@ -458,7 +449,8 @@ public class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull final SdkModel sdkModel, @NotNull final SdkModificator sdkModificator) {
+  public AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull final SdkModel sdkModel,
+                                                                     @NotNull final SdkModificator sdkModificator) {
     return null;
   }
 
@@ -503,7 +495,7 @@ public class PythonSdkType extends SdkType {
     return FileUtil.toSystemDependentName(path);
   }
 
-  public void setupSdkPaths(@NotNull final Sdk sdk) {
+  public void setupSdkPaths(@NotNull Sdk sdk) {
     final Project project;
     final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
     final Component ownerComponent = SoftReference.dereference(ownerComponentRef);
@@ -513,135 +505,12 @@ public class PythonSdkType extends SdkType {
     else {
       project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     }
-
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        setupSdkPaths(sdk, project, ownerComponent);
-      }
-    });
+    PythonSdkUpdater.updateOrShowError(sdk, null, project, ownerComponent);
   }
 
   @Override
   public boolean setupSdkPaths(@NotNull Sdk sdk, @NotNull SdkModel sdkModel) {
     return true;  // run setupSdkPaths only once (from PythonSdkDetailsStep). Skip this from showCustomCreateUI
-  }
-
-  public void setupSdkPaths(@NotNull final Sdk sdk,
-                                   @Nullable final Project project,
-                                   @Nullable final Component ownerComponent,
-                                   @NotNull final SdkModificator sdkModificator) {
-    scheduledToRefresh.add(sdk.getHomePath());
-    doSetupSdkPaths(project, ownerComponent, PySdkUpdater.fromSdkModificator(sdk, sdkModificator));
-  }
-
-
-  public void setupSdkPaths(final Sdk sdk, @Nullable final Project project, @Nullable final Component ownerComponent) {
-    scheduledToRefresh.add(sdk.getHomePath());
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final boolean success = doSetupSdkPaths(project, ownerComponent, PySdkUpdater.fromSdkPath(sdk.getHomePath()));
-
-          if (!success) {
-            Messages.showErrorDialog(
-              project,
-              PyBundle.message("MSG.cant.setup.sdk.$0", FileUtil.toSystemDependentName(sdk.getSdkModificator().getHomePath())),
-              PyBundle.message("MSG.title.bad.sdk")
-            );
-          }
-        }
-        catch (PySdkUpdater.PySdkNotFoundException e) {
-          // sdk was removed from sdk table so no need to setup paths
-        }
-      }
-    }, ModalityState.NON_MODAL);
-  }
-
-  public void setupSdkPathsImmediately(final Sdk sdk, @Nullable final Project project) {
-    scheduledToRefresh.add(sdk.getHomePath());
-    final boolean success = doSetupSdkPaths(project, null, PySdkUpdater.fromSdkPath(sdk.getHomePath()));
-
-    if (!success) {
-      Messages.showErrorDialog(
-        project,
-        PyBundle.message("MSG.cant.setup.sdk.$0", FileUtil.toSystemDependentName(sdk.getSdkModificator().getHomePath())),
-        PyBundle.message("MSG.title.bad.sdk")
-      );
-    }
-  }
-
-  private boolean doSetupSdkPaths(@Nullable final Project project,
-                                         @Nullable final Component ownerComponent,
-                                         @NotNull final PySdkUpdater sdkUpdater) {
-    if (isRemote(sdkUpdater.getSdk()) && project == null && ownerComponent == null) {
-      LOG.error("For refreshing skeletons of remote SDK, either project or owner component must be specified");
-    }
-    final ProgressManager progressManager = ProgressManager.getInstance();
-    boolean sdkPathsUpdated = UIUtil.<Boolean>invokeAndWaitIfNeeded(
-      new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return updateSdkPaths(sdkUpdater);
-        }
-      }
-    );
-
-    final Application application = ApplicationManager.getApplication();
-    if (sdkPathsUpdated && !application.isUnitTestMode()) {
-      application.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (!scheduledToRefresh.contains(sdkUpdater.getHomePath())) {
-            return;
-          }
-          scheduledToRefresh.remove(sdkUpdater.getHomePath());
-          progressManager.run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.skels"), false) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              try {
-                PythonSdkUpdater.updateSdk(project, ownerComponent, sdkUpdater);
-              }
-              catch (InvalidSdkException e) {
-                // If the SDK is invalid, the user should worry about the SDK itself, not about skeletons generation errors
-                if (isVagrant(sdkUpdater.getSdk()) || isDocker(sdkUpdater.getSdk())) {
-                  notifyRemoteSdkSkeletonsFail(e, new Runnable() {
-                    @Override
-                    public void run() {
-                      setupSdkPaths(sdkUpdater.getSdk(), project, ownerComponent);
-                    }
-                  });
-                }
-                else if (!isInvalid(sdkUpdater.getSdk())) {
-                  LOG.error(e);
-                }
-              }
-            }
-          });
-        }
-      });
-    }
-    return sdkPathsUpdated;
-  }
-
-  @NotNull
-  public static Boolean updateSdkPaths(@NotNull PySdkUpdater sdkUpdater) {
-    sdkUpdater.modifySdk(new PySdkUpdater.SdkModificationProcessor() {
-      @Override
-      public void process(@NotNull Sdk sdk,
-                          @NotNull SdkModificator sdkModificator) {
-        sdkModificator.removeAllRoots();
-      }
-    });
-    try {
-      updateSdkRootsFromSysPath(sdkUpdater);
-      updateUserAddedPaths(sdkUpdater);
-      return true;
-    }
-    catch (InvalidSdkException ignored) {
-    }
-    return false;
   }
 
   public static void notifyRemoteSdkSkeletonsFail(final InvalidSdkException e, @Nullable final Runnable restartAction) {
@@ -708,95 +577,6 @@ public class PythonSdkType extends SdkType {
    */
   public static final OrderRootType BUILTIN_ROOT_TYPE = OrderRootType.CLASSES;
 
-  private final static Pattern PYTHON_NN_RE = Pattern.compile("python\\d\\.\\d.*");
-
-  public static void updateSdkRootsFromSysPath(PySdkUpdater sdkUpdater)
-    throws InvalidSdkException {
-    Application application = ApplicationManager.getApplication();
-    boolean not_in_unit_test_mode = (application != null && !application.isUnitTestMode());
-
-    String sdkHome = sdkUpdater.getHomePath();
-    assert sdkHome != null;
-    final String sep = File.separator;
-    // Add folders from sys.path
-    if (!PySdkUtil.isRemote(sdkUpdater.getSdk())) { //no sense to add roots of remote sdk
-      final List<String> paths = getSysPath(sdkHome);
-      if (paths.size() > 0) {
-        // add every path as root.
-        for (String path : paths) {
-          if (!path.contains(sep)) continue; // TODO: interpret possible 'special' paths reasonably
-          addSdkRoot(sdkUpdater, path);
-        }
-      }
-    }
-
-    PyUserSkeletonsUtil.addUserSkeletonsRoot(sdkUpdater);
-    addSkeletonsRoot(sdkUpdater, sdkHome);
-
-    if (not_in_unit_test_mode) {
-      File venv_root = getVirtualEnvRoot(sdkHome);
-      if (venv_root != null && venv_root.isDirectory()) {
-        File lib_root = new File(venv_root, "lib");
-        if (lib_root.isDirectory()) {
-          String[] inside = lib_root.list();
-          for (String s : inside) {
-            if (PYTHON_NN_RE.matcher(s).matches()) {
-              File py_lib_root = new File(lib_root, s);
-              if (new File(py_lib_root, "no-global-site-packages.txt").exists()) return; // don't add hardcoded paths
-            }
-          }
-        }
-      }
-      addHardcodedPaths(sdkUpdater);
-    }
-  }
-
-  public static void updateUserAddedPaths(PySdkUpdater sdkUpdater)
-    throws InvalidSdkException {
-    SdkAdditionalData data = sdkUpdater.getSdk().getSdkAdditionalData();
-    if (data instanceof PythonSdkAdditionalData) {
-      for (VirtualFile file : ((PythonSdkAdditionalData)data).getAddedPathFiles()) {
-        addSdkRoot(sdkUpdater, file);
-      }
-    }
-  }
-
-  private static void addSkeletonsRoot(@NotNull PySdkUpdater sdkUpdater, String sdkHome) {
-    @NonNls final String skeletonsPath = getSkeletonsPath(PathManager.getSystemPath(), sdkHome);
-    new File(skeletonsPath).mkdirs();
-    final VirtualFile builtins_root = LocalFileSystem.getInstance().refreshAndFindFileByPath(skeletonsPath);
-    assert builtins_root != null : "Cannot find skeletons path " + skeletonsPath + " in VFS";
-    sdkUpdater.addRoot(builtins_root, BUILTIN_ROOT_TYPE);
-  }
-
-  protected static void addHardcodedPaths(PySdkUpdater sdkUpdater) {
-    // Add python-django installed as package in Linux
-    // NOTE: fragile and arbitrary
-    if (SystemInfo.isLinux) {
-      final VirtualFile file = LocalFileSystem.getInstance().findFileByPath("/usr/lib/python-django");
-      if (file != null) {
-        sdkUpdater.addRoot(file, OrderRootType.CLASSES);
-      }
-    }
-  }
-
-  public static void addSdkRoot(PySdkUpdater sdkUpdater, String path) {
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-    if (file != null) {
-      addSdkRoot(sdkUpdater, file);
-    }
-    else {
-      LOG.info("Bogus sys.path entry " + path);
-    }
-  }
-
-  private static void addSdkRoot(@NotNull PySdkUpdater sdkUpdater, final @NotNull VirtualFile child) {
-    // NOTE: Files marked as library sources are not considered part of project source. Since the directory of the project the
-    // user is working on is included in PYTHONPATH with many configurations (e.g. virtualenv), we must not mark SDK paths as
-    // library sources, only as classes.
-    sdkUpdater.addRoot(getSdkRootVirtualFile(child), OrderRootType.CLASSES);
-  }
-
   @NotNull
   public static VirtualFile getSdkRootVirtualFile(@NotNull VirtualFile path) {
     String suffix = path.getExtension();
@@ -845,7 +625,7 @@ public class PythonSdkType extends SdkType {
     // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
     GeneralCommandLine cmd = PythonHelper.SYSPATH.newCommandLine(binaryPath, Lists.<String>newArrayList());
     final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd, new File(binaryPath).getParent(),
-                                                                getVirtualEnvExtraEnv(binaryPath), MINUTE);
+                                                               getVirtualEnvExtraEnv(binaryPath), MINUTE);
     if (!runResult.checkSuccess(LOG)) {
       throw new InvalidSdkException(String.format("Failed to determine Python's sys.path value:\nSTDOUT: %s\nSTDERR: %s",
                                                   runResult.getStdout(),
@@ -991,24 +771,16 @@ public class PythonSdkType extends SdkType {
 
   @Nullable
   public static Sdk findPython2Sdk(@Nullable Module module) {
-    Sdk moduleSDK = findPythonSdk(module);
+    final Sdk moduleSDK = findPythonSdk(module);
     if (moduleSDK != null && !getLanguageLevelForSdk(moduleSDK).isPy3K()) {
       return moduleSDK;
     }
-    List<Sdk> allSdks = getAllSdks();
-    Collections.sort(allSdks, PreferredSdkComparator.INSTANCE);
-    for (Sdk sdk : allSdks) {
-      if (!getLanguageLevelForSdk(sdk).isPy3K()) {
-        return sdk;
-      }
-    }
-    return null;
+    return findPython2Sdk(getAllSdks());
   }
 
   @Nullable
-  public static Sdk findPython2Sdk(List<Sdk> sdks) {
-    Collections.sort(sdks, PreferredSdkComparator.INSTANCE);
-    for (Sdk sdk : sdks) {
+  public static Sdk findPython2Sdk(@NotNull List<Sdk> sdks) {
+    for (Sdk sdk : ContainerUtil.sorted(sdks, PreferredSdkComparator.INSTANCE)) {
       if (!getLanguageLevelForSdk(sdk).isPy3K()) {
         return sdk;
       }
@@ -1018,13 +790,11 @@ public class PythonSdkType extends SdkType {
 
   @Nullable
   public static Sdk findLocalCPython(@Nullable Module module) {
-    Sdk moduleSDK = findPythonSdk(module);
+    final Sdk moduleSDK = findPythonSdk(module);
     if (moduleSDK != null && !isRemote(moduleSDK) && PythonSdkFlavor.getFlavor(moduleSDK) instanceof CPythonSdkFlavor) {
       return moduleSDK;
     }
-    List<Sdk> allSdks = getAllSdks();
-    Collections.sort(allSdks, PreferredSdkComparator.INSTANCE);
-    for (Sdk sdk : allSdks) {
+    for (Sdk sdk : ContainerUtil.sorted(getAllSdks(), PreferredSdkComparator.INSTANCE)) {
       if (!isRemote(sdk)) {
         return sdk;
       }
@@ -1113,7 +883,7 @@ public class PythonSdkType extends SdkType {
     if (PySdkUtil.isRemote(sdk)) {
       final Ref<Boolean> result = Ref.create(false);
       //noinspection ConstantConditions
-      ((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).switchOnConnectionType(new RemoteSdkConnectionAcceptor() {
+      ((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).connectionCredentials().switchType(new RemoteSdkConnectionAcceptor() {
         @Override
         public void ssh(@NotNull RemoteCredentialsHolder cred) {
         }

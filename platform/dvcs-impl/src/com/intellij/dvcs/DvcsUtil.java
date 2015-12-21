@@ -42,6 +42,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -77,6 +79,40 @@ public class DvcsUtil {
   private static final int LONG_HASH_LENGTH = 40;
 
   /**
+   * Comparator for virtual files by name
+   */
+  public static final Comparator<VirtualFile> VIRTUAL_FILE_PRESENTATION_COMPARATOR = new Comparator<VirtualFile>() {
+    public int compare(final VirtualFile o1, final VirtualFile o2) {
+      if (o1 == null && o2 == null) {
+        return 0;
+      }
+      if (o1 == null) {
+        return -1;
+      }
+      if (o2 == null) {
+        return 1;
+      }
+      return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
+    }
+  };
+
+  @NotNull
+  public static List<VirtualFile> sortVirtualFilesByPresentation(@NotNull Collection<VirtualFile> virtualFiles) {
+    return ContainerUtil.sorted(virtualFiles, VIRTUAL_FILE_PRESENTATION_COMPARATOR);
+  }
+
+  @NotNull
+  public static List<VirtualFile> findVirtualFilesWithRefresh(@NotNull List<File> files) {
+    RefreshVFsSynchronously.refreshFiles(files);
+    return ContainerUtil.mapNotNull(files, new Function<File, VirtualFile>() {
+      @Override
+      public VirtualFile fun(File file) {
+        return VfsUtil.findFileByIoFile(file, false);
+      }
+    });
+  }
+
+  /**
    * @deprecated use {@link VcsImplUtil#getShortVcsRootName}
    */
   @NotNull
@@ -98,6 +134,16 @@ public class DvcsUtil {
         return getShortRepositoryName(repository);
       }
     }, ", ");
+  }
+
+  @NotNull
+  public static String fileOrFolder(@NotNull VirtualFile file) {
+    if (file.isDirectory()) {
+      return "folder";
+    }
+    else {
+      return "file";
+    }
   }
 
   public static boolean anyRepositoryIsFresh(Collection<? extends Repository> repositories) {
@@ -264,11 +310,10 @@ public class DvcsUtil {
   @Nullable
   public static <T extends Repository> T guessRepositoryForFile(@NotNull Project project,
                                                                 @NotNull RepositoryManager<T> manager,
-                                                                @Nullable AbstractVcs vcs,
                                                                 @Nullable VirtualFile file,
                                                                 @Nullable String defaultRootPathValue) {
     T repository = manager.getRepositoryForRoot(guessVcsRoot(project, file));
-    return repository != null ? repository : manager.getRepositoryForRoot(guessRootForVcs(project, vcs, defaultRootPathValue));
+    return repository != null ? repository : manager.getRepositoryForRoot(guessRootForVcs(project, manager.getVcs(), defaultRootPathValue));
   }
 
   @Nullable
@@ -439,5 +484,45 @@ public class DvcsUtil {
         return support.getVcs().equals(vcs);
       }
     });
+  }
+
+  @NotNull
+  public static String joinShortNames(@NotNull Collection<? extends Repository> repositories) {
+    return joinShortNames(repositories, -1);
+  }
+
+  @NotNull
+  public static String joinShortNames(@NotNull Collection<? extends Repository> repositories, int limit) {
+    return joinWithAnd(ContainerUtil.map(repositories, new Function<Repository, String>() {
+      @Override
+      public String fun(@NotNull Repository repository) {
+        return getShortRepositoryName(repository);
+      }
+    }), limit);
+  }
+
+  @NotNull
+  private static String joinWithAnd(@NotNull List<String> strings, int limit) {
+    int size = strings.size();
+    if (size == 0) return "";
+    if (size == 1) return strings.get(0);
+    if (size == 2) return strings.get(0) + " and " + strings.get(1);
+
+    boolean isLimited = limit >= 2 && limit < size;
+    int listCount = isLimited ? limit - 1 : size - 1;
+
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < listCount; i++) {
+      if (i != 0) sb.append(", ");
+      sb.append(strings.get(i));
+    }
+
+    if (isLimited) {
+      sb.append(" and ").append(size - limit + 1).append(" others");
+    }
+    else {
+      sb.append(" and ").append(strings.get(size - 1));
+    }
+    return sb.toString();
   }
 }

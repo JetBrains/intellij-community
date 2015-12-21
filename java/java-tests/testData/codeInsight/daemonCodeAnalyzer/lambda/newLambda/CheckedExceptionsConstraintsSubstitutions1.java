@@ -32,7 +32,7 @@ class Test1 {
   }
 
   {
-    bar(l -> baz<error descr="'baz(java.lang.Object)' in 'Test1' cannot be applied to '(<lambda parameter>)'">(l)</error>);
+    bar(l -> <error descr="Unhandled exception: Test1.MyEx">baz(l)</error>);
     bar(<error descr="Unhandled exception: Test1.MyEx">this::baz</error>);
   }
 }

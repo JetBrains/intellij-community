@@ -45,6 +45,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.util.List;
@@ -58,7 +59,12 @@ public class DiffPreviewPanel implements PreviewPanel {
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
   public DiffPreviewPanel(@NotNull Disposable parent) {
-    myViewer = new SimpleThreesideDiffViewer(new SampleContext(), new SampleRequest());
+    myViewer = new SimpleThreesideDiffViewer(new SampleContext(), new SampleRequest()) {
+      @Override
+      protected boolean forceRediffSynchronously() {
+        return true;
+      }
+    };
     myViewer.init();
     Disposer.register(parent, myViewer);
 
@@ -228,5 +234,11 @@ public class DiffPreviewPanel implements PreviewPanel {
 
   @Override
   public void disposeUIResources() {
+  }
+
+  @NotNull
+  @TestOnly
+  public SimpleThreesideDiffViewer testGetViewer() {
+    return myViewer;
   }
 }

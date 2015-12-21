@@ -6,10 +6,13 @@ be inadvertently leaked if an exception is thrown before the resource is closed.
 by this inspection include <b>org.hibernate.Session</b>.
 <!-- tooltip end -->
 <p>
-Use the checkbox below to specify if a Hibernate resource is allowed to be opened inside a try
+Use the first checkbox below to specify if a Hibernate resource is allowed to be opened <i>inside</i> a <b>try</b>
 block. This style is less desirable because it is more verbose than opening a resource
-in front of a try block.
+<i>in front of</i> a <b>try</b> block.
 <p>
-
+Use the second checkbox below to specify that the inspection should not warn if a Hibernate resource is passed as a method call argument.
+If enabled the inspection assumes the resource is closed in the called method.
+Method calls inside a <b>finally</b> block with <i>close</i> in the name and a Hibernate resource argument will not be ignored.
+<p>
 </body>
 </html>

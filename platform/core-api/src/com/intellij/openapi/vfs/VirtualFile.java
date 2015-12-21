@@ -750,4 +750,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public CharSequence getNameSequence() {
     return getName();
   }
+
+  public void setPreloadedContentHint(byte[] preloadedContentHint) {
+  }
 }

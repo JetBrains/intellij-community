@@ -235,19 +235,15 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     }
 
     final MethodCandidateInfo staticFactoryCandidateInfo = createMethodCandidate(staticFactory, context, false, argumentList);
-    if (staticFactory.isVarArgs()) {
-      final Computable<Integer> computable = new Computable<Integer>() {
-        @Override
-        public Integer compute() {
-          return staticFactoryCandidateInfo.getPertinentApplicabilityLevel();
-        }
-      };
-      final Integer applicability = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(newExpression, true, computable);
-      if ((applicability != null ? applicability : staticFactoryCandidateInfo.getApplicabilityLevel()) < MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY) {
-        return createMethodCandidate(staticFactory, context, true, argumentList);
-      }
+    if (!staticFactory.isVarArgs()) {
+      return staticFactoryCandidateInfo;
     }
-    return staticFactoryCandidateInfo;
+
+    final JavaMethodsConflictResolver resolver = new JavaMethodsConflictResolver(argumentList, PsiUtil.getLanguageLevel(argumentList));
+    final ArrayList<CandidateInfo> conflicts = new ArrayList<CandidateInfo>();
+    conflicts.add(staticFactoryCandidateInfo);
+    conflicts.add(createMethodCandidate(staticFactory, context, true, argumentList));
+    return resolver.resolveConflict(conflicts);
   }
 
   @Nullable

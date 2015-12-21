@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 
 import java.io.BufferedInputStream;
@@ -87,9 +88,7 @@ public class UrlUtil {
   private static List<String> getChildPathsFromJar(URL root) throws IOException {
     final List<String> paths = new ArrayList<String>();
     String file = root.getFile();
-    if (file.startsWith(FILE_PROTOCOL_PREFIX)) {
-      file = file.substring(FILE_PROTOCOL_PREFIX.length());
-    }
+    file = StringUtil.trimStart(file, FILE_PROTOCOL_PREFIX);
     final int jarSeparatorIndex = file.indexOf(JAR_SEPARATOR);
     assert jarSeparatorIndex > 0;
 

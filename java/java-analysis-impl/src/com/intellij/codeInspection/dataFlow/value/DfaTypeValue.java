@@ -35,19 +35,21 @@ import java.util.Map;
 public class DfaTypeValue extends DfaValue {
   public static class Factory {
     private final Map<DfaPsiType,ArrayList<DfaTypeValue>> myCache = ContainerUtil.newHashMap();
+    @NotNull
     private final DfaValueFactory myFactory;
 
-    Factory(DfaValueFactory factory) {
+    Factory(@NotNull DfaValueFactory factory) {
       myFactory = factory;
     }
 
     @NotNull
-    public DfaTypeValue createTypeValue(@NotNull DfaPsiType type, @NotNull Nullness nullness) {
+    DfaTypeValue createTypeValue(@NotNull DfaPsiType type, @NotNull Nullness nullness) {
       ArrayList<DfaTypeValue> conditions = myCache.get(type);
       if (conditions == null) {
         conditions = new ArrayList<DfaTypeValue>();
         myCache.put(type, conditions);
-      } else {
+      }
+      else {
         for (DfaTypeValue aType : conditions) {
           if (aType.myNullness == nullness) return aType;
         }
@@ -60,15 +62,18 @@ public class DfaTypeValue extends DfaValue {
 
   }
 
+  @NotNull
   private final DfaPsiType myType;
+  @NotNull
   private final Nullness myNullness;
 
-  private DfaTypeValue(DfaPsiType type, Nullness nullness, DfaValueFactory factory) {
+  private DfaTypeValue(@NotNull DfaPsiType type, @NotNull Nullness nullness, @NotNull DfaValueFactory factory) {
     super(factory);
     myType = type;
     myNullness = nullness;
   }
 
+  @NotNull
   public DfaPsiType getDfaType() {
     return myType;
   }
@@ -81,6 +86,7 @@ public class DfaTypeValue extends DfaValue {
     return myNullness == Nullness.NOT_NULL;
   }
 
+  @NotNull
   public Nullness getNullness() {
     return myNullness;
   }

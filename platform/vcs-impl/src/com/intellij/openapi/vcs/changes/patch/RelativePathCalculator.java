@@ -81,12 +81,17 @@ public class RelativePathCalculator {
       sb.append("../");
     }
 
-    for (int i = cnt; i < shiftedParts.length; i++) {
+    for (int i = cnt; i < shiftedParts.length - 1; i++) {
       final String shiftedPart = shiftedParts[i];
       sb.append(shiftedPart);
-      if (i < (shiftedParts.length - 1)) {
-        sb.append('/');
-      }
+      sb.append('/');
+    }
+
+    String oldName = baseParts[baseParts.length - 1];
+    String newName = shiftedParts[shiftedParts.length - 1];
+    boolean skipFileName = oldName.equals(newName);
+    if (!skipFileName) {
+      sb.append(newName);
     }
 
     myResult = sb.toString();

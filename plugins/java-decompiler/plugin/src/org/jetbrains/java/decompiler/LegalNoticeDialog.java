@@ -18,6 +18,8 @@ package org.jetbrains.java.decompiler;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Gray;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
@@ -30,12 +32,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
-abstract class LegalNoticeDialog extends DialogWrapper {
+class LegalNoticeDialog extends DialogWrapper {
+  public static final int POSTPONE_EXIT_CODE = CANCEL_EXIT_CODE;
+  public static final int DECLINE_EXIT_CODE = NEXT_USER_EXIT_CODE;
+
   private JEditorPane myMessage;
 
-  public LegalNoticeDialog(Project project) {
+  public LegalNoticeDialog(Project project, VirtualFile file) {
     super(project);
-    setTitle(IdeaDecompilerBundle.message("legal.notice.title"));
+    setTitle(IdeaDecompilerBundle.message("legal.notice.title", StringUtil.last(file.getPath(), 40, true)));
     setOKButtonText(IdeaDecompilerBundle.message("legal.notice.action.accept"));
     setCancelButtonText(IdeaDecompilerBundle.message("legal.notice.action.postpone"));
     init();
@@ -65,7 +70,15 @@ abstract class LegalNoticeDialog extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createActions() {
-    return new Action[]{getOKAction(), new DeclineAction(), getCancelAction()};
+    return new Action[]{
+      getOKAction(),
+      new DialogWrapperAction(IdeaDecompilerBundle.message("legal.notice.action.reject")) {
+        @Override
+        protected void doAction(ActionEvent e) {
+          close(DECLINE_EXIT_CODE);
+        }
+      },
+      getCancelAction()};
   }
 
   @Nullable
@@ -73,32 +86,4 @@ abstract class LegalNoticeDialog extends DialogWrapper {
   public JComponent getPreferredFocusedComponent() {
     return myMessage;
   }
-
-  @Override
-  protected void doOKAction() {
-    super.doOKAction();
-    accepted();
-  }
-
-  @Override
-  public void doCancelAction() {
-    super.doCancelAction();
-    canceled();
-  }
-
-  private class DeclineAction extends DialogWrapperAction {
-    protected DeclineAction() {
-      super(IdeaDecompilerBundle.message("legal.notice.action.reject"));
-    }
-
-    @Override
-    protected void doAction(ActionEvent e) {
-      doCancelAction();
-      declined();
-    }
-  }
-
-  protected abstract void accepted();
-  protected abstract void declined();
-  protected abstract void canceled();
 }

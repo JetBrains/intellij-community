@@ -183,8 +183,8 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
       public void paint(Graphics g) {
         Rectangle buttonBounds = getCloseButtonScreenBounds();
         if (buttonBounds != null) {
-          Point mouseScreenLocation = MouseInfo.getPointerInfo().getLocation();
-          myCloseButtonHovered = buttonBounds.contains(mouseScreenLocation);
+          final PointerInfo info = MouseInfo.getPointerInfo();
+          myCloseButtonHovered = info != null && buttonBounds.contains(info.getLocation());
         }
 
         Rectangle bounds = getBounds();

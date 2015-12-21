@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NamedJDOMExternalizable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
@@ -42,9 +45,11 @@ import static com.intellij.util.SystemProperties.getUserHome;
 
 public class PathManager {
   public static final String PROPERTIES_FILE = "idea.properties.file";
+  public static final String PROPERTIES_FILE_NAME = "idea.properties";
   public static final String PROPERTY_HOME_PATH = "idea.home.path";
   public static final String PROPERTY_CONFIG_PATH = "idea.config.path";
   public static final String PROPERTY_SYSTEM_PATH = "idea.system.path";
+  public static final String PROPERTY_SCRATCH_PATH = "idea.scratch.path";
   public static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
   public static final String PROPERTY_LOG_PATH = "idea.log.path";
   public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
@@ -66,6 +71,7 @@ public class PathManager {
   private static String ourHomePath;
   private static String ourConfigPath;
   private static String ourSystemPath;
+  private static String ourScratchPath;
   private static String ourPluginsPath;
   private static String ourLogPath;
 
@@ -117,9 +123,9 @@ public class PathManager {
   }
 
   private static boolean isIdeaHome(final File root) {
-    return new File(root, FileUtil.toSystemDependentName("bin/idea.properties")).exists() ||
-           new File(root, FileUtil.toSystemDependentName("bin/" + getOSSpecificBinSubdir() + "/idea.properties")).exists() ||
-           new File(root, FileUtil.toSystemDependentName("community/bin/idea.properties")).exists();
+    return new File(root, FileUtil.toSystemDependentName("bin/" + PROPERTIES_FILE_NAME)).exists() ||
+           new File(root, FileUtil.toSystemDependentName("bin/" + getOSSpecificBinSubdir() + "/" + PROPERTIES_FILE_NAME)).exists() ||
+           new File(root, FileUtil.toSystemDependentName("community/bin/" + PROPERTIES_FILE_NAME)).exists();
   }
 
   @NotNull
@@ -166,6 +172,20 @@ public class PathManager {
     }
 
     return ourConfigPath;
+  }
+
+  @NotNull
+  public static String getScratchPath() {
+    if (ourScratchPath != null) return ourScratchPath;
+
+    if (System.getProperty(PROPERTY_SCRATCH_PATH) != null) {
+      ourScratchPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_SCRATCH_PATH)));
+    }
+    else {
+      ourScratchPath = getConfigPath();
+    }
+
+    return ourScratchPath;
   }
 
   @NotNull
@@ -320,6 +340,9 @@ public class PathManager {
       return null;
     }
 
+    if (SystemInfo.isWindows && resultPath.startsWith("/")) {
+      resultPath = resultPath.substring(1);
+    }
     resultPath = StringUtil.trimEnd(resultPath, File.separator);
     resultPath = URLUtil.unescapePercentSequences(resultPath);
 
@@ -329,11 +352,11 @@ public class PathManager {
   public static void loadProperties() {
     String[] propFiles = {
       System.getProperty(PROPERTIES_FILE),
-      getUserPropertiesPath(),
-      getUserHome() + "/idea.properties",
-      getHomePath() + "/bin/idea.properties",
-      getHomePath() + "/bin/" + getOSSpecificBinSubdir() + "/idea.properties",
-      getHomePath() + "/community/bin/idea.properties"};
+      getCustomPropertiesFile(),
+      getUserHome() + "/" + PROPERTIES_FILE_NAME,
+      getHomePath() + "/bin/" + PROPERTIES_FILE_NAME,
+      getHomePath() + "/bin/" + getOSSpecificBinSubdir() + "/" + PROPERTIES_FILE_NAME,
+      getHomePath() + "/community/bin/" + PROPERTIES_FILE_NAME};
 
     for (String path : propFiles) {
       if (path != null) {
@@ -370,9 +393,9 @@ public class PathManager {
     }
   }
 
-  private static String getUserPropertiesPath() {
+  private static String getCustomPropertiesFile() {
     String configPath = getCustomOptionsDirectory();
-    return configPath != null ? configPath + "/idea.properties" : null;
+    return configPath != null ? configPath + File.separator + PROPERTIES_FILE_NAME : null;
   }
 
   @Contract("null -> null")

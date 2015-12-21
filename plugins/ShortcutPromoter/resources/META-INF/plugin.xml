@@ -15,7 +15,6 @@
     <extensionPoint qualifiedName="com.intellij.shortcutPromoter" beanClass="com.intellij.promoter.ShortcutPromoterEP"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <shortcutPromoter actionId="Debug" skip="3" repeat="2"/>
   </extensions>
 </idea-plugin>

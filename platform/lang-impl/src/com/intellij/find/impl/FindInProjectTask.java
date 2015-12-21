@@ -38,7 +38,6 @@ import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
@@ -68,7 +67,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * @author peter
@@ -87,11 +85,14 @@ class FindInProjectTask {
   private final ProgressIndicator myProgress;
   @Nullable private final Module myModule;
   private final Set<VirtualFile> myLargeFiles = ContainerUtil.newTroveSet();
+  private final Set<VirtualFile> myFilesToScanInitially;
   private boolean myWarningShown;
+  private final String myStringToFindInIndices;
 
-  FindInProjectTask(@NotNull final FindModel findModel, @NotNull final Project project) {
+  FindInProjectTask(@NotNull final FindModel findModel, @NotNull final Project project, @NotNull Set<VirtualFile> filesToScanInitially) {
     myFindModel = findModel;
     myProject = project;
+    myFilesToScanInitially = filesToScanInitially;
     myDirectory = FindInProjectUtil.getDirectory(findModel);
     myPsiManager = PsiManager.getInstance(project);
 
@@ -105,18 +106,25 @@ class FindInProjectTask {
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myFileIndex = myModule == null ? myProjectFileIndex : ModuleRootManager.getInstance(myModule).getFileIndex();
 
-    final String filter = findModel.getFileFilter();
-    final Pattern pattern = FindInProjectUtil.createFileMaskRegExp(filter);
+    final Condition<String> patternCondition = FindInProjectUtil.createFileMaskCondition(findModel.getFileFilter());
 
-    myFileMask = pattern == null ? Conditions.<VirtualFile>alwaysTrue() : new Condition<VirtualFile>() {
+    myFileMask = new Condition<VirtualFile>() {
       @Override
       public boolean value(VirtualFile file) {
-        return file != null && pattern.matcher(file.getName()).matches();
+        return file != null && patternCondition.value(file.getName());
       }
     };
 
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     myProgress = progress != null ? progress : new EmptyProgressIndicator();
+
+    String stringToFind = myFindModel.getStringToFind();
+
+    if (myFindModel.isRegularExpressions()) {
+      stringToFind = FindInProjectUtil.buildStringToFindForIndicesFromRegExp(stringToFind, myProject);
+    }
+
+    myStringToFindInIndices = stringToFind;
   }
 
   public void findUsages(@NotNull final Processor<UsageInfo> consumer, @NotNull final FindUsagesProcessPresentation processPresentation) {
@@ -272,7 +280,7 @@ class FindInProjectTask {
     final GlobalSearchScope globalCustomScope = customScope == null ? null : toGlobal(customScope);
 
     final ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
-    final boolean hasTrigrams = hasTrigrams(myFindModel.getStringToFind());
+    final boolean hasTrigrams = hasTrigrams(myStringToFindInIndices);
 
     class EnumContentIterator implements ContentIterator {
       private final Set<VirtualFile> myFiles = new LinkedHashSet<VirtualFile>();
@@ -411,12 +419,10 @@ class FindInProjectTask {
   private boolean canRelyOnIndices() {
     if (DumbService.isDumb(myProject)) return false;
 
-    if (myFindModel.isRegularExpressions()) return false;
-
     // a local scope may be over a non-indexed file
     if (myFindModel.getCustomScope() instanceof LocalSearchScope) return false;
 
-    String text = myFindModel.getStringToFind();
+    String text = myStringToFindInIndices;
     if (StringUtil.isEmptyOrSpaces(text)) return false;
 
     if (hasTrigrams(text)) return true;
@@ -440,14 +446,20 @@ class FindInProjectTask {
 
   @NotNull
   private Set<VirtualFile> getFilesForFastWordSearch() {
-    String stringToFind = myFindModel.getStringToFind();
-    if (stringToFind.isEmpty() || DumbService.getInstance(myProject).isDumb() || myFindModel.isRegularExpressions()) {
+    String stringToFind = myStringToFindInIndices;
+
+    if (stringToFind.isEmpty() || DumbService.getInstance(myProject).isDumb()) {
       return Collections.emptySet();
     }
 
-    final GlobalSearchScope scope = toGlobal(FindInProjectUtil.getScopeFromModel(myProject, myFindModel));
-
     final Set<VirtualFile> resultFiles = new LinkedHashSet<VirtualFile>();
+    for(VirtualFile file:myFilesToScanInitially) {
+      if (myFileMask.value(file)) {
+        resultFiles.add(file);
+      }
+    }
+
+    final GlobalSearchScope scope = toGlobal(FindInProjectUtil.getScopeFromModel(myProject, myFindModel));
 
     if (TrigramIndex.ENABLED) {
       final Set<Integer> keys = ContainerUtil.newTroveSet();

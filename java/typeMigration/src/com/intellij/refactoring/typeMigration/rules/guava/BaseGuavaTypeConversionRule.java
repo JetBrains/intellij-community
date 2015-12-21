@@ -17,8 +17,8 @@ package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
+import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.reference.SoftLazyValue;
@@ -27,9 +27,9 @@ import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
@@ -59,7 +59,8 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
 
   @Nullable
   protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
-                                                                            @NotNull PsiVariable psiVariable) {
+                                                                            @NotNull PsiVariable psiVariable,
+                                                                            @Nullable PsiExpression context) {
     return null;
   }
 
@@ -68,6 +69,11 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
 
   @NotNull
   public abstract String ruleToClass();
+
+  @NotNull
+  protected Set<String> getAdditionalUtilityClasses() {
+    return Collections.emptySet();
+  }
 
   @Nullable
   @Override
@@ -82,9 +88,12 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     if (member instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)member;
       final String methodName = method.getName();
-      final TypeConversionDescriptorBase descriptor = mySimpleDescriptors.getValue().get(methodName);
-      if (descriptor != null) {
-        return descriptor;
+      final PsiClass aClass = method.getContainingClass();
+      if (isValidMethodQualifierToConvert(aClass)) {
+        final TypeConversionDescriptorBase descriptor = mySimpleDescriptors.getValue().get(methodName);
+        if (descriptor != null) {
+          return descriptor;
+        }
       }
       return findConversionForMethod(from, to, method, methodName, context, labeler);
     } else if (context instanceof PsiNewExpression) {
@@ -92,7 +101,7 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
       if (anonymousClass != null && AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, false)) {
         return new TypeConversionDescriptorBase() {
           @Override
-          public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+          public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
             return AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, false, true);
           };
         };
@@ -101,16 +110,20 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     else if (context instanceof PsiReferenceExpression) {
       final PsiElement resolvedElement = ((PsiReferenceExpression)context).resolve();
       if (resolvedElement instanceof PsiVariable) {
-        return findConversionForVariableReference((PsiReferenceExpression)context, (PsiVariable)resolvedElement);
+        return findConversionForVariableReference((PsiReferenceExpression)context, (PsiVariable)resolvedElement, context);
       }
     }
     return null;
   }
 
-  public static boolean canConvert(@Nullable PsiType from,
-                                   @Nullable  PsiType to,
-                                   @NotNull String fromClassName,
-                                   @NotNull String toClassName) {
+  protected boolean isValidMethodQualifierToConvert(PsiClass aClass) {
+    return aClass != null && (ruleFromClass().equals(aClass.getQualifiedName()) || getAdditionalUtilityClasses().contains(aClass.getQualifiedName()));
+  }
+
+  static boolean canConvert(@Nullable PsiType from,
+                            @Nullable PsiType to,
+                            @NotNull String fromClassName,
+                            @NotNull String toClassName) {
     if (!(from instanceof PsiClassType)) {
       return false;
     }

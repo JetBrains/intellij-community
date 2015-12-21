@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 abstract class BaseShowDiffAction extends AnAction implements DumbAware {
+  @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     boolean canShow = isAvailable(e);
@@ -39,6 +40,7 @@ abstract class BaseShowDiffAction extends AnAction implements DumbAware {
     }
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     DiffRequest request = getDiffRequest(e);

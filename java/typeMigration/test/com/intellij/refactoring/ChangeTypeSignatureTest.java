@@ -13,6 +13,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangeTypeSignatureTest extends LightCodeInsightTestCase {
@@ -35,10 +36,12 @@ public class ChangeTypeSignatureTest extends LightCodeInsightTestCase {
     PsiType migrationType = getJavaFacade().getElementFactory().createTypeFromText(migrationTypeText, null);
 
     try {
-      final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(parameterList));
-      rules.setMigrationRootType(PsiSubstitutor.EMPTY.put(superClass.getTypeParameters()[0], migrationType).substitute(new PsiImmediateClassType(superClass, PsiSubstitutor.EMPTY)));
+      final TypeMigrationRules rules = new TypeMigrationRules();
       rules.setBoundScope(GlobalSearchScope.projectScope(getProject()));
-      new TypeMigrationProcessor(getProject(), parameterList, rules).run();
+      new TypeMigrationProcessor(getProject(),
+                                 new PsiElement[]{parameterList},
+                                 Functions.<PsiElement, PsiType>constant(PsiSubstitutor.EMPTY.put(superClass.getTypeParameters()[0], migrationType).substitute(new PsiImmediateClassType(superClass, PsiSubstitutor.EMPTY))),
+                                 rules).run();
       if (success) {
         checkResultByFile(dataPath + getTestName(false) + ".java.after");
       } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,8 @@ public class TerminalProcessHandler extends SvnProcessHandler {
   private final StringBuilder outputLine = new StringBuilder();
   private final StringBuilder errorLine = new StringBuilder();
 
-  public TerminalProcessHandler(@NotNull Process process, boolean forceUtf8, boolean forceBinary) {
-    super(process, forceUtf8, forceBinary);
+  public TerminalProcessHandler(@NotNull Process process, @NotNull String commandLine, boolean forceUtf8, boolean forceBinary) {
+    super(process, commandLine, forceUtf8, forceBinary);
   }
 
   public void addInteractiveListener(@NotNull InteractiveCommandListener listener) {
@@ -64,21 +64,26 @@ public class TerminalProcessHandler extends SvnProcessHandler {
 
   @Override
   public void notifyTextAvailable(String text, Key outputType) {
-    terminalOutputCapturer.onTextAvailable(new ProcessEvent(this, text), outputType);
+    if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
+      super.notifyTextAvailable(text, outputType);
+    }
+    else {
+      terminalOutputCapturer.onTextAvailable(new ProcessEvent(this, text), outputType);
 
-    text = filterText(text);
+      text = filterText(text);
 
-    if (!StringUtil.isEmpty(text)) {
-      StringBuilder lastLine = getLastLineFor(outputType);
-      String currentLine = lastLine.append(text).toString();
-      lastLine.setLength(0);
+      if (!StringUtil.isEmpty(text)) {
+        StringBuilder lastLine = getLastLineFor(outputType);
+        String currentLine = lastLine.append(text).toString();
+        lastLine.setLength(0);
 
-      currentLine = filterCombinedText(currentLine);
+        currentLine = filterCombinedText(currentLine);
 
-      // check if current line presents some interactive output
-      boolean handled = handlePrompt(currentLine, outputType);
-      if (!handled) {
-        notify(currentLine, outputType, lastLine);
+        // check if current line presents some interactive output
+        boolean handled = handlePrompt(currentLine, outputType);
+        if (!handled) {
+          notify(currentLine, outputType, lastLine);
+        }
       }
     }
   }

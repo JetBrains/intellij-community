@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -136,7 +138,7 @@ public class Py3TypeTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
       @Override
       public void run() {
-        doTest("Any", "def f(x: int):\n" +
+        doTest("int", "def f(x: int):\n" +
                       "    \"\"\"\n" +
                       "    Args:\n" +
                       "        x (): foo\n" +
@@ -145,8 +147,6 @@ public class Py3TypeTest extends PyTestCase {
       }
     });
   }
-  
-  // TODO: Same test for Numpy docstrings doesn't pass because typing provider is invoked earlier than NumpyDocStringTypeProvider
   
   // PY-16987
   public void testNoTypeInNumpyDocstringParamAnnotation() {
@@ -159,18 +159,52 @@ public class Py3TypeTest extends PyTestCase {
                       "    ----------\n" +
                       "    x\n" +
                       "        foo\n" +
-                      "    \"\"\"    \n" +
+                      "    \"\"\"\n" +
                       "    expr = x");
       }
     });
   }
   
-  
+  // PY-17010
+  public void testAnnotatedReturnTypePrecedesDocstring() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      @Override
+      public void run() {
+        doTest("int", "def func() -> int:\n" +
+                      "    \"\"\"\n" +
+                      "    Returns:\n" +
+                      "        str\n" +
+                      "    \"\"\"\n" +
+                      "expr = func()");
+      }
+    });
+  }
+
+  // PY-17010
+  public void testAnnotatedParamTypePrecedesDocstring() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      @Override
+      public void run() {
+        doTest("int", "def func(x: int):\n" +
+                      "    \"\"\"\n" +
+                      "    Args:\n" +
+                      "        x (str):\n" +
+                      "    \"\"\"\n" +
+                      "    expr = x");
+      }
+    });
+  }
 
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    final TypeEvalContext context = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
+    final Project project = expr.getProject();
+    final PsiFile containingFile = expr.getContainingFile();
+    assertType(expectedType, expr, TypeEvalContext.codeAnalysis(project, containingFile));
+    assertType(expectedType, expr, TypeEvalContext.userInitiated(project, containingFile));
+  }
+
+  private static void assertType(String expectedType, PyExpression expr, TypeEvalContext context) {
     final PyType actual = context.getType(expr);
     final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
     assertEquals(expectedType, actualType);

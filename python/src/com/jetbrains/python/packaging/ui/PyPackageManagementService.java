@@ -47,7 +47,7 @@ public class PyPackageManagementService extends PackageManagementService {
   @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
 
   private final Project myProject;
-  private final Sdk mySdk;
+  protected final Sdk mySdk;
 
   public PyPackageManagementService(@NotNull final Project project, @NotNull final Sdk sdk) {
     myProject = project;

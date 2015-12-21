@@ -23,6 +23,9 @@
     <extensionPoint name="codeInsight.containerProvider"
                     interface="com.intellij.codeInsight.ContainerProvider"/>
 
+    <extensionPoint name="preloadingActivity"
+                    interface="com.intellij.openapi.application.PreloadingActivity"/>
+
     <extensionPoint name="projectConfigurable"
                     beanClass="com.intellij.openapi.options.ConfigurableEP"
                     area="IDEA_PROJECT">

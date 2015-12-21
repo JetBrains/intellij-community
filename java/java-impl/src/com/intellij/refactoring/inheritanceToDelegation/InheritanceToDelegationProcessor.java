@@ -18,7 +18,7 @@ package com.intellij.refactoring.inheritanceToDelegation;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,7 +54,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -466,7 +465,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
     final PsiExpression newExpr;
     final PsiReferenceExpression ref;
-    @NonNls final String delegateQualifier;
+    final String delegateQualifier;
     if (!(expression instanceof PsiThisExpression || expression instanceof PsiSuperExpression)) {
       delegateQualifier = "a.";
     } else {
@@ -499,7 +498,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       if (!myAbstractDelegatedMethods.contains(method)) {
         PsiMethod methodToAdd = delegateMethod(myFieldName, method, getSuperSubstitutor(method.getContainingClass()));
 
-        String visibility = myDelegatedMethodsVisibility.get(method);
+        @PsiModifier.ModifierConstant String visibility = myDelegatedMethodsVisibility.get(method);
         if (visibility != null) {
           PsiUtil.setModifierProperty(methodToAdd, visibility, true);
         }
@@ -509,25 +508,15 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private PsiMethod delegateMethod(@NonNls String delegationTarget,
+  private PsiMethod delegateMethod(String delegationTarget,
                                    PsiMethod method,
                                    PsiSubstitutor substitutor) throws IncorrectOperationException {
-    substitutor = OverrideImplementUtil.correctSubstitutor(method, substitutor);
+    substitutor = OverrideImplementExploreUtil.correctSubstitutor(method, substitutor);
     PsiMethod methodToAdd = GenerateMembersUtil.substituteGenericMethod(method, substitutor);
 
-    final PsiModifierList modifierList = methodToAdd.getModifierList();
-    final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-    modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
-    final PsiAnnotation nullable = manager.copyNullableAnnotation(method);
-    if (nullable != null) {
-      modifierList.addAfter(nullable, null);
-    }
-    else {
-      final PsiAnnotation notNull = manager.copyNotNullAnnotation(method);
-      if (notNull != null) {
-        modifierList.addAfter(notNull, null);
-      }
-    }
+    methodToAdd.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false);
+
+    NullableNotNullManager.getInstance(myProject).copyNullableOrNotNullAnnotation(method, methodToAdd);
 
     final String delegationBody = getDelegationBody(methodToAdd, delegationTarget);
     PsiCodeBlock newBody = myFactory.createCodeBlockFromText(delegationBody, method);
@@ -547,7 +536,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   }
 
   private static String getDelegationBody(PsiMethod methodToAdd, String delegationTarget) {
-    @NonNls final StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     buffer.append("{\n");
 
     if (!PsiType.VOID.equals(methodToAdd.getReturnType())) {
@@ -619,7 +608,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
     if (myGenerateGetter) {
       final String getterVisibility = PsiModifier.PUBLIC;
-      @NonNls StringBuffer getterBuffer = new StringBuffer();
+      StringBuffer getterBuffer = new StringBuffer();
       getterBuffer.append(getterVisibility);
       getterBuffer.append(" Object ");
       getterBuffer.append(myGetterName);
@@ -648,12 +637,12 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     return PsiModifier.PRIVATE;
   }
 
-  private @NonNls String defaultClassFieldType() {
+  private String defaultClassFieldType() {
     return (myIsInnerClassNeeded ? myInnerClassName : "Object");
   }
 
   private PsiField createField(final String fieldVisibility, final boolean fieldInitializerNeeded, String defaultTypeName) throws IncorrectOperationException {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    StringBuffer buffer = new StringBuffer();
     buffer.append(fieldVisibility);
     buffer.append(" final " + defaultTypeName + "  ");
     buffer.append(myFieldName);
@@ -672,7 +661,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     for (PsiMethod constructor : constructors) {
       PsiCodeBlock body = constructor.getBody();
       final PsiStatement[] statements = body.getStatements();
-      @NonNls String fieldQualifier = "";
+      String fieldQualifier = "";
       PsiParameter[] constructorParams = constructor.getParameterList().getParameters();
       for (PsiParameter constructorParam : constructorParams) {
         if (myFieldName.equals(constructorParam.getName())) {
@@ -680,7 +669,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
           break;
         }
       }
-      final @NonNls String assignmentText = fieldQualifier + myFieldName + "= new " + defaultClassFieldType() + "()";
+      final String assignmentText = fieldQualifier + myFieldName + "= new " + defaultClassFieldType() + "()";
       if (statements.length < 1 || !JavaHighlightUtil.isSuperOrThisCall(statements[0], true, true) || myBaseClass.isInterface()) {
         PsiExpressionStatement assignmentStatement =
           (PsiExpressionStatement)myFactory.createStatementFromText(

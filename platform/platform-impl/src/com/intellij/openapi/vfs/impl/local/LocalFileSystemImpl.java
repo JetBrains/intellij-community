@@ -31,18 +31,24 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.Futures;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements ApplicationComponent {
@@ -59,7 +65,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     private final boolean myWatchRecursively;
     private boolean myDominated;
 
-    public WatchRequestImpl(String rootPath, boolean watchRecursively) throws FileNotFoundException {
+    public WatchRequestImpl(String rootPath, boolean isDirectory, boolean watchRecursively) throws FileNotFoundException {
       int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
       if (index >= 0) rootPath = rootPath.substring(0, index);
 
@@ -68,7 +74,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
         throw new FileNotFoundException("Invalid path: " + rootPath);
       }
 
-      if (index > 0 || !(FileUtil.isRootPath(rootFile) || rootFile.isDirectory())) {
+      if (index > 0 || !(FileUtil.isRootPath(rootFile) || isDirectory)) {
         File parentFile = rootFile.getParentFile();
         if (parentFile == null) {
           throw new FileNotFoundException(rootPath);
@@ -421,8 +427,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
                                     @NotNull final Set<VirtualFile> filesToSync) {
     boolean update = false;
 
+    Set<String> directories = findDirectories(recursiveRoots, flatRoots);
+
     for (String root : recursiveRoots) {
-      final WatchRequestImpl request = watch(root, true);
+      WatchRequestImpl request = watch(root, directories.contains(root), true);
       if (request == null) continue;
       final boolean alreadyWatched = isAlreadyWatched(request);
 
@@ -434,7 +442,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
 
     for (String root : flatRoots) {
-      final WatchRequestImpl request = watch(root, false);
+      WatchRequestImpl request = watch(root, directories.contains(root), false);
       if (request == null) continue;
       final boolean alreadyWatched = isAlreadyWatched(request);
 
@@ -455,10 +463,31 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     return update;
   }
 
+  private static Set<String> findDirectories(Collection<String> recursiveRoots, Collection<String> flatRoots) {
+    final Set<String> directories = ContainerUtil.newConcurrentSet();
+
+    final BoundedTaskExecutor executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, Runtime.getRuntime().availableProcessors());
+    Futures.invokeAll(JBIterable.from(recursiveRoots).append(flatRoots).transform(new Function<String, Future<?>>() {
+      @Override
+      public Future<?> fun(final String root) {
+        return executor.submit(new Runnable() {
+          @Override
+          public void run() {
+            if (!root.contains(JarFileSystem.JAR_SEPARATOR) && new File(root).isDirectory()) {
+              directories.add(root);
+            }
+          }
+        });
+      }
+    }).toList());
+
+    return directories;
+  }
+
   @Nullable
-  private static WatchRequestImpl watch(final String root, final boolean recursively) {
+  private static WatchRequestImpl watch(final String root, boolean isDirectory, final boolean recursively) {
     try {
-      return new WatchRequestImpl(root, recursively);
+      return new WatchRequestImpl(root, isDirectory, recursively);
     }
     catch (FileNotFoundException e) {
       LOG.warn(e);

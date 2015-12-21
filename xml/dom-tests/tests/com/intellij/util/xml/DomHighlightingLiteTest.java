@@ -18,9 +18,7 @@ package com.intellij.util.xml;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.mock.MockInspectionProfile;
@@ -242,7 +240,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
       public void checkFileElement(final DomFileElement fileElement, final DomElementAnnotationHolder holder) {
       }
     };
-    HighlightDisplayKey.register(inspection.getShortName());
+    registerInspectionKey(inspection);
     myInspectionProfile.setInspectionTools(new LocalInspectionToolWrapper(inspection));
 
     myAnnotationsManager.appendProblems(myElement, createHolder(), MockAnnotatingDomInspection.class);
@@ -250,6 +248,14 @@ public class DomHighlightingLiteTest extends DomTestCase {
 
     myAnnotationsManager.appendProblems(myElement, createHolder(), inspection.getClass());
     assertEquals(DomHighlightStatus.INSPECTIONS_FINISHED, myAnnotationsManager.getHighlightStatus(myElement));
+  }
+
+  private static void registerInspectionKey(MyDomElementsInspection inspection) {
+    final String shortName = inspection.getShortName();
+    HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    if (key == null) {
+      HighlightDisplayKey.register(shortName);
+    }
   }
 
   public void testHighlightStatus_OtherInspections2() throws Throwable {
@@ -267,7 +273,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
       public void checkFileElement(final DomFileElement fileElement, final DomElementAnnotationHolder holder) {
       }
     };
-    HighlightDisplayKey.register(inspection.getShortName());
+    registerInspectionKey(inspection);
     LocalInspectionToolWrapper toolWrapper = new LocalInspectionToolWrapper(inspection);
     myInspectionProfile.setInspectionTools(toolWrapper);
     myInspectionProfile.setEnabled(toolWrapper, false);

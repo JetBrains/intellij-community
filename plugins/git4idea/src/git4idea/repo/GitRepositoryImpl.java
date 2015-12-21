@@ -18,6 +18,7 @@ package git4idea.repo;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -34,31 +35,30 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Collection;
 
-/**
- * @author Kirill Likhodedov
- */
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   @NotNull private final GitPlatformFacade myPlatformFacade;
+  @NotNull private final GitVcs myVcs;
   @NotNull private final GitRepositoryReader myReader;
   @NotNull private final VirtualFile myGitDir;
   @Nullable private final GitUntrackedFilesHolder myUntrackedFilesHolder;
 
   @NotNull private volatile GitRepoInfo myInfo;
 
-  /**
-   * Get the GitRepository instance from the {@link GitRepositoryManager}.
-   * If you need to have an instance of GitRepository for a repository outside the project, use
-   * {@link #getLightInstance(VirtualFile, Project, git4idea.GitPlatformFacade, Disposable)}
-   */
-  @SuppressWarnings("ConstantConditions")
-  protected GitRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull GitPlatformFacade facade, @NotNull Project project,
-                              @NotNull Disposable parentDisposable, final boolean light) {
+  private GitRepositoryImpl(@NotNull VirtualFile rootDir,
+                            @NotNull VirtualFile gitDir,
+                            @NotNull GitPlatformFacade facade,
+                            @NotNull Project project,
+                            @NotNull Disposable parentDisposable,
+                            final boolean light) {
     super(project, rootDir, parentDisposable);
     myPlatformFacade = facade;
-    myGitDir = GitUtil.findGitDir(rootDir);
-    assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
+    myVcs = assertNotNull(GitVcs.getInstance(project));
+    myGitDir = gitDir;
     myReader = new GitRepositoryReader(VfsUtilCore.virtualToIoFile(myGitDir));
+    myInfo = readRepoInfo();
     if (!light) {
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
       Disposer.register(this, myUntrackedFilesHolder);
@@ -66,30 +66,27 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     else {
       myUntrackedFilesHolder = null;
     }
-    update();
   }
 
-  /**
-   * Returns the temporary light instance of GitRepository.
-   * It lacks functionality of auto-updating GitRepository on Git internal files change, and also stored a stub instance of
-   * {@link GitUntrackedFilesHolder}.
-   */
   @NotNull
-  public static GitRepository getLightInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull GitPlatformFacade facade,
-                                               @NotNull Disposable parentDisposable) {
-    return new GitRepositoryImpl(root, facade, project, parentDisposable, true);
+  public static GitRepository getInstance(@NotNull VirtualFile root,
+                                          @NotNull Project project,
+                                          boolean listenToRepoChanges) {
+    return getInstance(root, assertNotNull(GitUtil.findGitDir(root)), project, listenToRepoChanges);
   }
 
-  /**
-   * Returns the full-functional instance of GitRepository - with UntrackedFilesHolder and GitRepositoryUpdater.
-   * This is used for repositories registered in project, and should be optained via {@link GitRepositoryManager}.
-   */
   @NotNull
-  public static GitRepository getFullInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull GitPlatformFacade facade,
-                                              @NotNull Disposable parentDisposable) {
-    GitRepositoryImpl repository = new GitRepositoryImpl(root, facade, project, parentDisposable, false);
-    repository.myUntrackedFilesHolder.setupVfsListener(project);  //myUntrackedFilesHolder cannot be null because it is not light instance
-    repository.setupUpdater();
+  public static GitRepository getInstance(@NotNull VirtualFile root,
+                                          @NotNull VirtualFile gitDir,
+                                          @NotNull Project project,
+                                          boolean listenToRepoChanges) {
+    GitPlatformFacade platformFacade = ServiceManager.getService(project, GitPlatformFacade.class);
+    GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, platformFacade, project, project, !listenToRepoChanges);
+    if (listenToRepoChanges) {
+      repository.getUntrackedFilesHolder().setupVfsListener(project);
+      repository.setupUpdater();
+      notifyListenersAsync(repository);
+    }
     return repository;
   }
 
@@ -145,10 +142,10 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     return currentBranch == null ? null : currentBranch.getName();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public AbstractVcs getVcs() {
-    return GitVcs.getInstance(getProject());
+    return myVcs;
   }
 
   /**
@@ -158,7 +155,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   @NotNull
   public GitBranchesCollection getBranches() {
     GitRepoInfo info = myInfo;
-    return new GitBranchesCollection(info.getLocalBranches(), info.getRemoteBranches());
+    return new GitBranchesCollection(info.getLocalBranchesWithHashes(), info.getRemoteBranchesWithHashes());
   }
 
   @Override
@@ -192,7 +189,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   public void update() {
     GitRepoInfo previousInfo = myInfo;
     myInfo = readRepoInfo();
-    notifyListeners(this, previousInfo, myInfo);
+    notifyIfRepoChanged(this, previousInfo, myInfo);
   }
 
   @NotNull
@@ -201,31 +198,31 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     GitConfig config = GitConfig.read(myPlatformFacade, configFile);
     Collection<GitRemote> remotes = config.parseRemotes();
     GitBranchState state = myReader.readState(remotes);
-    Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches(), state.getRemoteBranches());
+    Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
     return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), remotes,
                            state.getLocalBranches(), state.getRemoteBranches(), trackInfos);
   }
 
-  // previous info can be null before the first update
-  private static void notifyListeners(@NotNull final GitRepository repository, @Nullable GitRepoInfo previousInfo, @NotNull GitRepoInfo info) {
-    if (Disposer.isDisposed(repository.getProject())) {
-      return;
+  private static void notifyIfRepoChanged(@NotNull final GitRepository repository, @NotNull GitRepoInfo previousInfo, @NotNull GitRepoInfo info) {
+    if (!repository.getProject().isDisposed() && !info.equals(previousInfo)) {
+      notifyListenersAsync(repository);
     }
-    if (!info.equals(previousInfo)) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          Project project = repository.getProject();
-          if (!project.isDisposed()) {
-            project.getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(repository);
-          }
+  }
+
+  private static void notifyListenersAsync(@NotNull final GitRepository repository) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        Project project = repository.getProject();
+        if (!project.isDisposed()) {
+          project.getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(repository);
         }
-      });
-    }
+      }
+    });
   }
 
   @NotNull
   @Override
   public String toLogString() {
-    return String.format("GitRepository " + getRoot() + " : " + myInfo);
+    return "GitRepository " + getRoot() + " : " + myInfo;
   }
 }

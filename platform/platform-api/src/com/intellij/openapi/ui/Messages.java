@@ -115,7 +115,11 @@ public class Messages {
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     int barWidth = UIUtil.getScrollBarWidth();
     Dimension preferredSize =
-      new Dimension(Math.min(prefDim.width, maxDim.width) + barWidth, Math.min(prefDim.height, maxDim.height) + barWidth);
+      new Dimension(Math.min(prefDim.width, maxDim.width) + barWidth,
+                    Math.min(prefDim.height, maxDim.height) + barWidth);
+    if (prefDim.width > maxDim.width) { //Too wide single-line message should be wrapped
+      preferredSize.height = Math.max(preferredSize.height, (int)(4 * fontSize) + barWidth);
+    }
     scrollPane.setPreferredSize(preferredSize);
     return scrollPane;
   }

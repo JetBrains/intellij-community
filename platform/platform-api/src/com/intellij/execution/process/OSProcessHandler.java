@@ -38,15 +38,23 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     setHasPty(commandLine instanceof PtyCommandLine);
   }
 
+  /** @deprecated use {@link #OSProcessHandler(Process, String)} or any other ctor (to be removed in IDEA 17) */
+  @Deprecated
   public OSProcessHandler(@NotNull Process process) {
     this(process, null);
   }
 
-  public OSProcessHandler(@NotNull Process process, @Nullable String commandLine) {
+  /**
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   */
+  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     this(process, commandLine, EncodingManager.getInstance().getDefaultCharset());
   }
 
-  public OSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset) {
+  /**
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   */
+  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     super(process, commandLine, charset);
   }
 

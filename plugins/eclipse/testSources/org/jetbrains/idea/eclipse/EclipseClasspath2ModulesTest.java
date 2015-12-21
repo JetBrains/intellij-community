@@ -44,6 +44,10 @@ public class EclipseClasspath2ModulesTest extends Eclipse2ModulesTest {
     doTest("multi", "main");
   }
 
+  public void testSameNames() throws Exception {
+    doTest("root", "proj1");
+  }
+
   @Override
   protected void doTest(@NotNull final String workspaceRoot, @NotNull final String projectRoot) throws Exception {
     super.doTest(workspaceRoot, projectRoot);

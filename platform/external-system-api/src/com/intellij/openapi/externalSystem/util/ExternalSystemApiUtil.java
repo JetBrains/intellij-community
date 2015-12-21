@@ -512,10 +512,6 @@ public class ExternalSystemApiUtil {
 
   public static <T> T executeOnEdt(@NotNull final Computable<T> task) {
     final Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
-      return task.compute();
-    }
-
     final Ref<T> result = Ref.create();
     app.invokeAndWait(new Runnable() {
       @Override
@@ -598,11 +594,11 @@ public class ExternalSystemApiUtil {
    * ide project if it doesn't completely corresponds to the given ide project then.
    *
    * @param ideProject       target ide project
-   * @param externalProject  target external project
+   * @param projectData      target external project
    * @return                 <code>true</code> if given ide project has 1-1 mapping to the given external project;
    *                         <code>false</code> otherwise
    */
-  public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull DataNode<ProjectData> externalProject) {
+  public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull ProjectData projectData) {
     String linkedExternalProjectPath = null;
     for (ExternalSystemManager<?, ?, ?, ?, ?> manager : getAllManagers()) {
       ProjectSystemId externalSystemId = manager.getSystemId();
@@ -624,7 +620,6 @@ public class ExternalSystemApiUtil {
       }
     }
 
-    ProjectData projectData = externalProject.getData();
     if (linkedExternalProjectPath != null && !linkedExternalProjectPath.equals(projectData.getLinkedExternalProjectPath())) {
       // New external project is being linked.
       return false;

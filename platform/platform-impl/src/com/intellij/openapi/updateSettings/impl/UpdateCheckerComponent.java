@@ -22,14 +22,18 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +44,8 @@ import javax.swing.event.HyperlinkEvent;
  * @author yole
  */
 public class UpdateCheckerComponent implements ApplicationComponent {
+  private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
+
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
 
   private final Alarm myCheckForUpdatesAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
@@ -56,38 +62,55 @@ public class UpdateCheckerComponent implements ApplicationComponent {
   };
   private final UpdateSettings mySettings;
 
-  public UpdateCheckerComponent(@NotNull final Application app, @NotNull UpdateSettings settings) {
+  public UpdateCheckerComponent(@NotNull Application app, @NotNull UpdateSettings settings) {
     mySettings = settings;
+    updateDefaultChannel(app);
+    checkSecureConnection(app);
+    scheduleOnStartCheck(app);
+  }
 
+  private void updateDefaultChannel(Application app) {
+    ChannelStatus current = mySettings.getSelectedChannelStatus();
+    LOG.info("channel: " + current.getCode());
+    boolean eap = ApplicationInfoEx.getInstanceEx().isEAP();
+
+    if (eap && current != ChannelStatus.EAP && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
+      mySettings.setSelectedChannelStatus(ChannelStatus.EAP);
+      LOG.info("channel forced to 'eap'");
+      String title = IdeBundle.message("update.notifications.title");
+      String message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
+      notify(app, UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.INFORMATION, null));
+    }
+
+    if (!eap && current == ChannelStatus.EAP && Boolean.getBoolean(ConfigImportHelper.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY)) {
+      mySettings.setSelectedChannelStatus(ChannelStatus.RELEASE);
+      LOG.info("channel set to 'release'");
+    }
+  }
+
+  private void checkSecureConnection(final Application app) {
     if (mySettings.isSecureConnection() && !mySettings.canUseSecureConnection()) {
       mySettings.setSecureConnection(false);
 
       boolean tooOld = !SystemInfo.isJavaVersionAtLeast("1.7");
-      final String title = IdeBundle.message("update.notifications.title");
-      final String message = IdeBundle.message(tooOld ? "update.sni.not.available.message" : "update.sni.disabled.message");
-      app.invokeLater(new Runnable() {
+      String title = IdeBundle.message("update.notifications.title");
+      String message = IdeBundle.message(tooOld ? "update.sni.not.available.message" : "update.sni.disabled.message");
+      notify(app, UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.WARNING, new NotificationListener.Adapter() {
         @Override
-        public void run() {
-          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.WARNING, new NotificationListener.Adapter() {
+        protected void hyperlinkActivated(@NotNull Notification notification1, @NotNull HyperlinkEvent e) {
+          notification1.expire();
+          app.invokeLater(new Runnable() {
             @Override
-            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-              notification.expire();
-              app.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  ShowSettingsUtil.getInstance().showSettingsDialog(null, UpdateSettingsConfigurable.class);
-                }
-              }, ModalityState.NON_MODAL);
+            public void run() {
+              ShowSettingsUtil.getInstance().showSettingsDialog(null, UpdateSettingsConfigurable.class);
             }
-          }).notify(null);
+          }, ModalityState.NON_MODAL);
         }
-      }, ModalityState.NON_MODAL);
+      }));
     }
-
-    scheduleOnStartCheck(app);
   }
 
-  private void scheduleOnStartCheck(@NotNull Application app) {
+  private void scheduleOnStartCheck(Application app) {
     if (!mySettings.isCheckNeeded()) {
       return;
     }
@@ -95,10 +118,11 @@ public class UpdateCheckerComponent implements ApplicationComponent {
     app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
-        String currentBuild = ApplicationInfo.getInstance().getBuild().asString();
+        BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
+        BuildNumber lastBuildChecked = BuildNumber.fromString(mySettings.getLasBuildChecked());
         long timeToNextCheck = mySettings.getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
 
-        if (StringUtil.compareVersionNumbers(mySettings.getLasBuildChecked(), currentBuild) < 0 || timeToNextCheck <= 0) {
+        if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeToNextCheck <= 0) {
           myCheckRunnable.run();
         }
         else {
@@ -110,6 +134,15 @@ public class UpdateCheckerComponent implements ApplicationComponent {
 
   private void queueNextCheck(long interval) {
     myCheckForUpdatesAlarm.addRequest(myCheckRunnable, interval);
+  }
+
+  private static void notify(Application app, final Notification notification) {
+    app.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        notification.notify(null);
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   @Override

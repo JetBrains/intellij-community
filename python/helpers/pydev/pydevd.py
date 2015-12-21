@@ -385,6 +385,7 @@ class PyDB:
         self.mpl_modules_for_patching = {}
 
         self._filename_to_not_in_scope = {}
+        self.first_breakpoint_reached = False
         
     def get_plugin_lazy_init(self):
         if self.plugin is None and SUPPORT_PLUGINS:
@@ -392,7 +393,7 @@ class PyDB:
         return self.plugin
 
     def not_in_scope(self, filename):
-        return pydevd_utils.is_in_project_roots(filename)
+        return pydevd_utils.not_in_project_roots(filename)
 
     def first_appearance_in_scope(self, trace):
         if trace is None or self.not_in_scope(trace.tb_frame.f_code.co_filename):
@@ -555,14 +556,21 @@ class PyDB:
             self._lock_running_thread_ids.acquire()
             try:
                 for t in all_threads:
-                    thread_id = GetThreadId(t)
-
                     if getattr(t, 'is_pydev_daemon_thread', False):
                         pass # I.e.: skip the DummyThreads created from pydev daemon threads
                     elif isinstance(t, PyDBDaemonThread):
                         pydev_log.error_once('Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
 
                     elif isThreadAlive(t):
+                        if not self._running_thread_ids:
+                            old_thread_id = GetThreadId(t)
+                            thread_id = GetThreadId(t, True)
+                            curr_thread_id = GetThreadId(threadingCurrentThread())
+                            if pydevd_vars.hasAdditionalFramesById(old_thread_id):
+                                frames_by_id = pydevd_vars.getAdditionalFramesById(old_thread_id)
+                                pydevd_vars.addAdditionalFrameById(thread_id, frames_by_id)
+                        else:
+                            thread_id = GetThreadId(t)
                         program_threads_alive[thread_id] = t
 
                         if not DictContains(self._running_thread_ids, thread_id):

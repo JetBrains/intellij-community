@@ -52,9 +52,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class JavaLineMarkerProvider implements LineMarkerProvider {
+public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   private final DaemonCodeAnalyzerSettings myDaemonSettings;
   private final EditorColorsManager myColorsManager;
+  private final Option myLambdaOption = new Option("java.lambda", "Lambda", AllIcons.Gutter.ImplementingFunctional);
 
   public JavaLineMarkerProvider(DaemonCodeAnalyzerSettings daemonSettings, EditorColorsManager colorsManager) {
     myDaemonSettings = daemonSettings;
@@ -79,7 +80,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
 
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(element);
     final PsiElement firstChild = element.getFirstChild();
-    if (interfaceMethod != null && firstChild != null) {
+    if (interfaceMethod != null && firstChild != null && LineMarkerSettings.getSettings().isEnabled(myLambdaOption)) {
       return createSuperMethodLineMarkerInfo(firstChild, AllIcons.Gutter.ImplementingFunctional, Pass.UPDATE_ALL);
     }
 
@@ -291,6 +292,16 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
       NavigateAction.setNavigateAction(info, overrides ? "Go to overriding methods" : "Go to implementation(s)", IdeActions.ACTION_GOTO_IMPLEMENTATION);
       result.add(info);
     }
+  }
+
+  @Override
+  public String getName() {
+    return "Java line markers";
+  }
+
+  @Override
+  public Option[] getOptions() {
+    return new Option[] {myLambdaOption};
   }
 
   private static class ArrowUpLineMarkerInfo extends MergeableLineMarkerInfo<PsiElement> {

@@ -1,6 +1,3 @@
-import com.intellij.util.text.VersionComparatorUtil
-
-import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 /*
  * Copyright 2000-2015 JetBrains s.r.o.
  *
@@ -16,16 +13,36 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import com.intellij.util.text.VersionComparatorUtil
+
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
-String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_M15_2_Idea142branch150versionNoTests"
+String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_Beta3_Idea142branch150versionNoTests"
 
 target('default': 'Ensures that build/kotlinc directory contains JARs from Kotlin plugin compatible with current IDEA sources. These JARs are used by build scripts.') {
   def communityHome = guessHome(this)
   def reasonToUpdate = getReasonToUpdate(communityHome, new File(communityHome, "build/kotlinc"))
   if (reasonToUpdate == null) {
-    projectBuilder.info("Compatible Kotlin plugin already installed, no update is required")
-    return
+    if (isDefined("workIdeaHome")) {
+      def workKotlinVersionFile = new File(workIdeaHome, "plugins/Kotlin/kotlinc/build.txt")
+      if (workKotlinVersionFile.exists()) {
+        try {
+          def currentKotlinVersionFile = new File(communityHome, "build/kotlinc/build.txt")
+          if (VersionComparatorUtil.compare(currentKotlinVersionFile.text, workKotlinVersionFile.text) < 0) {
+            reasonToUpdate = "a newer version is installed in $workIdeaHome"
+          }
+        }
+        catch (IOException e) {
+          reasonToUpdate = "cannot read Kotlin version: $e"
+        }
+      }
+    }
+
+    if (reasonToUpdate == null) {
+      projectBuilder.info("Compatible Kotlin plugin already installed, no update is required")
+      return
+    }
   }
 
   projectBuilder.info("Kotlin plugin will be updated: $reasonToUpdate")

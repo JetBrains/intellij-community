@@ -528,6 +528,16 @@ public class PyResolveTest extends PyResolveTestCase {
     });
   }
 
+  // PY-16906
+  public void testGoogleDocstringModuleAttribute() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        assertResolvesTo(PyTargetExpression.class, "module_level_variable1");
+      }
+    });
+  }
+
   // PY-7541
   public void testLoopToUpperReassignment() {
     final PsiReference ref = findReferenceByMarker();
@@ -599,5 +609,45 @@ public class PyResolveTest extends PyResolveTestCase {
   // PY-15390
   public void testRMatMul() {
     assertResolvesTo(PyFunction.class, "__rmatmul__");
+  }
+
+  //PY-2478
+  public void testFormatStringKWArgs() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof  PyKeywordArgument);
+    assertEquals("fst", ((PyKeywordArgument)target).getKeyword());
+  }
+
+  //PY-2478
+  public void testFormatPositionalArgs() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof  PyReferenceExpression);
+    assertEquals("string", target.getText());
+  }
+
+  //PY-2478
+  public void testFormatArgsAndKWargs() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof  PyStringLiteralExpression);
+  }
+
+  //PY-2478
+  public void testFormatArgsAndKWargs1() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof  PyKeywordArgument);
+    assertEquals("kwd", ((PyKeywordArgument)target).getKeyword());
+  }
+
+  //PY-2478
+  public void testPercentPositionalArgs() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PyStringLiteralExpression);
+  }
+
+  //PY-2478
+  public void testPercentKeyWordArgs() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PyStringLiteralExpression);
+    assertEquals("kwg", ((PyStringLiteralExpression)target).getStringValue());
   }
 }

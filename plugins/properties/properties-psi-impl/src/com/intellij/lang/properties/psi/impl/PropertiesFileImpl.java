@@ -166,7 +166,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
             final String k1 = p1.getKey();
             final String k2 = p2.getKey();
             LOG.assertTrue(k1 != null && k2 != null);
-            return k1.compareTo(k2);
+            return String.CASE_INSENSITIVE_ORDER.compare(k1, k2);
           }
         });
         return insertIndex == -1 ? null :myProperties.get(insertIndex < 0 ? - insertIndex - 2 : insertIndex);

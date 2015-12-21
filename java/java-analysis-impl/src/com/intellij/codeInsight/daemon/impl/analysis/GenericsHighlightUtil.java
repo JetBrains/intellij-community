@@ -360,11 +360,8 @@ public class GenericsHighlightUtil {
                                                                  Map<PsiClass, PsiSubstitutor> inheritedClasses,
                                                                  Set<PsiClass> visited,
                                                                  TextRange textRange) {
-    final PsiClassType[] superTypes = aClass.getSuperTypes();
-    for (PsiClassType superType : superTypes) {
-      superType = PsiClassImplUtil.correctType(superType, place.getResolveScope());
-      if (superType == null) continue;
-      final PsiClassType.ClassResolveResult result = superType.resolveGenerics();
+    final List<PsiClassType.ClassResolveResult> superTypes = PsiClassImplUtil.getScopeCorrectedSuperTypes(aClass, place.getResolveScope());
+    for (PsiClassType.ClassResolveResult result : superTypes) {
       final PsiClass superClass = result.getElement();
       if (superClass == null || visited.contains(superClass)) continue;
       PsiSubstitutor superTypeSubstitutor = result.getSubstitutor();
@@ -1317,24 +1314,14 @@ public class GenericsHighlightUtil {
 
   static HighlightInfo checkInferredIntersections(PsiSubstitutor substitutor, TextRange ref) {
     for (Map.Entry<PsiTypeParameter, PsiType> typeEntry : substitutor.getSubstitutionMap().entrySet()) {
+      final String parameterName = typeEntry.getKey().getName();
       final PsiType type = typeEntry.getValue();
       if (type instanceof PsiIntersectionType) {
-        final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
-        for (int i = 0; i < conjuncts.length; i++) {
-          PsiClass conjunct = PsiUtil.resolveClassInClassTypeOnly(conjuncts[i]);
-          if (conjunct != null && !conjunct.isInterface()) {
-            for (int i1 = i + 1; i1 < conjuncts.length; i1++) {
-              PsiClass oppositeConjunct = PsiUtil.resolveClassInClassTypeOnly(conjuncts[i1]);
-              if (oppositeConjunct != null && !oppositeConjunct.isInterface()) {
-                if (!conjunct.isInheritor(oppositeConjunct, true) && !oppositeConjunct.isInheritor(conjunct, true)) {
-                  return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                    .descriptionAndTooltip("Type parameter " + typeEntry.getKey().getName() + " has incompatible upper bounds: " +
-                                           conjunct.getName() + " and " + oppositeConjunct.getName())
-                    .range(ref).create();
-                }
-              }
-            }
-          }
+        final String conflictingConjunctsMessage = ((PsiIntersectionType)type).getConflictingConjunctsMessage();
+        if (conflictingConjunctsMessage != null) {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .descriptionAndTooltip("Type parameter " + parameterName + " has incompatible upper bounds: " + conflictingConjunctsMessage)
+            .range(ref).create();
         }
       }
     }

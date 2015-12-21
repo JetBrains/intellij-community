@@ -28,7 +28,6 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -149,8 +148,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(new AppendSelectedChangesAction(Side.LEFT, false));
     group.add(new ReplaceSelectedChangesAction(Side.RIGHT, false));
     group.add(new AppendSelectedChangesAction(Side.RIGHT, false));
-    group.add(new RevertSelectedChangesAction(Side.LEFT));
-    group.add(new RevertSelectedChangesAction(Side.RIGHT));
 
     group.add(Separator.getInstance());
     group.addAll(super.createEditorPopupActions());
@@ -409,6 +406,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     return super.getSyncScrollSupport();
   }
 
+  protected boolean isEditable(@NotNull Side side) {
+    return DiffUtil.isEditable(getEditor(side));
+  }
+
   //
   // Misc
   //
@@ -530,11 +531,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         return;
       }
 
-      Editor modifiedEditor = getEditor(myModifiedSide);
-      if (!DiffUtil.isEditable(modifiedEditor)) {
+      if (!isEditable(myModifiedSide)) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
       }
+
+      e.getPresentation().setText(getText(side));
+      e.getPresentation().setIcon(getIcon(side));
 
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(isSomeChangeSelected(side));
@@ -549,11 +552,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       final List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
       if (selectedChanges.isEmpty()) return;
 
-      Editor modifiedEditor = getEditor(myModifiedSide);
-      if (!DiffUtil.isEditable(modifiedEditor)) return;
+      if (!isEditable(myModifiedSide)) return;
 
       String title = e.getPresentation().getText() + " selected changes";
-      DiffUtil.executeWriteCommand(modifiedEditor.getDocument(), e.getProject(), title, new Runnable() {
+      DiffUtil.executeWriteCommand(getEditor(myModifiedSide).getDocument(), e.getProject(), title, new Runnable() {
         @Override
         public void run() {
           apply(selectedChanges);
@@ -577,7 +579,17 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       return false;
     }
 
+    protected boolean isBothEditable() {
+      return isEditable(Side.LEFT) && isEditable(Side.RIGHT);
+    }
+
     protected abstract boolean isVisible(@NotNull Side side);
+
+    @NotNull
+    protected abstract String getText(@NotNull Side side);
+
+    @Nullable
+    protected abstract Icon getIcon(@NotNull Side side);
 
     @CalledWithWriteLock
     protected abstract void apply(@NotNull List<SimpleDiffChange> changes);
@@ -586,15 +598,24 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private class ReplaceSelectedChangesAction extends ApplySelectedChangesActionBase {
     public ReplaceSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
       super(focusedSide.other(), shortcut);
-
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
-      getTemplatePresentation().setText("Replace");
-      getTemplatePresentation().setIcon(DiffUtil.getArrowIcon(focusedSide));
     }
 
     @Override
     protected boolean isVisible(@NotNull Side side) {
-      return side == myModifiedSide.other();
+      return !isBothEditable() || side == myModifiedSide.other();
+    }
+
+    @NotNull
+    @Override
+    protected String getText(@NotNull Side side) {
+      return "Accept";
+    }
+
+    @Nullable
+    @Override
+    protected Icon getIcon(@NotNull Side side) {
+      return DiffUtil.getArrowIcon(myModifiedSide.other());
     }
 
     @Override
@@ -608,41 +629,30 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private class AppendSelectedChangesAction extends ApplySelectedChangesActionBase {
     public AppendSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
       super(focusedSide.other(), shortcut);
-
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")).getShortcutSet());
-      getTemplatePresentation().setText("Insert");
-      getTemplatePresentation().setIcon(DiffUtil.getArrowDownIcon(focusedSide));
     }
 
     @Override
     protected boolean isVisible(@NotNull Side side) {
-      return side == myModifiedSide.other();
+      return !isBothEditable() || side == myModifiedSide.other();
+    }
+
+    @NotNull
+    @Override
+    protected String getText(@NotNull Side side) {
+      return isBothEditable() ? myModifiedSide.select("Append to the Left", "Append to the Right") : "Append";
+    }
+
+    @Nullable
+    @Override
+    protected Icon getIcon(@NotNull Side side) {
+      return DiffUtil.getArrowDownIcon(myModifiedSide.other());
     }
 
     @Override
     protected void apply(@NotNull List<SimpleDiffChange> changes) {
       for (SimpleDiffChange change : changes) {
         appendChange(change, myModifiedSide.other());
-      }
-    }
-  }
-
-  private class RevertSelectedChangesAction extends ApplySelectedChangesActionBase {
-    public RevertSelectedChangesAction(@NotNull Side focusedSide) {
-      super(focusedSide, false);
-      getTemplatePresentation().setText("Revert");
-      getTemplatePresentation().setIcon(AllIcons.Diff.Remove);
-    }
-
-    @Override
-    protected boolean isVisible(@NotNull Side side) {
-      return side == myModifiedSide;
-    }
-
-    @Override
-    protected void apply(@NotNull List<SimpleDiffChange> changes) {
-      for (SimpleDiffChange change : changes) {
-        replaceChange(change, myModifiedSide.other());
       }
     }
   }
@@ -803,6 +813,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       return getTextSettings().isEnableSyncScroll();
     }
 
+    @Override
     public int transfer(@NotNull Side baseSide, int line) {
       if (myDiffChanges.isEmpty()) {
         return line;

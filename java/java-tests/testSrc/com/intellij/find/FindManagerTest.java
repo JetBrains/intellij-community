@@ -18,6 +18,7 @@ package com.intellij.find;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.find.impl.FindInProjectUtil;
+import com.intellij.find.impl.FindResultImpl;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -29,9 +30,14 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -68,6 +74,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+
+import static com.intellij.find.impl.FindInProjectUtil.buildStringToFindForIndicesFromRegExp;
+import static com.intellij.find.impl.FindInProjectUtil.createFileMaskCondition;
 
 /**
  * @author MYakovlev
@@ -89,7 +99,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     super.tearDown();
   }
 
-  public void testFindString() {
+  public void testFindString() throws InterruptedException {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 
     String text = "public static class MyClass{\n/*done*/\npublic static void main(){}}";
@@ -139,7 +149,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setProjectScope(true);
 
     final FindResult[] findResultArr = new FindResult[1];
-    findInNewThread(findModel, myFindManager, text, 0, findResultArr);
+    Thread thread = findInNewThread(findModel, myFindManager, text, 0, findResultArr);
     new WaitFor(30 *1000){
       @Override
       protected boolean condition() {
@@ -148,6 +158,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     }.assertCompleted();
 
     assertFalse(findResultArr[0].isStringFound());
+    thread.join();
   }
 
   private static Thread findInNewThread(final FindModel model,
@@ -545,6 +556,11 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     findModel.setWholeWordsOnly(true);
     assertSize(2, findUsages(findModel));
+
+    findModel.setWholeWordsOnly(false);
+    findModel.setRegularExpressions(true);
+    findModel.setStringToFind("Ta(rgetWord)");
+    assertSize(2, findUsages(findModel));
   }
 
   public void testLocalScopeSearchPerformance() throws Exception {
@@ -574,10 +590,10 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       ThrowableRunnable test = () -> assertSize(lineCount, findUsages(findModel));
 
       findModel.setCustomScope(GlobalSearchScope.fileScope(psiFile));
-      PlatformTestUtil.startPerformanceTest("slow", 400, test).attempts(2).cpuBound().usesAllCPUCores().assertTiming();
+      PlatformTestUtil.startPerformanceTest("slow", 400, test).attempts(2).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming();
 
       findModel.setCustomScope(new LocalSearchScope(psiFile));
-      PlatformTestUtil.startPerformanceTest("slow", 400, test).attempts(2).cpuBound().usesAllCPUCores().assertTiming();
+      PlatformTestUtil.startPerformanceTest("slow", 400, test).attempts(2).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming();
     }
     finally {
       fixture.tearDown();
@@ -604,6 +620,11 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     FindUtil.replace(myProject, myEditor, 0, model);
     assertEquals("Foo foo FOO", myEditor.getDocument().getText());
+
+    model.setStringToFind("Foo");
+    model.setStringToReplace("Bar");
+    FindUtil.replace(myProject, myEditor, 0, model);
+    assertEquals("Bar bar BAR", myEditor.getDocument().getText());
 
     configureByText(FileTypes.PLAIN_TEXT, "Bar bar");
 
@@ -834,6 +855,58 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setCustomScope(GlobalSearchScopesCore.filterScope(myProject, new NamedScope.UnnamedScope(compile)));
     findModel.setCustomScope(true);
     assertSize(0, findUsages(findModel));
+  }
+
+  public void testRegexReplacementStringForIndices() {
+    assertEquals("public static   MyType my   = 1;", buildStringToFindForIndicesFromRegExp("public static (@A)? MyType my\\w+?  = 1;", myProject));
+    assertEquals(" Foo ", buildStringToFindForIndicesFromRegExp("\\bFoo\\b", myProject));
+    assertEquals("", buildStringToFindForIndicesFromRegExp("foo|bar", myProject));
+  }
+
+  public void testCreateFileMaskCondition() {
+    final Condition<String> condition = createFileMaskCondition("*.java, *.js, !Foo.java, !*.min.js");
+    assertTrue(condition.value("Bar.java"));
+    assertTrue(!condition.value("Bar.javac"));
+    assertTrue(!condition.value("Foo.java"));
+    assertTrue(!condition.value("Foo.jav"));
+    assertTrue(!condition.value("Foo.min.js"));
+    assertTrue(condition.value("Foo.js"));
+  }
+
+  public void testRegExpSearchDoesCheckCancelled() throws InterruptedException {
+    String text = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+    FindModel findModel = FindManagerTestUtils.configureFindModel("(x+x+)+y");
+    findModel.setRegularExpressions(true);
+
+    runAsyncTest(text, findModel);
+    findModel.setSearchContext(FindModel.SearchContext.IN_COMMENTS);
+    runAsyncTest("/*" + text + "*/", findModel);
+  }
+
+  private void runAsyncTest(String text, FindModel findModel) throws InterruptedException {
+    final Ref<FindResult> result = new Ref<>();
+    final CountDownLatch progressStarted = new CountDownLatch(1);
+    final ProgressIndicatorBase progressIndicatorBase = new ProgressIndicatorBase();
+    final Thread thread = new Thread(() -> {
+      ProgressManager.getInstance().runProcess(() -> {
+        try {
+          progressStarted.countDown();
+          result.set(myFindManager.findString(text, 0, findModel, new LightVirtualFile("foo.java")));
+        }
+        catch (ProcessCanceledException ex) {
+          result.set(new FindResultImpl());
+        }
+      }, progressIndicatorBase);
+    }, "runAsyncTest");
+    thread.start();
+
+    progressStarted.await();
+    thread.join(100);
+    progressIndicatorBase.cancel();
+    thread.join(500);
+    assertNotNull(result.get());
+    assertTrue(!result.get().isStringFound());
+    thread.join();
   }
 
   private void doTestRegexpReplace(String initialText, String searchString, String replaceString, String expectedResult) {

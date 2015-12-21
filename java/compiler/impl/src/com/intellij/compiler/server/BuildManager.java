@@ -806,6 +806,10 @@ public class BuildManager implements Disposable {
                   msg.append("Abnormal build process termination: ");
                   if (errorsOnLaunch != null && errorsOnLaunch.length() > 0) {
                     msg.append("\n").append(errorsOnLaunch);
+                    if (StringUtil.contains(errorsOnLaunch, "java.lang.NoSuchMethodError")) {
+                      msg.append("\nThe error may be caused by JARs in Java Extensions directory which conflicts with libraries used by the external build process.")
+                         .append("\nTry adding -Djava.ext.dirs=\"\" argument to 'Build process VM options' in File | Settings | Build, Execution, Deployment | Compiler to fix the problem.");
+                    }
                   }
                   else {
                     msg.append("unknown error");
@@ -1199,9 +1203,7 @@ public class BuildManager implements Disposable {
       LOG.error(e);
     }
     
-    final Process process = cmdLine.createProcess();
-
-    final OSProcessHandler processHandler = new OSProcessHandler(process, null, mySystemCharset) {
+    final OSProcessHandler processHandler = new OSProcessHandler(cmdLine) {
       @Override
       protected boolean shouldDestroyProcessRecursively() {
         return true;
@@ -1311,8 +1313,10 @@ public class BuildManager implements Disposable {
     return 0;
   }
 
-  public void stopListening() {
-    myChannelRegistrar.close();
+  @NotNull
+  public Future<?> stopListening() {
+    myListenPort = -1;
+    return myChannelRegistrar.close(true);
   }
 
   private int startListening() throws Exception {
@@ -1766,7 +1770,7 @@ public class BuildManager implements Disposable {
       return delegate;
     }
 
-    public synchronized boolean setDelegate(@NotNull TaskFuture<? extends T> delegate) {
+    private synchronized boolean setDelegate(@NotNull TaskFuture<? extends T> delegate) {
       if (myDelegate == null) {
         try {
           myDelegate = delegate;

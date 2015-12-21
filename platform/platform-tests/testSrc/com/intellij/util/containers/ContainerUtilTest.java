@@ -240,7 +240,7 @@ public class ContainerUtilTest extends TestCase {
         long elapsed = System.currentTimeMillis() - start;
         System.out.println("elapsed = " + elapsed);
       }
-    }).assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   private static void assertReallyEmpty(List<Object> my) {

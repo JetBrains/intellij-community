@@ -17,6 +17,7 @@ package com.jetbrains.python.testing;
 
 import com.google.common.collect.Sets;
 import com.intellij.execution.Location;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -58,7 +59,7 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
     super(configurationFactory);
   }
 
-  @Override
+    @Override
   public boolean isConfigurationFromContext(AbstractPythonTestRunConfiguration configuration, ConfigurationContext context) {
     final Location location = context.getLocation();
     if (location == null || !isAvailable(location)) return false;

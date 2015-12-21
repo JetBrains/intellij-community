@@ -15,19 +15,31 @@
  */
 package com.intellij.codeInsight.inspections;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.BatchQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.actions.CleanupInspectionIntention;
+import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.inspections.GuavaInspection;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.SmartList;
+import org.junit.Assert;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Dmitry Batkovich
@@ -42,10 +54,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addLibraryJars("guava-17.0.jar", PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/lib/",
-                                 "guava-17.0.jar");
-    moduleBuilder.addLibraryJars("guava-17.0.jar-2", PathManager.getHomePath().replace(File.separatorChar, '/') + "/lib/",
-                                 "guava-17.0.jar");
+    moduleBuilder.addLibraryJars("guava", PathManager.getHomePathFor(Assert.class) + "/lib/", "guava-17.0.jar");
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 
@@ -106,7 +115,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testDontShowFluentIterableChainQuickFix() {
-    doTestNoQuickFixes(GuavaInspection.MigrateFluentIterableChainQuickFix.class);
+    doTestNoQuickFixes(PsiMethodCallExpression.class);
   }
 
   public void testRemoveMethodReferenceForFunctionalInterfaces() {
@@ -118,8 +127,13 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  //needs Guava 18.0 as dependency
+  public void _testAppend() {
+    doTest();
+  }
+
   public void testChainContainsStopMethods() {
-    doTestNoQuickFixes(GuavaInspection.MigrateFluentIterableChainQuickFix.class);
+    doTestNoQuickFixes(PsiMethodCallExpression.class);
   }
 
   public void testFluentIterableAndOptionalChain() {
@@ -131,6 +145,14 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testToArray() {
+    doTest();
+  }
+
+  public void testToArray2() {
+    doTest();
+  }
+
+  public void testToArray3() {
     doTest();
   }
 
@@ -186,13 +208,65 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
-  private void doTestNoQuickFixes(final Class<? extends IntentionAction>... quickFixesClasses) {
+  public void testOptionalTransform() {
+    doTest();
+  }
+
+  public void testOptionalTransform2() {
+    doTest();
+  }
+
+  public void testRemoveMethodReference() {
+    doTest();
+  }
+
+  public void testSimplifyOptionalComposition() {
+    doTest();
+  }
+
+  public void testMigrateArrays() {
+    doTest();
+  }
+
+  public void testConvertImmutableCollections() {
+    doTestAllFile();
+  }
+
+  public void testUniqueIndex() {
+    doTestAllFile();
+  }
+
+  public void testMigrateMethodAsChainQualifier() {
+    doTest();
+  }
+
+  public void testFixAllProblems() {
+    doTestAllFile();
+  }
+
+  public void testFixAllProblems2() {
+    doTestAllFile();
+  }
+
+  public void testPredicates() {
+    doTestAllFile();
+
+  }
+
+  public void testPredicates2() {
+    doTestAllFile();
+  }
+
+  private void doTestNoQuickFixes(Class<? extends PsiElement>... highlightedElements) {
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.enableInspections(new GuavaInspection());
     myFixture.doHighlighting();
     for (IntentionAction action : myFixture.getAvailableIntentions()) {
-      if (PsiTreeUtil.instanceOf(action, quickFixesClasses)) {
-        fail("Quick fix is found for types " + Arrays.toString(quickFixesClasses));
+      if (action instanceof GuavaInspection.MigrateGuavaTypeFix) {
+        final PsiElement element = ((GuavaInspection.MigrateGuavaTypeFix)action).getStartElement();
+        if (PsiTreeUtil.instanceOf(element, highlightedElements)) {
+          fail("Quick fix is found but not expected for types " + Arrays.toString(highlightedElements));
+        }
       }
     }
   }
@@ -203,15 +277,39 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     boolean actionFound = false;
     myFixture.doHighlighting();
     for (IntentionAction action : myFixture.getAvailableIntentions()) {
-      if (action instanceof VariableTypeFix ||
-          action instanceof GuavaInspection.MigrateFluentIterableChainQuickFix ||
-          action instanceof GuavaInspection.MigrateMethodReturnTypeFix) {
+      if (action instanceof GuavaInspection.MigrateGuavaTypeFix) {
         myFixture.launchAction(action);
         actionFound = true;
         break;
       }
     }
     assertTrue("Quick fix isn't found", actionFound);
+    myFixture.checkResultByFile(getTestName(true) + "_after.java");
+  }
+
+  private void doTestAllFile() {
+    myFixture.configureByFile(getTestName(true) + ".java");
+    myFixture.enableInspections(new GuavaInspection());
+    for (HighlightInfo info : myFixture.doHighlighting())
+      if (GuavaInspection.PROBLEM_DESCRIPTION_FOR_METHOD_CHAIN.equals(info.getDescription()) ||
+          GuavaInspection.PROBLEM_DESCRIPTION_FOR_VARIABLE.equals(info.getDescription())) {
+        final Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> marker = info.quickFixActionMarkers.get(0);
+        final PsiElement someElement = myFixture.getFile().findElementAt(0);
+        assertNotNull(someElement);
+        final List<IntentionAction> options = marker.getFirst().getOptions(someElement, myFixture.getEditor());
+        assertNotNull(options);
+        boolean doBreak = false;
+        for (IntentionAction option : options) {
+          if (option instanceof CleanupInspectionIntention) {
+            myFixture.launchAction(option);
+            doBreak = true;
+            break;
+          }
+        }
+        if (doBreak) {
+          break;
+        }
+      }
     myFixture.checkResultByFile(getTestName(true) + "_after.java");
   }
 }

@@ -25,7 +25,10 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,7 +40,6 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.PatternUtil;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
@@ -70,11 +72,8 @@ public class FileTypesTest extends PlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     FileTypeManagerImpl.reDetectAsync(false);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList);
     });
     super.tearDown();
   }
@@ -82,11 +81,8 @@ public class FileTypesTest extends PlatformTestCase {
   public void testMaskExclude() {
     final String pattern1 = "a*b.c?d";
     final String pattern2 = "xxx";
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myFileTypeManager.setIgnoredFilesList(pattern1 + ";" + pattern2);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myFileTypeManager.setIgnoredFilesList(pattern1 + ";" + pattern2);
     });
     checkIgnored("ab.cxd");
     checkIgnored("axb.cxd");
@@ -101,24 +97,18 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   public void testExcludePerformance() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myFileTypeManager.setIgnoredFilesList("1*2;3*4;5*6;7*8;9*0;*1;*3;*5;*6;7*;*8*");
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myFileTypeManager.setIgnoredFilesList("1*2;3*4;5*6;7*8;9*0;*1;*3;*5;*6;7*;*8*");
     });
     final String[] names = new String[100];
     for (int i = 0; i < names.length; i++) {
       String name = String.valueOf(i % 10 * 10 + i * 100 + i + 1);
       names[i] = name + name + name + name;
     }
-    PlatformTestUtil.startPerformanceTest("ignore perf", 700, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        for (int i=0;i<1000;i++) {
-          for (String name : names) {
-            myFileTypeManager.isFileIgnored(name);
-          }
+    PlatformTestUtil.startPerformanceTest("ignore perf", 700, () -> {
+      for (int i=0;i<1000;i++) {
+        for (String name : names) {
+          myFileTypeManager.isFileIgnored(name);
         }
       }
     }).assertTiming();
@@ -138,7 +128,7 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   public void testAddNewExtension() throws Exception {
-    FileTypeAssocTable<FileType> associations = new FileTypeAssocTable<FileType>();
+    FileTypeAssocTable<FileType> associations = new FileTypeAssocTable<>();
     associations.addAssociation(FileTypeManager.parseFromString("*.java"), FileTypes.ARCHIVE);
     associations.addAssociation(FileTypeManager.parseFromString("*.xyz"), StdFileTypes.XML);
     associations.addAssociation(FileTypeManager.parseFromString("SomeSpecial*.java"), StdFileTypes.XML); // patterns should have precedence over extensions
@@ -150,18 +140,12 @@ public class FileTypesTest extends PlatformTestCase {
 
   public void testIgnoreOrder() {
     final FileTypeManagerEx manager = FileTypeManagerEx.getInstanceEx();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        manager.setIgnoredFilesList("a;b;");
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      manager.setIgnoredFilesList("a;b;");
     });
     assertEquals("a;b;", manager.getIgnoredFilesList());
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        manager.setIgnoredFilesList("b;a;");
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      manager.setIgnoredFilesList("b;a;");
     });
     assertEquals("b;a;", manager.getIgnoredFilesList());
   }
@@ -369,11 +353,8 @@ public class FileTypesTest extends PlatformTestCase {
     final FileType perlFileType = myFileTypeManager.getFileTypeByFileName("foo.pl");
     assertEquals("Perl", perlFileType.getName());
     assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myFileTypeManager.associatePattern(perlFileType, "*.cgi");
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myFileTypeManager.associatePattern(perlFileType, "*.cgi");
     });
 
     assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
@@ -383,11 +364,8 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.initComponent();
     assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myFileTypeManager.removeAssociatedExtension(perlFileType, "*.cgi");
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myFileTypeManager.removeAssociatedExtension(perlFileType, "*.cgi");
     });
 
     myFileTypeManager.clearForTests();
@@ -419,15 +397,12 @@ public class FileTypesTest extends PlatformTestCase {
 
   // for IDEA-114804 File types mapped to text are not remapped when corresponding plugin is installed
   public void testRemappingToInstalledPluginExtension() throws WriteExternalException, InvalidDataException {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myFileTypeManager.associatePattern(PlainTextFileType.INSTANCE, "*.fromPlugin");
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myFileTypeManager.associatePattern(PlainTextFileType.INSTANCE, "*.fromPlugin");
     });
 
     Element element = myFileTypeManager.getState();
-    String s = JDOMUtil.writeElement(element);
+    //String s = JDOMUtil.writeElement(element);
 
     final AbstractFileType typeFromPlugin = new AbstractFileType(new SyntaxTable());
     PlatformTestUtil.registerExtension(FileTypeFactory.FILE_TYPE_FACTORY_EP, new FileTypeFactory() {
@@ -501,11 +476,8 @@ public class FileTypesTest extends PlatformTestCase {
       myFileTypeManager.loadState(element);
       myFileTypeManager.initComponent();
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          myFileTypeManager.associatePattern(typeFromPlugin, "*.foo");
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        myFileTypeManager.associatePattern(typeFromPlugin, "*.foo");
       });
 
 
@@ -527,7 +499,7 @@ public class FileTypesTest extends PlatformTestCase {
       myFileTypeManager.loadState(element);
       myFileTypeManager.initComponent();
 
-      element = myFileTypeManager.getState();
+      //element = myFileTypeManager.getState();
       //log(JDOMUtil.writeElement(element));
 
       assertEquals(typeFromPlugin, myFileTypeManager.getFileTypeByFileName("foo.foo"));
@@ -560,11 +532,8 @@ public class FileTypesTest extends PlatformTestCase {
     Element map = myFileTypeManager.getState().getChild("extensionMap");
     if (map != null) {
       List<Element> mapping = map.getChildren("mapping");
-      assertNull(ContainerUtil.find(mapping, new Condition<Element>() {
-        @Override
-        public boolean value(Element o) {
-          return "zip".equals(o.getAttributeValue("ext"));
-        }
+      assertNull(ContainerUtil.find(mapping, o -> {
+        return "zip".equals(o.getAttributeValue("ext"));
       }));
     }
   }
@@ -572,20 +541,14 @@ public class FileTypesTest extends PlatformTestCase {
   public void testDefaultFileType() throws Exception {
     final String extension = "veryRareExtension";
     final FileType idl = myFileTypeManager.findFileTypeByName("IDL");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myFileTypeManager.associatePattern(idl, "*." + extension);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myFileTypeManager.associatePattern(idl, "*." + extension);
     });
 
     Element element = myFileTypeManager.getState();
     //log(JDOMUtil.writeElement(element));
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myFileTypeManager.removeAssociatedExtension(idl, extension);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myFileTypeManager.removeAssociatedExtension(idl, extension);
     });
 
     myFileTypeManager.clearForTests();
@@ -594,14 +557,11 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.initComponent();
     FileType extensions = myFileTypeManager.getFileTypeByExtension(extension);
     assertEquals("IDL", extensions.getName());
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myFileTypeManager.removeAssociatedExtension(idl, extension);
-        myFileTypeManager.clearForTests();
-        myFileTypeManager.initStandardFileTypes();
-        myFileTypeManager.initComponent();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myFileTypeManager.removeAssociatedExtension(idl, extension);
+      myFileTypeManager.clearForTests();
+      myFileTypeManager.initStandardFileTypes();
+      myFileTypeManager.initComponent();
     });
   }
 

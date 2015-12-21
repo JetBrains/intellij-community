@@ -26,19 +26,17 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.concurrency.FixedFuture;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 import static java.util.Collections.unmodifiableMap;
 
@@ -159,8 +157,7 @@ public class EnvironmentUtil {
     File reader = FileUtil.findFirstThatExist(
       PathManager.getBinPath() + "/printenv.py",
       PathManager.getHomePath() + "/community/bin/mac/printenv.py",
-      PathManager.getHomePath() + "/bin/mac/printenv.py"
-    );
+      PathManager.getHomePath() + "/bin/mac/printenv.py");
     if (reader == null) {
       throw new Exception("bin:" + PathManager.getBinPath());
     }
@@ -170,11 +167,14 @@ public class EnvironmentUtil {
       String[] command = {shell, "-l", "-i", "-c", ("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'")};
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
-      Process process = Runtime.getRuntime().exec(command);
+      Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
+      StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
       int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
+      gobbler.stop();
 
       String lines = FileUtil.loadFile(envFile);
       if (rv != 0 || lines.isEmpty()) {
+        LOG.info("shell process output: " + StringUtil.trimEnd(gobbler.getText(), '\n'));
         throw new Exception("rv:" + rv + " text:" + lines.length());
       }
       return parseEnv(lines);
@@ -294,6 +294,36 @@ public class EnvironmentUtil {
     }
     catch (Exception e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private static class StreamGobbler extends BaseOutputReader {
+
+    private final StringBuffer myBuffer;
+
+    public StreamGobbler(@NotNull InputStream stream) {
+      super(stream, CharsetToolkit.getDefaultSystemCharset());
+      myBuffer = new StringBuffer();
+      start("stdout/stderr streams of shell env loading process");
+    }
+
+    @NotNull
+    @Override
+    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
+      ExecutorService executor = ConcurrencyUtil.newSingleThreadExecutor("shell process streams gobbler");
+      Future<?> future = executor.submit(runnable);
+      executor.shutdown();
+      return future;
+    }
+
+    @Override
+    protected void onTextAvailable(@NotNull String text) {
+      myBuffer.append(text);
+    }
+
+    @NotNull
+    public String getText() {
+      return myBuffer.toString();
     }
   }
 }

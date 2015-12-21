@@ -58,13 +58,9 @@ public class JBUI {
 
     // On Windows: rely on default system font
     if (SystemInfo.isWindows) {
+      UIUtil.initSystemFontData();
       Pair<String, Integer> fdata = UIUtil.getSystemFontData();
-      if (fdata == null) {
-        UIUtil.initDefaultLAF();
-        fdata = UIUtil.getSystemFontData();
-
-        if (fdata != null) size = fdata.getSecond();
-      }
+      if (fdata != null) size = fdata.getSecond();
     }
     if (size == -1) {
       size = Fonts.label().getSize();

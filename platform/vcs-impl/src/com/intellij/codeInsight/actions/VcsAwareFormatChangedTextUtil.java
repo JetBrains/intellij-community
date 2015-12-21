@@ -93,7 +93,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @Nullable
   private static List<TextRange> getCachedChangedLines(@NotNull Project project, @NotNull Document document) {
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
-    if (tracker != null) {
+    if (tracker != null && tracker.isValid()) {
       List<Range> ranges = tracker.getRanges();
       return getChangedTextRanges(document, ranges);
     }

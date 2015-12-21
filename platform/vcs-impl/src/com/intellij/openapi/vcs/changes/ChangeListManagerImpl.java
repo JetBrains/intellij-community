@@ -419,7 +419,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void freezeImmediately(@Nullable String reason) {
     myUpdater.setIgnoreBackgroundOperation(false);
     myUpdater.pause();
-    myUpdateChangesProgressIndicator.cancel();
     myFreezeName.set(reason);
   }
 
@@ -518,10 +517,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     try {
       checkIfDisposed();
 
-      // copy existsing data to objects that would be updated.
+      // copy existing data to objects that would be updated.
       // mark for "modifier" that update started (it would create duplicates of modification commands done by user during update;
       // after update of copies of objects is complete, it would apply the same modifications to copies.)
       final DataHolder dataHolder;
+      ProgressIndicator indicator = createProgressIndicator();
       synchronized (myDataLock) {
         dataHolder = new DataHolder((FileHolderComposite)myComposite.copy(), myWorker.copy(), wasEverythingDirty);
         myModifier.enterUpdate();
@@ -529,6 +529,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           myUpdateException = null;
           myAdditionalInfo = null;
         }
+        myUpdateChangesProgressIndicator = indicator;
       }
       final String scopeInString = !LOG.isDebugEnabled() ? "" : StringUtil.join(scopes, new Function<VcsDirtyScope, String>() {
         @Override
@@ -540,9 +541,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
 
-      myUpdateChangesProgressIndicator = createProgressIndicator();
+      ProgressManager.getInstance().runProcess(new Runnable() {
+        @Override
+        public void run() {
+          iterateScopes(dataHolder, scopes, wasEverythingDirty);
+        }
 
-      iterateScopes(dataHolder, scopes, wasEverythingDirty);
+      }, indicator);
 
       final boolean takeChanges = myUpdateException == null;
       if (takeChanges) {
@@ -757,7 +762,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }
     }
-    catch (ProcessCanceledException ignore) {
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable t) {
       LOG.debug(t);

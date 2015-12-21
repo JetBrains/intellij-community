@@ -68,21 +68,28 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     }
 
     if (myT instanceof PsiWildcardType || myS instanceof PsiWildcardType) {
+      session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + myT.getPresentableText() + " and " + myS.getPresentableText());
       return false;
     }
 
     if (session.isProperType(myT) && session.isProperType(myS)) {
-      if (myT == null || myT == PsiType.NULL) return myS == null || myS == PsiType.NULL || myS.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
-      if (myS == null || myS == PsiType.NULL) return true;
-      return Comparing.equal(myT, myS);
+      final boolean equal = Comparing.equal(myT, myS);
+      if (!equal) {
+        session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + myT.getPresentableText() + " and " + myS.getPresentableText());
+      }
+      return equal;
     }
+
+    if (myT == null || myT == PsiType.NULL) return false;
+    if (myS == null || myS == PsiType.NULL) return false;
+
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
-    if (inferenceVariable != null) {
+    if (inferenceVariable != null && !(myT instanceof PsiPrimitiveType)) {
       inferenceVariable.addBound(myT, InferenceBound.EQ);
       return true;
     }
     inferenceVariable = session.getInferenceVariable(myT);
-    if (inferenceVariable != null) {
+    if (inferenceVariable != null && !(myS instanceof PsiPrimitiveType)) {
       inferenceVariable.addBound(myS, InferenceBound.EQ);
       return true;
     }
@@ -96,9 +103,13 @@ public class TypeEqualityConstraint implements ConstraintFormula {
         final PsiSubstitutor sSubstitutor = sResult.getSubstitutor();
         for (PsiTypeParameter typeParameter : tClass.getTypeParameters()) {
           final PsiType tSubstituted = tSubstitutor.substitute(typeParameter);
-          final PsiType sSubstituted = sSubstitutor.substituteWithBoundsPromotion(typeParameter);
+          final PsiType sSubstituted = sSubstitutor.substitute(typeParameter);
           if (tSubstituted != null && sSubstituted != null) {
             constraints.add(new TypeEqualityConstraint(tSubstituted, sSubstituted));
+          }
+          if (tSubstituted == null ^ sSubstituted == null) {
+            session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + myT.getPresentableText() + " and " + myS.getPresentableText());
+            return false;
           }
         }
         return true;
@@ -109,6 +120,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       return true;
     }
 
+    session.registerIncompatibleErrorMessage(session.getInferenceVariables(), myS.getPresentableText() + " conforms to " + myT.getPresentableText());
     return false;
   }
 

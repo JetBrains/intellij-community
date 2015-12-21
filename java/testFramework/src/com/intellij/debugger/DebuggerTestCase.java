@@ -114,6 +114,10 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   protected void tearDown() throws Exception {
     try {
       FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
+      if (myDebugProcess != null) {
+        myDebugProcess.stop(true);
+        myDebugProcess.waitFor();
+      }
     }
     finally {
       super.tearDown();

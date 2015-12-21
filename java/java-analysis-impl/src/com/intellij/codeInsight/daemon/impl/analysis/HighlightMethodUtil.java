@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
@@ -362,6 +361,17 @@ public class HighlightMethodUtil {
         
         if (highlightInfo == null) {
           highlightInfo = checkVarargParameterErasureToBeAccessible((MethodCandidateInfo)resolveResult, methodCall);
+        }
+
+        if (highlightInfo == null && resolveResult instanceof MethodCandidateInfo) {
+          final String errorMessage = ((MethodCandidateInfo)resolveResult).getInferenceErrorMessage();
+          if (errorMessage != null) {
+            highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(errorMessage).range(fixRange).create();
+            if (highlightInfo != null) {
+              registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
+              registerMethodReturnFixAction(highlightInfo, (MethodCandidateInfo)resolveResult, methodCall);
+            }
+          }
         }
       }
     }
@@ -781,20 +791,21 @@ public class HighlightMethodUtil {
     PsiClass aClass = method.getContainingClass();
     PsiParameter[] parameters = method.getParameterList().getParameters();
     String methodName = method.getName();
-    return createMismatchedArgumentsHtmlTooltip(list, parameters, methodName, substitutor, aClass);
+    return createMismatchedArgumentsHtmlTooltip(list, info, parameters, methodName, substitutor, aClass);
   }
 
   private static String createShortMismatchedArgumentsHtmlTooltip(PsiExpressionList list,
-                                                             PsiParameter[] parameters,
-                                                             String methodName,
-                                                             PsiSubstitutor substitutor,
-                                                             PsiClass aClass) {
+                                                                  @Nullable MethodCandidateInfo info, 
+                                                                  PsiParameter[] parameters,
+                                                                  String methodName,
+                                                                  PsiSubstitutor substitutor,
+                                                                  PsiClass aClass) {
     PsiExpression[] expressions = list.getExpressions();
     int cols = Math.max(parameters.length, expressions.length);
 
     @Language("HTML")
     @NonNls String parensizedName = methodName + (parameters.length == 0 ? "(&nbsp;)&nbsp;" : "");
-    final String errorMessage = InferenceSession.getInferenceErrorMessage(list.getParent());
+    final String errorMessage = info != null ? info.getInferenceErrorMessage() : null;
     return JavaErrorMessages.message(
       "argument.mismatch.html.tooltip",
       Integer.valueOf(cols - parameters.length + 1), parensizedName,
@@ -833,22 +844,24 @@ public class HighlightMethodUtil {
   }
 
   private static String createMismatchedArgumentsHtmlTooltip(PsiExpressionList list,
+                                                             MethodCandidateInfo info, 
                                                              PsiParameter[] parameters,
                                                              String methodName,
                                                              PsiSubstitutor substitutor,
                                                              PsiClass aClass) {
     return Math.max(parameters.length, list.getExpressions().length) <= 2
-           ? createShortMismatchedArgumentsHtmlTooltip(list, parameters, methodName, substitutor, aClass)
-           : createLongMismatchedArgumentsHtmlTooltip(list, parameters, methodName, substitutor, aClass);
+           ? createShortMismatchedArgumentsHtmlTooltip(list, info, parameters, methodName, substitutor, aClass)
+           : createLongMismatchedArgumentsHtmlTooltip(list, info, parameters, methodName, substitutor, aClass);
   }
 
   @SuppressWarnings("StringContatenationInLoop")
   @Language("HTML")
   private static String createLongMismatchedArgumentsHtmlTooltip(PsiExpressionList list,
-                                                             PsiParameter[] parameters,
-                                                             String methodName,
-                                                             PsiSubstitutor substitutor,
-                                                             PsiClass aClass) {
+                                                                 @Nullable MethodCandidateInfo info, 
+                                                                 PsiParameter[] parameters,
+                                                                 String methodName,
+                                                                 PsiSubstitutor substitutor,
+                                                                 PsiClass aClass) {
     PsiExpression[] expressions = list.getExpressions();
 
     @SuppressWarnings("NonConstantStringShouldBeStringBuffer") @NonNls
@@ -904,7 +917,7 @@ public class HighlightMethodUtil {
     }
 
     s+= "</table>";
-    final String errorMessage = InferenceSession.getInferenceErrorMessage(list.getParent());
+    final String errorMessage = info != null ? info.getInferenceErrorMessage() : null;
     if (errorMessage != null) {
       s+= "reason: "; 
       s += XmlStringUtil.escapeString(errorMessage).replaceAll("\n", "<br/>");
@@ -1459,7 +1472,7 @@ public class HighlightMethodUtil {
         String constructorName = aClass.getName();
         String argTypes = buildArgTypesList(list);
         String description = JavaErrorMessages.message("wrong.constructor.arguments", constructorName+"()", argTypes);
-        String tooltip = createMismatchedArgumentsHtmlTooltip(list, PsiParameter.EMPTY_ARRAY, constructorName, PsiSubstitutor.EMPTY, aClass);
+        String tooltip = createMismatchedArgumentsHtmlTooltip(list, null, PsiParameter.EMPTY_ARRAY, constructorName, PsiSubstitutor.EMPTY, aClass);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).description(description).escapedToolTip(tooltip).navigationShift(+1).create();
         QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), QUICK_FIX_FACTORY.createCreateConstructorFromCallFix(constructorCall));
         if (classReference != null) {

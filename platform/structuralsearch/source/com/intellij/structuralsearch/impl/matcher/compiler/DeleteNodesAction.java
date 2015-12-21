@@ -2,7 +2,7 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.psi.PsiElement;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,47 +12,48 @@ import java.util.ArrayList;
  * To change this template use File | Settings | File Templates.
  */
 class DeleteNodesAction implements Runnable {
-  private final ArrayList elements;
 
-  DeleteNodesAction(ArrayList _elements) {
+  private final List<PsiElement> elements;
+
+  DeleteNodesAction(List<PsiElement> _elements) {
     elements = _elements;
   }
 
-  private void delete(PsiElement first, PsiElement last) throws Exception {
-    if (last==first) {
+  private static void delete(PsiElement first, PsiElement last) {
+    if (last == first) {
       first.delete();
-    } else {
-      first.getParent().deleteChildRange(first,last);
+    }
+    else {
+      first.getParent().deleteChildRange(first, last);
     }
   }
+
+  @Override
   public void run() {
     try {
-      PsiElement first= null;
+      PsiElement first = null;
       PsiElement last = null;
 
-      for(int i = 0;i < elements.size(); ++i) {
-        final PsiElement el = (PsiElement)elements.get(i);
+      for (PsiElement element : elements) {
+        if (!element.isValid()) continue;
 
-        if (!el.isValid()) continue;
-          
-        if (first==null) {
-          first = last = el;
-        } else if (last.getNextSibling()==el) {
-          last = el;
-        } else {
-          delete(first,last);
-          first = last = null;
-          --i;
-          continue;
+        if (first == null) {
+          first = last = element;
+        }
+        else if (last.getNextSibling() == element) {
+          last = element;
+        }
+        else {
+          delete(first, last);
+          first = last = element;
         }
       }
 
-      if (first!=null) {
-        delete(first,last);
+      if (first != null) {
+        delete(first, last);
       }
-    } catch(Throwable ex) {
-      ex.printStackTrace();
-    } finally {
+    }
+    finally {
       elements.clear();
     }
   }

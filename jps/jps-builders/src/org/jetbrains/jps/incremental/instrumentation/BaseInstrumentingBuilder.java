@@ -55,7 +55,7 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
         // do not instrument the same content twice
         continue;
       }
-      final ClassWriter writer = new InstrumenterClassWriter(getAsmClassWriterFlags(version), finder);
+      final ClassWriter writer = new InstrumenterClassWriter(reader, getAsmClassWriterFlags(version), finder);
       try {
         if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
           LOG.info("instrumenting " + compiledClass + " by " + getClass());

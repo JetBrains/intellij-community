@@ -11,6 +11,7 @@
 		<module>_bisect</module>
 		<module>_bootlocale</module>
 		<module>_bytesio</module>
+		<module>_bz2</module>
 		<module>_codecs_cn</module>
 		<module>_codecs_hk</module>
 		<module>_codecs_iso2022</module>
@@ -20,6 +21,7 @@
 		<module>_collections</module>
 		<module>_collections_abc</module>
 		<module>_compat_pickle</module>
+		<module>_compression</module>
 		<module>_crypt</module>
 		<module>_ctypes</module>
 		<module>_ctypes_test</module>
@@ -62,6 +64,7 @@
 		<module>_sysconfigdata</module>
 		<module>_testbuffer</module>
 		<module>_testimportmultiple</module>
+		<module>_testmultiphase</module>
 		<module>_thread</module>
 		<module>_threading_local</module>
 		<module>_tracemalloc</module>
@@ -75,6 +78,7 @@
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
 		<module>asyncio.base_subprocess</module>
+		<module>asyncio.compat</module>
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
 		<module>asyncio.events</module>
@@ -192,6 +196,7 @@
 		<module>dbm.gnu</module>
 		<module>dbm.ndbm</module>
 		<module>decimal</module>
+		<module>distutils._msvccompiler</module>
 		<module>distutils.command.bdist_msi</module>
 		<module>distutils.command.check</module>
 		<module>distutils.command.install_egg_info</module>
@@ -234,6 +239,7 @@
 		<module>distutils.tests.test_install_scripts</module>
 		<module>distutils.tests.test_log</module>
 		<module>distutils.tests.test_msvc9compiler</module>
+		<module>distutils.tests.test_msvccompiler</module>
 		<module>distutils.tests.test_register</module>
 		<module>distutils.tests.test_sdist</module>
 		<module>distutils.tests.test_spawn</module>
@@ -245,6 +251,7 @@
 		<module>distutils.tests.test_version</module>
 		<module>distutils.tests.test_versionpredicate</module>
 		<module>distutils.versionpredicate</module>
+		<module>django_fetch_doc_urls</module>
 		<module>email.FeedParser</module>
 		<module>email._encoded_words</module>
 		<module>email._header_value_parser</module>
@@ -305,6 +312,8 @@
 		<module>encodings.iso8859_11</module>
 		<module>encodings.iso8859_16</module>
 		<module>encodings.johab</module>
+		<module>encodings.koi8_t</module>
+		<module>encodings.kz1048</module>
 		<module>encodings.mac_arabic</module>
 		<module>encodings.mac_centeuro</module>
 		<module>encodings.mac_croatian</module>
@@ -344,6 +353,7 @@
 		<module>idlelib.MultiCall</module>
 		<module>idlelib.RstripExtension</module>
 		<module>idlelib.__main__</module>
+		<module>idlelib.help</module>
 		<module>idlelib.idle_test</module>
 		<module>idlelib.idle_test.htest</module>
 		<module>idlelib.idle_test.mock_idle</module>
@@ -354,10 +364,12 @@
 		<module>idlelib.idle_test.test_config_name</module>
 		<module>idlelib.idle_test.test_configdialog</module>
 		<module>idlelib.idle_test.test_delegator</module>
+		<module>idlelib.idle_test.test_editor</module>
 		<module>idlelib.idle_test.test_formatparagraph</module>
 		<module>idlelib.idle_test.test_grep</module>
 		<module>idlelib.idle_test.test_hyperparser</module>
 		<module>idlelib.idle_test.test_idlehistory</module>
+		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_pathbrowser</module>
 		<module>idlelib.idle_test.test_rstrip</module>
@@ -371,6 +383,7 @@
 		<module>idlelib.tabbedpages</module>
 		<module>importlib</module>
 		<module>importlib._bootstrap</module>
+		<module>importlib._bootstrap_external</module>
 		<module>importlib.abc</module>
 		<module>importlib.machinery</module>
 		<module>importlib.test</module>
@@ -557,8 +570,10 @@
 		<module>pydoc_data</module>
 		<module>pydoc_data.topics</module>
 		<module>pydoc_topics</module>
+		<module>pypi_download_install</module>
 		<module>queue</module>
 		<module>readline</module>
+		<module>repack_pypi_cache</module>
 		<module>reprlib</module>
 		<module>runpy</module>
 		<module>selectors</module>
@@ -637,6 +652,7 @@
 		<module>turtledemo.two_canvases</module>
 		<module>turtledemo.wikipedia</module>
 		<module>turtledemo.yinyang</module>
+		<module>typing</module>
 		<module>unittest.__main__</module>
 		<module>unittest.case</module>
 		<module>unittest.loader</module>
@@ -674,6 +690,7 @@
 		<module>unittest.test.testmock.testsentinel</module>
 		<module>unittest.test.testmock.testwith</module>
 		<module>unittest.util</module>
+		<module>unsupported_modules</module>
 		<module>urllib.error</module>
 		<module>urllib.parse</module>
 		<module>urllib.request</module>
@@ -697,6 +714,7 @@
 		<module>xmlrpc.client</module>
 		<module>xmlrpc.server</module>
 		<module>xxlimited</module>
+		<module>zipapp</module>
 		<module>zlib</module>
 		<func>BaseException</func>
 		<func>BlockingIOError</func>
@@ -717,7 +735,9 @@
 		<func>NotADirectoryError</func>
 		<func>PermissionError</func>
 		<func>ProcessLookupError</func>
+		<func>RecursionError</func>
 		<func>ResourceWarning</func>
+		<func>StopAsyncIteration</func>
 		<func>TimeoutError</func>
 		<func>UnicodeWarning</func>
 		<func>__build_class__</func>
@@ -750,9 +770,11 @@
 		<module>_ast</module>
 		<module>_bootlocale</module>
 		<module>_bytesio</module>
+		<module>_bz2</module>
 		<module>_collections</module>
 		<module>_collections_abc</module>
 		<module>_compat_pickle</module>
+		<module>_compression</module>
 		<module>_crypt</module>
 		<module>_ctypes</module>
 		<module>_ctypes_test</module>
@@ -793,6 +815,7 @@
 		<module>_sysconfigdata</module>
 		<module>_testbuffer</module>
 		<module>_testimportmultiple</module>
+		<module>_testmultiphase</module>
 		<module>_thread</module>
 		<module>_tracemalloc</module>
 		<module>_types</module>
@@ -805,6 +828,7 @@
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
 		<module>asyncio.base_subprocess</module>
+		<module>asyncio.compat</module>
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
 		<module>asyncio.events</module>
@@ -916,6 +940,7 @@
 		<module>dbm.dumb</module>
 		<module>dbm.gnu</module>
 		<module>dbm.ndbm</module>
+		<module>distutils._msvccompiler</module>
 		<module>distutils.command.bdist_msi</module>
 		<module>distutils.command.check</module>
 		<module>distutils.command.install_egg_info</module>
@@ -951,6 +976,7 @@
 		<module>distutils.tests.test_install_lib</module>
 		<module>distutils.tests.test_log</module>
 		<module>distutils.tests.test_msvc9compiler</module>
+		<module>distutils.tests.test_msvccompiler</module>
 		<module>distutils.tests.test_register</module>
 		<module>distutils.tests.test_sdist</module>
 		<module>distutils.tests.test_spawn</module>
@@ -962,6 +988,7 @@
 		<module>distutils.tests.test_version</module>
 		<module>distutils.tests.test_versionpredicate</module>
 		<module>distutils.versionpredicate</module>
+		<module>django_fetch_doc_urls</module>
 		<module>email._compat21</module>
 		<module>email._compat22</module>
 		<module>email._encoded_words</module>
@@ -998,6 +1025,8 @@
 		<module>encodings.cp65001</module>
 		<module>encodings.cp720</module>
 		<module>encodings.cp858</module>
+		<module>encodings.koi8_t</module>
+		<module>encodings.kz1048</module>
 		<module>encodings.mac_arabic</module>
 		<module>encodings.mac_centeuro</module>
 		<module>encodings.mac_croatian</module>
@@ -1031,6 +1060,7 @@
 		<module>idlelib.MultiCall</module>
 		<module>idlelib.RstripExtension</module>
 		<module>idlelib.__main__</module>
+		<module>idlelib.help</module>
 		<module>idlelib.idle_test</module>
 		<module>idlelib.idle_test.htest</module>
 		<module>idlelib.idle_test.mock_idle</module>
@@ -1041,10 +1071,12 @@
 		<module>idlelib.idle_test.test_config_name</module>
 		<module>idlelib.idle_test.test_configdialog</module>
 		<module>idlelib.idle_test.test_delegator</module>
+		<module>idlelib.idle_test.test_editor</module>
 		<module>idlelib.idle_test.test_formatparagraph</module>
 		<module>idlelib.idle_test.test_grep</module>
 		<module>idlelib.idle_test.test_hyperparser</module>
 		<module>idlelib.idle_test.test_idlehistory</module>
+		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_pathbrowser</module>
 		<module>idlelib.idle_test.test_rstrip</module>
@@ -1058,6 +1090,7 @@
 		<module>idlelib.tabbedpages</module>
 		<module>importlib</module>
 		<module>importlib._bootstrap</module>
+		<module>importlib._bootstrap_external</module>
 		<module>importlib.abc</module>
 		<module>importlib.machinery</module>
 		<module>importlib.test</module>
@@ -1246,8 +1279,10 @@
 		<module>pydoc_data</module>
 		<module>pydoc_data.topics</module>
 		<module>pydoc_topics</module>
+		<module>pypi_download_install</module>
 		<module>queue</module>
 		<module>readline</module>
+		<module>repack_pypi_cache</module>
 		<module>reprlib</module>
 		<module>rotor</module>
 		<module>runpy</module>
@@ -1326,6 +1361,7 @@
 		<module>turtledemo.two_canvases</module>
 		<module>turtledemo.wikipedia</module>
 		<module>turtledemo.yinyang</module>
+		<module>typing</module>
 		<module>unittest.__main__</module>
 		<module>unittest.case</module>
 		<module>unittest.loader</module>
@@ -1363,6 +1399,7 @@
 		<module>unittest.test.testmock.testsentinel</module>
 		<module>unittest.test.testmock.testwith</module>
 		<module>unittest.util</module>
+		<module>unsupported_modules</module>
 		<module>urllib.error</module>
 		<module>urllib.parse</module>
 		<module>urllib.request</module>
@@ -1387,6 +1424,7 @@
 		<module>xmlrpc.server</module>
 		<module>xreadlines</module>
 		<module>xxlimited</module>
+		<module>zipapp</module>
 		<module>zlib</module>
 		<func>BaseException</func>
 		<func>BlockingIOError</func>
@@ -1407,7 +1445,9 @@
 		<func>NotADirectoryError</func>
 		<func>PermissionError</func>
 		<func>ProcessLookupError</func>
+		<func>RecursionError</func>
 		<func>ResourceWarning</func>
+		<func>StopAsyncIteration</func>
 		<func>TimeoutError</func>
 		<func>UnicodeWarning</func>
 		<func>__build_class__</func>
@@ -1435,9 +1475,11 @@
 		<module>_abcoll</module>
 		<module>_bootlocale</module>
 		<module>_bytesio</module>
+		<module>_bz2</module>
 		<module>_collections</module>
 		<module>_collections_abc</module>
 		<module>_compat_pickle</module>
+		<module>_compression</module>
 		<module>_crypt</module>
 		<module>_datetime</module>
 		<module>_decimal</module>
@@ -1466,6 +1508,7 @@
 		<module>_sysconfigdata</module>
 		<module>_testbuffer</module>
 		<module>_testimportmultiple</module>
+		<module>_testmultiphase</module>
 		<module>_thread</module>
 		<module>_tracemalloc</module>
 		<module>_warnings</module>
@@ -1477,6 +1520,7 @@
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
 		<module>asyncio.base_subprocess</module>
+		<module>asyncio.compat</module>
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
 		<module>asyncio.events</module>
@@ -1525,6 +1569,7 @@
 		<module>dbm.dumb</module>
 		<module>dbm.gnu</module>
 		<module>dbm.ndbm</module>
+		<module>distutils._msvccompiler</module>
 		<module>distutils.command.check</module>
 		<module>distutils.config</module>
 		<module>distutils.msvc9compiler</module>
@@ -1557,6 +1602,7 @@
 		<module>distutils.tests.test_install_lib</module>
 		<module>distutils.tests.test_log</module>
 		<module>distutils.tests.test_msvc9compiler</module>
+		<module>distutils.tests.test_msvccompiler</module>
 		<module>distutils.tests.test_register</module>
 		<module>distutils.tests.test_sdist</module>
 		<module>distutils.tests.test_spawn</module>
@@ -1566,6 +1612,7 @@
 		<module>distutils.tests.test_upload</module>
 		<module>distutils.tests.test_util</module>
 		<module>distutils.tests.test_version</module>
+		<module>django_fetch_doc_urls</module>
 		<module>email.Charset</module>
 		<module>email.Encoders</module>
 		<module>email.Errors</module>
@@ -1598,6 +1645,8 @@
 		<module>encodings.cp65001</module>
 		<module>encodings.cp720</module>
 		<module>encodings.cp858</module>
+		<module>encodings.koi8_t</module>
+		<module>encodings.kz1048</module>
 		<module>encodings.utf_32</module>
 		<module>encodings.utf_32_be</module>
 		<module>encodings.utf_32_le</module>
@@ -1620,6 +1669,7 @@
 		<module>idlelib.RstripExtension</module>
 		<module>idlelib.__main__</module>
 		<module>idlelib.buildapp</module>
+		<module>idlelib.help</module>
 		<module>idlelib.idle_test</module>
 		<module>idlelib.idle_test.htest</module>
 		<module>idlelib.idle_test.mock_idle</module>
@@ -1630,10 +1680,12 @@
 		<module>idlelib.idle_test.test_config_name</module>
 		<module>idlelib.idle_test.test_configdialog</module>
 		<module>idlelib.idle_test.test_delegator</module>
+		<module>idlelib.idle_test.test_editor</module>
 		<module>idlelib.idle_test.test_formatparagraph</module>
 		<module>idlelib.idle_test.test_grep</module>
 		<module>idlelib.idle_test.test_hyperparser</module>
 		<module>idlelib.idle_test.test_idlehistory</module>
+		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_pathbrowser</module>
 		<module>idlelib.idle_test.test_rstrip</module>
@@ -1646,6 +1698,7 @@
 		<module>idlelib.tabbedpages</module>
 		<module>importlib</module>
 		<module>importlib._bootstrap</module>
+		<module>importlib._bootstrap_external</module>
 		<module>importlib.abc</module>
 		<module>importlib.machinery</module>
 		<module>importlib.test</module>
@@ -1833,12 +1886,14 @@
 		<module>pydoc_data</module>
 		<module>pydoc_data.topics</module>
 		<module>pydoc_topics</module>
+		<module>pypi_download_install</module>
 		<module>queue</module>
 		<module>readline</module>
 		<module>reconvert</module>
 		<module>regex</module>
 		<module>regex_syntax</module>
 		<module>regsub</module>
+		<module>repack_pypi_cache</module>
 		<module>reprlib</module>
 		<module>rotor</module>
 		<module>selectors</module>
@@ -1907,6 +1962,7 @@
 		<module>turtledemo.two_canvases</module>
 		<module>turtledemo.wikipedia</module>
 		<module>turtledemo.yinyang</module>
+		<module>typing</module>
 		<module>tzparse</module>
 		<module>unittest.__main__</module>
 		<module>unittest.case</module>
@@ -1945,6 +2001,7 @@
 		<module>unittest.test.testmock.testsentinel</module>
 		<module>unittest.test.testmock.testwith</module>
 		<module>unittest.util</module>
+		<module>unsupported_modules</module>
 		<module>urllib.error</module>
 		<module>urllib.parse</module>
 		<module>urllib.request</module>
@@ -1958,6 +2015,7 @@
 		<module>xmlrpc.server</module>
 		<module>xreadlines</module>
 		<module>xxlimited</module>
+		<module>zipapp</module>
 		<func>BlockingIOError</func>
 		<func>BrokenPipeError</func>
 		<func>BufferError</func>
@@ -1975,7 +2033,9 @@
 		<func>OverflowWarning</func>
 		<func>PermissionError</func>
 		<func>ProcessLookupError</func>
+		<func>RecursionError</func>
 		<func>ResourceWarning</func>
+		<func>StopAsyncIteration</func>
 		<func>TimeoutError</func>
 		<func>__build_class__</func>
 		<func>__loader__</func>
@@ -1998,8 +2058,10 @@
 		<module>TERMIOS</module>
 		<module>TYPES</module>
 		<module>_bootlocale</module>
+		<module>_bz2</module>
 		<module>_collections_abc</module>
 		<module>_compat_pickle</module>
+		<module>_compression</module>
 		<module>_crypt</module>
 		<module>_curses</module>
 		<module>_curses_panel</module>
@@ -2029,6 +2091,7 @@
 		<module>_sysconfigdata</module>
 		<module>_testbuffer</module>
 		<module>_testimportmultiple</module>
+		<module>_testmultiphase</module>
 		<module>_thread</module>
 		<module>_tracemalloc</module>
 		<module>_types</module>
@@ -2038,6 +2101,7 @@
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
 		<module>asyncio.base_subprocess</module>
+		<module>asyncio.compat</module>
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
 		<module>asyncio.events</module>
@@ -2082,6 +2146,7 @@
 		<module>dbm.dumb</module>
 		<module>dbm.gnu</module>
 		<module>dbm.ndbm</module>
+		<module>distutils._msvccompiler</module>
 		<module>distutils.command.check</module>
 		<module>distutils.tests.test_archive_util</module>
 		<module>distutils.tests.test_bdist</module>
@@ -2103,9 +2168,11 @@
 		<module>distutils.tests.test_install_data</module>
 		<module>distutils.tests.test_install_headers</module>
 		<module>distutils.tests.test_log</module>
+		<module>distutils.tests.test_msvccompiler</module>
 		<module>distutils.tests.test_spawn</module>
 		<module>distutils.tests.test_text_file</module>
 		<module>distutils.tests.test_version</module>
+		<module>django_fetch_doc_urls</module>
 		<module>email.Charset</module>
 		<module>email.Encoders</module>
 		<module>email.Errors</module>
@@ -2138,6 +2205,8 @@
 		<module>encodings.cp65001</module>
 		<module>encodings.cp720</module>
 		<module>encodings.cp858</module>
+		<module>encodings.koi8_t</module>
+		<module>encodings.kz1048</module>
 		<module>ensurepip</module>
 		<module>ensurepip.__main__</module>
 		<module>ensurepip._uninstall</module>
@@ -2155,6 +2224,7 @@
 		<module>idlelib.RstripExtension</module>
 		<module>idlelib.__main__</module>
 		<module>idlelib.buildapp</module>
+		<module>idlelib.help</module>
 		<module>idlelib.idle_test</module>
 		<module>idlelib.idle_test.htest</module>
 		<module>idlelib.idle_test.mock_idle</module>
@@ -2165,10 +2235,12 @@
 		<module>idlelib.idle_test.test_config_name</module>
 		<module>idlelib.idle_test.test_configdialog</module>
 		<module>idlelib.idle_test.test_delegator</module>
+		<module>idlelib.idle_test.test_editor</module>
 		<module>idlelib.idle_test.test_formatparagraph</module>
 		<module>idlelib.idle_test.test_grep</module>
 		<module>idlelib.idle_test.test_hyperparser</module>
 		<module>idlelib.idle_test.test_idlehistory</module>
+		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_pathbrowser</module>
 		<module>idlelib.idle_test.test_rstrip</module>
@@ -2181,6 +2253,7 @@
 		<module>idlelib.tabpage</module>
 		<module>importlib</module>
 		<module>importlib._bootstrap</module>
+		<module>importlib._bootstrap_external</module>
 		<module>importlib.abc</module>
 		<module>importlib.machinery</module>
 		<module>importlib.test</module>
@@ -2251,12 +2324,14 @@
 		<module>pre</module>
 		<module>pydoc_data</module>
 		<module>pydoc_data.topics</module>
+		<module>pypi_download_install</module>
 		<module>queue</module>
 		<module>readline</module>
 		<module>reconvert</module>
 		<module>regex</module>
 		<module>regex_syntax</module>
 		<module>regsub</module>
+		<module>repack_pypi_cache</module>
 		<module>reprlib</module>
 		<module>rotor</module>
 		<module>selectors</module>
@@ -2321,6 +2396,7 @@
 		<module>turtledemo.two_canvases</module>
 		<module>turtledemo.wikipedia</module>
 		<module>turtledemo.yinyang</module>
+		<module>typing</module>
 		<module>tzparse</module>
 		<module>unittest.__main__</module>
 		<module>unittest.case</module>
@@ -2359,6 +2435,7 @@
 		<module>unittest.test.testmock.testsentinel</module>
 		<module>unittest.test.testmock.testwith</module>
 		<module>unittest.util</module>
+		<module>unsupported_modules</module>
 		<module>urllib.error</module>
 		<module>urllib.parse</module>
 		<module>urllib.request</module>
@@ -2372,6 +2449,7 @@
 		<module>xmlrpc.server</module>
 		<module>xreadlines</module>
 		<module>xxlimited</module>
+		<module>zipapp</module>
 		<module>zlib</module>
 		<func>BlockingIOError</func>
 		<func>BrokenPipeError</func>
@@ -2388,7 +2466,9 @@
 		<func>OverflowWarning</func>
 		<func>PermissionError</func>
 		<func>ProcessLookupError</func>
+		<func>RecursionError</func>
 		<func>ResourceWarning</func>
+		<func>StopAsyncIteration</func>
 		<func>TimeoutError</func>
 		<func>__build_class__</func>
 		<func>__loader__</func>
@@ -2402,8 +2482,10 @@
 		<module>TERMIOS</module>
 		<module>_bootlocale</module>
 		<module>_bytesio</module>
+		<module>_bz2</module>
 		<module>_collections_abc</module>
 		<module>_compat_pickle</module>
+		<module>_compression</module>
 		<module>_crypt</module>
 		<module>_datetime</module>
 		<module>_decimal</module>
@@ -2428,12 +2510,14 @@
 		<module>_stringio</module>
 		<module>_testbuffer</module>
 		<module>_testimportmultiple</module>
+		<module>_testmultiphase</module>
 		<module>_thread</module>
 		<module>_tracemalloc</module>
 		<module>_types</module>
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
 		<module>asyncio.base_subprocess</module>
+		<module>asyncio.compat</module>
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
 		<module>asyncio.events</module>
@@ -2476,10 +2560,13 @@
 		<module>dbm.dumb</module>
 		<module>dbm.gnu</module>
 		<module>dbm.ndbm</module>
+		<module>distutils._msvccompiler</module>
 		<module>distutils.mwerkscompiler</module>
 		<module>distutils.tests.test_cygwinccompiler</module>
 		<module>distutils.tests.test_extension</module>
 		<module>distutils.tests.test_log</module>
+		<module>distutils.tests.test_msvccompiler</module>
+		<module>django_fetch_doc_urls</module>
 		<module>email.Charset</module>
 		<module>email.Encoders</module>
 		<module>email.Errors</module>
@@ -2510,6 +2597,8 @@
 		<module>encodings.cp1125</module>
 		<module>encodings.cp273</module>
 		<module>encodings.cp65001</module>
+		<module>encodings.koi8_t</module>
+		<module>encodings.kz1048</module>
 		<module>ensurepip</module>
 		<module>ensurepip.__main__</module>
 		<module>ensurepip._uninstall</module>
@@ -2526,11 +2615,15 @@
 		<module>http.server</module>
 		<module>idlelib.__main__</module>
 		<module>idlelib.buildapp</module>
+		<module>idlelib.help</module>
 		<module>idlelib.idle_test.test_configdialog</module>
+		<module>idlelib.idle_test.test_editor</module>
+		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_searchdialogbase</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
 		<module>idlelib.tabpage</module>
 		<module>importlib._bootstrap</module>
+		<module>importlib._bootstrap_external</module>
 		<module>importlib.abc</module>
 		<module>importlib.machinery</module>
 		<module>importlib.test</module>
@@ -2593,11 +2686,13 @@
 		<module>pcre</module>
 		<module>pre</module>
 		<module>pydoc_topics</module>
+		<module>pypi_download_install</module>
 		<module>queue</module>
 		<module>reconvert</module>
 		<module>regex</module>
 		<module>regex_syntax</module>
 		<module>regsub</module>
+		<module>repack_pypi_cache</module>
 		<module>reprlib</module>
 		<module>rotor</module>
 		<module>selectors</module>
@@ -2660,6 +2755,7 @@
 		<module>turtledemo.two_canvases</module>
 		<module>turtledemo.wikipedia</module>
 		<module>turtledemo.yinyang</module>
+		<module>typing</module>
 		<module>tzparse</module>
 		<module>unittest.mock</module>
 		<module>unittest.test.__main__</module>
@@ -2674,6 +2770,7 @@
 		<module>unittest.test.testmock.testpatch</module>
 		<module>unittest.test.testmock.testsentinel</module>
 		<module>unittest.test.testmock.testwith</module>
+		<module>unsupported_modules</module>
 		<module>urllib.error</module>
 		<module>urllib.parse</module>
 		<module>urllib.request</module>
@@ -2687,6 +2784,7 @@
 		<module>xmlrpc.server</module>
 		<module>xreadlines</module>
 		<module>xxlimited</module>
+		<module>zipapp</module>
 		<func>BlockingIOError</func>
 		<func>BrokenPipeError</func>
 		<func>ChildProcessError</func>
@@ -2702,7 +2800,9 @@
 		<func>OverflowWarning</func>
 		<func>PermissionError</func>
 		<func>ProcessLookupError</func>
+		<func>RecursionError</func>
 		<func>ResourceWarning</func>
+		<func>StopAsyncIteration</func>
 		<func>TimeoutError</func>
 		<func>__build_class__</func>
 		<func>__loader__</func>
@@ -2746,8 +2846,10 @@
 		<module>_MozillaCookieJar</module>
 		<module>__builtin__</module>
 		<module>_bootlocale</module>
+		<module>_bz2</module>
 		<module>_collections_abc</module>
 		<module>_compat_pickle</module>
+		<module>_compression</module>
 		<module>_crypt</module>
 		<module>_curses</module>
 		<module>_curses_panel</module>
@@ -2776,6 +2878,7 @@
 		<module>_sysconfigdata</module>
 		<module>_testbuffer</module>
 		<module>_testimportmultiple</module>
+		<module>_testmultiphase</module>
 		<module>_tracemalloc</module>
 		<module>_types</module>
 		<module>anydbm</module>
@@ -2783,6 +2886,7 @@
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
 		<module>asyncio.base_subprocess</module>
+		<module>asyncio.compat</module>
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
 		<module>asyncio.events</module>
@@ -2866,6 +2970,7 @@
 		<module>ctypes.test.test_wintypes</module>
 		<module>dbhash</module>
 		<module>dircache</module>
+		<module>distutils._msvccompiler</module>
 		<module>distutils.command.check</module>
 		<module>distutils.tests.setuptools_build_ext</module>
 		<module>distutils.tests.setuptools_extension</module>
@@ -2892,11 +2997,13 @@
 		<module>distutils.tests.test_install_headers</module>
 		<module>distutils.tests.test_install_lib</module>
 		<module>distutils.tests.test_log</module>
+		<module>distutils.tests.test_msvccompiler</module>
 		<module>distutils.tests.test_spawn</module>
 		<module>distutils.tests.test_text_file</module>
 		<module>distutils.tests.test_unixccompiler</module>
 		<module>distutils.tests.test_util</module>
 		<module>distutils.tests.test_version</module>
+		<module>django_fetch_doc_urls</module>
 		<module>dumbdbm</module>
 		<module>dummy_thread</module>
 		<module>email.Charset</module>
@@ -2935,6 +3042,8 @@
 		<module>encodings.cp720</module>
 		<module>encodings.cp858</module>
 		<module>encodings.hex_codec</module>
+		<module>encodings.koi8_t</module>
+		<module>encodings.kz1048</module>
 		<module>encodings.quopri_codec</module>
 		<module>encodings.rot_13</module>
 		<module>encodings.string_escape</module>
@@ -2959,6 +3068,7 @@
 		<module>idlelib.RstripExtension</module>
 		<module>idlelib.__main__</module>
 		<module>idlelib.buildapp</module>
+		<module>idlelib.help</module>
 		<module>idlelib.idle_test</module>
 		<module>idlelib.idle_test.htest</module>
 		<module>idlelib.idle_test.mock_idle</module>
@@ -2969,10 +3079,12 @@
 		<module>idlelib.idle_test.test_config_name</module>
 		<module>idlelib.idle_test.test_configdialog</module>
 		<module>idlelib.idle_test.test_delegator</module>
+		<module>idlelib.idle_test.test_editor</module>
 		<module>idlelib.idle_test.test_formatparagraph</module>
 		<module>idlelib.idle_test.test_grep</module>
 		<module>idlelib.idle_test.test_hyperparser</module>
 		<module>idlelib.idle_test.test_idlehistory</module>
+		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_pathbrowser</module>
 		<module>idlelib.idle_test.test_rstrip</module>
@@ -2986,6 +3098,7 @@
 		<module>ihooks</module>
 		<module>importlib</module>
 		<module>importlib._bootstrap</module>
+		<module>importlib._bootstrap_external</module>
 		<module>importlib.abc</module>
 		<module>importlib.machinery</module>
 		<module>importlib.test</module>
@@ -3070,11 +3183,13 @@
 		<module>pre</module>
 		<module>pydoc_data</module>
 		<module>pydoc_data.topics</module>
+		<module>pypi_download_install</module>
 		<module>readline</module>
 		<module>reconvert</module>
 		<module>regex</module>
 		<module>regex_syntax</module>
 		<module>regsub</module>
+		<module>repack_pypi_cache</module>
 		<module>repr</module>
 		<module>rexec</module>
 		<module>rfc822</module>
@@ -3145,6 +3260,7 @@
 		<module>turtledemo.two_canvases</module>
 		<module>turtledemo.wikipedia</module>
 		<module>turtledemo.yinyang</module>
+		<module>typing</module>
 		<module>tzparse</module>
 		<module>unittest.__main__</module>
 		<module>unittest.case</module>
@@ -3183,6 +3299,7 @@
 		<module>unittest.test.testmock.testsentinel</module>
 		<module>unittest.test.testmock.testwith</module>
 		<module>unittest.util</module>
+		<module>unsupported_modules</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
@@ -3194,6 +3311,7 @@
 		<module>xmlrpclib</module>
 		<module>xreadlines</module>
 		<module>xxlimited</module>
+		<module>zipapp</module>
 		<module>zlib</module>
 		<func>BlockingIOError</func>
 		<func>BrokenPipeError</func>
@@ -3210,8 +3328,10 @@
 		<func>OverflowWarning</func>
 		<func>PermissionError</func>
 		<func>ProcessLookupError</func>
+		<func>RecursionError</func>
 		<func>ResourceWarning</func>
 		<func>StandardError</func>
+		<func>StopAsyncIteration</func>
 		<func>TimeoutError</func>
 		<func>__loader__</func>
 		<func>__spec__</func>
@@ -3269,7 +3389,9 @@
 		<module>__builtin__</module>
 		<module>_bootlocale</module>
 		<module>_bytesio</module>
+		<module>_bz2</module>
 		<module>_collections_abc</module>
+		<module>_compression</module>
 		<module>_crypt</module>
 		<module>_datetime</module>
 		<module>_decimal</module>
@@ -3294,6 +3416,7 @@
 		<module>_sysconfigdata</module>
 		<module>_testbuffer</module>
 		<module>_testimportmultiple</module>
+		<module>_testmultiphase</module>
 		<module>_tracemalloc</module>
 		<module>_types</module>
 		<module>anydbm</module>
@@ -3301,6 +3424,7 @@
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
 		<module>asyncio.base_subprocess</module>
+		<module>asyncio.compat</module>
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
 		<module>asyncio.events</module>
@@ -3385,6 +3509,7 @@
 		<module>ctypes.test.test_wintypes</module>
 		<module>dbhash</module>
 		<module>dircache</module>
+		<module>distutils._msvccompiler</module>
 		<module>distutils.mwerkscompiler</module>
 		<module>distutils.tests.setuptools_build_ext</module>
 		<module>distutils.tests.setuptools_extension</module>
@@ -3392,6 +3517,8 @@
 		<module>distutils.tests.test_build</module>
 		<module>distutils.tests.test_ccompiler</module>
 		<module>distutils.tests.test_dep_util</module>
+		<module>distutils.tests.test_msvccompiler</module>
+		<module>django_fetch_doc_urls</module>
 		<module>dumbdbm</module>
 		<module>dummy_thread</module>
 		<module>email.Charset</module>
@@ -3431,6 +3558,8 @@
 		<module>encodings.cp720</module>
 		<module>encodings.cp858</module>
 		<module>encodings.hex_codec</module>
+		<module>encodings.koi8_t</module>
+		<module>encodings.kz1048</module>
 		<module>encodings.quopri_codec</module>
 		<module>encodings.rot_13</module>
 		<module>encodings.string_escape</module>
@@ -3454,6 +3583,7 @@
 		<module>httplib</module>
 		<module>idlelib.__main__</module>
 		<module>idlelib.buildapp</module>
+		<module>idlelib.help</module>
 		<module>idlelib.idle_test</module>
 		<module>idlelib.idle_test.htest</module>
 		<module>idlelib.idle_test.mock_idle</module>
@@ -3464,10 +3594,12 @@
 		<module>idlelib.idle_test.test_config_name</module>
 		<module>idlelib.idle_test.test_configdialog</module>
 		<module>idlelib.idle_test.test_delegator</module>
+		<module>idlelib.idle_test.test_editor</module>
 		<module>idlelib.idle_test.test_formatparagraph</module>
 		<module>idlelib.idle_test.test_grep</module>
 		<module>idlelib.idle_test.test_hyperparser</module>
 		<module>idlelib.idle_test.test_idlehistory</module>
+		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_pathbrowser</module>
 		<module>idlelib.idle_test.test_rstrip</module>
@@ -3479,6 +3611,7 @@
 		<module>idlelib.idle_test.test_widgetredir</module>
 		<module>idlelib.tabpage</module>
 		<module>ihooks</module>
+		<module>importlib._bootstrap_external</module>
 		<module>importlib.test.__main__</module>
 		<module>importlib.test.import_.test_api</module>
 		<module>importlib.test.regrtest</module>
@@ -3517,11 +3650,13 @@
 		<module>posixfile</module>
 		<module>pre</module>
 		<module>pydoc_topics</module>
+		<module>pypi_download_install</module>
 		<module>readline</module>
 		<module>reconvert</module>
 		<module>regex</module>
 		<module>regex_syntax</module>
 		<module>regsub</module>
+		<module>repack_pypi_cache</module>
 		<module>repr</module>
 		<module>rexec</module>
 		<module>rfc822</module>
@@ -3580,6 +3715,7 @@
 		<module>turtledemo.two_canvases</module>
 		<module>turtledemo.wikipedia</module>
 		<module>turtledemo.yinyang</module>
+		<module>typing</module>
 		<module>tzparse</module>
 		<module>unittest.__main__</module>
 		<module>unittest.case</module>
@@ -3618,6 +3754,7 @@
 		<module>unittest.test.testmock.testsentinel</module>
 		<module>unittest.test.testmock.testwith</module>
 		<module>unittest.util</module>
+		<module>unsupported_modules</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
@@ -3629,6 +3766,7 @@
 		<module>xmlrpclib</module>
 		<module>xreadlines</module>
 		<module>xxlimited</module>
+		<module>zipapp</module>
 		<func>BlockingIOError</func>
 		<func>BrokenPipeError</func>
 		<func>ChildProcessError</func>
@@ -3644,8 +3782,10 @@
 		<func>OverflowWarning</func>
 		<func>PermissionError</func>
 		<func>ProcessLookupError</func>
+		<func>RecursionError</func>
 		<func>ResourceWarning</func>
 		<func>StandardError</func>
+		<func>StopAsyncIteration</func>
 		<func>TimeoutError</func>
 		<func>__loader__</func>
 		<func>__spec__</func>
@@ -3700,7 +3840,9 @@
 		<module>__builtin__</module>
 		<module>_bootlocale</module>
 		<module>_bytesio</module>
+		<module>_bz2</module>
 		<module>_collections_abc</module>
+		<module>_compression</module>
 		<module>_crypt</module>
 		<module>_decimal</module>
 		<module>_fileio</module>
@@ -3721,12 +3863,14 @@
 		<module>_sysconfigdata</module>
 		<module>_testbuffer</module>
 		<module>_testimportmultiple</module>
+		<module>_testmultiphase</module>
 		<module>_tracemalloc</module>
 		<module>_types</module>
 		<module>anydbm</module>
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
 		<module>asyncio.base_subprocess</module>
+		<module>asyncio.compat</module>
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
 		<module>asyncio.events</module>
@@ -3806,10 +3950,13 @@
 		<module>ctypes.test.test_wintypes</module>
 		<module>dbhash</module>
 		<module>dircache</module>
+		<module>distutils._msvccompiler</module>
 		<module>distutils.mwerkscompiler</module>
 		<module>distutils.tests.setuptools_build_ext</module>
 		<module>distutils.tests.setuptools_extension</module>
 		<module>distutils.tests.test_ccompiler</module>
+		<module>distutils.tests.test_msvccompiler</module>
+		<module>django_fetch_doc_urls</module>
 		<module>dumbdbm</module>
 		<module>dummy_thread</module>
 		<module>email.Charset</module>
@@ -3844,6 +3991,8 @@
 		<module>encodings.cp1125</module>
 		<module>encodings.cp273</module>
 		<module>encodings.cp65001</module>
+		<module>encodings.koi8_t</module>
+		<module>encodings.kz1048</module>
 		<module>encodings.string_escape</module>
 		<module>ensurepip</module>
 		<module>ensurepip.__main__</module>
@@ -3863,6 +4012,7 @@
 		<module>httplib</module>
 		<module>idlelib.__main__</module>
 		<module>idlelib.buildapp</module>
+		<module>idlelib.help</module>
 		<module>idlelib.idle_test</module>
 		<module>idlelib.idle_test.htest</module>
 		<module>idlelib.idle_test.mock_idle</module>
@@ -3873,10 +4023,12 @@
 		<module>idlelib.idle_test.test_config_name</module>
 		<module>idlelib.idle_test.test_configdialog</module>
 		<module>idlelib.idle_test.test_delegator</module>
+		<module>idlelib.idle_test.test_editor</module>
 		<module>idlelib.idle_test.test_formatparagraph</module>
 		<module>idlelib.idle_test.test_grep</module>
 		<module>idlelib.idle_test.test_hyperparser</module>
 		<module>idlelib.idle_test.test_idlehistory</module>
+		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_pathbrowser</module>
 		<module>idlelib.idle_test.test_rstrip</module>
@@ -3888,6 +4040,7 @@
 		<module>idlelib.idle_test.test_widgetredir</module>
 		<module>idlelib.tabpage</module>
 		<module>ihooks</module>
+		<module>importlib._bootstrap_external</module>
 		<module>imputil</module>
 		<module>ipaddress</module>
 		<module>json.tests</module>
@@ -3938,11 +4091,13 @@
 		<module>posixfile</module>
 		<module>pre</module>
 		<module>pydoc_topics</module>
+		<module>pypi_download_install</module>
 		<module>readline</module>
 		<module>reconvert</module>
 		<module>regex</module>
 		<module>regex_syntax</module>
 		<module>regsub</module>
+		<module>repack_pypi_cache</module>
 		<module>repr</module>
 		<module>rexec</module>
 		<module>rfc822</module>
@@ -3977,6 +4132,7 @@
 		<module>tracemalloc</module>
 		<module>ttk</module>
 		<module>turtledemo.sorting_animate</module>
+		<module>typing</module>
 		<module>tzparse</module>
 		<module>unittest.mock</module>
 		<module>unittest.test.__main__</module>
@@ -3990,6 +4146,7 @@
 		<module>unittest.test.testmock.testpatch</module>
 		<module>unittest.test.testmock.testsentinel</module>
 		<module>unittest.test.testmock.testwith</module>
+		<module>unsupported_modules</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
@@ -4001,6 +4158,7 @@
 		<module>xmlrpclib</module>
 		<module>xreadlines</module>
 		<module>xxlimited</module>
+		<module>zipapp</module>
 		<func>BlockingIOError</func>
 		<func>BrokenPipeError</func>
 		<func>ChildProcessError</func>
@@ -4016,7 +4174,9 @@
 		<func>OverflowWarning</func>
 		<func>PermissionError</func>
 		<func>ProcessLookupError</func>
+		<func>RecursionError</func>
 		<func>StandardError</func>
+		<func>StopAsyncIteration</func>
 		<func>TimeoutError</func>
 		<func>__loader__</func>
 		<func>__spec__</func>
@@ -4072,7 +4232,9 @@
 		<module>_abcoll</module>
 		<module>_bootlocale</module>
 		<module>_bytesio</module>
+		<module>_bz2</module>
 		<module>_collections_abc</module>
+		<module>_compression</module>
 		<module>_fileio</module>
 		<module>_hotshot</module>
 		<module>_opcode</module>
@@ -4084,12 +4246,14 @@
 		<module>_stat</module>
 		<module>_stringio</module>
 		<module>_testimportmultiple</module>
+		<module>_testmultiphase</module>
 		<module>_tracemalloc</module>
 		<module>_types</module>
 		<module>anydbm</module>
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
 		<module>asyncio.base_subprocess</module>
+		<module>asyncio.compat</module>
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
 		<module>asyncio.events</module>
@@ -4166,10 +4330,13 @@
 		<module>curses.wrapper</module>
 		<module>dbhash</module>
 		<module>dircache</module>
+		<module>distutils._msvccompiler</module>
 		<module>distutils.mwerkscompiler</module>
 		<module>distutils.tests.setuptools_build_ext</module>
 		<module>distutils.tests.setuptools_extension</module>
 		<module>distutils.tests.test_ccompiler</module>
+		<module>distutils.tests.test_msvccompiler</module>
+		<module>django_fetch_doc_urls</module>
 		<module>dumbdbm</module>
 		<module>dummy_thread</module>
 		<module>email.Charset</module>
@@ -4202,6 +4369,8 @@
 		<module>email.test.test_email_torture</module>
 		<module>encodings.cp1125</module>
 		<module>encodings.cp273</module>
+		<module>encodings.koi8_t</module>
+		<module>encodings.kz1048</module>
 		<module>encodings.string_escape</module>
 		<module>ensurepip</module>
 		<module>ensurepip.__main__</module>
@@ -4219,17 +4388,21 @@
 		<module>htmllib</module>
 		<module>httplib</module>
 		<module>idlelib.buildapp</module>
+		<module>idlelib.help</module>
 		<module>idlelib.idle_test.htest</module>
 		<module>idlelib.idle_test.test_autocomplete</module>
 		<module>idlelib.idle_test.test_autoexpand</module>
 		<module>idlelib.idle_test.test_configdialog</module>
+		<module>idlelib.idle_test.test_editor</module>
 		<module>idlelib.idle_test.test_hyperparser</module>
+		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_searchdialogbase</module>
 		<module>idlelib.idle_test.test_textview</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
 		<module>idlelib.tabpage</module>
 		<module>ihooks</module>
+		<module>importlib._bootstrap_external</module>
 		<module>importlib.test</module>
 		<module>importlib.test.__main__</module>
 		<module>importlib.test.abc</module>
@@ -4317,10 +4490,12 @@
 		<module>posixfile</module>
 		<module>pre</module>
 		<module>pydoc_topics</module>
+		<module>pypi_download_install</module>
 		<module>reconvert</module>
 		<module>regex</module>
 		<module>regex_syntax</module>
 		<module>regsub</module>
+		<module>repack_pypi_cache</module>
 		<module>repr</module>
 		<module>rexec</module>
 		<module>rfc822</module>
@@ -4352,9 +4527,11 @@
 		<module>tracemalloc</module>
 		<module>ttk</module>
 		<module>turtledemo.sorting_animate</module>
+		<module>typing</module>
 		<module>tzparse</module>
 		<module>unittest.test.__main__</module>
 		<module>unittest.test.testmock.__main__</module>
+		<module>unsupported_modules</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
@@ -4363,8 +4540,11 @@
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
 		<module>xreadlines</module>
+		<module>zipapp</module>
 		<func>OverflowWarning</func>
+		<func>RecursionError</func>
 		<func>StandardError</func>
+		<func>StopAsyncIteration</func>
 		<func>__spec__</func>
 		<func>apply</func>
 		<func>basestring</func>
@@ -4417,14 +4597,18 @@
 		<module>__main__</module>
 		<module>_abcoll</module>
 		<module>_bytesio</module>
+		<module>_bz2</module>
+		<module>_compression</module>
 		<module>_fileio</module>
 		<module>_hotshot</module>
 		<module>_pydecimal</module>
 		<module>_sha</module>
 		<module>_signal</module>
 		<module>_stringio</module>
+		<module>_testmultiphase</module>
 		<module>_types</module>
 		<module>anydbm</module>
+		<module>asyncio.compat</module>
 		<module>asyncio.coroutines</module>
 		<module>asyncio.sslproto</module>
 		<module>audiodev</module>
@@ -4484,11 +4668,14 @@
 		<module>curses.wrapper</module>
 		<module>dbhash</module>
 		<module>dircache</module>
+		<module>distutils._msvccompiler</module>
 		<module>distutils.emxccompiler</module>
 		<module>distutils.mwerkscompiler</module>
 		<module>distutils.tests.setuptools_build_ext</module>
 		<module>distutils.tests.setuptools_extension</module>
 		<module>distutils.tests.test_ccompiler</module>
+		<module>distutils.tests.test_msvccompiler</module>
+		<module>django_fetch_doc_urls</module>
 		<module>dumbdbm</module>
 		<module>dummy_thread</module>
 		<module>email.Charset</module>
@@ -4518,6 +4705,8 @@
 		<module>email.test.test_email_codecs_renamed</module>
 		<module>email.test.test_email_renamed</module>
 		<module>email.test.test_email_torture</module>
+		<module>encodings.koi8_t</module>
+		<module>encodings.kz1048</module>
 		<module>encodings.string_escape</module>
 		<module>exceptions</module>
 		<module>fpformat</module>
@@ -4531,16 +4720,20 @@
 		<module>htmllib</module>
 		<module>httplib</module>
 		<module>idlelib.buildapp</module>
+		<module>idlelib.help</module>
 		<module>idlelib.idle_test.test_autocomplete</module>
 		<module>idlelib.idle_test.test_autoexpand</module>
 		<module>idlelib.idle_test.test_configdialog</module>
+		<module>idlelib.idle_test.test_editor</module>
 		<module>idlelib.idle_test.test_hyperparser</module>
+		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_searchdialogbase</module>
 		<module>idlelib.idle_test.test_textview</module>
 		<module>idlelib.idle_test.test_widgetredir</module>
 		<module>idlelib.tabpage</module>
 		<module>ihooks</module>
+		<module>importlib._bootstrap_external</module>
 		<module>importlib.test</module>
 		<module>importlib.test.__main__</module>
 		<module>importlib.test.abc</module>
@@ -4618,10 +4811,12 @@
 		<module>posixfile</module>
 		<module>pre</module>
 		<module>pydoc_topics</module>
+		<module>pypi_download_install</module>
 		<module>reconvert</module>
 		<module>regex</module>
 		<module>regex_syntax</module>
 		<module>regsub</module>
+		<module>repack_pypi_cache</module>
 		<module>repr</module>
 		<module>rexec</module>
 		<module>rfc822</module>
@@ -4649,7 +4844,9 @@
 		<module>toaiff</module>
 		<module>ttk</module>
 		<module>turtledemo.sorting_animate</module>
+		<module>typing</module>
 		<module>tzparse</module>
+		<module>unsupported_modules</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
@@ -4658,8 +4855,11 @@
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
 		<module>xreadlines</module>
+		<module>zipapp</module>
 		<func>OverflowWarning</func>
+		<func>RecursionError</func>
 		<func>StandardError</func>
+		<func>StopAsyncIteration</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>buffer</func>
@@ -4929,12 +5129,14 @@
 		<module>tkFont</module>
 		<module>tkMessageBox</module>
 		<module>tkSimpleDialog</module>
+		<module>tkinter._fix</module>
 		<module>toaiff</module>
 		<module>ttk</module>
 		<module>tzparse</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
+		<module>versions_updater</module>
 		<module>whichdb</module>
 		<module>whrandom</module>
 		<module>xmllib</module>

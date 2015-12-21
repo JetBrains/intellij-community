@@ -682,8 +682,15 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       return settings.isCollapseImports();
     }
     else if (element instanceof PsiMethod || element instanceof PsiClassInitializer || element instanceof PsiCodeBlock) {
-      if (element instanceof PsiMethod && isSimplePropertyAccessor((PsiMethod)element)) {
-        return settings.isCollapseAccessors();
+      if (element instanceof PsiMethod) {
+
+        if (!settings.isCollapseAccessors() && !settings.isCollapseMethods()) {
+          return false;
+        }
+
+        if (isSimplePropertyAccessor((PsiMethod)element)) {
+          return settings.isCollapseAccessors();
+        }
       }
       return settings.isCollapseMethods();
     }

@@ -16,6 +16,7 @@
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.tools.holders.EditorHolder;
+import com.intellij.diff.util.DiffUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ import java.awt.*;
 
 public class HolderPanel extends JPanel {
   public HolderPanel(@NotNull EditorHolder holder, @Nullable JComponent title) {
-    super(new BorderLayout());
+    super(new BorderLayout(0, DiffUtil.TITLE_GAP));
     add(holder.getComponent(), BorderLayout.CENTER);
     if (title != null) add(title, BorderLayout.NORTH);
   }

@@ -17,20 +17,18 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.application.PreloadingActivity;
+import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class ActionPreloader implements StartupActivity, DumbAware {
-
+public class ActionPreloader extends PreloadingActivity {
   @Override
-  public void runActivity(@NotNull Project project) {
+  public void preload(@NotNull ProgressIndicator indicator) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      ((ActionManagerImpl)ActionManager.getInstance()).preloadActions();
+      ((ActionManagerImpl)ActionManager.getInstance()).preloadActions(indicator);
     }
   }
 }

@@ -48,8 +48,8 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
                                 "store", "stream", "toArray", "write");
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet updateNames =
-    new ExternalizableStringSet("add", "clear", "compute", "drainTo", "insert", "load", "offer", "poll", "push", "put", "remove", "replace",
-                                "retain", "set", "take");
+    new ExternalizableStringSet("add", "clear", "compute", "drainTo", "insert", "load", "merge", "offer", "poll", "push", "put", "remove",
+                                "replace", "retain", "set", "take");
 
   private static boolean isEmptyCollectionInitializer(PsiExpression initializer) {
     if (!(initializer instanceof PsiNewExpression)) {

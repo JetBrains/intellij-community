@@ -67,7 +67,7 @@ public class IdeBackgroundUtil {
     PaintersHelper.initWallpaperPainter("idea.wallpaper.ide", painters);
 
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-    String path = UIUtil.isUnderDarcula()? appInfo.getEditorBackgroundImageUrl() : null;
+    String path = /*UIUtil.isUnderDarcula()? appInfo.getEditorBackgroundImageUrl() : */null;
     URL url = path == null ? null : appInfo.getClass().getResource(path);
     Image centerImage = url == null ? null : ImageLoader.loadFromUrl(url);
 

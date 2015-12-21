@@ -159,9 +159,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
     String text = getSelectedText();
 
     text = text.trim();
-    if (text.startsWith(GRAILS_PREFIX)) {
-      text = text.substring(GRAILS_PREFIX.length());
-    }
+    text = StringUtil.trimStart(text, GRAILS_PREFIX);
 
     return text;
   }

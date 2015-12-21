@@ -299,13 +299,19 @@ public class PluginManagerCore {
     return true;
   }
 
-  public static void addPluginClass(@NotNull String className, PluginId pluginId, boolean loaded) {
-    ourPluginClasses.addPluginClass(className, pluginId, loaded);
+  public static void addPluginClass(PluginId pluginId) {
+    ourPluginClasses.addPluginClass(pluginId);
   }
 
   @Nullable
   public static PluginId getPluginByClassName(@NotNull String className) {
-    return ourPluginClasses.getPluginByClassName(className);
+    for (IdeaPluginDescriptor descriptor : getPlugins()) {
+      ClassLoader loader = descriptor.getPluginClassLoader();
+      if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).hasLoadedClass(className)) {
+        return descriptor.getPluginId();
+      }
+    }
+    return null;
   }
 
   public static void dumpPluginClassStatistics() {
@@ -831,7 +837,9 @@ public class PluginManagerCore {
     }
   }
 
-  private static void filterBadPlugins(@NotNull List<? extends IdeaPluginDescriptor> result, @NotNull final Map<String, String> disabledPluginNames, @NotNull final List<String> errors) {
+  private static void filterBadPlugins(@NotNull List<? extends IdeaPluginDescriptor> result,
+                                       @NotNull final Map<String, String> disabledPluginNames,
+                                       @NotNull final List<String> errors) {
     final Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap = new THashMap<PluginId, IdeaPluginDescriptor>();
     boolean pluginsWithoutIdFound = false;
     for (Iterator<? extends IdeaPluginDescriptor> it = result.iterator(); it.hasNext();) {
@@ -967,7 +975,8 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  private static String decodeUrl(@NotNull String file) {
+  public /* public for Upsource */
+  static String decodeUrl(@NotNull String file) {
     String quotePluses = StringUtil.replace(file, "+", "%2B");
     //noinspection deprecation
     return URLDecoder.decode(quotePluses);
@@ -1049,36 +1058,46 @@ public class PluginManagerCore {
     return Holder.ourBuildNumber;
   }
 
-  private static boolean shouldLoadPlugin(@NotNull IdeaPluginDescriptor descriptor, @NotNull IdeaPluginDescriptor[] loaded) {
+  /**
+   * Checks if plugin should be loaded and return the reason why it should not
+   * @param descriptor plugin to check
+   * @param loaded
+   * @return null if plugin should be loaded, string with the reason why plugin should not be loaded
+   */
+  @Nullable
+  private static String detectReasonToNotLoad(@NotNull IdeaPluginDescriptor descriptor, @NotNull IdeaPluginDescriptor[] loaded) {
     final String idString = descriptor.getPluginId().getIdString();
     if (CORE_PLUGIN_ID.equals(idString)) {
-      return true;
+      return null;
     }
 
     //noinspection HardCodedStringLiteral
     final String pluginId = System.getProperty("idea.load.plugins.id");
     if (pluginId == null) {
-      if (descriptor instanceof IdeaPluginDescriptorImpl && !descriptor.isEnabled()) return false;
+      if (descriptor instanceof IdeaPluginDescriptorImpl && !descriptor.isEnabled()) return "Plugin is not enabled";
 
-      if (!shouldLoadPlugins()) return false;
+      if (!shouldLoadPlugins()) return "Plugins should not be loaded";
     }
     final List<String> pluginIds = pluginId == null ? null : StringUtil.split(pluginId, ",");
 
+    // http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+    // If a plugin does not include any module dependency tags in its plugin.xml,
+    // it’s assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
     final boolean checkModuleDependencies = !ourModulesToContainingPlugins.isEmpty() && !ourModulesToContainingPlugins.containsKey("com.intellij.modules.all");
     if (checkModuleDependencies && !hasModuleDependencies(descriptor)) {
-      return false;
+      return "Plugin does not include any module dependency tags in its plugin.xml therefore is assumed legacy and can be loaded only in IntelliJ IDEA";
     }
 
-    boolean shouldLoad;
+    String reasonToNotLoad;
     //noinspection HardCodedStringLiteral
     final String loadPluginCategory = System.getProperty("idea.load.plugins.category");
     if (loadPluginCategory != null) {
-      shouldLoad = loadPluginCategory.equals(descriptor.getCategory());
+      reasonToNotLoad = loadPluginCategory.equals(descriptor.getCategory()) ? null : "Plugin category doesn't match 'idea.load.plugins.category' value";
     }
     else {
       if (pluginIds != null) {
-        shouldLoad = pluginIds.contains(idString);
-        if (!shouldLoad) {
+        reasonToNotLoad = pluginIds.contains(idString) ? null : "'idea.load.plugins.id' doesn't contain this plugin id";
+        if (reasonToNotLoad != null) {
           Map<PluginId,IdeaPluginDescriptor> map = new THashMap<PluginId, IdeaPluginDescriptor>();
           for (IdeaPluginDescriptor pluginDescriptor : loaded) {
             map.put(pluginDescriptor.getPluginId(), pluginDescriptor);
@@ -1087,21 +1106,21 @@ public class PluginManagerCore {
           for (String id : pluginIds) {
             final IdeaPluginDescriptor descriptorFromProperty = map.get(PluginId.getId(id));
             if (descriptorFromProperty != null && isDependent(descriptorFromProperty, descriptor.getPluginId(), map, checkModuleDependencies)) {
-              shouldLoad = true;
+              reasonToNotLoad = null;
               break;
             }
           }
         }
       }
       else {
-        shouldLoad = !getDisabledPlugins().contains(idString);
+        reasonToNotLoad = getDisabledPlugins().contains(idString) ? "Plugin is disabled" : null;
       }
-      if (shouldLoad && descriptor instanceof IdeaPluginDescriptorImpl) {
-        if (isIncompatible(descriptor)) return false;
+      if (reasonToNotLoad == null && descriptor instanceof IdeaPluginDescriptorImpl) {
+        if (isIncompatible(descriptor)) return "Plugin since-build or until-build don't match this product's build number";
       }
     }
 
-    return shouldLoad;
+    return reasonToNotLoad;
   }
 
   public static boolean isCompatible(@NotNull IdeaPluginDescriptor descriptor) {
@@ -1152,11 +1171,11 @@ public class PluginManagerCore {
       if (skipped != null) {
         return skipped.booleanValue();
       }
-      boolean result = !shouldLoadPlugin(descriptor, ourPlugins) || isBrokenPlugin(descriptor);
+      boolean result = detectReasonToNotLoad(descriptor, ourPlugins) != null || isBrokenPlugin(descriptor);
       descriptorImpl.setSkipped(result);
       return result;
     }
-    return !shouldLoadPlugin(descriptor, ourPlugins) || isBrokenPlugin(descriptor);
+    return detectReasonToNotLoad(descriptor, ourPlugins) != null || isBrokenPlugin(descriptor);
   }
 
   private static void initializePlugins(@Nullable StartupProgress progress) {
@@ -1254,15 +1273,15 @@ public class PluginManagerCore {
                                           @NotNull List<String> brokenPluginsList,
                                           @NotNull List<IdeaPluginDescriptorImpl> result) {
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
-      boolean shouldLoad = shouldLoadPlugin(descriptor, pluginDescriptors);
-      if (shouldLoad) {
+      String toNotLoadReason = detectReasonToNotLoad(descriptor, pluginDescriptors);
+      if (toNotLoadReason == null) {
         if (isBrokenPlugin(descriptor)) {
           brokenPluginsList.add(descriptor.getName());
-          shouldLoad = false;
+          toNotLoadReason = "This plugin version was marked as incompatible";
         }
       }
 
-      if (shouldLoad) {
+      if (toNotLoadReason == null) {
         final List<String> modules = descriptor.getModules();
         if (modules != null) {
           for (String module : modules) {
@@ -1275,6 +1294,7 @@ public class PluginManagerCore {
       }
       else {
         descriptor.setEnabled(false);
+        getLogger().info(String.format("Plugin '%s' can't be loaded because: %s", descriptor.getName(), toNotLoadReason));
         disabledPluginNames.put(descriptor.getPluginId().getIdString(), descriptor.getName());
         initClassLoader(parentLoader, descriptor);
       }

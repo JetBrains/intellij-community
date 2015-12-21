@@ -57,6 +57,8 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -241,6 +243,16 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   public List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
                                            @NotNull Document document,
                                            @NotNull final ProgressIndicator progress) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      throw new IllegalStateException("Must not run highlighting from under EDT");
+    }
+    if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
+      throw new IllegalStateException("Must run highlighting from under read action");
+    }
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (!(indicator instanceof DaemonProgressIndicator)) {
+      throw new IllegalStateException("Must run highlighting under progress with DaemonProgressIndicator");
+    }
     // clear status maps to run passes from scratch so that refCountHolder won't conflict and try to restart itself on partially filled maps
     myFileStatusMap.markAllFilesDirty("prepare to run main passes");
     stopProcess(false, "disable background daemon");
@@ -296,6 +308,19 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     return runPasses(file, document, Collections.singletonList(textEditor), toIgnore, canChangeDocument, callbackWhileWaiting);
   }
 
+  private volatile boolean mustWaitForSmartMode = true;
+  @TestOnly
+  public void mustWaitForSmartMode(final boolean mustWait, @NotNull Disposable parent) {
+    final boolean old = mustWaitForSmartMode;
+    mustWaitForSmartMode = mustWait;
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        mustWaitForSmartMode = old;
+      }
+    });
+  }
+
   @NotNull
   @TestOnly
   List<HighlightInfo> runPasses(@NotNull PsiFile file,
@@ -318,6 +343,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
     // refresh will fire write actions interfering with highlighting
     while (RefreshQueueImpl.isRefreshInProgress() || HeavyProcessLatch.INSTANCE.isRunning()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    long dstart = System.currentTimeMillis();
+    while (mustWaitForSmartMode && DumbService.getInstance(myProject).isDumb()) {
+      if (System.currentTimeMillis() > dstart + 100000) {
+        throw new IllegalStateException("Timeout waiting for smart mode. If you absolutely want to be dumb, please use DaemonCodeAnalyzerImpl.mustWaitForSmartMode(false).");
+      }
       UIUtil.dispatchAllInvocationEvents();
     }
 
@@ -559,6 +591,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   synchronized boolean isRunning() {
     return myUpdateProgress != null && !myUpdateProgress.isCanceled();
   }
+  
+  @TestOnly
+  boolean isRunningOrPending() {
+    return isRunning() || !myAlarm.isEmpty();
+  }
 
   synchronized void stopProcess(boolean toRestartAlarm, @NonNls String reason) {
     if (!allowToInterrupt) throw new RuntimeException("Cannot interrupt daemon");
@@ -664,13 +701,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   @NotNull
-  public static List<LineMarkerInfo> getLineMarkers(@NotNull Document document, Project project) {
+  public static List<LineMarkerInfo> getLineMarkers(@NotNull Document document, @NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     return ObjectUtils.notNull(markup.getUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY), Collections.<LineMarkerInfo>emptyList());
   }
 
-  static void setLineMarkers(@NotNull Document document, List<LineMarkerInfo> lineMarkers, Project project) {
+  static void setLineMarkers(@NotNull Document document, @NotNull List<LineMarkerInfo> lineMarkers, @NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     markup.putUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY, lineMarkers);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,13 +30,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Danila Ponomarenko
@@ -75,7 +75,8 @@ public final class FieldFromParameterUtils {
     final PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(type);
     final PsiClass psiClass = result.getElement();
     if (psiClass == null) return type;
-    final HashSet<PsiTypeParameter> usedTypeParameters = new HashSet<PsiTypeParameter>();
+
+    final Set<PsiTypeParameter> usedTypeParameters = new HashSet<PsiTypeParameter>();
     RefactoringUtil.collectTypeParameters(usedTypeParameters, parameter);
     for (Iterator<PsiTypeParameter> iterator = usedTypeParameters.iterator(); iterator.hasNext(); ) {
       PsiTypeParameter usedTypeParameter = iterator.next();
@@ -83,18 +84,27 @@ public final class FieldFromParameterUtils {
         iterator.remove();
       }
     }
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(parameter.getProject());
+
     PsiSubstitutor subst = PsiSubstitutor.EMPTY;
     for (PsiTypeParameter usedTypeParameter : usedTypeParameters) {
-      subst = subst.put(usedTypeParameter, TypeConversionUtil.typeParameterErasure(usedTypeParameter));
+      final PsiType bound = TypeConversionUtil.typeParameterErasure(usedTypeParameter);
+      final PsiManager manager = usedTypeParameter.getManager();
+      subst = subst.put(usedTypeParameter, bound == null ? PsiWildcardType.createUnbounded(manager) : bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? bound : PsiWildcardType.createExtends(manager, bound));
     }
+
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     final Map<PsiTypeParameter, PsiType> typeMap = result.getSubstitutor().getSubstitutionMap();
     for (PsiTypeParameter typeParameter : typeMap.keySet()) {
       final PsiType psiType = typeMap.get(typeParameter);
       substitutor = substitutor.put(typeParameter, psiType != null ? subst.substitute(psiType) : null);
     }
-    return psiClass instanceof PsiTypeParameter ? subst.substitute((PsiTypeParameter)psiClass) : elementFactory.createType(psiClass, substitutor);
+
+    if (psiClass instanceof PsiTypeParameter) {
+      return GenericsUtil.getVariableTypeByExpressionType(subst.substitute((PsiTypeParameter)psiClass));
+    }
+    else {
+      return JavaPsiFacade.getElementFactory(parameter.getProject()).createType(psiClass, substitutor);
+    }
   }
 
   @Nullable
@@ -127,8 +137,7 @@ public final class FieldFromParameterUtils {
 
         if (expression instanceof PsiMethodCallExpression) {
           PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-          @NonNls String text = methodCallExpression.getMethodExpression().getText();
-
+          String text = methodCallExpression.getMethodExpression().getText();
           if (text.equals("super") || text.equals("this")) {
             continue;
           }
@@ -173,29 +182,23 @@ public final class FieldFromParameterUtils {
                                                  final @NotNull PsiClass targetClass,
                                                  final @NotNull PsiMethod method,
                                                  final @NotNull PsiParameter parameter,
-                                                 final @NotNull PsiType fieldType, final @NotNull String fieldName,
-                                                 final boolean isStatic, final boolean isFinal) throws IncorrectOperationException {
-
+                                                 final @NotNull PsiType fieldType,
+                                                 final @NotNull String fieldName,
+                                                 final boolean isStatic,
+                                                 final boolean isFinal) throws IncorrectOperationException {
     PsiManager psiManager = PsiManager.getInstance(project);
     PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
 
     PsiField field = factory.createField(fieldName, fieldType);
-    PsiModifierList modifierList = field.getModifierList();
 
+    PsiModifierList modifierList = field.getModifierList();
     if (modifierList == null) return;
     modifierList.setModifierProperty(PsiModifier.STATIC, isStatic);
     modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 
-    final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    final PsiAnnotation nullable = manager.copyNullableAnnotation(parameter);
-    if (nullable != null) {
-      modifierList.addAfter(nullable, null);
-    }
-    else if (isFinal) {
-      final PsiAnnotation notNull = manager.copyNotNullAnnotation(parameter);
-      if (notNull != null) {
-        modifierList.addAfter(notNull, null);
-      }
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
+    if (manager.copyNullableAnnotation(parameter, field) == null && isFinal) {
+      manager.copyNotNullAnnotation(parameter, field);
     }
 
     PsiCodeBlock methodBody = method.getBody();
@@ -208,7 +211,7 @@ public final class FieldFromParameterUtils {
 
     String stmtText = fieldName + " = " + parameter.getName() + ";";
     if (fieldName.equals(parameter.getName())) {
-      @NonNls String prefix = isStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
+      String prefix = isStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
       stmtText = prefix + stmtText;
     }
 
@@ -227,16 +230,7 @@ public final class FieldFromParameterUtils {
       psiVariable.normalizeDeclaration();
     }
 
-    boolean found = false;
-    final PsiField[] fields = targetClass.getFields();
-    for (PsiField f : fields) {
-      if (f.getName().equals(field.getName())) {
-        found = true;
-        break;
-      }
-    }
-
-    if (!found) {
+    if (targetClass.findFieldByName(fieldName, false) == null) {
       if (fieldAnchor != null) {
         Boolean insertBefore = fieldAnchor.getSecond();
         PsiField inField = fieldAnchor.getFirst();
@@ -253,9 +247,7 @@ public final class FieldFromParameterUtils {
     }
   }
 
-  public static boolean isAvailable(@Nullable PsiParameter myParameter,
-                                     @Nullable PsiType type,
-                                     @Nullable PsiClass targetClass){
+  public static boolean isAvailable(@Nullable PsiParameter myParameter, @Nullable PsiType type, @Nullable PsiClass targetClass) {
     return myParameter != null
            && myParameter.isValid()
            && myParameter.getManager().isInProject(myParameter)
@@ -267,6 +259,6 @@ public final class FieldFromParameterUtils {
            && !targetClass.isInterface()
            && getParameterAssignedToField(myParameter) == null;
   }
-  private FieldFromParameterUtils() {
-  }
+
+  private FieldFromParameterUtils() { }
 }

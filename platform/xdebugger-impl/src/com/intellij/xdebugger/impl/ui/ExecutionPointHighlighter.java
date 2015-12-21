@@ -25,7 +25,10 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -166,7 +169,18 @@ public class ExecutionPointHighlighter {
     if (!navigate && myOpenFileDescriptor != null) {
       fileDescriptor = new OpenFileDescriptor(myProject, myOpenFileDescriptor.getFile());
     }
-    myEditor = fileDescriptor == null ? null : XDebuggerUtilImpl.createEditor(fileDescriptor);
+    myEditor = null;
+    if (fileDescriptor != null) {
+      if (!navigate) {
+        FileEditor editor = FileEditorManager.getInstance(fileDescriptor.getProject()).getSelectedEditor(fileDescriptor.getFile());
+        if (editor instanceof TextEditor) {
+          myEditor = ((TextEditor)editor).getEditor();
+        }
+      }
+      if (myEditor == null) {
+        myEditor = XDebuggerUtilImpl.createEditor(fileDescriptor);
+      }
+    }
     if (myEditor != null) {
       addHighlighter();
     }
@@ -220,6 +234,7 @@ public class ExecutionPointHighlighter {
       myRangeHighlighter = markupModel.addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER, attributes);
     }
     myRangeHighlighter.putUserData(EXECUTION_POINT_HIGHLIGHTER_KEY, true);
+    myRangeHighlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
     myRangeHighlighter.setGutterIconRenderer(myGutterIconRenderer);
   }
 

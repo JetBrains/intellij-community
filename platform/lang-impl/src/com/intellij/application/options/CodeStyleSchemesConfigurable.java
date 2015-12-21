@@ -23,7 +23,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
@@ -55,10 +54,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   public JComponent createComponent() {
     myModel = ensureModel();
 
-    if (Registry.is("ide.new.settings.dialog")) {
-      return myPanels == null || myPanels.isEmpty() ? null : myPanels.get(0).createComponent();
-    }
-    return myRootSchemesPanel.getPanel();
+    return myPanels == null || myPanels.isEmpty() ? null : myPanels.get(0).createComponent();
   }
 
   @Override
@@ -235,15 +231,12 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       }
     }
 
-    if (Registry.is("ide.new.settings.dialog")) {
-      int size = myPanels.size();
-      Configurable[] result = new Configurable[size > 0 ? size - 1 : 0];
-      for (int i = 0; i < result.length; i++) {
-        result[i] = myPanels.get(i + 1);
-      }
-      return result;
+    int size = myPanels.size();
+    Configurable[] result = new Configurable[size > 0 ? size - 1 : 0];
+    for (int i = 0; i < result.length; i++) {
+      result[i] = myPanels.get(i + 1);
     }
-    return myPanels.toArray(new Configurable[myPanels.size()]);
+    return result;
   }
 
   private CodeStyleSchemesModel ensureModel() {
@@ -276,7 +269,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
         @Override
         public void schemeChanged(final CodeStyleScheme scheme) {
-          reset();
+          if (scheme == myModel.getSelectedScheme()) myRootSchemesPanel.onSelectedSchemeChanged();
         }
       });
     }
@@ -301,10 +294,8 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   @Override
   public boolean isModified() {
     if (myModel != null) {
-      if (Registry.is("ide.new.settings.dialog")) {
-        if (myPanels != null && myPanels.size() > 0 && myPanels.get(0).isModified()) {
-          return true;
-        }
+      if (myPanels != null && myPanels.size() > 0 && myPanels.get(0).isModified()) {
+        return true;
       }
       boolean schemeListModified = myModel.isSchemeListModified();
       if (schemeListModified) {

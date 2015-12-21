@@ -78,6 +78,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_5, "1.6");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_6, "1.7");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_7, "1.8");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_1_9, "1.9");
 
     loadForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }
@@ -152,11 +153,6 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
   @Override
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
   }
 
   @Override

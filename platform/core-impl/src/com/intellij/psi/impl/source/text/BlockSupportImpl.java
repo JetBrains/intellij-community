@@ -207,7 +207,7 @@ public class BlockSupportImpl extends BlockSupport {
       final FileElement newFileElement = (FileElement)newFile.getNode();
       final FileElement oldFileElement = (FileElement)fileImpl.getNode();
       if (!lastCommittedText.toString().equals(oldFileElement.getText())) {
-        throw new IncorrectOperationException();
+        throw new IncorrectOperationException(viewProvider.toString());
       }
       DiffLog diffLog = mergeTrees(fileImpl, oldFileElement, newFileElement, indicator, lastCommittedText);
 

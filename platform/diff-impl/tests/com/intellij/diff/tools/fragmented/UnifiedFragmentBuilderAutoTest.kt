@@ -17,6 +17,7 @@ package com.intellij.diff.tools.fragmented
 
 import com.intellij.diff.DiffTestCase
 import com.intellij.diff.comparison.ComparisonPolicy
+import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.Document
@@ -39,8 +40,8 @@ class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
       debugData.put("Text1", textToReadableFormat(text1.charsSequence))
       debugData.put("Text2", textToReadableFormat(text2.charsSequence))
 
-      for (side in Side.values) {
-        for (comparisonPolicy in ComparisonPolicy.values) {
+      for (side in Side.values()) {
+        for (comparisonPolicy in ComparisonPolicy.values()) {
           debugData.put("Policy", comparisonPolicy)
           debugData.put("Current side", side)
           doTest(text1, text2, comparisonPolicy, side)
@@ -64,6 +65,8 @@ class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
     val convertor = builder.convertor
     val changedLines = builder.changedLines
     val ranges = builder.ranges
+
+    val document = DocumentImpl(text)
 
     // both documents - before and after - should be subsequence of result text.
     assertTrue(isSubsequence(text, sequence1, ignoreWhitespaces))
@@ -97,8 +100,8 @@ class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
       val fragment1 = sequence1.subSequence(fragment.startOffset1, fragment.endOffset1)
       val fragment2 = sequence2.subSequence(fragment.startOffset2, fragment.endOffset2)
 
-      val block1 = text.subSequence(block.startOffset1, block.endOffset1)
-      val block2 = text.subSequence(block.startOffset2, block.endOffset2)
+      val block1 = DiffUtil.getLinesContent(document, block.range1.start, block.range1.end)
+      val block2 = DiffUtil.getLinesContent(document, block.range2.start, block.range2.end)
 
       assertEqualsCharSequences(fragment1, block1, ignoreWhitespaces, true)
       assertEqualsCharSequences(fragment2, block2, ignoreWhitespaces, true)

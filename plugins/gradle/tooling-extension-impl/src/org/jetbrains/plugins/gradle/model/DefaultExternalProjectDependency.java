@@ -17,6 +17,9 @@ package org.jetbrains.plugins.gradle.model;
 
 import com.google.common.base.Objects;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 /**
  * @author Vladislav.Soroka
  * @since 12/24/2014
@@ -25,23 +28,37 @@ public class DefaultExternalProjectDependency extends AbstractExternalDependency
 
   private static final long serialVersionUID = 1L;
 
-  private String projectPath;
+  private String myProjectPath;
+  private Collection<String> myProjectDependencyArtifacts;
 
   public DefaultExternalProjectDependency() {
   }
 
   public DefaultExternalProjectDependency(ExternalProjectDependency dependency) {
     super(dependency);
-    projectPath = dependency.getProjectPath();
+    myProjectPath = dependency.getProjectPath();
+    myProjectDependencyArtifacts =
+      dependency.getProjectDependencyArtifacts() == null
+      ? new ArrayList<String>()
+      : new ArrayList<String>(dependency.getProjectDependencyArtifacts());
   }
 
   @Override
   public String getProjectPath() {
-    return projectPath;
+    return myProjectPath;
   }
 
   public void setProjectPath(String projectPath) {
-    this.projectPath = projectPath;
+    this.myProjectPath = projectPath;
+  }
+
+  @Override
+  public Collection<String> getProjectDependencyArtifacts() {
+    return myProjectDependencyArtifacts;
+  }
+
+  public void setProjectDependencyArtifacts(Collection<String> projectArtifacts) {
+    myProjectDependencyArtifacts = projectArtifacts;
   }
 
   @Override
@@ -50,16 +67,16 @@ public class DefaultExternalProjectDependency extends AbstractExternalDependency
     if (!(o instanceof DefaultExternalProjectDependency)) return false;
     if (!super.equals(o)) return false;
     DefaultExternalProjectDependency that = (DefaultExternalProjectDependency)o;
-    return Objects.equal(projectPath, that.projectPath);
+    return Objects.equal(myProjectPath, that.myProjectPath);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), projectPath);
+    return Objects.hashCode(super.hashCode(), myProjectPath);
   }
 
   @Override
   public String toString() {
-    return "project dependency '" + projectPath + '\'';
+    return "project dependency '" + myProjectPath + '\'';
   }
 }

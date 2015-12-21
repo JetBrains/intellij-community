@@ -29,7 +29,7 @@ import org.jetbrains.annotations.TestOnly;
  */
 public class DaemonProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator, Disposable {
   private static boolean debug;
-  private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug ? new Throwable() : null);
+  private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug);
   private volatile boolean myDisposed;
 
   @Override

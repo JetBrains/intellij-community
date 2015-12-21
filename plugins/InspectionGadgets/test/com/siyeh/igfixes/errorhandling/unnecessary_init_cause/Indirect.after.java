@@ -7,7 +7,7 @@ class Indirect {
             new FileInputStream("asdf");
         } catch (FileNotFoundException e) {
             final RuntimeException exception = new RuntimeException(e);
-            throw e;
+            throw exception;
         }
     }
 }

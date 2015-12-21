@@ -15,6 +15,7 @@
  */
 package org.jetbrains.debugger.connection
 
+import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Condition
@@ -35,50 +36,48 @@ import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicReference
 
 abstract class RemoteVmConnection : VmConnection<Vm>() {
-  private val connectCancelHandler = AtomicReference<Runnable>()
+  private val connectCancelHandler = AtomicReference<() -> Unit>()
 
   abstract fun createBootstrap(address: InetSocketAddress, vmResult: org.jetbrains.concurrency.AsyncPromise<Vm>): Bootstrap
 
   @JvmOverloads
   fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null) {
     setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.hostName}:${address.port}")
-    val future = ApplicationManager.getApplication().executeOnPooledThread(object : Runnable {
-      override fun run() {
-        if (Thread.interrupted()) {
-          return
-        }
-
-        val result = org.jetbrains.concurrency.AsyncPromise<Vm>()
-        connectCancelHandler.set(Runnable { result.setError("Closed explicitly") })
-
-        val connectionPromise = AsyncPromise<Any?>()
-        connectionPromise.rejected { result.setError(it) }
-
-        result
-          .done {
-            vm = it
-            setState(ConnectionStatus.CONNECTED, "Connected to ${connectedAddressToPresentation(address, it)}")
-            startProcessing()
-          }
-          .rejected {
-            if (it !is ConnectException) {
-              Promise.logError(LOG, it)
-            }
-            setState(ConnectionStatus.CONNECTION_FAILED, it.getMessage())
-          }
-          .processed { connectCancelHandler.set(null) }
-
-        createBootstrap(address, result).connect(address, connectionPromise, maxAttemptCount = if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition = stopCondition)
+    val future = ApplicationManager.getApplication().executeOnPooledThread {
+      if (Thread.interrupted()) {
+        return@executeOnPooledThread
       }
-    })
-    connectCancelHandler.set(Runnable { future.cancel(true) })
+
+      val result = AsyncPromise<Vm>()
+      connectCancelHandler.set({ result.setError("Closed explicitly") })
+
+      val connectionPromise = AsyncPromise<Any?>()
+      connectionPromise.rejected { result.setError(it) }
+
+      result
+        .done {
+          vm = it!!
+          setState(ConnectionStatus.CONNECTED, "Connected to ${connectedAddressToPresentation(address, it)}")
+          startProcessing()
+        }
+        .rejected {
+          if (it !is ConnectException) {
+            Promise.logError(LOG, it)
+          }
+          setState(ConnectionStatus.CONNECTION_FAILED, it.message)
+        }
+        .processed { connectCancelHandler.set(null) }
+
+      createBootstrap(address, result).connect(address, connectionPromise, maxAttemptCount = if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition = stopCondition)
+    }
+    connectCancelHandler.set { future.cancel(true) }
   }
 
-  protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String = address.hostName + ":" + address.port
+  protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String = "${address.hostName}:${address.port}"
 
   override fun detachAndClose(): Promise<*> {
     try {
-      connectCancelHandler.getAndSet(null)?.run()
+      connectCancelHandler.getAndSet(null)?.invoke()
     }
     finally {
       return super.detachAndClose()
@@ -86,7 +85,9 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
   }
 }
 
-fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemToString: (T) -> String): org.jetbrains.concurrency.Promise<T> {
+fun RemoteVmConnection.open(address: InetSocketAddress, processHandler: ProcessHandler) = open(address, Condition<java.lang.Void> { processHandler.isProcessTerminating || processHandler.isProcessTerminated })
+
+fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T, ColoredListCellRenderer.KotlinFriendlyColoredListCellRenderer<*>) -> Unit): Promise<T> {
   if (targets.size == 1) {
     return resolvedPromise(targets.first())
   }
@@ -99,7 +100,7 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemToString:
     val list = JBList(targets)
     list.cellRenderer = object : ColoredListCellRenderer.KotlinFriendlyColoredListCellRenderer<T>() {
       override fun customizeCellRenderer(value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
-        append(itemToString(value))
+        renderer(value, this)
       }
     }
     if (selectedIndex != -1) {

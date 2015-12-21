@@ -38,8 +38,8 @@ import java.util.List;
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
   protected volatile AnchorTypeInfo myType;
-  private final SmartPointerManagerImpl myManager;
-  protected final MarkerCache myMarkerCache;
+  protected final SmartPointerManagerImpl myManager;
+  private final VirtualFile myFile;
   private final boolean myForInjected;
   private int myStartOffset;
   private int myEndOffset;
@@ -53,9 +53,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     myType = info;
 
     myManager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(project);
-    myMarkerCache = myManager.getMarkerCache(containingFile.getViewProvider().getVirtualFile());
+    myFile = containingFile.getViewProvider().getVirtualFile();
     setRange(range);
-    myMarkerCache.rangeChanged();
   }
 
   void setRange(@Nullable Segment range) {
@@ -177,16 +176,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
       @Override
       public PsiFile compute() {
         if (project.isDisposed()) return null;
-        VirtualFile child;
-        if (virtualFile.isValid()) {
-          child = virtualFile;
-        }
-        else {
-          VirtualFile vParent = virtualFile.getParent();
-          if (vParent == null || !vParent.isDirectory()) return null;
-          String name = virtualFile.getName();
-          child = vParent.findChild(name);
-        }
+        VirtualFile child = restoreVFile(virtualFile);
         if (child == null || !child.isValid()) return null;
         PsiFile file = PsiManager.getInstance(project).findFile(child);
         if (file != null && language != null) {
@@ -205,22 +195,28 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
       @Override
       public PsiDirectory compute() {
-        VirtualFile child;
-        if (virtualFile.isValid()) {
-          child = virtualFile;
-        }
-        else {
-          VirtualFile vParent = virtualFile.getParent();
-          if (vParent == null || !vParent.isDirectory()) return null;
-          String name = virtualFile.getName();
-          child = vParent.findChild(name);
-        }
+        VirtualFile child = restoreVFile(virtualFile);
         if (child == null || !child.isValid()) return null;
         PsiDirectory file = PsiManager.getInstance(project).findDirectory(child);
         if (file == null || !file.isValid()) return null;
         return file;
       }
     });
+  }
+
+  @Nullable
+  private static VirtualFile restoreVFile(VirtualFile virtualFile) {
+    VirtualFile child;
+    if (virtualFile.isValid()) {
+      child = virtualFile;
+    }
+    else {
+      VirtualFile vParent = virtualFile.getParent();
+      if (vParent == null || !vParent.isValid()) return null;
+      String name = virtualFile.getName();
+      child = vParent.findChild(name);
+    }
+    return child;
   }
 
   @Override
@@ -256,7 +252,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   @Override
   @NotNull
   public final VirtualFile getVirtualFile() {
-    return myMarkerCache.getVirtualFile();
+    return myFile;
   }
 
   @Override
@@ -268,7 +264,10 @@ public class SelfElementInfo extends SmartPointerElementInfo {
         PsiDocumentManagerBase documentManager = myManager.getPsiDocumentManager();
         List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
         if (!events.isEmpty()) {
-          return myMarkerCache.getUpdatedRange(this, (FrozenDocument)documentManager.getLastCommittedDocument(document), events);
+          MarkerCache markerCache = myManager.getMarkerCache(getVirtualFile());
+          if (markerCache != null) {
+            return markerCache.getUpdatedRange(this, (FrozenDocument)documentManager.getLastCommittedDocument(document), events);
+          }
         }
       }
     }
@@ -281,4 +280,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     return myManager.getProject();
   }
 
+  @Override
+  public String toString() {
+    return "psi:range=" + calcPsiRange() + ",type=" + myType;
+  }
 }

@@ -18,10 +18,11 @@ package org.jetbrains.plugins.gradle.service.task;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupportedImpl;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.task.AbstractExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -35,10 +36,10 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelper;
+import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
-import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -107,7 +108,8 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
 
         if (!initScripts.isEmpty()) {
           try {
-            File tempFile = GradleExecutionHelper.writeToFileGradleInitScript(StringUtil.join(initScripts, SystemProperties.getLineSeparator()));
+            File tempFile =
+              GradleExecutionHelper.writeToFileGradleInitScript(StringUtil.join(initScripts, SystemProperties.getLineSeparator()));
             ContainerUtil.addAll(scriptParameters, GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
           }
           catch (IOException e) {
@@ -116,12 +118,17 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
         }
 
         GradleVersion gradleVersion = GradleExecutionHelper.getGradleVersion(connection);
+        if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.5")) < 0) {
+          listener.onStatusChange(new ExternalSystemTaskExecutionEvent(
+            id, new ExternalSystemProgressEventUnsupportedImpl(gradleVersion + " does not support executions view")));
+        }
         BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener, vmOptions, scriptParameters);
         launcher.forTasks(ArrayUtil.toStringArray(taskNames));
 
         if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.1")) < 0) {
           myCancellationMap.put(id, new UnsupportedCancellationToken());
-        } else {
+        }
+        else {
           final CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
           launcher.withCancellationToken(cancellationTokenSource.token());
           myCancellationMap.put(id, cancellationTokenSource);

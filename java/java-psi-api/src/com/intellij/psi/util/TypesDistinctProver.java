@@ -135,7 +135,6 @@ public class TypesDistinctProver {
           if (type1 instanceof PsiClassType && ((PsiClassType)type1).hasParameters()) return true;
         } else {
           if (provablyDistinct(substitutedType1, substitutedType2, level + 1)) return true;
-          if (substitutedType1 instanceof PsiWildcardType && !((PsiWildcardType)substitutedType1).isBounded()) return true;
         }
       }
       if (level < 2) return false;
@@ -259,6 +258,9 @@ public class TypesDistinctProver {
     else if (bound instanceof PsiWildcardType) {
       final PsiType boundBound = ((PsiWildcardType)bound).getBound();
       if (boundBound != null && !boundBound.equals(type)) {
+        if (boundBound instanceof PsiArrayType && !((PsiWildcardType)bound).isSuper()) {
+          return proveArrayTypeDistinct(type, boundBound);
+        }
         final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(boundBound);
         if (psiClass == null) {
           return true;
@@ -269,6 +271,14 @@ public class TypesDistinctProver {
         return !(((PsiWildcardType)bound).isExtends() && isSuperClassOfArrayType(psiClass));
       }
       return false;
+    }
+    else if (bound instanceof PsiIntersectionType) {
+      for (PsiType conjunctBound : ((PsiIntersectionType)bound).getConjuncts()) {
+        if (!proveArrayTypeDistinct(type, conjunctBound)) return false;
+      }
+    }
+    else if (bound instanceof PsiCapturedWildcardType) {
+      return proveArrayTypeDistinct(type, ((PsiCapturedWildcardType)bound).getWildcard());
     }
     return true;
   }

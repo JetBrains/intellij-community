@@ -110,7 +110,7 @@ public class FunctionalInterfaceParameterizationUtil {
         return null;
       }
 
-      final PsiSubstitutor substitutor = session.retrieveNonPrimitiveEqualsBounds(session.getInferenceVariables());
+      final PsiSubstitutor substitutor = session.getInstantiations(session.getInferenceVariables());
       final PsiType[] newTypeParameters = new PsiType[parameters.length];
       for (int i = 0; i < typeParameters.length; i++) {
         PsiTypeParameter typeParameter = typeParameters[i];
@@ -130,7 +130,7 @@ public class FunctionalInterfaceParameterizationUtil {
       }
 
       //Otherwise, the inferred parameterization is either F<A'1, ..., A'm>, if all the type arguments are types,
-      if (!TypeConversionUtil.containsWildcards(parameterization)) {
+      if (!isWildcardParameterized(parameterization)) {
         return parameterization;
       }
 
@@ -177,16 +177,19 @@ public class FunctionalInterfaceParameterizationUtil {
       for (int i = 0; i < parameters.length; i++) {
         PsiType paramType = parameters[i];
         if (paramType instanceof PsiWildcardType) {
-          final PsiType bound = GenericsUtil.eliminateWildcards(((PsiWildcardType)paramType).getBound(), false, false);
+          for (PsiClassType paramBound : typeParameters[i].getExtendsListTypes()) {
+            if (PsiPolyExpressionUtil.mentionsTypeParameters(paramBound, typeParametersSet)) {
+              return null;
+            }
+          }
+          final PsiType bound = ((PsiWildcardType)paramType).getBound();
           if (((PsiWildcardType)paramType).isSuper()) {
             newParameters[i] = bound;
           }
           else {
             newParameters[i] = bound != null ? bound : PsiType.getJavaLangObject(psiClass.getManager(), psiClassType.getResolveScope());
             for (PsiClassType paramBound : typeParameters[i].getExtendsListTypes()) {
-              if (!PsiPolyExpressionUtil.mentionsTypeParameters(paramBound, typeParametersSet)) {
-                newParameters[i] = GenericsUtil.getGreatestLowerBound(newParameters[i], paramBound);
-              }
+              newParameters[i] = GenericsUtil.getGreatestLowerBound(newParameters[i], paramBound);
             }
           }
         } else {

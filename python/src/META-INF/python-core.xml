@@ -15,7 +15,6 @@
     <nameSuggestionProvider implementation="com.jetbrains.python.refactoring.PyNameSuggestionProvider"/>
     <methodNavigationOffsetProvider implementation="com.jetbrains.python.codeInsight.PyMethodNavigationOffsetProvider"/>
     <copyPastePreProcessor implementation="com.jetbrains.python.editor.PythonCopyPasteProcessor"/>
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="com.jetbrains.python.PythonFileTypeFactory"/>
     <fileTypeDetector implementation="com.jetbrains.python.PyFileTypeDetector"/>
     <editorHighlighterProvider filetype="Python" implementationClass="com.jetbrains.python.PyEditorHighlighterProvider"/>
@@ -80,6 +79,9 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyStructuralTypeAttributesCompletionContributor"/>
 
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PyStringFormatCompletionContributor" />
+
     <lang.tokenSeparatorGenerator language="Python" implementationClass="com.jetbrains.python.PyTokenSeparatorGenerator"/>
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyReferenceExpression"
                              implementationClass="com.jetbrains.python.psi.impl.PyReferenceExpressionManipulator"/>
@@ -137,10 +139,12 @@
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
 
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
+    <configurationType implementation="com.jetbrains.python.testing.tox.PyToxConfigurationType"/>
 
     <runConfigurationProducer implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.pytest.PyTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.tox.PyToxConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.attest.PythonAtTestConfigurationProducer"/>
 
@@ -484,6 +488,7 @@
     <moduleService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
                    serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.docstrings.DocStringReferenceContributor"/>
+    <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PythonFormattedStringReferenceContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringTagCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringSectionHeaderCompletionContributor"/>
 
@@ -499,7 +504,7 @@
                          displayName="Console"/>
     <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptions"/>
 
-    <projectConfigurable groupId="build" id="reference.idesettings.debugger.python" instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"
+    <projectConfigurable groupId="build" groupWeight="119" id="reference.idesettings.debugger.python" instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"
                          displayName="Python Debugger"/>
     <projectService serviceImplementation="com.jetbrains.python.debugger.PyDebuggerOptionsProvider"/>
 
@@ -572,6 +577,13 @@
 
     <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.PyInspectionsSuppressor"/>
     <refactoring.invertBoolean implementation="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanDelegate"/>
+
+    <backspaceHandlerDelegate implementation="com.jetbrains.python.codeInsight.editorActions.PyTripleQuoteBackspaceDelegate"/>
+
+    <!--folding-->
+    <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider"/>
+    <applicationService serviceInterface="com.jetbrains.python.PythonFoldingSettings"
+                        serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
   </extensions>
 
   <extensionPoints>
@@ -618,6 +630,7 @@
   <extensions defaultExtensionNs="Pythonid">
     <testLocator implementation="com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider"/>
     <testLocator implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestUrlProvider"/>
+    <testLocator implementation="com.jetbrains.python.testing.tox.PyToxTestLocator"/>
     <pySuperMethodsSearch implementation="com.jetbrains.python.psi.search.PySuperMethodsSearchExecutor"/>
     <pyClassInheritorsSearch implementation="com.jetbrains.python.psi.search.PyClassInheritorsSearchExecutor"/>
     <pyOverridingMethodsSearch implementation="com.jetbrains.python.psi.search.PyOverridingMethodsSearchExecutor"/>
@@ -652,7 +665,13 @@
     <typeProvider implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"/>
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PythonBuiltinReferenceResolveProvider"/>
 
+    <!-- NumPy -->
+    <pyModuleMembersProvider implementation="com.jetbrains.numpy.codeInsight.NumpyModuleMembersProvider"/>
+    <typeProvider implementation="com.jetbrains.numpy.codeInsight.NumpyDocStringTypeProvider"/>
+    <resolveResultRater implementation="com.jetbrains.numpy.codeInsight.NumpyResolveRater"/>
+
     <!-- PyDocstring -->
+    <typeProvider implementation="com.jetbrains.python.documentation.docstrings.PyDocStringTypeProvider"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.python.documentation.doctest.PyDocstringTokenSetContributor"/>
     <visitorFilter language="PyDocstring" implementationClass="com.jetbrains.python.documentation.doctest.PyDocstringVisitorFilter"/>
 
@@ -664,11 +683,6 @@
 
     <!-- PyQt -->
     <typeProvider implementation="com.jetbrains.pyqt.PyQtTypeProvider"/>
-
-    <!-- NumPy -->
-    <pyModuleMembersProvider implementation="com.jetbrains.numpy.codeInsight.NumpyModuleMembersProvider"/>
-    <typeProvider implementation="com.jetbrains.numpy.codeInsight.NumpyDocStringTypeProvider"/>
-    <resolveResultRater implementation="com.jetbrains.numpy.codeInsight.NumpyResolveRater"/>
   </extensions>
 
   <project-components>

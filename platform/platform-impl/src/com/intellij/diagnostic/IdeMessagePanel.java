@@ -44,7 +44,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   private final MessagePool myMessagePool;
   private boolean myNotificationPopupAlreadyShown = false;
 
-  public IdeMessagePanel(MessagePool messagePool) {
+  public IdeMessagePanel(@NotNull MessagePool messagePool) {
     super(new BorderLayout());
     myIdeFatal = new IdeFatalErrorsIcon(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -74,6 +74,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   }
 
   public void dispose() {
+    myMessagePool.removeListener(this);
   }
 
   public void install(@NotNull StatusBar statusBar) {

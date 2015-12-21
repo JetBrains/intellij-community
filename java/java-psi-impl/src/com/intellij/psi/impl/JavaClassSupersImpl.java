@@ -16,6 +16,9 @@
 package com.intellij.psi.impl;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.JavaClassSupers;
 import com.intellij.psi.util.PsiUtil;
@@ -23,6 +26,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,10 +42,56 @@ public class JavaClassSupersImpl extends JavaClassSupers {
                                                  @NotNull GlobalSearchScope scope,
                                                  @NotNull PsiSubstitutor derivedSubstitutor) {
     if (InheritanceImplUtil.hasObjectQualifiedName(superClass)) return PsiSubstitutor.EMPTY;
+    if (!(derivedClass instanceof PsiTypeParameter)) {
+      List<PsiType> bounds = null;
+      if (superClass instanceof InferenceVariable) {
+        bounds = ((InferenceVariable)superClass).getBounds(InferenceBound.LOWER);
+      }
+      else if (superClass instanceof PsiTypeParameter) {
+        final PsiType lowerBound = superClass.getUserData(InferenceSession.LOWER_BOUND);
+        if (lowerBound != null) {
+          bounds = Collections.singletonList(lowerBound);
+        }
+      }
+      if (bounds != null) {
+        for (PsiType lowerBound : bounds) {
+          final PsiSubstitutor substitutor = processLowerBound(lowerBound, derivedClass, scope, derivedSubstitutor);
+          if (substitutor != null) {
+            return substitutor;
+          }
+        }
+      }
+    }
 
     return derivedClass instanceof PsiTypeParameter
            ? processTypeParameter((PsiTypeParameter)derivedClass, scope, superClass, ContainerUtil.<PsiTypeParameter>newTroveSet(), derivedSubstitutor)
            : getSuperSubstitutorWithCaching(superClass, derivedClass, scope, derivedSubstitutor);
+  }
+  
+  private static PsiSubstitutor processLowerBound(@NotNull PsiType lowerBound, 
+                                                  @NotNull PsiClass derivedClass,
+                                                  @NotNull GlobalSearchScope scope,
+                                                  @NotNull PsiSubstitutor derivedSubstitutor) {
+    if (lowerBound instanceof PsiClassType) {
+      final PsiClassType.ClassResolveResult result = ((PsiClassType)lowerBound).resolveGenerics();
+      final PsiClass boundClass = result.getElement();
+      if (boundClass != null) {
+        final PsiSubstitutor substitutor = getSuperSubstitutorWithCaching(boundClass,
+                                                                          derivedClass, scope, result.getSubstitutor());
+        if (substitutor != null) {
+          return composeSubstitutors(derivedSubstitutor, substitutor, boundClass);
+        }
+      }
+    }
+    else if (lowerBound instanceof PsiIntersectionType) {
+      for (PsiType bound : ((PsiIntersectionType)lowerBound).getConjuncts()) {
+        final PsiSubstitutor substitutor = processLowerBound(bound, derivedClass, scope, derivedSubstitutor);
+        if (substitutor != null) {
+          return substitutor;
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable

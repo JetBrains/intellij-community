@@ -21,7 +21,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
+import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,7 +42,7 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
   protected PsiFile createFile(@NotNull final Project project, @NotNull final VirtualFile vFile, @NotNull final FileType fileType) {
     FileIndexFacade fileIndex = ServiceManager.getService(project, FileIndexFacade.class);
     if (!fileIndex.isInLibraryClasses(vFile) && fileIndex.isInSource(vFile)) {
-      return null;
+      return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
 
     // skip inners & anonymous

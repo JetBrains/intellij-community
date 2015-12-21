@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,17 +137,13 @@ public abstract class GitTextHandler extends GitHandler {
   }
 
   public ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    Process process = commandLine.createProcess();
-    return new MyOSProcessHandler(process, commandLine, getCharset());
+    commandLine.setCharset(getCharset());
+    return new MyOSProcessHandler(commandLine);
   }
 
   private static class MyOSProcessHandler extends OSProcessHandler {
-    @NotNull
-    private final Charset myCharset;
-
-    public MyOSProcessHandler(Process process, GeneralCommandLine commandLine, @NotNull Charset charset) {
-      super(process, commandLine.getCommandLineString());
-      myCharset = charset;
+    private MyOSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+      super(commandLine);
     }
 
     @NotNull

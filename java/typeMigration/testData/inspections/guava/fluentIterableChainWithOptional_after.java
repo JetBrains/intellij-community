@@ -1,5 +1,4 @@
-import java.util.*;
-import com.google.common.collect.FluentIterable;
+import java.util.ArrayList;
 
 class A {
   void m1() {

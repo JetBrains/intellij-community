@@ -456,21 +456,19 @@ public abstract class HgUtil {
   public static List<Change> getDiff(@NotNull final Project project,
                                      @NotNull final VirtualFile root,
                                      @NotNull final FilePath path,
-                                     @Nullable final HgFileRevision rev1,
-                                     @Nullable final HgFileRevision rev2) {
+                                     @Nullable final HgRevisionNumber revNum1,
+                                     @Nullable final HgRevisionNumber revNum2) {
     HgStatusCommand statusCommand;
-    HgRevisionNumber revNumber1 = null;
-    if (rev1 != null) {
-      revNumber1 = rev1.getRevisionNumber();
+    if (revNum1 != null) {
       //rev2==null means "compare with local version"
-      statusCommand = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(false).baseRevision(revNumber1)
-        .targetRevision(rev2 != null ? rev2.getRevisionNumber() : null).build(project);
+      statusCommand = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(!path.isDirectory()).baseRevision(revNum1)
+        .targetRevision(revNum2).build(project);
     }
     else {
-      LOG.assertTrue(rev2 != null, "revision1 and revision2 can't both be null. Path: " + path); //rev1 and rev2 can't be null both//
+      LOG.assertTrue(revNum2 != null, "revision1 and revision2 can't both be null. Path: " + path); //rev1 and rev2 can't be null both//
       //get initial changes//
       statusCommand =
-        new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(false).baseRevision(rev2.getRevisionNumber())
+        new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(false).baseRevision(revNum2)
           .build(project);
     }
 
@@ -480,9 +478,8 @@ public abstract class HgUtil {
     for (HgChange hgChange : hgChanges) {
       FileStatus status = convertHgDiffStatus(hgChange.getStatus());
       if (status != FileStatus.UNKNOWN) {
-        changes.add(HgHistoryUtil.createChange(project, root, hgChange.beforeFile().getRelativePath(), revNumber1,
-                                               hgChange.afterFile().getRelativePath(),
-                                               rev2 != null ? rev2.getRevisionNumber() : null, status));
+        changes.add(HgHistoryUtil.createChange(project, root, hgChange.beforeFile().getRelativePath(), revNum1,
+                                               hgChange.afterFile().getRelativePath(), revNum2, status));
       }
     }
     return changes;
@@ -545,7 +542,7 @@ public abstract class HgUtil {
   @Nullable
   public static HgRepository getCurrentRepository(@NotNull Project project) {
     if (project.isDisposed()) return null;
-    return DvcsUtil.guessRepositoryForFile(project, getRepositoryManager(project), HgVcs.getInstance(project),
+    return DvcsUtil.guessRepositoryForFile(project, getRepositoryManager(project),
                                            DvcsUtil.getSelectedFile(project),
                                            HgProjectSettings.getInstance(project).getRecentRootPath());
   }

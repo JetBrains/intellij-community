@@ -17,6 +17,7 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.ROOT_CONFIG
 import com.intellij.configurationStore.StateStorageManagerImpl
+import com.intellij.configurationStore.removeMacroIfStartsWith
 import com.intellij.ide.actions.ExportableItem
 import com.intellij.ide.actions.getExportableComponentsMap
 import com.intellij.openapi.application.ApplicationManager
@@ -30,22 +31,21 @@ fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager
   val streamProvider = storageManager.streamProvider!! as IcsManager.IcsStreamProvider
 
   val fileToComponents = getExportableComponentsMap(true, false, storageManager)
-  for (file in fileToComponents.keySet()) {
+  for (file in fileToComponents.keys) {
     val absolutePath = FileUtilRt.toSystemIndependentName(file.absolutePath)
-    var fileSpec = storageManager.collapseMacros(absolutePath)
-    LOG.assertTrue(!fileSpec.contains(ROOT_CONFIG))
-    if (fileSpec.equals(absolutePath)) {
+    var fileSpec = removeMacroIfStartsWith(storageManager.collapseMacros(absolutePath), ROOT_CONFIG)
+    if (fileSpec == absolutePath) {
       // we have not experienced such problem yet, but we are just aware
       val canonicalPath = FileUtilRt.toSystemIndependentName(file.canonicalPath)
-      if (!canonicalPath.equals(absolutePath)) {
-        fileSpec = storageManager.collapseMacros(canonicalPath)
+      if (canonicalPath != absolutePath) {
+        fileSpec = removeMacroIfStartsWith(storageManager.collapseMacros(canonicalPath), ROOT_CONFIG)
       }
     }
 
     val roamingType = getRoamingType(fileToComponents.get(file)!!)
     if (file.isFile) {
       val fileBytes = FileUtil.loadFileBytes(file)
-      streamProvider.doSave(fileSpec, fileBytes, fileBytes.size(), roamingType)
+      streamProvider.doSave(fileSpec, fileBytes, fileBytes.size, roamingType)
     }
     else {
       saveDirectory(file, fileSpec, roamingType, streamProvider)
@@ -54,13 +54,12 @@ fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager
 }
 
 private fun saveDirectory(parent: File, parentFileSpec: String, roamingType: RoamingType, streamProvider: IcsManager.IcsStreamProvider) {
-  val files = parent.listFiles()
-  if (files != null) {
-    for (file in files) {
-      val childFileSpec = parentFileSpec + '/' + file.name
+  parent.listFiles()?.let {
+    for (file in it) {
+      val childFileSpec = "$parentFileSpec/${file.name}"
       if (file.isFile) {
         val fileBytes = FileUtil.loadFileBytes(file)
-        streamProvider.doSave(childFileSpec, fileBytes, fileBytes.size(), roamingType)
+        streamProvider.doSave(childFileSpec, fileBytes, fileBytes.size, roamingType)
       }
       else {
         saveDirectory(file, childFileSpec, roamingType, streamProvider)

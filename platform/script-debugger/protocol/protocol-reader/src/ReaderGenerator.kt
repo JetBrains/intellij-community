@@ -1,8 +1,7 @@
 package org.jetbrains.protocolReader
 
 import gnu.trove.THashMap
-import java.io.File
-import java.nio.file.FileSystems
+import java.nio.file.Paths
 import java.util.*
 
 class GenerateConfiguration<ROOT>(val packageName: String, val className: String, readerRootClass: Class<ROOT>, protocolInterfaces: List<Class<*>>, basePackagesMap: Map<Class<*>, String>? = null) {
@@ -13,7 +12,7 @@ class GenerateConfiguration<ROOT>(val packageName: String, val className: String
 }
 
 fun generate(args: Array<String>, configuration: GenerateConfiguration<*>) {
-  val fileUpdater = FileUpdater(FileSystems.getDefault().getPath(parseArgs(args), configuration.packageName.replace('.', File.separatorChar), "${configuration.className}.kt"))
+  val fileUpdater = FileUpdater(Paths.get(parseArgs(args), "${configuration.className}.kt"))
   generate(configuration, fileUpdater.builder)
   fileUpdater.update()
 }
@@ -26,7 +25,7 @@ private fun parseArgs(args: Array<String>): String {
 
   for (arg in args) {
     if (!arg.startsWith("--")) {
-      throw IllegalArgumentException("Unrecognized param: " + arg)
+      throw IllegalArgumentException("Unrecognized param: $arg")
     }
     val equalsPos = arg.indexOf('=', 2)
     val key: String
@@ -39,12 +38,12 @@ private fun parseArgs(args: Array<String>): String {
       key = arg.substring(2, equalsPos).trim()
       value = arg.substring(equalsPos + 1).trim()
     }
-    val paramListener = paramMap.get(key) ?: throw IllegalArgumentException("Unrecognized param name: " + key)
+    val paramListener = paramMap.get(key) ?: throw IllegalArgumentException("Unrecognized param name: $key")
     try {
       paramListener.value = value
     }
     catch (e: IllegalArgumentException) {
-      throw IllegalArgumentException("Failed to set value of " + key, e)
+      throw IllegalArgumentException("Failed to set value of $key", e)
     }
 
   }
@@ -83,11 +82,11 @@ private fun generate(configuration: GenerateConfiguration<*>, stringBuilder: Str
   out.newLine().append("import org.jetbrains.io.JsonReaderEx")
 
   out.newLine().newLine().append("import org.jetbrains.jsonProtocol.JsonReaders.*")
-  out.newLine().newLine().append("class ").append(configuration.className).space()
+  out.newLine().newLine().append("internal class ").append(configuration.className).space()
   out.append(':').space().append(configuration.root.type.canonicalName).append(if (configuration.root.type.isInterface) "" else "()").openBlock(false)
 
   val rootClassScope = fileScope.newClassScope()
-  configuration.root.writeStaticMethodJava(rootClassScope)
+  configuration.root.write(rootClassScope)
 
   for (typeWriter in configuration.typeToTypeHandler.values) {
     out.newLine()
@@ -107,7 +106,7 @@ private fun generate(configuration: GenerateConfiguration<*>, stringBuilder: Str
     val originName = typeWriter.typeClass.canonicalName
     out.newLine().append("private class ").append(TYPE_FACTORY_NAME_PREFIX).append(globalScope.getTypeImplShortName(typeWriter)).append(" : ObjectFactory<")
     out.append(originName).append(">()").openBlock()
-    out.append("override fun read(").append(JSON_READER_PARAMETER_DEF).append(") = ")
+    out.append("override fun read(").append(JSON_READER_PARAMETER_DEF).append("): ").append(originName).append(" = ")
     typeWriter.writeInstantiateCode(rootClassScope, out)
     out.append('(').append(READER_NAME).append(", null)")
     out.closeBlock()

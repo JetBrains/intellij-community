@@ -82,7 +82,7 @@ class Foo { List a; Map b; }
 
     myFixture.type 'import '
     myFixture.doHighlighting()
-    assert !myFixture.editor.foldingModel.getCollapsedRegionAtOffset(10)
+    assert !myFixture.editor.foldingModel.getCollapsedRegionAtOffset(46)
   }
 
   public void testJavadocLikeClassHeader() {
@@ -1164,6 +1164,30 @@ class Foo {
     assert topLevelRegions.length == 1
     assert topLevelRegions[0].startOffset == text.indexOf('{', text.indexOf("if"))
     assert topLevelRegions[0].endOffset == text.indexOf('}', text.indexOf("if")) + 1
+  }
+  
+  public void "test editing near closure folding"() {
+    configure """\
+class Foo {
+  void m() {
+    SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println();
+            }
+        });
+  }
+}
+"""
+    assertTopLevelFoldRegionsState "[FoldRegion +(56:143), placeholder='(Runnable) () → { ', FoldRegion +(164:188), placeholder=' }']"
+    myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf("SwingUtilities"))
+    myFixture.type(' ')
+    myFixture.doHighlighting()
+    assertTopLevelFoldRegionsState "[FoldRegion +(57:144), placeholder='(Runnable) () → { ', FoldRegion +(165:189), placeholder=' }']"
+  }
+
+  private void assertTopLevelFoldRegionsState(String expectedState) {
+    assertEquals(expectedState, myFixture.editor.foldingModel.toString())
   }
 
   private int getFoldRegionsCount() {

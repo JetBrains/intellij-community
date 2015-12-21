@@ -65,6 +65,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT;
 import static git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK;
@@ -94,6 +95,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   public void cherryPick(@NotNull List<VcsFullCommitDetails> commits) {
     Map<GitRepository, List<VcsFullCommitDetails>> commitsInRoots =
       DvcsUtil.<GitRepository>groupCommitsByRoots(myPlatformFacade.getRepositoryManager(myProject), commits);
+    LOG.info("Cherry-picking commits: " + toString(commitsInRoots));
     List<GitCommitWrapper> successfulCommits = ContainerUtil.newArrayList();
     List<GitCommitWrapper> alreadyPicked = ContainerUtil.newArrayList();
     AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
@@ -111,6 +113,22 @@ public class GitCherryPicker extends VcsCherryPicker {
     finally {
       DvcsUtil.workingTreeChangeFinished(myProject, token);
     }
+  }
+
+  @NotNull
+  private static String toString(@NotNull final Map<GitRepository, List<VcsFullCommitDetails>> commitsInRoots) {
+    return StringUtil.join(commitsInRoots.keySet(), new Function<GitRepository, String>() {
+      @Override
+      public String fun(@NotNull GitRepository repository) {
+        String commits = StringUtil.join(commitsInRoots.get(repository), new Function<VcsFullCommitDetails, String>() {
+          @Override
+          public String fun(VcsFullCommitDetails details) {
+            return details.getId().asString();
+          }
+        }, ", ");
+        return getShortRepositoryName(repository) + ": [" + commits + "]";
+      }
+    }, "; ");
   }
 
   // return true to continue with other roots, false to break execution
@@ -623,18 +641,18 @@ public class GitCherryPicker extends VcsCherryPicker {
     }
 
     @Override
-    public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
+    public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
       return "<html>Conflicts during cherry-picking commit <code>" + myCommitHash + "</code> made by " + myCommitAuthor + "<br/>" +
              "<code>\"" + myCommitMessage + "\"</code></html>";
     }
 
     @Override
-    public String getLeftPanelTitle(VirtualFile file) {
+    public String getLeftPanelTitle(@NotNull VirtualFile file) {
       return "Local changes";
     }
 
     @Override
-    public String getRightPanelTitle(VirtualFile file, VcsRevisionNumber lastRevisionNumber) {
+    public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
       return "<html>Changes from cherry-pick <code>" + myCommitHash + "</code>";
     }
   }

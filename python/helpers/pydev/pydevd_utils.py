@@ -128,7 +128,7 @@ def _get_project_roots(project_roots_cache=[]):
     return project_roots_cache[-1] # returns the project roots with case normalized
 
 
-def is_in_project_roots(filename, filename_to_not_in_scope_cache={}):
+def not_in_project_roots(filename, filename_to_not_in_scope_cache={}):
     # Note: the filename_to_not_in_scope_cache is the same instance among the many calls to the method
     try:
         return filename_to_not_in_scope_cache[filename]

@@ -35,3 +35,17 @@ class <warning descr="Missing '@deprecated' Javadoc tag explanation">Two</warnin
   @Deprecated
   String <warning descr="Missing '@deprecated' Javadoc tag explanation">s</warning>;
 }
+class Parent {
+  /** @deprecated don't use */
+  @Deprecated
+  public void some() {
+  }
+}
+
+class Child extends Parent {
+  @Deprecated
+  @Override
+  public void some() {
+    super.some();
+  }
+}

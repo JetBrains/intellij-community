@@ -110,6 +110,7 @@ abstract class ChangeCorrector {
       myText2 = text2;
     }
 
+    @Override
     protected void matchGap(int start1, int end1, int start2, int end2) {
       Range expand = expand(myText1, myText2, start1, start2, end1, end2);
 
@@ -156,6 +157,7 @@ abstract class ChangeCorrector {
       myLines2 = lines2;
     }
 
+    @Override
     protected void matchGap(int start1, int end1, int start2, int end2) {
       Range expand = expand(myLines1, myLines2, start1, start2, end1, end2);
 

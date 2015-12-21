@@ -81,7 +81,7 @@ public class StudyProjectGenerator {
                   StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
                   course.setCourseDirectory(new File(ourCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
                   VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
-                  StudyProjectComponent.getInstance(project).registerStudyToolwindow(course);
+                  StudyProjectComponent.getInstance(project).registerStudyToolWindow(course);
                   openFirstTask(course, project);
                 }
               });

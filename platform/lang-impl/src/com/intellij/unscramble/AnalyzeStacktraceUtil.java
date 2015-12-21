@@ -66,7 +66,6 @@ public class AnalyzeStacktraceUtil {
     if (!text.equals(consoleText)) {
       consoleView.clear();
       consoleView.print(text, ConsoleViewContentType.ERROR_OUTPUT);
-
       consoleView.scrollTo(0);
     }
   }
@@ -125,7 +124,9 @@ public class AnalyzeStacktraceUtil {
     public MyConsolePanel(ExecutionConsole consoleView, ActionGroup toolbarActions) {
       super(new BorderLayout());
       JPanel toolbarPanel = new JPanel(new BorderLayout());
-      toolbarPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions,false).getComponent());
+      toolbarPanel.add(ActionManager.getInstance()
+                         .createActionToolbar(ActionPlaces.ANALYZE_STACKTRACE_PANEL_TOOLBAR, toolbarActions, false)
+                         .getComponent());
       add(toolbarPanel, BorderLayout.WEST);
       add(consoleView.getComponent(), BorderLayout.CENTER);
     }

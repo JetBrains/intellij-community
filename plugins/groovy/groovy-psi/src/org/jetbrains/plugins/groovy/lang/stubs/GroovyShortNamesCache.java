@@ -87,19 +87,8 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   @NotNull
-  public List<PsiClass> getClassesByFQName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
-    final List<PsiClass> result = addClasses(name, scope, true);
-    if (result.isEmpty()) {
-      result.addAll(addClasses(name, scope, false));
-    }
-    if (result.isEmpty()) {
-      result.addAll(addClasses(name, GlobalSearchScope.projectScope(myProject), false));
-    }
-    return result;
-  }
-
-  private List<PsiClass> addClasses(String name, GlobalSearchScope scope, boolean inSource) {
-    final List<PsiClass> result = new ArrayList<PsiClass>(getScriptClassesByFQName(name, scope, inSource));
+  public List<PsiClass> getClassesByFQName(String name, GlobalSearchScope scope, boolean inSource) {
+    final List<PsiClass> result = ContainerUtil.newArrayList();
 
     for (PsiElement psiClass : StubIndex.getElements(GrFullClassNameIndex.KEY, name.hashCode(), myProject,
                                                      inSource ? new GrSourceFilterScope(scope) : scope, PsiClass.class)) {
@@ -108,6 +97,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
         result.add((PsiClass)psiClass);
       }
     }
+    result.addAll(getScriptClassesByFQName(name, scope, inSource));
     return result;
   }
 

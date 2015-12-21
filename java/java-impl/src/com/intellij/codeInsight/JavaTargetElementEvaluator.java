@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
@@ -310,7 +311,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   
   @Override
   @Nullable
-  public SearchScope getSearchScope(Editor editor, @NotNull PsiElement element) {
+  public SearchScope getSearchScope(Editor editor, @NotNull final PsiElement element) {
     final PsiReferenceExpression referenceExpression = editor != null ? findReferenceExpression(editor) : null;
     if (referenceExpression != null && element instanceof PsiMethod) {
       final PsiClass[] memberClass = getMemberClass(referenceExpression, element);
@@ -326,9 +327,13 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
             for (PsiClass psiClass : classesToSearch) {
               supers.addAll(InheritanceUtil.getSuperClasses(psiClass));
             }
-            classesToSearch.addAll(supers);
 
-            return new Result<SearchScope>(new LocalSearchScope(PsiUtilCore.toPsiElementArray(classesToSearch)), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+            final List<PsiElement> elements = new ArrayList<PsiElement>();
+            elements.addAll(classesToSearch);
+            elements.addAll(supers);
+            elements.addAll(FunctionalExpressionSearch.search(memberClass[0]).findAll());
+
+            return new Result<SearchScope>(new LocalSearchScope(PsiUtilCore.toPsiElementArray(elements)), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
           }
         });
       }

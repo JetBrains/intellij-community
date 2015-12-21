@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.FoldRegion;
@@ -23,7 +24,6 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -31,12 +31,10 @@ import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
-import java.awt.image.BufferedImage;
 
 /**
  * A facade for components responsible for drawing editor contents, managing editor size 
@@ -44,7 +42,7 @@ import java.awt.image.BufferedImage;
  * 
  * Also contains a cache of several font-related quantities (line height, space width, etc).
  */
-public class EditorView implements TextDrawingCallback, Disposable {
+public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   private static Key<LineLayout> FOLD_REGION_TEXT_LAYOUT = Key.create("text.layout");
 
   private final EditorImpl myEditor;
@@ -209,7 +207,7 @@ public class EditorView implements TextDrawingCallback, Disposable {
     myPrefixText = prefixText;
     synchronized (myLock) {
       myPrefixLayout = prefixText == null || prefixText.isEmpty() ? null :
-                       new LineLayout(this, prefixText, attributes.getFontType());
+                       LineLayout.create(this, prefixText, attributes.getFontType());
     }
     myPrefixAttributes = attributes;
     mySizeManager.invalidateRange(0, 0);
@@ -244,6 +242,7 @@ public class EditorView implements TextDrawingCallback, Disposable {
 
   public Dimension getPreferredSize() {
     assertIsDispatchThread();
+    assert !myEditor.isPurePaintingMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return mySizeManager.getPreferredSize();
   }
@@ -428,9 +427,8 @@ public class EditorView implements TextDrawingCallback, Disposable {
   }
 
   private static FontRenderContext createFontRenderContext() {
-    Graphics2D g = (Graphics2D)UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_RGB).getGraphics();
+    Graphics2D g = FontInfo.createReferenceGraphics();
     try {
-      EditorUIUtil.setupAntialiasing(g);
       return g.getFontRenderContext();
     }
     finally {
@@ -442,7 +440,7 @@ public class EditorView implements TextDrawingCallback, Disposable {
     LineLayout layout = foldRegion.getUserData(FOLD_REGION_TEXT_LAYOUT);
     if (layout == null) {
       TextAttributes placeholderAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
-      layout = new LineLayout(this, foldRegion.getPlaceholderText(), 
+      layout = LineLayout.create(this, foldRegion.getPlaceholderText(), 
                               placeholderAttributes == null ? Font.PLAIN : placeholderAttributes.getFontType());
       foldRegion.putUserData(FOLD_REGION_TEXT_LAYOUT, layout);
     }
@@ -466,5 +464,19 @@ public class EditorView implements TextDrawingCallback, Disposable {
   @Override
   public void drawChars(@NotNull Graphics g, @NotNull char[] data, int start, int end, int x, int y, Color color, FontInfo fontInfo) {
     myPainter.drawChars(g, data, start, end, x, y, color, fontInfo);
+  }
+
+  @NotNull
+  @Override
+  public String dumpState() {
+    return "[prefix text: " + myPrefixText + 
+           ", prefix attributes: " + myPrefixAttributes + 
+           ", space width: " + myPlainSpaceWidth +
+           ", line height: " + myLineHeight +
+           ", descent: " + myDescent +
+           ", char height: " + myCharHeight +
+           ", max char width: " + myMaxCharWidth +
+           ", tab size: " + myTabSize + 
+           " ,size manager: " + mySizeManager.dumpState() + "]";
   }
 }

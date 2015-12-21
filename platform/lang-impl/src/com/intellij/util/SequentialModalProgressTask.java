@@ -118,7 +118,6 @@ public class SequentialModalProgressTask extends Task.Modal {
     myTask = task;
   }
   
-  @Nullable
   public ProgressIndicator getIndicator() {
     return myIndicator;
   }

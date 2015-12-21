@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -158,10 +159,14 @@ class ContractInferenceInterpreter {
   }
 
   private List<MethodContract> handleCallDelegation(PsiMethodCallExpression expression, final boolean negated) {
-    final PsiMethod targetMethod = expression.resolveMethod();
+    JavaResolveResult result = expression.resolveMethodGenerics();
+    final PsiMethod targetMethod = (PsiMethod)result.getElement();
     if (targetMethod == null) return Collections.emptyList();
-    
+
+    final PsiParameter[] parameters = targetMethod.getParameterList().getParameters();
     final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
+    final boolean varArgCall = MethodCallInstruction.isVarArgCall(targetMethod, result.getSubstitutor(), arguments, parameters);
+
     final boolean notNull = NullableNotNullManager.isNotNull(targetMethod);
     List<MethodContract> fromDelegate = ContainerUtil.mapNotNull(ControlFlowAnalyzer.getMethodContracts(targetMethod), new NullableFunction<MethodContract, MethodContract>() {
       @Nullable
@@ -170,9 +175,15 @@ class ContractInferenceInterpreter {
         ValueConstraint[] answer = myEmptyConstraints;
         for (int i = 0; i < delegateContract.arguments.length; i++) {
           if (i >= arguments.length) return null;
-
           ValueConstraint argConstraint = delegateContract.arguments[i];
           if (argConstraint != ANY_VALUE) {
+            if (varArgCall && i >= parameters.length - 1) {
+              if (argConstraint == NULL_VALUE) {
+                return null;
+              }
+              break;
+            }
+
             int paramIndex = resolveParameter(arguments[i]);
             if (paramIndex < 0) {
               if (argConstraint != getLiteralConstraint(arguments[i])) {

@@ -26,7 +26,6 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -201,7 +200,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   }
 
   private boolean edgeIsVisibleInRow(@NotNull GraphEdge edge, int visibleRowIndex) {
-    Pair<Integer, Integer> normalEdge = LinearGraphUtils.asNormalEdge(edge);
+    Pair<Integer, Integer> normalEdge = asNormalEdge(edge);
     if (normalEdge == null) // e.d. edge is special. See addSpecialEdges
     {
       return false;

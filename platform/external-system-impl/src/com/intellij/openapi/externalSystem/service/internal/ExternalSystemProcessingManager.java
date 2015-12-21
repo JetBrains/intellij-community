@@ -130,7 +130,7 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
   }
 
   @Override
-  public void onQueued(@NotNull ExternalSystemTaskId id) {
+  public void onQueued(@NotNull ExternalSystemTaskId id, String workingDir) {
     myTasksInProgress.put(id, System.currentTimeMillis() + TOO_LONG_EXECUTION_MS);
     if (myAlarm.getActiveRequestCount() <= 0) {
       myAlarm.addRequest(new Runnable() {
@@ -171,6 +171,14 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
 
   @Override
   public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
+  }
+
+  @Override
+  public void beforeCancel(@NotNull ExternalSystemTaskId id) {
+  }
+
+  @Override
+  public void onCancel(@NotNull ExternalSystemTaskId id) {
   }
 
   public void update() {

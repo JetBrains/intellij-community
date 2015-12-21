@@ -329,9 +329,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     return normalizeFileSpec(result)
   }
 
-  override fun startExternalization() = StateStorageManagerExternalizationSession(this)
-
-  private class StateStorageManagerExternalizationSession(private val storageManager: StateStorageManagerImpl) : StateStorageManager.ExternalizationSession {
+  override final fun startExternalization() = object : StateStorageManager.ExternalizationSession {
     private val sessions = LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>()
 
     override fun setState(storageSpecs: Array<Storage>, component: Any, componentName: String, state: Any) {
@@ -342,14 +340,13 @@ open class StateStorageManagerImpl(private val rootTagName: String,
           continue
         }
 
-        getExternalizationSession(storageManager.getStateStorage(storageSpec))?.setState(component, componentName, if (storageSpec.deprecated || resolution === Resolution.CLEAR) Element("empty") else state)
+        getExternalizationSession(getStateStorage(storageSpec))?.setState(component, componentName, if (storageSpec.deprecated || resolution == Resolution.CLEAR) Element("empty") else state)
       }
     }
 
     override fun setStateInOldStorage(component: Any, componentName: String, state: Any) {
-      val storage = storageManager.getOldStorage(component, componentName, StateStorageOperation.WRITE)
-      if (storage != null) {
-        getExternalizationSession(storage)?.setState(component, componentName, state)
+      getOldStorage(component, componentName, StateStorageOperation.WRITE)?.let {
+        getExternalizationSession(it)?.setState(component, componentName, state)
       }
     }
 
@@ -387,7 +384,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
   }
 
-  override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? {
+  override final fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? {
     val oldStorageSpec = getOldStorageSpec(component, componentName, operation) ?: return null
     @Suppress("DEPRECATION")
     return getOrCreateStorage(oldStorageSpec, if (component is com.intellij.openapi.util.RoamingTypeDisabled) RoamingType.DISABLED else RoamingType.DEFAULT)
@@ -396,7 +393,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   protected open fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? = null
 }
 
-fun String.startsWithMacro(macro: String): Boolean {
+private fun String.startsWithMacro(macro: String): Boolean {
   val i = macro.length
   return length > i && this[i] == '/' && startsWith(macro)
 }
+
+fun removeMacroIfStartsWith(path: String, macro: String) = if (path.startsWithMacro(macro)) path.substring(macro.length + 1) else path

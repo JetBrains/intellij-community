@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -206,7 +207,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
     for (int i = 0; i < referenceData.length; i++) {
       PsiElement ref = refs[i];
       if (ref != null) {
-        LOG.assertTrue(ref.isValid());
+        PsiUtilCore.ensureValid(ref);
         Object refObject = refObjects[i];
         boolean found = false;
         for (Object selected : selectedObjects) {

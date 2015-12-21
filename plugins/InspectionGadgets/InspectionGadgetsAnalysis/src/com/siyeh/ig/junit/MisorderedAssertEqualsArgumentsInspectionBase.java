@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -187,8 +187,13 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
       registerMethodCallError(expression);
     }
 
-    private boolean looksLikeExpectedArgument(PsiExpression expression) {
-      if (ExpressionUtils.computeConstantExpression(expression) != null || PsiType.NULL.equals(expression.getType())) {
+    private boolean looksLikeExpectedArgument(@Nullable PsiExpression expression) {
+      expression = ParenthesesUtils.stripParentheses(expression);
+      if (expression == null) {
+        return false;
+      }
+      final PsiType type = expression.getType();
+      if (ExpressionUtils.computeConstantExpression(expression) != null || PsiType.NULL.equals(type)) {
         return true;
       }
       if (expression instanceof PsiReferenceExpression) {
@@ -197,11 +202,25 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
         if (target instanceof PsiEnumConstant) {
           return true;
         }
-        if ((target instanceof PsiField)) {
+        else if ((target instanceof PsiField)) {
           final PsiField field = (PsiField)target;
           if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL)) {
             return true;
           }
+        }
+        else if (target instanceof PsiLocalVariable) {
+          final PsiVariable variable = (PsiLocalVariable)target;
+          final PsiExpression definition = VariableSearchUtils.findDefinition(referenceExpression, variable);
+          if (LibraryUtil.isOnlyLibraryCodeUsed(definition)) {
+            return true;
+          }
+        }
+      }
+      if (expression instanceof PsiCallExpression && type instanceof PsiClassType) {
+        final PsiClassType classType = (PsiClassType)type;
+        final PsiClass aClass = classType.resolve();
+        if (aClass instanceof PsiCompiledElement) {
+            return LibraryUtil.isOnlyLibraryCodeUsed(expression);
         }
       }
       return false;

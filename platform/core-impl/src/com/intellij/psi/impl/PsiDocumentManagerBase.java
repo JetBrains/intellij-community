@@ -253,10 +253,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return true;
     }
     if (myUncommittedDocuments.isEmpty()) {
-      action.run();
-      if (!hasUncommitedDocuments()) {
+      if (!ApplicationManager.getApplication().hasWriteAction(CommitToPsiFileAction.class)) {
+        // in case of fireWriteActionFinished() we didn't execute 'actionsWhenAllDocumentsAreCommitted' yet
         assert actionsWhenAllDocumentsAreCommitted.isEmpty() : actionsWhenAllDocumentsAreCommitted;
       }
+      action.run();
       return true;
     }
 
@@ -611,6 +612,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       DocumentWindow window = (DocumentWindow)document;
       Document delegate = window.getDelegate();
       if (delegate instanceof FrozenDocument) return (DocumentEx)window;
+
+      if (!window.isValid()) {
+        throw new AssertionError("host committed: " + isCommitted(delegate) + ", window=" + window);
+      }
 
       UncommittedInfo info = myUncommittedInfos.get(delegate);
       DocumentWindow answer = info == null ? null : info.myFrozenWindows.get(document);

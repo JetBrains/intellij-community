@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,19 @@ import org.jetbrains.annotations.NotNull;
  * @author traff
  */
 public class CapturingAnsiEscapesAwareProcessHandler extends CapturingProcessHandler {
-  public CapturingAnsiEscapesAwareProcessHandler(@NotNull GeneralCommandLine commandLine)
-    throws ExecutionException {
+  public CapturingAnsiEscapesAwareProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
   }
 
+  /** @deprecated Use {@link #CapturingAnsiEscapesAwareProcessHandler(Process, String)} instead (to be removed in IDEA 17) */
+  @SuppressWarnings({"deprecation", "unused"})
+  @Deprecated
   public CapturingAnsiEscapesAwareProcessHandler(Process process) {
     super(process);
+  }
+
+  public CapturingAnsiEscapesAwareProcessHandler(@NotNull Process process, @NotNull String commandLine) {
+    super(process, null, commandLine);
   }
 
   @Override

@@ -53,7 +53,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   private ChangeListsIndexes myIdx;
   private final ChangesDelta myDelta;
-  private final List<String> myListsToDisappear;
+  private final Set<String> myListsToDisappear;
 
   public ChangeListWorker(final Project project, final PlusMinusModify<BaseRevision> deltaListener) {
     myProject = project;
@@ -63,7 +63,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     mySwitchedHolder = new SwitchedFileHolder(project, FileHolder.HolderType.SWITCHED);
 
     myDelta = new ChangesDelta(deltaListener);
-    myListsToDisappear = new LinkedList<String>();
+    myListsToDisappear = ContainerUtil.newLinkedHashSet();
   }
 
   private ChangeListWorker(final ChangeListWorker worker) {
@@ -73,7 +73,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myLocallyDeleted = worker.myLocallyDeleted.copy();
     mySwitchedHolder = worker.mySwitchedHolder.copy();
     myDelta = worker.myDelta;
-    myListsToDisappear = new LinkedList<String>(worker.myListsToDisappear);
+    myListsToDisappear = ContainerUtil.newLinkedHashSet(worker.myListsToDisappear);
     
     LocalChangeList defaultList = null;
     for (LocalChangeList changeList : worker.myMap.values()) {
@@ -234,7 +234,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return changeList != null;
   }
 
-  public void addChangeToCorrespondingList(final Change change, final VcsKey vcsKey) {
+  public void addChangeToCorrespondingList(@NotNull Change change, final VcsKey vcsKey) {
     final String path = ChangesUtil.getFilePath(change).getPath();
     LOG.debug("[addChangeToCorrespondingList] for change " + path  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
     assert myDefault != null;

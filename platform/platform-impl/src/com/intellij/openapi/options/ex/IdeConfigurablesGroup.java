@@ -20,6 +20,10 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
 
+/**
+ * @deprecated ShowSettingsUtilImpl#getConfigurableGroups(null, true)
+ */
+@Deprecated
 public class IdeConfigurablesGroup extends ConfigurablesGroupBase implements ConfigurableGroup {
   public IdeConfigurablesGroup() {
     super(ApplicationManager.getApplication(), Configurable.APPLICATION_CONFIGURABLE);
