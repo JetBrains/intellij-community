@@ -282,8 +282,8 @@ public class PyQualifiedReference extends PyReferenceImpl {
           if (name != null && name.endsWith(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) {
             continue;
           }
-          if (ex instanceof PsiNamedElement && qualifierType instanceof PyClassType) {
-            variants.add(LookupElementBuilder.create((PsiNamedElement)ex)
+          if (ex instanceof PsiNamedElement && qualifierType instanceof PyClassType && name != null) {
+            variants.add(LookupElementBuilder.createWithSmartPointer(name, ex)
                            .withTypeText(qualifierType.getName())
                            .withIcon(PlatformIcons.FIELD_ICON));
           }

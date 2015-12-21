@@ -18,9 +18,6 @@ package com.intellij.refactoring;
 import com.intellij.refactoring.typeMigration.rules.LongAdderConversionRule;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * @author Dmitry Batkovich
  */
@@ -33,25 +30,21 @@ public class TypeMigrationByLongAdderTest extends TypeMigrationTestBase {
 
   public void testDirectCallsWithoutAssignment() {
     doTestFieldType("l",
-                    myJavaFacade.getElementFactory().createTypeFromText(AtomicLong.class.getName(), null),
                     myJavaFacade.getElementFactory().createTypeFromText(LongAdderConversionRule.JAVA_UTIL_CONCURRENT_ATOMIC_LONG_ADDER, null));
   }
 
   public void testIncrementDecrement() {
     doTestFieldType("l",
-                    myJavaFacade.getElementFactory().createTypeFromText(AtomicLong.class.getName(), null),
                     myJavaFacade.getElementFactory().createTypeFromText(LongAdderConversionRule.JAVA_UTIL_CONCURRENT_ATOMIC_LONG_ADDER, null));
   }
 
   public void testToPrimitivesAndString() {
     doTestFieldType("i",
-                    myJavaFacade.getElementFactory().createTypeFromText(AtomicInteger.class.getName(), null),
                     myJavaFacade.getElementFactory().createTypeFromText(LongAdderConversionRule.JAVA_UTIL_CONCURRENT_ATOMIC_LONG_ADDER, null));
   }
 
   public void testUnconvertable() {
     doTestFieldType("i",
-                    myJavaFacade.getElementFactory().createTypeFromText(AtomicInteger.class.getName(), null),
                     myJavaFacade.getElementFactory().createTypeFromText(LongAdderConversionRule.JAVA_UTIL_CONCURRENT_ATOMIC_LONG_ADDER, null));
   }
 }

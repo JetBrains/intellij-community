@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 
 import java.util.Random;
@@ -31,7 +32,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     for (int maxTasks=1; maxTasks<5;maxTasks++) {
       System.out.println("maxTasks = " + maxTasks);
       ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory("maxTasks = " + maxTasks));
-      BoundedTaskExecutorService executor = new BoundedTaskExecutorService(backendExecutor, maxTasks);
+      BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, maxTasks);
       AtomicInteger running = new AtomicInteger();
       AtomicInteger max = new AtomicInteger();
       AtomicInteger executed = new AtomicInteger();
@@ -49,7 +50,15 @@ public class BoundedTaskExecutorTest extends TestCase {
           }
         });
       }
-      executor.waitAllTasksExecuted();
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        try {
+          executor.waitAllTasksExecuted(5, TimeUnit.MINUTES);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      });
+
       assertEquals(0, executor.shutdownNow().size());
       assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
       backendExecutor.shutdownNow();
@@ -61,7 +70,7 @@ public class BoundedTaskExecutorTest extends TestCase {
 
   public void testCallableReallyReturnsValue() throws Exception{
     ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(getName()));
-    BoundedTaskExecutorService executor = new BoundedTaskExecutorService(backendExecutor, 1);
+    BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, 1);
 
     Future<Integer> f1 = executor.submit(() -> 42);
     Integer result = f1.get();
@@ -75,7 +84,7 @@ public class BoundedTaskExecutorTest extends TestCase {
   public void testEarlyCancelPreventsRunning() throws ExecutionException, InterruptedException {
     AtomicBoolean run = new AtomicBoolean();
     ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(getName()));
-    BoundedTaskExecutorService executor = new BoundedTaskExecutorService(backendExecutor, 1);
+    BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, 1);
 
     int delay = 500;
     Future<?> s1 = executor.submit((Runnable)() -> TimeoutUtil.sleep(delay));
@@ -99,7 +108,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(getName()));
     for (int maxSimultaneousTasks = 1; maxSimultaneousTasks<20; maxSimultaneousTasks++) {
       final Disposable myDisposable = Disposer.newDisposable();
-      BoundedTaskExecutorService executor = new BoundedTaskExecutorService(backendExecutor, maxSimultaneousTasks, myDisposable);
+      BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, maxSimultaneousTasks, myDisposable);
       AtomicInteger running = new AtomicInteger();
       AtomicInteger maxThreads = new AtomicInteger();
 
@@ -131,7 +140,14 @@ public class BoundedTaskExecutorTest extends TestCase {
             }
           });
         }
-        executor.waitAllTasksExecuted();
+        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+          try {
+            executor.waitAllTasksExecuted(5, TimeUnit.MINUTES);
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        });
         for (Future future : futures) {
           assertTrue(future.isDone());
         }
@@ -149,10 +165,10 @@ public class BoundedTaskExecutorTest extends TestCase {
 
   public void testSequentialSubmitsMustExecuteSequentially() throws ExecutionException, InterruptedException {
     ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(getName()));
-    BoundedTaskExecutorService executor = new BoundedTaskExecutorService(backendExecutor, 1);
+    BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, 1);
     int N = 100000;
     StringBuffer log = new StringBuffer(N*4);
-    StringBuffer expected = new StringBuffer(N*4);
+    StringBuilder expected = new StringBuilder(N * 4);
 
     Future[] futures = new Future[N];
     for (int i = 0; i < N; i++) {
@@ -170,5 +186,109 @@ public class BoundedTaskExecutorTest extends TestCase {
     assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
     backendExecutor.shutdownNow();
     assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
+  }
+
+  public void testStressForHorribleABAProblemWhenFirstThreadFinishesTaskAndIsAboutToDecrementCountAndSecondThreadIncrementsCounterToTwoThenSkipsExecutionThenDecrementsItBackAndTheFirstThreadFinishedDecrementingSuccessfully() throws Exception {
+    ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(getName()));
+    int maxSimultaneousTasks = 1;
+    final Disposable myDisposable = Disposer.newDisposable();
+    BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, maxSimultaneousTasks, myDisposable);
+    AtomicInteger running = new AtomicInteger();
+    AtomicInteger maxThreads = new AtomicInteger();
+
+    try {
+      int N = 100000;
+      for (int i = 0; i < N; i++) {
+        final int finalI = i;
+        Future<?> future = executor.submit(new Runnable() {
+          @Override
+          public void run() {
+            maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
+
+            try {
+              if (finalI % 100 == 0) {
+                TimeoutUtil.sleep(1);
+              }
+            }
+            finally {
+              running.decrementAndGet();
+            }
+          }
+
+          @Override
+          public String toString() {
+            return "iter " + finalI;
+          }
+        });
+        CountDownLatch waitCompleted = new CountDownLatch(1);
+        CountDownLatch waitStarted = new CountDownLatch(1);
+        UIUtil.invokeLaterIfNeeded(() -> {
+          try {
+            waitStarted.countDown();
+            executor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
+            waitCompleted.countDown();
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        });
+        waitStarted.await();
+        executor.execute(new Runnable() {
+          @Override
+          public void run() {
+            maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
+
+            try {
+              //TimeoutUtil.sleep(1);
+            }
+            finally {
+              running.decrementAndGet();
+            }
+          }
+
+          @Override
+          public String toString() {
+            return "check for " + finalI;
+          }
+        });
+        //TimeoutUtil.sleep(1);
+        executor.execute(new Runnable() {
+          @Override
+          public void run() {
+            maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
+
+            try {
+              //TimeoutUtil.sleep(1);
+            }
+            finally {
+              running.decrementAndGet();
+            }
+          }
+
+          @Override
+          public String toString() {
+            return "check 2 for " + finalI;
+          }
+        });
+        assertTrue(waitCompleted.await(1, TimeUnit.MINUTES));
+        assertTrue(future.isDone());
+      }
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        try {
+          executor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      });
+    }
+    finally {
+      Disposer.dispose(myDisposable);
+      assertTrue(executor.isShutdown());
+    }
+
+    assertTrue("Max threads was: "+maxThreads+" but bound was 1", maxThreads.get() == 1);
+    backendExecutor.shutdownNow();
+    assertTrue(backendExecutor.awaitTermination(1, TimeUnit.MINUTES));
   }
 }

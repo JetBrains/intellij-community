@@ -133,7 +133,7 @@ public class ConfigImportHelper {
   }
 
   private static String getPrefixFromSelector(String selector) {
-    return (SystemInfo.isMac ? "" : ".") + selector.replaceAll("\\d", "");
+    return (SystemInfo.isMac ? "" : ".") + selector.replaceAll("\\d(\\.\\d)?", "");
   }
 
   private static void doImport(@NotNull File newConfigDir, @NotNull File oldConfigDir, ConfigImportSettings settings, File installationHome) {

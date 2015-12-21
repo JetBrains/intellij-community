@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -24,6 +25,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,11 +36,17 @@ import javax.swing.*;
  * <strong>Due to a high I/O impact SHOULD NOT be used in any other cases.</strong>
  */
 public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
-  private static final Icon ourProjectIcon = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
+  private static final Icon ourProjectIcon = PlatformUtils.isJetBrainsProduct()
+                                 ? AllIcons.Nodes.IdeaProject
+                                 : IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
   private static final boolean ourCanInspectDirs = SystemProperties.getBooleanProperty("idea.chooser.lookup.for.project.dirs", true);
 
   public OpenProjectFileChooserDescriptor(boolean chooseFiles) {
-    super(chooseFiles, true, chooseFiles, chooseFiles, false, false);
+    this(chooseFiles, chooseFiles);
+  }
+
+  public OpenProjectFileChooserDescriptor(boolean chooseFiles, boolean chooseJars) {
+    super(chooseFiles, true, chooseJars, chooseJars, false, false);
     setHideIgnored(false);
   }
 

@@ -24,7 +24,9 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ui.IDEInspectionToolsConfigurable;
+import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
+
+import javax.swing.*;
 
 public class CodeCleanupAction extends CodeInspectionAction {
 
@@ -48,9 +50,10 @@ public class CodeCleanupAction extends CodeInspectionAction {
   }
 
   @Override
-  protected IDEInspectionToolsConfigurable createConfigurable(InspectionProjectProfileManager projectProfileManager,
-                                                              InspectionProfileManager profileManager) {
-    return new IDEInspectionToolsConfigurable(projectProfileManager, profileManager) {
+  protected InspectionToolsConfigurable createConfigurable(InspectionProjectProfileManager projectProfileManager,
+                                                           InspectionProfileManager profileManager,
+                                                           JComboBox profilesCombo) {
+    return new ExternalProfilesComboboxAwareInspectionToolsConfigurable(projectProfileManager, profileManager, profilesCombo) {
       @Override
       protected boolean acceptTool(InspectionToolWrapper entry) {
         return super.acceptTool(entry) && entry.isCleanupTool();

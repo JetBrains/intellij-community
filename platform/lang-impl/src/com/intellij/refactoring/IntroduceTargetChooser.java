@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,7 +127,7 @@ public class IntroduceTargetChooser {
         @Override
         public void run() {
           SmartPsiElementPointer<T> value = (SmartPsiElementPointer<T>)list.getSelectedValue();
-          T expr = value.getElement();
+          T expr = value != null ? value.getElement() : null;
           if (expr != null) {
             callback.pass(expr);
           }

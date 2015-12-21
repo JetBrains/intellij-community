@@ -18,6 +18,7 @@ package com.intellij.util;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -43,9 +44,9 @@ public class JdkBundle {
   private boolean myBoot;
   private boolean myBundled;
 
-  public JdkBundle(@NotNull File bundleAsFile,
-                   @NotNull String bundleName,
-                   @Nullable Pair<Version, Integer> versionUpdate, boolean boot, boolean bundled) {
+  JdkBundle(@NotNull File bundleAsFile,
+            @NotNull String bundleName,
+            @Nullable Pair<Version, Integer> versionUpdate, boolean boot, boolean bundled) {
     myBundleAsFile = bundleAsFile;
     myBundleName = bundleName;
     myVersionUpdate = versionUpdate;
@@ -61,11 +62,18 @@ public class JdkBundle {
   }
 
   @Nullable
-  public static JdkBundle createBundle(@NotNull File jvm, @NotNull String homeSubPath, boolean boot, boolean bundled) {
+  static JdkBundle createBundle(@NotNull File jvm, @NotNull String homeSubPath, boolean boot, boolean bundled) {
     File javaHome = SystemInfo.isMac ? new File(jvm, homeSubPath) : jvm;
-    if (!new File(javaHome, "lib" + File.separator + "tools.jar").exists()) return null; // Skip JRE
+    if (bundled) javaHome = new File(PathManager.getHomePath(), javaHome.getPath());
+    boolean hasToolsJar = new File(javaHome, "lib" + File.separator + "tools.jar").exists();
+    if (!SystemInfo.isMac && !hasToolsJar) return null; // Skip jre
 
-    Pair<String, Pair<Version, Integer>> nameVersionAndUpdate = getJDKNameVersionAndUpdate(jvm, homeSubPath);
+    File absJvmLocation = bundled ? new File(PathManager.getHomePath(), jvm.getPath()) : jvm;
+    Pair<String, Pair<Version, Integer>> nameVersionAndUpdate = getJDKNameVersionAndUpdate(absJvmLocation, homeSubPath);
+
+    if (SystemInfo.isMac && nameVersionAndUpdate.second != null && nameVersionAndUpdate.second.first.isOrGreaterThan(1, 7) && !hasToolsJar)
+      return null; // Skip jre
+
     return new JdkBundle(jvm, nameVersionAndUpdate.first, nameVersionAndUpdate.second, boot, bundled);
   }
 
@@ -75,7 +83,7 @@ public class JdkBundle {
   }
 
   @Nullable
-  public static JdkBundle createBoot(boolean adjustToMacBundle) {
+  static JdkBundle createBoot(boolean adjustToMacBundle) {
     File bootJDK = new File(System.getProperty("java.home")).getParentFile();
     if (SystemInfo.isMac && adjustToMacBundle) {
       bootJDK = bootJDK.getParentFile().getParentFile();
@@ -85,7 +93,12 @@ public class JdkBundle {
   }
 
   @NotNull
-  public File getBundleAsFile() {
+  File getAbsoluteLocation() {
+    return myBundled ? new File(PathManager.getHomePath(), myBundleAsFile.getPath()) : myBundleAsFile;
+  }
+
+  @NotNull
+  public File getLocation() {
     return myBundleAsFile;
   }
 
@@ -118,7 +131,7 @@ public class JdkBundle {
   }
 
   @Nullable
-  public Pair<Version, Integer> getVersionUpdate() {
+  Pair<Version, Integer> getVersionUpdate() {
     return myVersionUpdate;
   }
 
@@ -128,7 +141,7 @@ public class JdkBundle {
   }
 
   @NotNull
-  public String getNameVersion() {
+  String getNameVersion() {
     return myBundleName + ((myVersionUpdate != null) ? myVersionUpdate.first.toString() : "");
   }
 
@@ -144,6 +157,16 @@ public class JdkBundle {
       displayVersion = ExecUtil.readFirstLine(commandLine.createProcess().getErrorStream(), null);
     }
     catch (ExecutionException e) {
+      // Checking for jdk 6 on mac
+      if (SystemInfo.isMac) {
+        commandLine.setExePath(new File(jvm,  homeSubPath + File.separator +  "bin" + File.separator + "java").getAbsolutePath());
+        try {
+          displayVersion = ExecUtil.readFirstLine(commandLine.createProcess().getErrorStream(), null);
+        }
+        catch (ExecutionException e1) {
+          LOG.debug(e);
+        }
+      }
       LOG.debug(e);
     }
 

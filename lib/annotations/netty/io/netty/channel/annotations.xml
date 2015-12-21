@@ -1,4 +1,7 @@
 <root>
+  <item name='io.netty.channel.ChannelInboundHandlerAdapter void channelActive(io.netty.channel.ChannelHandlerContext) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='io.netty.channel.ChannelInboundHandlerAdapter void channelInactive(io.netty.channel.ChannelHandlerContext) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

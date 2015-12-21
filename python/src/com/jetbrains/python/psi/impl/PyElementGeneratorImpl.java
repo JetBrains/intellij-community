@@ -74,12 +74,20 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
 
   public PsiFile createDummyFile(LanguageLevel langLevel, String contents, boolean physical) {
     final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
-    final String name = "dummy." + PythonFileType.INSTANCE.getDefaultExtension();
+    final String name = getDummyFileName();
     final LightVirtualFile virtualFile = new LightVirtualFile(name, PythonFileType.INSTANCE, contents);
     virtualFile.putUserData(LanguageLevel.KEY, langLevel);
     final PsiFile psiFile = ((PsiFileFactoryImpl)factory).trySetupPsiForFile(virtualFile, PythonLanguage.getInstance(), physical, true);
     assert psiFile != null;
     return psiFile;
+  }
+
+  /**
+   * @return name used for {@link #createDummyFile(LanguageLevel, String)}
+   */
+  @NotNull
+  public static String getDummyFileName() {
+    return "dummy." + PythonFileType.INSTANCE.getDefaultExtension();
   }
 
   public PyStringLiteralExpression createStringLiteralAlreadyEscaped(String str) {

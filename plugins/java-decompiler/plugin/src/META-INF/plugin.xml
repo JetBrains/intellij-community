@@ -16,7 +16,6 @@
   <resource-bundle>messages.Decompiler</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
 
     <psi.classFileDecompiler implementation="org.jetbrains.java.decompiler.IdeaDecompiler" order="last"/>
   </extensions>

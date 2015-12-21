@@ -12,7 +12,7 @@ class MyTest {
 
     {
       I i = Foo<String> :: foo;
-      I i1 = Foo<Integer> :: <error descr="Cannot resolve method 'foo'">foo</error>;
+      I i1 = <error descr="Non-static method cannot be referenced from a static context">Foo<Integer> :: foo</error>;
     }
   }
 }

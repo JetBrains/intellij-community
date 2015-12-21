@@ -19,5 +19,5 @@ package com.intellij.openapi.externalSystem.model.task.event;
  * @author Vladislav.Soroka
  * @since 11/27/2015
  */
-public interface ExternalSystemStartEvent extends ExternalSystemProgressEvent{
+public interface ExternalSystemStartEvent<T extends OperationDescriptor> extends ExternalSystemProgressEvent<T> {
 }

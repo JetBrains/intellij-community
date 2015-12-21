@@ -66,6 +66,13 @@ public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetec
       .cpuBound()
       .useLegacyScaling().assertTiming();
   }
+  
+  public void testBigOneLineFile() {
+    configureByFile("oneLine.json");
+    long time = trackTime(AbstractIndentAutoDetectionTest::detectIndentOptions);
+    assertTrue(time < 40);
+  }
+  
 
   private static long trackTime(Runnable runnable) {
     long startTime = System.currentTimeMillis();

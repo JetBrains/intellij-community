@@ -41,7 +41,7 @@ public class GuavaFunctionConversionRule extends BaseGuavaTypeConversionRule {
   @Override
   protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
                                                                             @NotNull PsiVariable psiVariable, PsiExpression context) {
-    return new TypeConversionDescriptor("$f$", "$f$::apply");
+    return new FunctionalInterfaceTypeConversionDescriptor("apply", "apply");
   }
 
   @NotNull

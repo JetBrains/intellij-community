@@ -512,10 +512,6 @@ public class ExternalSystemApiUtil {
 
   public static <T> T executeOnEdt(@NotNull final Computable<T> task) {
     final Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
-      return task.compute();
-    }
-
     final Ref<T> result = Ref.create();
     app.invokeAndWait(new Runnable() {
       @Override

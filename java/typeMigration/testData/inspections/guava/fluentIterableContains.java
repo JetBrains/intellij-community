@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class Main21 {
   void m() {
-    FluentIterable<String> it = FluentIterable.fr<caret>om(new ArrayList<String>());
+    FluentIterable<String> i<caret>t = FluentIterable.from(new ArrayList<String>());
 
     boolean s = it.contains("asd");
 

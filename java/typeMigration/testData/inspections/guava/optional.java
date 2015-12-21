@@ -3,7 +3,7 @@ import com.google.common.base.Optional;
 class A {
 
   void m() {
-    Option<caret>al<String> o = Optional.absent();
+    Optional<String> <caret>o = Optional.absent();
     String s = o.get();
     Optional<String> yetAnotherOptional = Optional.fromNullable("bla-bla");
     System.out.println(o.or(yetAnotherOptional));

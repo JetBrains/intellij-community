@@ -47,7 +47,7 @@ abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
 
       var empty = true
       var squashed = true
-      ThreeSide.values.forEach {
+      ThreeSide.values().forEach {
         val start = starts(it)
         val end = ends(it)
         val last = lasts(it)

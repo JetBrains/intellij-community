@@ -4,7 +4,7 @@ import java.util.Collections;
 class A {
 
   Optional<String> m1() {
-    Optiona<caret>l<String> o = Optional.absent();
+    Optional<String> <caret>o = Optional.absent();
     String s = o.get();
     return o;
   }

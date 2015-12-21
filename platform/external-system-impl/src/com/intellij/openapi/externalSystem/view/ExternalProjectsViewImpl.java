@@ -38,13 +38,11 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataMan
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -52,8 +50,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.SimpleTree;
@@ -583,7 +579,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   @Nullable
-  private Location extractLocation() {
+  private ExternalSystemTaskLocation extractLocation() {
     final List<ExternalSystemNode> selectedNodes = getSelectedNodes(ExternalSystemNode.class);
     if (selectedNodes.isEmpty()) return null;
 
@@ -615,13 +611,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     taskExecutionInfo.getSettings().setExternalSystemIdString(myExternalSystemId.toString());
     taskExecutionInfo.getSettings().setExternalProjectPath(projectPath);
 
-    String name = myExternalSystemId.getReadableName() + projectPath + StringUtil.join(taskExecutionInfo.getSettings().getTaskNames(), " ");
-    // We create a dummy text file instead of re-using external system file in order to avoid clashing with other configuration producers.
-    // For example gradle files are enhanced groovy scripts but we don't want to run them via regular IJ groovy script runners.
-    // Gradle tooling api should be used for running gradle tasks instead. IJ execution sub-system operates on Location objects
-    // which encapsulate PsiElement and groovy runners are automatically applied if that PsiElement IS-A GroovyFile.
-    PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(name, PlainTextFileType.INSTANCE, "");
-    return new ExternalSystemTaskLocation(myProject, file, taskExecutionInfo);
+    return ExternalSystemTaskLocation.create(myProject, myExternalSystemId, projectPath, taskExecutionInfo);
   }
 
   private VirtualFile extractVirtualFile() {

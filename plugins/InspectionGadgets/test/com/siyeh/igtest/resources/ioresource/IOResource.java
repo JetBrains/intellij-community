@@ -73,29 +73,25 @@ public class IOResource {
         } finally {
         }
     }
-
     public void foo7() throws IOException {
         FileInputStream str = null;
-        BufferedInputStream str2 = null;
+        InputStreamReader str2 = null;
         try {
-            str = new <warning descr="'FileInputStream' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">FileInputStream</warning>("bar");
-            str2 = new BufferedInputStream(str);
+            str = new FileInputStream("bar");
+            str2 = new <warning descr="'InputStreamReader' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">InputStreamReader</warning>(str);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
         str.close();
     }
-
-    /*public void correct() throws IOException {
-        FileInputStream str = null;
-        InputStreamReader reader = null;
+    public void correct() throws IOException {
+        FileInputStream str = new FileInputStream("xxxx");
+        InputStreamReader reader = new InputStreamReader(str);
         try {
-            str = new FileInputStream("xxxx");
-            reader = new InputStreamReader(str);
         } finally {
             reader.close();
         }
-    }*/
+    }
 
     public void correct2() throws IOException {
         FileInputStream str = new FileInputStream("xxxx");
@@ -208,5 +204,13 @@ public class IOResource {
 
   Reader escaped6(InputStream stream, String cs) {
     return cs == null ? new InputStreamReader(stream) : new InputStreamReader(stream, cs);
+  }
+
+  void closeable() {
+    new <warning descr="'Closeable' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">Closeable</warning>() {
+      public void close() throws IOException {
+
+      }
+    };
   }
 }

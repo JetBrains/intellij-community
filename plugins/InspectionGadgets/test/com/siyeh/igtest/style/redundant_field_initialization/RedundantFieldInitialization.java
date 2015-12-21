@@ -15,3 +15,18 @@ class RedudantFieldInitialization {
   private int type = DEFAULT_TYPE;
   private int type2 = ((DEFAULT_TYPE) + 0);
 }
+class InitializerOverwrite {
+
+  {
+    x1=42;
+    x2=42;
+  }
+  int x1;
+  int x2 = 0;
+
+  public static void main(String... args) {
+    InitializerOverwrite io = new InitializerOverwrite();
+    System.out.println(io.x1); // 42
+    System.out.println(io.x2); // 0
+  }
+}

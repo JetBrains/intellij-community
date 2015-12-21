@@ -20,6 +20,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TypeConversionDescriptorBase {
@@ -54,7 +55,7 @@ public class TypeConversionDescriptorBase {
     return null;
   }
 
-  public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+  public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
     return expression;
   }
 

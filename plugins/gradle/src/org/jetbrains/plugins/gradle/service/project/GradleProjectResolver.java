@@ -43,6 +43,7 @@ import com.intellij.util.containers.MultiMap;
 import org.gradle.tooling.*;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.BasicIdeaProject;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
@@ -52,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.settings.ClassHolder;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -143,7 +145,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     if(resolverCtx.isPreviewMode()){
       commandLineArgs.add("-Didea.isPreviewMode=true");
-      final Set<Class> previewLightWeightToolingModels = ContainerUtil.<Class>set(ExternalProjectPreview.class);
+      final Set<Class> previewLightWeightToolingModels = ContainerUtil.<Class>set(ExternalProjectPreview.class, GradleBuild.class);
       projectImportAction.addExtraProjectModelClasses(previewLightWeightToolingModels);
     }
 
@@ -412,7 +414,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           ContainerUtil.addAllNotNull(compileSet,
                                       moduleData.getCompileOutputPath(ExternalSystemSourceType.SOURCE),
                                       moduleData.getCompileOutputPath(ExternalSystemSourceType.RESOURCE));
-          if (!compileSet.isEmpty() && libraryPaths.containsAll(compileSet)) {
+          if (!compileSet.isEmpty() && ContainerUtil.intersects(libraryPaths, compileSet)) {
             targetModuleOutputPaths = compileSet;
           }
           else {
@@ -420,7 +422,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
             ContainerUtil.addAllNotNull(testSet,
                                         moduleData.getCompileOutputPath(ExternalSystemSourceType.TEST),
                                         moduleData.getCompileOutputPath(ExternalSystemSourceType.TEST_RESOURCE));
-            if (compileSet.isEmpty() && libraryPaths.containsAll(testSet)) {
+            if (compileSet.isEmpty() && ContainerUtil.intersects(libraryPaths, testSet)) {
               targetModuleOutputPaths = testSet;
             }
           }
@@ -662,8 +664,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     private final boolean myIsBuildSrcProject;
     private DefaultProjectResolverContext myResolverContext;
 
-    public ProjectConnectionDataNodeFunction(@NotNull DefaultProjectResolverContext resolverContext,
-                                             @NotNull GradleProjectResolverExtension projectResolverChain, boolean isBuildSrcProject) {
+    private ProjectConnectionDataNodeFunction(@NotNull DefaultProjectResolverContext resolverContext,
+                                              @NotNull GradleProjectResolverExtension projectResolverChain, boolean isBuildSrcProject) {
       myResolverContext = resolverContext;
       myProjectResolverChain = projectResolverChain;
       myIsBuildSrcProject = isBuildSrcProject;

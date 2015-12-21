@@ -51,6 +51,10 @@ internal class ExecutionStackImpl(private val suspendContext: SuspendContext<out
             }
 
             val frame = frames[i]
+            val asyncFunctionName = frame.asyncFunctionName
+            if (asyncFunctionName != null) {
+              result.add(AsyncFramesHeader(asyncFunctionName))
+            }
             // if script is null, it is native function (Object.forEach for example), so, skip it
             val script = viewSupport.vm?.scriptManager?.getScript(frame)
             if (script != null) {

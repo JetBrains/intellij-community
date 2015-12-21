@@ -290,6 +290,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @NotNull
   protected List<PyPackage> getPackages() throws ExecutionException {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return Lists.newArrayList(new PyPackage(PIP, PIP_VERSION, null, Collections.<PyRequirement>emptyList()),
+                                new PyPackage(SETUPTOOLS, SETUPTOOLS_VERSION, null, Collections.<PyRequirement>emptyList()));
+    }
     final String output = getHelperResult(PACKAGING_TOOL, Collections.singletonList("list"), false, false, null);
     return parsePackagingToolOutput(output);
   }

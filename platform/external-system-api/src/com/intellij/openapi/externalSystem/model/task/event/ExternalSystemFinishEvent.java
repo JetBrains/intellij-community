@@ -19,6 +19,6 @@ package com.intellij.openapi.externalSystem.model.task.event;
  * @author Vladislav.Soroka
  * @since 11/27/2015
  */
-public interface ExternalSystemFinishEvent extends ExternalSystemProgressEvent {
+public interface ExternalSystemFinishEvent<T extends OperationDescriptor> extends ExternalSystemProgressEvent<T> {
   OperationResult getOperationResult();
 }

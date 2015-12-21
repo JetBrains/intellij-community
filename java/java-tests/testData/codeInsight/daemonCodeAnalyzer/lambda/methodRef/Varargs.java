@@ -56,8 +56,8 @@ class MyTest {
 
     {
         I1 i_1 = <error descr="Non-static method cannot be referenced from a static context">MyTest::_1</error>;
-        I1 i_2 = MyTest::<error descr="Cannot resolve method '_2'">_2</error>;
-        I1 i_3 = MyTest::<error descr="Cannot resolve method '_3'">_3</error>;
+        I1 i_2 = <error descr="Non-static method cannot be referenced from a static context">MyTest::_2</error>;
+        I1 i_3 = <error descr="Non-static method cannot be referenced from a static context">MyTest::_3</error>;
         I1 i_4 = MyTest::<error descr="Cannot resolve method '_4'">_4</error>;
 
         I1 i1 = this::_1;

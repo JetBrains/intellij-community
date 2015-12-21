@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,9 @@ public class SubstitutorComputer {
     return false;
   }
 
-  public PsiSubstitutor obtainSubstitutor(PsiSubstitutor substitutor, PsiMethod method, ResolveState state) {
+  public PsiSubstitutor obtainSubstitutor(@NotNull PsiSubstitutor substitutor,
+                                          @NotNull PsiMethod method,
+                                          @Nullable PsiElement resolveContext) {
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (myTypeArguments.length == typeParameters.length) {
       for (int i = 0; i < typeParameters.length; i++) {
@@ -125,7 +127,6 @@ public class SubstitutorComputer {
 
     if (myArgumentTypes != null && method.hasTypeParameters()) {
       PsiType[] argTypes = myArgumentTypes;
-      final PsiElement resolveContext = state.get(ClassHint.RESOLVE_CONTEXT);
       if (method instanceof GrGdkMethod) {
         //type inference should be performed from static method
         PsiType[] newArgTypes = PsiType.createArray(argTypes.length + 1);

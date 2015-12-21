@@ -113,7 +113,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
 
   override final fun startStepInto() {
     updateLastCallFrame()
-    continueVm(StepAction.IN)
+    continueVm(if (vm!!.captureAsyncStackTraces) StepAction.IN_ASYNC else StepAction.IN)
   }
 
   override final fun startStepOut() {

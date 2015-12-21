@@ -74,6 +74,7 @@ public class ExecutorAction extends AnAction {
 
   private String getActionName(DataContext dataContext, @NotNull Executor executor) {
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    if (context.getLocation() == null) return null;
     List<RunConfigurationProducer<?>> producers = RunConfigurationProducer.getProducers(context.getProject());
     List<ConfigurationFromContext> list = ContainerUtil.mapNotNull(producers,
                                                                    new Function<RunConfigurationProducer<?>, ConfigurationFromContext>() {

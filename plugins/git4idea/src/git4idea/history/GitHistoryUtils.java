@@ -728,8 +728,7 @@ public class GitHistoryUtils {
   }
 
   /**
-   * Keep for compatibility with TeamCity plugin.
-   * To remove in IDEA 15.
+   * @deprecated To remove in IDEA 17
    */
   @Deprecated
   @SuppressWarnings("unused")
@@ -739,6 +738,10 @@ public class GitHistoryUtils {
     return onlyHashesHistory(project, path, root, parameters);
   }
 
+  /**
+   * @deprecated To remove in IDEA 17
+   */
+  @Deprecated
   public static List<Pair<SHAHash, Date>> onlyHashesHistory(Project project, FilePath path, final VirtualFile root, final String... parameters)
     throws VcsException {
     // adjust path using change manager

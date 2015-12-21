@@ -162,7 +162,7 @@ public class PyStringFormatParser {
   private static final String CONVERSION_FLAGS = "#0- +";
   private static final String DIGITS = "0123456789";
   private static final String LENGTH_MODIFIERS = "hlL";
-  private static final String VALID_CONVERSION_TYPES = "diouxXeEfFgGcrs";
+  private static final String VALID_CONVERSION_TYPES = "diouxXeEfFgGcrsb";
 
   private PyStringFormatParser(@NotNull String literal) {
     myLiteral = literal;

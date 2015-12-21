@@ -27,6 +27,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
+import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -75,7 +76,7 @@ public class FluentIterableConversionUtil {
         PsiType myType = parameters[0];
 
         @Override
-        public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+        public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
           if (!JavaGenericsUtil.isReifiableType(myType)) {
             final UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
             final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
@@ -99,7 +100,7 @@ public class FluentIterableConversionUtil {
           } else {
             setReplaceByString("$q$.toArray(" + myType.getCanonicalText(false) + "[]::new)");
           }
-          return super.replace(expression);
+          return super.replace(expression, evaluator);
         }
       };
     }
@@ -132,7 +133,7 @@ public class FluentIterableConversionUtil {
     }
 
     @Override
-    public PsiExpression replace(PsiExpression expression) {
+    public PsiExpression replace(PsiExpression expression, TypeEvaluator typeEvaluator) {
       PsiExpression argument = ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0];
 
       PsiAnonymousClass anonymousClass;
@@ -180,7 +181,7 @@ public class FluentIterableConversionUtil {
         return expression;
       }
 
-      return super.replace(expression);
+      return super.replace(expression, typeEvaluator);
     }
 
     private static boolean determineType(PsiExpression retValue,
@@ -232,12 +233,12 @@ public class FluentIterableConversionUtil {
     }
 
     @Override
-    public PsiExpression replace(PsiExpression expression) {
+    public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
       final PsiExpression argument = ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0];
       final PsiExpression newArgument = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText("(" + argument.getText() + ")::isInstance", argument);
       ParenthesesUtils.removeParentheses((PsiExpression)((PsiMethodReferenceExpression)newArgument).getQualifier(), false);
       argument.replace(newArgument);
-      return super.replace(expression);
+      return super.replace(expression, evaluator);
     }
   }
 

@@ -349,12 +349,21 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
       final PsiType type = field.getDeclaredType();
       if (!(type instanceof PsiClassType)) continue;
 
-      final PsiClass psiClass = ((PsiClassType)type).resolve();
+      final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+      final PsiClass psiClass = resolveResult.getElement();
       if (psiClass == null) continue;
+      final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
 
-      result.addAll(Arrays.asList(psiClass.getImplementsListTypes()));
       if (psiClass.isInterface()) {
         result.add((PsiClassType)type);
+      }
+      else {
+        for (PsiClassType implementsType : psiClass.getImplementsListTypes()) {
+          PsiType substituted = substitutor.substitute(implementsType);
+          if (substituted instanceof PsiClassType) {
+            result.add((PsiClassType)substituted);
+          }
+        }
       }
     }
   }

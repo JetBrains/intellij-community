@@ -50,7 +50,7 @@ import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.BoundedTaskExecutorService;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ConcurrentPackedBitsArray;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
@@ -72,6 +72,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -346,7 +347,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     System.out.println(message + " - "+Thread.currentThread());
   }
 
-  private final BoundedTaskExecutorService reDetectExecutor = new BoundedTaskExecutorService(PooledThreadExecutor.INSTANCE, 1, this);
+  private final BoundedTaskExecutor reDetectExecutor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1, this);
   private final BlockingQueue<VirtualFile> filesToRedetect = new LinkedBlockingDeque<VirtualFile>();
 
   private void awakeReDetectExecutor() {
@@ -367,7 +368,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @TestOnly
   public void drainReDetectQueue() {
     try {
-      reDetectExecutor.waitAllTasksExecuted();
+      reDetectExecutor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
     }
     catch (Exception e) {
       throw new RuntimeException(e);

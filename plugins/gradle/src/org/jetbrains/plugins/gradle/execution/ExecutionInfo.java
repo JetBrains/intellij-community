@@ -15,7 +15,9 @@
  */
 package org.jetbrains.plugins.gradle.execution;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor;
+import com.intellij.openapi.externalSystem.model.task.event.OperationDescriptorImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -23,30 +25,49 @@ import org.jetbrains.annotations.Nullable;
  * @since 12/1/2015
  */
 public class ExecutionInfo {
-  private final @Nullable String id;
-  private String myDisplayName;
+  private final @Nullable String myId;
+  private @Nullable String myWorkingDir;
+  private OperationDescriptor myDescriptor;
   private long startTime;
   private long endTime;
   private boolean isFailed;
   private boolean isSkipped;
   private boolean isUpToDate;
 
-  public ExecutionInfo(@Nullable String id, String displayName) {
-    this.id = id;
-    this.myDisplayName = displayName;
+  public ExecutionInfo(@Nullable String id, OperationDescriptor descriptor, @Nullable String workingDir) {
+    myId = id;
+    myWorkingDir = workingDir;
+    myDescriptor = descriptor;
+  }
+
+  public ExecutionInfo(String id, String description, @Nullable String workingDir) {
+    this(id, new OperationDescriptorImpl(description, -1), workingDir);
   }
 
   @Nullable
   public String getId() {
-    return id;
+    return myId;
+  }
+
+  @Nullable
+  public String getWorkingDir() {
+    return myWorkingDir;
+  }
+
+  public void setWorkingDir(@Nullable String workingDir) {
+    myWorkingDir = workingDir;
   }
 
   public String getDisplayName() {
-    return myDisplayName;
+    return myDescriptor.getDisplayName();
   }
 
-  public void setDisplayName(String displayName) {
-    this.myDisplayName = displayName;
+  public OperationDescriptor getDescriptor() {
+    return myDescriptor;
+  }
+
+  public void setDescriptor(OperationDescriptor descriptor) {
+    this.myDescriptor = descriptor;
   }
 
   public long getStartTime() {
@@ -95,6 +116,6 @@ public class ExecutionInfo {
 
   @Override
   public String toString() {
-    return myDisplayName;
+    return myDescriptor.getDisplayName();
   }
 }

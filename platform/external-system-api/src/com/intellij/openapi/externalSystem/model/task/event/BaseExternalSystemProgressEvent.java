@@ -22,20 +22,19 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  * @since 11/27/2015
  */
-public class BaseExternalSystemProgressEvent implements ExternalSystemProgressEvent {
+public class BaseExternalSystemProgressEvent<T extends OperationDescriptor> implements ExternalSystemProgressEvent<T> {
+  private static final long serialVersionUID = 1L;
+
   @NotNull private final String myEventId;
-  @NotNull private final String myDescription;
+  @NotNull private final T myDescriptor;
   @Nullable private final String myParentEventId;
-  private final long myEventTime;
 
   public BaseExternalSystemProgressEvent(@NotNull String eventId,
                                          @Nullable String parentEventId,
-                                         @NotNull String description,
-                                         long eventTime) {
+                                         @NotNull T descriptor) {
     myEventId = eventId;
-    myDescription = description;
+    myDescriptor = descriptor;
     myParentEventId = parentEventId;
-    myEventTime = eventTime;
   }
 
   @NotNull
@@ -52,12 +51,18 @@ public class BaseExternalSystemProgressEvent implements ExternalSystemProgressEv
 
   @NotNull
   @Override
-  public String getDescription() {
-    return myDescription;
+  public T getDescriptor() {
+    return myDescriptor;
+  }
+
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return myDescriptor.getDisplayName();
   }
 
   @Override
   public long getEventTime() {
-    return myEventTime;
+    return myDescriptor.getEventTime();
   }
 }

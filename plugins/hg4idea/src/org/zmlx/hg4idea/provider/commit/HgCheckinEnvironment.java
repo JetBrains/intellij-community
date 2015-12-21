@@ -205,12 +205,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
         );
       }
     };
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
-    }
-    else {
-      runnable.run();
-    }
+    ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
     return choice[0] == Messages.OK;
   }
 

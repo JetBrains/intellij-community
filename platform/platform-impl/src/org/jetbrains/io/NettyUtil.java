@@ -60,7 +60,7 @@ public final class NettyUtil {
     if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
       System.setProperty("io.netty.machineId", "9e43d860");
       System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
-      System.setProperty("io.netty.serviceThreadPrefix", "Netty");
+      System.setProperty("io.netty.serviceThreadPrefix", "Netty ");
     }
   }
 
@@ -97,45 +97,16 @@ public final class NettyUtil {
                            int maxAttemptCount,
                            @NotNull Condition<Void> stopCondition) throws Throwable {
     int attemptCount = 0;
-
     if (bootstrap.group() instanceof NioEventLoopGroup) {
-      while (true) {
-        ChannelFuture future = bootstrap.connect(remoteAddress).awaitUninterruptibly();
-        if (future.isSuccess()) {
-          return future.channel();
-        }
-        else if (stopCondition.value(null) || (promise != null && promise.getState() == Promise.State.REJECTED)) {
-          return null;
-        }
-        else if (maxAttemptCount == -1) {
-          //noinspection BusyWait
-          Thread.sleep(300);
-          attemptCount++;
-        }
-        else if (++attemptCount < maxAttemptCount) {
-          //noinspection BusyWait
-          Thread.sleep(attemptCount * MIN_START_TIME);
-        }
-        else {
-          @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-          Throwable cause = future.cause();
-          if (promise != null) {
-            if (cause == null) {
-              promise.setError("Cannot connect: unknown error");
-            }
-            else {
-              promise.setError(cause);
-            }
-          }
-          return null;
-        }
-      }
+      return connectNio(bootstrap, remoteAddress, promise, maxAttemptCount, stopCondition, attemptCount);
     }
+
+    bootstrap.validate();
 
     Socket socket;
     while (true) {
       try {
-        //noinspection SocketOpenedButNotSafelyClosed
+        //noinspection IOResourceOpenedButNotSafelyClosed,SocketOpenedButNotSafelyClosed
         socket = new Socket(remoteAddress.getAddress(), remoteAddress.getPort());
         break;
       }
@@ -144,13 +115,15 @@ public final class NettyUtil {
           return null;
         }
         else if (maxAttemptCount == -1) {
-          //noinspection BusyWait
-          Thread.sleep(300);
+          if (sleep(promise, 300)) {
+            return null;
+          }
           attemptCount++;
         }
         else if (++attemptCount < maxAttemptCount) {
-          //noinspection BusyWait
-          Thread.sleep(attemptCount * MIN_START_TIME);
+          if (sleep(promise, attemptCount * MIN_START_TIME)) {
+            return null;
+          }
         }
         else {
           if (promise != null) {
@@ -160,9 +133,69 @@ public final class NettyUtil {
         }
       }
     }
+
     OioSocketChannel channel = new OioSocketChannel(socket);
     BootstrapUtil.initAndRegister(channel, bootstrap).sync();
     return channel;
+  }
+
+  @Nullable
+  private static Channel connectNio(@NotNull Bootstrap bootstrap,
+                                    @NotNull InetSocketAddress remoteAddress,
+                                    @Nullable AsyncPromise<?> promise,
+                                    int maxAttemptCount,
+                                    @NotNull Condition<Void> stopCondition,
+                                    int attemptCount) {
+    while (true) {
+      ChannelFuture future = bootstrap.connect(remoteAddress).awaitUninterruptibly();
+      if (future.isSuccess()) {
+        if (!future.channel().isOpen()) {
+          continue;
+        }
+        return future.channel();
+      }
+      else if (stopCondition.value(null) || (promise != null && promise.getState() == Promise.State.REJECTED)) {
+        return null;
+      }
+      else if (maxAttemptCount == -1) {
+        if (sleep(promise, 300)) {
+          return null;
+        }
+        attemptCount++;
+      }
+      else if (++attemptCount < maxAttemptCount) {
+        if (sleep(promise, attemptCount * MIN_START_TIME)) {
+          return null;
+        }
+      }
+      else {
+        @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+        Throwable cause = future.cause();
+        if (promise != null) {
+          if (cause == null) {
+            promise.setError("Cannot connect: unknown error");
+          }
+          else {
+            promise.setError(cause);
+          }
+        }
+        return null;
+      }
+    }
+  }
+
+  private static boolean sleep(@Nullable AsyncPromise<?> promise, int time) {
+    try {
+      //noinspection BusyWait
+      Thread.sleep(time);
+    }
+    catch (InterruptedException ignored) {
+      if (promise != null) {
+        promise.setError("Interrupted");
+      }
+      return true;
+    }
+    return false;
   }
 
   private static boolean isAsWarning(@NotNull Throwable throwable) {

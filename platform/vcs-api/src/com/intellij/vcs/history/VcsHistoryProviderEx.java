@@ -17,13 +17,20 @@ package com.intellij.vcs.history;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.history.VcsAppendableHistorySessionPartner;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.CalledInBackground;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface VcsHistoryProviderEx extends VcsHistoryProvider {
   @Nullable
   @CalledInBackground
   VcsFileRevision getLastRevision(FilePath filePath) throws VcsException;
+  
+  void reportAppendableHistory(@NotNull FilePath path, 
+                               @Nullable VcsRevisionNumber startingRevision, 
+                               @NotNull VcsAppendableHistorySessionPartner partner) throws VcsException;
 }

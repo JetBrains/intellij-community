@@ -461,8 +461,7 @@ public final class IconLoader {
       });
 
       public Image getOrigImage(boolean retina) {
-        SoftReference<Image> val = origImagesCache.get(retina);
-        Image img = val != null ? val.get() : null;
+        Image img = SoftReference.dereference(origImagesCache.get(retina));
 
         if (img == null) {
           img = ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), retina, filter);
@@ -473,8 +472,7 @@ public final class IconLoader {
 
       public Icon getScaledIcon(float scale) {
         float effectiveScale = scale * JBUI.scale(1f);
-        SoftReference<Icon> val = scaledIconsCache.get(effectiveScale);
-        Icon icon = val != null ? val.get() : null;
+        Icon icon = SoftReference.dereference(scaledIconsCache.get(effectiveScale));
 
         if (icon == null) {
           boolean needRetinaImage = (effectiveScale >= 1.5f || UIUtil.isRetina());

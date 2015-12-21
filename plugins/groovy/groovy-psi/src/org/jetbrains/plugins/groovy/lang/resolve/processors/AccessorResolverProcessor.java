@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
+import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,8 +23,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT;
 
@@ -37,21 +39,20 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
 
 
   public AccessorResolverProcessor(@Nullable String accessorName, @NotNull String propertyName, @NotNull PsiElement place, boolean searchForGetter) {
-    this(accessorName, propertyName, place, searchForGetter, false, null, PsiType.EMPTY_ARRAY);
+    this(accessorName, propertyName, place, searchForGetter, null, PsiType.EMPTY_ARRAY);
   }
 
   public AccessorResolverProcessor(@Nullable String accessorName,
                                    @NotNull String propertyName,
                                    @NotNull PsiElement place,
                                    boolean searchForGetter,
-                                   boolean byShape,
                                    @Nullable PsiType thisType,
                                    @NotNull PsiType[] typeArguments) {
-    super(accessorName, place, false, thisType, null, typeArguments, false, byShape);
+    super(accessorName, place, false, thisType, null, typeArguments, false);
     myPropertyName = propertyName;
 
     mySearchForGetter = searchForGetter;
-    mySubstitutorComputer = byShape ? null : new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, typeArguments, place, myPlace);
+    mySubstitutorComputer = new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, typeArguments, place, myPlace);
   }
 
   @Override
@@ -102,18 +103,25 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
     return PsiType.BOOLEAN.equals(method.getReturnType());
   }
 
-  private boolean addAccessor(PsiMethod method, ResolveState state) {
-    PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
-    if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
+  private boolean addAccessor(final PsiMethod method, ResolveState state) {
+    final PsiSubstitutor substitutor = getSubstitutor(state);
 
-    if (mySubstitutorComputer != null) {
-      substitutor = mySubstitutorComputer.obtainSubstitutor(substitutor, method, state);
-    }
-    boolean isAccessible = isAccessible(method);
     final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+    final NotNullCachedComputableWrapper<PsiSubstitutor> substitutorComputer = new NotNullCachedComputableWrapper<PsiSubstitutor>(
+      new NotNullComputable<PsiSubstitutor>() {
+        @NotNull
+        @Override
+        public PsiSubstitutor compute() {
+          return mySubstitutorComputer.obtainSubstitutor(substitutor, method, resolveContext);
+        }
+      }
+    );
+    boolean isAccessible = isAccessible(method);
     final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
     boolean isStaticsOK = isStaticsOK(method, resolveContext, false);
-    final GroovyResolveResultImpl candidate = new GroovyResolveResultImpl(method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK, true, true);
+    final GroovyMethodResult candidate = new GroovyMethodResult(
+      method, resolveContext, spreadState, substitutor, substitutorComputer,  isAccessible, isStaticsOK
+    );
     if (isAccessible && isStaticsOK) {
       addCandidate(candidate);
       return method instanceof GrGdkMethod; //don't stop searching if we found only gdk method

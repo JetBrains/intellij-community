@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyUtil;
 
 /**
  * @author yole
@@ -41,8 +42,8 @@ public class PyClassInsertHandler implements InsertHandler<LookupElement> {
       final int offset = context.getTailOffset();
       document.insertString(offset, "()");
 
-      PyClass pyClass = (PyClass) item.getObject();
-      PyFunction init = pyClass.findInitOrNew(true, null);
+      PyClass pyClass = PyUtil.as(item.getPsiElement(), PyClass.class);
+      PyFunction init = pyClass != null ? pyClass.findInitOrNew(true, null) : null;
       if (init != null && PyFunctionInsertHandler.hasParams(context, init)) {
         editor.getCaretModel().moveToOffset(offset+1);
         AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), init);

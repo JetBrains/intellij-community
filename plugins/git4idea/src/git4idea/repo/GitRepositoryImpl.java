@@ -155,7 +155,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   @NotNull
   public GitBranchesCollection getBranches() {
     GitRepoInfo info = myInfo;
-    return new GitBranchesCollection(info.getLocalBranches(), info.getRemoteBranches());
+    return new GitBranchesCollection(info.getLocalBranchesWithHashes(), info.getRemoteBranchesWithHashes());
   }
 
   @Override
@@ -198,16 +198,13 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     GitConfig config = GitConfig.read(myPlatformFacade, configFile);
     Collection<GitRemote> remotes = config.parseRemotes();
     GitBranchState state = myReader.readState(remotes);
-    Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches(), state.getRemoteBranches());
+    Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
     return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), remotes,
                            state.getLocalBranches(), state.getRemoteBranches(), trackInfos);
   }
 
   private static void notifyIfRepoChanged(@NotNull final GitRepository repository, @NotNull GitRepoInfo previousInfo, @NotNull GitRepoInfo info) {
-    if (Disposer.isDisposed(repository.getProject())) {
-      return;
-    }
-    if (!info.equals(previousInfo)) {
+    if (!repository.getProject().isDisposed() && !info.equals(previousInfo)) {
       notifyListenersAsync(repository);
     }
   }
@@ -226,6 +223,6 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   @NotNull
   @Override
   public String toLogString() {
-    return String.format("GitRepository " + getRoot() + " : " + myInfo);
+    return "GitRepository " + getRoot() + " : " + myInfo;
   }
 }

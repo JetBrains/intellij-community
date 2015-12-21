@@ -8,7 +8,6 @@
   <resource-bundle>com.intellij.ide.commander.CommanderBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <selectInTarget implementation="com.intellij.ide.commander.CommanderSelectInTarget"/>
     <toolWindow id="Commander" anchor="right" icon="AllIcons.Toolwindows.ToolWindowCommander"
                 factoryClass="com.intellij.ide.commander.CommanderToolWindowFactory"/>

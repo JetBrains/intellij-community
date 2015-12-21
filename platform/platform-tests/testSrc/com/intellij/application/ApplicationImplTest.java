@@ -31,7 +31,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.Timings;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -109,8 +108,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
 
   public void testRead50Write50LockPerformance() throws InterruptedException {
-    int iterations = Timings.adjustAccordingToMySpeed(400000, true);
-    System.out.println("iterations = " + iterations);
+    int iterations = 400000;
     final int readIterations = iterations;
     final int writeIterations = iterations;
 
@@ -118,9 +116,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   }
 
   public void testRead100Write0LockPerformance() throws InterruptedException {
-    int iterations = Timings.adjustAccordingToMySpeed(400000, true);
-    System.out.println("iterations = " + iterations);
-    final int readIterations = iterations;
+    final int readIterations = 400000;
     final int writeIterations = 0;
 
     runReadWrites(readIterations, writeIterations, 1000);
@@ -133,8 +129,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     List<Thread> threads = new ArrayList<>();
 
     try {
-      final int numOfThreads = JobSchedulerImpl.CORES_COUNT;
       PlatformTestUtil.startPerformanceTest("lock performance", expectedMs, () -> {
+        final int numOfThreads = JobSchedulerImpl.CORES_COUNT;
         final CountDownLatch reads = new CountDownLatch(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
           Thread thread = new Thread(() -> {
@@ -160,7 +156,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           System.out.println("write end");
         }
         reads.await();
-      }).cpuBound().useLegacyScaling().assertTiming();
+      }).cpuBound().assertTiming();
     }
     finally {
       Disposer.dispose(disposable);
@@ -574,6 +570,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
         assertFalse(ApplicationManager.getApplication().isDispatchThread());
         for (int i=0; i<100;i++) {
+          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
             TimeoutUtil.sleep(20);
           }));
@@ -586,13 +583,14 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         exception = e;
       }
       return null;
-    }, "cc", false, getProject());
+    }, "Cc", false, getProject());
+    UIUtil.dispatchAllInvocationEvents();
     if (exception != null) throw exception;
   }
 
   public void testAsyncProgressVsReadAction() throws Throwable {
     Future<?> future = ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(
-      new Task.Backgroundable(getProject(), "xx") {
+      new Task.Backgroundable(getProject(), "Xx") {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
@@ -641,6 +639,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   }
 
   public void testRunProcessWithProgressSynchronouslyInReadActionWithPendingWriteAction() throws Throwable {
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()));
     boolean result = ((ApplicationEx)ApplicationManager.getApplication())
       .runProcessWithProgressSynchronouslyInReadAction(getProject(), "title", true, "cancel", null, () -> TimeoutUtil.sleep(10000));

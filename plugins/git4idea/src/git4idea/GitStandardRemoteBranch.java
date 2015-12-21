@@ -19,14 +19,20 @@ import com.intellij.vcs.log.Hash;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRemote;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class GitStandardRemoteBranch extends GitRemoteBranch {
 
   @NotNull private final GitRemote myRemote;
   @NotNull private final String myNameAtRemote;
 
-  public GitStandardRemoteBranch(@NotNull GitRemote remote, @NotNull String nameAtRemote, @NotNull Hash hash) {
-    super(formStandardName(remote, GitBranchUtil.stripRefsPrefix(nameAtRemote)), hash);
+  @Deprecated
+  public GitStandardRemoteBranch(@NotNull GitRemote remote, @NotNull String nameAtRemote, @Nullable Hash hash) {
+    this(remote, nameAtRemote);
+  }
+
+  public GitStandardRemoteBranch(@NotNull GitRemote remote, @NotNull String nameAtRemote) {
+    super(formStandardName(remote, GitBranchUtil.stripRefsPrefix(nameAtRemote)));
     myRemote = remote;
     myNameAtRemote = GitBranchUtil.stripRefsPrefix(nameAtRemote);
   }

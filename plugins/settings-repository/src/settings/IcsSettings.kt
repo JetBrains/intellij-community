@@ -61,7 +61,7 @@ class MyPrettyPrinter : DefaultPrettyPrinter() {
 
 fun saveSettings(settings: IcsSettings, settingsFile: File) {
   val serialized = ObjectMapper().writer<ObjectWriter>(MyPrettyPrinter()).writeValueAsBytes(settings)
-  if (serialized.size() <= 2) {
+  if (serialized.size <= 2) {
     FileUtil.delete(settingsFile)
   }
   else {

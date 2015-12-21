@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -93,10 +94,10 @@ public class HectorComponent extends JPanel {
     for (Language language : languages) {
       @SuppressWarnings("UseOfObsoleteCollectionType")
       final Hashtable<Integer, JComponent> sliderLabels = new Hashtable<Integer, JComponent>();
-      sliderLabels.put(1, new JLabel(EditorBundle.message("hector.none.slider.label")));
-      sliderLabels.put(2, new JLabel(EditorBundle.message("hector.syntax.slider.label")));
+      sliderLabels.put(1, new JLabel(EditorBundle.message("hector.none.slider.label"), AllIcons.Ide.HectorOff, SwingConstants.LEFT));
+      sliderLabels.put(2, new JLabel(EditorBundle.message("hector.syntax.slider.label"), AllIcons.Ide.HectorSyntax, SwingConstants.LEFT));
       if (notInLibrary) {
-        sliderLabels.put(3, new JLabel(EditorBundle.message("hector.inspections.slider.label")));
+        sliderLabels.put(3, new JLabel(EditorBundle.message("hector.inspections.slider.label"), AllIcons.Ide.HectorOn, SwingConstants.LEFT));
       }
 
       final JSlider slider = new JSlider(SwingConstants.VERTICAL, 1, notInLibrary ? 3 : 2, 1);
@@ -113,7 +114,7 @@ public class HectorComponent extends JPanel {
         @Override
         public void stateChanged(ChangeEvent e) {
           int value = slider.getValue();
-          for (Enumeration<Integer> enumeration = sliderLabels.keys(); enumeration.hasMoreElements();) {
+          for (Enumeration<Integer> enumeration = sliderLabels.keys(); enumeration.hasMoreElements(); ) {
             Integer key = enumeration.nextElement();
             sliderLabels.get(key).setForeground(key.intValue() <= value ? UIUtil.getLabelForeground() : UIUtil.getLabelDisabledForeground());
           }
@@ -122,8 +123,8 @@ public class HectorComponent extends JPanel {
 
       final PsiFile psiRoot = viewProvider.getPsi(language);
       assert psiRoot != null : "No root in " + viewProvider + " for " + language;
-      slider.setValue(getValue(HighlightingLevelManager.getInstance(project).shouldHighlight(psiRoot), HighlightingLevelManager.getInstance(project).shouldInspect(
-        psiRoot)));
+      slider.setValue(getValue(HighlightingLevelManager.getInstance(project).shouldHighlight(psiRoot),
+                               HighlightingLevelManager.getInstance(project).shouldInspect(psiRoot)));
       mySliders.put(language, slider);
     }
 

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import java.util.*;
-import com.google.common.collect.FluentIterable;
+
+import java.util.ArrayList;
 
 class A {
   int m1() {

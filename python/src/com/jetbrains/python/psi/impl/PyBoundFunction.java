@@ -24,4 +24,9 @@ public class PyBoundFunction extends PyFunctionImpl {
   public PyBoundFunction(PyFunction function) {
     super(function.getNode());
   }
+
+  @Override
+  public boolean isPhysical() {
+    return false;
+  }
 }

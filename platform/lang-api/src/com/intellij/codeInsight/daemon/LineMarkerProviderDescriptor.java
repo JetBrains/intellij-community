@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon;
 
 /**
  * @author Dmitry Avdeev
+ * @since 144
  */
 public abstract class LineMarkerProviderDescriptor extends GutterIconDescriptor implements LineMarkerProvider {
 }

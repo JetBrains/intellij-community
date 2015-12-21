@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
+import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,11 +61,11 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
             TypeConversionDescriptor descriptor =
               new TypeConversionDescriptor(null, "java.util.Optional.ofNullable($val$.orElseGet($o$::get))") {
                 @Override
-                public PsiExpression replace(PsiExpression expression) {
+                public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
                   setStringToReplace("$val$.or(" +
                                      GuavaOptionalConversionUtil.simplifyParameterPattern((PsiMethodCallExpression)expression)
                                      + ")");
-                  return super.replace(expression);
+                  return super.replace(expression, evaluator);
                 }
               };
             if (to != null) {
@@ -132,13 +133,13 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
   protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {
     descriptorsMap.put("absent", new TypeConversionDescriptor("'Optional*.absent()", "java.util.Optional.empty()") {
       @Override
-      public PsiExpression replace(PsiExpression expression) {
+      public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
         LOG.assertTrue(expression instanceof PsiMethodCallExpression);
 
         final PsiReferenceParameterList typeArguments = ((PsiMethodCallExpression)expression).getTypeArgumentList();
         PsiReferenceParameterList typeArgumentsCopy =
           typeArguments.getTypeArguments().length == 0 ? null : (PsiReferenceParameterList)typeArguments.copy();
-        final PsiMethodCallExpression replacedExpression = (PsiMethodCallExpression)super.replace(expression);
+        final PsiMethodCallExpression replacedExpression = (PsiMethodCallExpression)super.replace(expression, evaluator);
         if (typeArgumentsCopy != null) {
           replacedExpression.getTypeArgumentList().replace(typeArgumentsCopy);
         }

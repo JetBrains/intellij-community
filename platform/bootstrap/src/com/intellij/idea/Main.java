@@ -19,11 +19,13 @@ import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Restarter;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -47,6 +49,7 @@ public class Main {
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
   public static final int OUT_OF_MEMORY = 9;
+  public static final int UNSUPPORTED_JAVA_VERSION = 10;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
@@ -76,6 +79,14 @@ public class Main {
     }
     else if (!checkGraphics()) {
       System.exit(NO_GRAPHICS);
+    }
+
+    //this property is temporary and will be removed when IntelliJ platform really migrates to Java 8
+    boolean checkVersion = !SystemProperties.getBooleanProperty("idea.no.java.version.check", false);
+    if (checkVersion && !SystemInfo.isJavaVersionAtLeast("1.8")) {
+      showMessage("Unsupported Java Version",
+                  "Cannot start under Java " + SystemInfo.JAVA_RUNTIME_VERSION + ": Java 1.8 or later is required.", true);
+      System.exit(UNSUPPORTED_JAVA_VERSION);
     }
 
     if (args.length == 0 || (args.length == 1 && "nosplash".equals(args[0]))) {

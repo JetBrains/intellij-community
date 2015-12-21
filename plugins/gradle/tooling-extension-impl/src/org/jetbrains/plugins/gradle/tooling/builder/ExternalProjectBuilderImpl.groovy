@@ -153,14 +153,21 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
     def ideaOutDir = ideaPluginModule?.outputDir
     def ideaTestOutDir = ideaPluginModule?.testOutputDir
-    def generatedSourceDirs = ideaPluginModule?.hasProperty("generatedSourceDirs") ? ideaPluginModule?.generatedSourceDirs: null;
-    def ideaSourceDirs = ideaPluginModule?.sourceDirs;
-    def ideaTestSourceDirs = ideaPluginModule?.testSourceDirs;
+    def generatedSourceDirs
+    def ideaSourceDirs
+    def ideaTestSourceDirs
     def downloadJavadoc = false
     def downloadSources = true
     if(ideaPluginModule) {
+      generatedSourceDirs = ideaPluginModule.hasProperty("generatedSourceDirs") ? new LinkedHashSet<>(ideaPluginModule.generatedSourceDirs): null
+      ideaSourceDirs = new LinkedHashSet<>(ideaPluginModule.sourceDirs)
+      ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSourceDirs)
       downloadJavadoc = ideaPluginModule.downloadJavadoc
       downloadSources = ideaPluginModule.downloadSources
+    } else {
+      generatedSourceDirs = null
+      ideaSourceDirs = null
+      ideaTestSourceDirs = null
     }
 
     def projectSourceCompatibility
@@ -213,12 +220,6 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
 //      javaDirectorySet.excludes = javaExcludes + sourceSet.java.excludes;
 //      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
 
-      if (SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.name)) {
-        javaDirectorySet.srcDirs.addAll(ideaSourceDirs - sourceSet.resources.srcDirs)
-      } else if(SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.name)){
-        javaDirectorySet.srcDirs.addAll(ideaTestSourceDirs - sourceSet.resources.srcDirs)
-      }
-
       ExternalSourceDirectorySet generatedDirectorySet = null
       if(generatedSourceDirs && !generatedSourceDirs.isEmpty()) {
         def files = new HashSet<File>()
@@ -261,8 +262,15 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         resourcesDirectorySet.filters = filterReaders
         sources.put(ExternalSystemSourceType.SOURCE, javaDirectorySet)
         sources.put(ExternalSystemSourceType.RESOURCE, resourcesDirectorySet)
-        if(generatedDirectorySet) {
+        if (generatedDirectorySet) {
           sources.put(ExternalSystemSourceType.SOURCE_GENERATED, generatedDirectorySet)
+        }
+
+        if (ideaPluginModule && !SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.name) && !SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.name)) {
+          sources.values().each {
+            ideaSourceDirs.removeAll(it.srcDirs)
+            ideaTestSourceDirs.removeAll(it.srcDirs)
+          }
         }
       }
 
@@ -272,6 +280,29 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       externalSourceSet.sources = sources
       result[sourceSet.name] = externalSourceSet
     }
+
+    def mainSourceSet = result[SourceSet.MAIN_SOURCE_SET_NAME]
+    if(ideaPluginModule && mainSourceSet && ideaSourceDirs && !ideaSourceDirs.isEmpty()) {
+      def mainGradleSourceSet = sourceSets.findByName(SourceSet.MAIN_SOURCE_SET_NAME)
+      if(mainGradleSourceSet) {
+        def mainSourceDirectorySet = mainSourceSet.sources[ExternalSystemSourceType.SOURCE]
+        if(mainSourceDirectorySet) {
+          mainSourceDirectorySet.srcDirs.addAll(ideaSourceDirs - (mainGradleSourceSet.resources.srcDirs + generatedSourceDirs))
+        }
+      }
+    }
+
+    def testSourceSet = result[SourceSet.TEST_SOURCE_SET_NAME]
+    if(ideaPluginModule && testSourceSet && ideaTestSourceDirs && !ideaSourceDirs.isEmpty()) {
+      def testGradleSourceSet = sourceSets.findByName(SourceSet.TEST_SOURCE_SET_NAME)
+      if(testGradleSourceSet) {
+        def testSourceDirectorySet = testSourceSet.sources[ExternalSystemSourceType.TEST]
+        if(testSourceDirectorySet) {
+          testSourceDirectorySet.srcDirs.addAll(ideaTestSourceDirs - (testGradleSourceSet.resources.srcDirs + generatedSourceDirs))
+        }
+      }
+    }
+
     result
   }
 

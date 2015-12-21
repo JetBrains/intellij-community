@@ -15,7 +15,7 @@
  */
 package com.intellij.util;
 
-import com.intellij.util.concurrency.BoundedTaskExecutorService;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
 
@@ -30,11 +30,11 @@ import org.jetbrains.ide.PooledThreadExecutor;
  */
 public class MergingBackgroundExecutor<T> {
   private final Consumer<T> myConsumer;
-  private final BoundedTaskExecutorService myExecutorService;
+  private final BoundedTaskExecutor myExecutorService;
 
   public MergingBackgroundExecutor(int maxThreads, @NotNull Consumer<T> consumer) {
     myConsumer = consumer;
-    myExecutorService = new BoundedTaskExecutorService(PooledThreadExecutor.INSTANCE, maxThreads);
+    myExecutorService = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, maxThreads);
   }
 
 

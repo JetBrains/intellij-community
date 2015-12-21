@@ -29,6 +29,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Functions;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,21 +48,17 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   }
 
   protected void doTestAnonymousClassTypeParameters(@NotNull String assignmentVariableName,
-                                                    PsiType fromType,
                                                     PsiType toType) {
-    doTestAnonymousClassTypeParameters(assignmentVariableName, "Test", fromType, toType);
+    doTestAnonymousClassTypeParameters(assignmentVariableName, "Test", toType);
   }
 
   protected void doTestAnonymousClassTypeParameters(@NotNull final String assignmentVariableName,
                                                     final String className,
-                                                    final PsiType fromType,
                                                     final PsiType toType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public TypeMigrationRules provide() throws Exception {
-        final TypeMigrationRules rules = new TypeMigrationRules();
-        rules.setMigrationRootType(toType);
-        return rules;
+      public PsiType migrationType() throws Exception {
+        return toType;
       }
 
       @Override
@@ -80,17 +77,15 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     start(provider, className);
   }
 
-  protected void doTestFieldType(@NonNls String fieldName, PsiType fromType, PsiType toType) {
-    doTestFieldType(fieldName, "Test", fromType, toType);
+  protected void doTestFieldType(@NonNls String fieldName, PsiType toType) {
+    doTestFieldType(fieldName, "Test", toType);
   }
 
-  protected void doTestFieldType(@NonNls final String fieldName, String className, final PsiType rootType, final PsiType migrationType) {
+  protected void doTestFieldType(@NonNls final String fieldName, String className, final PsiType migrationType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public TypeMigrationRules provide() throws Exception {
-        final TypeMigrationRules rules = new TypeMigrationRules();
-        rules.setMigrationRootType(migrationType);
-        return rules;
+      public PsiType migrationType() throws Exception {
+        return migrationType;
       }
 
       @Override
@@ -104,17 +99,17 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     start(provider, className);
   }
 
-  protected void doTestMethodType(@NonNls final String methodName, final PsiType rootType, final PsiType migrationType) {
-    doTestMethodType(methodName, "Test", rootType, migrationType);
+  protected void doTestMethodType(@NonNls final String methodName, final PsiType migrationType) {
+    doTestMethodType(methodName, "Test", migrationType);
   }
 
-  protected void doTestMethodType(@NonNls final String methodName, @NonNls String className, final PsiType rootType, final PsiType migrationType) {
+  protected void doTestMethodType(@NonNls final String methodName,
+                                  @NonNls String className,
+                                  final PsiType migrationType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public TypeMigrationRules provide() throws Exception {
-        final TypeMigrationRules rules = new TypeMigrationRules();
-        rules.setMigrationRootType(migrationType);
-        return rules;
+      public PsiType migrationType() throws Exception {
+        return migrationType;
       }
 
       @Override
@@ -126,17 +121,15 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     start(provider, className);
   }
 
-  protected void doTestFirstParamType(@NonNls final String methodName, final PsiType rootType, final PsiType migrationType) {
-    doTestFirstParamType(methodName, "Test", rootType, migrationType);
+  protected void doTestFirstParamType(@NonNls final String methodName, final PsiType migrationType) {
+    doTestFirstParamType(methodName, "Test", migrationType);
   }
 
-  protected void doTestFirstParamType(@NonNls final String methodName, String className, final PsiType rootType, final PsiType migrationType) {
+  protected void doTestFirstParamType(@NonNls final String methodName, String className, final PsiType migrationType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public TypeMigrationRules provide() throws Exception {
-        final TypeMigrationRules rules = new TypeMigrationRules();
-        rules.setMigrationRootType(migrationType);
-        return rules;
+      public PsiType migrationType() throws Exception {
+        return migrationType;
       }
 
       @Override
@@ -166,9 +159,10 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
 
     assertNotNull("Class " + className + " not found", aClass);
 
-    final TypeMigrationRules rules = provider.provide();
+    final PsiType migrationType = provider.migrationType();
+    final TypeMigrationRules rules = new TypeMigrationRules();
     rules.setBoundScope(new LocalSearchScope(aClass.getContainingFile()));
-    final TestTypeMigrationProcessor pr = new TestTypeMigrationProcessor(getProject(), provider.victims(aClass), rules);
+    final TestTypeMigrationProcessor pr = new TestTypeMigrationProcessor(getProject(), provider.victims(aClass), migrationType, rules);
 
     final UsageInfo[] usages = pr.findUsages();
     final String report = pr.getLabeler().getMigrationReport();
@@ -216,14 +210,14 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   }
 
   interface RulesProvider {
-    TypeMigrationRules provide() throws Exception;
+    PsiType migrationType() throws Exception;
 
     PsiElement victims(PsiClass aClass);
   }
 
   private static class TestTypeMigrationProcessor extends TypeMigrationProcessor {
-    public TestTypeMigrationProcessor(final Project project, final PsiElement root, final TypeMigrationRules rules) {
-      super(project, root, rules);
+    public TestTypeMigrationProcessor(final Project project, final PsiElement root, final PsiType migrationType, final TypeMigrationRules rules) {
+      super(project, new PsiElement[] {root}, Functions.<PsiElement, PsiType>constant(migrationType), rules);
     }
 
     @NotNull

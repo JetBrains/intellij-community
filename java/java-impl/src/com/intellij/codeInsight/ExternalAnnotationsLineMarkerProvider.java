@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
@@ -85,7 +86,7 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
       return null;
     }
 
-    return new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(),
+    return new LineMarkerInfo<PsiElement>(element, element.getTextRange(),
                                           AllIcons.Gutter.ExtAnnotation,
                                           Pass.UPDATE_ALL,
                                           ourTooltipProvider, MyIconGutterHandler.INSTANCE,
@@ -158,6 +159,12 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
   @Override
   public String getName() {
     return "External annotations";
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon() {
+    return AllIcons.Gutter.ExtAnnotation;
   }
 
   private static class MyIconGutterHandler implements GutterIconNavigationHandler<PsiElement> {

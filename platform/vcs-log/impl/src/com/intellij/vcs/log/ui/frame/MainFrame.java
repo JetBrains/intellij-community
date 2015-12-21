@@ -15,12 +15,15 @@ import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
+import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
@@ -39,9 +42,12 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.vcs.log.impl.VcsLogUtil.groupByRoot;
 
 public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
@@ -307,14 +313,33 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         sink.put(key, ArrayUtil.toObjectArray(selectedChanges, Change.class));
       }
     }
+    else if (VcsDataKeys.CHANGE_LISTS == key) {
+      List<VcsFullCommitDetails> details = myUI.getVcsLog().getSelectedDetails();
+      sink.put(key, ContainerUtil.map2Array(details, CommittedChangeListForRevision.class,
+        new Function<VcsFullCommitDetails, CommittedChangeListForRevision>() {
+          @Override
+          public CommittedChangeListForRevision fun(@NotNull VcsFullCommitDetails details) {
+            return new CommittedChangeListForRevision(details.getSubject(), details.getFullMessage(), details.getCommitter().getName(),
+                                                      new Date(details.getCommitTime()), details.getChanges(),
+                                                      convertToRevisionNumber(details.getId()));
+          }
+        }));
+    }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS == key) {
       List<Hash> hashes = myUI.getVcsLog().getSelectedCommits();
       sink.put(key, ArrayUtil.toObjectArray(ContainerUtil.map(hashes, new Function<Hash, VcsRevisionNumber>() {
         @Override
         public VcsRevisionNumber fun(Hash hash) {
-          return new TextRevisionNumber(hash.asString(), hash.toShortString());
+          return convertToRevisionNumber(hash);
         }
       }), VcsRevisionNumber.class));
+    }
+    else if (VcsDataKeys.VCS == key) {
+      MultiMap<VirtualFile, VcsFullCommitDetails> commitsByRoots = groupByRoot(myUI.getVcsLog().getSelectedDetails());
+      Set<VirtualFile> roots = commitsByRoots.keySet();
+      if (roots.size() == 1) {
+        sink.put(key, myLogDataHolder.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs());
+      }
     }
   }
 
@@ -329,6 +354,11 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   public void onFiltersChange(@NotNull VcsLogFilterCollection filters) {
     myBranchesPanel.onFiltersChange(filters);
+  }
+
+  @NotNull
+  private static TextRevisionNumber convertToRevisionNumber(@NotNull Hash hash) {
+    return new TextRevisionNumber(hash.asString(), hash.toShortString());
   }
 
   private class CommitSelectionListener implements ListSelectionListener {

@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -310,7 +311,8 @@ public class RegistryUi implements Disposable {
       @Override
       protected JComponent createNorthPanel() {
         if (!ApplicationManager.getApplication().isInternal()) {
-          JLabel warningLabel = new JLabel(XmlStringUtil.wrapInHtml("<b>Changing registry values may lead to unpredictable results. Don’t change them it unless you were explicitly asked to do that by JetBrains employee.</b>"));
+          JLabel warningLabel = new JLabel(XmlStringUtil.wrapInHtml("<b>Changing these values may cause unwanted behavior of " +
+                                                                    ApplicationNamesInfo.getInstance().getFullProductName() + ". Please do not change these unless you have been asked.</b>"));
           warningLabel.setIcon(UIUtil.getWarningIcon());
           warningLabel.setForeground(JBColor.RED);
           return warningLabel;

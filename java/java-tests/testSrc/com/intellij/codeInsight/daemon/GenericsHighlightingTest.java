@@ -546,7 +546,11 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA130243() throws Exception {
     doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
   }
-  
+
+  public void testCastingToPrimitive() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
+  }
+
   public void testProvablyDistinctForWildcardsWithArrayBounds() throws Exception {
     doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
   }
@@ -568,5 +572,9 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     final String text = collectionsClass.getContainingFile().getText();
     configureFromFileText("Collections.java", StringUtil.convertLineSeparators(StringUtil.replace(text, "package java.util;", "package java.utilx; import java.util.*;")));
     doTestConfiguredFile(false, false, null);
+  }
+
+  public void testReturnTypeSubstitutableForSameOverrideEquivalentMethods() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
   }
 }

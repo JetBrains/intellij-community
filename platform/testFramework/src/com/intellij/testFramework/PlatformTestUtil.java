@@ -16,6 +16,10 @@
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -905,4 +909,14 @@ public class PlatformTestUtil {
     @Override
     public void write(int b) throws IOException { }
   };
+
+  public static void assertSuccessful(@NotNull GeneralCommandLine command) {
+    try {
+      ProcessOutput output = ExecUtil.execAndGetOutput(command.withRedirectErrorStream(true));
+      assertEquals(output.getStdout(), 0, output.getExitCode());
+    }
+    catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+  }
 }

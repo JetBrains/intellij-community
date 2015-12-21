@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @RunWith(Parameterized.class)
 public class GitRepositoryReaderTest extends GitPlatformTest {
@@ -140,21 +141,21 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
     GitBranchState state = myRepositoryReader.readState(remotes);
 
     assertEquals("HEAD revision is incorrect", readHead(myTempDir), state.getCurrentRevision());
-    assertEqualBranches(readCurrentBranch(myTempDir), state.getCurrentBranch());
+    assertEqualBranches(readCurrentBranch(myTempDir), state.getCurrentBranch(), state.getLocalBranches().get(state.getCurrentBranch()));
     assertBranches(state.getLocalBranches(), readBranches(myTempDir, true));
     assertBranches(state.getRemoteBranches(), readBranches(myTempDir, false));
   }
 
-  private static void assertEqualBranches(@NotNull Branch expected, @NotNull GitLocalBranch actual) {
+  private static void assertEqualBranches(@NotNull Branch expected, @NotNull GitLocalBranch actual, @NotNull Hash hash) {
     assertEquals(expected.name, actual.getName());
-    assertEquals("Incorrect hash of branch " + actual.getName(), expected.hash, actual.getHash());
+    assertEquals("Incorrect hash of branch " + actual.getName(), expected.hash, hash);
   }
 
-  private static void assertBranches(Collection<? extends GitBranch> actualBranches, Collection<Branch> expectedBranches) {
-    VcsTestUtil.assertEqualCollections(actualBranches, expectedBranches, new VcsTestUtil.EqualityChecker<GitBranch, Branch>() {
+  private static void assertBranches(Map<? extends GitBranch, Hash> actualBranches, Collection<Branch> expectedBranches) {
+    VcsTestUtil.assertEqualCollections(actualBranches.entrySet(), expectedBranches, new VcsTestUtil.EqualityChecker<Map.Entry<? extends GitBranch, Hash>, Branch>() {
       @Override
-      public boolean areEqual(GitBranch actual, Branch expected) {
-        return branchesAreEqual(actual, expected);
+      public boolean areEqual(Map.Entry<? extends GitBranch, Hash> actual, Branch expected) {
+        return branchesAreEqual(actual.getKey(), actual.getValue(), expected);
       }
     });
   }
@@ -169,8 +170,8 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
     return branches;
   }
 
-  private static boolean branchesAreEqual(GitBranch actual, Branch expected) {
-    return actual.getFullName().equals(expected.name) && actual.getHash().equals(expected.hash);
+  private static boolean branchesAreEqual(GitBranch actualBranch, Hash actualHash, Branch expected) {
+    return actualBranch.getFullName().equals(expected.name) && actualHash.equals(expected.hash);
   }
 
   private static class Branch {

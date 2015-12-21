@@ -24,10 +24,12 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.holders.BinaryEditorHolder;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.StatusPanel;
+import com.intellij.diff.tools.util.TransferableFileEditorStateSupport;
 import com.intellij.diff.tools.util.side.TwosideDiffViewer;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
@@ -50,9 +52,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.diff.util.DiffUtil.getDiffSettings;
+
 public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolder> {
   public static final Logger LOG = Logger.getInstance(TwosideBinaryDiffViewer.class);
 
+  private final TransferableFileEditorStateSupport myTransferableStateSupport;
   @NotNull private final StatusPanel myStatusPanel;
 
   public TwosideBinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -63,6 +68,20 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
     myContentPanel.setTopAction(new MyAcceptSideAction(Side.LEFT));
     myContentPanel.setBottomAction(new MyAcceptSideAction(Side.RIGHT));
+
+    myTransferableStateSupport = new TransferableFileEditorStateSupport(getDiffSettings(context), getEditorHolders(), this);
+  }
+
+  @Override
+  protected void processContextHints() {
+    super.processContextHints();
+    myTransferableStateSupport.processContextHints(myRequest, myContext);
+  }
+
+  @Override
+  protected void updateContextHints() {
+    super.updateContextHints();
+    myTransferableStateSupport.updateContextHints(myRequest, myContext);
   }
 
   @Override
@@ -73,6 +92,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     group.add(new MyAcceptSideAction(Side.RIGHT));
 
     group.add(Separator.getInstance());
+    group.add(myTransferableStateSupport.createToggleAction());
     group.addAll(super.createToolbarActions());
 
     return group;
@@ -185,6 +205,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
       myBaseSide = baseSide;
       getTemplatePresentation().setText("Copy Content to " + baseSide.select("Right", "Left"));
       getTemplatePresentation().setIcon(baseSide.select(AllIcons.Vcs.Arrow_right, AllIcons.Vcs.Arrow_left));
+      setShortcutSet(ActionManager.getInstance().getAction(baseSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
     }
 
     @Override

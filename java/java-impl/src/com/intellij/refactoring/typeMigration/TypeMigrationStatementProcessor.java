@@ -506,7 +506,10 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       case TypeInfection.LEFT_INFECTED:
         final PsiType valueType = right.getType();
         if (valueType != null && declarationType != null) {
-          myLabeler.migrateExpressionType(value, declarationType, myStatement, TypeConversionUtil.isAssignable(declarationType, valueType), true);
+          myLabeler.migrateExpressionType(value,
+                                          adjustMigrationTypeIfGenericArrayCreation(declarationType, value),
+                                          myStatement,
+                                          TypeConversionUtil.isAssignable(declarationType, valueType), true);
         }
         break;
 
@@ -515,7 +518,11 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         if (psiType != null && declarationType != null && 
             !myLabeler.addMigrationRoot(variable, psiType, myStatement, TypeConversionUtil.isAssignable(declarationType, psiType), true) && 
             !TypeConversionUtil.isAssignable(left.getType(), psiType)) {
-          myLabeler.convertExpression(value, psiType, left.getType(), isCovariantPosition);
+          PsiType initialType = left.getType();
+          if (initialType instanceof PsiEllipsisType) {
+            initialType = ((PsiEllipsisType)initialType).getComponentType();
+          }
+          myLabeler.convertExpression(value, psiType, initialType, isCovariantPosition);
         }
         break;
 
@@ -526,6 +533,21 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       default:
         LOG.error("Must not happen.");
     }
+  }
+
+  private static PsiType adjustMigrationTypeIfGenericArrayCreation(PsiType migrationType, PsiExpression expression) {
+    if (expression instanceof PsiNewExpression) {
+      if (migrationType instanceof PsiArrayType) {
+        final PsiType componentType = migrationType.getDeepComponentType();
+        if (componentType instanceof PsiClassType) {
+          final PsiClassType rawType = ((PsiClassType)componentType).rawType();
+          if (!rawType.equals(componentType)) {
+            return com.intellij.refactoring.typeCook.Util.createArrayType(rawType, migrationType.getArrayDimensions());
+          }
+        }
+      }
+    }
+    return migrationType;
   }
 
 

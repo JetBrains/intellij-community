@@ -33,6 +33,7 @@ public class ThreadsViewSettings implements PersistentStateComponent<ThreadsView
   public boolean SHOW_SOURCE_NAME = false;
   public boolean SHOW_SYNTHETIC_FRAMES = true;
   public boolean SHOW_CURRENT_THREAD = true;
+  public boolean SHOW_ARGUMENTS_TYPES = false;
 
   public static ThreadsViewSettings getInstance() {
     return ServiceManager.getService(ThreadsViewSettings.class);

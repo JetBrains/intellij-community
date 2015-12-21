@@ -19,7 +19,6 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
@@ -141,7 +140,11 @@ open class FileBasedStorage(file: File,
       if (e != null) {
         LOG.info(e)
       }
-      Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Load Settings", "Cannot load settings from file '$file': ${if (contentTruncated) "content truncated" else e!!.getMessage()}\n${if (blockSavingTheContent) "Please correct the file content" else "File content will be recreated"}", NotificationType.WARNING).notify(null)
+      Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
+        "Load Settings",
+        "Cannot load settings from file '$file': ${if (contentTruncated) "content truncated" else e!!.message}\n${if (blockSavingTheContent) "Please correct the file content" else "File content will be recreated"}",
+        NotificationType.WARNING)
+        .notify(null)
     }
   }
 
@@ -173,18 +176,18 @@ fun writeFile(file: File?, requestor: Any, virtualFile: VirtualFile?, element: E
 private val XML_PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>".toByteArray()
 
 private fun isEqualContent(result: VirtualFile, lineSeparator: LineSeparator, content: BufferExposingByteArrayOutputStream, prependXmlProlog: Boolean): Boolean {
-  val headerLength = if (!prependXmlProlog) 0 else XML_PROLOG.size() + lineSeparator.separatorBytes.size()
+  val headerLength = if (!prependXmlProlog) 0 else XML_PROLOG.size + lineSeparator.separatorBytes.size
   if (result.length.toInt() != (headerLength + content.size())) {
     return false
   }
 
   val oldContent = result.contentsToByteArray()
 
-  if (prependXmlProlog && (!ArrayUtil.startsWith(oldContent, XML_PROLOG) || !ArrayUtil.startsWith(oldContent, XML_PROLOG.size(), lineSeparator.separatorBytes))) {
+  if (prependXmlProlog && (!ArrayUtil.startsWith(oldContent, XML_PROLOG) || !ArrayUtil.startsWith(oldContent, XML_PROLOG.size, lineSeparator.separatorBytes))) {
     return false
   }
 
-  for (i in headerLength..oldContent.size() - 1) {
+  for (i in headerLength..oldContent.size - 1) {
     if (oldContent[i] != content.internalBuffer[i - headerLength]) {
       return false
     }
@@ -194,36 +197,30 @@ private fun isEqualContent(result: VirtualFile, lineSeparator: LineSeparator, co
 
 private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparator: LineSeparator, prependXmlProlog: Boolean) {
   LOG.debug { "Save ${file.presentableUrl}" }
-  val token = WriteAction.start()
-  try {
-    val out = file.getOutputStream(requestor)
+  runWriteAction {  ->
     try {
-      if (prependXmlProlog) {
-        out.write(XML_PROLOG)
-        out.write(lineSeparator.separatorBytes)
+      val out = file.getOutputStream(requestor)
+      try {
+        if (prependXmlProlog) {
+          out.write(XML_PROLOG)
+          out.write(lineSeparator.separatorBytes)
+        }
+        if (content is Element) {
+          JDOMUtil.writeParent(content, out, lineSeparator.separatorString)
+        }
+        else {
+          (content as BufferExposingByteArrayOutputStream).writeTo(out)
+        }
       }
-      if (content is Element) {
-        JDOMUtil.writeParent(content, out, lineSeparator.separatorString)
-      }
-      else {
-        (content as BufferExposingByteArrayOutputStream).writeTo(out)
+      finally {
+        out.close()
       }
     }
-    finally {
-      out.close()
+    catch (e: FileNotFoundException) {
+      // may be element is not long-lived, so, we must write it to byte array
+      val byteArray = if (content is Element) content.toBufferExposingByteArray(lineSeparator.separatorString) else (content as BufferExposingByteArrayOutputStream)
+      throw ReadOnlyModificationException(file, e, StateStorage.SaveSession { doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog) })
     }
-  }
-  catch (e: FileNotFoundException) {
-    // may be element is not long-lived, so, we must write it to byte array
-    val byteArray = if (content is Element) content.toBufferExposingByteArray(lineSeparator.separatorString) else (content as BufferExposingByteArrayOutputStream)
-    throw ReadOnlyModificationException(file, e, object : StateStorage.SaveSession {
-      override fun save() {
-        doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog)
-      }
-    })
-  }
-  finally {
-    token.finish()
   }
 }
 
@@ -263,11 +260,7 @@ private fun deleteFile(file: File, requestor: Any, virtualFile: VirtualFile?) {
       deleteFile(requestor, virtualFile)
     }
     catch (e: FileNotFoundException) {
-      throw ReadOnlyModificationException(virtualFile, e, object : StateStorage.SaveSession {
-        override fun save() {
-          deleteFile(requestor, virtualFile)
-        }
-      })
+      throw ReadOnlyModificationException(virtualFile, e, StateStorage.SaveSession { deleteFile(requestor, virtualFile) })
     }
   }
 }

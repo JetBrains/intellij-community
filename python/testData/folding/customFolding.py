@@ -16,10 +16,10 @@ class ImportantClass(object):<fold text='...'>
 
 <fold text='VeryImportant'>#region VeryImportant
 def importantFunction():<fold text='...'>
-    if (x > 0):
+    if (x > 0):<fold text='...'>
         <fold text='Body'>#region Body
         print "abc"
-        #endregion</fold>
+        #endregion</fold></fold>
     return</fold>
 pass
 #endregion</fold>

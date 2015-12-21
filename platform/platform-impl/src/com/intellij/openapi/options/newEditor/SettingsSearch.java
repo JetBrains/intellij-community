@@ -18,7 +18,6 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.SearchTextField;
 
 import javax.swing.KeyStroke;
@@ -39,14 +38,12 @@ abstract class SettingsSearch extends SearchTextField implements KeyListener {
     super(false);
     addKeyListener(new KeyAdapter() {
     });
-    if (Registry.is("ide.new.settings.dialog")) {
-      if (!SystemInfo.isMac) {
-        JTextField editor = getTextEditor();
-        editor.putClientProperty("JTextField.variant", "search");
-        if (!(editor.getUI() instanceof DarculaTextFieldUI)) {
-          editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
-          editor.setBorder(new DarculaTextBorder());
-        }
+    if (!SystemInfo.isMac) {
+      JTextField editor = getTextEditor();
+      editor.putClientProperty("JTextField.variant", "search");
+      if (!(editor.getUI() instanceof DarculaTextFieldUI)) {
+        editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
+        editor.setBorder(new DarculaTextBorder());
       }
     }
   }

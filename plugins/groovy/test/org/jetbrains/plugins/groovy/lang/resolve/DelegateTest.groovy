@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -268,6 +268,15 @@ interface Foo {
     assertAllMethodsImplemented('text.groovy', '''\
 class FooImpl implements Foo {
     @Delegate(deprecated = false) Foo delegate
+}
+''')
+  }
+
+  void 'test delegate with generics'() {
+    assertAllMethodsImplemented('a.groovy', '''
+class MyClass {
+    @Delegate
+    HashMap<String, Integer> map = new HashMap<String, Integer>()
 }
 ''')
   }

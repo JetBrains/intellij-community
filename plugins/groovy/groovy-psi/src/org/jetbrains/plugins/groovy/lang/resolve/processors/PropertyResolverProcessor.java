@@ -31,7 +31,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RES
 /**
  * @author ven
  */
-public class PropertyResolverProcessor extends ResolverProcessor {
+public class PropertyResolverProcessor extends ResolverProcessorImpl {
 
   public PropertyResolverProcessor(String name, PsiElement place) {
     super(name, RESOLVE_KINDS_PROPERTY, place, PsiType.EMPTY_ARRAY);

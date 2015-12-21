@@ -149,8 +149,7 @@ public class MethodReturnValueWatcher  {
 
   public void setFeatureEnabled(final boolean featureEnabled) {
     myFeatureEnabled = featureEnabled;
-    myLastExecutedMethod = null;
-    myLastMethodReturnValue = null;
+    clear();
   }
 
   public void enable(ThreadReference thread) {
@@ -166,6 +165,12 @@ public class MethodReturnValueWatcher  {
     updateRequestState(trackingEnabled && myFeatureEnabled, thread);
   }
 
+  public void clear() {
+    myLastExecutedMethod = null;
+    myLastMethodReturnValue = null;
+    myThread = null;
+  }
+
   private void updateRequestState(final boolean enabled, @Nullable final ThreadReference thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
@@ -178,8 +183,7 @@ public class MethodReturnValueWatcher  {
         myExitRequest = null;
       }
       if (enabled) {
-        myLastExecutedMethod = null;
-        myLastMethodReturnValue = null;
+        clear();
         myThread = thread;
 
         if (Registry.is("debugger.watch.return.speedup")) {

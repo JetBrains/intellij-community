@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.jetbrains.debugger
 
 open class MemberFilterWithNameMappings(rawNameToSource: Map<String, String>?) : MemberFilter {
@@ -43,9 +41,9 @@ open class MemberFilterWithNameMappings(rawNameToSource: Map<String, String>?) :
       return null
     }
 
-    for (entry in rawNameToSource.entrySet()) {
-      if (entry.getValue() == name) {
-        return entry.getKey()
+    for (entry in rawNameToSource.entries) {
+      if (entry.value == name) {
+        return entry.key
       }
     }
     return null

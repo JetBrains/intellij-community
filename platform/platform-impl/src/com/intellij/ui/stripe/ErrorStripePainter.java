@@ -186,7 +186,6 @@ public class ErrorStripePainter extends RegionPainter.Image {
           currentValue.myModified = value != null && value.myModified;
         }
         else if (value != null) {
-          value.myModified = false;
           ErrorStripe stripe = value.get();
           if (stripe != null && stripe.compareTo(currentValue.myStripe) < 0) {
             currentValue.myStripe = stripe;
@@ -209,8 +208,8 @@ public class ErrorStripePainter extends RegionPainter.Image {
       for (int index = 0; index < myArraySize; index++) {
         Value value = myArray[index];
         if (value != null) {
-          value.myModified = false;
           value.paint(g, 0, myImageHeight, width, max, force);
+          value.myModified = false;
         }
         myImageHeight += max;
       }
@@ -286,7 +285,6 @@ public class ErrorStripePainter extends RegionPainter.Image {
 
     @Override
     void paint(Graphics2D g, int x, int y, int width, int height) {
-      myModified = false;
       if (myStripe != null) {
         int thickness = myAlignment != null ? myMin + myGap : height;
         y += getOffset(height, thickness);
@@ -326,7 +324,6 @@ public class ErrorStripePainter extends RegionPainter.Image {
 
     @Override
     void paint(Graphics2D g, int x, int y, int width, int height) {
-      myModified = false;
       if (mySet != null) {
         Iterator<ErrorStripe> iterator = mySet.iterator();
         if (iterator.hasNext()) {

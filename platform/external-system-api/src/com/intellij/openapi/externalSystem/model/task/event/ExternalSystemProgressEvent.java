@@ -24,15 +24,17 @@ import java.io.Serializable;
  * @author Vladislav.Soroka
  * @since 11/27/2015
  */
-public interface ExternalSystemProgressEvent extends Serializable {
+public interface ExternalSystemProgressEvent<T extends OperationDescriptor> extends Serializable {
   @NotNull
   String getEventId();
-
   @Nullable
   String getParentEventId();
 
   @NotNull
-  String getDescription();
+  String getDisplayName();
 
   long getEventTime();
+
+  @NotNull
+  T getDescriptor();
 }

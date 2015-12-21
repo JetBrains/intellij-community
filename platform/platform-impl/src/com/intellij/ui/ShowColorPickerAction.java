@@ -20,8 +20,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,8 +31,7 @@ import java.util.List;
 public class ShowColorPickerAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getProject();
-    JComponent root = rootComponent(project);
+    Window root = parent();
     if (root != null) {
       List<ColorPickerListener> listeners = ColorPickerListenerFactory.createListenersFor(e.getData(CommonDataKeys.PSI_ELEMENT));
       ColorPicker.ColorPickerDialog picker = new ColorPicker.ColorPickerDialog(root, "Color Picker", null, true, listeners, true);
@@ -53,13 +50,11 @@ public class ShowColorPickerAction extends DumbAwareAction {
     e.getPresentation().setEnabledAndVisible(true);
   }
 
-  private static JComponent rootComponent(Project project) {
-    if (project != null) {
-      IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
-      if (frame != null) return frame.getComponent();
+  private static Window parent() {
+    Window activeWindow = null;
+    for (Window w : Window.getWindows()) {
+      if (w.isActive()) {activeWindow = w;};
     }
-
-    JFrame frame = WindowManager.getInstance().findVisibleFrame();
-    return frame != null ? frame.getRootPane() : null;
+    return activeWindow;
   }
 }

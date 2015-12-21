@@ -88,4 +88,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testTypingTupleInDocstring() {
     doTest();
   }
+
+  // PY-16898
+  public void testAsyncForIterable() {
+    doTest();
+  }
 }

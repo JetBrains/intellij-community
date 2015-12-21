@@ -18,6 +18,7 @@ package com.intellij.refactoring.typeMigration.rules.guava;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.psi.*;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
+import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.reference.SoftLazyValue;
@@ -88,10 +89,11 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
       PsiMethod method = (PsiMethod)member;
       final String methodName = method.getName();
       final PsiClass aClass = method.getContainingClass();
-      if (!isValidMethodQualifierToConvert(aClass)) return null;
-      final TypeConversionDescriptorBase descriptor = mySimpleDescriptors.getValue().get(methodName);
-      if (descriptor != null) {
-        return descriptor;
+      if (isValidMethodQualifierToConvert(aClass)) {
+        final TypeConversionDescriptorBase descriptor = mySimpleDescriptors.getValue().get(methodName);
+        if (descriptor != null) {
+          return descriptor;
+        }
       }
       return findConversionForMethod(from, to, method, methodName, context, labeler);
     } else if (context instanceof PsiNewExpression) {
@@ -99,7 +101,7 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
       if (anonymousClass != null && AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, false)) {
         return new TypeConversionDescriptorBase() {
           @Override
-          public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+          public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
             return AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, false, true);
           };
         };

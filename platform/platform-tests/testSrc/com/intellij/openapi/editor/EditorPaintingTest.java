@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor;
 
-import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -53,7 +52,6 @@ public class EditorPaintingTest extends AbstractEditorTest {
   public void testWholeLineHighlighterAtDocumentEnd() throws Exception {
     initText("foo");
     addLineHighlighter(0, 3, HighlighterLayer.WARNING, null, Color.red);
-    System.out.println(((Dumpable)myEditor).dumpState()); // temporary code to find the cause of blinking
     checkResult();
   }
 

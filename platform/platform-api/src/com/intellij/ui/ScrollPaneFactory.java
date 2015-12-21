@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ui.components.JBScrollPane;
+import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
 
 import javax.swing.*;
@@ -36,19 +37,14 @@ public class ScrollPaneFactory implements ScrollPaneConstants {
     return new JBScrollPane(view);
   }
 
-  public static JScrollPane createScrollPane(int vsbPolicy, int hsbPolicy) {
+  public static JScrollPane createScrollPane(@JdkConstants.VerticalScrollBarPolicy int vsbPolicy,
+                                             @JdkConstants.HorizontalScrollBarPolicy int hsbPolicy) {
     return new JBScrollPane(vsbPolicy, hsbPolicy);
   }
 
   public static JScrollPane createScrollPane(Component view,
-                                             @MagicConstant(intValues = {
-                                               VERTICAL_SCROLLBAR_ALWAYS,
-                                               VERTICAL_SCROLLBAR_AS_NEEDED,
-                                               VERTICAL_SCROLLBAR_NEVER}) int vsbPolicy,
-                                             @MagicConstant(intValues = {
-                                               HORIZONTAL_SCROLLBAR_ALWAYS,
-                                               HORIZONTAL_SCROLLBAR_AS_NEEDED,
-                                               HORIZONTAL_SCROLLBAR_NEVER}) int hsbPolicy) {
+                                             @JdkConstants.VerticalScrollBarPolicy int vsbPolicy,
+                                             @JdkConstants.HorizontalScrollBarPolicy int hsbPolicy) {
     return new JBScrollPane(view, vsbPolicy, hsbPolicy);
   }
 

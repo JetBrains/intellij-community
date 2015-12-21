@@ -16,6 +16,8 @@
 package com.intellij.ui;
 
 import com.intellij.ide.StartupProgress;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
@@ -181,10 +183,10 @@ public class Splash extends JDialog implements StartupProgress {
         int offsetX = uiScale(15);
         int offsetY = 30;
         if (Registry.is("ide.new.about")) {
-          ApplicationInfoEx infoEx = ApplicationInfoEx.getInstanceEx();
-          if (infoEx instanceof ApplicationInfoImpl) {
-            offsetX = Math.max(offsetX, ((ApplicationInfoImpl)infoEx).getProgressX());
-            offsetY = ((ApplicationInfoImpl)infoEx).getLicenseOffsetY();
+          ApplicationInfo info = getAppInfo();
+          if (info instanceof ApplicationInfoImpl) {
+            offsetX = Math.max(offsetX, ((ApplicationInfoImpl)info).getProgressX());
+            offsetY = ((ApplicationInfoImpl)info).getLicenseOffsetY();
           } else {
             return false;
           }
@@ -198,6 +200,9 @@ public class Splash extends JDialog implements StartupProgress {
       return true;
     }
     return false;
+  }
+  private static ApplicationInfo getAppInfo() {
+    return ApplicationManager.getApplication() == null ? ApplicationInfoImpl.getShadowInstance() : ApplicationInfo.getInstance();
   }
 
   private static float JBUI_INIT_SCALE = JBUI.scale(1f);

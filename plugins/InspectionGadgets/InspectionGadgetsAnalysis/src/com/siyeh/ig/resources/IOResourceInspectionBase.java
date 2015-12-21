@@ -30,7 +30,7 @@ public class IOResourceInspectionBase extends ResourceInspection {
   protected static final String[] IO_TYPES =
     {
       "java.io.InputStream", "java.io.OutputStream", "java.io.Reader", "java.io.Writer",
-      "java.io.RandomAccessFile", "java.util.zip.ZipFile"
+      "java.io.RandomAccessFile", "java.util.zip.ZipFile", "java.io.Closeable"
     };
   final List<String> ignoredTypes = new ArrayList<String>();
 

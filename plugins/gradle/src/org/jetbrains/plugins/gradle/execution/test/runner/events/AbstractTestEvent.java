@@ -21,9 +21,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsoleProperties;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsoleProperties;
 
 /**
  * @author Vladislav.Soroka
@@ -52,9 +53,9 @@ public abstract class AbstractTestEvent implements TestEvent {
     return (GradleConsoleProperties)getExecutionConsole().getProperties();
   }
 
-  @Nullable
+  @NotNull
   protected String findLocationUrl(@Nullable String name, @NotNull String fqClassName) {
-    return name == null ? "gradle://className::" + fqClassName : "gradle://methodName::" + fqClassName + '.' + name;
+    return GradleRunnerUtil.getTestLocationUrl(name, fqClassName);
   }
 
   protected String getTestName(@NotNull XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException {

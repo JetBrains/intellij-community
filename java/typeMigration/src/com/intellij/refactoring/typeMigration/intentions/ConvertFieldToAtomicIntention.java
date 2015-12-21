@@ -7,6 +7,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -17,8 +18,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
+import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationReplacementUtil;
 import com.intellij.refactoring.typeMigration.rules.AtomicConversionRule;
+import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
@@ -26,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.*;
@@ -177,7 +181,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
           }
           final TypeConversionDescriptor directConversion = AtomicConversionRule.findDirectConversion(psiElement, toType, fromType);
           if (directConversion != null) {
-            TypeMigrationReplacementUtil.replaceExpression((PsiExpression)psiElement, project, directConversion);
+            TypeMigrationReplacementUtil.replaceExpression((PsiExpression)psiElement, project, directConversion, new TypeEvaluator(null, null));
           }
         }
       }
@@ -191,7 +195,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
         }
         final TypeConversionDescriptor directConversion = AtomicConversionRule.wrapWithNewExpression(toType, fromType, initializer, element);
         if (directConversion != null) {
-          TypeMigrationReplacementUtil.replaceExpression(initializer, project, directConversion);
+          TypeMigrationReplacementUtil.replaceExpression(initializer, project, directConversion, new TypeEvaluator(null, null));
         }
       }
       else if (!assertNotNull(psiVariable.getModifierList()).hasModifierProperty(PsiModifier.FINAL)) {

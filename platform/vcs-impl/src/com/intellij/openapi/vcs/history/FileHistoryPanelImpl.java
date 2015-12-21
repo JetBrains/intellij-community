@@ -111,6 +111,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   private final AnnotationProvider myAnnotationProvider;
   private VcsHistorySession myHistorySession;
   @NotNull private final FilePath myFilePath;
+  @Nullable private final VcsRevisionNumber myStartingRevision;
   @NotNull private final FileHistoryRefresherI myRefresherI;
   private VcsFileRevision myBottomRevisionForShowDiff;
   private final DualView myDualView;
@@ -187,6 +188,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         refreshImpl(canUseLastRevision);
       }
     });
+  }
+
+  @Nullable
+  public VcsRevisionNumber getStartingRevision() {
+    return myStartingRevision;
   }
 
   private static class AuthorCellRenderer extends DefaultTableCellRenderer {
@@ -354,6 +360,17 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
                               ContentManager contentManager,
                               @NotNull FileHistoryRefresherI refresherI,
                               final boolean isStaticEmbedded) {
+    this(vcs, filePath, null, session, provider, contentManager, refresherI, isStaticEmbedded);
+  }
+  
+  public FileHistoryPanelImpl(AbstractVcs vcs,
+                              @NotNull FilePath filePath,
+                              @Nullable VcsRevisionNumber startingRevision,
+                              VcsHistorySession session,
+                              VcsHistoryProvider provider,
+                              ContentManager contentManager,
+                              @NotNull FileHistoryRefresherI refresherI,
+                              final boolean isStaticEmbedded) {
     super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history", ! isStaticEmbedded);
     myProject = vcs.getProject();
     myIsStaticAndEmbedded = false;
@@ -363,6 +380,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myRefresherI = refresherI;
     myHistorySession = session;
     myFilePath = filePath;
+    myStartingRevision = startingRevision;
 
     DiffFromHistoryHandler customDiffHandler = provider.getHistoryDiffHandler();
     myDiffHandler = customDiffHandler == null ? new StandardDiffFromHistoryHandler() : customDiffHandler;
@@ -1743,13 +1761,25 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof FileHistoryPanelImpl && Comparing.equal(((FileHistoryPanelImpl)obj).getVirtualFile(), getVirtualFile());
+    return obj instanceof FileHistoryPanelImpl && sameHistories((FileHistoryPanelImpl)obj, myFilePath, myStartingRevision);
   }
 
   @Override
   public int hashCode() {
-    final VirtualFile file = getVirtualFile();
-    return file == null ? 0 : file.hashCode();
+    int result = myFilePath.hashCode();
+    result = 31 * result + (myStartingRevision != null ? myStartingRevision.asString().hashCode() : 0); // NB: asString to conform to equals
+    return result;
+  }
+
+  /**
+   * Checks if the given historyPanel shows the history for given path and revision number.
+   */
+  static boolean sameHistories(@NotNull FileHistoryPanelImpl historyPanel,
+                               @NotNull FilePath path,
+                               @Nullable VcsRevisionNumber startingRevisionNumber) {
+    String existingRevision = historyPanel.getStartingRevision() == null ? null : historyPanel.getStartingRevision().asString();
+    String newRevision = startingRevisionNumber == null ? null : startingRevisionNumber.asString();
+    return historyPanel.getFilePath().equals(path) && Comparing.equal(existingRevision, newRevision);
   }
 
   private class MyToggleAction extends ToggleAction implements DumbAware {

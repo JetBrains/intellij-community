@@ -22,10 +22,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
+import org.jdom.Element;
 
 import java.io.File;
 import java.util.Arrays;
@@ -164,6 +166,19 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       myTemplateManager.setCurrentScheme(myTemplateManager.getProjectScheme());
       myTemplateManager.setTemplates(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, Arrays.asList(before));
     }
+  }
+
+  public void testSaveReformatCode() throws Exception {
+    FileTemplate template = myTemplateManager.getTemplate(TEST_TEMPLATE_TXT);
+    assertTrue(template.isReformatCode());
+    template.setReformatCode(false);
+
+    ExportableFileTemplateSettings settings = ExportableFileTemplateSettings.getInstance(getProject());
+    Element state = settings.getState();
+    assertNotNull(state);
+    Element element = state.getChildren().get(1).getChildren().get(0);
+    assertEquals("<template name=\"testTemplate.txt\" reformat=\"false\" live-template-enabled=\"false\" enabled=\"true\" />", JDOMUtil
+      .writeElement(element));
   }
 
   private FileTemplateManagerImpl myTemplateManager;

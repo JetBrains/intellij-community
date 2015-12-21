@@ -181,6 +181,20 @@ public class UpdateStrategyTest {
     assertNull(result.getChannelToPropose());
   }
 
+  @Test
+  public void testParallelCampaignsInChannel() {
+    BuildNumber currentBuild = BuildNumber.fromString("IU-143.381");
+    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(15, currentBuild, InfoReader.read("idea-2eap.xml"), settings, customization);
+
+    CheckForUpdateResult result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    BuildInfo build = result.getNewBuildInSelectedChannel();
+    assertNotNull(build);
+    assertEquals("143.888", build.getNumber().toString());
+  }
+
   private static class TestUpdateSettings implements UserUpdateSettings {
     private final ChannelStatus myChannelStatus;
     private final List<String> myIgnoredBuildNumbers;

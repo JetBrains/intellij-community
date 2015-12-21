@@ -22,8 +22,11 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  * @since 11/27/2015
  */
-public class ExternalSystemStartEventImpl extends BaseExternalSystemProgressEvent implements ExternalSystemStartEvent {
-  public ExternalSystemStartEventImpl(@NotNull String eventId, @Nullable String parentEventId, @NotNull String description, long eventTime) {
-    super(eventId, parentEventId, description, eventTime);
+public class ExternalSystemStartEventImpl<T extends OperationDescriptor> extends BaseExternalSystemProgressEvent<T>
+  implements ExternalSystemStartEvent<T> {
+  private static final long serialVersionUID = 1L;
+
+  public ExternalSystemStartEventImpl(@NotNull String eventId, @Nullable String parentEventId, @NotNull T descriptor) {
+    super(eventId, parentEventId, descriptor);
   }
 }

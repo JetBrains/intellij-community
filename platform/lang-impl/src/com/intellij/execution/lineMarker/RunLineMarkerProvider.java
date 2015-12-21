@@ -18,6 +18,7 @@ package com.intellij.execution.lineMarker;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -81,7 +82,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
         return tooltip.length() == 0 ? null : tooltip.toString();
       }
     };
-    return new LineMarkerInfo<PsiElement>(element, element.getTextOffset(), icon, Pass.UPDATE_ALL,
+    return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.UPDATE_ALL,
                                           tooltipProvider, null,
                                           GutterIconRenderer.Alignment.CENTER) {
       @Nullable
@@ -116,5 +117,11 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
   @Override
   public String getName() {
     return "Run line marker";
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon() {
+    return AllIcons.RunConfigurations.TestState.Run;
   }
 }

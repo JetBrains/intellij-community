@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
-import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,9 +36,9 @@ public class ExecutionNode extends CachingSimpleNode {
   private ExecutionInfo myInfo;
   private final List<ExecutionNode> myNodes = ContainerUtil.newArrayList();
 
-  protected ExecutionNode(Project project) {
+  protected ExecutionNode(Project project, @Nullable String workingDir) {
     super(project, null);
-    this.myInfo = new ExecutionInfo(null, "--");
+    this.myInfo = new ExecutionInfo(null, "--", workingDir);
   }
 
   public void add(ExecutionNode node) {
@@ -87,15 +86,10 @@ public class ExecutionNode extends CachingSimpleNode {
     setNameAndTooltip(getName(), null, myInfo.isUpToDate() ? "UP-TO-DATE" : null);
     setIcon(
       myInfo.isRunning() ? NodeProgressAnimator.getCurrentFrame() :
-      myInfo.isFailed() ? AllIcons.RunConfigurations.TestError :
-      myInfo.isSkipped() ? AllIcons.RunConfigurations.TestSkipped :
-      AllIcons.RunConfigurations.TestPassed
+      myInfo.isFailed() ? AllIcons.Process.State.RedExcl :
+      myInfo.isSkipped() ? AllIcons.Process.State.YellowStr :
+      AllIcons.Process.State.GreenOK
     );
-  }
-
-  @Override
-  public void handleSelection(SimpleTree tree) {
-    super.handleSelection(tree);
   }
 
   protected void setNameAndTooltip(String name, @Nullable String tooltip) {
@@ -119,5 +113,9 @@ public class ExecutionNode extends CachingSimpleNode {
 
   private static SimpleTextAttributes prepareAttributes(SimpleTextAttributes from) {
     return new SimpleTextAttributes(from.getBgColor(), from.getFgColor(), null, from.getStyle());
+  }
+
+  public String getMenuId() {
+    return "RunContextGroup";
   }
 }

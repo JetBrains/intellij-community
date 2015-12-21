@@ -36,6 +36,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,7 +114,8 @@ public class PyPackageUtil {
                 return (PyListLiteralExpression)value;
               }
               if (value instanceof PyReferenceExpression) {
-                final PyResolveContext resolveContext = PyResolveContext.defaultContext();
+                final TypeEvalContext context = TypeEvalContext.deepCodeInsight(module.getProject());
+                final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
                 final QualifiedResolveResult result = ((PyReferenceExpression)value).followAssignmentsChain(resolveContext);
                 final PsiElement element = result.getElement();
                 if (element instanceof PyListLiteralExpression) {

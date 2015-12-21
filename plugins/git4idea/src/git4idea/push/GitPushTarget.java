@@ -100,7 +100,7 @@ public class GitPushTarget implements PushTarget {
     if (existingRemoteBranch != null) {
       return new GitPushTarget(existingRemoteBranch, false);
     }
-    GitRemoteBranch rb = new GitStandardRemoteBranch(remote, branchName, GitBranch.DUMMY_HASH);
+    GitRemoteBranch rb = new GitStandardRemoteBranch(remote, branchName);
     return new GitPushTarget(rb, true);
   }
 

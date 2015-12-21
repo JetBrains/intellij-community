@@ -83,7 +83,6 @@
 
     <resolveScopeEnlarger implementation="org.jetbrains.plugins.gradle.config.GradleBuildClasspathResolveScopeEnlarger"/>
 
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <testActionProvider implementation="org.jetbrains.plugins.gradle.execution.test.runner.OpenGradleTestResultActionProvider"/>
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer"
                               order="last"/>
@@ -145,7 +144,7 @@
 
     <localInspection language="Groovy" groupPath="Gradle" shortName="MultipleRepositoryUrls"
                      bundle="org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle"
-                     key="multiple.repository.urls" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
+                     key="multiple.repository.urls" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.MultipleRepositoryUrlsInspection"/>
 
   </extensions>

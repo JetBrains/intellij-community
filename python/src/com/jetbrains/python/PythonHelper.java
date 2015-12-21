@@ -50,6 +50,7 @@ public enum PythonHelper implements HelperPackage {
 
   // Test runners
   UT("pycharm", "utrunner"),
+  TOX("pycharm", "_jb_tox_runner"),
   SETUPPY("pycharm", "pycharm_setup_runner"),
   NOSE("pycharm", "noserunner"),
   PYTEST("pycharm", "pytestrunner"),

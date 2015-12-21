@@ -15,11 +15,14 @@
  */
 package com.siyeh.ig.j2me;
 
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.resources.ResourceInspection;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 public class ConnectionResourceInspection extends ResourceInspection {
@@ -43,5 +46,10 @@ public class ConnectionResourceInspection extends ResourceInspection {
     }
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
     return MethodCallUtils.isCallToMethod(methodCallExpression, "javax.microedition.io.Connector", null, "open", null);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    XmlSerializer.serializeInto(this, node, getSerializationFilter());
   }
 }

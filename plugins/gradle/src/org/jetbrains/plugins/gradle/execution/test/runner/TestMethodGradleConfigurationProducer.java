@@ -38,7 +38,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.List;
 
-import static org.jetbrains.plugins.gradle.execution.test.runner.TestRunnerUtils.getMethodLocation;
+import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
 
 /**
  * @author Vladislav.Soroka

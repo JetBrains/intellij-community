@@ -28,11 +28,24 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.List;
 
-public class FocusTrackerSupport<T> {
-  public static class TwosideFocusTrackerSupport {
+public abstract class FocusTrackerSupport<S> {
+  @NotNull
+  public abstract S getCurrentSide();
+
+  public abstract void setCurrentSide(@NotNull S side);
+
+  public abstract void processContextHints(@NotNull DiffRequest request, @NotNull DiffContext context);
+
+  public abstract void updateContextHints(@NotNull DiffRequest request, @NotNull DiffContext context);
+
+  //
+  // Impl
+  //
+
+  public static class Twoside extends FocusTrackerSupport<Side> {
     @NotNull private Side myCurrentSide;
 
-    public TwosideFocusTrackerSupport(@NotNull List<? extends EditorHolder> holders) {
+    public Twoside(@NotNull List<? extends EditorHolder> holders) {
       assert holders.size() == 2;
 
       myCurrentSide = Side.RIGHT;
@@ -77,10 +90,10 @@ public class FocusTrackerSupport<T> {
     }
   }
 
-  public static class ThreesideFocusTrackerSupport {
+  public static class Threeside extends FocusTrackerSupport<ThreeSide> {
     @NotNull private ThreeSide myCurrentSide;
 
-    public ThreesideFocusTrackerSupport(@NotNull List<? extends EditorHolder> holders) {
+    public Threeside(@NotNull List<? extends EditorHolder> holders) {
       myCurrentSide = ThreeSide.BASE;
 
       addListener(holders, ThreeSide.LEFT);

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.concurrency;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Function;
@@ -23,11 +24,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * ExecutorService which limits the number of tasks running simultaneously.
@@ -37,8 +39,9 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   private volatile boolean myShutdown;
   private final Executor myBackendExecutor;
   private final int myMaxTasks;
-  // number of tasks running (or trying to run)
-  private final AtomicInteger myInProgress = new AtomicInteger();
+  // low  32 bits: number of tasks running (or trying to run)
+  // high 32 bits: myTaskQueue modification stamp
+  private final AtomicLong myStatus = new AtomicLong();
   private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<Runnable>();
 
   public BoundedTaskExecutor(@NotNull Executor backendExecutor, int maxSimultaneousTasks) {
@@ -104,34 +107,39 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
 
   @Override
   public void execute(@NotNull Runnable task) {
-    myTaskQueue.offer(task);
-    int inProgress = myInProgress.incrementAndGet();
+    if (!myTaskQueue.offer(task)) {
+      throw new RejectedExecutionException();
+    }
+    long status = myStatus.addAndGet(1 + (1L << 32)); // increment inProgress and queue stamp atomically
 
-    tryToPollAndExecuteNext(inProgress);
+    tryToPollAndExecuteNext(status);
   }
 
-  private void tryToPollAndExecuteNext(int inProgress) {
-    while (!isShutdown()) {
+  private void tryToPollAndExecuteNext(long status) {
+    while (true) {
+      int inProgress = (int)status;
+
       assert inProgress > 0 : inProgress;
       Runnable next;
-      if (inProgress <= myMaxTasks && (next = myTaskQueue.poll()) != null) {
+      if (inProgress <= myMaxTasks && !isShutdown() && (next = myTaskQueue.poll()) != null) {
         try {
+          myStatus.addAndGet(1L << 32);
           myBackendExecutor.execute(wrap(next));
         }
         catch (Error e) {
-          myInProgress.decrementAndGet();
+          myStatus.decrementAndGet();
           throw e;
         }
         catch (RuntimeException e) {
-          myInProgress.decrementAndGet();
+          myStatus.decrementAndGet();
           throw e;
         }
         break;
       }
-      if (myInProgress.compareAndSet(inProgress, inProgress-1)) {
+      if (myStatus.compareAndSet(status, status - 1)) {
         break;
       }
-      inProgress = myInProgress.get();
+      status = myStatus.get();
     }
   }
 
@@ -144,7 +152,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
           task.run();
         }
         finally {
-          tryToPollAndExecuteNext(myInProgress.get());
+          tryToPollAndExecuteNext(myStatus.get());
         }
       }
 
@@ -156,20 +164,25 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   @TestOnly
-  public void waitAllTasksExecuted() throws ExecutionException, InterruptedException {
+  public void waitAllTasksExecuted(int timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException {
+    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread(); // to make sure we are not waiting inside the pooled thread, blocking it forever
     final CountDownLatch started = new CountDownLatch(myMaxTasks);
     final CountDownLatch readyToFinish = new CountDownLatch(1);
+    final StringBuffer log = new StringBuffer("waitAllTasksExecuted: " + this + "\n==="+ThreadDumper.dumpThreadsToString()+"\n===\n");
     // start myMaxTasks runnables which will spread to all available executor threads
     // and wait for them all to finish
     List<Future> futures = ContainerUtil.map(Collections.nCopies(myMaxTasks, null), new Function<Object, Future>() {
       @Override
       public Future fun(Object o) {
+        log.append("Submit task\n");
         return submit(new Runnable() {
           @Override
           public void run() {
             try {
               started.countDown();
+              log.append("Task run. started=" + started+"\n");
               readyToFinish.await();
+              log.append("Task finished.\n");
             }
             catch (InterruptedException e) {
               throw new RuntimeException(e);
@@ -179,12 +192,18 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       }
     });
     try {
-      started.await();
+      if (!started.await(timeout, unit)) {
+        throw new RuntimeException("Interrupted by timeout. " + this +
+                                   "\nLog: ---"+log+"\n---"+
+                                   "; Thread dump:\n" + ThreadDumper.dumpThreadsToString());
+      }
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
-    readyToFinish.countDown();
+    finally {
+      readyToFinish.countDown();
+    }
     for (Future future : futures) {
       future.get();
     }
@@ -200,5 +219,18 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       }
     }
     return queued;
+  }
+
+  @Override
+  public String toString() {
+    return "BoundedExecutor(" + myMaxTasks + ") " + (isShutdown() ? "SHUTDOWN " : "") +
+           "inProgress: " + (int)myStatus.get() +
+           "; " + myTaskQueue.size() +
+           " tasks in queue: [" + ContainerUtil.map(myTaskQueue, new Function<Runnable, Object>() {
+      @Override
+      public Object fun(Runnable runnable) {
+        return info(runnable);
+      }
+    }) + "]";
   }
 }

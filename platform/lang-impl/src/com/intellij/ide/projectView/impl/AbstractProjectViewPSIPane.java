@@ -27,7 +27,6 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.ide.util.treeView.TreeBuilderUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -35,6 +34,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -44,7 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.stripe.ErrorStripe;
-import com.intellij.ui.stripe.ExtraErrorStripePainter;
+import com.intellij.ui.stripe.ErrorStripePainter;
 import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
@@ -83,15 +83,14 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     enableDnD();
     myComponent = ScrollPaneFactory.createScrollPane(myTree);
     if (Registry.is("error.stripe.enabled")) {
-      ExtraErrorStripePainter painter = new ExtraErrorStripePainter(true);
-      Disposer.register(this, new TreeUpdater<ExtraErrorStripePainter>(painter, myComponent, myTree) {
+      ErrorStripePainter painter = new ErrorStripePainter(true);
+      Disposer.register(this, new TreeUpdater<ErrorStripePainter>(painter, myComponent, myTree) {
         @Override
-        protected void update(ExtraErrorStripePainter painter, int index, Object object) {
+        protected void update(ErrorStripePainter painter, int index, Object object) {
           if (object instanceof DefaultMutableTreeNode) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode)object;
             object = node.getUserObject();
           }
-          painter.setExtraStripe(index, getExtraStripe(object));
           if (object instanceof PsiDirectoryNode && !myTree.isCollapsed(index)) {
             object = null;
           }
@@ -106,16 +105,10 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
             TextAttributesKey key = presentation.getTextAttributesKey();
             if (key != null) {
               TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
-              if (attributes != null) return ErrorStripe.create(attributes.getEffectColor(), 1);
+              if (attributes != null && EffectType.WAVE_UNDERSCORE == attributes.getEffectType()) {
+                return ErrorStripe.create(attributes.getEffectColor(), 1);
+              }
             }
-          }
-          return null;
-        }
-
-        private ErrorStripe getExtraStripe(Object object) {
-          if (object instanceof NodeDescriptor) {
-            NodeDescriptor node = (NodeDescriptor)object;
-            return ErrorStripe.create(node.getColor(), 0);
           }
           return null;
         }

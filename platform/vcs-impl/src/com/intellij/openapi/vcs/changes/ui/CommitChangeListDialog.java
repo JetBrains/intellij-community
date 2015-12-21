@@ -41,7 +41,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
-import com.intellij.openapi.vcs.impl.VcsGlobalMessageManager;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -997,13 +996,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  @Nullable
-  @Override
-  protected JComponent createNorthPanel() {
-    final JComponent banner = VcsGlobalMessageManager.getInstance(myProject).getMessageBanner();
-    return banner != null ? banner : super.createNorthPanel();
-  }
-
   @Override
   @Nullable
   protected JComponent createCenterPanel() {
@@ -1020,8 +1012,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     JPanel mainPanel;
     if (myAdditionalOptionsPanel != null) {
       JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(myAdditionalOptionsPanel, true);
-      optionsPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-      optionsPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
       optionsPane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
       JPanel infoPanel = JBUI.Panels.simplePanel(optionsPane).withBorder(JBUI.Borders.emptyLeft(10));
 

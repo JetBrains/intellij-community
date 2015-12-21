@@ -2104,6 +2104,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       @Override
       public void contextAction() {
         breakpointManager.applyThreadFilter(DebugProcessImpl.this, null); // clear the filter on resume
+        if (myReturnValueWatcher != null) {
+          myReturnValueWatcher.clear();
+        }
         super.contextAction();
       }
 

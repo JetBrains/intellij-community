@@ -173,5 +173,6 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   protected abstract HelperPackage getRunner();
+  @NotNull
   protected abstract List<String> getTestSpecs();
 }

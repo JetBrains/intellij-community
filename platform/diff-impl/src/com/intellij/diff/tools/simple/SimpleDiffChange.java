@@ -18,7 +18,7 @@ package com.intellij.diff.tools.simple;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.util.*;
-import com.intellij.icons.AllIcons;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -252,12 +252,12 @@ public class SimpleDiffChange {
           return createApplyRenderer(mySide);
         }
       }
-      else if (isEditable) {
-        return createRevertRenderer(mySide);
-      }
       else if (isOtherEditable) {
-        if (isAppendable) {
+        if (myCtrlPressed && isAppendable) {
           return createAppendRenderer(mySide);
+        }
+        else {
+          return createApplyRenderer(mySide);
         }
       }
       return null;
@@ -279,17 +279,8 @@ public class SimpleDiffChange {
     return createIconRenderer(side, "Append", DiffUtil.getArrowDownIcon(side), new Runnable() {
       @Override
       public void run() {
+        UsageTrigger.trigger("diff.SimpleDiffChange.Append");
         myViewer.appendChange(SimpleDiffChange.this, side);
-      }
-    });
-  }
-
-  @Nullable
-  private GutterIconRenderer createRevertRenderer(@NotNull final Side side) {
-    return createIconRenderer(side.other(), "Revert", AllIcons.Diff.Remove, new Runnable() {
-      @Override
-      public void run() {
-        myViewer.replaceChange(SimpleDiffChange.this, side.other());
       }
     });
   }

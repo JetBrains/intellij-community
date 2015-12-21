@@ -109,6 +109,9 @@ public class VariableSearchUtils {
       variable = (PsiVariable)target;
     }
     final PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+    if (block == null) {
+      return null;
+    }
     final PsiElement[] defs = DefUseUtil.getDefs(block, variable, referenceExpression);
     if (defs.length != 1) {
       return null;

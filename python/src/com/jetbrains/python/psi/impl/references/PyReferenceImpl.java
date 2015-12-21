@@ -597,19 +597,26 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
     }
 
-    // Throw away fake elements used for completion internally
-    for (LookupElement e : processor.getResultList()) {
-      final Object o = e.getObject();
-      if (o instanceof PsiElement) {
-        final PsiElement original = CompletionUtil.getOriginalElement((PsiElement)o);
+    ret.addAll(getOriginalElements(processor));
+    return ret.toArray();
+  }
+
+  /**
+   * Throws away fake elements used for completion internally.
+   */
+  protected List<LookupElement> getOriginalElements(@NotNull CompletionVariantsProcessor processor) {
+    final List<LookupElement> ret = Lists.newArrayList();
+    for (LookupElement item : processor.getResultList()) {
+      final PsiElement e = item.getPsiElement();
+      if (e != null) {
+        final PsiElement original = CompletionUtil.getOriginalElement(e);
         if (original == null) {
           continue;
         }
       }
-      ret.add(e);
+      ret.add(item);
     }
-
-    return ret.toArray();
+    return ret;
   }
 
   @Override

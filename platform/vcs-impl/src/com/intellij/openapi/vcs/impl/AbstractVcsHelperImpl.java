@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.ConfirmationDialog;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -142,6 +143,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                               @Nullable String repositoryPath,
                               @NotNull AbstractVcs vcs) {
     FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(historyProvider, path, vcs);
+    refresher.run(false, true);
+  }
+
+  public void showFileHistory(@NotNull VcsHistoryProviderEx historyProvider,
+                              @NotNull FilePath path,
+                              @NotNull AbstractVcs vcs,
+                              @Nullable VcsRevisionNumber startingRevisionNumber) {
+    FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(historyProvider, path, vcs, startingRevisionNumber);
     refresher.run(false, true);
   }
 

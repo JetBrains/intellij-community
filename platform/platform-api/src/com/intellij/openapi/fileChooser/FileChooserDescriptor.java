@@ -275,10 +275,7 @@ public class FileChooserDescriptor implements Cloneable {
   }
 
   public Icon getIcon(final VirtualFile file) {
-    if (file.isDirectory()) {
-      return dressIcon(file, PlatformIcons.DIRECTORY_CLOSED_ICON);
-    }
-    return IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null);
+    return dressIcon(file, IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
   }
 
   protected static Icon dressIcon(final VirtualFile file, final Icon baseIcon) {
