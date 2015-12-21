@@ -117,7 +117,7 @@
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.daemon.impl.EditorTracker</interface-class>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.EditorTrackerimpl</implementation-class>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.EditorTrackerImpl</implementation-class>
       <loadForDefaultProject/>
     </component>
     <component>

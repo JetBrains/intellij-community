@@ -45,7 +45,7 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
-public class EditorTrackerimpl extends AbstractProjectComponent implements EditorTracker {
+public class EditorTrackerImpl extends AbstractProjectComponent implements EditorTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.EditorTracker");
 
   private final WindowManager myWindowManager;
@@ -61,7 +61,7 @@ public class EditorTrackerimpl extends AbstractProjectComponent implements Edito
   private IdeFrameImpl myIdeFrame;
   private Window myActiveWindow = null;
 
-  public EditorTrackerimpl(final Project project,
+  public EditorTrackerImpl(final Project project,
                            final WindowManager windowManager,
                            final EditorFactory editorFactory) {
     super(project);
