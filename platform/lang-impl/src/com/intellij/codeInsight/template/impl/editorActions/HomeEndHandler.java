@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,19 @@
 
 package com.intellij.codeInsight.template.impl.editorActions;
 
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class HomeEndHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
-  boolean myIsHomeHandler;
+  private final boolean myIsHomeHandler;
 
   public HomeEndHandler(final EditorActionHandler originalHandler, boolean isHomeHandler) {
     super(true);
@@ -34,7 +37,7 @@ public abstract class HomeEndHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(Editor editor, DataContext dataContext) {
+  protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     if (templateState != null && !templateState.isFinished()) {
       final TextRange range = templateState.getCurrentVariableRange();
@@ -44,12 +47,11 @@ public abstract class HomeEndHandler extends EditorActionHandler {
         if (offsetToMove != caretOffset) {
           editor.getCaretModel().moveToOffset(offsetToMove);
         }
+        EditorModificationUtil.scrollToCaret(editor);
         editor.getSelectionModel().removeSelection();
-      } else {
-        myOriginalHandler.execute(editor, dataContext);
+        return;
       }
-    } else {
-      myOriginalHandler.execute(editor, dataContext);
     }
+    myOriginalHandler.execute(editor, caret, dataContext);
   }
 }
