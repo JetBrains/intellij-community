@@ -80,6 +80,12 @@ def removeAdditionalFrameById(thread_id):
     del AdditionalFramesContainer.additional_frames[thread_id]
 
 
+def hasAdditionalFramesById(thread_id):
+    return DictContains(AdditionalFramesContainer.additional_frames, thread_id)
+
+
+def getAdditionalFramesById(thread_id):
+    return AdditionalFramesContainer.additional_frames.get(thread_id)
 
 
 def findFrame(thread_id, frame_id):
