@@ -13,6 +13,8 @@ import java.io.Reader;
  */
 public class YAMLFlexLexer extends MergingLexerAdapter {
   private static final TokenSet TOKENS_TO_MERGE = TokenSet.create(YAMLTokenTypes.TEXT);
+  
+  private static final int DIRTY_STATE = 239;
 
   public YAMLFlexLexer() {
     super(new MyFlexAdapter(new _YAMLLexer((Reader) null)), TOKENS_TO_MERGE);
@@ -28,8 +30,17 @@ public class YAMLFlexLexer extends MergingLexerAdapter {
 
     @Override
     public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
+      if (initialState != DIRTY_STATE) {
+        ((_YAMLLexer)getFlex()).cleanMyState();
+      }
+      else {
+        // That should not occur normally, but some complex lexers (e.g. black and white lexer)
+        // require "suspending" of the lexer to pass some template language. In these cases we
+        // believe that the same instance of the lexer would be restored (with its internal state) 
+        initialState = 0;
+      }
+
       super.start(buffer, startOffset, endOffset, initialState);
-      ((_YAMLLexer)getFlex()).cleanMyState();
     }
 
     @Override
@@ -38,7 +49,7 @@ public class YAMLFlexLexer extends MergingLexerAdapter {
       if (state != 0 || myStateCleanliness) {
         return state;
       }
-      return 239;
+      return DIRTY_STATE;
     }
 
     @Override
