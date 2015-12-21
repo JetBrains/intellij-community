@@ -123,7 +123,10 @@ public class VfsData {
       throw reportDeadFileAccess(new VirtualFileImpl(id, segment, parent));
     }
     final int nameId = segment.getNameId(id);
-    assert nameId > 0 : "nameId=" + nameId + "; data=" + o + "; parent=" + parent;
+    if (nameId <= 0) {
+      FSRecords.invalidateCaches();
+      throw new AssertionError("nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + FSRecords.getParent(id));
+    }
 
     return o instanceof DirectoryData ? new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem())
                                       : new VirtualFileImpl(id, segment, parent);
@@ -159,6 +162,7 @@ public class VfsData {
 
     Object existingData = segment.myObjectArray.get(offset);
     if (existingData != null) {
+      FSRecords.invalidateCaches();
       int parent = FSRecords.getParent(id);
       String msg = "File already created: " + nameId + ", data=" + existingData + "; parentId=" + parent;
       if (parent > 0) {
