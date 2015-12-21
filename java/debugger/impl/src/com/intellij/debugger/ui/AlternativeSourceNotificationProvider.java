@@ -81,8 +81,6 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
       return null;
     }
 
-    if (file.getFileType() == JavaClassFileType.INSTANCE) return null;
-
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     if (psiFile == null) return null;
 
