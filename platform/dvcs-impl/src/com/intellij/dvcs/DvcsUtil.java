@@ -139,10 +139,10 @@ public class DvcsUtil {
   @NotNull
   public static String fileOrFolder(@NotNull VirtualFile file) {
     if (file.isDirectory()) {
-      return "Folder";
+      return "folder";
     }
     else {
-      return "File";
+      return "file";
     }
   }
 
