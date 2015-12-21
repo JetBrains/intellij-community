@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
@@ -166,12 +167,8 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
           changes = getDiffChanges(project, file, compare);
         }
         catch (VcsException e) {
-          VcsNotifier.getInstance(project).notifyImportantWarning("Couldn't compare with branch", String.format("Couldn't compare " +
-                                                                                                                DvcsUtil
-                                                                                                                  .fileOrFolder(file) +
-                                                                                                                " [%s] with branch [%s];\n %s",
-                                                                                                                file, compare,
-                                                                                                                e.getMessage()));
+          VcsNotifier.getInstance(project).notifyImportantWarning("Couldn't compare with branch", String
+            .format("Couldn't compare " + DvcsUtil.fileOrFolder(file) + " [%s] with branch [%s];\n %s", file, compare, e.getMessage()));
         }
       }
 
@@ -188,7 +185,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
 
   protected static String fileDoesntExistInBranchError(@NotNull VirtualFile file, @NotNull String branchToCompare) {
     return String.format("%s <code>%s</code> doesn't exist in branch <code>%s</code>",
-                         DvcsUtil.fileOrFolder(file), file.getPresentableUrl(),
+                         StringUtil.capitalize(DvcsUtil.fileOrFolder(file)), file.getPresentableUrl(),
                          branchToCompare);
   }
 }
