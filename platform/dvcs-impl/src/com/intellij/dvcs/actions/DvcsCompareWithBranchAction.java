@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -35,6 +34,7 @@ import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,21 +54,13 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
   public void actionPerformed(@NotNull AnActionEvent event) {
     Project project = event.getRequiredData(CommonDataKeys.PROJECT);
     VirtualFile file = getAffectedFile(event);
-    T repository = getRepositoryManager(project).getRepositoryForFile(file);
-    assert repository != null;
-    if (repository.isFresh()) {
-      errorForFresh(repository);
-      return;
-    }
+    T repository = ObjectUtils.assertNotNull(getRepositoryManager(project).getRepositoryForFile(file));
+    assert !repository.isFresh();
     String currentBranchName = repository.getCurrentBranchName();
-    String head = currentBranchName;
+    String presentableRevisionName = currentBranchName;
     if (currentBranchName == null) {
-      String currentRevision = repository.getCurrentRevision();
-      if (currentRevision == null) {
-        errorForFresh(repository);
-        return;
-      }
-      head = DvcsUtil.getShortHash(currentRevision);
+      String currentRevision = ObjectUtils.assertNotNull(repository.getCurrentRevision());
+      presentableRevisionName = DvcsUtil.getShortHash(currentRevision);
     }
     List<String> branchNames = getBranchNamesExceptCurrent(repository);
 
@@ -76,7 +68,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
     JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
       .setTitle("Select branch to compare")
-      .setItemChoosenCallback(new OnBranchChooseRunnable(project, file, head, list))
+      .setItemChoosenCallback(new OnBranchChooseRunnable(project, file, presentableRevisionName, list))
       .setAutoselectOnMouseMove(true)
       .setFilteringEnabled(new Function<Object, String>() {
         @Override
@@ -85,11 +77,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
         }
       })
       .createPopup()
-      .showInBestPositionFor(event.getDataContext());
-  }
-
-  private void errorForFresh(@NotNull T repository) {
-    LOG.error("Compare with branch shouldn't be available for fresh repository. Check " + repository.getPresentableUrl());
+      .showCenteredInCurrentWindow(project);
   }
 
   @NotNull
@@ -146,7 +134,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
     private final String myHead;
     private final JList myList;
 
-    OnBranchChooseRunnable(@NotNull Project project, @NotNull VirtualFile file, @NotNull String head, @NotNull JList list) {
+    private OnBranchChooseRunnable(@NotNull Project project, @NotNull VirtualFile file, @NotNull String head, @NotNull JList list) {
       myProject = project;
       myFile = file;
       myHead = head;
@@ -168,7 +156,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
                                                     @NotNull final VirtualFile file,
                                                     @NotNull final String head,
                                                     @NotNull final String compare) {
-    new Task.Modal(project, "Collecting Changes...", true) {
+    new Task.Backgroundable(project, "Collecting Changes...", true) {
       private Collection<Change> changes;
 
       @Override
@@ -177,33 +165,27 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
           changes = getDiffChanges(project, file, head, compare);
         }
         catch (VcsException e) {
-          String title;
-          String message;
-          if (e.getMessage().contains("exists on disk, but not in")) {
-            title = DvcsUtil.fileOrFolder(file) + " doesn't exist in branch ";
-            message = fileDoesntExistInBranchError(file, compare);
-          }
-          else {
-            title = "Couldn't compare with branch";
-            message = String.format("Couldn't compare " +
-                                    DvcsUtil.fileOrFolder(file) +
-                                    " [%s] with selected branch [%s] ;",
-                                    file, compare) + e.getMessage();
-          }
-          VcsNotifier.getInstance(project).notifyImportantWarning(title, message);
-          throw new ProcessCanceledException(e);
+          VcsNotifier.getInstance(project).notifyImportantWarning("Couldn't compare with branch", String.format("Couldn't compare " +
+                                                                                                                DvcsUtil
+                                                                                                                  .fileOrFolder(file) +
+                                                                                                                " [%s] with branch [%s];\n %s",
+                                                                                                                file, compare,
+                                                                                                                e.getMessage()));
         }
       }
 
       @Override
       public void onSuccess() {
-        VcsDiffUtil.showDiffFor(project, changes, VcsDiffUtil.getRevisionTitle(compare, false), VcsDiffUtil.getRevisionTitle(head, true),
-                                VcsUtil.getFilePath(file));
+        //if changes null -> then exception occurred before
+        if (changes != null) {
+          VcsDiffUtil.showDiffFor(project, changes, VcsDiffUtil.getRevisionTitle(compare, false), VcsDiffUtil.getRevisionTitle(head, true),
+                                  VcsUtil.getFilePath(file));
+        }
       }
     }.queue();
   }
 
-  public static String fileDoesntExistInBranchError(@NotNull VirtualFile file, @NotNull String branchToCompare) {
+  protected static String fileDoesntExistInBranchError(@NotNull VirtualFile file, @NotNull String branchToCompare) {
     return String.format("%s <code>%s</code> doesn't exist in branch <code>%s</code>",
                          DvcsUtil.fileOrFolder(file), file.getPresentableUrl(),
                          branchToCompare);
