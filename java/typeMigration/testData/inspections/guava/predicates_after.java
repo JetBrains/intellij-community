@@ -6,14 +6,14 @@ public class Main {
   }
 
   public void m(Predicate<String> p) {
-    Predicate<String> orP1 = ((Predicate<String>) p::test).or(p::test).or(getPredicate()::test).or(s -> s.equals("qew"));
-    Predicate<String> orP2 = ((Predicate<String>) p::test).or(p::test).or(getPredicate()::test).or(s -> s.equals("qew"));
-    Predicate<String> orP3 = ((Predicate<String>) getPredicate()::test).and(p::test).and(p::test).and(s -> s.equals("qew"));
-    Predicate<String> orP4 = ((Predicate<String>) s -> s.equals("qew")).and(p::test).and(p::test).and(getPredicate()::test);
+    Predicate<String> orP1 = p.or(p).or(getPredicate()).or(s -> s.equals("qew"));
+    Predicate<String> orP2 = p.or(p).or(getPredicate()).or(s -> s.equals("qew"));
+    Predicate<String> orP3 = getPredicate().and(p).and(p).and(s -> s.equals("qew"));
+    Predicate<String> orP4 = ((Predicate<String>) s -> s.equals("qew")).and(p).and(p).and(getPredicate());
 
-    Predicate<String> n1 = ((Predicate<String>) p::test).negate();
-    Predicate<String> n2 = ((Predicate<String>) p::test).negate();
+    Predicate<String> n1 = p.negate();
+    Predicate<String> n2 = p.negate();
     Predicate<Object> n3 = ((Predicate<Object>) s -> s.equals("asd")).negate();
-    Predicate<String> n4 = ((Predicate<String>) getPredicate()::test).negate();
+    Predicate<String> n4 = getPredicate().negate();
   }
 }

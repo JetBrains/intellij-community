@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.RedundantCastUtil;
-import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
@@ -44,7 +43,7 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
 
   public static final String GUAVA_PREDICATES_UTILITY = "com.google.common.base.Predicates";
   public static final Set<String> PREDICATES_AND_OR = ContainerUtil.newHashSet("or", "and");
-  public static final String PREDIACTES_NOT = "not";
+  public static final String PREDICATES_NOT = "not";
 
 
   @NotNull
@@ -82,7 +81,7 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
       if (PREDICATES_AND_OR.contains(methodName) && canMigrateAndOrOr((PsiMethodCallExpression)context)) {
         return new AndOrOrConversionDescriptor(GuavaConversionUtil.addTypeParameters(JAVA_PREDICATE, context.getType(), context));
       }
-      else if (PREDIACTES_NOT.equals(methodName)) {
+      else if (PREDICATES_NOT.equals(methodName)) {
         return new NotConversionDescriptor(GuavaConversionUtil.addTypeParameters(JAVA_PREDICATE, context.getType(), context));
       }
     }
@@ -125,9 +124,9 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
     }
 
     @Override
-    public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
+    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
       String newExpressionString =
-        adjust(((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0], true, myTargetType) + ".negate()";
+        adjust(((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0], true, myTargetType, evaluator) + ".negate()";
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
       PsiExpression convertedExpression =
         (PsiExpression)expression.replace(elementFactory.createExpressionFromText(newExpressionString, expression));
@@ -150,22 +149,22 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
     }
 
     @Override
-    public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
+    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
       final String methodName = methodCall.getMethodExpression().getReferenceName();
 
       final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
       if (arguments.length == 1) {
-        return (PsiExpression)expression.replace(arguments[0]);
+        return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(adjust(arguments[0], true, myTargetType, evaluator), expression));
       }
       LOG.assertTrue(arguments.length != 0);
       StringBuilder replaceBy = new StringBuilder();
       for (int i = 1; i < arguments.length; i++) {
         PsiExpression argument = arguments[i];
-        replaceBy.append(".").append(methodName).append("(").append(adjust(argument, false, myTargetType)).append(")");
+        replaceBy.append(".").append(methodName).append("(").append(adjust(argument, false, myTargetType, evaluator)).append(")");
       }
-      replaceBy.insert(0, adjust(arguments[0], true, myTargetType));
-      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
+      replaceBy.insert(0, adjust(arguments[0], true, myTargetType, evaluator));
       return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(replaceBy.toString(), expression));
     }
 
@@ -176,17 +175,27 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
     return predicateClass != null && !JAVA_PREDICATE.equals(predicateClass.getQualifiedName());
   }
 
-  private static String adjust(PsiExpression expression, boolean insertTypeCase, PsiType targetType) {
+  private static String adjust(PsiExpression expression, boolean insertTypeCase, PsiType targetType, TypeEvaluator evaluator) {
+    if (expression instanceof PsiMethodReferenceExpression) {
+      final PsiExpression qualifier = ((PsiMethodReferenceExpression)expression).getQualifierExpression();
+      final PsiType evaluatedType = evaluator.evaluateType(qualifier);
+      final PsiClass evaluateClass;
+      if (evaluatedType != null &&
+          (evaluateClass = PsiTypesUtil.getPsiClass(evaluatedType)) != null &&
+           JAVA_PREDICATE.equals(evaluateClass.getQualifiedName())) {
+        return adjust((PsiExpression)expression.replace(qualifier), insertTypeCase, targetType, evaluator);
+      }
+    }
     if (expression instanceof PsiFunctionalExpression) {
       if (insertTypeCase) {
         return "((" + targetType.getCanonicalText() + ")" + expression.getText() + ")";
       }
     }
     else if (expression instanceof PsiMethodCallExpression || expression instanceof PsiReferenceExpression) {
-      if (isUnconverted(expression.getType())) {
+      if (isUnconverted(evaluator.evaluateType(expression))) {
         expression = (PsiExpression)expression.replace(JavaPsiFacade.getElementFactory(expression.getProject())
                                                                     .createExpressionFromText(expression.getText() + "::apply", expression));
-        return adjust(expression, insertTypeCase, targetType);
+        return adjust(expression, insertTypeCase, targetType, evaluator);
       }
     }
     return expression.getText();

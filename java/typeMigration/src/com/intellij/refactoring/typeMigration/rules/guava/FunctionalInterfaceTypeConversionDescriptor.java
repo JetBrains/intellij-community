@@ -73,7 +73,7 @@ public class FunctionalInterfaceTypeConversionDescriptor extends TypeConversionD
 
   public static boolean isPredicates(PsiMethodCallExpression expression) {
     final String methodName = expression.getMethodExpression().getReferenceName();
-    if (GuavaPredicateConversionRule.PREDIACTES_NOT.equals(methodName) ||
+    if (GuavaPredicateConversionRule.PREDICATES_NOT.equals(methodName) ||
         GuavaPredicateConversionRule.PREDICATES_AND_OR.contains(methodName)) {
       final PsiMethod method = expression.resolveMethod();
       if (method == null) return false;
