@@ -69,7 +69,6 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @NotNull private final PermanentLinearGraphImpl myPermanentLinearGraph;
   @NotNull private final GraphLayoutImpl myPermanentGraphLayout;
   @NotNull private final GraphColorManager<CommitId> myGraphColorManager;
-  @NotNull private final Set<CommitId> myBranchesCommitId;
   @NotNull private final Set<Integer> myBranchNodeIds;
   @NotNull private final ReachableNodes myReachableNodes;
   @NotNull private final Supplier<BekIntMap> myBekIntMap;
@@ -83,7 +82,6 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     myPermanentCommitsInfo = permanentCommitsInfo;
     myPermanentLinearGraph = permanentLinearGraph;
     myGraphColorManager = graphColorManager;
-    myBranchesCommitId = branchesCommitId;
     myBranchNodeIds = permanentCommitsInfo.convertToNodeIds(branchesCommitId);
     myReachableNodes = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentLinearGraph));
     myBekIntMap = Suppliers.memoize(new Supplier<BekIntMap>() {
@@ -212,11 +210,6 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @NotNull
   public GraphColorManager<CommitId> getGraphColorManager() {
     return myGraphColorManager;
-  }
-
-  @NotNull
-  public Set<CommitId> getBranchesCommitId() {
-    return myBranchesCommitId;
   }
 
   @NotNull
