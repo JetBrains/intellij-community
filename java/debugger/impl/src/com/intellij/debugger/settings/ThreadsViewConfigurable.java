@@ -38,6 +38,7 @@ public class ThreadsViewConfigurable extends BaseConfigurable {
   private JCheckBox myShowSyntheticsCheckBox;
   private JCheckBox myShowCurrentThreadChechBox;
   private JCheckBox myPackageCheckBox;
+  private JCheckBox myArgsTypesCheckBox;
   private final CompositeDataBinding myDataBinding = new CompositeDataBinding();
 
   public ThreadsViewConfigurable(ThreadsViewSettings settings) {
@@ -45,6 +46,7 @@ public class ThreadsViewConfigurable extends BaseConfigurable {
 
     myDataBinding.addBinding(new ToggleButtonBinding("SHOW_CLASS_NAME", myClassNameCheckBox));
     myDataBinding.addBinding(new ToggleButtonBinding("SHOW_PACKAGE_NAME", myPackageCheckBox));
+    myDataBinding.addBinding(new ToggleButtonBinding("SHOW_ARGUMENTS_TYPES", myArgsTypesCheckBox));
     myDataBinding.addBinding(new ToggleButtonBinding("SHOW_LINE_NUMBER", myLineNumberCheckBox));
     myDataBinding.addBinding(new ToggleButtonBinding("SHOW_SOURCE_NAME", mySourceCheckBox));
     myDataBinding.addBinding(new ToggleButtonBinding("SHOW_THREAD_GROUPS", myShowGroupsCheckBox));

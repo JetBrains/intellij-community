@@ -59,6 +59,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -554,6 +555,23 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     String getClassName() {
       return "";
     }
+  }
+
+  public static String methodNameWithArguments(Method m) {
+    StringBuilder res = new StringBuilder();
+    res.append(m.name()).append("(");
+    res.append(StringUtil.join(m.argumentTypeNames(), new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return getSimpleName(s);
+      }
+    }, ", "));
+    res.append(")");
+    return res.toString();
+  }
+
+  public static String getSimpleName(String fqn) {
+    return fqn.substring(fqn.lastIndexOf('.') + 1);
   }
 
   public static String methodName(final Method m) {
