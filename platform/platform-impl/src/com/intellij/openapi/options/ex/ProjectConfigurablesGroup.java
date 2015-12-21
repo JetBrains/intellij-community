@@ -23,7 +23,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
+ * @deprecated ShowSettingsUtilImpl#getConfigurableGroups(project, false)
  */
+@Deprecated
 public class ProjectConfigurablesGroup extends ConfigurablesGroupBase implements ConfigurableGroup {
   private final Project myProject;
 
