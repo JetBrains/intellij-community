@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,8 +98,8 @@ public class ReachingDefinitionsCollector {
 
     addClosureUsages(imap, omap, first, last, flowOwner);
 
-    final VariableInfo[] iarr = filterNonlocals(imap, first);
-    final VariableInfo[] oarr = filterNonlocals(omap, first);
+    final VariableInfo[] iarr = filterNonlocals(imap, last);
+    final VariableInfo[] oarr = filterNonlocals(omap, last);
 
     return new FragmentVariableInfos() {
       @Override
