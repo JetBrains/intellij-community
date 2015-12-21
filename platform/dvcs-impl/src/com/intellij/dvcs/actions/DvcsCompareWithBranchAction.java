@@ -125,7 +125,8 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
 
   protected abstract boolean noBranchesToCompare(@NotNull T repository);
 
-  protected abstract Collection<Change> getDiffChanges(@NotNull Project project, @NotNull VirtualFile file, @NotNull String head,
+  @NotNull
+  protected abstract Collection<Change> getDiffChanges(@NotNull Project project, @NotNull VirtualFile file,
                                                        @NotNull String branchToCompare) throws VcsException;
 
   private class OnBranchChooseRunnable implements Runnable {
@@ -162,7 +163,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          changes = getDiffChanges(project, file, head, compare);
+          changes = getDiffChanges(project, file, compare);
         }
         catch (VcsException e) {
           VcsNotifier.getInstance(project).notifyImportantWarning("Couldn't compare with branch", String.format("Couldn't compare " +

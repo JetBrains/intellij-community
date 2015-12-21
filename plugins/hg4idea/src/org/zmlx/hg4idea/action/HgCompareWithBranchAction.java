@@ -99,9 +99,9 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
   }
 
   @Override
+  @NotNull
   protected Collection<Change> getDiffChanges(@NotNull Project project,
                                               @NotNull VirtualFile file,
-                                              @NotNull String head,
                                               @NotNull String branchToCompare) throws VcsException {
     HgRepository repository = getRepositoryManager(project).getRepositoryForFile(file);
     if (repository == null) {

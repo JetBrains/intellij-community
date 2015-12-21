@@ -81,9 +81,7 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
 
   @Override
   @NotNull
-  protected Collection<Change> getDiffChanges(@NotNull Project project,
-                                              @NotNull VirtualFile file,
-                                              @NotNull String head,
+  protected Collection<Change> getDiffChanges(@NotNull Project project, @NotNull VirtualFile file,
                                               @NotNull String branchToCompare) throws VcsException {
     FilePath filePath = VcsUtil.getFilePath(file);
     final GitRepository gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFile(file);
