@@ -16,9 +16,8 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.project.Project;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -31,10 +30,10 @@ import java.util.Locale;
  */
 @State(
   name = "ExportableFileTemplateSettings",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/" + ExportableFileTemplateSettings.EXPORTABLE_SETTINGS_FILE),
+  storages = @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/" + ExportableFileTemplateSettings.EXPORTABLE_SETTINGS_FILE),
   additionalExportFile = FileTemplatesLoader.TEMPLATES_DIR
 )
-public class ExportableFileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
+public class ExportableFileTemplateSettings implements PersistentStateComponent<Element> {
   public final static String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
 
   static final String ELEMENT_TEMPLATE = "template";
@@ -42,15 +41,15 @@ public class ExportableFileTemplateSettings extends FileTemplatesLoader implemen
   static final String ATTRIBUTE_REFORMAT = "reformat";
   static final String ATTRIBUTE_LIVE_TEMPLATE = "live-template-enabled";
   static final String ATTRIBUTE_ENABLED = "enabled";
+  private final Project myProject;
 
-  private boolean myLoaded = false;
-
-  public ExportableFileTemplateSettings(@NotNull FileTypeManagerEx typeManager) {
-    super(typeManager);
+  public ExportableFileTemplateSettings(Project project) {
+    myProject = project;
   }
 
-  public static ExportableFileTemplateSettings getInstance() {
-    return ServiceManager.getService(ExportableFileTemplateSettings.class);
+
+  static ExportableFileTemplateSettings getInstance(Project project) {
+    return ServiceManager.getService(project, ExportableFileTemplateSettings.class);
   }
 
   @Nullable
@@ -89,10 +88,13 @@ public class ExportableFileTemplateSettings extends FileTemplatesLoader implemen
     return element;
   }
 
+  private FTManager[] getAllManagers() {
+    return FileTemplateManagerImpl.getInstanceImpl(myProject).getAllManagers();
+  }
+
   @Override
   public void loadState(Element state) {
     doLoad(state);
-    myLoaded = true;
   }
 
   private void doLoad(Element element) {
@@ -122,9 +124,5 @@ public class ExportableFileTemplateSettings extends FileTemplatesLoader implemen
 
   private static String getXmlElementGroupName(FTManager manager) {
     return manager.getName().toLowerCase(Locale.US) + "_templates";
-  }
-
-  public boolean isLoaded() {
-    return myLoaded;
   }
 }
