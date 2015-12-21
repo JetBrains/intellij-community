@@ -116,9 +116,15 @@
         </annotation>
     </item>
     <item name='org.apache.commons.lang.text.StrBuilder java.io.Reader asReader()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.text.StrBuilder java.io.Writer asWriter()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.text.StrBuilder java.lang.String getNewLineText()'>
@@ -404,6 +410,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrTokenizer asTokenizer()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.text.StrBuilder.StrBuilderReader boolean markSupported()'>
@@ -438,6 +447,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.lang.text.StrLookup org.apache.commons.lang.text.StrLookup mapLookup(java.util.Map)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.text.StrLookup org.apache.commons.lang.text.StrLookup noneLookup()'>
@@ -462,6 +474,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.text.StrMatcher org.apache.commons.lang.text.StrMatcher charMatcher(char)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.text.StrMatcher org.apache.commons.lang.text.StrMatcher charSetMatcher(char[]) 0'>
