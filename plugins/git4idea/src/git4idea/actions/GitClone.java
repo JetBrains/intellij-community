@@ -27,6 +27,12 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class GitClone extends DumbAwareAction {
   @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && GitVcs.getInstance(e.getProject()) != null);
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     GitVcs vcs = assertNotNull(GitVcs.getInstance(project));
