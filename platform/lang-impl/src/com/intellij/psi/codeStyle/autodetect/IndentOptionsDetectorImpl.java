@@ -64,6 +64,8 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
 
   private List<LineIndentInfo> calcLineIndentInfo() {
     if (myDocument == null) return null;
+    if (myDocument.getLineCount() < 3) return null;
+    
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
     FormattingModelBuilder modelBuilder = LanguageFormatting.INSTANCE.forContext(myFile);
     if (modelBuilder == null) return null;
