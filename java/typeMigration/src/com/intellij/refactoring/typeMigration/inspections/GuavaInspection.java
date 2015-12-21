@@ -144,6 +144,10 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       }
 
       private void checkPredicatesUtilityMethod(PsiMethodCallExpression expression) {
+        final PsiElement parent = expression.getParent();
+        if (parent instanceof PsiAssignmentExpression || parent instanceof PsiVariable) {
+          return;
+        }
         if (FunctionalInterfaceTypeConversionDescriptor.isPredicates(expression)) {
           final PsiMethod method = expression.resolveMethod();
           if (GuavaPredicateConversionRule.isConvertablePredicatesMethod(method)) {
@@ -298,10 +302,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       if (myInitialType == null) {
         performTypeMigration(Collections.singletonList(startElement), Collections.singletonList(myTargetType));
       } else {
-        performMethodCallTypeMigration(project,
-                                       Collections.singletonList(startElement),
-                                       Collections.singletonList(myInitialType),
-                                       Collections.singletonList(myTargetType));
+        performMethodCallTypeMigration(project, Collections.singletonList(new ChainFixInfo(startElement, myInitialType, myTargetType)));
       }
     }
 
@@ -338,14 +339,10 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
                          @NotNull ProblemDescriptor[] descriptors,
                          @NotNull List<PsiElement> psiElementsToIgnore,
                          @Nullable Runnable refreshViews) {
-      SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
-
       final List<PsiElement> elementsToFix = new ArrayList<PsiElement>();
       final List<PsiType> migrationTypes = new ArrayList<PsiType>();
 
-      final List<SmartPsiElementPointer> chainsToFix = new ArrayList<SmartPsiElementPointer>();
-      final List<PsiType> chainsMigrationTypes = new ArrayList<PsiType>();
-      final List<PsiType> chainsInitialTypes = new ArrayList<PsiType>();
+      final List<ChainFixInfo> chainFixInfos = new ArrayList<ChainFixInfo>();
 
       for (ProblemDescriptor descriptor : descriptors) {
         final MigrateGuavaTypeFix fix = getFix(descriptor);
@@ -354,59 +351,41 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
           migrationTypes.add(fix.myTargetType);
         }
         else {
-          chainsToFix.add(smartPointerManager.createSmartPsiElementPointer(fix.getStartElement()));
-          chainsMigrationTypes.add(fix.myTargetType);
-          chainsInitialTypes.add(fix.myInitialType);
-        }
-      }
-      if(!elementsToFix.isEmpty() && !performTypeMigration(elementsToFix, migrationTypes)) return;
-
-      if (!chainsToFix.isEmpty()) {
-        filterAndPerformMethodCallTypeMigration(project, chainsToFix, chainsInitialTypes, chainsMigrationTypes);
-      }
-    }
-
-    private static void filterAndPerformMethodCallTypeMigration(@NotNull final Project project,
-                                                       final List<SmartPsiElementPointer> elements,
-                                                       List<PsiType> initialTypes,
-                                                       List<PsiType> targetTypes) {
-      final List<PsiElement> onlyAliveElements = new ArrayList<PsiElement>();
-      final List<PsiType> onlyAliveInitialTypes = new ArrayList<PsiType>();
-      final List<PsiType> onlyAliveTargets = new ArrayList<PsiType>();
-
-      final Iterator<PsiType> initialIterator = initialTypes.iterator();
-      final Iterator<PsiType> targetIterator = targetTypes.iterator();
-      for (SmartPsiElementPointer elementPointer : elements) {
-        final PsiType currentInitial = initialIterator.next();
-        final PsiType currentTarget = targetIterator.next();
-
-        final PsiElement currentElement = elementPointer.getElement();
-        if (currentElement != null) {
-          onlyAliveElements.add(currentElement);
-          onlyAliveInitialTypes.add(currentInitial);
-          onlyAliveTargets.add(currentTarget);
+          chainFixInfos.add(new ChainFixInfo(fix.getStartElement(), fix.myInitialType, fix.myTargetType));
         }
       }
 
-      performMethodCallTypeMigration(project, onlyAliveElements, onlyAliveInitialTypes, onlyAliveTargets);
+      if (!chainFixInfos.isEmpty()) performMethodCallTypeMigration(project, chainFixInfos);
+      if (!elementsToFix.isEmpty()) performTypeMigration(elementsToFix, migrationTypes);
     }
 
     private static void performMethodCallTypeMigration(@NotNull final Project project,
-                                                       final List<PsiElement> elements,
-                                                       List<PsiType> initialTypes,
-                                                       List<PsiType> targetTypes) {
-      final Iterator<PsiType> initialTypeIterator = initialTypes.iterator();
-      final Iterator<PsiType> targetTypeIterator = targetTypes.iterator();
+                                                       final List<ChainFixInfo> elements) {
+      Collections.sort(elements, new Comparator<ChainFixInfo>() {
+        @Override
+        public int compare(ChainFixInfo o1, ChainFixInfo o2) {
+          final PsiElement element1 = o1.myElement;
+          final PsiElement element2 = o2.myElement;
+          if (element1.getTextRange().contains(element2.getTextRange())) {
+            return 1;
+          }
+          if (element2.getTextRange().contains(element1.getTextRange())) {
+            return -1;
+          }
+          return 0;
+        }
+      });
 
       final List<PsiElement> validElement = new ArrayList<PsiElement>();
       final List<Boolean> isIterableList = new ArrayList<Boolean>(elements.size());
       final List<TypeConversionDescriptorBase> conversionList = new ArrayList<TypeConversionDescriptorBase>(elements.size());
 
-      for (PsiElement element : elements) {
-        final PsiType initialType = initialTypeIterator.next();
-        final PsiType targetType = targetTypeIterator.next();
+      for (ChainFixInfo info : elements) {
+        final PsiElement element = info.myElement;
+        final PsiType initialType = info.myFrom;
+        final PsiType targetType = info.myTo;
         if (element.isValid()) {
-          PsiMethodCallExpression expr = (PsiMethodCallExpression) element;
+          PsiMethodCallExpression expr = (PsiMethodCallExpression)element;
           final TypeMigrationRules rules = new TypeMigrationRules();
           rules.setBoundScope(element.getUseScope());
           conversionList.add(rules.findConversion(initialType, targetType, expr.resolveMethod(), expr, new TypeMigrationLabeler(rules, targetType)));
@@ -533,6 +512,18 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
           return mappings.get(element);
         }
       };
+    }
+
+    private static class ChainFixInfo {
+      private final PsiElement myElement;
+      private final PsiType myFrom;
+      private final PsiType myTo;
+
+      private ChainFixInfo(PsiElement element, PsiType from, PsiType to) {
+        myElement = element;
+        myFrom = from;
+        myTo = to;
+      }
     }
   }
 }

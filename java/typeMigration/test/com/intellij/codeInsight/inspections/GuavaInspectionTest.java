@@ -250,6 +250,11 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
 
   public void testPredicates() {
     doTestAllFile();
+
+  }
+
+  public void testPredicates2() {
+    doTestAllFile();
   }
 
   private void doTestNoQuickFixes(Class<? extends PsiElement>... highlightedElements) {
