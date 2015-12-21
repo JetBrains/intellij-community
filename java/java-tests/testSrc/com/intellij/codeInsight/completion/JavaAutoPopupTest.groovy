@@ -52,6 +52,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
@@ -1714,7 +1715,7 @@ class Cls {
 
     def docProvider = new LiveTemplateDocumentationProvider()
     def docElement = docProvider.getDocumentationElementForLookupItem(myFixture.psiManager, lookup.currentItem, null)
-    assert docElement.presentation.presentableText == 'sout'
+    assert (docElement as NavigatablePsiElement).presentation.presentableText == 'sout'
     assert docProvider.generateDoc(docElement, docElement).contains('System.out')
   }
 
