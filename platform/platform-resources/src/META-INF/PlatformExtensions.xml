@@ -182,6 +182,8 @@
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.FileAppearanceService"
                         serviceImplementation="com.intellij.openapi.roots.ui.FileAppearanceServiceImpl"/>
 
+    <applicationService serviceImplementation="com.intellij.openapi.components.impl.SettingsListenerManager"/>
+
     <applicationService serviceImplementation="com.intellij.internal.statistic.UsageTrigger"/>
 
     <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"

@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.components.impl.SettingsListenerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
@@ -794,6 +795,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   public void apply() {
     Map<Configurable, ConfigurationException> errors = new LinkedHashMap<Configurable, ConfigurationException>();
     final Set<Configurable> modified = getContext().getModified();
+    Set<Configurable> modifiedCopy = new HashSet<Configurable>(modified);
     for (Configurable each : modified) {
       try {
         each.apply();
@@ -807,6 +809,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         LOG.debug(e);
       }
     }
+
+    SettingsListenerManager.getInstance().fireSettingsChanged(modifiedCopy);
+    modifiedCopy.clear();
 
     getContext().fireErrorsChanged(errors, null);
 
