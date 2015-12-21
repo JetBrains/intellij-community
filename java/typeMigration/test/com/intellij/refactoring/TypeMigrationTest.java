@@ -916,6 +916,22 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestReturnType("meth", myFactory.createTypeFromText("java.util.List<T>", null));
   }
 
+  public void testBooleanGetterMethodName() {
+    doTestFieldType("fooMigrateName", PsiType.BOOLEAN, PsiType.INT);
+  }
+
+  public void testBooleanGetterMethodName2() {
+    doTestFieldType("fooDontMigrateName", PsiType.BOOLEAN, PsiType.INT);
+  }
+
+  public void testGetterToBoolean() {
+    doTestFieldType("fooMigrateName", PsiType.INT, PsiType.BOOLEAN);
+  }
+
+  public void testGetterToBoolean2() {
+    doTestFieldType("fooDontMigrateName", PsiType.INT, PsiType.BOOLEAN);
+  }
+
   private void doTestReturnType(final String methodName, final PsiType migrationType) {
     start(new RulesProvider() {
       @Override

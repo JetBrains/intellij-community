@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.typeMigration;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,6 +37,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.typeMigration.usageInfo.OverridenUsageInfo;
 import com.intellij.refactoring.typeMigration.usageInfo.OverriderUsageInfo;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
@@ -312,6 +315,12 @@ public class TypeMigrationLabeler {
       }
       else {
         TypeMigrationReplacementUtil.migratePsiMemberType(element, project, getTypeEvaluator().getType(usageInfo));
+        if (usageInfo instanceof OverridenUsageInfo) {
+          final String migrationName = ((OverridenUsageInfo)usageInfo).getMigrateMethodName();
+          if (migrationName != null) {
+            new RenameProcessor(project, element, migrationName, false, false).run();
+          }
+        }
       }
     }
 
@@ -567,12 +576,16 @@ public class TypeMigrationLabeler {
 
 
       final PsiMethod[] methods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
-      final OverridenUsageInfo overridenUsageInfo = new OverridenUsageInfo(method);
       final OverriderUsageInfo[] overriders = new OverriderUsageInfo[methods.length];
       for (int i = -1; i < methods.length; i++) {
         final TypeMigrationUsageInfo m;
         if (i < 0) {
+          final OverridenUsageInfo overridenUsageInfo = new OverridenUsageInfo(method);
           m = overridenUsageInfo;
+          final String newMethodName = isMethodNameCanBeChanged(method);
+          if (newMethodName != null) {
+            myRules.getMigrateGetterNameSetting().askUserIfNeed(overridenUsageInfo, newMethodName, myTypeEvaluator.getType(myCurrentRoot));
+          }
         }
         else {
           overriders[i] = new OverriderUsageInfo(methods[i], method);
@@ -581,7 +594,6 @@ public class TypeMigrationLabeler {
 
         alreadyProcessed = addRoot(m, type, place, alreadyProcessed);
       }
-      overridenUsageInfo.setOverriders(overriders);
 
       return !alreadyProcessed;
     }
@@ -607,13 +619,52 @@ public class TypeMigrationLabeler {
         alreadyProcessed = addRoot(paramUsageInfo, type, place, alreadyProcessed);
       }
 
-      overridenUsageInfo.setOverriders(overriders);
-
       return !alreadyProcessed;
     }
     else {
       return !addRoot(new TypeMigrationUsageInfo(resolved), type, place, alreadyProcessed);
     }
+  }
+
+  @Nullable
+  private String isMethodNameCanBeChanged(PsiMethod method) {
+    if (myCurrentRoot == null) {
+      return null;
+    }
+    final PsiElement root = myCurrentRoot.getElement();
+    if (!(root instanceof PsiField)) {
+      return null;
+    }
+    PsiField field = (PsiField) root;
+    final PsiType migrationType = myTypeEvaluator.getType(root);
+    if (migrationType == null) {
+      return null;
+    }
+    final PsiType sourceType = field.getType();
+    if (TypeConversionUtil.isAssignable(migrationType, sourceType)) {
+      return null;
+    }
+    if (!(migrationType.equals(PsiType.BOOLEAN) || migrationType.equals(PsiType.BOOLEAN.getBoxedType(field))) &&
+        !(sourceType.equals(PsiType.BOOLEAN) || sourceType.equals(PsiType.BOOLEAN.getBoxedType(field)))) {
+      return null;
+    }
+    final PsiMethod[] getters =
+      GetterSetterPrototypeProvider.findGetters(field.getContainingClass(), field.getName(), field.hasModifierProperty(PsiModifier.STATIC));
+    if (getters != null) {
+      for (PsiMethod getter : getters) {
+        if (getter.isEquivalentTo(method)) {
+          final String suggestedName = GenerateMembersUtil.suggestGetterName(field.getName(), migrationType, method.getProject());
+          if (!suggestedName.equals(method.getName())) {
+            if (getter.getContainingClass().findMethodsByName(suggestedName, true).length == 0) {
+              return null;
+            }
+            return suggestedName;
+          }
+          return null;
+        }
+      }
+    }
+    return null;
   }
 
   static boolean typeContainsTypeParameters(@Nullable PsiType originalType, @NotNull Set<PsiTypeParameter> excluded) {
