@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
-public class GitClone extends DumbAwareAction {
+public class GitCloneAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
