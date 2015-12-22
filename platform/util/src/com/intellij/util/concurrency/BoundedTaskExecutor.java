@@ -107,33 +107,25 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
 
   @Override
   public void execute(@NotNull Runnable task) {
+    long status = myStatus.addAndGet(1 + (1L << 32)); // increment inProgress and queue stamp atomically
+
+    if (tryToExecute(status, task)) {
+      return;
+    }
     if (!myTaskQueue.offer(task)) {
       throw new RejectedExecutionException();
     }
-    long status = myStatus.addAndGet(1 + (1L << 32)); // increment inProgress and queue stamp atomically
-
-    tryToPollAndExecuteNext(status);
+    pollAndExecute(status);
   }
 
-  private void tryToPollAndExecuteNext(long status) {
+  private void pollAndExecute(long status) {
     while (true) {
       int inProgress = (int)status;
-
       assert inProgress > 0 : inProgress;
+
       Runnable next;
       if (inProgress <= myMaxTasks && !isShutdown() && (next = myTaskQueue.poll()) != null) {
-        try {
-          myStatus.addAndGet(1L << 32);
-          myBackendExecutor.execute(wrap(next));
-        }
-        catch (Error e) {
-          myStatus.decrementAndGet();
-          throw e;
-        }
-        catch (RuntimeException e) {
-          myStatus.decrementAndGet();
-          throw e;
-        }
+        tryToExecute(status, next);
         break;
       }
       if (myStatus.compareAndSet(status, status - 1)) {
@@ -141,6 +133,28 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       }
       status = myStatus.get();
     }
+  }
+
+  // true if executed
+  private boolean tryToExecute(long status, @NotNull Runnable task) {
+    int inProgress = (int)status;
+
+    assert inProgress > 0 : inProgress;
+    if (inProgress <= myMaxTasks && !isShutdown()) {
+      try {
+        myBackendExecutor.execute(wrap(task));
+      }
+      catch (Error e) {
+        myStatus.decrementAndGet();
+        throw e;
+      }
+      catch (RuntimeException e) {
+        myStatus.decrementAndGet();
+        throw e;
+      }
+      return true;
+    }
+    return false;
   }
 
   @NotNull
@@ -152,7 +166,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
           task.run();
         }
         finally {
-          tryToPollAndExecuteNext(myStatus.get());
+          pollAndExecute(myStatus.get());
         }
       }
 
