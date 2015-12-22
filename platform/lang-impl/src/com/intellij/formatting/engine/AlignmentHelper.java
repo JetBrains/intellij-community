@@ -79,11 +79,11 @@ public class AlignmentHelper {
                        "Can't align block " + context.targetBlock, context.document.getText());
   }
 
-  public LeafBlockWrapper applyAlignmentAndContinueFormatting(final AlignmentImpl alignment, final LeafBlockWrapper currentBlock) {
+  public LeafBlockWrapper applyAlignment(final AlignmentImpl alignment, final LeafBlockWrapper currentBlock) {
     BlockAlignmentProcessor alignmentProcessor = ALIGNMENT_PROCESSORS.get(alignment.getAnchor());
     if (alignmentProcessor == null) {
       LOG.error(String.format("Can't find alignment processor for alignment anchor %s", alignment.getAnchor()));
-      return currentBlock;
+      return null;
     }
 
     BlockAlignmentProcessor.Context context = new BlockAlignmentProcessor.Context(
@@ -93,13 +93,13 @@ public class AlignmentHelper {
     final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(currentBlock);
     switch (result) {
       case TARGET_BLOCK_PROCESSED_NOT_ALIGNED:
-        return currentBlock;
+        return null;
       case TARGET_BLOCK_ALIGNED:
         storeAlignmentMapping(currentBlock);
-        return currentBlock;
+        return null;
       case BACKWARD_BLOCK_ALIGNED:
         if (offsetResponsibleBlock == null) {
-          return currentBlock;
+          return null;
         }
         Set<LeafBlockWrapper> blocksCausedRealignment = new HashSet<LeafBlockWrapper>();
         myBackwardShiftedAlignedBlocks.clear();
@@ -109,7 +109,7 @@ public class AlignmentHelper {
 
         if (myBlockRollbacks > myTotalBlocksWithAlignments) {
           reportAlignmentProcessingError(context);
-          return currentBlock;
+          return null;
         }
         myBlockRollbacks++;
         return offsetResponsibleBlock.getNextBlock();
@@ -120,7 +120,7 @@ public class AlignmentHelper {
         myAlignmentsToSkip.add(alignment);
         return null;
       default:
-        return currentBlock;
+        return null;
     }
   }
 

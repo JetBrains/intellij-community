@@ -276,7 +276,10 @@ public class FormatProcessor {
       }
     }
 
-    if (!adjustIndentAndContinue()) {
+    LeafBlockWrapper newCurrentBlock = adjustIndent();
+    if (newCurrentBlock != null) {
+      myCurrentBlock = newCurrentBlock;
+      onCurrentLineChanged();
       return;
     }
 
@@ -442,14 +445,14 @@ public class FormatProcessor {
            !myCurrentBlock.getWhiteSpace().isReadOnly();
   }
 
+
   /**
-   * Adjusts indent of the current block.
-   *
-   * @return <code>true</code> if current formatting iteration should be continued;
-   *         <code>false</code> otherwise (e.g. if previously processed block is shifted inside this method for example
-   *         because of specified alignment options)
+   * Sometimes to align myCurrentBlock we adjust whitespace of other block before.
+   * In such a case, we rollback to that block restarting formatting from there.
+   * 
+   * @return new current block if we need to rollback, null otherwise
    */
-  private boolean adjustIndentAndContinue() {
+  private LeafBlockWrapper adjustIndent() {
     AlignmentImpl alignment = CoreFormatterUtil.getAlignment(myCurrentBlock);
     WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
 
@@ -460,16 +463,10 @@ public class FormatProcessor {
       else {
         whiteSpace.arrangeSpaces(myCurrentBlock.getSpaceProperty());
       }
-      return true;
+      return null;
     }
 
-    LeafBlockWrapper newCurrentBlock = myAlignmentHelper.applyAlignmentAndContinueFormatting(alignment, myCurrentBlock);
-    if (newCurrentBlock != myCurrentBlock) {
-      myCurrentBlock = newCurrentBlock;
-      onCurrentLineChanged();
-      return false;
-    }
-    return true;
+    return myAlignmentHelper.applyAlignment(alignment, myCurrentBlock);
   }
 
   /**
@@ -1112,7 +1109,7 @@ public class FormatProcessor {
 
         if (space.containsLineFeeds()) {
           myCurrentBlock = (LeafBlockWrapper)block;
-          adjustIndentAndContinue();
+          adjustIndent(); //since aligned block starts new line, it should not touch any other block
           storeAlignmentsAfterCurrentBlock();
         }
       }
