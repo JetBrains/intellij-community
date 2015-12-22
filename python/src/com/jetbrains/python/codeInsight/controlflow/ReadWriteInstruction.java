@@ -20,7 +20,6 @@ import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
@@ -31,15 +30,7 @@ public class ReadWriteInstruction extends InstructionImpl {
     @Nullable
     @Override
     public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
-      if (myElement instanceof PyTargetExpressionImpl) {
-        return ((PyTargetExpressionImpl) myElement).getTypeWithAnchor(context, anchor);
-      }
-      if (myElement instanceof PyExpression) {
-        return context.getType((PyExpression)myElement);
-      }
-      else {
-        return null;
-      }
+      return myElement instanceof PyExpression ? context.getType((PyExpression)myElement) : null;
     }
   };
 
