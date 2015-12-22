@@ -183,7 +183,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   @Nullable
   public static Icon patchIcon(@NotNull Project project, @Nullable Icon original, @Nullable VirtualFile file) {
-    if (file == null || original == null) return null;
+    if (file == null || original == null) return original;
     
     Icon icon = original;
 
