@@ -97,7 +97,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     final Module module = context.getModule();
     if (module == null) return false;
 
-    final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
+    final String projectPath = resolveProjectPath(module);
     if (projectPath == null) return false;
 
     if (!StringUtil.equals(projectPath, configuration.getSettings().getExternalProjectPath())) {
@@ -148,16 +148,16 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     super.onFirstRun(fromContext, context, performRunnable);
   }
 
-  private static boolean applyTestMethodConfiguration(@NotNull ExternalSystemRunConfiguration configuration,
-                                                      @NotNull ConfigurationContext context,
-                                                      @NotNull PsiMethod psiMethod,
-                                                      @NotNull PsiClass... containingClasses) {
+  private boolean applyTestMethodConfiguration(@NotNull ExternalSystemRunConfiguration configuration,
+                                               @NotNull ConfigurationContext context,
+                                               @NotNull PsiMethod psiMethod,
+                                               @NotNull PsiClass... containingClasses) {
     final Module module = context.getModule();
     if (module == null) return false;
 
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return false;
 
-    final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
+    final String projectPath = resolveProjectPath(module);
     if (projectPath == null) return false;
 
     List<String> tasksToRun = getTasksToRun(module);

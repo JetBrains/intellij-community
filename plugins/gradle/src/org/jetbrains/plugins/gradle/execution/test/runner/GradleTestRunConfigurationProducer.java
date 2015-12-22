@@ -31,6 +31,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.BooleanFunction;
@@ -115,6 +116,18 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
   }
 
   protected abstract boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context);
+
+  @Nullable
+  protected String resolveProjectPath(@NotNull Module module) {
+    final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
+    String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
+
+    if (rootProjectPath == null || projectPath == null) return null;
+    if (!FileUtil.isAncestor(rootProjectPath, projectPath, false)) {
+      projectPath = rootProjectPath;
+    }
+    return projectPath;
+  }
 
   @NotNull
   static List<String> getTasksToRun(Module module) {
