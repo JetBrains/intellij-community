@@ -43,10 +43,11 @@ public abstract class LineStartEndWithSelectionHandler extends EditorActionHandl
       final TextRange range = templateState.getCurrentVariableRange();
       final int caretOffset = editor.getCaretModel().getOffset();
       if (range != null && range.getStartOffset() <= caretOffset && caretOffset <= range.getEndOffset()) {
+        int selectionOffset = editor.getSelectionModel().getLeadSelectionOffset();
         int offsetToMove = myIsHomeHandler ? range.getStartOffset() : range.getEndOffset();
         editor.getCaretModel().moveToOffset(offsetToMove);
         EditorModificationUtil.scrollToCaret(editor);
-        editor.getSelectionModel().setSelection(myIsHomeHandler ? offsetToMove : caretOffset, myIsHomeHandler ? caretOffset : offsetToMove);
+        editor.getSelectionModel().setSelection(selectionOffset, offsetToMove);
         return;
       }
     }
