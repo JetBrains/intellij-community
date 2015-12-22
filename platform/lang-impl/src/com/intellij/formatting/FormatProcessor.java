@@ -259,7 +259,7 @@ public class FormatProcessor {
       }
     }
 
-    whiteSpace.arrangeLineFeeds(spaceProperty, this);
+    whiteSpace.arrangeLineFeeds(spaceProperty, myBlockMapperHelper);
 
     if (!whiteSpace.containsLineFeeds()) {
       whiteSpace.arrangeSpaces(spaceProperty);
@@ -357,7 +357,7 @@ public class FormatProcessor {
       myFirstWrappedBlockOnLine = null;
 
       if (!whiteSpace.containsLineFeedsInitially()) {
-        whiteSpace.removeLineFeeds(spacing, this);
+        whiteSpace.removeLineFeeds(spacing, myBlockMapperHelper);
       }
     }
 
@@ -530,7 +530,7 @@ public class FormatProcessor {
       return startColumnNow > startColumnAfterWrap;
     }
     finally {
-      whiteSpace.removeLineFeeds(myCurrentBlock.getSpaceProperty(), this);
+      whiteSpace.removeLineFeeds(myCurrentBlock.getSpaceProperty(), myBlockMapperHelper);
       whiteSpace.setSpaces(spaces, indentSpaces);
     }
   }

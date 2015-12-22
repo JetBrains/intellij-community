@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.formatting.engine.BlockMapperHelper;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -90,10 +91,8 @@ public class SpacingImpl extends Spacing {
 
   /**
    * Allows to ask to refresh current state using given formatter if necessary.
-   *
-   * @param formatter     formatter to use during state refresh
    */
-  public void refresh(FormatProcessor formatter) {
+  public void refresh(BlockMapperHelper helper) {
   }
 
   public final boolean shouldKeepLineFeeds() {
