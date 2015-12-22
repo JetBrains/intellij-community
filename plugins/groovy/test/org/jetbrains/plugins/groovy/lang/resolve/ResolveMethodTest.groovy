@@ -30,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
@@ -337,11 +336,6 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     PsiMethod resolved = ((GrNewExpression)ref.element.parent).resolveMethod();
     assertNotNull(resolved);
     assertEquals(0, resolved.parameterList.parametersCount);
-  }
-
-  public void testGrvy179() {
-    PsiReference ref = configureByFile("grvy179/A.groovy");
-    assertInstanceOf(ref.resolve(), GrBindingVariable);
   }
 
   public void testPrivateScriptMethod() {
