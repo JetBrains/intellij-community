@@ -28,6 +28,7 @@ import java.util.Set;
 
 /**
  * Produces equations for inference of @Contract(pure=true) annotations.
+ * Scala source at https://github.com/ilya-klyuchnikov/faba
  *
  * This simple analysis infers @Contract(pure=true) only if the method doesn't have following instructions.
  * <ul>

@@ -22,6 +22,9 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import java.util.*;
 
+/**
+ * For lattice, equations and solver description, see http://pat.keldysh.ru/~ilya/faba.pdf (in Russian)
+ */
 final class ELattice<T extends Enum<T>> {
   final T bot;
   final T top;
