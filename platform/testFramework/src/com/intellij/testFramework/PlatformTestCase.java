@@ -716,7 +716,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected boolean isRunInWriteAction() {
-    return true;
+    return false;
   }
 
   @Override
@@ -938,11 +938,19 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }.execute().throwException();
   }
 
-  public static void setBinaryContent(final VirtualFile file, final byte[] content) {
+  public static void setBinaryContent(@NotNull final VirtualFile file, @NotNull final byte[] content) {
     new WriteAction() {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
         file.setBinaryContent(content);
+      }
+    }.execute().throwException();
+  }
+  public static void setBinaryContent(@NotNull final VirtualFile file, @NotNull final byte[] content, final long newModificationStamp, final long newTimeStamp, final Object requestor) {
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        file.setBinaryContent(content,newModificationStamp, newTimeStamp,requestor);
       }
     }.execute().throwException();
   }

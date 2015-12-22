@@ -85,9 +85,4 @@ public class LoadProjectTest extends PlatformTestCase {
                          psiFile -> psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem &&
                                     psiFile.getProject() == getProject());
   }
-
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
-  }
 }

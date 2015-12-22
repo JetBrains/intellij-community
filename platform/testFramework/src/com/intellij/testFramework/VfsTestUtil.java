@@ -16,6 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -99,14 +100,18 @@ public class VfsTestUtil {
     UtilKt.deleteFile(file);
   }
 
-  public static void clearContent(VirtualFile file) {
-    Assert.assertNotNull(file);
-    try {
-      VfsUtil.saveText(file, "");
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  public static void clearContent(@NotNull final VirtualFile file) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          VfsUtil.saveText(file, "");
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   @SuppressWarnings("UnusedDeclaration")

@@ -40,17 +40,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class JobUtilTest extends PlatformTestCase {
   private static final AtomicInteger COUNT = new AtomicInteger();
 
-  //@Override
-  //protected void setUp() throws Exception {
-  //  super.setUp();
-  //  ((ApplicationImpl)ApplicationManager.getApplication()).stopMeasuringWriteActionPauses(myTestRootDisposable);
-  //}
-  //
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
-  }
-
   public void testUnbalancedTaskJobUtilPerformance() {
     List<Integer> things = new ArrayList<Integer>(Collections.<Integer>nCopies(10000, null));
     int sum = 0;

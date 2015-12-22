@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.util.List;
 
 public class PatchCreatorTest extends PatchingTestCase {
   public void testCreationPatch() throws Exception {
-    myRoot.createChildData(null, "f.txt");
+    createChildData(myRoot, "f.txt");
 
     createPatchBetweenRevisions(1, 0);
     clearRoot();
@@ -37,9 +37,9 @@ public class PatchCreatorTest extends PatchingTestCase {
   }
 
   public void testPatchBetweenTwoOldRevisions() throws Exception {
-    myRoot.createChildData(null, "f1.txt");
-    myRoot.createChildData(null, "f2.txt");
-    myRoot.createChildData(null, "f3.txt");
+    createChildData(myRoot, "f1.txt");
+    createChildData(myRoot, "f2.txt");
+    createChildData(myRoot, "f3.txt");
 
     createPatchBetweenRevisions(3, 1);
     clearRoot();
@@ -51,13 +51,13 @@ public class PatchCreatorTest extends PatchingTestCase {
   }
 
   public void testRename() throws Exception {
-    VirtualFile f = myRoot.createChildData(null, "f.txt");
-    f.setBinaryContent(new byte[]{'x'});
+    VirtualFile f = createChildData(myRoot, "f.txt");
+    setBinaryContent(f,new byte[]{'x'});
 
-    f.rename(null, "ff.txt");
+    rename(f, "ff.txt");
 
     createPatchBetweenRevisions(1, 0);
-    f.rename(null, "f.txt");
+    rename(f, "f.txt");
     applyPatch();
 
     VirtualFile patched = myRoot.findChild("ff.txt");
@@ -67,7 +67,7 @@ public class PatchCreatorTest extends PatchingTestCase {
   }
 
   public void testReversePatch() throws Exception {
-    myRoot.createChildData(null, "f.txt");
+    createChildData(myRoot, "f.txt");
 
     createPatchBetweenRevisions(1, 0, true);
     applyPatch();
@@ -76,8 +76,8 @@ public class PatchCreatorTest extends PatchingTestCase {
   }
 
   public void testDirectoryCreationWithFiles() throws Exception {
-    VirtualFile dir = myRoot.createChildDirectory(null, "dir");
-    dir.createChildData(null, "f.txt");
+    VirtualFile dir = createChildDirectory(myRoot, "dir");
+    createChildData(dir, "f.txt");
 
     createPatchBetweenRevisions(2, 0, false);
     clearRoot();
@@ -89,16 +89,16 @@ public class PatchCreatorTest extends PatchingTestCase {
   }
 
   public void testDirectoryDeletionWithFiles() throws Exception {
-    VirtualFile dir = myRoot.createChildDirectory(null, "dir");
-    dir.createChildData(null, "f1.txt");
-    dir.createChildData(null, "f2.txt");
+    VirtualFile dir = createChildDirectory(myRoot, "dir");
+    createChildData(dir, "f1.txt");
+    createChildData(dir, "f2.txt");
 
-    dir.delete(null);
+    delete(dir);
     createPatchBetweenRevisions(1, 0, false);
 
-    dir = myRoot.createChildDirectory(null, "dir");
-    dir.createChildData(null, "f1.txt");
-    dir.createChildData(null, "f2.txt");
+    dir = createChildDirectory(myRoot, "dir");
+    createChildData(dir, "f1.txt");
+    createChildData(dir, "f2.txt");
 
     applyPatch();
 
@@ -108,14 +108,14 @@ public class PatchCreatorTest extends PatchingTestCase {
   }
 
   public void testDirectoryRename() throws Exception {
-    VirtualFile dir = myRoot.createChildDirectory(null, "dir1");
-    dir.createChildData(null, "f.txt");
+    VirtualFile dir = createChildDirectory(myRoot, "dir1");
+    createChildData(dir, "f.txt");
 
-    dir.rename(null, "dir2");
+    rename(dir, "dir2");
 
     createPatchBetweenRevisions(1, 0);
 
-    dir.rename(null, "dir1");
+    rename(dir, "dir1");
 
     applyPatch();
 

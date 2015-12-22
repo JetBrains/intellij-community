@@ -147,7 +147,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   public void testDeletionOfFilteredDirectoryExternallyDoesNotThrowExceptionDuringRefresh() throws Exception {
     int before = getRevisionsFor(myRoot).size();
 
-    myRoot.createChildDirectory(this, FILTERED_DIR_NAME);
+    createChildDirectory(myRoot, FILTERED_DIR_NAME);
     String path = Paths.appended(myRoot.getPath(), FILTERED_DIR_NAME);
 
     FileUtil.delete(new File(path));
@@ -171,7 +171,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     addExcludedDir(classesPath);
     final VirtualFile classesDir = LocalFileSystem.getInstance().findFileByPath(classesPath);
     assertNotNull(classesDir);
-    classesDir.getParent().delete(this);
+    delete(classesDir.getParent());
 
     FileUtil.copyDir(targetDir, new File(myRoot.getPath(), "target"));
     VirtualFileManager.getInstance().syncRefresh(); // shouldn't throw

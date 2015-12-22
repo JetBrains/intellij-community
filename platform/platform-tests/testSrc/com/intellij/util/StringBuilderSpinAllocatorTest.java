@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,10 +103,5 @@ public class StringBuilderSpinAllocatorTest extends PlatformTestCase {
     long spinTime = (System.nanoTime() - start) / 1000;
     randomField++;
     return spinTime;
-  }
-
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
   }
 }
