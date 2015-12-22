@@ -32,9 +32,10 @@ public class ShowHideRecycledAction extends ToggleAction implements DumbAware {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(project != null);
     if (project != null) {
-      presentation.setText(ShelveChangesManager.getInstance(project).isShowRecycled() ?
+      final boolean fromContextMenu = ShelvedChangesViewManager.SHELF_CONTEXT_MENU.equals(e.getPlace());
+      presentation.setText(ShelveChangesManager.getInstance(project).isShowRecycled() && !fromContextMenu ?
                            "Hide Already Unshelved" : "Show Already Unshelved");
-      presentation.setIcon(ShelvedChangesViewManager.SHELF_CONTEXT_MENU.equals(e.getPlace()) ? null : AllIcons.Nodes.DisabledPointcut);
+      presentation.setIcon(fromContextMenu ? null : AllIcons.Nodes.DisabledPointcut);
     }
   }
 
