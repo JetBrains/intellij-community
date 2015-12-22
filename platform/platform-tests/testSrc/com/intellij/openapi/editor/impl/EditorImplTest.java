@@ -22,7 +22,9 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.testFramework.EditorTestUtil;
 
 import java.awt.*;
@@ -229,5 +231,12 @@ public class EditorImplTest extends AbstractEditorTest {
     configureSoftWraps(10);
     mouse().clickAt(0, 10);
     assertEquals(new VisualPosition(0, 7), myEditor.getCaretModel().getVisualPosition());
+  }
+  
+  public void testXYToVisualPositionWhenPrefixIsSet() throws Exception {
+    initText("abc");
+    configureSoftWraps(1000); // to make sure soft wrap character width is properly mocked
+    ((EditorEx)myEditor).setPrefixTextAndAttributes(">", new TextAttributes());
+    assertEquals(new VisualPosition(0, 0), myEditor.xyToVisualPosition(new Point(1, 0)));
   }
 }
