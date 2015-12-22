@@ -50,6 +50,7 @@ public class FormatProcessor {
   private BlockMapperHelper myBlockMapperHelper;
   private DependentSpacingEngine myDependentSpacingEngine;
   private AlignmentHelper myAlignmentHelper;
+  private IndentAdjuster myIndentAdjuster;
 
   private final BlockIndentOptions myBlockIndentOptions;
   private final CommonCodeStyleSettings.IndentOptions myDefaultIndentOption;
@@ -117,6 +118,7 @@ public class FormatProcessor {
         myDependentSpacingEngine = new DependentSpacingEngine(myBlockMapperHelper);
         myAlignmentsInsideRangesToModify = builder.getAlignmentsInsideRangeToModify();
         myAlignmentHelper = new AlignmentHelper(myDocument, builder.getBlocksToAlign(), myBlockIndentOptions);
+        myIndentAdjuster = new IndentAdjuster(myBlockIndentOptions, myAlignmentHelper);
         myExpandableIndents = builder.getExpandableIndentsBlocks();
       } 
     });
@@ -276,7 +278,7 @@ public class FormatProcessor {
       }
     }
 
-    LeafBlockWrapper newCurrentBlock = adjustIndent();
+    LeafBlockWrapper newCurrentBlock = myIndentAdjuster.adjustIndent(myCurrentBlock);
     if (newCurrentBlock != null) {
       myCurrentBlock = newCurrentBlock;
       onCurrentLineChanged();
@@ -445,55 +447,6 @@ public class FormatProcessor {
            !myCurrentBlock.getWhiteSpace().isReadOnly();
   }
 
-
-  /**
-   * Sometimes to align myCurrentBlock we adjust whitespace of other block before.
-   * In such a case, we rollback to that block restarting formatting from there.
-   * 
-   * @return new current block if we need to rollback, null otherwise
-   */
-  private LeafBlockWrapper adjustIndent() {
-    AlignmentImpl alignment = CoreFormatterUtil.getAlignment(myCurrentBlock);
-    WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
-
-    if (alignment == null || myAlignmentHelper.shouldSkip(alignment)) {
-      if (whiteSpace.containsLineFeeds()) {
-        adjustSpacingByIndentOffset();
-      }
-      else {
-        whiteSpace.arrangeSpaces(myCurrentBlock.getSpaceProperty());
-      }
-      return null;
-    }
-
-    return myAlignmentHelper.applyAlignment(alignment, myCurrentBlock);
-  }
-
-  /**
-   * Applies indent to the white space of {@link #myCurrentBlock currently processed wrapped block}. Both indentation
-   * and alignment options are took into consideration here.
-   */
-  private void adjustLineIndent() {
-    IndentData alignOffset = getAlignOffset();
-
-    if (alignOffset == null) {
-      adjustSpacingByIndentOffset();
-    }
-    else {
-      myCurrentBlock.getWhiteSpace().setSpaces(alignOffset.getSpaces(), alignOffset.getIndentSpaces());
-    }
-  }
-
-  private void adjustSpacingByIndentOffset() {
-    adjustSpacingByIndentOffset(myBlockIndentOptions, myCurrentBlock);
-  }
-
-  private static void adjustSpacingByIndentOffset(BlockIndentOptions blockIndentOptions, LeafBlockWrapper block) {
-    CommonCodeStyleSettings.IndentOptions options = blockIndentOptions.getIndentOptions(block);
-    IndentData offset = block.calculateOffset(options);
-    block.getWhiteSpace().setSpaces(offset.getSpaces(), offset.getIndentSpaces());
-  }
-
   private boolean isChopNeeded(final WrapImpl wrap) {
     return wrap != null && wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED && isSuitableInTheCurrentPosition(wrap);
   }
@@ -527,7 +480,7 @@ public class FormatProcessor {
     try {
       final int startColumnNow = CoreFormatterUtil.getStartColumn(myCurrentBlock);
       whiteSpace.ensureLineFeed();
-      adjustLineIndent();
+      myIndentAdjuster.adjustLineIndent(myCurrentBlock);
       final int startColumnAfterWrap = CoreFormatterUtil.getStartColumn(myCurrentBlock);
       return startColumnNow > startColumnAfterWrap;
     }
@@ -582,46 +535,6 @@ public class FormatProcessor {
     }
   }
 
-  /**
-   * Tries to get align-implied indent of the current block.
-   *
-   * @return indent of the current block if any; <code>null</code> otherwise
-   */
-  @Nullable
-  private IndentData getAlignOffset() {
-    AbstractBlockWrapper current = myCurrentBlock;
-    while (true) {
-      final AlignmentImpl alignment = current.getAlignment();
-      LeafBlockWrapper offsetResponsibleBlock;
-      if (alignment != null && (offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock)) != null) {
-        final WhiteSpace whiteSpace = offsetResponsibleBlock.getWhiteSpace();
-        if (whiteSpace.containsLineFeeds()) {
-          return new IndentData(whiteSpace.getIndentSpaces(), whiteSpace.getSpaces());
-        }
-        else {
-          final int offsetBeforeBlock = CoreFormatterUtil.getStartColumn(offsetResponsibleBlock);
-          final AbstractBlockWrapper indentedParentBlock = CoreFormatterUtil.getIndentedParentBlock(myCurrentBlock);
-          if (indentedParentBlock == null) {
-            return new IndentData(0, offsetBeforeBlock);
-          }
-          else {
-            final int parentIndent = indentedParentBlock.getWhiteSpace().getIndentOffset();
-            if (parentIndent > offsetBeforeBlock) {
-              return new IndentData(0, offsetBeforeBlock);
-            }
-            else {
-              return new IndentData(parentIndent, offsetBeforeBlock - parentIndent);
-            }
-          }
-        }
-      }
-      else {
-        current = current.getParent();
-        if (current == null || current.getStartOffset() != myCurrentBlock.getStartOffset()) return null;
-      }
-    }
-  }
-
   public void setAllWhiteSpacesAreReadOnly() {
     LeafBlockWrapper current = myFirstTokenBlock;
     while (current != null) {
@@ -630,10 +543,10 @@ public class FormatProcessor {
     }
   }
 
-  static class ChildAttributesInfo {
+  public static class ChildAttributesInfo {
     public final AbstractBlockWrapper parent;
-    final        ChildAttributes      attributes;
-    final        int                  index;
+    public final ChildAttributes attributes;
+    public final int index;
 
     public ChildAttributesInfo(final AbstractBlockWrapper parent, final ChildAttributes attributes, final int index) {
       this.parent = parent;
@@ -662,7 +575,7 @@ public class FormatProcessor {
       return new IndentInfo(0, 0, 0);
     }
 
-    return adjustLineIndent(info.parent, info.attributes, info.index);
+    return myIndentAdjuster.adjustLineIndent(myCurrentBlock, info);
   }
 
   @Nullable
@@ -707,40 +620,7 @@ public class FormatProcessor {
       return new ChildAttributesInfo(parent, childAttributes, index);
     }
   }
-
-  private IndentInfo adjustLineIndent(final AbstractBlockWrapper parent, final ChildAttributes childAttributes, final int index) {
-    int alignOffset = getAlignOffsetBefore(childAttributes.getAlignment(), null);
-    if (alignOffset == -1) {
-      return parent.calculateChildOffset(myBlockIndentOptions.getIndentOptions(parent), childAttributes, index).createIndentInfo();
-    }
-    else {
-      AbstractBlockWrapper indentedParentBlock = CoreFormatterUtil.getIndentedParentBlock(myCurrentBlock);
-      if (indentedParentBlock == null) {
-        return new IndentInfo(0, 0, alignOffset);
-      }
-      else {
-        int indentOffset = indentedParentBlock.getWhiteSpace().getIndentOffset();
-        if (indentOffset > alignOffset) {
-          return new IndentInfo(0, 0, alignOffset);
-        }
-        else {
-          return new IndentInfo(0, indentOffset, alignOffset - indentOffset);
-        }
-      }
-    }
-  }
-
-  private static int getAlignOffsetBefore(@Nullable final Alignment alignment, @Nullable final LeafBlockWrapper blockAfter) {
-    if (alignment == null) return -1;
-    final LeafBlockWrapper alignRespBlock = ((AlignmentImpl)alignment).getOffsetRespBlockBefore(blockAfter);
-    if (alignRespBlock != null) {
-      return CoreFormatterUtil.getStartColumn(alignRespBlock);
-    }
-    else {
-      return -1;
-    }
-  }
-
+  
   private static int getNewChildPosition(final AbstractBlockWrapper parent, final int offset) {
     AbstractBlockWrapper parentBlockToUse = getLastNestedCompositeBlockForSameRange(parent);
     if (!(parentBlockToUse instanceof CompositeBlockWrapper)) return 0;
@@ -1109,7 +989,7 @@ public class FormatProcessor {
 
         if (space.containsLineFeeds()) {
           myCurrentBlock = (LeafBlockWrapper)block;
-          adjustIndent(); //since aligned block starts new line, it should not touch any other block
+          myIndentAdjuster.adjustIndent(myCurrentBlock); //since aligned block starts new line, it should not touch any other block
           storeAlignmentsAfterCurrentBlock();
         }
       }
