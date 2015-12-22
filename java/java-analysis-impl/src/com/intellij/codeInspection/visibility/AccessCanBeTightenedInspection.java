@@ -222,12 +222,10 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
         // access from the same file can be via private
         // except when used in annotation:
         // @Ann(value = C.VAL) class C { public static final String VAL = "xx"; }
-        PsiAnnotation annotation = PsiTreeUtil.getParentOfType(element, PsiAnnotation.class);
-        if (annotation != null && annotation.getParent() instanceof PsiModifierList && annotation.getParent().getParent() == aClass) {
-          return suggestPackageLocal(member);
-        }
         // or in implements/extends clauses
-        if (isInReferenceList(aClass.getImplementsList(), member) || isInReferenceList(aClass.getExtendsList(), member)) {
+        if (isInReferenceList(aClass.getModifierList(), member) ||
+            isInReferenceList(aClass.getImplementsList(), member) ||
+            isInReferenceList(aClass.getExtendsList(), member)) {
           return suggestPackageLocal(member);
         }
 
@@ -255,7 +253,7 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
-  private static boolean isInReferenceList(@Nullable PsiReferenceList list, @NotNull final PsiMember member) {
+  private static boolean isInReferenceList(@Nullable PsiElement list, @NotNull final PsiMember member) {
     if (list == null) return false;
     final PsiManager psiManager = member.getManager();
     final boolean[] result = new boolean[1];
