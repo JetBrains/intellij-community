@@ -80,6 +80,12 @@ public class EditorPaintingTest extends AbstractEditorTest {
     addBorderHighlighter(0, 0, HighlighterLayer.WARNING, Color.red);
     checkResult();
   }
+  
+  public void testPrefixWithEmptyText() throws Exception {
+    initText("");
+    ((EditorEx)myEditor).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
+    checkResult();
+  }
 
   private static void addRangeHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
     addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
