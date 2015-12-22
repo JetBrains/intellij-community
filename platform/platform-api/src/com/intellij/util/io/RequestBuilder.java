@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public final class RequestBuilder {
   int myRedirectLimit = HttpConfigurable.REDIRECT_LIMIT;
   boolean myGzip = true;
   boolean myForceHttps;
+  boolean myUseProxy = true;
   HostnameVerifier myHostnameVerifier;
   String myUserAgent;
   String myAccept;
@@ -80,6 +81,12 @@ public final class RequestBuilder {
   @NotNull
   public RequestBuilder forceHttps(boolean forceHttps) {
     myForceHttps = forceHttps;
+    return this;
+  }
+
+  @NotNull
+  public RequestBuilder useProxy(boolean useProxy) {
+    myUseProxy = useProxy;
     return this;
   }
 
