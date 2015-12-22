@@ -126,7 +126,7 @@ public class LeafBlockWrapper extends AbstractBlockWrapper {
   }
 
   @Override
-  protected IndentData getNumberOfSymbolsBeforeBlock() {
+  public IndentData getNumberOfSymbolsBeforeBlock() {
     int spaces = getWhiteSpace().getSpaces();
     int indentSpaces = getWhiteSpace().getIndentSpaces();
 

@@ -77,7 +77,7 @@ public class SpacingImpl extends Spacing {
     return myMinLineFeeds;
   }
 
-  final boolean isReadOnly(){
+  public final boolean isReadOnly(){
     return (myFlags & READ_ONLY_MASK) != 0;
   }
 

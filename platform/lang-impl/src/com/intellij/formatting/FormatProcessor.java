@@ -75,7 +75,8 @@ public class FormatProcessor {
 
   @NotNull
   private StateProcessor myStateProcessor;
-  private MultiMap<ExpandableIndent, AbstractBlockWrapper> myExpandableIndents;
+  private Ref<MultiMap<ExpandableIndent, AbstractBlockWrapper>> myExpandableIndentsRef = Ref.create();
+  private Ref<IndentAdjuster> myIndentAdjusterRef = Ref.create();
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
@@ -119,7 +120,8 @@ public class FormatProcessor {
         myAlignmentsInsideRangesToModify = builder.getAlignmentsInsideRangeToModify();
         myAlignmentHelper = new AlignmentHelper(myDocument, builder.getBlocksToAlign(), myBlockIndentOptions);
         myIndentAdjuster = new IndentAdjuster(myBlockIndentOptions, myAlignmentHelper);
-        myExpandableIndents = builder.getExpandableIndentsBlocks();
+        myIndentAdjusterRef.set(myIndentAdjuster);
+        myExpandableIndentsRef.set(builder.getExpandableIndentsBlocks());
       } 
     });
     myStateProcessor = new StateProcessor(wrapState);
@@ -176,7 +178,7 @@ public class FormatProcessor {
   public void format(FormattingModel model, boolean sequentially) {
     if (sequentially) {
       myStateProcessor.setNextState(new AdjustWhiteSpacesState());
-      myStateProcessor.setNextState(new ExpandChildrenIndent());
+      myStateProcessor.setNextState(new ExpandChildrenIndent(myDocument, myIndentAdjusterRef, myExpandableIndentsRef));
       myStateProcessor.setNextState(new ApplyChangesState(myFirstTokenBlockRef, model, myBlockIndentOptions, myProgressCallback));
     }
     else {
@@ -213,7 +215,7 @@ public class FormatProcessor {
   @SuppressWarnings({"WhileLoopSpinsOnField"})
   public void formatWithoutRealModifications(boolean sequentially) {
     myStateProcessor.setNextState(new AdjustWhiteSpacesState());
-    myStateProcessor.setNextState(new ExpandChildrenIndent());
+    myStateProcessor.setNextState(new ExpandChildrenIndent(myDocument, myIndentAdjusterRef, myExpandableIndentsRef));
     if (sequentially) {
       return;
     }
@@ -829,186 +831,6 @@ public class FormatProcessor {
       myAffectedRanges = ranges;
       myReformatContext = reformatContext;
       myInterestingOffset = interestingOffset;
-    }
-  }
-
-  private class ExpandChildrenIndent extends State {
-    private Iterator<ExpandableIndent> myIterator;
-    private MultiMap<Alignment, LeafBlockWrapper> myBlocksToRealign = new MultiMap<Alignment, LeafBlockWrapper>();
-
-    @Override
-    protected void doIteration() {
-      if (myIterator == null) {
-        myIterator = myExpandableIndents.keySet().iterator();
-      }
-      if (!myIterator.hasNext()) {
-        setDone(true);
-        return;
-      }
-
-      final ExpandableIndent indent = myIterator.next();
-      Collection<AbstractBlockWrapper> blocksToExpandIndent = myExpandableIndents.get(indent);
-      if (shouldExpand(blocksToExpandIndent)) {
-        for (AbstractBlockWrapper block : blocksToExpandIndent) {
-          indent.setEnforceIndent(true);
-          reindentNewLineChildren(block);
-          indent.setEnforceIndent(false);
-        }
-      }
-
-      restoreAlignments(myBlocksToRealign);
-      myBlocksToRealign.clear();
-    }
-
-    private void restoreAlignments(MultiMap<Alignment, LeafBlockWrapper> blocks) {
-      for (Alignment alignment : blocks.keySet()) {
-        AlignmentImpl alignmentImpl = (AlignmentImpl)alignment;
-        if (!alignmentImpl.isAllowBackwardShift()) continue;
-        
-        Set<LeafBlockWrapper> toRealign = alignmentImpl.getOffsetResponsibleBlocks();
-        arrangeSpaces(toRealign);
-        
-        LeafBlockWrapper rightMostBlock = getRightMostBlock(toRealign);
-        int maxSpacesBeforeBlock = rightMostBlock.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
-        int rightMostBlockLine = myDocument.getLineNumber(rightMostBlock.getStartOffset());
-
-        for (LeafBlockWrapper block : toRealign) {
-          int currentBlockLine = myDocument.getLineNumber(block.getStartOffset());
-          if (currentBlockLine == rightMostBlockLine) continue;
-          
-          int blockIndent = block.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
-          int delta = maxSpacesBeforeBlock - blockIndent;
-          if (delta > 0) {
-            int newSpaces = block.getWhiteSpace().getTotalSpaces() + delta;
-            adjustSpacingToKeepAligned(block, newSpaces);
-          }
-        }
-      }
-    }
-
-    private void adjustSpacingToKeepAligned(LeafBlockWrapper block, int newSpaces) {
-      WhiteSpace space = block.getWhiteSpace();
-      SpacingImpl property = block.getSpaceProperty();
-      if (property == null) return;
-      space.arrangeSpaces(new SpacingImpl(newSpaces, newSpaces, 
-                                          property.getMinLineFeeds(), 
-                                          property.isReadOnly(), 
-                                          property.isSafe(), 
-                                          property.shouldKeepLineFeeds(), 
-                                          property.getKeepBlankLines(), 
-                                          property.shouldKeepFirstColumn(), 
-                                          property.getPrefLineFeeds()));
-    }
-
-    private LeafBlockWrapper getRightMostBlock(Collection<LeafBlockWrapper> toRealign) {
-      int maxSpacesBeforeBlock = -1;
-      LeafBlockWrapper rightMostBlock = null;
-      
-      for (LeafBlockWrapper block : toRealign) {
-        int spaces = block.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
-        if (spaces > maxSpacesBeforeBlock) {
-          maxSpacesBeforeBlock = spaces;
-          rightMostBlock = block;
-        }
-      }
-      
-      return rightMostBlock;
-    }
-
-    private void arrangeSpaces(Collection<LeafBlockWrapper> toRealign) {
-      for (LeafBlockWrapper block : toRealign) {
-        WhiteSpace whiteSpace = block.getWhiteSpace();
-        SpacingImpl spacing = block.getSpaceProperty();
-        whiteSpace.arrangeSpaces(spacing);
-      }
-    }
-
-    private boolean shouldExpand(Collection<AbstractBlockWrapper> blocksToExpandIndent) {
-      AbstractBlockWrapper last = null;
-      for (AbstractBlockWrapper block : blocksToExpandIndent) {
-        if (block.getWhiteSpace().containsLineFeeds()) {
-          return true;
-        }
-        last = block;
-      }
-
-      if (last != null) {
-        AbstractBlockWrapper next = getNextBlock(last);
-        if (next != null && next.getWhiteSpace().containsLineFeeds()) {
-          int nextNewLineBlockIndent = next.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
-          if (nextNewLineBlockIndent >= finMinNewLineIndent(blocksToExpandIndent)) {
-            return true;  
-          }
-        }
-      }
-      
-      return false;
-    }
-
-    private int finMinNewLineIndent(@NotNull Collection<AbstractBlockWrapper> wrappers) {
-      int totalMinimum = Integer.MAX_VALUE;
-      for (AbstractBlockWrapper wrapper : wrappers) {
-        int minNewLineIndent = findMinNewLineIndent(wrapper);
-        if (minNewLineIndent < totalMinimum) {
-          totalMinimum = minNewLineIndent;
-        }
-      }
-      return totalMinimum;
-    }
-    
-    private int findMinNewLineIndent(@NotNull AbstractBlockWrapper block) {
-      if (block instanceof LeafBlockWrapper && block.getWhiteSpace().containsLineFeeds()) {
-        return block.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
-      }
-      else if (block instanceof CompositeBlockWrapper) {
-        List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)block).getChildren();
-        int currentMin = Integer.MAX_VALUE;
-        for (AbstractBlockWrapper child : children) {
-          int childIndent = findMinNewLineIndent(child);
-          if (childIndent < currentMin) {
-            currentMin = childIndent;
-          }
-        }
-        return currentMin;
-      }
-      return Integer.MAX_VALUE;
-    }
-    
-    private AbstractBlockWrapper getNextBlock(AbstractBlockWrapper block) {
-      List<AbstractBlockWrapper> children = block.getParent().getChildren();
-      int nextBlockIndex = children.indexOf(block) + 1;
-      if (nextBlockIndex < children.size()) {
-        return children.get(nextBlockIndex);
-      }
-      return null;
-    }
-    
-    private void reindentNewLineChildren(final @NotNull AbstractBlockWrapper block) {
-      if (block instanceof LeafBlockWrapper) {
-        WhiteSpace space = block.getWhiteSpace();
-
-        if (space.containsLineFeeds()) {
-          myCurrentBlock = (LeafBlockWrapper)block;
-          myIndentAdjuster.adjustIndent(myCurrentBlock); //since aligned block starts new line, it should not touch any other block
-          storeAlignmentsAfterCurrentBlock();
-        }
-      }
-      else if (block instanceof CompositeBlockWrapper) {
-        List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)block).getChildren();
-        for (AbstractBlockWrapper childBlock : children) {
-          reindentNewLineChildren(childBlock);
-        }
-      }
-    }
-
-    private void storeAlignmentsAfterCurrentBlock() {
-      LeafBlockWrapper current = myCurrentBlock.getNextBlock();
-      while (current != null && !current.getWhiteSpace().containsLineFeeds()) {
-        if (current.getAlignment() != null) {
-          myBlocksToRealign.putValue(current.getAlignment(), current);
-        }
-        current = current.getNextBlock();
-      }
     }
   }
 }
