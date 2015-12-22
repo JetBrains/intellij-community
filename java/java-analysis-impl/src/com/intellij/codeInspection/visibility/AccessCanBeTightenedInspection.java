@@ -36,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -225,6 +226,11 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
         if (annotation != null && annotation.getParent() instanceof PsiModifierList && annotation.getParent().getParent() == aClass) {
           return suggestPackageLocal(member);
         }
+        // or in implements/extends clauses
+        if (isInReferenceList(aClass.getImplementsList(), member) || isInReferenceList(aClass.getExtendsList(), member)) {
+          return suggestPackageLocal(member);
+        }
+
         return myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS ||
                memberClass == aClass && memberClass.getContainingClass() == null ? PsiUtil.ACCESS_LEVEL_PRIVATE : suggestPackageLocal(member);
       }
@@ -247,6 +253,23 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       }
       return PsiUtil.ACCESS_LEVEL_PUBLIC;
     }
+  }
+
+  private static boolean isInReferenceList(@Nullable PsiReferenceList list, @NotNull final PsiMember member) {
+    if (list == null) return false;
+    final PsiManager psiManager = member.getManager();
+    final boolean[] result = new boolean[1];
+    list.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        super.visitReferenceElement(reference);
+        if (psiManager.areElementsEquivalent(reference.resolve(), member)) {
+          result[0] = true;
+          stopWalking();
+        }
+      }
+    });
+    return result[0];
   }
 
   private int suggestPackageLocal(@NotNull PsiElement member) {

@@ -108,6 +108,13 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
            "}");
   }
 
+  public void testDoNotSuggestPrivateIfInExtendsOrImplements() {
+    doTest("abstract class C implements Comparable<C.Inner> {\n" +
+           "  static class Inner {\n" +
+           "  }\n"+
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     VisibilityInspection inspection = new VisibilityInspection();
