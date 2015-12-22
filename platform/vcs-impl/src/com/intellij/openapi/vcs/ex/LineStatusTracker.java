@@ -37,7 +37,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -250,37 +249,22 @@ public class LineStatusTracker {
 
     int first =
       range.getLine1() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getLine1());
-
     int second =
       range.getLine2() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getLine2());
 
-    final TextAttributes attr = LineStatusTrackerDrawing.getAttributesFor(range);
-    final RangeHighlighter highlighter = DocumentMarkupModel.forDocument(myDocument, myProject, true)
-      .addRangeHighlighter(first, second, HighlighterLayer.FIRST - 1, attr, HighlighterTargetArea.LINES_IN_RANGE);
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(myDocument, myProject, true);
+    TextAttributes attributes = LineStatusMarkerRenderer.getTextAttributes(range);
 
+    final RangeHighlighter highlighter = markupModel.addRangeHighlighter(first, second,
+                                                                         HighlighterLayer.FIRST - 1, attributes,
+                                                                         HighlighterTargetArea.LINES_IN_RANGE);
     highlighter.setThinErrorStripeMark(true);
     highlighter.setGreedyToLeft(true);
     highlighter.setGreedyToRight(true);
+
     highlighter.setLineMarkerRenderer(LineStatusTrackerDrawing.createRenderer(range, this));
     highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
-
-    final String tooltip;
-    if (range.getLine1() == range.getLine2()) {
-      if (range.getVcsLine1() + 1 == range.getVcsLine2()) {
-        tooltip = VcsBundle.message("tooltip.text.line.before.deleted", range.getLine1() + 1);
-      }
-      else {
-        tooltip = VcsBundle.message("tooltip.text.lines.before.deleted", range.getLine1() + 1, range.getVcsLine2() - range.getVcsLine1());
-      }
-    }
-    else if (range.getLine1() + 1 == range.getLine2()) {
-      tooltip = VcsBundle.message("tooltip.text.line.changed", range.getLine1() + 1);
-    }
-    else {
-      tooltip = VcsBundle.message("tooltip.text.lines.changed", range.getLine1() + 1, range.getLine2());
-    }
-
-    highlighter.setErrorStripeTooltip(tooltip);
+    highlighter.setErrorStripeTooltip(LineStatusMarkerRenderer.getTooltipText(range));
 
     range.setHighlighter(highlighter);
   }

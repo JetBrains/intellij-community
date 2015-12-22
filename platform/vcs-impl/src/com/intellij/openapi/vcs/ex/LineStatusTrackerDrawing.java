@@ -28,20 +28,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -58,7 +52,6 @@ import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +64,6 @@ import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 
-import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 import static com.intellij.diff.util.DiffUtil.getDiffType;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
@@ -79,123 +71,14 @@ public class LineStatusTrackerDrawing {
   private LineStatusTrackerDrawing() {
   }
 
-  static TextAttributes getAttributesFor(final Range range) {
-    return new TextAttributes() {
-      @Override
-      public Color getErrorStripeColor() {
-        return getDiffColor(range);
-      }
-    };
-  }
-
-  private static void paintGutterFragment(final Editor editor, final Graphics g, final Rectangle r, final Range range) {
-    final EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
-    Color gutterColor = getDiffGutterColor(range);
-    Color borderColor = getDiffGutterBorderColor();
-
-    final int x = r.x + r.width - 3;
-    final int endX = gutter.getWhitespaceSeparatorOffset();
-
-    final int y = lineToY(editor, range.getLine1());
-    final int endY = lineToY(editor, range.getLine2());
-
-    if (range.getInnerRanges() == null) { // Mode.DEFAULT
-      if (y != endY) {
-        paintRect(g, gutterColor, borderColor, x, y, endX, endY);
-      }
-      else {
-        paintTriangle(g, gutterColor, borderColor, x, endX, y);
-      }
-    }
-    else { // Mode.SMART
-      if (y == endY) {
-        paintTriangle(g, gutterColor, borderColor, x, endX, y);
-      }
-      else {
-        List<Range.InnerRange> innerRanges = range.getInnerRanges();
-        for (Range.InnerRange innerRange : innerRanges) {
-          if (innerRange.getType() == Range.DELETED) continue;
-
-          int start = lineToY(editor, innerRange.getLine1());
-          int end = lineToY(editor, innerRange.getLine2());
-
-          paintRect(g, getDiffColor(innerRange), null, x, start, endX, end);
-        }
-
-        for (int i = 0; i < innerRanges.size(); i++) {
-          Range.InnerRange innerRange = innerRanges.get(i);
-          if (innerRange.getType() != Range.DELETED) continue;
-
-          int start;
-          int end;
-
-          if (i == 0) {
-            start = lineToY(editor, innerRange.getLine1());
-            end = lineToY(editor, innerRange.getLine2()) + 5;
-          }
-          else if (i == innerRanges.size() - 1) {
-            start = lineToY(editor, innerRange.getLine1()) - 5;
-            end = lineToY(editor, innerRange.getLine2());
-          }
-          else {
-            start = lineToY(editor, innerRange.getLine1()) - 3;
-            end = lineToY(editor, innerRange.getLine2()) + 3;
-          }
-
-          paintRect(g, getDiffColor(innerRange), null, x, start, endX, end);
-        }
-
-        paintRect(g, null, borderColor, x, y, endX, endY);
-      }
-    }
-  }
-
-  private static void paintRect(@NotNull Graphics g, @Nullable Color color, @Nullable Color borderColor, int x1, int y1, int x2, int y2) {
-    if (color != null) {
-      g.setColor(color);
-      g.fillRect(x1, y1, x2 - x1, y2 - y1);
-    }
-    if (borderColor != null) {
-      g.setColor(borderColor);
-      UIUtil.drawLine(g, x1, y1, x2 - 1, y1);
-      UIUtil.drawLine(g, x1, y1, x1, y2 - 1);
-      UIUtil.drawLine(g, x1, y2 - 1, x2 - 1, y2 - 1);
-    }
-  }
-
-  private static void paintTriangle(@NotNull Graphics g, @Nullable Color color, @Nullable Color borderColor, int x1, int x2, int y) {
-    int size = 4;
-
-    final int[] xPoints = new int[]{x1, x1, x2};
-    final int[] yPoints = new int[]{y - size, y + size, y};
-
-    if (color != null) {
-      g.setColor(color);
-      g.fillPolygon(xPoints, yPoints, xPoints.length);
-    }
-    if (borderColor != null) {
-      g.setColor(borderColor);
-      g.drawPolygon(xPoints, yPoints, xPoints.length);
-    }
-  }
-
   public static LineMarkerRenderer createRenderer(final Range range, final LineStatusTracker tracker) {
-    return new ActiveGutterRenderer() {
-      public void paint(final Editor editor, final Graphics g, final Rectangle r) {
-        paintGutterFragment(editor, g, r, range);
-      }
-
+    return new LineStatusMarkerRenderer(range) {
       public void doAction(final Editor editor, final MouseEvent e) {
         e.consume();
         final JComponent comp = (JComponent)e.getComponent(); // shall be EditorGutterComponent, cast is safe.
         final JLayeredPane layeredPane = comp.getRootPane().getLayeredPane();
         final Point point = SwingUtilities.convertPoint(comp, ((EditorEx)editor).getGutterComponentEx().getWidth(), e.getY(), layeredPane);
         showActiveHint(range, editor, tracker, point);
-      }
-
-      public boolean canDoAction(final MouseEvent e) {
-        final EditorGutterComponentEx gutter = (EditorGutterComponentEx)e.getComponent();
-        return e.getX() > gutter.getLineMarkerFreePaintersAreaOffset();
       }
     };
   }
@@ -391,63 +274,6 @@ public class LineStatusTrackerDrawing {
         showActiveHint(range, editor, tracker, null);
       }
     });
-  }
-
-  @Nullable
-  private static Color getDiffColor(@NotNull Range.InnerRange range) {
-    // TODO: we should move color settings from Colors-General to Colors-Diff
-    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    switch (range.getType()) {
-      case Range.INSERTED:
-        return globalScheme.getColor(EditorColors.ADDED_LINES_COLOR);
-      case Range.DELETED:
-        return globalScheme.getColor(EditorColors.DELETED_LINES_COLOR);
-      case Range.MODIFIED:
-        return globalScheme.getColor(EditorColors.MODIFIED_LINES_COLOR);
-      case Range.EQUAL:
-        return globalScheme.getColor(EditorColors.WHITESPACES_MODIFIED_LINES_COLOR);
-      default:
-        assert false;
-        return null;
-    }
-  }
-
-  @Nullable
-  private static Color getDiffColor(@NotNull Range range) {
-    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    switch (range.getType()) {
-      case Range.INSERTED:
-        return globalScheme.getAttributes(DiffColors.DIFF_INSERTED).getErrorStripeColor();
-      case Range.DELETED:
-        return globalScheme.getAttributes(DiffColors.DIFF_DELETED).getErrorStripeColor();
-      case Range.MODIFIED:
-        return globalScheme.getAttributes(DiffColors.DIFF_MODIFIED).getErrorStripeColor();
-      default:
-        assert false;
-        return null;
-    }
-  }
-
-  @Nullable
-  private static Color getDiffGutterColor(@NotNull Range range) {
-    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    switch (range.getType()) {
-      case Range.INSERTED:
-        return globalScheme.getColor(EditorColors.ADDED_LINES_COLOR);
-      case Range.DELETED:
-        return globalScheme.getColor(EditorColors.DELETED_LINES_COLOR);
-      case Range.MODIFIED:
-        return globalScheme.getColor(EditorColors.MODIFIED_LINES_COLOR);
-      default:
-        assert false;
-        return null;
-    }
-  }
-
-  @Nullable
-  private static Color getDiffGutterBorderColor() {
-    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    return globalScheme.getColor(EditorColors.BORDER_LINES_COLOR);
   }
 
   private static class ToggleByWordDiffAction extends ToggleAction implements DumbAware {
