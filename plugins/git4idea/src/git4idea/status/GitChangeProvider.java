@@ -44,7 +44,7 @@ import java.util.*;
  */
 public class GitChangeProvider implements ChangeProvider {
 
-  private static final Logger PROFILE_LOG = Logger.getInstance("#GitStatus");
+  private static final Logger LOG = Logger.getInstance("#GitStatus");
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
@@ -72,7 +72,9 @@ public class GitChangeProvider implements ChangeProvider {
       return;
     }
 
+    if (LOG.isDebugEnabled()) LOG.debug("initial dirty scope: " + dirtyScope);
     appendNestedVcsRootsToDirt(dirtyScope, vcs, myVcsManager);
+    if (LOG.isDebugEnabled()) LOG.debug("after adding nested vcs roots to dirt: " + dirtyScope);
 
     final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRoots();
     Collection<VirtualFile> roots = GitUtil.gitRootsForPaths(affected);
@@ -81,7 +83,7 @@ public class GitChangeProvider implements ChangeProvider {
       final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, dirtyScope.getDirtyFilesNoExpand(), addGate,
                                                                myFileDocumentManager, myVcsManager);
       for (VirtualFile root : roots) {
-        debug("checking root: " + root.getPath());
+        LOG.debug("checking root: " + root.getPath());
         GitChangesCollector collector = isNewGitChangeProviderAvailable()
                                         ? GitNewChangesCollector.collect(myProject, myGit, myChangeListManager, myVcsManager,
                                                                          vcs, dirtyScope, root)
@@ -90,7 +92,7 @@ public class GitChangeProvider implements ChangeProvider {
         final Collection<Change> changes = collector.getChanges();
         holder.changed(changes);
         for (Change file : changes) {
-          debug("process change: " + ChangesUtil.getFilePath(file).getPath());
+          LOG.debug("process change: " + ChangesUtil.getFilePath(file).getPath());
           builder.processChange(file, GitVcs.getKey());
         }
         for (VirtualFile f : collector.getUnversionedFiles()) {
@@ -101,7 +103,7 @@ public class GitChangeProvider implements ChangeProvider {
       }
     }
     catch (VcsException e) {
-      PROFILE_LOG.info(e);
+      LOG.info(e);
       // most probably the error happened because git is not configured
       vcs.getExecutableValidator().showNotificationOrThrow(e);
     }
@@ -130,6 +132,7 @@ public class GitChangeProvider implements ChangeProvider {
       }
     }
     inputColl.addAll(existingInScope);
+    if (LOG.isDebugEnabled()) LOG.debug("appendNestedVcsRoots. collection to remove ancestors: " + inputColl);
     FileUtil.removeAncestors(inputColl, new Convertor<VirtualFile, String>() {
                                @Override
                                public String convert(VirtualFile o) {
@@ -139,7 +142,7 @@ public class GitChangeProvider implements ChangeProvider {
                                @Override
                                public boolean process(VirtualFile parent, VirtualFile child) {
                                  if (! existingInScope.contains(child) && existingInScope.contains(parent)) {
-                                   debug("adding git root for check: " + child.getPath());
+                                   LOG.debug("adding git root for check. child: " + child.getPath() + ", parent: " + parent.getPath());
                                    ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(child));
                                  }
                                  return true;
@@ -155,14 +158,6 @@ public class GitChangeProvider implements ChangeProvider {
     }
     final GitVersion version = vcs.getVersion();
     return GitVersionSpecialty.KNOWS_STATUS_PORCELAIN.existsIn(version);
-  }
-
-  /**
-   * Common debug logging method for all Git status related operations.
-   * Primarily used for measuring performance and tracking calls to heavy methods.
-   */
-  public static void debug(String message) {
-    PROFILE_LOG.debug(message);
   }
 
   private static class MyNonChangedHolder {
