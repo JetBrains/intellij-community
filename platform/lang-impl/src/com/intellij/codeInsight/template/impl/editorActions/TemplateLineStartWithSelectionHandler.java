@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.template.impl.editorActions;
 
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
-/**
- * @author yole
- */
-public class HomeHandler extends HomeEndHandler {
-  public HomeHandler(final EditorActionHandler originalHandler) {
-    super(originalHandler, true);
+public class TemplateLineStartWithSelectionHandler extends TemplateLineStartEndHandler {
+  public TemplateLineStartWithSelectionHandler(final EditorActionHandler originalHandler) {
+    super(originalHandler, true, true);
   }
 }
