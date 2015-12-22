@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.ui;
 
 import org.jetbrains.annotations.Nullable;
