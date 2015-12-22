@@ -72,12 +72,13 @@ public class PyDefUseUtil {
                                     if (instruction instanceof ReadWriteInstruction) {
                                       final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
                                       final PsiElement element = instruction.getElement();
-                                      final String name = elementName(element);
                                       final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
-                                      if ((access.isWriteAccess() || (acceptTypeAssertions && access.isAssertTypeAccess())) &&
-                                          Comparing.strEqual(name, varName)) {
-                                        result.add(rwInstruction);
-                                        return ControlFlowUtil.Operation.CONTINUE;
+                                      if (access.isWriteAccess() || acceptTypeAssertions && access.isAssertTypeAccess()) {
+                                        final String name = elementName(element);
+                                        if (Comparing.strEqual(name, varName)) {
+                                          result.add(rwInstruction);
+                                          return ControlFlowUtil.Operation.CONTINUE;
+                                        }
                                       }
                                     }
                                     return ControlFlowUtil.Operation.NEXT;
