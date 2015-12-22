@@ -488,8 +488,13 @@ public class FormatProcessor {
   }
 
   private void adjustSpacingByIndentOffset() {
-    IndentData offset = myCurrentBlock.calculateOffset(myBlockIndentOptions.getIndentOptions(myCurrentBlock));
-    myCurrentBlock.getWhiteSpace().setSpaces(offset.getSpaces(), offset.getIndentSpaces());
+    adjustSpacingByIndentOffset(myBlockIndentOptions, myCurrentBlock);
+  }
+
+  private static void adjustSpacingByIndentOffset(BlockIndentOptions blockIndentOptions, LeafBlockWrapper block) {
+    CommonCodeStyleSettings.IndentOptions options = blockIndentOptions.getIndentOptions(block);
+    IndentData offset = block.calculateOffset(options);
+    block.getWhiteSpace().setSpaces(offset.getSpaces(), offset.getIndentSpaces());
   }
 
   private boolean isChopNeeded(final WrapImpl wrap) {
