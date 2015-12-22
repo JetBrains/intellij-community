@@ -60,7 +60,8 @@ public class ExportableFileTemplateSettings implements PersistentStateComponent<
       Element templatesGroup = null;
       for (FileTemplateBase template : manager.getAllTemplates(true)) {
         // save only those settings that differ from defaults
-        boolean shouldSave = template.isReformatCode() != FileTemplateBase.DEFAULT_REFORMAT_CODE_VALUE || template.isLiveTemplateEnabled();
+        boolean shouldSave = template.isReformatCode() != FileTemplateBase.DEFAULT_REFORMAT_CODE_VALUE ||
+                             template.isLiveTemplateEnabled() != template.isLiveTemplateEnabledByDefault();
         if (template instanceof BundledFileTemplate) {
           shouldSave |= ((BundledFileTemplate)template).isEnabled() != FileTemplateBase.DEFAULT_ENABLED_VALUE;
         }
