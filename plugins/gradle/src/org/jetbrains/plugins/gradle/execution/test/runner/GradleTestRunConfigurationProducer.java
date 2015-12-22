@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.BooleanFunction;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -149,6 +150,21 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
       final String taskName = taskNode.getData().getName();
       result = ContainerUtil.list("clean" + StringUtil.capitalize(taskName), taskName);
     }
-    return result;
+
+    final String path;
+    if(!externalProjectId.startsWith(":")) {
+      path = ":";
+    } else {
+      final List<String> pathParts = StringUtil.split(externalProjectId, ":");
+      if (!pathParts.isEmpty()) pathParts.remove(pathParts.size() - 1);
+      final String join = StringUtil.join(pathParts, ":");
+      path = ":" + join + (!join.isEmpty() ? ":" : "");
+    }
+    return ContainerUtil.map(result, new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return path + s;
+      }
+    });
   }
 }

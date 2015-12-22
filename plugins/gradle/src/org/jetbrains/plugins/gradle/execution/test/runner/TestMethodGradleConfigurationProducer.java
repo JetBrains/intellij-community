@@ -33,6 +33,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -105,7 +106,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(module))) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
-    final String testFilter = creatTestFilter(containingClass, psiMethod);
+    final String testFilter = createTestFilter(containingClass, psiMethod);
     return scriptParameters.contains(testFilter);
   }
 
@@ -167,7 +168,10 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
 
     StringBuilder buf = new StringBuilder();
     for (PsiClass aClass : containingClasses) {
-      buf.append(creatTestFilter(aClass, psiMethod));
+      final String filter = createTestFilter(aClass, psiMethod);
+      if(filter != null) {
+        buf.append(filter);
+      }
     }
 
     configuration.getSettings().setScriptParameters(buf.toString().trim());
@@ -175,8 +179,15 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     return true;
   }
 
-  private static String creatTestFilter(@NotNull PsiClass aClass, @NotNull PsiMethod psiMethod) {
-    String testFilterPattern = aClass.getQualifiedName() + '.' + psiMethod.getName();
+  @Nullable
+  private static String createTestFilter(@NotNull PsiClass aClass, @NotNull PsiMethod psiMethod) {
+    return createTestFilter(aClass.getQualifiedName(), psiMethod.getName());
+  }
+
+  @Nullable
+  public static String createTestFilter(@Nullable String aClass, @Nullable String method) {
+    if (aClass == null) return null;
+    String testFilterPattern = aClass + (method == null ? "" : '.' + method);
     return String.format("--tests \"%s\" ", StringUtil.replaceChar(testFilterPattern, '\"', '*'));
   }
 }
