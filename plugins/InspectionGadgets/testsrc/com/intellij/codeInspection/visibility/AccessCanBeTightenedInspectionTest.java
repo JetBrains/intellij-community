@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.visibility;
+package com.intellij.codeInspection.visibility;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.visibility.VisibilityInspection;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.util.ReflectionUtil;
 import com.siyeh.ig.LightInspectionTestCase;
 
 public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase {
@@ -86,6 +88,24 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
       "}");
     myFixture.configureByFiles("y/C.java","x/Sub.java");
     myFixture.checkHighlighting();
+  }
+
+  public void testDoNotSuggestPrivateInAnonymousClassIfPrivatesForInnersIsOff() {
+    InspectionProfileImpl profile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(getProject()).getInspectionProfile();
+    AccessCanBeTightenedInspection inspection = (AccessCanBeTightenedInspection)profile.getInspectionTool(VisibilityInspection.SHORT_NAME, getProject()).getTool();
+    VisibilityInspection visibilityInspection =
+      ReflectionUtil.getField(inspection.getClass(), inspection, VisibilityInspection.class, "myVisibilityInspection");
+    visibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
+
+    doTest("class C {\n" +
+           " {\n" +
+           "  new Runnable() {\n" +
+           "    @Override\n" +
+            "   public void run() {}\n"+
+            "   boolean isVisible() { return true; }\n" +
+           "  }.run();\n" +
+           " }\n"+
+           "}");
   }
 
   @Override

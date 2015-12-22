@@ -225,7 +225,8 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
         if (annotation != null && annotation.getParent() instanceof PsiModifierList && annotation.getParent().getParent() == aClass) {
           return suggestPackageLocal(member);
         }
-        return myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS || memberClass == aClass ? PsiUtil.ACCESS_LEVEL_PRIVATE : suggestPackageLocal(member);
+        return myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS ||
+               memberClass == aClass && memberClass.getContainingClass() == null ? PsiUtil.ACCESS_LEVEL_PRIVATE : suggestPackageLocal(member);
       }
       //if (file == memberFile) {
       //  return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
