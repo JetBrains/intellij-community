@@ -88,7 +88,7 @@ public class CompilerEncodingServiceTest extends PsiTestCase {
   public void testUseContentRootEncodingIfEncodingForSourceRootIsNotSpecified() throws IOException {
     VirtualFile contentRoot = getVirtualFile(createTempDir("contentRoot"));
     PsiTestUtil.addContentRoot(myModule, contentRoot);
-    VirtualFile srcDir = contentRoot.createChildDirectory(this, "src");
+    VirtualFile srcDir = createChildDirectory(contentRoot, "src");
     PsiTestUtil.addSourceRoot(myModule, srcDir);
     EncodingProjectManager.getInstance(myProject).setEncoding(contentRoot, WINDOWS_1251);
     assertSameElements(getService().getAllModuleEncodings(myModule), WINDOWS_1251);

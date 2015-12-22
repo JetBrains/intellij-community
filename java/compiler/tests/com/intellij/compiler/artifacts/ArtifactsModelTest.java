@@ -1,5 +1,6 @@
 package com.intellij.compiler.artifacts;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,7 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
 
     final MyArtifactListener listener = subscribe();
     assertEmpty(getArtifacts());
-    model.commit();
+    commit(model);
     final Artifact newArt = assertOneElement(getArtifacts());
     assertEquals("xxx", newArt.getName());
     assertTrue(newArt.isBuildOnMake());
@@ -41,7 +42,7 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
     model.removeArtifact(artifact);
     final MyArtifactListener listener = subscribe();
-    model.commit();
+    commit(model);
 
     assertEmpty(getArtifacts());
     assertEquals("removed:aaa;", listener.clearMessages());
@@ -64,9 +65,18 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
 
 
     final MyArtifactListener listener = subscribe();
-    model.commit();
+    commit(model);
     assertEmpty(getArtifacts());
     assertEquals("removed:aaa;", listener.clearMessages());
+  }
+
+  private static void commit(ModifiableArtifactModel model) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        model.commit();
+      }
+    });
   }
 
   public void testChangeArtifact() throws Exception {
@@ -96,7 +106,7 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     assertTrue(model.isModified());
 
     final MyArtifactListener listener = subscribe();
-    model.commit();
+    commit(model);
     assertEquals("changed:xxx->qqq;", listener.clearMessages());
     final Artifact newArtifact = assertOneElement(getArtifacts());
     assertEquals("qqq", newArtifact.getName());

@@ -34,7 +34,8 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
   public void testMoveFile() throws Exception {
     final VirtualFile file = createFile("a/xxx.txt");
     final Artifact artifact = addArtifact(root().file(file));
-    moveFile(file, getBaseDir().createChildDirectory(this, "b"));
+    VirtualFile baseDir = getBaseDir();
+    moveFile(file, createChildDirectory(baseDir, "b"));
     assertLayout(artifact, "<root>\n" +
                            " file:" + getProjectBasePath() + "/b/xxx.txt");
   }
@@ -50,7 +51,8 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
   public void testMoveParentDir() throws Exception {
     final VirtualFile file = createFile("a/b/c.txt");
     final Artifact artifact = addArtifact(root().file(file));
-    moveFile(file.getParent(), getBaseDir().createChildDirectory(this, "d"));
+    VirtualFile baseDir = getBaseDir();
+    moveFile(file.getParent(), createChildDirectory(baseDir, "d"));
     assertLayout(artifact, "<root>\n" +
                            " file:" + getProjectBasePath() + "/d/b/c.txt");
   }

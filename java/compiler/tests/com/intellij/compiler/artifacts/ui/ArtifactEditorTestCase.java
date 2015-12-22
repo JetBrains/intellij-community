@@ -1,6 +1,7 @@
 package com.intellij.compiler.artifacts.ui;
 
 import com.intellij.compiler.artifacts.PackagingElementsTestCase;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ui.configuration.artifacts.*;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ComplexPackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
@@ -63,8 +64,13 @@ public abstract class ArtifactEditorTestCase extends PackagingElementsTestCase {
   }
 
   protected void applyChanges() {
-    myArtifactEditor.apply();
-    ((MockArtifactsStructureConfigurableContext)myArtifactEditor.getContext().getParent()).commitModel();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        myArtifactEditor.apply();
+        ((MockArtifactsStructureConfigurableContext)myArtifactEditor.getContext().getParent()).commitModel();
+      }
+    });
   }
 
   protected static void runAction(final Runnable action, boolean confirmationExpected) {
