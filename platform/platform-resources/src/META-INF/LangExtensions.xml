@@ -941,6 +941,10 @@
       name="Code Style XML File"
       schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
       implementationClass="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeCopyExporter"/>
+    <schemeImporter
+      name="Intellij IDEA code style XML"
+      schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
+      implementationClass="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter"/>
 
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomPropertiesAction$AccessExtension"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomVmOptionsAction$AccessExtension"/>
