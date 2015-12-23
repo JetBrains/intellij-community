@@ -207,6 +207,8 @@ public final class NettyUtil {
            (message.startsWith("Connection reset") || message.equals("Operation timed out") || message.equals("Connection timed out"));
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   @NotNull
   public static ServerBootstrap nioServerBootstrap(@NotNull EventLoopGroup eventLoopGroup) {
     ServerBootstrap bootstrap = new ServerBootstrap().group(eventLoopGroup).channel(eventLoopGroup instanceof NioEventLoopGroup ? NioServerSocketChannel.class : EpollServerSocketChannel.class);

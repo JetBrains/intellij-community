@@ -58,7 +58,7 @@ public final class SubServer implements CustomPortServerManager.CustomPortServic
       channelRegistrar = new ChannelRegistrar();
     }
 
-    ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(server.getEventLoopGroup());
+    ServerBootstrap bootstrap = NettyKt.serverBootstrap(server.getEventLoopGroup());
     Map<String, Object> xmlRpcHandlers = user.createXmlRpcHandlers();
     if (xmlRpcHandlers == null) {
       BuiltInServer.configureChildHandler(bootstrap, channelRegistrar, null);

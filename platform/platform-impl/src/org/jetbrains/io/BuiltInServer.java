@@ -76,13 +76,7 @@ public class BuiltInServer implements Disposable {
                                     int portsCount,
                                     boolean tryAnyPort,
                                     @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
-    return start(new NioEventLoopGroup(workerCount, new ThreadFactory() {
-      private final AtomicInteger counter = new AtomicInteger();
-      @Override
-      public Thread newThread(Runnable r) {
-        return new Thread(r, "Netty Builtin Server " + counter.incrementAndGet());
-      }
-    }), true, firstPort, portsCount, tryAnyPort, handler);
+    return start(new NioEventLoopGroup(workerCount, new BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler);
   }
 
   @NotNull
@@ -93,7 +87,7 @@ public class BuiltInServer implements Disposable {
                                     boolean tryAnyPort,
                                     @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
     ChannelRegistrar channelRegistrar = new ChannelRegistrar();
-    ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(eventLoopGroup);
+    ServerBootstrap bootstrap = NettyKt.serverBootstrap(eventLoopGroup);
     configureChildHandler(bootstrap, channelRegistrar, handler);
     int port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar);
     return new BuiltInServer(eventLoopGroup, port, channelRegistrar, isEventLoopGroupOwner);
@@ -148,5 +142,14 @@ public class BuiltInServer implements Disposable {
 
   public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull ChannelHandler channelHandler) {
     context.pipeline().replace(DelegatingHttpRequestHandler.class, "replacedDefaultHandler", channelHandler);
+  }
+
+  public static class BuiltInServerThreadFactory implements ThreadFactory {
+    private final AtomicInteger counter = new AtomicInteger();
+
+    @Override
+    public Thread newThread(Runnable r) {
+      return new Thread(r, "Netty Builtin Server " + counter.incrementAndGet());
+    }
   }
 }
