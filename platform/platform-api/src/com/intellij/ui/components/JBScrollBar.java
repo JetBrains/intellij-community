@@ -21,7 +21,9 @@ import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 
+import javax.swing.JComponent;
 import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
 import java.awt.Adjustable;
 
 public class JBScrollBar extends JScrollBar {
@@ -49,5 +51,31 @@ public class JBScrollBar extends JScrollBar {
   @Override
   public void updateUI() {
     setUI(ButtonlessScrollBarUI.createNormal());
+  }
+
+  /**
+   * Positions of a ScrollBar on a ScrollPane.
+   */
+  enum Alignment {
+    TOP, LEFT, RIGHT, BOTTOM;
+
+    static Alignment get(JComponent component) {
+      if (component instanceof JScrollBar) {
+        Object property = component.getClientProperty(Alignment.class);
+        if (property instanceof Alignment) return (Alignment)property;
+
+        if (component.getParent() instanceof JScrollPane) {
+          switch (((JScrollBar)component).getOrientation()) {
+            case Adjustable.HORIZONTAL:
+              return BOTTOM;
+            case Adjustable.VERTICAL:
+              return component.getParent().getComponentOrientation().isLeftToRight()
+                     ? RIGHT
+                     : LEFT;
+          }
+        }
+      }
+      return null;
+    }
   }
 }
