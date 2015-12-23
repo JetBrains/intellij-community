@@ -22,6 +22,7 @@ import com.intellij.diff.impl.CacheDiffRequestProcessor;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.ide.DataManager;
@@ -100,6 +101,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   private final DirDiffTableModel myModel;
   private final DirDiffWindow myDiffWindow;
   private final MyDiffRequestProcessor myDiffRequestProcessor;
+  private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
   private String oldFilter;
   public static final DataKey<DirDiffTableModel> DIR_DIFF_MODEL = DataKey.create("DIR_DIFF_MODEL");
   public static final DataKey<JTable> DIR_DIFF_TABLE = DataKey.create("DIR_DIFF_TABLE");
@@ -360,6 +362,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myDiffRequestProcessor = new MyDiffRequestProcessor(project);
     Disposer.register(this, myDiffRequestProcessor);
     myDiffPanel.add(myDiffRequestProcessor.getComponent(), BorderLayout.CENTER);
+
+    myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
   }
 
   private int getNextRow() {
@@ -516,6 +520,9 @@ public class DirDiffPanel implements Disposable, DataProvider {
     else if (DiffDataKeys.OPEN_FILE_DESCRIPTOR.is(dataId)) {
       return getOpenFileDescriptor();
     }
+    else if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
+      return myPrevNextDifferenceIterable;
+    }
     return null;
   }
 
@@ -546,6 +553,28 @@ public class DirDiffPanel implements Disposable, DataProvider {
       if (descriptor2 != null) descriptors.add(descriptor2);
     }
     return ContainerUtil.toArray(descriptors, new OpenFileDescriptor[descriptors.size()]);
+  }
+
+  private class MyPrevNextDifferenceIterable implements PrevNextDifferenceIterable {
+    @Override
+    public boolean canGoPrev() {
+      return getPrevRow() != -1;
+    }
+
+    @Override
+    public boolean canGoNext() {
+      return getNextRow() != -1;
+    }
+
+    @Override
+    public void goPrev() {
+      selectRow(getPrevRow(), false);
+    }
+
+    @Override
+    public void goNext() {
+      selectRow(getNextRow(), false);
+    }
   }
 
   private class MyDiffRequestProcessor extends CacheDiffRequestProcessor<ElementWrapper> {
