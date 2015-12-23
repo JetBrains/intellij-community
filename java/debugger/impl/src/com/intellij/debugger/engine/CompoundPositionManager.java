@@ -20,6 +20,7 @@ import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.filters.LineNumbersMapping;
@@ -84,7 +85,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   public SourcePosition getSourcePosition(final Location location) {
     if (location == null) return null;
     SourcePosition res = mySourcePositionCache.get(location);
-    if (res != null && res.getFile().isValid()) return res;
+    if (checkCacheEntry(res, location)) return res;
 
     return iterate(new Processor<SourcePosition>() {
       @Override
@@ -94,6 +95,14 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
         return res;
       }
     }, null);
+  }
+
+  private static boolean checkCacheEntry(SourcePosition position, Location location) {
+    if (position == null || !position.getFile().isValid()) return false;
+    String url = DebuggerUtilsEx.getAlternativeSourceUrl(location.declaringType().name());
+    if (url == null) return true;
+    VirtualFile file = position.getFile().getVirtualFile();
+    return file != null && url.equals(file.getUrl());
   }
 
   @Override

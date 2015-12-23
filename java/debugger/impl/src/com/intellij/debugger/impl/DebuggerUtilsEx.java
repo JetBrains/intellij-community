@@ -43,13 +43,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -76,6 +76,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.PatternSyntaxException;
 
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
@@ -704,6 +705,17 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return text.replace("\t", StringUtil.repeat(" ", tabSize));
   }
 
+  private static final Map<String, String> ourAlternativeSources = new ConcurrentHashMap<String, String>();
+
+  public static void setAlternativeSourceUrl(String className, String source) {
+    ourAlternativeSources.put(className, source);
+  }
+
+  @Nullable
+  public static String getAlternativeSourceUrl(@Nullable String className) {
+    return ourAlternativeSources.get(className);
+  }
+
   @Nullable
   public static XSourcePosition toXSourcePosition(@NotNull SourcePosition position) {
     VirtualFile file = position.getFile().getVirtualFile();
@@ -714,13 +726,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return null;
     }
     return new JavaXSourcePosition(position, file);
-  }
-
-  private static final Key<VirtualFile> ALTERNATIVE_SOURCE_KEY = new Key<VirtualFile>("DEBUGGER_ALTERNATIVE_SOURCE");
-
-  public static void setAlternativeSource(VirtualFile source, VirtualFile dest) {
-    ALTERNATIVE_SOURCE_KEY.set(source, dest);
-    ALTERNATIVE_SOURCE_KEY.set(dest, null);
   }
 
   private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
@@ -745,19 +750,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @NotNull
     @Override
     public VirtualFile getFile() {
-      VirtualFile file = ALTERNATIVE_SOURCE_KEY.get(myFile);
-      if (file != null) {
-        return file;
-      }
       return myFile;
     }
 
     @NotNull
     @Override
     public Navigatable createNavigatable(@NotNull Project project) {
-      if (ALTERNATIVE_SOURCE_KEY.get(myFile) != null) {
-        return new OpenFileDescriptor(project, getFile(), getLine(), 0);
-      }
       return XSourcePositionImpl.doCreateOpenFileDescriptor(project, this);
     }
 
