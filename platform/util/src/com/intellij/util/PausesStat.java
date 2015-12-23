@@ -50,7 +50,6 @@ public class PausesStat {
     }
     register();
     started = true;
-    totalNumberRecorded++;
   }
 
   public void finished(@NotNull String description) {
@@ -63,6 +62,7 @@ public class PausesStat {
       maxDuration = duration;
       maxDurationDescription = description;
     }
+    totalNumberRecorded++;
   }
 
   public String statistics() {
