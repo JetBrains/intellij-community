@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
  * Holds <a href="http://semver.org">Semantic Version</a>.
  */
 public class SemVer implements Comparable<SemVer> {
+  public static final SemVer UNKNOWN = new SemVer("?", 0, 0, 0);
+
   private final String myRawVersion;
   private final int myMajor;
   private final int myMinor;
@@ -109,6 +111,12 @@ public class SemVer implements Comparable<SemVer> {
       return new SemVer(text, major, minor, patch);
     }
     return null;
+  }
+
+  @NotNull
+  public static SemVer parseFromTextNonNullize(@NotNull final String text) {
+    final SemVer ver = parseFromText(text);
+    return ver == null ? UNKNOWN : ver;
   }
 
   @Override
