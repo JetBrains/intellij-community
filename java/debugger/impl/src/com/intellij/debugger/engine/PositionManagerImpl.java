@@ -27,7 +27,6 @@ import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
@@ -643,8 +642,10 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
     @Override
     public SourcePosition mapDelegate(SourcePosition original) {
-      if (myOriginalLine < 0) return original;
-      SourcePosition position = calcLineMappedSourcePosition(getFile(), myOriginalLine);
+      PsiFile file = getFile();
+      if (myOriginalLine < 0 || !file.isValid()) return original;
+      PsiDocumentManager.getInstance(file.getProject()).getDocument(file); // to ensure decompilation
+      SourcePosition position = calcLineMappedSourcePosition(file, myOriginalLine);
       return position != null ? position : original;
     }
   }
