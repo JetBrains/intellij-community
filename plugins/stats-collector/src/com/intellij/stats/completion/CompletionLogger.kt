@@ -22,11 +22,19 @@ class CompletionFileLoggerProvider(private val logFileManager: LogFileManager) :
     override fun dispose() {
         logFileManager.dispose()
     }
-
+    
+    private fun String.shortedUUID(): String {
+        val start = this.lastIndexOf('-')
+        if (start > 0) {
+            return this.substring(start)
+        }
+        return this
+    }
+    
     override fun newCompletionLogger(): CompletionLogger {
         val installationUID = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())
         val completionUID = UUID.randomUUID().toString()
-        return CompletionFileLogger(installationUID, completionUID, logFileManager)  
+        return CompletionFileLogger(installationUID.shortedUUID(), completionUID.shortedUUID(), logFileManager)  
     }
 }
 
