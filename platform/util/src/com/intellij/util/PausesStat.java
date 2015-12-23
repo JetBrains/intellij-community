@@ -69,7 +69,7 @@ public class PausesStat {
     int total = 0;
     int number = pauses.size() / 2;
     int[] duration = new int[number];
-    for (int i = 0; i < pauses.size(); i+=2) {
+    for (int i = 0; i < number*2; i+=2) {
       int start = pauses.get(i);
       int finish = pauses.get(i+1);
       int thisDuration = finish - start;
