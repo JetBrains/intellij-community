@@ -740,7 +740,7 @@ public class TypeMigrationLabeler {
     }
     if (myException != null) throw myException;
     rememberRootTrace(usageInfo, type, place, alreadyProcessed);
-    if (!alreadyProcessed && !getTypeEvaluator().setType(usageInfo, type)) {
+    if (!alreadyProcessed && !(usageInfo.getElement() instanceof PsiExpression) && !getTypeEvaluator().setType(usageInfo, type)) {
       alreadyProcessed = true;
     }
 
@@ -853,6 +853,10 @@ public class TypeMigrationLabeler {
     }
     else if (root instanceof PsiVariable || root instanceof PsiExpression) {
       final PsiElement element = getContainingStatement(root);
+      if (root instanceof PsiExpression) {
+        migrateExpressionType((PsiExpression)root, migrationType, element, false, true);
+        myTypeEvaluator.setType(newRootUsageInfo, migrationType);
+      }
       element.accept(new TypeMigrationStatementProcessor(element, this));
     }
     else if (root instanceof PsiReferenceParameterList) {
@@ -968,6 +972,7 @@ public class TypeMigrationLabeler {
   }
 
   private void migrate(boolean autoMigrate, final PsiElement... victims) {
+
     myMigrationRoots = new LinkedList<Pair<TypeMigrationUsageInfo, PsiType>>();
     myTypeEvaluator = new TypeEvaluator(myMigrationRoots, this);
 

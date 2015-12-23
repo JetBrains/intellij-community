@@ -79,7 +79,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testFluentIterableChainWithoutVariable() {
-    doTest();
+    doTestAllFile();;
   }
 
   public void testChainedFluentIterableWithChainedInitializer() {
@@ -112,10 +112,6 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
 
   public void testInsertTypeParameter() {
     doTest();
-  }
-
-  public void testDontShowFluentIterableChainQuickFix() {
-    doTestNoQuickFixes(PsiMethodCallExpression.class);
   }
 
   public void testRemoveMethodReferenceForFunctionalInterfaces() {
@@ -254,6 +250,10 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testPredicates2() {
+    doTestAllFile();
+  }
+
+  public void testPredicates3() {
     doTestAllFile();
   }
 

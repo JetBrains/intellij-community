@@ -16,8 +16,10 @@
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,11 +28,15 @@ import org.jetbrains.annotations.NotNull;
 public class FunctionalInterfaceTypeConversionDescriptor extends TypeConversionDescriptor {
   @NotNull private final String myMethodName;
   @NotNull private final String myTargetMethodName;
+  @NotNull private final String myTargetClassQName;
 
-  FunctionalInterfaceTypeConversionDescriptor(@NotNull String methodName, @NotNull String targetMethodName) {
+  FunctionalInterfaceTypeConversionDescriptor(@NotNull String methodName,
+                                              @NotNull String targetMethodName,
+                                              @NotNull String targetClassQName) {
     super(null, null);
     myMethodName = methodName;
     myTargetMethodName = targetMethodName;
+    myTargetClassQName = targetClassQName;
   }
 
   @Override
@@ -39,49 +45,47 @@ public class FunctionalInterfaceTypeConversionDescriptor extends TypeConversionD
       expression = (PsiExpression)expression.getParent();
     }
     if (expression instanceof PsiMethodReferenceExpression) {
-      setAsMethodReference((PsiMethodReferenceExpression)expression);
+      expression = setupAsMethodReference(expression);
     }
     else if (expression instanceof PsiReferenceExpression) {
-      setAsReference();
+      setupAsReference();
     }
     else {
-      setAsMethodCall();
+      setupAsMethodCall();
     }
-    return super.replace(expression, evaluator);
+    final PsiExpression converted = super.replace(expression, evaluator);
+    final PsiElement parent = converted.getParent();
+    if (parent instanceof PsiParenthesizedExpression) {
+      if (!ParenthesesUtils.areParenthesesNeeded((PsiParenthesizedExpression)parent, true)) {
+        return (PsiExpression)parent.replace(converted);
+      }
+    }
+    return converted;
   }
 
-  private void setAsReference() {
+  private void setupAsReference() {
     setStringToReplace("$ref$");
     setReplaceByString("$ref$::" + myTargetMethodName);
   }
 
-  private void setAsMethodReference(PsiMethodReferenceExpression methodReference) {
-    setStringToReplace("$qualifier$::" + myMethodName);
-    if (methodReference.getParent() instanceof PsiExpressionList &&
-        methodReference.getParent().getParent() instanceof PsiMethodCallExpression &&
-        isPredicates((PsiMethodCallExpression)methodReference.getParent().getParent())) {
-      setReplaceByString("$qualifier$::" + myTargetMethodName);
-      return;
-    }
-    setReplaceByString("$qualifier$");
-  }
-
-  private void setAsMethodCall() {
-    setStringToReplace("$qualifier$." + myMethodName + "($param$)");
-    setReplaceByString("$qualifier$." + myTargetMethodName + "($param$)");
-  }
-
-  public static boolean isPredicates(PsiMethodCallExpression expression) {
-    final String methodName = expression.getMethodExpression().getReferenceName();
-    if (GuavaPredicateConversionRule.PREDICATES_NOT.equals(methodName) ||
-        GuavaPredicateConversionRule.PREDICATES_AND_OR.contains(methodName)) {
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) return false;
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass != null && GuavaPredicateConversionRule.GUAVA_PREDICATES_UTILITY.equals(aClass.getQualifiedName())) {
-        return true;
+  private PsiExpression setupAsMethodReference(PsiExpression methodReferenceExpression) {
+    final PsiElement parent = methodReferenceExpression.getParent();
+    if (parent instanceof PsiTypeCastExpression) {
+      final PsiTypeElement typeElement = ((PsiTypeCastExpression)parent).getCastType();
+      if (typeElement != null) {
+        final PsiClass resolvedClass = PsiTypesUtil.getPsiClass(typeElement.getType());
+        if (resolvedClass != null && myTargetClassQName.equals(resolvedClass.getQualifiedName())) {
+          methodReferenceExpression = (PsiExpression)parent.replace(methodReferenceExpression);
+        }
       }
     }
-    return false;
+    setStringToReplace("$qualifier$::" + myMethodName);
+    setReplaceByString("$qualifier$");
+    return methodReferenceExpression;
+  }
+
+  private void setupAsMethodCall() {
+    setStringToReplace("$qualifier$." + myMethodName + "($param$)");
+    setReplaceByString("$qualifier$." + myTargetMethodName + "($param$)");
   }
 }

@@ -122,12 +122,12 @@ public class FluentIterableConversionUtil {
       return new GuavaFilterInstanceOfConversionDescriptor();
     }
     else if (GuavaPredicateConversionRule.GUAVA_PREDICATE.equals(resolvedClass.getQualifiedName())) {
-      return new LambdaParametersTypeConversionDescriptor("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "($p$)");
+      return new GuavaTypeConversionDescriptor("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "($p$)");
     }
     return null;
   }
 
-  static class TransformAndConcatConversionRule extends LambdaParametersTypeConversionDescriptor {
+  static class TransformAndConcatConversionRule extends GuavaTypeConversionDescriptor {
     public TransformAndConcatConversionRule() {
       super("$q$.transformAndConcat($params$)", "$q$.flatMap($params$)");
     }
@@ -248,8 +248,8 @@ public class FluentIterableConversionUtil {
     final String replaceTemplate;
     final String returnType;
     if ("toMap".equals(methodName) || "uniqueIndex".equals(methodName)) {
-      final LambdaParametersTypeConversionDescriptor descriptor = new LambdaParametersTypeConversionDescriptor("$it$.$methodName$($f$)",
-                                                                                                               "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))");
+      final GuavaTypeConversionDescriptor descriptor = new GuavaTypeConversionDescriptor("$it$.$methodName$($f$)",
+                                                                                         "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))");
       return descriptor.withConversionType(GuavaConversionUtil.addTypeParameters(CommonClassNames.JAVA_UTIL_MAP, context.getType(), context));
     }
     else if ("toList".equals(methodName)) {

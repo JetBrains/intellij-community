@@ -1,25 +1,25 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-class A {
-  int m1() {
-    ArrayList<String> strings = new ArrayList<String>();
-    int size = (int) strings.stream().map(s -> s + s).limit(10).count();
-    return size
+class Main {
+  void mmm() {
+    Iterator<String> iterator = m().iterator();
+    int i = m1() + 10;
+    Stream<String> strings = m2();
   }
+
+  Iterable<String> m() {
+    return new ArrayList<String>().stream().map(s -> s + s).filter(String::isEmpty).collect(Collectors.toList());
+  }
+
+  int m1() {
+    return (int) new ArrayList<String>().stream().map(s -> s + s).count();
+  }
+
+  Stream<String> m2() {
+    return new ArrayList<String>().stream().map(s -> s + s).filter(String::isEmpty);
+  }
+
 }

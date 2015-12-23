@@ -77,8 +77,11 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     }
 
     public TypeConversionDescriptor create() {
-      return myWithLambdaParameter ? new LambdaParametersTypeConversionDescriptor(myStringToReplace, myReplaceByString)
-                                   : new TypeConversionDescriptor(myStringToReplace, myReplaceByString);
+      GuavaTypeConversionDescriptor descriptor = new GuavaTypeConversionDescriptor(myStringToReplace, myReplaceByString);
+      if (!myWithLambdaParameter) {
+        descriptor = descriptor.setConvertParameterAsLambda(false);
+      }
+      return descriptor;
     }
 
     public boolean isChainedMethod() {
@@ -225,7 +228,8 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     if (descriptorBase != null) {
       if (needSpecifyType) {
         if (conversionType == null) {
-          conversionType = GuavaConversionUtil.addTypeParameters(StreamApiConstants.JAVA_UTIL_STREAM_STREAM, context.getType(), context);
+          PsiMethodCallExpression methodCall = (PsiMethodCallExpression) (context instanceof PsiMethodCallExpression ? context : context.getParent());
+          conversionType = GuavaConversionUtil.addTypeParameters(GuavaTypeConversionDescriptor.isIterable(methodCall) ? CommonClassNames.JAVA_LANG_ITERABLE : StreamApiConstants.JAVA_UTIL_STREAM_STREAM, context.getType(), context);
         }
         descriptorBase.withConversionType(conversionType);
       }
