@@ -90,16 +90,16 @@ class LookupStringWithRelevance(val item: String, val relevance: List<Pair<Strin
     fun toData(): String {
         val builder = StringBuilder()
         with(builder, {
-            append("LEN(")
-            append(item.length)
-            append(")")
+            append("LEN=${item.length} ")
             if (relevance.isNotEmpty()) {
-                append(" RELEVANCE[")
+                append("RELEVANCE=[")
+                var first = true
                 relevance.forEach {
-                    append(it.first)
-                    append('(')
-                    append(it.second)
-                    append(") ")
+                    if (!first) {
+                        append(", ")
+                    }
+                    first = false
+                    append("${it.first}=${it.second}")
                 }
                 append("]")
             }
