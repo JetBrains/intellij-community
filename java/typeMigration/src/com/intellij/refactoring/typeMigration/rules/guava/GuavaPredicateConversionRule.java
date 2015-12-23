@@ -15,16 +15,11 @@
  */
 package com.intellij.refactoring.typeMigration.rules.guava;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,15 +32,10 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
-  private static final Logger LOG = Logger.getInstance(GuavaPredicateConversionRule.class);
-
   static final String GUAVA_PREDICATE = "com.google.common.base.Predicate";
   static final String JAVA_PREDICATE = "java.util.function.Predicate";
 
-  public static final String GUAVA_PREDICATES_UTILITY = "com.google.common.base.Predicates";
-  public static final Set<String> PREDICATES_AND_OR = ContainerUtil.newHashSet("or", "and");
-  public static final String PREDICATES_NOT = "not";
-
+  private static final String GUAVA_PREDICATES_UTILITY = "com.google.common.base.Predicates";
 
   @NotNull
   @Override
@@ -78,12 +68,9 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
     }
     final PsiClass aClass = method.getContainingClass();
     if (aClass != null && GUAVA_PREDICATES_UTILITY.equals(aClass.getQualifiedName())) {
-      if (!isConvertablePredicatesMethod(method)) return null;
-      if (PREDICATES_AND_OR.contains(methodName) && canMigrateAndOrOr((PsiMethodCallExpression)context)) {
-        return new AndOrOrConversionDescriptor(GuavaConversionUtil.addTypeParameters(JAVA_PREDICATE, context.getType(), context));
-      }
-      else if (PREDICATES_NOT.equals(methodName)) {
-        return new NotConversionDescriptor(GuavaConversionUtil.addTypeParameters(JAVA_PREDICATE, context.getType(), context));
+      final TypeConversionDescriptorBase descriptor = GuavaPredicatesUtil.tryConvertIfPredicates(method, context);
+      if (descriptor != null) {
+        return descriptor;
       }
     }
     return new TypeConversionDescriptorBase() {
@@ -92,169 +79,6 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
         return (PsiExpression)expression.replace(JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::test", expression));
       }
     };
-  }
-
-  public static boolean isConvertablePredicatesMethod(@NotNull PsiMethod method) {
-    if (method.getParameterList().getParametersCount() == 1) {
-      final PsiParameter parameter = method.getParameterList().getParameters()[0];
-      final PsiClass psiClass = PsiTypesUtil.getPsiClass(parameter.getType().getDeepComponentType());
-      if (psiClass == null || CommonClassNames.JAVA_LANG_ITERABLE.equals(psiClass.getQualifiedName())) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean canMigrateAndOrOr(PsiMethodCallExpression expr) {
-    final PsiMethod method = expr.resolveMethod();
-    if (method == null) return false;
-    final PsiParameterList parameters = method.getParameterList();
-    if (parameters.getParametersCount() != 1) {
-      return parameters.getParametersCount() != 0;
-    }
-    final PsiParameter parameter = parameters.getParameters()[0];
-    final PsiType type = parameter.getType();
-    return type instanceof PsiEllipsisType;
-  }
-
-  private static class NotConversionDescriptor extends TypeConversionDescriptorBase {
-    private final PsiType myTargetType;
-
-    public NotConversionDescriptor(PsiType targetType) {
-      myTargetType = targetType;
-    }
-
-    @Override
-    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
-      String newExpressionString =
-        adjust(((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0], true, myTargetType, evaluator) + ".negate()";
-
-      final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiMethodReferenceExpression) {
-        expression = replaceTypeCast(expression, parent);
-      }
-      else if (!isJavaPredicate(parent, evaluator)) {
-        newExpressionString += "::test";
-      }
-      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
-      PsiExpression convertedExpression =
-        (PsiExpression)expression.replace(elementFactory.createExpressionFromText(newExpressionString, expression));
-      convertedExpression = convertedExpression.getParent() instanceof PsiMethodReferenceExpression
-                            ? (PsiExpression)convertedExpression.getParent().replace(convertedExpression)
-                            : convertedExpression;
-      final PsiElement maybeTypeCast = convertedExpression.getParent();
-      if (maybeTypeCast instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)maybeTypeCast)) {
-        convertedExpression = (PsiExpression)maybeTypeCast.replace(((PsiTypeCastExpression)maybeTypeCast).getOperand());
-      }
-      return convertedExpression;
-    }
-  }
-
-  private static class AndOrOrConversionDescriptor extends TypeConversionDescriptorBase {
-    private final PsiType myTargetType;
-
-    public AndOrOrConversionDescriptor(PsiType targetType) {
-      myTargetType = targetType;
-    }
-
-    @Override
-    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
-      final String methodName = methodCall.getMethodExpression().getReferenceName();
-
-      final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
-      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
-      if (arguments.length == 1) {
-        return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(adjust(arguments[0], true, myTargetType, evaluator), expression));
-      }
-      LOG.assertTrue(arguments.length != 0);
-      StringBuilder replaceBy = new StringBuilder();
-      for (int i = 1; i < arguments.length; i++) {
-        PsiExpression argument = arguments[i];
-        replaceBy.append(".").append(methodName).append("(").append(adjust(argument, false, myTargetType, evaluator)).append(")");
-      }
-      replaceBy.insert(0, adjust(arguments[0], true, myTargetType, evaluator));
-      final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiMethodReferenceExpression) {
-        expression = replaceTypeCast(expression, parent);
-      }
-      else if (!isJavaPredicate(parent, evaluator)) {
-        replaceBy.append("::test");
-      }
-      return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(replaceBy.toString(), expression));
-    }
-  }
-
-  private static PsiExpression replaceTypeCast(PsiExpression expression, PsiElement parent) {
-    final PsiElement parParent = parent.getParent();
-    if (parParent instanceof PsiTypeCastExpression) {
-      final PsiTypeElement typeElement = ((PsiTypeCastExpression)parParent).getCastType();
-      if (typeElement != null) {
-        final PsiType type = typeElement.getType();
-        final PsiClass aClass = PsiTypesUtil.getPsiClass(type);
-        if (aClass != null && JAVA_PREDICATE.equals(aClass.getQualifiedName())) {
-          expression = (PsiExpression)parParent.replace(expression);
-        }
-      }
-    }
-    return expression;
-  }
-
-  public static boolean isJavaPredicate(PsiElement element, TypeEvaluator evaluator) {
-    if (element instanceof PsiLocalVariable) {
-      return isJavaPredicate(evaluator.getType(element));
-    }
-    else if (element instanceof PsiReturnStatement) {
-      final PsiElement methodOrLambda = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
-      PsiType methodReturnType = null;
-      if (methodOrLambda instanceof PsiMethod) {
-        methodReturnType = evaluator.getType(methodOrLambda);
-      }
-      return isJavaPredicate(methodReturnType);
-    }
-    else if (element instanceof PsiExpressionList) {
-      final PsiElement parent = element.getParent();
-      if (parent instanceof PsiMethodCallExpression) {
-        return evaluator.getType(parent) != null;
-      }
-    }
-    return false;
-  }
-
-  private static boolean isJavaPredicate(@Nullable PsiType type) {
-    PsiClass aClass;
-    return (aClass = PsiTypesUtil.getPsiClass(type)) != null && JAVA_PREDICATE.equals(aClass.getQualifiedName());
-  }
-
-  private static boolean isUnconverted(PsiType type) {
-    final PsiClass predicateClass = PsiTypesUtil.getPsiClass(type);
-    return predicateClass != null && !JAVA_PREDICATE.equals(predicateClass.getQualifiedName());
-  }
-
-  private static String adjust(PsiExpression expression, boolean insertTypeCase, PsiType targetType, TypeEvaluator evaluator) {
-    if (expression instanceof PsiMethodReferenceExpression) {
-      final PsiExpression qualifier = ((PsiMethodReferenceExpression)expression).getQualifierExpression();
-      final PsiType evaluatedType = evaluator.evaluateType(qualifier);
-      final PsiClass evaluateClass;
-      if (evaluatedType != null &&
-          (evaluateClass = PsiTypesUtil.getPsiClass(evaluatedType)) != null &&
-           JAVA_PREDICATE.equals(evaluateClass.getQualifiedName())) {
-        return adjust((PsiExpression)expression.replace(qualifier), insertTypeCase, targetType, evaluator);
-      }
-    }
-    if (expression instanceof PsiFunctionalExpression) {
-      if (insertTypeCase) {
-        return "((" + targetType.getCanonicalText() + ")" + expression.getText() + ")";
-      }
-    }
-    else if (expression instanceof PsiMethodCallExpression || expression instanceof PsiReferenceExpression) {
-      if (isUnconverted(evaluator.evaluateType(expression))) {
-        expression = (PsiExpression)expression.replace(JavaPsiFacade.getElementFactory(expression.getProject())
-                                                                    .createExpressionFromText(expression.getText() + "::apply", expression));
-        return adjust(expression, insertTypeCase, targetType, evaluator);
-      }
-    }
-    return expression.getText();
   }
 
   @NotNull
@@ -271,8 +95,7 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
 
   public static boolean isPredicates(PsiMethodCallExpression expression) {
     final String methodName = expression.getMethodExpression().getReferenceName();
-    if (PREDICATES_NOT.equals(methodName) ||
-        PREDICATES_AND_OR.contains(methodName)) {
+    if (GuavaPredicatesUtil.PREDICATES_METHOD_NAMES.contains(methodName)) {
       final PsiMethod method = expression.resolveMethod();
       if (method == null) return false;
       final PsiClass aClass = method.getContainingClass();

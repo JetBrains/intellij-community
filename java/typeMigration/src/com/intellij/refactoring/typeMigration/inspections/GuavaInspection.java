@@ -29,7 +29,8 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.typeMigration.*;
+import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
+import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.refactoring.typeMigration.rules.guava.*;
 import com.intellij.reference.SoftLazyValue;
@@ -143,15 +144,12 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
 
       private void checkPredicatesUtilityMethod(PsiMethodCallExpression expression) {
         if (GuavaPredicateConversionRule.isPredicates(expression)) {
-          final PsiMethod method = expression.resolveMethod();
-          if (GuavaPredicateConversionRule.isConvertablePredicatesMethod(method)) {
-            final PsiClassType initialType = (PsiClassType)expression.getType();
-            PsiClassType targetType = createTargetType(initialType);
-            if (targetType == null) return;
-            holder.registerProblem(expression.getMethodExpression().getReferenceNameElement(),
-                                   PROBLEM_DESCRIPTION_FOR_VARIABLE,
-                                   new MigrateGuavaTypeFix(expression, targetType));
-          }
+          final PsiClassType initialType = (PsiClassType)expression.getType();
+          PsiClassType targetType = createTargetType(initialType);
+          if (targetType == null) return;
+          holder.registerProblem(expression.getMethodExpression().getReferenceNameElement(),
+                                 PROBLEM_DESCRIPTION_FOR_VARIABLE,
+                                 new MigrateGuavaTypeFix(expression, targetType));
         }
       }
 

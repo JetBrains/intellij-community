@@ -78,11 +78,7 @@ public class FluentIterableConversionUtil {
         @Override
         public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
           if (!JavaGenericsUtil.isReifiableType(myType)) {
-            final UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
-            final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
-            final String name = codeStyleManager.suggestUniqueVariableName(
-              codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, PsiType.INT).names[0], expression, false);
-            final String chosenName = nameGenerator.generateUniqueName(name);
+            final String chosenName = chooseName(expression, PsiType.INT);
             final PsiType arrayType;
             if (myType instanceof PsiClassType) {
               final PsiClass resolvedClass = ((PsiClassType)myType).resolve();
@@ -105,6 +101,14 @@ public class FluentIterableConversionUtil {
       };
     }
     return null;
+  }
+
+  public static String chooseName(@NotNull PsiExpression context, @Nullable PsiType type) {
+    final UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(context.getProject());
+    final String name = codeStyleManager.suggestUniqueVariableName(
+      codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, type).names[0], context, false);
+    return nameGenerator.generateUniqueName(name);
   }
 
   @Nullable
