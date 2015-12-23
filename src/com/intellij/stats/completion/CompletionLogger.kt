@@ -25,8 +25,8 @@ class CompletionFileLoggerProvider(private val logFileManager: LogFileManager) :
     
     private fun String.shortedUUID(): String {
         val start = this.lastIndexOf('-')
-        if (start > 0) {
-            return this.substring(start)
+        if (start > 0 && start + 1 < this.length) {
+            return this.substring(start + 1)
         }
         return this
     }
@@ -74,26 +74,26 @@ class CompletionFileLogger(private val installationUID: String,
     override fun completionStarted(items: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.COMPLETION_STARTED)
         builder.nextEntity("COMP_LIST_LEN", items.size)
-        builder.nextToken(convertCompletionList(items))
+        builder.nextText(convertCompletionList(items))
         log(builder)
     }
     
     fun convertCompletionList(items: List<LookupStringWithRelevance>): String {
         addUntrackedItemsToIdMap(items)
-        
         val builder = StringBuilder()
         with(builder, {
-            append("{")
+            append("[")
+            var first = true
             items.forEach {
-                append("ID(")
-                append(itemsToId[it.item])
-                append(") ")
-                append(it.toData())
-                append(", ")
+                if (!first) {
+                    append(", ")
+                }
+                first = false
+                val itemName = itemsToId[it.item]
+                append("{ID=$itemName ${it.toData()}}")
             }
-            append("}")
+            append("]")
         })
-        
         return builder.toString()
     }
 
@@ -129,7 +129,7 @@ class CompletionFileLogger(private val installationUID: String,
         builder.nextEntity("COMP_LIST_LEN", completionList.size)
         val id = getItemId(itemName, completionList)
         builder.nextEntity("ID", id)
-        builder.nextToken(toIdsList(completionList))
+        builder.nextText(toIdsList(completionList))
         log(builder)
     }
 
@@ -156,7 +156,7 @@ class CompletionFileLogger(private val installationUID: String,
     override fun charTyped(c: Char, completionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.TYPE)
         builder.nextEntity("COMP_LIST_LEN", completionList.size)
-        builder.nextToken(toIdsList(completionList))
+        builder.nextText(toIdsList(completionList))
         log(builder)
     }
     
@@ -199,18 +199,10 @@ class StatInfoBuilder(val installationUID: String, val completionUID: String, va
     private val builder = StringBuilder()
     
     init {
-        with (builder) {
-            append(installationUID)
-            append(' ')
-            append(completionUID)
-            append(' ')
-            append(timestamp)
-            append(' ')
-            append(action)
-        }
+        builder.append("$installationUID $completionUID $timestamp $action")
     }
 
-    fun nextToken(any: Any) {
+    fun nextText(any: Any) {
         builder.append(" $any")
     }
     
