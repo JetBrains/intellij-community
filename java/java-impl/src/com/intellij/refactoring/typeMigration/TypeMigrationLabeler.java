@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -244,15 +245,23 @@ public class TypeMigrationLabeler {
         if (i2 == null) {
           return -1;
         }
+        final PsiElement element1 = info1.getElement();
+        final PsiElement element2 = info2.getElement();
+        LOG.assertTrue(element1 != null && element2 != null);
+        final TextRange range1 = element1.getTextRange();
+        final TextRange range2 = element2.getTextRange();
+        if (range1.contains(range2)) {
+          return 1;
+        }
+        if (range2.contains(range1)) {
+          return -1;
+        }
 
         final int res = cmp.compare(i1, i2);
         if (res != 0) {
           return res;
         }
-        final PsiElement element1 = info1.getElement();
-        final PsiElement element2 = info2.getElement();
-        LOG.assertTrue(element1 != null && element2 != null);
-        return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
+        return range2.getStartOffset() - range1.getStartOffset();
       }
     });
 
