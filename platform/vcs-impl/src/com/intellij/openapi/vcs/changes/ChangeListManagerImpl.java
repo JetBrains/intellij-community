@@ -667,12 +667,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       final AbstractVcs vcs = scope.getVcs();
       if (vcs == null) continue;
       scope.setWasEverythingDirty(wasEverythingDirty);
-      final VcsModifiableDirtyScope adjustedScope = vcs.adjustDirtyScope((VcsModifiableDirtyScope)scope);
 
       myChangesViewManager.setBusy(true);
-      dataHolder.notifyStartProcessingChanges(adjustedScope);
+      dataHolder.notifyStartProcessingChanges((VcsModifiableDirtyScope)scope);
 
-      actualUpdate(builder, adjustedScope, vcs, dataHolder, gate);
+      actualUpdate(builder, scope, vcs, dataHolder, gate);
 
       if (myUpdateException != null) break;
     }
