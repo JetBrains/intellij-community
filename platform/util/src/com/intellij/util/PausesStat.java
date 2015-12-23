@@ -45,6 +45,7 @@ public class PausesStat {
       int toDelete = N_MAX / 4;
       assert toDelete % 2 == 0 : toDelete;
       pauses.remove(0, toDelete);
+      maxDuration = 0;
     }
     register();
     started = true;
