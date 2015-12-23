@@ -29,11 +29,17 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jvnet.winp.WinProcess;
+import org.jvnet.winp.WinpException;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class ProcessUtils {
   private static final Logger LOG = Logger.getInstance(ProcessUtils.class);
@@ -41,6 +47,7 @@ public class ProcessUtils {
   /**
    * Passes the commands directly to Runtime.exec (with the passed envp)
    */
+  @NotNull
   public static Process createProcess(String[] cmdarray, String[] envp, File workingDir) throws IOException {
     return Runtime.getRuntime().exec(getWithoutEmptyParams(cmdarray), getWithoutEmptyParams(envp), workingDir);
   }
@@ -48,7 +55,8 @@ public class ProcessUtils {
   /**
    * @return a new array without any null/empty elements originally contained in the array.
    */
-  private static String[] getWithoutEmptyParams(String[] cmdarray) {
+  @Nullable
+  private static String[] getWithoutEmptyParams(@Nullable String[] cmdarray) {
     if (cmdarray == null) {
       return null;
     }
@@ -58,11 +66,11 @@ public class ProcessUtils {
         list.add(string);
       }
     }
-    return list.toArray(new String[list.size()]);
+    return ArrayUtil.toStringArray(list);
   }
 
-
-  public static IProcessList getProcessList(String helpersRoot) {
+  @NotNull
+  public static IProcessList getProcessList(@NotNull String helpersRoot) {
     if (SystemInfo.isWindows) {
       return new ProcessListWin32(helpersRoot);
     }
@@ -106,13 +114,119 @@ public class ProcessUtils {
 
     int DEFAULT_FILE_SIZE = 8 * BUFFER_SIZE;
 
-    StringBuffer buffer = new StringBuffer(DEFAULT_FILE_SIZE);
+    StringBuilder builder = new StringBuilder(DEFAULT_FILE_SIZE);
 
     while (n > 0) {
-      buffer.append(readBuffer, 0, n);
+      builder.append(readBuffer, 0, n);
       n = reader.read(readBuffer);
     }
 
-    return buffer.toString().toCharArray();
+    return builder.toString().toCharArray();
+  }
+
+  public static boolean killProcessTree(@NotNull Process process) {
+    if (SystemInfo.isWindows) {
+      try {
+        WinProcess winProcess = createWinProcess(process);
+        winProcess.killRecursively();
+        return true;
+      }
+      catch (Throwable e) {
+        LOG.info("Cannot kill process tree", e);
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      return UnixProcessManager.sendSigKillToProcessTree(process);
+    }
+    return false;
+  }
+
+  public static void killProcess(@NotNull Process process) {
+    if (SystemInfo.isWindows) {
+      try {
+        WinProcess winProcess = createWinProcess(process);
+        winProcess.kill();
+      }
+      catch (Throwable e) {
+        LOG.info("Cannot kill process", e);
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      UnixProcessManager.sendSignal(UnixProcessManager.getProcessPid(process), UnixProcessManager.SIGKILL);
+    }
+  }
+  
+  public static int getProcessID(@NotNull Process process) {
+    if (SystemInfo.isWindows) {
+      try {
+        return createWinProcess(process).getPid();
+      }
+      catch (Throwable e) {
+        LOG.info("Cannot get process id", e);
+        return -1;
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      return UnixProcessManager.getProcessPid(process);
+    }
+    throw new IllegalStateException("Unknown OS: "  + SystemInfo.OS_NAME);
+  }
+
+  @SuppressWarnings("deprecation")
+  @NotNull
+  private static WinProcess createWinProcess(@NotNull Process process) {
+    if (process instanceof RunnerWinProcess) process = ((RunnerWinProcess)process).getOriginalProcess();
+    return new WinProcess(process);
+  }
+  
+  @Nullable
+  public static List<String> getCommandLinesOfRunningProcesses() {
+    try {
+      if (SystemInfo.isWindows) {
+        List<String> commandLines = new ArrayList<String>();
+        for (WinProcess process : WinProcess.all()) {
+          try {
+            commandLines.add(process.getCommandLine());
+          }
+          catch (WinpException ignored) { }
+        }
+        return commandLines;
+      }
+      else {
+        String[] cmd = UnixProcessManager.getPSCmd(true);
+        Process process = Runtime.getRuntime().exec(cmd);
+        List<String> outputLines = readLines(process.getInputStream(), false);
+        List<String> errorLines = readLines(process.getErrorStream(), false);
+        if (!errorLines.isEmpty()) {
+          throw new IOException(Arrays.toString(cmd) + " failed: " + StringUtil.join(errorLines, "\n"));
+        }
+
+        //trim 'ps' output header
+        return outputLines.subList(1, outputLines.size());
+      }
+    }
+    catch (Throwable e) {
+      LOG.info("Cannot collect command lines");
+      LOG.info(e);
+      return null;
+    }
+  }
+
+  @NotNull
+  private static List<String> readLines(@NotNull InputStream inputStream, boolean includeEmpty) throws IOException {
+    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+    try {
+      List<String> lines = new ArrayList<String>();
+      String line;
+      while ((line = reader.readLine()) != null) {
+        if (includeEmpty || !line.isEmpty()) {
+          lines.add(line);
+        }
+      }
+      return lines;
+    }
+    finally {
+      reader.close();
+    }
   }
 }
