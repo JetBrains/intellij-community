@@ -270,7 +270,7 @@ public class FormatProcessor {
     }
 
     try {
-      LeafBlockWrapper newBlock = processWrap();
+      LeafBlockWrapper newBlock = processWrap(myCurrentBlock);
       if (newBlock != null) {
         myCurrentBlock = newBlock;
         return;
@@ -356,9 +356,9 @@ public class FormatProcessor {
    * @return true if we have changed myCurrentBlock and need to restart its processing; false if myCurrentBlock is unchanged and we can
    * continue processing
    */
-  private LeafBlockWrapper processWrap() {
-    final SpacingImpl spacing = myCurrentBlock.getSpaceProperty();
-    final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
+  private LeafBlockWrapper processWrap(LeafBlockWrapper currentBlock) {
+    final SpacingImpl spacing = currentBlock.getSpaceProperty();
+    final WhiteSpace whiteSpace = currentBlock.getWhiteSpace();
 
     final boolean wrapWasPresent = whiteSpace.containsLineFeeds();
 
@@ -372,12 +372,12 @@ public class FormatProcessor {
 
     final boolean wrapIsPresent = whiteSpace.containsLineFeeds();
 
-    final ArrayList<WrapImpl> wraps = myCurrentBlock.getWraps();
+    final ArrayList<WrapImpl> wraps = currentBlock.getWraps();
     for (WrapImpl wrap : wraps) {
-      wrap.setWrapOffset(myCurrentBlock.getStartOffset());
+      wrap.setWrapOffset(currentBlock.getStartOffset());
     }
 
-    final WrapImpl wrap = getWrapToBeUsed(wraps);
+    final WrapImpl wrap = getWrapToBeUsed(wraps, currentBlock);
 
     if (wrap != null || wrapIsPresent) {
       if (!wrapIsPresent && !canReplaceWrapCandidate(wrap)) {
@@ -390,19 +390,19 @@ public class FormatProcessor {
         wrap.setActive();
         return newCurrentBlock;
       }
-      if (wrap != null && isChopNeeded(wrap)) {
+      if (wrap != null && isChopNeeded(wrap, currentBlock)) {
         wrap.setActive();
       }
 
       if (!wrapIsPresent) {
         whiteSpace.ensureLineFeed();
         if (!wrapWasPresent) {
-          if (myFirstWrappedBlockOnLine != null && wrap.isChildOf(myFirstWrappedBlockOnLine.getWrap(), myCurrentBlock)) {
-            wrap.ignoreParentWrap(myFirstWrappedBlockOnLine.getWrap(), myCurrentBlock);
+          if (myFirstWrappedBlockOnLine != null && wrap.isChildOf(myFirstWrappedBlockOnLine.getWrap(), currentBlock)) {
+            wrap.ignoreParentWrap(myFirstWrappedBlockOnLine.getWrap(), currentBlock);
             return myFirstWrappedBlockOnLine;
           }
           else {
-            myFirstWrappedBlockOnLine = myCurrentBlock;
+            myFirstWrappedBlockOnLine = currentBlock;
           }
         }
       }
@@ -411,16 +411,16 @@ public class FormatProcessor {
     }
     else {
       for (final WrapImpl wrap1 : wraps) {
-        if (isCandidateToBeWrapped(wrap1) && canReplaceWrapCandidate(wrap1)) {
-          myWrapCandidate = myCurrentBlock;
+        if (isCandidateToBeWrapped(wrap1, myCurrentBlock) && canReplaceWrapCandidate(wrap1)) {
+          myWrapCandidate = currentBlock;
         }
-        if (isChopNeeded(wrap1)) {
-          wrap1.saveChopBlock(myCurrentBlock);
+        if (isChopNeeded(wrap1, currentBlock)) {
+          wrap1.saveChopBlock(currentBlock);
         }
       }
     }
 
-    if (!whiteSpace.containsLineFeeds() && myWrapCandidate != null && !whiteSpace.isReadOnly() && lineOver()) {
+    if (!whiteSpace.containsLineFeeds() && myWrapCandidate != null && !whiteSpace.isReadOnly() && lineOver(currentBlock)) {
       return myWrapCandidate;
     }
 
@@ -442,18 +442,18 @@ public class FormatProcessor {
     return wrap == currentWrap || !wrap.isChildOf(currentWrap, myCurrentBlock);
   }
 
-  private boolean isCandidateToBeWrapped(final WrapImpl wrap) {
-    return isSuitableInTheCurrentPosition(wrap) &&
+  private boolean isCandidateToBeWrapped(final WrapImpl wrap, LeafBlockWrapper currentBlock) {
+    return isSuitableInTheCurrentPosition(wrap, currentBlock) &&
            (wrap.getType() == WrapImpl.Type.WRAP_AS_NEEDED || wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED) &&
-           !myCurrentBlock.getWhiteSpace().isReadOnly();
+           !currentBlock.getWhiteSpace().isReadOnly();
   }
 
-  private boolean isChopNeeded(final WrapImpl wrap) {
-    return wrap != null && wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED && isSuitableInTheCurrentPosition(wrap);
+  private boolean isChopNeeded(final WrapImpl wrap, LeafBlockWrapper currentBlock) {
+    return wrap != null && wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED && isSuitableInTheCurrentPosition(wrap, currentBlock);
   }
 
-  private boolean isSuitableInTheCurrentPosition(final WrapImpl wrap) {
-    if (wrap.getWrapOffset() < myCurrentBlock.getStartOffset()) {
+  private boolean isSuitableInTheCurrentPosition(final WrapImpl wrap, LeafBlockWrapper currentBlock) {
+    if (wrap.getWrapOffset() < currentBlock.getStartOffset()) {
       return true;
     }
 
@@ -462,10 +462,10 @@ public class FormatProcessor {
     }
 
     if (wrap.getType() == WrapImpl.Type.WRAP_AS_NEEDED) {
-      return positionAfterWrappingIsSuitable();
+      return positionAfterWrappingIsSuitable(currentBlock);
     }
 
-    return wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED && lineOver() && positionAfterWrappingIsSuitable();
+    return wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED && lineOver(currentBlock) && positionAfterWrappingIsSuitable(currentBlock);
   }
 
   /**
@@ -473,39 +473,39 @@ public class FormatProcessor {
    *
    * @return <code>true</code> if it's ok to wrap at the currently processed block; <code>false</code> otherwise
    */
-  private boolean positionAfterWrappingIsSuitable() {
-    final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
+  private boolean positionAfterWrappingIsSuitable(LeafBlockWrapper currentBlock) {
+    final WhiteSpace whiteSpace = currentBlock.getWhiteSpace();
     if (whiteSpace.containsLineFeeds()) return true;
     final int spaces = whiteSpace.getSpaces();
     int indentSpaces = whiteSpace.getIndentSpaces();
     try {
-      final int startColumnNow = CoreFormatterUtil.getStartColumn(myCurrentBlock);
+      final int startColumnNow = CoreFormatterUtil.getStartColumn(currentBlock);
       whiteSpace.ensureLineFeed();
-      myIndentAdjuster.adjustLineIndent(myCurrentBlock);
-      final int startColumnAfterWrap = CoreFormatterUtil.getStartColumn(myCurrentBlock);
+      myIndentAdjuster.adjustLineIndent(currentBlock);
+      final int startColumnAfterWrap = CoreFormatterUtil.getStartColumn(currentBlock);
       return startColumnNow > startColumnAfterWrap;
     }
     finally {
-      whiteSpace.removeLineFeeds(myCurrentBlock.getSpaceProperty(), myBlockMapperHelper);
+      whiteSpace.removeLineFeeds(currentBlock.getSpaceProperty(), myBlockMapperHelper);
       whiteSpace.setSpaces(spaces, indentSpaces);
     }
   }
 
   @Nullable
-  private WrapImpl getWrapToBeUsed(final ArrayList<WrapImpl> wraps) {
+  private WrapImpl getWrapToBeUsed(final ArrayList<WrapImpl> wraps, LeafBlockWrapper currentBlock) {
     if (wraps.isEmpty()) {
       return null;
     }
-    if (myWrapCandidate == myCurrentBlock) return wraps.get(0);
+    if (myWrapCandidate == currentBlock) return wraps.get(0);
 
     for (final WrapImpl wrap : wraps) {
-      if (!isSuitableInTheCurrentPosition(wrap)) continue;
+      if (!isSuitableInTheCurrentPosition(wrap, currentBlock)) continue;
       if (wrap.isActive()) return wrap;
 
       final WrapImpl.Type type = wrap.getType();
       if (type == WrapImpl.Type.WRAP_ALWAYS) return wrap;
       if (type == WrapImpl.Type.WRAP_AS_NEEDED || type == WrapImpl.Type.CHOP_IF_NEEDED) {
-        if (lineOver()) {
+        if (lineOver(currentBlock)) {
           return wrap;
         }
       }
@@ -517,9 +517,9 @@ public class FormatProcessor {
    * @return <code>true</code> if {@link #myCurrentBlock currently processed wrapped block} doesn't contain line feeds and
    *         exceeds right margin; <code>false</code> otherwise
    */
-  private boolean lineOver() {
-    return !myCurrentBlock.containsLineFeeds() &&
-           CoreFormatterUtil.getStartColumn(myCurrentBlock) + myCurrentBlock.getLength() > myRightMargin;
+  private boolean lineOver(LeafBlockWrapper currentBlock) {
+    return !currentBlock.containsLineFeeds() &&
+           CoreFormatterUtil.getStartColumn(currentBlock) + currentBlock.getLength() > myRightMargin;
   }
 
   private void defineAlignOffset(final LeafBlockWrapper block) {
