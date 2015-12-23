@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.ImportSchemeChooserDialog;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.SchemeFactory;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.options.SchemeImporter;
@@ -65,8 +66,9 @@ public class CodeStyleSchemeXmlImporter implements SchemeImporter<CodeStyleSchem
   
   @NotNull
   private static Element loadScheme(@NotNull VirtualFile selectedFile) throws SchemeImportException {
+    InputStream inputStream = null;
     try {
-      InputStream inputStream = selectedFile.getInputStream();
+      inputStream = selectedFile.getInputStream();
       final Document document = JDOMUtil.loadDocument(inputStream);
       final Element root = document.getRootElement();
       inputStream.close();
@@ -78,24 +80,33 @@ public class CodeStyleSchemeXmlImporter implements SchemeImporter<CodeStyleSchem
     catch (JDOMException e) {
       throw new SchemeImportException(getErrorMessage(e, selectedFile));
     }
+    finally {
+      if (inputStream != null) {
+        try {
+          inputStream.close();
+        }
+        catch (IOException e) {
+          // ignore
+        }
+      }
+    }
   }
   
   @NotNull
   private static String getSchemeName(@NotNull Element rootElement) throws SchemeImportException {
     String rootName = rootElement.getName();
     if (!"code_scheme".equals(rootName)) {
-      throw new SchemeImportException("The file doesn't seem to be Intellij IDEA XML scheme, \n" +
-                                      "it should contain <code_scheme> root element, found " + rootName + " instead");
+      throw new SchemeImportException(ApplicationBundle.message("settings.code.style.import.xml.error.invalid.file", rootName));
     }
     Attribute schemeNameAttr = rootElement.getAttribute("name");
     if (schemeNameAttr == null) {
-      throw new SchemeImportException("Scheme name attribute not found.");
+      throw new SchemeImportException(ApplicationBundle.message("settings.code.style.import.xml.error.missing.scheme.name"));
     }
     return schemeNameAttr.getValue();
   }
   
   private static String getErrorMessage(@NotNull Exception e, @NotNull VirtualFile file) {
-    return "Can't read from" + file.getPresentableUrl() + ", " + e.getMessage(); 
+    return "Can't read from" + file.getName() + ", " + e.getMessage(); 
   }
 
   private static CodeStyleScheme readSchemeFromDom(@NotNull Element rootElement, @NotNull CodeStyleScheme scheme)
@@ -107,7 +118,7 @@ public class CodeStyleSchemeXmlImporter implements SchemeImporter<CodeStyleSchem
       return scheme;
     }
     catch (InvalidDataException e) {
-      throw new SchemeImportException("Can't load code style scheme: " + e.getMessage());
+      throw new SchemeImportException(ApplicationBundle.message("settings.code.style.import.xml.error.can.not.load", e.getMessage()));
     }
   }
 
