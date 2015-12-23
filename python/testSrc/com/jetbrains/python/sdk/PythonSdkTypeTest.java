@@ -66,6 +66,6 @@ public class PythonSdkTypeTest extends TestCase {
         ((RemoteSdkConnectionAcceptor)invocation.getArguments()[0]).vagrant(credentials);
         return null;
       }
-    }).when(data).connectionCredentials().switchType(any(RemoteSdkConnectionAcceptor.class));
+    }).when(data).switchOnConnectionType(any(RemoteSdkConnectionAcceptor.class));
   }
 }
