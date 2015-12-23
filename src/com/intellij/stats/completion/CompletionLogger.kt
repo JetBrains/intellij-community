@@ -73,7 +73,7 @@ class CompletionFileLogger(private val installationUID: String,
     
     override fun completionStarted(items: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.COMPLETION_STARTED)
-        builder.nextWrappedToken("COMP_LIST_LEN", items.size)
+        builder.nextEntity("COMP_LIST_LEN", items.size)
         builder.nextToken(convertCompletionList(items))
         log(builder)
     }
@@ -109,26 +109,26 @@ class CompletionFileLogger(private val installationUID: String,
 
     override fun downPressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.DOWN)
-        builder.nextWrappedToken("POS", pos)
+        builder.nextEntity("POS", pos)
         val id = getItemId(itemName, completionList)
-        builder.nextWrappedToken("ID", id)
+        builder.nextEntity("ID", id)
         log(builder)
     }
 
     override fun upPressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.UP)
-        builder.nextWrappedToken("POS", pos)
+        builder.nextEntity("POS", pos)
         val id = getItemId(itemName, completionList)
-        builder.nextWrappedToken("ID", id)
+        builder.nextEntity("ID", id)
         log(builder)
     }
 
     override fun backspacePressed(pos: Int, itemName: String?, completionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.BACKSPACE)
-        builder.nextWrappedToken("POS", pos)
-        builder.nextWrappedToken("COMP_LIST_LEN", completionList.size)
+        builder.nextEntity("POS", pos)
+        builder.nextEntity("COMP_LIST_LEN", completionList.size)
         val id = getItemId(itemName, completionList)
-        builder.nextWrappedToken("ID", id)
+        builder.nextEntity("ID", id)
         builder.nextToken(toIdsList(completionList))
         log(builder)
     }
@@ -147,15 +147,15 @@ class CompletionFileLogger(private val installationUID: String,
 
     override fun itemSelectedCompletionFinished(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.EXPLICIT_SELECT)
-        builder.nextWrappedToken("POS", pos)
+        builder.nextEntity("POS", pos)
         val id = getItemId(itemName, completionList)
-        builder.nextWrappedToken("ID", id)
+        builder.nextEntity("ID", id)
         log(builder)
     }
 
     override fun charTyped(c: Char, completionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.TYPE)
-        builder.nextWrappedToken("COMP_LIST_LEN", completionList.size)
+        builder.nextEntity("COMP_LIST_LEN", completionList.size)
         builder.nextToken(toIdsList(completionList))
         log(builder)
     }
@@ -182,7 +182,7 @@ class CompletionFileLogger(private val installationUID: String,
 
     override fun itemSelectedByTyping(itemName: String) {
         val builder = messageBuilder(Action.TYPED_SELECT)
-        builder.nextWrappedToken("ID", itemsToId[itemName]!!)
+        builder.nextEntity("ID", itemsToId[itemName]!!)
         log(builder)
     }
     
@@ -211,13 +211,11 @@ class StatInfoBuilder(val installationUID: String, val completionUID: String, va
     }
 
     fun nextToken(any: Any) {
-        builder.append(' ').append(any)
+        builder.append(" $any")
     }
     
-    fun nextWrappedToken(info: String, any: Any) {
-        builder.append(' ')
-                .append(info)
-                .append('(').append(any).append(')')
+    fun nextEntity(name: String, value: Any) {
+        builder.append(" $name=$value")
     }
 
     
