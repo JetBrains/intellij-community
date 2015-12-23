@@ -70,8 +70,8 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   @Override
-  public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress,
-                         final ChangeListManagerGate addGate) throws VcsException {
+  public void getChanges(@NotNull final VcsDirtyScope dirtyScope, @NotNull final ChangelistBuilder builder, @NotNull final ProgressIndicator progress,
+                         @NotNull final ChangeListManagerGate addGate) throws VcsException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Processing changes for scope " + dirtyScope);
     }

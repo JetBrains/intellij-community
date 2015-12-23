@@ -726,6 +726,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myListsToDisappear.addAll(names);
   }
 
+  @NotNull
   ChangeListManagerGate createSelfGate() {
     return new MyGate(this);
   }

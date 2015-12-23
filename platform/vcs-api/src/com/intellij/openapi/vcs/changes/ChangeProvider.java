@@ -20,13 +20,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsProviderMarker;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
  * The provider of change information (from the point of view of VCS).
- *
- * @author max
  */
 public interface ChangeProvider extends VcsProviderMarker {
   /**
@@ -41,11 +40,12 @@ public interface ChangeProvider extends VcsProviderMarker {
    * @param dirtyScope a changes on the virtual file system
    * @param builder a builder of VCS changes
    * @param progress a current progress object
-   * @param addGate
    * @throws VcsException if there there is a VCS specific problem
    */
-  void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress,
-                  final ChangeListManagerGate addGate) throws VcsException;
+  void getChanges(@NotNull VcsDirtyScope dirtyScope,
+                  @NotNull ChangelistBuilder builder,
+                  @NotNull ProgressIndicator progress,
+                  @NotNull ChangeListManagerGate addGate) throws VcsException;
 
   /**
    * Returns true if the initial unsaved modification of a document should cause dirty scope invalidation

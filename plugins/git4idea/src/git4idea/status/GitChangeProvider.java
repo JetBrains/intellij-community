@@ -52,8 +52,11 @@ public class GitChangeProvider implements ChangeProvider {
   @NotNull private final FileDocumentManager myFileDocumentManager;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
 
-  public GitChangeProvider(@NotNull Project project, @NotNull Git git, ChangeListManager changeListManager,
-                           @NotNull FileDocumentManager fileDocumentManager, @NotNull ProjectLevelVcsManager vcsManager) {
+  public GitChangeProvider(@NotNull Project project,
+                           @NotNull Git git,
+                           @NotNull ChangeListManager changeListManager,
+                           @NotNull FileDocumentManager fileDocumentManager,
+                           @NotNull ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myGit = git;
     myChangeListManager = changeListManager;
@@ -62,10 +65,10 @@ public class GitChangeProvider implements ChangeProvider {
   }
 
   @Override
-  public void getChanges(final VcsDirtyScope dirtyScope,
-                         final ChangelistBuilder builder,
-                         final ProgressIndicator progress,
-                         final ChangeListManagerGate addGate) throws VcsException {
+  public void getChanges(@NotNull VcsDirtyScope dirtyScope,
+                         @NotNull final ChangelistBuilder builder,
+                         @NotNull final ProgressIndicator progress,
+                         @NotNull final ChangeListManagerGate addGate) throws VcsException {
     final GitVcs vcs = GitVcs.getInstance(myProject);
     if (vcs == null) {
       // already disposed or not yet initialized => ignoring
@@ -109,7 +112,7 @@ public class GitChangeProvider implements ChangeProvider {
     }
   }
 
-  public static void appendNestedVcsRootsToDirt(final VcsDirtyScope dirtyScope, GitVcs vcs, final ProjectLevelVcsManager vcsManager) {
+  private static void appendNestedVcsRootsToDirt(final VcsDirtyScope dirtyScope, GitVcs vcs, final ProjectLevelVcsManager vcsManager) {
     final Set<FilePath> recursivelyDirtyDirectories = dirtyScope.getRecursivelyDirtyDirectories();
     if (recursivelyDirtyDirectories.isEmpty()) {
       return;

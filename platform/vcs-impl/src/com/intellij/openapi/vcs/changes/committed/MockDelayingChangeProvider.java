@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.ChangelistBuilder;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -34,8 +35,8 @@ public class MockDelayingChangeProvider implements ChangeProvider {
     myLock = new Object();
   }
 
-  public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress,
-                         final ChangeListManagerGate addGate)
+  public void getChanges(@NotNull final VcsDirtyScope dirtyScope, @NotNull final ChangelistBuilder builder, @NotNull final ProgressIndicator progress,
+                         @NotNull final ChangeListManagerGate addGate)
     throws VcsException {
     synchronized (myLock) {
       if (myExecuteInsideUpdate == null) {
