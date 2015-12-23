@@ -133,7 +133,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       return null;
     }
 
-    PsiFile psiFile = getPsiFileByLocation(getDebugProcess().getProject(), location);
+    Project project = getDebugProcess().getProject();
+    PsiFile psiFile = getPsiFileByLocation(project, location);
     if(psiFile == null ) {
       return null;
     }
@@ -149,7 +150,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
 
     // replace file with alternative
-    String altFileUrl = DebuggerUtilsEx.getAlternativeSourceUrl(location.declaringType().name());
+    String altFileUrl = DebuggerUtilsEx.getAlternativeSourceUrl(location.declaringType().name(), project);
     if (altFileUrl != null) {
       VirtualFile altFile = VirtualFileManager.getInstance().findFileByUrl(altFileUrl);
       if (altFile != null) {

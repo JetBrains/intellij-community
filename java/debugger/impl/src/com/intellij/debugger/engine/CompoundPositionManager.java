@@ -27,6 +27,7 @@ import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.sun.jdi.InternalException;
@@ -98,10 +99,12 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   }
 
   private static boolean checkCacheEntry(SourcePosition position, Location location) {
-    if (position == null || !position.getFile().isValid()) return false;
-    String url = DebuggerUtilsEx.getAlternativeSourceUrl(location.declaringType().name());
+    if (position == null) return false;
+    PsiFile psiFile = position.getFile();
+    if (!psiFile.isValid()) return false;
+    String url = DebuggerUtilsEx.getAlternativeSourceUrl(location.declaringType().name(), psiFile.getProject());
     if (url == null) return true;
-    VirtualFile file = position.getFile().getVirtualFile();
+    VirtualFile file = psiFile.getVirtualFile();
     return file != null && url.equals(file.getUrl());
   }
 

@@ -49,7 +49,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -705,15 +704,21 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return text.replace("\t", StringUtil.repeat(" ", tabSize));
   }
 
-  private static final Map<String, String> ourAlternativeSources = new ConcurrentHashMap<String, String>();
+  private static final Key<Map<String, String>> DEBUGGER_ALTERNATIVE_SOURCE_MAPPING = Key.create("DEBUGGER_ALTERNATIVE_SOURCE_MAPPING");
 
-  public static void setAlternativeSourceUrl(String className, String source) {
-    ourAlternativeSources.put(className, source);
+  public static void setAlternativeSourceUrl(String className, String source, Project project) {
+    Map<String, String> map = project.getUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING);
+    if (map == null) {
+      map = new ConcurrentHashMap<String, String>();
+      project.putUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING, map);
+    }
+    map.put(className, source);
   }
 
   @Nullable
-  public static String getAlternativeSourceUrl(@Nullable String className) {
-    return ourAlternativeSources.get(className);
+  public static String getAlternativeSourceUrl(@Nullable String className, Project project) {
+    Map<String, String> map = project.getUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING);
+    return map != null ? map.get(className) : null;
   }
 
   @Nullable

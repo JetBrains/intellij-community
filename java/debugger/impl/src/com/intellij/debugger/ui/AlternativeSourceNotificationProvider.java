@@ -179,7 +179,7 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
                 if (location != null) {
                   VirtualFile vFile = item.getContainingFile().getVirtualFile();
                   if (vFile != null) {
-                    DebuggerUtilsEx.setAlternativeSourceUrl(location.declaringType().name(), vFile.getUrl());
+                    DebuggerUtilsEx.setAlternativeSourceUrl(location.declaringType().name(), vFile.getUrl(), project);
                   }
                 }
                 DebuggerUIUtil.invokeLater(new Runnable() {
