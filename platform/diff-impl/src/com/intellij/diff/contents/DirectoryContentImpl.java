@@ -35,7 +35,7 @@ public class DirectoryContentImpl extends DiffContentBase implements DirectoryCo
   @Nullable
   @Override
   public OpenFileDescriptor getOpenFileDescriptor() {
-    if (myProject == null || myProject.isDefault()) return null;
+    if (myProject == null || myProject.isDefault() || !myFile.isValid()) return null;
     return new OpenFileDescriptor(myProject, myFile);
   }
 
