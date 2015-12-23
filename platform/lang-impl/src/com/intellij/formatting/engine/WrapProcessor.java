@@ -200,6 +200,14 @@ public class WrapProcessor {
   private boolean isChopNeeded(final WrapImpl wrap, LeafBlockWrapper currentBlock) {
     return wrap != null && wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED && isSuitableInTheCurrentPosition(wrap, currentBlock);
   }
+
+
+  public void reset() {
+    myWrapCandidate = null;
+  }
   
+  public void onCurrentLineChanged() {
+    myWrapCandidate = null;
+  }
   
 }

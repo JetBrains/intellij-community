@@ -81,7 +81,6 @@ public class FormatProcessor {
   private Ref<MultiMap<ExpandableIndent, AbstractBlockWrapper>> myExpandableIndentsRef = Ref.create();
   private Ref<IndentAdjuster> myIndentAdjusterRef = Ref.create();
   private WrapProcessor myWrapProcessor;
-  private LeafBlockWrapper myWrapCandidate;
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
@@ -231,7 +230,7 @@ public class FormatProcessor {
   private void reset() {
     myAlignmentHelper.reset();
     myDependentSpacingEngine.clear();
-    myWrapCandidate = null;
+    myWrapProcessor.reset();
     if (myRootBlockWrapper != null) {
       myRootBlockWrapper.reset();
     }
@@ -318,7 +317,7 @@ public class FormatProcessor {
   }
 
   private void onCurrentLineChanged() {
-    myWrapCandidate = null;
+    myWrapProcessor.onCurrentLineChanged();
   }
 
   private boolean isReformatSelectedRangesContext() {
