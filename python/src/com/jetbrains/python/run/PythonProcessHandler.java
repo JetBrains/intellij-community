@@ -17,7 +17,11 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.process.KillableColoredProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,14 +39,24 @@ public class PythonProcessHandler extends KillableColoredProcessHandler {
 
   public PythonProcessHandler(@NotNull GeneralCommandLine commandLine, boolean softKillOnWin) throws ExecutionException {
     super(commandLine, softKillOnWin);
+    setupPtyIfNeed(commandLine);
   }
 
   public PythonProcessHandler(Process process, @NotNull String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
   }
 
-  @Override
-  protected boolean shouldDestroyProcessRecursively() {
-    return true;
+  private void setupPtyIfNeed(@NotNull GeneralCommandLine commandLine) {
+    boolean usePty = commandLine instanceof PtyCommandLine;
+    if (usePty && SystemInfo.isWindows) {
+      // winpty_close() must be always called, otherwise winpty-agent.exe is going to be left running
+      addProcessListener(new ProcessAdapter() {
+        @Override
+        public void processTerminated(ProcessEvent event) {
+          getProcess().destroy();
+        }
+      });
+    }
+    setShouldDestroyProcessRecursively(!usePty);
   }
 }

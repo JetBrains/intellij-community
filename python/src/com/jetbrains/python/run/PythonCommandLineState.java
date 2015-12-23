@@ -246,7 +246,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   @NotNull
   public static GeneralCommandLine createPythonCommandLine(Project project, PythonRunParams config, boolean isDebug) {
-    GeneralCommandLine commandLine = generalCommandLine();
+    boolean usePty = config instanceof AbstractPythonRunConfiguration
+                     ? ((AbstractPythonRunConfiguration)config).usePty()
+                     : PtyCommandLine.isEnabled();
+    GeneralCommandLine commandLine = usePty ? new PtyCommandLine() : new GeneralCommandLine();
 
     commandLine.withCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
 
@@ -257,10 +260,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
     setRunnerPath(project, commandLine, config);
 
     return commandLine;
-  }
-
-  public static GeneralCommandLine generalCommandLine() {
-    return PtyCommandLine.isEnabled() ? new PtyCommandLine() : new GeneralCommandLine();
   }
 
   /**
