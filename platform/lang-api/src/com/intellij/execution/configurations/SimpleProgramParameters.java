@@ -72,7 +72,7 @@ public class SimpleProgramParameters {
       final HashMap<String, String> map = new HashMap<String, String>(envs);
       EnvironmentUtil.inlineParentOccurrences(map);
       setEnv(map);
-      setPassParentEnvs(passDefault);
     }
+    setPassParentEnvs(passDefault);
   }
 }
