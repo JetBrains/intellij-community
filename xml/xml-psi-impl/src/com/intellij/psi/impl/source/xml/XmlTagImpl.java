@@ -1021,7 +1021,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       return null;
     }
     else {
-      PsiElement xmlAttribute = add(XmlElementFactory.getInstance(getProject()).createXmlAttribute(qname, value));
+      PsiElement xmlAttribute = add(XmlElementFactory.getInstance(getProject()).createAttribute(qname, value, this));
       while (!(xmlAttribute instanceof XmlAttribute)) xmlAttribute = xmlAttribute.getNextSibling();
       return (XmlAttribute)xmlAttribute;
     }
