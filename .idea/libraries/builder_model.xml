@@ -4,8 +4,6 @@
       <root url="jar://$PROJECT_DIR$/android/android/lib/builder-model-1.4.0-beta2.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$PROJECT_DIR$/android/android/lib/src/builder-model-1.4.0-beta2-sources.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>
