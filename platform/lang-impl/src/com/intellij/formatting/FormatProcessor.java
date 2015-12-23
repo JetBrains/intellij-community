@@ -270,7 +270,9 @@ public class FormatProcessor {
     }
 
     try {
-      if (processWrap()) {
+      LeafBlockWrapper newBlock = processWrap();
+      if (newBlock != null) {
+        myCurrentBlock = newBlock;
         return;
       }
     }
@@ -354,7 +356,7 @@ public class FormatProcessor {
    * @return true if we have changed myCurrentBlock and need to restart its processing; false if myCurrentBlock is unchanged and we can
    * continue processing
    */
-  private boolean processWrap() {
+  private LeafBlockWrapper processWrap() {
     final SpacingImpl spacing = myCurrentBlock.getSpaceProperty();
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
 
@@ -379,15 +381,14 @@ public class FormatProcessor {
 
     if (wrap != null || wrapIsPresent) {
       if (!wrapIsPresent && !canReplaceWrapCandidate(wrap)) {
-        myCurrentBlock = myWrapCandidate;
-        return true;
+        return myWrapCandidate;
       }
       if (wrap != null && wrap.getChopStartBlock() != null) {
         // getWrapToBeUsed() returns the block only if it actually exceeds the right margin. In this case, we need to go back to the
         // first block that has the CHOP_IF_NEEDED wrap type and start wrapping from there.
-        myCurrentBlock = wrap.getChopStartBlock();
+        LeafBlockWrapper newCurrentBlock = wrap.getChopStartBlock();
         wrap.setActive();
-        return true;
+        return newCurrentBlock;
       }
       if (wrap != null && isChopNeeded(wrap)) {
         wrap.setActive();
@@ -398,8 +399,7 @@ public class FormatProcessor {
         if (!wrapWasPresent) {
           if (myFirstWrappedBlockOnLine != null && wrap.isChildOf(myFirstWrappedBlockOnLine.getWrap(), myCurrentBlock)) {
             wrap.ignoreParentWrap(myFirstWrappedBlockOnLine.getWrap(), myCurrentBlock);
-            myCurrentBlock = myFirstWrappedBlockOnLine;
-            return true;
+            return myFirstWrappedBlockOnLine;
           }
           else {
             myFirstWrappedBlockOnLine = myCurrentBlock;
@@ -421,11 +421,10 @@ public class FormatProcessor {
     }
 
     if (!whiteSpace.containsLineFeeds() && myWrapCandidate != null && !whiteSpace.isReadOnly() && lineOver()) {
-      myCurrentBlock = myWrapCandidate;
-      return true;
+      return myWrapCandidate;
     }
 
-    return false;
+    return null;
   }
 
   /**
