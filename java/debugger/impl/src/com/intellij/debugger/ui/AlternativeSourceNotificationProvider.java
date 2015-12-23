@@ -170,17 +170,15 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
           final DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(project).getContext();
           final DebuggerSession session = context.getDebuggerSession();
           final PsiClass item = ((ComboBoxClassElement)switcher.getSelectedItem()).myClass;
-          if (session != null) {
+          final VirtualFile vFile = item.getContainingFile().getVirtualFile();
+          if (session != null && vFile != null) {
             session.getProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
               @Override
               protected void action() throws Exception {
                 StackFrameProxyImpl proxy = context.getFrameProxy();
                 Location location = proxy != null ? proxy.location() : null;
                 if (location != null) {
-                  VirtualFile vFile = item.getContainingFile().getVirtualFile();
-                  if (vFile != null) {
-                    DebuggerUtilsEx.setAlternativeSourceUrl(location.declaringType().name(), vFile.getUrl(), project);
-                  }
+                  DebuggerUtilsEx.setAlternativeSourceUrl(location.declaringType().name(), vFile.getUrl(), project);
                 }
                 DebuggerUIUtil.invokeLater(new Runnable() {
                   @Override
