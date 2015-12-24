@@ -53,6 +53,7 @@ class CompletionTrackerInitializer(project: Project): AbstractProjectComponent(p
 interface CompletionPopupListener {
     fun downPressed()
     fun upPressed()
+    fun beforeBackspacePressed()
     fun backSpacePressed()
     fun beforeCharTyped(c: Char)
     
@@ -60,6 +61,7 @@ interface CompletionPopupListener {
         override fun downPressed() = Unit
         override fun upPressed() = Unit
         override fun backSpacePressed() = Unit
+        override fun beforeBackspacePressed() = Unit
         override fun beforeCharTyped(c: Char) = Unit
     }
 }
@@ -77,6 +79,12 @@ class LookupActionsListener : AnActionListener.Adapter() {
             down -> listener.downPressed()
             up -> listener.upPressed()
             backspace -> listener.backSpacePressed()
+        }
+    }
+
+    override fun beforeActionPerformed(action: AnAction?, dataContext: DataContext?, event: AnActionEvent?) {
+        when (action) {
+            backspace -> listener.beforeBackspacePressed()
         }
     }
 
@@ -185,18 +193,23 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         logger.upPressed(index, current!!.lookupString, lookup.toRelevanceDataList())
     }
 
+    override fun beforeBackspacePressed() {
+        if (!isCompletionActive()) return
+        logger.beforeBackspacePressed(lookup.toRelevanceDataList())
+    }
+
     override fun backSpacePressed() {
         if (!isCompletionActive()) return
         
         val current = lookup.currentItem
         val index = lookup.items.indexOf(current)
-        logger.backspacePressed(index, current?.lookupString, lookup.toRelevanceDataList())
+        logger.afterBackspacePressed(index, current?.lookupString, lookup.toRelevanceDataList())
     }
     
     override fun afterAppend(c: Char) {
         if (!isCompletionActive()) return
         
-        logger.charTyped(c, lookup.toRelevanceDataList())
+        logger.afterCharTyped(c, lookup.toRelevanceDataList())
     }
 
     override fun beforeCharTyped(c: Char) {
@@ -207,6 +220,9 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
             if (item.lookupString.equals(text)) {
                 selectedByDotTyping = true
             }
+        }
+        else {
+            logger.beforeCharTyped(c, lookup.toRelevanceDataList())
         }
     }
     
