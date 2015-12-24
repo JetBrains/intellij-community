@@ -9,7 +9,7 @@
     ]]></description>
 
   <change-notes><![CDATA[
-      Output prettified 
+      Log previous action data just before next action, to log full completion list
     ]]>
   </change-notes>
 
