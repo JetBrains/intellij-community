@@ -65,8 +65,8 @@ class Test {
 
         myFixture.type('r')
         myFixture.type('u')
-        verify(mockLogger).charTyped(eq('r'), Matchers.anyListOf(LookupStringWithRelevance::class.java))
-        verify(mockLogger).charTyped(eq('u'), Matchers.anyListOf(LookupStringWithRelevance::class.java))
+        verify(mockLogger).afterCharTyped(eq('r'), Matchers.anyListOf(LookupStringWithRelevance::class.java))
+        verify(mockLogger).afterCharTyped(eq('u'), Matchers.anyListOf(LookupStringWithRelevance::class.java))
     }
     
     fun `test up buttons`() {
@@ -96,7 +96,7 @@ class Test {
         myFixture.completeBasic()
         
         myFixture.type('\b')
-        verify(mockLogger).backspacePressed(Matchers.anyInt(), Matchers.anyString(), Matchers.anyListOf(LookupStringWithRelevance::class.java))
+        verify(mockLogger).afterBackspacePressed(Matchers.anyInt(), Matchers.anyString(), Matchers.anyListOf(LookupStringWithRelevance::class.java))
     }
     
     fun `test enter`() {
