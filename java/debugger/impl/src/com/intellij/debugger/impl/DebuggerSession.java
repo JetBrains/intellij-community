@@ -176,6 +176,11 @@ public class DebuggerSession implements AbstractDebuggerSession {
       else {
         getProcess().getManagerThread().schedule(new SuspendContextCommandImpl(context.getSuspendContext()) {
           @Override
+          public Priority getPriority() {
+            return Priority.HIGH;
+          }
+
+          @Override
           public void contextAction() throws Exception {
             context.initCaches();
             DebuggerInvocationUtil.swingInvokeLater(getProject(), setStateRunnable);
