@@ -120,6 +120,12 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       public TableCellRenderer getRenderer(final VirtualFile virtualFile) {
         return myVirtualFileRenderer;
       }
+
+      @Nullable
+      @Override
+      public Comparator<VirtualFile> getComparator() {
+        return VirtualFileComparator.INSTANCE;
+      }
     });
     columns.add(new ColumnInfo<VirtualFile, String>(VcsBundle.message("multiple.file.merge.column.type")) {
       @Override
@@ -441,6 +447,22 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       if (parent != null) {
         append(" (" + FileUtil.toSystemDependentName(parent.getPresentableUrl()) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
+    }
+  }
+
+  private static class VirtualFileComparator implements Comparator<VirtualFile> {
+    public static final VirtualFileComparator INSTANCE = new VirtualFileComparator();
+
+    @Override
+    public int compare(VirtualFile file1, VirtualFile file2) {
+      int delta = StringUtil.naturalCompare(file1.getName(), file2.getName());
+      if (delta != 0) return delta;
+
+      VirtualFile parent1 = file1.getParent();
+      VirtualFile parent2 = file2.getParent();
+      String path1 = parent1 != null ? parent1.getPath() : null;
+      String path2 = parent2 != null ? parent2.getPath() : null;
+      return StringUtil.naturalCompare(path1, path2);
     }
   }
 }
