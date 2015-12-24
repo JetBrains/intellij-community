@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
-  <version>0.0.13</version>
+  <version>0.0.14</version>
   <vendor email="yaroslav.lepenkin@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
@@ -9,7 +9,7 @@
     ]]></description>
 
   <change-notes><![CDATA[
-      Log previous action data just before next action, to log full completion list
+      Show new completion items, not shown in the first completion list
     ]]>
   </change-notes>
 
