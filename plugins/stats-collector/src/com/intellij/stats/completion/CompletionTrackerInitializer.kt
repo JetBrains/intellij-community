@@ -75,34 +75,37 @@ class LookupActionsListener : AnActionListener.Adapter() {
     private val backspace = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE)
 
     var listener: CompletionPopupListener = CompletionPopupListener.Adapter()
+
+    private fun logThrowables(block: () -> Unit) {
+        try {
+            block()
+        } catch (e: Throwable) {
+            LOG.error(e)
+        }
+    }
     
     override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent?) {
-        when (action) {
-            down -> listener.downPressed()
-            up -> listener.upPressed()
-            backspace -> listener.backSpacePressed()
+        logThrowables {
+            when (action) {
+                down -> listener.downPressed()
+                up -> listener.upPressed()
+                backspace -> listener.backSpacePressed()
+            }
         }
     }
 
     override fun beforeActionPerformed(action: AnAction?, dataContext: DataContext?, event: AnActionEvent?) {
-        try {
+        logThrowables { 
             when (action) {
                 backspace -> listener.beforeBackspacePressed()
             }
         }
-        catch (e: Throwable) {
-            LOG.error(e)
-        }
     }
 
     override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
-        try {
+        logThrowables {
             listener.beforeCharTyped(c)
-        } 
-        catch (e: Throwable) {
-            LOG.error(e)
         }
-                
     }
 }
 
