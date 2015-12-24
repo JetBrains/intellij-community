@@ -94,8 +94,8 @@ class IcsSettings {
 @JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
 @JsonIgnoreProperties(ignoreUnknown = true)
 class ReadonlySource(var url: String? = null, var active: Boolean = true) {
-  @JsonIgnore
   val path: String?
+    @JsonIgnore
     get() {
       if (url == null) {
         return null
