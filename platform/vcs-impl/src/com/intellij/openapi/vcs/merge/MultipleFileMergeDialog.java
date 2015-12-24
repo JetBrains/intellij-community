@@ -46,11 +46,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
@@ -190,6 +193,15 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         return true;
       }
     }.installOn(myTable);
+    new TableSpeedSearch(myTable, new Convertor<Object, String>() {
+      @Override
+      public String convert(Object o) {
+        if (o instanceof VirtualFile) {
+          return ((VirtualFile)o).getName();
+        }
+        return null;
+      }
+    });
   }
 
   private void updateButtonState() {
@@ -437,7 +449,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     });
   }
 
-  private static class VirtualFileRenderer extends ColoredTableCellRenderer {
+  private class VirtualFileRenderer extends ColoredTableCellRenderer {
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       VirtualFile vf = (VirtualFile)value;
@@ -447,6 +459,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       if (parent != null) {
         append(" (" + FileUtil.toSystemDependentName(parent.getPresentableUrl()) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
+      SpeedSearchUtil.applySpeedSearchHighlighting(myTable, this, true, selected);
     }
   }
 
