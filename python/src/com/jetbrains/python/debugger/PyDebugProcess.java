@@ -26,6 +26,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -80,6 +81,8 @@ import static javax.swing.SwingUtilities.invokeLater;
 // todo: bundle messages
 // todo: pydevd supports module reloading - look for a way to use the feature
 public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener {
+
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.debugger.PyDebugProcess");
   private static final int CONNECTION_TIMEOUT = 60000;
 
   private final ProcessDebugger myDebugger;
@@ -351,6 +354,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
     if (remoteVersion != null) {
       if (!remoteVersion.equals(currentBuild)) {
+        LOG.warn(String.format("Wrong debugger version. Remote version: %s Current build: %s", remoteVersion, currentBuild));
         printToConsole("Warning: wrong debugger version. Use pycharm-debugger.egg from PyCharm installation folder.\n",
                        ConsoleViewContentType.ERROR_OUTPUT);
       }
