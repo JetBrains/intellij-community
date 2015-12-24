@@ -234,7 +234,7 @@ public fun Repository.deleteAllFiles(deletedSet: MutableSet<String>? = null, fro
   }
 
   if (fromWorkingTree) {
-    val files = workTree.listFiles { it.name != Constants.DOT_GIT }
+    val files = workTree.listFiles { file -> file.name != Constants.DOT_GIT }
     if (files != null) {
       for (file in files) {
         FileUtil.delete(file)
