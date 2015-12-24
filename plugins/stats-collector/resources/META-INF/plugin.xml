@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
-  <version>0.0.16</version>
+  <version>0.0.17</version>
   <vendor email="yaroslav.lepenkin@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
@@ -9,7 +9,7 @@
     ]]></description>
 
   <change-notes><![CDATA[
-      Catch all throwables and log them, do not affect typing 
+      Add all lookup elements in first completion list to id map
     ]]>
   </change-notes>
 
