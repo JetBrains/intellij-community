@@ -39,9 +39,9 @@ class CompletionFileLogger(private val installationUID: String,
     override fun completionStarted(completionList: List<LookupStringWithRelevance>) {
         lastCompletionList = completionList
         logLastAction = { items ->
-            val builder = messageBuilder(Action.COMPLETION_STARTED)
-            builder.nextEntity("COMP_LIST_LEN", items.size)
-            builder.nextText(convertCompletionList(items))
+            val builder = logLineBuilder(Action.COMPLETION_STARTED)
+            builder.addPair("COMP_LIST_LEN", items.size)
+            builder.addText(convertCompletionList(items))
             log(builder)
         }
     }
@@ -51,9 +51,9 @@ class CompletionFileLogger(private val installationUID: String,
         logLastAction(completionList)
         
         logLastAction = { items ->
-            val builder = messageBuilder(Action.TYPE)
-            builder.nextEntity("COMP_LIST_LEN", items.size)
-            builder.nextText(toIdsList(items))
+            val builder = logLineBuilder(Action.TYPE)
+            builder.addPair("COMP_LIST_LEN", items.size)
+            builder.addText(toIdsList(items))
             log(builder)
         }
     }
@@ -67,10 +67,10 @@ class CompletionFileLogger(private val installationUID: String,
         logLastAction(completionList)
         logLastAction = LOG_NOTHING
         
-        val builder = messageBuilder(Action.DOWN)
-        builder.nextEntity("POS", pos)
+        val builder = logLineBuilder(Action.DOWN)
+        builder.addPair("POS", pos)
         val id = getItemId(itemName, completionList)
-        builder.nextEntity("ID", id)
+        builder.addPair("ID", id)
         log(builder)
     }
 
@@ -79,25 +79,25 @@ class CompletionFileLogger(private val installationUID: String,
         logLastAction(completionList)
         logLastAction = LOG_NOTHING
         
-        val builder = messageBuilder(Action.UP)
-        builder.nextEntity("POS", pos)
+        val builder = logLineBuilder(Action.UP)
+        builder.addPair("POS", pos)
         val id = getItemId(itemName, completionList)
-        builder.nextEntity("ID", id)
+        builder.addPair("ID", id)
         log(builder)
     }
 
     override fun completionCancelled() {
         logLastAction(lastCompletionList)
         logLastAction = LOG_NOTHING
-        val builder = messageBuilder(Action.COMPLETION_CANCELED)
+        val builder = logLineBuilder(Action.COMPLETION_CANCELED)
         log(builder)
     }
 
     override fun itemSelectedByTyping(itemName: String) {
         logLastAction(lastCompletionList)
         logLastAction = LOG_NOTHING
-        val builder = messageBuilder(Action.TYPED_SELECT)
-        builder.nextEntity("ID", itemsToId[itemName]!!)
+        val builder = logLineBuilder(Action.TYPED_SELECT)
+        builder.addPair("ID", itemsToId[itemName]!!)
         log(builder)
     }
 
@@ -105,10 +105,10 @@ class CompletionFileLogger(private val installationUID: String,
         logLastAction(completionList)
         logLastAction = LOG_NOTHING
         
-        val builder = messageBuilder(Action.EXPLICIT_SELECT)
-        builder.nextEntity("POS", pos)
+        val builder = logLineBuilder(Action.EXPLICIT_SELECT)
+        builder.addPair("POS", pos)
         val id = getItemId(itemName, completionList)
-        builder.nextEntity("ID", id)
+        builder.addPair("ID", id)
         log(builder)
     }
 
@@ -120,12 +120,12 @@ class CompletionFileLogger(private val installationUID: String,
     override fun afterBackspacePressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>) {
         lastCompletionList = completionList
         
-        val builder = messageBuilder(Action.BACKSPACE)
-        builder.nextEntity("POS", pos)
-        builder.nextEntity("COMP_LIST_LEN", completionList.size)
+        val builder = logLineBuilder(Action.BACKSPACE)
+        builder.addPair("POS", pos)
+        builder.addPair("COMP_LIST_LEN", completionList.size)
         val id = getItemId(itemName, completionList)
-        builder.nextEntity("ID", id)
-        builder.nextText(toIdsList(completionList))
+        builder.addPair("ID", id)
+        builder.addText(toIdsList(completionList))
         log(builder)
     }
 
@@ -160,8 +160,8 @@ class CompletionFileLogger(private val installationUID: String,
         }
     }
 
-    private fun log(statInfoBuilder: StatInfoBuilder) {
-        val msg = statInfoBuilder.message()
+    private fun log(logLineBuilder: LogLineBuilder) {
+        val msg = logLineBuilder.text()
         println(msg)
         logFileManager.println(msg)
     }
@@ -188,8 +188,8 @@ class CompletionFileLogger(private val installationUID: String,
         return ids.toString()
     }
 
-    private fun messageBuilder(action: Action): StatInfoBuilder {
-        return StatInfoBuilder(installationUID, completionUID, action)
+    private fun logLineBuilder(action: Action): LogLineBuilder {
+        return LogLineBuilder(installationUID, completionUID, action)
     }
 
 }
@@ -205,7 +205,7 @@ enum class Action {
     TYPED_SELECT
 }
 
-class StatInfoBuilder(val installationUID: String, val completionUID: String, val action: Action) {
+class LogLineBuilder(val installationUID: String, val completionUID: String, val action: Action) {
     private val timestamp = System.currentTimeMillis()
     private val builder = StringBuilder()
 
@@ -213,11 +213,11 @@ class StatInfoBuilder(val installationUID: String, val completionUID: String, va
         builder.append("$installationUID $completionUID $timestamp $action")
     }
 
-    fun nextText(any: Any) = builder.append(" $any")
+    fun addText(any: Any) = builder.append(" $any")
     
-    fun nextEntity(name: String, value: Any) = builder.append(" $name=$value")
+    fun addPair(name: String, value: Any) = builder.append(" $name=$value")
     
-    fun message() = builder.toString()
+    fun text() = builder.toString()
 
 }
 
