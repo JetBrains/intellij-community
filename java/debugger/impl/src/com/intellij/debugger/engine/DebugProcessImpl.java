@@ -185,7 +185,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             public void run() {
               final DebuggerSession session = mySession;
               if (session != null && session.isAttached()) {
-                session.refresh(true);
                 DebuggerAction.refreshViews(mySession.getXDebugSession());
               }
             }

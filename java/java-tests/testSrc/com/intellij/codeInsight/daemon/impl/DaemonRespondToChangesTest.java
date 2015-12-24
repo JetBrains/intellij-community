@@ -107,7 +107,6 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -1420,7 +1419,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         @Override
         protected void run(@NotNull Result<OpenFileDescriptor> result) throws Throwable {
           VirtualFile alienFile = alienRoot.createChildData(this, "X.java");
-          VfsUtil.saveText(alienFile, "class Alien { }");
+          setFileText(alienFile, "class Alien { }");
           OpenFileDescriptor alienDescriptor = new OpenFileDescriptor(alienProject, alienFile);
           result.setResult(alienDescriptor);
         }

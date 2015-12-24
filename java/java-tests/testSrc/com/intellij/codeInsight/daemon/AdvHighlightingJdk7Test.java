@@ -34,8 +34,13 @@ public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
 
   @Override
   protected Sdk getTestProjectJdk() {
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_7);
     return IdeaTestUtil.getMockJdk17();
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_7);
   }
 
   @Override

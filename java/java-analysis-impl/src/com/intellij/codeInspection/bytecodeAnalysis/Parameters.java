@@ -60,7 +60,9 @@ abstract class PResults {
     return sop;
   }
 
-  // Results
+  /**
+   * 'P' stands for 'Partial'
+   */
   interface PResult {}
   static final PResult Identity = new PResult() {
     @Override

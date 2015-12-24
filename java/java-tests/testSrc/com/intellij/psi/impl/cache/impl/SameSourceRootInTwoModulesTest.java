@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -47,14 +46,15 @@ public class SameSourceRootInTwoModulesTest extends PsiTestCase {
       @Override
       public void run() {
         try {
-          VirtualFile rootVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
+          VirtualFile rootVFile =
+            LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
 
-          myPrjDir1 = rootVFile.createChildDirectory(null, "prj1");
-          mySrcDir1 = myPrjDir1.createChildDirectory(null, "src1");
+          myPrjDir1 = createChildDirectory(rootVFile, "prj1");
+          mySrcDir1 = createChildDirectory(myPrjDir1, "src1");
 
-          myPackDir = mySrcDir1.createChildDirectory(null, "p");
-          VirtualFile file1 = myPackDir.createChildData(null, "A.java");
-          VfsUtil.saveText(file1, "package p; public class A{ public void foo(); }");
+          myPackDir = createChildDirectory(mySrcDir1, "p");
+          VirtualFile file1 = createChildData(myPackDir, "A.java");
+          setFileText(file1, "package p; public class A{ public void foo(); }");
           PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
           PsiTestUtil.addContentRoot(myModule, myPrjDir1);

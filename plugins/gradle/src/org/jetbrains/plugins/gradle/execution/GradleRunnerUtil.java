@@ -192,7 +192,7 @@ public class GradleRunnerUtil {
   public static String getTestLocationUrl(@Nullable String testName, @NotNull String fqClassName) {
     return testName == null
            ? String.format("%s://%s::%s", GradleUrlProvider.PROTOCOL_ID, GradleUrlProvider.CLASS_PREF, fqClassName)
-           : String.format("%s://%s::%s.%s", GradleUrlProvider.PROTOCOL_ID, GradleUrlProvider.METHOD_PREF, fqClassName, testName);
+           : String.format("%s://%s::%s::%s", GradleUrlProvider.PROTOCOL_ID, GradleUrlProvider.METHOD_PREF, fqClassName, testName);
   }
 
   public static Object getData(@NotNull Project project, @NonNls String dataId, @NotNull ExecutionInfo executionInfo) {

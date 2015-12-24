@@ -17,6 +17,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
+import com.intellij.Patches;
 import com.intellij.diagnostic.LogEventException;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
@@ -26,11 +27,13 @@ import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ServiceKt;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -65,8 +68,6 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -521,7 +522,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       task.run();
     }
     else {
-      ProgressManager.getInstance().runProcess(task, indicator);
+      ProgressManager progressManager = ServiceManager.getService(ProgressManager.class);
+      if (progressManager == null) {
+        // https://youtrack.jetbrains.com/issue/IDEA-134164
+        task.run();
+      }
+      else {
+        progressManager.runProcess(task, indicator);
+      }
     }
   }
 
@@ -562,21 +570,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     Disposer.dispose(myLastDisposable); // dispose it last
 
     if (LOG.isDebugEnabled()) {
-      final int[] sum = {0};
-      writePauses.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int value) {
-          sum[0] += value;
-          return true;
-        }
-      });
-      LOG.debug("write action Statistics:\n" +
-                "\nTotal write actions: " + writePauses.size() +
-                "\nTotal write pauses : " + sum[0] + "ms"+
-                "\nAverage write pause: " + sum[0] / writePauses.size() + "ms" +
-                "\nMedian  write pause: " + ArrayUtil.averageAmongMedians(writePauses.toNativeArray(), 3) + "ms"
-      );
+      LOG.debug(writeActionStatistics());
+      LOG.debug(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
     }
+  }
+
+  @TestOnly
+  public String writeActionStatistics() {
+    return writePauses.statistics();
   }
 
   @NotNull
@@ -1079,6 +1080,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static Thread getEventQueueThread() {
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     try {
+      // use sun.awt.AWTAccessor.EventQueueAccessor?
+      assert Patches.USE_REFLECTION_TO_ACCESS_JDK8;
       Method method = ReflectionUtil.getDeclaredMethod(EventQueue.class, "getDispatchThread");
       return (Thread)method.invoke(eventQueue);
     }
@@ -1227,12 +1230,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myWriteActionPending;
   }
 
-  private final TIntArrayList writePauses = new TIntArrayList();
-  private void startWrite(@Nullable Class clazz) {
+  private final PausesStat writePauses = new PausesStat("Write action");
+
+  private void startWrite(/*@NotNull*/ Class clazz) {
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     boolean writeActionPending = myWriteActionPending;
     myWriteActionPending = true;
-    long start = System.currentTimeMillis();
+    if ((LOG.isDebugEnabled() || isUnitTestMode()) && myWriteActionsStack.isEmpty()) {
+      writePauses.started();
+    }
     try {
       ActivityTracker.getInstance().inc();
       fireBeforeWriteActionStart(clazz);
@@ -1269,16 +1275,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
 
     myWriteActionsStack.push(clazz);
-    if (LOG.isDebugEnabled()) {
-      long end = System.currentTimeMillis();
-      writePauses.add((int)(end - start));
-    }
     fireWriteActionStarted(clazz);
   }
 
-  private void endWrite(@Nullable Class clazz) {
+  private void endWrite(/*@NotNull*/ Class clazz) {
     try {
       myWriteActionsStack.pop();
+      if ((LOG.isDebugEnabled() || isUnitTestMode()) && myWriteActionsStack.isEmpty()) {
+        writePauses.finished("write action ("+clazz+")");
+      }
       fireWriteActionFinished(clazz);
     }
     finally {
@@ -1288,15 +1293,17 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @NotNull
   @Override
-  public AccessToken acquireWriteActionLock(@Nullable Class clazz) {
+  public AccessToken acquireWriteActionLock(/*@NotNull */Class clazz) {
+    if (clazz == null) {
+      LOG.warn("Parameter must be not null", new Throwable());
+    }
     return new WriteAccessToken(clazz);
   }
 
   private class WriteAccessToken extends AccessToken {
-    @Nullable
     private final Class clazz;
 
-    public WriteAccessToken(@Nullable Class clazz) {
+    public WriteAccessToken(/*@NotNull*/ Class clazz) {
       this.clazz = clazz;
       startWrite(clazz);
       markThreadNameInStackTrace();
@@ -1424,15 +1431,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myDispatcher.getMulticaster().applicationExiting();
   }
 
-  private void fireBeforeWriteActionStart(@Nullable Class action) {
+  private void fireBeforeWriteActionStart(Class action) {
     myDispatcher.getMulticaster().beforeWriteActionStart(action);
   }
 
-  private void fireWriteActionStarted(@Nullable Class action) {
+  private void fireWriteActionStarted(Class action) {
     myDispatcher.getMulticaster().writeActionStarted(action);
   }
 
-  private void fireWriteActionFinished(@Nullable Class action) {
+  private void fireWriteActionFinished(Class action) {
     myDispatcher.getMulticaster().writeActionFinished(action);
   }
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.UIUtil;
@@ -104,7 +105,9 @@ public class ChangeListChooserPanel extends JPanel {
     myRbNew.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        getPreferredFocusedComponent().requestFocusInWindow();
+        if (myRbNew.isSelected()) {
+          IdeFocusManager.getInstance(myProject).requestFocus(myNewListPanel.getPreferredFocusedComponent(), true);
+        }
       }
     });
     final ComboboxSpeedSearch search = new ComboboxSpeedSearch(myExistingListsCombo);

@@ -74,7 +74,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
 
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return false;
 
-    final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
+    final String projectPath = resolveProjectPath(module);
     if (projectPath == null) return false;
 
     List<String> tasksToRun = getTasksToRun(module);
@@ -109,9 +109,9 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
 
     if (context.getModule() == null) return false;
 
-    if (!StringUtil.equals(
-      context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY),
-      configuration.getSettings().getExternalProjectPath())) {
+    final String projectPath = resolveProjectPath(context.getModule());
+    if (projectPath == null) return false;
+    if (!StringUtil.equals(projectPath, configuration.getSettings().getExternalProjectPath())) {
       return false;
     }
     if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(context.getModule()))) return false;

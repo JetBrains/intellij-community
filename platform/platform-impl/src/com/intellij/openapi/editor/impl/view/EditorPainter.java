@@ -138,17 +138,17 @@ class EditorPainter implements TextDrawingCallback {
     final Map<Integer, Couple<Integer>> virtualSelectionMap = createVirtualSelectionMap(startVisualLine, endVisualLine);
     final VisualPosition primarySelectionStart = myEditor.getSelectionModel().getSelectionStartPosition();
     final VisualPosition primarySelectionEnd = myEditor.getSelectionModel().getSelectionEndPosition();
+
+    LineLayout prefixLayout = myView.getPrefixLayout();
+    if (startVisualLine == 0 && prefixLayout != null) {
+      paintBackground(g, myView.getPrefixAttributes(), 0, 0, prefixLayout.getWidth());
+    }
     
     VisualLinesIterator visLinesIterator = new VisualLinesIterator(myView, startVisualLine);
     while (!visLinesIterator.atEnd()) {
       int visualLine = visLinesIterator.getVisualLine();
-      if (visualLine > endVisualLine) break;
+      if (visualLine > endVisualLine || visualLine >= lineCount) break;
       int y = myView.visualLineToY(visualLine);
-      LineLayout prefixLayout = myView.getPrefixLayout();
-      if (visualLine == 0 && prefixLayout != null) {
-        paintBackground(g, myView.getPrefixAttributes(), 0, y, prefixLayout.getWidth());
-      }
-      if (visualLine >= lineCount) break;
       paintLineFragments(g, clip, visLinesIterator, y, new LineFragmentPainter() {
         @Override
         public void paintBeforeLineStart(Graphics2D g, TextAttributes attributes, int columnEnd, float xEnd, int y) {
@@ -330,19 +330,20 @@ class EditorPainter implements TextDrawingCallback {
     final EditorImpl.LineWhitespacePaintingStrategy whitespacePaintingStrategy = myEditor.new LineWhitespacePaintingStrategy();
     boolean paintAllSoftWraps = myEditor.getSettings().isAllSoftWrapsShown();
     int lineCount = myEditor.getVisibleLineCount();
+
+    LineLayout prefixLayout = myView.getPrefixLayout();
+    if (startVisualLine == 0 && prefixLayout != null) {
+      g.setColor(myView.getPrefixAttributes().getForegroundColor());
+      paintLineLayoutWithEffect(g, prefixLayout, 0, myView.getAscent(),
+                                myView.getPrefixAttributes().getEffectColor(), myView.getPrefixAttributes().getEffectType());
+    }
+
     VisualLinesIterator visLinesIterator = new VisualLinesIterator(myView, startVisualLine);
     while (!visLinesIterator.atEnd()) {
       int visualLine = visLinesIterator.getVisualLine();
-      if (visualLine > endVisualLine) break;
+      if (visualLine > endVisualLine || visualLine >= lineCount) break;
+
       int y = myView.visualLineToY(visualLine) + myView.getAscent();
-      LineLayout prefixLayout = myView.getPrefixLayout();
-      if (visualLine == 0 && prefixLayout != null) {
-        g.setColor(myView.getPrefixAttributes().getForegroundColor());
-        paintLineLayoutWithEffect(g, prefixLayout, 0, y, 
-                                  myView.getPrefixAttributes().getEffectColor(), myView.getPrefixAttributes().getEffectType());
-      }
-      if (visualLine >= lineCount) break;
-      
       final boolean paintSoftWraps = paintAllSoftWraps || 
                                      myEditor.getCaretModel().getLogicalPosition().line == visLinesIterator.getStartLogicalLine();
       final int[] currentLogicalLine = new int[] {-1}; 

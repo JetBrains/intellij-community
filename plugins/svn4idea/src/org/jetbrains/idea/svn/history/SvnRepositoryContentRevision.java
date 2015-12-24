@@ -30,7 +30,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.MarkerVcsContentRevision;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -49,7 +49,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsContentRevision {
+public class SvnRepositoryContentRevision implements ByteBackedContentRevision, MarkerVcsContentRevision {
 
   @NotNull private final SvnVcs myVcs;
   @NotNull private final String myPath;
@@ -63,20 +63,26 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
     myRevision = revision;
   }
 
-  @Nullable
+  @NotNull
   public String getContent() throws VcsException {
+    return ContentRevisionCache.getAsString(getContentAsBytes(), myFilePath, null);
+  }
+
+  @NotNull
+  @Override
+  public byte[] getContentAsBytes() throws VcsException {
     try {
       if (myFilePath.getVirtualFile() == null) {
         LocalFileSystem.getInstance().refreshAndFindFileByPath(myFilePath.getPath());
       }
-      return ContentRevisionCache.getOrLoadAsString(myVcs.getProject(), myFilePath, getRevisionNumber(), myVcs.getKeyInstanceMethod(),
-                                                    ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
-                                                    new Throwable2Computable<byte[], VcsException, IOException>() {
-                                                      @Override
-                                                      public byte[] compute() throws VcsException, IOException {
-                                                        return loadContent().toByteArray();
-                                                      }
-                                                    });
+      return ContentRevisionCache.getOrLoadAsBytes(myVcs.getProject(), myFilePath, getRevisionNumber(), myVcs.getKeyInstanceMethod(),
+                                                   ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
+                                                   new Throwable2Computable<byte[], VcsException, IOException>() {
+                                                     @Override
+                                                     public byte[] compute() throws VcsException, IOException {
+                                                       return loadContent().toByteArray();
+                                                     }
+                                                   });
     }
     catch (IOException e) {
       throw new VcsException(e);

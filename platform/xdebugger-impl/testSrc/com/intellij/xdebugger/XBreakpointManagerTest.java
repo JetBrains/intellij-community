@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -38,32 +37,32 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     assertSameElements(getAllBreakpoints(), defaultBreakpoint);
 
     XLineBreakpoint<MyBreakpointProperties> lineBreakpoint =
-      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "url", 239, new MyBreakpointProperties("123"));
+      addLineBreakpoint(myBreakpointManager, "url", 239, new MyBreakpointProperties("123"));
 
-    XBreakpoint<MyBreakpointProperties> breakpoint = myBreakpointManager.addBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE, new MyBreakpointProperties("abc"));
+    XBreakpoint<MyBreakpointProperties> breakpoint = addBreakpoint(myBreakpointManager, new MyBreakpointProperties("abc"));
 
     assertSameElements(getAllBreakpoints(), breakpoint, lineBreakpoint, defaultBreakpoint);
     assertSame(lineBreakpoint, assertOneElement(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE)));
     assertSameElements(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE), breakpoint, defaultBreakpoint);
 
-    myBreakpointManager.removeBreakpoint(lineBreakpoint);
+    removeBreakPoint(myBreakpointManager, lineBreakpoint);
     assertSameElements(getAllBreakpoints(), breakpoint, defaultBreakpoint);
     assertTrue(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE).isEmpty());
     assertSameElements(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE), breakpoint, defaultBreakpoint);
 
-    myBreakpointManager.removeBreakpoint(breakpoint);
+    removeBreakPoint(myBreakpointManager, breakpoint);
     assertSameElements(getAllBreakpoints(), defaultBreakpoint);
     assertSameElements(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE), defaultBreakpoint);
   }
 
   public void testSerialize() {
     XLineBreakpoint<MyBreakpointProperties> breakpoint =
-      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "myurl", 239, new MyBreakpointProperties("z1"));
+      addLineBreakpoint(myBreakpointManager, "myurl", 239, new MyBreakpointProperties("z1"));
     breakpoint.setCondition("cond");
     breakpoint.setLogExpression("log");
     breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
     breakpoint.setLogMessage(true);
-    myBreakpointManager.addBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE, new MyBreakpointProperties("z2"));
+    addBreakpoint(myBreakpointManager, new MyBreakpointProperties("z2"));
 
     reload();
     List<XBreakpoint<?>> breakpoints = getAllBreakpoints();
@@ -134,27 +133,22 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     };
     myBreakpointManager.addBreakpointListener(MY_LINE_BREAKPOINT_TYPE, listener);
 
-    XBreakpoint<MyBreakpointProperties> breakpoint = myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "url", 239, new MyBreakpointProperties("abc"));
-    myBreakpointManager.addBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE, new MyBreakpointProperties("321"));
-    myBreakpointManager.removeBreakpoint(breakpoint);
+    XBreakpoint<MyBreakpointProperties> breakpoint = addLineBreakpoint(myBreakpointManager, "url", 239, new MyBreakpointProperties("abc"));
+    addBreakpoint(myBreakpointManager, new MyBreakpointProperties("321"));
+    removeBreakPoint(myBreakpointManager, breakpoint);
     assertEquals("added[abc];removed[abc];", out.toString());
 
     myBreakpointManager.removeBreakpointListener(MY_LINE_BREAKPOINT_TYPE, listener);
     out.setLength(0);
-    myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "url", 239, new MyBreakpointProperties("a"));
+    addLineBreakpoint(myBreakpointManager, "url", 239, new MyBreakpointProperties("a"));
     assertEquals("", out.toString());
   }
 
   public void testRemoveFile() {
     final VirtualFile file = myTempFiles.createVFile("breakpoint", ".txt");
-    myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, null);
+    addLineBreakpoint(myBreakpointManager, file.getUrl(), 0, null);
     assertOneElement(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE));
-    try {
-      file.delete(this);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    delete(file);
     assertEmpty(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE));
   }
 

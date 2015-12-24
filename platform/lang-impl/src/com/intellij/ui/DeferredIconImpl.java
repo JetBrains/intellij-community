@@ -46,7 +46,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
-public class DeferredIconImpl<T> implements DeferredIcon {
+public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.DeferredIconImpl");
   private static final int MIN_AUTO_UPDATE_MILLIS = 950;
   private static final RepaintScheduler ourRepaintScheduler = new RepaintScheduler();
@@ -246,6 +246,12 @@ public class DeferredIconImpl<T> implements DeferredIcon {
       myEvaluator = null;
       myParam = null;
     }
+  }
+
+  @Nullable
+  @Override
+  public Icon retrieve() {
+    return evaluate();
   }
 
   @NotNull

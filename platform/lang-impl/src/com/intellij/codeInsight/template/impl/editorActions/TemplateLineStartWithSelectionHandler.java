@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,8 @@ package com.intellij.codeInsight.template.impl.editorActions;
 
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
-/**
- * User: anna
- * Date: 2/22/11
- */
-public class LineStartWithSelectionHandler extends LineStartEndWithSelectionHandler {
-  public LineStartWithSelectionHandler(final EditorActionHandler originalHandler) {
-    super(originalHandler, true);
+public class TemplateLineStartWithSelectionHandler extends TemplateLineStartEndHandler {
+  public TemplateLineStartWithSelectionHandler(final EditorActionHandler originalHandler) {
+    super(originalHandler, true, true);
   }
 }

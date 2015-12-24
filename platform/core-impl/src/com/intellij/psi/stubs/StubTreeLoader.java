@@ -124,7 +124,7 @@ public abstract class StubTreeLoader {
     final Function<Pair<IStubFileElementType, PsiFile>, String> stubRootToString = new Function<Pair<IStubFileElementType, PsiFile>, String>() {
       @Override
       public String fun(Pair<IStubFileElementType, PsiFile> pair) {
-        return "(" + pair.first.getClass().getSimpleName() + " -> " + fileClassName.fun(pair.second) + ")";
+        return "(" + pair.first.toString() + ", " + pair.first.getLanguage() + " -> " + fileClassName.fun(pair.second) + ")";
       }
     };
     final List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(provider);

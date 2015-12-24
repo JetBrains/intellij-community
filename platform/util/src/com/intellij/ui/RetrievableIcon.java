@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-package com.intellij.util.indexing;
+package com.intellij.ui;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
+import javax.swing.*;
+
 
 /**
- * @deprecated extend {@link com.intellij.util.indexing.IndexableSetContributor} instead
- * @author Dmitry Avdeev
+ * This class is mostly for testing purposes: in case an icon is hidden behind a private or a restricted interface,
+ * marking it as RetrievableIcon will help get the actual icon and perform checks.
  */
-public interface IndexedRootsProvider {
-
-  ExtensionPointName<IndexedRootsProvider> EP_NAME = new ExtensionPointName<IndexedRootsProvider>("com.intellij.indexedRootsProvider");
-
-  /**
-   * @deprecated
-   * @return each string is VFS url {@link com.intellij.openapi.vfs.VirtualFile#getUrl()} of the root to index. Cannot depend on project.
-   */
-  Set<String> getRootsToIndex();
+public interface RetrievableIcon extends Icon {
+  @Nullable
+  Icon retrieve();
 }

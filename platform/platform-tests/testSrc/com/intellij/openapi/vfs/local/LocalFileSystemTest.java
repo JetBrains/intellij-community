@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -160,11 +161,11 @@ public class LocalFileSystemTest extends PlatformTestCase {
     VirtualFile toVDir = myFS.findFileByPath(toDir.getPath().replace(File.separatorChar, '/'));
     assertNotNull(fromVDir);
     assertNotNull(toVDir);
-    final VirtualFile fileToCopy = fromVDir.createChildData(this, "temp_file");
+    final VirtualFile fileToCopy = createChildData(fromVDir, "temp_file");
     final byte[] byteContent = {0, 1, 2, 3};
-    fileToCopy.setBinaryContent(byteContent);
+    setBinaryContent(fileToCopy,byteContent);
     final String newName = "new_temp_file";
-    final VirtualFile copy = fileToCopy.copy(this, toVDir, newName);
+    final VirtualFile copy = copy(fileToCopy, toVDir, newName);
     assertEquals(newName, copy.getName());
     assertTrue(Arrays.equals(byteContent, copy.contentsToByteArray()));
   }
@@ -177,11 +178,11 @@ public class LocalFileSystemTest extends PlatformTestCase {
     VirtualFile toVDir = myFS.findFileByPath(toDir.getPath().replace(File.separatorChar, '/'));
     assertNotNull(fromVDir);
     assertNotNull(toVDir);
-    final VirtualFile dirToCopy = fromVDir.createChildDirectory(this, "dir");
-    final VirtualFile file = dirToCopy.createChildData(this, "temp_file");
-    file.setBinaryContent(new byte[]{0, 1, 2, 3});
+    final VirtualFile dirToCopy = createChildDirectory(fromVDir, "dir");
+    final VirtualFile file = createChildData(dirToCopy, "temp_file");
+    setBinaryContent(file,new byte[]{0, 1, 2, 3});
     final String newName = "dir";
-    final VirtualFile dirCopy = dirToCopy.copy(this, toVDir, newName);
+    final VirtualFile dirCopy = copy(dirToCopy, toVDir, newName);
     assertEquals(newName, dirCopy.getName());
     PlatformTestUtil.assertDirectoriesEqual(toVDir, fromVDir);
   }
@@ -291,7 +292,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
 
       final VirtualFile file = myFS.refreshAndFindFileByIoFile(targetFile);
       assertNotNull(file);
-      file.setBinaryContent("hello".getBytes(CharsetToolkit.UTF8_CHARSET), 0, 0, requestor);
+      setBinaryContent(file,"hello".getBytes(CharsetToolkit.UTF8_CHARSET), 0, 0, requestor);
       assertTrue(file.getLength() > 0);
 
       final VirtualFile check = myFS.refreshAndFindFileByIoFile(hardLinkFile);
@@ -698,12 +699,25 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertNotNull(vFile);
     assertWritable(file, vFile, true);
 
-    vFile.setWritable(false);
+    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
+      @Override
+      public Object compute() throws IOException {
+        vFile.setWritable(false);
+        return null;
+      }
+    });
+
     assertWritable(file, vFile, false);
     vFile.refresh(false, false);
     assertWritable(file, vFile, false);
 
-    vFile.setWritable(true);
+    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
+      @Override
+      public Object compute() throws IOException {
+        vFile.setWritable(true);
+        return null;
+      }
+    });
     assertWritable(file, vFile, true);
     vFile.refresh(false, false);
     assertWritable(file, vFile, true);

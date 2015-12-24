@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.contents;
 
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,20 +23,10 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * ex: 'Before' state for new file
  */
-public class EmptyContent implements DiffContent {
+public class EmptyContent extends DiffContentBase {
   @Nullable
   @Override
   public FileType getContentType() {
     return null;
-  }
-
-  @Nullable
-  @Override
-  public OpenFileDescriptor getOpenFileDescriptor() {
-    return null;
-  }
-
-  @Override
-  public void onAssigned(boolean isAssigned) {
   }
 }

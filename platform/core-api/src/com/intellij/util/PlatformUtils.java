@@ -36,6 +36,7 @@ public class PlatformUtils {
   public static final String PHP_PREFIX = "PhpStorm";
   public static final String WEB_PREFIX = "WebStorm";
   public static final String DBE_PREFIX = "DataGrip";
+  public static final String RIDER_PREFIX = "Rider";
 
   public static String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);
@@ -104,6 +105,10 @@ public class PlatformUtils {
 
   public static boolean isDatabaseIDE() {
     return is(DBE_PREFIX);
+  }
+
+  public static boolean isRider() {
+    return is(RIDER_PREFIX);
   }
 
   public static boolean isCommunityEdition() {

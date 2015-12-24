@@ -1,6 +1,8 @@
 package com.jetbrains.python.debugger;
 
 
+import org.jetbrains.annotations.NotNull;
+
 public class PyStackFrameInfo {
 
   private final String myThreadId;
@@ -15,6 +17,7 @@ public class PyStackFrameInfo {
     myPosition = position;
   }
 
+  @NotNull
   public String getThreadId() {
     return myThreadId;
   }

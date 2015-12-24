@@ -85,7 +85,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public enum State {STOPPED, RUNNING, WAITING_ATTACH, PAUSED, WAIT_EVALUATION, DISPOSED}
 
   public enum Event
-  {ATTACHED, DETACHED, RESUME, STEP, PAUSE, REFRESH, CONTEXT, START_WAIT_ATTACH, DISPOSE, REFRESH_VIEWS_ONLY, THREADS_REFRESH}
+  {ATTACHED, DETACHED, RESUME, STEP, PAUSE, REFRESH, CONTEXT, START_WAIT_ATTACH, DISPOSE, REFRESH_WITH_STACK, THREADS_REFRESH}
 
   private volatile boolean myIsEvaluating;
   private volatile int myIgnoreFiltersFrameCountThreshold = 0;
@@ -376,13 +376,11 @@ public class DebuggerSession implements AbstractDebuggerSession {
                                  Event.REFRESH, null);
   }
 
-  public void refresh(final boolean refreshViewsOnly) {
+  public void refresh(final boolean refreshWithStack) {
     final State state = getState();
     DebuggerContextImpl context = myContextManager.getContext();
     DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(this, context.getSuspendContext(), context.getThreadProxy(), context.getFrameProxy());
-    myContextManager.setState(newContext, state, refreshViewsOnly ? Event.REFRESH_VIEWS_ONLY
-                                                                  : Event.REFRESH
-      , null);
+    myContextManager.setState(newContext, state, refreshWithStack ? Event.REFRESH_WITH_STACK : Event.REFRESH, null);
   }
 
   public void dispose() {

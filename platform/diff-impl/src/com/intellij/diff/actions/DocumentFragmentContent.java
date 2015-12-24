@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.actions;
 
+import com.intellij.diff.contents.DiffContentBase;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
@@ -35,7 +36,7 @@ import java.nio.charset.Charset;
 /**
  * Represents sub text of other content. Original content should provide not null document.
  */
-public class DocumentFragmentContent implements DocumentContent {
+public class DocumentFragmentContent extends DiffContentBase implements DocumentContent {
   // TODO: reuse DocumentWindow ?
 
   @NotNull private final DocumentContent myOriginal;

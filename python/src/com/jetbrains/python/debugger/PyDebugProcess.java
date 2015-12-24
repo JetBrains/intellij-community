@@ -614,7 +614,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return PyDebugSupportUtils.canSaveToTemp(project, name);
   }
 
-  @Nullable
+  @NotNull
   private PyStackFrame currentFrame() throws PyDebuggerException {
     if (!isConnected()) {
       throw new PyDebuggerException("Disconnected");
@@ -633,24 +633,27 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return frame;
   }
 
+  @Nullable
   private String getFunctionName(final XLineBreakpoint breakpoint) {
+    if (breakpoint.getSourcePosition() == null) {
+      return null;
+    }
     final VirtualFile file = breakpoint.getSourcePosition().getFile();
     AccessToken lock = ApplicationManager.getApplication().acquireReadActionLock();
     try {
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       final Project project = getSession().getProject();
-      final String[] funcName = new String[1];
       if (document != null) {
         if (file.getFileType() == PythonFileType.INSTANCE) {
           PsiElement psiElement = XDebuggerUtil.getInstance().findContextElement(file, breakpoint.getSourcePosition().getOffset(),
                                                                                  project, false);
           PyFunction function = PsiTreeUtil.getParentOfType(psiElement, PyFunction.class);
           if (function != null) {
-            funcName[0] = function.getName();
+            return function.getName();
           }
         }
       }
-      return funcName[0];
+      return null;
     }
     finally {
       lock.finish();
@@ -660,9 +663,15 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public void addBreakpoint(final PySourcePosition position, final XLineBreakpoint breakpoint) {
     myRegisteredBreakpoints.put(position, breakpoint);
     if (isConnected()) {
+      final String conditionExpression = breakpoint.getConditionExpression() == null
+                                         ? null
+                                         : breakpoint.getConditionExpression().getExpression();
+      final String logExpression = breakpoint.getLogExpressionObject() == null
+                                   ? null
+                                   : breakpoint.getLogExpressionObject().getExpression();
       myDebugger.setBreakpointWithFuncName(breakpoint.getType().getId(), position.getFile(), position.getLine(),
-                                           breakpoint.getCondition(),
-                                           breakpoint.getLogExpression(),
+                                           conditionExpression,
+                                           logExpression,
                                            getFunctionName(breakpoint));
     }
   }
@@ -824,7 +833,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     try {
       PyStackFrame frame = currentFrame();
 
-      return frame != null ? frame.getSourcePosition() : null;
+      return frame.getSourcePosition();
     }
     catch (PyDebuggerException e) {
       return null;

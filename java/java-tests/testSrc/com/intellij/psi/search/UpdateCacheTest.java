@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.JavaTestUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.todo.TodoConfiguration;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -29,7 +31,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
@@ -88,7 +89,14 @@ public class UpdateCacheTest extends PsiTestCase {
     PsiDirectory root = ProjectRootUtil.getAllContentRoots(myProject) [0];
 
     PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("New.java", JavaFileType.INSTANCE, "class A{ Object o;}");
-    file = (PsiFile)root.add(file);
+    final PsiFile finalFile = file;
+    file = new WriteAction<PsiFile>() {
+      @Override
+      protected void run(Result<PsiFile> result) throws Throwable {
+        PsiFile res = (PsiFile)root.add(finalFile);
+        result.setResult(res);
+      }
+    }.execute().throwException().getResultObject();
     assertNotNull(file);
 
     PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
@@ -115,7 +123,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     VirtualFile file = root.findChild("1.java");
     assertNotNull(file);
-    file.delete(null);
+    delete(file);
 
     PsiClass stringClass = myJavaFacade.findClass("java.lang.String", GlobalSearchScope.allScope(getProject()));
     assertNotNull(stringClass);
@@ -127,17 +135,12 @@ public class UpdateCacheTest extends PsiTestCase {
 
     VirtualFile file = root.findChild("1.java");
     assertNotNull(file);
-    VfsUtil.saveText(file, "class A{ Object o;}");
+    setFileText(file, "class A{ Object o;}");
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
     assertNotNull(objectClass);
     checkUsages(objectClass, new String[]{"1.java"});
-  }
-
-  @Override
-  protected boolean isRunInWriteAction() {
-    return !getTestName(false).equals("ExternalFileModificationWhileProjectClosed");
   }
 
   public void testExternalFileModificationWhileProjectClosed() throws Exception {
@@ -207,7 +210,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     VirtualFile file = root.findChild("aDir");
     assertNotNull(file);
-    file.delete(null);
+    delete(file);
 
     PsiClass threadClass = myJavaFacade.findClass("java.lang.Thread", GlobalSearchScope.allScope(getProject()));
     assertNotNull(threadClass);
@@ -242,8 +245,8 @@ public class UpdateCacheTest extends PsiTestCase {
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {
-        VirtualFile newFile = dir.createChildData(null, "New.java");
-        VfsUtil.saveText(newFile, "class A{ Exception e;} //todo");
+        VirtualFile newFile = createChildData(dir, "New.java");
+        setFileText(newFile, "class A{ Exception e;} //todo");
       }
     }.execute().throwException();
 
@@ -270,8 +273,8 @@ public class UpdateCacheTest extends PsiTestCase {
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {
-        VirtualFile newFile = dir.createChildData(null, "New.java");
-        VfsUtil.saveText(newFile, "class A{ Exception e;} //todo");
+        VirtualFile newFile = createChildData(dir, "New.java");
+        setFileText(newFile, "class A{ Exception e;} //todo");
       }
     }.execute().throwException();
 
@@ -297,8 +300,8 @@ public class UpdateCacheTest extends PsiTestCase {
       protected void run() throws Throwable {
         PsiTestUtil.addContentRoot(myModule, root);
 
-        VirtualFile newFile = root.createChildData(null, "New.java");
-        VfsUtil.saveText(newFile, "class A{ Exception e;} //todo");
+        VirtualFile newFile = createChildData(root, "New.java");
+        setFileText(newFile, "class A{ Exception e;} //todo");
       }
     }.execute().throwException();
 
@@ -322,8 +325,8 @@ public class UpdateCacheTest extends PsiTestCase {
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {
-        VirtualFile newFile = root.createChildData(null, "New.java");
-        VfsUtil.saveText(newFile, "class A{ Exception e;} //todo");
+        VirtualFile newFile = createChildData(root, "New.java");
+        setFileText(newFile, "class A{ Exception e;} //todo");
       }
     }.execute().throwException();
 
@@ -354,8 +357,8 @@ public class UpdateCacheTest extends PsiTestCase {
       protected void run() throws Throwable {
         PsiTestUtil.addSourceRoot(myModule, root);
 
-        VirtualFile newFile = root.createChildData(null, "New.java");
-        VfsUtil.saveText(newFile, "class A{ Exception e;} //todo");
+        VirtualFile newFile = createChildData(root, "New.java");
+        setFileText(newFile, "class A{ Exception e;} //todo");
       }
     }.execute().throwException();
 
@@ -389,8 +392,8 @@ public class UpdateCacheTest extends PsiTestCase {
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {
-        VirtualFile newFile = root.createChildData(null, "New.java");
-        VfsUtil.saveText(newFile, "class A{ Exception e;} //todo");
+        VirtualFile newFile = createChildData(root, "New.java");
+        setFileText(newFile, "class A{ Exception e;} //todo");
       }
     }.execute().throwException();
 

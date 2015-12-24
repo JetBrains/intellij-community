@@ -191,8 +191,11 @@ public class PyOverrideImplementUtil {
     }
   }
 
-  private static PyFunctionBuilder buildOverriddenFunction(PyClass pyClass, PyFunction baseFunction, boolean implement) {
+  private static PyFunctionBuilder buildOverriddenFunction(PyClass pyClass,
+                                                           PyFunction baseFunction,
+                                                           boolean implement) {
     final boolean overridingNew = PyNames.NEW.equals(baseFunction.getName());
+    assert baseFunction.getName() != null;
     PyFunctionBuilder pyFunctionBuilder = new PyFunctionBuilder(baseFunction.getName(), baseFunction);
     final PyDecoratorList decorators = baseFunction.getDecoratorList();
     boolean baseMethodIsStatic = false;
@@ -203,6 +206,10 @@ public class PyOverrideImplementUtil {
       else if (decorators.findDecorator(PyNames.STATICMETHOD) != null) {
         baseMethodIsStatic = true;
         pyFunctionBuilder.decorate(PyNames.STATICMETHOD);
+      }
+      else if (decorators.findDecorator(PyNames.PROPERTY) != null ||
+        decorators.findDecorator(PyNames.ABSTRACTPROPERTY) != null) {
+        pyFunctionBuilder.decorate(PyNames.PROPERTY);
       }
     }
     PyAnnotation anno = baseFunction.getAnnotation();

@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
@@ -31,6 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -64,6 +66,18 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
   @Override
   @NotNull
   public XmlAttribute createXmlAttribute(@NotNull String name, @NotNull String value) throws IncorrectOperationException {
+    return createAttribute(name, value, XmlFileType.INSTANCE);
+  }
+
+  @NotNull
+  @Override
+  public XmlAttribute createAttribute(@NotNull @NonNls String name, @NotNull String value, @Nullable PsiElement context) throws IncorrectOperationException {
+    final FileType type = context != null ? context.getContainingFile().getFileType() : null;
+    return createAttribute(name, value, type instanceof XmlLikeFileType ? type : XmlFileType.INSTANCE);
+  }
+
+  @NotNull
+  private XmlAttribute createAttribute(@NotNull String name, @NotNull String value, @NotNull FileType fileType) {
     final char quoteChar;
     if (!value.contains("\"")) {
       quoteChar = '"';
@@ -73,8 +87,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
       quoteChar = '"';
       value = StringUtil.replace(value, "\"", "&quot;");
     }
-    final XmlDocument document = createXmlDocument("<tag " + name + "=" + quoteChar + value + quoteChar + "/>", "dummy.xml",
-                                                   XmlFileType.INSTANCE);
+    final XmlDocument document = createXmlDocument("<tag " + name + "=" + quoteChar + value + quoteChar + "/>", "dummy.xml", fileType);
     XmlTag tag = document.getRootTag();
     assert tag != null;
     XmlAttribute[] attributes = tag.getAttributes();

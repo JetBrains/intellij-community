@@ -883,7 +883,7 @@ public class PythonSdkType extends SdkType {
     if (PySdkUtil.isRemote(sdk)) {
       final Ref<Boolean> result = Ref.create(false);
       //noinspection ConstantConditions
-      ((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).connectionCredentials().switchType(new RemoteSdkConnectionAcceptor() {
+      ((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).switchOnConnectionType(new RemoteSdkConnectionAcceptor() {
         @Override
         public void ssh(@NotNull RemoteCredentialsHolder cred) {
         }

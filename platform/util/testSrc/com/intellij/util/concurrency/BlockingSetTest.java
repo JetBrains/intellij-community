@@ -36,7 +36,7 @@ public class BlockingSetTest {
   public void testMultipleThreads() throws Exception {
     final BlockingSet<String> lock = new BlockingSet<String>();
     int threads = 10;
-    int tasks = 100;
+    int tasks = 10000;
     ExecutorService service = Executors.newFixedThreadPool(threads);
     List<Callable<Void>> taskList = new ArrayList<Callable<Void>>(tasks);
     final AtomicBoolean check = new AtomicBoolean(false);
@@ -48,7 +48,7 @@ public class BlockingSetTest {
           try {
             Assert.assertFalse(check.get());
             check.set(true);
-            Thread.sleep(10L);
+            Thread.sleep(1);
             check.set(false);
           }
           finally {

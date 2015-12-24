@@ -167,6 +167,7 @@ public class LineStatusTracker {
   private void destroyRanges() {
     removeAnathema();
     removeHighlightersFromMarkupModel();
+    myDirtyRange = null;
   }
 
   @CalledInAwt

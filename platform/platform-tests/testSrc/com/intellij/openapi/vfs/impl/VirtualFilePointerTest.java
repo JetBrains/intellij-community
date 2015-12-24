@@ -80,11 +80,6 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     }
   }
 
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
-  }
-
   private static class LoggingListener implements VirtualFilePointerListener {
     private final ArrayList<String> myLog = new ArrayList<>();
 

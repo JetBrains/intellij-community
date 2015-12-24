@@ -74,7 +74,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
             return descriptor;
           }
           return GuavaSupplierConversionRule.GUAVA_SUPPLIER.equals(qName)
-                 ? new LambdaParametersTypeConversionDescriptor("$val$.or($other$)", "$val$.orElseGet($other$)")
+                 ? new GuavaTypeConversionDescriptor("$val$.or($other$)", "$val$.orElseGet($other$)")
                  : new TypeConversionDescriptor("$val$.or($other$)", "$val$.orElse($other$)");
         }
         return null;
@@ -86,7 +86,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
           return null;
         }
         final PsiExpression functionArgument = arguments[0];
-        final TypeConversionDescriptor descriptor = new LambdaParametersTypeConversionDescriptor("$val$.transform($fun$)", "$val$.map($fun$)");
+        final TypeConversionDescriptor descriptor = new GuavaTypeConversionDescriptor("$val$.transform($fun$)", "$val$.map($fun$)");
         final PsiType typeParameter = GuavaConversionUtil.getFunctionReturnType(functionArgument);
         if (typeParameter == null) {
           return descriptor;

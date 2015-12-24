@@ -2,7 +2,9 @@ package com.intellij.ui;
 
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,13 +24,14 @@ import java.util.Map;
  * @author oleg
  */
 public class CheckBoxList<T> extends JBList {
-  private static final int DEFAULT_CHECK_BOX_WIDTH = 20;
+  private final CellRenderer myCellRenderer;
   private CheckBoxListListener checkBoxListListener;
   private final BidirectionalMap<T, JCheckBox> myItemMap = new BidirectionalMap<T, JCheckBox>();
 
   public CheckBoxList(final CheckBoxListListener checkBoxListListener) {
     this(new DefaultListModel(), checkBoxListListener);
   }
+
   public CheckBoxList(final DefaultListModel dataModel, final CheckBoxListListener checkBoxListListener) {
     this(dataModel);
     setCheckBoxListListener(checkBoxListListener);
@@ -42,8 +45,8 @@ public class CheckBoxList<T> extends JBList {
     super();
     //noinspection unchecked
     setModel(dataModel);
-    final CellRenderer cellRenderer = new CellRenderer();
-    setCellRenderer(cellRenderer);
+    myCellRenderer = new CellRenderer();
+    setCellRenderer(myCellRenderer);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     setBorder(BorderFactory.createEtchedBorder());
     addKeyListener(new KeyAdapter() {
@@ -64,28 +67,107 @@ public class CheckBoxList<T> extends JBList {
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (isEnabled()) {
           int index = locationToIndex(e.getPoint());
-
           if (index != -1) {
-            JCheckBox checkbox = (JCheckBox)getModel().getElementAt(index);
-            int iconArea;
-            try {
-              iconArea = checkbox.getMargin().left +
-                         ((BasicRadioButtonUI)checkbox.getUI()).getDefaultIcon().getIconWidth() +
-                         checkbox.getIconTextGap();
+            JCheckBox checkBox = getCheckBoxAt(index);
+            Rectangle bounds = getCellBounds(index, index);
+            if (bounds == null) {
+              return false;
             }
-            catch (ClassCastException c) {
-              iconArea = DEFAULT_CHECK_BOX_WIDTH;
-            }
-            int checkboxX = e.getX() - cellRenderer.getLeftBorderThickness();
-            if (checkboxX >= 0 && checkboxX < iconArea) {
-              setSelected(checkbox, index);
-              return true;
+            Point p = findPointRelativeToCheckBox(e.getX() - bounds.x, e.getY() - bounds.y, checkBox, index);
+            if (p != null) {
+              Dimension dim = getCheckBoxDimension(checkBox);
+              if (p.x >= 0 && p.x < dim.width && p.y >= 0 && p.y < dim.height) {
+                setSelected(checkBox, index);
+                return true;
+              }
             }
           }
         }
         return false;
       }
     }.installOn(this);
+  }
+
+  @NotNull
+  private static Dimension getCheckBoxDimension(@NotNull JCheckBox checkBox) {
+    Icon icon = null;
+    BasicRadioButtonUI ui = ObjectUtils.tryCast(checkBox.getUI(), BasicRadioButtonUI.class);
+    if (ui != null) {
+      icon = ui.getDefaultIcon();
+    }
+    if (icon == null) {
+      // com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI.getDefaultIcon()
+      icon = JBUI.emptyIcon(20);
+    }
+    Insets margin = checkBox.getMargin();
+    return new Dimension(margin.left + icon.getIconWidth(), margin.top + icon.getIconHeight());
+  }
+
+  /**
+   * Find point relative to the checkbox. Performs lightweight calculations suitable for default rendering.
+
+   * @param x x-coordinate relative to the rendered component
+   * @param y y-coordinate relative to the rendered component
+   * @param checkBox  JCheckBox instance
+   * @param index     The list cell index
+   * @return A point relative to the checkbox or null, if it's outside of the checkbox.
+   */
+  @Nullable
+  protected Point findPointRelativeToCheckBox(int x, int y, @NotNull JCheckBox checkBox, int index) {
+    int cx = x - myCellRenderer.getBorderInsets().left;
+    int cy = y - myCellRenderer.getBorderInsets().top;
+    return  cx >= 0 && cy >= 0 ? new Point(cx, cy) : null;
+  }
+
+  /**
+   * Find point relative to the checkbox. Performs heavy calculations suitable for adjusted rendering
+   * where the checkbox location can be arbitrary inside the rendered component.
+   *
+   * @param x x-coordinate relative to the rendered component
+   * @param y y-coordinate relative to the rendered component
+   * @param checkBox  JCheckBox instance
+   * @param index     The list cell index
+   * @return A point relative to the checkbox or null, if it's outside of the checkbox.
+   */
+  @Nullable
+  protected Point findPointRelativeToCheckBoxWithAdjustedRendering(int x, int y, @NotNull JCheckBox checkBox, int index) {
+    boolean selected = isSelectedIndex(index);
+    boolean hasFocus = hasFocus();
+    Component component = myCellRenderer.getListCellRendererComponent(this, checkBox, index, selected, hasFocus);
+    Rectangle bounds = getCellBounds(index, index);
+    bounds.x = 0;
+    bounds.y = 0;
+    component.setBounds(bounds);
+    if (component instanceof Container) {
+      Container c = (Container)component;
+      Component found = c.findComponentAt(x, y);
+      if (found == checkBox) {
+        Point checkBoxLocation = getChildLocationRelativeToAncestor(component, checkBox);
+        if (checkBoxLocation != null) {
+          return new Point(x - checkBoxLocation.x, y - checkBoxLocation.y);
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Point getChildLocationRelativeToAncestor(@NotNull Component ancestor, @NotNull Component child) {
+    int dx = 0, dy = 0;
+    Component c = child;
+    while (c != null && c != ancestor) {
+      Point p = c.getLocation();
+      dx += p.x;
+      dy += p.y;
+      c = child.getParent();
+    }
+    return c == ancestor ? new Point(dx, dy) : null;
+  }
+
+
+  @NotNull
+  private JCheckBox getCheckBoxAt(int index) {
+    return (JCheckBox)getModel().getElementAt(index);
   }
 
   public void setStringItems(final Map<String, Boolean> items) {
@@ -108,7 +190,7 @@ public class CheckBoxList<T> extends JBList {
     JCheckBox checkBox = new JCheckBox(text, selected);
     myItemMap.put(item, checkBox);
     //noinspection unchecked
-    ((DefaultListModel) getModel()).addElement(checkBox);
+    ((DefaultListModel)getModel()).addElement(checkBox);
   }
 
   public void updateItem(@NotNull T oldItem, @NotNull T newItem, @NotNull String newText) {
@@ -130,7 +212,7 @@ public class CheckBoxList<T> extends JBList {
   }
 
   public void clear() {
-    ((DefaultListModel) getModel()).clear();
+    ((DefaultListModel)getModel()).clear();
     myItemMap.clear();
   }
 
@@ -182,13 +264,12 @@ public class CheckBoxList<T> extends JBList {
   private class CellRenderer implements ListCellRenderer {
     private final Border mySelectedBorder;
     private final Border myBorder;
-    private final int myLeftBorderThickness;
+    private final Insets myBorderInsets;
 
     private CellRenderer() {
       mySelectedBorder = UIManager.getBorder("List.focusCellHighlightBorder");
-      final Insets borderInsets = mySelectedBorder.getBorderInsets(new JCheckBox());
-      myBorder = new EmptyBorder(borderInsets);
-      myLeftBorderThickness = borderInsets.left;
+      myBorderInsets = mySelectedBorder.getBorderInsets(new JCheckBox());
+      myBorder = new EmptyBorder(myBorderInsets);
     }
 
     @Override
@@ -244,8 +325,9 @@ public class CheckBoxList<T> extends JBList {
       return rootComponent;
     }
 
-    private int getLeftBorderThickness() {
-      return myLeftBorderThickness;
+    @NotNull
+    private Insets getBorderInsets() {
+      return myBorderInsets;
     }
   }
 
@@ -255,8 +337,8 @@ public class CheckBoxList<T> extends JBList {
   }
 
   protected Color getBackground(final boolean isSelected) {
-      return isSelected ? getSelectionBackground() : getBackground();
-    }
+    return isSelected ? getSelectionBackground() : getBackground();
+  }
 
   protected Color getForeground(final boolean isSelected) {
     return isSelected ? getSelectionForeground() : getForeground();

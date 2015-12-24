@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -55,6 +56,7 @@ import java.util.List;
  */
 public class PyProtectedMemberInspection extends PyInspection {
   public boolean ignoreTestFunctions = true;
+  public boolean ignoreAnnotations = false;
 
   @Nls
   @NotNull
@@ -90,6 +92,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     @Override
     public void visitPyReferenceExpression(PyReferenceExpression node) {
       final PyExpression qualifier = node.getQualifier();
+      if (ignoreAnnotations && PsiTreeUtil.getParentOfType(node, PyAnnotation.class) != null) return;
       if (qualifier == null || PyNames.CANONICAL_SELF.equals(qualifier.getText())) return;
       checkReference(node, qualifier);
     }
@@ -102,7 +105,6 @@ public class PyProtectedMemberInspection extends PyInspection {
 
       if (name != null && name.startsWith("_") && !name.startsWith("__") && !name.endsWith("__")) {
         final PsiReference reference = node.getReference(getResolveContext());
-        if (reference == null) return;
         for (final PyInspectionExtension inspectionExtension : PyInspectionExtension.EP_NAME.getExtensions()) {
           if (inspectionExtension.ignoreProtectedSymbol(node, myTypeEvalContext)) {
             return;
@@ -161,6 +163,7 @@ public class PyProtectedMemberInspection extends PyInspection {
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox("Ignore test functions", "ignoreTestFunctions");
+    panel.addCheckbox("Ignore annotations", "ignoreAnnotations");
     return panel;
   }
 }

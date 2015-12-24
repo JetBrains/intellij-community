@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.diff.contents;
 
-package com.intellij.codeInsight.template.impl.editorActions;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.util.UserDataHolderBase;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.Nullable;
 
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+public abstract class DiffContentBase extends UserDataHolderBase implements DiffContent {
+  @Nullable
+  @Override
+  public OpenFileDescriptor getOpenFileDescriptor() {
+    return null;
+  }
 
-/**
- * @author yole
- */
-public class EndHandler extends HomeEndHandler {
-  public EndHandler(final EditorActionHandler originalHandler) {
-    super(originalHandler, false);
+  @Override
+  @CalledInAwt
+  public void onAssigned(boolean isAssigned) {
   }
 }

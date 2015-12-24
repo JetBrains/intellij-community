@@ -70,8 +70,8 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   @Override
-  public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress,
-                         final ChangeListManagerGate addGate) throws VcsException {
+  public void getChanges(@NotNull final VcsDirtyScope dirtyScope, @NotNull final ChangelistBuilder builder, @NotNull final ProgressIndicator progress,
+                         @NotNull final ChangeListManagerGate addGate) throws VcsException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Processing changes for scope " + dirtyScope);
     }
@@ -506,10 +506,11 @@ public class CvsChangeProvider implements ChangeProvider {
     return result;
   }
 
-  private class CvsUpToDateRevision implements ContentRevision {
+  private class CvsUpToDateRevision implements ByteBackedContentRevision {
     protected final FilePath myPath;
     private final VcsRevisionNumber myRevisionNumber;
-    private String myContent;
+
+    private byte[] myContent;
 
     protected CvsUpToDateRevision(final FilePath path, final VcsRevisionNumber revisionNumber) {
       myRevisionNumber = revisionNumber;
@@ -519,20 +520,26 @@ public class CvsChangeProvider implements ChangeProvider {
     @Override
     @Nullable
     public String getContent() throws VcsException {
+      final byte[] fileBytes = getContentAsBytes();
+      return fileBytes == null ? null : CharsetToolkit.bytesToString(fileBytes, myPath.getCharset());
+    }
+
+    @Nullable
+    @Override
+    public byte[] getContentAsBytes() throws VcsException {
       if (myContent == null) {
         try {
-          final byte[] fileBytes = getUpToDateBinaryContent();
-          myContent = fileBytes == null ? null : CharsetToolkit.bytesToString(fileBytes, myPath.getCharset());
+          myContent = getUpToDateBinaryContent();
         }
         catch (CannotFindCvsRootException e) {
-          myContent = null;
+          throw new VcsException(e);
         }
       }
       return myContent;
     }
 
     @Nullable
-    protected byte[] getUpToDateBinaryContent() throws CannotFindCvsRootException {
+    private byte[] getUpToDateBinaryContent() throws CannotFindCvsRootException {
       final VirtualFile virtualFile = myPath.getVirtualFile();
       byte[] result = null;
       if (virtualFile != null) {
@@ -585,8 +592,6 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private class CvsUpToDateBinaryRevision extends CvsUpToDateRevision implements BinaryContentRevision {
-    private byte[] myBinaryContent;
-
     public CvsUpToDateBinaryRevision(final FilePath path, final VcsRevisionNumber revisionNumber) {
       super(path, revisionNumber);
     }
@@ -594,15 +599,7 @@ public class CvsChangeProvider implements ChangeProvider {
     @Override
     @Nullable
     public byte[] getBinaryContent() throws VcsException {
-      if (myBinaryContent == null) {
-        try {
-          myBinaryContent = getUpToDateBinaryContent();
-        }
-        catch (CannotFindCvsRootException e) {
-          throw new VcsException(e);
-        }
-      }
-      return myBinaryContent;
+      return getContentAsBytes();
     }
 
     @NonNls

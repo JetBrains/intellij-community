@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -23,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
@@ -263,7 +265,7 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
     PsiDirectory dir = createDirectory(getTempRootDirectory().getVirtualFile(), newModuleName);
     String path = dir.getVirtualFile().getPath() + "/" + newModuleName + ".iml";
 
-    Module module = ModuleManager.getInstance(getProject()).newModule(path, StdModuleTypes.JAVA.getId());
+    Module module = ApplicationManager.getApplication().runWriteAction((Computable<Module>)() -> ModuleManager.getInstance(getProject()).newModule(path, StdModuleTypes.JAVA.getId()));
     PsiDirectory src = createDirectory(dir.getVirtualFile(), "src");
 
     PsiTestUtil.addSourceRoot(module, src.getVirtualFile());

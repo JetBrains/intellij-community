@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -59,9 +60,13 @@ public class _LastInSuiteTest extends TestCase {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        ((ApplicationImpl)ApplicationManager.getApplication()).setDisposeInProgress(true);
+        ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
+        application.setDisposeInProgress(true);
         LightPlatformTestCase.disposeApplication();
         UIUtil.dispatchAllInvocationEvents();
+
+        System.out.println(application.writeActionStatistics());
+        System.out.println(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
       }
     });
 

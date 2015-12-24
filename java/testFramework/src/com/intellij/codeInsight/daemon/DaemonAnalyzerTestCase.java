@@ -96,11 +96,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   private VirtualFileFilter myVirtualFileFilter = new FileTreeAccessFilter();
 
   @Override
-  protected boolean isRunInWriteAction() {
-    return false;
-  }
-
-  @Override
   protected void setUp() throws Exception {
     super.setUp();
 

@@ -70,8 +70,8 @@ public class GradleUrlProvider implements SMTestLocator {
     final String pref = locationData.substring(0, i);
     final String qualifiedName = locationData.substring(i + 2);
     if (METHOD_PREF.equals(pref)) {
-      final int dot = qualifiedName.lastIndexOf('.');
-      return qualifiedName.substring(0, dot);
+      final int dot = qualifiedName.indexOf("::");
+      return dot == -1 ? null : qualifiedName.substring(0, dot);
     }
     else if (CLASS_PREF.equals(pref)) {
       return qualifiedName;
@@ -85,8 +85,8 @@ public class GradleUrlProvider implements SMTestLocator {
     final String pref = locationData.substring(0, i);
     final String qualifiedName = locationData.substring(i + 2);
     if (METHOD_PREF.equals(pref)) {
-      final int dot = qualifiedName.lastIndexOf('.');
-      return qualifiedName.substring(dot+1);
+      final int dot = qualifiedName.indexOf("::");
+      return dot == -1 ? null : qualifiedName.substring(dot + 2);
     }
     return null;
   }

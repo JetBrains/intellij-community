@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,9 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.impl.DomFileElementImpl;
 import org.jetbrains.annotations.NotNull;
@@ -48,14 +46,14 @@ public class DomVirtualFileEventsTest extends DomHardCoreTestCase{
       @Override
       protected void run() throws Throwable {
         final VirtualFile dir = getVirtualFile(createTempDirectory());
-        PsiTestUtil.addSourceContentToRoots(getModule(), dir);
+        addSourceContentToRoots(getModule(), dir);
         final VirtualFile childData = dir.createChildData(this, "abc.xml");
         System.gc();
         System.gc();
         System.gc();
         System.gc();
         assertResultsAndClear();
-        VfsUtil.saveText(childData, "<a/>");
+        setFileText(childData, "<a/>");
         assertEventCount(0);
         assertResultsAndClear();
       }
@@ -67,10 +65,10 @@ public class DomVirtualFileEventsTest extends DomHardCoreTestCase{
       @Override
       protected void run() throws Throwable {
         final VirtualFile dir = getVirtualFile(createTempDirectory());
-        PsiTestUtil.addSourceContentToRoots(getModule(), dir);
+        addSourceContentToRoots(getModule(), dir);
         final VirtualFile childData = dir.createChildData(this, "abc.xml");
         assertResultsAndClear();
-        VfsUtil.saveText(childData, "<a/>");
+        setFileText(childData, "<a/>");
         final DomFileElementImpl<DomElement> fileElement = getFileElement(childData);
         assertResultsAndClear();
 
@@ -88,9 +86,9 @@ public class DomVirtualFileEventsTest extends DomHardCoreTestCase{
       @Override
       protected void run() throws Throwable {
         final VirtualFile dir = getVirtualFile(createTempDirectory());
-        PsiTestUtil.addSourceContentToRoots(getModule(), dir);
+        addSourceContentToRoots(getModule(), dir);
         final VirtualFile data = dir.createChildData(this, "abc.xml");
-        VfsUtil.saveText(data, "<a/>");
+        setFileText(data, "<a/>");
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
         final DomFileElementImpl<DomElement> fileElement = getFileElement(data);
         assertEventCount(0);

@@ -364,10 +364,6 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     }.execute().getResultObject();
   }
 
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
-  }
 
   protected static void assertOutput(Module module, TestFileSystemBuilder item) {
     assertOutput(module, item, false);

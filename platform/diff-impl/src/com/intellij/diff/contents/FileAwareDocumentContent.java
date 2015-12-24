@@ -1,5 +1,7 @@
 package com.intellij.diff.contents;
 
+import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -11,11 +13,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.LightColors;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.List;
 
 public class FileAwareDocumentContent extends DocumentContentImpl {
   @Nullable private final Project myProject;
@@ -32,7 +39,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
 
   @Override
   public OpenFileDescriptor getOpenFileDescriptor(int offset) {
-    if (myProject == null || getHighlightFile() == null) return null;
+    if (myProject == null || getHighlightFile() == null || !getHighlightFile().isValid()) return null;
     return new OpenFileDescriptor(myProject, getHighlightFile(), offset);
   }
 
@@ -63,6 +70,8 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     private VirtualFile myHighlightFile;
     private LineSeparator mySeparator;
     private Charset myCharset;
+    private Charset mySuggestedCharset;
+    private boolean myMalformedContent;
 
     public Builder(@Nullable Project project) {
       myProject = project;
@@ -76,7 +85,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     private Builder init(@NotNull FilePath path) {
       myHighlightFile = path.getVirtualFile();
       myFileType = path.getFileType();
-      myCharset = path.getCharset(myProject);
+      mySuggestedCharset = path.getCharset(myProject);
       return this;
     }
 
@@ -84,7 +93,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     private Builder init(@NotNull VirtualFile highlightFile) {
       myHighlightFile = highlightFile;
       myFileType = highlightFile.getFileType();
-      myCharset = highlightFile.getCharset();
+      mySuggestedCharset = highlightFile.getCharset();
       return this;
     }
 
@@ -98,14 +107,37 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
 
     @NotNull
     private Builder create(@NotNull byte[] content) {
-      assert myCharset != null;
-      return create(CharsetToolkit.decodeString(content, myCharset));
+      assert mySuggestedCharset != null;
+
+      myCharset = mySuggestedCharset;
+      try {
+        String text = CharsetToolkit.tryDecodeString(content, mySuggestedCharset);
+        return create(text);
+      }
+      catch (CharacterCodingException e) {
+        String text = CharsetToolkit.decodeString(content, mySuggestedCharset);
+        myMalformedContent = true;
+        return create(text);
+      }
+    }
+
+    @Nullable
+    private List<JComponent> createNotifications() {
+      if (!myMalformedContent) return null;
+      assert mySuggestedCharset != null;
+
+      String text = "Content was decoded with errors (using " + "'" + mySuggestedCharset.name() + "' charset)";
+      JComponent notification = DiffNotifications.createNotification(text, LightColors.RED);
+      return Collections.singletonList(notification);
     }
 
     @NotNull
     public FileAwareDocumentContent build() {
       if (FileTypes.UNKNOWN.equals(myFileType)) myFileType = PlainTextFileType.INSTANCE;
-      return new FileAwareDocumentContent(myProject, myDocument, myFileType, myHighlightFile, mySeparator, myCharset);
+      FileAwareDocumentContent content
+        = new FileAwareDocumentContent(myProject, myDocument, myFileType, myHighlightFile, mySeparator, myCharset);
+      content.putUserData(DiffUserDataKeys.NOTIFICATIONS, createNotifications());
+      return content;
     }
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Key;
@@ -24,6 +25,12 @@ import javax.swing.*;
 import java.util.List;
 
 public interface DiffUserDataKeys {
+  //
+  // DiffContent
+  //
+
+  Key<Language> LANGUAGE = Key.create("Diff.Language");
+
   //
   // DiffRequest
   //

@@ -86,14 +86,20 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       createModules(toCreate, modelsProvider, project);
     }
 
-    final boolean isOneToOneMapping = projectData != null && ExternalSystemApiUtil.isOneToOneMapping(project, projectData);
-
     for (DataNode<E> node : toImport) {
       Module module = node.getUserData(MODULE_KEY);
       if (module != null) {
         setModuleOptions(module, node);
+        ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
+        syncPaths(module, modifiableRootModel, node.getData());
+        setLanguageLevel(modifiableRootModel, node.getData());
+      }
+    }
 
-        final ModifiableModuleModel modifiableModel = modelsProvider.getModifiableModuleModel();
+    final boolean isOneToOneMapping = projectData != null && ExternalSystemApiUtil.isOneToOneMapping(project, projectData);
+    for (DataNode<E> node : toImport) {
+      Module module = node.getUserData(MODULE_KEY);
+      if (module != null) {
         final String[] groupPath;
         if (isOneToOneMapping || projectData == null) {
           groupPath = node.getData().getIdeModuleGroup();
@@ -104,10 +110,8 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
                       ? new String[]{externalProjectGroup}
                       : ArrayUtil.prepend(externalProjectGroup, node.getData().getIdeModuleGroup());
         }
+        final ModifiableModuleModel modifiableModel = modelsProvider.getModifiableModuleModel();
         modifiableModel.setModuleGroupPath(module, groupPath);
-        ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
-        syncPaths(module, modifiableRootModel, node.getData());
-        setLanguageLevel(modifiableRootModel, node.getData());
       }
     }
   }

@@ -71,15 +71,16 @@ public interface ProcessDebugger {
 
   void resumeOrStep(String threadId, ResumeOrStepCommand.Mode mode);
 
-  void setTempBreakpoint(String type, String file, int line);
+  void setTempBreakpoint(@NotNull String type, @NotNull String file, int line);
 
-  void removeTempBreakpoint(String file, int line);
+  void removeTempBreakpoint(@NotNull String file, int line);
 
-  void setBreakpoint(String typeId, String file, int line, String condition, String logExpression);
+  void setBreakpoint(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition, @Nullable String logExpression);
 
-  void setBreakpointWithFuncName(String typeId, String file, int line, String condition, String logExpression, String funcName);
+  void setBreakpointWithFuncName(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition,
+                                 @Nullable String logExpression, @Nullable String funcName);
 
-  void removeBreakpoint(String typeId, String file, int line);
+  void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line);
 
   void addCloseListener(RemoteDebuggerCloseListener remoteDebuggerCloseListener);
 

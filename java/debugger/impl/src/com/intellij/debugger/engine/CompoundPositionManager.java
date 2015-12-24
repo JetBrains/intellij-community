@@ -20,12 +20,14 @@ import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.sun.jdi.InternalException;
@@ -84,7 +86,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   public SourcePosition getSourcePosition(final Location location) {
     if (location == null) return null;
     SourcePosition res = mySourcePositionCache.get(location);
-    if (res != null && res.getFile().isValid()) return res;
+    if (checkCacheEntry(res, location)) return res;
 
     return iterate(new Processor<SourcePosition>() {
       @Override
@@ -94,6 +96,16 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
         return res;
       }
     }, null);
+  }
+
+  private static boolean checkCacheEntry(SourcePosition position, Location location) {
+    if (position == null) return false;
+    PsiFile psiFile = position.getFile();
+    if (!psiFile.isValid()) return false;
+    String url = DebuggerUtilsEx.getAlternativeSourceUrl(location.declaringType().name(), psiFile.getProject());
+    if (url == null) return true;
+    VirtualFile file = psiFile.getVirtualFile();
+    return file != null && url.equals(file.getUrl());
   }
 
   @Override

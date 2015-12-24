@@ -26,14 +26,16 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class HomeEndHandler extends EditorActionHandler {
+public abstract class TemplateLineStartEndHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
   private final boolean myIsHomeHandler;
+  private final boolean myWithSelection;
 
-  public HomeEndHandler(final EditorActionHandler originalHandler, boolean isHomeHandler) {
+  public TemplateLineStartEndHandler(final EditorActionHandler originalHandler, boolean isHomeHandler, boolean withSelection) {
     super(true);
     myOriginalHandler = originalHandler;
     myIsHomeHandler = isHomeHandler;
+    myWithSelection = withSelection;
   }
 
   @Override
@@ -43,12 +45,16 @@ public abstract class HomeEndHandler extends EditorActionHandler {
       final TextRange range = templateState.getCurrentVariableRange();
       final int caretOffset = editor.getCaretModel().getOffset();
       if (range != null && range.getStartOffset() <= caretOffset && caretOffset <= range.getEndOffset()) {
+        int selectionOffset = editor.getSelectionModel().getLeadSelectionOffset();
         int offsetToMove = myIsHomeHandler ? range.getStartOffset() : range.getEndOffset();
-        if (offsetToMove != caretOffset) {
-          editor.getCaretModel().moveToOffset(offsetToMove);
-        }
+        editor.getCaretModel().moveToOffset(offsetToMove);
         EditorModificationUtil.scrollToCaret(editor);
-        editor.getSelectionModel().removeSelection();
+        if (myWithSelection) {
+          editor.getSelectionModel().setSelection(selectionOffset, offsetToMove);
+        }
+        else {
+          editor.getSelectionModel().removeSelection();
+        }
         return;
       }
     }
