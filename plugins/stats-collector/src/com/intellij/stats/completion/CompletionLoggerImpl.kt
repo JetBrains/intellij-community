@@ -69,7 +69,7 @@ class CompletionFileLogger(private val installationUID: String,
         
         val builder = logLineBuilder(Action.DOWN)
         builder.addPair("POS", pos)
-        val id = getItemId(itemName, completionList)
+        val id = getItemId(itemName)!!
         builder.addPair("ID", id)
         log(builder)
     }
@@ -81,7 +81,7 @@ class CompletionFileLogger(private val installationUID: String,
         
         val builder = logLineBuilder(Action.UP)
         builder.addPair("POS", pos)
-        val id = getItemId(itemName, completionList)
+        val id = getItemId(itemName)!!
         builder.addPair("ID", id)
         log(builder)
     }
@@ -97,7 +97,8 @@ class CompletionFileLogger(private val installationUID: String,
         logLastAction(lastCompletionList)
         logLastAction = LOG_NOTHING
         val builder = logLineBuilder(Action.TYPED_SELECT)
-        builder.addPair("ID", itemsToId[itemName]!!)
+        val id = getItemId(itemName)!!
+        builder.addPair("ID", id)
         log(builder)
     }
 
@@ -107,7 +108,7 @@ class CompletionFileLogger(private val installationUID: String,
         
         val builder = logLineBuilder(Action.EXPLICIT_SELECT)
         builder.addPair("POS", pos)
-        val id = getItemId(itemName, completionList)
+        val id = getItemId(itemName)!!
         builder.addPair("ID", id)
         log(builder)
     }
@@ -123,7 +124,7 @@ class CompletionFileLogger(private val installationUID: String,
         val builder = logLineBuilder(Action.BACKSPACE)
         builder.addPair("POS", pos)
         builder.addPair("COMP_LIST_LEN", completionList.size)
-        val id = getItemId(itemName, completionList)
+        val id = getItemId(itemName)!!
         builder.addPair("ID", id)
         builder.addText(toIdsList(completionList))
         log(builder)
@@ -131,8 +132,6 @@ class CompletionFileLogger(private val installationUID: String,
 
     private fun convertCompletionList(items: List<LookupStringWithRelevance>): String {
         check(items.size > 0)
-        
-        addUntrackedItemsToIdMap(items)
         val builder = StringBuilder()
         with(builder, {
             append("[")
@@ -142,50 +141,51 @@ class CompletionFileLogger(private val installationUID: String,
                     append(", ")
                 }
                 first = false
-                val itemName = itemsToId[it.item]
+                val itemName = getItemId(it.item)!!
                 append("{ID=$itemName ${it.toData()}}")
             }
             append("]")
         })
         return builder.toString()
     }
-
-    private fun addUntrackedItemsToIdMap(items: List<LookupStringWithRelevance>) {
-        items.forEach {
-            val lookupString = it.item
-            var id = itemsToId[lookupString]
-            if (id == null) {
-                itemsToId[lookupString] = itemsToId.size
-            }
-        }
-    }
-
+    
     private fun log(logLineBuilder: LogLineBuilder) {
         val msg = logLineBuilder.text()
         println(msg)
         logFileManager.println(msg)
     }
 
-    private fun getItemId(itemName: String, newCompletionList: List<LookupStringWithRelevance>): Int {
-        if (itemsToId[itemName] == null) {
-            addUntrackedItemsToIdMap(newCompletionList)
-        }
-        return itemsToId[itemName]!!
+    private fun getItemId(itemName: String): Int? {
+        return itemsToId[itemName]
+    }
+    
+    private fun addNewItem(itemName: String): Int {
+        val size = itemsToId.size
+        itemsToId[itemName] = size
+        return size 
     }
 
     private fun toIdsList(items: List<LookupStringWithRelevance>): String {
-        addUntrackedItemsToIdMap(items)
-        val ids = StringBuilder()
-        with (ids) {
-            append("{")
+        val idsList = StringBuilder()
+        with (idsList) {
+            append("[")
+            var first = true
             items.forEach {
-                append("ID(")
-                append(itemsToId[it.item])
-                append("), ")
+                if (!first) {
+                    append(", ")
+                }
+                first = false
+                
+                var relevance = ""
+                if (getItemId(it.item) == null) {
+                    addNewItem(it.item)
+                    relevance = " ${it.toData()}"
+                }
+                append("ID=${getItemId(it.item)!!}$relevance")
             }
-            append('}')
+            append(']')
         }
-        return ids.toString()
+        return idsList.toString()
     }
 
     private fun logLineBuilder(action: Action): LogLineBuilder {
