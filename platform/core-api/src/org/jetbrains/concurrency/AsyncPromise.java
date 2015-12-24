@@ -203,7 +203,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
 
   @Override
   @NotNull
-  public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull final AsyncFunction<T, SUB_RESULT> fulfilled) {
+  public <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull final AsyncFunction<T, SUB_RESULT> fulfilled) {
     switch (state) {
       case PENDING:
         break;
