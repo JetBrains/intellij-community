@@ -116,7 +116,7 @@ class StateMap private constructor(private val names: Array<String>, private val
 
   fun getElement(key: String, newLiveStates: Map<String, Element>? = null) = stateToElement(key, get(key), newLiveStates)
 
-  fun isEmpty() = names.isEmpty()
+  fun isEmpty(): Boolean = names.isEmpty()
 
   fun hasState(key: String) = get(key) is Element
 
