@@ -41,7 +41,7 @@ class CompletionFileLogger(private val installationUID: String,
         logLastAction = { items ->
             val builder = logLineBuilder(Action.COMPLETION_STARTED)
             builder.addPair("COMP_LIST_LEN", items.size)
-            builder.addText(convertCompletionList(items))
+            builder.addText(firstCompletionListText(items))
             log(builder)
         }
     }
@@ -130,7 +130,7 @@ class CompletionFileLogger(private val installationUID: String,
         log(builder)
     }
 
-    private fun convertCompletionList(items: List<LookupStringWithRelevance>): String {
+    private fun firstCompletionListText(items: List<LookupStringWithRelevance>): String {
         check(items.size > 0)
         val builder = StringBuilder()
         with(builder, {
@@ -141,8 +141,8 @@ class CompletionFileLogger(private val installationUID: String,
                     append(", ")
                 }
                 first = false
-                val itemName = getItemId(it.item)!!
-                append("{ID=$itemName ${it.toData()}}")
+                val id = addNewItem(it.item)
+                append("{ID=$id ${it.toData()}}")
             }
             append("]")
         })
