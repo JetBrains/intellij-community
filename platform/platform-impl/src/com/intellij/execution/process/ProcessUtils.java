@@ -62,7 +62,13 @@ public class ProcessUtils {
   }
 
 
-  public static IProcessList getProcessList(String helpersRoot) {
+  @NotNull
+  public static ProcessInfo[] getProcessList(@NotNull String helpersRoot) {
+    return getProcessListImpl(helpersRoot).getProcessList();
+  }
+
+  @NotNull
+  private static IProcessList getProcessListImpl(@NotNull String helpersRoot) {
     if (SystemInfo.isWindows) {
       return new ProcessListWin32(helpersRoot);
     }

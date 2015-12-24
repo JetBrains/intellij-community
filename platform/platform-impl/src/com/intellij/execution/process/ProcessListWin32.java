@@ -100,7 +100,7 @@ class ProcessListWin32 implements IProcessList {
         String name = line.substring(0, commandLineI).trim();
         String commandLine = line.substring(commandLineI, processIdI).trim();
         String processId = line.substring(processIdI, line.length()).trim();
-        lst.add(new ProcessInfo(Integer.parseInt(processId), name + "   " + commandLine));
+        lst.add(new ProcessInfo(Integer.parseInt(processId), name, commandLine));
       }
       if (lst.size() == 0) {
         throw new AssertionError("Error: no processes found");

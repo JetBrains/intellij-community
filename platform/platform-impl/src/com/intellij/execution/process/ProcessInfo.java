@@ -15,6 +15,9 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author traff
  */
@@ -22,34 +25,47 @@ public class ProcessInfo {
   public static ProcessInfo[] EMPTY_ARRAY = new ProcessInfo[0];
 
   private final int myPid;
-  private final String myCommand;
-  private final String myArgs;
+  @NotNull private final String myExecutable;
+  @NotNull private final String myCommandLine;
 
-  public ProcessInfo(String pidString, String name) {
-    this(Integer.parseInt(pidString), name);
+  public ProcessInfo(@NotNull String pidString, @NotNull String commandLine) {
+    this(Integer.parseInt(pidString), commandLine);
   }
 
-  public ProcessInfo(int pid, String name) {
+  public ProcessInfo(int pid, @NotNull String commandLine) {
     myPid = pid;
-    String[] args = name.split(" ");
-    myCommand = args.length > 0 ? args[0] : "";
-    myArgs = name;
+    String[] args = commandLine.split(" ");
+    myExecutable = args.length > 0 ? args[0] : "";
+    myCommandLine = commandLine;
+  }
+
+  public ProcessInfo(int pid, @NotNull String executables, @NotNull String args) {
+    myPid = pid;
+    myExecutable = executables;
+    myCommandLine = executables + " " + args;
   }
 
   public int getPid() {
     return myPid;
   }
 
-  public String getCommand() {
-    return myCommand;
+  @NotNull
+  public String getExecutable() {
+    return myExecutable;
   }
 
-  public String getArgs() {
-    return myArgs;
+  @NotNull
+  public String getExecutableName() {
+    return FileUtil.getNameWithoutExtension(myExecutable);
+  }
+
+  @NotNull
+  public String getCommandLine() {
+    return myCommandLine;
   }
 
   @Override
   public String toString() {
-    return String.valueOf(myPid) + " (" + myArgs + ")";
+    return String.valueOf(myPid) + " (" + myCommandLine + ")";
   }
 }

@@ -20,6 +20,7 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessInfo;
+import com.intellij.execution.process.ProcessUtils;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -29,8 +30,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SelectFromListDialog;
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.intellij.execution.process.ProcessUtils;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,7 +66,7 @@ public class PyAttachToProcessAction extends AnAction {
         public String getToStirng(Object obj) {
           ProcessInfo info = (ProcessInfo)obj;
 
-          return info.getPid() + " " + info.getArgs();
+          return info.getPid() + " " + info.getCommandLine();
         }
       }, "Select Python Process", ListSelectionModel.SINGLE_SELECTION);
     if (selectDialog.showAndGet()) {
@@ -85,11 +86,11 @@ public class PyAttachToProcessAction extends AnAction {
   }
 
   private static ProcessInfo[] pythonProcessesList() {
-    ProcessInfo[] list = ProcessUtils.getProcessList(PythonHelpersLocator.getHelpersRoot().getAbsolutePath()).getProcessList();
+    ProcessInfo[] list = ProcessUtils.getProcessList(PythonHelpersLocator.getHelpersRoot().getAbsolutePath());
     return FluentIterable.from(Lists.newArrayList(list)).filter(new Predicate<ProcessInfo>() {
       @Override
       public boolean apply(ProcessInfo input) {
-        return input.getCommand().toLowerCase().contains("python");
+        return StringUtil.containsIgnoreCase(input.getExecutableName(), "python");
       }
     }).toArray(ProcessInfo.class);
   }
