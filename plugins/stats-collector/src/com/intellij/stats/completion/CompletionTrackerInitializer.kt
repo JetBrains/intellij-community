@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.AbstractProjectComponent
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import java.beans.PropertyChangeListener
@@ -68,6 +69,7 @@ interface CompletionPopupListener {
 
 
 class LookupActionsListener : AnActionListener.Adapter() {
+    private val LOG = Logger.getInstance(LookupActionsListener::class.java)
     private val down = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
     private val up = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
     private val backspace = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE)
@@ -83,13 +85,24 @@ class LookupActionsListener : AnActionListener.Adapter() {
     }
 
     override fun beforeActionPerformed(action: AnAction?, dataContext: DataContext?, event: AnActionEvent?) {
-        when (action) {
-            backspace -> listener.beforeBackspacePressed()
+        try {
+            when (action) {
+                backspace -> listener.beforeBackspacePressed()
+            }
+        }
+        catch (e: Throwable) {
+            LOG.error(e)
         }
     }
 
     override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
-        listener.beforeCharTyped(c)
+        try {
+            listener.beforeCharTyped(c)
+        } 
+        catch (e: Throwable) {
+            LOG.error(e)
+        }
+                
     }
 }
 
