@@ -57,6 +57,22 @@ public class PyAbstractClassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  public void testConditionalRaise() {
+    doTest();
+  }
+
+  public void testConditionalRaise1() {
+    doTest();
+  }
+
+  public void testConditionalRaise2() {
+    doTest();
+  }
+
+  public void testConditionalRaise3() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
