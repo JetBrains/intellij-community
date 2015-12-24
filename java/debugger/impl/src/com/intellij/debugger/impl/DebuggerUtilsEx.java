@@ -43,7 +43,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -59,6 +58,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -75,6 +75,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.PatternSyntaxException;
 
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
@@ -556,6 +557,23 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  public static String methodNameWithArguments(Method m) {
+    StringBuilder res = new StringBuilder();
+    res.append(m.name()).append("(");
+    res.append(StringUtil.join(m.argumentTypeNames(), new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return getSimpleName(s);
+      }
+    }, ", "));
+    res.append(")");
+    return res.toString();
+  }
+
+  public static String getSimpleName(String fqn) {
+    return fqn.substring(fqn.lastIndexOf('.') + 1);
+  }
+
   public static String methodName(final Method m) {
     return methodName(signatureToName(m.declaringType().signature()), m.name(), m.signature());
   }
@@ -686,6 +704,23 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return text.replace("\t", StringUtil.repeat(" ", tabSize));
   }
 
+  private static final Key<Map<String, String>> DEBUGGER_ALTERNATIVE_SOURCE_MAPPING = Key.create("DEBUGGER_ALTERNATIVE_SOURCE_MAPPING");
+
+  public static void setAlternativeSourceUrl(String className, String source, Project project) {
+    Map<String, String> map = project.getUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING);
+    if (map == null) {
+      map = new ConcurrentHashMap<String, String>();
+      project.putUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING, map);
+    }
+    map.put(className, source);
+  }
+
+  @Nullable
+  public static String getAlternativeSourceUrl(@Nullable String className, Project project) {
+    Map<String, String> map = project.getUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING);
+    return map != null ? map.get(className) : null;
+  }
+
   @Nullable
   public static XSourcePosition toXSourcePosition(@NotNull SourcePosition position) {
     VirtualFile file = position.getFile().getVirtualFile();
@@ -696,13 +731,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return null;
     }
     return new JavaXSourcePosition(position, file);
-  }
-
-  private static final Key<VirtualFile> ALTERNATIVE_SOURCE_KEY = new Key<VirtualFile>("DEBUGGER_ALTERNATIVE_SOURCE");
-
-  public static void setAlternativeSource(VirtualFile source, VirtualFile dest) {
-    ALTERNATIVE_SOURCE_KEY.set(source, dest);
-    ALTERNATIVE_SOURCE_KEY.set(dest, null);
   }
 
   private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
@@ -727,19 +755,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @NotNull
     @Override
     public VirtualFile getFile() {
-      VirtualFile file = ALTERNATIVE_SOURCE_KEY.get(myFile);
-      if (file != null) {
-        return file;
-      }
       return myFile;
     }
 
     @NotNull
     @Override
     public Navigatable createNavigatable(@NotNull Project project) {
-      if (ALTERNATIVE_SOURCE_KEY.get(myFile) != null) {
-        return new OpenFileDescriptor(project, getFile(), getLine(), 0);
-      }
       return XSourcePositionImpl.doCreateOpenFileDescriptor(project, this);
     }
 

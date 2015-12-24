@@ -22,12 +22,12 @@ import org.jetbrains.annotations.Nullable;
  * Represents thread dump of the IDE captured by its performance diagnostic tool.
  */
 public class ThreadDump {
-  private String myRawDump;
-  private StackTraceElement[] myEdtStack;
+  private final String myRawDump;
+  private final StackTraceElement[] myEdtStack;
 
   ThreadDump(@NotNull String rawDump, @Nullable StackTraceElement[] edtStack) {
-    this.myRawDump = rawDump;
-    this.myEdtStack = edtStack;
+    myRawDump = rawDump;
+    myEdtStack = edtStack;
   }
 
   /**

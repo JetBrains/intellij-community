@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Bas Leijdekkers
+ * Copyright 2009-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +31,13 @@ public class ThreadLocalNotStaticFinalInspection extends BaseInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "thread.local.not.static.final.display.name");
+    return InspectionGadgetsBundle.message("thread.local.not.static.final.display.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "thread.local.not.static.final.problem.descriptor");
+    return InspectionGadgetsBundle.message("thread.local.not.static.final.problem.descriptor");
   }
 
   @Override
@@ -52,22 +50,13 @@ public class ThreadLocalNotStaticFinalInspection extends BaseInspection {
     return new ThreadLocalNotStaticFinalVisitor();
   }
 
-  private static class ThreadLocalNotStaticFinalVisitor
-    extends BaseInspectionVisitor {
+  private static class ThreadLocalNotStaticFinalVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitField(PsiField field) {
       super.visitField(field);
       final PsiType type = field.getType();
-      if (!(type instanceof PsiClassType)) {
-        return;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass aClass = classType.resolve();
-      if (aClass == null) {
-        return;
-      }
-      if (!InheritanceUtil.isInheritor(aClass, "java.lang.ThreadLocal")) {
+      if (!InheritanceUtil.isInheritor(type, "java.lang.ThreadLocal")) {
         return;
       }
       final PsiModifierList modifierList = field.getModifierList();

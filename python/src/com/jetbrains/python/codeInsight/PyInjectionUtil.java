@@ -84,8 +84,7 @@ public class PyInjectionUtil {
    */
   @NotNull
   public static InjectionResult registerStringLiteralInjection(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar) {
-    // Assume percent formatting since the MySQL parser cannot handle Python-style substitutions
-    return processStringLiteral(element, registrar, "", "", Formatting.PERCENT);
+    return processStringLiteral(element, registrar, "", "", Formatting.NONE);
   }
 
   private static boolean isStringLiteralPart(@NotNull PsiElement element, @Nullable PsiElement context) {

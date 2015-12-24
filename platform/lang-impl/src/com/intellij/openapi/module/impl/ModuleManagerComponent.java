@@ -143,13 +143,8 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
               fireModuleAddedInWriteAction(module);
             }
           };
-          if (app.isDispatchThread()) {
-            swingRunnable.run();
-          }
-          else {
-            ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-            app.invokeAndWait(swingRunnable, pi.getModalityState());
-          }
+          ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+          app.invokeAndWait(swingRunnable, pi.getModalityState());
         }
       }
     };

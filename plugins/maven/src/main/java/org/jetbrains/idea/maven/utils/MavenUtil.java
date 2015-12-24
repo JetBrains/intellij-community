@@ -155,12 +155,7 @@ public class MavenUtil {
       r.run();
     }
     else {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        r.run();
-      }
-      else {
-        ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(r, p), state);
-      }
+      ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(r, p), state);
     }
   }
   

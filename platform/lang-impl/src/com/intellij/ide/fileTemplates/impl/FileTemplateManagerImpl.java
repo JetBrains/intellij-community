@@ -78,13 +78,13 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   }
 
   public FileTemplateManagerImpl(@NotNull FileTypeManagerEx typeManager,
+                                 FileTemplatesLoader loader,
                                  /*need this to ensure disposal of the service _after_ project manager*/
                                  @SuppressWarnings("UnusedParameters") ProjectManager pm,
                                  final Project project) {
     myTypeManager = typeManager;
     myProject = project;
 
-    FileTemplatesLoader loader = ExportableFileTemplateSettings.getInstance();
     myInternalTemplatesManager = loader.getInternalTemplatesManager();
     myDefaultTemplatesManager = loader.getDefaultTemplatesManager();
     myPatternsManager = loader.getPatternsManager();
@@ -451,9 +451,14 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
 
   @Override
   public void loadState(State state) {
+    ExportableFileTemplateSettings.getInstance(myProject);
     XmlSerializerUtil.copyBean(state, myState);
     FileTemplatesScheme scheme = myProjectScheme != null && myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT;
     setScheme(scheme);
+  }
+
+  FTManager[] getAllManagers() {
+    return myAllManagers;
   }
 
   public static class State {

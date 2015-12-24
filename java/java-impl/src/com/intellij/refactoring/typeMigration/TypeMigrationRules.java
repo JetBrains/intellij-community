@@ -37,6 +37,8 @@ public class TypeMigrationRules {
   private final LinkedList<TypeConversionRule> myConversionRules = new LinkedList<TypeConversionRule>();
   private SearchScope mySearchScope;
 
+  private final MigrateGetterNameSetting myMigrateGetterNameSetting = new MigrateGetterNameSetting();
+
   public TypeMigrationRules() {
     myConversionRules.add(new RootTypeConversionRule());
     myConversionRules.add(new DisjunctionTypeConversionRule());
@@ -80,6 +82,10 @@ public class TypeMigrationRules {
 
   public SearchScope getSearchScope() {
     return mySearchScope;
+  }
+
+  public MigrateGetterNameSetting getMigrateGetterNameSetting() {
+    return myMigrateGetterNameSetting;
   }
 
   @Nullable

@@ -16,7 +16,6 @@
 package org.jetbrains.debugger
 
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.then
 import org.jetbrains.concurrency.thenAsyncAccept
 import org.jetbrains.debugger.values.Value
 import org.jetbrains.io.JsonUtil

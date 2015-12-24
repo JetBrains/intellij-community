@@ -272,7 +272,7 @@ public class PythonInspectionsTest extends PyTestCase {
     myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
     PyChainedComparisonsInspection inspection = new PyChainedComparisonsInspection();
     myFixture.enableInspections(inspection);
-    inspection.simplifyWithConstantInTheMiddle = false;
+    inspection.ignoreConstantInTheMiddle = true;
     myFixture.checkHighlighting(true, false, true);
   }
 

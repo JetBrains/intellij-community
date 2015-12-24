@@ -20,9 +20,15 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nullable;
 
 public class HtmlAttributeValuesProvider {
-  public static ExtensionPointName<HtmlAttributeValuesProvider> EP_NAME =
+  public static final ExtensionPointName<HtmlAttributeValuesProvider> EP_NAME =
     new ExtensionPointName<HtmlAttributeValuesProvider>("com.intellij.html.attributeValuesProvider");
 
+  /**
+   * Calculates attribute value. Used when it is impossible to get attribute value as text of PSI element
+   * @param tag
+   * @param attributeName
+   * @return calculated value
+   */
   @Nullable
   public String getCustomAttributeValues(final XmlTag tag, final String attributeName) {
     return null;

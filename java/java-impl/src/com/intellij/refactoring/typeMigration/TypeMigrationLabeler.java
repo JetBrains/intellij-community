@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.typeMigration;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -35,6 +38,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.typeMigration.usageInfo.OverridenUsageInfo;
 import com.intellij.refactoring.typeMigration.usageInfo.OverriderUsageInfo;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
@@ -241,15 +245,23 @@ public class TypeMigrationLabeler {
         if (i2 == null) {
           return -1;
         }
+        final PsiElement element1 = info1.getElement();
+        final PsiElement element2 = info2.getElement();
+        LOG.assertTrue(element1 != null && element2 != null);
+        final TextRange range1 = element1.getTextRange();
+        final TextRange range2 = element2.getTextRange();
+        if (range1.contains(range2)) {
+          return 1;
+        }
+        if (range2.contains(range1)) {
+          return -1;
+        }
 
         final int res = cmp.compare(i1, i2);
         if (res != 0) {
           return res;
         }
-        final PsiElement element1 = info1.getElement();
-        final PsiElement element2 = info2.getElement();
-        LOG.assertTrue(element1 != null && element2 != null);
-        return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
+        return range2.getStartOffset() - range1.getStartOffset();
       }
     });
 
@@ -312,6 +324,12 @@ public class TypeMigrationLabeler {
       }
       else {
         TypeMigrationReplacementUtil.migratePsiMemberType(element, project, getTypeEvaluator().getType(usageInfo));
+        if (usageInfo instanceof OverridenUsageInfo) {
+          final String migrationName = ((OverridenUsageInfo)usageInfo).getMigrateMethodName();
+          if (migrationName != null) {
+            new RenameProcessor(project, element, migrationName, false, false).run();
+          }
+        }
       }
     }
 
@@ -567,12 +585,16 @@ public class TypeMigrationLabeler {
 
 
       final PsiMethod[] methods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
-      final OverridenUsageInfo overridenUsageInfo = new OverridenUsageInfo(method);
       final OverriderUsageInfo[] overriders = new OverriderUsageInfo[methods.length];
       for (int i = -1; i < methods.length; i++) {
         final TypeMigrationUsageInfo m;
         if (i < 0) {
+          final OverridenUsageInfo overridenUsageInfo = new OverridenUsageInfo(method);
           m = overridenUsageInfo;
+          final String newMethodName = isMethodNameCanBeChanged(method);
+          if (newMethodName != null) {
+            myRules.getMigrateGetterNameSetting().askUserIfNeed(overridenUsageInfo, newMethodName, myTypeEvaluator.getType(myCurrentRoot));
+          }
         }
         else {
           overriders[i] = new OverriderUsageInfo(methods[i], method);
@@ -581,7 +603,6 @@ public class TypeMigrationLabeler {
 
         alreadyProcessed = addRoot(m, type, place, alreadyProcessed);
       }
-      overridenUsageInfo.setOverriders(overriders);
 
       return !alreadyProcessed;
     }
@@ -607,13 +628,52 @@ public class TypeMigrationLabeler {
         alreadyProcessed = addRoot(paramUsageInfo, type, place, alreadyProcessed);
       }
 
-      overridenUsageInfo.setOverriders(overriders);
-
       return !alreadyProcessed;
     }
     else {
       return !addRoot(new TypeMigrationUsageInfo(resolved), type, place, alreadyProcessed);
     }
+  }
+
+  @Nullable
+  private String isMethodNameCanBeChanged(PsiMethod method) {
+    if (myCurrentRoot == null) {
+      return null;
+    }
+    final PsiElement root = myCurrentRoot.getElement();
+    if (!(root instanceof PsiField)) {
+      return null;
+    }
+    PsiField field = (PsiField) root;
+    final PsiType migrationType = myTypeEvaluator.getType(root);
+    if (migrationType == null) {
+      return null;
+    }
+    final PsiType sourceType = field.getType();
+    if (TypeConversionUtil.isAssignable(migrationType, sourceType)) {
+      return null;
+    }
+    if (!(migrationType.equals(PsiType.BOOLEAN) || migrationType.equals(PsiType.BOOLEAN.getBoxedType(field))) &&
+        !(sourceType.equals(PsiType.BOOLEAN) || sourceType.equals(PsiType.BOOLEAN.getBoxedType(field)))) {
+      return null;
+    }
+    final PsiMethod[] getters =
+      GetterSetterPrototypeProvider.findGetters(field.getContainingClass(), field.getName(), field.hasModifierProperty(PsiModifier.STATIC));
+    if (getters != null) {
+      for (PsiMethod getter : getters) {
+        if (getter.isEquivalentTo(method)) {
+          final String suggestedName = GenerateMembersUtil.suggestGetterName(field.getName(), migrationType, method.getProject());
+          if (!suggestedName.equals(method.getName())) {
+            if (getter.getContainingClass().findMethodsByName(suggestedName, true).length == 0) {
+              return null;
+            }
+            return suggestedName;
+          }
+          return null;
+        }
+      }
+    }
+    return null;
   }
 
   static boolean typeContainsTypeParameters(@Nullable PsiType originalType, @NotNull Set<PsiTypeParameter> excluded) {
@@ -689,7 +749,7 @@ public class TypeMigrationLabeler {
     }
     if (myException != null) throw myException;
     rememberRootTrace(usageInfo, type, place, alreadyProcessed);
-    if (!alreadyProcessed && !getTypeEvaluator().setType(usageInfo, type)) {
+    if (!alreadyProcessed && !(usageInfo.getElement() instanceof PsiExpression) && !getTypeEvaluator().setType(usageInfo, type)) {
       alreadyProcessed = true;
     }
 
@@ -802,6 +862,10 @@ public class TypeMigrationLabeler {
     }
     else if (root instanceof PsiVariable || root instanceof PsiExpression) {
       final PsiElement element = getContainingStatement(root);
+      if (root instanceof PsiExpression) {
+        migrateExpressionType((PsiExpression)root, migrationType, element, false, true);
+        myTypeEvaluator.setType(newRootUsageInfo, migrationType);
+      }
       element.accept(new TypeMigrationStatementProcessor(element, this));
     }
     else if (root instanceof PsiReferenceParameterList) {
@@ -917,6 +981,7 @@ public class TypeMigrationLabeler {
   }
 
   private void migrate(boolean autoMigrate, final PsiElement... victims) {
+
     myMigrationRoots = new LinkedList<Pair<TypeMigrationUsageInfo, PsiType>>();
     myTypeEvaluator = new TypeEvaluator(myMigrationRoots, this);
 

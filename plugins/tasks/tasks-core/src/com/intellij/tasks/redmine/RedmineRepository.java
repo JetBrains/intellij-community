@@ -1,6 +1,7 @@
 package com.intellij.tasks.redmine;
 
 import com.google.gson.Gson;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
@@ -9,6 +10,7 @@ import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.tasks.redmine.model.RedmineIssue;
 import com.intellij.tasks.redmine.model.RedmineProject;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -40,9 +42,9 @@ import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.*;
 @Tag("Redmine")
 public class RedmineRepository extends NewBaseRepositoryImpl {
   private static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
-
   private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
-
+  private static final Logger LOG = Logger.getInstance(RedmineRepository.class);
+  
   public static final RedmineProject UNSPECIFIED_PROJECT = new RedmineProject() {
     @NotNull
     @Override
@@ -151,12 +153,20 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   @Override
   public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
     List<RedmineIssue> issues = fetchIssues(query, offset, limit, withClosed);
-    return ContainerUtil.map2Array(issues, RedmineTask.class, new Function<RedmineIssue, RedmineTask>() {
+    List<Task> result = ContainerUtil.map(issues, new Function<RedmineIssue, Task>() {
       @Override
       public RedmineTask fun(RedmineIssue issue) {
         return new RedmineTask(RedmineRepository.this, issue);
       }
     });
+    if (query != null && ID_PATTERN.matcher(query).matches()) {
+      LOG.debug("Query '" + query + "' looks like an issue ID. Requesting it explicitly from the server " + this);
+      final Task found = findTask(query);
+      if (found != null) {
+        result = ContainerUtil.append(result, found);
+      }
+    }
+    return ArrayUtil.toObjectArray(result, Task.class);
   }
 
   public List<RedmineIssue> fetchIssues(String query, int offset, int limit, boolean withClosed) throws Exception {

@@ -18,9 +18,9 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.Method;
@@ -53,12 +53,8 @@ public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl{
   }
 
   public String getName() {
-    StringBuilder res = new StringBuilder();
-    res.append(NodeRendererSettings.getInstance().getClassRenderer().renderTypeName(myMethod.declaringType().name()));
-    res.append(".").append(myMethod.name()).append("(");
-    StringUtil.join(myMethod.argumentTypeNames(), ", ", res);
-    res.append(")");
-    return res.toString();
+    return NodeRendererSettings.getInstance().getClassRenderer().renderTypeName(myMethod.declaringType().name()) + "." +
+           DebuggerUtilsEx.methodNameWithArguments(myMethod);
   }
 
   public Type getType() {

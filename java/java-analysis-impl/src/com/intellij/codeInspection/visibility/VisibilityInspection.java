@@ -367,7 +367,9 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         if (fromTopLevelElement != null && isInExtendsList(to, fromTopLevelElement.getExtendsList())) return false;
         if (fromTopLevelElement != null && isInExtendsList(to, fromTopLevelElement.getImplementsList())) return false;
         if (fromTopLevelElement != null && isInAnnotations(to, fromTopLevelElement)) return false;
-        return fromTopLevel == toOwner || fromOwner == toTopLevel || toOwner != null && refUtil.getOwnerClass(toOwner) == from;
+        return fromTopLevel == toOwner || fromOwner == toTopLevel || toOwner != null && (
+          refUtil.getOwnerClass(toOwner) == from || from instanceof RefMethod && toOwner == ((RefMethod)from).getOwnerClass() ||
+          from instanceof RefField && toOwner == ((RefField)from).getOwnerClass());
       }
 
       if (fromOwner != null && fromOwner.isStatic() && !to.isStatic() && refUtil.isInheritor(fromOwner, toOwner)) return false;

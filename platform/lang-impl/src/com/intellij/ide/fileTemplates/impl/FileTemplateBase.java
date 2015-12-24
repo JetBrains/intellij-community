@@ -124,4 +124,6 @@ public abstract class FileTemplateBase implements FileTemplate {
   public void setLiveTemplateEnabled(boolean value) {
     myLiveTemplateEnabled = value;
   }
+
+  public boolean isLiveTemplateEnabledByDefault() { return false; }
 }

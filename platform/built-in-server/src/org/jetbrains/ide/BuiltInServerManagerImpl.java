@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
+import io.netty.channel.oio.OioEventLoopGroup;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,11 +87,10 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
       public void run() {
         try {
           BuiltInServer mainServer = StartupUtil.getServer();
-          if (mainServer == null && ApplicationManager.getApplication().isUnitTestMode()) {
+          if (mainServer == null || mainServer.getEventLoopGroup() instanceof OioEventLoopGroup) {
             server = BuiltInServer.start(1, getDefaultPort(), PORTS_COUNT, false, null);
           }
           else {
-            LOG.assertTrue(mainServer != null);
             server = BuiltInServer.start(mainServer.getEventLoopGroup(), false, getDefaultPort(), PORTS_COUNT, true, null);
           }
           bindCustomPorts(server);

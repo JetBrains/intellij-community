@@ -814,16 +814,6 @@ public class GitUtil {
     }, "\n");
   }
 
-  @NotNull
-  public static String fileOrFolder(@NotNull VirtualFile file) {
-    if (file.isDirectory()) {
-      return "Folder";
-    }
-    else {
-      return "File";
-    }
-  }
-
   /**
    * Show changes made in the specified revision.
    *

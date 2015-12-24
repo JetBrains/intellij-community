@@ -20,8 +20,6 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionFromMethodQuickFix;
@@ -29,7 +27,6 @@ import com.jetbrains.python.inspections.quickfix.PyMakeMethodStaticQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
-import com.jetbrains.python.testing.PythonUnitTestUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +65,6 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       if (PyNames.getBuiltinMethods(LanguageLevel.forElement(node)).containsKey(node.getName())) return;
       final PyClass containingClass = node.getContainingClass();
       if (containingClass == null) return;
-      if (PythonUnitTestUtil.isUnitTestCaseClass(containingClass)) return;
       final PsiElement firstSuper = PySuperMethodsSearch.search(node, myTypeEvalContext).findFirst();
       if (firstSuper != null) return;
       final PyFunction firstOverride = PyOverridingMethodsSearch.search(node, true).findFirst();
@@ -136,12 +132,13 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
     }
   }
 
-  private static boolean isTestElement(@NotNull PsiNamedElement node) {
+  private static boolean isTestElement(@NotNull PyFunction node) {
     final String methodName = node.getName();
-    final PyClass pyClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
+    final PyClass pyClass = node.getContainingClass();
     final String className = pyClass == null ? null : pyClass.getName();
 
-    return methodName != null && className != null && methodName.toLowerCase(Locale.getDefault()).startsWith("test")
-                                                                                      && className.toLowerCase(Locale.getDefault()).startsWith("test");
+    return methodName != null && className != null
+           && methodName.toLowerCase(Locale.getDefault()).startsWith("test")
+           && className.toLowerCase(Locale.getDefault()).startsWith("test");
   }
 }

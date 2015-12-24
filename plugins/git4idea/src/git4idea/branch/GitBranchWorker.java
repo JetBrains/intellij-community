@@ -156,7 +156,8 @@ public final class GitBranchWorker {
   @NotNull
   private static Collection<Change> loadTotalDiff(@NotNull GitRepository repository, @NotNull String branchName) {
     try {
-      return GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), null, branchName, null);
+      // return git diff between current working directory and branchName: working dir should be displayed as a 'left' one (base)
+      return GitChangeUtils.getDiffWithWorkingDir(repository.getProject(), repository.getRoot(), branchName, null, true);
     }
     catch (VcsException e) {
       // we treat it as critical and report an error

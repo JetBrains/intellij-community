@@ -25,12 +25,14 @@ public final class BundledFileTemplate extends FileTemplateBase {
 
   private final DefaultTemplate myDefaultTemplate;
   private final boolean myInternal;
+  private final boolean myLiveTemplateEnabledByDefault;
   private boolean myEnabled = true; // when user 'deletes' bundled plugin, it simply becomes disabled
 
   public BundledFileTemplate(@NotNull DefaultTemplate defaultTemplate, boolean internal) {
     myDefaultTemplate = defaultTemplate;
     myInternal = internal;
-    setLiveTemplateEnabled(defaultTemplate.getText().contains("#[[$"));
+    myLiveTemplateEnabledByDefault = defaultTemplate.getText().contains("#[[$");
+    setLiveTemplateEnabled(myLiveTemplateEnabledByDefault);
   }
 
   @Override
@@ -97,11 +99,16 @@ public final class BundledFileTemplate extends FileTemplateBase {
   public void revertToDefaults() {
     setText(null);
     setReformatCode(DEFAULT_REFORMAT_CODE_VALUE);
-    setLiveTemplateEnabled(false);
+    setLiveTemplateEnabled(myLiveTemplateEnabledByDefault);
   }
 
   public boolean isTextModified() {
     return !getText().equals(getDefaultText());
+  }
+
+  @Override
+  public boolean isLiveTemplateEnabledByDefault() {
+    return myLiveTemplateEnabledByDefault;
   }
 
   @Override

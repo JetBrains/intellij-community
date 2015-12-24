@@ -247,9 +247,4 @@ public abstract class InspectionTestCase extends PsiTestCase {
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath() + "/inspection/";
   }
-
-  @Override
-  protected final boolean isRunInWriteAction() {
-    return false;
-  }
 }

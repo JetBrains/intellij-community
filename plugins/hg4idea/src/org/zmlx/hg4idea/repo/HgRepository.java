@@ -23,10 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 public interface HgRepository extends Repository {
@@ -43,10 +40,10 @@ public interface HgRepository extends Repository {
   String getCurrentBranch();
 
   /**
-   * @return map with heavy branch names and appropriate set of head hashes
+   * @return map with heavy branch names and appropriate set of head hashes, order of heads is important - the last head in file is the main
    */
   @NotNull
-  Map<String, Set<Hash>> getBranches();
+  Map<String, LinkedHashSet<Hash>> getBranches();
 
   /**
    * @return names of opened heavy branches

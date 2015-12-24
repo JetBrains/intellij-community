@@ -19,6 +19,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.tree.StackFrameDescriptor;
@@ -180,8 +181,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       Method method = myMethodOccurrence.getMethod();
       if (method != null) {
         myName = method.name();
-        label.append(myName);
-        label.append("()");
+        label.append(settings.SHOW_ARGUMENTS_TYPES ? DebuggerUtilsEx.methodNameWithArguments(method) : myName);
       }
       if (settings.SHOW_LINE_NUMBER) {
         String lineNumber;

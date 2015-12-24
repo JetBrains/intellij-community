@@ -240,14 +240,14 @@ public class PythonSdkType extends SdkType {
     if (sdk != null && sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
       PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
 
-      return data.getRemoteConnectionType() == CredentialsType.VAGRANT;
+      return data.connectionCredentials().getRemoteConnectionType() == CredentialsType.VAGRANT;
     }
     return false;
   }
 
   public static boolean isDocker(@Nullable final Sdk sdk) {
     return sdk != null && sdk.getSdkAdditionalData() instanceof RemoteSdkAdditionalData &&
-           ((RemoteSdkAdditionalData)sdk.getSdkAdditionalData()).getRemoteConnectionType() == CredentialsType.DOCKER;
+           ((RemoteSdkAdditionalData)sdk.getSdkAdditionalData()).connectionCredentials().getRemoteConnectionType() == CredentialsType.DOCKER;
   }
 
   public static boolean isRemote(@Nullable String sdkPath) {

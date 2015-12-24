@@ -18,6 +18,7 @@ public class AllTypeMigrationTests {
      suite.addTestSuite(TypeMigrationTest.class);
      suite.addTestSuite(TypeMigrationByAtomicRuleTest.class);
      suite.addTestSuite(TypeMigrationByThreadLocalRuleTest.class);
+     suite.addTestSuite(TypeMigrationByLongAdderTest.class);
      suite.addTestSuite(MigrateTypeSignatureTest.class);
      suite.addTestSuite(ChangeTypeSignatureTest.class);
      suite.addTestSuite(WildcardTypeMigrationTest.class);

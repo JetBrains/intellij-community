@@ -975,7 +975,8 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  private static String decodeUrl(@NotNull String file) {
+  public /* public for Upsource */
+  static String decodeUrl(@NotNull String file) {
     String quotePluses = StringUtil.replace(file, "+", "%2B");
     //noinspection deprecation
     return URLDecoder.decode(quotePluses);

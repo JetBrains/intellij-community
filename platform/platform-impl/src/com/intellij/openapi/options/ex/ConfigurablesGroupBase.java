@@ -27,6 +27,7 @@ import java.util.List;
 /**
  * @author nik
  */
+@Deprecated
 public abstract class ConfigurablesGroupBase implements ConfigurableGroup {
   private Configurable[] myChildren;
   private final ComponentManager myComponentManager;

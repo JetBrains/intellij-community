@@ -218,24 +218,23 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
   public Object getData(@NonNls String dataId) {
     final TreeTableTree tree = myTreeTable.getTree();
 
-    // TODO uncomment when multiple tests execution for gradle tests will be added
-    //if (Location.DATA_KEYS.is(dataId)) {
-    //  TreePath[] paths = tree.getSelectionModel().getSelectionPaths();
-    //  if (paths != null && paths.length > 1) {
-    //    final List<Location<?>> locations = new ArrayList<Location<?>>(paths.length);
-    //    for (TreePath path : paths) {
-    //      if (tree.isPathSelected(path.getParentPath())) continue;
-    //      ExecutionInfo executionInfo = getSelectedExecution(path);
-    //      if (executionInfo != null) {
-    //        final Location<?> location = (Location<?>)GradleRunnerUtil.getData(myProject, Location.DATA_KEY.getName(), executionInfo);
-    //        if (location != null) {
-    //          locations.add(location);
-    //        }
-    //      }
-    //    }
-    //    return locations.isEmpty() ? null : locations.toArray(new Location[locations.size()]);
-    //  }
-    //}
+    if (Location.DATA_KEYS.is(dataId)) {
+      TreePath[] paths = tree.getSelectionModel().getSelectionPaths();
+      if (paths != null && paths.length > 1) {
+        final List<Location<?>> locations = new ArrayList<Location<?>>(paths.length);
+        for (TreePath path : paths) {
+          if (tree.isPathSelected(path.getParentPath())) continue;
+          ExecutionInfo executionInfo = getSelectedExecution(path);
+          if (executionInfo != null) {
+            final Location<?> location = (Location<?>)GradleRunnerUtil.getData(myProject, Location.DATA_KEY.getName(), executionInfo);
+            if (location != null) {
+              locations.add(location);
+            }
+          }
+        }
+        return locations.isEmpty() ? null : locations.toArray(new Location[locations.size()]);
+      }
+    }
 
     if (Location.DATA_KEY.is(dataId)) {
       TreePath[] paths = tree.getSelectionModel().getSelectionPaths();

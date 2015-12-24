@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PausesStat;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +41,7 @@ public class ActionUtil {
   private ActionUtil() {
   }
 
-  public static void showDumbModeWarning(AnActionEvent... events) {
+  public static void showDumbModeWarning(@NotNull AnActionEvent... events) {
     Project project = null;
     List<String> actionNames = new ArrayList<String>();
     for (final AnActionEvent event : events) {
@@ -63,17 +64,19 @@ public class ActionUtil {
   }
 
   @NotNull
-  public static String getActionUnavailableMessage(@NotNull List<String> actionNames) {
-      String message;
-      final String beAvailableUntil = " available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
-      if (actionNames.isEmpty()) {
-        message = "This action is not" + beAvailableUntil;
-      } else if (actionNames.size() == 1) {
-        message = "'" + actionNames.get(0) + "' action is not" + beAvailableUntil;
-      } else {
-        message = "None of the following actions are" + beAvailableUntil + ": " + StringUtil.join(actionNames, ", ");
-      }
-      return message;
+  private static String getActionUnavailableMessage(@NotNull List<String> actionNames) {
+    String message;
+    final String beAvailableUntil = " available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
+    if (actionNames.isEmpty()) {
+      message = "This action is not" + beAvailableUntil;
+    }
+    else if (actionNames.size() == 1) {
+      message = "'" + actionNames.get(0) + "' action is not" + beAvailableUntil;
+    }
+    else {
+      message = "None of the following actions are" + beAvailableUntil + ": " + StringUtil.join(actionNames, ", ");
+    }
+    return message;
   }
 
   @NotNull
@@ -82,6 +85,8 @@ public class ActionUtil {
            + " not available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
   }
 
+  public static final PausesStat ACTION_UPDATE_PAUSES = new PausesStat("AnAction.update()");
+  private static int insidePerformDumbAwareUpdate;
   /**
    * @param action action
    * @param e action event
@@ -91,7 +96,7 @@ public class ActionUtil {
    * {@link com.intellij.openapi.actionSystem.AnAction#update(com.intellij.openapi.actionSystem.AnActionEvent)}
    * @return true if update tried to access indices in dumb mode
    */
-  public static boolean performDumbAwareUpdate(AnAction action, AnActionEvent e, boolean beforeActionPerformed) {
+  public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
     final Presentation presentation = e.getPresentation();
     final Boolean wasEnabledBefore = (Boolean)presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB);
     final boolean dumbMode = isDumbMode(CommonDataKeys.PROJECT.getData(e.getDataContext()));
@@ -104,6 +109,9 @@ public class ActionUtil {
 
     final boolean notAllowed = dumbMode && !action.isDumbAware();
 
+    if (insidePerformDumbAwareUpdate++ == 0) {
+      ACTION_UPDATE_PAUSES.started();
+    }
     try {
       if (beforeActionPerformed) {
         action.beforeActionPerformedUpdate(e);
@@ -121,6 +129,9 @@ public class ActionUtil {
       throw e1;
     }
     finally {
+      if (--insidePerformDumbAwareUpdate == 0) {
+        ACTION_UPDATE_PAUSES.finished(presentation.getText()+" action update ("+action.getClass()+")");
+      }
       if (notAllowed) {
         if (wasEnabledBefore == null) {
           presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, enabledBeforeUpdate);

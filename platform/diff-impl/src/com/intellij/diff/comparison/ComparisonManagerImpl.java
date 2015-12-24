@@ -59,17 +59,8 @@ public class ComparisonManagerImpl extends ComparisonManager {
                                               @NotNull CharSequence text2,
                                               @NotNull ComparisonPolicy policy,
                                               @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    List<LineFragment> fragments = compareLines(text1, text2, policy, indicator);
-    return compareLinesInner(text1, text2, fragments, policy, indicator);
-  }
+    List<LineFragment> lineFragments = compareLines(text1, text2, policy, indicator);
 
-  @NotNull
-  @Override
-  public List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
-                                              @NotNull CharSequence text2,
-                                              @NotNull List<LineFragment> lineFragments,
-                                              @NotNull ComparisonPolicy policy,
-                                              @NotNull ProgressIndicator indicator) throws DiffTooBigException {
     List<LineFragment> fineFragments = new ArrayList<LineFragment>(lineFragments.size());
     int tooBigChunksCount = 0;
 
@@ -125,8 +116,18 @@ public class ComparisonManagerImpl extends ComparisonManager {
         tooBigChunksCount++;
       }
     }
-
     return fineFragments;
+  }
+
+  @NotNull
+  @Override
+  @Deprecated
+  public List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
+                                              @NotNull CharSequence text2,
+                                              @NotNull List<LineFragment> lineFragments,
+                                              @NotNull ComparisonPolicy policy,
+                                              @NotNull ProgressIndicator indicator) throws DiffTooBigException {
+    return compareLinesInner(text1, text2, policy, indicator);
   }
 
   @NotNull

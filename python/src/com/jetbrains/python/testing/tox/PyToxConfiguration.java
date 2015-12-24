@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Ilya.Kazakevich
  */
-final class PyToxConfiguration extends AbstractPythonRunConfiguration<PyToxConfiguration> {
+public final class PyToxConfiguration extends AbstractPythonRunConfiguration<PyToxConfiguration> {
 
   @NotNull
   private final Project myProject;

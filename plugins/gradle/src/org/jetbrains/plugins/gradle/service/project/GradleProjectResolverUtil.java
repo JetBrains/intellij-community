@@ -485,10 +485,35 @@ public class GradleProjectResolverUtil {
   }
 
   @Nullable
+  public static DataNode<ModuleData> findModuleById(@Nullable final DataNode<ProjectData> projectNode, @NotNull final String path) {
+    if (projectNode == null) return null;
+    return ExternalSystemApiUtil.find(projectNode, ProjectKeys.MODULE, new BooleanFunction<DataNode<ModuleData>>() {
+      @Override
+      public boolean fun(DataNode<ModuleData> node) {
+        return node.getData().getId().equals(path);
+      }
+    });
+  }
+
+  @Nullable
   public static DataNode<TaskData> findTask(@Nullable final DataNode<ProjectData> projectNode,
                                             @NotNull final String modulePath,
-                                            @NotNull final String taskName) {
-    final DataNode<ModuleData> moduleNode = findModule(projectNode, modulePath);
+                                            @NotNull final String taskPath) {
+    DataNode<ModuleData> moduleNode;
+    final String taskName;
+    if (StringUtil.startsWith(taskPath, ":")) {
+      final int i = taskPath.lastIndexOf(':');
+      String path = taskPath.substring(0, i);
+      moduleNode = findModuleById(projectNode, path);
+      if(moduleNode == null || !FileUtil.isAncestor(moduleNode.getData().getLinkedExternalProjectPath(), modulePath, false)) {
+        moduleNode = findModule(projectNode, modulePath);
+      }
+      taskName = (i + 1) <= taskPath.length() ? taskPath.substring(i + 1): taskPath;
+    }
+    else {
+      moduleNode = findModule(projectNode, modulePath);
+      taskName = taskPath;
+    }
     if (moduleNode == null) return null;
 
     return ExternalSystemApiUtil.find(moduleNode, ProjectKeys.TASK, new BooleanFunction<DataNode<TaskData>>() {

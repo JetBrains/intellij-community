@@ -573,5 +573,5 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeAfterCompletion);
 
-  void saveText(VirtualFile file, String text);
+  void saveText(@NotNull VirtualFile file, @NotNull String text);
 }

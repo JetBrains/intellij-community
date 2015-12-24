@@ -105,9 +105,11 @@ public class JavaDebugProcess extends XDebugProcess {
         if (event == DebuggerSession.Event.PAUSE
             || event == DebuggerSession.Event.CONTEXT
             || event == DebuggerSession.Event.REFRESH
+            || event == DebuggerSession.Event.REFRESH_WITH_STACK
                && myJavaSession.isPaused()) {
           final SuspendContextImpl newSuspendContext = newContext.getSuspendContext();
-          if (newSuspendContext != null && shouldApplyContext(newContext)) {
+          if (newSuspendContext != null &&
+              (shouldApplyContext(newContext) || event == DebuggerSession.Event.REFRESH_WITH_STACK)) {
             process.getManagerThread().schedule(new SuspendContextCommandImpl(newSuspendContext) {
               @Override
               public void contextAction() throws Exception {

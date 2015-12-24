@@ -36,7 +36,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -99,11 +98,6 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = getDocument(file);
     assertNotNull(document);
     assertSame(document, FileDocumentManager.getInstance().getDocument(vFile));
-  }
-
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
   }
 
   private static LightVirtualFile createFile() {
@@ -436,7 +430,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
   private void makeFileTooLarge(final VirtualFile vFile) throws Exception {
     WriteCommandAction.runWriteCommandAction(myProject, (ThrowableComputable<Object, Exception>)() -> {
-      VfsUtil.saveText(vFile, StringUtil.repeat("a", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1));
+      setFileText(vFile, StringUtil.repeat("a", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1));
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       return null;
     });

@@ -16,9 +16,13 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.util.ModuleRendererFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -37,6 +41,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.sun.jdi.Location;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,8 +86,6 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
       FILE_PROCESSED_KEY.set(file, null);
       return null;
     }
-
-    if (file.getFileType() == JavaClassFileType.INSTANCE) return null;
 
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     if (psiFile == null) return null;
@@ -163,13 +167,32 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
       switcher.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          FileEditorManager.getInstance(project).closeFile(file);
-          PsiClass item = ((ComboBoxClassElement)switcher.getSelectedItem()).myClass;
-          DebuggerUtilsEx.setAlternativeSource(file, item.getContainingFile().getVirtualFile());
-          item.navigate(true);
-          XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-          if (session != null) {
-            session.updateExecutionPosition();
+          final DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(project).getContext();
+          final DebuggerSession session = context.getDebuggerSession();
+          final PsiClass item = ((ComboBoxClassElement)switcher.getSelectedItem()).myClass;
+          final VirtualFile vFile = item.getContainingFile().getVirtualFile();
+          if (session != null && vFile != null) {
+            session.getProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
+              @Override
+              protected void action() throws Exception {
+                StackFrameProxyImpl proxy = context.getFrameProxy();
+                Location location = proxy != null ? proxy.location() : null;
+                if (location != null) {
+                  DebuggerUtilsEx.setAlternativeSourceUrl(location.declaringType().name(), vFile.getUrl(), project);
+                }
+                DebuggerUIUtil.invokeLater(new Runnable() {
+                  @Override
+                  public void run() {
+                    FileEditorManager.getInstance(project).closeFile(file);
+                    session.refresh(true);
+                  }
+                });
+              }
+            });
+          }
+          else {
+            FileEditorManager.getInstance(project).closeFile(file);
+            item.navigate(true);
           }
         }
       });

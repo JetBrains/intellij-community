@@ -81,6 +81,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = true;
     public boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
+    
+    public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
   }
 
   private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";
@@ -504,5 +506,13 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setShowInlineLocalDialog(final boolean val) {
     myOptions.SHOW_INLINE_DIALOG = val;
+  }
+  
+  public boolean addCaretsOnDoubleCtrl() {
+    return myOptions.ADD_CARETS_ON_DOUBLE_CTRL;
+  }
+  
+  public void setAddCaretsOnDoubleCtrl(boolean val) {
+    myOptions.ADD_CARETS_ON_DOUBLE_CTRL = val;
   }
 }

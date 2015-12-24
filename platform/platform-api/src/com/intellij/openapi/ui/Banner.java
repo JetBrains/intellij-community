@@ -18,12 +18,12 @@ package com.intellij.openapi.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +47,7 @@ class Banner extends NonOpaquePanel implements PropertyChangeListener{
   public Banner() {
     setLayout(new BorderLayout());
 
-    setBorder(new EmptyBorder(2, Registry.is("ide.new.settings.dialog") ? 12 : 6, 2, 4));
+    setBorder(JBUI.Borders.empty(2, 12, 2, 4));
 
     myProjectIcon.setVisible(false);
     myProjectIcon.setBorder(new EmptyBorder(0, 12, 0, 4));
