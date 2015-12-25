@@ -1179,7 +1179,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myTitle.setText(title);
         myMainPanel.add(createTitle(" " + title), BorderLayout.NORTH);
       }
-      myMainPanel.add(cmp, BorderLayout.CENTER);
+      myMainPanel.add(cmp, BorderLayout.WEST);
       if (cmp instanceof Accessible) {
         myMainPanel.setAccessible((Accessible)cmp);
       }

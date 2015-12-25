@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -69,7 +70,14 @@ public abstract class ResolveTestCase extends PsiTestCase {
       if (existing != null) {
         myDocument = FileDocumentManager.getInstance().getDocument(existing);
         assertNotNull(myDocument);
-        myDocument.setText(fileText);
+        final String finalFileText = fileText;
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            myDocument.setText(finalFileText);
+          }
+        });
+
         myFile = PsiManager.getInstance(getProject()).findFile(existing);
         assertNotNull(myFile);
         assertEquals(fileText, myFile.getText());

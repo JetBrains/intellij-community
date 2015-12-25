@@ -76,10 +76,14 @@ public class PyBuiltinCache {
    */
   @NotNull
   public static PyBuiltinCache getInstance(@Nullable PsiElement reference) {
-    if (reference != null && reference.isValid()) {
-      Sdk sdk = findSdkForFile(reference.getContainingFile());
-      if (sdk != null) {
-        return PythonSdkPathCache.getInstance(reference.getProject(), sdk).getBuiltins();
+    if (reference != null) {
+      try {
+        Sdk sdk = findSdkForFile(reference.getContainingFile());
+        if (sdk != null) {
+          return PythonSdkPathCache.getInstance(reference.getProject(), sdk).getBuiltins();
+        }
+      }
+      catch (PsiInvalidElementAccessException ignored) {
       }
     }
     return DUD_INSTANCE; // a non-functional fail-fast instance, for a case when skeletons are not available

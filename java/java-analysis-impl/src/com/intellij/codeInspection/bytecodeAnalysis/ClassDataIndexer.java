@@ -33,6 +33,11 @@ import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
 /**
+ * Scala code (same algorithm, but easier to read): https://github.com/ilya-klyuchnikov/faba
+ *
+ * Based on "Nullness Analysis of Java Bytecode via Supercompilation over Abstract Values" by Ilya Klyuchnikov
+ *     (http://meta2014.pereslavl.ru/papers/2014_Klyuchnikov__Nullness_Analysis_of_Java_Bytecode_via_Supercompilation_over_Abstract_Values.pdf)
+ *
  * @author lambdamix
  */
 public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileContent> {

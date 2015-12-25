@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
@@ -29,26 +28,28 @@ public class ShowHideRecycledAction extends ToggleAction implements DumbAware {
   @Override
   public void update(@NotNull final AnActionEvent e) {
     super.update(e);
-    final Project project = e.getData(CommonDataKeys.PROJECT);
+    final Project project = getEventProject(e);
     final Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(project != null);
     if (project != null) {
-      presentation.setText(ShelveChangesManager.getInstance(project).isShowRecycled() ?
+      final boolean fromContextMenu = ShelvedChangesViewManager.SHELF_CONTEXT_MENU.equals(e.getPlace());
+      presentation.setText(ShelveChangesManager.getInstance(project).isShowRecycled() && !fromContextMenu ?
                            "Hide Already Unshelved" : "Show Already Unshelved");
-      presentation.setIcon(ShelvedChangesViewManager.SHELF_CONTEXT_MENU.equals(e.getPlace()) ? null : AllIcons.Nodes.DisabledPointcut);
+      presentation.setIcon(fromContextMenu ? null : AllIcons.Nodes.DisabledPointcut);
     }
   }
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    final ShelveChangesManager manager = ShelveChangesManager.getInstance(project);
-    return manager.isShowRecycled();
+    final Project project = getEventProject(e);
+    return project != null && ShelveChangesManager.getInstance(project).isShowRecycled();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    ShelveChangesManager.getInstance(project).setShowRecycled(state);
+    final Project project = getEventProject(e);
+    if (project != null) {
+      ShelveChangesManager.getInstance(project).setShowRecycled(state);
+    }
   }
 }

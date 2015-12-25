@@ -136,6 +136,16 @@ public class DvcsUtil {
     }, ", ");
   }
 
+  @NotNull
+  public static String fileOrFolder(@NotNull VirtualFile file) {
+    if (file.isDirectory()) {
+      return "folder";
+    }
+    else {
+      return "file";
+    }
+  }
+
   public static boolean anyRepositoryIsFresh(Collection<? extends Repository> repositories) {
     for (Repository repository : repositories) {
       if (repository.isFresh()) {

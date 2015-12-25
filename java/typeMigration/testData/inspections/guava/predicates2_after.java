@@ -10,7 +10,7 @@ class Main {
 
     Predicate<String> not1 = p1.negate();
 
-    Predicate<String> not2 = ((Predicate<String>) p1).or(((Predicate<String>) p1).or(p2)).negate();
+    Predicate<String> not2 = p1.or(p1.or(p2)).negate();
 
   }
 

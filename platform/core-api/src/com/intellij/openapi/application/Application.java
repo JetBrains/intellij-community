@@ -404,7 +404,7 @@ public interface Application extends ComponentManager {
    * Returns lock used for write operations, should be closed in finally block
    */
   @NotNull
-  AccessToken acquireWriteActionLock(Class marker);
+  AccessToken acquireWriteActionLock(/*@NotNull*/ Class marker);
 
   boolean isInternal();
 

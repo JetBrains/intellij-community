@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,18 +38,21 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private final Project myProject;
   private final PsiFile[] myPsiFiles;
 
-  protected WriteCommandAction(@Nullable Project project, PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project, /*@NotNull*/ PsiFile... files) {
     this(project, "Undefined", files);
   }
 
-  protected WriteCommandAction(@Nullable Project project, @Nullable @NonNls String commandName, PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project, @Nullable @NonNls String commandName, /*@NotNull*/ PsiFile... files) {
     this(project, commandName, null, files);
   }
 
-  protected WriteCommandAction(@Nullable final Project project, @Nullable final String commandName, @Nullable final String groupID, PsiFile... files) {
+  protected WriteCommandAction(@Nullable final Project project, @Nullable final String commandName, @Nullable final String groupID, /*@NotNull*/ PsiFile... files) {
     myCommandName = commandName;
     myGroupID = groupID;
     myProject = project;
+    if (files == null) {
+      LOG.warn("'files' parameter must not be null", new Throwable());
+    }
     myPsiFiles = files == null || files.length == 0 ? PsiFile.EMPTY_ARRAY : files;
   }
 
@@ -71,6 +74,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     Application application = ApplicationManager.getApplication();
     if (!application.isDispatchThread() && application.isReadAccessAllowed()) {
       LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
+      throw new IllegalStateException();
     }
     final RunResult<T> result = new RunResult<T>(this);
 
@@ -86,11 +90,11 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return result;
   }
 
-  public static boolean ensureFilesWritable(@NotNull final Project project, @NotNull final Collection<PsiFile> psiFiles) {
+  public static boolean ensureFilesWritable(@NotNull Project project, @NotNull Collection<PsiFile> psiFiles) {
     return FileModificationService.getInstance().preparePsiElementsForWrite(psiFiles);
   }
 
-  private void performWriteCommandAction(@NotNull final RunResult<T> result) {
+  private void performWriteCommandAction(@NotNull RunResult<T> result) {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(Arrays.asList(myPsiFiles))) return;
 
     // this is needed to prevent memory leak, since the command is put into undo queue
@@ -99,13 +103,14 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
-        getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            results[0].run();
-            results[0] = null;
-          }
-        });
+        AccessToken token = getApplication().acquireWriteActionLock(WriteCommandAction.this.getClass());
+        try {
+          results[0].run();
+          results[0] = null;
+        }
+        finally {
+          token.finish();
+        }
       }
     }, getCommandName(), getGroupID(), getUndoConfirmationPolicy());
   }
@@ -141,14 +146,14 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * WriteCommandAction without result
    */
   public abstract static class Simple<T> extends WriteCommandAction<T> {
-    protected Simple(final Project project, PsiFile... files) {
+    protected Simple(final Project project, /*@NotNull*/ PsiFile... files) {
       super(project, files);
     }
-    protected Simple(final Project project, final String commandName, final PsiFile... files) {
+    protected Simple(final Project project, final String commandName, /*@NotNull*/ PsiFile... files) {
       super(project, commandName, files);
     }
 
-    protected Simple(final Project project, final String name, final String groupID, final PsiFile... files) {
+    protected Simple(final Project project, final String name, final String groupID, /*@NotNull*/ PsiFile... files) {
       super(project, name, groupID, files);
     }
 
@@ -164,8 +169,11 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     runWriteCommandAction(project, "Undefined", null, runnable);
   }
 
-  public static void runWriteCommandAction(Project project, @Nullable final String commandName,
-                                           @Nullable final String groupID, @NotNull final Runnable runnable, PsiFile... files) {
+  public static void runWriteCommandAction(Project project,
+                                           @Nullable final String commandName,
+                                           @Nullable final String groupID,
+                                           @NotNull final Runnable runnable,
+                                           @NotNull PsiFile... files) {
     new Simple(project, commandName, groupID, files) {
       @Override
       protected void run() throws Throwable {
@@ -190,7 +198,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
         result.setResult(computable.compute());
       }
     }.execute();
-    if (result.getThrowable() instanceof Throwable) throw (E)result.getThrowable();
+    if (result.getThrowable() != null) throw (E)result.getThrowable();
     return result.throwException().getResultObject();
   }
 }

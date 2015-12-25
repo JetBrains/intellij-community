@@ -26,6 +26,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -80,6 +81,8 @@ import static javax.swing.SwingUtilities.invokeLater;
 // todo: bundle messages
 // todo: pydevd supports module reloading - look for a way to use the feature
 public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener {
+
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.debugger.PyDebugProcess");
   private static final int CONNECTION_TIMEOUT = 60000;
 
   private final ProcessDebugger myDebugger;
@@ -351,6 +354,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
     if (remoteVersion != null) {
       if (!remoteVersion.equals(currentBuild)) {
+        LOG.warn(String.format("Wrong debugger version. Remote version: %s Current build: %s", remoteVersion, currentBuild));
         printToConsole("Warning: wrong debugger version. Use pycharm-debugger.egg from PyCharm installation folder.\n",
                        ConsoleViewContentType.ERROR_OUTPUT);
       }
@@ -614,7 +618,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return PyDebugSupportUtils.canSaveToTemp(project, name);
   }
 
-  @Nullable
+  @NotNull
   private PyStackFrame currentFrame() throws PyDebuggerException {
     if (!isConnected()) {
       throw new PyDebuggerException("Disconnected");
@@ -633,24 +637,27 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return frame;
   }
 
+  @Nullable
   private String getFunctionName(final XLineBreakpoint breakpoint) {
+    if (breakpoint.getSourcePosition() == null) {
+      return null;
+    }
     final VirtualFile file = breakpoint.getSourcePosition().getFile();
     AccessToken lock = ApplicationManager.getApplication().acquireReadActionLock();
     try {
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       final Project project = getSession().getProject();
-      final String[] funcName = new String[1];
       if (document != null) {
         if (file.getFileType() == PythonFileType.INSTANCE) {
           PsiElement psiElement = XDebuggerUtil.getInstance().findContextElement(file, breakpoint.getSourcePosition().getOffset(),
                                                                                  project, false);
           PyFunction function = PsiTreeUtil.getParentOfType(psiElement, PyFunction.class);
           if (function != null) {
-            funcName[0] = function.getName();
+            return function.getName();
           }
         }
       }
-      return funcName[0];
+      return null;
     }
     finally {
       lock.finish();
@@ -660,9 +667,15 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public void addBreakpoint(final PySourcePosition position, final XLineBreakpoint breakpoint) {
     myRegisteredBreakpoints.put(position, breakpoint);
     if (isConnected()) {
+      final String conditionExpression = breakpoint.getConditionExpression() == null
+                                         ? null
+                                         : breakpoint.getConditionExpression().getExpression();
+      final String logExpression = breakpoint.getLogExpressionObject() == null
+                                   ? null
+                                   : breakpoint.getLogExpressionObject().getExpression();
       myDebugger.setBreakpointWithFuncName(breakpoint.getType().getId(), position.getFile(), position.getLine(),
-                                           breakpoint.getCondition(),
-                                           breakpoint.getLogExpression(),
+                                           conditionExpression,
+                                           logExpression,
                                            getFunctionName(breakpoint));
     }
   }
@@ -824,7 +837,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     try {
       PyStackFrame frame = currentFrame();
 
-      return frame != null ? frame.getSourcePosition() : null;
+      return frame.getSourcePosition();
     }
     catch (PyDebuggerException e) {
       return null;

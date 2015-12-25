@@ -1220,8 +1220,6 @@
 
     <vcsSelectionProvider implementation="com.intellij.vcsUtil.JavaVcsSelectionProvider"/>
 
-    <smartPointerElementInfoFactory implementation="com.intellij.psi.impl.smartPointers.ImplicitVariableElementInfoFactory"/>
-    <smartPointerElementInfoFactory implementation="com.intellij.psi.impl.smartPointers.ImportListElementInfoFactory"/>
     <smartPointer.anchorProvider implementation="com.intellij.psi.impl.smartPointers.JavaAnchorProvider"/>
 
     <elementSignatureProvider implementation="com.intellij.codeInsight.folding.impl.JavaElementSignatureProvider"/>

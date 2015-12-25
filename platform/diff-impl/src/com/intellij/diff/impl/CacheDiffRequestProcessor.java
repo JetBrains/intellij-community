@@ -64,7 +64,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
   // Abstract
   //
 
-  @NotNull
+  @Nullable
   protected abstract String getRequestName(@NotNull T provider);
 
   protected abstract T getCurrentRequestProvider();

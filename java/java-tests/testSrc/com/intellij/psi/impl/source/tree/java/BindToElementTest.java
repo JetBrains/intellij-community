@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Computable;
@@ -60,12 +61,17 @@ public class BindToElementTest extends CodeInsightTestCase {
         final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement.class);
         final PsiClass aClassA = JavaPsiFacade.getInstance(myProject).findClass("p2.A", GlobalSearchScope.moduleScope(myModule));
         assertNotNull(aClassA);
-        try {
-          referenceElement.bindToElement(aClassA);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              referenceElement.bindToElement(aClassA);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        });
       }
     });
   }
@@ -80,12 +86,17 @@ public class BindToElementTest extends CodeInsightTestCase {
         assertNotNull(aClassA);
         final PsiElementFactory factory = myJavaFacade.getElementFactory();
         final PsiClassType type = factory.createType(aClassA);
-        try {
-          typeElement.replace(factory.createTypeElement(type));
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              typeElement.replace(factory.createTypeElement(type));
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        });
       }
     });
   }

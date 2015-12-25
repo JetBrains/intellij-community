@@ -157,7 +157,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     return "BookmarkManager";
   }
 
-  public void addEditorBookmark(Editor editor, int lineIndex) {
+  public void addEditorBookmark(@NotNull Editor editor, int lineIndex) {
     Document document = editor.getDocument();
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (psiFile == null) return;
@@ -168,14 +168,16 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     addTextBookmark(virtualFile, lineIndex, getAutoDescription(editor, lineIndex));
   }
 
-  public Bookmark addTextBookmark(VirtualFile file, int lineIndex, String description) {
+  @NotNull
+  public Bookmark addTextBookmark(@NotNull VirtualFile file, int lineIndex, @NotNull String description) {
     Bookmark b = new Bookmark(myProject, file, lineIndex, description);
     myBookmarks.add(0, b);
     myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkAdded(b);
     return b;
   }
 
-  public static String getAutoDescription(final Editor editor, final int lineIndex) {
+  @NotNull
+  public static String getAutoDescription(@NotNull final Editor editor, final int lineIndex) {
     String autoDescription = editor.getSelectionModel().getSelectedText();
     if ( autoDescription == null ) {
       Document document = editor.getDocument();
@@ -189,7 +191,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   }
 
   @Nullable
-  public Bookmark addFileBookmark(VirtualFile file, String description) {
+  public Bookmark addFileBookmark(@Nullable VirtualFile file, @NotNull String description) {
     if (file == null) return null;
     if (findFileBookmark(file) != null) return null;
 

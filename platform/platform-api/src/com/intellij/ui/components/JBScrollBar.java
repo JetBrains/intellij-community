@@ -15,32 +15,67 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import com.intellij.util.ui.RegionPainter;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import java.awt.Adjustable;
 
-public class JBScrollBar extends JScrollBar{
+public class JBScrollBar extends JScrollBar {
+  /**
+   * This key defines a region painter, which is used by the custom ScrollBarUI
+   * to draw additional paintings (i.e. error stripes) on the scrollbar's track.
+   *
+   * @see UIUtil#putClientProperty
+   */
+  public static final Key<RegionPainter<Object>> TRACK = Key.create("JB_SCROLL_BAR_TRACK");
+
   public JBScrollBar() {
-    init();
+    this(Adjustable.VERTICAL);
   }
 
   public JBScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
-    super(orientation);
-    init();
+    this(orientation, 0, 10, 0, 100);
   }
 
   public JBScrollBar(@JdkConstants.AdjustableOrientation int orientation, int value, int extent, int min, int max) {
     super(orientation, value, extent, min, max);
-    init();
-  }
-
-  private void init() {
     putClientProperty("JScrollBar.fastWheelScrolling", Boolean.TRUE); // fast scrolling for JDK 6
   }
 
   @Override
   public void updateUI() {
     setUI(ButtonlessScrollBarUI.createNormal());
+  }
+
+  /**
+   * Positions of a ScrollBar on a ScrollPane.
+   */
+  enum Alignment {
+    TOP, LEFT, RIGHT, BOTTOM;
+
+    static Alignment get(JComponent component) {
+      if (component instanceof JScrollBar) {
+        Object property = component.getClientProperty(Alignment.class);
+        if (property instanceof Alignment) return (Alignment)property;
+
+        if (component.getParent() instanceof JScrollPane) {
+          switch (((JScrollBar)component).getOrientation()) {
+            case Adjustable.HORIZONTAL:
+              return BOTTOM;
+            case Adjustable.VERTICAL:
+              return component.getParent().getComponentOrientation().isLeftToRight()
+                     ? RIGHT
+                     : LEFT;
+          }
+        }
+      }
+      return null;
+    }
   }
 }

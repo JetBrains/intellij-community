@@ -615,9 +615,4 @@ public class FileTypesTest extends PlatformTestCase {
       myFileTypeManager.toLog = false;
     }
   }
-
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
-  }
 }

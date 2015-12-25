@@ -30,6 +30,8 @@ public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
   @Deprecated
   void setInitialized(boolean initialized);
 
+  RemoteConnectionCredentialsWrapper connectionCredentials();
+
   void setVagrantConnectionType(@NotNull VagrantBasedCredentialsHolder vagrantBasedCredentials);
 
   /**

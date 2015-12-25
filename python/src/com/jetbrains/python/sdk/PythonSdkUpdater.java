@@ -370,7 +370,7 @@ public class PythonSdkUpdater implements StartupActivity {
     final String homePath = sdk.getHomePath();
     final SdkModificator modificatorToGetRoots = sdkModificator != null ? sdkModificator : sdk.getSdkModificator();
     final List<VirtualFile> currentSdkPaths = Arrays.asList(modificatorToGetRoots.getRoots(OrderRootType.CLASSES));
-    if (!Sets.difference(Sets.newHashSet(sdkPaths), Sets.newHashSet(currentSdkPaths)).isEmpty()) {
+    if (!Sets.newHashSet(sdkPaths).equals(Sets.newHashSet(currentSdkPaths))) {
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
         public void run() {

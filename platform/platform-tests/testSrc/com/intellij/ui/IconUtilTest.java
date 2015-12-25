@@ -325,9 +325,4 @@ public class IconUtilTest extends PlatformTestCase {
     }
     return Collections.singletonList(icon);
   }
-
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
-  }
 }

@@ -27,6 +27,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.diagnostic.Logger;
@@ -223,7 +224,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
   }
 
   @NotNull
-  private static DiffRequest createRequest(@Nullable Project project,
+  private DiffRequest createRequest(@Nullable Project project,
                                            @NotNull Change change,
                                            @NotNull UserDataHolder context,
                                            @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
@@ -312,8 +313,10 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
       DiffContent content1 = createContent(project, bRev, context, indicator);
       DiffContent content2 = createContent(project, aRev, context, indicator);
 
-      String beforeRevisionTitle = getRevisionTitle(bRev, "Base version");
-      String afterRevisionTitle = getRevisionTitle(aRev, "Your version");
+      final String userLeftRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE);
+      String beforeRevisionTitle = userLeftRevisionTitle != null ? userLeftRevisionTitle : getRevisionTitle(bRev, "Base version");
+      final String userRightRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE);
+      String afterRevisionTitle = userRightRevisionTitle != null ? userRightRevisionTitle : getRevisionTitle(aRev, "Your version");
 
       SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, beforeRevisionTitle, afterRevisionTitle);
 
@@ -367,6 +370,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
       indicator.checkCanceled();
 
       if (revision == null) return DiffContentFactory.getInstance().createEmpty();
+      FilePath filePath = revision.getFile();
 
       if (revision instanceof CurrentContentRevision) {
         VirtualFile vFile = ((CurrentContentRevision)revision).getVirtualFile();
@@ -374,7 +378,6 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
         return DiffContentFactory.getInstance().create(project, vFile);
       }
 
-      FilePath filePath = revision.getFile();
       if (revision instanceof BinaryContentRevision) {
         byte[] content = ((BinaryContentRevision)revision).getBinaryContent();
         if (content == null) {
@@ -383,9 +386,16 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
         return DiffContentFactory.getInstance().createBinary(project, filePath.getName(), filePath.getFileType(), content);
       }
 
-      String revisionContent = revision.getContent();
-      if (revisionContent == null) throw new DiffRequestProducerException("Can't get revision content");
-      return FileAwareDocumentContent.create(project, revisionContent, filePath);
+      if (revision instanceof ByteBackedContentRevision) {
+        byte[] revisionContent = ((ByteBackedContentRevision)revision).getContentAsBytes();
+        if (revisionContent == null) throw new DiffRequestProducerException("Can't get revision content");
+        return FileAwareDocumentContent.create(project, revisionContent, filePath);
+      }
+      else {
+        String revisionContent = revision.getContent();
+        if (revisionContent == null) throw new DiffRequestProducerException("Can't get revision content");
+        return FileAwareDocumentContent.create(project, revisionContent, filePath);
+      }
     }
     catch (IOException e) {
       LOG.info(e);

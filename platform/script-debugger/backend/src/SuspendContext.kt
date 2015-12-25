@@ -51,6 +51,9 @@ interface SuspendContext<CALL_FRAME : CallFrame> {
    */
   val breakpointsHit: List<Breakpoint>
 
+  val hasUnresolvedBreakpointsHit: Boolean
+    get() = false
+
   val valueManager: ValueManager
 }
 

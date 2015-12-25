@@ -6,7 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="util" exported="" />
     <orderEntry type="module" module-name="forms_rt" />
@@ -37,6 +37,6 @@
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="jps-serialization-tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
   </component>
 </module>
-

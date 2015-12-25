@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.RetrievableIcon;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ReflectionUtil;
@@ -42,8 +43,6 @@ import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.*;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
@@ -317,7 +316,13 @@ public final class IconLoader {
   }
 
   public static Icon getTransparentIcon(@NotNull final Icon icon, final float alpha) {
-    return new Icon() {
+    return new RetrievableIcon() {
+      @Nullable
+      @Override
+      public Icon retrieve() {
+        return icon;
+      }
+
       @Override
       public int getIconHeight() {
         return icon.getIconHeight();

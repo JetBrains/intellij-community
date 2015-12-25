@@ -34,14 +34,14 @@ public class GuavaSupplierConversionRule extends BaseGuavaTypeConversionRule {
 
   @Override
   protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {
-    descriptorsMap.put("get", new FunctionalInterfaceTypeConversionDescriptor("get", "get"));
+    descriptorsMap.put("get", new FunctionalInterfaceTypeConversionDescriptor("get", "get", JAVA_SUPPLIER));
   }
 
   @Nullable
   @Override
   protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
                                                                             @NotNull PsiVariable psiVariable, PsiExpression context) {
-    return new FunctionalInterfaceTypeConversionDescriptor("get", "get");
+    return new FunctionalInterfaceTypeConversionDescriptor("get", "get", JAVA_SUPPLIER);
   }
 
   @NotNull

@@ -388,9 +388,4 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     return html == null ? null : StringUtil.convertLineSeparators(html.trim()).replaceAll("<base href=\"[^\"]*\">", 
                                                                                           "<base href=\"placeholder\">");
   }
-
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
-  }
 }

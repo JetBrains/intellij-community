@@ -19,7 +19,9 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
-import java.util.concurrent.locks.*;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Naive implementation of blocking set: class that allows {@link #put(Object)} lock by the {@code key} specified and
@@ -42,8 +44,6 @@ public class BlockingSet<T> {
 
   /**
    * Acquires lock by {@code key}. If lock by {@code key} has been already acquired wait until it is released. Acquire is <b>not</b> reentrant.
-   *
-   * @param key
    */
   public void put(@NotNull T key) {
     lock.lock();
@@ -61,7 +61,6 @@ public class BlockingSet<T> {
   /**
    * Releases lock by {@code key}. If lock has not been acquired throws {@link IllegalStateException}.
    *
-   * @param key
    * @throws IllegalStateException if lock by {@code key} has not been acquired.
    */
   public void remove(@NotNull T key) throws IllegalStateException {

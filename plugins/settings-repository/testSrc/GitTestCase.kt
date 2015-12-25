@@ -107,8 +107,8 @@ internal abstract class GitTestCase : IcsTestCase() {
 
   protected fun FileSystem.compare(): FileSystem {
     val root = getPath("/")!!
-    compareFiles(root, repository.workTree)
-    compareFiles(root, remoteRepository.workTree)
+    compareFiles(root, repository.workTreePath)
+    compareFiles(root, remoteRepository.workTreePath)
     return this
   }
 }

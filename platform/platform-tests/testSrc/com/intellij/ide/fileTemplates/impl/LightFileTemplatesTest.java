@@ -37,8 +37,8 @@ import java.util.Arrays;
  */
 public class LightFileTemplatesTest extends LightPlatformTestCase {
 
-  public static final String TEST_TEMPLATE_TXT = "testTemplate.txt";
-  public static final String HI_THERE = "hi there";
+  private static final String TEST_TEMPLATE_TXT = "testTemplate.txt";
+  private static final String HI_THERE = "hi there";
 
   public void testSchemas() throws Exception {
     assertEquals(FileTemplatesScheme.DEFAULT, myTemplateManager.getCurrentScheme());
@@ -176,9 +176,22 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     ExportableFileTemplateSettings settings = ExportableFileTemplateSettings.getInstance(getProject());
     Element state = settings.getState();
     assertNotNull(state);
-    Element element = state.getChildren().get(1).getChildren().get(0);
+    Element element = state.getChildren().get(0).getChildren().get(0);
     assertEquals("<template name=\"testTemplate.txt\" reformat=\"false\" live-template-enabled=\"false\" enabled=\"true\" />", JDOMUtil
       .writeElement(element));
+  }
+
+  public void testDoNotSaveDefaults() throws Exception {
+    assertFalse(((FileTemplateBase)myTemplateManager.getTemplate(TEST_TEMPLATE_TXT)).isLiveTemplateEnabledByDefault());
+    FileTemplateBase template = (FileTemplateBase)myTemplateManager.getTemplate("templateWithLiveTemplate.txt");
+    assertTrue(template.isLiveTemplateEnabledByDefault());
+    ExportableFileTemplateSettings settings = ExportableFileTemplateSettings.getInstance(getProject());
+    assertNull(settings.getState());
+    template.setLiveTemplateEnabled(false);
+    Element state = settings.getState();
+    assertNotNull(state);
+    template.setLiveTemplateEnabled(true);
+    assertNull(settings.getState());
   }
 
   private FileTemplateManagerImpl myTemplateManager;

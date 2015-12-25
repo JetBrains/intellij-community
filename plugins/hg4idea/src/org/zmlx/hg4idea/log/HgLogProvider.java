@@ -106,7 +106,7 @@ public class HgLogProvider implements VcsLogProvider {
     }
 
     repository.update();
-    Map<String, Set<Hash>> branches = repository.getBranches();
+    Map<String, LinkedHashSet<Hash>> branches = repository.getBranches();
     Set<String> openedBranchNames = repository.getOpenedBranches();
     Collection<HgNameWithHashInfo> bookmarks = repository.getBookmarks();
     Collection<HgNameWithHashInfo> tags = repository.getTags();
@@ -115,7 +115,7 @@ public class HgLogProvider implements VcsLogProvider {
 
     Set<VcsRef> refs = new HashSet<VcsRef>(branches.size() + bookmarks.size());
 
-    for (Map.Entry<String, Set<Hash>> entry : branches.entrySet()) {
+    for (Map.Entry<String, LinkedHashSet<Hash>> entry : branches.entrySet()) {
       String branchName = entry.getKey();
       boolean opened = openedBranchNames.contains(branchName);
       for (Hash hash : entry.getValue()) {

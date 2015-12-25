@@ -1,11 +1,18 @@
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class CopyInto {
-  void m(Stream<String> it) {
-    ArrayList<String> collection = new ArrayList<>();
-    List<String> collection2 = it.collect(Collectors.toCollection(() -> collection));
+public class Main {
+
+  public <T, C extends Collection<T>> C copyInto1(Stream<T> fi, C collection) {
+    return fi.collect(Collectors.toCollection(() -> collection));
+  }
+
+
+  public <T, C extends Collection<? super T>> C copyInto2(Stream<T> fi, C collection) {
+    return fi.collect(Collectors.collectingAndThen(Collectors.toList(), ts -> {
+        collection.addAll(ts);
+        return collection;
+    }));
   }
 }

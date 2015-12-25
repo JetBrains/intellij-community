@@ -20,7 +20,6 @@ import com.intellij.xdebugger.frame.XSuspendContext
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.rejectedPromise
 import org.jetbrains.concurrency.resolvedPromise
-import org.jetbrains.concurrency.thenAsync
 import org.jetbrains.debugger.*
 import org.jetbrains.debugger.values.StringValue
 

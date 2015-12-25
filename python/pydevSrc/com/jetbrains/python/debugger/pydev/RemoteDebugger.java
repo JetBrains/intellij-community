@@ -433,7 +433,7 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void setTempBreakpoint(String type, String file, int line) {
+  public void setTempBreakpoint(@NotNull String type, @NotNull String file, int line) {
     final SetBreakpointCommand command =
       new SetBreakpointCommand(this, type, file, line);
     execute(command);  // set temp. breakpoint
@@ -441,7 +441,7 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void removeTempBreakpoint(String file, int line) {
+  public void removeTempBreakpoint(@NotNull String file, int line) {
     String type = myTempBreakpoints.get(Pair.create(file, line));
     if (type != null) {
       final RemoveBreakpointCommand command = new RemoveBreakpointCommand(this, type, file, line);
@@ -453,7 +453,8 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void setBreakpoint(String typeId, String file, int line, String condition, String logExpression) {
+  public void setBreakpoint(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition,
+                            @Nullable String logExpression) {
     final SetBreakpointCommand command =
       new SetBreakpointCommand(this, typeId, file, line,
                                condition,
@@ -462,7 +463,8 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void setBreakpointWithFuncName(String typeId, String file, int line, String condition, String logExpression, String funcName) {
+  public void setBreakpointWithFuncName(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition,
+                                        @Nullable String logExpression, @Nullable String funcName) {
     final SetBreakpointCommand command =
       new SetBreakpointCommand(this, typeId, file, line,
                                condition,
@@ -472,7 +474,7 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void removeBreakpoint(String typeId, String file, int line) {
+  public void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line) {
     final RemoveBreakpointCommand command =
       new RemoveBreakpointCommand(this, typeId, file, line);
     execute(command);

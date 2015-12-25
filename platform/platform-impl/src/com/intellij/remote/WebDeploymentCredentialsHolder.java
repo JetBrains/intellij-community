@@ -18,6 +18,7 @@ package com.intellij.remote;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author traff
@@ -41,7 +42,7 @@ public class WebDeploymentCredentialsHolder {
     myRemoteCredentials.copyFrom(remoteCredentials);
   }
 
-  @NotNull
+  @Nullable
   public String getWebServerConfigId() {
     return myWebServerConfigId;
   }

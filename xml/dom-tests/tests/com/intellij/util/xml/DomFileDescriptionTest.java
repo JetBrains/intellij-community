@@ -16,6 +16,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -125,7 +126,13 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     final XmlFile file = (XmlFile)createFile("a.xml", "<b>42</b>");
 
     getDomManager().registerFileDescription(new MockDomFileDescription<MyElement>(MyElement.class, "b", file), myDisposable);
-    file.setName("b.xml");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        file.setName("b.xml");
+      }
+    });
+
     assertTrue(getDomManager().isDomFile(file));
     final XmlFile copy = (XmlFile)file.copy();
     assertTrue(getDomManager().isDomFile(copy));

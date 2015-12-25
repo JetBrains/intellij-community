@@ -97,7 +97,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 import org.jetbrains.io.ChannelRegistrar;
-import org.jetbrains.io.NettyUtil;
+import org.jetbrains.io.NettyKt;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
@@ -1320,7 +1320,7 @@ public class BuildManager implements Disposable {
   }
 
   private int startListening() throws Exception {
-    final ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(new NioEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("External compiler")));
+    final ServerBootstrap bootstrap = NettyKt.serverBootstrap(new NioEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("External compiler")));
     bootstrap.childHandler(new ChannelInitializer() {
       @Override
       protected void initChannel(Channel channel) throws Exception {

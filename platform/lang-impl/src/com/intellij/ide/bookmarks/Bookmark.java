@@ -51,6 +51,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.RetrievableIcon;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
@@ -353,7 +354,13 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     }
   }
 
-  private static class MyCheckedIcon implements Icon {
+  private static class MyCheckedIcon implements Icon, RetrievableIcon {
+    @Nullable
+    @Override
+    public Icon retrieve() {
+      return PlatformIcons.CHECK_ICON;
+    }
+
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
       (darkBackground() ? AllIcons.Actions.CheckedGrey : AllIcons.Actions.CheckedBlack).paintIcon(c, g, x, y);

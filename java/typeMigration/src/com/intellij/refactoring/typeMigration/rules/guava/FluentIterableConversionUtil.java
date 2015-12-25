@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.util.IncorrectOperationException;
@@ -33,6 +34,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.types.ReplaceMethodRefWithLambdaIntention;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,11 +80,7 @@ public class FluentIterableConversionUtil {
         @Override
         public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
           if (!JavaGenericsUtil.isReifiableType(myType)) {
-            final UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
-            final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
-            final String name = codeStyleManager.suggestUniqueVariableName(
-              codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, PsiType.INT).names[0], expression, false);
-            final String chosenName = nameGenerator.generateUniqueName(name);
+            final String chosenName = chooseName(expression, PsiType.INT);
             final PsiType arrayType;
             if (myType instanceof PsiClassType) {
               final PsiClass resolvedClass = ((PsiClassType)myType).resolve();
@@ -107,6 +105,14 @@ public class FluentIterableConversionUtil {
     return null;
   }
 
+  public static String chooseName(@NotNull PsiExpression context, @Nullable PsiType type) {
+    final UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(context.getProject());
+    final String name = codeStyleManager.suggestUniqueVariableName(
+      codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, type).names[0], context, false);
+    return nameGenerator.generateUniqueName(name);
+  }
+
   @Nullable
   static TypeConversionDescriptor getFilterDescriptor(PsiMethod method) {
     LOG.assertTrue("filter".equals(method.getName()));
@@ -122,12 +128,12 @@ public class FluentIterableConversionUtil {
       return new GuavaFilterInstanceOfConversionDescriptor();
     }
     else if (GuavaPredicateConversionRule.GUAVA_PREDICATE.equals(resolvedClass.getQualifiedName())) {
-      return new LambdaParametersTypeConversionDescriptor("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "($p$)");
+      return new GuavaTypeConversionDescriptor("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "($p$)");
     }
     return null;
   }
 
-  static class TransformAndConcatConversionRule extends LambdaParametersTypeConversionDescriptor {
+  static class TransformAndConcatConversionRule extends GuavaTypeConversionDescriptor {
     public TransformAndConcatConversionRule() {
       super("$q$.transformAndConcat($params$)", "$q$.flatMap($params$)");
     }
@@ -248,8 +254,8 @@ public class FluentIterableConversionUtil {
     final String replaceTemplate;
     final String returnType;
     if ("toMap".equals(methodName) || "uniqueIndex".equals(methodName)) {
-      final LambdaParametersTypeConversionDescriptor descriptor = new LambdaParametersTypeConversionDescriptor("$it$.$methodName$($f$)",
-                                                                                                               "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))");
+      final GuavaTypeConversionDescriptor descriptor = new GuavaTypeConversionDescriptor("$it$.$methodName$($f$)",
+                                                                                         "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))");
       return descriptor.withConversionType(GuavaConversionUtil.addTypeParameters(CommonClassNames.JAVA_UTIL_MAP, context.getType(), context));
     }
     else if ("toList".equals(methodName)) {
@@ -277,4 +283,44 @@ public class FluentIterableConversionUtil {
     final PsiType type = GuavaConversionUtil.addTypeParameters(returnType, context.getType(), context);
     return new TypeConversionDescriptor(findTemplate, replaceTemplate).withConversionType(type);
   }
+
+  static class CopyIntoConversionDescriptor extends TypeConversionDescriptor {
+    public CopyIntoConversionDescriptor() {
+      super("$it$.copyInto($c$)", null);
+    }
+
+    @Override
+    public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(expression.getProject());
+      final PsiClass javaUtilCollection = facade.findClass(CommonClassNames.JAVA_UTIL_COLLECTION, expression.getResolveScope());
+      LOG.assertTrue(javaUtilCollection != null);
+      final PsiClassType assignableCollection = facade.getElementFactory().createType(javaUtilCollection, getQualifierElementType((PsiMethodCallExpression)expression));
+      final PsiType actualType = ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0].getType();
+      final String replaceTemplate;
+      if (actualType == null || TypeConversionUtil.isAssignable(assignableCollection, actualType)) {
+        replaceTemplate = "$it$.collect(java.util.stream.Collectors.toCollection(() -> $c$))";
+      } else  {
+        String varName = chooseName(expression, assignableCollection);
+        replaceTemplate = "$it$.collect(java.util.stream.Collectors.collectingAndThen(java.util.stream.Collectors.toList(), " + varName + " -> {\n" +
+                          "            $c$.addAll(" + varName + ");\n" +
+                          "            return $c$;\n" +
+                          "        }))";
+      }
+      setReplaceByString(replaceTemplate);
+      return super.replace(expression, evaluator);
+    }
+
+    @Nullable
+    private PsiType getQualifierElementType(PsiMethodCallExpression expression) {
+      final PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
+      if (qualifier == null) return null;
+      final PsiType type = qualifier.getType();
+      if (!(type instanceof PsiClassType)) return null;
+      PsiType[] parameters = ((PsiClassType)type).getParameters();
+      if (parameters.length > 1) return null;
+      if (parameters.length == 0) return PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
+      return parameters[0];
+    }
+  }
+
 }

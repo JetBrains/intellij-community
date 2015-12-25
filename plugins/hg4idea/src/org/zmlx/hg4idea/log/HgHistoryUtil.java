@@ -178,7 +178,7 @@ public class HgHistoryUtil {
 
 
   @Nullable
-  private static HgCommandResult getLogResult(@NotNull final Project project,
+  public static HgCommandResult getLogResult(@NotNull final Project project,
                                               @NotNull final VirtualFile root, @NotNull HgVersion version, int limit,
                                               @NotNull List<String> parameters, @NotNull String template) {
     HgFile originalHgFile = getOriginalHgFile(project, root);
@@ -326,14 +326,19 @@ public class HgHistoryUtil {
       fileBefore == null || aStatus == FileStatus.ADDED ? null
                                                         : HgContentRevision
         .create(project, new HgFile(root, new File(root.getPath(), fileBefore)), revisionBefore);
-    if (revisionAfter == null && fileBefore != null) {
-      ContentRevision currentRevision =
-        CurrentContentRevision.create(new HgFile(root, new File(root.getPath(), fileBefore)).toFilePath());
-      return new Change(beforeRevision, currentRevision, aStatus);
+    ContentRevision afterRevision;
+    if (aStatus == FileStatus.DELETED) {
+      afterRevision = null;
     }
-    HgContentRevision afterRevision =
-      fileAfter == null || aStatus == FileStatus.DELETED ? null :
-      HgContentRevision.create(project, new HgFile(root, new File(root.getPath(), fileAfter)), revisionAfter);
+    else if (revisionAfter == null && fileBefore != null) {
+      afterRevision =
+        CurrentContentRevision.create(new HgFile(root, new File(root.getPath(), fileAfter != null ? fileAfter : fileBefore)).toFilePath());
+    }
+    else {
+      assert revisionAfter != null;
+      afterRevision = fileAfter == null ? null :
+                      HgContentRevision.create(project, new HgFile(root, new File(root.getPath(), fileAfter)), revisionAfter);
+    }
     return new Change(beforeRevision, afterRevision, aStatus);
   }
 

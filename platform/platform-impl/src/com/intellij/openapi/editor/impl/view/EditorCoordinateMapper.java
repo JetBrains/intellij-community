@@ -242,6 +242,9 @@ class EditorCoordinateMapper {
       int maxOffset = 0;
       for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false)) {
         if (p.x <= fragment.getStartX()) {
+          if (fragment.getStartVisualColumn() == 0) {
+            return new VisualPosition(visualLine, 0);
+          }
           int markerWidth = myView.getEditor().getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
           float indent = fragment.getStartX() - markerWidth;
           if (p.x <= indent) {

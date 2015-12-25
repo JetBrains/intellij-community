@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,10 +54,10 @@ public class OverlappingSourceRootsTest extends PsiTestCase {
 
                   myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
 
-                  mySourceRoot1 = myProjectRoot.createChildDirectory(null, "root1");
-                  mySourceRoot2 = myProjectRoot.createChildDirectory(null, "root2");
-                  mySourceRoot11 = mySourceRoot1.createChildDirectory(null, "root11");
-                  mySourceRoot21 = mySourceRoot2.createChildDirectory(null, "root21");
+                  mySourceRoot1 = createChildDirectory(myProjectRoot, "root1");
+                  mySourceRoot2 = createChildDirectory(myProjectRoot, "root2");
+                  mySourceRoot11 = createChildDirectory(mySourceRoot1, "root11");
+                  mySourceRoot21 = createChildDirectory(mySourceRoot2, "root21");
 
                   PsiTestUtil.addContentRoot(myModule, myProjectRoot);
                   PsiTestUtil.addSourceRoot(myModule, mySourceRoot21);
@@ -50,10 +65,10 @@ public class OverlappingSourceRootsTest extends PsiTestCase {
                   PsiTestUtil.addSourceRoot(myModule, mySourceRoot2);
                   PsiTestUtil.addSourceRoot(myModule, mySourceRoot11);
 
-                  myFile1 = mySourceRoot1.createChildData(null, "File1.java");
-                  myFile2 = mySourceRoot2.createChildData(null, "File2.java");
-                  myFile11 = mySourceRoot11.createChildData(null, "File11.java");
-                  myFile21 = mySourceRoot21.createChildData(null, "File21.java");
+                  myFile1 = createChildData(mySourceRoot1, "File1.java");
+                  myFile2 = createChildData(mySourceRoot2, "File2.java");
+                  myFile11 = createChildData(mySourceRoot11, "File11.java");
+                  myFile21 = createChildData(mySourceRoot21, "File21.java");
                 } catch (IOException e) {
                   LOG.error(e);
                 }

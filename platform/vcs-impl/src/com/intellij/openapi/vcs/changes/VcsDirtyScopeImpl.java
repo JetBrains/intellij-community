@@ -509,7 +509,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   public String toString() {
     @NonNls StringBuilder result = new StringBuilder("VcsDirtyScope[");
     if (!myDirtyFiles.isEmpty()) {
-      result.append(" files=");
+      result.append(" files: ");
       for (THashSet<FilePath> paths : myDirtyFiles.values()) {
         for (FilePath file : paths) {
           result.append(file).append(" ");
@@ -517,18 +517,18 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
       }
     }
     if (!myDirtyDirectoriesRecursively.isEmpty()) {
-      result.append(" dirs=");
+      result.append("\n dirs: ");
       for(THashSet<FilePath> dirsByRoot: myDirtyDirectoriesRecursively.values()) {
         for(FilePath file: dirsByRoot) {
           result.append(file).append(" ");
         }
       }
     }
-    result.append("affected roots=");
+    result.append("\naffected roots: ");
     for (VirtualFile contentRoot : myAffectedContentRoots) {
       result.append(contentRoot.getPath()).append(" ");
     }
-    result.append("affected roots DISCLOSED=");
+    result.append("\naffected roots with check: ");
     for (VirtualFile contentRoot : getAffectedContentRootsWithCheck()) {
       result.append(contentRoot.getPath()).append(" ");
     }

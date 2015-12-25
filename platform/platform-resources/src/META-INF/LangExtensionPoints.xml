@@ -367,7 +367,7 @@
     <!-- File-Based Index-->
     <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension"/>
     <extensionPoint name="stubIndex" interface="com.intellij.psi.stubs.StubIndexExtension"/>
-    <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexedRootsProvider"/>
+    <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexableSetContributor"/>
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider"/>
 
     <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>

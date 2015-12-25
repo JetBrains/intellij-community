@@ -709,12 +709,12 @@
                          id="templateEscape" order="after hide-hints"/>
     <editorActionHandler action="EditorEnter" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EnterHandler"
                          id="templateEnter" order="before editorEnter"/>
-    <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.template.impl.editorActions.HomeHandler"/>
+    <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.template.impl.editorActions.TemplateLineStartHandler"/>
     <editorActionHandler action="EditorLineStartWithSelection"
-                         implementationClass="com.intellij.codeInsight.template.impl.editorActions.LineStartWithSelectionHandler"/>
-    <editorActionHandler action="EditorLineEnd" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EndHandler"/>
+                         implementationClass="com.intellij.codeInsight.template.impl.editorActions.TemplateLineStartWithSelectionHandler"/>
+    <editorActionHandler action="EditorLineEnd" implementationClass="com.intellij.codeInsight.template.impl.editorActions.TemplateLineEndHandler"/>
     <editorActionHandler action="EditorLineEndWithSelection"
-                         implementationClass="com.intellij.codeInsight.template.impl.editorActions.LineEndWithSelectionHandler"/>
+                         implementationClass="com.intellij.codeInsight.template.impl.editorActions.TemplateLineEndWithSelectionHandler"/>
     <editorActionHandler action="$SelectAll" implementationClass="com.intellij.codeInsight.template.impl.editorActions.SelectAllHandler"/>
     <typedHandler implementation="com.intellij.codeInsight.template.impl.editorActions.SpaceHandler"/>
 
@@ -941,6 +941,10 @@
       name="Code Style XML File"
       schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
       implementationClass="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeCopyExporter"/>
+    <schemeImporter
+      name="Intellij IDEA code style XML"
+      schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
+      implementationClass="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter"/>
 
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomPropertiesAction$AccessExtension"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomVmOptionsAction$AccessExtension"/>

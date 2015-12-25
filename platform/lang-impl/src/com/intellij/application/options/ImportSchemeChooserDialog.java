@@ -1,8 +1,11 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.options.SchemeFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +38,7 @@ public class ImportSchemeChooserDialog extends DialogWrapper {
     else {
       myNames.add(UNNAMED_SCHEME_ITEM);
     }
+    //noinspection unchecked
     mySchemeList.setModel(new DefaultListModel() {
       @Override
       public int getSize() {
@@ -96,5 +100,19 @@ public class ImportSchemeChooserDialog extends DialogWrapper {
   public String getTargetName() {
     String name = myTargetNameField.getText();
     return name != null && !name.trim().isEmpty() ? name : null;
+  }
+
+  public static Pair<String,CodeStyleScheme> selectOrCreateTargetScheme(@NotNull Project project,
+                                                                        @NotNull CodeStyleScheme currentScheme,
+                                                                        @NotNull SchemeFactory<CodeStyleScheme> schemeFactory,
+                                                                        String... schemeNames) {
+    final ImportSchemeChooserDialog schemeChooserDialog =
+      new ImportSchemeChooserDialog(project, schemeNames, !currentScheme.isDefault() ? currentScheme.getName() : null);
+    if (schemeChooserDialog.showAndGet()) {
+      return Pair.create(schemeChooserDialog.getSelectedName(),
+        schemeChooserDialog.isUseCurrentScheme() && (!currentScheme.isDefault()) ? currentScheme :
+             schemeFactory.createNewScheme(schemeChooserDialog.getTargetName()));
+    }
+    return null;
   }
 }

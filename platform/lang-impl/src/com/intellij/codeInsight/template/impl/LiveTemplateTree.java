@@ -144,7 +144,14 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
 
     try {
       for (Element templateElement : JDOMUtil.load(new StringReader("<root>" + buffer + "</root>")).getChildren(TemplateSettings.TEMPLATE)) {
-        myConfigurable.addTemplate(TemplateSettings.readTemplateFromElement(group.getName(), templateElement, getClass().getClassLoader()));
+        TemplateImpl template = TemplateSettings.readTemplateFromElement(group.getName(), templateElement, getClass().getClassLoader());
+        while (group.containsTemplate(template.getKey(), template.getId())) {
+          template.setKey(template.getKey() + "1");
+          if (template.getId() != null) {
+            template.setId(template.getId() + "1");
+          }
+        }
+        myConfigurable.addTemplate(template);
       }
     }
     catch (JDOMException ignore) {

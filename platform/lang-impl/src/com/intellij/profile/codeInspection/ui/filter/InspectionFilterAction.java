@@ -44,6 +44,7 @@ import java.util.*;
  * @author Dmitry Batkovich
  */
 public class InspectionFilterAction extends DefaultActionGroup implements Toggleable, DumbAware {
+  private final static int MIN_LANGUAGE_COUNT_TO_WRAP = 11;
 
   private final SeverityRegistrar mySeverityRegistrar;
   private final InspectionsFilter myInspectionsFilter;
@@ -103,6 +104,9 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
 
     if (!languages.isEmpty()) {
+      final DefaultActionGroup languageActionGroupParent =
+        new DefaultActionGroup("Filter by Language", languages.size() >= MIN_LANGUAGE_COUNT_TO_WRAP);
+      add(languageActionGroupParent);
       Collections.sort(languages, new Comparator<Language>() {
         @Override
         public int compare(Language l1, Language l2) {
@@ -110,9 +114,9 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
         }
       });
       for (Language language : languages) {
-        add(new LanguageFilterAction(language));
+        languageActionGroupParent.add(new LanguageFilterAction(language));
       }
-      add(new LanguageFilterAction(null));
+      languageActionGroupParent.add(new LanguageFilterAction(null));
       addSeparator();
     }
 
