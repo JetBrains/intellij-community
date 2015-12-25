@@ -32,7 +32,7 @@ public interface VcsLog {
    * Returns commits currently selected in the log.
    */
   @NotNull
-  List<Hash> getSelectedCommits();
+  List<CommitId> getSelectedCommits();
 
   /**
    * Returns details of the selected commits if all of them have been loaded.

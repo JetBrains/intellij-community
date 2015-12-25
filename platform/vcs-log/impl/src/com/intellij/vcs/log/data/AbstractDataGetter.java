@@ -88,7 +88,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   @Nullable
   public T getCommitData(int row, @NotNull GraphTableModel tableModel) {
     assert EventQueue.isDispatchThread();
-    Integer hash = tableModel.getCommitIdAtRow(row);
+    Integer hash = tableModel.getIdAtRow(row);
     T details = getFromCache(hash);
     if (details != null) {
       return details;
@@ -140,7 +140,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
             @Override
             public Hash compute() {
-              return myHashMap.getHash(commitId);
+              return myHashMap.getCommitId(commitId).getHash();
             }
           }, taskNumber, root));
         }
@@ -158,7 +158,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
                                                                  int below) {
     MultiMap<VirtualFile, Integer> commits = MultiMap.create();
     for (int row = Math.max(0, selectedRow - above); row < selectedRow + below && row < model.getRowCount(); row++) {
-      Integer hash = model.getCommitIdAtRow(row);
+      Integer hash = model.getIdAtRow(row);
       VirtualFile root = model.getRoot(row);
       commits.putValue(root, hash);
     }
@@ -170,7 +170,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
       List<String> hashStrings = ContainerUtil.map(entry.getValue(), new Function<Integer, String>() {
         @Override
         public String fun(Integer commitId) {
-          return myHashMap.getHash(commitId).asString();
+          return myHashMap.getCommitId(commitId).getHash().asString();
         }
       });
       List<? extends T> details = readDetails(myLogProviders.get(entry.getKey()), entry.getKey(), hashStrings);

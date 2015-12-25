@@ -45,16 +45,16 @@ public class VcsLogImpl implements VcsLog {
 
   @Override
   @NotNull
-  public List<Hash> getSelectedCommits() {
-    List<Hash> hashes = ContainerUtil.newArrayList();
+  public List<CommitId> getSelectedCommits() {
+    List<CommitId> commitIds = ContainerUtil.newArrayList();
     JBTable table = myUi.getTable();
     for (int row : table.getSelectedRows()) {
-      Hash hash = ((GraphTableModel)table.getModel()).getHashAtRow(row);
-      if (hash != null) {
-        hashes.add(hash);
+      CommitId commitId = ((GraphTableModel)table.getModel()).getCommitIdAtRow(row);
+      if (commitId != null) {
+        commitIds.add(commitId);
       }
     }
-    return hashes;
+    return commitIds;
   }
 
   @NotNull

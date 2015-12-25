@@ -326,11 +326,11 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         }));
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS == key) {
-      List<Hash> hashes = myUI.getVcsLog().getSelectedCommits();
-      sink.put(key, ArrayUtil.toObjectArray(ContainerUtil.map(hashes, new Function<Hash, VcsRevisionNumber>() {
+      List<CommitId> hashes = myUI.getVcsLog().getSelectedCommits();
+      sink.put(key, ArrayUtil.toObjectArray(ContainerUtil.map(hashes, new Function<CommitId, VcsRevisionNumber>() {
         @Override
-        public VcsRevisionNumber fun(Hash hash) {
-          return convertToRevisionNumber(hash);
+        public VcsRevisionNumber fun(CommitId commitId) {
+          return convertToRevisionNumber(commitId.getHash());
         }
       }), VcsRevisionNumber.class));
     }

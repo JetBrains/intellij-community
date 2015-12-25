@@ -61,7 +61,7 @@ public class GraphTableModel extends AbstractTableModel {
     int head = myDataPack.getVisibleGraph().getRowInfo(rowIndex).getOneOfHeads();
     Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(head);
     if (refs.isEmpty()) {
-      LOG.error("No references pointing to head " + myDataHolder.getHash(head) + " identified for commit at row " + rowIndex,
+      LOG.error("No references pointing to head " + myDataHolder.getCommitId(head) + " identified for commit at row " + rowIndex,
                 new Attachment("details.txt", getErrorDetails()));
       // take the first root: it is the right choice in one-repo case, though it will likely fail in multi-repo case
       return myDataPack.getLogProviders().keySet().iterator().next();
@@ -76,7 +76,7 @@ public class GraphTableModel extends AbstractTableModel {
     List<GraphCommit<Integer>> commits = myDataPack.getPermanentGraph().getAllCommits();
     for (int i = 0; i < 100 && i < commits.size(); i++) {
       GraphCommit<Integer> commit = commits.get(i);
-      sb.append(String.format("%s -> %s\n", myDataHolder.getHash(commit.getId()).toShortString(), getParents(commit)));
+      sb.append(String.format("%s -> %s\n", myDataHolder.getCommitId(commit.getId()).getHash().toShortString(), getParents(commit)));
     }
     sb.append("\nALL REFS:\n");
     printRefs(sb, myDataPack.getRefsModel().getAllRefsByRoot());
@@ -88,7 +88,7 @@ public class GraphTableModel extends AbstractTableModel {
     return StringUtil.join(commit.getParents(), new Function<Integer, String>() {
       @Override
       public String fun(Integer integer) {
-        return myDataHolder.getHash(integer).toShortString();
+        return myDataHolder.getCommitId(integer).getHash().toShortString();
       }
     }, ", ");
   }
@@ -117,13 +117,13 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   @NotNull
-  public Integer getCommitIdAtRow(int row) {
+  public Integer getIdAtRow(int row) {
     return myDataPack.getVisibleGraph().getRowInfo(row).getCommit();
   }
 
   @Nullable
-  public Hash getHashAtRow(int row) {
-    return myDataHolder.getHash(getCommitIdAtRow(row));
+  public CommitId getCommitIdAtRow(int row) {
+    return myDataHolder.getCommitId(getIdAtRow(row));
   }
 
   public int getRowOfCommit(@NotNull final Hash hash, @NotNull VirtualFile root) {
