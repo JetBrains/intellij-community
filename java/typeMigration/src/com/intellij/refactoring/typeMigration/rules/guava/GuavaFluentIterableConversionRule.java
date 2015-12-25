@@ -18,6 +18,7 @@ package com.intellij.refactoring.typeMigration.rules.guava;
 import com.intellij.codeInspection.java18StreamApi.PseudoLambdaReplaceTemplate;
 import com.intellij.codeInspection.java18StreamApi.StreamApiConstants;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -25,6 +26,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
@@ -104,10 +106,6 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     DESCRIPTORS_MAP.put("anyMatch", new TypeConversionDescriptorFactory("$it$.anyMatch($c$)", "$it$." + StreamApiConstants.ANY_MATCH + "($c$)", true));
     DESCRIPTORS_MAP.put("firstMatch", new TypeConversionDescriptorFactory("$it$.firstMatch($p$)", "$it$.filter($p$).findFirst()", true, true, false));
     DESCRIPTORS_MAP.put("size", new TypeConversionDescriptorFactory("$it$.size()", "(int) $it$.count()", false));
-
-    DESCRIPTORS_MAP.put("copyInto", new TypeConversionDescriptorFactory("$it$.copyInto($c$)",
-                                                                        "$it$.collect(java.util.stream.Collectors.toCollection(() -> $c$))",
-                                                                        false));
   }
 
   @Override
@@ -165,6 +163,10 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       descriptorBase = new FluentIterableConversionUtil.TransformAndConcatConversionRule();
     } else if (methodName.equals("toArray")) {
       descriptorBase = FluentIterableConversionUtil.getToArrayDescriptor(from, context);
+      needSpecifyType = false;
+    }
+    else if (methodName.equals("copyInto")) {
+      descriptorBase = new FluentIterableConversionUtil.CopyIntoConversionDescriptor();
       needSpecifyType = false;
     }
     else if (methodName.equals("append")) {
