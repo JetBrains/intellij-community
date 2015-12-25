@@ -288,61 +288,10 @@ public class PyOverrideImplementUtil {
   }
 
   public static boolean raisesNotImplementedError(@NotNull PyFunction function) {
-    for (PyStatement statement : function.getStatementList().getStatements()) {
-      if (isIfStatementWithReturnInside(statement)) {
-        return false;
-      }
-      if (!(statement instanceof PyRaiseStatement)) {
-        continue;
-      }
-
-      final PyRaiseStatement raiseStatement = (PyRaiseStatement)statement;
-      final PyExpression[] expressions = raiseStatement.getExpressions();
-      if (expressions.length > 0) {
-        final PyExpression firstExpression = expressions[0];
-        if (firstExpression instanceof PyCallExpression) {
-          final PyExpression callee = ((PyCallExpression)firstExpression).getCallee();
-          if (callee != null && callee.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
-            return true;
-          }
-        }
-        else if (firstExpression.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  private static boolean isIfStatementWithReturnInside(PyStatement statement) {
-    if (statement instanceof PyIfStatement) {
-      final PyStatement[] insideIfStatements = ((PyIfStatement) statement).getIfPart().getStatementList().getStatements();
-      if (hasReturnInside(insideIfStatements)) return true;
-
-      final PyIfPart[] elifParts = ((PyIfStatement)statement).getElifParts();
-      for (PyIfPart part: elifParts) {
-        if (hasReturnInside(part.getStatementList().getStatements())) return true;
-      }
-
-      final PyElsePart elsePart = ((PyIfStatement)statement).getElsePart();
-      if (elsePart != null) {
-        PyStatement[] pyStatements = elsePart.getStatementList().getStatements();
-        if (hasReturnInside(pyStatements)) return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean hasReturnInside(PyStatement[] statements) {
-    for (PyStatement st: statements) {
-      if (st instanceof PyReturnStatement) {
-        return true;
-      }
-      else if (st instanceof PyIfStatement) {
-        return isIfStatementWithReturnInside(st);
-      }
-    }
-    return false;
+    PyStatementList statementList = function.getStatementList();
+    IfVisitor visitor = new IfVisitor();
+    statementList.accept(visitor);
+    return !visitor.hasReturnInside && visitor.raiseNotImplemented;
   }
 
   // TODO find a better place for this logic
@@ -376,5 +325,45 @@ public class PyOverrideImplementUtil {
       }
     }
     return Lists.newArrayList(functions.values());
+  }
+
+  private static class IfVisitor extends PyRecursiveElementVisitor {
+    private boolean hasReturnInside;
+    private boolean raiseNotImplemented;
+    @Override
+    public void visitPyIfStatement(PyIfStatement node) {
+      node.getIfPart().getStatementList().accept(this);
+      final PyIfPart[] elifParts = node.getElifParts();
+      for (PyIfPart part: elifParts) {
+        part.accept(this);
+      }
+
+      final PyElsePart elsePart = node.getElsePart();
+      if (elsePart != null) {
+        elsePart.accept(this);
+      }
+    }
+
+    @Override
+    public void visitPyReturnStatement(PyReturnStatement node) {
+      hasReturnInside = true;
+    }
+
+    @Override
+    public void visitPyRaiseStatement(PyRaiseStatement node) {
+      final PyExpression[] expressions = node.getExpressions();
+      if (expressions.length > 0) {
+        final PyExpression firstExpression = expressions[0];
+        if (firstExpression instanceof PyCallExpression) {
+          final PyExpression callee = ((PyCallExpression)firstExpression).getCallee();
+          if (callee != null && callee.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
+            raiseNotImplemented = true;
+          }
+        }
+        else if (firstExpression.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
+          raiseNotImplemented = true;
+        }
+      }
+    }
   }
 }
