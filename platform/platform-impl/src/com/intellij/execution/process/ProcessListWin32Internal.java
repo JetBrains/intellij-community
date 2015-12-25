@@ -15,6 +15,8 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.io.*;
@@ -26,25 +28,34 @@ import java.util.List;
  * Use through ProcessUtils.
  */
 class ProcessListWin32Internal implements IProcessList {
-  private String myHelpersRoot;
-
-  public ProcessListWin32Internal(String helpersRoot) {
-    myHelpersRoot = helpersRoot;
-  }
+  private static final Logger LOG = Logger.getInstance(ProcessListWin32Internal.class);
 
   @Override
   public ProcessInfo[] getProcessList() {
+    String[] dirs = {
+      PathManager.getBinPath(),
+      PathManager.getHomePath() + "/community/bin/win", 
+      PathManager.getBinPath() + "/win"};
+    
+    File listtasks = null;
+    
+    for (String each : dirs) {
+      listtasks = new File(each, "listtasks.exe");
+    }
+    
+    if (!listtasks.exists()) {
+      LOG.error("listtasks.exe not found in bin folders");
+      return ProcessInfo.EMPTY_ARRAY;
+    }
+    
     try {
-      File file = new File(myHelpersRoot, "process/listtasks.exe");
-      if (file.exists()) {
-        String[] command = {file.getCanonicalPath()};
-        Process p = ProcessUtils.createProcess(command, null, null);
-        try {
-          return parseListTasks(p.getInputStream());
-        }
-        finally {
-          p.destroy();
-        }
+      String[] command = {listtasks.getCanonicalPath()};
+      Process p = ProcessUtils.createProcess(command, null, null);
+      try {
+        return parseListTasks(p.getInputStream());
+      }
+      finally {
+        p.destroy();
       }
     }
     catch (IOException ignored) { }

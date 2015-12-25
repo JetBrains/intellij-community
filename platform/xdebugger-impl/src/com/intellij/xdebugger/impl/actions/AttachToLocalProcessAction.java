@@ -62,31 +62,34 @@ public class AttachToLocalProcessAction extends AnAction {
       // todo show message
     }
 
-    JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<AttachItem>("Attach", items) {
-      @Override
-      public boolean isSpeedSearchEnabled() {
-        return true;
-      }
+    BaseListPopupStep<AttachItem> step =
+      new BaseListPopupStep<AttachItem>(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.title"), items) {
+        @Override
+        public boolean isSpeedSearchEnabled() {
+          return true;
+        }
 
-      @NotNull
-      @Override
-      public String getTextFor(AttachItem value) {
-        return value.info.getPid() + " " + value.info.getExecutableName();
-      }
+        @NotNull
+        @Override
+        public String getTextFor(AttachItem value) {
+          return value.info.getPid() + " " + value.info.getExecutableName();
+        }
 
-      @Override
-      public PopupStep onChosen(AttachItem selectedValue, boolean finalChoice) {
-        startDebugSession(project, selectedValue.debuggers.get(0), selectedValue.info);
-        return super.onChosen(selectedValue, finalChoice);
-      }
-    }).showCenteredInCurrentWindow(project);
+        @Override
+        public PopupStep onChosen(AttachItem selectedValue, boolean finalChoice) {
+          startDebugSession(project, selectedValue.debuggers.get(0), selectedValue.info);
+          return super.onChosen(selectedValue, finalChoice);
+        }
+      };
+
+    JBPopupFactory.getInstance().createListPopup(step).showCenteredInCurrentWindow(project);
   }
 
   @NotNull
   private static List<AttachItem> collectAttachItems(@NotNull Project project) {
     List<AttachItem> result = new ArrayList<AttachItem>();
 
-    for (ProcessInfo eachInfo : ProcessUtils.getProcessList("")) {
+    for (ProcessInfo eachInfo : ProcessUtils.getProcessList()) {
       List<XLocalAttachDebugger> availableDebuggers = new ArrayList<XLocalAttachDebugger>();
       for (XLocalAttachDebuggerProvider eachProvider : Extensions.getExtensions(XLocalAttachDebuggerProvider.EP)) {
         availableDebuggers.addAll(eachProvider.getAvailableDebuggers(project, eachInfo));

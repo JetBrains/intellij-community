@@ -63,14 +63,14 @@ public class ProcessUtils {
 
 
   @NotNull
-  public static ProcessInfo[] getProcessList(@NotNull String helpersRoot) {
-    return getProcessListImpl(helpersRoot).getProcessList();
+  public static ProcessInfo[] getProcessList() {
+    return getProcessListImpl().getProcessList();
   }
 
   @NotNull
-  private static IProcessList getProcessListImpl(@NotNull String helpersRoot) {
+  private static IProcessList getProcessListImpl() {
     if (SystemInfo.isWindows) {
-      return new ProcessListWin32(helpersRoot);
+      return new ProcessListWin32();
     }
     if (SystemInfo.isLinux) {
       return new ProcessListLinux();

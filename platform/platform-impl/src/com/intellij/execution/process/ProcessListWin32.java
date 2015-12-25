@@ -33,12 +33,6 @@ import java.util.List;
 class ProcessListWin32 implements IProcessList {
   private static final Logger LOG = Logger.getInstance(ProcessListWin32.class);
 
-  private String myHelpersRoot;
-
-  public ProcessListWin32(String helpersRoot) {
-    myHelpersRoot = helpersRoot;
-  }
-
   @Override
   public ProcessInfo[] getProcessList() {
     try {
@@ -56,7 +50,7 @@ class ProcessListWin32 implements IProcessList {
       }
       catch (Exception e) {
         //Use fallback
-        return new ProcessListWin32Internal(myHelpersRoot).getProcessList();
+        return new ProcessListWin32Internal().getProcessList();
       }
       try {
         return parseListTasks(p.getInputStream());

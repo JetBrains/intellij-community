@@ -31,7 +31,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SelectFromListDialog;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,7 +85,7 @@ public class PyAttachToProcessAction extends AnAction {
   }
 
   private static ProcessInfo[] pythonProcessesList() {
-    ProcessInfo[] list = ProcessUtils.getProcessList(PythonHelpersLocator.getHelpersRoot().getAbsolutePath());
+    ProcessInfo[] list = ProcessUtils.getProcessList();
     return FluentIterable.from(Lists.newArrayList(list)).filter(new Predicate<ProcessInfo>() {
       @Override
       public boolean apply(ProcessInfo input) {
