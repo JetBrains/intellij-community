@@ -41,7 +41,7 @@ public class SuspendManagerUtil {
    */
   @Nullable
   public static SuspendContextImpl findContextByThread(@NotNull SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
-    for (SuspendContextImpl context : ((SuspendManagerImpl)suspendManager).getPausedContexts()) {
+    for (SuspendContextImpl context : suspendManager.getEventContexts()) {
       if ((context.getThread() == thread || context.getSuspendPolicy() == EventRequest.SUSPEND_ALL)
           && !context.isExplicitlyResumed(thread)){
         return context;

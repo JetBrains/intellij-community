@@ -1264,16 +1264,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (action instanceof PreloadableAction) {
         ((PreloadableAction)action).preload();
       }
-      else if (action instanceof ActionGroup) {
-        application.runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            if (!application.isDisposed()) {
-              ((ActionGroup)action).getChildren(null);
-            }
-          }
-        });
-      }
+      // don't preload ActionGroup.getChildren() because that would unstub child actions
+      // and make it impossible to replace the corresponding actions later
+      // (via unregisterAction+registerAction, as some app components do)
     }
   }
 

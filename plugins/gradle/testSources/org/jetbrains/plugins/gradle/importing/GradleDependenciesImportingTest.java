@@ -206,4 +206,42 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDep("project_main", depName, "file://" + path);
     assertModuleLibDepScope("project_main", depName, DependencyScope.RUNTIME);
   }
+
+  @Test
+  public void testProjectArtifactDependencyInTestAndArchivesConfigurations() throws Exception {
+    createSettingsFile("include 'api', 'impl' ");
+
+    importProject(
+      "allprojects {\n" +
+      "  apply plugin: 'java'\n" +
+      "}\n" +
+      "\n" +
+      "project(\"api\") {\n" +
+      "  configurations {\n" +
+      "    tests\n" +
+      "  }\n" +
+      "  task testJar(type: Jar, dependsOn: testClasses, description: \"archive the testClasses\") {\n" +
+      "    baseName = \"${project.archivesBaseName}-tests\"\n" +
+      "    classifier = \"tests\"\n" +
+      "    from sourceSets.test.output\n" +
+      "  }\n" +
+      "  artifacts {\n" +
+      "    tests testJar\n" +
+      "    archives testJar\n" +
+      "  }\n" +
+      "}\n" +
+      "project(\"impl\") {\n" +
+      "  dependencies {\n" +
+      "    testCompile  project(path: ':api', configuration: 'tests')\n" +
+      "  }\n" +
+      "}\n"
+    );
+
+    assertModules("project", "project_main", "project_test", "api", "api_main", "api_test", "impl", "impl_main", "impl_test");
+
+    assertModuleModuleDepScope("project_test", "project_main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("api_test", "api_main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("impl_test", "impl_main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("impl_test", "api_test", DependencyScope.COMPILE);
+  }
 }

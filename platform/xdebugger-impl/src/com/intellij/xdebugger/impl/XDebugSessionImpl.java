@@ -845,6 +845,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void positionReached(@NotNull final XSuspendContext suspendContext) {
+    myActiveNonLineBreakpoint = null;
     positionReachedInternal(suspendContext);
   }
 
