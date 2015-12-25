@@ -111,7 +111,7 @@ public class GraphTableModel extends AbstractTableModel {
     List<VcsRef> refs = Collections.emptyList();
     if (details != null) {
       message = details.getSubject();
-      refs = (List<VcsRef>)myDataPack.getRefsModel().refsToCommit(details.getId());
+      refs = (List<VcsRef>)myDataPack.getRefsModel().refsToCommit(details.getId(), details.getRoot());
     }
     return new GraphCommitCell(message, refs);
   }
