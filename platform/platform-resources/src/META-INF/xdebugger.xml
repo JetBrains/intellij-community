@@ -48,7 +48,7 @@
   <actions>
     <group id="XDebugger.AttachGroup">
       <action id="XDebugger.AttachToLocalProcess" class="com.intellij.xdebugger.impl.actions.AttachToLocalProcessAction"/>
-      <add-to-group group-id="RunMenu" anchor="after" relative-to-action="RunnerActions"/>
+      <add-to-group group-id="RunMenu" anchor="before" relative-to-action="editRunConfigurations"/>
     </group>
   </actions>
 </idea-plugin>
