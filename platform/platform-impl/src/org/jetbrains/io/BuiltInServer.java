@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Random;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,6 +42,15 @@ public class BuiltInServer implements Disposable {
   private final int port;
   private final ChannelRegistrar channelRegistrar;
   private final boolean isOwnerOfEventLoopGroup;
+
+  static {
+    // IDEA-120811
+    if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
+      System.setProperty("io.netty.machineId", "9e43d860");
+      System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
+      System.setProperty("io.netty.serviceThreadPrefix", "Netty ");
+    }
+  }
 
   private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup,
                         int port,
