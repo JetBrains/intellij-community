@@ -43,7 +43,7 @@ public class PausesStat {
     assert !started;
     if (pauses.size() > N_MAX) {
       // guard against OOME
-      int toDelete = N_MAX / 4;
+      int toDelete = N_MAX / 2;
       assert toDelete % 2 == 0 : toDelete;
       pauses.remove(0, toDelete);
       maxDuration = 0;
