@@ -19,9 +19,9 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nullable;
 
-public class HtmlAttributeValuesProvider {
-  public static final ExtensionPointName<HtmlAttributeValuesProvider> EP_NAME =
-    new ExtensionPointName<HtmlAttributeValuesProvider>("com.intellij.html.attributeValuesProvider");
+public class HtmlAttributeValueProvider {
+  public static final ExtensionPointName<HtmlAttributeValueProvider> EP_NAME =
+    new ExtensionPointName<HtmlAttributeValueProvider>("com.intellij.html.attributeValueProvider");
 
   /**
    * Calculates attribute value. Used when it is impossible to get attribute value as text of PSI element
