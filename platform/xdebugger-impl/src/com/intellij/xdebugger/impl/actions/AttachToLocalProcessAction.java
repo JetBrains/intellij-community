@@ -24,10 +24,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
@@ -39,6 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,7 +69,35 @@ public class AttachToLocalProcessAction extends AnAction {
     if (project == null) return;
 
     MyPopupStep step = new MyPopupStep(collectAttachItems(project), project);
-    JBPopupFactory.getInstance().createListPopup(step).showCenteredInCurrentWindow(project);
+
+    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
+    final JList mainList = ((ListPopupImpl)popup).getList();
+
+    ListSelectionListener listener = new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent event) {
+        if (event.getValueIsAdjusting()) return;
+
+        Object item = ((JList)event.getSource()).getSelectedValue();
+
+        // if a sub-list is closed, fallback to the selected value from the main list 
+        if (item == null) {
+          item = mainList.getSelectedValue();
+        }
+
+        if (item instanceof AttachItem) {
+          popup.setAdText(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.adText",
+                                                  ((AttachItem)item).getSelectedDebugger().getDebuggerDisplayName()),
+                          SwingConstants.LEADING);
+        }
+      }
+    };
+    popup.addListSelectionListener(listener);
+
+    // force first valueChanged event
+    listener.valueChanged(new ListSelectionEvent(mainList, mainList.getMinSelectionIndex(), mainList.getMaxSelectionIndex(), false));
+
+    popup.showCenteredInCurrentWindow(project);
   }
 
   @NotNull
@@ -133,9 +165,9 @@ public class AttachToLocalProcessAction extends AnAction {
   }
 
   private static class MyPopupStep extends BaseListPopupStep<AttachItem> implements ListPopupStepEx<AttachItem> {
-    private final Project myProject;
+    @NotNull private final Project myProject;
 
-    public MyPopupStep(List<AttachItem> items, Project project) {
+    public MyPopupStep(@NotNull List<AttachItem> items, @NotNull Project project) {
       super(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.title"), items);
       myProject = project;
     }
@@ -143,6 +175,11 @@ public class AttachToLocalProcessAction extends AnAction {
     @Override
     public boolean isSpeedSearchEnabled() {
       return true;
+    }
+
+    @Override
+    public boolean isAutoSelectionEnabled() {
+      return false;
     }
 
     @NotNull
@@ -166,6 +203,7 @@ public class AttachToLocalProcessAction extends AnAction {
     public void setEmptyText(@NotNull StatusText emptyText) {
       emptyText.setText(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.emptyText"));
     }
+
 
     @Override
     public PopupStep onChosen(AttachItem selectedValue, boolean finalChoice) {
