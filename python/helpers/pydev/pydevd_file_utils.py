@@ -41,8 +41,7 @@
 
 
 
-from pydevd_constants import *  #@UnusedWildImport
-from _pydev_filesystem_encoding import getfilesystemencoding
+from _pydevd_bundle.pydevd_constants import *  #@UnusedWildImport
 import os.path
 import sys
 import traceback
@@ -73,15 +72,6 @@ PATHS_FROM_ECLIPSE_TO_PYTHON = []
 
 normcase = os_normcase # May be rebound on set_ide_os
 
-
-def norm_case(filename):
-    filename = os_normcase(filename)
-    if IS_PY3K:
-        return filename
-    enc = getfilesystemencoding()
-    return filename.decode(enc).lower().encode(enc)
-
-
 def set_ide_os(os):
     '''
     We need to set the IDE os because the host where the code is running may be
@@ -92,7 +82,7 @@ def set_ide_os(os):
     if os == 'UNIX':
         normcase = lambda f:f #Change to no-op if the client side is on unix/mac.
     else:
-        normcase = norm_case
+        normcase = os_normcase
 
     # After setting the ide OS, apply the normcase to the existing paths.
 
@@ -257,7 +247,7 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
 
 
     #only setup translation functions if absolutely needed!
-    def NormFileToServer(filename):
+    def norm_file_to_server(filename):
         #Eclipse will send the passed filename to be translated to the python process
         #So, this would be 'NormFileFromEclipseToPython'
         try:
@@ -287,7 +277,7 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
             return translated
 
 
-    def NormFileToClient(filename):
+    def norm_file_to_client(filename):
         #The result of this method will be passed to eclipse
         #So, this would be 'NormFileFromPythonToEclipse'
         try:
@@ -318,12 +308,12 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
 
 else:
     #no translation step needed (just inline the calls)
-    NormFileToClient = _AbsFile
-    NormFileToServer = _NormFile
+    norm_file_to_client = _AbsFile
+    norm_file_to_server = _NormFile
 
 
 # For given file f returns tuple of its absolute path, real path and base name
-def GetNormPathsAndBaseFromFile(f):
+def get_norm_paths_and_base_from_file(f):
     try:
         return NORM_PATHS_AND_BASE_CONTAINER[f]
     except KeyError:
@@ -333,17 +323,17 @@ def GetNormPathsAndBaseFromFile(f):
         return abs_path, real_path, base
 
 
-def GetFileNameAndBaseFromFile(f):
-    abs_path, real_path, base = GetNormPathsAndBaseFromFile(f)
+def get_file_name_and_base_from_file(f):
+    abs_path, real_path, base = get_norm_paths_and_base_from_file(f)
     return real_path, base
 
 
-def GetFilenameAndBase(frame):
-    abs_path, real_path, base = GetNormPathsAndBase(frame)
+def get_filename_and_base(frame):
+    abs_path, real_path, base = get_norm_paths_and_base(frame)
     return real_path, base
 
 
-def GetNormPathsAndBase(frame):
+def get_norm_paths_and_base(frame):
     #This one is just internal (so, does not need any kind of client-server translation)
     f = frame.f_code.co_filename
     if f is not None and f.startswith('build/bdist.'):
@@ -351,4 +341,4 @@ def GetNormPathsAndBase(frame):
         f = frame.f_globals['__file__']
         if f.endswith('.pyc'):
             f = f[:-1]
-    return GetNormPathsAndBaseFromFile(f)
+    return get_norm_paths_and_base_from_file(f)

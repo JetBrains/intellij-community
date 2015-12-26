@@ -12,7 +12,7 @@
 import os
 import sys
 
-from pydevd_constants import IS_PY24, IS_PY3K, IS_JYTHON
+from _pydevd_bundle.pydevd_constants import IS_PY24, IS_PY3K, IS_JYTHON
 
 if IS_PY24:
     from _pydev_imps._pydev_uuid_old import uuid4
@@ -127,7 +127,7 @@ class _IntentionallyEmptyModule(ModuleType):
 
     def __getattr__(self, name):
         try:
-            return ModuleType.__getattr__(self, name)
+            return ModuleType.__getattr__(self, name)  # @UndefinedVariable
         except AttributeError:
             if name[:2] == '__':
                 raise
@@ -324,7 +324,7 @@ class PluginSource(object):
                 return open(os.path.join(os.path.dirname(fn), filename), 'rb')
         buf = pkgutil.get_data(self.mod.__name__ + '.' + plugin, filename)
         if buf is None:
-            raise IOError(errno.ENOEXITS, 'Could not find resource')
+            raise IOError('Could not find resource')
         return NativeBytesIO(buf)
 
     def cleanup(self):

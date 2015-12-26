@@ -37,7 +37,7 @@ if __name__ == '__main__':
             menu.Append(wx.ID_EXIT, "E&xit\tAlt-X", "Exit this simple sample")
     
             # bind the menu event to an event handler
-            self.Bind(wx.EVT_MENU, self.OnTimeToClose, id=wx.ID_EXIT)
+            self.Bind(wx.EVT_MENU, self.on_time_to_close, id=wx.ID_EXIT)
     
             # and put the menu on the menubar
             menuBar.Append(menu, "&File")
@@ -56,8 +56,8 @@ if __name__ == '__main__':
             funbtn = wx.Button(panel, -1, "Just for fun...")
     
             # bind the button events to handlers
-            self.Bind(wx.EVT_BUTTON, self.OnTimeToClose, btn)
-            self.Bind(wx.EVT_BUTTON, self.OnFunButton, funbtn)
+            self.Bind(wx.EVT_BUTTON, self.on_time_to_close, btn)
+            self.Bind(wx.EVT_BUTTON, self.on_fun_button, funbtn)
     
             # Use a sizer to layout the controls, stacked vertically and with
             # a 10 pixel border around each
@@ -69,12 +69,12 @@ if __name__ == '__main__':
             panel.Layout()
     
     
-        def OnTimeToClose(self, evt):
+        def on_time_to_close(self, evt):
             """Event handler for the button click."""
             print("See ya later!")
             self.Close()
     
-        def OnFunButton(self, evt):
+        def on_fun_button(self, evt):
             """Event handler for the button click."""
             print("Having fun yet?")
     
