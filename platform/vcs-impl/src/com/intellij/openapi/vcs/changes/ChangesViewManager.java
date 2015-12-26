@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 11.07.2006
- * Time: 15:29:25
- */
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.util.DiffPlaces;
@@ -81,7 +75,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, ProjectComponent {
-  public static final int UNVERSIONED_MAX_SIZE = 50;
+  private static final int UNVERSIONED_MAX_SIZE = 50;
   private boolean SHOW_FLATTEN_MODE = true;
   private boolean SHOW_IGNORED_MODE = false;
 
@@ -211,7 +205,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     EmptyAction.registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), panel);
     EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), panel);
     EmptyAction.registerWithShortcutSet("ChangesView.Rename",CommonShortcuts.getRename() , panel);
-    EmptyAction.registerWithShortcutSet("ChangesView.SetDefault", new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, KeyEvent.ALT_DOWN_MASK | ctrlMask())), panel);
+    EmptyAction.registerWithShortcutSet("ChangesView.SetDefault", new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK | ctrlMask())), panel);
     EmptyAction.registerWithShortcutSet("ChangesView.Diff", CommonShortcuts.getDiff(), panel);
 
     JPanel toolbarPanel = new JPanel(new BorderLayout());
@@ -301,7 +295,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     return SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK;
   }
 
-  public void updateProgressComponent(final Factory<JComponent> progress) {
+  private void updateProgressComponent(final Factory<JComponent> progress) {
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
@@ -355,7 +349,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     }
   }
 
-  void refreshView() {
+  private void refreshView() {
     if (myDisposed || ! myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return;
     if (! ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return;
 
@@ -497,7 +491,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     }
   }
 
-  public class ToggleShowFlattenAction extends ToggleAction implements DumbAware {
+  private class ToggleShowFlattenAction extends ToggleAction implements DumbAware {
     public ToggleShowFlattenAction() {
       super(VcsBundle.message("changes.action.show.directories.text"),
             VcsBundle.message("changes.action.show.directories.description"),
@@ -513,7 +507,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     }
   }
 
-  public class ToggleShowIgnoredAction extends ToggleAction implements DumbAware {
+  private class ToggleShowIgnoredAction extends ToggleAction implements DumbAware {
     public ToggleShowIgnoredAction() {
       super(VcsBundle.message("changes.action.show.ignored.text"),
             VcsBundle.message("changes.action.show.ignored.description"),
