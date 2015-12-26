@@ -537,7 +537,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           return scope.toString();
         }
       }, "->\n");
-      LOG.debug("refresh procedure started, everything = " + wasEverythingDirty + " dirty scope: " + scopeInString);
+      LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
+                "\ncurrent changes: " + myWorker);
       dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
 
@@ -575,7 +576,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
               myWorker.onAfterWorkerSwitch(oldWorker);
               myModifier.setWorker(myWorker);
               LOG.debug("refresh procedure finished, unversioned size: " +
-                        dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize() + "\n changes: " + myWorker);
+                        dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize() + "\nchanges: " + myWorker);
               final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
               myComposite = dataHolder.getComposite();
               if (statusChanged) {
