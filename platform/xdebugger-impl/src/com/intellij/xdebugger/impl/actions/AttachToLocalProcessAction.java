@@ -24,17 +24,24 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StatusText;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class AttachToLocalProcessAction extends AnAction {
@@ -57,31 +64,7 @@ public class AttachToLocalProcessAction extends AnAction {
     final Project project = getEventProject(e);
     if (project == null) return;
 
-    List<AttachItem> items = collectAttachItems(project);
-    if (items.isEmpty()) {
-      // todo show message
-    }
-
-    BaseListPopupStep<AttachItem> step =
-      new BaseListPopupStep<AttachItem>(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.title"), items) {
-        @Override
-        public boolean isSpeedSearchEnabled() {
-          return true;
-        }
-
-        @NotNull
-        @Override
-        public String getTextFor(AttachItem value) {
-          return value.info.getPid() + " " + value.info.getExecutableName();
-        }
-
-        @Override
-        public PopupStep onChosen(AttachItem selectedValue, boolean finalChoice) {
-          startDebugSession(project, selectedValue.debuggers.get(0), selectedValue.info);
-          return super.onChosen(selectedValue, finalChoice);
-        }
-      };
-
+    MyPopupStep step = new MyPopupStep(collectAttachItems(project), project);
     JBPopupFactory.getInstance().createListPopup(step).showCenteredInCurrentWindow(project);
   }
 
@@ -101,30 +84,122 @@ public class AttachToLocalProcessAction extends AnAction {
     return result;
   }
 
-  private static void startDebugSession(@NotNull Project project,
-                                        @NotNull XLocalAttachDebugger debugger,
-                                        @NotNull ProcessInfo info) {
-    try {
-      debugger.attachDebugSession(project, info);
-    }
-    catch (ExecutionException e) {
-      ExecutionUtil.handleExecutionError(project, ToolWindowId.DEBUG, info.getExecutableName(), e);
-    }
-  }
-
-
   public static class AttachItem {
-    @NotNull private final ProcessInfo info;
-    @NotNull private final List<XLocalAttachDebugger> debuggers;
+    @NotNull private final ProcessInfo myProcessInfo;
+    @NotNull private final List<XLocalAttachDebugger> myDebuggers;
+    @NotNull private final List<AttachItem> mySubItems;
 
     public AttachItem(@NotNull ProcessInfo info, @NotNull List<XLocalAttachDebugger> debuggers) {
-      this.info = info;
-      this.debuggers = debuggers;
+      assert !debuggers.isEmpty();
+
+      this.myProcessInfo = info;
+      this.myDebuggers = debuggers;
+      if (debuggers.size() > 1) {
+        mySubItems = ContainerUtil.map(debuggers, new Function<XLocalAttachDebugger, AttachItem>() {
+          @Override
+          public AttachItem fun(XLocalAttachDebugger debugger) {
+            return new AttachItem(myProcessInfo, Collections.singletonList(debugger));
+          }
+        });
+      }
+      else {
+        mySubItems = Collections.emptyList();
+      }
     }
 
     @Nullable
     public Icon getIcon() {
       return null;
+    }
+
+    @NotNull
+    public XLocalAttachDebugger getSelectedDebugger() {
+      return myDebuggers.get(0);
+    }
+
+    @NotNull
+    public List<AttachItem> getSubItems() {
+      return mySubItems;
+    }
+
+    public void startDebugSession(@NotNull Project project) {
+      try {
+        getSelectedDebugger().attachDebugSession(project, myProcessInfo);
+      }
+      catch (ExecutionException e) {
+        ExecutionUtil.handleExecutionError(project, ToolWindowId.DEBUG, myProcessInfo.getExecutableName(), e);
+      }
+    }
+  }
+
+  private static class MyPopupStep extends BaseListPopupStep<AttachItem> implements ListPopupStepEx<AttachItem> {
+    private final Project myProject;
+
+    public MyPopupStep(List<AttachItem> items, Project project) {
+      super(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.title"), items);
+      myProject = project;
+    }
+
+    @Override
+    public boolean isSpeedSearchEnabled() {
+      return true;
+    }
+
+    @NotNull
+    @Override
+    public String getTextFor(AttachItem value) {
+      return value.myProcessInfo.getPid() + " " + value.myProcessInfo.getExecutableName();
+    }
+
+    @Override
+    public boolean hasSubstep(AttachItem selectedValue) {
+      return !selectedValue.getSubItems().isEmpty();
+    }
+
+    @Nullable
+    @Override
+    public String getTooltipTextFor(AttachItem value) {
+      return null;
+    }
+
+    @Override
+    public void setEmptyText(@NotNull StatusText emptyText) {
+      emptyText.setText(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.emptyText"));
+    }
+
+    @Override
+    public PopupStep onChosen(AttachItem selectedValue, boolean finalChoice) {
+      if (finalChoice) {
+        selectedValue.startDebugSession(myProject);
+        return FINAL_CHOICE;
+      }
+
+      return new BaseListPopupStep<AttachItem>(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.selectDebugger.title"),
+                                               selectedValue.getSubItems()) {
+        @Override
+        public boolean isSpeedSearchEnabled() {
+          return true;
+        }
+
+        @NotNull
+        @Override
+        public String getTextFor(AttachItem value) {
+          return value.getSelectedDebugger().getDebuggerDisplayName();
+        }
+
+        @Override
+        public PopupStep onChosen(AttachItem selectedValue, boolean finalChoice) {
+          selectedValue.startDebugSession(myProject);
+          return FINAL_CHOICE;
+        }
+      };
+    }
+
+    @Override
+    public PopupStep onChosen(AttachItem selectedValue,
+                              boolean finalChoice,
+                              @MagicConstant(flagsFromClass = InputEvent.class) int eventModifiers) {
+      return onChosen(selectedValue, finalChoice);
     }
   }
 }
