@@ -46,13 +46,13 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
     mySdkPath = sdkPath;
   }
 
-  public void launch() throws ExecutionException {
+  public XDebugSession launch() throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    int port = launchRemoteDebugServer();
+    return launchRemoteDebugServer();
   }
 
-  private int launchRemoteDebugServer() throws ExecutionException {
+  private XDebugSession launchRemoteDebugServer() throws ExecutionException {
     final ServerSocket serverSocket;
     try {
       //noinspection SocketOpenedButNotSafelyClosed
@@ -68,7 +68,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
     final ExecutionResult result = state.execute(state.getEnvironment().getExecutor(), this);
 
     //start remote debug server
-    final XDebugSession session = XDebuggerManager.getInstance(myProject).
+    return XDebuggerManager.getInstance(myProject).
       startSessionAndShowTab(String.valueOf(myPid), null, new XDebugProcessStarter() {
         @org.jetbrains.annotations.NotNull
         public XDebugProcess start(@NotNull final XDebugSession session) {
@@ -97,7 +97,5 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
           return pyDebugProcess;
         }
       });
-
-    return serverSocket.getLocalPort();
   }
 }
