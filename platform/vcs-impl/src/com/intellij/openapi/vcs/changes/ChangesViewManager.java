@@ -126,7 +126,13 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("selection changed. selected:  " + toStringPaths(myView.getSelectionPaths()) + " from: " + DebugUtil.currentStackTrace());
+          String message = "selection changed. selected:  " + toStringPaths(myView.getSelectionPaths());
+          if (LOG.isTraceEnabled()) {
+            LOG.trace(message + " from: " + DebugUtil.currentStackTrace());
+          }
+          else {
+            LOG.debug(message);
+          }
         }
         SwingUtilities.invokeLater(new Runnable() {
           @Override
