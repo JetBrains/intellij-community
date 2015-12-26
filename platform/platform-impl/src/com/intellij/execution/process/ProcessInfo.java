@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.process;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +57,12 @@ public class ProcessInfo {
 
   @NotNull
   public String getExecutableName() {
-    return FileUtil.getNameWithoutExtension(PathUtil.getFileName(myExecutable));
+    return PathUtil.getFileName(myExecutable);
+  }
+
+  @NotNull
+  public String getExecutableDisplayName() {
+    return StringUtil.trimEnd(getExecutableName(), ".exe", true);
   }
 
   @NotNull

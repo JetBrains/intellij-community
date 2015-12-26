@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Function;
@@ -104,10 +105,11 @@ public class AttachToLocalProcessAction extends AnAction {
   private static List<AttachItem> collectAttachItems(@NotNull Project project) {
     List<AttachItem> result = new ArrayList<AttachItem>();
 
+    UserDataHolderBase dataHolder = new UserDataHolderBase();
     for (ProcessInfo eachInfo : ProcessUtils.getProcessList()) {
       List<XLocalAttachDebugger> availableDebuggers = new ArrayList<XLocalAttachDebugger>();
       for (XLocalAttachDebuggerProvider eachProvider : Extensions.getExtensions(XLocalAttachDebuggerProvider.EP)) {
-        availableDebuggers.addAll(eachProvider.getAvailableDebuggers(project, eachInfo));
+        availableDebuggers.addAll(eachProvider.getAvailableDebuggers(project, eachInfo, dataHolder));
       }
       if (!availableDebuggers.isEmpty()) {
         result.add(new AttachItem(eachInfo, availableDebuggers));
@@ -185,7 +187,7 @@ public class AttachToLocalProcessAction extends AnAction {
     @NotNull
     @Override
     public String getTextFor(AttachItem value) {
-      return value.myProcessInfo.getPid() + " " + value.myProcessInfo.getExecutableName();
+      return value.myProcessInfo.getPid() + " " + value.myProcessInfo.getExecutableDisplayName();
     }
 
     @Override

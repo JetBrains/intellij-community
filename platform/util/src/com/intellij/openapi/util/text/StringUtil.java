@@ -1004,7 +1004,14 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String trimEnd(@NotNull String s, @NonNls @NotNull String suffix) {
-    if (s.endsWith(suffix)) {
+    return trimEnd(s, suffix, false);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String trimEnd(@NotNull String s, @NonNls @NotNull String suffix, boolean ignoreCase) {
+    boolean endsWith = ignoreCase ? endsWithIgnoreCase(s, suffix) : s.endsWith(suffix);
+    if (endsWith) {
       return s.substring(0, s.length() - suffix.length());
     }
     return s;
