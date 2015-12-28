@@ -70,33 +70,33 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   private final Project myProject;
 
   private static final ColumnInfo REVISION = new ColumnInfo(VcsBundle.message("column.name.revision.version")) {
+    @Override
     public Object valueOf(Object object) {
       return ((VcsFileRevision)object).getRevisionNumber();
     }
-
   };
 
   private static final ColumnInfo DATE = new ColumnInfo(VcsBundle.message("column.name.revision.list.date")) {
+    @Override
     public Object valueOf(Object object) {
       Date date = ((VcsFileRevision)object).getRevisionDate();
       if (date == null) return "";
       return DateFormatUtil.formatPrettyDateTime(date);
     }
-
   };
 
   private static final ColumnInfo MESSAGE = new ColumnInfo(VcsBundle.message("column.name.revision.list.message")) {
+    @Override
     public Object valueOf(Object object) {
       return ((VcsFileRevision)object).getCommitMessage();
     }
-
   };
 
   private static final ColumnInfo AUTHOR = new ColumnInfo(VcsBundle.message("column.name.revision.list.author")) {
+    @Override
     public Object valueOf(Object object) {
       return ((VcsFileRevision)object).getAuthor();
     }
-
   };
 
   private static final ColumnInfo[] COLUMNS = new ColumnInfo[]{REVISION, DATE, AUTHOR, MESSAGE};
@@ -150,6 +150,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
       myRevisions.add(new CurrentRevision(file, currentRevisionNumber));
     }
     Collections.sort(myRevisions, new Comparator<VcsFileRevision>() {
+      @Override
       public int compare(VcsFileRevision rev1, VcsFileRevision rev2){
         return VcsHistoryUtil.compare(rev1, rev2);
       }
@@ -166,6 +167,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     mySplitter.setSecondComponent(createBottomPanel(components.getDetailsComponent()));
 
     mySplitter.addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
       public void propertyChange(PropertyChangeEvent evt) {
         if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
           getVcsConfiguration().FILE_HISTORY_DIALOG_SPLITTER_PROPORTION
@@ -176,6 +178,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
 
     final ListSelectionListener selectionListener = new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         final VcsFileRevision revision;
         if (myList.getSelectedRowCount() == 1 && !myList.isEmpty()) {
@@ -204,6 +207,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
       canNotLoadRevisionMessage(e);
     }
     myChangesOnlyCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         configuration.SHOW_ONLY_CHANGED_IN_SELECTION_DIFF = myChangesOnlyCheckBox.isSelected();
         try {
@@ -218,6 +222,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     init();
 
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (! VcsHistoryDialog.this.isShowing()) return;
         myList.getSelectionModel().addSelectionInterval(0, 0);
@@ -246,6 +251,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     return myList;
   }
 
+  @Override
   public void show() {
     myList.getSelectionModel().setSelectionInterval(0, 0);
     super.show();
@@ -350,6 +356,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     }
   }
 
+  @Override
   public void dispose() {
     myIsDisposed = true;
     super.dispose();
@@ -361,6 +368,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     splitter.setDividerWidth(4);
 
     splitter.addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
       public void propertyChange(PropertyChangeEvent evt) {
         if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
           getVcsConfiguration().FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION
@@ -409,14 +417,17 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     return ScrollPaneFactory.createScrollPane(myList);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return mySplitter;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(myHelpId);
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     Action okAction = getOKAction();
@@ -429,10 +440,12 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     }
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "VCS.FileHistoryDialog";
   }
 
+  @Override
   public Object getData(@NonNls String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
@@ -472,5 +485,4 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   private Block getBlock(int index) throws VcsException {
     return index > 0 ? getBlock(myRevisions.get(index - 1)) : new Block(myEditor.getDocument().getText(), mySelectionStart, mySelectionEnd);
   }
-
 }
