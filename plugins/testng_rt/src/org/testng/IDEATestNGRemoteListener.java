@@ -311,7 +311,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
 
     public String getDisplayMethodName() {
       final String testName = myResult.getTestName();
-      return testName != null ? testName : myResult.getMethod().getMethodName();
+      return testName != null && testName.length() > 0 ? testName : myResult.getMethod().getMethodName();
     }
 
     public String getClassName() {
