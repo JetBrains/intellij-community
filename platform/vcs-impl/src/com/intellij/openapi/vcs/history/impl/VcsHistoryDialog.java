@@ -301,7 +301,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     return result;
   }
 
-  private synchronized void updateDiff() {
+  private void updateDiff() {
     if (myList.isEmpty()) return;
     int[] selectedIndices = myList.getSelectedRows();
     if (selectedIndices.length == 0) {
@@ -315,7 +315,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     }
   }
 
-  private synchronized void updateDiff(int first, int second) {
+  private void updateDiff(int first, int second) {
     if (myIsDisposed || myIsInLoading) return;
     List items = myListModel.getItems();
     VcsFileRevision firstRev = (VcsFileRevision)items.get(first);
@@ -350,7 +350,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     }
   }
 
-  public synchronized void dispose() {
+  public void dispose() {
     myIsDisposed = true;
     super.dispose();
   }
