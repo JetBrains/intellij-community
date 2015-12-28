@@ -22,11 +22,11 @@ import com.intellij.diff.requests.MessageDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -55,7 +55,7 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
+public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.impl.VcsHistoryDialog");
 
   private static final ColumnInfo REVISION = new ColumnInfo(VcsBundle.message("column.name.revision.version")) {
@@ -131,7 +131,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
                           int selectionEnd,
                           String title,
                           CachedRevisionsContents cachedContents) {
-    super(project, true);
+    super(project);
     myProject = project;
     myFile = file;
     myEditor = editor;
@@ -141,9 +141,8 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     mySelectionEnd = selectionEnd;
     myHelpId = ObjectUtils.notNull(vcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history");
 
-    setTitle(title);
-
-    final VcsDependentHistoryComponents components = vcsHistoryProvider.getUICustomization(session, getRootPane());
+    JRootPane rootPane = ((RootPaneContainer)getFrame()).getRootPane();
+    final VcsDependentHistoryComponents components = vcsHistoryProvider.getUICustomization(session, rootPane);
 
     ColumnInfo[] additionalColumns = ObjectUtils.notNull(components.getColumns(), ColumnInfo.EMPTY_ARRAY);
     myListModel = new ListTableModel<VcsFileRevision>(ArrayUtil.mergeArrays(COLUMNS, additionalColumns));
@@ -152,7 +151,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
     myList.getEmptyText().setText(VcsBundle.message("history.empty"));
 
-    myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, getDisposable(), getWindow());
+    myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, this, getFrame());
 
     final VcsRevisionNumber currentRevisionNumber = session.getCurrentRevisionNumber();
     if (currentRevisionNumber != null) {
@@ -199,26 +198,25 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     updateRevisionsList();
     myList.getSelectionModel().setSelectionInterval(0, 0);
 
-    init();
+    setTitle(title);
+    setComponent(mySplitter);
+    setPreferredFocusedComponent(myList);
+    setDimensionKey("VCS.FileHistoryDialog");
+    closeOnEsc();
   }
 
   private void canNotLoadRevisionMessage(final VcsException e) {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (!VcsHistoryDialog.this.isShowing()) return;
-        PopupUtil.showBalloonForComponent(VcsHistoryDialog.this.getRootPane(), canNoLoadMessage(e), MessageType.ERROR, true, myProject);
+        if (!VcsHistoryDialog.this.getFrame().isShowing()) return;
+        PopupUtil.showBalloonForComponent(VcsHistoryDialog.this.getFrame(), canNoLoadMessage(e), MessageType.ERROR, true, myProject);
       }
     });
   }
 
   private String canNoLoadMessage(VcsException e) {
     return "Can not load revision contents: " + e.getMessage();
-  }
-
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myList;
   }
 
   protected String getContentOf(VcsFileRevision revision) throws VcsException {
@@ -344,34 +342,6 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   }
 
   @Override
-  protected JComponent createCenterPanel() {
-    return mySplitter;
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(myHelpId);
-  }
-
-  @Override
-  @NotNull
-  protected Action[] createActions() {
-    Action okAction = getOKAction();
-    okAction.putValue(Action.NAME, VcsBundle.message("close.tab.action.name"));
-    if (myHelpId != null) {
-      return new Action[]{okAction, getHelpAction()};
-    }
-    else {
-      return new Action[]{okAction};
-    }
-  }
-
-  @Override
-  protected String getDimensionServiceKey() {
-    return "VCS.FileHistoryDialog";
-  }
-
-  @Override
   public Object getData(@NonNls String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
@@ -384,6 +354,9 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
       return myActiveVcs.getKeyInstanceMethod();
+    }
+    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return myHelpId;
     }
     return null;
   }
