@@ -59,23 +59,28 @@ public class FontInfo {
   private boolean myCheckedForProblemGlyphs;
 
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style) {
+    this(familyName, size, style, style);    
+  }
+  
+  FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style, @JdkConstants.FontStyle int realStyle) {
     mySize = size;
     myStyle = style;
     Font font = new Font(familyName, style, size);
-    myFont = ENABLE_OPTIONAL_LIGATURES ? getFontWithLigaturesEnabled(font) : font;
+    myFont = ENABLE_OPTIONAL_LIGATURES ? getFontWithLigaturesEnabled(font, realStyle) : font;
   }
 
   @NotNull
-  private static Font getFontWithLigaturesEnabled(Font font) {
+  private static Font getFontWithLigaturesEnabled(Font font, @JdkConstants.FontStyle int fontStyle) {
     if (Patches.JDK_BUG_ID_7162125) {
       // Ligatures don't work on Mac for fonts loaded natively, so we need to locate and load font manually
-      File fontFile = findFileForFont(font, true);
-      if (fontFile == null && font.getStyle() != Font.PLAIN) fontFile = findFileForFont(font.deriveFont(Font.PLAIN), true);
-      if (fontFile == null) fontFile = findFileForFont(font, false);
+      String familyName = font.getFamily();
+      File fontFile = findFileForFont(familyName, fontStyle);
+      if (fontFile == null && fontStyle != Font.PLAIN) fontFile = findFileForFont(familyName, Font.PLAIN);
+      if (fontFile == null) fontFile = findFileForFont(familyName, -1);
       if (fontFile == null) return font;
       LOG.info(font + " located at " + fontFile);
       try {
-        font = Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(font.getStyle(), font.getSize());
+        font = Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(fontStyle, font.getSize());
       }
       catch (Exception e) {
         LOG.warn("Couldn't load font", e);
@@ -92,16 +97,15 @@ public class FontInfo {
     }
   };
 
-  private static File findFileForFont(Font font, final boolean matchStyle) {
-    final String normalizedFamilyName = font.getFamily().toLowerCase(Locale.getDefault()).replace(" ", "");
-    final int fontStyle = font.getStyle();
+  private static File findFileForFont(@NotNull String familyName, final int style) {
+    final String normalizedFamilyName = familyName.toLowerCase(Locale.getDefault()).replace(" ", "");
     FilenameFilter filter = new FilenameFilter() {
       @Override
       public boolean accept(File file, String name) {
         String normalizedName = name.toLowerCase(Locale.getDefault());
         return normalizedName.startsWith(normalizedFamilyName) &&
                (normalizedName.endsWith(".otf") || normalizedName.endsWith(".ttf")) &&
-               (!matchStyle || fontStyle == ComplementaryFontsRegistry.getFontStyle(name));
+               (style == -1 || style == ComplementaryFontsRegistry.getFontStyle(name));
       }
     };
     List<File> files = new ArrayList<File>();
@@ -114,7 +118,7 @@ public class FontInfo {
     
     if (files.isEmpty()) return null;
     
-    if (matchStyle && fontStyle == Font.PLAIN) {
+    if (style == Font.PLAIN) {
       // prefer font containing 'regular' in its name
       List<File> regulars = ContainerUtil.filter(files, new Condition<File>() {
         @Override
