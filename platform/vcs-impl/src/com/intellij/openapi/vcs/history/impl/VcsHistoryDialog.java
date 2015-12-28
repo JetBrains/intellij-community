@@ -302,7 +302,6 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
       return new SimpleDiffRequest(null, content1, content2, title1, title2);
     }
     catch (VcsException e) {
-      canNotLoadRevisionMessage(e);
       return new MessageDiffRequest(canNoLoadMessage(e));
     }
   }
