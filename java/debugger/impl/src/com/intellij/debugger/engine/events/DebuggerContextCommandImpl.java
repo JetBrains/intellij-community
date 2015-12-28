@@ -30,6 +30,7 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
 
   private final DebuggerContextImpl myDebuggerContext;
   private final ThreadReferenceProxyImpl myCustomThread; // thread to perform command in
+  private SuspendContextImpl myCustomSuspendContext;
 
   protected DebuggerContextCommandImpl(@NotNull DebuggerContextImpl debuggerContext) {
     this(debuggerContext, null);
@@ -44,10 +45,14 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
   @Nullable
   @Override
   public SuspendContextImpl getSuspendContext() {
-    if (myCustomThread != null) {
-      return SuspendManagerUtil.findContextByThread(myDebuggerContext.getDebugProcess().getSuspendManager(), getThread());
+    if (myCustomSuspendContext == null) {
+      myCustomSuspendContext = super.getSuspendContext();
+      ThreadReferenceProxyImpl thread = getThread();
+      if (myCustomThread != null && (myCustomSuspendContext == null || !myCustomSuspendContext.suspends(thread))) {
+        myCustomSuspendContext = SuspendManagerUtil.findContextByThread(myDebuggerContext.getDebugProcess().getSuspendManager(), thread);
+      }
     }
-    return super.getSuspendContext();
+    return myCustomSuspendContext;
   }
 
   private ThreadReferenceProxyImpl getThread() {
