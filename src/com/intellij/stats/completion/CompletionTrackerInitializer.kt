@@ -221,12 +221,11 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         
         val current = lookup.currentItem
         val index = lookup.items.indexOf(current)
-
-        if (current == null) {
-            LOG.error("After completion current item is null Lookup: ${lookup.toRelevanceDataList()} Lookup size: ${lookup.items.size}")
-        }
         
-        logger.afterBackspacePressed(index, current!!.lookupString, lookup.toRelevanceDataList())
+        if (current == null) {
+            LOG.error("After completion current item is null Lookup: ${lookup.items} Lookup size: ${lookup.items.size}")
+        }
+        logger.afterBackspacePressed(index, current?.lookupString ?: "NULL", lookup.toRelevanceDataList())
     }
     
     override fun afterAppend(c: Char) {

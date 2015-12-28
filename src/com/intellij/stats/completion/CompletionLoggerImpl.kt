@@ -1,7 +1,6 @@
 package com.intellij.stats.completion
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import java.util.*
 
@@ -37,8 +36,6 @@ class CompletionFileLogger(private val installationUID: String,
     private var logLastAction = LOG_NOTHING
     private var lastCompletionList: List<LookupStringWithRelevance> = emptyList()
     
-    private val LOG = Logger.getInstance(CompletionFileLogger::class.java) 
-
     override fun completionStarted(completionList: List<LookupStringWithRelevance>) {
         lastCompletionList = completionList
         logLastAction = { items ->
@@ -103,9 +100,15 @@ class CompletionFileLogger(private val installationUID: String,
         val builder = logBuilder(Action.TYPED_SELECT)
         
         if (getItemId(itemName) == null) {
-            builder.addPair("ID", "NOT_IN_LIST")
+            builder.addPair("ID", "NOT_IN_LIST $itemName")
+
+            val allValues = itemsToId.map {
+                "${it.key}=${it.value}"
+            }.joinToString(",", "[", "]")
+            
+            builder.addText(allValues)
             log(builder)
-            LOG.error("itemName: $itemName not in the id list")
+            return
         }
 
         val id = getItemId(itemName)!!
