@@ -27,7 +27,6 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.data.LoadingDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,20 +59,20 @@ public abstract class VcsLogSingleCommitAction<Repo extends Repository> extends 
     List<CommitId> commits = log.getSelectedCommits();
     if (commits.isEmpty()) {
       e.getPresentation().setEnabledAndVisible(false);
+      return;
     }
-    else {
-      CommitId commit = ContainerUtil.getFirstItem(commits);
-      assert commit != null;
-      Repo repository = getRepositoryForRoot(project, commit.getRoot());
 
-      if (repository == null) {
-        e.getPresentation().setEnabledAndVisible(false);
-      }
-      else {
-        e.getPresentation().setVisible(isVisible(project, repository, commit.getHash()));
-        e.getPresentation().setEnabled(commits.size() == 1 && isEnabled(repository, commit.getHash()));
-      }
+    CommitId commit = ContainerUtil.getFirstItem(commits);
+    assert commit != null;
+    Repo repository = getRepositoryForRoot(project, commit.getRoot());
+
+    if (repository == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
     }
+
+    e.getPresentation().setVisible(isVisible(project, repository, commit.getHash()));
+    e.getPresentation().setEnabled(commits.size() == 1 && isEnabled(repository, commit.getHash()));
   }
 
   protected abstract void actionPerformed(@NotNull Repo repository, @NotNull Hash commit);
