@@ -19,6 +19,7 @@ import com.intellij.diff.*;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.MessageDiffRequest;
+import com.intellij.diff.requests.NoDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -89,8 +90,6 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
     }
   };
   private static final ColumnInfo[] COLUMNS = new ColumnInfo[]{REVISION, DATE, AUTHOR, MESSAGE};
-
-  private static final int CURRENT = 0;
 
   private static final float DIFF_SPLITTER_PROPORTION = 0.5f;
   private static final float COMMENTS_SPLITTER_PROPORTION = 0.8f;
@@ -306,43 +305,50 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   }
 
   private void updateDiff() {
-    if (myList.isEmpty()) return;
-    int[] selectedIndices = myList.getSelectedRows();
-    if (selectedIndices.length == 0) {
-      updateDiff(CURRENT, CURRENT);
+    if (myIsDisposed || myIsDuringUpdate) return;
+    List<VcsFileRevision> selected = myList.getSelectedObjects();
+    if (selected.isEmpty()) {
+      myDiffPanel.setRequest(NoDiffRequest.INSTANCE);
     }
-    else if (selectedIndices.length == 1) {
-      updateDiff(selectedIndices[0], CURRENT);
+    else if (selected.size() == 1) {
+      VcsFileRevision revision = selected.get(0);
+      int index = myRevisions.indexOf(revision);
+      myDiffPanel.setRequest(createDiffRequest(index + 1, index));
     }
     else {
-      updateDiff(selectedIndices[selectedIndices.length - 1], selectedIndices[0]);
+      VcsFileRevision revision1 = selected.get(0);
+      VcsFileRevision revision2 = selected.get(selected.size() - 1);
+      myDiffPanel.setRequest(createDiffRequest(myRevisions.indexOf(revision2) + 1, myRevisions.indexOf(revision1)));
     }
-  }
-
-  private void updateDiff(int first, int second) {
-    if (myIsDisposed || myIsDuringUpdate) return;
-
-    VcsFileRevision firstRev = myListModel.getRowValue(first);
-    VcsFileRevision secondRev = myListModel.getRowValue(second);
-
-    DiffRequest diffRequest = createDiffRequest(firstRev, secondRev);
-    myDiffPanel.setRequest(diffRequest);
   }
 
   @NotNull
-  private DiffRequest createDiffRequest(@NotNull VcsFileRevision firstRev, @NotNull VcsFileRevision secondRev) {
+  private DiffRequest createDiffRequest(int revIndex1, int revIndex2) {
     try {
-      DiffContent content1 = DiffContentFactory.getInstance().create(getContentToShow(firstRev), myFile.getFileType());
-      DiffContent content2 = DiffContentFactory.getInstance().create(getContentToShow(secondRev), myFile.getFileType());
+      int count = myRevisions.size();
+      if (revIndex1 == count && revIndex2 == count) return NoDiffRequest.INSTANCE;
 
-      String title1 = VcsBundle.message("diff.content.title.revision.number", firstRev.getRevisionNumber());
-      String title2 = VcsBundle.message("diff.content.title.revision.number", secondRev.getRevisionNumber());
-
+      DiffContent content1 = createDiffContent(revIndex1);
+      DiffContent content2 = createDiffContent(revIndex2);
+      String title1 = createDiffContentTitle(revIndex1);
+      String title2 = createDiffContentTitle(revIndex2);
       return new SimpleDiffRequest(null, content1, content2, title1, title2);
     }
     catch (VcsException e) {
       return new MessageDiffRequest(canNoLoadMessage(e));
     }
+  }
+
+  @Nullable
+  private String createDiffContentTitle(int index) {
+    if (index >= myRevisions.size()) return null;
+    return VcsBundle.message("diff.content.title.revision.number", myRevisions.get(index).getRevisionNumber());
+  }
+
+  @NotNull
+  private DiffContent createDiffContent(int index) throws VcsException {
+    if (index >= myRevisions.size()) return DiffContentFactory.getInstance().createEmpty();
+    return DiffContentFactory.getInstance().create(getContentToShow(myRevisions.get(index)), myFile.getFileType());
   }
 
   @Override
