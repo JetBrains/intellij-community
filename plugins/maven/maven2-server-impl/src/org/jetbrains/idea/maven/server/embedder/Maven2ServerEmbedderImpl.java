@@ -18,7 +18,9 @@ package org.jetbrains.idea.maven.server.embedder;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.artifact.Artifact;
@@ -287,18 +289,33 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   }
 
   @NotNull
-  public MavenServerExecutionResult resolveProject(@NotNull final File file,
+  public Collection<MavenServerExecutionResult> resolveProject(@NotNull final Collection<File> files,
                                                    @NotNull final Collection<String> activeProfiles,
                                                    @NotNull final Collection<String> inactiveProfiles)
     throws MavenServerProcessCanceledException, RemoteException {
-    return doExecute(new Executor<MavenServerExecutionResult>() {
-      public MavenServerExecutionResult execute() throws Exception {
-        DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
-        MavenExecutionResult result = myImpl.resolveProject(file,
-                                                            new ArrayList<String>(activeProfiles),
-                                                            new ArrayList<String>(inactiveProfiles),
-                                                            Arrays.<ResolutionListener>asList(listener));
-        return createExecutionResult(file, result, listener.getRootNode());
+
+    return ContainerUtil.mapNotNull(files, new Function<File, MavenServerExecutionResult>() {
+      @Override
+      public MavenServerExecutionResult fun(final File file) {
+        try {
+          return doExecute(new Executor<MavenServerExecutionResult>() {
+            public MavenServerExecutionResult execute() throws Exception {
+              DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
+              MavenExecutionResult result = myImpl.resolveProject(file,
+                                                                  new ArrayList<String>(activeProfiles),
+                                                                  new ArrayList<String>(inactiveProfiles),
+                                                                  Collections.<ResolutionListener>singletonList(listener));
+              return createExecutionResult(file, result, listener.getRootNode());
+            }
+          });
+        }
+        catch (MavenServerProcessCanceledException e) {
+          ExceptionUtil.rethrowAllAsUnchecked(e);
+        }
+        catch (RemoteException e) {
+          ExceptionUtil.rethrowAllAsUnchecked(e);
+        }
+        return null;
       }
     });
   }
