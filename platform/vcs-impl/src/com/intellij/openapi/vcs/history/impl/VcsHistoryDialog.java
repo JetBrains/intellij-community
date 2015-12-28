@@ -197,16 +197,9 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     });
 
     updateRevisionsList();
+    myList.getSelectionModel().setSelectionInterval(0, 0);
 
     init();
-
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (! VcsHistoryDialog.this.isShowing()) return;
-        myList.getSelectionModel().addSelectionInterval(0, 0);
-      }
-    });
   }
 
   private void canNotLoadRevisionMessage(final VcsException e) {
@@ -228,12 +221,6 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     return myList;
   }
 
-  @Override
-  public void show() {
-    myList.getSelectionModel().setSelectionInterval(0, 0);
-    super.show();
-  }
-
   protected String getContentOf(VcsFileRevision revision) throws VcsException {
     return myCachedContents.getContentOf(revision);
   }
@@ -244,22 +231,25 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
   private void updateRevisionsList() {
     if (myIsInLoading) return;
+
+    List<VcsFileRevision> newItems;
     if (myChangesOnlyCheckBox.isSelected()) {
       try {
         loadContentsFor(myRevisions.toArray(new VcsFileRevision[myRevisions.size()]));
-        myListModel.setItems(filteredRevisions());
-        myListModel.fireTableDataChanged();
-        updateDiff(0, 0);
+        newItems = filteredRevisions();
       }
       catch (final VcsException e) {
         // todo test it, always exception
         canNotLoadRevisionMessage(e);
+        return;
       }
     }
     else {
-      myListModel.setItems(myRevisions);
-      myListModel.fireTableDataChanged();
+      newItems = myRevisions;
     }
+
+    myListModel.setItems(newItems);
+    myList.getSelectionModel().setSelectionInterval(0, 0);
   }
 
   private List<VcsFileRevision> filteredRevisions() throws  VcsException {
