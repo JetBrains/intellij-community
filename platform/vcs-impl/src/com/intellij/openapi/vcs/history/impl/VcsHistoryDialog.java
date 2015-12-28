@@ -40,7 +40,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.SortableColumnModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +101,8 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
   private static final ColumnInfo[] COLUMNS = new ColumnInfo[]{REVISION, DATE, AUTHOR, MESSAGE};
 
-  private final TableView myList;
+  private final ListTableModel<VcsFileRevision> myListModel;
+  private final TableView<VcsFileRevision> myList;
   protected final List<VcsFileRevision> myRevisions;
   private final Splitter mySplitter;
   private final VirtualFile myFile;
@@ -136,8 +136,9 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     String helpId = vcsHistoryProvider.getHelpId();
     myHelpId = helpId != null ? helpId : "reference.dialogs.vcs.selection.history";
     final VcsDependentHistoryComponents components = vcsHistoryProvider.getUICustomization(session, getRootPane());
-    myList = new TableView(new ListTableModel(createColumns(components.getColumns())));
-    ((SortableColumnModel)myList.getModel()).setSortable(false);
+    myListModel = new ListTableModel<VcsFileRevision>(createColumns(components.getColumns()));
+    myListModel.setSortable(false);
+    myList = new TableView<VcsFileRevision>(myListModel);
 
     myList.getEmptyText().setText(VcsBundle.message("history.empty"));
 
@@ -178,7 +179,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
       public void valueChanged(ListSelectionEvent e) {
         final VcsFileRevision revision;
         if (myList.getSelectedRowCount() == 1 && !myList.isEmpty()) {
-          revision = (VcsFileRevision)myList.getItems().get(myList.getSelectedRow());
+          revision = myList.getItems().get(myList.getSelectedRow());
           myComments.setText(revision.getCommitMessage());
           myComments.setCaretPosition(0);
         }
@@ -275,13 +276,13 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     if (myIsInLoading) return;
     if (myChangesOnlyCheckBox.isSelected()) {
       loadContentsFor(myRevisions.toArray(new VcsFileRevision[myRevisions.size()]));
-      ((ListTableModel)myList.getModel()).setItems(filteredRevisions());
-      ((ListTableModel)myList.getModel()).fireTableDataChanged();
+      myListModel.setItems(filteredRevisions());
+      myListModel.fireTableDataChanged();
       updateDiff(0, 0);
     }
     else {
-      ((ListTableModel)myList.getModel()).setItems(myRevisions);
-      ((ListTableModel)myList.getModel()).fireTableDataChanged();
+      myListModel.setItems(myRevisions);
+      myListModel.fireTableDataChanged();
     }
 
   }
@@ -316,7 +317,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
   private synchronized void updateDiff(int first, int second) {
     if (myIsDisposed || myIsInLoading) return;
-    List items = ((ListTableModel)myList.getModel()).getItems();
+    List items = myListModel.getItems();
     VcsFileRevision firstRev = (VcsFileRevision)items.get(first);
     VcsFileRevision secondRev = (VcsFileRevision)items.get(second);
 
