@@ -156,6 +156,11 @@ public class InferenceSession {
     }
     if (parameters.length > 0) {
       for (int i = 0; i < args.length; i++) {
+        //don't infer anything if number of parameters differ and method is not vararg
+        if (!varargs && i >= parameters.length) {
+          continue;
+        }
+
         if (args[i] != null && isPertinentToApplicability(args[i], method)) {
           PsiType parameterType = getParameterType(parameters, i, mySiteSubstitutor, varargs);
           addConstraint(new ExpressionCompatibilityConstraint(args[i], substituteWithInferenceVariables(parameterType)));
