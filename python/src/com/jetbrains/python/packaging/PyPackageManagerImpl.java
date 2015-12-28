@@ -290,12 +290,13 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @NotNull
   protected List<PyPackage> getPackages() throws ExecutionException {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return Lists.newArrayList(new PyPackage(PIP, PIP_VERSION, null, Collections.<PyRequirement>emptyList()),
-                                new PyPackage(SETUPTOOLS, SETUPTOOLS_VERSION, null, Collections.<PyRequirement>emptyList()));
-    }
     final String output = getHelperResult(PACKAGING_TOOL, Collections.singletonList("list"), false, false, null);
-    return parsePackagingToolOutput(output);
+    final List<PyPackage> packages = new ArrayList<PyPackage>(parsePackagingToolOutput(output));
+    if (packages.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
+      packages.addAll(Lists.newArrayList(new PyPackage(PIP, PIP_VERSION, null, Collections.<PyRequirement>emptyList()),
+                                         new PyPackage(SETUPTOOLS, SETUPTOOLS_VERSION, null, Collections.<PyRequirement>emptyList())));
+    }
+    return packages;
   }
 
   @Nullable
@@ -493,7 +494,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
       else {
         process = commandLine.createProcess();
       }
-      final CapturingProcessHandler handler = new CapturingProcessHandler(process, commandLine.getCharset(), commandLine.getCommandLineString());
+      final CapturingProcessHandler handler =
+        new CapturingProcessHandler(process, commandLine.getCharset(), commandLine.getCommandLineString());
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       final ProcessOutput result;
       if (showProgress && indicator != null) {
