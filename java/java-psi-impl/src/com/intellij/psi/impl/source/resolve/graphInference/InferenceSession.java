@@ -1810,4 +1810,8 @@ public class InferenceSession {
   public List<String> getIncompatibleErrorMessages() {
     return myErrorMessages;
   }
+
+  public boolean isErased() {
+    return myErased;
+  }
 }
