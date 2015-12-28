@@ -129,12 +129,19 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   @NotNull
   public static String getTitle(@NotNull FilePath path1, @NotNull FilePath path2, @NotNull String separator) {
     if ((path1.isDirectory() || path2.isDirectory()) && path1.getPath().equals(path2.getPath())) return path1.getPath();
-    if (path1.isDirectory() ^ path2.isDirectory()) return getContentTitle(path1) + " vs " + getContentTitle(path2);
+
+    String name1 = path1.getName();
+    String name2 = path2.getName();
+
+    if (path1.isDirectory() ^ path2.isDirectory()) {
+      if (path1.isDirectory()) name1 += "/";
+      if (path2.isDirectory()) name2 += "/";
+    }
 
     FilePath parent1 = path1.getParentPath();
     FilePath parent2 = path2.getParentPath();
-    return getRequestTitle(path1.getName(), path1.getPath(), parent1 != null ? parent1.getPath() : null,
-                           path2.getName(), path2.getPath(), parent2 != null ? parent2.getPath() : null,
+    return getRequestTitle(name1, path1.getPath(), parent1 != null ? parent1.getPath() : null,
+                           name2, path2.getPath(), parent2 != null ? parent2.getPath() : null,
                            separator);
   }
 
