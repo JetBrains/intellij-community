@@ -18,12 +18,12 @@ package com.intellij.openapi.application;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.idea.Main;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.*;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,22 +42,25 @@ public class ConfigImportHelper {
    * Holds name of the system property that is supposed to hold <code>'true'</code> value when IDE settings have been
    * imported on the current startup
    */
-  @NonNls public static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
+  public static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
   
-  @NonNls private static final String BUILD_NUMBER_FILE = SystemInfo.isMac ? "/Resources/build.txt" : "build.txt";
-  @NonNls private static final String PLUGINS_PATH = "plugins";
-  @NonNls private static final String BIN_FOLDER = "bin";
-  @NonNls private static final String CONFIG_RELATED_PATH = SystemInfo.isMac ? "" : "config/";
-  @NonNls private static final String OPTIONS_XML = "options/options.xml";
+  private static final String BUILD_NUMBER_FILE = SystemInfo.isMac ? "/Resources/build.txt" : "build.txt";
+  private static final String PLUGINS_PATH = "plugins";
+  private static final String BIN_FOLDER = "bin";
+  private static final String CONFIG_RELATED_PATH = SystemInfo.isMac ? "" : "config/";
+  private static final String OPTIONS_XML = "options/options.xml";
 
-  private ConfigImportHelper() {
-  }
+  private ConfigImportHelper() { }
 
   public static void importConfigsTo(@NotNull String newConfigPath) {
     ConfigImportSettings settings = getConfigImportSettings();
 
     File newConfigDir = new File(newConfigPath);
     File oldConfigDir = findOldConfigDir(newConfigDir, settings.getCustomPathsSelector());
+
+    try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
+    catch (Throwable ignore) { }
+
     do {
       ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(oldConfigDir, settings);
       dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
@@ -91,10 +94,8 @@ public class ConfigImportHelper {
         return ReflectionUtil.newInstance(customProviderClass);
       }
     }
-    catch (ClassNotFoundException ignored) {
-    }
-    catch (RuntimeException ignored) {
-    }
+    catch (ClassNotFoundException ignored) { }
+    catch (RuntimeException ignored) { }
     return new ConfigImportSettings();
   }
 
@@ -141,28 +142,26 @@ public class ConfigImportHelper {
       copy(oldConfigDir, newConfigDir, settings, installationHome);
     }
     catch (IOException e) {
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                    ApplicationBundle.message("error.unable.to.import.settings", e.getMessage()),
-                                    ApplicationBundle.message("title.settings.import.failed"), JOptionPane.WARNING_MESSAGE);
+      String message = ApplicationBundle.message("error.unable.to.import.settings", e.getMessage());
+      Main.showMessage(ApplicationBundle.message("title.settings.import.failed"), message, false);
     }
   }
 
   private static boolean validateOldConfigDir(@Nullable File installationHome, @Nullable File oldConfigDir, @NotNull ConfigImportSettings settings) {
     if (oldConfigDir == null) {
       if (installationHome != null) {
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                      ApplicationBundle.message("error.invalid.installation.home", installationHome.getAbsolutePath(), settings.getProductName(ThreeState.YES)));
+        String message = ApplicationBundle.message("error.invalid.installation.home", installationHome.getAbsolutePath(), settings.getProductName(ThreeState.YES));
+        Main.showMessage(ApplicationBundle.message("title.settings.import.failed"), message, false);
       }
       return false;
     }
 
     if (!oldConfigDir.exists()) {
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                    ApplicationBundle.message("error.no.settings.path",
-                                                              oldConfigDir.getAbsolutePath()),
-                                    ApplicationBundle.message("title.settings.import.failed"), JOptionPane.WARNING_MESSAGE);
+      String message = ApplicationBundle.message("error.no.settings.path", oldConfigDir.getAbsolutePath());
+      Main.showMessage(ApplicationBundle.message("title.settings.import.failed"), message, false);
       return false;
     }
+
     return true;
   }
 
@@ -405,24 +404,9 @@ public class ConfigImportHelper {
   @Nullable
   private static String getContent(File file) {
     try {
-      StringBuilder content = new StringBuilder();
-      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-      try {
-        do {
-          String line = reader.readLine();
-          if (line == null) break;
-          content.append(line);
-          content.append('\n');
-        }
-        while (true);
-      }
-      finally {
-        reader.close();
-      }
-
-      return content.toString();
+      return FileUtil.loadFile(file);
     }
-    catch (Exception e) {
+    catch (IOException e) {
       return null;
     }
   }
