@@ -39,7 +39,7 @@ class CompletionFileLogger(private val installationUID: String,
     override fun completionStarted(completionList: List<LookupStringWithRelevance>) {
         lastCompletionList = completionList
         logLastAction = { items ->
-            val builder = logLineBuilder(Action.COMPLETION_STARTED)
+            val builder = logBuilder(Action.COMPLETION_STARTED)
             builder.addPair("COMP_LIST_LEN", items.size)
             builder.addText(firstCompletionListText(items))
             log(builder)
@@ -51,7 +51,7 @@ class CompletionFileLogger(private val installationUID: String,
         logLastAction(completionList)
         
         logLastAction = { items ->
-            val builder = logLineBuilder(Action.TYPE)
+            val builder = logBuilder(Action.TYPE)
             builder.addPair("COMP_LIST_LEN", items.size)
             builder.addText(toIdsList(items))
             log(builder)
@@ -67,7 +67,7 @@ class CompletionFileLogger(private val installationUID: String,
         logLastAction(completionList)
         logLastAction = LOG_NOTHING
         
-        val builder = logLineBuilder(Action.DOWN)
+        val builder = logBuilder(Action.DOWN)
         builder.addPair("POS", pos)
         val id = getItemId(itemName)!!
         builder.addPair("ID", id)
@@ -79,7 +79,7 @@ class CompletionFileLogger(private val installationUID: String,
         logLastAction(completionList)
         logLastAction = LOG_NOTHING
         
-        val builder = logLineBuilder(Action.UP)
+        val builder = logBuilder(Action.UP)
         builder.addPair("POS", pos)
         val id = getItemId(itemName)!!
         builder.addPair("ID", id)
@@ -89,14 +89,16 @@ class CompletionFileLogger(private val installationUID: String,
     override fun completionCancelled() {
         logLastAction(lastCompletionList)
         logLastAction = LOG_NOTHING
-        val builder = logLineBuilder(Action.COMPLETION_CANCELED)
+        val builder = logBuilder(Action.COMPLETION_CANCELED)
         log(builder)
     }
 
     override fun itemSelectedByTyping(itemName: String) {
         logLastAction(lastCompletionList)
         logLastAction = LOG_NOTHING
-        val builder = logLineBuilder(Action.TYPED_SELECT)
+        
+        val builder = logBuilder(Action.TYPED_SELECT)
+        //todo here exception comes
         val id = getItemId(itemName)!!
         builder.addPair("ID", id)
         log(builder)
@@ -106,7 +108,7 @@ class CompletionFileLogger(private val installationUID: String,
         logLastAction(completionList)
         logLastAction = LOG_NOTHING
         
-        val builder = logLineBuilder(Action.EXPLICIT_SELECT)
+        val builder = logBuilder(Action.EXPLICIT_SELECT)
         builder.addPair("POS", pos)
         val id = getItemId(itemName)!!
         builder.addPair("ID", id)
@@ -121,7 +123,7 @@ class CompletionFileLogger(private val installationUID: String,
     override fun afterBackspacePressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>) {
         lastCompletionList = completionList
         
-        val builder = logLineBuilder(Action.BACKSPACE)
+        val builder = logBuilder(Action.BACKSPACE)
         builder.addPair("POS", pos)
         builder.addPair("COMP_LIST_LEN", completionList.size)
         val id = getItemId(itemName)!!
@@ -188,7 +190,7 @@ class CompletionFileLogger(private val installationUID: String,
         return idsList.toString()
     }
 
-    private fun logLineBuilder(action: Action): LogLineBuilder {
+    private fun logBuilder(action: Action): LogLineBuilder {
         return LogLineBuilder(installationUID, completionUID, action)
     }
 

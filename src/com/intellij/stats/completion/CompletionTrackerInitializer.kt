@@ -55,13 +55,13 @@ interface CompletionPopupListener {
     fun downPressed()
     fun upPressed()
     fun beforeBackspacePressed()
-    fun backSpacePressed()
+    fun afterBackspacePressed()
     fun beforeCharTyped(c: Char)
     
     class Adapter: CompletionPopupListener {
         override fun downPressed() = Unit
         override fun upPressed() = Unit
-        override fun backSpacePressed() = Unit
+        override fun afterBackspacePressed() = Unit
         override fun beforeBackspacePressed() = Unit
         override fun beforeCharTyped(c: Char) = Unit
     }
@@ -89,7 +89,7 @@ class LookupActionsListener : AnActionListener.Adapter() {
             when (action) {
                 down -> listener.downPressed()
                 up -> listener.upPressed()
-                backspace -> listener.backSpacePressed()
+                backspace -> listener.afterBackspacePressed()
             }
         }
     }
@@ -154,6 +154,8 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     private var completionStarted = false
     private var selectedByDotTyping = false
     
+    private val LOG = Logger.getInstance(CompletionActionsTracker::class.java)
+    
     private fun isCompletionActive(): Boolean {
         return completionStarted && !lookup.isLookupDisposed
                 || ApplicationManager.getApplication().isUnitTestMode
@@ -214,11 +216,16 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         logger.beforeBackspacePressed(lookup.toRelevanceDataList())
     }
 
-    override fun backSpacePressed() {
+    override fun afterBackspacePressed() {
         if (!isCompletionActive()) return
         
         val current = lookup.currentItem
         val index = lookup.items.indexOf(current)
+
+        if (current == null) {
+            LOG.error("After completion current item is null Lookup: ${lookup.toRelevanceDataList()} Lookup size: ${lookup.items.size}")
+        }
+        
         logger.afterBackspacePressed(index, current!!.lookupString, lookup.toRelevanceDataList())
     }
     
