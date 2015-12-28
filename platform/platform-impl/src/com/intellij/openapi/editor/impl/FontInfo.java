@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.util.SystemInfo;
@@ -39,6 +40,8 @@ import java.util.List;
  * @author max
  */
 public class FontInfo {
+  private static final Logger LOG = Logger.getInstance(FontInfo.class);
+  
   private static final boolean USE_ALTERNATIVE_CAN_DISPLAY_PROCEDURE = SystemInfo.isAppleJvm && Registry.is("ide.mac.fix.font.fallback");
   private static final FontRenderContext DUMMY_CONTEXT = new FontRenderContext(null, false, false);
   private static final boolean ENABLE_OPTIONAL_LIGATURES = Registry.is("editor.enable.optional.ligatures");
@@ -68,10 +71,12 @@ public class FontInfo {
       if (fontFile == null && font.getStyle() != Font.PLAIN) fontFile = findFileForFont(font.deriveFont(Font.PLAIN), true);
       if (fontFile == null) fontFile = findFileForFont(font, false);
       if (fontFile == null) return font;
+      LOG.info(font + " located at " + fontFile);
       try {
         font = Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(font.getStyle(), font.getSize());
       }
       catch (Exception e) {
+        LOG.warn("Couldn't load font", e);
         return font;
       }
     }
