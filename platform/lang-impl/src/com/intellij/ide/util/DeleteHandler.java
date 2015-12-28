@@ -48,6 +48,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.SafeDeleteDialog;
+import com.intellij.refactoring.safeDelete.SafeDeleteDialogFactory;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -127,7 +128,7 @@ public class DeleteHandler {
     final boolean dumb = DumbService.getInstance(project).isDumb();
     if (safeDeleteApplicable && !dumb) {
       final Ref<Boolean> exit = Ref.create(false);
-      final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, new SafeDeleteDialog.Callback() {
+      final SafeDeleteDialog dialog = SafeDeleteDialogFactory.SERVICE.getInstance().createDialog(project, elements, new SafeDeleteDialog.Callback() {
         @Override
         public void run(final SafeDeleteDialog dialog) {
           if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
@@ -142,12 +143,7 @@ public class DeleteHandler {
 
           DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, processor);
         }
-      }) {
-        @Override
-        protected boolean isDelete() {
-          return true;
-        }
-      };
+      }, true);
       if (needConfirmation) {
         if (!dialog.showAndGet() || exit.get()) {
           return;
