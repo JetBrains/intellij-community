@@ -315,7 +315,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
 
     if(!overridingMethods.isEmpty()) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isOnAir()) {
         result.addAll(overridingMethods);
       }
       else {
@@ -350,7 +350,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
     if (!delegatingParams.isEmpty()) {
       final SafeDeleteParameterCallHierarchyUsageInfo parameterHierarchyUsageInfo = delegatingParams.get(0);
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isOnAir()) {
         result.addAll(delegatingParams);
       } else {
         final PsiMethod method = parameterHierarchyUsageInfo.getCalledMethod();
@@ -375,7 +375,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
 
     if (!calleesSafeToDelete.isEmpty()) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isOnAir()) {
         result.addAll(calleesSafeToDelete);
       }
       else {
