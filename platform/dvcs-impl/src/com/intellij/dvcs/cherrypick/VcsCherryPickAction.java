@@ -18,6 +18,7 @@ package com.intellij.dvcs.cherrypick;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -46,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class VcsCherryPickAction extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(VcsCherryPickAction.class);
   private static final String NAME = "Cherry-Pick";
   @NotNull private final Set<Hash> myIdsInProgress;
 
@@ -184,8 +186,10 @@ public class VcsCherryPickAction extends DumbAwareAction {
 
       VcsCherryPicker cherryPicker = getCherryPickerForCommit(myProject, myProjectLevelVcsManager, details);
       if (cherryPicker == null) {
-        VcsNotifier.getInstance(myProject).notifyWeakError(
-          "Cherry pick is not supported for commit " + details.getId().toShortString() + " from root " + details.getRoot().getName());
+        String message =
+          "Cherry pick is not supported for commit " + details.getId().toShortString() + " from root " + details.getRoot().getName();
+        VcsNotifier.getInstance(myProject).notifyWeakError(message);
+        LOG.warn(message);
         return false;
       }
       List<VcsFullCommitDetails> list = myGroupedCommits.get(cherryPicker);
