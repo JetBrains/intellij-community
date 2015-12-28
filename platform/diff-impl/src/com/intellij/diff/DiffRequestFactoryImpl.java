@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,23 +104,13 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   @Override
   @NotNull
   public String getContentTitle(@NotNull VirtualFile file) {
-    if (file.isDirectory()) return file.getPath();
-
-    VirtualFile parent = file.getParent();
-    return getContentTitle(file.getName(), file.getPath(), parent != null ? parent.getPath() : null);
+    return getContentTitle(VcsUtil.getFilePath(file));
   }
 
   @Override
   @NotNull
   public String getTitle(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    if ((file1.isDirectory() || file2.isDirectory()) && file1.getPath().equals(file2.getPath())) return file1.getPath();
-    if (file1.isDirectory() ^ file2.isDirectory()) return getContentTitle(file1) + " vs " + getContentTitle(file2);
-
-    VirtualFile parent1 = file1.getParent();
-    VirtualFile parent2 = file2.getParent();
-    return getRequestTitle(file1.getName(), file1.getPath(), parent1 != null ? parent1.getPath() : null,
-                           file2.getName(), file2.getPath(), parent2 != null ? parent2.getPath() : null,
-                           " vs ");
+    return getTitle(VcsUtil.getFilePath(file1), VcsUtil.getFilePath(file2), " vs ");
   }
 
   @Override
