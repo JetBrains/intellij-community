@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.Patches;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.util.SystemInfo;
@@ -61,7 +62,7 @@ public class FontInfo {
 
   @NotNull
   private static Font getFontWithLigaturesEnabled(Font font) {
-    if (SystemInfo.isMac) {
+    if (Patches.JDK_BUG_ID_7162125) {
       // Ligatures don't work on Mac for fonts loaded natively, so we need to locate and load font manually
       File fontFile = findFileForFont(font, true);
       if (fontFile == null && font.getStyle() != Font.PLAIN) fontFile = findFileForFont(font.deriveFont(Font.PLAIN), true);
