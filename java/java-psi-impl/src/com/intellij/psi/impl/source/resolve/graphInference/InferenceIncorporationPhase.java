@@ -167,7 +167,7 @@ public class InferenceIncorporationPhase {
 
             for (PsiType lowerBound : lowerBounds) {
               if (mySession.getInferenceVariable(lowerBound) == null) {
-                addConstraint(new StrictSubtypingConstraint(lowerBound, superBound));
+                addConstraint(new StrictSubtypingConstraint(superBound, lowerBound));
               }
             }
           }
