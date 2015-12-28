@@ -221,8 +221,6 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
         myList.getSelectionModel().addSelectionInterval(0, 0);
       }
     });
-
-    setTitle(VcsBundle.message("dialog.title.history.for.file", file.getName()));
   }
 
   private void canNotLoadRevisionMessage(final VcsException e) {
