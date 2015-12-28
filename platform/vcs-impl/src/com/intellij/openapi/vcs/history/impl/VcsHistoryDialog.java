@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.history.impl;
 
 import com.intellij.diff.*;
-import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.MessageDiffRequest;
@@ -38,7 +37,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -277,18 +275,9 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     if (myIsInLoading) return;
     if (myChangesOnlyCheckBox.isSelected()) {
       loadContentsFor(myRevisions.toArray(new VcsFileRevision[myRevisions.size()]));
-      try {
-        ((ListTableModel)myList.getModel()).setItems(filteredRevisions());
-      }
-      catch (FilesTooBigForDiffException e) {
-        myChangesOnlyCheckBox.setEnabled(false);
-        myChangesOnlyCheckBox.setSelected(false);
-        setErrorText(e.getMessage());
-        ((ListTableModel)myList.getModel()).setItems(myRevisions);
-      }
+      ((ListTableModel)myList.getModel()).setItems(filteredRevisions());
       ((ListTableModel)myList.getModel()).fireTableDataChanged();
       updateDiff(0, 0);
-
     }
     else {
       ((ListTableModel)myList.getModel()).setItems(myRevisions);
@@ -297,7 +286,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
   }
 
-  private List<VcsFileRevision> filteredRevisions() throws FilesTooBigForDiffException, VcsException {
+  private List<VcsFileRevision> filteredRevisions() throws  VcsException {
     ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
     VcsFileRevision nextRevision = myRevisions.get(myRevisions.size() - 1);
     result.add(nextRevision);
@@ -357,9 +346,6 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     catch (VcsException e) {
       canNotLoadRevisionMessage(e);
       return new MessageDiffRequest(canNoLoadMessage(e));
-    }
-    catch (FilesTooBigForDiffException e) {
-      return new MessageDiffRequest(DiffTooBigException.MESSAGE);
     }
   }
 
@@ -459,14 +445,14 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     return null;
   }
 
-  protected String getContentToShow(VcsFileRevision revision) throws FilesTooBigForDiffException, VcsException {
+  protected String getContentToShow(VcsFileRevision revision) throws VcsException {
     final Block block = getBlock(revision);
     if (block == null) return "";
     return block.getBlockContent();
   }
 
   @Nullable
-  private Block getBlock(VcsFileRevision revision) throws FilesTooBigForDiffException, VcsException {
+  private Block getBlock(VcsFileRevision revision) throws VcsException {
     if (myRevisionToContentMap.containsKey(revision)) {
       return myRevisionToContentMap.get(revision);
     }
@@ -482,7 +468,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     return myRevisionToContentMap.get(revision);
   }
 
-  private Block getBlock(int index) throws FilesTooBigForDiffException, VcsException {
+  private Block getBlock(int index) throws VcsException {
     return index > 0 ? getBlock(myRevisions.get(index - 1)) : new Block(myEditor.getDocument().getText(), mySelectionStart, mySelectionEnd);
   }
 
