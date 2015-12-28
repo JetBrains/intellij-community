@@ -206,7 +206,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (! VcsHistoryDialog.this.isShowing()) return;
+        if (!VcsHistoryDialog.this.isShowing()) return;
         PopupUtil.showBalloonForComponent(VcsHistoryDialog.this.getRootPane(), canNoLoadMessage(e), MessageType.ERROR, true, myProject);
       }
     });
@@ -252,7 +252,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     myList.getSelectionModel().setSelectionInterval(0, 0);
   }
 
-  private List<VcsFileRevision> filteredRevisions() throws  VcsException {
+  private List<VcsFileRevision> filteredRevisions() throws VcsException {
     ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
     VcsFileRevision nextRevision = myRevisions.get(myRevisions.size() - 1);
     result.add(nextRevision);
@@ -317,7 +317,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     splitter.setDividerWidth(4);
 
     JPanel tablePanel = new JPanel(new BorderLayout());
-    tablePanel.add(createTablePanel(), BorderLayout.CENTER);
+    tablePanel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
     tablePanel.add(myChangesOnlyCheckBox, BorderLayout.NORTH);
 
     splitter.setFirstComponent(tablePanel);
@@ -341,10 +341,6 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     splitter.setFirstComponent(panel);
     splitter.setSecondComponent(addComp);
     return splitter;
-  }
-
-  private JComponent createTablePanel() {
-    return ScrollPaneFactory.createScrollPane(myList);
   }
 
   @Override
@@ -379,17 +375,20 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   public Object getData(@NonNls String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
-    } else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
+    }
+    else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
       return myFile;
-    } else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
+    }
+    else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
       return myList.getSelectedObject();
-    } else if (VcsDataKeys.VCS.is(dataId)) {
+    }
+    else if (VcsDataKeys.VCS.is(dataId)) {
       return myActiveVcs.getKeyInstanceMethod();
     }
     return null;
   }
 
-  protected String getContentToShow(VcsFileRevision revision) throws VcsException {
+  private String getContentToShow(VcsFileRevision revision) throws VcsException {
     final Block block = getBlock(revision);
     if (block == null) return "";
     return block.getBlockContent();
