@@ -41,6 +41,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -121,27 +122,29 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
   @NotNull
   public static String getContentTitle(@NotNull FilePath path) {
-    if (path.isDirectory()) return path.getPath();
+    if (path.isDirectory()) return path.getPresentableUrl();
     FilePath parent = path.getParentPath();
-    return getContentTitle(path.getName(), path.getPath(), parent != null ? parent.getPath() : null);
+    return getContentTitle(path.getName(), path.getPresentableUrl(), parent != null ? parent.getPresentableUrl() : null);
   }
 
   @NotNull
   public static String getTitle(@NotNull FilePath path1, @NotNull FilePath path2, @NotNull String separator) {
-    if ((path1.isDirectory() || path2.isDirectory()) && path1.getPath().equals(path2.getPath())) return path1.getPath();
+    if ((path1.isDirectory() || path2.isDirectory()) && path1.getPresentableUrl().equals(path2.getPresentableUrl())) {
+      return path1.getPresentableUrl();
+    }
 
     String name1 = path1.getName();
     String name2 = path2.getName();
 
     if (path1.isDirectory() ^ path2.isDirectory()) {
-      if (path1.isDirectory()) name1 += "/";
-      if (path2.isDirectory()) name2 += "/";
+      if (path1.isDirectory()) name1 += File.separatorChar;
+      if (path2.isDirectory()) name2 += File.separatorChar;
     }
 
     FilePath parent1 = path1.getParentPath();
     FilePath parent2 = path2.getParentPath();
-    return getRequestTitle(name1, path1.getPath(), parent1 != null ? parent1.getPath() : null,
-                           name2, path2.getPath(), parent2 != null ? parent2.getPath() : null,
+    return getRequestTitle(name1, path1.getPresentableUrl(), parent1 != null ? parent1.getPresentableUrl() : null,
+                           name2, path2.getPresentableUrl(), parent2 != null ? parent2.getPresentableUrl() : null,
                            separator);
   }
 
