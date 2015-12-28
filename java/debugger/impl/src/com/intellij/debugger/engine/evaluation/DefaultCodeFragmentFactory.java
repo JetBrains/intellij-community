@@ -89,7 +89,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
 
         final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(project).getContext();
         DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
-        if (debuggerSession != null) {
+        if (debuggerSession != null && debuggerContext.getSuspendContext() != null) {
           final Semaphore semaphore = new Semaphore();
           semaphore.down();
           final AtomicReference<PsiType> nameRef = new AtomicReference<PsiType>();
