@@ -290,13 +290,22 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @NotNull
   protected List<PyPackage> getPackages() throws ExecutionException {
-    final String output = getHelperResult(PACKAGING_TOOL, Collections.singletonList("list"), false, false, null);
-    final List<PyPackage> packages = new ArrayList<PyPackage>(parsePackagingToolOutput(output));
-    if (packages.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
-      packages.addAll(Lists.newArrayList(new PyPackage(PIP, PIP_VERSION, null, Collections.<PyRequirement>emptyList()),
-                                         new PyPackage(SETUPTOOLS, SETUPTOOLS_VERSION, null, Collections.<PyRequirement>emptyList())));
+    final String output;
+    try {
+      output = getHelperResult(PACKAGING_TOOL, Collections.singletonList("list"), false, false, null);
     }
-    return packages;
+    catch (final ProcessNotCreatedException ex) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        Logger.getInstance(PyPackageManagerImpl.class).info("Not-env unit test mode, will return mock packages");
+        return Lists.newArrayList(new PyPackage(PIP, PIP_VERSION, null, Collections.<PyRequirement>emptyList()),
+                                  new PyPackage(SETUPTOOLS, SETUPTOOLS_VERSION, null, Collections.<PyRequirement>emptyList()));
+      }
+      else {
+        throw ex;
+      }
+    }
+
+    return parsePackagingToolOutput(output);
   }
 
   @Nullable
