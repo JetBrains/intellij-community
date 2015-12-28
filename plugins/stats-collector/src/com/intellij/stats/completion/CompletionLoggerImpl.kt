@@ -1,6 +1,7 @@
 package com.intellij.stats.completion
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import java.util.*
 
@@ -35,6 +36,8 @@ class CompletionFileLogger(private val installationUID: String,
     
     private var logLastAction = LOG_NOTHING
     private var lastCompletionList: List<LookupStringWithRelevance> = emptyList()
+    
+    private val LOG = Logger.getInstance(CompletionFileLogger::class.java) 
 
     override fun completionStarted(completionList: List<LookupStringWithRelevance>) {
         lastCompletionList = completionList
@@ -98,7 +101,13 @@ class CompletionFileLogger(private val installationUID: String,
         logLastAction = LOG_NOTHING
         
         val builder = logBuilder(Action.TYPED_SELECT)
-        //todo here exception comes
+        
+        if (getItemId(itemName) == null) {
+            builder.addPair("ID", "NOT_IN_LIST")
+            log(builder)
+            LOG.error("itemName: $itemName not in the id list")
+        }
+
         val id = getItemId(itemName)!!
         builder.addPair("ID", id)
         log(builder)
