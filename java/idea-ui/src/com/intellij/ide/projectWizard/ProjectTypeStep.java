@@ -559,7 +559,15 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       if (!mySettingsStep.validate()) return false;
     }
     ModuleWizardStep step = getCustomStep();
-    return step != null ? step.validate() : super.validate();
+    if (step != null && !step.validate()) {
+      return false;
+    }
+
+    if (isFrameworksMode() && !myFrameworksPanel.validate()) {
+      return false;
+    }
+
+    return super.validate();
   }
 
   @Override

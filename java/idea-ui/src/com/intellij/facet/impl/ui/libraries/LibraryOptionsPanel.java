@@ -509,6 +509,18 @@ public class LibraryOptionsPanel implements Disposable {
     return mySettings;
   }
 
+  public boolean isLibrarySelected() {
+    Choice selected = myButtonEnumModel.getSelected();
+    switch (selected) {
+      case USE_LIBRARY:
+        return myExistingLibraryComboBox.getSelectedItem() != null;
+      case SETUP_LIBRARY_LATER:
+        return false;
+      default:
+        return true;
+    }
+  }
+
   @Nullable
   public LibraryCompositionSettings apply() {
     if (mySettings == null) return null;

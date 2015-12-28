@@ -57,6 +57,10 @@ public abstract class FrameworkSupportInModuleConfigurable implements Disposable
     return true;
   }
 
+  public boolean validateNoLibrary() {
+    return true;
+  }
+
   @Override
   public void dispose() {
   }

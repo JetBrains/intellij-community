@@ -194,6 +194,31 @@ public class AddSupportForFrameworksPanel implements Disposable {
     }
   }
 
+  public boolean validate() {
+    List<FrameworkSupportNode> selectedFrameworks = getSelectedNodes();
+    sortFrameworks(selectedFrameworks);
+
+    for (FrameworkSupportNode node : selectedFrameworks) {
+
+      FrameworkSupportOptionsComponent optionsComponent = myInitializedOptionsComponents.get(node);
+      if (optionsComponent == null) continue;
+
+      final LibraryOptionsPanel optionsPanel = optionsComponent.getLibraryOptionsPanel();
+      if (optionsPanel == null) continue;
+
+      FrameworkSupportInModuleConfigurable configurable = node.getConfigurable();
+
+      boolean librarySelected = optionsPanel.isLibrarySelected();
+      if (!librarySelected) {
+        if (!configurable.validateNoLibrary()) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
   @Override
   public void dispose() {
   }

@@ -87,6 +87,10 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
+    if (!myAddSupportPanel.validate()) {
+      return;
+    }
+
     if (myAddSupportPanel.hasSelectedFrameworks()) {
       if (!myAddSupportPanel.downloadLibraries()) {
         int answer = Messages.showYesNoDialog(myAddSupportPanel.getMainPanel(),
@@ -110,6 +114,7 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
         }
       });
     }
+
     super.doOKAction();
   }
 
