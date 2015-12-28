@@ -38,6 +38,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -118,7 +119,7 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   private final JCheckBox myChangesOnlyCheckBox = new JCheckBox(VcsBundle.message("checkbox.show.changed.revisions.only"));
   private final JTextArea myComments = new JTextArea();
 
-  private boolean myIsInLoading = false;
+  private boolean myIsDuringUpdate = false;
   private boolean myIsDisposed = false;
 
   public VcsHistoryDialog(Project project,
@@ -228,26 +229,66 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   }
 
   private void updateRevisionsList() {
-    if (myIsInLoading) return;
+    if (myIsDuringUpdate) return;
+    try {
+      myIsDuringUpdate = true;
 
-    List<VcsFileRevision> newItems;
-    if (myChangesOnlyCheckBox.isSelected()) {
-      try {
-        loadContentsFor(myRevisions.toArray(new VcsFileRevision[myRevisions.size()]));
-        newItems = filteredRevisions();
+      List<VcsFileRevision> newItems;
+      if (myChangesOnlyCheckBox.isSelected()) {
+        try {
+          loadContentsFor(myRevisions.toArray(new VcsFileRevision[myRevisions.size()]));
+          newItems = filteredRevisions();
+        }
+        catch (final VcsException e) {
+          // todo test it, always exception
+          canNotLoadRevisionMessage(e);
+          return;
+        }
       }
-      catch (final VcsException e) {
-        // todo test it, always exception
-        canNotLoadRevisionMessage(e);
-        return;
+      else {
+        newItems = myRevisions;
+      }
+
+      List<VcsFileRevision> oldSelection = getSelectedRevisions();
+
+      myListModel.setItems(newItems);
+
+      myList.setSelection(oldSelection);
+      if (myList.getSelectedRowCount() == 0) {
+        int index = getNearestVisibleRevision(ContainerUtil.getFirstItem(oldSelection));
+        myList.getSelectionModel().setSelectionInterval(index, index);
       }
     }
-    else {
-      newItems = myRevisions;
+    finally {
+      myIsDuringUpdate = false;
     }
 
-    myListModel.setItems(newItems);
-    myList.getSelectionModel().setSelectionInterval(0, 0);
+    updateDiff();
+  }
+
+  @NotNull
+  private List<VcsFileRevision> getSelectedRevisions() {
+    int minIndex = myList.getSelectionModel().getMinSelectionIndex();
+    int maxIndex = myList.getSelectionModel().getMaxSelectionIndex();
+    VcsFileRevision minRevision = minIndex != -1 ? myList.getRow(minIndex) : null;
+    VcsFileRevision maxRevision = maxIndex != -1 ? myList.getRow(maxIndex) : null;
+    int startIndex = myRevisions.indexOf(minRevision);
+    int endIndex = myRevisions.indexOf(maxRevision);
+
+    return startIndex != -1 && endIndex != -1 ?
+           myRevisions.subList(startIndex, endIndex + 1) :
+           Collections.<VcsFileRevision>emptyList();
+  }
+
+  private int getNearestVisibleRevision(@Nullable VcsFileRevision anchor) {
+    int anchorIndex = myRevisions.indexOf(anchor);
+    if (anchorIndex == -1) return 0;
+
+    for (int i = anchorIndex - 1; i > 0; i--) {
+      int index = myListModel.indexOf(myRevisions.get(i));
+      if (index != -1) return index;
+    }
+    return 0;
   }
 
   private List<VcsFileRevision> filteredRevisions() throws VcsException {
@@ -279,7 +320,7 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   }
 
   private void updateDiff(int first, int second) {
-    if (myIsDisposed || myIsInLoading) return;
+    if (myIsDisposed || myIsDuringUpdate) return;
 
     VcsFileRevision firstRev = myListModel.getRowValue(first);
     VcsFileRevision secondRev = myListModel.getRowValue(second);
