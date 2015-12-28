@@ -144,18 +144,11 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
     myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, getDisposable(), getWindow());
 
-    myRevisions.addAll(session.getRevisionList());
     final VcsRevisionNumber currentRevisionNumber = session.getCurrentRevisionNumber();
     if (currentRevisionNumber != null) {
       myRevisions.add(new CurrentRevision(file, currentRevisionNumber));
     }
-    Collections.sort(myRevisions, new Comparator<VcsFileRevision>() {
-      @Override
-      public int compare(VcsFileRevision rev1, VcsFileRevision rev2){
-        return VcsHistoryUtil.compare(rev1, rev2);
-      }
-    });
-    Collections.reverse(myRevisions);
+    myRevisions.addAll(session.getRevisionList());
 
     myContentFileType = file.getFileType();
 
@@ -323,17 +316,9 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
   private void updateDiff(int first, int second) {
     if (myIsDisposed || myIsInLoading) return;
-    List items = myListModel.getItems();
-    VcsFileRevision firstRev = (VcsFileRevision)items.get(first);
-    VcsFileRevision secondRev = (VcsFileRevision)items.get(second);
 
-    if (VcsHistoryUtil.compare(firstRev, secondRev) > 0) {
-      VcsFileRevision tmp = firstRev;
-      firstRev = secondRev;
-      secondRev = tmp;
-    }
-
-    if (myIsDisposed) return;
+    VcsFileRevision firstRev = myListModel.getRowValue(first);
+    VcsFileRevision secondRev = myListModel.getRowValue(second);
 
     DiffRequest diffRequest = createDiffRequest(firstRev, secondRev);
     myDiffPanel.setRequest(diffRequest);
