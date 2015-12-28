@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NonNls;
@@ -45,6 +46,18 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
     if (popup != null && popup.isVisible()) {
       popup.hide();
     }
+  }
+
+  @Override
+  protected void doPopupOKAction() {
+    ComboPopup popup = myExpressionEditor.getComboBox().getPopup();
+    if (popup != null && popup.isVisible()) {
+      Object value = popup.getList().getSelectedValue();
+      if (value != null) {
+        myExpressionEditor.setExpression((XExpression)value);
+      }
+    }
+    doOKAction();
   }
 
   protected JComponent getPreferredFocusedComponent() {
