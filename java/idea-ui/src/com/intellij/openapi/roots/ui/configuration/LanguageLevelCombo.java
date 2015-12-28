@@ -98,6 +98,7 @@ public abstract class LanguageLevelCombo extends ComboBox {
     }
     else if (!(getItemAt(0) instanceof String)) {
       addDefaultItem();
+      setSelectedIndex(0);
     }
     repaint();
   }
