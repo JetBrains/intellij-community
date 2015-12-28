@@ -31,10 +31,8 @@ import java.awt.font.TextAttribute;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FilenameFilter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Locale;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author max
@@ -82,7 +80,7 @@ public class FontInfo {
   private static File findFileForFont(Font font, final boolean matchStyle) {
     final String normalizedFamilyName = font.getFamily().toLowerCase(Locale.getDefault()).replace(" ", "");
     final int fontStyle = font.getStyle();
-    File[] files = new File(System.getProperty("user.home"), "Library/Fonts").listFiles(new FilenameFilter() {
+    FilenameFilter filter = new FilenameFilter() {
       @Override
       public boolean accept(File file, String name) {
         String normalizedName = name.toLowerCase(Locale.getDefault());
@@ -90,10 +88,18 @@ public class FontInfo {
                (normalizedName.endsWith(".otf") || normalizedName.endsWith(".ttf")) &&
                (!matchStyle || fontStyle == ComplementaryFontsRegistry.getFontStyle(name));
       }
-    });
-    if (files == null || files.length == 0) return null;
+    };
+    List<File> files = new ArrayList<File>();
+    
+    File[] userFiles = new File(System.getProperty("user.home"), "Library/Fonts").listFiles(filter);
+    if (userFiles != null) files.addAll(Arrays.asList(userFiles));
+    
+    File[] localFiles = new File("/Library/Fonts").listFiles(filter);
+    if (localFiles != null) files.addAll(Arrays.asList(localFiles));
+    
+    if (files.isEmpty()) return null;
     // to make sure results are predictable we return first file in alphabetical order
-    return Collections.min(Arrays.asList(files), new Comparator<File>() {
+    return Collections.min(files, new Comparator<File>() {
       @Override
       public int compare(File file1, File file2) {
         return file1.getName().compareTo(file2.getName());
