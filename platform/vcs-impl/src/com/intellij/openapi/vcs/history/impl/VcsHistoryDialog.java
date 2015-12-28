@@ -36,6 +36,8 @@ import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -136,7 +138,9 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     String helpId = vcsHistoryProvider.getHelpId();
     myHelpId = helpId != null ? helpId : "reference.dialogs.vcs.selection.history";
     final VcsDependentHistoryComponents components = vcsHistoryProvider.getUICustomization(session, getRootPane());
-    myListModel = new ListTableModel<VcsFileRevision>(createColumns(components.getColumns()));
+
+    ColumnInfo[] additionalColumns = ObjectUtils.notNull(components.getColumns(), ColumnInfo.EMPTY_ARRAY);
+    myListModel = new ListTableModel<VcsFileRevision>(ArrayUtil.mergeArrays(COLUMNS, additionalColumns));
     myListModel.setSortable(false);
     myList = new TableView<VcsFileRevision>(myListModel);
 
@@ -246,19 +250,6 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   public void show() {
     myList.getSelectionModel().setSelectionInterval(0, 0);
     super.show();
-  }
-
-  private static ColumnInfo[] createColumns(ColumnInfo[] additionalColumns) {
-    if (additionalColumns == null) {
-      return COLUMNS;
-    }
-
-    ColumnInfo[] result = new ColumnInfo[additionalColumns.length + COLUMNS.length];
-
-    System.arraycopy(COLUMNS, 0, result, 0, COLUMNS.length);
-    System.arraycopy(additionalColumns, 0, result, COLUMNS.length, additionalColumns.length);
-
-    return result;
   }
 
   protected String getContentOf(VcsFileRevision revision) throws VcsException {
