@@ -46,7 +46,7 @@ public class MacColorPipette extends ColorPipetteBase {
   private static final int SIZE = PIXELS * ZOOM;
   private static final int DIALOG_SIZE = SIZE + 20;
 
-  @SuppressWarnings("UseJBColor") private final Color myTransparentColor = new Color(0, true);
+  @SuppressWarnings("UseJBColor") private final Color myTransparentColor = new Color(0, 0, 0, 1);
 
   public MacColorPipette(@NotNull ColorPicker picker, @NotNull ColorListener listener) {
     super(picker, listener);
