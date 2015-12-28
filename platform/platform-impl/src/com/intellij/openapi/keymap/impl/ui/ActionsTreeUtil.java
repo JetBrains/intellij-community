@@ -453,6 +453,7 @@ public class ActionsTreeUtil {
         node.add(childNode);
       }
       else {
+        LOG.assertTrue(child != null);
         node.add(new DefaultMutableTreeNode(child));
       }
     }
