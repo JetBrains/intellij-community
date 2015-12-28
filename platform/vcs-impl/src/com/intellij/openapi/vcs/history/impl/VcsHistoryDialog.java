@@ -327,13 +327,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   }
 
   private JComponent createComments(final JComponent addComp) {
-    final Splitter splitter = new Splitter(false);
-    final JLabel label = new JLabel("Commit Message:") {
-      @Override
-      public Dimension getPreferredSize() {
-        return new Dimension(getWidth(), 21);
-      }
-    };
+    final JLabel label = new JLabel("Commit Message:");
 
     JPanel panel = new JPanel(new BorderLayout(4, 4));
     panel.add(label, BorderLayout.NORTH);
@@ -343,6 +337,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     myComments.setEditable(false);
     myComments.setLineWrap(true);
 
+    final Splitter splitter = new Splitter(false);
     splitter.setFirstComponent(panel);
     splitter.setSecondComponent(addComp);
     return splitter;
