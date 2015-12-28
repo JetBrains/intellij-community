@@ -97,7 +97,10 @@ public class MacColorPipette extends ColorPipetteBase {
             int left = PIXELS / 2 + 1;
             Rectangle captureRectangle = new Rectangle(mouseLoc.x - left, mouseLoc.y - left, PIXELS, PIXELS);
             BufferedImage captureScreen = captureScreen(pickerDialog, captureRectangle);
-            if (captureScreen == null) return;
+            if (captureScreen == null || captureScreen.getWidth() < PIXELS || captureRectangle.getHeight() < PIXELS) {
+              cancelPipette();
+              return;
+            }
 
             //noinspection UseJBColor
             Color newColor = new Color(captureScreen.getRGB(captureRectangle.width / 2, captureRectangle.height / 2));
