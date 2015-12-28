@@ -27,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -75,10 +76,11 @@ public class FontInfo {
       // Ligatures don't work on Mac for fonts loaded natively, so we need to locate and load font manually
       String familyName = font.getFamily();
       File fontFile = findFileForFont(familyName, fontStyle);
-      if (fontFile == null && fontStyle != Font.PLAIN) fontFile = findFileForFont(familyName, Font.PLAIN);
-      if (fontFile == null) fontFile = findFileForFont(familyName, -1);
-      if (fontFile == null) return font;
-      LOG.info(font + " located at " + fontFile);
+      if (fontFile == null) {
+        LOG.info(font + "(style=" + fontStyle + ") not located");
+        return font;
+      }
+      LOG.info(font + "(style=" + fontStyle + ") located at " + fontFile);
       try {
         font = Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(fontStyle, font.getSize());
       }
@@ -97,7 +99,16 @@ public class FontInfo {
     }
   };
 
-  private static File findFileForFont(@NotNull String familyName, final int style) {
+  @Nullable
+  private static File findFileForFont(@NotNull String familyName, int style) {
+    File fontFile = doFindFileForFont(familyName, style);
+    if (fontFile == null && style != Font.PLAIN) fontFile = doFindFileForFont(familyName, Font.PLAIN);
+    if (fontFile == null) fontFile = doFindFileForFont(familyName, -1);
+    return fontFile;
+  }
+
+  @Nullable
+  private static File doFindFileForFont(@NotNull String familyName, final int style) {
     final String normalizedFamilyName = familyName.toLowerCase(Locale.getDefault()).replace(" ", "");
     FilenameFilter filter = new FilenameFilter() {
       @Override
