@@ -19,8 +19,10 @@ import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
@@ -83,6 +85,13 @@ public class FontInfo {
     return font.deriveFont(Collections.singletonMap(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON));
   }
 
+  private static final Comparator<File> BY_NAME = new Comparator<File>() {
+    @Override
+    public int compare(File file1, File file2) {
+      return file1.getName().compareTo(file2.getName());
+    }
+  };
+
   private static File findFileForFont(Font font, final boolean matchStyle) {
     final String normalizedFamilyName = font.getFamily().toLowerCase(Locale.getDefault()).replace(" ", "");
     final int fontStyle = font.getStyle();
@@ -104,13 +113,19 @@ public class FontInfo {
     if (localFiles != null) files.addAll(Arrays.asList(localFiles));
     
     if (files.isEmpty()) return null;
-    // to make sure results are predictable we return first file in alphabetical order
-    return Collections.min(files, new Comparator<File>() {
-      @Override
-      public int compare(File file1, File file2) {
-        return file1.getName().compareTo(file2.getName());
-      }
-    });
+    
+    if (matchStyle && fontStyle == Font.PLAIN) {
+      // prefer font containing 'regular' in its name
+      List<File> regulars = ContainerUtil.filter(files, new Condition<File>() {
+        @Override
+        public boolean value(File file) {
+          return file.getName().toLowerCase(Locale.getDefault()).contains("regular");
+        }
+      });
+      if (!regulars.isEmpty()) return Collections.min(regulars, BY_NAME);
+    }
+    
+    return Collections.min(files, BY_NAME);
   }
 
   private void parseProblemGlyphs() {
