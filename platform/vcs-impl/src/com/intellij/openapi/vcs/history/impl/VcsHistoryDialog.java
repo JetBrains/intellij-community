@@ -160,8 +160,6 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     }
     myRevisions.addAll(session.getRevisionList());
 
-    final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
-
     mySplitter = new JBSplitter(true, DIFF_SPLITTER_PROPORTION_KEY, DIFF_SPLITTER_PROPORTION);
 
     mySplitter.setFirstComponent(myDiffPanel.getComponent());
@@ -188,26 +186,17 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     };
     myList.getSelectionModel().addListSelectionListener(selectionListener);
 
+    final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
     myChangesOnlyCheckBox.setSelected(configuration.SHOW_ONLY_CHANGED_IN_SELECTION_DIFF);
-    try {
-      updateRevisionsList();
-    }
-    catch (final VcsException e) {
-      // todo test it, always exception
-      canNotLoadRevisionMessage(e);
-    }
     myChangesOnlyCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         configuration.SHOW_ONLY_CHANGED_IN_SELECTION_DIFF = myChangesOnlyCheckBox.isSelected();
-        try {
-          updateRevisionsList();
-        }
-        catch (VcsException e1) {
-          canNotLoadRevisionMessage(e1);
-        }
+        updateRevisionsList();
       }
     });
+
+    updateRevisionsList();
 
     init();
 
@@ -253,19 +242,24 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     myCachedContents.loadContentsFor(revisions);
   }
 
-  private void updateRevisionsList() throws VcsException {
+  private void updateRevisionsList() {
     if (myIsInLoading) return;
     if (myChangesOnlyCheckBox.isSelected()) {
-      loadContentsFor(myRevisions.toArray(new VcsFileRevision[myRevisions.size()]));
-      myListModel.setItems(filteredRevisions());
-      myListModel.fireTableDataChanged();
-      updateDiff(0, 0);
+      try {
+        loadContentsFor(myRevisions.toArray(new VcsFileRevision[myRevisions.size()]));
+        myListModel.setItems(filteredRevisions());
+        myListModel.fireTableDataChanged();
+        updateDiff(0, 0);
+      }
+      catch (final VcsException e) {
+        // todo test it, always exception
+        canNotLoadRevisionMessage(e);
+      }
     }
     else {
       myListModel.setItems(myRevisions);
       myListModel.fireTableDataChanged();
     }
-
   }
 
   private List<VcsFileRevision> filteredRevisions() throws  VcsException {
