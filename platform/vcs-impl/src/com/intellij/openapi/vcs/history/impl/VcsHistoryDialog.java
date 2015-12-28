@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
@@ -51,8 +52,6 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
@@ -91,6 +90,12 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   private static final ColumnInfo[] COLUMNS = new ColumnInfo[]{REVISION, DATE, AUTHOR, MESSAGE};
 
   private static final int CURRENT = 0;
+
+  private static final float DIFF_SPLITTER_PROPORTION = 0.5f;
+  private static final float COMMENTS_SPLITTER_PROPORTION = 0.8f;
+  private static final String DIFF_SPLITTER_PROPORTION_KEY = "file.history.selection.diff.splitter.proportion";
+  private static final String COMMENTS_SPLITTER_PROPORTION_KEY = "file.history.selection.comments.splitter.proportion";
+
 
   private final Project myProject;
   private final VirtualFile myFile;
@@ -157,21 +162,10 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
     final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
 
-    mySplitter = new Splitter(true, getVcsConfiguration().FILE_HISTORY_DIALOG_SPLITTER_PROPORTION);
+    mySplitter = new JBSplitter(true, DIFF_SPLITTER_PROPORTION_KEY, DIFF_SPLITTER_PROPORTION);
 
     mySplitter.setFirstComponent(myDiffPanel.getComponent());
     mySplitter.setSecondComponent(createBottomPanel(components.getDetailsComponent()));
-
-    mySplitter.addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
-          getVcsConfiguration().FILE_HISTORY_DIALOG_SPLITTER_PROPORTION
-          = ((Float)evt.getNewValue()).floatValue();
-        }
-      }
-    });
-
 
     final ListSelectionListener selectionListener = new ListSelectionListener() {
       @Override
@@ -336,19 +330,8 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   }
 
   private JComponent createBottomPanel(final JComponent addComp) {
-    Splitter splitter = new Splitter(true, getVcsConfiguration()
-                                           .FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION);
+    JBSplitter splitter = new JBSplitter(true, COMMENTS_SPLITTER_PROPORTION_KEY, COMMENTS_SPLITTER_PROPORTION);
     splitter.setDividerWidth(4);
-
-    splitter.addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
-          getVcsConfiguration().FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION
-          = ((Float)evt.getNewValue()).floatValue();
-        }
-      }
-    });
 
     JPanel tablePanel = new JPanel(new BorderLayout());
     tablePanel.add(createTablePanel(), BorderLayout.CENTER);
@@ -358,10 +341,6 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     splitter.setSecondComponent(createComments(addComp));
 
     return splitter;
-  }
-
-  private VcsConfiguration getVcsConfiguration() {
-    return myActiveVcs.getConfiguration();
   }
 
   private JComponent createComments(final JComponent addComp) {
