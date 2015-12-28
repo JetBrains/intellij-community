@@ -156,7 +156,7 @@ class CompletionFileLogger(private val installationUID: String,
                 }
                 first = false
                 val id = addNewItem(it.item)
-                append("{ID=$id ${it.toData()}}")
+                append("{ID=$id, ${it.toData()}}")
             }
             append("]")
         })
