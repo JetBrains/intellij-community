@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -58,18 +57,7 @@ import java.util.*;
 import java.util.List;
 
 public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
-  private final Editor myEditor;
-  private final int mySelectionStart;
-  private final int mySelectionEnd;
-
-  // todo equals???
-  private final Map<VcsFileRevision, Block> myRevisionToContentMap = new HashMap<VcsFileRevision, Block>();
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.impl.VcsHistoryDialog");
-  private final AbstractVcs myActiveVcs;
-
-  private final DiffRequestPanel myDiffPanel;
-  private final Project myProject;
 
   private static final ColumnInfo REVISION = new ColumnInfo(VcsBundle.message("column.name.revision.version")) {
     @Override
@@ -100,43 +88,56 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
       return ((VcsFileRevision)object).getAuthor();
     }
   };
-
   private static final ColumnInfo[] COLUMNS = new ColumnInfo[]{REVISION, DATE, AUTHOR, MESSAGE};
+
+  private static final int CURRENT = 0;
+
+  private final Project myProject;
+  private final VirtualFile myFile;
+  private final Editor myEditor;
+  private final AbstractVcs myActiveVcs;
+  private final CachedRevisionsContents myCachedContents;
+  private final int mySelectionStart;
+  private final int mySelectionEnd;
+  @NonNls private final String myHelpId;
+
+  // todo equals???
+  private final Map<VcsFileRevision, Block> myRevisionToContentMap = new HashMap<VcsFileRevision, Block>();
+  private final List<VcsFileRevision> myRevisions = new ArrayList<VcsFileRevision>();
 
   private final ListTableModel<VcsFileRevision> myListModel;
   private final TableView<VcsFileRevision> myList;
-  protected final List<VcsFileRevision> myRevisions;
+
   private final Splitter mySplitter;
-  private final VirtualFile myFile;
+  private final DiffRequestPanel myDiffPanel;
   private final JCheckBox myChangesOnlyCheckBox = new JCheckBox(VcsBundle.message("checkbox.show.changed.revisions.only"));
-  private final CachedRevisionsContents myCachedContents;
   private final JTextArea myComments = new JTextArea();
-  private static final int CURRENT = 0;
+
   private boolean myIsInLoading = false;
-  @NonNls private final String myHelpId;
   private boolean myIsDisposed = false;
-  private final FileType myContentFileType;
 
   public VcsHistoryDialog(Project project,
-                          final VirtualFile file,
-                          Editor editor, final VcsHistoryProvider vcsHistoryProvider,
+                          VirtualFile file,
+                          Editor editor,
+                          VcsHistoryProvider vcsHistoryProvider,
                           VcsHistorySession session,
                           AbstractVcs vcs,
                           int selectionStart,
                           int selectionEnd,
-                          final String title, final CachedRevisionsContents cachedContents){
+                          String title,
+                          CachedRevisionsContents cachedContents) {
     super(project, true);
     myProject = project;
+    myFile = file;
     myEditor = editor;
+    myActiveVcs = vcs;
+    myCachedContents = cachedContents;
     mySelectionStart = selectionStart;
     mySelectionEnd = selectionEnd;
-    myCachedContents = cachedContents;
+    myHelpId = ObjectUtils.notNull(vcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history");
+
     setTitle(title);
-    myActiveVcs = vcs;
-    myRevisions = new ArrayList<VcsFileRevision>();
-    myFile = file;
-    String helpId = vcsHistoryProvider.getHelpId();
-    myHelpId = helpId != null ? helpId : "reference.dialogs.vcs.selection.history";
+
     final VcsDependentHistoryComponents components = vcsHistoryProvider.getUICustomization(session, getRootPane());
 
     ColumnInfo[] additionalColumns = ObjectUtils.notNull(components.getColumns(), ColumnInfo.EMPTY_ARRAY);
@@ -153,8 +154,6 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
       myRevisions.add(new CurrentRevision(file, currentRevisionNumber));
     }
     myRevisions.addAll(session.getRevisionList());
-
-    myContentFileType = file.getFileType();
 
     final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
 
@@ -316,8 +315,8 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   @NotNull
   private DiffRequest createDiffRequest(@NotNull VcsFileRevision firstRev, @NotNull VcsFileRevision secondRev) {
     try {
-      DiffContent content1 = DiffContentFactory.getInstance().create(getContentToShow(firstRev), myContentFileType);
-      DiffContent content2 = DiffContentFactory.getInstance().create(getContentToShow(secondRev), myContentFileType);
+      DiffContent content1 = DiffContentFactory.getInstance().create(getContentToShow(firstRev), myFile.getFileType());
+      DiffContent content2 = DiffContentFactory.getInstance().create(getContentToShow(secondRev), myFile.getFileType());
 
       String title1 = VcsBundle.message("diff.content.title.revision.number", firstRev.getRevisionNumber());
       String title2 = VcsBundle.message("diff.content.title.revision.number", secondRev.getRevisionNumber());
