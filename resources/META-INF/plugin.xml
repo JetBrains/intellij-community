@@ -9,7 +9,7 @@
     ]]></description>
 
   <change-notes><![CDATA[
-      Add all lookup elements in first completion list to id map
+      Exception handling, log into file
     ]]>
   </change-notes>
 
