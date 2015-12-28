@@ -49,6 +49,9 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     if (maxSimultaneousTasks < 1) {
       throw new IllegalArgumentException("maxSimultaneousTasks must be >=1 but got: "+maxSimultaneousTasks);
     }
+    if (backendExecutor instanceof BoundedTaskExecutor) {
+      throw new IllegalArgumentException("backendExecutor is already BoundedTaskExecutor: "+backendExecutor);
+    }
     myMaxTasks = maxSimultaneousTasks;
   }
 
@@ -66,7 +69,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   // for diagnostics
-  public static Object info(Object task) {
+  static Object info(Object task) {
     if (task instanceof FutureTask) {
       task = ReflectionUtil.getField(task.getClass(), task, Callable.class, "callable");
     }
@@ -182,21 +185,17 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread(); // to make sure we are not waiting inside the pooled thread, blocking it forever
     final CountDownLatch started = new CountDownLatch(myMaxTasks);
     final CountDownLatch readyToFinish = new CountDownLatch(1);
-    final StringBuffer log = new StringBuffer("waitAllTasksExecuted: " + this + "\n==="+ThreadDumper.dumpThreadsToString()+"\n===\n");
     // start myMaxTasks runnables which will spread to all available executor threads
     // and wait for them all to finish
     List<Future> futures = ContainerUtil.map(Collections.nCopies(myMaxTasks, null), new Function<Object, Future>() {
       @Override
       public Future fun(Object o) {
-        log.append("Submit task\n");
         return submit(new Runnable() {
           @Override
           public void run() {
             try {
               started.countDown();
-              log.append("Task run. started=" + started+"\n");
               readyToFinish.await();
-              log.append("Task finished.\n");
             }
             catch (InterruptedException e) {
               throw new RuntimeException(e);
@@ -208,7 +207,6 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     try {
       if (!started.await(timeout, unit)) {
         throw new RuntimeException("Interrupted by timeout. " + this +
-                                   "\nLog: ---"+log+"\n---"+
                                    "; Thread dump:\n" + ThreadDumper.dumpThreadsToString());
       }
     }
