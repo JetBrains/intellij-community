@@ -96,7 +96,7 @@ public interface OSXKeychainLibrary : com.sun.jna.Library {
         }
         else {
           val buf = CharArray(LIBRARY.CFStringGetLength(translated).toInt())
-          for (i in 0..buf.size() - 1) {
+          for (i in 0..buf.size - 1) {
             buf[i] = LIBRARY.CFStringGetCharacterAtIndex(translated, i.toLong())
           }
           LIBRARY.CFRelease(translated)

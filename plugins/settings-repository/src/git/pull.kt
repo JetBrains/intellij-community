@@ -310,7 +310,7 @@ private fun resolveConflicts(mergeProvider: JGitMergeProvider<out Any>, unresolv
       break
     }
     else {
-      unresolvedFiles.removeAll(mergedFiles)
+      unresolvedFiles.removeAll { it.path in mergedFiles }
     }
   }
 
