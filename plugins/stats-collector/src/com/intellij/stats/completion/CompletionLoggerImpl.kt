@@ -191,7 +191,6 @@ class CompletionFileLogger(private val installationUID: String,
     
     private fun log(logLineBuilder: LogLineBuilder) {
         val msg = logLineBuilder.text()
-        println(msg)
         logFileManager.println(msg)
     }
 
