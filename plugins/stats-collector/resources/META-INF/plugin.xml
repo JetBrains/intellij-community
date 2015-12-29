@@ -9,8 +9,10 @@
     ]]></description>
 
   <change-notes><![CDATA[
-      Fixed couple NPE's
-      Sending data every 30 minutes
+      <ul>
+        <li>Fixed couple NPE's</li>
+        <li>Sending data every 30 minutes</li>
+      </ul>
     ]]>
   </change-notes>
 
