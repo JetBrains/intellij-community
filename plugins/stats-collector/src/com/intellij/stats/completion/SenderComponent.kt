@@ -30,7 +30,7 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
                 LOG.error(e.message)
             }
             finally {
-                alarm.addRequest({ send() }, Time.MINUTE)
+                alarm.addRequest({ send() }, 30 * Time.MINUTE)
             }
         }
     }
