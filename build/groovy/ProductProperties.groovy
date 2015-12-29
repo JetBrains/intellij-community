@@ -27,7 +27,7 @@ public abstract class ProductProperties {
   abstract def String appInfoFile()
 
   /**
-   * @return build number with produce code (e.g. IC-142.239 for IDEA Community)
+   * @return build number with product code (e.g. IC-142.239 for IDEA Community)
    */
   abstract def String fullBuildNumber()
 
