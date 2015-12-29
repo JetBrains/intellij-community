@@ -975,6 +975,7 @@ public class InferenceSession {
   private  boolean hasBoundProblems(final List<InferenceVariable> typeParams,
                                     final PsiSubstitutor substitutor) {
     for (InferenceVariable typeParameter : typeParams) {
+      if (typeParameter.getInstantiation() != PsiType.NULL) continue;
       final List<PsiType> extendsTypes = typeParameter.getBounds(InferenceBound.UPPER);
       final PsiType[] bounds = extendsTypes.toArray(new PsiType[extendsTypes.size()]);
       if (GenericsUtil.findTypeParameterBoundError(typeParameter, bounds, substitutor, myContext, true) != null) {

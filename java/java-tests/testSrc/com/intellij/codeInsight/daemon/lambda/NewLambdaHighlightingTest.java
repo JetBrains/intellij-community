@@ -260,6 +260,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testResolveOrderShouldTakeIntoAccountDependenciesOfAlreadyResolvedVars() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
