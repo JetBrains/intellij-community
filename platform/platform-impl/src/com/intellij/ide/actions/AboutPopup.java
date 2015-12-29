@@ -172,8 +172,11 @@ public class AboutPopup {
         myLines.add(new AboutBoxLine(""));
         myLines.add(new AboutBoxLine(""));
         myLines.add(new AboutBoxLine("Powered by ").keepWithNext());
-        myLines.add(new AboutBoxLine("open-source software", false, thirdParty).keepWithNext());
+        myLines.add(new AboutBoxLine("open-source software", false, thirdParty));
       }
+      
+      myLines.add(new AboutBoxLine(""));
+      myLines.add(new AboutBoxLine(IdeBundle.message("about.box.copy.prompt", SystemInfo.isMac ? "Cmd+C" : "Ctrl+C")));
 
       addMouseListener(new MouseAdapter() {
         @Override

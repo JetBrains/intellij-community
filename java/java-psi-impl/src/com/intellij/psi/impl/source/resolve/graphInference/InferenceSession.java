@@ -674,7 +674,7 @@ public class InferenceSession {
           }
           substitutedCapture = elementFactory.createType(psiClass, newParameters);
 
-          myIncorporationPhase.addCapture(copy, substitutedCapture);
+          myIncorporationPhase.addCapture(copy, (PsiClassType)returnType);
           addConstraint(new TypeCompatibilityConstraint(targetType, substitutedCapture));
         }
       } else {
@@ -1809,5 +1809,9 @@ public class InferenceSession {
 
   public List<String> getIncompatibleErrorMessages() {
     return myErrorMessages;
+  }
+
+  public boolean isErased() {
+    return myErased;
   }
 }

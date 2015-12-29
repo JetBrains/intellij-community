@@ -32,6 +32,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
   private PsiType myS;
   private PsiType myT;
 
+  //t < s
   public StrictSubtypingConstraint(PsiType t, PsiType s) {
     myT = t;
     myS = s;

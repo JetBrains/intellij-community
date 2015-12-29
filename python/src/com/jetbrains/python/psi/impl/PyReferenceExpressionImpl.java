@@ -325,11 +325,33 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
     return null;
   }
-
   @Nullable
   private static PyType getTypeFromTarget(@NotNull final PsiElement target,
                                           final TypeEvalContext context,
                                           PyReferenceExpression anchor) {
+    final PyType type = getGenericTypeFromTarget(target, context, anchor);
+    if (context.maySwitchToAST(anchor)) {
+      final PyExpression qualifier = anchor.getQualifier();
+      if (qualifier != null) {
+        if (!(type instanceof PyFunctionType) && PyTypeChecker.hasGenerics(type, context)) {
+          final Map<PyExpression, PyNamedParameter> parameters = Collections.emptyMap();
+          final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(qualifier, parameters, context);
+          if (substitutions != null && !substitutions.isEmpty()) {
+            final PyType substituted = PyTypeChecker.substitute(type, substitutions, context);
+            if (substituted != null) {
+              return substituted;
+            }
+          }
+        }
+      }
+    }
+    return type;
+  }
+
+  @Nullable
+  private static PyType getGenericTypeFromTarget(@NotNull final PsiElement target,
+                                                 final TypeEvalContext context,
+                                                 PyReferenceExpression anchor) {
     if (!(target instanceof PyTargetExpression)) {  // PyTargetExpression will ask about its type itself
       final PyType pyType = getReferenceTypeFromProviders(target, context, anchor);
       if (pyType != null) {

@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.picker.ColorListener;
@@ -162,7 +161,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
   @Nullable
   private ColorPipette createPipette(@NotNull ColorListener colorListener, @NotNull Disposable parentDisposable) {
-    if (SystemInfo.isMac && Registry.is("ide.mac.new.color.picker")) {
+    if (ColorPipetteBase.canUseMacPipette()) {
       ColorPipette pipette = getPipetteIfAvailable(new MacColorPipette(this, colorListener), parentDisposable);
       if (pipette != null) {
         return pipette;
