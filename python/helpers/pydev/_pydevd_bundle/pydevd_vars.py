@@ -82,6 +82,13 @@ def remove_additional_frame_by_id(thread_id):
 removeAdditionalFrameById = remove_additional_frame_by_id  # Backward compatibility
 
 
+def has_additional_frames_by_id(thread_id):
+    return dict_contains(AdditionalFramesContainer.additional_frames, thread_id)
+
+
+def get_additional_frames_by_id(thread_id):
+    return AdditionalFramesContainer.additional_frames.get(thread_id)
+
 
 def find_frame(thread_id, frame_id):
     """ returns a frame on the thread that has a given frame_id """
