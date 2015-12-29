@@ -38,6 +38,7 @@ import java.util.PropertyResourceBundle;
  * @author max
  */
 public class ConfigImportHelper {
+  private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
 
   private static final String BUILD_NUMBER_FILE = SystemInfo.isMac ? "/Resources/build.txt" : "build.txt";
@@ -49,6 +50,8 @@ public class ConfigImportHelper {
   private ConfigImportHelper() { }
 
   public static void importConfigsTo(@NotNull String newConfigPath) {
+    System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
+
     ConfigImportSettings settings = getConfigImportSettings();
 
     File newConfigDir = new File(newConfigPath);
@@ -78,6 +81,13 @@ public class ConfigImportHelper {
       System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
       break;
     }
+  }
+
+  /**
+   * Returns {@code true} when the IDE is launched for the first time (i.e. there was no config directory).
+   */
+  public static boolean isFirstSession() {
+    return Boolean.getBoolean(FIRST_SESSION_KEY);
   }
 
   /**

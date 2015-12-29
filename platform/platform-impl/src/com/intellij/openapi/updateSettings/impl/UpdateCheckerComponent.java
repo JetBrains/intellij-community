@@ -77,9 +77,11 @@ public class UpdateCheckerComponent implements ApplicationComponent {
     if (eap && current != ChannelStatus.EAP && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
       mySettings.setSelectedChannelStatus(ChannelStatus.EAP);
       LOG.info("channel forced to 'eap'");
-      String title = IdeBundle.message("update.notifications.title");
-      String message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
-      notify(app, UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.INFORMATION, null));
+      if (!ConfigImportHelper.isFirstSession()) {
+        String title = IdeBundle.message("update.notifications.title");
+        String message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
+        notify(app, UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.INFORMATION, null));
+      }
     }
 
     if (!eap && current == ChannelStatus.EAP && ConfigImportHelper.isConfigImported()) {
