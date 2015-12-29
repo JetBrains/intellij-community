@@ -314,8 +314,8 @@ public class IconUtilTest extends PlatformTestCase {
 
   @NotNull
   private static List<Icon> autopsyIconsFrom(@NotNull Icon icon) {
-    if (icon instanceof DeferredIconImpl) {
-      return autopsyIconsFrom(((DeferredIconImpl)icon).getDelegateIcon());
+    if (icon instanceof RetrievableIcon) {
+      return autopsyIconsFrom(((RetrievableIcon)icon).retrieveIcon());
     }
     if (icon instanceof LayeredIcon) {
       return ContainerUtil.flatten(ContainerUtil.map(((LayeredIcon)icon).getAllLayers(), IconUtilTest::autopsyIconsFrom));
