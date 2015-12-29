@@ -7,7 +7,8 @@ from _pydevd_bundle.pydevd_constants import *  # @UnusedWildImport
 
 def load_plugins(package):
     plugin_base = PluginBase(package=package)
-    plugin_source = plugin_base.make_plugin_source(searchpath=[os.path.dirname(os.path.realpath(__file__)) + '/' + package], persist=True)
+    search_path = [os.path.dirname(os.path.realpath(__file__)) + '/' + os.pardir + '/' + package]
+    plugin_source = plugin_base.make_plugin_source(searchpath=search_path, persist=True)
     plugins = []
     for plugin in plugin_source.list_plugins():
         loaded_plugin = None
