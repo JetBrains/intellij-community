@@ -960,6 +960,29 @@ public class PyTypeTest extends PyTestCase {
            "expr = f\n");
   }
 
+  // PY-16267
+  public void testGenericField() {
+    doTest("str",
+           "class D(object):\n" +
+           "    def __init__(self, foo):\n" +
+           "        '''\n" +
+           "        :type foo: T\n" +
+           "        :rtype: D[T]\n" +
+           "        '''\n" +
+           "        self.foo = foo\n" +
+           "\n" +
+           "\n" +
+           "def g():\n" +
+           "    '''\n" +
+           "    :rtype: D[str]\n" +
+           "    '''\n" +
+           "    return D('test')\n" +
+           "\n" +
+           "\n" +
+           "y = g()\n" +
+           "expr = y.foo\n");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
