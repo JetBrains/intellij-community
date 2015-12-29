@@ -48,7 +48,7 @@ fun wrapIfNeedAndReThrow(e: TransportException) {
     throw org.jetbrains.settingsRepository.NoRemoteRepositoryException(e)
   }
 
-  val message = e.getMessage()!!
+  val message = e.message!!
   if (e.status == TransportException.Status.NOT_AUTHORIZED || e.status == TransportException.Status.NOT_PERMITTED ||
       message.contains(JGitText.get().notAuthorized) || message.contains("Auth cancel") || message.contains("Auth fail") || message.contains(": reject HostKey:") /* JSch */) {
     throw AuthenticationException(e)
@@ -73,7 +73,7 @@ fun Repository.fetch(remoteConfig: RemoteConfig, credentialsProvider: Credential
     }
   }
   catch (e: TransportException) {
-    val message = e.getMessage()!!
+    val message = e.message!!
     if (message.startsWith("Remote does not have ")) {
       LOG.info(message)
       // "Remote does not have refs/heads/master available for fetch." - remote repository is not initialized
