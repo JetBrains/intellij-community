@@ -1343,26 +1343,29 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                                  !((MethodCandidateInfo)results[0]).isApplicable() &&
                                  expression.getFunctionalInterfaceType() != null) {
         String description = null;
+        if (results.length == 1) {
+          description = ((MethodCandidateInfo)results[0]).getInferenceErrorMessage();
+        }
         if (expression.isConstructor()) {
           final PsiClass containingClass = PsiMethodReferenceUtil.getQualifierResolveResult(expression).getContainingClass();
 
           if (containingClass != null) {
             if (!myHolder.add(HighlightClassUtil.checkInstantiationOfAbstractClass(containingClass, expression)) &&
                 !myHolder.add(GenericsHighlightUtil.checkEnumInstantiation(expression, containingClass)) &&
-                containingClass.isPhysical()) {
+                containingClass.isPhysical() &&
+                description == null) {
               description = JavaErrorMessages.message("cannot.resolve.constructor", containingClass.getName());
             }
           }
         }
-        else {
+        else if (description == null){
           description = JavaErrorMessages.message("cannot.resolve.method", expression.getReferenceName());
         }
 
         if (description != null) {
           final PsiElement referenceNameElement = expression.getReferenceNameElement();
           final HighlightInfo highlightInfo =
-            HighlightInfo.newHighlightInfo(results.length == 0 ? HighlightInfoType.WRONG_REF 
-                                                               : HighlightInfoType.ERROR)
+            HighlightInfo.newHighlightInfo(results.length == 0 ? HighlightInfoType.WRONG_REF : HighlightInfoType.ERROR)
               .descriptionAndTooltip(description).range(referenceNameElement).create();
           myHolder.add(highlightInfo);
           final TextRange fixRange = HighlightMethodUtil.getFixRange(referenceNameElement);

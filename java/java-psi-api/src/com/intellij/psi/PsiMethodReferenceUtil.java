@@ -54,28 +54,6 @@ public class PsiMethodReferenceUtil {
            isSecondSearchPossible(functionalMethodParameterTypes, qualifierResolveResult, methodRef);
   }
 
-  public static boolean isCorrectAssignment(PsiType[] parameterTypes,
-                                            PsiType[] argTypes,
-                                            boolean varargs,
-                                            int offset) {
-    final int min = Math.min(parameterTypes.length, argTypes.length - offset);
-    for (int i = 0; i < min; i++) {
-      final PsiType argType = argTypes[i + offset];
-      PsiType parameterType = parameterTypes[i];
-      parameterType = GenericsUtil.getVariableTypeByExpressionType(parameterType, true);
-      if (varargs && i == parameterTypes.length - 1) {
-        if (!TypeConversionUtil.isAssignable(parameterType, argType) &&
-            !TypeConversionUtil.isAssignable(((PsiArrayType)parameterType).getComponentType(), argType)) {
-          return false;
-        }
-      }
-      else if (!TypeConversionUtil.isAssignable(parameterType, argType)) {
-        return false;
-      }
-    }
-    return !varargs || parameterTypes.length - 1 <= argTypes.length - offset;
-  }
-
   @Nullable
   public static PsiType getQualifierType(PsiMethodReferenceExpression expression) {
     PsiType qualifierType = null;
