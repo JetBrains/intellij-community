@@ -17,8 +17,8 @@ package com.intellij.psi.util.proximity;
 
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ProximityLocation;
@@ -33,7 +33,7 @@ import static com.intellij.psi.util.proximity.ReferenceListWeigher.ReferenceList
 public class ReferenceListWeigher extends ProximityWeigher {
   public static final ReferenceListWeigher INSTANCE = new ReferenceListWeigher();
 
-  private static final PsiElementPattern.Capture<PsiElement> INSIDE_REFERENCE_LIST =
+  public static final ElementPattern<PsiElement> INSIDE_REFERENCE_LIST =
     PlatformPatterns.psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiReferenceList.class);
 
   protected enum Preference {
