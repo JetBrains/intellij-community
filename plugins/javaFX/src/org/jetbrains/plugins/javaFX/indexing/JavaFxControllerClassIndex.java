@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.javaFX;
+package org.jetbrains.plugins.javaFX.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -34,8 +34,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.JavaFXNamespaceProvider;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxNamespaceDataProvider;
 
 import java.io.StringReader;
 import java.util.*;
@@ -93,7 +93,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
 
     @Nullable
     private static String getControllerClassName(String content) {
-      if (!content.contains(JavaFXNamespaceProvider.JAVAFX_NAMESPACE)) {
+      if (!content.contains(JavaFxNamespaceDataProvider.JAVAFX_NAMESPACE)) {
         return null;
       }
 

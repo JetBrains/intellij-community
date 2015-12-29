@@ -25,7 +25,7 @@ import java.util.ArrayList;
 * User: anna
 * Date: 1/9/13
 */
-public class JavaFXNSDescriptor implements XmlNSDescriptor, Validator<XmlDocument> {
+public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<XmlDocument> {
   private XmlFile myFile;
 
   @Nullable

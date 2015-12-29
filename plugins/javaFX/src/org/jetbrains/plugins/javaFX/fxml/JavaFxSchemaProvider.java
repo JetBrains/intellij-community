@@ -18,8 +18,8 @@ import java.net.URL;
  * User: anna
  * Date: 1/10/13
  */
-public class JavaFXSchemaHandler extends XmlSchemaProvider {
-  private static final Logger LOG = Logger.getInstance("#" + JavaFXSchemaHandler.class.getName());
+public class JavaFxSchemaProvider extends XmlSchemaProvider {
+  private static final Logger LOG = Logger.getInstance("#" + JavaFxSchemaProvider.class.getName());
 
   @Override
   public boolean isAvailable(final @NotNull XmlFile file) {
@@ -33,8 +33,12 @@ public class JavaFXSchemaHandler extends XmlSchemaProvider {
   }
 
   private static XmlFile getReference(@NotNull Module module) {
-    final URL resource = JavaFXSchemaHandler.class.getResource("fx.xsd");
+    final URL resource = JavaFxSchemaProvider.class.getResource("fx.xsd");
     final VirtualFile fileByURL = VfsUtil.findFileByURL(resource);
+    if (fileByURL == null) {
+      LOG.error("xsd not found");
+      return null;
+    }
 
     PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(fileByURL);
     LOG.assertTrue(psiFile != null);
