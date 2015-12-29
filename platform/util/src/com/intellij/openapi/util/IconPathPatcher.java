@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.ui.tree.nodes;
+package com.intellij.openapi.util;
 
-import com.intellij.xdebugger.Obsolescent;
-import com.intellij.xdebugger.XExpression;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.tree.TreeNode;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author nik
+ * @author Konstantin Bulenkov
  */
-public interface WatchNode extends TreeNode, Obsolescent {
-  @NotNull
-  XExpression getExpression();
-
-  void setObsolete();
+public abstract class IconPathPatcher {
+  /**
+   * Patches the path or returns null if nothing has patched
+   * @param path path to the icon
+   * @return patched path or null
+   */
+  @Nullable
+  public abstract String patchPath(String path);
 }

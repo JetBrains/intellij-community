@@ -517,7 +517,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
       }
     }
     if (!myDirtyDirectoriesRecursively.isEmpty()) {
-      result.append("\n dirs: ");
+      result.append("\ndirs: ");
       for(THashSet<FilePath> dirsByRoot: myDirtyDirectoriesRecursively.values()) {
         for(FilePath file: dirsByRoot) {
           result.append(file).append(" ");

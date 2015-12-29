@@ -2691,8 +2691,8 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Implementation of "Sorting for Humans: Natural Sort Order":
-   * http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html
+   * Implementation of <a href="http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html"/>
+   * "Sorting for Humans: Natural Sort Order"</a>
    */
   @Contract(pure = true)
   public static int naturalCompare(@Nullable String string1, @Nullable String string2) {

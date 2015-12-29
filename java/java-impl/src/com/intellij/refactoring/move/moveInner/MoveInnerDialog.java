@@ -20,7 +20,6 @@
  */
 package com.intellij.refactoring.move.moveInner;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -43,7 +42,6 @@ import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
-import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -289,6 +287,13 @@ public class MoveInnerDialog extends MoveDialogBase {
           }
           else if (myTargetContainer instanceof PsiDirectory) {
             message = RefactoringMessageUtil.checkCanCreateClass((PsiDirectory)myTargetContainer, className);
+
+            if (message == null) {
+              final String packageName = myPackageNameField.getText().trim();
+              if (packageName.length() > 0 && !PsiNameHelper.getInstance(myProject).isQualifiedName(packageName)) {
+                message = RefactoringMessageUtil.getIncorrectIdentifierMessage(packageName);
+              }
+            }
           }
         }
       }

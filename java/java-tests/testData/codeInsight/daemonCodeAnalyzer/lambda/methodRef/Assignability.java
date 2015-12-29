@@ -2,7 +2,7 @@ class Test {
   {
       Runnable b = Test :: <error descr="Cannot resolve method 'length'">length</error>;
       Comparable<String> c = Test :: length;
-      Comparable<Integer> c1 =  Test :: <error descr="Cannot resolve method 'length'">length</error>;
+      Comparable<Integer> c1 =  Test :: <error descr="Invalid method reference: Integer cannot be converted to String">length</error>;
   }
 
   public static Integer length(String s) {

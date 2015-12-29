@@ -256,10 +256,10 @@ public class StartupManagerImpl extends StartupManagerEx {
         path = PathUtil.getParentPath(path);
       }
 
-      boolean actual = FileUtil.isFileSystemCaseSensitive(path);
-      LOG.info(path + " case-sensitivity: " + actual);
-      if (actual != SystemInfo.isFileSystemCaseSensitive) {
-        int prefix = SystemInfo.isFileSystemCaseSensitive ? 1 : 0;  // IDE=true -> FS=false -> prefix='in'
+      boolean expected = SystemInfo.isFileSystemCaseSensitive, actual = FileUtil.isFileSystemCaseSensitive(path);
+      LOG.info(path + " case-sensitivity: expected=" + expected + " actual=" + actual);
+      if (actual != expected) {
+        int prefix = expected ? 1 : 0;  // IDE=true -> FS=false -> prefix='in'
         String title = ApplicationBundle.message("fs.case.sensitivity.mismatch.title");
         String text = ApplicationBundle.message("fs.case.sensitivity.mismatch.message", prefix);
         Notifications.Bus.notify(

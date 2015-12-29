@@ -47,4 +47,19 @@ class ConditionalExpressionWithIdenticalBranches {
   int someMethod(String s, String s2) {
     return s.length();
   }
+
+  class Item {
+    Item(String name) {
+    }
+
+    Item(int value) {
+    }
+
+    void v() {
+      int i = 1;
+      Item item = (i == 1 ? new Item("1") : new Item(i)); // warning here
+
+      Item item1 = (i == 1 ? new Item("1") : new Item("2")); // warning here
+    }
+  }
 }

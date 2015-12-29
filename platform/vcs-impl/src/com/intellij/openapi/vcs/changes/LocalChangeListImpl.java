@@ -132,12 +132,14 @@ public class LocalChangeListImpl extends LocalChangeList {
   void addChange(Change change) {
     myReadChangesCache = null;
     myChanges.add(change);
+    LOG.debug("List: " + myName + ". addChange: " + change);
   }
 
   Change removeChange(Change change) {
     for (Change localChange : myChanges) {
       if (localChange.equals(change)) {
         myChanges.remove(localChange);
+        LOG.debug("List: " + myName + ". removeChange: " + change);
         myReadChangesCache = null;
         return localChange;
       }
@@ -156,6 +158,7 @@ public class LocalChangeListImpl extends LocalChangeList {
         || isIgnoredChange(oldBoy, project)) {
         result.add(oldBoy);
         myChanges.remove(oldBoy);
+        LOG.debug("List: " + myName + ". removed change during processing: " + oldBoy);
         myReadChangesCache = null;
       }
     }

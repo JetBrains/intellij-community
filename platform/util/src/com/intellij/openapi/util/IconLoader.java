@@ -60,34 +60,10 @@ public final class IconLoader {
    * This cache contains mapping between icons and disabled icons.
    */
   private static final Map<Icon, Icon> ourIcon2DisabledIcon = new WeakHashMap<Icon, Icon>(200);
-  @NonNls private static final Map<String, String> ourDeprecatedIconsReplacements = new HashMap<String, String>();
+  @NonNls private static final List<IconPathPatcher> ourPatchers = new ArrayList<IconPathPatcher>(2);
 
   static {
-    ourDeprecatedIconsReplacements.put("/general/toolWindowDebugger.png", "AllIcons.Toolwindows.ToolWindowDebugger");
-    ourDeprecatedIconsReplacements.put("/general/toolWindowChanges.png", "AllIcons.Toolwindows.ToolWindowChanges");
-
-    ourDeprecatedIconsReplacements.put("/actions/showSettings.png", "AllIcons.General.ProjectSettings");
-    ourDeprecatedIconsReplacements.put("/general/ideOptions.png", "AllIcons.General.Settings");
-    ourDeprecatedIconsReplacements.put("/general/applicationSettings.png", "AllIcons.General.Settings");
-    ourDeprecatedIconsReplacements.put("/toolbarDecorator/add.png", "AllIcons.General.Add");
-    ourDeprecatedIconsReplacements.put("/vcs/customizeView.png", "AllIcons.General.Settings");
-
-    ourDeprecatedIconsReplacements.put("/vcs/refresh.png", "AllIcons.Actions.Refresh");
-    ourDeprecatedIconsReplacements.put("/actions/sync.png", "AllIcons.Actions.Refresh");
-    ourDeprecatedIconsReplacements.put("/actions/refreshUsages.png", "AllIcons.Actions.Rerun");
-
-    ourDeprecatedIconsReplacements.put("/compiler/error.png", "AllIcons.General.Error");
-    ourDeprecatedIconsReplacements.put("/compiler/hideWarnings.png", "AllIcons.General.HideWarnings");
-    ourDeprecatedIconsReplacements.put("/compiler/information.png", "AllIcons.General.Information");
-    ourDeprecatedIconsReplacements.put("/compiler/warning.png", "AllIcons.General.Warning");
-    ourDeprecatedIconsReplacements.put("/ide/errorSign.png", "AllIcons.General.Error");
-
-    ourDeprecatedIconsReplacements.put("/ant/filter.png", "AllIcons.General.Filter");
-    ourDeprecatedIconsReplacements.put("/inspector/useFilter.png", "AllIcons.General.Filter");
-
-    ourDeprecatedIconsReplacements.put("/actions/showSource.png", "AllIcons.Actions.Preview");
-    ourDeprecatedIconsReplacements.put("/actions/consoleHistory.png", "AllIcons.General.MessageHistory");
-    ourDeprecatedIconsReplacements.put("/vcs/messageHistory.png", "AllIcons.General.MessageHistory");
+    installPathPatcher(new DeprecatedDuplicatesIconPathPatcher());
   }
 
   private static final ImageIcon EMPTY_ICON = new ImageIcon(UIUtil.createImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
@@ -100,6 +76,11 @@ public final class IconLoader {
   private static boolean ourIsActivated = false;
 
   private IconLoader() { }
+
+  public static void installPathPatcher(IconPathPatcher patcher) {
+    ourPatchers.add(patcher);
+    clearCache();
+  }
 
   @Deprecated
   public static Icon getIcon(@NotNull final Image image) {
@@ -204,7 +185,7 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull final Class aClass, boolean computeNow, boolean strict) {
-    path = undeprecate(path);
+    path = patchPath(path);
     if (isReflectivePath(path)) return getReflectiveIcon(path, aClass.getClassLoader());
 
     URL myURL = aClass.getResource(path);
@@ -215,10 +196,14 @@ public final class IconLoader {
     return findIcon(myURL);
   }
 
-  @NotNull
-  private static String undeprecate(@NotNull String path) {
-    String replacement = ourDeprecatedIconsReplacements.get(path);
-    return replacement == null ? path : replacement;
+  private static String patchPath(@NotNull String path) {
+    for (IconPathPatcher patcher : ourPatchers) {
+      String newPath = patcher.patchPath(path);
+      if (newPath != null) {
+        path = newPath;
+      }
+    }
+    return path;
   }
 
   private static boolean isReflectivePath(@NotNull String path) {
@@ -248,7 +233,7 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
-    path = undeprecate(path);
+    path = patchPath(path);
     if (isReflectivePath(path)) return getReflectiveIcon(path, classLoader);
     if (!StringUtil.startsWithChar(path, '/')) return null;
 
