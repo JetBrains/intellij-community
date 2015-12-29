@@ -122,6 +122,7 @@ class CompletionFileLogger(private val installationUID: String,
         
         val builder = logBuilder(Action.TYPED_SELECT)
         
+        //todo remove: for debugging purposes
         if (getItemId(itemName) == null) {
             builder.addPair("ID", "NOT_IN_LIST $itemName")
 
