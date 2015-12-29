@@ -154,20 +154,20 @@ class CompletionFileLogger(private val installationUID: String,
 
     override fun beforeBackspacePressed(completionList: List<LookupStringWithRelevance>) {
         logLastAction(completionList)
-        logLastAction = LOG_NOTHING
     }
 
     override fun afterBackspacePressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>) {
         lastCompletionList = completionList
-        
-        val builder = logBuilder(Action.BACKSPACE)
-        builder.addPair("POS", pos)
-        builder.addPair("COMP_LIST_LEN", completionList.size)
-        val ids = createIdListAddUntrackedItems(completionList)
-        val id = getItemId(itemName)!!
-        builder.addPair("ID", id)
-        builder.addText(ids)
-        log(builder)
+        logLastAction = { items ->
+            val builder = logBuilder(Action.BACKSPACE)
+            builder.addPair("POS", pos)
+            builder.addPair("COMP_LIST_LEN", items.size)
+            val ids = createIdListAddUntrackedItems(items)
+            val id = getItemId(itemName)!!
+            builder.addPair("ID", id)
+            builder.addText(ids)
+            log(builder)
+        }
     }
 
     private fun firstCompletionListText(items: List<LookupStringWithRelevance>): String {
