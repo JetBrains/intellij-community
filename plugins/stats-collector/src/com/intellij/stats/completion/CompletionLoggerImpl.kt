@@ -53,7 +53,7 @@ class CompletionFileLogger(private val installationUID: String,
         logLastAction = { items ->
             val builder = logBuilder(Action.TYPE)
             builder.addPair("COMP_LIST_LEN", items.size)
-            builder.addText(toIdsList(items))
+            builder.addText(createIdListAddUntrackedItems(items))
             log(builder)
         }
     }
@@ -69,8 +69,19 @@ class CompletionFileLogger(private val installationUID: String,
         
         val builder = logBuilder(Action.DOWN)
         builder.addPair("POS", pos)
-        val id = getItemId(itemName)!!
-        builder.addPair("ID", id)
+
+        val id = getItemId(itemName)
+        var idsList = ""
+        if (id == null) {
+            idsList = createIdListAddUntrackedItems(completionList)
+        }
+
+        builder.addPair("ID", getItemId(itemName)!!)
+
+        if (idsList.isNotEmpty()) {
+            builder.addText(idsList)
+        }
+        
         log(builder)
     }
 
@@ -81,8 +92,20 @@ class CompletionFileLogger(private val installationUID: String,
         
         val builder = logBuilder(Action.UP)
         builder.addPair("POS", pos)
-        val id = getItemId(itemName)!!
-        builder.addPair("ID", id)
+
+        val id = getItemId(itemName)
+        var idsList = ""
+        if (id == null) {
+            idsList = createIdListAddUntrackedItems(completionList)
+        }
+
+        builder.addPair("ID", getItemId(itemName)!!)
+
+        if (idsList.isNotEmpty()) {
+            builder.addText(idsList)
+        }
+        
+        builder.addPair("ID", getItemId(itemName)!!)
         log(builder)
     }
 
@@ -140,7 +163,7 @@ class CompletionFileLogger(private val installationUID: String,
         builder.addPair("COMP_LIST_LEN", completionList.size)
         val id = getItemId(itemName)!!
         builder.addPair("ID", id)
-        builder.addText(toIdsList(completionList))
+        builder.addText(createIdListAddUntrackedItems(completionList))
         log(builder)
     }
 
@@ -179,7 +202,7 @@ class CompletionFileLogger(private val installationUID: String,
         return size 
     }
 
-    private fun toIdsList(items: List<LookupStringWithRelevance>): String {
+    private fun createIdListAddUntrackedItems(items: List<LookupStringWithRelevance>): String {
         val idsList = StringBuilder()
         with (idsList) {
             append("[")
