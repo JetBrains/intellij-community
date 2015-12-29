@@ -114,17 +114,22 @@ def patch_args(args):
             return args
 
         i = 1
+        original = sys.original_argv[:]
         while i < len(args):
-            if args[i].startswith('-'):
-                new_args.append(args[i])
+            if args[i] == '-m':
+                original.insert(i, '--module')
             else:
+                if args[i].startswith('-'):
+                    new_args.append(args[i])
+                else:
+                    break
                 break
             i += 1
 
         if i < len(args) and _is_managed_arg(args[i]):  # no need to add pydevd twice
             return args
 
-        for x in sys.original_argv:  # @UndefinedVariable
+        for x in original:  # @UndefinedVariable
             if sys.platform == "win32" and not x.endswith('"'):
                 arg = '"%s"' % x
             else:
