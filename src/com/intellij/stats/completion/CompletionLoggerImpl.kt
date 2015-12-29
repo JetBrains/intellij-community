@@ -124,8 +124,9 @@ class CompletionFileLogger(private val installationUID: String,
         
         //todo remove: for debugging purposes
         if (getItemId(itemName) == null) {
-            builder.addPair("ID", "NOT_IN_LIST $itemName")
-
+            builder.addPair("ID", "-777")
+            builder.addPair("ITEM", itemName)
+            
             val allValues = itemsToId.map {
                 "${it.key}=${it.value}"
             }.joinToString(",", "[", "]")
