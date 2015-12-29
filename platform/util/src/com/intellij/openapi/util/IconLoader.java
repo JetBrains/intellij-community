@@ -319,7 +319,7 @@ public final class IconLoader {
     return new RetrievableIcon() {
       @Nullable
       @Override
-      public Icon retrieve() {
+      public Icon retrieveIcon() {
         return icon;
       }
 

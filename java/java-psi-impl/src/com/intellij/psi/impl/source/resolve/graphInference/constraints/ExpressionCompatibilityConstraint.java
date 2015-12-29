@@ -56,8 +56,14 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         return false;
       }
       
-      if (exprType instanceof PsiClassType && ((PsiClassType)exprType).resolve() == null) {
-        return true;
+      if (exprType instanceof PsiClassType) {
+        if (((PsiClassType)exprType).resolve() == null) {
+          return true;
+        }
+
+        if (((PsiClassType)exprType).isRaw()) {
+          session.setErased();
+        }
       }
 
       if (exprType != null && exprType != PsiType.NULL) {
@@ -94,6 +100,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       if (callSession != session) {
         session.getInferenceSessionContainer().registerNestedSession(callSession);
         session.propagateVariables(callSession.getInferenceVariables());
+        if (callSession.isErased()) {
+          session.setErased();
+        }
       }
       return true;
     }

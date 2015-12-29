@@ -419,6 +419,24 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n");
   }
 
+  // PY-16267
+  public void testGenericField() {
+    doTest("str",
+           "from typing import TypeVar, Generic\n" +
+           "\n"                                    +
+           "T = TypeVar('T', covariant=True)\n"    +
+           "\n"                                    +
+           "class C(Generic[T]):\n"                +
+           "    def __init__(self, foo: T):\n"     +
+           "        self.foo = foo\n"              +
+           "\n"                                    +
+           "def f() -> C[str]:\n"                  +
+           "    return C('test')\n"                +
+           "\n"                                    +
+           "x = f()\n"                             +
+           "expr = x.foo\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

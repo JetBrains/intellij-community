@@ -60,6 +60,10 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
 
   protected abstract JTree getTree();
 
+  protected void doPopupOKAction() {
+    doOKAction();
+  }
+
   public void doOKAction() {
     hide();
   }
@@ -281,7 +285,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     for (Component comp = componentAtPoint; comp != null; comp = comp.getParent()) {
       if (comp instanceof ComboPopup) {
         if (id != MouseEvent.MOUSE_WHEEL) {
-          doOKAction();
+          doPopupOKAction();
         }
         return;
       }

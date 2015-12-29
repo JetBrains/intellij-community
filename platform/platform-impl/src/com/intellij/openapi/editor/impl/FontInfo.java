@@ -15,14 +15,19 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.Patches;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -31,15 +36,15 @@ import java.awt.font.TextAttribute;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FilenameFilter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Locale;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author max
  */
 public class FontInfo {
+  private static final Logger LOG = Logger.getInstance(FontInfo.class);
+  
   private static final boolean USE_ALTERNATIVE_CAN_DISPLAY_PROCEDURE = SystemInfo.isAppleJvm && Registry.is("ide.mac.fix.font.fallback");
   private static final FontRenderContext DUMMY_CONTEXT = new FontRenderContext(null, false, false);
   private static final boolean ENABLE_OPTIONAL_LIGATURES = Registry.is("editor.enable.optional.ligatures");
@@ -55,50 +60,87 @@ public class FontInfo {
   private boolean myCheckedForProblemGlyphs;
 
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style) {
+    this(familyName, size, style, style);    
+  }
+  
+  FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style, @JdkConstants.FontStyle int realStyle) {
     mySize = size;
     myStyle = style;
     Font font = new Font(familyName, style, size);
-    myFont = ENABLE_OPTIONAL_LIGATURES ? getFontWithLigaturesEnabled(font) : font;
+    myFont = ENABLE_OPTIONAL_LIGATURES ? getFontWithLigaturesEnabled(font, realStyle) : font;
   }
 
   @NotNull
-  private static Font getFontWithLigaturesEnabled(Font font) {
-    if (SystemInfo.isMac) {
+  private static Font getFontWithLigaturesEnabled(Font font, @JdkConstants.FontStyle int fontStyle) {
+    if (Patches.JDK_BUG_ID_7162125) {
       // Ligatures don't work on Mac for fonts loaded natively, so we need to locate and load font manually
-      File fontFile = findFileForFont(font, true);
-      if (fontFile == null && font.getStyle() != Font.PLAIN) fontFile = findFileForFont(font.deriveFont(Font.PLAIN), true);
-      if (fontFile == null) fontFile = findFileForFont(font, false);
-      if (fontFile == null) return font;
+      String familyName = font.getFamily();
+      File fontFile = findFileForFont(familyName, fontStyle);
+      if (fontFile == null) {
+        LOG.info(font + "(style=" + fontStyle + ") not located");
+        return font;
+      }
+      LOG.info(font + "(style=" + fontStyle + ") located at " + fontFile);
       try {
-        font = Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(font.getStyle(), font.getSize());
+        font = Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(fontStyle, font.getSize());
       }
       catch (Exception e) {
+        LOG.warn("Couldn't load font", e);
         return font;
       }
     }
     return font.deriveFont(Collections.singletonMap(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON));
   }
 
-  private static File findFileForFont(Font font, final boolean matchStyle) {
-    final String normalizedFamilyName = font.getFamily().toLowerCase(Locale.getDefault()).replace(" ", "");
-    final int fontStyle = font.getStyle();
-    File[] files = new File(System.getProperty("user.home"), "Library/Fonts").listFiles(new FilenameFilter() {
+  private static final Comparator<File> BY_NAME = new Comparator<File>() {
+    @Override
+    public int compare(File file1, File file2) {
+      return file1.getName().compareTo(file2.getName());
+    }
+  };
+
+  @Nullable
+  private static File findFileForFont(@NotNull String familyName, int style) {
+    File fontFile = doFindFileForFont(familyName, style);
+    if (fontFile == null && style != Font.PLAIN) fontFile = doFindFileForFont(familyName, Font.PLAIN);
+    if (fontFile == null) fontFile = doFindFileForFont(familyName, -1);
+    return fontFile;
+  }
+
+  @Nullable
+  private static File doFindFileForFont(@NotNull String familyName, final int style) {
+    final String normalizedFamilyName = familyName.toLowerCase(Locale.getDefault()).replace(" ", "");
+    FilenameFilter filter = new FilenameFilter() {
       @Override
       public boolean accept(File file, String name) {
         String normalizedName = name.toLowerCase(Locale.getDefault());
         return normalizedName.startsWith(normalizedFamilyName) &&
                (normalizedName.endsWith(".otf") || normalizedName.endsWith(".ttf")) &&
-               (!matchStyle || fontStyle == ComplementaryFontsRegistry.getFontStyle(name));
+               (style == -1 || style == ComplementaryFontsRegistry.getFontStyle(name));
       }
-    });
-    if (files == null || files.length == 0) return null;
-    // to make sure results are predictable we return first file in alphabetical order
-    return Collections.min(Arrays.asList(files), new Comparator<File>() {
-      @Override
-      public int compare(File file1, File file2) {
-        return file1.getName().compareTo(file2.getName());
-      }
-    });
+    };
+    List<File> files = new ArrayList<File>();
+    
+    File[] userFiles = new File(System.getProperty("user.home"), "Library/Fonts").listFiles(filter);
+    if (userFiles != null) files.addAll(Arrays.asList(userFiles));
+    
+    File[] localFiles = new File("/Library/Fonts").listFiles(filter);
+    if (localFiles != null) files.addAll(Arrays.asList(localFiles));
+    
+    if (files.isEmpty()) return null;
+    
+    if (style == Font.PLAIN) {
+      // prefer font containing 'regular' in its name
+      List<File> regulars = ContainerUtil.filter(files, new Condition<File>() {
+        @Override
+        public boolean value(File file) {
+          return file.getName().toLowerCase(Locale.getDefault()).contains("regular");
+        }
+      });
+      if (!regulars.isEmpty()) return Collections.min(regulars, BY_NAME);
+    }
+    
+    return Collections.min(files, BY_NAME);
   }
 
   private void parseProblemGlyphs() {

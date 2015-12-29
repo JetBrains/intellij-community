@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -163,6 +164,7 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
       return true;
     }
     else {
+      final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
       if (files != null) {
         Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -171,7 +173,16 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
           for (VirtualFile file : files) {
             final PsiFile psiFile = psiManager.findFile(file);
             if (psiFile instanceof PsiClassOwner) {
-              collectTestMembers(((PsiClassOwner)psiFile).getClasses(), checkAbstract, checkIsTest, processor);
+              PsiClass[] psiClasses = ((PsiClassOwner)psiFile).getClasses();
+              if (element != null && psiClasses.length > 0) {
+                for (PsiClass aClass : psiClasses) {
+                  if (PsiTreeUtil.isAncestor(aClass, element, false)) {
+                    psiClasses = new PsiClass[] {aClass};
+                    break;
+                  }
+                }
+              }
+              collectTestMembers(psiClasses, checkAbstract, checkIsTest, processor);
               for (PsiElement psiMember : processor.getCollection()) {
                 classes.add(((PsiClass)psiMember).getQualifiedName());
               }

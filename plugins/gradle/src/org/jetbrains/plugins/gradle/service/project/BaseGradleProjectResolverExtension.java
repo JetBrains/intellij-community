@@ -440,15 +440,17 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final String moduleConfigPath = ideModule.getData().getLinkedExternalProjectPath();
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
-
+    final String rootProjectPath = ideProject.getData().getLinkedExternalProjectPath();
+    final boolean isFlatProject = !FileUtil.isAncestor(rootProjectPath, moduleConfigPath, false);
     if (externalProject != null) {
       for (ExternalTask task : externalProject.getTasks().values()) {
-        String taskName = task.getName();
+        String taskName = isFlatProject ? task.getQName() : task.getName();
         String taskGroup = task.getGroup();
         if (taskName.trim().isEmpty() || isIdeaTask(taskName, taskGroup)) {
           continue;
         }
-        TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, taskName, moduleConfigPath, task.getDescription());
+        final String taskPath = isFlatProject ? rootProjectPath : moduleConfigPath;
+        TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, taskName, taskPath, task.getDescription());
         taskData.setGroup(taskGroup);
         taskData.setType(task.getType());
         ideModule.createChild(ProjectKeys.TASK, taskData);

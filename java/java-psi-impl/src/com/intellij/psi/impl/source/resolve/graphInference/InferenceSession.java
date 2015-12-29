@@ -156,6 +156,11 @@ public class InferenceSession {
     }
     if (parameters.length > 0) {
       for (int i = 0; i < args.length; i++) {
+        //don't infer anything if number of parameters differ and method is not vararg
+        if (!varargs && i >= parameters.length) {
+          continue;
+        }
+
         if (args[i] != null && isPertinentToApplicability(args[i], method)) {
           PsiType parameterType = getParameterType(parameters, i, mySiteSubstitutor, varargs);
           addConstraint(new ExpressionCompatibilityConstraint(args[i], substituteWithInferenceVariables(parameterType)));
@@ -406,9 +411,8 @@ public class InferenceSession {
             }
           }
         }
-        final InferenceSession nestedCallSession = myInferenceSessionContainer.findNestedCallSession(arg, this);
-        final PsiType parameterType =
-          nestedCallSession.substituteWithInferenceVariables(getParameterType(parameters, i, siteSubstitutor, varargs));
+        final PsiSubstitutor nestedSubstitutor = myInferenceSessionContainer.findNestedSubstitutor(arg, myInferenceSubstitution);
+        final PsiType parameterType = nestedSubstitutor.substitute(getParameterType(parameters, i, siteSubstitutor, varargs));
         if (!isPertinentToApplicability(arg, parentMethod)) {
           additionalConstraints.add(new ExpressionCompatibilityConstraint(arg, parameterType));
         }
@@ -584,13 +588,14 @@ public class InferenceSession {
     return mySiteSubstitutor;
   }
 
-  public InitialInferenceState createInitialState() {
-    return new InitialInferenceState(myInferenceVariables, 
+  public InitialInferenceState createInitialState(InferenceSessionContainer container, PsiSubstitutor topInferenceSubstitutor) {
+    return new InitialInferenceState(myInferenceVariables,
+                                     topInferenceSubstitutor,
                                      myContext, 
                                      myInferenceSubstitution, 
                                      mySiteSubstitutor, 
                                      myIncorporationPhase.getCaptures(),
-                                     myInferenceSessionContainer);
+                                     container);
   }
 
   public void initBounds(PsiTypeParameter... typeParameters) {
@@ -669,7 +674,7 @@ public class InferenceSession {
           }
           substitutedCapture = elementFactory.createType(psiClass, newParameters);
 
-          myIncorporationPhase.addCapture(copy, substitutedCapture);
+          myIncorporationPhase.addCapture(copy, (PsiClassType)returnType);
           addConstraint(new TypeCompatibilityConstraint(targetType, substitutedCapture));
         }
       } else {
@@ -848,6 +853,17 @@ public class InferenceSession {
 
   public boolean collectDependencies(@Nullable PsiType type,
                                      @Nullable final Set<InferenceVariable> dependencies) {
+    return collectDependencies(type, dependencies, new Function<PsiClassType, InferenceVariable>() {
+      @Override
+      public InferenceVariable fun(PsiClassType classType) {
+        return getInferenceVariable(classType);
+      }
+    });
+  }
+
+  public static boolean collectDependencies(@Nullable PsiType type,
+                                            @Nullable final Set<InferenceVariable> dependencies,
+                                            final Function<PsiClassType, InferenceVariable> fun) {
     if (type == null) return true;
     final Boolean isProper = type.accept(new PsiTypeVisitor<Boolean>() {
       @Nullable
@@ -879,7 +895,7 @@ public class InferenceSession {
       @Nullable
       @Override
       public Boolean visitClassType(PsiClassType classType) {
-        final InferenceVariable inferenceVariable = getInferenceVariable(classType);
+        final InferenceVariable inferenceVariable = fun.fun(classType);
         if (inferenceVariable != null) {
           if (dependencies != null) {
             dependencies.add(inferenceVariable);
@@ -1727,6 +1743,10 @@ public class InferenceSession {
     return myInferenceSubstitution.substitute(type);
   }
 
+  public PsiSubstitutor getInferenceSubstitution() {
+    return myInferenceSubstitution;
+  }
+
   public InferenceSessionContainer getInferenceSessionContainer() {
     return myInferenceSessionContainer;
   }
@@ -1789,5 +1809,9 @@ public class InferenceSession {
 
   public List<String> getIncompatibleErrorMessages() {
     return myErrorMessages;
+  }
+
+  public boolean isErased() {
+    return myErased;
   }
 }

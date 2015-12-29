@@ -247,6 +247,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                   }
                 });
               DebuggerUIUtil.registerExtraHandleShortcuts(popup, IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT);
+              popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT));
+
               popup.addListSelectionListener(selectionListener);
               popup.show(relativePoint);
               result.setResult(res);
@@ -509,6 +511,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     PsiFile file = document == null ? null : PsiManager.getInstance(project).findFile(virtualFile);
     if (file == null) {
       return null;
+    }
+
+    if (file instanceof PsiCompiledFile) {
+      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
     }
 
     if (offset < 0) {

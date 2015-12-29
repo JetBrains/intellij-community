@@ -144,13 +144,6 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
   @Override
   public XExpression getExpression() {
-    ComboPopup popup = myComboBox.getPopup();
-    if (popup != null && popup.isVisible()) {
-      Object value = popup.getList().getSelectedValue();
-      if (value != null) {
-        return (XExpression)value;
-      }
-    }
     Object document = myEditor.getItem();
     if (document instanceof Document) { // sometimes null on Mac
       return getEditorsProvider().createExpression(getProject(), (Document)document, myExpression.getLanguage(), EvaluationMode.EXPRESSION);

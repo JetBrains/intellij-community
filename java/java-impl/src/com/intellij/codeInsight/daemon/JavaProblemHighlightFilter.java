@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -36,8 +37,11 @@ public class JavaProblemHighlightFilter extends ProblemHighlightFilter {
     if (shouldHighlight) {
       if (psiFile.getFileType() == JavaFileType.INSTANCE) {
         final VirtualFile virtualFile = psiFile.getVirtualFile();
-        if (virtualFile != null && ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex().isInLibrarySource(virtualFile)) {
-          return false;
+        if (virtualFile != null) {
+          final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
+          if (fileIndex.isInLibrarySource(virtualFile)) {
+            return fileIndex.isInSourceContent(virtualFile);
+          }
         }
       }
     }

@@ -230,7 +230,7 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
         }
 
         return myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS ||
-               memberClass == aClass && memberClass.getContainingClass() == null ? PsiUtil.ACCESS_LEVEL_PRIVATE : suggestPackageLocal(member);
+               !isInnerClass(memberClass) ? PsiUtil.ACCESS_LEVEL_PRIVATE : suggestPackageLocal(member);
       }
       //if (file == memberFile) {
       //  return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
@@ -251,6 +251,10 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       }
       return PsiUtil.ACCESS_LEVEL_PUBLIC;
     }
+  }
+
+  private static boolean isInnerClass(@NotNull PsiClass memberClass) {
+    return memberClass.getContainingClass() != null || memberClass instanceof PsiAnonymousClass;
   }
 
   private static boolean isInReferenceList(@Nullable PsiElement list, @NotNull final PsiMember member) {
