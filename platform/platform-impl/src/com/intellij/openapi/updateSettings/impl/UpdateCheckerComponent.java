@@ -82,7 +82,7 @@ public class UpdateCheckerComponent implements ApplicationComponent {
       notify(app, UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.INFORMATION, null));
     }
 
-    if (!eap && current == ChannelStatus.EAP && Boolean.getBoolean(ConfigImportHelper.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY)) {
+    if (!eap && current == ChannelStatus.EAP && ConfigImportHelper.isConfigImported()) {
       mySettings.setSelectedChannelStatus(ChannelStatus.RELEASE);
       LOG.info("channel set to 'release'");
     }
