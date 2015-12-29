@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,15 +44,17 @@ public class ProgressManagerQueue extends AbstractTaskQueue<Runnable> {
   protected void runMe() {
     if (!myIsStarted) return;
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      if (myQueuePollTask.myProject.isDisposed() || isEmpty()) return;
-      myProgressManager.run(myQueuePollTask);
+      if (!myQueuePollTask.myProject.isDisposed()) {
+        myProgressManager.run(myQueuePollTask);
+      }
     }
     else {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (myQueuePollTask.myProject.isDisposed() || isEmpty()) return;
-          myProgressManager.run(myQueuePollTask);
+          if (!myQueuePollTask.myProject.isDisposed()) {
+            myProgressManager.run(myQueuePollTask);
+          }
         }
       });
     }

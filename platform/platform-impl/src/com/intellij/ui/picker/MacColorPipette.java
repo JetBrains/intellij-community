@@ -46,7 +46,7 @@ public class MacColorPipette extends ColorPipetteBase {
   private static final int SIZE = PIXELS * ZOOM;
   private static final int DIALOG_SIZE = SIZE + 20;
 
-  @SuppressWarnings("UseJBColor") private final Color myTransparentColor = new Color(0, true);
+  @SuppressWarnings("UseJBColor") private final Color myTransparentColor = new Color(0, 0, 0, 1);
 
   public MacColorPipette(@NotNull ColorPicker picker, @NotNull ColorListener listener) {
     super(picker, listener);
@@ -97,7 +97,10 @@ public class MacColorPipette extends ColorPipetteBase {
             int left = PIXELS / 2 + 1;
             Rectangle captureRectangle = new Rectangle(mouseLoc.x - left, mouseLoc.y - left, PIXELS, PIXELS);
             BufferedImage captureScreen = captureScreen(pickerDialog, captureRectangle);
-            if (captureScreen == null) return;
+            if (captureScreen == null || captureScreen.getWidth() < PIXELS || captureRectangle.getHeight() < PIXELS) {
+              cancelPipette();
+              return;
+            }
 
             //noinspection UseJBColor
             Color newColor = new Color(captureScreen.getRGB(captureRectangle.width / 2, captureRectangle.height / 2));

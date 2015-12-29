@@ -59,6 +59,10 @@ public class ExtractSuperClassTest extends RefactoringTestCase {
     doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("m", PsiMethod.class));
   }
 
+  public void testMultipleTypeParameters() throws Exception {
+    doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("m", PsiMethod.class));
+  }
+
 
   public void testEmptyForeach() throws Exception {
     doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("m", PsiMethod.class));

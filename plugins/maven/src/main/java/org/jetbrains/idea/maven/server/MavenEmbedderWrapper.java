@@ -16,6 +16,8 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
@@ -105,15 +107,28 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
                                    myCustomization.alwaysUpdateSnapshot);
   }
 
-  @NotNull
   public MavenServerExecutionResult resolveProject(@NotNull final VirtualFile file,
+                                                               @NotNull final Collection<String> activeProfiles,
+                                                               @NotNull final Collection<String> inactiveProfiles)
+    throws MavenProcessCanceledException {
+    return resolveProject(Collections.singleton(file), activeProfiles, inactiveProfiles).iterator().next();
+  }
+
+  @NotNull
+  public Collection<MavenServerExecutionResult> resolveProject(@NotNull final Collection<VirtualFile> files,
                                                    @NotNull final Collection<String> activeProfiles,
                                                    @NotNull final Collection<String> inactiveProfiles)
     throws MavenProcessCanceledException {
-    return perform(new RetriableCancelable<MavenServerExecutionResult>() {
+    return perform(new RetriableCancelable<Collection<MavenServerExecutionResult>>() {
       @Override
-      public MavenServerExecutionResult execute() throws RemoteException, MavenServerProcessCanceledException {
-        return getOrCreateWrappee().resolveProject(new File(file.getPath()), activeProfiles, inactiveProfiles);
+      public Collection<MavenServerExecutionResult> execute() throws RemoteException, MavenServerProcessCanceledException {
+        final List<File> ioFiles = ContainerUtil.map(files, new Function<VirtualFile, File>() {
+          @Override
+          public File fun(VirtualFile file) {
+            return new File(file.getPath());
+          }
+        });
+        return getOrCreateWrappee().resolveProject(ioFiles, activeProfiles, inactiveProfiles);
       }
     });
   }

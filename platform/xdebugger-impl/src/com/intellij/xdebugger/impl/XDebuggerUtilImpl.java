@@ -247,6 +247,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                   }
                 });
               DebuggerUIUtil.registerExtraHandleShortcuts(popup, IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT);
+              popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT));
+
               popup.addListSelectionListener(selectionListener);
               popup.show(relativePoint);
               result.setResult(res);

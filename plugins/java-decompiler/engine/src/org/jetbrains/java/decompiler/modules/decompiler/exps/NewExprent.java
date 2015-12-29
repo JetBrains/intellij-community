@@ -159,7 +159,32 @@ public class NewExprent extends Exprent {
     if (anonymous) {
       ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value);
 
-      buf.append("(");
+      if (!enumConst) {
+        String enclosing = null;
+
+        if (!lambda && constructor != null) {
+          enclosing = getQualifiedNewInstance(child.anonymousClassType.value, constructor.getLstParameters(), indent, tracer);
+          if (enclosing != null) {
+            buf.append(enclosing).append('.');
+          }
+        }
+
+        buf.append("new ");
+
+        String typename = ExprProcessor.getCastTypeName(child.anonymousClassType);
+        if (enclosing != null) {
+          ClassNode anonymousNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(child.anonymousClassType.value);
+          if (anonymousNode != null) {
+            typename = anonymousNode.simpleName;
+          }
+          else {
+            typename = typename.substring(typename.lastIndexOf('.') + 1);
+          }
+        }
+        buf.append(typename);
+      }
+
+      buf.append('(');
 
       if (!lambda && constructor != null) {
         InvocationExprent invSuper = child.superInvocation;
@@ -207,32 +232,7 @@ public class NewExprent extends Exprent {
         }
       }
 
-      if (!enumConst) {
-        String enclosing = null;
-        if (!lambda && constructor != null) {
-          enclosing = getQualifiedNewInstance(child.anonymousClassType.value, constructor.getLstParameters(), indent, tracer);
-        }
-
-        String typename = ExprProcessor.getCastTypeName(child.anonymousClassType);
-
-        if (enclosing != null) {
-          ClassNode anonymousNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(child.anonymousClassType.value);
-          if (anonymousNode != null) {
-            typename = anonymousNode.simpleName;
-          }
-          else {
-            typename = typename.substring(typename.lastIndexOf('.') + 1);
-          }
-        }
-
-        buf.prepend("new " + typename);
-
-        if (enclosing != null) {
-          buf.prepend(enclosing + ".");
-        }
-      }
-
-      buf.append(")");
+      buf.append(')');
 
       if (enumConst && buf.length() == 2) {
         buf.setLength(0);
@@ -257,16 +257,41 @@ public class NewExprent extends Exprent {
     }
     else if (directArrayInit) {
       VarType leftType = newType.decreaseArrayDim();
-      buf.append("{");
+      buf.append('{');
       for (int i = 0; i < lstArrayElements.size(); i++) {
         if (i > 0) {
           buf.append(", ");
         }
         ExprProcessor.getCastedExprent(lstArrayElements.get(i), leftType, buf, indent, false, tracer);
       }
-      buf.append("}");
+      buf.append('}');
     }
     else if (newType.arrayDim == 0) {
+      if (!enumConst) {
+        String enclosing = null;
+
+        if (constructor != null) {
+          enclosing = getQualifiedNewInstance(newType.value, constructor.getLstParameters(), indent, tracer);
+          if (enclosing != null) {
+            buf.append(enclosing).append('.');
+          }
+        }
+
+        buf.append("new ");
+
+        String typename = ExprProcessor.getTypeName(newType);
+        if (enclosing != null) {
+          ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value);
+          if (newNode != null) {
+            typename = newNode.simpleName;
+          }
+          else {
+            typename = typename.substring(typename.lastIndexOf('.') + 1);
+          }
+        }
+        buf.append(typename);
+      }
+
       if (constructor != null) {
         List<Exprent> lstParameters = constructor.getLstParameters();
 
@@ -286,7 +311,7 @@ public class NewExprent extends Exprent {
 
         int start = enumConst ? 2 : 0;
         if (!enumConst || start < lstParameters.size()) {
-          buf.append("(");
+          buf.append('(');
 
           boolean firstParam = true;
           for (int i = start; i < lstParameters.size(); i++) {
@@ -311,31 +336,7 @@ public class NewExprent extends Exprent {
             }
           }
 
-          buf.append(")");
-        }
-      }
-
-      if (!enumConst) {
-        String enclosing = null;
-        if (constructor != null) {
-          enclosing = getQualifiedNewInstance(newType.value, constructor.getLstParameters(), indent, tracer);
-        }
-
-        String typename = ExprProcessor.getTypeName(newType);
-
-        if (enclosing != null) {
-          ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value);
-          if (newNode != null) {
-            typename = newNode.simpleName;
-          }
-          else {
-            typename = typename.substring(typename.lastIndexOf('.') + 1);
-          }
-        }
-        buf.prepend("new " + typename);
-
-        if (enclosing != null) {
-          buf.prepend(enclosing + ".");
+          buf.append(')');
         }
       }
     }
@@ -344,11 +345,11 @@ public class NewExprent extends Exprent {
 
       if (lstArrayElements.isEmpty()) {
         for (int i = 0; i < newType.arrayDim; i++) {
-          buf.append("[");
+          buf.append('[');
           if (i < lstDims.size()) {
             buf.append(lstDims.get(i).toJava(indent, tracer));
           }
-          buf.append("]");
+          buf.append(']');
         }
       }
       else {
@@ -357,14 +358,14 @@ public class NewExprent extends Exprent {
         }
 
         VarType leftType = newType.decreaseArrayDim();
-        buf.append("{");
+        buf.append('{');
         for (int i = 0; i < lstArrayElements.size(); i++) {
           if (i > 0) {
             buf.append(", ");
           }
           ExprProcessor.getCastedExprent(lstArrayElements.get(i), leftType, buf, indent, false, tracer);
         }
-        buf.append("}");
+        buf.append('}');
       }
     }
 

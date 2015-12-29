@@ -349,7 +349,7 @@ public class Main {
           scrollPane.setPreferredSize(new Dimension(Math.min(maxWidth, component.width), Math.min(maxHeight, component.height)));
         }
 
-        int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE;
+        int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.WARNING_MESSAGE;
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
       }
       catch (Throwable t) {
