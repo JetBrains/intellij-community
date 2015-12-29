@@ -18,7 +18,6 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -35,6 +34,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
@@ -425,5 +425,9 @@ public class DebuggerUIUtil {
       }
     }
     return XDebuggerBundle.message("ad.extra.selection.shortcut", res.toString());
+  }
+
+  public static boolean isObsolete(Object object) {
+    return object instanceof Obsolescent && ((Obsolescent)object).isObsolete();
   }
 }

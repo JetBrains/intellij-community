@@ -141,6 +141,9 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
       @Override
       public void contextAction() throws Exception {
+        if (node.isObsolete()) {
+          return;
+        }
         if (!myContextSet) {
           myValueDescriptor.setContext(myEvaluationContext);
         }
