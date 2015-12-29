@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class VcsLogUtil {
-  public static final int COMMITS_LIMIT = 100;
+  public static final int MAX_SELECTED_COMMITS = 1000;
 
   @NotNull
   public static MultiMap<VirtualFile, VcsRef> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
@@ -181,7 +181,7 @@ public class VcsLogUtil {
       }
       else {
         result.add(next);
-        if (result.size() >= COMMITS_LIMIT) break;
+        if (result.size() >= VcsLogUtil.MAX_SELECTED_COMMITS) break;
       }
     }
 

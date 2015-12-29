@@ -33,6 +33,7 @@ import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
@@ -53,7 +54,6 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
-  public static final int MAX_SELECTED_COMMITS = 1000;
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final VcsLogUiImpl myUI;
   @NotNull private final Project myProject;
@@ -308,7 +308,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     }
     else if (VcsDataKeys.CHANGE_LISTS == key) {
       List<VcsFullCommitDetails> details = myUI.getVcsLog().getSelectedDetails();
-      if (details.size() > MAX_SELECTED_COMMITS) return;
+      if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return;
       sink.put(key, ContainerUtil
         .map2Array(details, CommittedChangeListForRevision.class, new Function<VcsFullCommitDetails, CommittedChangeListForRevision>() {
           @Override
@@ -321,7 +321,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS == key) {
       List<CommitId> hashes = myUI.getVcsLog().getSelectedCommits();
-      if (hashes.size() > MAX_SELECTED_COMMITS) return;
+      if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return;
       sink.put(key, ArrayUtil.toObjectArray(ContainerUtil.map(hashes, new Function<CommitId, VcsRevisionNumber>() {
         @Override
         public VcsRevisionNumber fun(CommitId commitId) {
@@ -338,7 +338,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         }
         return;
       }
-      if (commits.size() > MAX_SELECTED_COMMITS) return;
+      if (commits.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return;
 
       Set<VirtualFile> roots = ContainerUtil.map2Set(commits, new Function<CommitId, VirtualFile>() {
         @Override

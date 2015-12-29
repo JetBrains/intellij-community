@@ -102,7 +102,7 @@ public class VcsCherryPickAction extends DumbAwareAction {
       return;
     }
 
-    List<CommitId> details = VcsLogUtil.collectFirstPack(log.getSelectedCommits(), VcsLogUtil.COMMITS_LIMIT);
+    List<CommitId> details = VcsLogUtil.collectFirstPack(log.getSelectedCommits(), VcsLogUtil.MAX_SELECTED_COMMITS);
     final Map<VirtualFile, List<Hash>> groupedByRoot = groupByRoot(details);
     VcsCherryPicker enabledCherryPicker = ContainerUtil.find(cherryPickers, new Condition<VcsCherryPicker>() {
       @Override
