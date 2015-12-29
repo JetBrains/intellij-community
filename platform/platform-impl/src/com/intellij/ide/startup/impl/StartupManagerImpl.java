@@ -36,7 +36,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -208,11 +207,6 @@ public class StartupManagerImpl extends StartupManagerEx {
         }
       }
     });
-
-    // otherwise will be stored - we must not create config files in tests
-    if (!app.isUnitTestMode()) {
-      Registry.get("ide.firstStartup").setValue(false);
-    }
   }
 
   public void scheduleInitialVfsRefresh() {
