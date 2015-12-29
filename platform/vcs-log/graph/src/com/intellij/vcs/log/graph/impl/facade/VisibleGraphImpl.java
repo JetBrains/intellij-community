@@ -115,6 +115,14 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     myPrintElementGenerator = new PrintElementGeneratorImpl(myGraphController.getCompiledGraph(), myPrintElementManager, myShowLongEdges);
   }
 
+  @NotNull
+  public SimpleGraphInfo<CommitId> buildSimpleGraphInfo() {
+    return SimpleGraphInfo
+      .build(myGraphController.getCompiledGraph(), myPermanentGraph.getPermanentGraphLayout(), myPermanentGraph.getPermanentCommitsInfo(),
+             myPermanentGraph.getLinearGraph().nodesCount(),
+             myPermanentGraph.getBranchNodeIds());
+  }
+
   private class ActionControllerImpl implements ActionController<CommitId> {
 
     @Nullable
