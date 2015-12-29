@@ -10,6 +10,7 @@
 
   <change-notes><![CDATA[
       Fixed couple NPE's
+      Sending data every 30 minutes
     ]]>
   </change-notes>
 
