@@ -93,6 +93,11 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   }
 
   @Override
+  public void invalidate() {
+    myTaskController.request(new InvalidateRequest());
+  }
+
+  @Override
   public void onFiltersChange(@NotNull VcsLogFilterCollection newFilters) {
     myTaskController.request(new FilterRequest(newFilters));
   }
@@ -149,9 +154,12 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
     @Nullable
     private VisiblePack getVisiblePack(@Nullable VisiblePack visiblePack, @NotNull List<Request> requests) {
+      InvalidateRequest invalidateRequest = ContainerUtil.findLastInstance(requests, InvalidateRequest.class);
+
       FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
       SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
       List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
+
       myRequestsToRun.addAll(moreCommitsRequests);
 
       DataPack dataPack = myDataManager.getDataPack();
@@ -186,6 +194,9 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   }
 
   private static final class RefreshRequest implements Request {
+  }
+
+  private static final class InvalidateRequest implements Request {
   }
 
   private static final class FilterRequest implements Request {

@@ -30,6 +30,8 @@ public interface VcsLogFilterer {
 
   void onRefresh();
 
+  void invalidate();
+
   void onFiltersChange(@NotNull VcsLogFilterCollection filters);
 
   void onSortTypeChange(@NotNull PermanentGraph.SortType sortType);

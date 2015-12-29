@@ -16,7 +16,9 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,6 +48,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
+  private static final Logger LOG = Logger.getInstance(VcsLogTabsRefresher.class);
   private static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
 
   @NotNull private final VcsLogDataManager myDataManager;
@@ -71,20 +74,28 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
       @Override
       public void consume(DataPack dataPack) {
         for (Map.Entry<String, VcsLogFilterer> tabAndFilterer : myTabToFiltererMap.entrySet()) {
-          if (isOneOfTabsVisible(Collections.singleton(tabAndFilterer.getKey()))) {
-            refresh(tabAndFilterer.getValue());
-          }
+          boolean visible = isOneOfTabsVisible(Collections.singleton(tabAndFilterer.getKey()));
+          refreshFilterer(tabAndFilterer.getValue(), visible);
         }
       }
     });
   }
 
-  private void refresh(@NotNull VcsLogFilterer filterer) {
+  private void refresh(@NotNull VcsLogFilterer filterer, boolean visible) {
     if (!isUpToDate()) {
       refreshPostponedRoots();
     }
     else {
-      filterer.onRefresh(); // todo sometimes no need to refresh here
+      refreshFilterer(filterer, visible);
+    }
+  }
+
+  private void refreshFilterer(@NotNull VcsLogFilterer filterer, boolean visible) {
+    if (visible) {
+      filterer.onRefresh();
+    }
+    else {
+      filterer.invalidate();
     }
   }
 
@@ -132,7 +143,7 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
 
   public void addTabToWatch(@NotNull String contentTabName, @NotNull VcsLogFilterer filterer) {
     myTabToFiltererMap.put(contentTabName, filterer);
-    refresh(filterer);
+    refresh(filterer, true);
   }
 
   public void removeTabFromWatch(@NotNull String contentTabName) {
@@ -151,16 +162,22 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
     private void selectionChanged() {
       String tabName = getSelectedTabName();
       if (tabName != null) {
-        VcsLogFilterer filterer = myTabToFiltererMap.get(tabName);
-        if (filterer != null) {
-          refresh(filterer);
-        }
+        selectionChanged(tabName);
+      }
+    }
+
+    private void selectionChanged(String tabName) {
+      VcsLogFilterer filterer = myTabToFiltererMap.get(tabName);
+      if (filterer != null) {
+        refresh(filterer, true);
       }
     }
 
     @Override
     public void selectionChanged(ContentManagerEvent event) {
-      selectionChanged();
+      if (ContentManagerEvent.ContentOperation.add.equals(event.getOperation())) {
+        selectionChanged(event.getContent().getTabName());
+      }
     }
 
     @Override
@@ -181,7 +198,7 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
 
     @Override
     public void stateChanged() {
-      refreshPostponedRoots();
+      selectionChanged();
     }
 
     @Override
