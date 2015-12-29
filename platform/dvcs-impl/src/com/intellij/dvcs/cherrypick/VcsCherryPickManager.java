@@ -43,10 +43,12 @@ import java.util.*;
 public class VcsCherryPickManager {
   private static final Logger LOG = Logger.getInstance(VcsCherryPickManager.class);
   @NotNull private final Project myProject;
+  @NotNull private final ProjectLevelVcsManager myProjectLevelVcsManager;
   @NotNull private final Set<CommitId> myIdsInProgress = ContainerUtil.newConcurrentSet();
 
-  public VcsCherryPickManager(@NotNull Project project) {
+  public VcsCherryPickManager(@NotNull Project project, @NotNull ProjectLevelVcsManager projectLevelVcsManager) {
     myProject = project;
+    myProjectLevelVcsManager = projectLevelVcsManager;
   }
 
   public void cherryPick(@NotNull VcsLog log) {
@@ -59,9 +61,8 @@ public class VcsCherryPickManager {
   }
 
   @Nullable
-  private VcsCherryPicker getCherryPickerForCommit(@NotNull ProjectLevelVcsManager projectLevelVcsManager,
-                                                   @NotNull VcsFullCommitDetails commitDetails) {
-    AbstractVcs vcs = projectLevelVcsManager.getVcsFor(commitDetails.getRoot());
+  private VcsCherryPicker getCherryPickerForCommit(@NotNull VcsFullCommitDetails commitDetails) {
+    AbstractVcs vcs = myProjectLevelVcsManager.getVcsFor(commitDetails.getRoot());
     if (vcs == null) return null;
     VcsKey key = vcs.getKeyInstanceMethod();
     return getCherryPickerFor(key);
@@ -78,16 +79,12 @@ public class VcsCherryPickManager {
   }
 
   private class CherryPickingTask extends Task.Backgroundable {
-    private final Project myProject;
-    private final ProjectLevelVcsManager myProjectLevelVcsManager;
     private final Map<VcsCherryPicker, List<VcsFullCommitDetails>> myGroupedCommits = ContainerUtil.newHashMap();
     private final Collection<VcsFullCommitDetails> myAllCommits;
     private final ChangeListManagerEx myChangeListManagerEx;
 
     public CherryPickingTask(@NotNull Project project, @NotNull Set<VcsFullCommitDetails> details) {
       super(project, "Cherry-Picking");
-      myProject = project;
-      myProjectLevelVcsManager = ProjectLevelVcsManager.getInstance(myProject);
       myAllCommits = details;
       myChangeListManagerEx = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);
       myChangeListManagerEx.blockModalNotifications();
@@ -96,7 +93,7 @@ public class VcsCherryPickManager {
     public boolean processDetails(@NotNull VcsFullCommitDetails details) {
       myIdsInProgress.add(new CommitId(details.getId(), details.getRoot()));
 
-      VcsCherryPicker cherryPicker = getCherryPickerForCommit(myProjectLevelVcsManager, details);
+      VcsCherryPicker cherryPicker = getCherryPickerForCommit(details);
       if (cherryPicker == null) {
         String message =
           "Cherry pick is not supported for commit " + details.getId().toShortString() + " from root " + details.getRoot().getName();
@@ -125,7 +122,9 @@ public class VcsCherryPickManager {
 
         if (isOk) {
           for (Map.Entry<VcsCherryPicker, List<VcsFullCommitDetails>> entry : myGroupedCommits.entrySet()) {
-            entry.getKey().cherryPick(sortCommits(entry.getValue()));
+            List<VcsFullCommitDetails> commits = entry.getValue();
+            Collections.reverse(commits);
+            entry.getKey().cherryPick(commits);
           }
         }
       }
@@ -140,12 +139,6 @@ public class VcsCherryPickManager {
         });
       }
     }
-  }
-
-  @NotNull
-  private static List<VcsFullCommitDetails> sortCommits(@NotNull List<VcsFullCommitDetails> commits) {
-    Collections.reverse(commits);
-    return commits;
   }
 
   public static VcsCherryPickManager getInstance(@NotNull Project project) {

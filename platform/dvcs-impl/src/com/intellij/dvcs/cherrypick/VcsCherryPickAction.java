@@ -27,13 +27,17 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLog;
+import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import icons.DvcsImplIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 public class VcsCherryPickAction extends DumbAwareAction {
   private static final String NAME = "Cherry-Pick";
@@ -56,32 +60,47 @@ public class VcsCherryPickAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setVisible(true);
+
     final VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
-    Project project = getEventProject(e);
-    final List<VcsCherryPicker> cherryPickers = getActiveCherryPickersForProject(project);
+    Project project = e.getProject();
+    assert project != null;
+
+    List<VcsCherryPicker> cherryPickers = getActiveCherryPickersForProject(project);
     if (log == null || cherryPickers.isEmpty()) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
-    List<CommitId> details = VcsLogUtil.collectFirstPack(log.getSelectedCommits(), VcsLogUtil.MAX_SELECTED_COMMITS);
-    final Map<VirtualFile, List<Hash>> groupedByRoot = groupByRoot(details);
-    VcsCherryPicker enabledCherryPicker = ContainerUtil.find(cherryPickers, new Condition<VcsCherryPicker>() {
+    List<CommitId> commits = VcsLogUtil.collectFirstPack(log.getSelectedCommits(), VcsLogUtil.MAX_SELECTED_COMMITS);
+    if (commits.isEmpty()) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+
+    VcsCherryPicker enabledCherryPicker = getEnabledCherryPicker(log, cherryPickers, commits);
+    e.getPresentation().setEnabled(enabledCherryPicker != null);
+    e.getPresentation()
+      .setText(enabledCherryPicker == null ? concatActionNamesForAllAvailable(cherryPickers) : enabledCherryPicker.getActionTitle());
+  }
+
+  @Nullable
+  private static VcsCherryPicker getEnabledCherryPicker(@NotNull final VcsLog log,
+                                                        @NotNull List<VcsCherryPicker> cherryPickers,
+                                                        @NotNull List<CommitId> commits) {
+    final Map<VirtualFile, List<Hash>> groupedByRoot = groupByRoot(commits);
+    return ContainerUtil.find(cherryPickers, new Condition<VcsCherryPicker>() {
       @Override
       public boolean value(VcsCherryPicker picker) {
         //all commits should be from one vcs, if not then all pickers should return false
         return picker.isEnabled(log, groupedByRoot);
       }
     });
-    e.getPresentation().setEnabled(enabledCherryPicker != null);
-    e.getPresentation().setText(
-      enabledCherryPicker == null ? concatActionNamesForAllAvailable(cherryPickers) : enabledCherryPicker.getActionTitle());
   }
 
   @NotNull
   private static Map<VirtualFile, List<Hash>> groupByRoot(@NotNull List<CommitId> details) {
     Map<VirtualFile, List<Hash>> result = ContainerUtil.newHashMap();
-    for (CommitId commit: details) {
+    for (CommitId commit : details) {
       List<Hash> hashes = result.get(commit.getRoot());
       if (hashes == null) {
         hashes = ContainerUtil.newArrayList();
