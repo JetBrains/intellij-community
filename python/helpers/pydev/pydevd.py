@@ -2396,7 +2396,7 @@ if __name__ == '__main__':
         if setup['save-threading']:
             debugger.thread_analyser = ThreadingLogger()
         if setup['save-asyncio']:
-            if IS_PY3K:
+            if IS_PY34_OLDER:
                 debugger.asyncio_analyser = AsyncioLogger()
 
         try:
