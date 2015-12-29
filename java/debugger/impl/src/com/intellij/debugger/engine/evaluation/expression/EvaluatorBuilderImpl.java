@@ -674,7 +674,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           //noinspection HardCodedStringLiteral
           final PsiClass classAt = myPosition != null? JVMNameUtil.getClassAt(myPosition) : null;
           FieldEvaluator.TargetClassFilter filter = FieldEvaluator.createClassFilter(classAt != null? classAt : getContextPsiClass());
-          myResult = new FieldEvaluator(objectEvaluator, filter, "val$" + localName);
+          myResult = createFallbackEvaluator(new FieldEvaluator(objectEvaluator, filter, "val$" + localName),
+                                             new LocalVariableEvaluator(localName, true));
           return;
         }
         throwEvaluateException(DebuggerBundle.message("evaluation.error.local.variable.missing.from.class.closure", localName));
@@ -747,6 +748,30 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           myResult = new LocalVariableEvaluator(name, false);
         }
       }
+    }
+
+    private static Evaluator createFallbackEvaluator(final Evaluator primary, final Evaluator fallback) {
+      return new Evaluator() {
+        @Override
+        public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
+          try {
+            return primary.evaluate(context);
+          }
+          catch (EvaluateException e) {
+            try {
+              return fallback.evaluate(context);
+            }
+            catch (EvaluateException e1) {
+              throw e;
+            }
+          }
+        }
+
+        @Override
+        public Modifier getModifier() {
+          return primary.getModifier();
+        }
+      };
     }
 
     private static void throwExpressionInvalid(PsiElement expression) {
