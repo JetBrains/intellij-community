@@ -56,14 +56,10 @@ public class GuavaTypeConversionDescriptor extends TypeConversionDescriptor {
       final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
       if (arguments.length == 1) {
         final PsiExpression functionArg = arguments[0];
-        customizeParameter(convertParameter(functionArg, evaluator));
+        convertParameter(functionArg, evaluator);
       }
     }
     return super.replace(expression, evaluator);
-  }
-
-  protected void customizeParameter(PsiExpression parameter) {
-
   }
 
   private static PsiExpression addApplyReference(final PsiExpression expression, TypeEvaluator evaluator) {
