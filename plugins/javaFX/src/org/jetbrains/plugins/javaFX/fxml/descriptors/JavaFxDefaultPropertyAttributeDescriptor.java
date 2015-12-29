@@ -17,11 +17,9 @@ package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -32,15 +30,15 @@ import java.util.List;
  * User: anna
  * Date: 1/10/13
  */
-public class JavaFxDefaultAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
-  private static final Logger LOG = Logger.getInstance("#" + JavaFxDefaultAttributeDescriptor.class.getName());
+public class JavaFxDefaultPropertyAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
+  private static final Logger LOG = Logger.getInstance("#" + JavaFxDefaultPropertyAttributeDescriptor.class.getName());
 
   private String myDefaultPropertyName = null;
-  public JavaFxDefaultAttributeDescriptor(String name, PsiClass psiClass) {
+  public JavaFxDefaultPropertyAttributeDescriptor(String name, PsiClass psiClass) {
     super(name, psiClass);
   }
 
-  public JavaFxDefaultAttributeDescriptor(String name, String defaultPropertyName) {
+  public JavaFxDefaultPropertyAttributeDescriptor(String name, String defaultPropertyName) {
     super(name, null);
     myDefaultPropertyName = defaultPropertyName;
   }

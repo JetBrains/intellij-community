@@ -17,10 +17,7 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * User: anna
@@ -55,19 +52,19 @@ public class FxmlConstants {
   public static final Map<String, List<String>> FX_ELEMENT_ATTRIBUTES = new HashMap<String, List<String>>();
   static {
     FX_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Arrays.asList(FX_ELEMENT_SOURCE, FX_ID, RESOURCES, CHARSET));
-    FX_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Arrays.asList(FX_ELEMENT_SOURCE));
-    FX_ELEMENT_ATTRIBUTES.put(FX_COPY, Arrays.asList(FX_ELEMENT_SOURCE));
-    FX_ELEMENT_ATTRIBUTES.put(FX_SCRIPT, Arrays.asList(FX_ELEMENT_SOURCE));
-    FX_ELEMENT_ATTRIBUTES.put(FX_ROOT, Arrays.asList(TYPE));
+    FX_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Collections.singletonList(FX_ELEMENT_SOURCE));
+    FX_ELEMENT_ATTRIBUTES.put(FX_COPY, Collections.singletonList(FX_ELEMENT_SOURCE));
+    FX_ELEMENT_ATTRIBUTES.put(FX_SCRIPT, Collections.singletonList(FX_ELEMENT_SOURCE));
+    FX_ELEMENT_ATTRIBUTES.put(FX_ROOT, Collections.singletonList(TYPE));
   }
 
   public static final Map<String, List<String>> FX_REQUIRED_ELEMENT_ATTRIBUTES = new HashMap<String, List<String>>();
 
   static {
-    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Arrays.asList(FX_ELEMENT_SOURCE));
-    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Arrays.asList(FX_ELEMENT_SOURCE));
-    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_COPY, Arrays.asList(FX_ELEMENT_SOURCE));
-    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_ROOT, Arrays.asList(TYPE));
+    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Collections.singletonList(FX_ELEMENT_SOURCE));
+    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Collections.singletonList(FX_ELEMENT_SOURCE));
+    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_COPY, Collections.singletonList(FX_ELEMENT_SOURCE));
+    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_ROOT, Collections.singletonList(TYPE));
   }
 
 }

@@ -20,54 +20,18 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.ArrayUtil;
-import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
  * Date: 1/10/13
  */
-public class JavaFxSetterAttributeDescriptor implements XmlAttributeDescriptor {
-  private final String myName;
-  private final PsiClass myPsiClass;
+public class JavaFxSetterAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
   private final PsiMethod myPsiMethod;
 
   public JavaFxSetterAttributeDescriptor(PsiMethod psiMethod, PsiClass psiClass) {
+    super(psiClass.getName() + "." + StringUtil.decapitalize(psiMethod.getName().substring("set".length())), psiClass);
     myPsiMethod = psiMethod;
-    myName = psiMethod.getName();
-    myPsiClass = psiClass;
-  }
-
-  @Override
-  public boolean isRequired() {
-    return false;
-  }
-
-  @Override
-  public boolean isFixed() {
-    return false;
-  }
-
-  @Override
-  public boolean hasIdType() {
-    return false;
-  }
-
-  @Override
-  public boolean hasIdRefType() {
-    return false;
-  }
-
-  @Nullable
-  @Override
-  public String getDefaultValue() {
-    return null;
-  }
-
-  @Override
-  public boolean isEnumerated() {
-    return false;
   }
 
   @Nullable
@@ -85,23 +49,5 @@ public class JavaFxSetterAttributeDescriptor implements XmlAttributeDescriptor {
   @Override
   public PsiElement getDeclaration() {
     return myPsiMethod != null && myPsiMethod.isValid() ? myPsiMethod : null;
-  }
-
-  @Override
-  public String getName(PsiElement context) {
-    return getName();
-  }
-
-  @Override
-  public String getName() {
-    return myPsiClass.getName() + "." + StringUtil.decapitalize(myName.substring("set".length()));
-  }
-
-  @Override
-  public void init(PsiElement element) {}
-
-  @Override
-  public Object[] getDependences() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 }
