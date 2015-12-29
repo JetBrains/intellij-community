@@ -277,12 +277,12 @@ def create_warn_multiproc(original_name):
 
 def create_execl(original_name):
     def new_execl(path, *args):
-        '''
-os.execl(path, arg0, arg1, ...)
-os.execle(path, arg0, arg1, ..., env)
-os.execlp(file, arg0, arg1, ...)
-os.execlpe(file, arg0, arg1, ..., env)
-        '''
+        """
+        os.execl(path, arg0, arg1, ...)
+        os.execle(path, arg0, arg1, ..., env)
+        os.execlp(file, arg0, arg1, ...)
+        os.execlpe(file, arg0, arg1, ..., env)
+        """
         import os
         args = patch_args(args)
         return getattr(os, original_name)(path, *args)
@@ -291,10 +291,10 @@ os.execlpe(file, arg0, arg1, ..., env)
 
 def create_execv(original_name):
     def new_execv(path, args):
-        '''
-os.execv(path, args)
-os.execvp(file, args)
-        '''
+        """
+        os.execv(path, args)
+        os.execvp(file, args)
+        """
         import os
         return getattr(os, original_name)(path, patch_args(args))
     return new_execv
@@ -302,8 +302,8 @@ os.execvp(file, args)
 
 def create_execve(original_name):
     """
-os.execve(path, args, env)
-os.execvpe(file, args, env)
+    os.execve(path, args, env)
+    os.execvpe(file, args, env)
     """
     def new_execve(path, args, env):
         import os
@@ -313,10 +313,10 @@ os.execvpe(file, args, env)
 
 def create_spawnl(original_name):
     def new_spawnl(mode, path, *args):
-        '''
-os.spawnl(mode, path, arg0, arg1, ...)
-os.spawnlp(mode, file, arg0, arg1, ...)
-        '''
+        """
+        os.spawnl(mode, path, arg0, arg1, ...)
+        os.spawnlp(mode, file, arg0, arg1, ...)
+        """
         import os
         args = patch_args(args)
         return getattr(os, original_name)(mode, path, *args)
@@ -325,10 +325,10 @@ os.spawnlp(mode, file, arg0, arg1, ...)
 
 def create_spawnv(original_name):
     def new_spawnv(mode, path, args):
-        '''
-os.spawnv(mode, path, args)
-os.spawnvp(mode, file, args)
-        '''
+        """
+        os.spawnv(mode, path, args)
+        os.spawnvp(mode, file, args)
+        """
         import os
         return getattr(os, original_name)(mode, path, patch_args(args))
     return new_spawnv
@@ -336,8 +336,8 @@ os.spawnvp(mode, file, args)
 
 def create_spawnve(original_name):
     """
-os.spawnve(mode, path, args, env)
-os.spawnvpe(mode, file, args, env)
+    os.spawnve(mode, path, args, env)
+    os.spawnvpe(mode, file, args, env)
     """
     def new_spawnve(mode, path, args, env):
         import os
@@ -347,7 +347,7 @@ os.spawnvpe(mode, file, args, env)
 
 def create_fork_exec(original_name):
     """
-_posixsubprocess.fork_exec(args, executable_list, close_fds, ... (13 more))
+    _posixsubprocess.fork_exec(args, executable_list, close_fds, ... (13 more))
     """
     def new_fork_exec(args, *other_args):
         import _posixsubprocess  # @UnresolvedImport
@@ -372,7 +372,7 @@ def create_warn_fork_exec(original_name):
 
 def create_CreateProcess(original_name):
     """
-CreateProcess(*args, **kwargs)
+    CreateProcess(*args, **kwargs)
     """
     def new_CreateProcess(appName, commandLine, *args):
         try:
@@ -385,7 +385,7 @@ CreateProcess(*args, **kwargs)
 
 def create_CreateProcessWarnMultiproc(original_name):
     """
-CreateProcess(*args, **kwargs)
+    CreateProcess(*args, **kwargs)
     """
     def new_CreateProcess(*args):
         try:
