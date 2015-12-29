@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,13 +202,12 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     protected void setTextToEditor(String text) {
       myEditor.getMarkupModel().removeAllHighlighters();
       myEditor.getDocument().setText(text);
+      ((EditorImpl)myEditor).resetSizes();
       myEditor.getHighlighter().setText(text);
       if (myTextAttributes != null) {
         myEditor.getMarkupModel().addRangeHighlighter(0, myEditor.getDocument().getTextLength(),
                                                       HighlighterLayer.ADDITIONAL_SYNTAX, myTextAttributes, HighlighterTargetArea.EXACT_RANGE);
       }
-
-      ((EditorImpl)myEditor).resetSizes();
 
       ((EditorImpl)myEditor).setPaintSelection(mySelected);
       SelectionModel selectionModel = myEditor.getSelectionModel();
