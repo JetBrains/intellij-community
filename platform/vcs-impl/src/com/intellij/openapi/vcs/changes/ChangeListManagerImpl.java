@@ -531,14 +531,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
         myUpdateChangesProgressIndicator = indicator;
       }
-      final String scopeInString = !LOG.isDebugEnabled() ? "" : StringUtil.join(scopes, new Function<VcsDirtyScope, String>() {
-        @Override
-        public String fun(VcsDirtyScope scope) {
-          return scope.toString();
-        }
-      }, "->\n");
-      LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
-                "\ncurrent changes: " + myWorker);
+      if (LOG.isDebugEnabled()) {
+        String scopeInString = StringUtil.join(scopes, new Function<VcsDirtyScope, String>() {
+          @Override
+          public String fun(VcsDirtyScope scope) {
+            return scope.toString();
+          }
+        }, "->\n");
+        LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
+                  "\ncurrent changes: " + myWorker);
+      }
       dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
 
@@ -575,8 +577,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
               myWorker = dataHolder.getChangeListWorker();
               myWorker.onAfterWorkerSwitch(oldWorker);
               myModifier.setWorker(myWorker);
-              LOG.debug("refresh procedure finished, unversioned size: " +
-                        dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize() + "\nchanges: " + myWorker);
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("refresh procedure finished, unversioned size: " +
+                          dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize() + "\nchanges: " + myWorker);
+              }
               final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
               myComposite = dataHolder.getComposite();
               if (statusChanged) {
