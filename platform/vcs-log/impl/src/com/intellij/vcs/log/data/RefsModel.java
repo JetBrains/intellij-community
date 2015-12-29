@@ -2,10 +2,8 @@ package com.intellij.vcs.log.data;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogHashMap;
 import com.intellij.vcs.log.VcsRef;
@@ -22,6 +20,7 @@ public class RefsModel extends SimpleRefsModel {
 
   @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myBranchesToIndices;
   @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myRefsToHeadIndices;
+  @NotNull private final TIntObjectHashMap<VirtualFile> myRootsToHeadIndices;
 
   public RefsModel(@NotNull Map<VirtualFile, Set<VcsRef>> refsByRoot,
                    @NotNull final Set<Integer> heads,
@@ -36,16 +35,17 @@ public class RefsModel extends SimpleRefsModel {
         return heads.contains(hashMap.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()));
       }
     }), hashMap);
+
+    myRootsToHeadIndices = prepareRootsMap(heads, hashMap);
   }
 
-  private RefsModel(@NotNull Map<VirtualFile, Set<VcsRef>> refsByRoot,
-                    @NotNull TIntObjectHashMap<SmartList<VcsRef>> branchesToIndices,
-                    @NotNull TIntObjectHashMap<SmartList<VcsRef>> refsToIndices) {
-    super(Iterables.concat(refsByRoot.values()));
-    myRefs = refsByRoot;
-
-    myBranchesToIndices = branchesToIndices;
-    myRefsToHeadIndices = refsToIndices;
+  private static TIntObjectHashMap<VirtualFile> prepareRootsMap(@NotNull Set<Integer> heads, @NotNull VcsLogHashMap hashMap) {
+    TIntObjectHashMap<VirtualFile> map = new TIntObjectHashMap<VirtualFile>();
+    for (Integer head : heads) {
+      CommitId commitId = hashMap.getCommitId(head);
+      map.put(head, commitId.getRoot());
+    }
+    return map;
   }
 
   @NotNull
@@ -72,8 +72,12 @@ public class RefsModel extends SimpleRefsModel {
   }
 
   @NotNull
+  public VirtualFile rootAtHead(int headIndex) {
+    return myRootsToHeadIndices.get(headIndex);
+  }
+
+  @NotNull
   public Map<VirtualFile, Set<VcsRef>> getAllRefsByRoot() {
     return myRefs;
   }
-
 }
