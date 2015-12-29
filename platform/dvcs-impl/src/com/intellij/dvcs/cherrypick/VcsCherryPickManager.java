@@ -60,6 +60,15 @@ public class VcsCherryPickManager {
     }, null);
   }
 
+  public boolean isCherryPickAlreadyStartedFor(@NotNull List<CommitId> commits) {
+    for (CommitId commit : commits) {
+      if (myIdsInProgress.contains(commit)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Nullable
   private VcsCherryPicker getCherryPickerForCommit(@NotNull VcsFullCommitDetails commitDetails) {
     AbstractVcs vcs = myProjectLevelVcsManager.getVcsFor(commitDetails.getRoot());
@@ -91,14 +100,17 @@ public class VcsCherryPickManager {
     }
 
     public boolean processDetails(@NotNull VcsFullCommitDetails details) {
-      myIdsInProgress.add(new CommitId(details.getId(), details.getRoot()));
+      CommitId commitId = new CommitId(details.getId(), details.getRoot());
+      if (myIdsInProgress.contains(commitId)) {
+        showError("Cherry pick process is already started for commit "  + commitId.getHash().toShortString() + " from root " + commitId.getRoot().getName());
+        return false;
+      }
+      myIdsInProgress.add(commitId);
 
       VcsCherryPicker cherryPicker = getCherryPickerForCommit(details);
       if (cherryPicker == null) {
-        String message =
-          "Cherry pick is not supported for commit " + details.getId().toShortString() + " from root " + details.getRoot().getName();
-        VcsNotifier.getInstance(myProject).notifyWeakError(message);
-        LOG.warn(message);
+        showError(
+          "Cherry pick is not supported for commit " + details.getId().toShortString() + " from root " + details.getRoot().getName());
         return false;
       }
       List<VcsFullCommitDetails> list = myGroupedCommits.get(cherryPicker);
@@ -107,6 +119,11 @@ public class VcsCherryPickManager {
       }
       list.add(details);
       return true;
+    }
+
+    public void showError(@NotNull String message) {
+      VcsNotifier.getInstance(myProject).notifyWeakError(message);
+      LOG.warn(message);
     }
 
     @Override

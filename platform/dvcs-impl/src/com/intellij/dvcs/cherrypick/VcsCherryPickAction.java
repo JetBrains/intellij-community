@@ -64,6 +64,7 @@ public class VcsCherryPickAction extends DumbAwareAction {
     final VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
     Project project = e.getProject();
     assert project != null;
+    VcsCherryPickManager cherryPickManager = VcsCherryPickManager.getInstance(project);
 
     List<VcsCherryPicker> cherryPickers = getActiveCherryPickersForProject(project);
     if (log == null || cherryPickers.isEmpty()) {
@@ -72,7 +73,7 @@ public class VcsCherryPickAction extends DumbAwareAction {
     }
 
     List<CommitId> commits = VcsLogUtil.collectFirstPack(log.getSelectedCommits(), VcsLogUtil.MAX_SELECTED_COMMITS);
-    if (commits.isEmpty()) {
+    if (commits.isEmpty() || cherryPickManager.isCherryPickAlreadyStartedFor(commits)) {
       e.getPresentation().setEnabled(false);
       return;
     }
