@@ -65,6 +65,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     else if (AnnotateDiffViewerAction.isEnabled(e)) {
       enabled = !AnnotateDiffViewerAction.isSuspended(e);
     }
+    else if (AnnotateVcsVirtualFileAction.isEnabled(e)) {
+      enabled = !AnnotateVcsVirtualFileAction.isSuspended(e);
+    }
     e.getPresentation().setEnabled(enabled);
   }
 
@@ -76,6 +79,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     else if (AnnotateDiffViewerAction.isEnabled(e)) {
       return AnnotateDiffViewerAction.isAnnotated(e);
     }
+    else if (AnnotateVcsVirtualFileAction.isEnabled(e)) {
+      return AnnotateVcsVirtualFileAction.isAnnotated(e);
+    }
     return false;
   }
 
@@ -86,6 +92,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     }
     else if (AnnotateDiffViewerAction.isEnabled(e)) {
       AnnotateDiffViewerAction.perform(e, selected);
+    }
+    else if (AnnotateVcsVirtualFileAction.isEnabled(e)) {
+      AnnotateVcsVirtualFileAction.perform(e, selected);
     }
   }
 
