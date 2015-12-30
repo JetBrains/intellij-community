@@ -122,7 +122,13 @@ public class PsiMethodReferenceUtil {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     final PsiExpression expression = methodReferenceExpression.getQualifierExpression();
     if (expression != null) {
-      final PsiType expressionType = replaceArrayType(expression.getType(), expression);
+      PsiType expressionType = expression.getType();
+      if (expressionType instanceof PsiCapturedWildcardType) {
+        expressionType = ((PsiCapturedWildcardType)expressionType).getUpperBound();
+      }
+      else {
+        expressionType = replaceArrayType(expressionType, expression);
+      }
       PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(expressionType);
       containingClass = result.getElement();
       if (containingClass != null) {
