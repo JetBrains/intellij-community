@@ -37,7 +37,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -71,7 +70,7 @@ public class AnnotateLocalFileAction {
 
   private static boolean isSuspended(AnActionEvent e) {
     VirtualFile file = assertNotNull(VcsContextFactory.SERVICE.getInstance().createContextOn(e).getSelectedFile());
-    return AnnotateToggleAction.getBackgroundableLock(e.getRequiredData(CommonDataKeys.PROJECT), file).isLocked();
+    return VcsAnnotateUtil.getBackgroundableLock(e.getRequiredData(CommonDataKeys.PROJECT), file).isLocked();
   }
 
   private static boolean isAnnotated(AnActionEvent e) {
@@ -129,7 +128,7 @@ public class AnnotateLocalFileAction {
     final Ref<FileAnnotation> fileAnnotationRef = new Ref<FileAnnotation>();
     final Ref<VcsException> exceptionRef = new Ref<VcsException>();
 
-    AnnotateToggleAction.getBackgroundableLock(project, file).lock();
+    VcsAnnotateUtil.getBackgroundableLock(project, file).lock();
 
     final Task.Backgroundable annotateTask = new Task.Backgroundable(project, VcsBundle.message("retrieving.annotations"), true) {
       @Override
@@ -155,7 +154,7 @@ public class AnnotateLocalFileAction {
 
       @Override
       public void onSuccess() {
-        AnnotateToggleAction.getBackgroundableLock(project, file).unlock();
+        VcsAnnotateUtil.getBackgroundableLock(project, file).unlock();
 
         if (!exceptionRef.isNull()) {
           LOG.warn(exceptionRef.get());
@@ -173,13 +172,8 @@ public class AnnotateLocalFileAction {
   @NotNull
   private static List<Editor> getEditors(@NotNull VcsContext context) {
     Project project = assertNotNull(context.getProject());
-    List<Editor> list = new ArrayList<Editor>();
-    for (FileEditor fileEditor : FileEditorManager.getInstance(project).getEditors(context.getSelectedFile())) {
-      if (fileEditor instanceof TextEditor) {
-        list.add(((TextEditor)fileEditor).getEditor());
-      }
-    }
-    return list;
+    VirtualFile file = assertNotNull(context.getSelectedFile());
+    return VcsAnnotateUtil.getEditors(project, file);
   }
 
   public static class Provider implements AnnotateToggleAction.Provider {

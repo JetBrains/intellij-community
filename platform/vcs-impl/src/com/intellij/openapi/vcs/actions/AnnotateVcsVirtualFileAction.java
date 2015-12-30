@@ -19,9 +19,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -43,7 +40,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,7 +56,7 @@ public class AnnotateVcsVirtualFileAction {
     VirtualFile file = selectedFiles[0];
     if (file.isDirectory() || file.getFileType().isBinary()) return false;
 
-    if (getEditors(project, file).isEmpty()) return false;
+    if (VcsAnnotateUtil.getEditors(project, file).isEmpty()) return false;
 
     AnnotationData data = extractData(project, file);
     if (data == null) return false;
@@ -71,13 +67,13 @@ public class AnnotateVcsVirtualFileAction {
 
   private static boolean isSuspended(AnActionEvent e) {
     VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
-    return AnnotateToggleAction.getBackgroundableLock(e.getRequiredData(CommonDataKeys.PROJECT), file).isLocked();
+    return VcsAnnotateUtil.getBackgroundableLock(e.getRequiredData(CommonDataKeys.PROJECT), file).isLocked();
   }
 
   private static boolean isAnnotated(AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
-    List<Editor> editors = getEditors(project, file);
+    List<Editor> editors = VcsAnnotateUtil.getEditors(project, file);
     return ContainerUtil.exists(editors, new Condition<Editor>() {
       @Override
       public boolean value(Editor editor) {
@@ -89,7 +85,7 @@ public class AnnotateVcsVirtualFileAction {
   private static void perform(AnActionEvent e, boolean selected) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
-    List<Editor> editors = getEditors(project, file);
+    List<Editor> editors = VcsAnnotateUtil.getEditors(project, file);
 
     if (!selected) {
       for (Editor editor : editors) {
@@ -113,7 +109,7 @@ public class AnnotateVcsVirtualFileAction {
     final Ref<FileAnnotation> fileAnnotationRef = new Ref<FileAnnotation>();
     final Ref<VcsException> exceptionRef = new Ref<VcsException>();
 
-    AnnotateToggleAction.getBackgroundableLock(project, file).lock();
+    VcsAnnotateUtil.getBackgroundableLock(project, file).lock();
 
     final Task.Backgroundable annotateTask = new Task.Backgroundable(project, VcsBundle.message("retrieving.annotations"), true) {
       @Override
@@ -139,7 +135,7 @@ public class AnnotateVcsVirtualFileAction {
 
       @Override
       public void onSuccess() {
-        AnnotateToggleAction.getBackgroundableLock(project, file).unlock();
+        VcsAnnotateUtil.getBackgroundableLock(project, file).unlock();
 
         if (!exceptionRef.isNull()) {
           LOG.warn(exceptionRef.get());
@@ -152,17 +148,6 @@ public class AnnotateVcsVirtualFileAction {
       }
     };
     ProgressManager.getInstance().run(annotateTask);
-  }
-
-  @NotNull
-  private static List<Editor> getEditors(@NotNull Project project, @NotNull VirtualFile file) {
-    List<Editor> list = new ArrayList<Editor>();
-    for (FileEditor fileEditor : FileEditorManager.getInstance(project).getEditors(file)) {
-      if (fileEditor instanceof TextEditor) {
-        list.add(((TextEditor)fileEditor).getEditor());
-      }
-    }
-    return list;
   }
 
   @Nullable

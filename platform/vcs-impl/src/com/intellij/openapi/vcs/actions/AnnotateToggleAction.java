@@ -34,9 +34,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
-import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -234,11 +232,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     }
     return Couple.of(commitOrderColors.size() > 1 ? commitOrderColors : null,
                      commitAuthorColors.size() > 1 ? commitAuthorColors : null);
-  }
-
-  @NotNull
-  public static BackgroundableActionLock getBackgroundableLock(@NotNull Project project, @NotNull VirtualFile file) {
-    return BackgroundableActionLock.getLock(project, VcsBackgroundableActions.ANNOTATE, file.getPath());
   }
 
   @Nullable
