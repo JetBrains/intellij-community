@@ -1135,11 +1135,15 @@ public class ResolveUtil {
     return element instanceof GrMethodCall;
   }
 
-  public static  boolean isPartOfFQN(GrReferenceExpression ref) {
+  public static boolean isPartOfFQN(@NotNull GrReferenceExpression ref) {
     if (ref.hasAt()) return false;
     final String name = ref.getReferenceName();
     if (StringUtil.isEmpty(name)) return false;
     return Character.isUpperCase(name.charAt(0)) && !isMethodCallRef(ref) ||
            ref.getParent() instanceof GrReferenceExpression && isPartOfFQN((GrReferenceExpression)ref.getParent());
+  }
+
+  public static boolean canResolveToMethod(@NotNull GrReferenceExpression ref) {
+    return ref.hasMemberPointer() || ref.getParent() instanceof GrMethodCall;
   }
 }

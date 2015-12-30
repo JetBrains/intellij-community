@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
@@ -62,6 +63,11 @@ public class GrReferenceResolveRunner {
     GrExpression qualifier = place.getQualifier();
     if (qualifier == null) {
       if (!ResolveUtil.treeWalkUp(place, processor, true)) return false;
+
+      if (place.getContext() instanceof GrMethodCall) {
+        if (!ClosureMissingMethodContributor.processMethodsFromClosures(place, processor)) return false;
+      }
+
       final GrExpression runtimeQualifier = PsiImplUtil.getRuntimeQualifier(place);
       if (runtimeQualifier != null) {
         if (!processQualifier(runtimeQualifier)) return false;
