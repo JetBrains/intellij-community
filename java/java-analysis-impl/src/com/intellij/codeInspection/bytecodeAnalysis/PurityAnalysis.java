@@ -71,24 +71,35 @@ public class PurityAnalysis {
 }
 
 // data for data analysis
-interface DataValue extends org.jetbrains.org.objectweb.asm.tree.analysis.Value {
+abstract class DataValue implements org.jetbrains.org.objectweb.asm.tree.analysis.Value {
+  private final int myHash;
 
-  DataValue ThisDataValue = new DataValue() {
+  DataValue(int hash) {
+    myHash = hash;
+  }
+
+  @Override
+  public final int hashCode() {
+    return myHash;
+  }
+
+  static final DataValue ThisDataValue = new DataValue(-1) {
     @Override
     public int getSize() {
       return 1;
     }
   };
-  DataValue LocalDataValue = new DataValue() {
+  static final DataValue LocalDataValue = new DataValue(-2) {
     @Override
     public int getSize() {
       return 1;
     }
   };
-  class ParameterDataValue implements DataValue {
+  static class ParameterDataValue extends DataValue {
     final int n;
 
     ParameterDataValue(int n) {
+      super(n);
       this.n = n;
     }
 
@@ -106,24 +117,20 @@ interface DataValue extends org.jetbrains.org.objectweb.asm.tree.analysis.Value 
       return true;
     }
 
-    @Override
-    public int hashCode() {
-      return n;
-    }
   }
-  DataValue OwnedDataValue = new DataValue() {
+  static final DataValue OwnedDataValue = new DataValue(-3) {
     @Override
     public int getSize() {
       return 1;
     }
   };
-  DataValue UnknownDataValue1 = new DataValue() {
+  static final DataValue UnknownDataValue1 = new DataValue(-4) {
     @Override
     public int getSize() {
       return 1;
     }
   };
-  DataValue UnknownDataValue2 = new DataValue() {
+  static final DataValue UnknownDataValue2 = new DataValue(-5) {
     @Override
     public int getSize() {
       return 2;
@@ -152,12 +159,24 @@ interface EffectQuantum {
   }
 }
 
-interface HEffectQuantum {
-  HEffectQuantum TopEffectQuantum = new HEffectQuantum() {};
-  HEffectQuantum ThisChangeQuantum = new HEffectQuantum() {};
-  class ParamChangeQuantum implements HEffectQuantum {
+abstract class HEffectQuantum {
+  private final int myHash;
+
+  HEffectQuantum(int hash) {
+    myHash = hash;
+  }
+
+  @Override
+  public final int hashCode() {
+    return myHash;
+  }
+
+  static final HEffectQuantum TopEffectQuantum = new HEffectQuantum(-1) {};
+  static final HEffectQuantum ThisChangeQuantum = new HEffectQuantum(-2) {};
+  static class ParamChangeQuantum extends HEffectQuantum {
     final int n;
     public ParamChangeQuantum(int n) {
+      super(n);
       this.n = n;
     }
 
@@ -172,17 +191,13 @@ interface HEffectQuantum {
 
       return true;
     }
-
-    @Override
-    public int hashCode() {
-      return n;
-    }
   }
-  class CallQuantum implements HEffectQuantum {
+  static class CallQuantum extends HEffectQuantum {
     final HKey key;
     final DataValue[] data;
     final boolean isStatic;
     public CallQuantum(HKey key, DataValue[] data, boolean isStatic) {
+      super((key.hashCode() * 31 + Arrays.hashCode(data)) * 31 + (isStatic ? 1 : 0));
       this.key = key;
       this.data = data;
       this.isStatic = isStatic;
@@ -201,14 +216,6 @@ interface HEffectQuantum {
       if (!Arrays.equals(data, that.data)) return false;
 
       return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = key.hashCode();
-      result = 31 * result + Arrays.hashCode(data);
-      result = 31 * result + (isStatic ? 1 : 0);
-      return result;
     }
   }
 }
