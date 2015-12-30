@@ -45,16 +45,17 @@ class MacDistributionBuilder {
 
   /**
    * Converts ${targetFileName}.mac.zip file to ${targetFileName}.dmg installer with signed application inside
+   * @return path to created .dmg file
    */
-  def signAndBuildDmg(String targetFileName) {
+  String signAndBuildDmg(String targetFileName) {
     defineTasks()
     def sitFilePath = "$artifactsPath/${targetFileName}.sit"
     ant.copy(file: "$artifactsPath/${targetFileName}.mac.zip", tofile: sitFilePath)
     signMacZip(targetFileName, sitFilePath)
-    buildDmg(targetFileName)
+    return buildDmg(targetFileName)
   }
 
-  private def buildDmg(String sitFileName) {
+  private String buildDmg(String sitFileName) {
     projectBuilder.stage("building .dmg")
     def dmgImageCopy = "$artifactsPath/${fullBuildNumber}.png"
     ant.copy(file: dmgImagePath, tofile: dmgImageCopy)
@@ -85,10 +86,7 @@ class MacDistributionBuilder {
     if (!new File(dmgFilePath).exists()) {
       projectBuilder.error("Failed to build .dmg file.")
     }
-
-    //todo[nik] reuse notifyArtifactBuilt from utils.gant
-//    notifyArtifactBuilt(dmgFilePath)
-    projectBuilder.info("##teamcity[publishArtifacts '${sitFileName}.dmg']")
+    return dmgFilePath
   }
 
   private def signMacZip(String sitFileName, String sitFilePath) {
