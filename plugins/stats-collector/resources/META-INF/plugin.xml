@@ -5,7 +5,7 @@
   <vendor email="yaroslav.lepenkin@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
-      Collecting statistics about using completion feature
+      Collecting statistics to measure completion sorting quality
     ]]></description>
 
   <change-notes><![CDATA[
