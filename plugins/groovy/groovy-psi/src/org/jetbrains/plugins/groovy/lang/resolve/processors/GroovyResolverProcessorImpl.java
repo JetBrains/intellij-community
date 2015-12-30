@@ -18,31 +18,24 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
 
-@SuppressWarnings("Duplicates")
 class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrMethodComparator.Context {
 
   private final boolean myIsPartOfFqn;
@@ -102,7 +95,7 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
     candidates = getCandidates(GroovyResolveKind.METHOD);
     if (candidates.first) {
       final List<GroovyResolveResult> results = filterMethodCandidates(candidates.second);
-      return myRef.hasMemberPointer()? collapseReflectedMethods(results) : results;
+      return myRef.hasMemberPointer() ? collapseReflectedMethods(results) : results;
     }
 
     candidates = getCandidates(GroovyResolveKind.PROPERTY);
@@ -185,7 +178,7 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
         for (Iterator<GroovyResolveResult> iterator = results.iterator(); iterator.hasNext(); ) {
           final GroovyResolveResult otherResolveResult = iterator.next();
           if (otherResolveResult instanceof GroovyMethodResult) {
-            int res = compareMethods((GroovyMethodResult)resolveResult, (GroovyMethodResult)otherResolveResult);
+            int res = GrMethodComparator.compareMethods((GroovyMethodResult)resolveResult, (GroovyMethodResult)otherResolveResult, this);
             if (res > 0) {
               continue Outer;
             }
@@ -200,137 +193,6 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
     }
 
     return results;
-  }
-
-  /**
-   * @return 1 if second is more preferable
-   * 0 if methods are equal
-   * -1 if first is more preferable
-   */
-  private int compareMethods(@NotNull GroovyMethodResult result1, @NotNull GroovyMethodResult result2) {
-    final PsiMethod method1 = result1.getElement();
-    final PsiMethod method2 = result2.getElement();
-
-    if (!method1.getName().equals(method2.getName())) return 0;
-
-    boolean firstIsPreferable = secondMethodIsPreferable(result2, result1);
-    boolean secondIsPreferable = secondMethodIsPreferable(result1, result2);
-
-    if (secondIsPreferable) {
-      if (firstIsPreferable) {
-        if (method2 instanceof GrGdkMethod && !(method1 instanceof GrGdkMethod)) {
-          return -1;
-        }
-      }
-      return 1;
-    }
-
-    if (firstIsPreferable) {
-      return -1;
-    }
-
-    return 0;
-  }
-
-  //method1 has more general parameter types thn method2
-  private boolean secondMethodIsPreferable(@NotNull GroovyMethodResult result1, @NotNull GroovyMethodResult result2) {
-    PsiMethod method1 = result1.getElement();
-    PsiSubstitutor substitutor1 = result1.getSubstitutor(false);
-    PsiElement resolveContext1 = result1.getCurrentFileResolveContext();
-    PsiMethod method2 = result2.getElement();
-    PsiSubstitutor substitutor2 = result2.getSubstitutor(false);
-    PsiElement resolveContext2 = result2.getCurrentFileResolveContext();
-
-    final Boolean custom = GrMethodComparator.checkDominated(method1, substitutor1, method2, substitutor2, this);
-    if (custom != null) return custom;
-
-    PsiType[] argTypes = myArgumentTypes;
-    if (method1 instanceof GrGdkMethod && method2 instanceof GrGdkMethod) {
-      method1 = ((GrGdkMethod)method1).getStaticMethod();
-      method2 = ((GrGdkMethod)method2).getStaticMethod();
-      if (myArgumentTypes != null) {
-        argTypes = PsiType.createArray(argTypes.length + 1);
-        System.arraycopy(myArgumentTypes, 0, argTypes, 1, myArgumentTypes.length);
-        argTypes[0] = myThisType;
-      }
-    }
-    else if (method1 instanceof GrGdkMethod) {
-      return true;
-    }
-    else if (method2 instanceof GrGdkMethod) {
-      return false;
-    }
-
-    PsiParameter[] params1 = method1.getParameterList().getParameters();
-    PsiParameter[] params2 = method2.getParameterList().getParameters();
-    if (argTypes == null && params1.length != params2.length) return false;
-
-    if (params1.length < params2.length) {
-      if (params1.length == 0) return false;
-      final PsiType lastType = params1[params1.length - 1].getType(); //varargs applicability
-      return lastType instanceof PsiArrayType;
-    }
-
-    for (int i = 0; i < params2.length; i++) {
-      final PsiType ptype1 = params1[i].getType();
-      final PsiType ptype2 = params2[i].getType();
-      PsiType type1 = substitutor1.substitute(ptype1);
-      PsiType type2 = substitutor2.substitute(ptype2);
-
-      if (argTypes != null && argTypes.length > i) {
-        PsiType argType = argTypes[i];
-        if (argType != null) {
-          final boolean converts1 = TypesUtil.isAssignableWithoutConversions(TypeConversionUtil.erasure(type1), argType, myRef);
-          final boolean converts2 = TypesUtil.isAssignableWithoutConversions(TypeConversionUtil.erasure(type2), argType, myRef);
-          if (converts1 != converts2) {
-            return converts2;
-          }
-
-          // see groovy.lang.GroovyCallable
-          if (TypesUtil.resolvesTo(type1, CommonClassNames.JAVA_UTIL_CONCURRENT_CALLABLE) &&
-              TypesUtil.resolvesTo(type2, CommonClassNames.JAVA_LANG_RUNNABLE)) {
-            if (InheritanceUtil.isInheritor(argType, GroovyCommonClassNames.GROOVY_LANG_GROOVY_CALLABLE)) return true;
-          }
-        }
-      }
-
-      if (!typesAgree(TypeConversionUtil.erasure(ptype1), TypeConversionUtil.erasure(ptype2))) return false;
-
-      if (resolveContext1 != null && resolveContext2 == null) {
-        return !(TypesUtil.resolvesTo(type1, CommonClassNames.JAVA_LANG_OBJECT) &&
-                 TypesUtil.resolvesTo(type2, CommonClassNames.JAVA_LANG_OBJECT));
-      }
-
-      if (resolveContext1 == null && resolveContext2 != null) {
-        return true;
-      }
-    }
-
-    if (!(method1 instanceof SyntheticElement) && !(method2 instanceof SyntheticElement)) {
-      final PsiType returnType1 = substitutor1.substitute(method1.getReturnType());
-      final PsiType returnType2 = substitutor2.substitute(method2.getReturnType());
-
-      if (!TypesUtil.isAssignableWithoutConversions(returnType1, returnType2, myRef) &&
-          TypesUtil.isAssignableWithoutConversions(returnType2, returnType1, myRef)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  private boolean typesAgree(@NotNull PsiType type1, @NotNull PsiType type2) {
-    if (argumentsSupplied() && type1 instanceof PsiArrayType && !(type2 instanceof PsiArrayType)) {
-      type1 = ((PsiArrayType)type1).getComponentType();
-    }
-    return argumentsSupplied() ? //resolve, otherwise same_name_variants
-           TypesUtil.isAssignableWithoutConversions(type1, type2, myRef) :
-           type1.equals(type2);
-  }
-
-  @Contract(pure = true)
-  private boolean argumentsSupplied() {
-    return myArgumentTypes != null;
   }
 
   @Nullable
@@ -357,6 +219,11 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
     return myRef;
   }
 
+  @Override
+  public boolean isConstructor() {
+    return false;
+  }
+
   private static List<GroovyResolveResult> collapseReflectedMethods(Collection<GroovyResolveResult> candidates) {
     Set<GrMethod> visited = ContainerUtil.newHashSet();
     List<GroovyResolveResult> collapsed = ContainerUtil.newArrayList();
@@ -367,7 +234,8 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
         if (visited.add(baseMethod)) {
           collapsed.add(PsiImplUtil.reflectedToBase(result, baseMethod, (GrReflectedMethod)element));
         }
-      } else {
+      }
+      else {
         collapsed.add(result);
       }
     }
