@@ -16,6 +16,7 @@
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.dvcs.DvcsCommitAdditionalComponent;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
@@ -620,6 +621,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         @Override
         protected EditorEx createEditor() {
           EditorEx editor = super.createEditor();
+          editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, true);
           EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
           if (customization != null) {
             customization.customize(editor);
