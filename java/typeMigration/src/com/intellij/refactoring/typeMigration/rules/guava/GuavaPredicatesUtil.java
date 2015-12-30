@@ -18,8 +18,6 @@ package com.intellij.refactoring.typeMigration.rules.guava;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
@@ -130,7 +128,7 @@ public class GuavaPredicatesUtil {
     @Override
     public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
       String newExpressionString =
-        GuavaConversionUtil.adjust(((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0], true, myTargetType, evaluator).getText() + ".negate()";
+        GuavaConversionUtil.adjustLambdaContainingExpression(((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0], true, myTargetType, evaluator).getText() + ".negate()";
 
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiMethodReferenceExpression) {
@@ -168,15 +166,15 @@ public class GuavaPredicatesUtil {
       final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
       if (arguments.length == 1) {
-        return (PsiExpression)expression.replace(GuavaConversionUtil.adjust(arguments[0], true, myTargetType, evaluator));
+        return (PsiExpression)expression.replace(GuavaConversionUtil.adjustLambdaContainingExpression(arguments[0], true, myTargetType, evaluator));
       }
       LOG.assertTrue(arguments.length != 0);
       StringBuilder replaceBy = new StringBuilder();
       for (int i = 1; i < arguments.length; i++) {
         PsiExpression argument = arguments[i];
-        replaceBy.append(".").append(methodName).append("(").append(GuavaConversionUtil.adjust(argument, false, myTargetType, evaluator).getText()).append(")");
+        replaceBy.append(".").append(methodName).append("(").append(GuavaConversionUtil.adjustLambdaContainingExpression(argument, false, myTargetType, evaluator).getText()).append(")");
       }
-      replaceBy.insert(0, GuavaConversionUtil.adjust(arguments[0], true, myTargetType, evaluator).getText());
+      replaceBy.insert(0, GuavaConversionUtil.adjustLambdaContainingExpression(arguments[0], true, myTargetType, evaluator).getText());
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiMethodReferenceExpression) {
         expression = replaceTypeCast(expression, parent);

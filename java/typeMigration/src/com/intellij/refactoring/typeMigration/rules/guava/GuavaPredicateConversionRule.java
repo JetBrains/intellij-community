@@ -55,8 +55,7 @@ public class GuavaPredicateConversionRule extends GuavaLambdaConversionRule {
     if (!(context instanceof PsiMethodCallExpression)) {
       return null;
     }
-    final PsiClass aClass = method.getContainingClass();
-    if (aClass != null && GUAVA_PREDICATES_UTILITY.equals(aClass.getQualifiedName())) {
+    if (isPredicates((PsiMethodCallExpression)context)) {
       final TypeConversionDescriptorBase descriptor = GuavaPredicatesUtil.tryConvertIfPredicates(method, context);
       if (descriptor != null) {
         return descriptor;
