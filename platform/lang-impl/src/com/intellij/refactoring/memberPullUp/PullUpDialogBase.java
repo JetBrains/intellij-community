@@ -113,7 +113,6 @@ public abstract class PullUpDialogBase<Storage extends AbstractMemberInfoStorage
         }
       }
     });
-    updateMemberInfo();
     gbConstraints.gridy++;
     panel.add(myClassCombo, gbConstraints);
 
@@ -139,6 +138,7 @@ public abstract class PullUpDialogBase<Storage extends AbstractMemberInfoStorage
     panel.add(myMemberSelectionPanel, BorderLayout.CENTER);
 
     addCustomElementsToCentralPanel(panel);
+    updateMemberInfo();
 
     return panel;
   }

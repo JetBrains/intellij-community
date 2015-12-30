@@ -123,7 +123,7 @@ class ReferencePopupComponent extends JPanel {
     myPopup.cancel(); // close the popup immediately not to stay at the front if jumping to a commits takes long time.
     VcsRef selectedRef = (VcsRef)myList.getSelectedValue();
     if (selectedRef != null) {
-      myUi.jumpToCommit(selectedRef.getCommitHash());
+      myUi.jumpToCommit(selectedRef.getCommitHash(), selectedRef.getRoot());
     }
   }
 

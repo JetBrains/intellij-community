@@ -25,10 +25,10 @@ import com.intellij.psi.util.PsiUtil;
  * User: anna
  * Date: 1/10/13
  */
-public class JavaFxStaticPropertyAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
+public class JavaFxStaticSetterAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
   private final PsiMethod mySetter;
   
-  public JavaFxStaticPropertyAttributeDescriptor(PsiMethod setter, String name) {
+  public JavaFxStaticSetterAttributeDescriptor(PsiMethod setter, String name) {
     super(name, setter.getContainingClass());
     mySetter = setter;
   }

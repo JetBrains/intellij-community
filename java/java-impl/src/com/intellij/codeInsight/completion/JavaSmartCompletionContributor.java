@@ -33,6 +33,7 @@ import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.filters.types.AssignableToFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.proximity.ReferenceListWeigher;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -79,7 +80,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       psiElement().withText(")").withParent(PsiTypeCastExpression.class)));
 
   @Nullable
-  private static ElementFilter getClassReferenceFilter(PsiElement element) {
+  private static ElementFilter getClassReferenceFilter(final PsiElement element, final boolean inRefList) {
     //throw new foo
     if (AFTER_THROW_NEW.accepts(element)) {
       return THROWABLES_FILTER;
@@ -98,14 +99,24 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       }
     }
 
+    // extends/implements/throws
+    if (inRefList) {
+      return new ElementExtractorFilter(new ElementFilter() {
+        @Override
+        public boolean isAcceptable(Object aClass, @Nullable PsiElement context) {
+          return aClass instanceof PsiClass && ReferenceListWeigher.INSTANCE.getApplicability((PsiClass)aClass, element) !=
+                                               ReferenceListWeigher.ReferenceListApplicability.inapplicable;
+        }
+
+        @Override
+        public boolean isClassAcceptable(Class hintClass) {
+          return true;
+        }
+      });
+    }
+
     return null;
   }
-
-  private static boolean isInsideThrowsList(PsiElement element) {
-    PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-    return method != null && PsiTreeUtil.isAncestor(method.getThrowsList(), element, true);
-  }
-
 
   public JavaSmartCompletionContributor() {
     extend(CompletionType.SMART, SmartCastProvider.TYPECAST_TYPE_CANDIDATE, new SmartCastProvider());
@@ -125,16 +136,13 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         final PsiJavaCodeReferenceElement reference = 
           PsiTreeUtil.findElementOfClassAtOffset(element.getContainingFile(), parameters.getOffset(), PsiJavaCodeReferenceElement.class, false);
         if (reference != null) {
-          ElementFilter filter = getClassReferenceFilter(element);
-          boolean completeConstructor = filter != null;
-          if (filter == null && isInsideThrowsList(element)) {
-            filter = THROWABLES_FILTER;
-          }
+          boolean inRefList = ReferenceListWeigher.INSIDE_REFERENCE_LIST.accepts(element);
+          ElementFilter filter = getClassReferenceFilter(element, inRefList);
           if (filter != null) {
             final List<ExpectedTypeInfo> infos = Arrays.asList(getExpectedTypes(parameters));
             for (LookupElement item : completeReference(element, reference, filter, true, false, parameters, result.getPrefixMatcher())) {
               if (item.getObject() instanceof PsiClass) {
-                if (completeConstructor) {
+                if (!inRefList) {
                   item = LookupElementDecorator.withInsertHandler(item, ConstructorInsertHandler.SMART_INSTANCE);
                 }
                 result.addElement(decorate(item, infos));
@@ -150,7 +158,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
               }
             }
           }
-
         }
       }
     });

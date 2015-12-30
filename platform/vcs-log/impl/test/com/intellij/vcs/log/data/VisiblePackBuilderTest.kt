@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.mock.MockVirtualFile
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Function
 import com.intellij.vcs.log.*
@@ -227,11 +228,11 @@ class VisiblePackBuilderTest {
   class ConstantVcsLogHashMap(val map: Map<Hash, Int>) : VcsLogHashMap {
     val reverseMap = map.entrySet().map { Pair(it.value, it.key) }.toMap()
 
-    override fun getCommitIndex(hash: Hash) = map.get(hash)!!
+    override fun getCommitIndex(hash: Hash, root: VirtualFile) = map.get(hash)!!
 
     override fun getHash(commitIndex: Int) = reverseMap.get(commitIndex)!!
 
-    override fun findHashByString(string: String) = throw UnsupportedOperationException()
+    override fun findCommitId(condition: Condition<CommitId>): CommitId? = throw UnsupportedOperationException()
   }
 }
 

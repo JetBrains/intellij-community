@@ -94,7 +94,15 @@
     <item name='org.apache.commons.collections.map.AbstractHashedMap java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.map.AbstractHashedMap org.apache.commons.collections.MapIterator mapIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap org.apache.commons.collections.map.AbstractHashedMap.HashEntry createEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, int, java.lang.Object, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap org.apache.commons.collections.map.AbstractHashedMap.HashEntry entryNext(org.apache.commons.collections.map.AbstractHashedMap.HashEntry)'>
@@ -210,7 +218,20 @@
     <item name='org.apache.commons.collections.map.AbstractLinkedMap java.lang.Object previousKey(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.map.AbstractLinkedMap org.apache.commons.collections.MapIterator mapIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.map.AbstractLinkedMap org.apache.commons.collections.OrderedMapIterator orderedMapIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.map.AbstractLinkedMap org.apache.commons.collections.map.AbstractHashedMap.HashEntry createEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, int, java.lang.Object, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.map.AbstractLinkedMap org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry entryAfter(org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry)'>

@@ -72,7 +72,7 @@ public class DataPack {
     Set<Integer> result = new HashSet<Integer>();
     for (VcsRef vcsRef : allRefs) {
       if (vcsRef.getType().isBranch())
-        result.add(hashMap.getCommitIndex(vcsRef.getCommitHash()));
+        result.add(hashMap.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()));
     }
     return result;
   }
