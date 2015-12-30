@@ -69,7 +69,7 @@ abstract class ContextDependentAsyncResultConsumer<T>(private val context: Suspe
 }
 
 
-inline fun <T> Promise<out T>.done(context: SuspendContext<*>, crossinline handler: (result: T) -> Unit) = done(object : ContextDependentAsyncResultConsumer<T>(context) {
+inline fun <T> Promise<out T>.done(context: SuspendContext<*>, crossinline handler: (result: T) -> Unit) = (this as Promise<T>).done(object : ContextDependentAsyncResultConsumer<T>(context) {
   override fun consume(result: T, vm: Vm) = handler(result)
 })
 
