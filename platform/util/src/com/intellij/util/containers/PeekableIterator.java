@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.ex;
+package com.intellij.util.containers;
 
-import com.intellij.util.containers.PeekableIterator;
+import java.util.Iterator;
 
-import java.util.NoSuchElementException;
+public interface PeekableIterator<T> extends Iterator<T> {
+  T peek();
 
-/**
- * An iterator you must to {@link #dispose()} after use
- */
-public interface DisposableIterator<T> extends PeekableIterator<T> {
-  void dispose();
-
-  DisposableIterator EMPTY = new DisposableIterator() {
-    @Override
-    public void dispose() {
-    }
-
+  PeekableIterator EMPTY = new PeekableIterator() {
     @Override
     public Object peek() {
       return null;
@@ -42,12 +33,12 @@ public interface DisposableIterator<T> extends PeekableIterator<T> {
 
     @Override
     public Object next() {
-      throw new NoSuchElementException();
+      return null;
     }
 
     @Override
     public void remove() {
-      throw new NoSuchElementException();
+      throw new UnsupportedOperationException("remove");
     }
   };
 }

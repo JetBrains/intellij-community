@@ -140,7 +140,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
   @NotNull
   @Override
   public DisposableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
-    return IntervalTreeImpl.PeekableIterator.EMPTY;
+    return DisposableIterator.EMPTY;
   }
 
   @Override

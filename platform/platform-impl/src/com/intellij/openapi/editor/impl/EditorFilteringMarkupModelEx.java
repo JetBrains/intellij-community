@@ -94,7 +94,7 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   }
 
   private class MyFilteringIterator extends FilteringIterator<RangeHighlighterEx, RangeHighlighterEx>
-    implements DisposableIterator<RangeHighlighterEx>, IntervalTreeImpl.PeekableIterator<RangeHighlighterEx> {
+    implements DisposableIterator<RangeHighlighterEx> {
     private DisposableIterator<RangeHighlighterEx> myDelegate;
 
     public MyFilteringIterator(@NotNull DisposableIterator<RangeHighlighterEx> delegate) {

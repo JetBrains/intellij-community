@@ -563,38 +563,8 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
     return processContaining(root.getRight(), offset, modCountBefore, delta, processor);
   }
 
-  interface PeekableIterator<T> extends DisposableIterator<T> {
-    T peek();
-    PeekableIterator EMPTY = new PeekableIterator() {
-      @Override
-      public Object peek() {
-        return null;
-      }
-
-      @Override
-      public void dispose() {
-
-      }
-
-      @Override
-      public boolean hasNext() {
-        return false;
-      }
-
-      @Override
-      public Object next() {
-        return null;
-      }
-
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException("remove");
-      }
-    };
-  }
-
   @NotNull
-  private PeekableIterator<T> overlappingIterator(@NotNull final TextRangeInterval rangeInterval) {
+  private DisposableIterator<T> overlappingIterator(@NotNull final TextRangeInterval rangeInterval) {
     l.readLock().lock();
 
     try {
@@ -604,13 +574,13 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
       if (firstOverlap == null) {
         l.readLock().unlock();
         //noinspection unchecked
-        return PeekableIterator.EMPTY;
+        return DisposableIterator.EMPTY;
       }
       final int firstOverlapDelta = firstOverlap.computeDeltaUpToRoot();
       final int firstOverlapStart = firstOverlap.intervalStart() + firstOverlapDelta;
       final int modCountBefore = modCount;
 
-      return new PeekableIterator<T>() {
+      return new DisposableIterator<T>() {
         private IntervalNode<T> currentNode = firstOverlap;
         private int deltaUpToRootExclusive = firstOverlapDelta-firstOverlap.delta;
         private int indexInCurrentList;
@@ -1395,21 +1365,21 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
 
   // combines iterators for two trees in one using specified comparator
   @NotNull
-  static <T extends MutableInterval> PeekableIterator<T> mergingOverlappingIterator(@NotNull IntervalTreeImpl<T> tree1,
-                                                                                    @NotNull TextRangeInterval tree1Range,
-                                                                                    @NotNull IntervalTreeImpl<T> tree2,
-                                                                                    @NotNull TextRangeInterval tree2Range,
-                                                                                    @NotNull Comparator<? super T> comparator) {
-    PeekableIterator<T> exact = tree1.overlappingIterator(tree1Range);
-    PeekableIterator<T> lines = tree2.overlappingIterator(tree2Range);
+  static <T extends MutableInterval> DisposableIterator<T> mergingOverlappingIterator(@NotNull IntervalTreeImpl<T> tree1,
+                                                                                      @NotNull TextRangeInterval tree1Range,
+                                                                                      @NotNull IntervalTreeImpl<T> tree2,
+                                                                                      @NotNull TextRangeInterval tree2Range,
+                                                                                      @NotNull Comparator<? super T> comparator) {
+    DisposableIterator<T> exact = tree1.overlappingIterator(tree1Range);
+    DisposableIterator<T> lines = tree2.overlappingIterator(tree2Range);
     return mergeIterators(exact, lines, comparator);
   }
 
   @NotNull
-  static <T extends MutableInterval> PeekableIterator<T> mergeIterators(@NotNull final PeekableIterator<T> iterator1,
-                                                                        @NotNull final PeekableIterator<T> iterator2,
-                                                                        @NotNull final Comparator<? super T> comparator) {
-    return new PeekableIterator<T>() {
+  static <T extends MutableInterval> DisposableIterator<T> mergeIterators(@NotNull final DisposableIterator<T> iterator1,
+                                                                          @NotNull final DisposableIterator<T> iterator2,
+                                                                          @NotNull final Comparator<? super T> comparator) {
+    return new DisposableIterator<T>() {
       @Override
       public void dispose() {
         iterator1.dispose();
@@ -1427,7 +1397,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
       }
 
       @NotNull
-      private PeekableIterator<T> choose() {
+      private DisposableIterator<T> choose() {
         T t1 = iterator1.hasNext() ? iterator1.peek() : null;
         T t2 = iterator2.hasNext() ? iterator2.peek() : null;
         if (t1 == null) {
