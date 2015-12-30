@@ -88,15 +88,15 @@ public class VcsCherryPickManager {
   }
 
   private class CherryPickingTask extends Task.Backgroundable {
-    private final Map<VcsCherryPicker, List<VcsFullCommitDetails>> myGroupedCommits = ContainerUtil.newHashMap();
-    private final Collection<VcsFullCommitDetails> myAllCommits;
-    private final ChangeListManagerEx myChangeListManagerEx;
+    @NotNull private final Map<VcsCherryPicker, List<VcsFullCommitDetails>> myGroupedCommits = ContainerUtil.newHashMap();
+    @NotNull private final Collection<VcsFullCommitDetails> myAllCommits;
+    @NotNull private final ChangeListManagerEx myChangeListManager;
 
     public CherryPickingTask(@NotNull Project project, @NotNull Set<VcsFullCommitDetails> details) {
       super(project, "Cherry-Picking");
       myAllCommits = details;
-      myChangeListManagerEx = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);
-      myChangeListManagerEx.blockModalNotifications();
+      myChangeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);
+      myChangeListManager.blockModalNotifications();
     }
 
     public boolean processDetails(@NotNull VcsFullCommitDetails details) {
@@ -148,7 +148,7 @@ public class VcsCherryPickManager {
       finally {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            myChangeListManagerEx.unblockModalNotifications();
+            myChangeListManager.unblockModalNotifications();
             for (VcsFullCommitDetails details : myAllCommits) {
               myIdsInProgress.remove(new CommitId(details.getId(), details.getRoot()));
             }
