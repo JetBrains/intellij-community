@@ -110,7 +110,7 @@ public class CommonRefactoringUtil {
     return JBIterable.from(elements).transform(new Function<PsiElement, PsiElement>() {
       @Override
       public PsiElement fun(PsiElement e) {
-        return e instanceof PsiFileSystemItem ? e.getParent() : e;
+        return e instanceof PsiFileSystemItem && e.getParent() != null ? e.getParent() : e;
       }
     }).toSet();
   }
