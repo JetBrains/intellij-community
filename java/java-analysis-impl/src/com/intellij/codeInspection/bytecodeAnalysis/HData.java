@@ -334,7 +334,7 @@ final class HEffects implements HResult {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     HEffects hEffects = (HEffects)o;
-    return !effects.equals(hEffects.effects);
+    return effects.equals(hEffects.effects);
   }
 
   @Override
