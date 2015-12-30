@@ -25,6 +25,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -46,18 +47,40 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
     }
 
     // skip inners & anonymous
-    if (isInnerClass(vFile)) return null;
+    if (isInnerClass(vFile, project)) return null;
 
     return new ClsFileImpl(this);
   }
 
   public static boolean isInnerClass(@NotNull VirtualFile vFile) {
+    return isInnerClass(vFile, null);
+  }
+
+  public static boolean isInnerClass(@NotNull VirtualFile vFile, @Nullable Project project) {
     String name = vFile.getNameWithoutExtension();
     int index = name.lastIndexOf('$', name.length());
     if (index > 0 && index < name.length() - 1) {
       String supposedParentName = name.substring(0, index) + ".class";
-      if (vFile.getParent().findChild(supposedParentName) != null) {
-        return true;
+      VirtualFile supposedParent = vFile.getParent().findChild(supposedParentName);
+      if (project == null) {
+        return supposedParent != null;
+      } else {
+        if (supposedParent != null) {
+          PsiFile supposedParentFile = PsiManager.getInstance(project).findFile(supposedParent);
+
+          return !isJavaInterface(supposedParentFile);
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isJavaInterface(PsiFile file) {
+    if (file instanceof PsiClassOwner) {
+      for (PsiClass cls : ((PsiClassOwner)file).getClasses()) {
+        if (cls.isInterface() && cls.hasModifierProperty(PsiModifier.PUBLIC)) {
+          return true;
+        }
       }
     }
     return false;

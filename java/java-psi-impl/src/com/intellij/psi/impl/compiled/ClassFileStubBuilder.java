@@ -65,7 +65,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
     }
 
     try {
-      PsiFileStub<?> stub = ClsFileImpl.buildFileStub(file, content);
+      PsiFileStub<?> stub = ClsFileImpl.buildFileStub(file, content, fileContent.getProject());
       if (stub == null && !fileContent.getFileName().contains("$")) {
         LOG.info("No stub built for file " + fileContent);
       }
