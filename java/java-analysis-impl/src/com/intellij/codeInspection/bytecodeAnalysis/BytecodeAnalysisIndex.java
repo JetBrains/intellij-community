@@ -123,7 +123,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
   /**
    * Externalizer for compressed equations.
    */
-  public static class HEquationsExternalizer implements DataExternalizer<HEquations>, DifferentSerializableBytesImplyNonEqualityPolicy {
+  public static class HEquationsExternalizer implements DataExternalizer<HEquations> {
     @Override
     public void save(@NotNull DataOutput out, HEquations eqs) throws IOException {
       out.writeBoolean(eqs.stable);
