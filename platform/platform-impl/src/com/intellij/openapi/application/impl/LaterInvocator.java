@@ -47,7 +47,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@SuppressWarnings({"SSBasedInspection"})
+@SuppressWarnings("SSBasedInspection")
 public class LaterInvocator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.LaterInvocator");
   private static final boolean DEBUG = LOG.isDebugEnabled();
@@ -83,7 +83,7 @@ public class LaterInvocator {
 
   private static final List<Object> ourModalEntities = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final List<RunnableInfo> ourQueue = new ArrayList<RunnableInfo>(); //protected by LOCK
-  private static volatile int ourQueueSkipCount = 0; // optimization
+  private static volatile int ourQueueSkipCount; // optimization
   private static final FlushQueue ourFlushQueueRunnable = new FlushQueue();
 
   private static final Stack<AWTEvent> ourEventStack = new Stack<AWTEvent>(); // guarded by RUN_LOCK
@@ -136,7 +136,7 @@ public class LaterInvocator {
 
   @NotNull
   static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired) {
-    ourFrequentEventDetector.eventHappened();
+    ourFrequentEventDetector.eventHappened(runnable);
 
     final ActionCallback callback = new ActionCallback();
     RunnableInfo runnableInfo = new RunnableInfo(runnable, modalityState, expired, callback);
