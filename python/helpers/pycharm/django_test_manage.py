@@ -4,6 +4,7 @@ import os
 import sys
 
 from django.core.management import ManagementUtility
+from django.core.management.base import CommandError, CommandParser, handle_default_options
 
 from pycharm_run_utils import import_system_module
 from teamcity import teamcity_presence_env_var
@@ -18,6 +19,15 @@ sys.path.insert(0, project_directory)
 #import settings to prevent circular dependencies later on import django.db
 try:
     from django.conf import settings
+    parser = CommandParser(None)
+    parser.add_argument('--settings')
+    parser.add_argument('--pythonpath')
+    parser.add_argument('args', nargs='*')  # catch-all
+    try:
+      options, args = parser.parse_known_args(sys.argv[2:])
+      handle_default_options(options)
+    except CommandError:
+      pass  # Ignore any option errors at this point.
     apps = settings.INSTALLED_APPS
 except:
     pass
