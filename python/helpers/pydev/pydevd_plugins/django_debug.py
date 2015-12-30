@@ -141,19 +141,10 @@ def suspend_django(main_debugger, thread, frame, cmd=CMD_SET_BREAK):
     if frame.f_lineno is None:
         return None
 
-    #try:
-    #    if thread.additional_info.filename == frame.f_code.co_filename and thread.additional_info.line == frame.f_lineno:
-    #        return None # don't stay twice on the same line
-    #except AttributeError:
-    #    pass
-
     pydevd_vars.add_additional_frame_by_id(get_thread_id(thread), {id(frame): frame})
 
     main_debugger.set_suspend(thread, cmd)
     thread.additional_info.suspend_type = DJANGO_SUSPEND
-
-    thread.additional_info.filename = frame.f_code.co_filename
-    thread.additional_info.line = frame.f_lineno
 
     return frame
 
