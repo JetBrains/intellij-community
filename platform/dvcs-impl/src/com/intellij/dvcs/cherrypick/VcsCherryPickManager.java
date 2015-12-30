@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.cherrypick;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +33,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
@@ -88,7 +90,14 @@ public class VcsCherryPickManager {
   }
 
   private class CherryPickingTask extends Task.Backgroundable {
-    @NotNull private final Map<VcsCherryPicker, List<VcsFullCommitDetails>> myGroupedCommits = ContainerUtil.newHashMap();
+    @NotNull private final MultiMap<VcsCherryPicker, VcsFullCommitDetails> myGroupedCommits =
+      new MultiMap<VcsCherryPicker, VcsFullCommitDetails>() {
+        @NotNull
+        @Override
+        protected Collection<VcsFullCommitDetails> createCollection() {
+          return new ArrayList<VcsFullCommitDetails>();
+        }
+      };
     @NotNull private final Collection<VcsFullCommitDetails> myAllCommits;
     @NotNull private final ChangeListManagerEx myChangeListManager;
 
@@ -113,11 +122,7 @@ public class VcsCherryPickManager {
           "Cherry pick is not supported for commit " + details.getId().toShortString() + " from root " + details.getRoot().getName());
         return false;
       }
-      List<VcsFullCommitDetails> list = myGroupedCommits.get(cherryPicker);
-      if (list == null) {
-        myGroupedCommits.put(cherryPicker, list = new ArrayList<VcsFullCommitDetails>()); // ordered set!!
-      }
-      list.add(details);
+      myGroupedCommits.putValue(cherryPicker, details);
       return true;
     }
 
@@ -138,9 +143,8 @@ public class VcsCherryPickManager {
         }
 
         if (isOk) {
-          for (Map.Entry<VcsCherryPicker, List<VcsFullCommitDetails>> entry : myGroupedCommits.entrySet()) {
-            List<VcsFullCommitDetails> commits = entry.getValue();
-            Collections.reverse(commits);
+          for (Map.Entry<VcsCherryPicker, Collection<VcsFullCommitDetails>> entry : myGroupedCommits.entrySet()) {
+            List<VcsFullCommitDetails> commits = Lists.reverse(Lists.newArrayList(entry.getValue()));
             entry.getKey().cherryPick(commits);
           }
         }
