@@ -138,21 +138,21 @@ public abstract class Promise<T> {
   }
 
   @NotNull
-  public abstract Promise<T> done(@NotNull Consumer<T> done);
+  public abstract Promise<T> done(@NotNull Consumer<? super T> done);
 
   @NotNull
-  public abstract Promise<T> processed(@NotNull AsyncPromise<T> fulfilled);
+  public abstract Promise<T> processed(@NotNull AsyncPromise<? super T> fulfilled);
 
   @NotNull
   public abstract Promise<T> rejected(@NotNull Consumer<Throwable> rejected);
 
-  public abstract Promise<T> processed(@NotNull Consumer<T> processed);
+  public abstract Promise<T> processed(@NotNull Consumer<? super T> processed);
 
   @NotNull
-  public abstract <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<T, SUB_RESULT> done);
+  public abstract <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<? super T, ? extends SUB_RESULT> done);
 
   @NotNull
-  public abstract <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull AsyncFunction<T, SUB_RESULT> done);
+  public abstract <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull AsyncFunction<? super T, SUB_RESULT> done);
 
   @NotNull
   public abstract State getState();
@@ -195,5 +195,5 @@ public abstract class Promise<T> {
     }
   }
 
-  public abstract void notify(@NotNull AsyncPromise<T> child);
+  public abstract void notify(@NotNull AsyncPromise<? super T> child);
 }

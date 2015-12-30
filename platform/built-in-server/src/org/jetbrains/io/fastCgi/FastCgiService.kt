@@ -82,7 +82,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
         promise = processHandler.get()
       }
 
-      promise
+      (promise as Promise<Any?>)
         .done { fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel.get()!!) }
         .rejected {
           Promise.logError(LOG, it)
