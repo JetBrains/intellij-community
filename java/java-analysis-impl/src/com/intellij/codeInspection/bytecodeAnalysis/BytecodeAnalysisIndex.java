@@ -181,8 +181,11 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
                 else if (dataValue == DataValue.OwnedDataValue) {
                   DataInputOutputUtil.writeINT(out, -3);
                 }
-                else if (dataValue == DataValue.UnknownDataValue1 || dataValue == DataValue.UnknownDataValue2) {
+                else if (dataValue == DataValue.UnknownDataValue1) {
                   DataInputOutputUtil.writeINT(out, -4);
+                }
+                else if (dataValue == DataValue.UnknownDataValue2) {
+                  DataInputOutputUtil.writeINT(out, -5);
                 }
                 else if (dataValue instanceof DataValue.ParameterDataValue) {
                   DataInputOutputUtil.writeINT(out, ((DataValue.ParameterDataValue)dataValue).n);
@@ -240,6 +243,9 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
                 }
                 else if (dataI == -4) {
                   data[di] = DataValue.UnknownDataValue1;
+                }
+                else if (dataI == -5) {
+                  data[di] = DataValue.UnknownDataValue2;
                 }
                 else {
                   data[di] = new DataValue.ParameterDataValue(dataI);
