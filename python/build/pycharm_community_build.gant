@@ -29,7 +29,7 @@ private List<String> pycharmPlatformApiModules() {
 
 private List pycharmImplementationModules() {   //modules to put into pycharm.jar
   return [platformImplementationModules, "dom-impl", "python-community", "python-community-ide-resources",
-    "python-ide-community", "python-configure", "python-openapi", "python-psi-api", "platform-main"].flatten()
+    "python-ide-community", "python-community-configure", "python-openapi", "python-psi-api", "platform-main"].flatten()
 }
 
 private List modules() {

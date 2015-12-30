@@ -2,7 +2,7 @@
   <!-- Components and extensions declared in this file work ONLY in PyCharm, not in Python plugin.
        Both Community and Professional editions. -->
 
-  <xi:include href="/META-INF/python-configure-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/python-community-configure-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <extensions defaultExtensionNs="com.intellij">
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"

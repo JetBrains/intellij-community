@@ -1,8 +1,6 @@
 <idea-plugin version="2" url="https://confluence.jetbrains.com/display/PYH/">
-  <!-- Components and extensions declared in this file work ONLY in PyCharm, not in Python plugin.
+  <!-- Components and extensions declared in this file work ONLY in PyCharm and CLion Python plugin, not in Standard Python plugin.
        Both Community and Professional editions. -->
-
-  <!-- Components and extensions declared in this file work in CLion Python Plugin to configure Python toolchain -->
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.jetbrains.python.configuration.PyConfigurableInterpreterList"

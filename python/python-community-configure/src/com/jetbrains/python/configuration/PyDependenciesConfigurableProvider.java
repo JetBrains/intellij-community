@@ -19,7 +19,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.python.configuration.PyDependenciesConfigurable;
 
 /**
  * @author Sergey.Malenkov

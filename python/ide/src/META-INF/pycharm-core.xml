@@ -14,7 +14,7 @@
   <xi:include href="/META-INF/RemoteServers.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/python-configure.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/python-community-configure-ide.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <application-components>
     <component>
