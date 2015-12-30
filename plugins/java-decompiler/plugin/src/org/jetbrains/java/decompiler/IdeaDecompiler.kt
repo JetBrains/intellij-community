@@ -171,10 +171,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     }
     catch (e: Exception) {
       if (ApplicationManager.getApplication().isUnitTestMode) {
-        val error = AssertionError(file.url)
-        @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-        (error as java.lang.Throwable).initCause(e)
-        throw error
+        throw AssertionError(file.url, e)
       }
       else {
         throw ClassFileDecompilers.Light.CannotDecompileException(e)
