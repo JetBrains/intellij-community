@@ -18,7 +18,6 @@ package com.intellij.refactoring.typeMigration.rules.guava;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiVariable;
-import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,31 +27,48 @@ import java.util.Map;
 /**
  * @author Dmitry Batkovich
  */
-public class GuavaFunctionConversionRule extends BaseGuavaTypeConversionRule {
-  public static final String JAVA_UTIL_FUNCTION_FUNCTION = "java.util.function.Function";
-  public static final String GUAVA_FUNCTION = "com.google.common.base.Function";
+public class GuavaLambdaConversionRule extends BaseGuavaTypeConversionRule {
+  private final GuavaLambda myLambda;
+
+  protected GuavaLambdaConversionRule(GuavaLambda lambda) {
+    myLambda = lambda;
+  }
 
   @Override
   protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {
-    descriptorsMap.put("apply", new FunctionalInterfaceTypeConversionDescriptor("apply", "apply", JAVA_UTIL_FUNCTION_FUNCTION));
+    descriptorsMap.put(myLambda.getSamName(), new FunctionalInterfaceTypeConversionDescriptor(myLambda.getSamName(), myLambda.getJavaAnalogueSamName(), myLambda.getJavaAnalogueClassQName()));
   }
 
   @Nullable
   @Override
   protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
                                                                             @NotNull PsiVariable psiVariable, PsiExpression context) {
-    return new FunctionalInterfaceTypeConversionDescriptor("apply", "apply", JAVA_UTIL_FUNCTION_FUNCTION);
+    return new FunctionalInterfaceTypeConversionDescriptor(myLambda.getSamName(), myLambda.getJavaAnalogueSamName(), myLambda.getJavaAnalogueClassQName());
   }
 
   @NotNull
   @Override
   public String ruleFromClass() {
-    return GUAVA_FUNCTION;
+    return myLambda.getClassQName();
   }
 
   @NotNull
   @Override
   public String ruleToClass() {
-    return JAVA_UTIL_FUNCTION_FUNCTION;
+    return myLambda.getJavaAnalogueClassQName();
   }
+
+  public static class Function extends GuavaLambdaConversionRule {
+    public Function() {
+      super(GuavaLambda.FUNCTION);
+    }
+  }
+
+  public static class Supplier extends GuavaLambdaConversionRule {
+    public Supplier() {
+      super(GuavaLambda.SUPPLIER);
+    }
+  }
+
 }
+

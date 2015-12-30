@@ -55,65 +55,10 @@ public class GuavaTypeConversionDescriptor extends TypeConversionDescriptor {
     if (myConvertParameterAsLambda) {
       final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
       if (arguments.length == 1) {
-        final PsiExpression functionArg = arguments[0];
-        convertParameter(functionArg, evaluator);
+        GuavaConversionUtil.adjust(arguments[0], false, null, evaluator);
       }
     }
     return super.replace(expression, evaluator);
-  }
-
-  private static PsiExpression addApplyReference(final PsiExpression expression, TypeEvaluator evaluator) {
-    String samMethodName = null;
-    PsiType type = evaluator.evaluateType(expression);
-    if (type instanceof PsiClassType) {
-      PsiClass resolvedClass = ((PsiClassType)type).resolve();
-      if (resolvedClass != null) {
-        final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(expression.getProject());
-        final GlobalSearchScope scope = resolvedClass.getResolveScope();
-        if (InheritanceUtil.isInheritorOrSelf(resolvedClass, javaPsiFacade.findClass(GuavaSupplierConversionRule.GUAVA_SUPPLIER, scope), true)) {
-          samMethodName = "get";
-        }
-        else if (InheritanceUtil.isInheritorOrSelf(resolvedClass, javaPsiFacade.findClass(GuavaFunctionConversionRule.GUAVA_FUNCTION, scope), true) ||
-                 InheritanceUtil.isInheritorOrSelf(resolvedClass, javaPsiFacade.findClass(GuavaPredicateConversionRule.GUAVA_PREDICATE, scope), true)) {
-          samMethodName = "apply";
-        }
-      }
-    }
-    if (samMethodName == null) {
-      return expression;
-    }
-    return (PsiExpression)expression.replace(
-      JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::" + samMethodName, null));
-  }
-
-  public static PsiExpression convertParameter(PsiExpression expression, TypeEvaluator evaluator) {
-    if (expression instanceof PsiNewExpression) {
-      final PsiAnonymousClass anonymousClass = ((PsiNewExpression)expression).getAnonymousClass();
-      if (anonymousClass != null) {
-        if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, true)) {
-          AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, true, true);
-        }
-      }
-      else {
-        return addApplyReference(expression, evaluator);
-      }
-    }
-    else if (!(expression instanceof PsiFunctionalExpression)) {
-      return addApplyReference(expression, evaluator);
-    }
-    else if (expression instanceof PsiMethodReferenceExpression) {
-      final PsiElement qualifier = ((PsiMethodReferenceExpression)expression).getQualifier();
-      PsiType qualifierType;
-      if (qualifier instanceof PsiExpression && (qualifierType = evaluator.evaluateType((PsiExpression)qualifier)) != null) {
-        final PsiClass qualifierClass = PsiTypesUtil.getPsiClass(qualifierType);
-        if (qualifierClass != null && (Comparing.equal(qualifierClass.getQualifiedName(), GuavaFunctionConversionRule.JAVA_UTIL_FUNCTION_FUNCTION) ||
-            Comparing.equal(qualifierClass.getQualifiedName(), GuavaOptionalConversionRule.JAVA_OPTIONAL) ||
-            Comparing.equal(qualifierClass.getQualifiedName(), GuavaSupplierConversionRule.JAVA_SUPPLIER) ||
-            Comparing.equal(qualifierClass.getQualifiedName(), GuavaPredicateConversionRule.JAVA_PREDICATE)))
-        return (PsiExpression)expression.replace(qualifier);
-      }
-    }
-    return expression;
   }
 
   public static boolean isIterable(PsiMethodCallExpression expression) {

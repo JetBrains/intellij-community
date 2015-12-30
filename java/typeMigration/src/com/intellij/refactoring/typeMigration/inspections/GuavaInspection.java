@@ -266,7 +266,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         }
         else {
           LOG.assertTrue(substitutionMap.size() == 2);
-          LOG.assertTrue(GuavaFunctionConversionRule.JAVA_UTIL_FUNCTION_FUNCTION.equals(targetClass.getQualifiedName()));
+          LOG.assertTrue(GuavaLambda.FUNCTION.getJavaAnalogueClassQName().equals(targetClass.getQualifiedName()));
           final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(currentType);
           final List<PsiType> types = new ArrayList<PsiType>(substitutionMap.values());
           types.remove(returnType);

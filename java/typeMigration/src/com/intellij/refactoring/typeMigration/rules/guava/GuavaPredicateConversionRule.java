@@ -31,28 +31,17 @@ import java.util.Set;
 /**
  * @author Dmitry Batkovich
  */
-public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
-  static final String GUAVA_PREDICATE = "com.google.common.base.Predicate";
-  static final String JAVA_PREDICATE = "java.util.function.Predicate";
-
+public class GuavaPredicateConversionRule extends GuavaLambdaConversionRule {
   private static final String GUAVA_PREDICATES_UTILITY = "com.google.common.base.Predicates";
+
+  protected GuavaPredicateConversionRule() {
+    super(GuavaLambda.PREDICATE);
+  }
 
   @NotNull
   @Override
   protected Set<String> getAdditionalUtilityClasses() {
     return Collections.singleton(GUAVA_PREDICATES_UTILITY);
-  }
-
-  @Override
-  protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {
-    descriptorsMap.put("apply", new FunctionalInterfaceTypeConversionDescriptor("apply", "test", JAVA_PREDICATE));
-  }
-
-  @Nullable
-  @Override
-  protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
-                                                                            @NotNull PsiVariable psiVariable, PsiExpression context) {
-    return new FunctionalInterfaceTypeConversionDescriptor("apply", "test", JAVA_PREDICATE);
   }
 
   @Nullable
@@ -79,18 +68,6 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
         return (PsiExpression)expression.replace(JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::test", expression));
       }
     };
-  }
-
-  @NotNull
-  @Override
-  public String ruleFromClass() {
-    return GUAVA_PREDICATE;
-  }
-
-  @NotNull
-  @Override
-  public String ruleToClass() {
-    return JAVA_PREDICATE;
   }
 
   public static boolean isPredicates(PsiMethodCallExpression expression) {
