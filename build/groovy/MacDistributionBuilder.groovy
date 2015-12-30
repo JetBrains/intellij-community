@@ -23,7 +23,7 @@ class MacDistributionBuilder {
   JpsGantProjectBuilder projectBuilder
   MacHostProperties macHostProperties
   /**
-   * Directory where IntelliJ IDEA community sources are located
+   * Path to a directory where IntelliJ IDEA community sources are located
    */
   String communityHome
   /**
