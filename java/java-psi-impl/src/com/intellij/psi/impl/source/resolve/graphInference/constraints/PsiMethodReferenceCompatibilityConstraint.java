@@ -26,6 +26,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -259,7 +260,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     return psiSubstitutor;
   }
 
-  public static PsiSubstitutor getParameterizedTypeSubstitutor(PsiClass qContainingClass, PsiType pType) {
+  public static PsiSubstitutor getParameterizedTypeSubstitutor(PsiClass qContainingClass, @NotNull PsiType pType) {
     if (pType instanceof PsiIntersectionType) {
       for (PsiType type : ((PsiIntersectionType)pType).getConjuncts()) {
         PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
@@ -271,7 +272,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
 
     PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(pType);
     PsiClass paramClass = resolveResult.getElement();
-    LOG.assertTrue(paramClass != null);
+    LOG.assertTrue(paramClass != null, pType.getCanonicalText());
     PsiSubstitutor psiSubstitutor = TypeConversionUtil.getClassSubstitutor(qContainingClass, paramClass, resolveResult.getSubstitutor());
     LOG.assertTrue(psiSubstitutor != null);
     return psiSubstitutor;
