@@ -53,8 +53,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
   //public class GuavaInspection extends BaseJavaBatchLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(GuavaInspection.class);
 
-  public final static String PROBLEM_DESCRIPTION_FOR_VARIABLE = "Guava's functional primitives can be replaced by Java API";
-  public final static String PROBLEM_DESCRIPTION_FOR_METHOD_CHAIN = "Guava's FluentIterable method chain can be replaced by Java API";
+  public final static String PROBLEM_DESCRIPTION = "Guava's functional primitives can be replaced by Java API";
 
   private final static SoftLazyValue<Set<String>> FLUENT_ITERABLE_STOP_METHODS = new SoftLazyValue<Set<String>>() {
     @NotNull
@@ -116,7 +115,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         PsiType targetType = getConversionClassType(type);
         if (targetType != null) {
           holder.registerProblem(variable.getNameIdentifier(),
-                                 PROBLEM_DESCRIPTION_FOR_VARIABLE,
+                                 PROBLEM_DESCRIPTION,
                                  new MigrateGuavaTypeFix(variable, targetType));
         }
       }
@@ -130,7 +129,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
           final PsiTypeElement typeElement = method.getReturnTypeElement();
           if (typeElement != null) {
             holder.registerProblem(typeElement,
-                                   PROBLEM_DESCRIPTION_FOR_VARIABLE,
+                                   PROBLEM_DESCRIPTION,
                                    new MigrateGuavaTypeFix(method, targetType));
           }
         }
@@ -148,7 +147,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
           PsiClassType targetType = createTargetType(initialType);
           if (targetType == null) return;
           holder.registerProblem(expression.getMethodExpression().getReferenceNameElement(),
-                                 PROBLEM_DESCRIPTION_FOR_VARIABLE,
+                                 PROBLEM_DESCRIPTION,
                                  new MigrateGuavaTypeFix(expression, targetType));
         }
       }
@@ -171,7 +170,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         if (chain.getParent() instanceof PsiReferenceExpression && chain.getParent().getParent() instanceof PsiMethodCallExpression) {
           highlightedElement = chain.getParent().getParent();
         }
-        holder.registerProblem(highlightedElement, PROBLEM_DESCRIPTION_FOR_METHOD_CHAIN, new MigrateGuavaTypeFix(chain, targetType));
+        holder.registerProblem(highlightedElement, PROBLEM_DESCRIPTION, new MigrateGuavaTypeFix(chain, targetType));
       }
 
       @Nullable
