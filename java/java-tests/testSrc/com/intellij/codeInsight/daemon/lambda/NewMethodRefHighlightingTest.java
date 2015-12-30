@@ -62,6 +62,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(true);
   }
 
+  public void testUncheckedWarningWithRawSecondSearchAndMethodFromSuper() throws Exception {
+    doTest(true);
+  }
+
   public void testWildcardReturns() throws Exception {
     doTest(false);
   }

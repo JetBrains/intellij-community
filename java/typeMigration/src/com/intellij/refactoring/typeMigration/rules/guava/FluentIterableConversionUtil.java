@@ -127,7 +127,7 @@ public class FluentIterableConversionUtil {
     if (CommonClassNames.JAVA_LANG_CLASS.equals(resolvedClass.getQualifiedName())) {
       return new GuavaFilterInstanceOfConversionDescriptor();
     }
-    else if (GuavaPredicateConversionRule.GUAVA_PREDICATE.equals(resolvedClass.getQualifiedName())) {
+    else if (GuavaLambda.PREDICATE.getClassQName().equals(resolvedClass.getQualifiedName())) {
       return new GuavaTypeConversionDescriptor("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "($p$)");
     }
     return null;

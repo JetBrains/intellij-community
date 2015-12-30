@@ -11,9 +11,9 @@
 
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.GuavaOptionalConversionRule"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.GuavaFluentIterableConversionRule"/>
-    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.GuavaFunctionConversionRule"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.GuavaLambdaConversionRule$Function"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.GuavaLambdaConversionRule$Supplier"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.GuavaPredicateConversionRule"/>
-    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.GuavaSupplierConversionRule"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.IterableStreamConversionRule"/>
     <intentionAction>
       <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention</className>

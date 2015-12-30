@@ -55,6 +55,7 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
     private final TemplateResource template;
     private final Editor myEditor;
     private final List<String> availableImplicits = new ArrayList<String>();
+  private String myHint;
 
   public GenerateTemplateConfigurable(TemplateResource template, Map<String, PsiType> contextMap, Project project) {
     this(template, contextMap, project, true);
@@ -92,15 +93,20 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
       myEditor = factory.createEditor(doc, project, ftl != null ? ftl : FileTypes.PLAIN_TEXT, template.isDefault());
     }
 
+    public void setHint(String hint) {
+      myHint = hint;
+    }
+  
     public JComponent createComponent() {
       final JComponent component = myEditor.getComponent();
-      if (availableImplicits.isEmpty()) {
+      if (availableImplicits.isEmpty() && myHint == null) {
         return component;
       }
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(component, BorderLayout.CENTER);
-      MultiLineLabel label =
-        new MultiLineLabel("<html>Available implicit variables:\n" + StringUtil.join(availableImplicits, ", ") + "</html>");
+      JLabel label =
+        !availableImplicits.isEmpty() ? new MultiLineLabel("<html>Available implicit variables:\n" + StringUtil.join(availableImplicits, ", ") + (myHint != null ? "<br/>" + myHint : "") + "</html>") 
+                                      : new JLabel(myHint);
       label.setPreferredSize(JBUI.size(250, 30));
       panel.add(label, BorderLayout.SOUTH);
       return panel;

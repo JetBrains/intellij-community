@@ -5,7 +5,7 @@
 class BBB {
 
     static <T> void f() {
-        TerminalOp<T, LinkedHashSet<T>> <warning descr="Variable 'reduceOp' is never used">reduceOp</warning> = BBB.<T, LinkedHashSet<T>>makeRef(LinkedHashSet::new, LinkedHashSet::<warning descr="Unchecked call to 'add(E)' as a member of raw type 'HashSet'">add</warning>, LinkedHashSet::<warning descr="Unchecked call to 'addAll(Collection<? extends E>)' as a member of raw type 'AbstractCollection'">addAll</warning>);
+        TerminalOp<T, LinkedHashSet<T>> <warning descr="Variable 'reduceOp' is never used">reduceOp</warning> = BBB.<T, LinkedHashSet<T>>makeRef(LinkedHashSet::new, LinkedHashSet::add, LinkedHashSet::addAll);
     }
 
     public static <T, U> TerminalOp<T, U> makeRef(U <warning descr="Parameter 'seed' is never used">seed</warning>, BiFunction<U, ? super T, U> <warning descr="Parameter 'reducer' is never used">reducer</warning>, BinaryOperator<U> <warning descr="Parameter 'combiner' is never used">combiner</warning>) {
