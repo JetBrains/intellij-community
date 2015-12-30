@@ -90,14 +90,6 @@ public class VcsCherryPickManager {
   }
 
   private class CherryPickingTask extends Task.Backgroundable {
-    @NotNull private final MultiMap<VcsCherryPicker, VcsFullCommitDetails> myGroupedCommits =
-      new MultiMap<VcsCherryPicker, VcsFullCommitDetails>() {
-        @NotNull
-        @Override
-        protected Collection<VcsFullCommitDetails> createCollection() {
-          return new ArrayList<VcsFullCommitDetails>();
-        }
-      };
     @NotNull private final Collection<VcsFullCommitDetails> myAllCommits;
     @NotNull private final ChangeListManagerEx myChangeListManager;
 
@@ -108,7 +100,8 @@ public class VcsCherryPickManager {
       myChangeListManager.blockModalNotifications();
     }
 
-    public boolean processDetails(@NotNull VcsFullCommitDetails details) {
+    public boolean processDetails(@NotNull VcsFullCommitDetails details,
+                                  @NotNull MultiMap<VcsCherryPicker, VcsFullCommitDetails> groupedDetails) {
       CommitId commitId = new CommitId(details.getId(), details.getRoot());
       if (myIdsInProgress.contains(commitId)) {
         showError("Cherry pick process is already started for commit "  + commitId.getHash().toShortString() + " from root " + commitId.getRoot().getName());
@@ -122,7 +115,7 @@ public class VcsCherryPickManager {
           "Cherry pick is not supported for commit " + details.getId().toShortString() + " from root " + details.getRoot().getName());
         return false;
       }
-      myGroupedCommits.putValue(cherryPicker, details);
+      groupedDetails.putValue(cherryPicker, details);
       return true;
     }
 
@@ -135,15 +128,16 @@ public class VcsCherryPickManager {
     public void run(@NotNull ProgressIndicator indicator) {
       try {
         boolean isOk = true;
+        MultiMap<VcsCherryPicker, VcsFullCommitDetails> groupedCommits = createArrayMultiMap();
         for (VcsFullCommitDetails details : myAllCommits) {
-          if (!processDetails(details)) {
+          if (!processDetails(details, groupedCommits)) {
             isOk = false;
             break;
           }
         }
 
         if (isOk) {
-          for (Map.Entry<VcsCherryPicker, Collection<VcsFullCommitDetails>> entry : myGroupedCommits.entrySet()) {
+          for (Map.Entry<VcsCherryPicker, Collection<VcsFullCommitDetails>> entry : groupedCommits.entrySet()) {
             List<VcsFullCommitDetails> commits = Lists.reverse(Lists.newArrayList(entry.getValue()));
             entry.getKey().cherryPick(commits);
           }
@@ -159,6 +153,17 @@ public class VcsCherryPickManager {
           }
         });
       }
+    }
+
+    @NotNull
+    public MultiMap<VcsCherryPicker, VcsFullCommitDetails> createArrayMultiMap() {
+      return new MultiMap<VcsCherryPicker, VcsFullCommitDetails>() {
+        @NotNull
+        @Override
+        protected Collection<VcsFullCommitDetails> createCollection() {
+          return new ArrayList<VcsFullCommitDetails>();
+        }
+      };
     }
   }
 
