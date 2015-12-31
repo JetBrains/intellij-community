@@ -38,7 +38,7 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightInspectionTestC
            "class A {" +
            "  private static volatile int value = 0;" +
            "  private static final AtomicIntegerFieldUpdater updater = " +
-           "    AtomicIntegerFieldUpdater.newUpdater(A.class, /*Field 'value' has 'static' modifier*/\"value\"/**/);" +
+           "    AtomicIntegerFieldUpdater.newUpdater((A.class), /*Field 'value' has 'static' modifier*/(\"value\")/**/);" +
            "}");
   }
 
@@ -97,6 +97,20 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightInspectionTestC
            "class A {" +
            "  private static final AtomicIntegerFieldUpdater updater = " +
            "    AtomicIntegerFieldUpdater.newUpdater(Z.class, /*'private' field 'value' is not accessible from here*/\"value\"/**/);" +
+           "}");
+  }
+
+  /**
+   * private fields are not accessible at runtime even from inner classes.
+   */
+  public void testNotAccessible2() {
+    doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +
+           "class Z {" +
+           "  private volatile int value = 0;" +
+           "  static class A {\n" +
+           "    private static final AtomicIntegerFieldUpdater updater = \n" +
+           "      AtomicIntegerFieldUpdater.newUpdater(Z.class, /*'private' field 'value' is not accessible from here*/\"value\"/**/);\n" +
+           "  }" +
            "}");
   }
 
