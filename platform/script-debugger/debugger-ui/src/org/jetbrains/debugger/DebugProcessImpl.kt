@@ -215,7 +215,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   override fun isLibraryFrameFilterSupported() = true
 }
 
-class LineBreakpointHandler(breakpointTypeClass: Class<out XBreakpointType<XLineBreakpoint<*>, out XBreakpointProperties<*>>>, private val manager: LineBreakpointManager) : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass) {
+class LineBreakpointHandler(breakpointTypeClass: Class<out XLineBreakpointType<*>>, private val manager: LineBreakpointManager) : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass) {
   override fun registerBreakpoint(breakpoint: XLineBreakpoint<*>) {
     manager.setBreakpoint(breakpoint)
   }
