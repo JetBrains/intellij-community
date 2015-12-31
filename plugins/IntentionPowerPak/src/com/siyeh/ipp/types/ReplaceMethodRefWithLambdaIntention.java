@@ -117,7 +117,8 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
           final String initialName;
           if (psiParameters != null) {
             final int idx = parameterIndex - (isReceiver ? 1 : 0);
-            initialName = psiParameters[idx < psiParameters.length ? idx : psiParameters.length - 1].getName();
+            initialName = psiParameters.length > 0 ? psiParameters[idx < psiParameters.length ? idx : psiParameters.length - 1].getName() 
+                                                   : parameter.getName();
           }
           else {
             initialName = parameter.getName();

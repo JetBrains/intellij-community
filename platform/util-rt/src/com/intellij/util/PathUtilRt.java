@@ -50,11 +50,11 @@ public class PathUtilRt {
   }
 
   @NotNull
-  public static String suggestFileName(@NotNull String text, final boolean allowDots, final boolean allowSpaces) {
+  public static String suggestFileName(@NotNull String text, boolean allowDots, boolean allowSpaces) {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
-      if (!isValidFileNameChar(c) || (!allowDots && c == '.') || (!allowSpaces && Character.isWhitespace(c))) {
+      if (!isValidFileNameChar(c, true) || (!allowDots && c == '.') || (!allowSpaces && Character.isWhitespace(c))) {
         result.append('_');
       }
       else {
@@ -65,19 +65,24 @@ public class PathUtilRt {
   }
 
   public static boolean isValidFileName(@NotNull String fileName) {
+    return isValidFileName(fileName, true);
+  }
+
+  public static boolean isValidFileName(@NotNull String fileName, boolean strict) {
     if (fileName.length() == 0 || fileName.equals(".") || fileName.equals("..")) {
       return false;
     }
     for (int i = 0; i < fileName.length(); i++) {
-      if (!isValidFileNameChar(fileName.charAt(i))) {
+      if (!isValidFileNameChar(fileName.charAt(i), strict)) {
         return false;
       }
     }
     return true;
   }
 
-  private static boolean isValidFileNameChar(char c) {
-    return c != '/' && c != '\\' && c != '\t' && c != '\n' && c != '\r' && c != ':' && c != ';' && c != '*' && c != '?' &&
-           c != '"' && c != '\'' && c != '<' && c != '>';
+  private static boolean isValidFileNameChar(char c, boolean strict) {
+    if (c == '/' || c == '\\') return false;
+    if (!strict) return true;
+    return c != '\t' && c != '\n' && c != '\r' && c != ':' && c != ';' && c != '*' && c != '?' && c != '"' && c != '\'' && c != '<' && c != '>';
   }
 }
