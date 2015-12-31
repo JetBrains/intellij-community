@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,33 +30,33 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class ClassFileViewProvider extends SingleRootFileViewProvider {
-  public ClassFileViewProvider(@NotNull final PsiManager manager, @NotNull final VirtualFile file) {
+  public ClassFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
     super(manager, file);
   }
 
-  public ClassFileViewProvider(@NotNull final PsiManager manager, @NotNull final VirtualFile virtualFile, final boolean eventSystemEnabled) {
-    super(manager, virtualFile, eventSystemEnabled, JavaClassFileType.INSTANCE);
+  public ClassFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file, boolean eventSystemEnabled) {
+    super(manager, file, eventSystemEnabled, JavaClassFileType.INSTANCE);
   }
 
   @Override
-  protected PsiFile createFile(@NotNull final Project project, @NotNull final VirtualFile vFile, @NotNull final FileType fileType) {
+  protected PsiFile createFile(@NotNull Project project, @NotNull VirtualFile file, @NotNull FileType fileType) {
     FileIndexFacade fileIndex = ServiceManager.getService(project, FileIndexFacade.class);
-    if (!fileIndex.isInLibraryClasses(vFile) && fileIndex.isInSource(vFile)) {
+    if (!fileIndex.isInLibraryClasses(file) && fileIndex.isInSource(file)) {
       return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
 
     // skip inners & anonymous
-    if (isInnerClass(vFile)) return null;
+    if (isInnerClass(file)) return null;
 
     return new ClsFileImpl(this);
   }
 
-  public static boolean isInnerClass(@NotNull VirtualFile vFile) {
-    String name = vFile.getNameWithoutExtension();
+  public static boolean isInnerClass(@NotNull VirtualFile file) {
+    String name = file.getNameWithoutExtension();
     int index = name.lastIndexOf('$', name.length());
     if (index > 0 && index < name.length() - 1) {
       String supposedParentName = name.substring(0, index) + ".class";
-      if (vFile.getParent().findChild(supposedParentName) != null) {
+      if (file.getParent().findChild(supposedParentName) != null) {
         return true;
       }
     }
@@ -65,7 +65,7 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
 
   @NotNull
   @Override
-  public SingleRootFileViewProvider createCopy(@NotNull final VirtualFile copy) {
+  public SingleRootFileViewProvider createCopy(@NotNull VirtualFile copy) {
     return new ClassFileViewProvider(getManager(), copy, false);
   }
 }
