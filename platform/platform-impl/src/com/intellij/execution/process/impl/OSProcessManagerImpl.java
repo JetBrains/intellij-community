@@ -42,14 +42,7 @@ public class OSProcessManagerImpl extends OSProcessManager {
 
   @NotNull
   public static ProcessInfo[] getProcessList() {
-    if (SystemInfo.isWindows) {
-      return ProcessListWin32.getProcessList();
-    }
-    if (SystemInfo.isLinux || SystemInfo.isMac) {
-      return ProcessListLinux.getProcessList(SystemInfo.isMac);
-    }
-    LOG.error("Unexpected platform. Unable to list processes.");
-    return new ProcessInfo[0];
+    return ProcessListUtil.getProcessList();
   }
 
   @Override

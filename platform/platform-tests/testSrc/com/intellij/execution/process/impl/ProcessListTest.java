@@ -16,16 +16,19 @@
 package com.intellij.execution.process.impl;
 
 import com.intellij.execution.process.ProcessInfo;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 
 public class ProcessListTest extends UsefulTestCase {
   private File myDir;
 
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -37,16 +40,25 @@ public class ProcessListTest extends UsefulTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    FileUtil.delete(myDir);
-    super.tearDown();
+    try {
+      FileUtil.delete(myDir);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
-  public void testProcessList_WorksOnAllPlatforms() throws Exception {
+  public void testWorksOnAllPlatforms() throws Exception {
     assertNotEmpty(Arrays.asList(OSProcessManagerImpl.getProcessList()));
+
+    if (SystemInfo.isWindows) {
+      assertNotEmpty(Arrays.asList(ProcessListUtil.getProcessList_WindowsTaskList()));
+      assertNotEmpty(Arrays.asList(ProcessListUtil.getProcessList_WindowsWMIC()));
+    }
   }
-  
-  public void testProcessListOnLinux_DetermineExecutable() throws Exception {
-    ProcessInfo[] infos = ProcessListLinux.parseOutput(
+
+  public void testUnix_DetermineExecutable() throws Exception {
+    List<ProcessInfo> infos = ProcessListUtil.parseUnixOutput(
       false,
       "   PID S USER    COMMAND\n\n" +
       "     1 S user    " + myDir + "/dir/file\n" +
@@ -75,9 +87,9 @@ public class ProcessListTest extends UsefulTestCase {
                         new ProcessInfo(9, myDir + "/dir/dir/file with spaces/", "", "user", "S"),
                         new ProcessInfo(10, myDir + "/dir/dir", "", "user", "S"));
   }
-  
-  public void testProcessListOnLinux_DetermineExecutableWithExtraSlashes() throws Exception {
-    ProcessInfo[] infos = ProcessListLinux.parseOutput(
+
+  public void testUnix_DetermineExecutableWithExtraSlashes() throws Exception {
+    List<ProcessInfo> infos = ProcessListUtil.parseUnixOutput(
       false,
       "   PID S USER    COMMAND\n\n" +
       "     1 S user    //" + myDir + "//dir//file//\n" +
@@ -88,51 +100,63 @@ public class ProcessListTest extends UsefulTestCase {
                         new ProcessInfo(2, "//" + myDir + "//dir//file//", "aaa bbb", "user", "S"));
   }
 
-  public void testProcessListOnLinuxMac_WrongFormat() throws Exception {
-    assertEmpty(ProcessListLinux.parseOutput(
+  public void testUnix_VariousFormsPidStatUser() throws Exception {
+    List<ProcessInfo> infos = ProcessListUtil.parseUnixOutput(
+      true,
+      "   PID STAT USER      COMMAND\n\n" +
+      "     1 S    user      " + myDir + "/dir/file\n" +
+      "   101 Ss   user_name " + myDir + "/dir/file\n"
+    );
+    assertOrderedEquals(infos,
+                        new ProcessInfo(1, myDir + "/dir/file", "", "user", "S"),
+                        new ProcessInfo(101, myDir + "/dir/file", "", "user_name", "Ss"));
+  }
+
+  public void testUnix_WrongFormat() throws Exception {
+    assertNull(ProcessListUtil.parseUnixOutput(
       false,
       ""
     ));
-    assertEmpty(ProcessListLinux.parseOutput(
+    assertNull(ProcessListUtil.parseUnixOutput(
       false,
       "wrong format"));
-    assertEmpty(ProcessListLinux.parseOutput(
+    assertEmpty(ProcessListUtil.parseUnixOutput(
       false,
       "   PID S USER    COMMAND\n\n"
     ));
-    assertEmpty(ProcessListLinux.parseOutput(
+    assertEmpty(ProcessListUtil.parseUnixOutput(
       false,
       "   PID S USER    COMMAND\n\n" +
       "                           \n"
     ));
-    assertEmpty(ProcessListLinux.parseOutput(
+    assertNull(ProcessListUtil.parseUnixOutput(
       false,
       "     1 S user    " + myDir + "/dir/file\n"
     ));
-    assertEmpty(ProcessListLinux.parseOutput(
+    assertNull(ProcessListUtil.parseUnixOutput(
       false,
       "   PID S USER    XXX\n\n" +
       "     1 S user    " + myDir + "/dir/file\n"
     ));
-    assertEmpty(ProcessListLinux.parseOutput(
+    assertNull(ProcessListUtil.parseUnixOutput(
       false,
       "   PID S XXX     COMMAND\n\n" +
       "     1 S user    " + myDir + "/dir/file\n"
     ));
-    assertEmpty(ProcessListLinux.parseOutput(
+    assertNull(ProcessListUtil.parseUnixOutput(
       false,
       "   PID X USER    COMMAND\n\n" +
       "     1 S user    " + myDir + "/dir/file\n"
     ));
-    assertEmpty(ProcessListLinux.parseOutput(
+    assertNull(ProcessListUtil.parseUnixOutput(
       false,
       "   XXX S USER    COMMAND\n\n" +
       "     1 S user    " + myDir + "/dir/file\n"
     ));
   }
 
-  public void testProcessListOnMac() throws Exception {
-    ProcessInfo[] infos = ProcessListLinux.parseOutput(
+  public void testMac() throws Exception {
+    List<ProcessInfo> infos = ProcessListUtil.parseUnixOutput(
       true,
       "   PID STAT USER    COMMAND\n\n" +
       "     1 S    user    " + myDir + "/dir/file\n" +
@@ -143,8 +167,8 @@ public class ProcessListTest extends UsefulTestCase {
                         new ProcessInfo(2, myDir + "/dir/dir/file", "", "user", "S"));
   }
 
-  public void testProcessListOnMac_DoNotIncludeZombies() throws Exception {
-    ProcessInfo[] infos = ProcessListLinux.parseOutput(
+  public void testMac_DoNotIncludeZombies() throws Exception {
+    List<ProcessInfo> infos = ProcessListUtil.parseUnixOutput(
       true,
       "   PID STAT USER    COMMAND\n\n" +
       "     1 S    user    " + myDir + "/dir/file\n" +
@@ -155,20 +179,8 @@ public class ProcessListTest extends UsefulTestCase {
                         new ProcessInfo(1, myDir + "/dir/file", "", "user", "S"));
   }
 
-  public void testProcessListOnLinuxMac_VariousFormsPidStatUser() throws Exception {
-    ProcessInfo[] infos = ProcessListLinux.parseOutput(
-      true,
-      "   PID STAT USER      COMMAND\n\n" +
-      "     1 S    user      " + myDir + "/dir/file\n" +
-      "   101 Ss   user_name " + myDir + "/dir/file\n"
-      );
-    assertOrderedEquals(infos,
-                        new ProcessInfo(1, myDir + "/dir/file", "", "user", "S"),
-                        new ProcessInfo(101, myDir + "/dir/file", "", "user_name", "Ss"));
-  }
-
   public void testWindows_WMIC() throws Exception {
-    ProcessInfo[] infos = ProcessListWin32.parseWMICOutput(
+    List<ProcessInfo> infos = ProcessListUtil.parseWMICOutput(
       "Caption                   CommandLine                                            ProcessId  \n" +
       "smss.exe                                                                         304        \n" +
       "sihost.exe                sihost.exe                                             3052       \n" +
@@ -186,7 +198,7 @@ public class ProcessListTest extends UsefulTestCase {
   }
 
   public void testOnWindows_WMIC_DoNotIncludeSystemIdleProcess() throws Exception {
-    ProcessInfo[] infos = ProcessListWin32.parseWMICOutput(
+    List<ProcessInfo> infos = ProcessListUtil.parseWMICOutput(
       "Caption                   CommandLine                                            ProcessId  \n" +
       "System Idle Process                                                              0          \n" +
       "System                                                                           4          \n" +
@@ -197,28 +209,28 @@ public class ProcessListTest extends UsefulTestCase {
   }
 
   public void testWindows_WMIC_WrongFormat() throws Exception {
-    assertNull(ProcessListWin32.parseWMICOutput(
+    assertNull(ProcessListUtil.parseWMICOutput(
       ""));
-    assertNull(ProcessListWin32.parseWMICOutput(
+    assertNull(ProcessListUtil.parseWMICOutput(
       "wrong format"));
-    assertEmpty(ProcessListWin32.parseWMICOutput(
+    assertEmpty(ProcessListUtil.parseWMICOutput(
       "Caption                   CommandLine                                            ProcessId  \n"));
-    assertNull(ProcessListWin32.parseWMICOutput(
+    assertNull(ProcessListUtil.parseWMICOutput(
       "smss.exe                                                                         304        \n"));
 
-    assertNull(ProcessListWin32.parseWMICOutput(
+    assertNull(ProcessListUtil.parseWMICOutput(
       "Caption                   XXX                                                    ProcessId  \n" +
       "smss.exe                                                                         304        \n"));
-    assertNull(ProcessListWin32.parseWMICOutput(
+    assertNull(ProcessListUtil.parseWMICOutput(
       "Caption                   CommandLine                                            XXX  \n" +
       "smss.exe                                                                         304        \n"));
-    assertEmpty(ProcessListWin32.parseWMICOutput(
+    assertEmpty(ProcessListUtil.parseWMICOutput(
       "Caption                   CommandLine                                            ProcessId  \n" +
       "                                                                                            \n"));
   }
 
   public void testWindows_TaskList() throws Exception {
-    ProcessInfo[] infos = ProcessListWin32.parseListTasksOutput(
+    List<ProcessInfo> infos = ProcessListUtil.parseListTasksOutput(
       "\"smss.exe\",\"304\",\"Services\",\"0\",\"224 K\",\"Unknown\",\"N/A\",\"0:00:00\",\"N/A\"\n" +
       "\"sihost.exe\",\"3052\",\"Console\",\"1\",\"10,924 K\",\"Running\",\"VM-WINDOWS\\Anton Makeev\",\"0:00:02\",\"N/A\"\n" +
       "\"taskhostw.exe\",\"3068\",\"Console\",\"1\",\"5,860 K\",\"Running\",\"VM-WINDOWS\\Anton Makeev\",\"0:00:00\",\"Task Host Window\"\n" +
@@ -235,8 +247,9 @@ public class ProcessListTest extends UsefulTestCase {
   }
 
   public void testWindows_TaskList_WrongFormat() throws Exception {
-    assertEmpty(ProcessListWin32.parseListTasksOutput(""));
-    assertEmpty(ProcessListWin32.parseListTasksOutput("wrong format"));
-    assertEmpty(ProcessListWin32.parseListTasksOutput("\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\"\n"));
+    assertEmpty(ProcessListUtil.parseListTasksOutput(""));
+    assertNull(ProcessListUtil.parseListTasksOutput("wrong format"));
+    assertNull(ProcessListUtil.parseListTasksOutput("\"\""));
+    assertEmpty(ProcessListUtil.parseListTasksOutput("\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\"\n"));
   }
 }
