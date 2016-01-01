@@ -25,31 +25,13 @@ public class ProcessInfo {
   public static ProcessInfo[] EMPTY_ARRAY = new ProcessInfo[0];
 
   private final int myPid;
-  @NotNull private final String myExecutable;
+  @NotNull private final String myExecutableName;
   @NotNull private final String myArgs;
-  @NotNull private final String myCommandLine;
   @Nullable private final String myUser;
   @Nullable private final String myState;
 
-  public ProcessInfo(@NotNull String pidString, @NotNull String commandLine) {
-    this(Integer.parseInt(pidString), commandLine);
-  }
-
-  public ProcessInfo(int pid, @NotNull String commandLine) {
-    myPid = pid;
-    int space = commandLine.indexOf(" ");
-    if (space > 0) {
-      myExecutable = commandLine.substring(0, space);
-      myArgs = commandLine.substring(space + 1);
-    }
-    else {
-      myExecutable = commandLine;
-      myArgs = "";
-    }
-    
-    myCommandLine = commandLine;
-    myUser = null;
-    myState = null;
+  public ProcessInfo(int pid, @NotNull String executable) {
+    this(pid, executable, "");
   }
 
   public ProcessInfo(int pid, @NotNull String executable, @NotNull String args) {
@@ -58,9 +40,8 @@ public class ProcessInfo {
 
   public ProcessInfo(int pid, @NotNull String executable, @NotNull String args, @Nullable String user, @Nullable String state) {
     myPid = pid;
-    myExecutable = executable;
+    myExecutableName = PathUtil.getFileName(executable);
     myArgs = args;
-    myCommandLine = executable + (args.isEmpty() ? "" : (" " + args));
     myState = state;
     myUser = user;
   }
@@ -70,28 +51,18 @@ public class ProcessInfo {
   }
 
   @NotNull
-  public String getExecutable() {
-    return myExecutable;
-  }
-
-  @NotNull
   public String getExecutableName() {
-    return PathUtil.getFileName(myExecutable);
+    return myExecutableName;
   }
 
   @NotNull
   public String getExecutableDisplayName() {
-    return StringUtil.trimEnd(getExecutableName(), ".exe", true);
+    return StringUtil.trimEnd(myExecutableName, ".exe", true);
   }
 
   @NotNull
   public String getArgs() {
     return myArgs;
-  }
-
-  @NotNull
-  public String getCommandLine() {
-    return myCommandLine;
   }
 
   @Nullable
@@ -106,7 +77,7 @@ public class ProcessInfo {
 
   @Override
   public String toString() {
-    return myPid + " '" + myExecutable + "' '" + myArgs + "' '" + myUser + "' '" + myState;
+    return myPid + " '" + myExecutableName + "' '" + myArgs + "' '" + myUser + "' '" + myState;
   }
 
   @Override
@@ -117,9 +88,8 @@ public class ProcessInfo {
     ProcessInfo info = (ProcessInfo)o;
 
     if (myPid != info.myPid) return false;
-    if (!myExecutable.equals(info.myExecutable)) return false;
+    if (!myExecutableName.equals(info.myExecutableName)) return false;
     if (!myArgs.equals(info.myArgs)) return false;
-    if (!myCommandLine.equals(info.myCommandLine)) return false;
     if (myUser != null ? !myUser.equals(info.myUser) : info.myUser != null) return false;
     if (myState != null ? !myState.equals(info.myState) : info.myState != null) return false;
 
@@ -129,9 +99,8 @@ public class ProcessInfo {
   @Override
   public int hashCode() {
     int result = myPid;
-    result = 31 * result + myExecutable.hashCode();
+    result = 31 * result + myExecutableName.hashCode();
     result = 31 * result + myArgs.hashCode();
-    result = 31 * result + myCommandLine.hashCode();
     result = 31 * result + (myUser != null ? myUser.hashCode() : 0);
     result = 31 * result + (myState != null ? myState.hashCode() : 0);
     return result;

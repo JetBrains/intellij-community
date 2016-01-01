@@ -31,36 +31,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-
 public class ProcessUtils {
   private static final Logger LOG = Logger.getInstance(ProcessUtils.class);
-
-  /**
-   * Passes the commands directly to Runtime.exec (with the passed envp)
-   */
-  public static Process createProcess(String[] cmdarray, String[] envp, File workingDir) throws IOException {
-    return Runtime.getRuntime().exec(getWithoutEmptyParams(cmdarray), getWithoutEmptyParams(envp), workingDir);
-  }
-
-  /**
-   * @return a new array without any null/empty elements originally contained in the array.
-   */
-  private static String[] getWithoutEmptyParams(String[] cmdarray) {
-    if (cmdarray == null) {
-      return null;
-    }
-    ArrayList<String> list = new ArrayList<String>();
-    for (String string : cmdarray) {
-      if (string != null && string.length() > 0) {
-        list.add(string);
-      }
-    }
-    return list.toArray(new String[list.size()]);
-  }
-
 
   @NotNull
   public static ProcessInfo[] getProcessList() {

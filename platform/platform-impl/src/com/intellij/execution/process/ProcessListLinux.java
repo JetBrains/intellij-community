@@ -42,43 +42,41 @@ class ProcessListLinux {
   }
 
   @NotNull
-  public static ProcessInfo[] parseOutput(boolean isMac, @NotNull String output) {
+  static ProcessInfo[] parseOutput(boolean isMac, @NotNull String output) {
     List<ProcessInfo> result = ContainerUtil.newArrayList();
     String[] lines = StringUtil.splitByLinesDontTrim(output);
     if (lines.length < 2) return ProcessInfo.EMPTY_ARRAY;
 
     String header = lines[0];
-    if (header != null) {
-      int pidStart = header.indexOf("PID");
-      if (pidStart == -1) return ProcessInfo.EMPTY_ARRAY;
+    int pidStart = header.indexOf("PID");
+    if (pidStart == -1) return ProcessInfo.EMPTY_ARRAY;
 
-      int statStart = header.indexOf(isMac ? "STAT" : "S", pidStart);
-      if (statStart == -1) return ProcessInfo.EMPTY_ARRAY;
+    int statStart = header.indexOf(isMac ? "STAT" : "S", pidStart);
+    if (statStart == -1) return ProcessInfo.EMPTY_ARRAY;
 
-      int userStart = header.indexOf("USER", statStart);
-      if (userStart == -1) return ProcessInfo.EMPTY_ARRAY;
+    int userStart = header.indexOf("USER", statStart);
+    if (userStart == -1) return ProcessInfo.EMPTY_ARRAY;
 
-      int commandStart = header.indexOf("COMMAND", userStart);
-      if (commandStart == -1) return ProcessInfo.EMPTY_ARRAY;
+    int commandStart = header.indexOf("COMMAND", userStart);
+    if (commandStart == -1) return ProcessInfo.EMPTY_ARRAY;
 
-      for (int i = 1; i < lines.length; i++) {
-        String line = lines[i];
+    for (int i = 1; i < lines.length; i++) {
+      String line = lines[i];
 
-        int pid = StringUtil.parseInt(line.substring(0, statStart).trim(), -1);
-        if (pid == -1) continue;
+      int pid = StringUtil.parseInt(line.substring(0, statStart).trim(), -1);
+      if (pid == -1) continue;
 
-        String state = line.substring(statStart, userStart).trim();
-        if (state.contains("Z")) continue; // zombie
+      String state = line.substring(statStart, userStart).trim();
+      if (state.contains("Z")) continue; // zombie
 
-        String user = line.substring(userStart, commandStart).trim();
-        String commandLine = line.substring(commandStart).trim();
+      String user = line.substring(userStart, commandStart).trim();
+      String commandLine = line.substring(commandStart).trim();
 
-        String executablePath = determineExecutable(commandLine);
-        if (executablePath == null) continue;
+      String executablePath = determineExecutable(commandLine);
+      if (executablePath == null) continue;
 
-        String args = commandLine.substring(executablePath.length()).trim();
-        result.add(new ProcessInfo(pid, executablePath, args, user, state));
-      }
+      String args = commandLine.substring(executablePath.length()).trim();
+      result.add(new ProcessInfo(pid, executablePath, args, user, state));
     }
 
     return result.isEmpty() ? ProcessInfo.EMPTY_ARRAY : result.toArray(new ProcessInfo[result.size()]);
