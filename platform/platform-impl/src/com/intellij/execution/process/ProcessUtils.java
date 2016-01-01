@@ -30,9 +30,9 @@ package com.intellij.execution.process;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class ProcessUtils {
@@ -64,61 +64,13 @@ public class ProcessUtils {
 
   @NotNull
   public static ProcessInfo[] getProcessList() {
-    return getProcessListImpl().getProcessList();
-  }
-
-  @NotNull
-  private static IProcessList getProcessListImpl() {
     if (SystemInfo.isWindows) {
-      return new ProcessListWin32();
+      return ProcessListWin32.getProcessList();
     }
-    if (SystemInfo.isLinux) {
-      return new ProcessListLinux();
+    if (SystemInfo.isLinux || SystemInfo.isMac) {
+      return ProcessListLinux.getProcessList(SystemInfo.isMac);
     }
-    if (SystemInfo.isMac) {
-      return new ProcessListMac();
-    }
-
     LOG.error("Unexpected platform. Unable to list processes.");
-    return new IProcessList() {
-
-      @Override
-      public ProcessInfo[] getProcessList() {
-        return new ProcessInfo[0];
-      }
-    };
-  }
-
-  @NotNull
-  public static char[] loadFileText(@NotNull File file, @Nullable String encoding) throws IOException {
-    InputStream stream = new FileInputStream(file);
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
-    try {
-      return loadText(reader);
-    }
-    finally {
-      reader.close();
-    }
-  }
-
-  @NotNull
-  public static char[] loadText(@NotNull Reader reader) throws IOException {
-    //fill a buffer with the contents
-    int BUFFER_SIZE = 2 * 1024;
-
-    char[] readBuffer = new char[BUFFER_SIZE];
-    int n = reader.read(readBuffer);
-
-    int DEFAULT_FILE_SIZE = 8 * BUFFER_SIZE;
-
-    StringBuffer buffer = new StringBuffer(DEFAULT_FILE_SIZE);
-
-    while (n > 0) {
-      buffer.append(readBuffer, 0, n);
-      n = reader.read(readBuffer);
-    }
-
-    return buffer.toString().toCharArray();
+    return new ProcessInfo[0];
   }
 }

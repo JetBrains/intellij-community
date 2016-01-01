@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,82 +14,116 @@
  * limitations under the License.
  */
 
-/*******************************************************************************
- * Copyright (c) 2000, 2010 QNX Software Systems and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     QNX Software Systems - Initial API and implementation
- *******************************************************************************/
 package com.intellij.execution.process;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import java.util.List;
 
 
-/**
- * Use through ProcessUtils.
- */
-class ProcessListLinux implements IProcessList {
-
-  ProcessInfo[] empty = new ProcessInfo[0];
-
-  public ProcessListLinux() {
+class ProcessListLinux {
+  @NotNull
+  public static ProcessInfo[] getProcessList(boolean isMac) {
+    String output;
+    try {
+      output = ExecUtil.execAndGetOutput(new GeneralCommandLine("/bin/ps", "-a", "-x", "-o", "pid,state,user,command")).getStdout();
+    }
+    catch (ExecutionException ignore) {
+      return ProcessInfo.EMPTY_ARRAY;
+    }
+    return parseOutput(isMac, output);
   }
 
-  /**
-   * Insert the method's description here.
-   *
-   * @see IProcessList#getProcessList
-   */
-  public ProcessInfo[] getProcessList() {
-    File proc = new File("/proc"); //$NON-NLS-1$
-    File[] pidFiles = null;
+  @NotNull
+  public static ProcessInfo[] parseOutput(boolean isMac, @NotNull String output) {
+    List<ProcessInfo> result = ContainerUtil.newArrayList();
+    String[] lines = StringUtil.splitByLinesDontTrim(output);
+    if (lines.length < 2) return ProcessInfo.EMPTY_ARRAY;
 
-    // We are only interested in the pid so filter the rest out.
-    try {
-      FilenameFilter filter = new FilenameFilter() {
-        public boolean accept(File dir, String name) {
-          boolean isPID = false;
-          try {
-            Integer.parseInt(name);
-            isPID = true;
-          }
-          catch (NumberFormatException e) {
-          }
-          return isPID;
-        }
-      };
-      pidFiles = proc.listFiles(filter);
-    }
-    catch (SecurityException e) {
-    }
+    String header = lines[0];
+    if (header != null) {
+      int pidStart = header.indexOf("PID");
+      if (pidStart == -1) return ProcessInfo.EMPTY_ARRAY;
 
-    ProcessInfo[] processInfo = empty;
-    if (pidFiles != null) {
-      processInfo = new ProcessInfo[pidFiles.length];
-      for (int i = 0; i < pidFiles.length; i++) {
-        File cmdLine = new File(pidFiles[i], "cmdline"); //$NON-NLS-1$
-        String name;
-        try {
-          name = new String(ProcessUtils.loadFileText(cmdLine, null)).replace('\0', ' ');
-        }
-        catch (IOException e) {
-          name = "";
-        }
-        if (name.length() == 0) {
-          name = "Unknown"; //$NON-NLS-1$
-        }
-        processInfo[i] = new ProcessInfo(pidFiles[i].getName(), name);
+      int statStart = header.indexOf(isMac ? "STAT" : "S", pidStart);
+      if (statStart == -1) return ProcessInfo.EMPTY_ARRAY;
+
+      int userStart = header.indexOf("USER", statStart);
+      if (userStart == -1) return ProcessInfo.EMPTY_ARRAY;
+
+      int commandStart = header.indexOf("COMMAND", userStart);
+      if (commandStart == -1) return ProcessInfo.EMPTY_ARRAY;
+
+      for (int i = 1; i < lines.length; i++) {
+        String line = lines[i];
+
+        int pid = StringUtil.parseInt(line.substring(0, statStart).trim(), -1);
+        if (pid == -1) continue;
+
+        String state = line.substring(statStart, userStart).trim();
+        if (state.contains("Z")) continue; // zombie
+
+        String user = line.substring(userStart, commandStart).trim();
+        String commandLine = line.substring(commandStart).trim();
+
+        String executablePath = determineExecutable(commandLine);
+        if (executablePath == null) continue;
+
+        String args = commandLine.substring(executablePath.length()).trim();
+        result.add(new ProcessInfo(pid, executablePath, args, user, state));
       }
     }
-    else {
-      pidFiles = new File[0];
+
+    return result.isEmpty() ? ProcessInfo.EMPTY_ARRAY : result.toArray(new ProcessInfo[result.size()]);
+  }
+
+  
+  @Nullable
+  private static String determineExecutable(String commandLine) {
+    // Since there is no way on Linux to get the path to the executable, we have to heuristically determine it
+    // by finding the longest existing file path from the beginning of the command line.
+    // There is a possibility to find the wrong path in ambiguous cases like the following:
+    // * "/path/to/executable with spaces" - file name with spaces
+    // * "/path/to/executable" "with spaces" - file name + arguments
+    // Though probability of such a situation is negligible 
+
+    String executablePath = commandLine;
+
+    found:
+    while (!new File(executablePath).exists()) {
+      int separator = executablePath.lastIndexOf("/");
+      if (separator == -1) return null;
+
+      String parentPath = executablePath.substring(0, separator);
+
+      if (new File(parentPath).exists()) {
+        String name = executablePath.substring(separator + 1);
+        int space = name.lastIndexOf(" ");
+
+        while (true) {
+          String namePart = name.substring(0, space == -1 ? name.length() : space);
+          if (new File(parentPath, namePart).exists()) {
+            executablePath = parentPath + "/" + namePart;
+            break found;
+          }
+
+          if (space == -1) break;
+          space = name.lastIndexOf(" ", space - 1);
+        }
+      }
+      separator = parentPath.lastIndexOf(" ");
+      if (separator == -1) return null;
+      executablePath = parentPath.substring(0, separator);
     }
-    return processInfo;
+
+    assert commandLine.startsWith(executablePath) : "Executable incorrectly found: " + executablePath + " in: " + commandLine;
+    return executablePath;
   }
 }

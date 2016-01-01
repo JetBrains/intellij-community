@@ -30,11 +30,10 @@ import java.util.List;
  * 
  * Use through ProcessUtils.
  */
-class ProcessListWin32 implements IProcessList {
+class ProcessListWin32 {
   private static final Logger LOG = Logger.getInstance(ProcessListWin32.class);
 
-  @Override
-  public ProcessInfo[] getProcessList() {
+  public static ProcessInfo[] getProcessList() {
     try {
       return createFromWMIC();
     }
@@ -50,7 +49,7 @@ class ProcessListWin32 implements IProcessList {
       }
       catch (Exception e) {
         //Use fallback
-        return new ProcessListWin32Internal().getProcessList();
+        return ProcessListWin32Internal.getProcessList();
       }
       try {
         return parseListTasks(p.getInputStream());

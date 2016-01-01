@@ -18,16 +18,18 @@ package com.intellij.execution.process;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author traff
- */
+
 public class ProcessInfo {
   public static ProcessInfo[] EMPTY_ARRAY = new ProcessInfo[0];
 
   private final int myPid;
   @NotNull private final String myExecutable;
+  @NotNull private final String myArgs;
   @NotNull private final String myCommandLine;
+  @Nullable private final String myUser;
+  @Nullable private final String myState;
 
   public ProcessInfo(@NotNull String pidString, @NotNull String commandLine) {
     this(Integer.parseInt(pidString), commandLine);
@@ -35,15 +37,32 @@ public class ProcessInfo {
 
   public ProcessInfo(int pid, @NotNull String commandLine) {
     myPid = pid;
-    String[] args = commandLine.split(" ");
-    myExecutable = args.length > 0 ? args[0] : "";
+    int space = commandLine.indexOf(" ");
+    if (space > 0) {
+      myExecutable = commandLine.substring(0, space);
+      myArgs = commandLine.substring(space + 1);
+    }
+    else {
+      myExecutable = commandLine;
+      myArgs = "";
+    }
+    
     myCommandLine = commandLine;
+    myUser = null;
+    myState = null;
   }
 
-  public ProcessInfo(int pid, @NotNull String executables, @NotNull String args) {
+  public ProcessInfo(int pid, @NotNull String executable, @NotNull String args) {
+    this(pid, executable, args, null, null);
+  }
+
+  public ProcessInfo(int pid, @NotNull String executable, @NotNull String args, @Nullable String user, @Nullable String state) {
     myPid = pid;
-    myExecutable = executables;
-    myCommandLine = executables + " " + args;
+    myExecutable = executable;
+    myArgs = args;
+    myCommandLine = executable + (args.isEmpty() ? "" : (" " + args));
+    myState = state;
+    myUser = user;
   }
 
   public int getPid() {
@@ -66,12 +85,55 @@ public class ProcessInfo {
   }
 
   @NotNull
+  public String getArgs() {
+    return myArgs;
+  }
+
+  @NotNull
   public String getCommandLine() {
     return myCommandLine;
   }
 
+  @Nullable
+  public String getUser() {
+    return myUser;
+  }
+
+  @Nullable
+  public String getState() {
+    return myState;
+  }
+
   @Override
   public String toString() {
-    return String.valueOf(myPid) + " (" + myCommandLine + ")";
+    return myPid + " '" + myExecutable + "' '" + myArgs + "' '" + myUser + "' '" + myState;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ProcessInfo info = (ProcessInfo)o;
+
+    if (myPid != info.myPid) return false;
+    if (!myExecutable.equals(info.myExecutable)) return false;
+    if (!myArgs.equals(info.myArgs)) return false;
+    if (!myCommandLine.equals(info.myCommandLine)) return false;
+    if (myUser != null ? !myUser.equals(info.myUser) : info.myUser != null) return false;
+    if (myState != null ? !myState.equals(info.myState) : info.myState != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myPid;
+    result = 31 * result + myExecutable.hashCode();
+    result = 31 * result + myArgs.hashCode();
+    result = 31 * result + myCommandLine.hashCode();
+    result = 31 * result + (myUser != null ? myUser.hashCode() : 0);
+    result = 31 * result + (myState != null ? myState.hashCode() : 0);
+    return result;
   }
 }

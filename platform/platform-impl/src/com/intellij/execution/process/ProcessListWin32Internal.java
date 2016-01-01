@@ -27,11 +27,10 @@ import java.util.List;
  * 
  * Use through ProcessUtils.
  */
-class ProcessListWin32Internal implements IProcessList {
+class ProcessListWin32Internal  {
   private static final Logger LOG = Logger.getInstance(ProcessListWin32Internal.class);
 
-  @Override
-  public ProcessInfo[] getProcessList() {
+  public static ProcessInfo[] getProcessList() {
     String[] dirs = {
       PathManager.getBinPath(),
       PathManager.getHomePath() + "/community/bin/win", 
