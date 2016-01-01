@@ -16,7 +16,6 @@
 package com.intellij.execution.process;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,22 +24,21 @@ public class ProcessInfo {
   public static ProcessInfo[] EMPTY_ARRAY = new ProcessInfo[0];
 
   private final int myPid;
+  @NotNull private final String myCommandLine;
   @NotNull private final String myExecutableName;
   @NotNull private final String myArgs;
   @Nullable private final String myUser;
   @Nullable private final String myState;
 
-  public ProcessInfo(int pid, @NotNull String executable) {
-    this(pid, executable, "");
-  }
-
-  public ProcessInfo(int pid, @NotNull String executable, @NotNull String args) {
-    this(pid, executable, args, null, null);
-  }
-
-  public ProcessInfo(int pid, @NotNull String executable, @NotNull String args, @Nullable String user, @Nullable String state) {
+  public ProcessInfo(int pid,
+                     @NotNull String commandLine,
+                     @NotNull String executableName,
+                     @NotNull String args,
+                     @Nullable String user,
+                     @Nullable String state) {
     myPid = pid;
-    myExecutableName = PathUtil.getFileName(executable);
+    myCommandLine = commandLine;
+    myExecutableName = executableName;
     myArgs = args;
     myState = state;
     myUser = user;
@@ -48,6 +46,11 @@ public class ProcessInfo {
 
   public int getPid() {
     return myPid;
+  }
+
+  @NotNull
+  public String getCommandLine() {
+    return myCommandLine;
   }
 
   @NotNull
@@ -77,7 +80,7 @@ public class ProcessInfo {
 
   @Override
   public String toString() {
-    return myPid + " '" + myExecutableName + "' '" + myArgs + "' '" + myUser + "' '" + myState;
+    return myPid + " '" + myCommandLine + "' '" + myExecutableName + "' '" + myArgs + "' '" + myUser + "' '" + myState;
   }
 
   @Override
@@ -90,6 +93,7 @@ public class ProcessInfo {
     if (myPid != info.myPid) return false;
     if (!myExecutableName.equals(info.myExecutableName)) return false;
     if (!myArgs.equals(info.myArgs)) return false;
+    if (!myCommandLine.equals(info.myCommandLine)) return false;
     if (myUser != null ? !myUser.equals(info.myUser) : info.myUser != null) return false;
     if (myState != null ? !myState.equals(info.myState) : info.myState != null) return false;
 
@@ -101,6 +105,7 @@ public class ProcessInfo {
     int result = myPid;
     result = 31 * result + myExecutableName.hashCode();
     result = 31 * result + myArgs.hashCode();
+    result = 31 * result + myCommandLine.hashCode();
     result = 31 * result + (myUser != null ? myUser.hashCode() : 0);
     result = 31 * result + (myState != null ? myState.hashCode() : 0);
     return result;

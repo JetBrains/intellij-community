@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,7 +132,9 @@ class ProcessListUtil {
       if (executablePath == null) continue;
 
       String args = commandLine.substring(executablePath.length()).trim();
-      result.add(new ProcessInfo(pid, executablePath, args, user, state));
+      
+      String name = PathUtil.getFileName(StringUtil.trimTrailing(executablePath, '/'));
+      result.add(new ProcessInfo(pid, commandLine, name, args, user, state));
     }
 
     return result;
@@ -200,7 +203,7 @@ class ProcessListUtil {
     String header = lines[0];
     int commandLineStart = header.indexOf("CommandLine");
     if (commandLineStart == -1) return null;
-    
+
     int pidStart = header.indexOf("ProcessId");
     if (pidStart == -1) return null;
 
@@ -216,12 +219,17 @@ class ProcessListUtil {
       String commandLine = line.substring(commandLineStart, pidStart).trim();
       String args = "";
 
-      int nameIndex = StringUtil.indexOfIgnoreCase(commandLine, name, 0);
-      if (nameIndex != -1) {
-        args = commandLine.substring(nameIndex + name.length()).trim();
+      if (commandLine.isEmpty()) {
+        commandLine = name;
+      }
+      else {
+        int nameIndex = StringUtil.indexOfIgnoreCase(commandLine, name, 0);
+        if (nameIndex != -1) {
+          args = commandLine.substring(nameIndex + name.length()).trim();
+        }
       }
 
-      result.add(new ProcessInfo(pid, name, args));
+      result.add(new ProcessInfo(pid, commandLine, name, args, null, null));
     }
     return result;
   }
@@ -254,7 +262,7 @@ class ProcessListUtil {
         String name = next[0];
         if (name.isEmpty()) continue;
 
-        result.add(new ProcessInfo(pid, name, ""));
+        result.add(new ProcessInfo(pid, name, name, "", null, null));
       }
     }
     catch (IOException ignore) {

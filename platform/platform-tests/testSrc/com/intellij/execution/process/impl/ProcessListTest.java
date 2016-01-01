@@ -76,16 +76,16 @@ public class ProcessListTest extends UsefulTestCase {
       "    13 S user    " + myDir + "/dir/dir/file_unknown\n"
       );
     assertOrderedEquals(infos,
-                        new ProcessInfo(1, myDir + "/dir/file", "", "user", "S"),
-                        new ProcessInfo(2, myDir + "/dir/dir/file", "", "user", "S"),
-                        new ProcessInfo(3, myDir + "/dir/dir/file", "param param", "user", "S"),
-                        new ProcessInfo(4, myDir + "/dir/dir/file", "with", "user", "S"),
-                        new ProcessInfo(5, myDir + "/dir/dir/file with spaces", "", "user", "S"),
-                        new ProcessInfo(6, myDir + "/dir/dir/file with spaces", "param param", "user", "S"),
-                        new ProcessInfo(7, myDir + "/dir/dir/file", "with spaces/foo", "user", "S"),
-                        new ProcessInfo(8, myDir + "/dir/dir/file/", "", "user", "S"),
-                        new ProcessInfo(9, myDir + "/dir/dir/file with spaces/", "", "user", "S"),
-                        new ProcessInfo(10, myDir + "/dir/dir", "", "user", "S"));
+                        new ProcessInfo(1, myDir + "/dir/file", "file", "", "user", "S"),
+                        new ProcessInfo(2, myDir + "/dir/dir/file", "file", "", "user", "S"),
+                        new ProcessInfo(3, myDir + "/dir/dir/file param param", "file", "param param", "user", "S"),
+                        new ProcessInfo(4, myDir + "/dir/dir/file with", "file", "with", "user", "S"),
+                        new ProcessInfo(5, myDir + "/dir/dir/file with spaces", "file with spaces", "", "user", "S"),
+                        new ProcessInfo(6, myDir + "/dir/dir/file with spaces param param", "file with spaces", "param param", "user", "S"),
+                        new ProcessInfo(7, myDir + "/dir/dir/file with spaces/foo", "file", "with spaces/foo", "user", "S"),
+                        new ProcessInfo(8, myDir + "/dir/dir/file/", "file", "", "user", "S"),
+                        new ProcessInfo(9, myDir + "/dir/dir/file with spaces/", "file with spaces", "", "user", "S"),
+                        new ProcessInfo(10, myDir + "/dir/dir", "dir", "", "user", "S"));
   }
 
   public void testUnix_DetermineExecutableWithExtraSlashes() throws Exception {
@@ -96,8 +96,8 @@ public class ProcessListTest extends UsefulTestCase {
       "     2 S user    //" + myDir + "//dir//file// aaa bbb\n"
       );
     assertOrderedEquals(infos,
-                        new ProcessInfo(1, "//" + myDir + "//dir//file//", "", "user", "S"),
-                        new ProcessInfo(2, "//" + myDir + "//dir//file//", "aaa bbb", "user", "S"));
+                        new ProcessInfo(1, "//" + myDir + "//dir//file//", "file", "", "user", "S"),
+                        new ProcessInfo(2, "//" + myDir + "//dir//file// aaa bbb", "file", "aaa bbb", "user", "S"));
   }
 
   public void testUnix_VariousFormsPidStatUser() throws Exception {
@@ -108,8 +108,8 @@ public class ProcessListTest extends UsefulTestCase {
       "   101 Ss   user_name " + myDir + "/dir/file\n"
     );
     assertOrderedEquals(infos,
-                        new ProcessInfo(1, myDir + "/dir/file", "", "user", "S"),
-                        new ProcessInfo(101, myDir + "/dir/file", "", "user_name", "Ss"));
+                        new ProcessInfo(1, myDir + "/dir/file", "file", "", "user", "S"),
+                        new ProcessInfo(101, myDir + "/dir/file", "file", "", "user_name", "Ss"));
   }
 
   public void testUnix_WrongFormat() throws Exception {
@@ -163,8 +163,8 @@ public class ProcessListTest extends UsefulTestCase {
       "     2 S    user    " + myDir + "/dir/dir/file\n"
     );
     assertOrderedEquals(infos,
-                        new ProcessInfo(1, myDir + "/dir/file", "", "user", "S"),
-                        new ProcessInfo(2, myDir + "/dir/dir/file", "", "user", "S"));
+                        new ProcessInfo(1, myDir + "/dir/file", "file", "", "user", "S"),
+                        new ProcessInfo(2, myDir + "/dir/dir/file", "file", "", "user", "S"));
   }
 
   public void testMac_DoNotIncludeZombies() throws Exception {
@@ -176,7 +176,7 @@ public class ProcessListTest extends UsefulTestCase {
       "     3 SZ   user    " + myDir + "/dir/file\n"
     );
     assertOrderedEquals(infos,
-                        new ProcessInfo(1, myDir + "/dir/file", "", "user", "S"));
+                        new ProcessInfo(1, myDir + "/dir/file", "file", "", "user", "S"));
   }
 
   public void testWindows_WMIC() throws Exception {
@@ -189,12 +189,12 @@ public class ProcessListTest extends UsefulTestCase {
       "TPAutoConnect.exe         TPAutoConnect.exe -q -i vmware -a COM1 -F 30           3336       \n" +
       "conhost.exe               \\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4                3348       \n");
     assertOrderedEquals(infos,
-                        new ProcessInfo(304, "smss.exe", "", null, null),
-                        new ProcessInfo(3052, "sihost.exe", "", null, null),
-                        new ProcessInfo(3068, "taskhostw.exe", "{222A245B-E637-4AE9-A93F-A59CA119A75E}", null, null),
-                        new ProcessInfo(3164, "explorer.exe", "", null, null),
-                        new ProcessInfo(3336, "TPAutoConnect.exe", "-q -i vmware -a COM1 -F 30", null, null),
-                        new ProcessInfo(3348, "conhost.exe", "0x4", null, null));
+                        new ProcessInfo(304, "smss.exe", "smss.exe", "", null, null),
+                        new ProcessInfo(3052, "sihost.exe", "sihost.exe", "", null, null),
+                        new ProcessInfo(3068, "taskhostw.exe {222A245B-E637-4AE9-A93F-A59CA119A75E}", "taskhostw.exe", "{222A245B-E637-4AE9-A93F-A59CA119A75E}", null, null),
+                        new ProcessInfo(3164, "C:\\WINDOWS\\Explorer.EXE", "explorer.exe", "", null, null),
+                        new ProcessInfo(3336, "TPAutoConnect.exe -q -i vmware -a COM1 -F 30", "TPAutoConnect.exe", "-q -i vmware -a COM1 -F 30", null, null),
+                        new ProcessInfo(3348, "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4", "conhost.exe", "0x4", null, null));
   }
 
   public void testOnWindows_WMIC_DoNotIncludeSystemIdleProcess() throws Exception {
@@ -204,8 +204,8 @@ public class ProcessListTest extends UsefulTestCase {
       "System                                                                           4          \n" +
       "smss.exe                                                                         304        \n");
     assertOrderedEquals(infos,
-                        new ProcessInfo(4, "System", "", null, null),
-                        new ProcessInfo(304, "smss.exe", "", null, null));
+                        new ProcessInfo(4, "System", "System", "", null, null),
+                        new ProcessInfo(304, "smss.exe", "smss.exe", "", null, null));
   }
 
   public void testWindows_WMIC_WrongFormat() throws Exception {
@@ -238,12 +238,12 @@ public class ProcessListTest extends UsefulTestCase {
       "\"TPAutoConnect.exe\",\"3336\",\"Console\",\"1\",\"5,508 K\",\"Running\",\"VM-WINDOWS\\Anton Makeev\",\"0:00:04\",\"HiddenTPAutoConnectWindow\"\n" +
       "\"conhost.exe\",\"3348\",\"Console\",\"1\",\"1,172 K\",\"Unknown\",\"VM-WINDOWS\\Anton Makeev\",\"0:00:00\",\"N/A\"\n");
     assertOrderedEquals(infos,
-                        new ProcessInfo(304, "smss.exe", "", null, null),
-                        new ProcessInfo(3052, "sihost.exe", "", null, null),
-                        new ProcessInfo(3068, "taskhostw.exe", "", null, null),
-                        new ProcessInfo(3164, "explorer.exe", "", null, null),
-                        new ProcessInfo(3336, "TPAutoConnect.exe", "", null, null),
-                        new ProcessInfo(3348, "conhost.exe", "", null, null));
+                        new ProcessInfo(304, "smss.exe", "smss.exe", "", null, null),
+                        new ProcessInfo(3052, "sihost.exe", "sihost.exe", "", null, null),
+                        new ProcessInfo(3068, "taskhostw.exe", "taskhostw.exe", "", null, null),
+                        new ProcessInfo(3164, "explorer.exe", "explorer.exe", "", null, null),
+                        new ProcessInfo(3336, "TPAutoConnect.exe", "TPAutoConnect.exe", "", null, null),
+                        new ProcessInfo(3348, "conhost.exe", "conhost.exe", "", null, null));
   }
 
   public void testWindows_TaskList_WrongFormat() throws Exception {

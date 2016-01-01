@@ -1070,6 +1070,14 @@ public class StringUtil extends StringUtilRt {
     return string.subSequence(0, index + 1);
   }
 
+  @NotNull
+  @Contract(pure = true)
+  public static String trimTrailing(@NotNull String string, char symbol) {
+    int index = string.length() - 1;
+    while (index >= 0 && string.charAt(index) == symbol) index--;
+    return string.substring(0, index + 1);
+  }
+
   @Contract(pure = true)
   public static boolean startsWithChar(@Nullable CharSequence s, char prefix) {
     return s != null && s.length() != 0 && s.charAt(0) == prefix;

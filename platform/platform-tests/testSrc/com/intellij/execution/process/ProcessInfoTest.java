@@ -19,10 +19,10 @@ import com.intellij.testFramework.UsefulTestCase;
 
 public class ProcessInfoTest extends UsefulTestCase {
   public void testExecutableName() throws Exception {
-    assertEquals("foo", new ProcessInfo(1, "foo", "bar").getExecutableDisplayName());
-    assertEquals("foo", new ProcessInfo(1, "foo.exe", "bar").getExecutableDisplayName());
-    assertEquals("foo", new ProcessInfo(1, "foo.EXE", "bar").getExecutableDisplayName());
-    assertEquals("foo.bar", new ProcessInfo(1, "foo.bar", "bar").getExecutableDisplayName());
-    assertEquals("foo.1.2", new ProcessInfo(1, "foo.1.2", "bar").getExecutableDisplayName());
+    assertEquals("foo", new ProcessInfo(1, "", "foo", "", null, null).getExecutableDisplayName());
+    assertEquals("foo", new ProcessInfo(1, "", "foo.exe", "", null, null).getExecutableDisplayName());
+    assertEquals("foo", new ProcessInfo(1, "", "foo.EXE", "", null, null).getExecutableDisplayName());
+    assertEquals("foo.bar", new ProcessInfo(1, "", "foo.bar", "", null, null).getExecutableDisplayName());
+    assertEquals("foo.1.2", new ProcessInfo(1, "", "foo.1.2", "", null, null).getExecutableDisplayName());
   }
 }
