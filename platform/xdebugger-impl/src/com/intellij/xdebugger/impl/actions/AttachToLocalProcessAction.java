@@ -23,20 +23,20 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.ListPopupStepEx;
-import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.StatusText;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
+import com.intellij.xdebugger.attach.XLocalAttachGroup;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,9 +45,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.InputEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class AttachToLocalProcessAction extends AnAction {
   public AttachToLocalProcessAction() {
@@ -69,7 +67,10 @@ public class AttachToLocalProcessAction extends AnAction {
     final Project project = getEventProject(e);
     if (project == null) return;
 
-    MyPopupStep step = new MyPopupStep(collectAttachItems(project), project);
+    ProcessInfo[] processList = OSProcessManagerImpl.getProcessList();
+    XLocalAttachDebuggerProvider[] providers = Extensions.getExtensions(XLocalAttachDebuggerProvider.EP);
+    
+    MyPopupStep step = new MyPopupStep(collectAttachItems(project, processList, providers), project);
 
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
     final JList mainList = ((ListPopupImpl)popup).getList();
@@ -102,37 +103,79 @@ public class AttachToLocalProcessAction extends AnAction {
   }
 
   @NotNull
-  private static List<AttachItem> collectAttachItems(@NotNull Project project) {
-    List<AttachItem> result = new ArrayList<AttachItem>();
-
+  public static List<AttachItem> collectAttachItems(@NotNull final Project project, 
+                                                    @NotNull ProcessInfo[] processList,
+                                                    @NotNull XLocalAttachDebuggerProvider... providers) {
+    MultiMap<XLocalAttachGroup, Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>> groupWithItems
+      = new MultiMap<XLocalAttachGroup, Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>>();
+    
     UserDataHolderBase dataHolder = new UserDataHolderBase();
-    for (ProcessInfo eachInfo : OSProcessManagerImpl.getProcessList()) {
-      List<XLocalAttachDebugger> availableDebuggers = new ArrayList<XLocalAttachDebugger>();
-      for (XLocalAttachDebuggerProvider eachProvider : Extensions.getExtensions(XLocalAttachDebuggerProvider.EP)) {
-        availableDebuggers.addAll(eachProvider.getAvailableDebuggers(project, eachInfo, dataHolder));
+    for (ProcessInfo eachInfo : processList) {
+
+      MultiMap<XLocalAttachGroup, XLocalAttachDebugger> groupsWithDebuggers = new MultiMap<XLocalAttachGroup, XLocalAttachDebugger>();
+      for (XLocalAttachDebuggerProvider eachProvider : providers) {
+        groupsWithDebuggers.putValues(eachProvider.getAttachGroup(), eachProvider.getAvailableDebuggers(project, eachInfo, dataHolder));
       }
-      if (!availableDebuggers.isEmpty()) {
-        result.add(new AttachItem(eachInfo, availableDebuggers));
+
+      for (XLocalAttachGroup eachGroup : groupsWithDebuggers.keySet()) {
+        Collection<XLocalAttachDebugger> debuggers = groupsWithDebuggers.get(eachGroup);
+        if (!debuggers.isEmpty()) {
+          groupWithItems.putValue(eachGroup, Pair.create(eachInfo, new ArrayList<XLocalAttachDebugger>(debuggers)));
+        }
       }
     }
+
+    ArrayList<XLocalAttachGroup> sortedGroups = new ArrayList<XLocalAttachGroup>(groupWithItems.keySet());
+    Collections.sort(sortedGroups, new Comparator<XLocalAttachGroup>() {
+      @Override
+      public int compare(XLocalAttachGroup a, XLocalAttachGroup b) {
+        return a.getOrder() - b.getOrder();
+      }
+    });
+
+    List<AttachItem> result = new ArrayList<AttachItem>();
+    for (final XLocalAttachGroup eachGroup : sortedGroups) {
+      List<Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>> sortedItems
+        = new ArrayList<Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>>(groupWithItems.get(eachGroup));
+      Collections.sort(sortedItems, new Comparator<Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>>() {
+        @Override
+        public int compare(Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>> a, Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>> b) {
+          return eachGroup.compare(project, a.first, b.first);
+        }
+      });
+
+      boolean first = true;
+      for (Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>> eachItem : sortedItems) {
+        result.add(new AttachItem(eachGroup, first, eachItem.first, eachItem.second));
+        first = false;
+      }
+    }
+
     return result;
   }
 
   public static class AttachItem {
+    @NotNull private final XLocalAttachGroup myGroup;
+    private final boolean myIsFirstInGroup;
     @NotNull private final ProcessInfo myProcessInfo;
     @NotNull private final List<XLocalAttachDebugger> myDebuggers;
     @NotNull private final List<AttachItem> mySubItems;
 
-    public AttachItem(@NotNull ProcessInfo info, @NotNull List<XLocalAttachDebugger> debuggers) {
+    public AttachItem(@NotNull XLocalAttachGroup group,
+                      boolean isFirstInGroup,
+                      @NotNull ProcessInfo info,
+                      @NotNull List<XLocalAttachDebugger> debuggers) {
       assert !debuggers.isEmpty();
 
-      this.myProcessInfo = info;
-      this.myDebuggers = debuggers;
+      myGroup = group;
+      myIsFirstInGroup = isFirstInGroup;
+      myProcessInfo = info;
+      myDebuggers = debuggers;
       if (debuggers.size() > 1) {
         mySubItems = ContainerUtil.map(debuggers, new Function<XLocalAttachDebugger, AttachItem>() {
           @Override
           public AttachItem fun(XLocalAttachDebugger debugger) {
-            return new AttachItem(myProcessInfo, Collections.singletonList(debugger));
+            return new AttachItem(myGroup, false, myProcessInfo, Collections.singletonList(debugger));
           }
         });
       }
@@ -142,8 +185,18 @@ public class AttachToLocalProcessAction extends AnAction {
     }
 
     @Nullable
-    public Icon getIcon() {
-      return null;
+    public String getSeparatorTitle() {
+      return myIsFirstInGroup ? myGroup.getGroupName() : null;
+    }
+
+    @Nullable
+    public Icon getIcon(@NotNull Project project) {
+      return myGroup.getProcessIcon(project, myProcessInfo);
+    }
+
+    @NotNull
+    public String getText(@NotNull Project project) {
+      return myProcessInfo.getPid() + " " + myGroup.getProcessDisplayText(project, myProcessInfo);
     }
 
     @NotNull
@@ -184,10 +237,22 @@ public class AttachToLocalProcessAction extends AnAction {
       return false;
     }
 
+    @Nullable
+    @Override
+    public ListSeparator getSeparatorAbove(AttachItem value) {
+      String separatorTitle = value.getSeparatorTitle();
+      return separatorTitle == null ? null : new ListSeparator(separatorTitle);
+    }
+
+    @Override
+    public Icon getIconFor(AttachItem value) {
+      return value.getIcon(myProject);
+    }
+
     @NotNull
     @Override
     public String getTextFor(AttachItem value) {
-      return value.myProcessInfo.getPid() + " " + value.myProcessInfo.getExecutableDisplayName();
+      return value.getText(myProject);
     }
 
     @Override

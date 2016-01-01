@@ -27,6 +27,14 @@ public interface XLocalAttachDebuggerProvider {
   ExtensionPointName<XLocalAttachDebuggerProvider> EP = ExtensionPointName.create("com.intellij.xdebugger.localAttachDebuggerProvider");
 
   /**
+   * @return a group in which the supported processes should be visually organized.
+   *         Return XLocalAttachGroup.DEFAULT for a common group.
+   * 
+   */
+  @NotNull
+  XLocalAttachGroup getAttachGroup();
+
+  /**
    *  Attach to Local Process action invokes {@link #getAvailableDebuggers} method for every running process.
    *  {@link XLocalAttachDebuggerProvider} should return a list of the debuggers that can attach and debug a given process.
    *  
