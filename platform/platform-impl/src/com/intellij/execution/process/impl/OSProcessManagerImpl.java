@@ -16,6 +16,7 @@
 package com.intellij.execution.process.impl;
 
 import com.intellij.execution.process.OSProcessManager;
+import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.process.RunnerWinProcess;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,6 +39,18 @@ import java.util.List;
  */
 public class OSProcessManagerImpl extends OSProcessManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.impl.OSProcessManagerImpl");
+
+  @NotNull
+  public static ProcessInfo[] getProcessList() {
+    if (SystemInfo.isWindows) {
+      return ProcessListWin32.getProcessList();
+    }
+    if (SystemInfo.isLinux || SystemInfo.isMac) {
+      return ProcessListLinux.getProcessList(SystemInfo.isMac);
+    }
+    LOG.error("Unexpected platform. Unable to list processes.");
+    return new ProcessInfo[0];
+  }
 
   @Override
   public boolean killProcessTree(@NotNull Process process) {

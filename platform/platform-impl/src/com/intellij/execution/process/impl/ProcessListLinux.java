@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.intellij.execution.process;
+package com.intellij.execution.process.impl;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;

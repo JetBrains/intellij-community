@@ -17,7 +17,7 @@ package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessInfo;
-import com.intellij.execution.process.ProcessUtils;
+import com.intellij.execution.process.impl.OSProcessManagerImpl;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -106,7 +106,7 @@ public class AttachToLocalProcessAction extends AnAction {
     List<AttachItem> result = new ArrayList<AttachItem>();
 
     UserDataHolderBase dataHolder = new UserDataHolderBase();
-    for (ProcessInfo eachInfo : ProcessUtils.getProcessList()) {
+    for (ProcessInfo eachInfo : OSProcessManagerImpl.getProcessList()) {
       List<XLocalAttachDebugger> availableDebuggers = new ArrayList<XLocalAttachDebugger>();
       for (XLocalAttachDebuggerProvider eachProvider : Extensions.getExtensions(XLocalAttachDebuggerProvider.EP)) {
         availableDebuggers.addAll(eachProvider.getAvailableDebuggers(project, eachInfo, dataHolder));

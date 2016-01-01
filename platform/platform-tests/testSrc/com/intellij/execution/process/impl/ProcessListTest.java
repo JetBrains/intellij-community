@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.process;
+package com.intellij.execution.process.impl;
 
+import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -22,7 +23,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import java.io.File;
 import java.util.Arrays;
 
-public class ProcessUtilsTest extends UsefulTestCase {
+public class ProcessListTest extends UsefulTestCase {
   private File myDir;
 
   @Override
@@ -41,7 +42,7 @@ public class ProcessUtilsTest extends UsefulTestCase {
   }
 
   public void testProcessList_WorksOnAllPlatforms() throws Exception {
-    assertNotEmpty(Arrays.asList(ProcessUtils.getProcessList()));
+    assertNotEmpty(Arrays.asList(OSProcessManagerImpl.getProcessList()));
   }
   
   public void testProcessListOnLinux_DetermineExecutable() throws Exception {
