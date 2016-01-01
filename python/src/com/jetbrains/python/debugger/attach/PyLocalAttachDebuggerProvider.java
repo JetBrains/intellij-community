@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
+import com.intellij.xdebugger.attach.XLocalAttachGroup;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +37,12 @@ import java.util.List;
 
 public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvider {
   private static final Key<List<XLocalAttachDebugger>> DEBUGGERS_KEY = Key.create("PyLocalAttachDebuggerProvider.DEBUGGERS");
+
+  @NotNull
+  @Override
+  public XLocalAttachGroup getAttachGroup() {
+    return PyLocalAttachGroup.INSTANCE;
+  }
 
   @NotNull
   @Override
