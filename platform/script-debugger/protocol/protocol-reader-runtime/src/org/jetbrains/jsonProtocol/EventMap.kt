@@ -29,7 +29,7 @@ class EventMap<R : ResponseResultReader>(private val protocolReader: R) {
   fun <T : Any?> add(type: EventType<T, R>, handler: (T) -> Unit) {
     nameToType.put(type.methodName, type)
     @Suppress("UNCHECKED_CAST")
-    nameToHandler.getOrPut(type.methodName, { ContainerUtil.createLockFreeCopyOnWriteList() }).add(handler as (Any?) -> Unit)
+    nameToHandler.concurrentGetOrPut(type.methodName, { ContainerUtil.createLockFreeCopyOnWriteList() }).add(handler as (Any?) -> Unit)
   }
 
   fun <T> addMulti(vararg types: EventType<out T, R>, eventHandler: (T) -> Unit) {
