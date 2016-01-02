@@ -19,6 +19,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.process.impl.OSProcessManagerImpl;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.Extensions;
@@ -210,8 +212,12 @@ public class AttachToLocalProcessAction extends AnAction {
     }
 
     public void startDebugSession(@NotNull Project project) {
+      XLocalAttachDebugger debugger = getSelectedDebugger();
+      UsageTrigger.trigger(ConvertUsagesUtil.ensureProperKey("debugger.attach.local"));
+      UsageTrigger.trigger(ConvertUsagesUtil.ensureProperKey("debugger.attach.local." + debugger.getDebuggerDisplayName()));
+      
       try {
-        getSelectedDebugger().attachDebugSession(project, myProcessInfo);
+        debugger.attachDebugSession(project, myProcessInfo);
       }
       catch (ExecutionException e) {
         ExecutionUtil.handleExecutionError(project, ToolWindowId.DEBUG, myProcessInfo.getExecutableName(), e);
