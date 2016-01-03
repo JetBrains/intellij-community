@@ -1,9 +1,11 @@
 package com.intellij.tasks.redmine;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.tasks.impl.gson.TaskGsonUtil;
@@ -20,16 +22,16 @@ import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.StringEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObjectDeserializer;
@@ -68,6 +70,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   private RedmineProject myCurrentProject;
   private boolean myAssignedToMe = true;
   private List<RedmineProject> myProjects = null;
+  private List<RedmineIssue.IssueStatus> myIssueStatuses = null;
 
   /**
    * Serialization constructor
@@ -200,6 +203,19 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     return builder.build();
   }
 
+  public List<RedmineIssue.IssueStatus> fetchIssueStatuses() throws Exception {
+    HttpClient client = getHttpClient();
+    HttpGet method = new HttpGet(getRestApiUrl("issue_statuses.json"));
+    IssueStatusesWrapper wrapper = client.execute(method, new GsonSingleObjectDeserializer<IssueStatusesWrapper>(GSON, IssueStatusesWrapper.class));
+    if (wrapper != null) {
+      myIssueStatuses = wrapper.getIssueStatuses();
+
+      return wrapper.getIssueStatuses();
+    }
+
+    return Collections.emptyList();
+  }
+
   public List<RedmineProject> fetchProjects() throws Exception {
     HttpClient client = getHttpClient();
     // Download projects with pagination (IDEA-125056, IDEA-125157)
@@ -240,6 +256,18 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
       return null;
     }
     return new RedmineTask(this, wrapper.getIssue());
+  }
+
+  @NotNull
+  @Override
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+    ensureIssueStatusesDiscovered();
+
+    final Set<CustomTaskState> result = new HashSet<CustomTaskState>();
+    for (RedmineIssue.IssueStatus issueStatus : myIssueStatuses) {
+      result.add(new CustomTaskState(String.valueOf(issueStatus.getId()), issueStatus.getName()));
+    }
+    return result;
   }
 
   public String getAPIKey() {
@@ -288,7 +316,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return super.getFeatures() & ~NATIVE_SEARCH | BASIC_HTTP_AUTHORIZATION;
+    return super.getFeatures() & ~NATIVE_SEARCH | BASIC_HTTP_AUTHORIZATION | STATE_UPDATING;
   }
 
   @Nullable
@@ -298,6 +326,75 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   public void setCurrentProject(@Nullable RedmineProject project) {
     myCurrentProject = project != null && project.getId() == -1 ? UNSPECIFIED_PROJECT : project;
+  }
+
+  @Override
+  public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
+    HttpPut method = new HttpPut(getRestApiUrl("issues", task.getId() + ".json"));
+
+    JsonObject jsonObject = new JsonObject();
+    JsonObject issueJsonObject = new JsonObject();
+    issueJsonObject.addProperty("status_id", Integer.parseInt(state.getId()));
+
+    jsonObject.add("issue", issueJsonObject);
+
+    method.setEntity(new StringEntity(GSON.toJson(jsonObject)));
+    method.addHeader("Content-Type", "application/json");
+    getHttpClient().execute(method);
+  }
+
+  @Nullable
+  @Override
+  public CustomTaskState getPreferredOpenTaskState() {
+    try {
+      ensureIssueStatusesDiscovered();
+
+      RedmineIssue.IssueStatus inProgress = null;
+      for (RedmineIssue.IssueStatus status : myIssueStatuses) {
+        if ((inProgress == null) && (status.getName().equals("In progress"))) {
+          inProgress = status;
+        }
+      }
+
+      if (inProgress != null) {
+        return new CustomTaskState(String.valueOf(inProgress.getId()), inProgress.getName());
+      }
+    }
+    catch (Exception ignored) {
+    }
+
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public CustomTaskState getPreferredCloseTaskState() {
+    try {
+      ensureIssueStatusesDiscovered();
+
+      RedmineIssue.IssueStatus closedStatus = null;
+      RedmineIssue.IssueStatus resolvedStatus = null;
+      for (RedmineIssue.IssueStatus status : myIssueStatuses) {
+        if ((closedStatus == null) && (status.isClosed())) {
+          closedStatus = status;
+        }
+        if ((resolvedStatus == null) && (status.getName().equals("Resolved"))) {
+          resolvedStatus = status;
+        }
+      }
+
+      // Prefer setting the status to Resolved rather than one of the closed statuses
+      if (resolvedStatus != null) {
+        return new CustomTaskState(String.valueOf(resolvedStatus.getId()), resolvedStatus.getName());
+      }
+      if (closedStatus != null) {
+        return new CustomTaskState(String.valueOf(closedStatus.getId()), closedStatus.getName());
+      }
+    }
+    catch (Exception ignored) {
+    }
+
+    return null;
   }
 
   @NotNull
@@ -314,6 +411,12 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   private void ensureProjectsDiscovered() throws Exception {
     if (myProjects == null) {
       fetchProjects();
+    }
+  }
+
+  private void ensureIssueStatusesDiscovered() throws Exception {
+    if (myIssueStatuses == null) {
+      fetchIssueStatuses();
     }
   }
 

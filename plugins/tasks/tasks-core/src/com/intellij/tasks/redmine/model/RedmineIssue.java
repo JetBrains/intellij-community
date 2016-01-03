@@ -90,6 +90,9 @@ public class RedmineIssue {
     @Mandatory
     private String name;
 
+    @SerializedName("is_closed")
+    private boolean closed;
+
     public int getId() {
       return id;
     }
@@ -97,6 +100,10 @@ public class RedmineIssue {
     @NotNull
     public String getName() {
       return name;
+    }
+
+    public boolean isClosed() {
+      return this.closed;
     }
   }
 }
