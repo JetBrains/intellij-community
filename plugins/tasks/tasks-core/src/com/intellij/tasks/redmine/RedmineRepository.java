@@ -234,7 +234,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   @Override
   public Task findTask(@NotNull String id) throws Exception {
     ensureProjectsDiscovered();
-    HttpGet method = new HttpGet(getRestApiUrl("issues", id + ".json"));
+    HttpGet method = new HttpGet(getRestApiUrl("issues", id + ".json") + "?include=journals");
     IssueWrapper wrapper = getHttpClient().execute(method, new GsonSingleObjectDeserializer<IssueWrapper>(GSON, IssueWrapper.class, true));
     if (wrapper == null) {
       return null;

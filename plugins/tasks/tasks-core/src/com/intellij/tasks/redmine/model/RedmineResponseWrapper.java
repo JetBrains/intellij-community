@@ -43,6 +43,18 @@ public abstract class RedmineResponseWrapper {
   }
 
   @RestModel
+  public static class IssueStatusesWrapper extends RedmineResponseWrapper {
+    @Mandatory
+    @SerializedName("issue_statuses")
+    private List<RedmineIssue.IssueStatus> issueStatuses;
+
+    @NotNull
+    public List<RedmineIssue.IssueStatus> getIssueStatuses() {
+      return issueStatuses;
+    }
+  }
+
+  @RestModel
   public static class IssueWrapper extends RedmineResponseWrapper {
     @Mandatory
     private RedmineIssue issue;

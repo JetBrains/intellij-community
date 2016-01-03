@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Mikhail Golubev
@@ -31,6 +32,10 @@ public class RedmineIssue {
   private Date updated;
 
   private RedmineProject project;
+
+  private RedmineTracker tracker;
+
+  private List<RedmineIssueJournal> journals;
 
   public int getId() {
     return id;
@@ -67,6 +72,16 @@ public class RedmineIssue {
   @Nullable
   public RedmineProject getProject() {
     return project;
+  }
+
+  @NotNull
+  public RedmineTracker getTracker() {
+    return tracker;
+  }
+
+  @Nullable
+  public List<RedmineIssueJournal> getJournals() {
+    return journals;
   }
 
   @RestModel

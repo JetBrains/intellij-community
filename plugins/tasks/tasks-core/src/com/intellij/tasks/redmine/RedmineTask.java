@@ -5,6 +5,7 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.redmine.model.RedmineIssue;
+import com.intellij.tasks.redmine.model.RedmineIssueJournal;
 import com.intellij.tasks.redmine.model.RedmineProject;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Mikhail Golubev
@@ -60,7 +62,12 @@ public class RedmineTask extends Task {
   @NotNull
   @Override
   public Comment[] getComments() {
-    return Comment.EMPTY_ARRAY;
+    if (myIssue.getJournals() == null) {
+      return Comment.EMPTY_ARRAY;
+    }
+
+    List<RedmineIssueJournal> journals = myIssue.getJournals();
+    return journals.toArray(new Comment[journals.size()]);
   }
 
   @NotNull
@@ -72,8 +79,14 @@ public class RedmineTask extends Task {
   @NotNull
   @Override
   public TaskType getType() {
-    // TODO: precise mapping
-    return TaskType.BUG;
+    if (myIssue.getTracker().getName().equals("Bug")) {
+      return TaskType.BUG;
+    }
+    if (myIssue.getTracker().getName().equals("Feature")) {
+      return TaskType.FEATURE;
+    }
+
+    return TaskType.OTHER;
   }
 
   @Nullable
