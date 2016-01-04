@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,6 +48,8 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   @NotNull private CommitCountStage myCommitCount = CommitCountStage.INITIAL;
   @NotNull private List<MoreCommitsRequest> myRequestsToRun = ContainerUtil.newArrayList();
   @NotNull private List<Consumer<VisiblePack>> myConsumers = ContainerUtil.newArrayList();
+  @NotNull private volatile VisiblePack myVisiblePack = VisiblePack.EMPTY;
+  private boolean myIsInvalid = false;
 
   public VcsLogFiltererImpl(@NotNull final Project project,
                             @NotNull VcsLogDataManager dataManager,
@@ -58,7 +61,8 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
     myTaskController = new SingleTaskController<Request, VisiblePack>(new Consumer<VisiblePack>() {
       @Override
-      public void consume(VisiblePack visiblePack) {
+      public void consume(@NotNull VisiblePack visiblePack) {
+        myVisiblePack = visiblePack;
         for (Consumer<VisiblePack> consumer : myConsumers) {
           consumer.consume(visiblePack);
         }
@@ -137,7 +141,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
       // visible pack can be null (e.g. when filter is set during initialization) => we just remember filters set by user
       myTaskController.taskCompleted(visiblePack);
 
-      if (visiblePack != null) {
+      if (visiblePack != null && !myIsInvalid) {
         final List<MoreCommitsRequest> requestsToRun = myRequestsToRun;
         myRequestsToRun = ContainerUtil.newArrayList();
 
@@ -154,22 +158,61 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
     @Nullable
     private VisiblePack getVisiblePack(@Nullable VisiblePack visiblePack, @NotNull List<Request> requests) {
-      InvalidateRequest invalidateRequest = ContainerUtil.findLastInstance(requests, InvalidateRequest.class);
+      int invalidateRequest = ContainerUtil.lastIndexOf(requests, new Condition<Request>() {
+        @Override
+        public boolean value(Request request) {
+          return request instanceof InvalidateRequest;
+        }
+      });
+      int refreshRequest = ContainerUtil.lastIndexOf(requests, new Condition<Request>() {
+        @Override
+        public boolean value(Request request) {
+          return request instanceof RefreshRequest;
+        }
+      });
 
       FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
       SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
       List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
 
       myRequestsToRun.addAll(moreCommitsRequests);
-
-      DataPack dataPack = myDataManager.getDataPack();
-
       if (filterRequest != null) {
         myFilters = filterRequest.filters;
       }
       if (sortTypeRequest != null) {
         mySortType = sortTypeRequest.sortType;
       }
+
+      if (myIsInvalid) {
+        if (refreshRequest > invalidateRequest) {
+          myIsInvalid = false;
+          return refresh(visiblePack, filterRequest, moreCommitsRequests);
+        }
+        else {
+          // remember filters
+          return visiblePack;
+        }
+      }
+      else {
+        if (refreshRequest >= invalidateRequest) {
+          return refresh(visiblePack, filterRequest, moreCommitsRequests);
+        }
+        else {
+          myIsInvalid = true;
+          // invalidate
+          VisiblePack frozenVisiblePack = visiblePack == null ? myVisiblePack : visiblePack;
+          if (filterRequest != null) {
+            frozenVisiblePack = refresh(visiblePack, filterRequest, moreCommitsRequests);
+          }
+          return new FakeVisiblePackBuilder(myDataManager.getHashMap()).build(frozenVisiblePack);
+        }
+      }
+    }
+
+    private VisiblePack refresh(@Nullable VisiblePack visiblePack,
+                                @Nullable FilterRequest filterRequest,
+                                @NotNull List<MoreCommitsRequest> moreCommitsRequests) {
+      DataPack dataPack = myDataManager.getDataPack();
 
       if (dataPack == DataPack.EMPTY) { // when filter is set during initialization, just remember filters
         return visiblePack;
