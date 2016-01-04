@@ -269,6 +269,9 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
       }
     }
+    else if (pType instanceof PsiCapturedWildcardType) {
+      pType = ((PsiCapturedWildcardType)pType).getUpperBound();
+    }
 
     PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(pType);
     PsiClass paramClass = resolveResult.getElement();
