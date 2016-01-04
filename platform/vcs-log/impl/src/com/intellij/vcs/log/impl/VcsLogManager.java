@@ -84,6 +84,13 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   public JComponent initMainLog(@Nullable final String contentTabName) {
+    myUi = createLog(contentTabName);
+    myUi.requestFocus();
+    return myUi.getMainFrame().getMainComponent();
+  }
+
+  @NotNull
+  public VcsLogUiImpl createLog(@Nullable String contentTabName) {
     initData();
 
     VcsLogFiltererImpl filterer =
@@ -92,9 +99,7 @@ public class VcsLogManager implements Disposable {
     if (contentTabName != null) {
       watchTab(contentTabName, filterer);
     }
-    myUi = ui;
-    myUi.requestFocus();
-    return myUi.getMainFrame().getMainComponent();
+    return ui;
   }
 
   public boolean initData() {
