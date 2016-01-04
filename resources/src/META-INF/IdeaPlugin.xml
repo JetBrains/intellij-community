@@ -538,6 +538,9 @@
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManagerImpl"/>
 
+    <projectService serviceInterface="com.intellij.codeInsight.ConcurrencyAnnotationsManager"
+                    serviceImplementation="com.intellij.codeInsight.ConcurrencyAnnotationsManager"/>
+
     <projectService serviceInterface="com.intellij.psi.search.PsiShortNamesCache"
                     serviceImplementation="com.intellij.psi.impl.CompositeShortNamesCache"/>
 
