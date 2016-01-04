@@ -31,7 +31,7 @@ class JCiPUtil {
   private static final String GUARDED_BY = "net.jcip.annotations.GuardedBy";
 
   static boolean isJCiPAnnotation(String ref) {
-    return "Immutable".equals(ref) || "GuardedBy".equals(ref) || "ThreadSafe".equals("ref");
+    return "Immutable".equals(ref) || "GuardedBy".equals(ref) || "ThreadSafe".equals(ref) || "NotThreadSafe".equals(ref);
   }
 
   private JCiPUtil() {

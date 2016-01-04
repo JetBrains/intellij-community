@@ -303,10 +303,10 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="non.short.circuit.boolean.expression.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.NonShortCircuitBooleanInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="NullArgumentToVariableArgMethod" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="null.argument.to.var.arg.method.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.bugs.NullArgumentToVariableArgMethodInspection"/>
+    <localInspection groupPath="Java" language="JAVA" suppressId="ConfusingArgumentToVarargsMethod" alternativeId="NullArgumentToVariableArgMethod"
+                     shortName="NullArgumentToVariableArgMethod" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="null.argument.to.var.arg.method.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.bugs.NullArgumentToVariableArgMethodInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NumberEquality" bundle="com.siyeh.InspectionGadgetsBundle" key="number.comparison.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.NumberEqualityInspection"/>
@@ -319,7 +319,8 @@
     <localInspection groupPath="Java" language="JAVA" shortName="ObjectToString" bundle="com.siyeh.InspectionGadgetsBundle" key="default.tostring.call.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.ObjectToStringInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="PrimitiveArrayArgumentToVariableArgMethod" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java" language="JAVA" suppressId="PrimitiveArrayArgumentToVarargsMethod" alternativeId="PrimitiveArrayArgumentToVariableArgMethod"
+                     shortName="PrimitiveArrayArgumentToVariableArgMethod" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="primitive.array.argument.to.var.arg.method.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.PrimitiveArrayArgumentToVariableArgMethodInspection"/>

@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger
+package com.intellij.testFramework
 
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.then
-import org.jetbrains.debugger.values.ValueManager
+import java.nio.file.FileSystem
 
-abstract class EvaluateContextBase<VALUE_MANAGER : ValueManager>(val valueManager: VALUE_MANAGER) : EvaluateContext {
-  override fun withValueManager(objectGroup: String) = this
-
-  override fun refreshOnDone(promise: Promise<*>): Promise<*> = (promise as Promise<Any?>).then { valueManager.clearCaches() }
+fun FileSystem.file(path: String, data: ByteArray): FileSystem {
+  getPath(path).write(data)
+  return this
 }
+
+fun FileSystem.file(path: String, data: String) = file(path, data.toByteArray())

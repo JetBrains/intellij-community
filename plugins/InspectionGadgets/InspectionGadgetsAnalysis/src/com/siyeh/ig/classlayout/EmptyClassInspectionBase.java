@@ -39,7 +39,7 @@ public class EmptyClassInspectionBase extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreThrowables = true;
   @SuppressWarnings("PublicField")
-  public boolean commentsAreContent = false;
+  public boolean commentsAreContent = true;
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
