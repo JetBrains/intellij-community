@@ -70,6 +70,7 @@ public abstract class GitHandler {
 
   protected static final Logger LOG = Logger.getInstance(GitHandler.class);
   protected static final Logger OUTPUT_LOG = Logger.getInstance("#output." + GitHandler.class.getName());
+  private static final Logger TIME_LOG = Logger.getInstance("#time." + GitHandler.class.getName());
 
   protected final Project myProject;
   protected final GitCommand myCommand;
@@ -757,11 +758,11 @@ public abstract class GitHandler {
   private void logTime() {
     if (myStartTime > 0) {
       long time = System.currentTimeMillis() - myStartTime;
-      if (!LOG.isDebugEnabled() && time > LONG_TIME) {
+      if (!TIME_LOG.isDebugEnabled() && time > LONG_TIME) {
         LOG.info(String.format("git %s took %s ms. Command parameters: %n%s", myCommand, time, myCommandLine.getCommandLineString()));
       }
       else {
-        LOG.debug(String.format("git %s took %s ms", myCommand, time));
+        TIME_LOG.debug(String.format("git %s took %s ms", myCommand, time));
       }
     }
     else {
