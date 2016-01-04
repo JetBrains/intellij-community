@@ -15,8 +15,12 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.IdePopupEventDispatcher;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -46,9 +50,11 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     LOG.assertTrue(isPopupActive());
 
     if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
-      SwingUtilities.invokeLater(new Runnable() {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           if (!isPopupActive()) return;
+
+          boolean shouldCloseAllPopup = false;
 
           Window focused = ((WindowEvent)e).getOppositeWindow();
           if (focused == null) {
@@ -56,15 +62,27 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
           }
 
           if (focused == null) {
-            closeAllPopups();
+            shouldCloseAllPopup = true;
           }
 
           Component ultimateParentForFocusedComponent = UIUtil.findUltimateParent(focused);
           Component ultimateParentForEventWindow = UIUtil.findUltimateParent(((WindowEvent)e).getWindow());
-          if (ultimateParentForFocusedComponent == null || !ultimateParentForFocusedComponent.equals(ultimateParentForEventWindow)) {
-            closeAllPopups();
+
+          if (!shouldCloseAllPopup && ultimateParentForEventWindow == null || ultimateParentForFocusedComponent == null) {
+            shouldCloseAllPopup = true;
           }
 
+          if (!shouldCloseAllPopup && ultimateParentForEventWindow instanceof IdeFrameEx) {
+            IdeFrameEx ultimateParentWindowForEvent = ((IdeFrameEx)ultimateParentForEventWindow);
+            if (!ultimateParentWindowForEvent.isInFullScreen()
+                && !ultimateParentForFocusedComponent.equals(ultimateParentForEventWindow)) {
+              shouldCloseAllPopup = true;
+            }
+          }
+
+          if (shouldCloseAllPopup) {
+            closeAllPopups();
+          }
         }
       });
     }

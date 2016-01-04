@@ -8,7 +8,7 @@ import com.intellij.psi.util.PsiMethodUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 
-public class JavaFXApplicationMainMethodProvider implements JavaMainMethodProvider {
+public class JavaFxMainMethodRunConfigurationProvider implements JavaMainMethodProvider {
   @NonNls public static final String LAUNCH_MAIN = "launch";
 
   @Override

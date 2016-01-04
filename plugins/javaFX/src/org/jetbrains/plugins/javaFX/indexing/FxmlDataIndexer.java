@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.javaFX;
+package org.jetbrains.plugins.javaFX.indexing;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -25,7 +25,7 @@ import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.JavaFXNamespaceProvider;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxNamespaceDataProvider;
 
 import java.io.StringReader;
 import java.util.*;
@@ -47,7 +47,7 @@ public class FxmlDataIndexer implements DataIndexer<String, Set<String>, FileCon
 
   @Nullable
   protected Map<String, Set<String>> getIds(String content, final VirtualFile file, Project project) {
-    if (!content.contains(JavaFXNamespaceProvider.JAVAFX_NAMESPACE)) {
+    if (!content.contains(JavaFxNamespaceDataProvider.JAVAFX_NAMESPACE)) {
       return null;
     }
 

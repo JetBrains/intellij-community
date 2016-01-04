@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.javaFX;
+package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;

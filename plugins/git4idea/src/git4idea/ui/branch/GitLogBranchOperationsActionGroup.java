@@ -59,16 +59,16 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
       return AnAction.EMPTY_ARRAY;
     }
 
-    List<Hash> details = log.getSelectedCommits();
+    List<VcsFullCommitDetails> details = log.getSelectedDetails(); // this is temporary
     if (details.size() != 1) return AnAction.EMPTY_ARRAY;
 
-    Hash hash = details.get(0);
+    VcsFullCommitDetails detail = details.get(0);
 
     VcsLogDataPack dataPack = logUI.getDataPack();
-    Collection<VcsRef> allVcsRefs = ((RefsModel)dataPack.getRefs()).refsToCommit(hash);
+    Collection<VcsRef> allVcsRefs = ((RefsModel)dataPack.getRefs()).refsToCommit(detail.getId(), detail.getRoot());
     if (allVcsRefs.isEmpty()) return AnAction.EMPTY_ARRAY;
 
-    VirtualFile rootFile = ContainerUtil.getFirstItem(allVcsRefs).getRoot();
+    VirtualFile rootFile = detail.getRoot();
     GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
     final GitRepository root = repositoryManager.getRepositoryForRoot(rootFile);
     if (root == null) return AnAction.EMPTY_ARRAY;

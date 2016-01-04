@@ -185,6 +185,7 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull final Class aClass, boolean computeNow, boolean strict) {
+    String originalPath = path;
     path = patchPath(path);
     if (isReflectivePath(path)) return getReflectiveIcon(path, aClass.getClassLoader());
 
@@ -193,7 +194,12 @@ public final class IconLoader {
       if (strict) throw new RuntimeException("Can't find icon in '" + path + "' near " + aClass);
       return null;
     }
-    return findIcon(myURL);
+    final Icon icon = findIcon(myURL);
+    if (icon instanceof CachedImageIcon) {
+      ((CachedImageIcon)icon).myOriginalPath = originalPath;
+      ((CachedImageIcon)icon).myClassLoader = aClass.getClassLoader();
+    }
+    return icon;
   }
 
   private static String patchPath(@NotNull String path) {
@@ -233,12 +239,18 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
+    String originalPath = path;
     path = patchPath(path);
     if (isReflectivePath(path)) return getReflectiveIcon(path, classLoader);
     if (!StringUtil.startsWithChar(path, '/')) return null;
 
     final URL url = classLoader.getResource(path.substring(1));
-    return findIcon(url);
+    final Icon icon = findIcon(url);
+    if (icon instanceof CachedImageIcon) {
+      ((CachedImageIcon)icon).myOriginalPath = originalPath;
+      ((CachedImageIcon)icon).myClassLoader = classLoader;
+    }
+    return icon;
   }
 
   @Nullable
@@ -346,12 +358,15 @@ public final class IconLoader {
 
   private static final class CachedImageIcon implements ScalableIcon {
     private volatile Object myRealIcon;
+    private String myOriginalPath;
+    private ClassLoader myClassLoader;
     @NotNull
-    private final URL myUrl;
+    private URL myUrl;
     private volatile boolean dark;
     private volatile float scale;
-    private volatile ImageFilter filter;
+    private volatile int numberOfPatchers = ourPatchers.size();
 
+    private volatile ImageFilter filter;
     private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
 
     public CachedImageIcon(@NotNull URL url) {
@@ -363,7 +378,7 @@ public final class IconLoader {
 
     @NotNull
     private synchronized Icon getRealIcon() {
-      if (isLoaderDisabled() && (myRealIcon == null || dark != USE_DARK_ICONS || scale != SCALE || filter != IMAGE_FILTER)) return EMPTY_ICON;
+      if (isLoaderDisabled() && (myRealIcon == null || dark != USE_DARK_ICONS || scale != SCALE || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size())) return EMPTY_ICON;
 
       if (!isValid()) {
         myRealIcon = null;
@@ -371,6 +386,17 @@ public final class IconLoader {
         scale = SCALE;
         filter = IMAGE_FILTER;
         myScaledIconsCache.clear();
+        if (numberOfPatchers != ourPatchers.size()) {
+          numberOfPatchers = ourPatchers.size();
+          String path = myOriginalPath == null ? null : patchPath(myOriginalPath);
+          if (myClassLoader != null&& path != null && path.startsWith("/")) {
+            path = path.substring(1);
+            final URL url = myClassLoader.getResource(path);
+            if (url != null) {
+              myUrl = url;
+            }
+          }
+        }
       }
       Object realIcon = myRealIcon;
       if (realIcon instanceof Icon) return (Icon)realIcon;
@@ -398,7 +424,7 @@ public final class IconLoader {
     }
 
     private boolean isValid() {
-      return dark == USE_DARK_ICONS && scale == SCALE && filter == IMAGE_FILTER;
+      return dark == USE_DARK_ICONS && scale == SCALE && filter == IMAGE_FILTER && numberOfPatchers == ourPatchers.size();
     }
 
     @Override
@@ -491,6 +517,7 @@ public final class IconLoader {
     private Icon myIcon;
     private boolean isDarkVariant = USE_DARK_ICONS;
     private float scale = SCALE;
+    private int numberOfPatchers = ourPatchers.size();
     private ImageFilter filter = IMAGE_FILTER;
 
     @Override
@@ -514,11 +541,12 @@ public final class IconLoader {
     }
 
     protected final synchronized Icon getOrComputeIcon() {
-      if (!myWasComputed || isDarkVariant != USE_DARK_ICONS || scale != SCALE || filter != IMAGE_FILTER) {
+      if (!myWasComputed || isDarkVariant != USE_DARK_ICONS || scale != SCALE || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size()) {
         isDarkVariant = USE_DARK_ICONS;
         scale = SCALE;
         filter = IMAGE_FILTER;
         myWasComputed = true;
+        numberOfPatchers = ourPatchers.size();
         myIcon = compute();
       }
 

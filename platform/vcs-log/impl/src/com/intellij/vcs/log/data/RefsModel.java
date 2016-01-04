@@ -5,10 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsLogHashMap;
-import com.intellij.vcs.log.VcsLogRefs;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.*;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +17,7 @@ public class RefsModel implements VcsLogRefs {
   @NotNull private final VcsLogHashMap myHashMap;
 
   @NotNull private final Collection<VcsRef> myBranches;
-  @NotNull private final MultiMap<Hash, VcsRef> myRefsToHashes;
+  @NotNull private final MultiMap<CommitId, VcsRef> myRefsToHashes;
   @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myRefsToIndices;
 
   public RefsModel(@NotNull Map<VirtualFile, Set<VcsRef>> refsByRoot, @NotNull VcsLogHashMap hashMap) {
@@ -43,7 +40,7 @@ public class RefsModel implements VcsLogRefs {
   private TIntObjectHashMap<SmartList<VcsRef>> prepareRefsToIndicesMap(@NotNull Collection<VcsRef> refs) {
     TIntObjectHashMap<SmartList<VcsRef>> map = new TIntObjectHashMap<SmartList<VcsRef>>();
     for (VcsRef ref : refs) {
-      int index = myHashMap.getCommitIndex(ref.getCommitHash());
+      int index = myHashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
       SmartList<VcsRef> list = map.get(index);
       if (list == null) map.put(index, list = new SmartList<VcsRef>());
       list.add(ref);
@@ -52,18 +49,19 @@ public class RefsModel implements VcsLogRefs {
   }
 
   @NotNull
-  private static MultiMap<Hash, VcsRef> prepareRefsMap(@NotNull Collection<VcsRef> refs) {
-    MultiMap<Hash, VcsRef> map = MultiMap.createSmart();
+  private static MultiMap<CommitId, VcsRef> prepareRefsMap(@NotNull Collection<VcsRef> refs) {
+    MultiMap<CommitId, VcsRef> map = MultiMap.createSmart();
     for (VcsRef ref : refs) {
-      map.putValue(ref.getCommitHash(), ref);
+      map.putValue(new CommitId(ref.getCommitHash(), ref.getRoot()), ref);
     }
     return map;
   }
 
   @NotNull
-  public Collection<VcsRef> refsToCommit(@NotNull Hash hash) {
-    if (myRefsToHashes.containsKey(hash)) {
-      return myRefsToHashes.get(hash);
+  public Collection<VcsRef> refsToCommit(@NotNull Hash hash, @NotNull VirtualFile root) {
+    CommitId commitId = new CommitId(hash, root);
+    if (myRefsToHashes.containsKey(commitId)) {
+      return myRefsToHashes.get(commitId);
     }
     return Collections.emptyList();
   }

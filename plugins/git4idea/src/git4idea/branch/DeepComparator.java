@@ -229,7 +229,7 @@ public class DeepComparator implements Disposable {
 
     @NotNull
     private TIntHashSet getNonPickedCommitsFromGit(@NotNull Project project,
-                                                   @NotNull VirtualFile root,
+                                                   @NotNull final VirtualFile root,
                                                    @NotNull final VcsLogDataProvider dataProvider,
                                                    @NotNull String currentBranch,
                                                    @NotNull String comparedBranch) throws VcsException {
@@ -250,7 +250,7 @@ public class DeepComparator implements Disposable {
                 line = line.substring(0, firstSpace); // safety-check: take just the first word for sure
               }
               Hash hash = HashImpl.build(line);
-              pickedCommits.add(dataProvider.getCommitIndex(hash));
+              pickedCommits.add(dataProvider.getCommitIndex(hash, root));
             }
             catch (Exception e) {
               LOG.error("Couldn't parse line [" + line + "]");

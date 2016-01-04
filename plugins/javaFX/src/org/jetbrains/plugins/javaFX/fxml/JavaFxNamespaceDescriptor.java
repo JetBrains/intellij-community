@@ -25,7 +25,7 @@ import java.util.ArrayList;
 * User: anna
 * Date: 1/9/13
 */
-public class JavaFXNSDescriptor implements XmlNSDescriptor, Validator<XmlDocument> {
+public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<XmlDocument> {
   private XmlFile myFile;
 
   @Nullable
@@ -33,15 +33,14 @@ public class JavaFXNSDescriptor implements XmlNSDescriptor, Validator<XmlDocumen
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     final String name = tag.getName();
 
-    if (tag.getName().equals(FxmlConstants.FX_ROOT)) {
-      return new JavaFxDefaultPropertyElementDescriptor(name, tag);
-    }
     final XmlTag parentTag = tag.getParentTag();
     if (parentTag != null) {
       final XmlElementDescriptor descriptor = parentTag.getDescriptor();
-      if (descriptor != null) {
-        return descriptor.getElementDescriptor(tag, parentTag);
-      }
+      return descriptor != null ? descriptor.getElementDescriptor(tag, parentTag) : null;
+    }
+
+    if (FxmlConstants.FX_ROOT.equals(tag.getName())) {
+      return new JavaFxDefaultPropertyElementDescriptor(name, tag);
     }
     return new JavaFxClassBackedElementDescriptor(name, tag);
   }

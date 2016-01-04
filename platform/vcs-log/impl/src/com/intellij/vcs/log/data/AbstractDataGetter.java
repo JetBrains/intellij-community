@@ -183,7 +183,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
       @Override
       public void run() {
         for (T data : details) {
-          myCache.put(myHashMap.getCommitIndex(data.getId()), data);
+          myCache.put(myHashMap.getCommitIndex(data.getId(), data.getRoot()), data);
         }
       }
     });

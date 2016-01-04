@@ -310,6 +310,9 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
    */
   @Override
   protected void setThumbBounds(int x, int y, int width, int height) {
+    // A logic to override Swing's "ScrollBar.alwaysShowThumb" property (set by GTK+ L&F).
+    // When the property is set, the thumb fits entire width/height of a scroll bar (see BasicScrollBarUI.layoutVScrollbar()).
+    // The fix detects such situations and resets thumb size, thus hiding the thumb when not needed.
     if (width > 0 && height > 0 && UIManager.getBoolean("ScrollBar.alwaysShowThumb") && !alwaysShowTrack()) {
       int w = trackRect.width, h = trackRect.height;
       if (w > h && w == width || w < h && h == height) {

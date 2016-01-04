@@ -195,7 +195,7 @@ public class JavaStackFrame extends XStackFrame {
 
       // add last method return value if any
       final Pair<Method, Value> methodValuePair = debugProcess.getLastExecutedMethod();
-      if (methodValuePair != null) {
+      if (methodValuePair != null && myDescriptor.getUiIndex() == 0) {
         ValueDescriptorImpl returnValueDescriptor = myNodeManager.getMethodReturnValueDescriptor(myDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
         children.add(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
       }
