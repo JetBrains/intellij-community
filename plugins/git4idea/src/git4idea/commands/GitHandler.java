@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
@@ -417,14 +418,11 @@ public abstract class GitHandler {
     try {
       myStartTime = System.currentTimeMillis();
       if (!myProject.isDefault() && !mySilent && (myVcs != null)) {
-        myVcs.showCommandLine("cd " + myWorkingDirectory);
-        myVcs.showCommandLine(printableCommandLine());
-        LOG.info("cd " + myWorkingDirectory);
-        LOG.info(printableCommandLine());
+        myVcs.showCommandLine("[" + stringifyWorkingDir() + "] " + printableCommandLine());
+        LOG.info("[" + stringifyWorkingDir() + "] " + printableCommandLine());
       }
       else {
-        LOG.debug("cd " + myWorkingDirectory);
-        LOG.debug("[" + myWorkingDirectory.getName() + "] " + printableCommandLine());
+        LOG.debug("[" + stringifyWorkingDir() + "] " + printableCommandLine());
       }
 
       // setup environment
@@ -739,6 +737,21 @@ public abstract class GitHandler {
 
       logTime();
     }
+  }
+
+  @NotNull
+  private String stringifyWorkingDir() {
+    String basePath = myProject.getBasePath();
+    if (basePath != null) {
+      String relPath = FileUtil.getRelativePath(basePath, FileUtil.toSystemIndependentName(myWorkingDirectory.getPath()), '/');
+      if (".".equals(relPath)) {
+        return myWorkingDirectory.getName();
+      }
+      else if (relPath != null) {
+        return FileUtil.toSystemDependentName(relPath);
+      }
+    }
+    return myWorkingDirectory.getPath();
   }
 
   private void logTime() {
