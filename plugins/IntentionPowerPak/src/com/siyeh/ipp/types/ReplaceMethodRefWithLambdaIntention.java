@@ -96,7 +96,7 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
 
     final StringBuilder buf = new StringBuilder("(");
     LOG.assertTrue(functionalInterfaceType != null);
-    buf.append(functionalInterfaceType.getCanonicalText()).append(")(");
+    buf.append(GenericsUtil.getVariableTypeByExpressionType(functionalInterfaceType).getCanonicalText()).append(")(");
     final PsiParameterList parameterList = interfaceMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
 
@@ -140,6 +140,7 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
 
     final JavaResolveResult resolveResult = referenceExpression.advancedResolve(false);
     final PsiElement resolveElement = resolveResult.getElement();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(referenceExpression.getProject());
     if (resolveElement instanceof PsiMember) {
 
       buf.append("{");
@@ -157,7 +158,7 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
       }
 
       final boolean onArrayRef =
-        JavaPsiFacade.getElementFactory(referenceExpression.getProject()).getArrayClass(PsiUtil.getLanguageLevel(referenceExpression)) == containingClass;
+        elementFactory.getArrayClass(PsiUtil.getLanguageLevel(referenceExpression)) == containingClass;
 
       final PsiElement referenceNameElement = referenceExpression.getReferenceNameElement();
       if (isReceiver){
@@ -232,18 +233,19 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
     }
 
 
-    final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)referenceExpression
-      .replace(JavaPsiFacade.getElementFactory(referenceExpression.getProject()).createExpressionFromText(buf.toString(), referenceExpression));
+    final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)referenceExpression.replace(elementFactory.createExpressionFromText(buf.toString(), referenceExpression));
     PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)typeCastExpression.getOperand();
+    LOG.assertTrue(lambdaExpression != null, buf.toString());
     if (RedundantCastUtil.isCastRedundant(typeCastExpression) || ignoreCast) {
       final PsiExpression operand = typeCastExpression.getOperand();
       LOG.assertTrue(operand != null);
       lambdaExpression = (PsiLambdaExpression)typeCastExpression.replace(operand);
-      final PsiElement body = lambdaExpression.getBody();
-      final PsiExpression singleExpression = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(lambdaExpression, body);
-      if (singleExpression != null) {
-        body.replace(singleExpression);
-      }
+    }
+
+    final PsiElement body = lambdaExpression.getBody();
+    final PsiExpression singleExpression = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(lambdaExpression, body);
+    if (singleExpression != null) {
+      body.replace(singleExpression);
     }
 
     return lambdaExpression;
