@@ -553,7 +553,8 @@
 
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
     <projectService serviceImplementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
-    <applicationService serviceImplementation="com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory"
+                        serviceImplementation="com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory"/>
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
 
