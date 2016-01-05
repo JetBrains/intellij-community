@@ -19,6 +19,7 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Key;
@@ -30,9 +31,8 @@ import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.Opcodes;
-
-import java.io.IOException;
 
 /**
  * @author max
@@ -79,7 +79,7 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
 
     final Ref<Boolean> ref = Ref.create(Boolean.FALSE);
     try {
-      new ClassReader(file.contentsToByteArray(false)).accept(new ClassVisitor(Opcodes.ASM5) {
+      new MyClassReader(file.contentsToByteArray(false)).accept(new ClassVisitor(Opcodes.ASM5) {
         @Override
         public void visitOuterClass(String owner, String name, String desc) {
           ref.set(Boolean.TRUE);
@@ -93,8 +93,11 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
         }
       }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     }
-    catch (IOException e) {
-      Logger.getInstance(ClassFileViewProvider.class).info(e);
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      Logger.getInstance(ClassFileViewProvider.class).warn(file.getPath(), e);
     }
 
     isInner = ref.get();
@@ -106,5 +109,16 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
   @Override
   public SingleRootFileViewProvider createCopy(@NotNull VirtualFile copy) {
     return new ClassFileViewProvider(getManager(), copy, false);
+  }
+
+  private static class MyClassReader extends ClassReader {
+    public MyClassReader(byte[] b) {
+      super(b);
+    }
+
+    @Override
+    protected Label readLabel(int offset, Label[] labels) {
+      return null;
+    }
   }
 }
