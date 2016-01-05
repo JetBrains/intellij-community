@@ -422,7 +422,7 @@
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupTaskManager"/>
     <projectConfigurable groupId="tools" instance="com.intellij.execution.startup.ProjectStartupConfigurable"
                          displayName="Startup Tasks"
-                         id="preferences.startup.tasks"/>
+                         id="preferences.startup.tasks" nonDefaultProject="true"/>
     <postStartupActivity implementation="com.intellij.execution.startup.ProjectStartupRunner"/>
   </extensions>
 </idea-plugin>
