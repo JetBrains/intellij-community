@@ -33,6 +33,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -490,6 +491,47 @@ public class GenericsHighlightUtil {
     return null;
   }
 
+  static HighlightInfo checkUnrelatedConcrete(@NotNull PsiClass psiClass,
+                                              @NotNull PsiIdentifier classIdentifier) {
+    final PsiClass superClass = psiClass.getSuperClass();
+    if (superClass != null && superClass.hasTypeParameters()) {
+      final Collection<HierarchicalMethodSignature> visibleSignatures = superClass.getVisibleSignatures();
+      final Map<MethodSignature, PsiMethod> overrideEquivalent = new THashMap<MethodSignature, PsiMethod>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+      for (HierarchicalMethodSignature hms : visibleSignatures) {
+        final PsiMethod method = hms.getMethod();
+        if (method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.DEFAULT)) continue;
+        if (psiClass.findMethodsBySignature(method, false).length > 0) continue;
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass == null) continue;
+        final PsiSubstitutor containingClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, psiClass, PsiSubstitutor.EMPTY);
+        final PsiSubstitutor finalSubstitutor = PsiSuperMethodImplUtil.obtainFinalSubstitutor(containingClass, containingClassSubstitutor, hms.getSubstitutor(), false);
+        final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, finalSubstitutor, false);
+        final PsiMethod foundMethod = overrideEquivalent.get(signature);
+        PsiClass foundMethodContainingClass;
+        if (foundMethod != null &&
+            !foundMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
+            !foundMethod.hasModifierProperty(PsiModifier.DEFAULT) &&
+            (foundMethodContainingClass = foundMethod.getContainingClass()) != null) {
+          final String description =
+            "Methods " +
+            JavaHighlightUtil.formatMethod(foundMethod) + " from " + HighlightUtil.formatClass(foundMethodContainingClass) +
+            " and " +
+            JavaHighlightUtil.formatMethod(method) + " from " + HighlightUtil.formatClass(containingClass) +
+            " are inherited with the same signature";
+          
+          final HighlightInfo info = HighlightInfo
+            .newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(
+              description)
+            .create();
+          //todo override fix
+          return info;
+        }
+        overrideEquivalent.put(signature, method);
+      }
+    }
+    return null;
+  }
+  
   @Nullable
   private static HighlightInfo checkSameErasureNotSubSignatureInner(@NotNull HierarchicalMethodSignature signature,
                                                                     @NotNull PsiManager manager,
