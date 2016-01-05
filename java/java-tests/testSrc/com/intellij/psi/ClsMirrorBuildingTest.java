@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,6 +161,14 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     }
   }
 
+  public void testInnerClassDetection() {
+    assertTrue(isInner("Nested$Inner1"));
+    assertTrue(isInner("Nested$Inner1$Inner2"));
+    assertTrue(isInner("NormalClass$1"));
+    assertTrue(isInner("LocalClass$1MyRunnable"));
+    assertFalse(isInner("KindaInner$Class"));
+  }
+
   private static String getTestDataDir() {
     return JavaTestUtil.getJavaTestDataPath() + "/psi/cls/mirror/";
   }
@@ -187,5 +195,11 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     }
 
     assertEquals(expected, ClsFileImpl.decompile(file).toString());
+  }
+
+  private static boolean isInner(String name) {
+    VirtualFile file = StandardFileSystems.local().findFileByPath(getTestDataDir() + "pkg/" + name + ".class");
+    assertNotNull(file);
+    return ClassFileViewProvider.isInnerClass(file);
   }
 }
