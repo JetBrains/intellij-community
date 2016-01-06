@@ -188,6 +188,7 @@ class GitBranchPopupActions {
         new RebaseAction(myProject, myRepositories, myBranchName),
         new CheckoutWithRebaseAction(myProject, myRepositories, myBranchName),
         new MergeAction(myProject, myRepositories, myBranchName, true),
+        new RenameBranchAction(myProject, myRepositories, myBranchName),
         new DeleteAction(myProject, myRepositories, myBranchName)
       };
     }
@@ -234,6 +235,31 @@ class GitBranchPopupActions {
           brancher.checkoutNewBranchStartingFrom(name, myBranchName, myRepositories, null);
         }
         reportUsage("git.checkout.as.new.branch");
+      }
+    }
+
+    private static class RenameBranchAction extends DumbAwareAction {
+      @NotNull private final Project myProject;
+      @NotNull private final List<GitRepository> myRepositories;
+      @NotNull private final String myCurrentBranchName;
+
+      public RenameBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String currentBranchName) {
+        super("Rename");
+        myProject = project;
+        myRepositories = repositories;
+        myCurrentBranchName = currentBranchName;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        String newName = Messages.showInputDialog(myProject, "Enter new name for the branch " + myCurrentBranchName,
+                                                  "Rename Branch " + myCurrentBranchName,
+                                                  Messages.getQuestionIcon(), "", GitNewBranchNameValidator.newInstance(myRepositories));
+        if (newName != null) {
+          GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+          brancher.renameBranch(myCurrentBranchName, newName, myRepositories);
+          reportUsage("git.branch.rename");
+        }
       }
     }
 

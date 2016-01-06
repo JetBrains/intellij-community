@@ -363,6 +363,18 @@ public class GitImpl implements Git {
     return run(h);
   }
 
+  @NotNull
+  @Override
+  public GitCommandResult renameBranch(@NotNull GitRepository repository,
+                                       @NotNull String currentName,
+                                       @NotNull String newName,
+                                       @NotNull GitLineHandlerListener... listeners) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.setStdoutSuppressed(false);
+    h.addParameters("-m", currentName, newName);
+    return run(h);
+  }
+
   @Override
   @NotNull
   public GitCommandResult reset(@NotNull GitRepository repository, @NotNull GitResetMode mode, @NotNull String target,
