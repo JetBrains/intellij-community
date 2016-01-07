@@ -457,8 +457,8 @@ public class GenericsHighlightUtil {
         if (aClass.findMethodsBySignature(method, false).length > 0) continue;
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) continue;
-        final PsiSubstitutor containingClassSubstitutor =
-          TypeConversionUtil.getSuperClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY);
+        final PsiSubstitutor containingClassSubstitutor = TypeConversionUtil.getClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY);
+        if (containingClassSubstitutor == null) continue;
         final PsiSubstitutor finalSubstitutor =
           PsiSuperMethodImplUtil.obtainFinalSubstitutor(containingClass, containingClassSubstitutor, hms.getSubstitutor(), false);
         final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, finalSubstitutor, false);
@@ -499,7 +499,11 @@ public class GenericsHighlightUtil {
         final PsiClass unrelatedMethodContainingClass = unrelatedMethod.getContainingClass();
         if (unrelatedMethodContainingClass == null) continue;
         if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && astracts != null && unrelatedMethodContainingClass.isInterface()) {
-          if (defaultMethodContainingClass.isInheritor(unrelatedMethodContainingClass, true)) continue;
+          if (defaultMethodContainingClass.isInheritor(unrelatedMethodContainingClass, true) && 
+              MethodSignatureUtil.isSubsignature(unrelatedMethod.getSignature(PsiSubstitutor.EMPTY), 
+                                                 defaultMethod.getSignature(PsiSubstitutor.EMPTY))) {
+            continue;
+          }
           final String key = aClass instanceof PsiEnumConstantInitializer ? "enum.constant.should.implement.method" : "class.must.be.abstract";
           final String message = JavaErrorMessages.message(key, HighlightUtil.formatClass(aClass, false), JavaHighlightUtil.formatMethod(astracts.get(0)), 
                                                            HighlightUtil.formatClass(unrelatedMethodContainingClass, false));
