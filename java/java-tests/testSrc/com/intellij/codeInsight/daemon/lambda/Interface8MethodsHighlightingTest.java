@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
@@ -83,6 +82,10 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   }
 
   public void testAcceptStaticInterfaceMethodsImportedViaStaticImports() throws Exception {
+    doTest();
+  }
+
+  public void testInherit2MethodsWithSameOverrideEquivalentSignatureFromOneSuperclass() throws Exception {
     doTest();
   }
 

@@ -439,52 +439,91 @@ public class GenericsHighlightUtil {
   }
 
   static HighlightInfo checkUnrelatedDefaultMethods(@NotNull PsiClass aClass,
-                                                            @NotNull Collection<HierarchicalMethodSignature> signaturesWithSupers,
-                                                            @NotNull PsiIdentifier classIdentifier) {
-    for (HierarchicalMethodSignature methodSignature : signaturesWithSupers) {
-      final PsiMethod method = methodSignature.getMethod();
-      final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
-      if (method.hasModifierProperty(PsiModifier.DEFAULT) || isAbstract) {
+                                                    @NotNull Collection<HierarchicalMethodSignature> signaturesWithSupers,
+                                                    @NotNull PsiIdentifier classIdentifier) {
+    final Map<MethodSignature, Set<PsiMethod>> overrideEquivalent =
+      new THashMap<MethodSignature, Set<PsiMethod>>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+    PsiClass[] supers = aClass.getSupers();
+    for (int i = 0; i < supers.length; i++) {
+      PsiClass superClass = supers[i];
+      boolean subType = false;
+      for (int j = 0; j < supers.length; j++) {
+        if (j == i) continue;
+        subType |= supers[j].isInheritor(supers[i], true);
+      }
+      if (subType) continue;
+      for (HierarchicalMethodSignature hms : superClass.getVisibleSignatures()) {
+        final PsiMethod method = hms.getMethod();
+        if (aClass.findMethodsBySignature(method, false).length > 0) continue;
         final PsiClass containingClass = method.getContainingClass();
-        List<HierarchicalMethodSignature> superSignatures = methodSignature.getSuperSignatures();
-        if (!superSignatures.isEmpty()) {
-          for (HierarchicalMethodSignature signature : superSignatures) {
-            final PsiMethod superMethod = signature.getMethod();
-            final PsiClass superContainingClass = superMethod.getContainingClass();
-            if (containingClass != null && superContainingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, superContainingClass, true)) {
-              final boolean isDefault = superMethod.hasModifierProperty(PsiModifier.DEFAULT);
-              if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !isDefault && !isAbstract) {
-                final String message = JavaErrorMessages.message(
-                  aClass instanceof PsiEnumConstantInitializer ? "enum.constant.should.implement.method" : "class.must.be.abstract",
-                  HighlightUtil.formatClass(superContainingClass),
-                  JavaHighlightUtil.formatMethod(superMethod),
-                  HighlightUtil.formatClass(superContainingClass, false));
-                final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                  .range(classIdentifier).descriptionAndTooltip(message)
-                  .create();
-                QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
-                return info;
-              }
+        if (containingClass == null) continue;
+        final PsiSubstitutor containingClassSubstitutor =
+          TypeConversionUtil.getSuperClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY);
+        final PsiSubstitutor finalSubstitutor =
+          PsiSuperMethodImplUtil.obtainFinalSubstitutor(containingClass, containingClassSubstitutor, hms.getSubstitutor(), false);
+        final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, finalSubstitutor, false);
+        Set<PsiMethod> methods = overrideEquivalent.get(signature);
+        if (methods == null) {
+          methods = new LinkedHashSet<PsiMethod>();
+          overrideEquivalent.put(signature, methods);
+        }
+        methods.add(method);
+      }
+    }
 
-              if (isDefault || !isAbstract && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                final String message = isDefault && !isAbstract
-                                       ? " inherits unrelated defaults for "
-                                       : " inherits abstract and default for ";
-                final String inheritUnrelatedDefaultsMessage = HighlightUtil.formatClass(aClass) +
-                                                               message +
-                                                               JavaHighlightUtil.formatMethod(method) +
-                                                               " from types " +
-                                                               HighlightUtil.formatClass(containingClass) +
-                                                               " and " +
-                                                               HighlightUtil.formatClass(superContainingClass);
-                final HighlightInfo info = HighlightInfo
-                  .newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(inheritUnrelatedDefaultsMessage)
-                  .create();
-                QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
-                return info;
-              }
-            }
+    final boolean isInterface = aClass.isInterface();
+    for (Set<PsiMethod> overrideEquivalentMethods : overrideEquivalent.values()) {
+      if (overrideEquivalentMethods.size() <= 1) continue;
+      List<PsiMethod> defaults = null;
+      List<PsiMethod> astracts = null;
+      boolean hasConcrete = false;
+      for (PsiMethod method : overrideEquivalentMethods) {
+        final boolean isDefault = method.hasModifierProperty(PsiModifier.DEFAULT);
+        final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+        if (isDefault) {
+          if (defaults == null) defaults = new ArrayList<PsiMethod>(2);
+          defaults.add(method);
+        }
+        if (isAbstract) {
+          if (astracts == null) astracts = new ArrayList<PsiMethod>(2);
+          astracts.add(method);
+        }
+        hasConcrete |= !isDefault && !isAbstract;
+      }
+
+      if (!hasConcrete && defaults != null) {
+        final PsiMethod defaultMethod = defaults.get(0);
+        final PsiClass defaultMethodContainingClass = defaultMethod.getContainingClass();
+        if (defaultMethodContainingClass == null) continue;
+        final PsiMethod unrelatedMethod = astracts != null ? astracts.get(0) : defaults.get(1);
+        final PsiClass unrelatedMethodContainingClass = unrelatedMethod.getContainingClass();
+        if (unrelatedMethodContainingClass == null) continue;
+        if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && astracts != null && unrelatedMethodContainingClass.isInterface()) {
+          if (defaultMethodContainingClass.isInheritor(unrelatedMethodContainingClass, true)) continue;
+          final String key = aClass instanceof PsiEnumConstantInitializer ? "enum.constant.should.implement.method" : "class.must.be.abstract";
+          final String message = JavaErrorMessages.message(key, HighlightUtil.formatClass(aClass, false), JavaHighlightUtil.formatMethod(astracts.get(0)), 
+                                                           HighlightUtil.formatClass(unrelatedMethodContainingClass, false));
+          final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(message).create();
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
+          return info;
+        }
+        if (isInterface || astracts == null || unrelatedMethodContainingClass.isInterface()) {
+          if (defaultMethodContainingClass.isInheritor(unrelatedMethodContainingClass, true) || 
+              unrelatedMethodContainingClass.isInheritor(defaultMethodContainingClass, true)) {
+            continue;
           }
+          final String message = astracts != null ? " inherits abstract and default for " : " inherits unrelated defaults for ";
+          final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(
+            HighlightUtil.formatClass(aClass) +
+            message +
+            JavaHighlightUtil.formatMethod(defaultMethod) +
+            " from types " +
+            HighlightUtil.formatClass(defaultMethodContainingClass) +
+            " and " +
+            HighlightUtil.formatClass(unrelatedMethodContainingClass))
+            .create();
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
+          return info;
         }
       }
     }
