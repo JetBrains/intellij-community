@@ -51,14 +51,13 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
   override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
     if (file.fileType is LanguageFileType && ProjectRootManager.getInstance(project).fileIndex.isInLibrarySource(file)) {
       val psiFile = PsiManager.getInstance(project).findFile(file)
-      if (psiFile is PsiClassOwner) {
-        val classes = psiFile.classes
-        if (classes.isNotEmpty()) {
-          val mismatch = classes.any { differs(it) }
-          val panel = ColoredNotificationPanel(if (mismatch) LightColors.RED else null)
-          panel.setText(ProjectBundle.message(if (mismatch) "library.source.mismatch" else "library.source.file"))
+      if (psiFile is PsiJavaFile) {
+        val offender = psiFile.classes.find { differs(it) }
+        if (offender != null) {
+          val panel = ColoredNotificationPanel(LightColors.RED)
+          panel.setText(ProjectBundle.message("library.source.mismatch", offender.name))
           panel.createActionLabel(ProjectBundle.message("library.source.open.class"), {
-            val classFile = classes[0].originalElement.containingFile?.virtualFile
+            val classFile = offender.originalElement.containingFile?.virtualFile
             if (classFile != null) {
               OpenFileDescriptor(project, classFile, -1).navigate(true)
             }
