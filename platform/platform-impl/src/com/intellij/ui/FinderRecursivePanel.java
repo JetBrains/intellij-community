@@ -362,7 +362,12 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
           append("loading...");
         }
 
-        doCustomizeCellRenderer(this, list, t, index, isSelected, cellHasFocus);
+        try {
+          doCustomizeCellRenderer(this, list, t, index, isSelected, cellHasFocus);
+        }
+        catch (IndexNotReadyException ignored) {
+          // ignore
+        }
 
         Color bg = isSelected ? UIUtil.getTreeSelectionBackground(cellHasFocus) : UIUtil.getTreeTextBackground();
         if (!isSelected && myFileColorManager.isEnabled()) {
