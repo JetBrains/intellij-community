@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
@@ -112,8 +113,30 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     final String methodReferenceText = createMethodReferenceText(callExpression, functionalInterfaceType, parameters);
     if (methodReferenceText != null) {
       LOG.assertTrue(callExpression != null);
+      final PsiMethod method = callExpression.resolveMethod();
+      if (method != null) {
+        if (!isSimpleCall(parameters, callExpression, method)) {
+          return null;
+        }
+      }
+      else {
+        LOG.assertTrue(callExpression instanceof PsiNewExpression);
+        if (((PsiNewExpression)callExpression).getQualifier() != null) {
+          return null;
+        }
+
+        final PsiExpression[] dims = ((PsiNewExpression)callExpression).getArrayDimensions();
+        if (dims.length == 1 && parameters.length == 1){
+          if (!resolvesToParameter(dims[0], parameters[0])) {
+            return null;
+          }
+        }
+        else if (dims.length > 0) {
+          return null;
+        }
+      }
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(callExpression.getProject());
-      final PsiMethodReferenceExpression methodReferenceExpression = 
+      PsiMethodReferenceExpression methodReferenceExpression = 
         (PsiMethodReferenceExpression)elementFactory.createExpressionFromText(methodReferenceText, context != null ? context : callExpression);
       final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
       try {
@@ -122,31 +145,11 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         final PsiElement element = result.getElement();
         if (element != null && result.isAccessible() &&
             !(result instanceof MethodCandidateInfo && !((MethodCandidateInfo)result).isApplicable())) {
-          if (element instanceof PsiMethod && !isSimpleCall(parameters, callExpression, (PsiMethod)element)) {
-            return null;
-          }
           if (!(element instanceof PsiMethod)) {
-            LOG.assertTrue(callExpression instanceof PsiNewExpression);
-            if (((PsiNewExpression)callExpression).getQualifier() != null) {
-              return null;
-            }
-
-            final PsiExpression[] dims = ((PsiNewExpression)callExpression).getArrayDimensions();
-            if (dims.length == 1 && parameters.length == 1){
-              if (!resolvesToParameter(dims[0], parameters[0])) {
-                return null;
-              }
-            }
-            else if (dims.length > 0) {
-              return null;
-            }
             return callExpression;
           }
 
-          final PsiMethod method = callExpression.resolveMethod();
-          if (method != null) {
-            return MethodSignatureUtil.areSignaturesEqual((PsiMethod)element, method) ? callExpression : null;
-          }
+          return method != null && MethodSignatureUtil.areSignaturesEqual((PsiMethod)element, method) ? callExpression : null;
         }
       }
       finally {
@@ -474,13 +477,15 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       if (lambdaExpression == null) return;
       PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
       if (functionalInterfaceType == null || !functionalInterfaceType.isValid()) return;
+      final PsiType denotableFunctionalInterfaceType = RefactoringChangeUtil.getTypeByExpression(lambdaExpression);
+      if (denotableFunctionalInterfaceType == null) return;
       final String methodRefText = createMethodReferenceText(element, functionalInterfaceType,
                                                              lambdaExpression.getParameterList().getParameters());
 
       if (methodRefText != null) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         final PsiExpression psiExpression = factory.createExpressionFromText(methodRefText, lambdaExpression);
-        final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(functionalInterfaceType);
+        final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(denotableFunctionalInterfaceType);
         PsiElement replace = lambdaExpression.replace(psiExpression);
         final PsiType functionalTypeAfterReplacement = ((PsiMethodReferenceExpression)replace).getFunctionalInterfaceType();
         functionalInterfaceType = typePointer.getType();

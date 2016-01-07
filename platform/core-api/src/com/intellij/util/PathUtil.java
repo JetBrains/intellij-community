@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class PathUtil {
-  private PathUtil() {
-  }
+  private PathUtil() { }
 
   @Nullable
   public static String getLocalPath(@Nullable VirtualFile file) {
@@ -112,11 +111,14 @@ public class PathUtil {
     return PathUtilRt.isValidFileName(fileName);
   }
 
+  public static boolean isValidFileName(@NotNull String fileName, boolean strict) {
+    return PathUtilRt.isValidFileName(fileName, strict);
+  }
+
   @Contract("null -> null; !null -> !null")
   public static String toSystemIndependentName(@Nullable String path) {
     return path == null ? null : FileUtilRt.toSystemIndependentName(path);
   }
-
 
   @Contract("null -> null; !null -> !null")
   public static String toSystemDependentName(@Nullable String path) {
@@ -136,6 +138,6 @@ public class PathUtil {
 
   @NotNull
   public static String makeFileName(@NotNull String name, @Nullable String extension) {
-    return name + (StringUtil.isEmpty(extension) ? "" : "." + extension);
+    return StringUtil.isEmpty(extension) ? name : name + '.' + extension;
   }
 }

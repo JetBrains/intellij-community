@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
 import com.intellij.ui.AbstractTitledSeparatorWithIcon;
 import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -428,7 +427,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
               CreateLauncherScriptAction.createLauncherScript(pathName);
             }
             catch (Exception e) {
-              Messages.showErrorDialog(ExceptionUtil.getNonEmptyMessage(e, "Internal error"), "Launcher Script Creation Failed");
+              CreateLauncherScriptAction.reportFailure(e, getProject());
             }
           }
 
@@ -440,7 +439,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
               CreateDesktopEntryAction.createDesktopEntry(globalEntry);
             }
             catch (Exception e) {
-              Messages.showErrorDialog(ExceptionUtil.getNonEmptyMessage(e, "Internal error"), "Desktop Entry Creation Failed");
+              CreateDesktopEntryAction.reportFailure(e, getProject());
             }
           }
 

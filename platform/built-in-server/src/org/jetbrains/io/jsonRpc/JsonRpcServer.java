@@ -96,6 +96,10 @@ public class JsonRpcServer implements MessageServer {
     if (!isBinary) {
       reader.beginArray();
     }
+    else {
+      // to allow top-level member to be not a object or array
+      reader.setLenient(true);
+    }
 
     int messageId = reader.peek() == JsonToken.NUMBER ? reader.nextInt() : -1;
     String domainName = reader.nextString();
@@ -155,7 +159,22 @@ public class JsonRpcServer implements MessageServer {
           method.setAccessible(true);
           Object result = method.invoke(isStatic ? null : domain, parameters);
           if (messageId != -1) {
-            client.send(encodeMessage(client.getByteBufAllocator(), messageId, null, null, null, new Object[]{result}));
+            if (result instanceof ByteBuf) {
+              ByteBuf buffer = (ByteBuf)result;
+              boolean success = false;
+              try {
+                client.send(encodeMessage(client.getByteBufAllocator(), messageId, null, null, buffer, null));
+                success = true;
+              }
+              finally {
+                if (!success) {
+                  buffer.release();
+                }
+              }
+            }
+            else {
+              client.send(encodeMessage(client.getByteBufAllocator(), messageId, null, null, null, new Object[]{result}));
+            }
           }
           return;
         }

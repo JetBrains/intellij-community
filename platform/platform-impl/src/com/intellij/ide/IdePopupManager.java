@@ -74,7 +74,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
 
           if (!shouldCloseAllPopup && ultimateParentForEventWindow instanceof IdeFrameEx) {
             IdeFrameEx ultimateParentWindowForEvent = ((IdeFrameEx)ultimateParentForEventWindow);
-            if (!ultimateParentWindowForEvent.isInFullScreen()
+            if (ultimateParentWindowForEvent.isInFullScreen()
                 && !ultimateParentForFocusedComponent.equals(ultimateParentForEventWindow)) {
               shouldCloseAllPopup = true;
             }

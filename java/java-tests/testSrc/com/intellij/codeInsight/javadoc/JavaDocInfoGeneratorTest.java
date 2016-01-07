@@ -239,7 +239,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   private void verifyJavaDoc(final PsiElement field, List<String> docUrls) throws IOException {
-    String docInfo = new JavaDocInfoGenerator(getProject(), field).generateDocInfo(docUrls);
+    String docInfo = JavaDocInfoGeneratorFactory.create(getProject(), field).generateDocInfo(docUrls);
     assertNotNull(docInfo);
     assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
   }
@@ -248,8 +248,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     final String path = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/javadocIG/";
     final String packageInfo = path + getTestName(true);
     PsiTestUtil.createTestProjectStructure(myProject, myModule, path, myFilesToDelete);
-    final String info =
-      new JavaDocInfoGenerator(getProject(), JavaPsiFacade.getInstance(getProject()).findPackage(getTestName(true))).generateDocInfo(null);
+    final String info = JavaDocInfoGeneratorFactory.create(getProject(), JavaPsiFacade.getInstance(getProject()).findPackage(getTestName(true))).generateDocInfo(null);
     String htmlText = FileUtil.loadFile(new File(packageInfo + File.separator + "packageInfo.html"));
     assertNotNull(info);
     assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), replaceEnvironmentDependentContent(info));
@@ -294,7 +293,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   private void verifyJavadocFor(String className) throws IOException {
     PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
     assertNotNull(psiClass);
-    String doc = new JavaDocInfoGenerator(myProject, psiClass).generateDocInfo(null);
+    String doc = JavaDocInfoGeneratorFactory.create(myProject, psiClass).generateDocInfo(null);
     assertNotNull(doc);
     PsiDirectory dir = (PsiDirectory)psiClass.getParent().getParent();
     PsiFile htmlFile = dir.findFile(psiClass.getName() + ".html");

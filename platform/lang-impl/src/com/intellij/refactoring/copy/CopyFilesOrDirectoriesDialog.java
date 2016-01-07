@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -31,6 +31,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -51,7 +53,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.io.File;
 import java.util.List;
 
 public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
@@ -102,29 +103,25 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
       String text;
       if (elements[0] instanceof PsiFile) {
         PsiFile file = (PsiFile)elements[0];
-        VirtualFile virtualFile = file.getVirtualFile();
-        String url = shortenPath(virtualFile);
-        text = RefactoringBundle.message(doClone ? "copy.files.clone.file.0" : "copy.files.copy.file.0", url);
-        // keep extensions (dots) and spaces, e.g. fragment file name will be "HTML Fragment (my.sql_61).html"
-        // and leave ordinary file name AS IS
-        String fileName = PathUtil.suggestFileName(file.getName(), true, true);
-        if (StringUtil.isEmpty(virtualFile.getExtension())) {
-          LanguageFileType type = file.getLanguage().getAssociatedFileType();
-          fileName = PathUtil.makeFileName(fileName, ObjectUtils.notNull(type, file.getFileType()).getDefaultExtension());
+        VirtualFile vFile = file.getVirtualFile();
+        text = RefactoringBundle.message(doClone ? "copy.files.clone.file.0" : "copy.files.copy.file.0", shortenPath(vFile));
+        String fileName = vFile.isInLocalFileSystem() ? vFile.getName() : PathUtil.suggestFileName(file.getName(), true, true);
+        if (StringUtil.isEmpty(vFile.getExtension())) {
+          FileType type = ObjectUtils.notNull(file.getLanguage().getAssociatedFileType(), file.getFileType());
+          fileName = PathUtil.makeFileName(fileName, type.getDefaultExtension());
         }
         myNewNameField.setText(fileName);
-        final int dotIdx = fileName.lastIndexOf(".");
-        if (dotIdx > -1) {
+        int dotIdx = fileName.lastIndexOf('.');
+        if (dotIdx > 0) {
           myNewNameField.select(0, dotIdx);
           myNewNameField.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, true);
         }
         myFileCopy = true;
       }
       else {
-        PsiDirectory directory = (PsiDirectory)elements[0];
-        String url = shortenPath(directory.getVirtualFile());
-        text = RefactoringBundle.message(doClone ? "copy.files.clone.directory.0" : "copy.files.copy.directory.0", url);
-        myNewNameField.setText(directory.getName());
+        VirtualFile vFile = ((PsiDirectory)elements[0]).getVirtualFile();
+        text = RefactoringBundle.message(doClone ? "copy.files.clone.directory.0" : "copy.files.copy.directory.0", shortenPath(vFile));
+        myNewNameField.setText(vFile.getName());
       }
       myInformationLabel.setText(text);
     }
@@ -258,7 +255,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
         return;
       }
 
-      if (myFileCopy && !PathUtil.isValidFileName(newName)) {
+      if (myFileCopy && !PathUtil.isValidFileName(newName, SystemInfo.isWindows)) {
         Messages.showErrorDialog(myNewNameField, "Name is not a valid file name");
         return;
       }
@@ -283,8 +280,8 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
             @Override
             public void run() {
               try {
-                myTargetDirectory =
-                  DirectoryUtil.mkdirs(PsiManager.getInstance(myProject), targetDirectoryName.replace(File.separatorChar, '/'));
+                String path = FileUtil.toSystemIndependentName(targetDirectoryName);
+                myTargetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(myProject), path);
               }
               catch (IncorrectOperationException ignored) { }
             }
@@ -302,15 +299,13 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   }
 
   private void validateOKButton() {
-    if (myShowDirectoryField) {
-      if (myTargetDirectoryField.getChildComponent().getText().length() == 0) {
-        setOKActionEnabled(false);
-        return;
-      }
+    if (myShowDirectoryField && myTargetDirectoryField.getChildComponent().getText().length() == 0) {
+      setOKActionEnabled(false);
+      return;
     }
     if (myShowNewNameField) {
-      final String newName = getNewName();
-      if (newName.length() == 0 || myFileCopy && !PathUtil.isValidFileName(newName)) {
+      String newName = getNewName();
+      if (newName.length() == 0 || myFileCopy && !PathUtil.isValidFileName(newName, SystemInfo.isWindows)) {
         setOKActionEnabled(false);
         return;
       }

@@ -362,7 +362,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
             removeScheme(existingScheme)
           }
           else {
-            if (schemeExtension != extension && schemeToInfo.get(existingScheme)?.fileNameWithoutExtension == fileNameWithoutExtension) {
+            if (schemeExtension != extension && schemeToInfo.get(existingScheme as Scheme)?.fileNameWithoutExtension == fileNameWithoutExtension) {
               // 1.oldExt is loading after 1.newExt - we should delete 1.oldExt
               filesToDelete.add(fileName.toString())
             }
@@ -678,11 +678,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       schemes.clear()
     }
     else {
-      for (i in schemes.indices.reversed()) {
-        if (removeCondition.value(schemes.get(i))) {
-          schemes.remove(i)
-        }
-      }
+      schemes.removeAll { removeCondition.value(it) }
     }
 
     retainExternalInfo(newSchemes)
@@ -741,8 +737,8 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
         toReplace = i
         if (replaceExisting && existing is ExternalizableScheme) {
-          val oldInfo = schemeToInfo.remove(existing as E)
-          if (oldInfo != null && scheme is ExternalizableScheme && !schemeToInfo.containsKey(scheme)) {
+          val oldInfo = schemeToInfo.remove(existing as ExternalizableScheme)
+          if (oldInfo != null && scheme is ExternalizableScheme && !schemeToInfo.containsKey(scheme as ExternalizableScheme)) {
             @Suppress("UNCHECKED_CAST")
             schemeToInfo.put(scheme as E, oldInfo)
           }
@@ -762,7 +758,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     }
 
     if (scheme is ExternalizableScheme && filesToDelete.isNotEmpty()) {
-      val info = schemeToInfo.get(scheme)
+      val info = schemeToInfo[scheme as ExternalizableScheme]
       if (info != null) {
         filesToDelete.remove("${info.fileName}")
       }
@@ -841,9 +837,9 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         }
 
         if (s is ExternalizableScheme) {
-          schemeToInfo.remove(s as E)?.scheduleDelete()
+          schemeToInfo.remove(s as ExternalizableScheme)?.scheduleDelete()
         }
-        schemes.remove(i)
+        schemes.removeAt(i)
         break
       }
     }

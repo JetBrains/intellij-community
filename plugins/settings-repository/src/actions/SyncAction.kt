@@ -44,7 +44,7 @@ fun syncAndNotify(syncType: SyncType, project: Project?, notifyIfUpToDate: Boole
   }
   catch (e: Exception) {
     LOG.warn(e)
-    NOTIFICATION_GROUP.createNotification(icsMessage("sync.rejected.title"), e.getMessage() ?: "Internal error", NotificationType.ERROR, null).notify(project)
+    NOTIFICATION_GROUP.createNotification(icsMessage("sync.rejected.title"), e.message ?: "Internal error", NotificationType.ERROR, null).notify(project)
   }
 }
 

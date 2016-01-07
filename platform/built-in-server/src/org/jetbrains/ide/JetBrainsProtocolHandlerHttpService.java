@@ -40,6 +40,8 @@ public class JetBrainsProtocolHandlerHttpService extends RestService {
     final String url = reader.nextString();
     reader.endObject();
 
+    activateLastFocusedFrame();
+
     if (URL_PARAM_NAME.equals(name) && url != null && url.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
       JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
       ApplicationManager.getApplication().invokeLater(new Runnable() {

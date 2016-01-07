@@ -23,9 +23,9 @@ class MacDistributionBuilder {
   JpsGantProjectBuilder projectBuilder
   MacHostProperties macHostProperties
   /**
-   * Directory where IntelliJ IDEA community sources are located
+   * Path to a directory where IntelliJ IDEA community sources are located
    */
-  String home
+  String communityHome
   /**
    * Unique number for the current build (e.g. IC-142.239 for IDEA Community), it is used to create unique file name for files transferred to Mac host
    */
@@ -45,16 +45,17 @@ class MacDistributionBuilder {
 
   /**
    * Converts ${targetFileName}.mac.zip file to ${targetFileName}.dmg installer with signed application inside
+   * @return path to created .dmg file
    */
-  def signAndBuildDmg(String targetFileName) {
+  String signAndBuildDmg(String targetFileName) {
     defineTasks()
     def sitFilePath = "$artifactsPath/${targetFileName}.sit"
     ant.copy(file: "$artifactsPath/${targetFileName}.mac.zip", tofile: sitFilePath)
     signMacZip(targetFileName, sitFilePath)
-    buildDmg(targetFileName)
+    return buildDmg(targetFileName)
   }
 
-  private def buildDmg(String sitFileName) {
+  private String buildDmg(String sitFileName) {
     projectBuilder.stage("building .dmg")
     def dmgImageCopy = "$artifactsPath/${fullBuildNumber}.png"
     ant.copy(file: dmgImagePath, tofile: dmgImageCopy)
@@ -63,7 +64,7 @@ class MacDistributionBuilder {
     }
     ant.delete(file: dmgImageCopy)
     ftpAction("put", false, "777") {
-      ant.fileset(dir: "$home/build/mac") {
+      ant.fileset(dir: "$communityHome/build/mac") {
         include(name: "makedmg.sh")
         include(name: "makedmg.pl")
       }
@@ -85,10 +86,7 @@ class MacDistributionBuilder {
     if (!new File(dmgFilePath).exists()) {
       projectBuilder.error("Failed to build .dmg file.")
     }
-
-    //todo[nik] reuse notifyArtifactBuilt from utils.gant
-//    notifyArtifactBuilt(dmgFilePath)
-    projectBuilder.info("##teamcity[publishArtifacts '${sitFileName}.dmg']")
+    return dmgFilePath
   }
 
   private def signMacZip(String sitFileName, String sitFilePath) {
@@ -109,7 +107,7 @@ class MacDistributionBuilder {
     }
     ant.delete(file: sitFilePath)
     ftpAction("put", false, "777") {
-      ant.fileset(dir: "$home/build/mac") {
+      ant.fileset(dir: "$communityHome/build/mac") {
         include(name: "signapp_ce.sh")
       }
     }
@@ -137,16 +135,16 @@ class MacDistributionBuilder {
      */
     def ftpTaskLoaderRef = "FTP_TASK_CLASS_LOADER";
     Path ftpPath = new Path(ant.project)
-    ftpPath.createPathElement().setLocation(new File("$home/lib/commons-net-3.3.jar"))
-    ftpPath.createPathElement().setLocation(new File("$home/lib/ant/lib/ant-commons-net.jar"))
+    ftpPath.createPathElement().setLocation(new File("$communityHome/lib/commons-net-3.3.jar"))
+    ftpPath.createPathElement().setLocation(new File("$communityHome/lib/ant/lib/ant-commons-net.jar"))
     ant.project.addReference(ftpTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), ftpPath, ant.project,
                                                                     ["FTP", "FTPTaskConfig"] as String[]))
     ant.taskdef(name: "ftp", classname: "org.apache.tools.ant.taskdefs.optional.net.FTP", loaderRef: ftpTaskLoaderRef)
 
     def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER";
     Path pathSsh = new Path(ant.project)
-    pathSsh.createPathElement().setLocation(new File("$home/lib/jsch-0.1.52.jar"))
-    pathSsh.createPathElement().setLocation(new File("$home/lib/ant/lib/ant-jsch.jar"))
+    pathSsh.createPathElement().setLocation(new File("$communityHome/lib/jsch-0.1.52.jar"))
+    pathSsh.createPathElement().setLocation(new File("$communityHome/lib/ant/lib/ant-jsch.jar"))
     ant.project.addReference(sshTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), pathSsh, ant.project,
                                                                     ["SSHExec", "SSHBase", "LogListener", "SSHUserInfo"] as String[]))
     ant.taskdef(name: "sshexec", classname: "org.apache.tools.ant.taskdefs.optional.ssh.SSHExec", loaderRef: sshTaskLoaderRef)

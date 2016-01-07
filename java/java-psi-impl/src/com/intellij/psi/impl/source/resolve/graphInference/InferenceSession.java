@@ -1444,18 +1444,26 @@ public class InferenceSession {
               return receiverSubstitutor;
             }
           }
-          mySiteSubstitutor = mySiteSubstitutor.putAll(receiverSubstitutor);
+          mySiteSubstitutor = receiverSubstitutor;
+
+          if (methodContainingClass != null) {
+            final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(methodContainingClass, containingClass, receiverSubstitutor);
+            LOG.assertTrue(superSubstitutor != null, "mContainingClass: " + methodContainingClass.getName() + "; containingClass: " + containingClass.getName());
+            mySiteSubstitutor = mySiteSubstitutor.putAll(superSubstitutor);
+          }
+
           psiSubstitutor = receiverSubstitutor;
         }
-      }
-      else if (methodContainingClass != null) {
-        psiSubstitutor = TypeConversionUtil.getClassSubstitutor(methodContainingClass, containingClass, psiSubstitutor);
-        LOG.assertTrue(psiSubstitutor != null, "derived: " + containingClass + "; super: " + methodContainingClass);
       }
 
       final PsiType qType = JavaPsiFacade.getElementFactory(method.getProject()).createType(containingClass, psiSubstitutor);
 
       addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(qType), pType));
+
+      if (methodContainingClass != null) {
+        psiSubstitutor = TypeConversionUtil.getClassSubstitutor(methodContainingClass, containingClass, psiSubstitutor);
+        LOG.assertTrue(psiSubstitutor != null, "derived: " + containingClass + "; super: " + methodContainingClass);
+      }
 
       for (int i = 0; i < signature.getParameterTypes().length - 1; i++) {
         final PsiType interfaceParamType = signature.getParameterTypes()[i + 1];

@@ -74,7 +74,6 @@ class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionH
 
   private class MyDecoder extends MessageDecoder {
     private State state = State.LENGTH;
-    private int contentLength;
 
     private final SocketClient client;
 

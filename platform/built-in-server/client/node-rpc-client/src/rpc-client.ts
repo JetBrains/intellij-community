@@ -1,82 +1,98 @@
-"use strict"
-
-import net = require("net")
-import rpc = require("./rpc")
+import * as net from "net"
+import { JsonRpc, Transport } from "./rpc"
 
 export class RpcClient {
-  connect(port:Number = 63342) {
-    var socket = net.connect({port: port}, function () {
-      console.log('Connected to IJ RPC server localhost:' + port)
-    });
+  connect(port: number = 63342) {
+    const socket = net.connect({port: port}, () => {
+      console.log("Connected to IJ RPC server localhost: " + port)
+    })
 
-    var jsonRpc = new rpc.JsonRpc(new SocketTransport(socket))
-    var decoder:MessageDecoder = new MessageDecoder(jsonRpc.messageReceived)
-    socket.on('data', decoder.messageReceived)
+    const transport = new SocketTransport(socket)
+    const jsonRpc = new JsonRpc(transport)
+    const decoder = new MessageDecoder(jsonRpc.messageReceived)
+    socket.on("data", decoder.messageReceived)
   }
 }
 
 const enum State {LENGTH, CONTENT}
 
-class SocketTransport implements rpc.Transport {
+export class SocketTransport implements Transport {
   private headerBuffer = new Buffer(4)
 
-  constructor(private socket:net.Socket) {
+  opened: () => void
+
+  constructor(private socket: net.Socket = new net.Socket()) {
   }
 
-  send(id:number, domain:string, command:string, params:any[] = null):void {
-    var encodedParams = JSON.stringify(params)
-    var header = (id == -1 ? '' : (id + ', ')) + '"' + domain + '", "' + command + '"';
-    this.headerBuffer.writeUInt32BE(Buffer.byteLength(encodedParams) + header.length, 0)
+  connect(port: number = 63342) {
+    this.socket.connect(port, null, ()=> {
+      const opened = this.opened
+      if (opened != null) {
+        opened()
+      }
+    })
+    this.socket.on("error", (e: Error) => {
+      console.error(e)
+    })
+    this.socket.write(new Buffer([67, 72, 105, -107, 126, -21, -81, -72, 64, 54, -87, -88, 0, -46, -48, 34, -7, -67]))
+  }
+
+  send(id: number, domain: string, command: string, params: any[] = null): void {
+    const encodedParams = JSON.stringify(params)
+    const header = (id == -1 ? '' : (id + ', ')) + '"' + domain + '", "' + command + '"';
+    this.headerBuffer.writeUInt32BE(header.length + Buffer.byteLength(encodedParams), 0)
     this.socket.write(this.headerBuffer)
-    this.socket.write(encodedParams, 'utf-8')
+    this.socket.write(header)
+    this.socket.write(encodedParams)
   }
 
-  sendResult(id:number, result:any):void {
+  sendResult(id: number, result: any): void {
     this.sendResultOrError(id, result, false)
   }
 
-  sendError(id:number, error:any):void {
+  sendError(id: number, error: any): void {
     this.sendResultOrError(id, error, true)
   }
 
-  private sendResultOrError(id:number, result:any, isError:boolean):void {
+  private sendResultOrError(id: number, result: any, isError: boolean): void {
     var encodedResult = JSON.stringify(result)
-    var header = id + ', "' + (isError ? 'e': 'r') + '"';
+    var header = id + ', "' + (isError ? 'e' : 'r') + '"';
     this.headerBuffer.writeUInt32BE(Buffer.byteLength(encodedResult) + header.length, 0)
     this.socket.write(this.headerBuffer)
-    this.socket.write(encodedResult, 'utf-8')
+    this.socket.write(encodedResult)
   }
 }
 
 class MessageDecoder {
-  private state:State = State.LENGTH
-  private contentLength:number = 0
+  private state: State = State.LENGTH
+  private contentLength: number = 0
 
-  private buffers:Array<Buffer> = []
-  private totalBufferLength:number = 0
-  private offset:number = 0
+  private buffers: Array<Buffer> = []
+  private totalBufferLength: number = 0
+  private offset: number = 0
 
-  constructor(private messageProcessor:(message:any)=>void) {
+  constructor(private messageProcessor: (message: any)=>void) {
   }
 
-  private byteConsumed(count:number) {
+  private byteConsumed(count: number) {
     this.offset += count
     this.totalBufferLength -= count
   }
 
-  messageReceived(buffer:Buffer) {
+  messageReceived(buffer: Buffer) {
     this.totalBufferLength += buffer.length
 
     while (true) {
       //noinspection FallThroughInSwitchStatementJS
       switch (this.state) {
-        case State.LENGTH: {
+        case State.LENGTH:
+        {
           if (this.totalBufferLength < 4) {
             this.buffers.push(buffer)
             return
           }
 
-          var totalBuffer:Buffer
+          var totalBuffer: Buffer
           if (this.buffers.length === 0) {
             totalBuffer = buffer
           }
@@ -92,13 +108,14 @@ class MessageDecoder {
           buffer = totalBuffer
         }
 
-        case State.CONTENT: {
+        case State.CONTENT:
+        {
           if (this.totalBufferLength < this.contentLength) {
             this.buffers.push(buffer)
             return
           }
 
-          var totalBuffer:Buffer
+          var totalBuffer: Buffer
           if (this.buffers.length === 0) {
             totalBuffer = buffer
           }
