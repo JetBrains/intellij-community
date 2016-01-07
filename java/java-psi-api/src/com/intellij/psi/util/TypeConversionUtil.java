@@ -177,6 +177,9 @@ public class TypeConversionUtil {
           return true;
         }
       }
+      if (fromType instanceof PsiCapturedWildcardType) {
+        return isNarrowingReferenceConversionAllowed(((PsiCapturedWildcardType)fromType).getUpperBound(), toType);
+      }
       return isAssignable(fromType, toType);
     }
     if (fromType instanceof PsiArrayType) {
