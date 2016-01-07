@@ -1,3 +1,7 @@
 package pkg;
 
-class KindaInner$Class { }
+class KindaInner$Class {
+  void m() {
+    new KindaInner$Class() { };
+  }
+}

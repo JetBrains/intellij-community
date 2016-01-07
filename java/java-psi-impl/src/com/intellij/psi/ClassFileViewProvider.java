@@ -83,19 +83,19 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
         @Override
         public void visitOuterClass(String owner, String name, String desc) {
           ref.set(Boolean.TRUE);
+          throw new ProcessCanceledException();
         }
 
         @Override
         public void visitInnerClass(String name, String outer, String inner, int access) {
-          if (inner == null || childName.equals(inner) && outer != null && parentName.equals(outer.substring(outer.lastIndexOf('/') + 1))) {
+          if ((inner == null || childName.equals(inner)) && outer != null && parentName.equals(outer.substring(outer.lastIndexOf('/') + 1))) {
             ref.set(Boolean.TRUE);
+            throw new ProcessCanceledException();
           }
         }
       }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
+    catch (ProcessCanceledException ignored) { }
     catch (Exception e) {
       Logger.getInstance(ClassFileViewProvider.class).warn(file.getPath(), e);
     }
