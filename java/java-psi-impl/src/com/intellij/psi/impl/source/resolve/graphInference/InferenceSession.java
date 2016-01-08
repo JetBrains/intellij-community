@@ -42,7 +42,6 @@ public class InferenceSession {
   private static final Logger LOG = Logger.getInstance("#" + InferenceSession.class.getName());
   public static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");
   public static final Key<PsiType> UPPER_BOUND = Key.create("UpperBound");
-  private static final Key<PsiElement> ORIGINAL_CONTEXT = Key.create("ORIGINAL_CONTEXT");
   private static final Key<Boolean> ERASED = Key.create("UNCHECKED_CONVERSION");
   private static final Function<Pair<PsiType, PsiType>, PsiType> UPPER_BOUND_FUNCTION = new Function<Pair<PsiType, PsiType>, PsiType>() {
     @Override
@@ -1038,7 +1037,7 @@ public class InferenceSession {
       }
       parameter.putUserData(UPPER_BOUND,
                             composeBound(var, InferenceBound.UPPER, UPPER_BOUND_FUNCTION, ySubstitutor.putAll(substitutor), true));
-      parameter.putUserData(ORIGINAL_CONTEXT, myContext);
+      TypeConversionUtil.markAsFreshVariable(parameter, myContext);
       if (!var.addBound(elementFactory.createType(parameter), InferenceBound.EQ)) {
         return false;
       }
@@ -1766,15 +1765,6 @@ public class InferenceSession {
       s = s.put(variable, JavaPsiFacade.getElementFactory(variable.getProject()).createType(variable.getParameter()));
     }
     return s.substitute(type);
-  }
-
-  public static boolean areSameFreshVariables(PsiTypeParameter p1, PsiTypeParameter p2) {
-    final PsiElement originalContext = p1.getUserData(ORIGINAL_CONTEXT);
-    return originalContext != null && originalContext == p2.getUserData(ORIGINAL_CONTEXT);
-  }
-  
-  public static boolean isFreshVariable(PsiTypeParameter typeParameter) {
-    return typeParameter.getUserData(ORIGINAL_CONTEXT) != null;
   }
 
   public static PsiClass findParameterizationOfTheSameGenericClass(List<PsiType> upperBounds,

@@ -78,6 +78,7 @@ public class TypeConversionUtil {
       return "FAKE TYPE";
     }
   };
+  private static final Key<PsiElement> ORIGINAL_CONTEXT = Key.create("ORIGINAL_CONTEXT");
 
   static {
     TYPE_TO_RANK_MAP.put(PsiType.BYTE, BYTE_RANK);
@@ -1291,7 +1292,7 @@ public class TypeConversionUtil {
       @Override
       public PsiType visitClassType(PsiClassType classType) {
         final PsiClass aClass = classType.resolve();
-        if (aClass instanceof PsiTypeParameter) {
+        if (aClass instanceof PsiTypeParameter && !isFreshVariable((PsiTypeParameter)aClass)) {
           return typeParameterErasure((PsiTypeParameter)aClass, beforeSubstitutor);
         }
         return classType.rawType();
@@ -1472,6 +1473,19 @@ public class TypeConversionUtil {
       if (d == 'E' || d == 'P') break;
     }
     return true;
+  }
+
+  public static boolean areSameFreshVariables(PsiTypeParameter p1, PsiTypeParameter p2) {
+    final PsiElement originalContext = p1.getUserData(ORIGINAL_CONTEXT);
+    return originalContext != null && originalContext == p2.getUserData(ORIGINAL_CONTEXT);
+  }
+
+  public static boolean isFreshVariable(PsiTypeParameter typeParameter) {
+    return typeParameter.getUserData(ORIGINAL_CONTEXT) != null;
+  }
+  
+  public static void markAsFreshVariable(PsiTypeParameter parameter, PsiElement context) {
+    parameter.putUserData(ORIGINAL_CONTEXT, context);
   }
 
   private interface Caster {

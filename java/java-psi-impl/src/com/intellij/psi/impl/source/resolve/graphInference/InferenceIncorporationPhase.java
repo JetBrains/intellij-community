@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.StrictSub
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 
 import java.util.*;
@@ -182,7 +183,7 @@ public class InferenceIncorporationPhase {
   private static Boolean isInferenceVariableOrFreshTypeParameter(PsiType eqBound) {
     final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(eqBound);
     if (psiClass instanceof InferenceVariable ||
-        psiClass instanceof PsiTypeParameter && InferenceSession.isFreshVariable((PsiTypeParameter)psiClass)) return true;
+        psiClass instanceof PsiTypeParameter && TypeConversionUtil.isFreshVariable((PsiTypeParameter)psiClass)) return true;
     return false;
   }
 
