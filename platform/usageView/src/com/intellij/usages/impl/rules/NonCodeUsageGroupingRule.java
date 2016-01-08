@@ -44,7 +44,7 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     private static final UsageGroup INSTANCE = new CodeUsageGroup();
 
     private CodeUsageGroup() {
-      super(1);
+      super(0);
     }
 
     @Override
@@ -63,7 +63,7 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     public static final UsageGroup INSTANCE = new UsageInGeneratedCodeGroup();
 
     private UsageInGeneratedCodeGroup() {
-      super(2);
+      super(3);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     public static final UsageGroup INSTANCE = new NonCodeUsageGroup();
 
     private NonCodeUsageGroup() {
-      super(0);
+      super(2);
     }
 
     @Override
@@ -105,7 +105,7 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     @NonNls private static final String DYNAMIC_CAPTION = "Dynamic usages";
 
     public DynamicUsageGroup() {
-      super(3);
+      super(1);
     }
 
     @Override
