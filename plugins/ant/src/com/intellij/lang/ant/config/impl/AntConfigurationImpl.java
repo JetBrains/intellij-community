@@ -197,6 +197,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private volatile Boolean myIsInitialized = null;
+  private volatile Thread myInitThread = null;
   
   public boolean isInitialized() {
     final Boolean initialized = myIsInitialized;
@@ -667,7 +668,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private List<ExecutionEvent> getEventsByClass(Class eventClass) {
-    ensureInitialized();
+    final Thread initThread = myInitThread;
+    if (initThread == null || initThread != Thread.currentThread()) {
+      ensureInitialized();
+    }
     final List<ExecutionEvent> list = new ArrayList<ExecutionEvent>();
     synchronized (myEventToTargetMap) {
       for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
@@ -716,6 +720,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               try {
+                myInitThread = Thread.currentThread();
                 // first, remove existing files
                 final AntBuildFile[] currentFiles = getBuildFiles();
                 for (AntBuildFile file : currentFiles) {
@@ -800,6 +805,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                   updateRegisteredActions();
                 }
                 finally {
+                  myInitThread = null;
                   myIsInitialized = Boolean.TRUE;
                   ApplicationManager.getApplication().invokeLater(new Runnable() {
                     public void run() {
