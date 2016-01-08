@@ -88,7 +88,8 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
 
         @Override
         public void visitInnerClass(String name, String outer, String inner, int access) {
-          if ((inner == null || childName.equals(inner)) && outer != null && parentName.equals(outer.substring(outer.lastIndexOf('/') + 1))) {
+          if ((inner == null || childName.equals(inner)) && outer != null && parentName.equals(outer.substring(outer.lastIndexOf('/') + 1)) ||
+              inner == null && outer == null && name.substring(name.lastIndexOf('/') + 1).equals(parentName + '$' + childName)) {
             ref.set(Boolean.TRUE);
             throw new ProcessCanceledException();
           }
