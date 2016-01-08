@@ -14,11 +14,7 @@ export class RpcClient {
   }
 }
 
-const enum State {LENGTH, CONTENT}
-
 export class SocketTransport implements Transport {
-  private headerBuffer = new Buffer(4)
-
   opened: () => void
 
   constructor(private socket: net.Socket = new net.Socket()) {
@@ -38,12 +34,16 @@ export class SocketTransport implements Transport {
   }
 
   send(id: number, domain: string, command: string, params: any[] = null): void {
-    const encodedParams = JSON.stringify(params)
-    const header = (id == -1 ? '' : (id + ', ')) + '"' + domain + '", "' + command + '"';
-    this.headerBuffer.writeUInt32BE(header.length + Buffer.byteLength(encodedParams), 0)
-    this.socket.write(this.headerBuffer)
+    const encodedParams = params == null || params.length === 0 ? null : JSON.stringify(params)
+    const header = '[' + (id == -1 ? '' : (id + ', ')) + '"' + domain + '", "' + command + '"'
+    const headerBuffer = new Buffer(4)
+    headerBuffer.writeUInt32BE(header.length + (encodedParams == null ? 0 : Buffer.byteLength(encodedParams)) + 1 /* ] symbol*/, 0)
+    this.socket.write(headerBuffer)
     this.socket.write(header)
-    this.socket.write(encodedParams)
+    if (encodedParams != null) {
+      this.socket.write(encodedParams)
+    }
+    this.socket.write(']')
   }
 
   sendResult(id: number, result: any): void {
@@ -56,20 +56,23 @@ export class SocketTransport implements Transport {
 
   private sendResultOrError(id: number, result: any, isError: boolean): void {
     var encodedResult = JSON.stringify(result)
-    var header = id + ', "' + (isError ? 'e' : 'r') + '"';
-    this.headerBuffer.writeUInt32BE(Buffer.byteLength(encodedResult) + header.length, 0)
-    this.socket.write(this.headerBuffer)
+    var header = id + ', "' + (isError ? 'e' : 'r') + '"'
+    const headerBuffer = new Buffer(4)
+    headerBuffer.writeUInt32BE(Buffer.byteLength(encodedResult) + header.length, 0)
+    this.socket.write(headerBuffer)
     this.socket.write(encodedResult)
   }
 }
 
+const enum State {LENGTH, CONTENT}
+
 class MessageDecoder {
-  private state: State = State.LENGTH
-  private contentLength: number = 0
+  private state = State.LENGTH
+  private contentLength = 0
 
   private buffers: Array<Buffer> = []
-  private totalBufferLength: number = 0
-  private offset: number = 0
+  private totalBufferLength = 0
+  private offset = 0
 
   constructor(private messageProcessor: (message: any)=>void) {
   }
@@ -85,8 +88,7 @@ class MessageDecoder {
     while (true) {
       //noinspection FallThroughInSwitchStatementJS
       switch (this.state) {
-        case State.LENGTH:
-        {
+        case State.LENGTH: {
           if (this.totalBufferLength < 4) {
             this.buffers.push(buffer)
             return
@@ -108,8 +110,7 @@ class MessageDecoder {
           buffer = totalBuffer
         }
 
-        case State.CONTENT:
-        {
+        case State.CONTENT: {
           if (this.totalBufferLength < this.contentLength) {
             this.buffers.push(buffer)
             return
@@ -125,7 +126,7 @@ class MessageDecoder {
             this.buffers.length = 0
           }
 
-          var message = JSON.parse(totalBuffer.toString('utf8', this.offset, this.contentLength));
+          const message = JSON.parse(totalBuffer.toString("utf8", this.offset, this.contentLength))
           this.state = State.LENGTH
           this.byteConsumed(this.contentLength)
           this.contentLength = 0

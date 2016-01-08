@@ -87,19 +87,13 @@ public class JsonRpcServer implements MessageServer {
   }
 
   @Override
-  public void messageReceived(@NotNull Client client, @NotNull CharSequence message, boolean isBinary) throws IOException {
+  public void messageReceived(@NotNull Client client, @NotNull CharSequence message) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("IN " + message);
     }
 
     JsonReaderEx reader = new JsonReaderEx(message);
-    if (!isBinary) {
-      reader.beginArray();
-    }
-    else {
-      // to allow top-level member to be not a object or array
-      reader.setLenient(true);
-    }
+    reader.beginArray();
 
     int messageId = reader.peek() == JsonToken.NUMBER ? reader.nextInt() : -1;
     String domainName = reader.nextString();
@@ -120,7 +114,15 @@ public class JsonRpcServer implements MessageServer {
 
     NotNullLazyValue domainHolder = domains.get(domainName);
     if (domainHolder == null) {
-      LOG.error("Cannot find domain " + domainName);
+      String error = "Cannot find domain " + domainName;
+      try {
+        LOG.error(error);
+      }
+      finally {
+        if (messageId != -1) {
+          sendErrorResponse(messageId, client, message);
+        }
+      }
       return;
     }
 
@@ -139,10 +141,6 @@ public class JsonRpcServer implements MessageServer {
     }
     else {
       parameters = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-    }
-
-    if (!isBinary) {
-      reader.endArray();
     }
 
     try {

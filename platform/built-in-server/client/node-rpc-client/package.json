@@ -11,6 +11,7 @@
     "url": "https://github.com/JetBrains/intellij-community.git"
   },
   "devDependencies": {
+    "mocha": "^2.3.4",
     "rimraf": "^2.5.0",
     "should": "^8.0.2",
     "tsconfig-glob": "^0.3.3",

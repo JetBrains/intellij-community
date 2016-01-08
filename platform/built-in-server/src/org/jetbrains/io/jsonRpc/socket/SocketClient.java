@@ -16,7 +16,7 @@ public class SocketClient extends Client {
   @Override
   public ChannelFuture send(@NotNull ByteBuf message) {
     if (channel.isOpen()) {
-      ByteBuf lengthBuffer = channel.alloc().buffer(4);
+      ByteBuf lengthBuffer = channel.alloc().ioBuffer(4);
       lengthBuffer.writeInt(message.readableBytes());
       channel.write(lengthBuffer);
       return channel.writeAndFlush(message);

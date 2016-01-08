@@ -39,7 +39,7 @@ final class MessageChannelHandler extends SimpleChannelInboundHandlerAdapter<Web
     }
     else if (message instanceof TextWebSocketFrame) {
       try {
-        messageServer.messageReceived(client, ChannelBufferToString.readChars(message.content()), false);
+        messageServer.messageReceived(client, ChannelBufferToString.readChars(message.content()));
       }
       catch (Throwable e) {
         clientManager.exceptionHandler.exceptionCaught(e);

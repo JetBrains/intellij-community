@@ -102,7 +102,7 @@ class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionH
             }
 
             try {
-              rpcServer.messageReceived(client, content, true);
+              rpcServer.messageReceived(client, content);
             }
             catch (Throwable e) {
               clientManager.getValue().exceptionHandler.exceptionCaught(e);

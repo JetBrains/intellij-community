@@ -1,19 +1,20 @@
 const should = require("should")
-const rpcClient = require("../out/rpc-client")
+const rpcNode = require("../out/rpc-node")
 const rpc = require("../out/rpc")
 
 describe("RPC", function () {
   it("connect", function (done) {
-    const transport = new rpcClient.SocketTransport()
+    const transport = new rpcNode.SocketTransport()
     transport.opened = function () {
       done()
     }
     transport.connect()
   })
-  it("connect", function (done) {
+
+  it("call method", function (done) {
     this.timeout(5000000)
 
-    const transport = new rpcClient.SocketTransport()
+    const transport = new rpcNode.SocketTransport()
     transport.opened = function () {
     }
     transport.connect(63343)
