@@ -59,7 +59,6 @@ public class ProcessListTest extends UsefulTestCase {
 
   public void testUnix_DetermineExecutable() throws Exception {
     List<ProcessInfo> infos = ProcessListUtil.parseUnixOutput(
-      false,
       "   PID S USER    COMMAND\n\n" +
       "     1 S user    " + myDir + "/dir/file\n" +
       "     2 S user    " + myDir + "/dir/dir/file\n" +
@@ -90,7 +89,6 @@ public class ProcessListTest extends UsefulTestCase {
 
   public void testUnix_DetermineExecutableWithExtraSlashes() throws Exception {
     List<ProcessInfo> infos = ProcessListUtil.parseUnixOutput(
-      false,
       "   PID S USER    COMMAND\n\n" +
       "     1 S user    //" + myDir + "//dir//file//\n" +
       "     2 S user    //" + myDir + "//dir//file// aaa bbb\n"
@@ -102,7 +100,6 @@ public class ProcessListTest extends UsefulTestCase {
 
   public void testUnix_VariousFormsPidStatUser() throws Exception {
     List<ProcessInfo> infos = ProcessListUtil.parseUnixOutput(
-      true,
       "   PID STAT USER      COMMAND\n\n" +
       "     1 S    user      " + myDir + "/dir/file\n" +
       "   101 Ss   user_name " + myDir + "/dir/file\n"
@@ -114,42 +111,33 @@ public class ProcessListTest extends UsefulTestCase {
 
   public void testUnix_WrongFormat() throws Exception {
     assertNull(ProcessListUtil.parseUnixOutput(
-      false,
       ""
     ));
     assertNull(ProcessListUtil.parseUnixOutput(
-      false,
       "wrong format"));
     assertEmpty(ProcessListUtil.parseUnixOutput(
-      false,
       "   PID S USER    COMMAND\n\n"
     ));
     assertEmpty(ProcessListUtil.parseUnixOutput(
-      false,
       "   PID S USER    COMMAND\n\n" +
       "                           \n"
     ));
     assertNull(ProcessListUtil.parseUnixOutput(
-      false,
       "     1 S user    " + myDir + "/dir/file\n"
     ));
     assertNull(ProcessListUtil.parseUnixOutput(
-      false,
       "   PID S USER    XXX\n\n" +
       "     1 S user    " + myDir + "/dir/file\n"
     ));
     assertNull(ProcessListUtil.parseUnixOutput(
-      false,
       "   PID S XXX     COMMAND\n\n" +
       "     1 S user    " + myDir + "/dir/file\n"
     ));
     assertNull(ProcessListUtil.parseUnixOutput(
-      false,
       "   PID X USER    COMMAND\n\n" +
       "     1 S user    " + myDir + "/dir/file\n"
     ));
     assertNull(ProcessListUtil.parseUnixOutput(
-      false,
       "   XXX S USER    COMMAND\n\n" +
       "     1 S user    " + myDir + "/dir/file\n"
     ));
@@ -157,7 +145,6 @@ public class ProcessListTest extends UsefulTestCase {
 
   public void testMac() throws Exception {
     List<ProcessInfo> infos = ProcessListUtil.parseUnixOutput(
-      true,
       "   PID STAT USER    COMMAND\n\n" +
       "     1 S    user    " + myDir + "/dir/file\n" +
       "     2 S    user    " + myDir + "/dir/dir/file\n"
@@ -169,7 +156,6 @@ public class ProcessListTest extends UsefulTestCase {
 
   public void testMac_DoNotIncludeZombies() throws Exception {
     List<ProcessInfo> infos = ProcessListUtil.parseUnixOutput(
-      true,
       "   PID STAT USER    COMMAND\n\n" +
       "     1 S    user    " + myDir + "/dir/file\n" +
       "     2 Z    user    " + myDir + "/dir/file\n" +

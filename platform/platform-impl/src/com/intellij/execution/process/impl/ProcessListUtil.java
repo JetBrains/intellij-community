@@ -61,7 +61,7 @@ class ProcessListUtil {
       LOG.error("Cannot get process list via wmic and tasklist");
     }
     else if (SystemInfo.isUnix) {
-      result = getProcessList_Unix(SystemInfo.isMac);
+      result = getProcessList_Unix();
       if (result != null) return result;
 
       LOG.error("Cannot get process list");
@@ -86,19 +86,19 @@ class ProcessListUtil {
   }
 
   @Nullable
-  private static List<ProcessInfo> getProcessList_Unix(final boolean isMac) {
+  private static List<ProcessInfo> getProcessList_Unix() {
     return parseCommandOutput(Arrays.asList("/bin/ps", "-a", "-x", "-o", "pid,state,user,command"),
                               new NullableFunction<String, List<ProcessInfo>>() {
                                 @Nullable
                                 @Override
                                 public List<ProcessInfo> fun(String output) {
-                                  return parseUnixOutput(isMac, output);
+                                  return parseUnixOutput(output);
                                 }
                               });
   }
 
   @Nullable
-  static List<ProcessInfo> parseUnixOutput(boolean isMac, @NotNull String output) {
+  static List<ProcessInfo> parseUnixOutput(@NotNull String output) {
     List<ProcessInfo> result = ContainerUtil.newArrayList();
     String[] lines = StringUtil.splitByLinesDontTrim(output);
     if (lines.length == 0) return null;
@@ -107,7 +107,7 @@ class ProcessListUtil {
     int pidStart = header.indexOf("PID");
     if (pidStart == -1) return null;
 
-    int statStart = header.indexOf(isMac ? "STAT" : "S", pidStart);
+    int statStart = header.indexOf("S", pidStart);
     if (statStart == -1) return null;
 
     int userStart = header.indexOf("USER", statStart);
