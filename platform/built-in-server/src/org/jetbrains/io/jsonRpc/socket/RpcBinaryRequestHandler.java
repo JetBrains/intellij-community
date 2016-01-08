@@ -33,6 +33,7 @@ class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionH
       Disposer.register(serverDisposable, result);
 
       rpcServer = new JsonRpcServer(result);
+      JsonRpcServerKt.registerFromEp(rpcServer);
       return result;
     }
   };

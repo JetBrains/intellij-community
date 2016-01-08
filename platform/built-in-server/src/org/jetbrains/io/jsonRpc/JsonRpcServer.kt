@@ -59,7 +59,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
         return
       }
       else {
-        throw IllegalArgumentException(name + " is already registered")
+        throw IllegalArgumentException("$name is already registered")
       }
     }
 
@@ -192,14 +192,11 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
                             command: String? = null,
                             rawData: ByteBuf? = null,
                             params: Array<*> = ArrayUtil.EMPTY_OBJECT_ARRAY): ByteBuf {
-    var buffer = byteBufAllocator.ioBuffer()
-    buffer.releaseIfError {
-      buffer = doEncodeMessage(byteBufAllocator, messageId, domain, command, params, rawData)
-      if (LOG.isDebugEnabled) {
-        LOG.debug("OUT ${buffer.toString(Charsets.UTF_8)}")
-      }
-      return buffer
+    val buffer = doEncodeMessage(byteBufAllocator, messageId, domain, command, params, rawData)
+    if (LOG.isDebugEnabled) {
+      LOG.debug("OUT ${buffer.toString(Charsets.UTF_8)}")
     }
+    return buffer
   }
 
   private fun doEncodeMessage(byteBufAllocator: ByteBufAllocator,
@@ -341,7 +338,13 @@ private class IntArrayListTypeAdapter<T> : TypeAdapter<T>() {
 private fun ByteBuf.addBuffer(buffer: ByteBuf): ByteBuf {
   if (this !== buffer) {
     (this as CompositeByteBuf).addComponent(buffer)
-    this.writerIndex(this.capacity())
+    writerIndex(capacity())
   }
-  return buffer
+  return this
+}
+
+fun JsonRpcServer.registerFromEp() {
+  for (domainBean in JsonRpcDomainBean.EP_NAME.extensions) {
+    registerDomain(domainBean.name, domainBean.value, domainBean.overridable)
+  }
 }
