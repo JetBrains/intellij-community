@@ -1,4 +1,5 @@
-const should = require("should")
+const assertThat = require("should/as-function")
+
 const rpcNode = require("../out/rpc-node")
 const rpc = require("../out/rpc")
 
@@ -11,21 +12,8 @@ describe("RPC", function () {
     transport.connect()
   })
 
-  it("call method", function (done) {
-    this.timeout(5000000)
-
-    const transport = new rpcNode.SocketTransport()
-    transport.opened = function () {
-    }
-    transport.connect(63343)
-
-    const rpcServer = new rpc.JsonRpc(transport)
-    rpcServer.call("Ide", "about")
-        .then(function (r) {
-          console.log(r)
-          done()
-        }, function (e) {
-          throw e
-        })
+  it("call method", function () {
+    const rpcServer = rpcNode.connect(63343)
+    return assertThat(rpcServer.call("Ide", "about")).fulfilled()
   })
 })

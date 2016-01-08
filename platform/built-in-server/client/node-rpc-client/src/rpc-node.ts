@@ -1,21 +1,16 @@
 import * as net from "net"
 import { JsonRpc, Transport } from "./rpc"
 
-export class RpcClient {
-  connect(port: number = 63342) {
-    const socket = net.connect({port: port}, () => {
-      console.log("Connected to IJ RPC server localhost: " + port)
-    })
-
-    const transport = new SocketTransport(socket)
-    const jsonRpc = new JsonRpc(transport)
-    const decoder = new MessageDecoder(jsonRpc.messageReceived)
-    socket.on("data", decoder.messageReceived)
-  }
+export function connect(port: number = 63342): JsonRpc {
+  const transport = new SocketTransport()
+  const server = new JsonRpc(transport)
+  transport.connect(63343)
+  return server
 }
 
 export class SocketTransport implements Transport {
   opened: () => void
+  messageReceived: (message: Array<any>) => void
 
   constructor(private socket: net.Socket = new net.Socket()) {
   }
@@ -30,6 +25,16 @@ export class SocketTransport implements Transport {
     this.socket.on("error", (e: Error) => {
       console.error(e)
     })
+
+    const messageReceived = this.messageReceived
+    if (messageReceived == null) {
+      console.warn("messageReceived is not specified, input will be ignored")
+    }
+    else {
+      const messageDecoder = new MessageDecoder(messageReceived)
+      this.socket.on("data", messageDecoder.messageReceived.bind(messageDecoder))
+    }
+
     this.socket.write(new Buffer([67, 72, 105, -107, 126, -21, -81, -72, 64, 54, -87, -88, 0, -46, -48, 34, -7, -67]))
   }
 
@@ -126,13 +131,18 @@ class MessageDecoder {
             this.buffers.length = 0
           }
 
-          const message = JSON.parse(totalBuffer.toString("utf8", this.offset, this.contentLength))
-          this.state = State.LENGTH
-          this.byteConsumed(this.contentLength)
-          this.contentLength = 0
-          buffer = totalBuffer
+          const rawMessage = totalBuffer.toString("utf8", this.offset, this.offset + this.contentLength)
+          try {
+            this.state = State.LENGTH
+            this.byteConsumed(this.contentLength)
+            this.contentLength = 0
+            buffer = totalBuffer
 
-          this.messageProcessor(message)
+            this.messageProcessor(JSON.parse(rawMessage))
+          }
+          catch (e) {
+            console.error("Error: %s,\nInput: %s", e, rawMessage)
+          }
         }
       }
     }

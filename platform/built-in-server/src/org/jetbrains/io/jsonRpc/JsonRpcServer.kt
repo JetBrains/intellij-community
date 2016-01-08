@@ -1,46 +1,59 @@
 package org.jetbrains.io.jsonRpc
 
-import com.google.gson.*
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.TypeAdapter
+import com.google.gson.TypeAdapterFactory
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NotNullLazyValue
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.Ref
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.Consumer
 import com.intellij.util.SmartList
-import com.intellij.util.text.CharSequenceBackedByArray
 import gnu.trove.THashMap
 import gnu.trove.TIntArrayList
-import gnu.trove.TIntProcedure
 import io.netty.buffer.*
-import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
-
+import org.jetbrains.io.releaseIfError
 import java.io.IOException
 import java.lang.reflect.Method
-import java.lang.reflect.Type
-import java.util.Arrays
 import java.util.concurrent.atomic.AtomicInteger
 
-class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
+private val LOG = Logger.getInstance(JsonRpcServer::class.java)
 
-  private val messageIdCounter = AtomicInteger()
-  private val gson: Gson
+private val INT_LIST_TYPE_ADAPTER_FACTORY = object : TypeAdapterFactory {
+  private var typeAdapter: IntArrayListTypeAdapter<TIntArrayList>? = null
 
-  private val domains = THashMap<String, NotNullLazyValue<Any>>()
+  override fun <T> create(gson: Gson, type: TypeToken<T>): TypeAdapter<T>? {
+    if (type.type !== TIntArrayList::class.java) {
+      return null
+    }
 
-  init {
-    gson = GsonBuilder().registerTypeAdapter(CharSequenceBackedByArray::class.java, JsonSerializer<com.intellij.util.text.CharSequenceBackedByArray> { src, typeOfSrc, context -> JsonPrimitive(src.toString()) }).registerTypeAdapterFactory(INT_LIST_TYPE_ADAPTER_FACTORY).disableHtmlEscaping().create()
+    if (typeAdapter == null) {
+      typeAdapter = IntArrayListTypeAdapter<TIntArrayList>()
+    }
+    @Suppress("CAST_NEVER_SUCCEEDS")
+    return typeAdapter as TypeAdapter<T>?
   }
+}
 
-  @JvmOverloads fun registerDomain(name: String, commands: NotNullLazyValue<Any>, overridable: Boolean = false) {
+private val gson by lazy {
+  GsonBuilder()
+    .registerTypeAdapterFactory(INT_LIST_TYPE_ADAPTER_FACTORY)
+    .disableHtmlEscaping()
+    .create()
+}
+
+class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
+  private val messageIdCounter = AtomicInteger()
+  private val domains = THashMap<String, NotNullLazyValue<*>>()
+
+  fun registerDomain(name: String, commands: NotNullLazyValue<*>, overridable: Boolean = false) {
     if (domains.containsKey(name)) {
       if (overridable) {
         return
@@ -53,10 +66,9 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
     domains.put(name, commands)
   }
 
-  @Throws(IOException::class)
   override fun messageReceived(client: Client, message: CharSequence) {
     if (LOG.isDebugEnabled) {
-      LOG.debug("IN " + message)
+      LOG.debug("IN $message")
     }
 
     val reader = JsonReaderEx(message)
@@ -81,15 +93,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
 
     val domainHolder = domains[domainName]
     if (domainHolder == null) {
-      val error = "Cannot find domain " + domainName
-      try {
-        LOG.error(error)
-      }
-      finally {
-        if (messageId != -1) {
-          sendErrorResponse(messageId, client, message)
-        }
-      }
+      processClientError(client, "Cannot find domain $domainName", messageId)
       return
     }
 
@@ -110,170 +114,140 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
       parameters = ArrayUtilRt.EMPTY_OBJECT_ARRAY
     }
 
-    try {
-      val isStatic = domain is Class<Any>
-      val methods: Array<Method>
-      if (isStatic) {
-        methods = (domain as Class<Any>).declaredMethods
-      }
-      else {
-        methods = domain.javaClass.methods
-      }
-      for (method in methods) {
-        if (method.name == command) {
-          method.isAccessible = true
-          val result = method.invoke(if (isStatic) null else domain, *parameters)
-          if (messageId != -1) {
-            if (result is ByteBuf) {
-              var success = false
-              try {
-                client.send(encodeMessage(client.byteBufAllocator, messageId, null, null, result, null))
-                success = true
-              }
-              finally {
-                if (!success) {
-                  result.release()
-                }
-              }
-            }
-            else {
-              client.send(encodeMessage(client.byteBufAllocator, messageId, null, null, null, arrayOf(result)))
+    val isStatic = domain is Class<*>
+    val methods: Array<Method>
+    if (isStatic) {
+      methods = (domain as Class<*>).declaredMethods
+    }
+    else {
+      methods = domain.javaClass.methods
+    }
+    for (method in methods) {
+      if (method.name == command) {
+        method.isAccessible = true
+        val result = method.invoke(if (isStatic) null else domain, *parameters)
+        if (messageId != -1) {
+          if (result is ByteBuf) {
+            result.releaseIfError {
+              client.send(encodeMessage(client.byteBufAllocator, messageId, rawData = result))
             }
           }
-          return
+          else {
+            client.send(encodeMessage(client.byteBufAllocator, messageId, params = arrayOf(result)))
+          }
         }
+        return
       }
-
-      throw NoSuchMethodException(command)
-    }
-    catch (e: Throwable) {
-      throw IOException(e)
     }
 
+    processClientError(client, "Cannot find method $domain.$command", messageId)
   }
 
-  fun sendResponse(messageId: Int, client: Client, rawMessage: ByteBuf?) {
-    client.send(encodeMessage(client.byteBufAllocator, messageId, null, null, rawMessage, ArrayUtil.EMPTY_OBJECT_ARRAY))
+  private fun processClientError(client: Client, error: String, messageId: Int) {
+    try {
+      LOG.error(error)
+    }
+    finally {
+      if (messageId != -1) {
+        sendErrorResponse(client, messageId, error)
+      }
+    }
   }
 
-  fun sendErrorResponse(messageId: Int, client: Client, rawMessage: CharSequence?) {
-    client.send(encodeMessage(client.byteBufAllocator, messageId, "e", null, null, arrayOf<Any>(rawMessage)))
+  fun sendResponse(client: Client, messageId: Int, rawData: ByteBuf? = null) {
+    client.send(encodeMessage(client.byteBufAllocator, messageId, rawData = rawData))
   }
 
-  fun <T> sendToClients(domain: String, command: String, results: List<AsyncPromise<Pair<Client, T>>>?, vararg params: Any) {
+  fun sendErrorResponse(client: Client, messageId: Int, message: CharSequence?) {
+    client.send(encodeMessage(client.byteBufAllocator, messageId, "e", params = arrayOf(message)))
+  }
+
+  fun sendWithRawPart(client: Client, domain: String, command: String, rawData: ByteBuf, params: Array<*>): Boolean {
+    return client.send(encodeMessage(client.byteBufAllocator, -1, domain, command, rawData = rawData, params = params)).cause() == null
+  }
+
+  fun send(client: Client, domain: String, command: String, vararg params: Any?) {
+    client.send(encodeMessage(client.byteBufAllocator, -1, domain, command, params = params))
+  }
+
+  fun <T> call(client: Client, domain: String, command: String, vararg params: Any?): Promise<T> {
+    val messageId = messageIdCounter.andIncrement
+    val message = encodeMessage(client.byteBufAllocator, messageId, domain, command, params = params)
+    return client.send(messageId, message)!!
+  }
+
+  fun <T> sendToClients(domain: String, command: String, results: MutableList<Promise<Pair<Client, T>>>?, vararg params: Any?) {
     if (clientManager.hasClients()) {
       sendToClients(if (results == null) -1 else messageIdCounter.andIncrement, domain, command, results, params)
     }
   }
 
-  private fun <T> sendToClients(messageId: Int, domain: String?, command: String?, results: List<AsyncPromise<Pair<Client, T>>>?, params: Array<Any>) {
-    clientManager.send(messageId, encodeMessage(ByteBufAllocator.DEFAULT, messageId, domain, command, null, params), results)
-  }
-
-  fun sendWithRawPart(client: Client, domain: String, command: String, rawMessage: ByteBuf?, vararg params: Any): Boolean {
-    client.send(encodeMessage(client.byteBufAllocator, -1, domain, command, rawMessage, params))
-    return true
-  }
-
-  fun send(client: Client, domain: String, command: String, vararg params: Any) {
-    sendWithRawPart(client, domain, command, null, *params)
-  }
-
-  fun <T> call(client: Client, domain: String, command: String, vararg params: Any): Promise<T> {
-    val messageId = messageIdCounter.andIncrement
-    val message = encodeMessage(client.byteBufAllocator, messageId, domain, command, null, params)
-    val result = client.send<T>(messageId, message)
-    LOG.assertTrue(result != null)
-    return result
+  private fun <T> sendToClients(messageId: Int, domain: String?, command: String?, results: MutableList<Promise<Pair<Client, T>>>?, params: Array<*>) {
+    clientManager.send(messageId, encodeMessage(ByteBufAllocator.DEFAULT, messageId, domain, command, params = params), results)
   }
 
   private fun encodeMessage(byteBufAllocator: ByteBufAllocator,
-                            messageId: Int,
-                            domain: String?,
-                            command: String?,
-                            rawData: ByteBuf?,
-                            params: Array<Any>?): ByteBuf {
+                            messageId: Int = -1,
+                            domain: String? = null,
+                            command: String? = null,
+                            rawData: ByteBuf? = null,
+                            params: Array<*> = ArrayUtil.EMPTY_OBJECT_ARRAY): ByteBuf {
     var buffer = byteBufAllocator.ioBuffer()
-    var success = false
-    try {
-      val notNullParams = params ?: ArrayUtil.EMPTY_OBJECT_ARRAY
-      buffer = doEncodeMessage(byteBufAllocator, buffer, messageId, domain, command, notNullParams, rawData)
+    buffer.releaseIfError {
+      buffer = doEncodeMessage(byteBufAllocator, messageId, domain, command, params, rawData)
       if (LOG.isDebugEnabled) {
-        LOG.debug("OUT " + domain + '.' + command + if (notNullParams.size == 0) "" else " " + Arrays.toString(params) + if (rawData == null) "" else " " + rawData.toString(CharsetToolkit.UTF8_CHARSET))
+        LOG.debug("OUT ${buffer.toString(Charsets.UTF_8)}")
       }
-      success = true
       return buffer
-    }
-    catch (e: IOException) {
-      throw RuntimeException(e)
-    }
-    finally {
-      if (!success) {
-        buffer.release()
-      }
     }
   }
 
-  @Throws(IOException::class)
   private fun doEncodeMessage(byteBufAllocator: ByteBufAllocator,
-                              buffer: ByteBuf,
                               id: Int,
                               domain: String?,
                               command: String?,
-                              params: Array<Any>,
+                              params: Array<*>,
                               rawData: ByteBuf?): ByteBuf {
-    var buffer = buffer
+    var buffer = byteBufAllocator.ioBuffer()
     buffer.writeByte('[')
-    var effectiveBuffer = buffer
-    var hasPrev = false
     var sb: StringBuilder? = null
     if (id != -1) {
       sb = StringBuilder()
-      ByteBufUtil.writeAscii(buffer, sb.append(id))
+      buffer.writeAscii(sb.append(id))
       sb.setLength(0)
-      hasPrev = true
     }
 
     if (domain != null) {
-      if (hasPrev) {
+      if (id != -1) {
         buffer.writeByte(',')
       }
-      buffer.writeByte('"')
-      ByteBufUtil.writeAscii(buffer, domain)
-      buffer.writeByte('"').writeByte(',').writeByte('"')
-      if (command == null) {
-        if (rawData != null) {
-          effectiveBuffer = byteBufAllocator.compositeBuffer().addComponent(buffer).addComponent(rawData)
-          buffer = byteBufAllocator.ioBuffer()
+      buffer.writeByte('"').writeAscii(domain).writeByte('"')
+      if (command != null) {
+        buffer.writeByte(',').writeByte('"').writeAscii(command).writeByte('"')
+      }
+    }
+
+    var effectiveBuffer = buffer
+    if (params.isNotEmpty() || rawData != null) {
+      buffer.writeByte(',').writeByte('[')
+      encodeParameters(buffer, params, sb)
+      if (rawData != null) {
+        if (params.isNotEmpty()) {
+          buffer.writeByte(',')
         }
-        buffer.writeByte('"')
-        return addBuffer(effectiveBuffer, buffer)
+        effectiveBuffer = byteBufAllocator.compositeBuffer().addComponent(buffer).addComponent(rawData)
+        buffer = byteBufAllocator.ioBuffer()
       }
-      else {
-        ByteBufUtil.writeAscii(buffer, command)
-        buffer.writeByte('"')
-      }
+      buffer.writeByte(']')
     }
 
-    encodeParameters(buffer, params, sb)
-    if (rawData != null) {
-      if (params.size > 0) {
-        buffer.writeByte(',')
-      }
-      effectiveBuffer = byteBufAllocator.compositeBuffer().addComponent(buffer).addComponent(rawData)
-      buffer = byteBufAllocator.ioBuffer()
-    }
     buffer.writeByte(']')
-
-    buffer.writeByte(']')
-    return addBuffer(effectiveBuffer, buffer)
+    return effectiveBuffer.addBuffer(buffer)
   }
 
-  @Throws(IOException::class)
-  private fun encodeParameters(buffer: ByteBuf, params: Array<Any>, sb: StringBuilder?) {
-    var sb = sb
+  private fun encodeParameters(buffer: ByteBuf, params: Array<*>, _sb: StringBuilder?) {
+    var sb = _sb
     var writer: JsonWriter? = null
-    buffer.writeByte(',').writeByte('[')
     var hasPrev = false
     for (param in params) {
       if (hasPrev) {
@@ -285,13 +259,13 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
 
       // gson - SOE if param has type class com.intellij.openapi.editor.impl.DocumentImpl$MyCharArray, so, use hack
       if (param is CharSequence) {
-        JsonUtil.escape(param as CharSequence?, buffer)
+        JsonUtil.escape(param, buffer)
       }
       else if (param == null) {
-        ByteBufUtil.writeAscii(buffer, "null")
+        buffer.writeAscii("null")
       }
       else if (param is Boolean) {
-        ByteBufUtil.writeAscii(buffer, param.toString())
+        buffer.writeAscii(param.toString())
       }
       else if (param is Number) {
         if (sb == null) {
@@ -312,14 +286,14 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
         else {
           sb.append(param.toString())
         }
-        ByteBufUtil.writeAscii(buffer, sb)
+        buffer.writeAscii(sb)
         sb.setLength(0)
       }
-      else if (param is Consumer<Any>) {
+      else if (param is Consumer<*>) {
         if (sb == null) {
           sb = StringBuilder()
         }
-        //noinspection unchecked
+        @Suppress("UNCHECKED_CAST")
         (param as Consumer<StringBuilder>).consume(sb)
         ByteBufUtilEx.writeUtf8(buffer, sb)
         sb.setLength(0)
@@ -328,66 +302,46 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
         if (writer == null) {
           writer = JsonWriter(ByteBufUtf8Writer(buffer))
         }
-        //noinspection unchecked
         (gson.getAdapter(param.javaClass) as TypeAdapter<Any>).write(writer, param)
       }
     }
   }
+}
 
-  private class IntArrayListTypeAdapter<T> : TypeAdapter<T>() {
-    @Throws(IOException::class)
-    override fun write(out: JsonWriter, value: T) {
-      val error = Ref<IOException>()
-      out.beginArray()
-      (value as TIntArrayList).forEach { value ->
-        try {
-          out.value(value.toLong())
-        }
-        catch (e: IOException) {
-          error.set(e)
-        }
+private fun ByteBuf.writeByte(c: Char) = writeByte(c.toInt())
 
-        error.isNull
+private fun ByteBuf.writeAscii(s: CharSequence): ByteBuf {
+  ByteBufUtil.writeAscii(this, s)
+  return this
+}
+
+private class IntArrayListTypeAdapter<T> : TypeAdapter<T>() {
+  override fun write(out: JsonWriter, value: T) {
+    var error: IOException? = null
+    out.beginArray()
+    (value as TIntArrayList).forEach { value ->
+      try {
+        out.value(value.toLong())
+      }
+      catch (e: IOException) {
+        error = e
       }
 
-      if (!error.isNull) {
-        throw error.get()
-      }
-
-      out.endArray()
+      error == null
     }
 
-    @Throws(IOException::class)
-    override fun read(`in`: com.google.gson.stream.JsonReader): T {
-      throw UnsupportedOperationException()
-    }
+    error?.let { throw it }
+    out.endArray()
   }
 
-  companion object {
-    protected val LOG = Logger.getInstance(JsonRpcServer::class.java)
+  override fun read(`in`: com.google.gson.stream.JsonReader) = throw UnsupportedOperationException()
+}
 
-    private val INT_LIST_TYPE_ADAPTER_FACTORY = object : TypeAdapterFactory {
-      private var typeAdapter: IntArrayListTypeAdapter<TIntArrayList>? = null
-
-      override fun <T> create(gson: Gson, type: TypeToken<T>): TypeAdapter<T>? {
-        if (type.type !== TIntArrayList::class.java) {
-          return null
-        }
-        if (typeAdapter == null) {
-          typeAdapter = IntArrayListTypeAdapter<TIntArrayList>()
-        }
-        //noinspection unchecked
-        return typeAdapter as TypeAdapter<T>?
-      }
-    }
-
-    private // addComponent always add sliced component, so, we must add last buffer only after all writes
-    fun addBuffer(buffer: ByteBuf, lastComponent: ByteBuf): ByteBuf {
-      if (buffer !== lastComponent) {
-        (buffer as CompositeByteBuf).addComponent(lastComponent)
-        buffer.writerIndex(buffer.capacity())
-      }
-      return buffer
-    }
+// addComponent always add sliced component, so, we must add last buffer only after all writes
+private fun ByteBuf.addBuffer(buffer: ByteBuf): ByteBuf {
+  if (this !== buffer) {
+    (this as CompositeByteBuf).addComponent(buffer)
+    this.writerIndex(this.capacity())
   }
+  return buffer
 }

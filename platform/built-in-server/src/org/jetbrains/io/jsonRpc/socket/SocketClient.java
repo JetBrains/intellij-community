@@ -13,6 +13,7 @@ public class SocketClient extends Client {
     super(channel);
   }
 
+  @NotNull
   @Override
   public ChannelFuture send(@NotNull ByteBuf message) {
     if (channel.isOpen()) {

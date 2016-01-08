@@ -27,7 +27,7 @@ class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionH
     @NotNull
     @Override
     protected ClientManager compute() {
-      ClientManager result = new ClientManager(RpcBinaryRequestHandler.this, RpcBinaryRequestHandler.this);
+      ClientManager result = new ClientManager(RpcBinaryRequestHandler.this, RpcBinaryRequestHandler.this, null);
       Disposable serverDisposable = BuiltInServerManager.getInstance().getServerDisposable();
       assert serverDisposable != null;
       Disposer.register(serverDisposable, result);
@@ -49,7 +49,7 @@ class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionH
   @Override
   public ChannelHandler getInboundHandler(@NotNull ChannelHandlerContext context) {
     SocketClient client = new SocketClient(context.channel());
-    context.attr(ClientManager.CLIENT).set(client);
+    context.attr(ClientManagerKt.getCLIENT()).set(client);
     clientManager.getValue().addClient(client);
     connected(client, null);
     return new MyDecoder(client);
@@ -105,7 +105,7 @@ class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionH
               rpcServer.messageReceived(client, content);
             }
             catch (Throwable e) {
-              clientManager.getValue().exceptionHandler.exceptionCaught(e);
+              clientManager.getValue().getExceptionHandler().exceptionCaught(e);
             }
             finally {
               contentLength = 0;
@@ -118,7 +118,7 @@ class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionH
 
     @Override
     public void channelInactive(ChannelHandlerContext context) throws Exception {
-      Client client = context.attr(ClientManager.CLIENT).get();
+      Client client = context.attr(ClientManagerKt.getCLIENT()).get();
       // if null, so, has already been explicitly removed
       if (client != null) {
         clientManager.getValue().disconnectClient(context, client, false);
