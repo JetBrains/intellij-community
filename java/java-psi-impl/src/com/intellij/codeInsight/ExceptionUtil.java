@@ -16,7 +16,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
@@ -457,7 +456,7 @@ public class ExceptionUtil {
       return Collections.emptyList();
     }
 
-    final PsiSubstitutor substitutor = getSubstitutor(result, methodCall);
+    final PsiSubstitutor substitutor = result.getSubstitutor();
     if (!isArrayClone(method, methodCall) && methodCall instanceof PsiMethodCallExpression) {
       final PsiFile containingFile = (containingMethod == null ? methodCall : containingMethod).getContainingFile();
       final MethodResolverProcessor processor = new MethodResolverProcessor((PsiMethodCallExpression)methodCall, containingFile);
@@ -471,7 +470,7 @@ public class ExceptionUtil {
             if (element instanceof PsiMethod &&
                 MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element) &&
                 !MethodSignatureUtil.isSuperMethod((PsiMethod)element, method)) {
-              return Pair.create((PsiMethod)element, getSubstitutor(info, methodCall));
+              return Pair.create((PsiMethod)element, info.getSubstitutor());
             }
             return null;
           }
@@ -495,25 +494,6 @@ public class ExceptionUtil {
     }
 
     return getUnhandledExceptions(method, methodCall, topElement, substitutor);
-  }
-
-  private static PsiSubstitutor getSubstitutor(final JavaResolveResult result, PsiCallExpression methodCall) {
-    final PsiLambdaExpression expression = PsiTreeUtil.getParentOfType(methodCall, PsiLambdaExpression.class);
-    final PsiSubstitutor substitutor;
-    if (expression != null) {
-      final PsiElement parent = methodCall.getParent();
-      final boolean callInReturnStatement = parent == expression || 
-                                            parent instanceof PsiReturnStatement && PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, true, PsiMethod.class) == expression;
-      substitutor = callInReturnStatement ? ourThrowsGuard.doPreventingRecursion(expression, false, new Computable<PsiSubstitutor>() {
-        @Override
-        public PsiSubstitutor compute() {
-          return result.getSubstitutor();
-        }
-      }) : result.getSubstitutor();
-    } else {
-      substitutor = result.getSubstitutor();
-    }
-    return substitutor == null ? ((MethodCandidateInfo)result).getSiteSubstitutor() : substitutor;
   }
 
   public static void retainExceptions(List<PsiClassType> ex, List<PsiClassType> thrownEx) {
