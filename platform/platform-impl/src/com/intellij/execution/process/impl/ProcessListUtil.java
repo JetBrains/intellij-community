@@ -60,7 +60,7 @@ class ProcessListUtil {
 
       LOG.error("Cannot get process list via wmic and tasklist");
     }
-    else if (SystemInfo.isLinux || SystemInfo.isMac) {
+    else if (SystemInfo.isUnix) {
       result = getProcessList_Unix(SystemInfo.isMac);
       if (result != null) return result;
 
