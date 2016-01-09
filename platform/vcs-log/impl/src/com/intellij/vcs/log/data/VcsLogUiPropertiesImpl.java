@@ -33,7 +33,7 @@ import java.util.*;
  * and have insignificant effect to the logic of the log, they are just gracefully remember what user prefers to see in the UI.
  */
 @State(name = "Vcs.Log.UiProperties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUiPropertiesImpl.State> {
+public class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUiPropertiesImpl.State>, VcsLogUiProperties {
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
   private final VcsLogSettings mySettings;
   private State myState = new State();
@@ -72,18 +72,22 @@ public class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUi
    * Returns true if the details pane (which shows commit meta-data, such as the full commit message, commit date, all references, etc.)
    * should be visible when the log is loaded; returns false if it should be hidden by default.
    */
+  @Override
   public boolean isShowDetails() {
     return myState.SHOW_DETAILS;
   }
 
+  @Override
   public void setShowDetails(boolean showDetails) {
     myState.SHOW_DETAILS = showDetails;
   }
 
+  @Override
   public void addRecentlyFilteredUserGroup(@NotNull List<String> usersInGroup) {
     addRecentGroup(usersInGroup, myState.RECENTLY_FILTERED_USER_GROUPS);
   }
 
+  @Override
   public void addRecentlyFilteredBranchGroup(@NotNull List<String> valuesInGroup) {
     addRecentGroup(valuesInGroup, myState.RECENTLY_FILTERED_BRANCH_GROUPS);
   }
@@ -100,11 +104,13 @@ public class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUi
     }
   }
 
+  @Override
   @NotNull
   public List<List<String>> getRecentlyFilteredUserGroups() {
     return getRecentGroup(myState.RECENTLY_FILTERED_USER_GROUPS);
   }
 
+  @Override
   @NotNull
   public List<List<String>> getRecentlyFilteredBranchGroups() {
     return getRecentGroup(myState.RECENTLY_FILTERED_BRANCH_GROUPS);
@@ -120,43 +126,53 @@ public class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUi
     });
   }
 
+  @Override
   public boolean areLongEdgesVisible() {
     return myState.LONG_EDGES_VISIBLE;
   }
 
+  @Override
   public void setLongEdgesVisibility(boolean visible) {
     myState.LONG_EDGES_VISIBLE = visible;
   }
 
+  @Override
   public int getBekSortType() {
     return myState.BEK_SORT_TYPE;
   }
 
+  @Override
   public void setBek(int bekSortType) {
     myState.BEK_SORT_TYPE = bekSortType;
   }
 
+  @Override
   public boolean isShowRootNames() {
     return myState.SHOW_ROOT_NAMES;
   }
 
+  @Override
   public void setShowRootNames(boolean isShowRootNames) {
     myState.SHOW_ROOT_NAMES = isShowRootNames;
   }
 
+  @Override
   public boolean isHighlighterEnabled(@NotNull String id) {
     Boolean result = myState.HIGHLIGHTERS.get(id);
     return result != null ? result : true; // new highlighters get enabled by default
   }
 
+  @Override
   public void enableHighlighter(@NotNull String id, boolean value) {
     myState.HIGHLIGHTERS.put(id, value);
   }
 
+  @Override
   public boolean isShowBranchesPanel() {
     return myState.SHOW_BRANCHES_PANEL;
   }
 
+  @Override
   public void setShowBranchesPanel(boolean show) {
     myState.SHOW_BRANCHES_PANEL = show;
   }
