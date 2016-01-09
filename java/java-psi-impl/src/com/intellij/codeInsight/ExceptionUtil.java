@@ -17,8 +17,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionGuard;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -48,7 +46,6 @@ import java.util.*;
  */
 public class ExceptionUtil {
   @NonNls private static final String CLONE_METHOD_NAME = "clone";
-  public static final RecursionGuard ourThrowsGuard = RecursionManager.createGuard("checkedExceptionsGuard");
 
   private ExceptionUtil() {}
 
