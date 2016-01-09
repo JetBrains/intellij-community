@@ -33,7 +33,7 @@ import java.util.*;
  * and have insignificant effect to the logic of the log, they are just gracefully remember what user prefers to see in the UI.
  */
 @State(name = "Vcs.Log.UiProperties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProperties.State> {
+public class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUiPropertiesImpl.State> {
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
   private final VcsLogSettings mySettings;
   private State myState = new State();
@@ -49,7 +49,7 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
     public Map<String, Boolean> HIGHLIGHTERS = ContainerUtil.newTreeMap();
   }
 
-  public VcsLogUiProperties(@NotNull VcsLogSettings settings) {
+  public VcsLogUiPropertiesImpl(@NotNull VcsLogSettings settings) {
     mySettings = settings;
   }
 
