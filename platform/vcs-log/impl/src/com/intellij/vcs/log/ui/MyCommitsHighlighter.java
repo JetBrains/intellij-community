@@ -44,13 +44,6 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     myDataHolder = logDataHolder;
     myUiProperties = uiProperties;
     myFilterUi = filterUi;
-    // migration to map storage
-    if (!myUiProperties.isHighlightMyCommits()) {
-      // by default, my commits highlighter was enabled
-      // if it was disabled we need to migrate that
-      myUiProperties.enableHighlighter(Factory.ID, false);
-      myUiProperties.setHighlightMyCommits(true);
-    }
 
     // this is a tmp solution for performance problems of calculating areTheOnlyUsers every repaint (we simply do not want to do that)
     // todo remove this when history2 branch is merged into master (history2 will allow a proper way to fix the problem)
