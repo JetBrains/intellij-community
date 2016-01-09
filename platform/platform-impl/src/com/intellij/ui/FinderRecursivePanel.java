@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -354,15 +354,20 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
 
         //noinspection unchecked
         final T t = (T)value;
-        setIcon(getItemIcon(t));
         try {
+          setIcon(getItemIcon(t));
           append(getItemText(t));
         }
         catch (IndexNotReadyException e) {
           append("loading...");
         }
 
-        doCustomizeCellRenderer(this, list, t, index, isSelected, cellHasFocus);
+        try {
+          doCustomizeCellRenderer(this, list, t, index, isSelected, cellHasFocus);
+        }
+        catch (IndexNotReadyException ignored) {
+          // ignore
+        }
 
         Color bg = isSelected ? UIUtil.getTreeSelectionBackground(cellHasFocus) : UIUtil.getTreeTextBackground();
         if (!isSelected && myFileColorManager.isEnabled()) {

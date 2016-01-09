@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,7 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassOwner
-import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiMember
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiExtensibleClass
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
@@ -54,14 +51,13 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
   override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
     if (file.fileType is LanguageFileType && ProjectRootManager.getInstance(project).fileIndex.isInLibrarySource(file)) {
       val psiFile = PsiManager.getInstance(project).findFile(file)
-      if (psiFile is PsiClassOwner) {
-        val classes = psiFile.classes
-        if (classes.isNotEmpty()) {
-          val mismatch = classes.any { differs(it) }
-          val panel = ColoredNotificationPanel(if (mismatch) LightColors.RED else null)
-          panel.setText(ProjectBundle.message(if (mismatch) "library.source.mismatch" else "library.source.file"))
+      if (psiFile is PsiJavaFile) {
+        val offender = psiFile.classes.find { differs(it) }
+        if (offender != null) {
+          val panel = ColoredNotificationPanel(LightColors.RED)
+          panel.setText(ProjectBundle.message("library.source.mismatch", offender.name))
           panel.createActionLabel(ProjectBundle.message("library.source.open.class"), {
-            val classFile = classes[0].originalElement.containingFile?.virtualFile
+            val classFile = offender.originalElement.containingFile?.virtualFile
             if (classFile != null) {
               OpenFileDescriptor(project, classFile, -1).navigate(true)
             }
@@ -85,7 +81,9 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
       list1.size != list2.size || list1.map { it.name ?: "" }.sorted() != list2.map { it.name ?: "" }.sorted()
 
   private fun fields(clazz: PsiClass) = if (clazz is PsiExtensibleClass) clazz.ownFields else clazz.fields.asList()
-  private fun methods(clazz: PsiClass) = if (clazz is PsiExtensibleClass) clazz.ownMethods else clazz.methods.asList()
+  private fun methods(clazz: PsiClass): List<PsiMethod> =
+      (if (clazz is PsiExtensibleClass) clazz.ownMethods else clazz.methods.asList())
+          .filter { !(it.isConstructor && it.parameterList.parametersCount == 0) }
   private fun inners(clazz: PsiClass) = if (clazz is PsiExtensibleClass) clazz.ownInnerClasses else clazz.innerClasses.asList()
 }
 

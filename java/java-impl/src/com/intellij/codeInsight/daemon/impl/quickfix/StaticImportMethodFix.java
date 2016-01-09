@@ -149,7 +149,8 @@ public class StaticImportMethodFix implements IntentionAction, HintAction {
 
   @NotNull
   private List<PsiMethod> getMethodsToImport() {
-    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(myMethodCall.getProject());
+    final Project project = myMethodCall.getProject();
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     final PsiMethodCallExpression element = myMethodCall.getElement();
     PsiReferenceExpression reference = element.getMethodExpression();
     final PsiExpressionList argumentList = element.getArgumentList();
@@ -160,7 +161,7 @@ public class StaticImportMethodFix implements IntentionAction, HintAction {
     final Map<PsiClass, Boolean> possibleClasses = new HashMap<PsiClass, Boolean>();
     final PsiType expectedType = getExpectedType();
     final List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
-    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
 
     final MultiMap<PsiClass, PsiMethod> deprecated = new LinkedMultiMap<PsiClass, PsiMethod>();
     final MultiMap<PsiClass, PsiMethod> suggestions = new LinkedMultiMap<PsiClass, PsiMethod>();
@@ -173,6 +174,9 @@ public class StaticImportMethodFix implements IntentionAction, HintAction {
           possibleClasses.put(containingClass, false);
         }
         for (PsiMethod method : methods) {
+          if (!PsiUtil.isAccessible(project, method, element, containingClass)) {
+            continue;
+          }
           PsiSubstitutor substitutorForMethod = resolveHelper
             .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(),
                                 argumentList.getExpressions(),
@@ -200,8 +204,7 @@ public class StaticImportMethodFix implements IntentionAction, HintAction {
         final PsiClass containingClass = method.getContainingClass();
         if (file instanceof PsiJavaFile
             //do not show methods from default package
-            && !((PsiJavaFile)file).getPackageName().isEmpty()
-            && PsiUtil.isAccessible(file.getProject(), method, element, containingClass)) {
+            && !((PsiJavaFile)file).getPackageName().isEmpty()) {
           if (isEffectivelyDeprecated(method)) {
             deprecated.putValue(containingClass, method);
             return processCondition();

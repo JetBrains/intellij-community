@@ -633,6 +633,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         myHolder.add(GenericsHighlightUtil.checkUnrelatedDefaultMethods(aClass, aClass.getVisibleSignatures(), identifier));
       }
+
+      if (!myHolder.hasErrorResults()) {
+        myHolder.add(GenericsHighlightUtil.checkUnrelatedConcrete(aClass, identifier));
+      }
     }
     else if (parent instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)parent;

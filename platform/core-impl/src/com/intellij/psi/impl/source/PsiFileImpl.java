@@ -718,6 +718,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         };
         LOG.error("readOrBuilt roots = " + StringUtil.join(stubRoots, stubToString, ", ") + "; " +
                   StubTreeLoader.getFileViewProviderMismatchDiagnostics(viewProvider));
+        rebuildStub();
         return stubHolder;
       }
       // set all stub trees to avoid reading file when stub tree for another psi root is accessed

@@ -162,11 +162,14 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   }
 
   public void testInnerClassDetection() {
-    assertTrue(isInner("Nested$Inner1"));
-    assertTrue(isInner("Nested$Inner1$Inner2"));
-    assertTrue(isInner("NormalClass$1"));
-    assertTrue(isInner("LocalClass$1MyRunnable"));
-    assertFalse(isInner("KindaInner$Class"));
+    assertTrue(isInner("pkg/Nested$Inner1"));
+    assertTrue(isInner("pkg/Nested$Inner1$Inner2"));
+    assertTrue(isInner("pkg/NormalClass$1"));
+    assertTrue(isInner("pkg/LocalClass$1MyRunnable"));
+    assertTrue(isInner("weird/ToStringStyle$1"));
+
+    assertFalse(isInner("pkg/KindaInner$Class"));
+    assertFalse(isInner("weird/ToStringStyle"));
   }
 
   private static String getTestDataDir() {
@@ -198,7 +201,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   }
 
   private static boolean isInner(String name) {
-    VirtualFile file = StandardFileSystems.local().findFileByPath(getTestDataDir() + "pkg/" + name + ".class");
+    VirtualFile file = StandardFileSystems.local().findFileByPath(getTestDataDir() + name + ".class");
     assertNotNull(file);
     return ClassFileViewProvider.isInnerClass(file);
   }

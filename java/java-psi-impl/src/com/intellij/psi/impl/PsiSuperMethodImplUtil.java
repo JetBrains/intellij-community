@@ -374,10 +374,10 @@ public class PsiSuperMethodImplUtil {
   }
 
   @NotNull
-  private static PsiSubstitutor obtainFinalSubstitutor(@NotNull PsiClass superClass,
-                                                       @NotNull PsiSubstitutor superSubstitutor,
-                                                       @NotNull PsiSubstitutor derivedSubstitutor,
-                                                       boolean inRawContext) {
+  public static PsiSubstitutor obtainFinalSubstitutor(@NotNull PsiClass superClass,
+                                                      @NotNull PsiSubstitutor superSubstitutor,
+                                                      @NotNull PsiSubstitutor derivedSubstitutor,
+                                                      boolean inRawContext) {
     if (inRawContext) {
       Set<PsiTypeParameter> typeParams = superSubstitutor.getSubstitutionMap().keySet();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(superClass.getProject());
