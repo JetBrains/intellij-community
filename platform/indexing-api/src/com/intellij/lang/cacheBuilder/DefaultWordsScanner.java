@@ -67,25 +67,26 @@ public class DefaultWordsScanner extends VersionedWordsScanner {
   }
 
   public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
-    myLexer.start(fileText);
+    Lexer lexer = getLexer();
+    lexer.start(fileText);
     WordOccurrence occurrence = new WordOccurrence(fileText, 0, 0, null); // shared occurrence
 
     IElementType type;
-    while ((type = myLexer.getTokenType()) != null) {
+    while ((type = lexer.getTokenType()) != null) {
       if (myIdentifierTokenSet.contains(type)) {
         //occurrence.init(fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
         //if (!processor.process(occurrence)) return;
-        if (!stripWords(processor, fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE, occurrence, false)) return;      }
+        if (!stripWords(processor, fileText, lexer.getTokenStart(), lexer.getTokenEnd(), WordOccurrence.Kind.CODE, occurrence, false)) return;      }
       else if (myCommentTokenSet.contains(type)) {
-        if (!stripWords(processor, fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.COMMENTS,occurrence, false)) return;
+        if (!stripWords(processor, fileText,lexer.getTokenStart(),lexer.getTokenEnd(), WordOccurrence.Kind.COMMENTS,occurrence, false)) return;
       }
       else if (myLiteralTokenSet.contains(type)) {
-        if (!stripWords(processor, fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(),WordOccurrence.Kind.LITERALS,occurrence, myMayHaveFileRefsInLiterals)) return;
+        if (!stripWords(processor, fileText, lexer.getTokenStart(),lexer.getTokenEnd(),WordOccurrence.Kind.LITERALS,occurrence, myMayHaveFileRefsInLiterals)) return;
       }
       else if (!mySkipCodeContextTokenSet.contains(type)) {
-        if (!stripWords(processor, fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE, occurrence, false)) return;
+        if (!stripWords(processor, fileText, lexer.getTokenStart(), lexer.getTokenEnd(), WordOccurrence.Kind.CODE, occurrence, false)) return;
       }
-      myLexer.advance();
+      lexer.advance();
     }
   }
 
@@ -137,5 +138,9 @@ public class DefaultWordsScanner extends VersionedWordsScanner {
 
   public void setMayHaveFileRefsInLiterals(final boolean mayHaveFileRefsInLiterals) {
     myMayHaveFileRefsInLiterals = mayHaveFileRefsInLiterals;
+  }
+
+  public Lexer getLexer() {
+    return myLexer;
   }
 }
