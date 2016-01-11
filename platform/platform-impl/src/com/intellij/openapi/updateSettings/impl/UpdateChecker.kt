@@ -72,6 +72,7 @@ object UpdateChecker {
   private val LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker")
   val NO_PLATFORM_UPDATE = "ide.no.platform.update"
 
+  @JvmField
   val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.group"), NotificationDisplayType.STICKY_BALLOON, true)
 
   private val INSTALLATION_UID = "installation.uid"
