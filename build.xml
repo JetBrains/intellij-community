@@ -17,7 +17,7 @@
   </condition>
 
   <condition property="test.patterns" value="${testpatterns}"
-             else="org.jetbrains.android.*;com.android.tools.idea.*;com.android.tools.ndk.*;com.google.gct.*;com.intellij.android.*">
+             else="org.jetbrains.android.*;com.android.tools.idea.*;com.android.tools.ndk.*;com.google.gct.*;com.intellij.android.*;com.google.idea.blaze.*">
     <isset property="testpatterns" />
   </condition>
 
