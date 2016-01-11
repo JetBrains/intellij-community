@@ -15,8 +15,6 @@
  */
 package com.intellij.refactoring.typeMigration;
 
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Multimap;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.lang.java.JavaLanguage;
@@ -66,7 +64,7 @@ import java.util.HashSet;
 public class TypeMigrationLabeler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeMigration.TypeMigrationLabeler");
   private boolean myShowWarning = true;
-  private MigrateException myException;
+  private volatile MigrateException myException;
 
   public TypeMigrationRules getRules() {
     return myRules;
