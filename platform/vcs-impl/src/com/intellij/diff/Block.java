@@ -39,6 +39,14 @@ public class Block {
     myEnd = end;
   }
 
+  public Block createPreviousBlock(String prevContent) {
+    return createPreviousBlock(LineTokenizer.tokenize(prevContent.toCharArray(), false));
+  }
+
+  public Block createPreviousBlock(String[] prevContent) {
+    return new FindBlock(prevContent, this).getBlockInThePrevVersion();
+  }
+
   public String getBlockContent(){
     StringBuffer result = new StringBuffer();
 

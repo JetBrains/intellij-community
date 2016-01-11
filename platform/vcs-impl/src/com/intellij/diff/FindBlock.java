@@ -15,13 +15,12 @@
  */
 package com.intellij.diff;
 
-import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.diff.Diff;
 
 /**
  * author: lesya
  */
-public class FindBlock {
+class FindBlock {
   private final Block myCurrentVersion;
   private final String[] myLines;
 
@@ -34,10 +33,6 @@ public class FindBlock {
     myLines = prevVersion;
     startLine = currentVersion.getStart();
     endLine = currentVersion.getEnd();
-  }
-
-  public FindBlock(String prevVersion, Block currentVersion) {
-    this(LineTokenizer.tokenize(prevVersion.toCharArray(), false), currentVersion);
   }
 
   public Block getBlockInThePrevVersion() {

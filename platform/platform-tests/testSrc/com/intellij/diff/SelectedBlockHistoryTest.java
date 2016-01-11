@@ -204,10 +204,8 @@ public class SelectedBlockHistoryTest extends TestCase {
 
     String[] prevVersion = composeVersion(beforePrevBlock, prevBlock, afterPrevBlock);
     String[] currentVersion = composeVersion(beforeBlock, block, afterBlock);
-    FindBlock findBlock = new FindBlock(prevVersion,
-        new Block(currentVersion, beforeBlock.length, beforeBlock.length + block.length - 1));
 
-    Block actualBlock = findBlock.getBlockInThePrevVersion();
+    Block actualBlock = new Block(currentVersion, beforeBlock.length, beforeBlock.length + block.length - 1).createPreviousBlock(prevVersion);
     Block expectedBlock = new Block(prevVersion,beforePrevBlock.length, beforePrevBlock.length + prevBlock.length - 1);
 
     assertEquals(expectedBlock, actualBlock);

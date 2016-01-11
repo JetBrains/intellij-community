@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.vcs.history.impl;
 
-import com.intellij.diff.*;
+import com.intellij.diff.Block;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestPanel;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.MessageDiffRequest;
@@ -427,7 +430,7 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
     Block blockByIndex = getBlock(index);
     if (blockByIndex == null) return null;
 
-    myRevisionToContentMap.put(revision, new FindBlock(revisionContent, blockByIndex).getBlockInThePrevVersion());
+    myRevisionToContentMap.put(revision, blockByIndex.createPreviousBlock(revisionContent));
     return myRevisionToContentMap.get(revision);
   }
 
