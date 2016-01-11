@@ -80,7 +80,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   protected boolean validateBaseClassConstructor(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    if (psiClass instanceof PsiAnonymousClass) {
+    if (psiClass instanceof PsiAnonymousClass || psiClass.isEnum()) {
       return true;
     }
     PsiClass baseClass = psiClass.getSuperClass();

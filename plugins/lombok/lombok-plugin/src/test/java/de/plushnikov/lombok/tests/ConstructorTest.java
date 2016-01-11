@@ -21,4 +21,7 @@ public class ConstructorTest extends LombokParsingTestCase {
     doTest();
   }
 
+  public void testConstructorEnum() throws IOException {
+    doTest();
+  }
 }
