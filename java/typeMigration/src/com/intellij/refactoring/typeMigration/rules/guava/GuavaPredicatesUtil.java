@@ -45,7 +45,7 @@ public class GuavaPredicatesUtil {
   static TypeConversionDescriptorBase tryConvertIfPredicates(PsiMethod method, PsiExpression context) {
     final String name = method.getName();
     if (name.equals("alwaysTrue") || name.equals("alwaysFalse")) {
-      return new TypeConversionDescriptorWithLocalVariable(name, "$x$ -> " + name.contains("True") + "");
+      return createConstantPredicate(name, name.contains("True"));
     }
     else if (name.equals("isNull") || name.equals("notNull")) {
       final String operation = name.equals("isNull") ? "==" : "!=";
@@ -55,6 +55,9 @@ public class GuavaPredicatesUtil {
       return new TypeConversionDescriptorWithLocalVariable("equalTo", "$x$ -> java.util.Objects.equals($x$, $v$)");
     }
     if (!isConvertablePredicatesMethod(method, (PsiMethodCallExpression)context)) return null;
+    if (((PsiMethodCallExpression)context).getArgumentList().getExpressions().length == 0) {
+      return createConstantPredicate(name, name.equals("and"));
+    }
     if (PREDICATES_AND_OR.contains(name) && canMigrateAndOrOr((PsiMethodCallExpression)context)) {
       return new AndOrOrConversionDescriptor(GuavaConversionUtil.addTypeParameters(GuavaLambda.PREDICATE.getJavaAnalogueClassQName(), context.getType(), context));
     }
@@ -62,6 +65,11 @@ public class GuavaPredicatesUtil {
       return new NotConversionDescriptor(GuavaConversionUtil.addTypeParameters(GuavaLambda.PREDICATE.getJavaAnalogueClassQName(), context.getType(), context));
     }
     return null;
+  }
+
+  @NotNull
+  private static TypeConversionDescriptorWithLocalVariable createConstantPredicate(String methodName, boolean value) {
+    return new TypeConversionDescriptorWithLocalVariable(methodName, "$x$ -> " + value + "");
   }
 
   private static class TypeConversionDescriptorWithLocalVariable extends TypeConversionDescriptor {
