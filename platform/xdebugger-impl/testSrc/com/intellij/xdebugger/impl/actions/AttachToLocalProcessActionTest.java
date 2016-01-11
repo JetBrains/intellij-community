@@ -18,7 +18,6 @@ package com.intellij.xdebugger.impl.actions;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Function;
@@ -46,8 +45,6 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
   }
 
   public void testCollectingAttachItems_OneDebugger() throws Exception {
-    Project project = ProjectManager.getInstance().getDefaultProject();
-
     assertItems("--------\n" +
                 "1 exec1: dbg\n" +
                 "2 exec2: dbg\n",
@@ -59,26 +56,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
     assertItems("--------\n" +
                 "1 exec1: dbg1\n" +
                 "2 exec2: dbg2\n",
-                new TestDebuggerProvider("dbg1") {
-                  @NotNull
-                  @Override
-                  public List<XLocalAttachDebugger> getAvailableDebuggers(@NotNull Project project,
-                                                                          @NotNull ProcessInfo processInfo,
-                                                                          @NotNull UserDataHolder contextHolder) {
-                    if (processInfo.getPid() != 1) return Collections.emptyList();
-                    return super.getAvailableDebuggers(project, processInfo, contextHolder);
-                  }
-                },
-                new TestDebuggerProvider("dbg2") {
-                  @NotNull
-                  @Override
-                  public List<XLocalAttachDebugger> getAvailableDebuggers(@NotNull Project project,
-                                                                          @NotNull ProcessInfo processInfo,
-                                                                          @NotNull UserDataHolder contextHolder) {
-                    if (processInfo.getPid() != 2) return Collections.emptyList();
-                    return super.getAvailableDebuggers(project, processInfo, contextHolder);
-                  }
-                });
+                new TestDebuggerProvider(1, XLocalAttachGroup.DEFAULT, "dbg1"),
+                new TestDebuggerProvider(2, XLocalAttachGroup.DEFAULT, "dbg2"));
   }
 
   public void testCollectingAttachItems_SeveralDebuggers() throws Exception {
@@ -284,11 +263,11 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
     AttachItem item4 = new AttachItem(XLocalAttachGroup.DEFAULT, true, info4, debuggers);
     AttachItem item5 = new AttachItem(XLocalAttachGroup.DEFAULT, true, info5, debuggers);
 
-    HistoryItem historyItem1 = new HistoryItem(info1, XLocalAttachGroup.DEFAULT, debuggers.get(0));
-    HistoryItem historyItem2 = new HistoryItem(info2, XLocalAttachGroup.DEFAULT, debuggers.get(0));
-    HistoryItem historyItem3 = new HistoryItem(info3, XLocalAttachGroup.DEFAULT, debuggers.get(0));
-    HistoryItem historyItem4 = new HistoryItem(info4, XLocalAttachGroup.DEFAULT, debuggers.get(0));
-    HistoryItem historyItem5 = new HistoryItem(info5, XLocalAttachGroup.DEFAULT, debuggers.get(0));
+    HistoryItem historyItem1 = new HistoryItem(info1, XLocalAttachGroup.DEFAULT, "gdb");
+    HistoryItem historyItem2 = new HistoryItem(info2, XLocalAttachGroup.DEFAULT, "gdb");
+    HistoryItem historyItem3 = new HistoryItem(info3, XLocalAttachGroup.DEFAULT, "gdb");
+    HistoryItem historyItem4 = new HistoryItem(info4, XLocalAttachGroup.DEFAULT, "gdb");
+    HistoryItem historyItem5 = new HistoryItem(info5, XLocalAttachGroup.DEFAULT, "gdb");
     
     // empty
     assertEmpty(getHistory(getProject()));
@@ -318,49 +297,308 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
     TestAttachGroup group1 = new TestAttachGroup("group1", 1);
     TestAttachGroup group2 = new TestAttachGroup("group2", 2);
 
-    List<XLocalAttachDebugger> debuggers1 = createDebuggers("gdb1");
-    List<XLocalAttachDebugger> debuggers2 = createDebuggers("gdb2");
-
     ProcessInfo info1 = new ProcessInfo(1, "same command line", "exec1", "args1", null, null);
     ProcessInfo info2 = new ProcessInfo(2, "same command line", "exec2", "args2", null, null);
     
-    AttachItem item1 = new AttachItem(group1, true, info1, debuggers1);
-    AttachItem item2 = new AttachItem(group2, true, info2, debuggers2);
+    AttachItem item1 = new AttachItem(group1, true, info1, createDebuggers("gdb1"));
+    AttachItem item2 = new AttachItem(group2, true, info2, createDebuggers("gdb2"));
 
-    HistoryItem historyItem1 = new HistoryItem(info1, group1, debuggers1.get(0));
-    HistoryItem historyItem2 = new HistoryItem(info2, group2, debuggers2.get(0));
+    HistoryItem historyItem1 = new HistoryItem(info1, group1, "gdb1");
+    HistoryItem historyItem2 = new HistoryItem(info2, group2, "gdb2");
 
     addToHistory(getProject(), item1);
     assertOrderedEquals(getHistory(getProject()), historyItem1);
     addToHistory(getProject(), item2);
     assertOrderedEquals(getHistory(getProject()), historyItem2);
   }
-                                                                                                                                     
-  private static void assertItems(String expected, @NotNull XLocalAttachDebuggerProvider... providers) {
-    Project project = ProjectManager.getInstance().getDefaultProject();
-    assertEquals(expected, printItems(project, collectAttachItems(project, getProcessList(), providers)));
+
+  public void testHistoryGroup() throws Exception {
+    TestAttachGroup group1 = new TestAttachGroup("group1", 1);
+    TestAttachGroup group2 = new TestAttachGroup("group2", 2);
+    List<XLocalAttachDebugger> debuggers1 = createDebuggers("gdb1", "lldb1");
+    List<XLocalAttachDebugger> debuggers2 = createDebuggers("gdb2", "lldb2");
+
+    List<AttachItem> originalItems = collectAttachItems(getProject(),
+                                                        new ProcessInfo[]{
+                                                          new ProcessInfo(1, "command line 1", "exec1", "args1", null, null),
+                                                          new ProcessInfo(2, "command line 2", "exec2", "args2", null, null)},
+                                                        new TestDebuggerProvider(1, group1, debuggers1),
+                                                        new TestDebuggerProvider(2, group2, debuggers2));
+    
+    // one item in history
+    addToHistory(getProject(), originalItems.get(0));
+    assertItems("----Recent----\n" +
+                "10 exec10: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group1----\n" +
+                "10 exec10: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group2----\n" +
+                "20 exec20: gdb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n",
+                new ProcessInfo[]{
+                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                },
+                new TestDebuggerProvider(10, group1, debuggers1),
+                new TestDebuggerProvider(20, group2, debuggers2));
+
+    // several items in history
+    addToHistory(getProject(), originalItems.get(1));
+    assertItems("----Recent----\n" +
+                "20 exec20: gdb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n" +
+                "10 exec10: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group1----\n" +
+                "10 exec10: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group2----\n" +
+                "20 exec20: gdb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n",
+                new ProcessInfo[]{
+                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                },
+                new TestDebuggerProvider(10, group1, debuggers1),
+                new TestDebuggerProvider(20, group2, debuggers2));
+    
+    // put most recent item on top
+    addToHistory(getProject(), originalItems.get(0));
+    assertItems("----Recent----\n" +
+                "10 exec10: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "20 exec20: gdb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n" +
+                "----group1----\n" +
+                "10 exec10: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group2----\n" +
+                "20 exec20: gdb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n",
+                new ProcessInfo[]{
+                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                },
+                new TestDebuggerProvider(10, group1, debuggers1),
+                new TestDebuggerProvider(20, group2, debuggers2));
+    
+    // put debugger used in history item on top
+    addToHistory(getProject(), originalItems.get(0).getSubItems().get(1));
+    addToHistory(getProject(), originalItems.get(1).getSubItems().get(1));
+    assertItems("----Recent----\n" +
+                "20 exec20: lldb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n" +
+                "10 exec10: lldb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group1----\n" +
+                "10 exec10: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group2----\n" +
+                "20 exec20: gdb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n",
+                new ProcessInfo[]{
+                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                },
+                new TestDebuggerProvider(10, group1, debuggers1),
+                new TestDebuggerProvider(20, group2, debuggers2));
+
+    // filter unavailable history items
+    assertItems("----Recent----\n" +
+                "20 exec20: lldb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n" +
+                "----group1----\n" +
+                "10 exec10: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group2----\n" +
+                "20 exec20: gdb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n",
+                new ProcessInfo[]{
+                  new ProcessInfo(10, "command line 10", "exec10", "args10", null, null),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                },
+                new TestDebuggerProvider(10, group1, debuggers1),
+                new TestDebuggerProvider(20, group2, debuggers2));
+    assertItems("----group1----\n" +
+                "10 exec10: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group2----\n" +
+                "20 exec20: gdb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n",
+                new ProcessInfo[]{
+                  new ProcessInfo(10, "command line 10", "exec10", "args10", null, null),
+                  new ProcessInfo(20, "command line 20", "exec20", "args20", null, null)
+                },
+                new TestDebuggerProvider(10, group1, debuggers1),
+                new TestDebuggerProvider(20, group2, debuggers2));
+    // history items available again:
+    assertItems("----Recent----\n" +
+                "20 exec20: lldb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n" +
+                "10 exec10: lldb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group1----\n" +
+                "10 exec10: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group2----\n" +
+                "20 exec20: gdb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n",
+                new ProcessInfo[]{
+                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                },
+                new TestDebuggerProvider(10, group1, debuggers1),
+                new TestDebuggerProvider(20, group2, debuggers2));
+    
+    // filter items from history by suitable group
+    assertItems("----Recent----\n" +
+                "10 exec10: lldb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group1----\n" +
+                "10 exec10: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "20 exec20: gdb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n",
+                new ProcessInfo[]{
+                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                },
+                new TestDebuggerProvider(10, group1, debuggers1),
+                new TestDebuggerProvider(20, group1, debuggers2));
+    assertItems("----Recent----\n" +
+                "20 exec20: lldb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n" +
+                "----group2----\n" +
+                "10 exec10: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "20 exec20: gdb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n",
+                new ProcessInfo[]{
+                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                },
+                new TestDebuggerProvider(10, group2, debuggers1),
+                new TestDebuggerProvider(20, group2, debuggers2));
+    // filter by group equality, not by name 
+    assertItems("----group1----\n" +
+                "10 exec10: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group2----\n" +
+                "20 exec20: gdb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n",
+                new ProcessInfo[]{
+                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                },
+                new TestDebuggerProvider(10, new TestAttachGroup(group1.getGroupName(), group1.getOrder()), debuggers1),
+                new TestDebuggerProvider(20, new TestAttachGroup(group2.getGroupName(), group2.getOrder()), debuggers2));
+
+    // filter items from history by available debugger
+    assertItems("----Recent----\n" +
+                "10 exec10: lldb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group1----\n" +
+                "10 exec10: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group2----\n" +
+                "20 exec20: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n",
+                new ProcessInfo[]{
+                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                },
+                new TestDebuggerProvider(10, group1, debuggers1),
+                new TestDebuggerProvider(20, group2, debuggers1));
+    
+    // filter debuggers by name, not by equality 
+    assertItems("----Recent----\n" +
+                "20 exec20: lldb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n" +
+                "10 exec10: lldb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group1----\n" +
+                "10 exec10: gdb1\n" +
+                "    gdb1\n" +
+                "    lldb1\n" +
+                "----group2----\n" +
+                "20 exec20: gdb2\n" +
+                "    gdb2\n" +
+                "    lldb2\n",
+                new ProcessInfo[]{
+                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                },
+                new TestDebuggerProvider(10, group1, createDebuggers("gdb1", "lldb1")),
+                new TestDebuggerProvider(20, group2, createDebuggers("gdb2", "lldb2")));
   }
 
-  private static String printItems(Project project, List<AttachItem> items) {
+  private void assertItems(String expected, @NotNull XLocalAttachDebuggerProvider... providers) {
+    ProcessInfo[] infos = {
+      new ProcessInfo(1, "command line 1", "exec1", "args1", null, null),
+      new ProcessInfo(2, "command line 2", "exec2", "args2", null, null),
+    };
+    assertItems(expected, infos, providers);
+  }
+
+  private void assertItems(String expected, ProcessInfo[] infos, @NotNull XLocalAttachDebuggerProvider... providers) {
+    assertEquals(expected, printItems(collectAttachItems(getProject(), infos, providers)));
+  }
+
+  private void assertItems(String expected, List<AttachItem> items) {
+    assertEquals(expected, printItems(items));
+  }
+
+  private String printItems(List<AttachItem> items) {
     StringBuilder builder = new StringBuilder();
 
     for (AttachItem each : items) {
       String title = each.getSeparatorTitle();
       if (title != null) builder.append("----").append(title).append("----\n");
-      builder.append(each.getText(project)).append(": ").append(each.getSelectedDebugger().getDebuggerDisplayName()).append("\n");
+      builder.append(each.getText(getProject())).append(": ").append(each.getSelectedDebugger().getDebuggerDisplayName()).append("\n");
       for (AttachItem eachSubItem : each.getSubItems()) {
         builder.append("    ").append(eachSubItem.getSelectedDebugger().getDebuggerDisplayName()).append("\n");
       }
     }
 
     return builder.toString();
-  }
-
-  private static ProcessInfo[] getProcessList() {
-    return new ProcessInfo[]{
-      new ProcessInfo(1, "command line 1", "exec1", "args1", null, null),
-      new ProcessInfo(2, "command line 2", "exec2", "args2", null, null),
-    };
   }
 
   @NotNull
@@ -407,12 +645,24 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
   }
 
   private static class TestDebuggerProvider implements XLocalAttachDebuggerProvider {
-    XLocalAttachGroup myGroup;
-    String[] myNames;
+    @Nullable private final Integer myFilterPID;
+    @NotNull private final XLocalAttachGroup myGroup;
+    @NotNull private final List<XLocalAttachDebugger> myDebuggers;
 
-    public TestDebuggerProvider(XLocalAttachGroup group, String... names) {
+    public TestDebuggerProvider(@Nullable Integer filterPID,
+                                @NotNull XLocalAttachGroup group,
+                                @NotNull List<XLocalAttachDebugger> debuggers) {
+      myFilterPID = filterPID;
       myGroup = group;
-      myNames = names;
+      myDebuggers = debuggers;
+    }
+
+    public TestDebuggerProvider(@Nullable Integer filterPID, @NotNull XLocalAttachGroup group, String... names) {
+      this(filterPID, group, createDebuggers(names));
+    }
+
+    public TestDebuggerProvider(@NotNull XLocalAttachGroup group, String... names) {
+      this(null, group, names);
     }
 
     public TestDebuggerProvider(String... names) {
@@ -430,7 +680,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
     public List<XLocalAttachDebugger> getAvailableDebuggers(@NotNull Project project,
                                                             @NotNull ProcessInfo processInfo,
                                                             @NotNull UserDataHolder contextHolder) {
-      return createDebuggers(myNames);
+      if (myFilterPID != null && processInfo.getPid() != myFilterPID) return Collections.emptyList();
+      return myDebuggers;
     }
   }
 }

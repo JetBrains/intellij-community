@@ -139,7 +139,7 @@ public class AttachToLocalProcessAction extends AnAction {
       }
     });
 
-    List<AttachItem> result = new ArrayList<AttachItem>();
+    List<AttachItem> currentItems = new ArrayList<AttachItem>();
     for (final XLocalAttachGroup eachGroup : sortedGroups) {
       List<Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>> sortedItems
         = new ArrayList<Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>>(groupWithItems.get(eachGroup));
@@ -152,12 +152,42 @@ public class AttachToLocalProcessAction extends AnAction {
 
       boolean first = true;
       for (Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>> eachItem : sortedItems) {
-        result.add(new AttachItem(eachGroup, first, eachItem.first, eachItem.second));
+        currentItems.add(new AttachItem(eachGroup, first, eachItem.first, eachItem.second));
         first = false;
       }
     }
 
-    return result;
+    List<AttachItem> currentHistoryItems = new ArrayList<AttachItem>();
+    List<HistoryItem> history = getHistory(project);
+    for (int i = history.size() - 1; i >= 0; i--) {
+      HistoryItem eachHistoryItem = history.get(i);
+      for (AttachItem eachCurrentItem : currentItems) {
+        boolean isSuitableItem = eachHistoryItem.getGroup().equals(eachCurrentItem.getGroup()) &&
+                    eachHistoryItem.getProcessInfo().getCommandLine().equals(eachCurrentItem.getProcessInfo().getCommandLine());
+        if (!isSuitableItem) continue;
+        
+        List<XLocalAttachDebugger> debuggers = eachCurrentItem.getDebuggers();
+        int selectedDebugger = -1;
+        for (int j = 0; j < debuggers.size(); j++) {
+          XLocalAttachDebugger eachDebugger = debuggers.get(j);
+          if (eachDebugger.getDebuggerDisplayName().equals(eachHistoryItem.getDebuggerName())) {
+            selectedDebugger = j;
+            break;
+          }
+        }
+        if (selectedDebugger == -1) continue;
+
+        currentHistoryItems.add(new AttachItem(eachCurrentItem.getGroup(),
+                                               currentHistoryItems.isEmpty(),
+                                               XDebuggerBundle.message("xdebugger.attach.toLocal.popup.recent"),
+                                               eachCurrentItem.getProcessInfo(),
+                                               debuggers,
+                                               selectedDebugger));
+      }
+    }
+
+    currentHistoryItems.addAll(currentItems);
+    return currentHistoryItems;
   }
 
   public static void addToHistory(@NotNull Project project, @NotNull AttachItem item) {
@@ -167,7 +197,8 @@ public class AttachToLocalProcessAction extends AnAction {
     }
     ProcessInfo processInfo = item.getProcessInfo();
     history.remove(processInfo.getCommandLine());
-    history.put(processInfo.getCommandLine(), new HistoryItem(processInfo, item.getGroup(), item.getSelectedDebugger()));
+    history.put(processInfo.getCommandLine(), new HistoryItem(processInfo, item.getGroup(), 
+                                                              item.getSelectedDebugger().getDebuggerDisplayName()));
     while (history.size() > 4) {
       history.remove(history.keySet().iterator().next());
     }
@@ -183,14 +214,14 @@ public class AttachToLocalProcessAction extends AnAction {
   public static class HistoryItem {
     @NotNull private final ProcessInfo myProcessInfo;
     @NotNull private final XLocalAttachGroup myGroup;
-    @NotNull private final XLocalAttachDebugger myDebugger;
+    @NotNull private final String myDebuggerName;
 
     public HistoryItem(@NotNull ProcessInfo processInfo,
                        @NotNull XLocalAttachGroup group,
-                       @NotNull XLocalAttachDebugger debugger) {
+                       @NotNull String debuggerName) {
       myProcessInfo = processInfo;
       myGroup = group;
-      myDebugger = debugger;
+      myDebuggerName = debuggerName;
     }
 
     @NotNull
@@ -204,8 +235,8 @@ public class AttachToLocalProcessAction extends AnAction {
     }
 
     @NotNull
-    public XLocalAttachDebugger getDebugger() {
-      return myDebugger;
+    public String getDebuggerName() {
+      return myDebuggerName;
     }
 
     @Override
@@ -217,7 +248,7 @@ public class AttachToLocalProcessAction extends AnAction {
 
       if (!myProcessInfo.equals(item.myProcessInfo)) return false;
       if (!myGroup.equals(item.myGroup)) return false;
-      if (!myDebugger.equals(item.myDebugger)) return false;
+      if (!myDebuggerName.equals(item.myDebuggerName)) return false;
 
       return true;
     }
@@ -226,7 +257,7 @@ public class AttachToLocalProcessAction extends AnAction {
     public int hashCode() {
       int result = myProcessInfo.hashCode();
       result = 31 * result + myGroup.hashCode();
-      result = 31 * result + myDebugger.hashCode();
+      result = 31 * result + myDebuggerName.hashCode();
       return result;
     }
   }
@@ -234,20 +265,34 @@ public class AttachToLocalProcessAction extends AnAction {
   public static class AttachItem {
     @NotNull private final XLocalAttachGroup myGroup;
     private final boolean myIsFirstInGroup;
+    @NotNull private final String myGroupName;
     @NotNull private final ProcessInfo myProcessInfo;
     @NotNull private final List<XLocalAttachDebugger> myDebuggers;
+    private final int mySelectedDebugger;
     @NotNull private final List<AttachItem> mySubItems;
 
     public AttachItem(@NotNull XLocalAttachGroup group,
                       boolean isFirstInGroup,
                       @NotNull ProcessInfo info,
                       @NotNull List<XLocalAttachDebugger> debuggers) {
-      assert !debuggers.isEmpty();
+      this(group, isFirstInGroup, group.getGroupName(), info, debuggers, 0);
+    }
+
+    public AttachItem(@NotNull XLocalAttachGroup group,
+                      boolean isFirstInGroup,
+                      @NotNull String groupName,
+                      @NotNull ProcessInfo info,
+                      @NotNull List<XLocalAttachDebugger> debuggers,
+                      int selectedDebugger) {
+      myGroupName = groupName;
+      assert !debuggers.isEmpty() : "debugger list should not be empty";
+      assert selectedDebugger >= 0 && selectedDebugger < debuggers.size() : "wrong selected debugger index";
 
       myGroup = group;
       myIsFirstInGroup = isFirstInGroup;
       myProcessInfo = info;
       myDebuggers = debuggers;
+      mySelectedDebugger = selectedDebugger;
 
       if (debuggers.size() > 1) {
         mySubItems = ContainerUtil.map(debuggers, new Function<XLocalAttachDebugger, AttachItem>() {
@@ -274,7 +319,7 @@ public class AttachToLocalProcessAction extends AnAction {
 
     @Nullable
     public String getSeparatorTitle() {
-      return myIsFirstInGroup ? myGroup.getGroupName() : null;
+      return myIsFirstInGroup ? myGroupName : null;
     }
 
     @Nullable
@@ -288,8 +333,13 @@ public class AttachToLocalProcessAction extends AnAction {
     }
 
     @NotNull
+    public List<XLocalAttachDebugger> getDebuggers() {
+      return myDebuggers;
+    }
+
+    @NotNull
     public XLocalAttachDebugger getSelectedDebugger() {
-      return myDebuggers.get(0);
+      return myDebuggers.get(mySelectedDebugger);
     }
 
     @NotNull
@@ -383,7 +433,7 @@ public class AttachToLocalProcessAction extends AnAction {
       if (finalChoice) {
         return super.onChosen(selectedValue, true);
       }
-      return new DebuggerListStep(selectedValue);
+      return new DebuggerListStep(selectedValue.getSubItems(), selectedValue.mySelectedDebugger);
     }
 
     @Override
@@ -394,9 +444,10 @@ public class AttachToLocalProcessAction extends AnAction {
     }
 
     private class DebuggerListStep extends MyBasePopupStep {
-      public DebuggerListStep(AttachItem selectedValue) {
+      public DebuggerListStep(List<AttachItem> items, int selectedItem) {
         super(ProcessListStep.this.myProject,
-              XDebuggerBundle.message("xdebugger.attach.toLocal.popup.selectDebugger.title"), selectedValue.getSubItems());
+              XDebuggerBundle.message("xdebugger.attach.toLocal.popup.selectDebugger.title"), items);
+        setDefaultOptionIndex(selectedItem);
       }
 
       @NotNull
