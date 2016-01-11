@@ -27,6 +27,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -34,6 +35,7 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.StatusText;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
@@ -50,6 +52,8 @@ import java.awt.event.InputEvent;
 import java.util.*;
 
 public class AttachToLocalProcessAction extends AnAction {
+  private static final Key<LinkedHashMap<String, HistoryItem>> HISTORY_KEY = Key.create("AttachToLocalProcessAction.HISTORY_KEY");
+    
   public AttachToLocalProcessAction() {
     super(XDebuggerBundle.message("xdebugger.attach.toLocal.action"),
           XDebuggerBundle.message("xdebugger.attach.toLocal.action.description"), null);
@@ -71,8 +75,8 @@ public class AttachToLocalProcessAction extends AnAction {
 
     ProcessInfo[] processList = OSProcessManagerImpl.getProcessList();
     XLocalAttachDebuggerProvider[] providers = Extensions.getExtensions(XLocalAttachDebuggerProvider.EP);
-    
-    MyPopupStep step = new MyPopupStep(collectAttachItems(project, processList, providers), project);
+
+    ProcessListStep step = new ProcessListStep(collectAttachItems(project, processList, providers), project);
 
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
     final JList mainList = ((ListPopupImpl)popup).getList();
@@ -156,6 +160,77 @@ public class AttachToLocalProcessAction extends AnAction {
     return result;
   }
 
+  public static void addToHistory(@NotNull Project project, @NotNull AttachItem item) {
+    LinkedHashMap<String, HistoryItem> history = project.getUserData(HISTORY_KEY);
+    if (history == null) {
+      project.putUserData(HISTORY_KEY, history = new LinkedHashMap<String, HistoryItem>());
+    }
+    ProcessInfo processInfo = item.getProcessInfo();
+    history.remove(processInfo.getCommandLine());
+    history.put(processInfo.getCommandLine(), new HistoryItem(processInfo, item.getGroup(), item.getSelectedDebugger()));
+    while (history.size() > 4) {
+      history.remove(history.keySet().iterator().next());
+    }
+  }
+
+  @NotNull
+  public static List<HistoryItem> getHistory(@NotNull Project project) {
+    LinkedHashMap<String, HistoryItem> history = project.getUserData(HISTORY_KEY);
+    return history == null ? Collections.<HistoryItem>emptyList()
+                           : Collections.unmodifiableList(new ArrayList<HistoryItem>(history.values()));
+  }
+
+  public static class HistoryItem {
+    @NotNull private final ProcessInfo myProcessInfo;
+    @NotNull private final XLocalAttachGroup myGroup;
+    @NotNull private final XLocalAttachDebugger myDebugger;
+
+    public HistoryItem(@NotNull ProcessInfo processInfo,
+                       @NotNull XLocalAttachGroup group,
+                       @NotNull XLocalAttachDebugger debugger) {
+      myProcessInfo = processInfo;
+      myGroup = group;
+      myDebugger = debugger;
+    }
+
+    @NotNull
+    public ProcessInfo getProcessInfo() {
+      return myProcessInfo;
+    }
+
+    @NotNull
+    public XLocalAttachGroup getGroup() {
+      return myGroup;
+    }
+
+    @NotNull
+    public XLocalAttachDebugger getDebugger() {
+      return myDebugger;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      HistoryItem item = (HistoryItem)o;
+
+      if (!myProcessInfo.equals(item.myProcessInfo)) return false;
+      if (!myGroup.equals(item.myGroup)) return false;
+      if (!myDebugger.equals(item.myDebugger)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myProcessInfo.hashCode();
+      result = 31 * result + myGroup.hashCode();
+      result = 31 * result + myDebugger.hashCode();
+      return result;
+    }
+  }
+
   public static class AttachItem {
     @NotNull private final XLocalAttachGroup myGroup;
     private final boolean myIsFirstInGroup;
@@ -173,6 +248,7 @@ public class AttachToLocalProcessAction extends AnAction {
       myIsFirstInGroup = isFirstInGroup;
       myProcessInfo = info;
       myDebuggers = debuggers;
+
       if (debuggers.size() > 1) {
         mySubItems = ContainerUtil.map(debuggers, new Function<XLocalAttachDebugger, AttachItem>() {
           @Override
@@ -184,6 +260,16 @@ public class AttachToLocalProcessAction extends AnAction {
       else {
         mySubItems = Collections.emptyList();
       }
+    }
+
+    @NotNull
+    public ProcessInfo getProcessInfo() {
+      return myProcessInfo;
+    }
+
+    @NotNull
+    public XLocalAttachGroup getGroup() {
+      return myGroup;
     }
 
     @Nullable
@@ -225,11 +311,13 @@ public class AttachToLocalProcessAction extends AnAction {
     }
   }
 
-  private static class MyPopupStep extends BaseListPopupStep<AttachItem> implements ListPopupStepEx<AttachItem> {
-    @NotNull private final Project myProject;
+  private static class MyBasePopupStep extends BaseListPopupStep<AttachItem> {
+    @NotNull final Project myProject;
 
-    public MyPopupStep(@NotNull List<AttachItem> items, @NotNull Project project) {
-      super(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.title"), items);
+    public MyBasePopupStep(@NotNull Project project,
+                           @Nullable String title,
+                           List<? extends AttachItem> values) {
+      super(title, values);
       myProject = project;
     }
 
@@ -241,6 +329,24 @@ public class AttachToLocalProcessAction extends AnAction {
     @Override
     public boolean isAutoSelectionEnabled() {
       return false;
+    }
+
+    @Override
+    public boolean hasSubstep(AttachItem selectedValue) {
+      return !selectedValue.getSubItems().isEmpty();
+    }
+
+    @Override
+    public PopupStep onChosen(AttachItem selectedValue, boolean finalChoice) {
+      addToHistory(myProject, selectedValue);
+      selectedValue.startDebugSession(myProject);
+      return FINAL_CHOICE;
+    }
+  }
+
+  private static class ProcessListStep extends MyBasePopupStep implements ListPopupStepEx<AttachItem> {
+    public ProcessListStep(@NotNull List<AttachItem> items, @NotNull Project project) {
+      super(project, XDebuggerBundle.message("xdebugger.attach.toLocal.popup.title"), items);
     }
 
     @Nullable
@@ -261,11 +367,6 @@ public class AttachToLocalProcessAction extends AnAction {
       return value.getText(myProject);
     }
 
-    @Override
-    public boolean hasSubstep(AttachItem selectedValue) {
-      return !selectedValue.getSubItems().isEmpty();
-    }
-
     @Nullable
     @Override
     public String getTooltipTextFor(AttachItem value) {
@@ -277,33 +378,12 @@ public class AttachToLocalProcessAction extends AnAction {
       emptyText.setText(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.emptyText"));
     }
 
-
     @Override
     public PopupStep onChosen(AttachItem selectedValue, boolean finalChoice) {
       if (finalChoice) {
-        selectedValue.startDebugSession(myProject);
-        return FINAL_CHOICE;
+        return super.onChosen(selectedValue, true);
       }
-
-      return new BaseListPopupStep<AttachItem>(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.selectDebugger.title"),
-                                               selectedValue.getSubItems()) {
-        @Override
-        public boolean isSpeedSearchEnabled() {
-          return true;
-        }
-
-        @NotNull
-        @Override
-        public String getTextFor(AttachItem value) {
-          return value.getSelectedDebugger().getDebuggerDisplayName();
-        }
-
-        @Override
-        public PopupStep onChosen(AttachItem selectedValue, boolean finalChoice) {
-          selectedValue.startDebugSession(myProject);
-          return FINAL_CHOICE;
-        }
-      };
+      return new DebuggerListStep(selectedValue);
     }
 
     @Override
@@ -311,6 +391,19 @@ public class AttachToLocalProcessAction extends AnAction {
                               boolean finalChoice,
                               @MagicConstant(flagsFromClass = InputEvent.class) int eventModifiers) {
       return onChosen(selectedValue, finalChoice);
+    }
+
+    private class DebuggerListStep extends MyBasePopupStep {
+      public DebuggerListStep(AttachItem selectedValue) {
+        super(ProcessListStep.this.myProject,
+              XDebuggerBundle.message("xdebugger.attach.toLocal.popup.selectDebugger.title"), selectedValue.getSubItems());
+      }
+
+      @NotNull
+      @Override
+      public String getTextFor(AttachItem value) {
+        return value.getSelectedDebugger().getDebuggerDisplayName();
+      }
     }
   }
 }
