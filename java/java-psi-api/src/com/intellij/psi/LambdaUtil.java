@@ -520,7 +520,8 @@ public class LambdaUtil {
         }
         else if (statements[0] instanceof PsiExpressionStatement) {
           expression = ((PsiExpressionStatement)statements[0]).getExpression();
-        } else if (statements[0] instanceof PsiBlockStatement) {
+        }
+        else if (statements[0] instanceof PsiBlockStatement) {
           return extractSingleExpressionFromBody(((PsiBlockStatement)statements[0]).getCodeBlock());
         }
       }
