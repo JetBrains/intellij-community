@@ -96,12 +96,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myShouldUpdateProblemsView = workspaceConfig.MAKE_PROJECT_ON_SAVE;
   }
 
-<<<<<<< HEAD
   public CompilerTaskBase getBuildSession() {
-=======
-  @NotNull
-  public CompilerTask getBuildSession() {
->>>>>>> master
     return myBuildSession;
   }
 
