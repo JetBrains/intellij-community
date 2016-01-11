@@ -33,6 +33,10 @@
     <isset property="enable.ui.tests" />
   </condition>
 
+  <condition property="enable.blaze" value="${include.blaze}" else="">
+    <isset property="include.blaze" />
+  </condition>
+
   <property name="tmp.dir" value="${out.dir}/tmp"/>
 
   <target name="cleanup">
@@ -66,6 +70,7 @@
         <jvmarg value="-Dproduct=${product.name}" />
         <jvmarg value="-DproductPropertiesPath=${productPropertiesPath}" />
         <jvmarg value="-Dstudio.ui.tests=${studio.ui.tests}" />
+        <jvmarg value="-Denable.blaze=${enable.blaze}" />
         <sysproperty key="java.awt.headless" value="true"/>
         <arg line="&quot;-Dgant.script=@{script}&quot;"/>
         <arg line="&quot;-Dteamcity.build.tempDir=${tmp.dir}&quot;"/>

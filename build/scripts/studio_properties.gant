@@ -27,9 +27,17 @@ def getProperties(String home, String buildNumber) {
   def gradleVersion = "2.8"
   def studioCustomRepo = System.getenv().STUDIO_CUSTOM_REPO
   def studioRepo = studioCustomRepo ?: "${home}/../../prebuilts/tools/common/offline-m2"
-
+  def blazeJvmArgs = "-Dgoogle.internal=true\n" + "-Ddisable.android.first.run=true\n" +
+                     "-Denable.csi.reports=true\n" +
+                     // "-Dblaze.helper.binaries=${installation_path}\n" +
+                     "-Dblaze.experiments.file=/google/data/ro/teams/as-with-blaze/experiments/blaze-experiments-00\n" +
+                     "-Dblaze.product.short.name=aswb\n" +
+                     "-Dcaches.indexerThreadsCount=24\n" +
+                     "-Dandroid.studio.sdk.manager.disabled=true\n" +
+                     "-Dstudio.projectview=true"
 
   def enableUITests = System.getProperty("studio.ui.tests") ? !System.getProperty("studio.ui.tests").isEmpty() : false
+  def enableBlaze = System.getProperty("enable.blaze") ? !System.getProperty("enable.blaze").isEmpty() : false
 
   return new ProductProperties() {
     {
@@ -59,7 +67,7 @@ def getProperties(String home, String buildNumber) {
       relativeAndroidHome = "$androidRoot"
       relativeAndroidToolsBaseHome = "$toolsBaseRoot"
       excludedPlugins = ["ant", "ByteCodeViewer", "devkit", "eclipse", "javaFX", "Kotlin", "uiDesigner", "xpath", "xslt-debugger", "maven"]
-      ideJvmArgs = "-Didea.platform.prefix=$platformPrefix"
+      ideJvmArgs = "-Didea.platform.prefix=$platformPrefix" + (enableBlaze ? " " + blazeJvmArgs : "")
 
       configNotice  = "#\n" +
                       "# *DO NOT* modify this file directly. If there is a value that you would like to override,\n" +
@@ -227,6 +235,26 @@ def getProperties(String home, String buildNumber) {
             dir("lib") {
               jar("sdk-updates.jar") {
                 module("sdk-updates")
+              }
+            }
+          }
+
+          if (enableBlaze) {
+            dir("blaze") {
+              dir("lib") {
+                jar("blaze.jar") {
+                  module("blaze")
+                }
+                fileset(dir: "$home/../vendor/google3/blaze/lib") { include(name: "*.jar") }
+                fileset(dir: "$home/../vendor/google3/blaze/lib/google3_deps") { include(name: "google3_deps_repackaged.jar") }
+              }
+            }
+
+            dir("aswb") {
+              dir("lib") {
+                jar("aswb.jar") {
+                  module("aswb")
+                }
               }
             }
           }
