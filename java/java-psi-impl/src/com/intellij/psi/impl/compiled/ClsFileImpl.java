@@ -559,7 +559,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return myIsPhysical;
   }
 
-  @SuppressWarnings("UnusedDeclaration")  // used by Kotlin compiler
+  /** @deprecated override {@link #isPhysical()} instead (to be removed in IDEA 17) */
+  @SuppressWarnings("UnusedDeclaration")
   public void setPhysical(boolean isPhysical) {
     myIsPhysical = isPhysical;
   }
