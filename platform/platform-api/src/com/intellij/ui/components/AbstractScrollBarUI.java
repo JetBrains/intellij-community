@@ -17,7 +17,7 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBScrollBar.Alignment;
+import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.RegionPainter;
