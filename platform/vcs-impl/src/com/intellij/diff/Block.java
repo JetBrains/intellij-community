@@ -16,9 +16,9 @@
 package com.intellij.diff;
 
 import com.intellij.openapi.util.text.LineTokenizer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * author: lesya
@@ -28,87 +28,85 @@ public class Block {
   private final int myStart;
   private final int myEnd;
 
-  public Block(String source, int start, int end) {
-    this(LineTokenizer.tokenize(source.toCharArray(), false),
-        start, end);
+  public Block(@NotNull String source, int start, int end) {
+    this(LineTokenizer.tokenize(source.toCharArray(), false), start, end);
   }
 
-  public Block(String[] source, int start, int end) {
+  public Block(@NotNull String[] source, int start, int end) {
     mySource = source;
     myStart = start;
     myEnd = end;
   }
 
-  public Block createPreviousBlock(String prevContent) {
+  @NotNull
+  public Block createPreviousBlock(@NotNull String prevContent) {
     return createPreviousBlock(LineTokenizer.tokenize(prevContent.toCharArray(), false));
   }
 
-  public Block createPreviousBlock(String[] prevContent) {
+  @NotNull
+  public Block createPreviousBlock(@NotNull String[] prevContent) {
     return new FindBlock(prevContent, this).getBlockInThePrevVersion();
   }
 
-  public String getBlockContent(){
-    StringBuffer result = new StringBuffer();
+  @NotNull
+  public String getBlockContent() {
+    StringBuilder result = new StringBuilder();
 
     int length = myEnd - myStart + 1;
 
     for (int i = 0; i < length; i++) {
-      if ((i + myStart)>= mySource.length) break;
+      if ((i + myStart) >= mySource.length) break;
       result.append(mySource[i + myStart]);
       if (i < length - 1) result.append("\n");
-    };
+    }
 
     return result.toString();
   }
 
   public int hashCode() {
-    return getSourceAsList().hashCode() ^ myStart ^ myEnd;
-  }
-
-  private List<String> getSourceAsList() {
-    return Arrays.asList(mySource);
+    return Arrays.hashCode(mySource) ^ myStart ^ myEnd;
   }
 
   public boolean equals(Object object) {
     if (!(object instanceof Block)) return false;
     Block other = (Block)object;
-    return getSourceAsList().equals(other.getSourceAsList())
-        && myStart == other.myStart
-        && myEnd == other.myEnd;
+    return Arrays.equals(mySource, other.mySource)
+           && myStart == other.myStart
+           && myEnd == other.myEnd;
   }
 
-  public int getStart() { return myStart; }
+  public int getStart() {
+    return myStart;
+  }
 
-  public int getEnd() { return myEnd; }
+  public int getEnd() {
+    return myEnd;
+  }
 
   public String[] getSource() {
     return mySource;
   }
 
   public String toString() {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
 
     appendLines(result, 0, myStart);
 
-    appendLineTo(result, "<-----------------------------");
+    result.append("<-----------------------------\n");
 
     appendLines(result, myStart, myEnd + 1);
 
-    appendLineTo(result, "----------------------------->");
+    result.append("----------------------------->\n");
 
     appendLines(result, myEnd + 1, mySource.length);
 
     return result.toString();
   }
 
-  private void appendLines(StringBuffer result, int from, int to) {
-    for (int i = from; i < to; i++){
-      appendLineTo(result, mySource[i]);
+  private void appendLines(StringBuilder result, int from, int to) {
+    for (int i = from; i < to; i++) {
+      result.append(mySource[i]);
+      result.append("\n");
     }
-  }
-
-  private void appendLineTo(StringBuffer result, String line) {
-    result.append(line);
-    result.append("\n");
   }
 }
