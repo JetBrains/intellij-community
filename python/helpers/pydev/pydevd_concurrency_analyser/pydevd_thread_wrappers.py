@@ -1,7 +1,9 @@
 
 import _pydev_threading as threading
-import functools
-
+try:
+    import functools
+except:
+    pass
 
 def wrapper(fun):
     def pydev_after_run_call():
