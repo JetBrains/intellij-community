@@ -172,7 +172,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
                 return true;
               }
             });
-            if (!overriders.isEmpty()) {
+            if (overriders.size() > 1) {
               String message = RefactoringBundle.message("0.is.a.part.of.method.hierarchy.do.you.want.to.delete.multiple.type.parameters", UsageViewUtil.getLongName(owner));
               int result = ApplicationManager.getApplication().isUnitTestMode() 
                            ? Messages.YES :Messages.showYesNoCancelDialog(project, message, SafeDeleteHandler.REFACTORING_NAME, Messages.getQuestionIcon());

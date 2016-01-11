@@ -142,4 +142,9 @@ public class Patches {
    * The issue was fixed in JDK 1.8.0_60 as part of <a href="https://bugs.openjdk.java.net/browse/JDK-8064833">JDK-8064833</a>.
    */
   public static final boolean JDK_MAC_FONT_STYLE_BUG = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.8.0_60");
+
+  /**
+   * On Mac OS font ligatures are not supported for natively loaded fonts, font needs to be loaded explicitly by JDK. 
+   */
+  public static final boolean JDK_BUG_ID_7162125 = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.9");
 }

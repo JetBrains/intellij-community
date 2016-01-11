@@ -17,10 +17,7 @@ package com.intellij.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.BatchQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.Pair;
@@ -33,11 +30,8 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.SmartList;
 import org.junit.Assert;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -137,7 +131,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testCopyInto() {
-    doTest();
+    doTestAllFile();
   }
 
   public void testToArray() {
@@ -261,6 +255,10 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTestAllFile();
   }
 
+  public void testFluentIterableElementTypeChanged() {
+    doTest();
+  }
+
   private void doTestNoQuickFixes(Class<? extends PsiElement>... highlightedElements) {
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.enableInspections(new GuavaInspection());
@@ -295,8 +293,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.enableInspections(new GuavaInspection());
     for (HighlightInfo info : myFixture.doHighlighting())
-      if (GuavaInspection.PROBLEM_DESCRIPTION_FOR_METHOD_CHAIN.equals(info.getDescription()) ||
-          GuavaInspection.PROBLEM_DESCRIPTION_FOR_VARIABLE.equals(info.getDescription())) {
+      if (GuavaInspection.PROBLEM_DESCRIPTION.equals(info.getDescription())) {
         final Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> marker = info.quickFixActionMarkers.get(0);
         final PsiElement someElement = myFixture.getFile().findElementAt(0);
         assertNotNull(someElement);

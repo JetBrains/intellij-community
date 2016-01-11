@@ -16,6 +16,8 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
@@ -35,6 +37,8 @@ import java.util.*;
  * @see LineLayout
  */
 class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
+  private static final Logger LOG = Logger.getInstance(TextLayoutCache.class);
+  
   private static final int MAX_CHUNKS_IN_ACTIVE_EDITOR = 1000;
   private static final int MAX_CHUNKS_IN_INACTIVE_EDITOR = 10;
   
@@ -125,6 +129,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   @NotNull
   LineLayout getLineLayout(int line) {
     checkDisposed();
+    if (line >= myLines.size()) LOG.error("Unexpected cache state", new Attachment("editorState.txt", myView.getEditor().dumpState()));
     LineLayout result = myLines.get(line);
     if (result == null || result == myBidiNotRequiredMarker) {
       result = LineLayout.create(myView, line, result == myBidiNotRequiredMarker);

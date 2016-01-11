@@ -1,0 +1,2 @@
+interface Int<T> {
+}

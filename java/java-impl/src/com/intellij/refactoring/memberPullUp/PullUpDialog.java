@@ -148,12 +148,17 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
   protected void addCustomElementsToCentralPanel(JPanel panel) {
     myJavaDocPanel = new DocCommentPanel(RefactoringBundle.message("javadoc.for.abstracts"));
     myJavaDocPanel.setPolicy(JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC);
+    panel.add(myJavaDocPanel, BorderLayout.EAST);
+    updateAbstractState();
+  }
+
+  private void updateAbstractState() {
     boolean hasJavadoc = false;
     for (MemberInfo info : myMemberInfos) {
       final PsiMember member = info.getMember();
       if (myMemberInfoModel.isAbstractEnabled(info)) {
         info.setToAbstract(myMemberInfoModel.isAbstractWhenDisabled(info));
-        if (!hasJavadoc && 
+        if (!hasJavadoc &&
             member instanceof PsiDocCommentOwner && 
             ((PsiDocCommentOwner)member).getDocComment() != null) {
           hasJavadoc = true;
@@ -161,7 +166,12 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
       }
     }
     UIUtil.setEnabled(myJavaDocPanel, hasJavadoc, true);
-    panel.add(myJavaDocPanel, BorderLayout.EAST);
+  }
+
+  @Override
+  protected void updateMemberInfo() {
+    super.updateMemberInfo();
+    updateAbstractState();
   }
 
   @Override

@@ -77,9 +77,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private final boolean myLight;
 
   /**
-   * @param projectManager
    * @param filePath System-independent path
-   * @param projectName
    */
   protected ProjectImpl(@NotNull ProjectManager projectManager,
                         @NotNull String filePath,
@@ -228,23 +226,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public VirtualFile getProjectFile() {
-    if (isDefault()) {
-      return null;
-    }
-    else {
-      return LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectFilePath());
-    }
+    return isDefault() ? null : LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectFilePath());
   }
 
   @Override
   public VirtualFile getBaseDir() {
     String path = isDefault() ? null : getStateStore().getProjectBasePath();
-    if (path == null) {
-      return null;
-    }
-    else {
-      return LocalFileSystem.getInstance().findFileByPath(path);
-    }
+    return path == null ? null : LocalFileSystem.getInstance().findFileByPath(path);
   }
 
   @Nullable
@@ -298,9 +286,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (progressIndicator != null) {
       progressIndicator.pushState();
     }
-    super.init(progressIndicator);
-    if (progressIndicator != null) {
-      progressIndicator.popState();
+    try {
+      init(progressIndicator);
+    }
+    finally {
+      if (progressIndicator != null) {
+        progressIndicator.popState();
+      }
     }
 
     long time = System.currentTimeMillis() - start;

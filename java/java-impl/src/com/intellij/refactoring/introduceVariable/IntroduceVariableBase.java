@@ -303,7 +303,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     PsiElement elementAtStart = file.findElementAt(startOffset);
     if (elementAtStart == null || elementAtStart instanceof PsiWhiteSpace || elementAtStart instanceof PsiComment) {
-      elementAtStart = PsiTreeUtil.skipSiblingsForward(elementAtStart, PsiWhiteSpace.class, PsiComment.class);
+      final PsiElement element = PsiTreeUtil.skipSiblingsForward(elementAtStart, PsiWhiteSpace.class, PsiComment.class);
+      if (element != null) {
+        startOffset = element.getTextOffset();
+        elementAtStart = file.findElementAt(startOffset);
+      }
       if (elementAtStart == null) {
         if (injectedLanguageManager.isInjectedFragment(file)) {
           return getSelectionFromInjectedHost(project, file, injectedLanguageManager, startOffset, endOffset);
@@ -324,6 +328,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     PsiElement elementAt = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
     final PsiExpression containingExpression = PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class, false);
+
+    if (containingExpression != null && containingExpression == elementAtEnd && startOffset == containingExpression.getTextOffset()) {
+      return containingExpression;
+    }
+    
     if (containingExpression == null || containingExpression instanceof PsiLambdaExpression) {
       if (injectedLanguageManager.isInjectedFragment(file)) {
         return getSelectionFromInjectedHost(project, file, injectedLanguageManager, startOffset, endOffset);

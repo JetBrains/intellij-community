@@ -22,7 +22,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
@@ -264,17 +263,6 @@ public class AddImportAction implements QuestionAction {
       myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(pos2.line, newCol));
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!myProject.isDisposed() && myProject.isOpen()) {
-          DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-          if (daemonCodeAnalyzer != null) {
-            daemonCodeAnalyzer.updateVisibleHighlighters(myEditor);
-          }
-        }
-      }
-    });
   }
 
   protected void bindReference(PsiReference ref, PsiClass targetClass) {

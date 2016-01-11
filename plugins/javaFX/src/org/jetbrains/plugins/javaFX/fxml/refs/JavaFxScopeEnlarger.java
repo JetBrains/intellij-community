@@ -26,9 +26,9 @@ import com.intellij.psi.search.UseScopeEnlarger;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.JavaFxControllerClassIndex;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
+import org.jetbrains.plugins.javaFX.indexing.JavaFxControllerClassIndex;
 
 /**
  * User: anna

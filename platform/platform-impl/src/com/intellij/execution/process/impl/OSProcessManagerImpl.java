@@ -16,132 +16,32 @@
 package com.intellij.execution.process.impl;
 
 import com.intellij.execution.process.OSProcessManager;
-import com.intellij.execution.process.RunnerWinProcess;
-import com.intellij.execution.process.UnixProcessManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.execution.process.ProcessUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jvnet.winp.WinProcess;
-import org.jvnet.winp.WinpException;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author nik
  */
 public class OSProcessManagerImpl extends OSProcessManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.impl.OSProcessManagerImpl");
-
   @Override
   public boolean killProcessTree(@NotNull Process process) {
-    if (SystemInfo.isWindows) {
-      try {
-        WinProcess winProcess = createWinProcess(process);
-        winProcess.killRecursively();
-        return true;
-      }
-      catch (Throwable e) {
-        LOG.info("Cannot kill process tree", e);
-      }
-    }
-    else if (SystemInfo.isUnix) {
-      return UnixProcessManager.sendSigKillToProcessTree(process);
-    }
-    return false;
+    return ProcessUtils.killProcessTree(process);
   }
 
   public static void killProcess(@NotNull Process process) {
-    if (SystemInfo.isWindows) {
-      try {
-        WinProcess winProcess = createWinProcess(process);
-        winProcess.kill();
-      }
-      catch (Throwable e) {
-        LOG.info("Cannot kill process", e);
-      }
-    }
-    else if (SystemInfo.isUnix) {
-      UnixProcessManager.sendSignal(UnixProcessManager.getProcessPid(process), UnixProcessManager.SIGKILL);
-    }
-  }
-  
-  public static int getProcessID(@NotNull Process process) {
-    if (SystemInfo.isWindows) {
-      try {
-        return createWinProcess(process).getPid();
-      }
-      catch (Throwable e) {
-        LOG.info("Cannot get process id", e);
-        return -1;
-      }
-    }
-    else if (SystemInfo.isUnix) {
-      return UnixProcessManager.getProcessPid(process);
-    }
-    throw new IllegalStateException("Unknown OS: "  + SystemInfo.OS_NAME);
+    ProcessUtils.killProcess(process);
   }
 
-  @SuppressWarnings("deprecation")
-  @NotNull
-  private static WinProcess createWinProcess(@NotNull Process process) {
-    if (process instanceof RunnerWinProcess) process = ((RunnerWinProcess)process).getOriginalProcess();
-    return new WinProcess(process);
+  public static int getProcessID(@NotNull Process process) {
+    return ProcessUtils.getProcessID(process);
   }
 
   @Override
+  @Nullable
   public List<String> getCommandLinesOfRunningProcesses() {
-    try {
-      if (SystemInfo.isWindows) {
-        List<String> commandLines = new ArrayList<String>();
-        for (WinProcess process : WinProcess.all()) {
-          try {
-            commandLines.add(process.getCommandLine());
-          }
-          catch (WinpException ignored) { }
-        }
-        return commandLines;
-      }
-      else {
-        String[] cmd = UnixProcessManager.getPSCmd(true);
-        Process process = Runtime.getRuntime().exec(cmd);
-        List<String> outputLines = readLines(process.getInputStream(), false);
-        List<String> errorLines = readLines(process.getErrorStream(), false);
-        if (!errorLines.isEmpty()) {
-          throw new IOException(Arrays.toString(cmd) + " failed: " + StringUtil.join(errorLines, "\n"));
-        }
-
-        //trim 'ps' output header
-        return outputLines.subList(1, outputLines.size());
-      }
-    }
-    catch (Throwable e) {
-      LOG.info("Cannot collect command lines");
-      LOG.info(e);
-      return null;
-    }
-  }
-
-  private static List<String> readLines(@NotNull InputStream inputStream, boolean includeEmpty) throws IOException {
-    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-    try {
-      List<String> lines = new ArrayList<String>();
-      String line;
-      while ((line = reader.readLine()) != null) {
-        if (includeEmpty || !line.isEmpty()) {
-          lines.add(line);
-        }
-      }
-      return lines;
-    }
-    finally {
-      reader.close();
-    }
+    return ProcessUtils.getCommandLinesOfRunningProcesses();
   }
 }

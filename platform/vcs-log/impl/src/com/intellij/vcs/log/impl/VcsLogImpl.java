@@ -96,7 +96,7 @@ public class VcsLogImpl implements VcsLog {
       }
     });
     if (ref != null) {
-      return myUi.jumpToCommit(ref.getCommitHash());
+      return myUi.jumpToCommit(ref.getCommitHash(), ref.getRoot());
     }
     else {
       return myUi.jumpToCommitByPartOfHash(reference);

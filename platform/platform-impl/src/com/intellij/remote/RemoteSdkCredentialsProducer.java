@@ -29,7 +29,7 @@ public interface RemoteSdkCredentialsProducer<T extends RemoteSdkCredentials> {
    * @deprecated
    */
   @Deprecated
-  T getRemoteSdkCredentials() throws InterruptedException;
+  T getRemoteSdkCredentials() throws InterruptedException, ExecutionException;
 
   T getRemoteSdkCredentials(boolean allowSynchronousInteraction) throws InterruptedException, ExecutionException;
 

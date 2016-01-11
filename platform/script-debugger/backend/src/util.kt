@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import org.jetbrains.annotations.PropertyKey
-import org.jetbrains.io.JsonReaderEx
+import org.jetbrains.io.CharSequenceBackedByChars
 import org.jetbrains.io.addListener
 import java.io.File
 import java.io.FileOutputStream
@@ -94,7 +94,7 @@ fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) ke
           writer.write("\"${entry.marker}\": ")
           writer.flush()
 
-          if (message is JsonReaderEx.CharSequenceBackedByChars) {
+          if (message is CharSequenceBackedByChars) {
             fileChannel.write(message.byteBuffer)
           }
           else {

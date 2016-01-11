@@ -27,5 +27,5 @@ import javax.swing.*;
  */
 public interface RetrievableIcon extends Icon {
   @Nullable
-  Icon retrieve();
+  Icon retrieveIcon();
 }

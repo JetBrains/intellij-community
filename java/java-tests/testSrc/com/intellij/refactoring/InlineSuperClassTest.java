@@ -16,7 +16,6 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.inlineSuperClass.InlineSuperClassRefactoringProcessor;
@@ -70,6 +69,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testMultipleSubclassesInheritsOneBaseBase() { doTestMultipleSubclasses(); }
   public void testInlineSuperclassExtendsList() { doTest(); }
   public void testInterfaceHierarchyWithSubstitution() { doTest(); }
+  public void testTypeParameterBound() { doTest();}
 
   private void doTest() {
     doTest(false, false);

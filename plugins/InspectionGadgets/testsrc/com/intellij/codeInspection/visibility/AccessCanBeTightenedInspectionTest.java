@@ -96,13 +96,15 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
     VisibilityInspection visibilityInspection =
       ReflectionUtil.getField(inspection.getClass(), inspection, VisibilityInspection.class, "myVisibilityInspection");
     visibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
+    visibilityInspection.SUGGEST_PRIVATE_FOR_INNERS = false;
 
     doTest("class C {\n" +
            " {\n" +
            "  new Runnable() {\n" +
            "    @Override\n" +
-            "   public void run() {}\n"+
-            "   boolean isVisible() { return true; }\n" +
+           "    public void run() { isDisposed = true; }\n"+
+           "    boolean isVisible() { return true; }\n" +
+           "    boolean isDisposed;\n" +
            "  }.run();\n" +
            " }\n"+
            "}");

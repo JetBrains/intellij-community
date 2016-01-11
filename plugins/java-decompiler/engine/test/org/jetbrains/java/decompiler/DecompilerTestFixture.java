@@ -22,10 +22,10 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -35,11 +35,9 @@ public class DecompilerTestFixture {
   private File targetDir;
   private ConsoleDecompiler decompiler;
 
-  public void setUp() throws IOException {
-    setUp(Collections.<String, Object>emptyMap());
-  }
+  public void setUp(String... optionPairs) throws IOException {
+    assertEquals(0, optionPairs.length % 2);
 
-  public void setUp(final Map<String, Object> options) throws IOException {
     testDataDir = new File("testData");
     if (!isTestDataDir(testDataDir)) testDataDir = new File("community/plugins/java-decompiler/engine/testData");
     if (!isTestDataDir(testDataDir)) testDataDir = new File("plugins/java-decompiler/engine/testData");
@@ -54,15 +52,18 @@ public class DecompilerTestFixture {
 
     targetDir = new File(tempDir, "decompiled");
     assertTrue(targetDir.mkdirs());
-    decompiler = new ConsoleDecompiler(this.targetDir, new HashMap<String, Object>() {{
-      put(IFernflowerPreferences.LOG_LEVEL, "warn");
-      put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
-      put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
-      put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
-      put(IFernflowerPreferences.LITERALS_AS_IS, "1");
-      put(IFernflowerPreferences.UNIT_TEST_MODE, "1");
-      putAll(options);
-    }});
+
+    Map<String, Object> options = new HashMap<String, Object>();
+    options.put(IFernflowerPreferences.LOG_LEVEL, "warn");
+    options.put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
+    options.put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
+    options.put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
+    options.put(IFernflowerPreferences.LITERALS_AS_IS, "1");
+    options.put(IFernflowerPreferences.UNIT_TEST_MODE, "1");
+    for (int i = 0; i < optionPairs.length; i += 2) {
+      options.put(optionPairs[i], optionPairs[i + 1]);
+    }
+    decompiler = new ConsoleDecompiler(targetDir, options);
   }
 
   public void tearDown() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,42 +21,47 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
  */
-public class RemovePropertyFix implements IntentionAction {
+class RemovePropertyFix implements IntentionAction {
   private final Property myProperty;
 
-  public RemovePropertyFix(@NotNull final Property origProperty) {
+  RemovePropertyFix(@NotNull final Property origProperty) {
     myProperty = origProperty;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return PropertiesBundle.message("remove.property.intention.text");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return file.isValid()
-           && myProperty != null
-           && myProperty.isValid()
-           && myProperty.getManager().isInProject(myProperty)
-      ;
+    return file != null &&
+           file.isValid() &&
+           myProperty.isValid() &&
+           PsiManager.getInstance(project).isInProject(myProperty);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     myProperty.delete();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

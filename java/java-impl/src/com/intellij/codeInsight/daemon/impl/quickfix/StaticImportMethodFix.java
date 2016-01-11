@@ -19,42 +19,32 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
+import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
-import com.intellij.ide.util.MethodCellRenderer;
+import com.intellij.codeInspection.HintAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
-import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
-public class StaticImportMethodFix implements IntentionAction {
+public class StaticImportMethodFix implements IntentionAction, HintAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix");
   private final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
   private List<PsiMethod> candidates;
@@ -68,14 +58,19 @@ public class StaticImportMethodFix implements IntentionAction {
   public String getText() {
     String text = QuickFixBundle.message("static.import.method.text");
     if (candidates != null && candidates.size() == 1) {
-      text += " '" + PsiFormatUtil.formatMethod(candidates.get(0), PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
-                                                                                         PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
-                                                                                         PsiFormatUtilBase.SHOW_FQ_NAME, 0)+"'";
+      text += " '" + getMethodPresentableText() + "'";
     }
     else {
       text += "...";
     }
     return text;
+  }
+
+  @NotNull
+  private String getMethodPresentableText() {
+    return PsiFormatUtil.formatMethod(candidates.get(0), PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
+                                                                               PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                                               PsiFormatUtilBase.SHOW_FQ_NAME, 0);
   }
 
   @Override
@@ -91,6 +86,7 @@ public class StaticImportMethodFix implements IntentionAction {
            && myMethodCall.getElement() != null
            && myMethodCall.getElement().isValid()
            && myMethodCall.getElement().getMethodExpression().getQualifierExpression() == null
+           && myMethodCall.getElement().resolveMethod() == null
            && file.getManager().isInProject(file)
            && !(candidates == null ? candidates = getMethodsToImport() : candidates).isEmpty()
       ;
@@ -153,7 +149,8 @@ public class StaticImportMethodFix implements IntentionAction {
 
   @NotNull
   private List<PsiMethod> getMethodsToImport() {
-    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(myMethodCall.getProject());
+    final Project project = myMethodCall.getProject();
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     final PsiMethodCallExpression element = myMethodCall.getElement();
     PsiReferenceExpression reference = element.getMethodExpression();
     final PsiExpressionList argumentList = element.getArgumentList();
@@ -164,7 +161,7 @@ public class StaticImportMethodFix implements IntentionAction {
     final Map<PsiClass, Boolean> possibleClasses = new HashMap<PsiClass, Boolean>();
     final PsiType expectedType = getExpectedType();
     final List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
-    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
 
     final MultiMap<PsiClass, PsiMethod> deprecated = new LinkedMultiMap<PsiClass, PsiMethod>();
     final MultiMap<PsiClass, PsiMethod> suggestions = new LinkedMultiMap<PsiClass, PsiMethod>();
@@ -177,6 +174,9 @@ public class StaticImportMethodFix implements IntentionAction {
           possibleClasses.put(containingClass, false);
         }
         for (PsiMethod method : methods) {
+          if (!PsiUtil.isAccessible(project, method, element, containingClass)) {
+            continue;
+          }
           PsiSubstitutor substitutorForMethod = resolveHelper
             .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(),
                                 argumentList.getExpressions(),
@@ -204,8 +204,7 @@ public class StaticImportMethodFix implements IntentionAction {
         final PsiClass containingClass = method.getContainingClass();
         if (file instanceof PsiJavaFile
             //do not show methods from default package
-            && !((PsiJavaFile)file).getPackageName().isEmpty()
-            && PsiUtil.isAccessible(file.getProject(), method, element, containingClass)) {
+            && !((PsiJavaFile)file).getPackageName().isEmpty()) {
           if (isEffectivelyDeprecated(method)) {
             deprecated.putValue(containingClass, method);
             return processCondition();
@@ -263,146 +262,61 @@ public class StaticImportMethodFix implements IntentionAction {
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-    if (candidates.size() == 1) {
-      final PsiMethod toImport = candidates.get(0);
-      doImport(toImport);
-    }
-    else {
-      chooseAndImport(editor, project);
-    }
-  }
-
-  private void doImport(final PsiMethod toImport) {
-    CommandProcessor.getInstance().executeCommand(toImport.getProject(), new Runnable(){
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              PsiMethodCallExpression element = myMethodCall.getElement();
-              if (element != null) {
-                AddSingleMemberStaticImportAction.bindAllClassRefs(element.getContainingFile(), toImport, toImport.getName(), toImport.getContainingClass());
-              }
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
-
+        final List<PsiMethod> methodsToImport = getMethodsToImport();
+        if (methodsToImport.isEmpty()) return;
+        createQuestionAction(methodsToImport, project, editor).execute();
       }
-    }, getText(), this);
-
+    });
   }
 
-  private void chooseAndImport(Editor editor, final Project project) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      doImport(candidates.get(0));
-      return;
+  @NotNull
+  private StaticImportMethodQuestionAction createQuestionAction(List<PsiMethod> methodsToImport, @NotNull Project project, Editor editor) {
+    return new StaticImportMethodQuestionAction(project, editor, methodsToImport, myMethodCall);
+  }
+
+  private ImportClassFixBase.Result doFix(Editor editor) {
+    if (candidates.isEmpty()) {
+      return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
     }
-    final BaseListPopupStep<PsiMethod> step =
-      new BaseListPopupStep<PsiMethod>(QuickFixBundle.message("class.to.import.chooser.title"), candidates) {
-
+    
+    final StaticImportMethodQuestionAction action = createQuestionAction(candidates, myMethodCall.getProject(), editor);
+    
+    if (candidates.size() == 1) {
+      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
         @Override
-        public PopupStep onChosen(PsiMethod selectedValue, boolean finalChoice) {
-          if (selectedValue == null) {
-            return FINAL_CHOICE;
-          }
-
-          if (finalChoice) {
-            PsiDocumentManager.getInstance(project).commitAllDocuments();
-            LOG.assertTrue(selectedValue.isValid());
-            doImport(selectedValue);
-            return FINAL_CHOICE;
-          }
-
-          String qname = PsiUtil.getMemberQualifiedName(selectedValue);
-          if (qname == null) return FINAL_CHOICE;
-          List<String> excludableStrings = AddImportAction.getAllExcludableStrings(qname);
-          return new BaseListPopupStep<String>(null, excludableStrings) {
-            @NotNull
-            @Override
-            public String getTextFor(String value) {
-              return "Exclude '" + value + "' from auto-import";
-            }
-
-            @Override
-            public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-              if (finalChoice) {
-                AddImportAction.excludeFromImport(project, selectedValue);
-              }
-
-              return super.onChosen(selectedValue, finalChoice);
-            }
-          };
+        public void run() {
+          action.execute();
         }
+      });
+      return ImportClassFixBase.Result.CLASS_AUTO_IMPORTED;
+    }
 
-        @Override
-        public boolean hasSubstep(PsiMethod selectedValue) {
-          return true;
-        }
-
-        @NotNull
-        @Override
-        public String getTextFor(PsiMethod value) {
-          return ObjectUtils.assertNotNull(value.getName());
-        }
-
-        @Override
-        public Icon getIconFor(PsiMethod aValue) {
-          return aValue.getIcon(0);
-        }
-      };
-
-    final ListPopupImpl popup = new ListPopupImpl(step) {
-      final PopupListElementRenderer rightArrow = new PopupListElementRenderer(this);
-      @Override
-      protected ListCellRenderer getListElementRenderer() {
-        return new MethodCellRenderer(true, PsiFormatUtilBase.SHOW_NAME){
-
-          @Nullable
-          @Override
-          protected TextAttributes getNavigationItemAttributes(Object value) {
-            TextAttributes attrs = super.getNavigationItemAttributes(value);
-            if (value instanceof PsiMethod && !((PsiMethod)value).isDeprecated()) {
-              PsiClass psiClass = ((PsiMethod)value).getContainingClass();
-              if (psiClass != null && psiClass.isDeprecated()) {
-                return TextAttributes.merge(attrs, super.getNavigationItemAttributes(psiClass));
-              }
-            }
-            return attrs;
-          }
-
-          @Override
-          protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
-            final DefaultListCellRenderer moduleRenderer = super.getRightCellRenderer(value);
-            return new DefaultListCellRenderer(){
-              @Override
-              public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                JPanel panel = new JPanel(new BorderLayout());
-                if (moduleRenderer != null) {
-                  Component moduleComponent = moduleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                  if (!isSelected) {
-                    moduleComponent.setBackground(getBackgroundColor(value));
-                  }
-                  panel.add(moduleComponent, BorderLayout.CENTER);
-                }
-                rightArrow.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                Component rightArrowComponent = rightArrow.getNextStepLabel();
-                panel.add(rightArrowComponent, BorderLayout.EAST);
-                return panel;
-              }
-            };
-          }
-        };
-      }
-    };
-    popup.showInBestPositionFor(editor);
+    String hintText = ShowAutoImportPass.getMessage(candidates.size() > 1, getMethodPresentableText());
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
+      final PsiMethodCallExpression element = myMethodCall.getElement();
+      final TextRange textRange = element.getTextRange();
+      HintManager.getInstance().showQuestionHint(editor, hintText,
+                                                 textRange.getStartOffset(),
+                                                 textRange.getEndOffset(), action);
+    }
+    return ImportClassFixBase.Result.POPUP_SHOWN;
   }
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
+  }
+
+  @Override
+  public boolean showHint(@NotNull Editor editor) {
+    final PsiMethodCallExpression callExpression = myMethodCall.getElement();
+    if (callExpression == null || callExpression.getMethodExpression().getQualifierExpression() != null) {
+      return false;
+    }
+    ImportClassFixBase.Result result = doFix(editor);
+    return result == ImportClassFixBase.Result.POPUP_SHOWN || result == ImportClassFixBase.Result.CLASS_AUTO_IMPORTED;
   }
 }

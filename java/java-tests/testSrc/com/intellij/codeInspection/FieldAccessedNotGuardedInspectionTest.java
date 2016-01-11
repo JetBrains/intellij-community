@@ -18,19 +18,27 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.concurrencyAnnotations.FieldAccessNotGuardedInspection;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class FieldAccessedNotGuardedInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testItself() throws Exception {
-    myFixture.addClass("package net.jcip.annotations;\n" +
-                       "@java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD})\n" +
-                       "@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)\n" +
-                       "public @interface GuardedBy {\n" +
-                       "    java.lang.String value();\n" +
-                       "}");
+    myFixture.addClass("package net.jcip.annotations;\n" + getGuardedByAnnotationText());
     myFixture.testHighlighting(true, false, false, getTestName(true) + ".java");
+  }
+
+  public void testJavax_itself() throws Exception {
+    myFixture.addClass("package javax.annotation.concurrent;\n" + getGuardedByAnnotationText());
+    myFixture.testHighlighting(true, false, false, getTestName(true) + ".java");
+  }
+
+  @NotNull
+  private static String getGuardedByAnnotationText() {
+    return "@java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD})\n" +
+           "@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)\n" +
+           "public @interface GuardedBy {\n" +
+           "    java.lang.String value();\n" +
+           "}";
   }
 
 

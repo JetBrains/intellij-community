@@ -134,7 +134,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
   }
 
   @NotNull
-  public Condition<Hash> getContainedInBranchCondition(@NotNull final String branchName, @NotNull final VirtualFile root) {
+  public Condition<CommitId> getContainedInBranchCondition(@NotNull final String branchName, @NotNull final VirtualFile root) {
     LOG.assertTrue(EventQueue.isDispatchThread());
     if (myRefs == null || myGraph == null) return Conditions.alwaysFalse();
     VcsRef branchRef = ContainerUtil.find(myRefs.getBranches(), new Condition<VcsRef>() {
@@ -147,7 +147,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
     ContainedInBranchCondition condition = myConditions.get(root);
     if (condition == null || !condition.getBranch().equals(branchName)) {
       condition =
-        new ContainedInBranchCondition(myGraph.getContainedInBranchCondition(Collections.singleton(myDataHolder.getCommitIndex(branchRef.getCommitHash()))),
+        new ContainedInBranchCondition(myGraph.getContainedInBranchCondition(Collections.singleton(myDataHolder.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot()))),
                           branchName);
       myConditions.put(root, condition);
     }
@@ -183,7 +183,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
       try {
         VcsLogProvider provider = dataHolder.getLogProvider(root);
         if (graph != null && refs != null && VcsLogProperties.get(provider, VcsLogProperties.LIGHTWEIGHT_BRANCHES)) {
-          Set<Integer> branchesIndexes = graph.getContainingBranches(dataHolder.getCommitIndex(hash));
+          Set<Integer> branchesIndexes = graph.getContainingBranches(dataHolder.getCommitIndex(hash, root));
 
           Collection<VcsRef> branchesRefs = new HashSet<VcsRef>();
           for (Integer index : branchesIndexes) {
@@ -212,7 +212,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
     }
   }
 
-  private class ContainedInBranchCondition implements Condition<Hash> {
+  private class ContainedInBranchCondition implements Condition<CommitId> {
     @NotNull private final Condition<Integer> myCondition;
     @NotNull private final String myBranch;
     private volatile boolean isDisposed = false;
@@ -228,9 +228,9 @@ public class ContainingBranchesGetter implements VcsLogListener {
     }
 
     @Override
-    public boolean value(Hash hash) {
+    public boolean value(CommitId commitId) {
       if (isDisposed) return false;
-      return myCondition.value(myDataHolder.getCommitIndex(hash));
+      return myCondition.value(myDataHolder.getCommitIndex(commitId.getHash(), commitId.getRoot()));
     }
 
     public void dispose() {

@@ -15,6 +15,8 @@
  */
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,17 +25,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface VcsLogHashMap {
 
-  int getCommitIndex(@NotNull Hash hash);
+  int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root);
 
   @NotNull
   Hash getHash(int commitIndex);
 
   /**
-   * Iterates over known hashes to find the first one which {@link Hash#asString() String representation} starts with the given string.
+   * Iterates over known commid id to find the first one which satisfies given condition.
    *
-   * @param string
    * @return
    */
   @Nullable
-  Hash findHashByString(@NotNull String string);
+  CommitId findCommitId(@NotNull Condition<CommitId> condition);
 }

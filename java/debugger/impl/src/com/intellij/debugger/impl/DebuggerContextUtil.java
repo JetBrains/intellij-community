@@ -16,9 +16,11 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManagerUtil;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,15 +42,34 @@ import java.util.Collection;
 import java.util.List;
 
 public class DebuggerContextUtil {
-  public static void setStackFrame(DebuggerStateManager manager, final StackFrameProxyImpl stackFrame) {
+  public static void setStackFrame(final DebuggerStateManager manager, final StackFrameProxyImpl stackFrame) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final DebuggerContextImpl context = manager.getContext();
 
     final DebuggerSession session = context.getDebuggerSession();
-    SuspendContextImpl threadSuspendContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(), stackFrame.threadProxy());
-    final DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(session, threadSuspendContext, stackFrame.threadProxy(), stackFrame);
+    if (session != null) {
+      session.getProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
+        @Override
+        public Priority getPriority() {
+          return Priority.HIGH;
+        }
 
-    manager.setState(newContext, session != null? session.getState() : DebuggerSession.State.DISPOSED, DebuggerSession.Event.REFRESH, null);
+        @Override
+        protected void action() throws Exception {
+          SuspendContextImpl threadSuspendContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(), stackFrame.threadProxy());
+          final DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(session, threadSuspendContext, stackFrame.threadProxy(), stackFrame);
+          DebuggerInvocationUtil.swingInvokeLater(session.getProject(), new Runnable() {
+            @Override
+            public void run() {
+              manager.setState(newContext, session.getState(), DebuggerSession.Event.REFRESH, null);
+            }
+          });
+        }
+      });
+    }
+    else {
+      manager.setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.State.DISPOSED, DebuggerSession.Event.REFRESH, null);
+    }
   }
 
   public static void setThread(DebuggerStateManager contextManager, ThreadDescriptorImpl item) {

@@ -294,31 +294,35 @@ public class JavaFindUsagesHelper {
       progress.pushState();
     }
 
-    List<PsiClass> classes = new ArrayList<PsiClass>();
-    addClassesInPackage(aPackage, options.isIncludeSubpackages, classes);
-    for (final PsiClass aClass : classes) {
-      if (progress != null) {
-        String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+    try {
+      List<PsiClass> classes = new ArrayList<PsiClass>();
+      addClassesInPackage(aPackage, options.isIncludeSubpackages, classes);
+      for (final PsiClass aClass : classes) {
+        if (progress != null) {
+          String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+            @Override
+            public String compute() {
+              return aClass.getName();
+            }
+          });
+          progress.setText(FindBundle.message("find.searching.for.references.to.class.progress", name));
+          progress.checkCanceled();
+        }
+        boolean success = ReferencesSearch.search(new ReferencesSearch.SearchParameters(aClass, options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
           @Override
-          public String compute() {
-            return aClass.getName();
+          public boolean processInReadAction(final PsiReference psiReference) {
+            return addResult(psiReference, options, processor);
           }
         });
-        progress.setText(FindBundle.message("find.searching.for.references.to.class.progress", name));
-        progress.checkCanceled();
+        if (!success) return false;
       }
-      boolean success = ReferencesSearch.search(new ReferencesSearch.SearchParameters(aClass, options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
-        @Override
-        public boolean processInReadAction(final PsiReference psiReference) {
-          return addResult(psiReference, options, processor);
-        }
-      });
-      if (!success) return false;
+    }
+    finally {
+      if (progress != null){
+        progress.popState();
+      }
     }
 
-    if (progress != null){
-      progress.popState();
-    }
     return true;
   }
 
@@ -345,7 +349,7 @@ public class JavaFindUsagesHelper {
         if (includeSubdirs) {
           PsiDirectory[] dirs = dir.getSubdirectories();
           for (PsiDirectory directory : dirs) {
-            addClassesInDirectory(directory, includeSubdirs, array);
+            addClassesInDirectory(directory, true, array);
           }
         }
       }

@@ -352,7 +352,8 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   @Override
   public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {
     checkVersion();
-    final HttpMethod method = doREST("/rest/issue/execute/" + task.getId() + "?command=work+Today+" + timeSpent.replaceAll(" ", "+") + "+" + comment, true);
+    String command = encodeUrl(String.format("work Today %s %s", timeSpent, comment));
+    final HttpMethod method = doREST("/rest/issue/execute/" + task.getId() + "?command=" + command, true);
     try {
       if (method.getStatusCode() != 200) {
         InputStream stream = method.getResponseBodyAsStream();

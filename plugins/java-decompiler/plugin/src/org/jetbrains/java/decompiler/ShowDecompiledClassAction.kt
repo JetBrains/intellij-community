@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,32 @@
  */
 package org.jetbrains.java.decompiler
 
+import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.psi.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
 
 class ShowDecompiledClassAction : AnAction(IdeaDecompilerBundle.message("action.show.decompiled.name")) {
   override fun update(e: AnActionEvent) {
-    val visible = getPsiElement(e)?.containingFile is PsiClassOwner
+    val psiElement = getPsiElement(e)
+    val visible = psiElement?.containingFile is PsiClassOwner
     e.presentation.isVisible = visible
-    e.presentation.isEnabled = visible && getOriginalFile(getPsiElement(e)) != null
+    e.presentation.isEnabled = visible && getOriginalFile(psiElement) != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val file = getOriginalFile(getPsiElement(e))
-    if (file != null) {
-      val vFile = file.virtualFile
-      if (vFile != null) {
-        OpenFileDescriptor(file.project, vFile, -1).navigate(true)
+    val project = e.project
+    if (project != null) {
+      val file = getOriginalFile(getPsiElement(e))
+      if (file != null) {
+        OpenFileDescriptor(project, file, -1).navigate(true)
       }
     }
   }
@@ -46,9 +51,9 @@ class ShowDecompiledClassAction : AnAction(IdeaDecompilerBundle.message("action.
     return PsiUtilBase.getPsiFileInEditor(editor, project)?.findElementAt(editor.caretModel.offset)
   }
 
-  private fun getOriginalFile(psiElement: PsiElement?): PsiFile? {
+  private fun getOriginalFile(psiElement: PsiElement?): VirtualFile? {
     val psiClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass::class.java, false)
-    val original = psiClass?.originalElement
-    return if (original != psiClass && original is PsiCompiledElement) original.containingFile else null
+    val file = psiClass?.originalElement?.containingFile?.virtualFile
+    return if (file != null && file.fileType == JavaClassFileType.INSTANCE) file else null
   }
 }

@@ -1,7 +1,9 @@
 
 import _pydev_threading as threading
-import functools
-
+try:
+    import functools
+except:
+    pass
 
 def wrapper(fun):
     def pydev_after_run_call():
@@ -22,7 +24,10 @@ def wrap_attr(obj, attr):
 class ObjectWrapper(object):
     def __init__(self, obj):
         self.wrapped_object = obj
-        functools.update_wrapper(self, obj)
+        try:
+            functools.update_wrapper(self, obj)
+        except:
+            pass
 
     def __getattr__(self, attr):
         orig_attr = getattr(self.wrapped_object, attr) #.__getattribute__(attr)

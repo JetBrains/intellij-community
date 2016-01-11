@@ -193,70 +193,70 @@ final class CombinedAnalysis {
     }
   }
 
-  final Equation<Key, Value> notNullParamEquation(int i, boolean stable) {
+  final Equation notNullParamEquation(int i, boolean stable) {
     final Key key = new Key(method, new In(i, In.NOT_NULL_MASK), stable);
-    final Result<Key, Value> result;
+    final Result result;
     if (interpreter.dereferencedParams[i]) {
-      result = new Final<Key, Value>(Value.NotNull);
+      result = new Final(Value.NotNull);
     }
     else {
       Set<ParamKey> calls = interpreter.parameterFlow[i];
       if (calls == null || calls.isEmpty()) {
-        result = new Final<Key, Value>(Value.Top);
+        result = new Final(Value.Top);
       }
       else {
         Set<Key> keys = new HashSet<Key>();
         for (ParamKey pk: calls) {
           keys.add(new Key(pk.method, new In(pk.i, In.NOT_NULL_MASK), pk.stable));
         }
-        result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
+        result = new Pending(new SingletonSet<Product>(new Product(Value.Top, keys)));
       }
     }
-    return new Equation<Key, Value>(key, result);
+    return new Equation(key, result);
   }
 
-  final Equation<Key, Value> nullableParamEquation(int i, boolean stable) {
+  final Equation nullableParamEquation(int i, boolean stable) {
     final Key key = new Key(method, new In(i, In.NULLABLE_MASK), stable);
-    final Result<Key, Value> result;
+    final Result result;
     if (interpreter.dereferencedParams[i] || interpreter.notNullableParams[i] || returnValue instanceof NthParamValue && ((NthParamValue)returnValue).n == i) {
-      result = new Final<Key, Value>(Value.Top);
+      result = new Final(Value.Top);
     }
     else {
       Set<ParamKey> calls = interpreter.parameterFlow[i];
       if (calls == null || calls.isEmpty()) {
-        result = new Final<Key, Value>(Value.Null);
+        result = new Final(Value.Null);
       }
       else {
-        Set<Product<Key, Value>> sum = new HashSet<Product<Key, Value>>();
+        Set<Product> sum = new HashSet<Product>();
         for (ParamKey pk: calls) {
-          sum.add(new Product<Key, Value>(Value.Top, Collections.singleton(new Key(pk.method, new In(pk.i, In.NULLABLE_MASK), pk.stable))));
+          sum.add(new Product(Value.Top, Collections.singleton(new Key(pk.method, new In(pk.i, In.NULLABLE_MASK), pk.stable))));
         }
-        result = new Pending<Key, Value>(sum);
+        result = new Pending(sum);
       }
     }
-    return new Equation<Key, Value>(key, result);
+    return new Equation(key, result);
   }
 
-  final Equation<Key, Value> contractEquation(int i, Value inValue, boolean stable) {
+  final Equation contractEquation(int i, Value inValue, boolean stable) {
     final Key key = new Key(method, new InOut(i, inValue), stable);
-    final Result<Key, Value> result;
+    final Result result;
     if (exception || (inValue == Value.Null && interpreter.dereferencedParams[i])) {
-      result = new Final<Key, Value>(Value.Bot);
+      result = new Final(Value.Bot);
     }
     else if (FalseValue == returnValue) {
-      result = new Final<Key, Value>(Value.False);
+      result = new Final(Value.False);
     }
     else if (TrueValue == returnValue) {
-      result = new Final<Key, Value>(Value.True);
+      result = new Final(Value.True);
     }
     else if (returnValue instanceof TrackableNullValue) {
-      result = new Final<Key, Value>(Value.Null);
+      result = new Final(Value.Null);
     }
     else if (returnValue instanceof NotNullValue || ThisValue == returnValue) {
-      result = new Final<Key, Value>(Value.NotNull);
+      result = new Final(Value.NotNull);
     }
     else if (returnValue instanceof NthParamValue && ((NthParamValue)returnValue).n == i) {
-      result = new Final<Key, Value>(inValue);
+      result = new Final(inValue);
     }
     else if (returnValue instanceof TrackableCallValue) {
       TrackableCallValue call = (TrackableCallValue)returnValue;
@@ -274,67 +274,67 @@ final class CombinedAnalysis {
         keys.add(new Key(call.method, Out, call.stableCall));
       }
       if (keys.isEmpty()) {
-        result = new Final<Key, Value>(Value.Top);
+        result = new Final(Value.Top);
       } else {
-        result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
+        result = new Pending(new SingletonSet<Product>(new Product(Value.Top, keys)));
       }
     }
     else {
-      result = new Final<Key, Value>(Value.Top);
+      result = new Final(Value.Top);
     }
-    return new Equation<Key, Value>(key, result);
+    return new Equation(key, result);
   }
 
-  final Equation<Key, Value> outContractEquation(boolean stable) {
+  final Equation outContractEquation(boolean stable) {
     final Key key = new Key(method, Out, stable);
-    final Result<Key, Value> result;
+    final Result result;
     if (exception) {
-      result = new Final<Key, Value>(Value.Bot);
+      result = new Final(Value.Bot);
     }
     else if (FalseValue == returnValue) {
-      result = new Final<Key, Value>(Value.False);
+      result = new Final(Value.False);
     }
     else if (TrueValue == returnValue) {
-      result = new Final<Key, Value>(Value.True);
+      result = new Final(Value.True);
     }
     else if (returnValue instanceof TrackableNullValue) {
-      result = new Final<Key, Value>(Value.Null);
+      result = new Final(Value.Null);
     }
     else if (returnValue instanceof NotNullValue || returnValue == ThisValue) {
-      result = new Final<Key, Value>(Value.NotNull);
+      result = new Final(Value.NotNull);
     }
     else if (returnValue instanceof TrackableCallValue) {
       TrackableCallValue call = (TrackableCallValue)returnValue;
       Key callKey = new Key(call.method, Out, call.stableCall);
       Set<Key> keys = new SingletonSet<Key>(callKey);
-      result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
+      result = new Pending(new SingletonSet<Product>(new Product(Value.Top, keys)));
     }
     else {
-      result = new Final<Key, Value>(Value.Top);
+      result = new Final(Value.Top);
     }
-    return new Equation<Key, Value>(key, result);
+    return new Equation(key, result);
   }
 
-  final Equation<Key, Value> nullableResultEquation(boolean stable) {
+  final Equation nullableResultEquation(boolean stable) {
     final Key key = new Key(method, NullableOut, stable);
-    final Result<Key, Value> result;
+    final Result result;
     if (exception ||
         returnValue instanceof Trackable && interpreter.dereferencedValues[((Trackable)returnValue).getOriginInsnIndex()]) {
-      result = new Final<Key, Value>(Value.Bot);
+      result = new Final(Value.Bot);
     }
     else if (returnValue instanceof TrackableCallValue) {
       TrackableCallValue call = (TrackableCallValue)returnValue;
       Key callKey = new Key(call.method, NullableOut, call.stableCall || call.thisCall);
       Set<Key> keys = new SingletonSet<Key>(callKey);
-      result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Null, keys)));
+      result = new Pending(new SingletonSet<Product>(new Product(Value.Null, keys)));
     }
     else if (returnValue instanceof TrackableNullValue) {
-      result = new Final<Key, Value>(Value.Null);
+      result = new Final(Value.Null);
     }
     else {
-      result = new Final<Key, Value>(Value.Bot);
+      result = new Final(Value.Bot);
     }
-    return new Equation<Key, Value>(key, result);
+    return new Equation(key, result);
   }
 
   final Frame<BasicValue> createStartFrame() {
@@ -680,9 +680,9 @@ final class NegationAnalysis {
     }
   }
 
-  final Equation<Key, Value> contractEquation(int i, Value inValue, boolean stable) {
+  final Equation contractEquation(int i, Value inValue, boolean stable) {
     final Key key = new Key(method, new InOut(i, inValue), stable);
-    final Result<Key, Value> result;
+    final Result result;
     HashSet<Key> keys = new HashSet<Key>();
     for (int argI = 0; argI < conditionValue.args.size(); argI++) {
       BasicValue arg = conditionValue.args.get(argI);
@@ -694,11 +694,11 @@ final class NegationAnalysis {
       }
     }
     if (keys.isEmpty()) {
-      result = new Final<Key, Value>(Value.Top);
+      result = new Final(Value.Top);
     } else {
-      result = new Pending<Key, Value>(new SingletonSet<Product<Key, Value>>(new Product<Key, Value>(Value.Top, keys)));
+      result = new Pending(new SingletonSet<Product>(new Product(Value.Top, keys)));
     }
-    return new Equation<Key, Value>(key, result);
+    return new Equation(key, result);
   }
 
   final Frame<BasicValue> createStartFrame() {

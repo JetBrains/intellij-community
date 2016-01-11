@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.platform;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -38,7 +39,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
@@ -259,34 +259,34 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return false;
   }
 
-  private static void openFileFromCommandLine(final Project project, final VirtualFile virtualFile, final int line) {
+  private static void openFileFromCommandLine(final Project project, final VirtualFile file, final int line) {
     StartupManager.getInstance(project).registerPostStartupActivity(new DumbAwareRunnable() {
+      @Override
       public void run() {
-        ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
-            ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
-              public void run() {
-                if (!virtualFile.isDirectory()) {
-                  if (line > 0) {
-                    new OpenFileDescriptor(project, virtualFile, line-1, 0).navigate(true);
-                  }
-                  else {
-                    new OpenFileDescriptor(project, virtualFile).navigate(true);
-                  }
-                }
+            if (!project.isDisposed() && file.isValid() && !file.isDirectory()) {
+              if (line > 0) {
+                new OpenFileDescriptor(project, file, line - 1, 0).navigate(true);
               }
-            });
+              else {
+                new OpenFileDescriptor(project, file).navigate(true);
+              }
+            }
           }
-        });
+        }, ModalityState.NON_MODAL);
       }
     });
   }
 
   @Nullable
+  @Override
   public Icon getIcon() {
     return null;
   }
 
+  @Override
   public String getName() {
     return "text editor";
   }

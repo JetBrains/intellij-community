@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,13 @@ package com.intellij.psi;
 
 import com.intellij.util.containers.Stack;
 
+/**
+ * a JavaElementVisitor which also visits all children elements
+ * in a tree pre-order, see <a href="https://en.wikipedia.org/wiki/Tree_traversal#Pre-order">Tree traversal:Pre-order</a> for details.
+ * <p>
+ * <b>Note</b>: This visitor handles all elements recursively, so it can consume a large amount of stack space for very deep trees.
+ * For such deep trees please consider using {@link JavaRecursiveElementWalkingVisitor} instead.
+ */
 public abstract class JavaRecursiveElementVisitor extends JavaElementVisitor {
   // This stack thing is intended to prevent exponential child traversing due to visitReferenceExpression calls both visitRefElement
   // and visitExpression.

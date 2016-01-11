@@ -143,6 +143,7 @@ public final class SocketLock {
           myServer = BuiltInServer.start(workerCount, 6942, 50, false, handler);
         }
         catch (IllegalStateException e) {
+          Logger.getInstance(SocketLock.class).warn(e);
           myServer = BuiltInServer.start(new OioEventLoopGroup(1, new BuiltInServer.BuiltInServerThreadFactory()), true, 6942, 50, false, handler);
         }
 

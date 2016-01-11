@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -62,19 +61,19 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final boolean myMake;
   private final boolean myIsRebuild;
   private final boolean myIsAnnotationProcessorsEnabled;
-  private boolean myRebuildRequested = false;
+  private boolean myRebuildRequested;
   private String myRebuildReason;
   private final Map<VirtualFile, Module> myRootToModuleMap = new HashMap<VirtualFile, Module>();
   private final Map<Module, Set<VirtualFile>> myModuleToRootsMap = new HashMap<Module, Set<VirtualFile>>();
-  private final Set<VirtualFile> myGeneratedTestRoots = new java.util.HashSet<VirtualFile>();
+  private final Set<VirtualFile> myGeneratedTestRoots = new HashSet<VirtualFile>();
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
   private final ProjectCompileScope myProjectCompileScope;
   private final long myStartCompilationStamp;
   private final UUID mySessionId = UUID.randomUUID();
 
-  public CompileContextImpl(final Project project,
-                            final CompilerTaskBase compilerSession,
-                            CompileScope compileScope,
+  public CompileContextImpl(@NotNull final Project project,
+                            @NotNull final CompilerTaskBase compilerSession,
+                            @NotNull CompileScope compileScope,
                             boolean isMake, boolean isRebuild) {
     myProject = project;
     myBuildSession = compilerSession;
@@ -86,20 +85,23 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myProjectCompileScope = new ProjectCompileScope(myProject);
     myIsAnnotationProcessorsEnabled = CompilerConfiguration.getInstance(project).isAnnotationProcessorsEnabled();
 
-    if (compilerSession != null) {
-      final Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(compileScope);
-      if (sessionId != null) {
-        // in case compilation is started as a part of some execution session, 
-        // all compilation tasks should have the same sessionId in order for successive task not to clean messages 
-        // from previous compilation tasks run within this execution session
-        compilerSession.setSessionId(sessionId);
-      }
+    final Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(compileScope);
+    if (sessionId != null) {
+      // in case compilation is started as a part of some execution session,
+      // all compilation tasks should have the same sessionId in order for successive task not to clean messages
+      // from previous compilation tasks run within this execution session
+      compilerSession.setSessionId(sessionId);
     }
     final CompilerWorkspaceConfiguration workspaceConfig = CompilerWorkspaceConfiguration.getInstance(myProject);
     myShouldUpdateProblemsView = workspaceConfig.MAKE_PROJECT_ON_SAVE;
   }
 
+<<<<<<< HEAD
   public CompilerTaskBase getBuildSession() {
+=======
+  @NotNull
+  public CompilerTask getBuildSession() {
+>>>>>>> master
     return myBuildSession;
   }
 
@@ -111,10 +113,13 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return myStartCompilationStamp;
   }
 
+  @Override
+  @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   public CompilerMessage[] getMessages(CompilerMessageCategory category) {
     Collection<CompilerMessage> collection = myMessages.get(category);
     if (collection == null) {
@@ -123,11 +128,13 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return collection.toArray(new CompilerMessage[collection.size()]);
   }
 
+  @Override
   public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
     final CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findFileByUrl(url), lineNum, columnNum, null);
     addMessage(msg);
   }
 
+  @Override
   public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum,
                          Navigatable navigatable) {
     final CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findFileByUrl(url), lineNum, columnNum, navigatable);
@@ -147,6 +154,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return file;
   }
 
+  @Override
   public void addMessage(CompilerMessage msg) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.info("addMessage: " + msg + " this=" + this);
@@ -165,6 +173,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
   }
 
+  @Override
   public int getMessageCount(CompilerMessageCategory category) {
     if (category != null) {
       Collection<CompilerMessage> collection = myMessages.get(category);
@@ -179,14 +188,17 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return count;
   }
 
+  @Override
   public CompileScope getCompileScope() {
     return myCompileScope;
   }
 
+  @Override
   public CompileScope getProjectCompileScope() {
     return myProjectCompileScope;
   }
 
+  @Override
   public void requestRebuildNextTime(String message) {
     if (!myRebuildRequested) {
       myRebuildRequested = true;
@@ -194,19 +206,24 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
   }
 
+  @Override
   public boolean isRebuildRequested() {
     return myRebuildRequested;
   }
 
+  @Override
   @Nullable
   public String getRebuildReason() {
     return myRebuildReason;
   }
 
+  @Override
+  @NotNull
   public ProgressIndicator getProgressIndicator() {
     return myBuildSession.getIndicator();
   }
 
+  @Override
   public Module getModuleByFile(VirtualFile file) {
     final Module module = myProjectFileIndex.getModuleForFile(file);
     if (module != null) {
@@ -214,7 +231,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       return module;
     }
     for (final VirtualFile root : myRootToModuleMap.keySet()) {
-      if (VfsUtil.isAncestor(root, file, false)) {
+      if (VfsUtilCore.isAncestor(root, file, false)) {
         final Module mod = myRootToModuleMap.get(root);
         if (mod != null) {
           LOG.assertTrue(!mod.isDisposed());
@@ -228,6 +245,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   private final Map<Module, VirtualFile[]> myModuleToRootsCache = new HashMap<Module, VirtualFile[]>();
 
+  @Override
   public VirtualFile[] getSourceRoots(Module module) {
     VirtualFile[] cachedRoots = myModuleToRootsCache.get(module);
     if (cachedRoots != null) {
@@ -265,48 +283,50 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return true;
   }
 
+  @Override
   public VirtualFile getModuleOutputDirectory(Module module) {
     return CompilerPaths.getModuleOutputDirectory(module, false);
   }
 
+  @Override
   public VirtualFile getModuleOutputDirectoryForTests(Module module) {
     return CompilerPaths.getModuleOutputDirectory(module, true);
   }
 
+  @Override
   public boolean isMake() {
     return myMake;
   }
 
+  @Override
   public boolean isRebuild() {
     return myIsRebuild;
   }
 
+  @Override
   public boolean isAnnotationProcessorsEnabled() {
     return myIsAnnotationProcessorsEnabled;
   }
 
+  @Override
   public void addScope(final CompileScope additionalScope) {
     myCompileScope = new CompositeScope(myCompileScope, additionalScope);
   }
 
+  @Override
   public boolean isInTestSourceContent(@NotNull final VirtualFile fileOrDir) {
     if (myProjectFileIndex.isInTestSourceContent(fileOrDir)) {
       return true;
     }
-    if (VfsUtilCore.isUnder(fileOrDir, myGeneratedTestRoots)) {
-      return true;
-    }
-    return false;
+    return VfsUtilCore.isUnder(fileOrDir, myGeneratedTestRoots);
   }
 
+  @Override
   public boolean isInSourceContent(@NotNull final VirtualFile fileOrDir) {
     if (myProjectFileIndex.isInSourceContent(fileOrDir)) {
       return true;
     }
-    if (VfsUtilCore.isUnder(fileOrDir, myRootToModuleMap.keySet())) {
-      return true;
-    }
-    return false;
+    return VfsUtilCore.isUnder(fileOrDir, myRootToModuleMap.keySet());
   }
 
   public UUID getSessionId() {

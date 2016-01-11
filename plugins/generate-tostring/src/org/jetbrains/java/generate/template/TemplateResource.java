@@ -27,11 +27,17 @@ public class TemplateResource implements Serializable {
   private final boolean isDefault;
   private String fileName = "";
   private String template = "";
+  private String className;
 
   public TemplateResource(String fileName, String template, boolean aDefault) {
     isDefault = aDefault;
     this.fileName = fileName;
     this.template = template;
+  }
+
+  public TemplateResource(String fileName, String template, boolean isDefault, String className) {
+    this(fileName, template, isDefault);
+    this.className = className;
   }
 
   /**
@@ -225,6 +231,13 @@ public class TemplateResource implements Serializable {
     }
 
     return true;
+  }
+
+  /**
+   * Class fqn to detect applicability 
+   */
+  public String getClassName() {
+    return className;
   }
 
   /**

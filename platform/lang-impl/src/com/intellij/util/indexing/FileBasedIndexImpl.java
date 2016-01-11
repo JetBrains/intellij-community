@@ -1914,14 +1914,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     return null;
   }
 
-  private void doInvalidateIndicesForFile(@NotNull final VirtualFile file, boolean markForReindex) {
+  private void doInvalidateIndicesForFile(@NotNull final VirtualFile file, boolean contentChanged) {
     cleanProcessedFlag(file);
 
     final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
     IndexingStamp.flushCache(fileId);
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
-    if (!markForReindex) {  // markForReindex really means content changed
+    if (!contentChanged) {
       for (ID<?, ?> indexId : nontrivialFileIndexedStates) {
         if (myNotRequiringContentIndices.contains(indexId)) {
           try {
@@ -1938,7 +1938,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     Collection<ID<?, ?>> fileIndexedStatesToUpdate = ContainerUtil.intersection(nontrivialFileIndexedStates, myRequiringContentIndices);
 
-    if (markForReindex) {
+    if (contentChanged) {
       // only mark the file as outdated, reindex will be done lazily
       if (!fileIndexedStatesToUpdate.isEmpty()) {
 
@@ -2066,18 +2066,18 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     @Override
-    protected boolean invalidateIndicesForFile(VirtualFile file, boolean markForReindex) {
+    protected boolean invalidateIndicesForFile(VirtualFile file, boolean contentChange) {
       if (isUnderConfigOrSystem(file)) {
         return false;
       }
       if (file.isDirectory()) {
-        doInvalidateIndicesForFile(file, markForReindex);
+        doInvalidateIndicesForFile(file, contentChange);
         if (!isMock(file) && !myManagingFS.wereChildrenAccessed(file)) {
           return false;
         }
       }
       else {
-        doInvalidateIndicesForFile(file, markForReindex);
+        doInvalidateIndicesForFile(file, contentChange);
       }
       return true;
     }

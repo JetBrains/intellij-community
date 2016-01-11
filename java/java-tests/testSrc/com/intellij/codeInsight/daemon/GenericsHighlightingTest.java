@@ -555,6 +555,10 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
   }
 
+  public void testReturnTypeOverrideEquivalenceWithTypeHierarchy() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
+  }
+
   public void testLeastUpperBoundWithRecursiveTypes() throws Exception {
     final PsiManager manager = getPsiManager();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());

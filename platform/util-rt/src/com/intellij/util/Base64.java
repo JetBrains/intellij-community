@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class Base64 {
     return ac;
   }
 
-  private static char getChar( int i) {
+  private static char getChar(int i) {
     if (i >= 0 && i <= 25) return (char)(65 + i);
     if (i >= 26 && i <= 51) return (char)(97 + (i - 26));
     if (i >= 52 && i <= 61) return (char)(48 + (i - 52));
@@ -73,10 +73,12 @@ public class Base64 {
     byte[] raw = new byte[len];
     int l = 0;
     for (int i1 = 0; i1 < s.length(); i1 += 4) {
+      int n = s.length() - i1;
+      if (n == 1) throw new IllegalArgumentException("Invalid Base64 string");
       int j1 = (getValue(s.charAt(i1)) << 18) +
                (getValue(s.charAt(i1 + 1)) << 12) +
-               (getValue(s.charAt(i1 + 2)) << 6) +
-               (getValue(s.charAt(i1 + 3)));
+               (n > 2 ? (getValue(s.charAt(i1 + 2)) << 6) : 0) +
+               (n > 3 ? (getValue(s.charAt(i1 + 3))) : 0);
       for (int k = 0; k < 3 && l + k < raw.length; k++) {
         raw[l + k] = (byte)(j1 >> 8 * (2 - k) & 0xff);
       }
