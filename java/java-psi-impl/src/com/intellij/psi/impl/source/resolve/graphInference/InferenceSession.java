@@ -1506,7 +1506,7 @@ public class InferenceSession {
       LOG.assertTrue(parameters1.length == parameters2.length);
     }
 
-    final int paramsLength = !varargs ? parameters1.length : parameters1.length - 1;
+    final int paramsLength = !varargs ? parameters1.length : Math.max(parameters1.length, parameters2.length) - 1;
     for (int i = 0; i < paramsLength; i++) {
       PsiType sType = getParameterType(parameters1, i, siteSubstitutor1, false);
       PsiType tType = session.substituteWithInferenceVariables(getParameterType(parameters2, i, siteSubstitutor1, varargs));
