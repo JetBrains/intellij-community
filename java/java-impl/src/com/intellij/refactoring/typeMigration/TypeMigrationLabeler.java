@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.typeMigration;
 
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Multimap;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.lang.java.JavaLanguage;
@@ -74,7 +76,7 @@ public class TypeMigrationLabeler {
   private final Function<PsiElement, PsiType> myMigrationRootTypeFunction;
   private TypeEvaluator myTypeEvaluator;
   private final LinkedHashMap<PsiElement, Object> myConversions;
-  private final HashSet<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> myFailedConversions;
+  private final Map<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>, TypeMigrationUsageInfo> myFailedConversions;
   private LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> myMigrationRoots;
   private final LinkedHashMap<TypeMigrationUsageInfo, PsiType> myNewExpressionTypeChange;
   private final LinkedHashMap<TypeMigrationUsageInfo, PsiClassType> myClassTypeArgumentsChange;
@@ -96,7 +98,7 @@ public class TypeMigrationLabeler {
     myMigrationRootTypeFunction = migrationRootTypeFunction;
 
     myConversions = new LinkedHashMap<PsiElement, Object>();
-    myFailedConversions = new HashSet<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>();
+    myFailedConversions = new LinkedHashMap<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>, TypeMigrationUsageInfo>();
     myNewExpressionTypeChange = new LinkedHashMap<TypeMigrationUsageInfo, PsiType>();
     myClassTypeArgumentsChange = new LinkedHashMap<TypeMigrationUsageInfo, PsiClassType>();
   }
@@ -113,7 +115,7 @@ public class TypeMigrationLabeler {
     final String[] report = new String[myFailedConversions.size()];
     int j = 0;
 
-    for (final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> p : myFailedConversions) {
+    for (final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> p : myFailedConversions.keySet()) {
       final PsiExpression element = p.getFirst().getElement();
       LOG.assertTrue(element != null);
       final PsiType type = element.getType();
@@ -128,24 +130,39 @@ public class TypeMigrationLabeler {
     return report;
   }
 
+  public UsageInfo[] getFailedUsages(final TypeMigrationUsageInfo root) {
+    return map2Usages(ContainerUtil.mapNotNull(myFailedConversions.entrySet(),
+                                               new Function<Map.Entry<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>, TypeMigrationUsageInfo>, Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>() {
+                                                 @Override
+                                                 public Pair<SmartPsiElementPointer<PsiExpression>, PsiType> fun(Map.Entry<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>, TypeMigrationUsageInfo> entry) {
+                                                   return entry.getValue().equals(root) ? entry.getKey() : null;
+                                                 }
+                                               }));
+  }
+
   public UsageInfo[] getFailedUsages() {
-    final List<UsageInfo> usages = new ArrayList<UsageInfo>(myFailedConversions.size());
-    for (final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> p : myFailedConversions) {
-      final PsiExpression expr = p.getFirst().getElement();
-      if (expr != null) {
-        usages.add(new UsageInfo(expr) {
+    return map2Usages(myFailedConversions.keySet());
+  }
+
+  @NotNull
+  private static UsageInfo[] map2Usages(Collection<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> usages) {
+    return ContainerUtil
+      .map2Array(usages, new UsageInfo[usages.size()], new Function<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>, UsageInfo>() {
+      @Override
+      public UsageInfo fun(final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> pair) {
+        final PsiExpression expr = pair.getFirst().getElement();
+        LOG.assertTrue(expr != null);
+        return new UsageInfo(expr) {
           @Nullable
           public String getTooltipText() {
             final PsiType type = expr.isValid() ? expr.getType() : null;
             if (type == null) return null;
             return "Cannot convert type of the expression from " +
-                   type.getCanonicalText() + " to " + p.getSecond().getCanonicalText();
+                   type.getCanonicalText() + " to " + pair.getSecond().getCanonicalText();
           }
-        });
+        };
       }
-    }
-
-    return usages.toArray(new UsageInfo[usages.size()]);
+    });
   }
 
   public TypeMigrationUsageInfo[] getMigratedUsages() {
@@ -804,7 +821,11 @@ public class TypeMigrationLabeler {
 
   void markFailedConversion(final Pair<PsiType, PsiType> typePair, final PsiExpression expression) {
     LOG.assertTrue(typePair.getSecond() != null);
-    myFailedConversions.add(Pair.create(SmartPointerManager.getInstance(expression.getProject()).createSmartPsiElementPointer(expression), typePair.getSecond()));
+    final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> key =
+      Pair.create(SmartPointerManager.getInstance(expression.getProject()).createSmartPsiElementPointer(expression), typePair.getSecond());
+    if (!myFailedConversions.containsKey(key)) {
+      myFailedConversions.put(key, getCurrentRoot());
+    }
   }
 
   void setConversionMapping(final PsiExpression expression, final Object obj) {
@@ -1101,7 +1122,7 @@ public class TypeMigrationLabeler {
     buffer.append("Fails:\n");
 
     final ArrayList<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>
-      failsList = new ArrayList<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>(myFailedConversions);
+      failsList = new ArrayList<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>(myFailedConversions.keySet());
     Collections.sort(failsList, new Comparator<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>() {
       public int compare(final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> o1, final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> o2) {
         final PsiElement element1 = o1.getFirst().getElement();
