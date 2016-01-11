@@ -39,10 +39,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.typeCook.deductive.PsiExtendedTypeVisitor;
 import com.intellij.refactoring.typeMigration.usageInfo.OverridenUsageInfo;
 import com.intellij.refactoring.typeMigration.usageInfo.OverriderUsageInfo;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
@@ -523,11 +523,20 @@ public class TypeMigrationLabeler {
 
     if (!userDefinedType) {
       final Set<PsiTypeParameter> collector;
-      final PsiType rootInitialType = getElementType(getCurrentRoot().getElement());
-      if (rootInitialType  instanceof PsiClassReferenceType) {
-        collector = new HashSet<PsiTypeParameter>();
-        final PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)rootInitialType).getReference();
-        RefactoringUtil.collectTypeParameters(collector, reference);
+      if (type instanceof PsiClassReferenceType) {
+        collector = type.accept(new PsiExtendedTypeVisitor<Set<PsiTypeParameter>>() {
+          private final Set<PsiTypeParameter> myResult = new HashSet<PsiTypeParameter>();
+
+          @Override
+          public Set<PsiTypeParameter> visitClassType(PsiClassType classType) {
+            super.visitClassType(classType);
+            final PsiClass resolved = classType.resolve();
+            if (resolved instanceof PsiTypeParameter) {
+              myResult.add((PsiTypeParameter) resolved);
+            }
+            return myResult;
+          }
+        });
       } else {
         collector = Collections.emptySet();
       }
