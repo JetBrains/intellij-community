@@ -1,5 +1,6 @@
 import * as net from "net"
 import { JsonRpc, Transport } from "./rpc"
+const debug = require("debug")("rpc")
 
 export function connect(port: number = 63342, domains: { [domainName:string]: { [methodName:string]:Function; }; } = null): JsonRpc {
   const transport = new SocketTransport()
@@ -17,6 +18,7 @@ export class SocketTransport implements Transport {
 
   connect(port: number = 63342) {
     this.socket.connect(port, null, ()=> {
+      debug("Connected to %s", port)
       const opened = this.opened
       if (opened != null) {
         opened()
@@ -44,6 +46,9 @@ export class SocketTransport implements Transport {
     const headerBuffer = new Buffer(4)
     headerBuffer.writeUInt32BE(header.length + (encodedParams == null ? 0 : Buffer.byteLength(encodedParams)) + 1 /* ] symbol*/, 0)
     this.socket.write(headerBuffer)
+
+    debug("out: %s%s]", header, encodedParams || "")
+
     this.socket.write(header)
     if (encodedParams != null) {
       this.socket.write(encodedParams)
@@ -76,67 +81,85 @@ class MessageDecoder {
   private contentLength = 0
 
   private buffers: Array<Buffer> = []
-  private totalBufferLength = 0
-  private offset = 0
+  private messageBuffer: Buffer
+
+  private readableByteCount = 0
+
+  private messageBufferOffset = 0
 
   constructor(private messageProcessor: (message: any)=>void) {
   }
 
-  private byteConsumed(count: number) {
-    this.offset += count
-    this.totalBufferLength -= count
+  private concatBuffer(buffer: Buffer): Buffer {
+    if (this.buffers.length === 0) {
+      return buffer
+    }
+
+    this.buffers.push(buffer)
+    let totalBuffer = Buffer.concat(this.buffers, this.readableByteCount)
+    this.buffers.length = 0
+    return totalBuffer
   }
 
   messageReceived(buffer: Buffer) {
-    this.totalBufferLength += buffer.length
-
+    let offset = 0
+    this.readableByteCount += buffer.length
     while (true) {
       //noinspection FallThroughInSwitchStatementJS
       switch (this.state) {
         case State.LENGTH: {
-          if (this.totalBufferLength < 4) {
+          if (this.readableByteCount < 4) {
+            if (offset != 0) {
+              buffer = buffer.slice(offset)
+            }
             this.buffers.push(buffer)
             return
           }
 
-          var totalBuffer: Buffer
-          if (this.buffers.length === 0) {
-            totalBuffer = buffer
-          }
-          else {
-            this.buffers.push(buffer)
-            totalBuffer = Buffer.concat(this.buffers, this.totalBufferLength)
-            this.buffers.length = 0
+          buffer = this.concatBuffer(buffer)
+          this.state = State.CONTENT
+          this.contentLength = buffer.readUInt32BE(offset)
+          offset += 4
+
+          if ((buffer.length - offset) < this.contentLength) {
+            this.messageBuffer = new Buffer(this.contentLength)
+            buffer.copy(this.messageBuffer, 0, offset)
+            this.messageBufferOffset = 0
+            this.readableByteCount = 0
+            return
           }
 
-          this.state = State.CONTENT
-          this.contentLength = totalBuffer.readUInt32BE(this.offset)
-          this.byteConsumed(4)
-          buffer = totalBuffer
+          this.readableByteCount = buffer.length - offset
         }
 
         case State.CONTENT: {
-          if (this.totalBufferLength < this.contentLength) {
-            this.buffers.push(buffer)
-            return
-          }
-
-          var totalBuffer: Buffer
-          if (this.buffers.length === 0) {
-            totalBuffer = buffer
+          let rawMessage: string
+          if (this.messageBuffer == null) {
+            rawMessage = buffer.toString("utf8", offset, offset + this.contentLength)
+            offset += this.contentLength
+            this.readableByteCount = buffer.length - offset
           }
           else {
-            this.buffers.push(buffer)
-            totalBuffer = Buffer.concat(this.buffers, this.totalBufferLength)
-            this.buffers.length = 0
+            const requiredByteCount = this.messageBuffer.length - this.messageBufferOffset
+            if (requiredByteCount > this.readableByteCount) {
+              buffer.copy(this.messageBuffer, this.messageBufferOffset, offset)
+              this.messageBufferOffset += this.readableByteCount
+              this.readableByteCount = 0
+              return
+            }
+            else {
+              const newOffset = offset + requiredByteCount
+              buffer.copy(this.messageBuffer, this.messageBufferOffset, offset, newOffset)
+              offset = newOffset
+              this.readableByteCount = buffer.length - offset
+              rawMessage = this.messageBuffer.toString("utf8")
+            }
           }
 
-          const rawMessage = totalBuffer.toString("utf8", this.offset, this.offset + this.contentLength)
+          debug("in: %s", rawMessage)
           try {
             this.state = State.LENGTH
-            this.byteConsumed(this.contentLength)
             this.contentLength = 0
-            buffer = totalBuffer
 
             this.messageProcessor(JSON.parse(rawMessage))
           }
