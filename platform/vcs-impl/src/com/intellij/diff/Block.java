@@ -25,8 +25,8 @@ import java.util.List;
  */
 public class Block {
   private final String[] mySource;
-  private int myStart;
-  private int myEnd;
+  private final int myStart;
+  private final int myEnd;
 
   public Block(String source, int start, int end) {
     this(LineTokenizer.tokenize(source.toCharArray(), false),
@@ -37,8 +37,6 @@ public class Block {
     mySource = source;
     myStart = start;
     myEnd = end;
-
-
   }
 
   public String getBlockContent(){
@@ -74,10 +72,6 @@ public class Block {
   public int getStart() { return myStart; }
 
   public int getEnd() { return myEnd; }
-
-  public void setStart(int start) { myStart = start; }
-
-  public void setEnd(int end) { myEnd = end; }
 
   public String[] getSource() {
     return mySource;

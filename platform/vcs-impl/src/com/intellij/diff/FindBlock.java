@@ -23,11 +23,17 @@ import com.intellij.util.diff.Diff;
  */
 public class FindBlock {
   private final Block myCurrentVersion;
-  private final Block myResult;
+  private final String[] myLines;
+
+  private int startLine;
+  private int endLine;
 
   public FindBlock(String[] prevVersion, Block currentVersion) {
-    myResult = new Block(prevVersion, currentVersion.getStart(), currentVersion.getEnd());
     myCurrentVersion = currentVersion;
+
+    myLines = prevVersion;
+    startLine = currentVersion.getStart();
+    endLine = currentVersion.getEnd();
   }
 
   public FindBlock(String prevVersion, Block currentVersion) {
@@ -35,29 +41,29 @@ public class FindBlock {
   }
 
   public Block getBlockInThePrevVersion() {
-    Diff.Change change = Diff.buildChangesSomehow(myResult.getSource(), myCurrentVersion.getSource());
+    Diff.Change change = Diff.buildChangesSomehow(myLines, myCurrentVersion.getSource());
     while (change != null) {
       shiftIndices(change.line1, change.line1, change.line0);
       shiftIndices(change.line1, change.line1 + change.inserted, change.line0 + change.deleted);
       change = change.link;
     }
 
-    if (myResult.getEnd() >= myResult.getSource().length){
-      myResult.setEnd(myResult.getSource().length - 1);
+    if (endLine >= myLines.length) {
+      endLine = myLines.length - 1;
     }
 
-    return myResult;
+    return new Block(myLines, startLine, endLine);
   }
 
   private void shiftIndices(int firstChangeIndex,int line1, int line0) {
     int shift = line1 - line0;
 
     if (line1 <= myCurrentVersion.getStart()) {
-      myResult.setStart(myCurrentVersion.getStart() - shift);
+      startLine = myCurrentVersion.getStart() - shift;
     }
 
     if (firstChangeIndex <= myCurrentVersion.getEnd()) {
-      myResult.setEnd(myCurrentVersion.getEnd() - shift);
+      endLine = myCurrentVersion.getEnd() - shift;
     }
   }
 }
