@@ -775,7 +775,7 @@ public class TypeMigrationLabeler {
         //do nothing
       }
     }
-    if (myException != null) throw myException;
+    checkInterrupted();
     rememberRootTrace(usageInfo, type, place, alreadyProcessed);
     if (!alreadyProcessed && !(usageInfo.getElement() instanceof PsiExpression) && !getTypeEvaluator().setType(usageInfo, type)) {
       alreadyProcessed = true;
@@ -783,6 +783,10 @@ public class TypeMigrationLabeler {
 
     if (!alreadyProcessed) myMigrationRoots.addFirst(Pair.create(usageInfo, type));
     return alreadyProcessed;
+  }
+
+  private void checkInterrupted() {
+    if (myException != null) throw myException;
   }
 
   private void rememberRootTrace(final TypeMigrationUsageInfo usageInfo, final PsiType type, final PsiElement place, final boolean alreadyProcessed) {
@@ -1029,9 +1033,7 @@ public class TypeMigrationLabeler {
     }
 
     myDialogSemaphore.waitFor();
-    if (myException != null) {
-      throw myException;
-    }
+    checkInterrupted();
   }
 
   public TypeEvaluator getTypeEvaluator() {
