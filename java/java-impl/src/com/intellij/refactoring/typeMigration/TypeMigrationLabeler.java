@@ -45,6 +45,7 @@ import com.intellij.refactoring.typeMigration.usageInfo.OverriderUsageInfo;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.*;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -65,6 +66,7 @@ public class TypeMigrationLabeler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeMigration.TypeMigrationLabeler");
   private boolean myShowWarning = true;
   private volatile MigrateException myException;
+  private final Semaphore myDialogSemaphore = new Semaphore();
 
   public TypeMigrationRules getRules() {
     return myRules;
@@ -756,6 +758,7 @@ public class TypeMigrationLabeler {
   boolean addRoot(final TypeMigrationUsageInfo usageInfo, final PsiType type, final PsiElement place, boolean alreadyProcessed) {
     if (myShowWarning && myMigrationRoots.size() > 10 && !ApplicationManager.getApplication().isUnitTestMode()) {
       myShowWarning = false;
+      myDialogSemaphore.down();
       try {
         final Runnable checkTimeToStopRunnable = new Runnable() {
           public void run() {
@@ -763,6 +766,7 @@ public class TypeMigrationLabeler {
                                                Messages.getWarningIcon()) == Messages.YES) {
               myException = new MigrateException();
             }
+            myDialogSemaphore.up();
           }
         };
         SwingUtilities.invokeLater(checkTimeToStopRunnable);
@@ -1022,6 +1026,11 @@ public class TypeMigrationLabeler {
       while (myMigrationRoots.size() > 0) {
         iterate();
       }
+    }
+
+    myDialogSemaphore.waitFor();
+    if (myException != null) {
+      throw myException;
     }
   }
 
