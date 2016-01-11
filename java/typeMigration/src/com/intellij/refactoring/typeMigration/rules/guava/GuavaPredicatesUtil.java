@@ -54,7 +54,7 @@ public class GuavaPredicatesUtil {
     else if (name.equals("equalTo")) {
       return new TypeConversionDescriptorWithLocalVariable("equalTo", "$x$ -> java.util.Objects.equals($x$, $v$)");
     }
-    if (!isConvertablePredicatesMethod(method)) return null;
+    if (!isConvertablePredicatesMethod(method, (PsiMethodCallExpression)context)) return null;
     if (PREDICATES_AND_OR.contains(name) && canMigrateAndOrOr((PsiMethodCallExpression)context)) {
       return new AndOrOrConversionDescriptor(GuavaConversionUtil.addTypeParameters(GuavaLambda.PREDICATE.getJavaAnalogueClassQName(), context.getType(), context));
     }
@@ -95,7 +95,7 @@ public class GuavaPredicatesUtil {
   }
 
 
-  public static boolean isConvertablePredicatesMethod(@NotNull PsiMethod method) {
+  public static boolean isConvertablePredicatesMethod(@NotNull PsiMethod method, PsiMethodCallExpression context) {
     if (method.getParameterList().getParametersCount() == 1) {
       final PsiParameter parameter = method.getParameterList().getParameters()[0];
       final PsiClass psiClass = PsiTypesUtil.getPsiClass(parameter.getType().getDeepComponentType());
@@ -103,7 +103,8 @@ public class GuavaPredicatesUtil {
         return false;
       }
     }
-    return true;
+    final PsiExpression[] expressions = context.getArgumentList().getExpressions();
+    return !(expressions.length == 1 && expressions[0].getType() instanceof PsiArrayType);
   }
 
   private static boolean canMigrateAndOrOr(PsiMethodCallExpression expr) {
