@@ -175,6 +175,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testLongerParamsWhenVarargs() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }
