@@ -37,7 +37,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.*;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
@@ -177,8 +176,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
     final Task.Backgroundable annotateTask = new Task.Backgroundable(project,
                                                                      VcsBundle.message("retrieving.annotations"),
-                                                                     true,
-                                                                     BackgroundFromStartOption.getInstance()) {
+                                                                     true) {
       @Override
       public void run(final @NotNull ProgressIndicator indicator) {
         try {

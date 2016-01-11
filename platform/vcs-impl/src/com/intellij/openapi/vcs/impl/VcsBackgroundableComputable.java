@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +48,7 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
                                   final Runnable awtErrorContinuation,
                                   final BackgroundableActionEnabledHandler handler,
                                   final Object actionParameter) {
-    super(project, title, true, BackgroundFromStartOption.getInstance());
+    super(project, title, true);
     myErrorTitle = errorTitle;
     myBackgroundable = backgroundable;
     myAwtSuccessContinuation = awtSuccessContinuation;
