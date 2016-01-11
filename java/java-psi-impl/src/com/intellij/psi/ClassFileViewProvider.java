@@ -29,10 +29,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.org.objectweb.asm.ClassReader;
-import org.jetbrains.org.objectweb.asm.ClassVisitor;
-import org.jetbrains.org.objectweb.asm.Label;
-import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.*;
 
 /**
  * @author max
@@ -79,7 +76,7 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
 
     final Ref<Boolean> ref = Ref.create(Boolean.FALSE);
     try {
-      new MyClassReader(file.contentsToByteArray(false)).accept(new ClassVisitor(Opcodes.ASM5) {
+      new ClassReader(file.contentsToByteArray(false)).accept(new ClassVisitor(Opcodes.ASM5) {
         @Override
         public void visitOuterClass(String owner, String name, String desc) {
           ref.set(Boolean.TRUE);
@@ -93,6 +90,11 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
             ref.set(Boolean.TRUE);
             throw new ProcessCanceledException();
           }
+        }
+
+        @Override
+        public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+          throw new ProcessCanceledException();
         }
       }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     }
@@ -110,16 +112,5 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
   @Override
   public SingleRootFileViewProvider createCopy(@NotNull VirtualFile copy) {
     return new ClassFileViewProvider(getManager(), copy, false);
-  }
-
-  private static class MyClassReader extends ClassReader {
-    public MyClassReader(byte[] b) {
-      super(b);
-    }
-
-    @Override
-    protected Label readLabel(int offset, Label[] labels) {
-      return null;
-    }
   }
 }
