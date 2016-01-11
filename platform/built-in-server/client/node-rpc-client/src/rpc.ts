@@ -22,13 +22,43 @@ export interface Transport {
   sendError(id: number, error: any):void
 }
 
+interface Map<K, V> {
+    clear(): void;
+    delete(key: K): boolean;
+    get(key: K): V;
+    has(key: K): boolean;
+    set(key: K, value?: V): Map<K, V>;
+}
+
+interface MapConstructor {
+  new <K, V>(): Map<K, V>
+
+  prototype: Map<any, any>
+}
+declare var Map: MapConstructor
+
 export class JsonRpc {
   private messageIdCounter = 0
   private callbacks: Map<number, PromiseCallback> = new Map<number, PromiseCallback>()
-  private domains: Map<string, any> = new Map<string, any>()
+  private domains = new Map<string, any>()
 
-  constructor(private transport: Transport) {
+  constructor(private transport: Transport, domains: { [domainName:string]: { [methodName:string]:Function; }; } = null) {
+    this.domains = new Map()
+    if (domains != null) {
+      for (let name of Object.getOwnPropertyNames(domains)) {
+        this.domains.set(name, domains[name])
+      }
+    }
+
     transport.messageReceived = this.messageReceived.bind(this)
+  }
+
+  public registerDomain(name: string, commands: any) {
+    if (this.domains.has(name)) {
+      throw Error("Domain " + name + " is already registered")
+    }
+
+    this.domains.set(name, commands)
   }
 
   public call<T>(domain: string, command: string, ...params: any[]): Promise<T> {
@@ -73,6 +103,15 @@ export class JsonRpc {
       const onRejected = id === -1 ? null : (error: any) => this.transport.sendError(id, error)
       try {
         const object = this.domains.get(domainName)
+        if (object == null) {
+          const e = "Cannot find domain " + domainName
+          console.warn(e)
+          if (onRejected != null) {
+            onRejected(e)
+          }
+          return
+        }
+
         const method = object[message[offset + 1]]
         const args = safeGet(message, offset + 2)
         const result: any = (args === null) ? method.call(object) : method.apply(object, args)

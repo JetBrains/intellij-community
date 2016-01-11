@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -232,8 +232,8 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
 
 class DisposeNonLightProjectsRule() : ExternalResource() {
   override fun after() {
-    val projectManager = ProjectManager.getInstance() as ProjectManagerImpl
-    projectManager.openProjects.forEachGuaranteed {
+    val projectManager = if (ApplicationManager.getApplication().isDisposed) null else ProjectManager.getInstance() as ProjectManagerImpl
+    projectManager?.openProjects?.forEachGuaranteed {
       if (!ProjectManagerImpl.isLight(it)) {
         runInEdtAndWait { projectManager.closeProject(it, false, true, false) }
       }

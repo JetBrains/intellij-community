@@ -176,14 +176,12 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
     return client.send(messageId, message)!!
   }
 
-  fun <T> sendToClients(domain: String, command: String, results: MutableList<Promise<Pair<Client, T>>>?, vararg params: Any?) {
+  fun send(domain: String, command: String, vararg params: Any?) {
     if (clientManager.hasClients()) {
-      sendToClients(if (results == null) -1 else messageIdCounter.andIncrement, domain, command, results, params)
+      val messageId = -1
+      val message = encodeMessage(ByteBufAllocator.DEFAULT, messageId, domain, command, params = params)
+      clientManager.send<Any?>(messageId, message)
     }
-  }
-
-  private fun <T> sendToClients(messageId: Int, domain: String?, command: String?, results: MutableList<Promise<Pair<Client, T>>>?, params: Array<*>) {
-    clientManager.send(messageId, encodeMessage(ByteBufAllocator.DEFAULT, messageId, domain, command, params = params), results)
   }
 
   private fun encodeMessage(byteBufAllocator: ByteBufAllocator,

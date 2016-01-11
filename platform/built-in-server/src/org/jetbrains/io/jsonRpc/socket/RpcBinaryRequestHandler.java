@@ -9,6 +9,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.BinaryRequestHandler;
 import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.io.MessageDecoder;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionHandler, ClientListener {
+public class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionHandler, ClientListener {
   private static final Logger LOG = Logger.getInstance(RpcBinaryRequestHandler.class);
 
   private static final UUID ID = UUID.fromString("69957EEB-AFB8-4036-A9A8-00D2D022F9BD");
@@ -39,6 +40,13 @@ class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionH
   };
 
   private JsonRpcServer rpcServer;
+
+  @NotNull
+  @TestOnly
+  public JsonRpcServer getRpcServer() {
+    clientManager.getValue();
+    return rpcServer;
+  }
 
   @NotNull
   @Override

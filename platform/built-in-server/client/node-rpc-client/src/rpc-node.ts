@@ -1,10 +1,10 @@
 import * as net from "net"
 import { JsonRpc, Transport } from "./rpc"
 
-export function connect(port: number = 63342): JsonRpc {
+export function connect(port: number = 63342, domains: { [domainName:string]: { [methodName:string]:Function; }; } = null): JsonRpc {
   const transport = new SocketTransport()
-  const server = new JsonRpc(transport)
-  transport.connect(63343)
+  const server = new JsonRpc(transport, domains)
+  transport.connect(port)
   return server
 }
 

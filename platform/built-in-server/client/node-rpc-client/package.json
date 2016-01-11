@@ -2,8 +2,10 @@
   "name": "ij-rpc-client",
   "version": "0.0.1",
   "description": "IntelliJ Platform RPC client",
+  "license": "Apache-2.0",
+  "main" : "./out/rpc-node.js",
   "scripts": {
-    "compile": "rimraf app/out && tsconfig -i 2 && tsc",
+    "compile": "rimraf out && tsconfig -i 2 && tsc",
     "test": "mocha --harmony_default_parameters --harmony_rest_parameters"
   },
   "repository": {
@@ -11,6 +13,7 @@
     "url": "https://github.com/JetBrains/intellij-community.git"
   },
   "devDependencies": {
+    "dts-generator": "^1.6.3",
     "mocha": "^2.3.4",
     "rimraf": "^2.5.0",
     "should": "^8.0.2",
