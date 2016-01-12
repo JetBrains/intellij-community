@@ -285,8 +285,13 @@ public class StaticImportMethodFix implements IntentionAction, HintAction {
     }
     
     final StaticImportMethodQuestionAction action = createQuestionAction(candidates, myMethodCall.getProject(), editor);
-    
-    if (candidates.size() == 1) {
+
+    final PsiMethodCallExpression element = myMethodCall.getElement();
+    if (element == null) {
+      return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
+    }
+
+    if (candidates.size() == 1 && ImportClassFixBase.canAddUnambiguousImport(element.getContainingFile())) {
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
         @Override
         public void run() {
@@ -298,7 +303,6 @@ public class StaticImportMethodFix implements IntentionAction, HintAction {
 
     String hintText = ShowAutoImportPass.getMessage(candidates.size() > 1, getMethodPresentableText());
     if (!ApplicationManager.getApplication().isUnitTestMode() && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
-      final PsiMethodCallExpression element = myMethodCall.getElement();
       final TextRange textRange = element.getTextRange();
       HintManager.getInstance().showQuestionHint(editor, hintText,
                                                  textRange.getStartOffset(),
