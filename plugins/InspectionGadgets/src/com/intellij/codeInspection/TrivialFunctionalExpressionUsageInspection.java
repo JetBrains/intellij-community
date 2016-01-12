@@ -18,9 +18,11 @@ package com.intellij.codeInspection;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +107,8 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
             final PsiMethod resolveMethod = ((PsiMethodCallExpression)ggParent).resolveMethod();
             final PsiElement referenceNameElement = ((PsiMethodCallExpression)ggParent).getMethodExpression().getReferenceNameElement();
             if (resolveMethod != null &&
-                resolveMethod.getParameterList().getParametersCount() == 0 &&
+                !resolveMethod.isVarArgs() &&
+                ((PsiMethodCallExpression)ggParent).getArgumentList().getExpressions().length == resolveMethod.getParameterList().getParametersCount() &&
                 referenceNameElement != null &&
                 elementContainerCondition.value(ggParent)) {
               final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
@@ -172,6 +175,8 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
     }
 
     private static void replaceWithLambdaBody(PsiMethodCallExpression callExpression, PsiLambdaExpression element) {
+      inlineCallArguments(callExpression, element);
+
       final PsiElement body = element.getBody();
       if (body instanceof PsiExpression) {
         callExpression.replace(body);
@@ -209,6 +214,21 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
             if (returnValue != null) {
               callExpression.replace(returnValue);
             }
+          }
+        }
+      }
+    }
+
+    private static void inlineCallArguments(PsiMethodCallExpression callExpression, PsiLambdaExpression element) {
+      final PsiExpression[] args = callExpression.getArgumentList().getExpressions();
+      final PsiParameter[] parameters = element.getParameterList().getParameters();
+      for (int i = 0; i < parameters.length; i++) {
+        final PsiParameter parameter = parameters[i];
+        final PsiExpression initializer = args[i];
+        for (PsiReference reference : ReferencesSearch.search(parameter)) {
+          final PsiElement referenceElement = reference.getElement();
+          if (referenceElement instanceof PsiJavaCodeReferenceElement) {
+            InlineUtil.inlineVariable(parameter, initializer, (PsiJavaCodeReferenceElement)referenceElement);
           }
         }
       }
