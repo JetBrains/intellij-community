@@ -19,14 +19,14 @@ package com.intellij.execution.ui.layout.actions;
 import com.intellij.execution.ui.layout.CellTransform;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.content.Content;
 
 import javax.swing.*;
 
-public class RestoreViewAction extends AnAction {
+public class RestoreViewAction extends DumbAwareAction {
 
   private final Content myContent;
   private final CellTransform.Restore myRestoreAction;
