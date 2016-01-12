@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3020,8 +3020,18 @@ public class UIUtil {
     return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
   }
 
+  @NotNull
   public static Timer createNamedTimer(@NonNls @NotNull final String name, int delay, @NotNull ActionListener listener) {
     return new Timer(delay, listener) {
+      @Override
+      public String toString() {
+        return name;
+      }
+    };
+  }
+  @NotNull
+  public static Timer createNamedTimer(@NonNls @NotNull final String name, int delay) {
+    return new Timer(delay, null) {
       @Override
       public String toString() {
         return name;
