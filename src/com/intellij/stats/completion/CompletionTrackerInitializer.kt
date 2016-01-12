@@ -154,8 +154,6 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     private var completionStarted = false
     private var selectedByDotTyping = false
     
-    private val LOG = Logger.getInstance(CompletionActionsTracker::class.java)
-    
     private fun isCompletionActive(): Boolean {
         return completionStarted && !lookup.isLookupDisposed
                 || ApplicationManager.getApplication().isUnitTestMode
@@ -222,9 +220,6 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         val current = lookup.currentItem
         val index = lookup.items.indexOf(current)
         
-        if (current == null) {
-            LOG.error("After completion current item is null Lookup: ${lookup.items} Lookup size: ${lookup.items.size}")
-        }
         logger.afterBackspacePressed(index, current?.lookupString ?: "NULL", lookup.toRelevanceDataList())
     }
     
