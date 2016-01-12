@@ -39,6 +39,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.UI;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -135,6 +136,8 @@ public class AboutPopup {
     private final List<Link> myLinks = new ArrayList<Link>();
     private Link myActiveLink;
     private boolean myShowCopy = false;
+    private float myShowCopyAlpha;
+    private Alarm myAlarm = new Alarm();
 
     public InfoSurface(Icon image) {
       ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();
@@ -208,11 +211,25 @@ public class AboutPopup {
           }
         }
 
+        final static double maxAlpha = 0.5;
+        final static double fadeStep = 0.05;
+        final static int animationDelay = 15;
+
         @Override
         public void mouseEntered(MouseEvent e) {
           if (!myShowCopy) {
             myShowCopy = true;
-            repaint();
+            myAlarm.cancelAllRequests();
+            myAlarm.addRequest(new Runnable() {
+              @Override
+              public void run() {
+                if (myShowCopyAlpha < maxAlpha) {
+                  myShowCopyAlpha += fadeStep;
+                  repaint();
+                  myAlarm.addRequest(this, animationDelay);
+                }
+              }
+            }, animationDelay);
           }
         }
 
@@ -220,7 +237,17 @@ public class AboutPopup {
         public void mouseExited(MouseEvent e) {
           if (myShowCopy) {
             myShowCopy = false;
-            repaint();
+            myAlarm.cancelAllRequests();
+            myAlarm.addRequest(new Runnable() {
+              @Override
+              public void run() {
+                if (myShowCopyAlpha > 0) {
+                  myShowCopyAlpha -= fadeStep;
+                  repaint();
+                  myAlarm.addRequest(this, animationDelay);
+                }
+              }
+            }, animationDelay);
           }
         }
       });
@@ -351,7 +378,7 @@ public class AboutPopup {
         x = indentX;
         y = indentY;
         ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-        boolean showCopyButton = myShowCopy;
+        boolean showCopyButton = myShowCopy || myShowCopyAlpha > 0;
         for (AboutBoxLine line : lines) {
           final String s = line.getText();
           setFont(line.isBold() ? myBoldFont : myFont);
@@ -371,7 +398,7 @@ public class AboutPopup {
             g2.setFont(myFont);
             g2.setColor(myLinkColor);
             final int xOffset = myImage.getIconWidth() - width - 10;
-            final GraphicsConfig config = GraphicsUtil.paintWithAlpha(g2, 0.5f);
+            final GraphicsConfig config = GraphicsUtil.paintWithAlpha(g2, myShowCopyAlpha);
             g2.drawString(copyString, xOffset, yBase + y);
             config.restore();
             myLinks.add(new Link(new Rectangle(xOffset, yBase + y - fontAscent, width, fontHeight), COPY_URL));
