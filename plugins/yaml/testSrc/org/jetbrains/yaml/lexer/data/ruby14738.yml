@@ -1,0 +1,3 @@
+my_service:
+  class: My\Service
+  arguments: [@doctrine.orm.entity_manager, @?logger]

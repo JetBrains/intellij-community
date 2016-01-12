@@ -729,6 +729,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="TrivialMethodReference" displayName="Method reference can be replaced with its qualifier"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.TrivialMethodReferenceInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="TrivialFunctionalExpressionUsage" displayName="Trivial usage of functional expression"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.TrivialFunctionalExpressionUsageInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CodeBlock2Expr" displayName="Statement lambda can be replaced with expression lambda"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RedundantLambdaCodeBlockInspection" />

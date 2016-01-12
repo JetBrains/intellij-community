@@ -1,0 +1,102 @@
+YAML file
+  YAML document
+    YAML mapping
+      YAML key value
+        PsiElement(scalar key)('application:')
+        PsiWhiteSpace(' ')
+        YAML plain scalar text
+          PsiElement(text)('gaeproject')
+      PsiElement(Eol)('\n')
+      YAML key value
+        PsiElement(scalar key)('version:')
+        PsiWhiteSpace(' ')
+        YAML plain scalar text
+          PsiElement(text)('1')
+      PsiElement(Eol)('\n')
+      YAML key value
+        PsiElement(scalar key)('runtime:')
+        PsiWhiteSpace(' ')
+        YAML plain scalar text
+          PsiElement(text)('python27')
+      PsiElement(Eol)('\n')
+      YAML key value
+        PsiElement(scalar key)('api_version:')
+        PsiWhiteSpace(' ')
+        YAML plain scalar text
+          PsiElement(text)('1')
+      PsiElement(Eol)('\n')
+      YAML key value
+        PsiElement(scalar key)('threadsafe:')
+        PsiWhiteSpace(' ')
+        YAML plain scalar text
+          PsiElement(text)('yes')
+      PsiElement(Eol)('\n')
+      PsiElement(Eol)('\n')
+      YAML key value
+        PsiElement(scalar key)('handlers:')
+        PsiElement(Eol)('\n')
+        YAML sequence
+          YAML sequence item
+            PsiElement(-)('-')
+            PsiWhiteSpace(' ')
+            YAML mapping
+              YAML key value
+                PsiElement(scalar key)('url:')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('/favicon\.ico')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('  ')
+              YAML key value
+                PsiElement(scalar key)('static_files:')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('favicon.ico')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('  ')
+              YAML key value
+                PsiElement(scalar key)('upload:')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('favicon\.ico')
+          PsiElement(Eol)('\n')
+          PsiElement(Eol)('\n')
+          YAML sequence item
+            PsiElement(-)('-')
+            PsiWhiteSpace(' ')
+            YAML mapping
+              YAML key value
+                PsiElement(scalar key)('url:')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('.*')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('  ')
+              YAML key value
+                PsiElement(scalar key)('script:')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('test/main.app')
+      PsiElement(Eol)('\n')
+      PsiElement(indent)('  ')
+      PsiElement(Eol)('\n')
+      YAML key value
+        PsiElement(scalar key)('libraries:')
+        PsiElement(Eol)('\n')
+        YAML sequence
+          YAML sequence item
+            PsiElement(-)('-')
+            PsiWhiteSpace(' ')
+            YAML mapping
+              YAML key value
+                PsiElement(scalar key)('name:')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('webapp2')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('  ')
+              YAML key value
+                PsiElement(scalar key)('version:')
+                PsiWhiteSpace(' ')
+                YAML quoted text
+                  PsiElement(scalar dstring)('"2.5.2"')

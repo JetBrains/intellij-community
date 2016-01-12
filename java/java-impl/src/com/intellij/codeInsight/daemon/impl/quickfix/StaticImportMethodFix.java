@@ -170,7 +170,9 @@ public class StaticImportMethodFix implements IntentionAction, HintAction {
         final Boolean alreadyMentioned = possibleClasses.get(containingClass);
         if (alreadyMentioned == Boolean.TRUE) return;
         if (alreadyMentioned == null) {
-          list.addAll(methods);
+          if (!methods.isEmpty()) {
+            list.add(methods.iterator().next());
+          }
           possibleClasses.put(containingClass, false);
         }
         for (PsiMethod method : methods) {
@@ -283,8 +285,13 @@ public class StaticImportMethodFix implements IntentionAction, HintAction {
     }
     
     final StaticImportMethodQuestionAction action = createQuestionAction(candidates, myMethodCall.getProject(), editor);
-    
-    if (candidates.size() == 1) {
+
+    final PsiMethodCallExpression element = myMethodCall.getElement();
+    if (element == null) {
+      return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
+    }
+
+    if (candidates.size() == 1 && ImportClassFixBase.canAddUnambiguousImport(element.getContainingFile())) {
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
         @Override
         public void run() {
@@ -296,7 +303,6 @@ public class StaticImportMethodFix implements IntentionAction, HintAction {
 
     String hintText = ShowAutoImportPass.getMessage(candidates.size() > 1, getMethodPresentableText());
     if (!ApplicationManager.getApplication().isUnitTestMode() && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
-      final PsiMethodCallExpression element = myMethodCall.getElement();
       final TextRange textRange = element.getTextRange();
       HintManager.getInstance().showQuestionHint(editor, hintText,
                                                  textRange.getStartOffset(),

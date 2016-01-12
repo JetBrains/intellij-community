@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.PortField;
 import com.intellij.util.ThreeState;
-import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipEmptySerializationFilter;
@@ -42,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 public abstract class RemoteDebugConfiguration extends LocatableConfigurationBase implements RunConfigurationWithSuppressedDefaultRunAction, DebuggableRunConfiguration {
@@ -129,7 +129,7 @@ public abstract class RemoteDebugConfiguration extends LocatableConfigurationBas
   @Override
   public InetSocketAddress computeDebugAddress() {
     if (host == null) {
-      return new InetSocketAddress(NetUtils.getLoopbackAddress(), port);
+      return new InetSocketAddress(InetAddress.getLoopbackAddress(), port);
     }
     else {
       return new InetSocketAddress(host, getPort());

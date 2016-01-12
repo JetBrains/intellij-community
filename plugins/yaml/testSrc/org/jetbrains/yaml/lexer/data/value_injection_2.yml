@@ -1,0 +1,3 @@
+key:
+    one: 1 text
+    other: some {{count}} text
