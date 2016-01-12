@@ -851,7 +851,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         }
         if (HeavyProcessLatch.INSTANCE.isRunning()) {
           final Disposable removeListenerDisposable = Disposer.newDisposable();
-          Disposer.register(DaemonCodeAnalyzerImpl.this, removeListenerDisposable);
           // wait for heavy processing to stop, re-schedule daemon but not too soon
           HeavyProcessLatch.HeavyProcessListener heavyProcessListener = new HeavyProcessLatch.HeavyProcessListener() {
             @Override
@@ -865,6 +864,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
             }
           };
           HeavyProcessLatch.INSTANCE.addListener(removeListenerDisposable, heavyProcessListener);
+          Disposer.register(DaemonCodeAnalyzerImpl.this, removeListenerDisposable);
+
           if (!HeavyProcessLatch.INSTANCE.isRunning()) {
             // in case heavy operation finished right before listener added
             heavyProcessListener.processFinished();
