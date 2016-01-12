@@ -2,15 +2,16 @@ package de.plushnikov.delegate.issue82;
 
 import lombok.experimental.Delegate;
 
-public class TestDetailBean extends AbstractDetailBean<Integer> {
-
+//TODO fix it
+public class TestDetailBean //extends AbstractDetailBean<Integer>
+{
     @Delegate
     private MyDetailData detailData;
 
     public static void main(String[] args) {
         TestDetailBean bean = new TestDetailBean();
 
-        bean.getResult();
+        //bean.getResult();
         bean.getSomething();
     }
 }

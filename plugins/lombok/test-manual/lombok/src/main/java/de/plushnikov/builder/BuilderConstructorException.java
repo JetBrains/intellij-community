@@ -5,7 +5,9 @@ public class BuilderConstructorException {
 
     private int i;
 
-    public BuilderConstructorException(int i) throws Exception {
+    //TODO fix it
+    public BuilderConstructorException(int i) //throws Exception
+    {
         System.out.println("sss");
     }
 
