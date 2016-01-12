@@ -202,6 +202,7 @@
 		<ul>
 		<li>0.9.8
 				<ol>
+				     <li>Fixed #165: Can't correctly resolve multiple @Builder methods in same class having partial implementations</li>
 				     <li>Fixed #172: "Lombok needs a default constructor in the base class" error in enum</li>
 				</ol>
 			</li>

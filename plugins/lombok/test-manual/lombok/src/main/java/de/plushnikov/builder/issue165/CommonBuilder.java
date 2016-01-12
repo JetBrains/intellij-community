@@ -1,9 +1,9 @@
 package de.plushnikov.builder.issue165;
 
+import lombok.Builder;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import lombok.Builder;
 
 public class CommonBuilder {
     @Builder(builderMethodName = "personBuilder")

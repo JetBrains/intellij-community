@@ -6,6 +6,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -223,23 +224,23 @@ public class BuilderHandler {
     return builderClassName;
   }
 
-  public boolean shouldGenerateBuilderMethod(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    final String builderMethodName = getBuilderMethodName(psiAnnotation);
+  protected boolean hasMethod(@NotNull PsiClass psiClass, String builderMethodName) {
     final Collection<PsiMethod> existingMethods = PsiClassUtil.collectClassStaticMethodsIntern(psiClass);
     for (PsiMethod existingMethod : existingMethods) {
       if (existingMethod.getName().equals(builderMethodName)) {
-        return false;
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
-  @NotNull
-  public PsiMethod createBuilderMethod(@NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
+  public void createBuilderMethodIfNecessary(@NotNull Collection<? super PsiElement> target, @NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
     final String builderMethodName = getBuilderMethodName(psiAnnotation);
-    LombokLightMethodBuilder method = createBuilderMethod(containingClass, psiMethod, builderPsiClass, psiAnnotation, builderMethodName);
-    method.withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
-    return method;
+    if (!hasMethod(containingClass, builderMethodName)) {
+      LombokLightMethodBuilder method = createBuilderMethod(containingClass, psiMethod, builderPsiClass, psiAnnotation, builderMethodName);
+      method.withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
+      target.add(method);
+    }
   }
 
   @NotNull

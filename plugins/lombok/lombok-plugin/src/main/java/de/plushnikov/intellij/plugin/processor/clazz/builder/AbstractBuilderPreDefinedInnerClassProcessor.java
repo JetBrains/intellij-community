@@ -36,7 +36,8 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
 
     final PsiElement parentElement = psiClass.getParent();
     if (parentElement instanceof PsiClass && !(parentElement instanceof LombokLightClassBuilder)) {
-      PsiMethod psiParentMethod = null;
+      result = new ArrayList<PsiElement>();
+
       final PsiClass psiParentClass = (PsiClass) parentElement;
       PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiParentClass, getSupportedAnnotation());
       if (null == psiAnnotation) {
@@ -44,31 +45,31 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
         for (PsiMethod psiMethod : psiMethods) {
           psiAnnotation = PsiAnnotationUtil.findAnnotation(psiMethod, getSupportedAnnotation());
           if (null != psiAnnotation) {
-            psiParentMethod = psiMethod;
-            break;
+            processMethodAnnotation(result, psiMethod, psiAnnotation, psiClass, psiParentClass);
           }
         }
-      }
-
-      if (null != psiAnnotation) {
-        final PsiType psiBuilderType = builderHandler.getBuilderType(psiParentClass, psiParentMethod);
-        final String builderClassName;
-
-        if (null == psiParentMethod) {
-          builderClassName = builderHandler.getBuilderClassName(psiParentClass, psiAnnotation, psiBuilderType);
-        } else {
-          builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
-        }
-
-        // apply only to inner BuilderClass
-        if (builderClassName.equals(psiClass.getName())) {
-          result = new ArrayList<PsiElement>();
-          generatePsiElements(psiParentClass, psiParentMethod, psiClass, psiAnnotation, result);
-        }
+      } else {
+        processMethodAnnotation(result, null, psiAnnotation, psiClass, psiParentClass);
       }
     }
 
     return result;
+  }
+
+  protected void processMethodAnnotation(List<? super PsiElement> result, PsiMethod psiParentMethod, PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, PsiClass psiParentClass) {
+    final PsiType psiBuilderType = builderHandler.getBuilderType(psiParentClass, psiParentMethod);
+    final String builderClassName;
+
+    if (null == psiParentMethod) {
+      builderClassName = builderHandler.getBuilderClassName(psiParentClass, psiAnnotation, psiBuilderType);
+    } else {
+      builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
+    }
+
+    // apply only to inner BuilderClass
+    if (builderClassName.equals(psiClass.getName())) {
+      generatePsiElements(psiParentClass, psiParentMethod, psiClass, psiAnnotation, result);
+    }
   }
 
   protected abstract void generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiClass psiBuilderClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target);

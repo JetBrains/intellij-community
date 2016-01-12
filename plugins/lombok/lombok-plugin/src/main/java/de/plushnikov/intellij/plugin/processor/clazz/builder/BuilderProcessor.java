@@ -65,9 +65,7 @@ public class BuilderProcessor extends AbstractClassProcessor {
       builderClass = builderHandler.createBuilderClass(psiClass, psiAnnotation);
     }
 
-    if (builderHandler.shouldGenerateBuilderMethod(psiClass, psiAnnotation)) {
-      target.add(builderHandler.createBuilderMethod(psiClass, null, builderClass, psiAnnotation));
-    }
+    builderHandler.createBuilderMethodIfNecessary(target, psiClass, null, builderClass, psiAnnotation);
 
     if (PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, TO_BUILDER_ANNOTATION_KEY, false)) {
       target.add(builderHandler.createToBuilderMethod(psiClass, null, builderClass, psiAnnotation));
