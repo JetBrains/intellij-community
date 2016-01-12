@@ -16,6 +16,7 @@
 package com.intellij.diff;
 
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.util.diff.Diff;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -45,7 +46,41 @@ public class Block {
 
   @NotNull
   public Block createPreviousBlock(@NotNull String[] prevContent) {
-    return new FindBlock(prevContent, this).getBlockInThePrevVersion();
+    int startLine = myStart;
+    int endLine = myEnd;
+
+    Diff.Change change = Diff.buildChangesSomehow(prevContent, getSource());
+    while (change != null) {
+      int startLine1 = change.line0;
+      int startLine2 = change.line1;
+      int endLine1 = startLine1 + change.deleted;
+      int endLine2 = startLine2 + change.inserted;
+
+      int shiftStart = startLine2 - startLine1;
+      int shiftEnd = endLine2 - endLine1;
+
+      if (startLine2 <= myStart) {
+        startLine = myStart - shiftStart;
+      }
+
+      if (endLine2 <= myStart) {
+        startLine = myStart - shiftEnd;
+      }
+
+      if (startLine2 < myEnd) {
+        endLine = myEnd - shiftEnd;
+      }
+
+      change = change.link;
+    }
+
+    if (endLine > prevContent.length) {
+      endLine = prevContent.length;
+    }
+    if (startLine < 0) startLine = 0;
+    if (endLine < startLine) endLine = startLine;
+
+    return new Block(prevContent, startLine, endLine);
   }
 
   @NotNull
