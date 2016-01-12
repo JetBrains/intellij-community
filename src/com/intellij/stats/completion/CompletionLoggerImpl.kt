@@ -58,6 +58,12 @@ class CompletionFileLogger(private val installationUID: String,
         }
     }
 
+    override fun customMessage(message: String) {
+        val builder = logBuilder(Action.CUSTOM)
+        builder.addText(message)
+        log(builder)
+    }
+
     override fun afterCharTyped(c: Char, completionList: List<LookupStringWithRelevance>) {
         lastCompletionList = completionList
     }
@@ -241,7 +247,8 @@ enum class Action {
     DOWN,
     COMPLETION_CANCELED,
     EXPLICIT_SELECT,
-    TYPED_SELECT
+    TYPED_SELECT,
+    CUSTOM
 }
 
 class LogLineBuilder(val installationUID: String, val completionUID: String, val action: Action) {
