@@ -46,6 +46,8 @@ class FindBlock {
     if (endLine > myLines.length) {
       endLine = myLines.length;
     }
+    if (startLine < 0) startLine = 0;
+    if (endLine < startLine) endLine = startLine;
 
     return new Block(myLines, startLine, endLine);
   }

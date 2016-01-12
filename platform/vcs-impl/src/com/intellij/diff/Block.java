@@ -52,12 +52,9 @@ public class Block {
   public String getBlockContent() {
     StringBuilder result = new StringBuilder();
 
-    int length = myEnd - myStart;
-
-    for (int i = 0; i < length; i++) {
-      if ((i + myStart) >= mySource.length) break;
+    for (int i = 0; i < myEnd - myStart; i++) {
+      if (i != 0) result.append("\n");
       result.append(mySource[i + myStart]);
-      if (i < length - 1) result.append("\n");
     }
 
     return result.toString();
