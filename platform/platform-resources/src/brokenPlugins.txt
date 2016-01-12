@@ -37,3 +37,4 @@ TFS 121.185 121.390 124.218 124.297 124.344 124.533 126.254 126.309 127.14 129.1
 "Haxe Support" "0.9.7 for IDEA 14.1.4"
 com.sencha.idea.IdeaPlugin 6.0.6.456 6.0.4.438 6.0.3.430 6.0.2.414 6.0.1.396 6.0.0.390 "0.4.325 (SenchaCon 2015 EA)" "0.3.323 (SenchaCon 2015 EA)" "0.3.312 (SenchaCon 2015 EA)" "0.2.251 (SenchaCon 2015 EA)" "0.1.211 (SenchaCon 2015 EA)" "0.1.210.1 (SenchaCon 2015 EA)" "0.1.210 (SenchaCon 2015 EA)"
 com.intellij.swift 144.SNAPSHOT
+SpellChecker 1.0
