@@ -16,8 +16,8 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessInfo;
-import com.intellij.execution.process.ProcessUtils;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
@@ -73,7 +73,7 @@ public class AttachToLocalProcessAction extends AnAction {
     final Project project = getEventProject(e);
     if (project == null) return;
 
-    ProcessInfo[] processList = ProcessUtils.getProcessList();
+    ProcessInfo[] processList = OSProcessUtil.getProcessList();
     XLocalAttachDebuggerProvider[] providers = Extensions.getExtensions(XLocalAttachDebuggerProvider.EP);
 
     ProcessListStep step = new ProcessListStep(collectAttachItems(project, processList, providers), project);

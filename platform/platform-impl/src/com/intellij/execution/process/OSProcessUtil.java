@@ -38,8 +38,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ProcessUtils {
-  private static final Logger LOG = Logger.getInstance(ProcessUtils.class);
+public class OSProcessUtil {
+  private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
 
   @NotNull
   public static ProcessInfo[] getProcessList() {

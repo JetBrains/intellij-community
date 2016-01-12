@@ -16,7 +16,7 @@
 package com.intellij.execution.process.impl;
 
 import com.intellij.execution.process.OSProcessManager;
-import com.intellij.execution.process.ProcessUtils;
+import com.intellij.execution.process.OSProcessUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,12 +28,12 @@ import java.util.List;
 public class OSProcessManagerImpl extends OSProcessManager {
   @Override
   public boolean killProcessTree(@NotNull Process process) {
-    return ProcessUtils.killProcessTree(process);
+    return OSProcessUtil.killProcessTree(process);
   }
 
   @Override
   @Nullable
   public List<String> getCommandLinesOfRunningProcesses() {
-    return ProcessUtils.getCommandLinesOfRunningProcesses();
+    return OSProcessUtil.getCommandLinesOfRunningProcesses();
   }
 }
