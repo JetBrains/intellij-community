@@ -190,7 +190,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         
         val currentItem = lookup.currentItem
         val index = lookup.items.indexOf(currentItem)
-        logger.itemSelectedCompletionFinished(index, currentItem!!.lookupString, lookup.toRelevanceDataList())
+        logger.itemSelectedCompletionFinished(index, currentItem?.lookupString ?: "NULL", lookup.toRelevanceDataList())
     }
 
     override fun downPressed() {
