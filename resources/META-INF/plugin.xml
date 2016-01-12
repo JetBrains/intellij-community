@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
-  <version>0.0.22</version>
+  <version>0.0.23</version>
   <vendor email="yaroslav.lepenkin@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
@@ -10,8 +10,7 @@
 
   <change-notes><![CDATA[
       <ul>
-        <li>No console output</li>
-        <li>Backspace logging also works lazily</li>
+        <li>Fixed couple NPE's</li>
       </ul>
     ]]>
   </change-notes>
