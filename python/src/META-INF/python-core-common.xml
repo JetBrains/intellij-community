@@ -565,6 +565,10 @@
     <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider"/>
     <applicationService serviceInterface="com.jetbrains.python.PythonFoldingSettings"
                         serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
+
+    <!-- postfix templates!-->
+    <codeInsight.template.postfixTemplateProvider language="Python"
+                                                  implementationClass="com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateProvider"/>
   </extensions>
 
   <extensionPoints>
