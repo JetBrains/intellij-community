@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
@@ -60,25 +61,58 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
         });
       }
 
-      private void doCheckMethodCallOnFunctionalExpression(PsiFunctionalExpression expression,
+      @Override
+      public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+        if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, false)) {
+          final PsiElement newExpression = aClass.getParent();
+          doCheckMethodCallOnFunctionalExpression(new Condition<PsiElement>() {
+            @Override
+            public boolean value(PsiElement ggParent) {
+              final PsiMethod method = aClass.getMethods()[0];
+              final PsiCodeBlock body = method.getBody();
+              final PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(body);
+              if (returnStatements.length > 1) {
+                return false;
+              }
+              final PsiElement callParent = ggParent.getParent();
+              return callParent instanceof PsiStatement ||
+                     callParent instanceof PsiLocalVariable;
+            }
+          }, newExpression, aClass.getBaseClassType(), "Replace call with method body");
+        }
+      }
+
+      private void doCheckMethodCallOnFunctionalExpression(PsiElement expression,
                                                            Condition<PsiElement> elementContainerCondition) {
         final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
         if (parent instanceof PsiTypeCastExpression) {
-          final PsiElement gParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
-          if (gParent instanceof PsiReferenceExpression) {
-            final PsiElement ggParent = gParent.getParent();
-            if (ggParent instanceof PsiMethodCallExpression) {
-              final PsiMethod resolveMethod = ((PsiMethodCallExpression)ggParent).resolveMethod();
-              final PsiElement referenceNameElement = ((PsiMethodCallExpression)ggParent).getMethodExpression().getReferenceNameElement();
-              if (resolveMethod != null &&
-                  resolveMethod.getParameterList().getParametersCount() == 0 && //todo pass args as parameters
-                  resolveMethod == LambdaUtil.getFunctionalInterfaceMethod(((PsiTypeCastExpression)parent).getType()) &&
-                  referenceNameElement != null &&
-                  elementContainerCondition.value(ggParent)) {
+          final PsiType interfaceType = ((PsiTypeCastExpression)parent).getType();
+          doCheckMethodCallOnFunctionalExpression(elementContainerCondition, parent, interfaceType,
+                                                  "Replace method call " + 
+                                                  (expression instanceof PsiLambdaExpression ? "on lambda with lambda body"
+                                                                                             : "on method reference with corresponding method call"));
+        }
+      }
+
+      private void doCheckMethodCallOnFunctionalExpression(Condition<PsiElement> elementContainerCondition,
+                                                           PsiElement parent,
+                                                           PsiType interfaceType, 
+                                                           String quickFixName) {
+        final PsiElement gParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
+        if (gParent instanceof PsiReferenceExpression) {
+          final PsiElement ggParent = gParent.getParent();
+          if (ggParent instanceof PsiMethodCallExpression) {
+            final PsiMethod resolveMethod = ((PsiMethodCallExpression)ggParent).resolveMethod();
+            final PsiElement referenceNameElement = ((PsiMethodCallExpression)ggParent).getMethodExpression().getReferenceNameElement();
+            if (resolveMethod != null &&
+                resolveMethod.getParameterList().getParametersCount() == 0 &&
+                referenceNameElement != null &&
+                elementContainerCondition.value(ggParent)) {
+              final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
+              if (resolveMethod == interfaceMethod || 
+                  interfaceMethod != null && MethodSignatureUtil.isSuperMethod(interfaceMethod, resolveMethod)) {
                 final ReplaceWithLambdaBodyFix fix = 
-                  new ReplaceWithLambdaBodyFix("Replace method call " +
-                                               (expression instanceof PsiLambdaExpression ? "on lambda with lambda body" 
-                                                                                          : "on method reference with corresponding method call"));
+                  new ReplaceWithLambdaBodyFix(quickFixName);
                 holder.registerProblem(referenceNameElement, "Method call can be simplified", fix);
               }
             }
@@ -123,6 +157,15 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
             final PsiLambdaExpression lambdaExpression =
               LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)element, false, true);
             replaceWithLambdaBody(callExpression, lambdaExpression);
+          }
+        }
+        else if (qualifierExpression instanceof PsiNewExpression) {
+          final PsiExpression cast = AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(qualifierExpression, true, false);
+          if (cast instanceof PsiTypeCastExpression) {
+            final PsiExpression lambdaExpression = ((PsiTypeCastExpression)cast).getOperand();
+            if (lambdaExpression instanceof PsiLambdaExpression) {
+              replaceWithLambdaBody(callExpression, (PsiLambdaExpression)lambdaExpression);
+            }
           }
         }
       }

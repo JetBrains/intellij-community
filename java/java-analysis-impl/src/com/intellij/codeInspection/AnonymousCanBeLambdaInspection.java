@@ -261,7 +261,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
       ReplaceWithLambdaFix
-        .giveUniqueNames(project, anonymousClass, elementFactory, body, conflictingLocals.toArray(new PsiVariable[conflictingLocals.size()]));
+        .giveUniqueNames(project, elementFactory, body, conflictingLocals.toArray(new PsiVariable[conflictingLocals.size()]));
 
       final String withoutTypesDeclared = ReplaceWithLambdaFix.composeLambdaText(method);
 
@@ -273,7 +273,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       lambdaBody.replace(body);
 
       ReplaceWithLambdaFix
-        .giveUniqueNames(project, lambdaContext, elementFactory, lambdaExpression, lambdaExpression.getParameterList().getParameters());
+        .giveUniqueNames(project, elementFactory, lambdaExpression, lambdaExpression.getParameterList().getParameters());
 
       final PsiNewExpression newExpression = (PsiNewExpression)anonymousClass.getParent();
       lambdaExpression = (PsiLambdaExpression)newExpression.replace(lambdaExpression);
@@ -332,7 +332,6 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     }
 
     private static void giveUniqueNames(Project project,
-                                        PsiElement lambdaContext,
                                         final PsiElementFactory elementFactory,
                                         PsiElement body,
                                         PsiVariable[] parameters) {
