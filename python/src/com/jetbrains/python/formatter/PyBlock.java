@@ -323,8 +323,13 @@ public class PyBlock implements ASTBlock {
       if (childType == PyTokenTypes.RPAR) {
         childIndent = Indent.getNoneIndent();
       }
-      else if (childType != PyTokenTypes.LPAR){
-        childIndent = Indent.getContinuationIndent();
+      else {
+        if (parentType == PyElementTypes.PARAMETER_LIST || argumentMayHaveSameIndentAsFollowingStatementList()) {
+          childIndent = Indent.getContinuationIndent();
+        }
+        else {
+          childIndent = Indent.getNormalIndent();
+        }
       }
     }
     else if (parentType == PyElementTypes.SUBSCRIPTION_EXPRESSION) {
@@ -419,6 +424,19 @@ public class PyBlock implements ASTBlock {
 
   private static boolean isEmptySequence(@NotNull ASTNode node) {
     return node.getPsi() instanceof PySequenceExpression && ((PySequenceExpression)node.getPsi()).isEmpty();
+  }
+
+  private boolean argumentMayHaveSameIndentAsFollowingStatementList() {
+    if (myNode.getElementType() != PyElementTypes.ARGUMENT_LIST) {
+      return false;
+    }
+    // This check is supposed to prevent PEP8's error: Continuation line with the same indent as next logical line
+    final PsiElement header = getControlStatementHeader(myNode);
+    if (header instanceof PyStatementListContainer) {
+      final PyStatementList statementList = ((PyStatementListContainer)header).getStatementList();
+      return PyUtil.onSameLine(header, myNode.getPsi()) && !PyUtil.onSameLine(header, statementList);
+    }
+    return false;
   }
 
   // Check https://www.python.org/dev/peps/pep-0008/#indentation
