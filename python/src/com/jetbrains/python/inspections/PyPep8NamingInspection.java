@@ -67,13 +67,14 @@ public class PyPep8NamingInspection extends PyInspection {
   private static final Pattern UPPERCASE_REGEX = Pattern.compile("[_\\p{javaUpperCase}][_\\p{javaUpperCase}0-9]*");
   private static final Pattern MIXEDCASE_REGEX = Pattern.compile("_?_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
   private static final String INSPECTION_SHORT_NAME = "PyPep8NamingInspection";
+  // See error codes of the tool "pep8-naming"
   private static final Map<String, String> ERROR_CODES_DESCRIPTION = ImmutableMap.<String, String>builder()
     .put("N801", "Class names should use CamelCase convention")
     .put("N802", "Function name should be lowercase")
     .put("N803", "Argument name should be lowercase")
     .put("N806", "Variable in function should be lowercase")
     .put("N811", "Constant variable imported as non constant")
-    .put("N812", "Lowercase variable imported as non lowercase)")
+    .put("N812", "Lowercase variable imported as non lowercase")
     .put("N813", "CamelCase variable imported as lowercase")
     .put("N814", "CamelCase variable imported as constant")
     .build();
