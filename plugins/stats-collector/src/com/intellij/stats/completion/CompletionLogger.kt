@@ -31,5 +31,7 @@ abstract class CompletionLogger {
     abstract fun itemSelectedCompletionFinished(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>)
     abstract fun completionCancelled()
     abstract fun itemSelectedByTyping(itemName: String)
-    
+
+    abstract fun customMessage(message: String)
+
 }

@@ -232,7 +232,11 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     override fun beforeCharTyped(c: Char) {
         if (!isCompletionActive()) return
         if (c == '.') {
-            val item = lookup.currentItem!!
+            val item = lookup.currentItem
+            if (item == null) {
+                logger.customMessage("Before typed $c lookup.currentItem is null; lookup size: ${lookup.items.size}")
+                return
+            }
             val text = lookup.itemPattern(item)
             if (item.lookupString.equals(text)) {
                 selectedByDotTyping = true
