@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -1096,11 +1097,18 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
                                                   }
                                                   else {
                                                     try {
+                                                      DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
                                                       settings.checkSettings();
                                                       icon = ProgramRunnerUtil.getConfigurationIcon(settings, false);
                                                     }
+                                                    catch (IndexNotReadyException e) {
+                                                      icon = ProgramRunnerUtil.getConfigurationIcon(settings, !Registry.is("dumb.aware.run.configurations"));
+                                                    }
                                                     catch (RuntimeConfigurationException ignored) {
                                                       icon = ProgramRunnerUtil.getConfigurationIcon(settings, true);
+                                                    }
+                                                    finally {
+                                                      DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
                                                     }
                                                   }
                                                   myIconCalcTime.put(uniqueID, System.currentTimeMillis() - startTime);
