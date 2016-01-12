@@ -100,12 +100,15 @@ public class VcsCherryPickManager {
       myChangeListManager.blockModalNotifications();
     }
 
-    public boolean processDetails(@NotNull VcsFullCommitDetails details,
-                                  @NotNull MultiMap<VcsCherryPicker, VcsFullCommitDetails> groupedDetails) {
+    @Nullable
+    private VcsCherryPicker getCherryPickerOrReportError(@NotNull VcsFullCommitDetails details) {
       CommitId commitId = new CommitId(details.getId(), details.getRoot());
       if (myIdsInProgress.contains(commitId)) {
-        showError("Cherry pick process is already started for commit "  + commitId.getHash().toShortString() + " from root " + commitId.getRoot().getName());
-        return false;
+        showError("Cherry pick process is already started for commit " +
+                  commitId.getHash().toShortString() +
+                  " from root " +
+                  commitId.getRoot().getName());
+        return null;
       }
       myIdsInProgress.add(commitId);
 
@@ -113,10 +116,9 @@ public class VcsCherryPickManager {
       if (cherryPicker == null) {
         showError(
           "Cherry pick is not supported for commit " + details.getId().toShortString() + " from root " + details.getRoot().getName());
-        return false;
+        return null;
       }
-      groupedDetails.putValue(cherryPicker, details);
-      return true;
+      return cherryPicker;
     }
 
     public void showError(@NotNull String message) {
@@ -130,10 +132,12 @@ public class VcsCherryPickManager {
         boolean isOk = true;
         MultiMap<VcsCherryPicker, VcsFullCommitDetails> groupedCommits = createArrayMultiMap();
         for (VcsFullCommitDetails details : myAllCommits) {
-          if (!processDetails(details, groupedCommits)) {
+          VcsCherryPicker cherryPicker = getCherryPickerOrReportError(details);
+          if (cherryPicker == null) {
             isOk = false;
             break;
           }
+          groupedCommits.putValue(cherryPicker, details);
         }
 
         if (isOk) {
