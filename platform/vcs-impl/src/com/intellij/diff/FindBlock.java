@@ -24,22 +24,37 @@ class FindBlock {
   private final Block myCurrentVersion;
   private final String[] myLines;
 
-  private int startLine;
-  private int endLine;
-
   public FindBlock(String[] prevVersion, Block currentVersion) {
     myCurrentVersion = currentVersion;
-
     myLines = prevVersion;
-    startLine = currentVersion.getStart();
-    endLine = currentVersion.getEnd();
   }
 
   public Block getBlockInThePrevVersion() {
+    int startLine = myCurrentVersion.getStart();
+    int endLine = myCurrentVersion.getEnd();
+
     Diff.Change change = Diff.buildChangesSomehow(myLines, myCurrentVersion.getSource());
     while (change != null) {
-      shiftIndices(change.line1, change.line1, change.line0);
-      shiftIndices(change.line1, change.line1 + change.inserted, change.line0 + change.deleted);
+      int startLine1 = change.line0;
+      int startLine2 = change.line1;
+      int endLine1 = startLine1 + change.deleted;
+      int endLine2 = startLine2 + change.inserted;
+
+      int shiftStart = startLine2 - startLine1;
+      int shiftEnd = endLine2 - endLine1;
+
+      if (startLine2 <= myCurrentVersion.getStart()) {
+        startLine = myCurrentVersion.getStart() - shiftStart;
+      }
+
+      if (endLine2 <= myCurrentVersion.getStart()) {
+        startLine = myCurrentVersion.getStart() - shiftEnd;
+      }
+
+      if (startLine2 < myCurrentVersion.getEnd()) {
+        endLine = myCurrentVersion.getEnd() - shiftEnd;
+      }
+
       change = change.link;
     }
 
@@ -50,17 +65,5 @@ class FindBlock {
     if (endLine < startLine) endLine = startLine;
 
     return new Block(myLines, startLine, endLine);
-  }
-
-  private void shiftIndices(int firstChangeIndex,int line1, int line0) {
-    int shift = line1 - line0;
-
-    if (line1 <= myCurrentVersion.getStart()) {
-      startLine = myCurrentVersion.getStart() - shift;
-    }
-
-    if (firstChangeIndex < myCurrentVersion.getEnd()) {
-      endLine = myCurrentVersion.getEnd() - shift;
-    }
   }
 }
