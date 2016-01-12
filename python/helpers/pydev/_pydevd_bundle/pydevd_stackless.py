@@ -1,13 +1,16 @@
 from __future__ import nested_scopes
-from _pydevd_bundle.pydevd_constants import *  # @UnusedWildImport
-import stackless  # @UnresolvedImport
-from pydevd_tracing import SetTrace
-from _pydevd_bundle.pydevd_custom_frames import update_custom_frame, remove_custom_frame, add_custom_frame
-from _pydevd_bundle.pydevd_comm import get_global_debugger
+
 import weakref
-from pydevd_file_utils import get_filename_and_base
-from pydevd import DONT_TRACE
+import sys
+
+from _pydevd_bundle.pydevd_comm import get_global_debugger
+from _pydevd_bundle.pydevd_constants import threading, dict_contains, call_only_once
 from _pydevd_bundle.pydevd_constants import dict_items
+from _pydevd_bundle.pydevd_custom_frames import update_custom_frame, remove_custom_frame, add_custom_frame
+from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
+from pydevd_tracing import SetTrace
+import stackless  # @UnresolvedImport
 
 
 # Used so that we don't loose the id (because we'll remove when it's not alive and would generate a new id for the
@@ -216,7 +219,7 @@ def _schedule_callback(prev, next):
                         if frame is current_frame:
                             frame = frame.f_back
                         if frame is not None:
-                            _filename, base = get_filename_and_base(frame)
+                            base = get_abs_path_real_path_and_base_from_frame(frame)[-1]
                             # print >>sys.stderr, "SchedCB: %r, %d, '%s', '%s'" % (tasklet, frame.f_lineno, _filename, base)
                             is_file_to_ignore = dict_contains(DONT_TRACE, base)
                             if not is_file_to_ignore:
@@ -284,7 +287,7 @@ if not hasattr(stackless.tasklet, "trace_function"):
                         if tasklet.paused or tasklet.blocked or tasklet.scheduled:
                             if tasklet.frame and tasklet.frame.f_back:
                                 f_back = tasklet.frame.f_back
-                                _filename, base = get_filename_and_base(f_back)
+                                base = get_abs_path_real_path_and_base_from_frame(f_back)[-1]
                                 is_file_to_ignore = dict_contains(DONT_TRACE, base)
                                 if not is_file_to_ignore:
                                     if tasklet_info.frame_id is None:

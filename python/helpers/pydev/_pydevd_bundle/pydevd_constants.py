@@ -59,7 +59,7 @@ IS_PY24 = False
 try:
     if sys.version_info[0] >= 3:
         IS_PY3K = True
-        if sys.version_info[0] == 3 and sys.version_info[1] >= 4:
+        if (sys.version_info[0] == 3 and sys.version_info[1] >= 4) or sys.version_info[0] > 3:
             IS_PY34_OLDER = True
     elif sys.version_info[0] == 2 and sys.version_info[1] == 7:
         IS_PY27 = True
@@ -67,15 +67,6 @@ try:
         IS_PY24 = True
 except AttributeError:
     pass  #Not all versions have sys.version_info
-
-try:
-    IS_64_BITS = sys.maxsize > 2 ** 32
-except AttributeError:
-    try:
-        import struct
-        IS_64_BITS = struct.calcsize("P") * 8 > 32
-    except:
-        IS_64_BITS = False
 
 try:
     SUPPORT_GEVENT = os.getenv('GEVENT_SUPPORT', 'False') == 'True'
@@ -184,6 +175,11 @@ except NameError:
     class object:
         pass
 
+    import __builtin__
+
+    setattr(__builtin__, 'object', object)
+
+
 try:
     enumerate
 except:
@@ -205,22 +201,6 @@ except:
 
 
 #=======================================================================================================================
-# NextId
-#=======================================================================================================================
-class NextId:
-
-    def __init__(self):
-        self._id = 0
-
-    def __call__(self):
-        #No need to synchronize here
-        self._id += 1
-        return self._id
-
-_nextThreadId = NextId()
-
-
-#=======================================================================================================================
 # get_pid
 #=======================================================================================================================
 def get_pid():
@@ -236,26 +216,39 @@ def get_pid():
             #ok, no pid available (will be unable to debug multiple processes)
             return '000001'
 
+def clear_cached_thread_id(thread):
+    try:
+        del thread.__pydevd_id__
+    except AttributeError:
+        pass
 
 #=======================================================================================================================
 # get_thread_id
 #=======================================================================================================================
-def get_thread_id(thread, update_pydevd_id=False):
+def get_thread_id(thread):
     try:
-        if update_pydevd_id:
-            del thread.__pydevd_id__
-        return thread.__pydevd_id__
+        tid = thread.__pydevd_id__
+        if tid is None:
+            # Fix for https://sw-brainwy.rhcloud.com/tracker/PyDev/645
+            # if __pydevd_id__ is None, recalculate it... also, use an heuristic
+            # that gives us always the same id for the thread (using thread.ident or id(thread)).
+            raise AttributeError()
     except AttributeError:
         _nextThreadIdLock.acquire()
         try:
             #We do a new check with the lock in place just to be sure that nothing changed
-            if not hasattr(thread, '__pydevd_id__'):
+            tid = getattr(thread, '__pydevd_id__', None)
+            if tid is None:
                 pid = get_pid()
-                thread.__pydevd_id__ = 'pid%s_seq%s' % (pid, _nextThreadId())
+                try:
+                    tid = thread.__pydevd_id__ = 'pid_%s_id_%s' % (pid, thread.ident)
+                except:
+                    # thread.ident isn't always there... (use id(thread) instead if it's not there).
+                    tid = thread.__pydevd_id__ = 'pid_%s_id_%s' % (pid, id(thread))
         finally:
             _nextThreadIdLock.release()
 
-    return thread.__pydevd_id__
+    return tid
 
 #===============================================================================
 # Null

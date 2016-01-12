@@ -114,19 +114,27 @@ def patch_args(args):
             return args
 
         i = 1
+
+        # Original args should be something as:
+        # ['X:\\pysrc\\pydevd.py', '--multiprocess', '--print-in-debugger-startup',
+        #  '--vm_type', 'python', '--client', '127.0.0.1', '--port', '56352', '--file', 'x:\\snippet1.py']
         original = sys.original_argv[:]
         while i < len(args):
             if args[i] == '-m':
-                original.insert(i, '--module')
+                # Always insert at pos == 1 (i.e.: pydevd "--module" --multiprocess ...)
+                original.insert(1, '--module')
             else:
                 if args[i].startswith('-'):
                     new_args.append(args[i])
                 else:
                     break
-                break
             i += 1
 
-        if i >= len(args) and _is_managed_arg(args[i]):  # no need to add pydevd twice
+        # Note: undoing https://github.com/Elizaveta239/PyDev.Debugger/commit/053c9d6b1b455530bca267e7419a9f63bf51cddf
+        # (i >= len(args) instead of i < len(args))
+        # in practice it'd raise an exception here and would return original args, which is not what we want... providing
+        # a proper fix for https://youtrack.jetbrains.com/issue/PY-9767 elsewhere.
+        if i < len(args) and _is_managed_arg(args[i]):  # no need to add pydevd twice
             return args
 
         for x in original:  # @UndefinedVariable
@@ -246,7 +254,8 @@ def str_to_args_windows(args):
 
 def patch_arg_str_win(arg_str):
     args = str_to_args_windows(arg_str)
-    if not is_python(args[0]):
+    # Fix https://youtrack.jetbrains.com/issue/PY-9767 (args may be empty)
+    if not args or not is_python(args[0]):
         return arg_str
     arg_str = args_to_str(patch_args(args))
     log_debug("New args: %s" % arg_str)
@@ -379,12 +388,12 @@ def create_CreateProcess(original_name):
     """
     CreateProcess(*args, **kwargs)
     """
-    def new_CreateProcess(appName, commandLine, *args):
+    def new_CreateProcess(app_name, cmd_line, *args):
         try:
             import _subprocess
         except ImportError:
             import _winapi as _subprocess
-        return getattr(_subprocess, original_name)(appName, patch_arg_str_win(commandLine), *args)
+        return getattr(_subprocess, original_name)(app_name, patch_arg_str_win(cmd_line), *args)
     return new_CreateProcess
 
 

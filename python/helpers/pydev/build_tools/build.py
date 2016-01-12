@@ -1,3 +1,12 @@
+'''
+Helper to build pydevd.
+
+It should:
+    * recreate our generated files
+    * compile cython deps (properly setting up the environment first).
+
+Note that it's used in the CI to build the cython deps based on the PYDEVD_USE_CYTHON environment variable.
+'''
 from __future__ import print_function
 
 import os
@@ -72,14 +81,20 @@ def get_environment_from_batch_command(env_cmd, initial=None):
     proc.communicate()
     return result
 
+def remove_binaries():
+    for f in os.listdir(os.path.join(root_dir, '_pydevd_bundle')):
+        if f.endswith('.pyd'):
+            remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', f))
 
 def build():
-    remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_trace_dispatch_cython.pyd'))
-    remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_additional_thread_info_cython.pyd'))
+    if '--no-remove-binaries' not in sys.argv:
+        remove_binaries()
+
+
     os.chdir(root_dir)
 
+    env=None
     if sys.platform == 'win32':
-
         # "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
         # set MSSdk=1
         # set DISTUTILS_USE_SDK=1
@@ -107,7 +122,7 @@ def build():
                     [vcvarsall, 'x86'],
                     initial=os.environ.copy()))
 
-        elif sys.version_info[:2] == (3,4):
+        elif sys.version_info[:2] in ((3,3), (3,4)):
             if is_python_64bit():
                 env.update(get_environment_from_batch_command(
                     [r"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd", '/x64'],
@@ -123,11 +138,29 @@ def build():
         env['MSSdk'] = '1'
         env['DISTUTILS_USE_SDK'] = '1'
 
-    subprocess.check_call([
-        sys.executable, os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'),
-        'build_ext', '--inplace', ], env=env,)
+    additional_args = []
+    for arg in sys.argv:
+        if arg.startswith('--target-pyd-name='):
+            additional_args.append(arg)
+
+    args = [
+        sys.executable, os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'), 'build_ext', '--inplace',
+    ]+additional_args
+    print('Calling args: %s' % (args,))
+    subprocess.check_call(args, env=env,)
 
 if __name__ == '__main__':
-    generate_dont_trace_files()
-    generate_cython_module()
-    build()
+    use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
+    if use_cython == 'YES':
+        build()
+    elif use_cython == 'NO':
+        remove_binaries()
+    elif use_cython is None:
+        # Regular process
+        if not '--no-regenerate-files':
+            generate_dont_trace_files()
+            generate_cython_module()
+        build()
+    else:
+        raise RuntimeError('Unexpected value for PYDEVD_USE_CYTHON: %s (accepted: YES, NO)' % (use_cython,))
+

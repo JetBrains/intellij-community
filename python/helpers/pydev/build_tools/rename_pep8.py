@@ -1,3 +1,6 @@
+'''
+Helper module to do refactoring to convert names to pep8.
+'''
 import re
 import os
 import names_to_rename
@@ -10,7 +13,7 @@ def _normalize(name):
 
 def find_matches_in_contents(contents):
     return [x[1] for x in re.findall(_CAMEL_DEF_RE, contents)]
-    
+
 def iter_files_in_dir(dirname):
     for root, dirs, files in os.walk(dirname):
         for name in ('pydevd_attach_to_process', '.git', 'stubs', 'pydev_ipython', 'third_party', 'pydev_ipython'):
@@ -25,14 +28,14 @@ def iter_files_in_dir(dirname):
                     initial_contents = stream.read()
 
                 yield path, initial_contents
-            
+
 def find_matches():
     found = set()
     for path, initial_contents in iter_files_in_dir(os.path.dirname(os.path.dirname(__file__))):
         found.update(find_matches_in_contents(initial_contents))
     print '\n'.join(sorted(found))
     print 'Total', len(found)
-    
+
 def substitute_contents(re_name_to_new_val, initial_contents):
     contents = initial_contents
     for key, val in re_name_to_new_val.iteritems():
@@ -46,12 +49,12 @@ def make_replace():
         contents = substitute_contents(re_name_to_new_val, initial_contents)
         if contents != initial_contents:
             print 'Changed something at: %s' % (path,)
-            
+
             for val in re_name_to_new_val.itervalues():
                 # Check in initial contents to see if it already existed!
                 if re.findall(r'\b%s\b' % (val,), initial_contents):
                     raise AssertionError('Error in:\n%s\n%s is already being used (and changes may conflict).' % (path, val,))
-            
+
             with open(path, 'wb') as stream:
                 stream.write(contents)
 
@@ -91,7 +94,7 @@ DictIterValues
 DictKeys
 DictPop
 DictValues
-''') 
+''')
     assert re_name_to_new_val == {'\\bDictPop\\b': 'dict_pop', '\\bDictItems\\b': 'dict_items', '\\bDictIterValues\\b': 'dict_iter_values', '\\bDictKeys\\b': 'dict_keys', '\\bDictContains\\b': 'dict_contains', '\\bDictIterItems\\b': 'dict_iter_items', '\\bCustomFramesContainerInit\\b': 'custom_frames_container_init', '\\bDictValues\\b': 'dict_values'}
     assert substitute_contents(re_name_to_new_val, '''
 CustomFramesContainerInit
@@ -112,7 +115,7 @@ dict_keys
 dict_pop
 dict_values
 '''
-    
+
 if __name__ == '__main__':
 #     find_matches()
     make_replace()

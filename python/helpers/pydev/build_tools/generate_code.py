@@ -1,5 +1,6 @@
 '''
-This module should be run to recreate the files that we generate automatically.
+This module should be run to recreate the files that we generate automatically
+(i.e.: modules that shouldn't be traced and cython .pyx)
 '''
 
 from __future__ import print_function
@@ -110,6 +111,14 @@ if IS_PY3K:
     pydev_files = []
 
     for root, dirs, files in os.walk(root_dir):
+        try:
+            dirs.remove('build')
+        except:
+            pass
+        try:
+            dirs.remove('dist')
+        except:
+            pass
         if os.path.basename(root) in (
             'PyDev.Debugger',
             '_pydev_bundle',
@@ -138,17 +147,21 @@ def remove_if_exists(f):
         import traceback;traceback.print_exc()
 
 def generate_cython_module():
-    remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_trace_dispatch_cython.pyx'))
-    remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_additional_thread_info_cython.pyx'))
+    remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_cython.pyx'))
 
-    target = os.path.join(root_dir, '_pydevd_bundle', 'pydevd_trace_dispatch_cython.pyx')
+    target = os.path.join(root_dir, '_pydevd_bundle', 'pydevd_cython.pyx')
+    curr = os.environ.get('PYDEVD_USE_CYTHON')
+    try:
+        os.environ['PYDEVD_USE_CYTHON'] = 'NO'
 
-    from _pydevd_bundle import pydevd_frame, pydevd_trace_dispatch_regular
-    _generate_cython_from_files(target, [pydevd_frame, pydevd_trace_dispatch_regular])
-
-    target = os.path.join(root_dir, '_pydevd_bundle', 'pydevd_additional_thread_info_cython.pyx')
-    from _pydevd_bundle import pydevd_additional_thread_info_regular
-    _generate_cython_from_files(target, [pydevd_additional_thread_info_regular])
+        from _pydevd_bundle import pydevd_additional_thread_info_regular
+        from _pydevd_bundle import pydevd_frame, pydevd_trace_dispatch_regular
+        _generate_cython_from_files(target, [pydevd_additional_thread_info_regular, pydevd_frame, pydevd_trace_dispatch_regular])
+    finally:
+        if curr is None:
+            del os.environ['PYDEVD_USE_CYTHON']
+        else:
+            os.environ['PYDEVD_USE_CYTHON'] = curr
 
 if __name__ == '__main__':
     generate_dont_trace_files()

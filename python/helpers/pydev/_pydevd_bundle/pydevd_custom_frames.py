@@ -1,5 +1,5 @@
 from _pydevd_bundle.pydevd_constants import *  #@UnusedWildImport
-from pydevd_file_utils import get_filename_and_base
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
 from _pydev_imps import _pydev_thread
 threadingCurrentThread = threading.currentThread
 
@@ -71,7 +71,7 @@ def add_custom_frame(frame, name, thread_id):
         frame_id = '__frame__:%s|%s' % (next_id, curr_thread_id)
         if DEBUG:
             sys.stderr.write('add_custom_frame: %s (%s) %s %s\n' % (
-                frame_id, get_filename_and_base(frame)[1], frame.f_lineno, frame.f_code.co_name))
+                frame_id, get_abs_path_real_path_and_base_from_frame(frame)[-1], frame.f_lineno, frame.f_code.co_name))
 
         CustomFramesContainer.custom_frames[frame_id] = CustomFrame(name, frame, thread_id)
         CustomFramesContainer._py_db_command_thread_event.set()
@@ -129,5 +129,5 @@ def remove_custom_frame(frame_id):
         CustomFramesContainer._py_db_command_thread_event.set()
     finally:
         CustomFramesContainer.custom_frames_lock.release()
-        
+
 removeCustomFrame = remove_custom_frame # Backward compatibility

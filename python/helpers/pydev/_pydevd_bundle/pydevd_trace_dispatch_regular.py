@@ -2,13 +2,17 @@ import traceback
 
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_imps import _pydev_threading as threading
-from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 from _pydevd_bundle.pydevd_constants import get_thread_id
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
-from pydevd_file_utils import get_filename_and_base
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 from _pydevd_bundle.pydevd_tracing import SetTrace
 
+# IFDEF CYTHON
+# # In Cython, PyDBAdditionalThreadInfo is bundled in the file.
+# ELSE
+from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
+# ENDIF
 
 threadingCurrentThread = threading.currentThread
 get_file_type = DONT_TRACE.get
@@ -69,6 +73,8 @@ class ThreadTracer:
         # IFDEF CYTHON
         # cdef str filename;
         # cdef str base;
+        # cdef tuple abs_path_real_path_and_base;
+        # cdef PyDBAdditionalThreadInfo additional_info;
         # ENDIF
         py_db, t, additional_info = self._args
 
@@ -89,7 +95,11 @@ class ThreadTracer:
                 py_db._process_thread_not_alive(get_thread_id(t))
                 return None  # suspend tracing
 
-            filename, base = get_filename_and_base(frame)
+            try:
+                # Make fast path faster!
+                abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
+            except:
+                abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
 
             if py_db.thread_analyser is not None:
                 py_db.thread_analyser.log_event(frame)
@@ -97,11 +107,11 @@ class ThreadTracer:
             if py_db.asyncio_analyser is not None:
                 py_db.asyncio_analyser.log_event(frame)
 
-            file_type = get_file_type(base) #we don't want to debug threading or anything related to pydevd
+            file_type = get_file_type(abs_path_real_path_and_base[-1]) #we don't want to debug threading or anything related to pydevd
 
             if file_type is not None:
                 if file_type == 1: # inlining LIB_FILE = 1
-                    if py_db.not_in_scope(filename):
+                    if py_db.not_in_scope(abs_path_real_path_and_base[1]):
                         # print('skipped: trace_dispatch (not in scope)', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
                         return None
                 else:
@@ -116,9 +126,9 @@ class ThreadTracer:
             # each new frame...
             # IFDEF CYTHON
             # # Note that on Cython we only support more modern idioms (no support for < Python 2.5)
-            # return PyDBFrame((py_db, filename, additional_info, t)).trace_dispatch(frame, event, arg)
+            # return PyDBFrame((py_db, abs_path_real_path_and_base[1], additional_info, t)).trace_dispatch(frame, event, arg)
             # ELSE
-            return additional_info.create_db_frame((py_db, filename, additional_info, t, frame)).trace_dispatch(frame, event, arg)
+            return additional_info.create_db_frame((py_db, abs_path_real_path_and_base[1], additional_info, t, frame)).trace_dispatch(frame, event, arg)
             # ENDIF
 
         except SystemExit:

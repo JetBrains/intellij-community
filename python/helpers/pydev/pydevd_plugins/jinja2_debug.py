@@ -3,7 +3,7 @@ from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_name
 from _pydevd_bundle.pydevd_constants import get_thread_id, STATE_SUSPEND, dict_contains, dict_iter_items, dict_keys, JINJA2_SUSPEND
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 from _pydevd_bundle import pydevd_vars
-from pydevd_file_utils import get_file_name_and_base_from_file
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_file
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, FCode
 
 class Jinja2LineBreakpoint(LineBreakpoint):
@@ -78,7 +78,6 @@ def _suspend_jinja2(pydb, thread, frame, cmd=CMD_SET_BREAK, message=None):
     pydb.set_suspend(thread, cmd)
 
     thread.additional_info.suspend_type = JINJA2_SUSPEND
-
     if cmd == CMD_ADD_EXCEPTION_BREAK:
         # send exception name as message
         if message:
@@ -200,8 +199,8 @@ def _get_jinja2_template_line(frame):
 def _get_jinja2_template_filename(frame):
     if dict_contains(frame.f_globals, '__jinja_template__'):
         fname = frame.f_globals['__jinja_template__'].filename
-        filename, base = get_file_name_and_base_from_file(fname)
-        return filename
+        abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_file(fname)
+        return abs_path_real_path_and_base[1]
     return None
 
 

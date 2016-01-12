@@ -5,6 +5,9 @@
 
     Note that it's a python script but it'll spawn a process to run as jython, ironpython and as python.
 '''
+from tests_python.debugger_unittest import get_free_port
+import threading
+
 
 
 
@@ -20,6 +23,92 @@ import os
 import sys
 import time
 from tests_python import debugger_unittest
+
+TEST_DJANGO = False
+if sys.version_info[:2] == (2, 7):
+    # Only test on python 2.7 for now
+    try:
+        import django
+        TEST_DJANGO = True
+    except:
+        pass
+
+TEST_CYTHON = os.getenv('PYDEVD_USE_CYTHON', None) == 'YES'
+
+#=======================================================================================================================
+# WriterThreadCaseDjango
+#======================================================================================================================
+class WriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
+
+    FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True
+
+    def get_command_line_args(self):
+        free_port = get_free_port()
+        self.django_port = free_port
+        return [
+            debugger_unittest._get_debugger_test_file(os.path.join('my_django_proj_17', 'manage.py')),
+            'runserver',
+            '--noreload',
+            str(free_port),
+        ]
+
+    def write_add_breakpoint(self, line, func):
+        '''
+            @param line: starts at 1
+        '''
+        breakpoint_id = self.next_breakpoint_id()
+        template_file = debugger_unittest._get_debugger_test_file(os.path.join('my_django_proj_17', 'my_app', 'templates', 'my_app', 'index.html'))
+        self.write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (self.next_seq(), breakpoint_id, 'django-line', template_file, line, func))
+        self.log.append('write_add_django_breakpoint: %s line: %s func: %s' % (breakpoint_id, line, func))
+        return breakpoint_id
+
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(5, None)
+        self.write_make_initial_run()
+        django_port = self.django_port
+
+        class T(threading.Thread):
+            def run(self):
+                try:
+                    from urllib.request import urlopen
+                except ImportError:
+                    from urllib import urlopen
+                stream = urlopen('http://127.0.0.1:%s/my_app' % django_port)
+                self.contents = stream.read()
+
+        t = T()
+        t.start()
+
+        thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
+        assert line == 5, 'Expected return to be in line 5, was: %s' % line
+        self.write_get_variable(thread_id, frame_id, 'entry')
+        self.wait_for_var('<var name="key" type="str"')
+        self.wait_for_var('v1')
+
+        self.write_run_thread(thread_id)
+
+        thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
+        assert line == 5, 'Expected return to be in line 5, was: %s' % line
+        self.write_get_variable(thread_id, frame_id, 'entry')
+        self.wait_for_var('<var name="key" type="str"')
+        self.wait_for_var('v2')
+
+        self.write_run_thread(thread_id)
+
+        for i in xrange(10):
+            if hasattr(t, 'contents'):
+                break
+            time.sleep(.3)
+        else:
+            raise AssertionError('Django did not return contents properly!')
+
+        contents = t.contents.replace(' ', '').replace('\r', '').replace('\n', '')
+        if contents != '<ul><li>v1:v1</li><li>v2:v2</li></ul>':
+            raise AssertionError('%s != <ul><li>v1:v1</li><li>v2:v2</li></ul>' % (contents,))
+
+        self.finished_ok = True
 
 #=======================================================================================================================
 # WriterThreadCase19 - [Test Case]: Evaluate '__' attributes
@@ -851,6 +940,15 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
     def test_case_19(self):
         self.check_case(WriterThreadCase19)
 
+    if TEST_DJANGO:
+        def test_case_django(self):
+            self.check_case(WriterThreadCaseDjango)
+
+    if TEST_CYTHON:
+        def test_cython(self):
+            from _pydevd_bundle import pydevd_cython
+            assert pydevd_cython.trace_dispatch is not None
+
     def _has_qt(self):
         try:
             from PySide import QtCore  # @UnresolvedImport
@@ -1019,6 +1117,8 @@ if __name__ == '__main__':
 #         suite.addTest(TestIronPython('test_case_3'))
 #         suite.addTest(TestIronPython('test_case_7'))
 #
+#         suite.addTest(TestPython('test_case_10'))
+#         suite.addTest(TestPython('test_case_django'))
 #         suite.addTest(TestPython('test_case_qthread1'))
 #         suite.addTest(TestPython('test_case_qthread2'))
 #         suite.addTest(TestPython('test_case_qthread3'))

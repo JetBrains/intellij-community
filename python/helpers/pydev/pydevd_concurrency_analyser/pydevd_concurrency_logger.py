@@ -57,7 +57,7 @@ def get_text_list_for_frame(frame):
 
             #print "name is ", myName
 
-            filename, base = pydevd_file_utils.get_filename_and_base(curFrame)
+            filename = pydevd_file_utils.get_abs_path_real_path_and_base_from_frame(curFrame)[1]
 
             myFile = pydevd_file_utils.norm_file_to_client(filename)
             if file_system_encoding.lower() != "utf-8" and hasattr(myFile, "decode"):
@@ -146,7 +146,7 @@ class ThreadingLogger:
                 back = frame.f_back
                 if not back:
                     return
-                name, back_base = pydevd_file_utils.get_filename_and_base(back)
+                _, name, back_base = pydevd_file_utils.get_abs_path_real_path_and_base_from_frame(back)
                 event_time = cur_time() - self.start_time
                 method_name = frame.f_code.co_name
 
@@ -203,7 +203,7 @@ class ThreadingLogger:
                     if back_base in DONT_TRACE_THREADING:
                         # do not trace methods called from threading
                         return
-                    _, back_back_base = pydevd_file_utils.get_filename_and_base(back.f_back)
+                    back_back_base = pydevd_file_utils.get_abs_path_real_path_and_base_from_frame(back.f_back)[-1]
                     back = back.f_back
                     if back_back_base in DONT_TRACE_THREADING:
                         # back_back_base is the file, where the method was called froms
@@ -239,7 +239,7 @@ class ThreadingLogger:
             traceback.print_exc()
 
 
-class NameManager:
+class NameManager():
     def __init__(self, name_prefix):
         self.tasks = {}
         self.last = 0

@@ -1,20 +1,22 @@
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 import inspect
 from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_thread_id, dict_contains, dict_iter_items, DJANGO_SUSPEND
-from pydevd_file_utils import get_file_name_and_base_from_file
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_file
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_name
 from _pydevd_bundle import pydevd_vars
 import traceback
 from _pydev_bundle import pydev_log
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, FCode, just_raised
 
-IS_DJANGO19 = False
 IS_DJANGO18 = False
+IS_DJANGO19 = False
+IS_DJANGO19_OR_HIGHER = False
 try:
     import django
-    version = django.__version__.split('.')
-    IS_DJANGO19 = version[0] == '1' and version[1] == '9'
-    IS_DJANGO18 = version[0] == '1' and version[1] == '8'
+    version = django.VERSION
+    IS_DJANGO18 = version[0] == 1 and version[1] == 8
+    IS_DJANGO19 = version[0] == 1 and version[1] == 9
+    IS_DJANGO19_OR_HIGHER = ((version[0] == 1 and version[1] >= 9) or version[0] > 1)
 except:
     pass
 
@@ -185,7 +187,7 @@ def _offset_to_line_number(text, offset):
     return curLine
 
 
-def _get_source(frame):
+def _get_source_django_18_or_lower(frame):
     # This method is usable only for the Django <= 1.8
     try:
         node = frame.f_locals['self']
@@ -209,7 +211,7 @@ def _get_source(frame):
 
 def _get_template_file_name(frame):
     try:
-        if IS_DJANGO19:
+        if IS_DJANGO19_OR_HIGHER:
             # The Node source was removed since Django 1.9
             if dict_contains(frame.f_locals, 'context'):
                 context = frame.f_locals['context']
@@ -218,7 +220,7 @@ def _get_template_file_name(frame):
                     return context.template.origin.name
             return None
 
-        source = _get_source(frame)
+        source = _get_source_django_18_or_lower(frame)
         if source is None:
             pydev_log.debug("Source is None\n")
             return None
@@ -228,22 +230,22 @@ def _get_template_file_name(frame):
             pydev_log.debug("Source name is %s\n" % fname)
             return None
         else:
-            filename, base = get_file_name_and_base_from_file(fname)
-            return filename
+            abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_file(fname)
+            return abs_path_real_path_and_base[1]
     except:
         pydev_log.debug(traceback.format_exc())
         return None
 
 
 def _get_template_line(frame):
-    if IS_DJANGO19:
+    if IS_DJANGO19_OR_HIGHER:
         # The Node source was removed since Django 1.9
         self = frame.f_locals['self']
         if hasattr(self, 'token') and hasattr(self.token, 'lineno'):
             return self.token.lineno
         else:
             return None
-    source = _get_source(frame)
+    source = _get_source_django_18_or_lower(frame)
     file_name = _get_template_file_name(frame)
     try:
         return _offset_to_line_number(_read_file(file_name), source[1][0])

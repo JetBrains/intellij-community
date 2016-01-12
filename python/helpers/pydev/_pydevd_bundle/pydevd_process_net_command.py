@@ -652,8 +652,15 @@ def process_net_command(py_db, cmd_id, seq, text):
 
         except Exception:
             traceback.print_exc()
-            cmd = py_db.cmd_factory.make_error_message(seq,
-                "Unexpected exception in process_net_command.\nInitial params: %s" % ((cmd_id, seq, text),))
+            from _pydev_bundle.pydev_imports import StringIO
+            stream = StringIO()
+            traceback.print_exc(file=stream)
+            cmd = py_db.cmd_factory.make_error_message(
+                seq,
+                "Unexpected exception in process_net_command.\nInitial params: %s. Exception: %s" % (
+                    ((cmd_id, seq, text), stream.getvalue())
+                )
+            )
 
             py_db.writer.add_command(cmd)
     finally:

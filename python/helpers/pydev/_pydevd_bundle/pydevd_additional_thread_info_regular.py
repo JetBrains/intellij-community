@@ -11,7 +11,7 @@ from _pydevd_bundle.pydevd_frame import PyDBFrame
 # IFDEF CYTHON
 # cdef class PyDBAdditionalThreadInfo:
 # ELSE
-class PyDBAdditionalThreadInfo:
+class PyDBAdditionalThreadInfo(object):
 # ENDIF
 
     # IFDEF CYTHON
@@ -40,7 +40,7 @@ class PyDBAdditionalThreadInfo:
         'pydev_message',
         'suspend_type',
         'pydev_next_line',
-        'pydev_func_name'
+        'pydev_func_name',
     ]
     # ENDIF
 
@@ -55,8 +55,8 @@ class PyDBAdditionalThreadInfo:
         self.conditional_breakpoint_exception = None
         self.pydev_message = ''
         self.suspend_type = PYTHON_SUSPEND
-        self.pydev_next_line = None
-        self.pydev_func_name = None
+        self.pydev_next_line = -1
+        self.pydev_func_name = '.invalid.' # Must match the type in cython
 
 
     def iter_frames(self, t):

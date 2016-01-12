@@ -2,23 +2,26 @@ import types
 
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_trace_api
-from _pydev_imps._pydev_pluginbase import PluginBase
-from _pydevd_bundle.pydevd_constants import *  # @UnusedWildImport
 
-def load_plugins(package):
-    plugin_base = PluginBase(package=package)
-    search_path = [os.path.dirname(os.path.realpath(__file__)) + '/' + os.pardir + '/' + package]
-    plugin_source = plugin_base.make_plugin_source(searchpath=search_path, persist=True)
+try:
+    from pydevd_plugins import django_debug
+except:
+    django_debug = None
+    pydev_log.debug('Unable to load django_debug plugin')
+
+try:
+    from pydevd_plugins import jinja2_debug
+except:
+    jinja2_debug = None
+    pydev_log.debug('Unable to load jinja2_debug plugin')
+
+def load_plugins():
     plugins = []
-    for plugin in plugin_source.list_plugins():
-        loaded_plugin = None
-        try:
-            loaded_plugin = plugin_source.load_plugin(plugin)
-        except:
-            pydev_log.error("Failed to load plugin %s" % plugin, True)
-        if loaded_plugin:
-            plugins.append(loaded_plugin)
+    if django_debug is not None:
+        plugins.append(django_debug)
 
+    if jinja2_debug is not None:
+        plugins.append(jinja2_debug)
     return plugins
 
 
@@ -30,8 +33,9 @@ def bind_func_to_method(func, obj, method_name):
 
 
 class PluginManager(object):
+
     def __init__(self, main_debugger):
-        self.plugins = load_plugins('pydevd_plugins')
+        self.plugins = load_plugins()
         self.active_plugins = []
         self.main_debugger = main_debugger
         self.rebind_methods()

@@ -29,7 +29,8 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
     start_client, start_server, InternalGetBreakpointException, InternalSendCurrExceptionTrace, \
     InternalSendCurrExceptionTraceProceeded
 from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OLDER, get_thread_id, dict_keys, dict_pop, dict_contains, \
-    dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange
+    dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange,\
+    clear_cached_thread_id
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
@@ -37,10 +38,9 @@ from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispat
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
-from pydevd_file_utils import get_filename_and_base
 
 
-__version_info__ = (1, 0, 1)
+__version_info__ = (0, 0, 3)
 __version__ = '.'.join(str(x) for x in __version_info__)
 
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
@@ -415,8 +415,20 @@ class PyDB:
 
                     elif is_thread_alive(t):
                         if not self._running_thread_ids:
+                            # Fix multiprocessing debug with breakpoints in both main and child processes
+                            # (https://youtrack.jetbrains.com/issue/PY-17092) When the new process is created, the main
+                            # thread in the new process already has the attribute 'pydevd_id', so the new thread doesn't
+                            # get new id with its process number and the debugger loses access to both threads.
+                            # Therefore we should update thread_id for every main thread in the new process.
+
+                            # TODO: Investigate: should we do this for all threads in threading.enumerate()?
+                            # (i.e.: if a fork happens on Linux, this seems likely).
                             old_thread_id = get_thread_id(t)
-                            thread_id = get_thread_id(t, True)
+
+                            clear_cached_thread_id(t)
+                            clear_cached_thread_id(threadingCurrentThread())
+
+                            thread_id = get_thread_id(t)
                             curr_thread_id = get_thread_id(threadingCurrentThread())
                             if pydevd_vars.has_additional_frames_by_id(old_thread_id):
                                 frames_by_id = pydevd_vars.get_additional_frames_by_id(old_thread_id)
@@ -1481,20 +1493,6 @@ if __name__ == '__main__':
         # Run the dev_appserver
         debugger.run(setup['file'], None, None, is_module, set_trace=False)
     else:
-        # as to get here all our imports are already resolved, the psyco module can be
-        # changed and we'll still get the speedups in the debugger, as those functions
-        # are already compiled at this time.
-        try:
-            import psyco
-        except ImportError:
-            if hasattr(sys, 'exc_clear'):  # jython does not have it
-                sys.exc_clear()  # don't keep the traceback -- clients don't want to see it
-            pass  # that's ok, no need to mock psyco if it's not available anyways
-        else:
-            # if it's available, let's change it for a stub (pydev already made use of it)
-            from _pydevd_bundle import pydevd_psyco_stub
-            sys.modules['psyco'] = pydevd_psyco_stub
-
         if setup['save-signatures']:
             if pydevd_vm_type.get_vm_type() == pydevd_vm_type.PydevdVmType.JYTHON:
                 sys.stderr.write("Collecting run-time type information is not supported for Jython\n")

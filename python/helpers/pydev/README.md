@@ -1,7 +1,13 @@
 PyDev.Debugger
 ==============
 
+Travis (Linux CI):
+
 [![Build Status](https://travis-ci.org/fabioz/PyDev.Debugger.png)](https://travis-ci.org/fabioz/PyDev.Debugger)
+
+Appveyor (Windows CI):
+
+[![Build status](https://ci.appveyor.com/api/projects/status/j6vjq687brbk20ux?svg=true)](https://ci.appveyor.com/project/fabioz/pydev-debugger)
 
 This repository contains the sources for the Debugger used in PyDev & PyCharm.
 

@@ -1,24 +1,25 @@
 import linecache
 import os.path
 import re
+import sys
 import traceback  # @Reimport
 
 from _pydev_bundle import pydev_log
+from _pydevd_bundle import pydevd_dont_trace
+from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
-from _pydevd_bundle.pydevd_constants import *  # @UnusedWildImport
-from pydevd_file_utils import get_filename_and_base
-
+from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_contains, get_thread_id, STATE_RUN, dict_iter_values
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
+
 
 try:
     from _pydevd_bundle.pydevd_signature import send_signature_call_trace
 except ImportError:
     def send_signature_call_trace(*args, **kwargs):
         pass
-from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle import pydevd_dont_trace
 
 basename = os.path.basename
 
@@ -31,11 +32,7 @@ TRACE_PROPERTY = 'pydevd_traceproperty.py'
 #=======================================================================================================================
 # PyDBFrame
 #=======================================================================================================================
-# IFDEF CYTHON
-# class PyDBFrame: # No longer cdef because object was dying when only a reference to trace_dispatch was kept (need to check alternatives).
-# ELSE
-class PyDBFrame:
-# ENDIF
+class PyDBFrame: # No longer cdef because object was dying when only a reference to trace_dispatch was kept (need to check alternatives).
     '''This makes the tracing for a given frame, so, the trace_dispatch
     is used initially when we enter into a new context ('call') and then
     is reused for the entire context.
@@ -47,18 +44,10 @@ class PyDBFrame:
     #considers the user input (so, the actual result must be a join of both).
     filename_to_lines_where_exceptions_are_ignored = {}
     filename_to_stat_info = {}
+    should_skip = -1
 
     # IFDEF CYTHON
-    # # cdef public tuple _args;
-    # # cdef public int should_skip;
-    # should_skip = -1  # Default value when non-cython (in cython it's set in the constructor).
-    # ELSE
-    should_skip = -1  # Default value when non-cython (in cython it's set in the constructor).
-    # ENDIF
-
-
-    # IFDEF CYTHON
-    # def __init__(self, tuple args):
+    # def __init__(self, args):
         # self._args = args # In the cython version we don't need to pass the frame
     # ELSE
     def __init__(self, args):
@@ -73,7 +62,12 @@ class PyDBFrame:
     def do_wait_suspend(self, *args, **kwargs):
         self._args[0].do_wait_suspend(*args, **kwargs)
 
+    # IFDEF CYTHON
+    # def trace_exception(self, frame, str event, arg):
+    #     cdef bint flag;
+    # ELSE
     def trace_exception(self, frame, event, arg):
+    # ENDIF
         if event == 'exception':
             flag, frame = self.should_stop_on_exception(frame, event, arg)
 
@@ -83,8 +77,17 @@ class PyDBFrame:
 
         return self.trace_exception
 
+    # IFDEF CYTHON
+    # def should_stop_on_exception(self, frame, str event, arg):
+    #     cdef PyDBAdditionalThreadInfo info;
+    #     cdef bint flag;
+    # ELSE
     def should_stop_on_exception(self, frame, event, arg):
-        main_debugger, _filename, info, thread = self._args
+    # ENDIF
+
+        # main_debugger, _filename, info, _thread = self._args
+        main_debugger = self._args[0]
+        info = self._args[2]
         flag = False
 
         if info.pydev_state != STATE_SUSPEND:  #and breakpoint is not None:
@@ -99,7 +102,7 @@ class PyDBFrame:
                         if exception_breakpoint.notify_on_first_raise_only:
                             if main_debugger.first_appearance_in_scope(trace):
                                 add_exception_to_frame(frame, (exception, value, trace))
-                                thread.additional_info.pydev_message = exception_breakpoint.qname
+                                info.pydev_message = exception_breakpoint.qname
                                 flag = True
                             else:
                                 pydev_log.debug("Ignore exception %s in library %s" % (exception, frame.f_code.co_filename))
@@ -107,7 +110,7 @@ class PyDBFrame:
                     else:
                         if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
                             add_exception_to_frame(frame, (exception, value, trace))
-                            thread.additional_info.pydev_message = exception_breakpoint.qname
+                            info.pydev_message = exception_breakpoint.qname
                             flag = True
                         else:
                             flag = False
@@ -148,7 +151,7 @@ class PyDBFrame:
 
             if main_debugger.ignore_exceptions_thrown_in_lines_with_ignore_exception:
                 for check_trace_obj in (initial_trace_obj, trace_obj):
-                    filename = get_filename_and_base(check_trace_obj.tb_frame)[0]
+                    filename = get_abs_path_real_path_and_base_from_frame(check_trace_obj.tb_frame)[1]
 
 
                     filename_to_lines_where_exceptions_are_ignored = self.filename_to_lines_where_exceptions_are_ignored
@@ -243,7 +246,21 @@ class PyDBFrame:
             main_debugger = None
             thread = None
 
+    # IFDEF CYTHON
+    # def trace_dispatch(self, frame, str event, arg):
+    #     cdef str filename;
+    #     cdef bint is_exception_event;
+    #     cdef bint has_exception_breakpoints;
+    #     cdef bint can_skip;
+    #     cdef PyDBAdditionalThreadInfo info;
+    #     cdef int step_cmd;
+    #     cdef int line;
+    #     cdef str curr_func_name;
+    #     cdef bint exist_result;
+    # ELSE
     def trace_dispatch(self, frame, event, arg):
+    # ENDIF
+
         main_debugger, filename, info, thread = self._args
         try:
             # print 'frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, event
@@ -384,25 +401,18 @@ class PyDBFrame:
                                 else:
                                     stop = True
                                     try:
-                                        additional_info = None
+                                        # add exception_type and stacktrace into thread additional info
+                                        etype, value, tb = sys.exc_info()
                                         try:
-                                            additional_info = thread.additional_info
-                                        except AttributeError:
-                                            pass  #that's ok, no info currently set
+                                            error = ''.join(traceback.format_exception_only(etype, value))
+                                            stack = traceback.extract_stack(f=tb.tb_frame.f_back)
 
-                                        if additional_info is not None:
-                                            # add exception_type and stacktrace into thread additional info
-                                            etype, value, tb = sys.exc_info()
-                                            try:
-                                                error = ''.join(traceback.format_exception_only(etype, value))
-                                                stack = traceback.extract_stack(f=tb.tb_frame.f_back)
-
-                                                # On self.set_suspend(thread, CMD_SET_BREAK) this info will be
-                                                # sent to the client.
-                                                additional_info.conditional_breakpoint_exception = \
-                                                    ('Condition:\n' + condition + '\n\nError:\n' + error, stack)
-                                            finally:
-                                                etype, value, tb = None, None, None
+                                            # On self.set_suspend(thread, CMD_SET_BREAK) this info will be
+                                            # sent to the client.
+                                            info.conditional_breakpoint_exception = \
+                                                ('Condition:\n' + condition + '\n\nError:\n' + error, stack)
+                                        finally:
+                                            etype, value, tb = None, None, None
                                     except:
                                         traceback.print_exc()
 
@@ -414,7 +424,7 @@ class PyDBFrame:
                                     val = sys.exc_info()[1]
                             finally:
                                 if val is not None:
-                                    thread.additional_info.pydev_message = str(val)
+                                    info.pydev_message = str(val)
 
                         if not main_debugger.first_breakpoint_reached:
                             if event == 'call':
@@ -423,7 +433,7 @@ class PyDBFrame:
                                     if back is not None:
                                         # When we start debug session, we call execfile in pydevd run function. It produces an additional
                                         # 'call' event for tracing and we stop on the first line of code twice.
-                                        back_filename, base = get_filename_and_base(back)
+                                        _, back_filename, base = get_abs_path_real_path_and_base_from_frame(back)
                                         if (base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]) or \
                                                 (base == DEBUG_START_PY3K[0] and back.f_code.co_name == DEBUG_START_PY3K[1]):
                                             stop = False
@@ -485,7 +495,7 @@ class PyDBFrame:
                 elif step_cmd == CMD_SMART_STEP_INTO:
                     stop = False
                     if info.pydev_smart_step_stop is frame:
-                        info.pydev_func_name = None
+                        info.pydev_func_name = '.invalid.' # Must match the type in cython
                         info.pydev_smart_step_stop = None
 
                     if event == 'line' or event == 'exception':
@@ -540,7 +550,7 @@ class PyDBFrame:
                             #When we get to the pydevd run function, the debugging has actually finished for the main thread
                             #(note that it can still go on for other threads, but for this one, we just make it finish)
                             #So, just setting it to None should be OK
-                            back_filename, base = get_filename_and_base(back)
+                            _, back_filename, base = get_abs_path_real_path_and_base_from_frame(back)
                             if base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]:
                                 back = None
 
