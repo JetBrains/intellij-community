@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -90,6 +91,14 @@ public class EditorPaintingTest extends AbstractEditorTest {
   public void testBorderAtLastLine() throws Exception {
     initText("a\nbc");
     addBorderHighlighter(3, 4, HighlighterLayer.WARNING, Color.red);
+    checkResult();
+  }
+  
+  public void testFoldedRegionShownOnlyWithBorder() throws Exception {
+    initText("abc");
+    addCollapsedFoldRegion(0, 3, "...");
+    myEditor.getColorsScheme().setAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES, 
+                                             new TextAttributes(null, null, Color.blue, EffectType.BOXED, Font.PLAIN));
     checkResult();
   }
 
