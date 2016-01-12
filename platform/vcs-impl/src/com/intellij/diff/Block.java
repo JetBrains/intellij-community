@@ -20,6 +20,7 @@ import com.intellij.util.diff.Diff;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * author: lesya
@@ -84,6 +85,11 @@ public class Block {
     }
 
     return result.toString();
+  }
+
+  @NotNull
+  public List<String> getLines() {
+    return Arrays.asList(mySource).subList(myStart, myEnd);
   }
 
   public int hashCode() {

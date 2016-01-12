@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,9 +42,7 @@ import com.intellij.ui.JBSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -57,8 +56,12 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.impl.VcsHistoryDialog");
@@ -99,6 +102,7 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   private static final String DIFF_SPLITTER_PROPORTION_KEY = "file.history.selection.diff.splitter.proportion";
   private static final String COMMENTS_SPLITTER_PROPORTION_KEY = "file.history.selection.comments.splitter.proportion";
 
+  private static final Block EMPTY_BLOCK = new Block("", 0, 0);
 
   private final Project myProject;
   private final VirtualFile myFile;
@@ -109,8 +113,7 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   private final int mySelectionEnd;
   @NonNls private final String myHelpId;
 
-  // todo equals???
-  private final Map<VcsFileRevision, Block> myRevisionToContentMap = new HashMap<VcsFileRevision, Block>();
+  private final List<Block> myBlocks = new ArrayList<Block>();
   private final List<VcsFileRevision> myRevisions = new ArrayList<VcsFileRevision>();
 
   private final ListTableModel<VcsFileRevision> myListModel;
@@ -142,12 +145,12 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
     myCachedContents = cachedContents;
     mySelectionStart = selectionStart;
     mySelectionEnd = selectionEnd;
-    myHelpId = ObjectUtils.notNull(vcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history");
+    myHelpId = notNull(vcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history");
 
     JRootPane rootPane = ((RootPaneContainer)getFrame()).getRootPane();
     final VcsDependentHistoryComponents components = vcsHistoryProvider.getUICustomization(session, rootPane);
 
-    ColumnInfo[] additionalColumns = ObjectUtils.notNull(components.getColumns(), ColumnInfo.EMPTY_ARRAY);
+    ColumnInfo[] additionalColumns = notNull(components.getColumns(), ColumnInfo.EMPTY_ARRAY);
     myListModel = new ListTableModel<VcsFileRevision>(ArrayUtil.mergeArrays(COLUMNS, additionalColumns));
     myListModel.setSortable(false);
     myList = new TableView<VcsFileRevision>(myListModel);
@@ -156,11 +159,10 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
 
     myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, this, getFrame());
 
-    final VcsRevisionNumber currentRevisionNumber = session.getCurrentRevisionNumber();
-    if (currentRevisionNumber != null) {
-      myRevisions.add(new CurrentRevision(file, currentRevisionNumber));
-    }
+    myRevisions.add(new CurrentRevision(file, VcsRevisionNumber.LOCAL));
     myRevisions.addAll(session.getRevisionList());
+
+    myBlocks.addAll(Collections.<Block>nCopies(myRevisions.size(), null));
 
     mySplitter = new JBSplitter(true, DIFF_SPLITTER_PROPORTION_KEY, DIFF_SPLITTER_PROPORTION);
 
@@ -295,14 +297,21 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
 
   private List<VcsFileRevision> filteredRevisions() throws VcsException {
     ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
-    VcsFileRevision nextRevision = myRevisions.get(myRevisions.size() - 1);
-    result.add(nextRevision);
-    for (int i = myRevisions.size() - 2; i >= 0; i--) {
-      VcsFileRevision vcsFileRevision = myRevisions.get(i);
-      if (getContentToShow(nextRevision).equals(getContentToShow(vcsFileRevision))) continue;
-      result.add(vcsFileRevision);
-      nextRevision = vcsFileRevision;
+
+    int firstRevision;
+    for (firstRevision = myRevisions.size() - 1; firstRevision > 0; firstRevision--) {
+      if (getBlock(firstRevision) != EMPTY_BLOCK) break;
     }
+
+    result.add(myRevisions.get(firstRevision));
+
+    for (int i = firstRevision - 1; i >= 0; i--) {
+      Block block1 = getBlock(i + 1);
+      Block block2 = getBlock(i);
+      if (orderedEquals(block1.getLines(), block2.getLines())) continue;
+      result.add(myRevisions.get(i));
+    }
+
     Collections.reverse(result);
     return result;
   }
@@ -351,7 +360,8 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   @NotNull
   private DiffContent createDiffContent(int index) throws VcsException {
     if (index >= myRevisions.size()) return DiffContentFactory.getInstance().createEmpty();
-    return DiffContentFactory.getInstance().create(getContentToShow(myRevisions.get(index)), myFile.getFileType());
+    if (getBlock(index) == EMPTY_BLOCK) return DiffContentFactory.getInstance().createEmpty();
+    return DiffContentFactory.getInstance().create(getBlock(index).getBlockContent(), myFile.getFileType());
   }
 
   @Override
@@ -411,30 +421,35 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
     return null;
   }
 
-  private String getContentToShow(VcsFileRevision revision) throws VcsException {
-    final Block block = getBlock(revision);
-    if (block == null) return "";
-    return block.getBlockContent();
-  }
-
-  @Nullable
-  private Block getBlock(VcsFileRevision revision) throws VcsException {
-    if (myRevisionToContentMap.containsKey(revision)) {
-      return myRevisionToContentMap.get(revision);
+  @NotNull
+  private Block createBlock(int index) throws VcsException {
+    if (index == 0) {
+      return new Block(myEditor.getDocument().getText(), mySelectionStart, mySelectionEnd + 1);
     }
 
-    final String revisionContent = getContentOf(revision);
-    if (revisionContent == null) return null;
+    Block previousBlock = getBlock(index - 1);
+    if (previousBlock == EMPTY_BLOCK) return EMPTY_BLOCK;
 
-    int index = myRevisions.indexOf(revision);
-    Block blockByIndex = getBlock(index);
-    if (blockByIndex == null) return null;
+    String revisionContent = getContentOf(myRevisions.get(index));
+    if (revisionContent == null) return EMPTY_BLOCK;
 
-    myRevisionToContentMap.put(revision, blockByIndex.createPreviousBlock(revisionContent));
-    return myRevisionToContentMap.get(revision);
+    Block newBlock = previousBlock.createPreviousBlock(revisionContent);
+    return newBlock.getStart() != newBlock.getEnd() ? newBlock : EMPTY_BLOCK;
   }
 
+  @NotNull
   private Block getBlock(int index) throws VcsException {
-    return index > 0 ? getBlock(myRevisions.get(index - 1)) : new Block(myEditor.getDocument().getText(), mySelectionStart, mySelectionEnd + 1);
+    if (myBlocks.get(index) == null) {
+      myBlocks.set(index, createBlock(index));
+    }
+    return myBlocks.get(index);
+  }
+
+  private static boolean orderedEquals(@NotNull List data1, @NotNull List data2) {
+    if (data1.size() != data2.size()) return false;
+    for (int i = 0; i < data1.size(); i++) {
+      if (!Comparing.equal(data1.get(i), data2.get(i))) return false;
+    }
+    return true;
   }
 }
