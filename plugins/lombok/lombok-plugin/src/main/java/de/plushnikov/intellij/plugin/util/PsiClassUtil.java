@@ -99,7 +99,7 @@ public class PsiClassUtil {
   public static Collection<PsiMethod> collectClassStaticMethodsIntern(@NotNull PsiClass psiClass) {
     final Collection<PsiMethod> psiMethods = collectClassMethodsIntern(psiClass);
 
-    Collection<PsiMethod> staticMethods = new ArrayList<PsiMethod>(5);
+    Collection<PsiMethod> staticMethods = new ArrayList<PsiMethod>(psiMethods.size());
     for (PsiMethod psiMethod : psiMethods) {
       if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
         staticMethods.add(psiMethod);

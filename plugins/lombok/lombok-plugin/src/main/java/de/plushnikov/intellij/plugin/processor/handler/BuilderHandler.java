@@ -223,9 +223,21 @@ public class BuilderHandler {
     return builderClassName;
   }
 
+  public boolean shouldGenerateBuilderMethod(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    final String builderMethodName = getBuilderMethodName(psiAnnotation);
+    final Collection<PsiMethod> existingMethods = PsiClassUtil.collectClassStaticMethodsIntern(psiClass);
+    for (PsiMethod existingMethod : existingMethods) {
+      if (existingMethod.getName().equals(builderMethodName)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @NotNull
   public PsiMethod createBuilderMethod(@NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
-    LombokLightMethodBuilder method = createBuilderMethod(containingClass, psiMethod, builderPsiClass, psiAnnotation, getBuilderMethodName(psiAnnotation));
+    final String builderMethodName = getBuilderMethodName(psiAnnotation);
+    LombokLightMethodBuilder method = createBuilderMethod(containingClass, psiMethod, builderPsiClass, psiAnnotation, builderMethodName);
     method.withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
     return method;
   }
