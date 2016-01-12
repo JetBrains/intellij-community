@@ -1310,7 +1310,7 @@ public class PyUtil {
         );
       }
       catch (IOException e) {
-        throw new IncorrectOperationException(String.format("Cannot create file '%s'", path));
+        throw new IncorrectOperationException(String.format("Cannot create file '%s'", path), (Throwable)e);
       }
     }
     else {
