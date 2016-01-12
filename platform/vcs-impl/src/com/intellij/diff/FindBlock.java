@@ -43,8 +43,8 @@ class FindBlock {
       change = change.link;
     }
 
-    if (endLine >= myLines.length) {
-      endLine = myLines.length - 1;
+    if (endLine > myLines.length) {
+      endLine = myLines.length;
     }
 
     return new Block(myLines, startLine, endLine);
@@ -57,7 +57,7 @@ class FindBlock {
       startLine = myCurrentVersion.getStart() - shift;
     }
 
-    if (firstChangeIndex <= myCurrentVersion.getEnd()) {
+    if (firstChangeIndex < myCurrentVersion.getEnd()) {
       endLine = myCurrentVersion.getEnd() - shift;
     }
   }

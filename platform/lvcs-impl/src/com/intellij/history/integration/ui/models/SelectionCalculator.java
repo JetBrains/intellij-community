@@ -74,7 +74,7 @@ public class SelectionCalculator {
     if (content == null) {
       result = EMPTY_BLOCK; 
     } else  if (revisionIndex == 0) {
-      result = new Block(content, myFromLine, myToLine);
+      result = new Block(content, myFromLine, myToLine + 1);
     }
     else {
       Block prev = EMPTY_BLOCK;

@@ -435,6 +435,6 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   }
 
   private Block getBlock(int index) throws VcsException {
-    return index > 0 ? getBlock(myRevisions.get(index - 1)) : new Block(myEditor.getDocument().getText(), mySelectionStart, mySelectionEnd);
+    return index > 0 ? getBlock(myRevisions.get(index - 1)) : new Block(myEditor.getDocument().getText(), mySelectionStart, mySelectionEnd + 1);
   }
 }

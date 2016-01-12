@@ -52,7 +52,7 @@ public class Block {
   public String getBlockContent() {
     StringBuilder result = new StringBuilder();
 
-    int length = myEnd - myStart + 1;
+    int length = myEnd - myStart;
 
     for (int i = 0; i < length; i++) {
       if ((i + myStart) >= mySource.length) break;
@@ -94,11 +94,11 @@ public class Block {
 
     result.append("<-----------------------------\n");
 
-    appendLines(result, myStart, myEnd + 1);
+    appendLines(result, myStart, myEnd);
 
     result.append("----------------------------->\n");
 
-    appendLines(result, myEnd + 1, mySource.length);
+    appendLines(result, myEnd, mySource.length);
 
     return result.toString();
   }
