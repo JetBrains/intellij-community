@@ -314,7 +314,8 @@ public final class IdeMouseEventDispatcher {
   private static JScrollBar findHorizontalScrollBar(Component c) {
     if (c == null) return null;
     if (c instanceof JScrollPane) {
-      return ((JScrollPane)c).getHorizontalScrollBar();
+      JScrollBar scrollBar = ((JScrollPane)c).getHorizontalScrollBar();
+      return scrollBar != null && scrollBar.isVisible() ? scrollBar : null;
     }
 
     if (isDiagramViewComponent(c)) {
@@ -323,7 +324,7 @@ public final class IdeMouseEventDispatcher {
          if (view.getComponent(i) instanceof JScrollBar) {
            final JScrollBar scrollBar = (JScrollBar)view.getComponent(i);
            if (scrollBar.getOrientation() == Adjustable.HORIZONTAL) {
-            return scrollBar;
+             return scrollBar.isVisible() ? scrollBar : null;
            }
          }
       }
