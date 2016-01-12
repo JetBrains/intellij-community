@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Function;
@@ -94,9 +95,9 @@ public class AttachToLocalProcessAction extends AnAction {
         }
 
         if (item instanceof AttachItem) {
-          popup.setAdText(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.adText",
-                                                  ((AttachItem)item).getSelectedDebugger().getDebuggerDisplayName()),
-                          SwingConstants.LEADING);
+          String debuggerName = ((AttachItem)item).getSelectedDebugger().getDebuggerDisplayName();
+          debuggerName = StringUtil.shortenTextWithEllipsis(debuggerName, 50, 0);
+          ((ListPopupImpl)popup).setCaption(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.adText", debuggerName));
         }
       }
     };
@@ -329,7 +330,8 @@ public class AttachToLocalProcessAction extends AnAction {
 
     @NotNull
     public String getText(@NotNull Project project) {
-      return myProcessInfo.getPid() + " " + myGroup.getProcessDisplayText(project, myProcessInfo);
+      String shortenedText = StringUtil.shortenTextWithEllipsis(myGroup.getProcessDisplayText(project, myProcessInfo), 80, 0);
+      return myProcessInfo.getPid() + " " + shortenedText;
     }
 
     @NotNull
@@ -396,7 +398,7 @@ public class AttachToLocalProcessAction extends AnAction {
 
   private static class ProcessListStep extends MyBasePopupStep implements ListPopupStepEx<AttachItem> {
     public ProcessListStep(@NotNull List<AttachItem> items, @NotNull Project project) {
-      super(project, XDebuggerBundle.message("xdebugger.attach.toLocal.popup.title"), items);
+      super(project, XDebuggerBundle.message("xdebugger.attach.toLocal.popup.adText", ""), items);
     }
 
     @Nullable
