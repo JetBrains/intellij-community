@@ -182,6 +182,17 @@ public class SelectedBlockHistoryTest extends TestCase {
     );
   }
 
+  public void test15() throws FilesTooBigForDiffException {
+    doTest(
+      new String[]{"1"},
+      new String[]{"0"},
+      new String[]{"3"},
+
+      new String[]{"1", "4"},
+      new String[]{"5", "0"},
+      new String[]{"3"}
+    );
+  }
 
   public void testContent(){
     Block block = new Block("0\n1\n2\n3\n4\n5\n6", 3, 7);

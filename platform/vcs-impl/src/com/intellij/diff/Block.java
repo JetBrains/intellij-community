@@ -46,8 +46,9 @@ public class Block {
 
   @NotNull
   public Block createPreviousBlock(@NotNull String[] prevContent) {
-    int startLine = myStart;
-    int endLine = myEnd;
+    int start = -1;
+    int end = -1;
+    int shift = 0;
 
     Diff.Change change = Diff.buildChangesSomehow(prevContent, getSource());
     while (change != null) {
@@ -56,31 +57,21 @@ public class Block {
       int endLine1 = startLine1 + change.deleted;
       int endLine2 = startLine2 + change.inserted;
 
-      int shiftStart = startLine2 - startLine1;
-      int shiftEnd = endLine2 - endLine1;
-
-      if (startLine2 <= myStart) {
-        startLine = myStart - shiftStart;
+      if (Math.max(myStart, startLine2) < Math.min(myEnd, endLine2)) {
+        // ranges intersect
+        if (startLine2 <= myStart) start = startLine1;
+        if (endLine2 > myEnd) end = endLine1;
       }
+      if (start == -1 && startLine2 > myStart) start = myStart - shift;
+      if (end == -1 && startLine2 >= myEnd) end = myEnd - shift;
 
-      if (endLine2 <= myStart) {
-        startLine = myStart - shiftEnd;
-      }
-
-      if (startLine2 < myEnd) {
-        endLine = myEnd - shiftEnd;
-      }
-
+      shift += change.inserted - change.deleted;
       change = change.link;
     }
+    if (start == -1) start = myStart - shift;
+    if (end == -1) end = myEnd - shift;
 
-    if (endLine > prevContent.length) {
-      endLine = prevContent.length;
-    }
-    if (startLine < 0) startLine = 0;
-    if (endLine < startLine) endLine = startLine;
-
-    return new Block(prevContent, startLine, endLine);
+    return new Block(prevContent, start, end);
   }
 
   @NotNull
