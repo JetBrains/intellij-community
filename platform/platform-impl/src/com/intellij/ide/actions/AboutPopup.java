@@ -62,7 +62,8 @@ import java.util.List;
 public class AboutPopup {
   private static final String COPY_URL = "copy://";
   private static JBPopup ourPopup;
-  public void show(@Nullable Window window) {
+
+  public static void show(@Nullable Window window) {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
 
     final JPanel panel = new JPanel(new BorderLayout());
