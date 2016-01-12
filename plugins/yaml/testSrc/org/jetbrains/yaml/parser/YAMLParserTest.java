@@ -1,6 +1,6 @@
 package org.jetbrains.yaml.parser;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.ParsingTestCase;
 import org.jetbrains.yaml.YAMLParserDefinition;
 
@@ -16,7 +16,7 @@ public class YAMLParserTest extends ParsingTestCase {
   }
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/parser/data/";
+    return PluginPathManager.getPluginHomePath("yaml") + "/testSrc/org/jetbrains/yaml/parser/data/";
   }
 
   public void test2docs() throws Throwable {

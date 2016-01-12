@@ -1,6 +1,7 @@
 package org.jetbrains.yaml.lexer;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LexerTestCase;
 
 public class YAMLLexerTest extends LexerTestCase {
@@ -11,7 +12,7 @@ public class YAMLLexerTest extends LexerTestCase {
 
   @Override
   protected String getDirPath() {
-    return "plugins/yaml/testSrc/org/jetbrains/yaml/lexer/data";
+    return PluginPathManager.getPluginHomePathRelative("yaml") + "/testSrc/org/jetbrains/yaml/lexer/data";
   }
 
   public void test2docs() {

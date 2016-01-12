@@ -1,6 +1,6 @@
 package org.jetbrains.yaml.psiModification;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,7 +14,7 @@ import org.jetbrains.yaml.psi.YAMLMapping;
 public class YAMLMappingModificationTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/psiModification/data/";
+    return PluginPathManager.getPluginHomePath("yaml") + "/testSrc/org/jetbrains/yaml/psiModification/data/";
   }
 
   @Override
