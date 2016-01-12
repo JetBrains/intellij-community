@@ -19,6 +19,7 @@ package com.intellij.execution.process.impl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessInfo;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -77,9 +78,18 @@ public class ProcessListUtil {
                                                       @NotNull NullableFunction<String, List<ProcessInfo>> parser) {
     String output;
     try {
-      output = ExecUtil.execAndGetOutput(new GeneralCommandLine(command)).getStdout();
+      ProcessOutput processOutput = ExecUtil.execAndGetOutput(new GeneralCommandLine(command));
+      int exitCode = processOutput.getExitCode();
+      if (exitCode != 0) {
+        LOG.error("Cannot get process list, 'ps' exited with code " + exitCode + ", stdout:\n" 
+                  + processOutput.getStdout()
+                  + "\nstderr:\n"
+                  + processOutput.getStderr());
+      }
+      output = processOutput.getStdout();
     }
-    catch (ExecutionException ignore) {
+    catch (ExecutionException e) {
+      LOG.error("Cannot get process list", e);
       return null;
     }
     return parser.fun(output);
@@ -265,7 +275,8 @@ public class ProcessListUtil {
         result.add(new ProcessInfo(pid, name, name, "", null, null));
       }
     }
-    catch (IOException ignore) {
+    catch (IOException e) {
+      LOG.error("Cannot parse listtasks output", e);
       return null;
     }
     finally {
