@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * @api {get} /about The application info
@@ -41,6 +42,7 @@ import java.io.IOException;
  * @apiGroup Platform
  *
  * @apiParam {Boolean} [registeredFileTypes=false] Whether to include the list of registered file types.
+ * @apiParam {Boolean} [more=false] Whether to include the full info.
  *
  * @apiSuccess {String} name The full application name.
  * @apiSuccess {String} productName The product name.
@@ -58,7 +60,7 @@ import java.io.IOException;
  * @apiUse SuccessExample
  * @apiUse SuccessExampleWithRegisteredFileTypes
  */
-class AboutHttpService extends RestService {
+public class AboutHttpService extends RestService {
   @NotNull
   @Override
   protected String getServiceName() {
@@ -73,10 +75,17 @@ class AboutHttpService extends RestService {
   @Nullable
   @Override
   public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
-    BuildNumber build = ApplicationInfo.getInstance().getBuild();
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     BufferExposingByteArrayOutputStream byteOut = new BufferExposingByteArrayOutputStream();
-    JsonWriter writer = createJsonWriter(byteOut);
+    getAbout(byteOut, urlDecoder);
+    send(byteOut, request, context);
+    return null;
+  }
+
+  public static void getAbout(@NotNull OutputStream out, @Nullable QueryStringDecoder urlDecoder) throws IOException {
+    BuildNumber build = ApplicationInfo.getInstance().getBuild();
+
+    JsonWriter writer = createJsonWriter(out);
     writer.beginObject();
 
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
@@ -94,7 +103,7 @@ class AboutHttpService extends RestService {
       writer.name("buildNumber").value(build.getBuildNumber());
     }
 
-    if (getBooleanParameter("registeredFileTypes", urlDecoder)) {
+    if (urlDecoder != null && getBooleanParameter("registeredFileTypes", urlDecoder)) {
       writer.name("registeredFileTypes").beginArray();
       for (FileType fileType : FileTypeRegistry.getInstance().getRegisteredFileTypes()) {
         writer.beginObject();
@@ -106,8 +115,7 @@ class AboutHttpService extends RestService {
       writer.endArray();
     }
 
-    String uri = request.getUri();
-    if (uri != null && uri.endsWith("?more")) {
+    if (urlDecoder != null && getBooleanParameter("more", urlDecoder)) {
       writer.name("vendor").value(appInfo.getCompanyName());
       writer.name("isEAP").value(appInfo.isEAP());
       writer.name("productCode").value(appInfo.getBuild().getProductCode());
@@ -122,12 +130,5 @@ class AboutHttpService extends RestService {
 
     writer.endObject();
     writer.close();
-    send(byteOut, request, context);
-    return null;
-  }
-
-  @Override
-  protected boolean activateToolBeforeExecution() {
-    return false;
   }
 }

@@ -80,7 +80,7 @@ public class PyTestCreator implements TestCreator {
                 fileText.append("pass\n");
 
               for (String method : methods) {
-                fileText.append("def ").append(method).append("(self):\n    self.fail()\n\n\t");
+                fileText.append("def ").append(method).append("(self):\n\tself.fail()\n\n\t");
               }
 
               PsiFile psiFile = PyUtil.getOrCreateFile(

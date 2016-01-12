@@ -41,6 +41,9 @@
         </annotation>
     </item>
     <item name='java.util.concurrent.atomic.AtomicInteger java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.atomic.AtomicInteger long longValue()'>
@@ -100,6 +103,9 @@
         </annotation>
     </item>
     <item name='java.util.concurrent.atomic.AtomicLong java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.atomic.AtomicLong long get()'>

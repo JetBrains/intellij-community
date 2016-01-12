@@ -29,12 +29,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
+import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ipp.types.ReplaceMethodRefWithLambdaIntention;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,7 +126,7 @@ public class FluentIterableConversionUtil {
     if (CommonClassNames.JAVA_LANG_CLASS.equals(resolvedClass.getQualifiedName())) {
       return new GuavaFilterInstanceOfConversionDescriptor();
     }
-    else if (GuavaPredicateConversionRule.GUAVA_PREDICATE.equals(resolvedClass.getQualifiedName())) {
+    else if (GuavaLambda.PREDICATE.getClassQName().equals(resolvedClass.getQualifiedName())) {
       return new GuavaTypeConversionDescriptor("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "($p$)");
     }
     return null;
@@ -157,7 +156,7 @@ public class FluentIterableConversionUtil {
       }
 
       if (argument instanceof PsiMethodReferenceExpression) {
-        argument = ReplaceMethodRefWithLambdaIntention.convertMethodReferenceToLambda((PsiMethodReferenceExpression)argument, true);
+        argument = LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)argument, true, true);
       }
       if (argument instanceof PsiLambdaExpression) {
         List<Pair<PsiExpression, Boolean>> iterableReturnValues = new SmartList<Pair<PsiExpression, Boolean>>();

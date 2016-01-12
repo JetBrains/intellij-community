@@ -62,6 +62,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(true);
   }
 
+  public void testUncheckedWarningWithRawSecondSearchAndMethodFromSuper() throws Exception {
+    doTest(true);
+  }
+
   public void testWildcardReturns() throws Exception {
     doTest(false);
   }
@@ -471,6 +475,18 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testCapturedTypesOfImplicitParameterTypes() throws Exception {
+    doTest();
+  }
+
+  public void testApplicabilityConflictMessage() throws Exception {
+    doTest();
+  }
+
+  public void testQualifierOfCapturedWildcardType() throws Exception {
+    doTest();
+  }
+
+  public void testCapturedWildcardInReceiverPosition() throws Exception {
     doTest();
   }
 

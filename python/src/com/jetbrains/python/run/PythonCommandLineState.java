@@ -89,6 +89,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   private final AbstractPythonRunConfiguration myConfig;
 
   private Boolean myMultiprocessDebug = null;
+  private boolean myRunWithPty = PtyCommandLine.isEnabled();
 
   public boolean isDebug() {
     return PyDebugRunner.PY_DEBUG_RUNNER.equals(getEnvironment().getRunner().getRunnerId());
@@ -235,7 +236,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   public GeneralCommandLine generateCommandLine() {
-    GeneralCommandLine commandLine = createPythonCommandLine(myConfig.getProject(), myConfig, isDebug());
+    GeneralCommandLine commandLine = createPythonCommandLine(myConfig.getProject(), myConfig, isDebug(), myRunWithPty);
 
     buildCommandLineParameters(commandLine);
 
@@ -245,11 +246,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   @NotNull
-  public static GeneralCommandLine createPythonCommandLine(Project project, PythonRunParams config, boolean isDebug) {
-    boolean usePty = config instanceof AbstractPythonRunConfiguration
-                     ? ((AbstractPythonRunConfiguration)config).usePty()
-                     : PtyCommandLine.isEnabled();
-    GeneralCommandLine commandLine = usePty ? new PtyCommandLine() : new GeneralCommandLine();
+  public static GeneralCommandLine createPythonCommandLine(Project project, PythonRunParams config, boolean isDebug, boolean runWithPty) {
+    GeneralCommandLine commandLine = generalCommandLine(runWithPty);
 
     commandLine.withCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
 
@@ -260,6 +258,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
     setRunnerPath(project, commandLine, config);
 
     return commandLine;
+  }
+
+  private static GeneralCommandLine generalCommandLine(boolean runWithPty) {
+    return runWithPty ? new PtyCommandLine() : new GeneralCommandLine();
   }
 
   /**
@@ -523,6 +525,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   public void setMultiprocessDebug(boolean multiprocessDebug) {
     myMultiprocessDebug = multiprocessDebug;
+  }
+
+  public void setRunWithPty(boolean runWithPty) {
+    myRunWithPty = runWithPty;
   }
 
   @NotNull

@@ -161,7 +161,7 @@ public class MigrationPanel extends JPanel implements Disposable {
     final Object userObject = migrationNodes[0].getUserObject();
     if (userObject instanceof MigrationNode) {
       final MigrationNode migrationNode = (MigrationNode)userObject;
-      final UsageInfo[] failedUsages = myLabeler.getFailedUsages();
+      final UsageInfo[] failedUsages = myLabeler.getFailedUsages(migrationNode.getInfo());
       if (failedUsages.length > 0) {
         myConflictsPanel.showUsages(PsiElement.EMPTY_ARRAY, failedUsages);
       }

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -177,12 +178,12 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   @NotNull
-  public Future<Boolean> jumpToCommit(@NotNull Hash commitHash) {
+  public Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull final VirtualFile root) {
     SettableFuture<Boolean> future = SettableFuture.create();
     jumpTo(commitHash, new PairFunction<GraphTableModel, Hash, Integer>() {
       @Override
       public Integer fun(GraphTableModel model, Hash hash) {
-        return model.getRowOfCommit(hash);
+        return model.getRowOfCommit(hash, root);
       }
     }, future);
     return future;

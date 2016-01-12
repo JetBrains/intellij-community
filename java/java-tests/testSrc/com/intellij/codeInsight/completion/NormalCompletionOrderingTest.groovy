@@ -15,6 +15,7 @@
  */
 
 package com.intellij.codeInsight.completion
+
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
@@ -270,6 +271,9 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testPreferInterfacesInImplements() {
     checkPreferredItems(0, "XFooIntf", "XFoo", "XFooClass");
+    assert LookupElementPresentation.renderElement(lookup.items[0]).itemTextForeground == JBColor.foreground()
+    assert LookupElementPresentation.renderElement(lookup.items[1]).itemTextForeground == JBColor.RED
+    assert LookupElementPresentation.renderElement(lookup.items[2]).itemTextForeground == JBColor.RED
   }
 
   public void testPreferClassesInExtends() {

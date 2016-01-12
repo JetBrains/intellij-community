@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Small size key, constructed by hashing method signature.
@@ -318,5 +319,26 @@ final class HPending implements HResult {
 
     }
     return new HPending(delta1);
+  }
+}
+
+final class HEffects implements HResult {
+  @NotNull final Set<HEffectQuantum> effects;
+
+  HEffects(@NotNull Set<HEffectQuantum> effects) {
+    this.effects = effects;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    HEffects hEffects = (HEffects)o;
+    return effects.equals(hEffects.effects);
+  }
+
+  @Override
+  public int hashCode() {
+    return effects.hashCode();
   }
 }

@@ -255,6 +255,10 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTestAllFile();
   }
 
+  public void testFluentIterableElementTypeChanged() {
+    doTest();
+  }
+
   private void doTestNoQuickFixes(Class<? extends PsiElement>... highlightedElements) {
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.enableInspections(new GuavaInspection());
@@ -289,8 +293,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.enableInspections(new GuavaInspection());
     for (HighlightInfo info : myFixture.doHighlighting())
-      if (GuavaInspection.PROBLEM_DESCRIPTION_FOR_METHOD_CHAIN.equals(info.getDescription()) ||
-          GuavaInspection.PROBLEM_DESCRIPTION_FOR_VARIABLE.equals(info.getDescription())) {
+      if (GuavaInspection.PROBLEM_DESCRIPTION.equals(info.getDescription())) {
         final Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> marker = info.quickFixActionMarkers.get(0);
         final PsiElement someElement = myFixture.getFile().findElementAt(0);
         assertNotNull(someElement);

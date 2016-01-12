@@ -66,9 +66,9 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
       String currentBranch = provider.getCurrentBranch(details.getRoot());
       VcsLogBranchFilter branchFilter = myFilterUi.getFilters().getBranchFilter();
       if (currentBranch != null && (branchFilter == null || !(currentBranch.equals(mySingleFilteredBranch)))) {
-        Condition<Hash> condition =
+        Condition<CommitId> condition =
           myDataHolder.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
-        if (condition.value(details.getId())) {
+        if (condition.value(new CommitId(details.getId(), details.getRoot()))) {
           return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
         }
       }

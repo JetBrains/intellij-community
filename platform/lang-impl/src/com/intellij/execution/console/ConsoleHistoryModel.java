@@ -96,6 +96,12 @@ class ConsoleHistoryModel extends SimpleModificationTracker {
     }
   }
 
+  public boolean isEmpty() {
+    synchronized (myLock) {
+      return myEntries.isEmpty();
+    }
+  }
+
   public int getHistorySize() {
     synchronized (myLock) {
       return myEntries.size();

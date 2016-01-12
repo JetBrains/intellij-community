@@ -70,7 +70,7 @@ public class BranchesPanel extends JPanel {
         }
         if (group.getRefs().size() == 1) {
           VcsRef ref = group.getRefs().iterator().next();
-          myUI.jumpToCommit(ref.getCommitHash());
+          myUI.jumpToCommit(ref.getCommitHash(), ref.getRoot());
         }
         else {
           final ReferencePopupComponent view = new ReferencePopupComponent(group, myUI, myReferencePainter);
@@ -261,7 +261,7 @@ public class BranchesPanel extends JPanel {
       myPopup.cancel(); // close the popup immediately not to stay at the front if jumping to a commits takes long time.
       VcsRef selectedRef = (VcsRef)myList.getSelectedValue();
       if (selectedRef != null) {
-        myUi.jumpToCommit(selectedRef.getCommitHash());
+        myUi.jumpToCommit(selectedRef.getCommitHash(), selectedRef.getRoot());
       }
     }
   }

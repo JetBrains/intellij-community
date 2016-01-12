@@ -10,10 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VisiblePack;
@@ -113,7 +111,7 @@ public class GraphTableModel extends AbstractTableModel {
     List<VcsRef> refs = Collections.emptyList();
     if (details != null) {
       message = details.getSubject();
-      refs = (List<VcsRef>)myDataPack.getRefsModel().refsToCommit(details.getId());
+      refs = (List<VcsRef>)myDataPack.getRefsModel().refsToCommit(details.getId(), details.getRoot());
     }
     return new GraphCommitCell(message, refs);
   }
@@ -128,8 +126,8 @@ public class GraphTableModel extends AbstractTableModel {
     return myDataHolder.getHash(getCommitIdAtRow(row));
   }
 
-  public int getRowOfCommit(@NotNull final Hash hash) {
-    final int commitIndex = myDataHolder.getCommitIndex(hash);
+  public int getRowOfCommit(@NotNull final Hash hash, @NotNull VirtualFile root) {
+    final int commitIndex = myDataHolder.getCommitIndex(hash, root);
     return ContainerUtil.indexOf(VcsLogUtil.getVisibleCommits(myDataPack.getVisibleGraph()), new Condition<Integer>() {
       @Override
       public boolean value(Integer integer) {
@@ -139,8 +137,14 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   public int getRowOfCommitByPartOfHash(@NotNull String partialHash) {
-    Hash hash = myDataHolder.getHashMap().findHashByString(partialHash);
-    return hash != null ? getRowOfCommit(hash) : -1;
+    final CommitIdByStringCondition hashByString = new CommitIdByStringCondition(partialHash);
+    CommitId commitId = myDataHolder.getHashMap().findCommitId(new Condition<CommitId>() {
+      @Override
+      public boolean value(CommitId commitId) {
+        return hashByString.value(commitId) && getRowOfCommit(commitId.getHash(), commitId.getRoot()) != -1;
+      }
+    });
+    return commitId != null ? getRowOfCommit(commitId.getHash(), commitId.getRoot()) : -1;
   }
 
   @Override

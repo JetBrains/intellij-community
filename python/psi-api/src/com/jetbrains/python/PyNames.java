@@ -165,6 +165,7 @@ public class PyNames {
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
+  public static final String EXIT = "__exit__";
 
   public static final String CALLABLE_BUILTIN = "callable";
   public static final String NAMEDTUPLE = "namedtuple";

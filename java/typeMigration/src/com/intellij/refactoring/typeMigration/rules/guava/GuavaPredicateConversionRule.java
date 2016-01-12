@@ -31,28 +31,17 @@ import java.util.Set;
 /**
  * @author Dmitry Batkovich
  */
-public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
-  static final String GUAVA_PREDICATE = "com.google.common.base.Predicate";
-  static final String JAVA_PREDICATE = "java.util.function.Predicate";
-
+public class GuavaPredicateConversionRule extends GuavaLambdaConversionRule {
   private static final String GUAVA_PREDICATES_UTILITY = "com.google.common.base.Predicates";
+
+  protected GuavaPredicateConversionRule() {
+    super(GuavaLambda.PREDICATE);
+  }
 
   @NotNull
   @Override
   protected Set<String> getAdditionalUtilityClasses() {
     return Collections.singleton(GUAVA_PREDICATES_UTILITY);
-  }
-
-  @Override
-  protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {
-    descriptorsMap.put("apply", new FunctionalInterfaceTypeConversionDescriptor("apply", "test", JAVA_PREDICATE));
-  }
-
-  @Nullable
-  @Override
-  protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
-                                                                            @NotNull PsiVariable psiVariable, PsiExpression context) {
-    return new FunctionalInterfaceTypeConversionDescriptor("apply", "test", JAVA_PREDICATE);
   }
 
   @Nullable
@@ -66,8 +55,7 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
     if (!(context instanceof PsiMethodCallExpression)) {
       return null;
     }
-    final PsiClass aClass = method.getContainingClass();
-    if (aClass != null && GUAVA_PREDICATES_UTILITY.equals(aClass.getQualifiedName())) {
+    if (isPredicates((PsiMethodCallExpression)context)) {
       final TypeConversionDescriptorBase descriptor = GuavaPredicatesUtil.tryConvertIfPredicates(method, context);
       if (descriptor != null) {
         return descriptor;
@@ -76,21 +64,9 @@ public class GuavaPredicateConversionRule extends BaseGuavaTypeConversionRule {
     return new TypeConversionDescriptorBase() {
       @Override
       public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
-        return (PsiExpression)expression.replace(JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::test", expression));
+        return (PsiExpression)expression.replace(JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::apply", expression));
       }
     };
-  }
-
-  @NotNull
-  @Override
-  public String ruleFromClass() {
-    return GUAVA_PREDICATE;
-  }
-
-  @NotNull
-  @Override
-  public String ruleToClass() {
-    return JAVA_PREDICATE;
   }
 
   public static boolean isPredicates(PsiMethodCallExpression expression) {

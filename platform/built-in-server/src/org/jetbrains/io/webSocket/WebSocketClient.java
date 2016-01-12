@@ -21,6 +21,7 @@ class WebSocketClient extends Client {
     this.handshaker = handshaker;
   }
 
+  @NotNull
   @Override
   public ChannelFuture send(@NotNull ByteBuf message) {
     if (channel.isOpen()) {

@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
@@ -118,12 +117,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       final List<PsiType> thrownTypes = new ArrayList<PsiType>();
       final PsiElement body = myExpression instanceof PsiLambdaExpression ? ((PsiLambdaExpression)myExpression).getBody() : myExpression;
       if (body != null) {
-        final List<PsiClassType> exceptions = ExceptionUtil.ourThrowsGuard.doPreventingRecursion(myExpression, false, new Computable<List<PsiClassType>>() {
-          @Override
-          public List<PsiClassType> compute() {
-            return ExceptionUtil.getUnhandledExceptions(new PsiElement[] {body});
-          }
-        });
+        final List<PsiClassType> exceptions =  ExceptionUtil.getUnhandledExceptions(new PsiElement[] {body});
         if (exceptions != null) {
           thrownTypes.addAll(ContainerUtil.filter(exceptions, new Condition<PsiClassType>() {
             @Override

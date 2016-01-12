@@ -297,9 +297,15 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       TypeConversionDescriptorBase descriptor = null;
       if (FLUENT_ITERABLE.equals(containingClass.getQualifiedName())) {
         descriptor = getOneMethodDescriptor(methodName, method, current.getType(), null, current);
+        if (descriptor == null) {
+          return null;
+        }
       }
       else if (GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(containingClass.getQualifiedName())) {
         descriptor = optionalDescriptor.getValue().findConversion(null, null, method, current.getMethodExpression(), labeler);
+        if (descriptor == null) {
+          return null;
+        }
       }
       if (descriptor == null) {
         addToMigrateChainQualifier(labeler, current);

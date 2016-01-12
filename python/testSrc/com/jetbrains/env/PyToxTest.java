@@ -16,6 +16,7 @@
 package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdkTools.SdkCreationType;
@@ -61,10 +62,7 @@ public final class PyToxTest extends PyEnvTestCase {
       if (stderr.isEmpty()) {
         return;
       }
-      // The only allowed  errors are InterpreterNotFound
-      for (String errorLine : StringUtil.split(stderr, "\n")) {
-        Assert.assertThat("Error iin stderr", errorLine, Matchers.containsString("InterpreterNotFound"));
-      }
+      Logger.getInstance(PyToxTest.class).warn(stderr);
     }
 
     @NotNull

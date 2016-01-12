@@ -118,6 +118,9 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.directive.Directive org.apache.velocity.runtime.directive.Scope makeScope(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.runtime.directive.Directive org.apache.velocity.runtime.directive.Scope makeScope(java.lang.Object) 0'>

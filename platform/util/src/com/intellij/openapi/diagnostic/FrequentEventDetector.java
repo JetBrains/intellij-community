@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class FrequentEventDetector {
     myLevel = level;
   }
 
-  public void eventHappened() {
+  public void eventHappened(@NotNull Object event) {
     if (myEventsPosted.incrementAndGet() > myEventCountThreshold) {
       boolean shouldLog = false;
 
@@ -75,12 +75,14 @@ public class FrequentEventDetector {
           logTrace = existingTraceId == null;
           if (logTrace) {
             myRecentTraces.put(trace, traceId = myLastTraceId.incrementAndGet());
-          } else {
+          }
+          else {
             traceId = existingTraceId;
           }
         }
 
-        String message = "Too many events posted, #" + traceId  + (logTrace ? "\n" + trace : "");
+        String message = "Too many events posted, #" + traceId  + ". Event: "+event +
+                         (logTrace ? "\n" + trace : "");
         if (myLevel == Level.INFO) {
           LOG.info(message);
         }

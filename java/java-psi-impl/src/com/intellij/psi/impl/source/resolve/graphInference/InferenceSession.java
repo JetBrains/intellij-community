@@ -42,7 +42,6 @@ public class InferenceSession {
   private static final Logger LOG = Logger.getInstance("#" + InferenceSession.class.getName());
   public static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");
   public static final Key<PsiType> UPPER_BOUND = Key.create("UpperBound");
-  private static final Key<PsiElement> ORIGINAL_CONTEXT = Key.create("ORIGINAL_CONTEXT");
   private static final Key<Boolean> ERASED = Key.create("UNCHECKED_CONVERSION");
   private static final Function<Pair<PsiType, PsiType>, PsiType> UPPER_BOUND_FUNCTION = new Function<Pair<PsiType, PsiType>, PsiType>() {
     @Override
@@ -975,6 +974,7 @@ public class InferenceSession {
   private  boolean hasBoundProblems(final List<InferenceVariable> typeParams,
                                     final PsiSubstitutor substitutor) {
     for (InferenceVariable typeParameter : typeParams) {
+      if (typeParameter.getInstantiation() != PsiType.NULL) continue;
       final List<PsiType> extendsTypes = typeParameter.getBounds(InferenceBound.UPPER);
       final PsiType[] bounds = extendsTypes.toArray(new PsiType[extendsTypes.size()]);
       if (GenericsUtil.findTypeParameterBoundError(typeParameter, bounds, substitutor, myContext, true) != null) {
@@ -1037,7 +1037,7 @@ public class InferenceSession {
       }
       parameter.putUserData(UPPER_BOUND,
                             composeBound(var, InferenceBound.UPPER, UPPER_BOUND_FUNCTION, ySubstitutor.putAll(substitutor), true));
-      parameter.putUserData(ORIGINAL_CONTEXT, myContext);
+      TypeConversionUtil.markAsFreshVariable(parameter, myContext);
       if (!var.addBound(elementFactory.createType(parameter), InferenceBound.EQ)) {
         return false;
       }
@@ -1443,18 +1443,26 @@ public class InferenceSession {
               return receiverSubstitutor;
             }
           }
-          mySiteSubstitutor = mySiteSubstitutor.putAll(receiverSubstitutor);
+          mySiteSubstitutor = receiverSubstitutor;
+
+          if (methodContainingClass != null) {
+            final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(methodContainingClass, containingClass, receiverSubstitutor);
+            LOG.assertTrue(superSubstitutor != null, "mContainingClass: " + methodContainingClass.getName() + "; containingClass: " + containingClass.getName());
+            mySiteSubstitutor = mySiteSubstitutor.putAll(superSubstitutor);
+          }
+
           psiSubstitutor = receiverSubstitutor;
         }
-      }
-      else if (methodContainingClass != null) {
-        psiSubstitutor = TypeConversionUtil.getClassSubstitutor(methodContainingClass, containingClass, psiSubstitutor);
-        LOG.assertTrue(psiSubstitutor != null, "derived: " + containingClass + "; super: " + methodContainingClass);
       }
 
       final PsiType qType = JavaPsiFacade.getElementFactory(method.getProject()).createType(containingClass, psiSubstitutor);
 
       addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(qType), pType));
+
+      if (methodContainingClass != null) {
+        psiSubstitutor = TypeConversionUtil.getClassSubstitutor(methodContainingClass, containingClass, psiSubstitutor);
+        LOG.assertTrue(psiSubstitutor != null, "derived: " + containingClass + "; super: " + methodContainingClass);
+      }
 
       for (int i = 0; i < signature.getParameterTypes().length - 1; i++) {
         final PsiType interfaceParamType = signature.getParameterTypes()[i + 1];
@@ -1498,7 +1506,7 @@ public class InferenceSession {
       LOG.assertTrue(parameters1.length == parameters2.length);
     }
 
-    final int paramsLength = !varargs ? parameters1.length : parameters1.length - 1;
+    final int paramsLength = !varargs ? parameters1.length : Math.max(parameters1.length, parameters2.length) - 1;
     for (int i = 0; i < paramsLength; i++) {
       PsiType sType = getParameterType(parameters1, i, siteSubstitutor1, false);
       PsiType tType = session.substituteWithInferenceVariables(getParameterType(parameters2, i, siteSubstitutor1, varargs));
@@ -1757,15 +1765,6 @@ public class InferenceSession {
       s = s.put(variable, JavaPsiFacade.getElementFactory(variable.getProject()).createType(variable.getParameter()));
     }
     return s.substitute(type);
-  }
-
-  public static boolean areSameFreshVariables(PsiTypeParameter p1, PsiTypeParameter p2) {
-    final PsiElement originalContext = p1.getUserData(ORIGINAL_CONTEXT);
-    return originalContext != null && originalContext == p2.getUserData(ORIGINAL_CONTEXT);
-  }
-  
-  public static boolean isFreshVariable(PsiTypeParameter typeParameter) {
-    return typeParameter.getUserData(ORIGINAL_CONTEXT) != null;
   }
 
   public static PsiClass findParameterizationOfTheSameGenericClass(List<PsiType> upperBounds,

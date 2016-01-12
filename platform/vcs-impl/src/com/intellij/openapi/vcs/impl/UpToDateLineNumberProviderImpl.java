@@ -20,6 +20,7 @@ import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.ex.Range;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -104,8 +105,7 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
     return content;
   }
 
-  private static int calcLineNumber(LineStatusTracker tracker, int currentNumber){
-    if (tracker == null) return -1;
+  private static int calcLineNumber(@NotNull LineStatusTracker tracker, int currentNumber) {
     List<Range> ranges = tracker.getRanges();
     int result = currentNumber;
 
