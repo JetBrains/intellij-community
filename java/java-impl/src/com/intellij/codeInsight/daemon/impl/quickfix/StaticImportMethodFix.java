@@ -170,7 +170,9 @@ public class StaticImportMethodFix implements IntentionAction, HintAction {
         final Boolean alreadyMentioned = possibleClasses.get(containingClass);
         if (alreadyMentioned == Boolean.TRUE) return;
         if (alreadyMentioned == null) {
-          list.addAll(methods);
+          if (!methods.isEmpty()) {
+            list.add(methods.iterator().next());
+          }
           possibleClasses.put(containingClass, false);
         }
         for (PsiMethod method : methods) {
