@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +46,7 @@ public class FixedSizeButton extends JButton {
     }
     mySize = size;
     myComponent = component;
-    setMargin(new Insets(0, 0, 0, 0));
+    setMargin(JBUI.emptyInsets());
     setDefaultCapable(false);
     setFocusable(false);
     if (((UIUtil.isUnderAquaLookAndFeel()) && size == -1) || UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
