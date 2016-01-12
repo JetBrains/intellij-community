@@ -469,8 +469,4 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   public boolean isCompileBeforeLaunchAddedByDefault() {
     return false;
   }
-
-  public boolean usePty() {
-    return PtyCommandLine.isEnabled();
-  }
 }

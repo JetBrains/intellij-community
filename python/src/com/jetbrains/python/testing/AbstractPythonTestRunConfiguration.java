@@ -360,10 +360,4 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
   private static boolean pathsEqual(VirtualFile vFile, final String folderName) {
     return Comparing.equal(new File(vFile.getPath()).getAbsolutePath(), new File(folderName).getAbsolutePath());
   }
-
-  @Override
-  public boolean usePty() {
-    // parsing of test output is easier without colors. Less problems with the process crash.
-    return false;
-  }
 }
