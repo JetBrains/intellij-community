@@ -19,7 +19,7 @@ import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.net.NetUtils;
+import com.intellij.util.net.NetKt;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -76,7 +76,7 @@ public final class SubServer implements CustomPortServerManager.CustomPortServic
     }
 
     try {
-      bootstrap.localAddress(user.isAvailableExternally() ? new InetSocketAddress(port) : new InetSocketAddress(NetUtils.getLoopbackAddress(), port));
+      bootstrap.localAddress(user.isAvailableExternally() ? new InetSocketAddress(port) : NetKt.loopbackSocketAddress(port));
       channelRegistrar.add(bootstrap.bind().syncUninterruptibly().channel());
       return true;
     }

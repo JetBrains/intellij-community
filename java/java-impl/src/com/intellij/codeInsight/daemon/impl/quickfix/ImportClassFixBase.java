@@ -315,14 +315,10 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
     boolean canImportHere = true;
 
-    if (classes.length == 1
-        && (canImportHere = canImportHere(allowCaretNearRef, editor, psiFile, classes[0].getName()))
-        && (FileTypeUtils.isInServerPageFile(psiFile) ?
-            CodeInsightSettings.getInstance().JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY :
-            CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY)
-        && (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile))
-        && !autoImportWillInsertUnexpectedCharacters(classes[0])
-        && !LaterInvocator.isInModalContext()
+    if (classes.length == 1 &&
+        (canImportHere = canImportHere(allowCaretNearRef, editor, psiFile, classes[0].getName())) &&
+        canAddUnambiguousImport(psiFile) &&
+        !autoImportWillInsertUnexpectedCharacters(classes[0])
       ) {
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
         @Override
@@ -342,6 +338,14 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       return Result.POPUP_SHOWN;
     }
     return Result.POPUP_NOT_SHOWN;
+  }
+
+  public static boolean canAddUnambiguousImport(PsiFile psiFile) {
+    return (FileTypeUtils.isInServerPageFile(psiFile) ?
+            CodeInsightSettings.getInstance().JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY :
+            CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY) &&
+           (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile)) &&
+           !LaterInvocator.isInModalContext();
   }
 
   protected int getStartOffset(T element, R ref) {

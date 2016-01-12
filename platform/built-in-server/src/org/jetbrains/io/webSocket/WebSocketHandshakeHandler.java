@@ -32,7 +32,7 @@ public abstract class WebSocketHandshakeHandler extends HttpRequestHandler imple
     @NotNull
     @Override
     protected ClientManager compute() {
-      ClientManager result = new ClientManager(WebSocketHandshakeHandler.this, WebSocketHandshakeHandler.this);
+      ClientManager result = new ClientManager(WebSocketHandshakeHandler.this, WebSocketHandshakeHandler.this, null);
       Disposable serverDisposable = BuiltInServerManager.getInstance().getServerDisposable();
       assert serverDisposable != null;
       Disposer.register(serverDisposable, result);
@@ -75,7 +75,7 @@ public abstract class WebSocketHandshakeHandler extends HttpRequestHandler imple
     }
 
     final Client client = new WebSocketClient(context.channel(), handshaker);
-    context.attr(ClientManager.CLIENT).set(client);
+    context.attr(ClientManagerKt.getCLIENT()).set(client);
     handshaker.handshake(context.channel(), request).addListener(new ChannelFutureListener() {
       @Override
       public void operationComplete(ChannelFuture future) throws Exception {
@@ -86,7 +86,7 @@ public abstract class WebSocketHandshakeHandler extends HttpRequestHandler imple
           BuiltInServer.replaceDefaultHandler(context, messageChannelHandler);
           ChannelHandlerContext messageChannelHandlerContext = context.pipeline().context(messageChannelHandler);
           context.pipeline().addBefore(messageChannelHandlerContext.name(), "webSocketFrameAggregator", new WebSocketFrameAggregator(NettyUtil.MAX_CONTENT_LENGTH));
-          messageChannelHandlerContext.attr(ClientManager.CLIENT).set(client);
+          messageChannelHandlerContext.attr(ClientManagerKt.getCLIENT()).set(client);
           connected(client, uriDecoder.parameters());
         }
       }

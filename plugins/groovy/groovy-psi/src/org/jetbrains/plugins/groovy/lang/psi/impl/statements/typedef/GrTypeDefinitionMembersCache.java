@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -321,26 +321,21 @@ public class GrTypeDefinitionMembersCache {
               if (traitFieldHelper == null) return;
 
               final VirtualFile virtualFile = traitFieldHelper.getContainingFile().getVirtualFile();
-              FileBasedIndex.getInstance().processValues(
+              final List<Collection<TraitFieldDescriptor>> descriptors = FileBasedIndex.getInstance().getValues(
                 INDEX_ID,
                 FileBasedIndex.getFileId(virtualFile),
-                virtualFile,
-                new FileBasedIndex.ValueProcessor<Collection<TraitFieldDescriptor>>() {
-                  @Override
-                  public boolean process(VirtualFile file, Collection<TraitFieldDescriptor> values) {
-                    for (TraitFieldDescriptor descriptor : values) {
-                      final GrLightField field = new GrLightField(trait, descriptor.name, descriptor.typeString);
-                      if (descriptor.isStatic) {
-                        field.getModifierList().addModifier(STATIC_MASK);
-                      }
-                      field.getModifierList().addModifier(descriptor.isPublic ? PUBLIC_MASK : PRIVATE_MASK);
-                      addCandidate(field, substitutor);
-                    }
-                    return true;
-                  }
-                },
                 trait.getResolveScope()
               );
+              for (Collection<TraitFieldDescriptor> traitFieldDescriptors : descriptors) {
+                for (TraitFieldDescriptor descriptor : traitFieldDescriptors) {
+                  final GrLightField field = new GrLightField(trait, descriptor.name, descriptor.typeString);
+                  if (descriptor.isStatic) {
+                    field.getModifierList().addModifier(STATIC_MASK);
+                  }
+                  field.getModifierList().addModifier(descriptor.isPublic ? PUBLIC_MASK : PRIVATE_MASK);
+                  addCandidate(field, substitutor);
+                }
+              }
             }
           }
         }.getResult();

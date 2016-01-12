@@ -198,18 +198,32 @@ public class InferenceSessionContainer {
       if (parent instanceof PsiCall) {
         break;
       }
-      if (parent instanceof PsiCodeBlock && PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class) == null) {
-        break;
-      }
-      if (parent instanceof PsiLambdaExpression) {
-        boolean inReturnExpressions = false;
-        for (PsiExpression expression : LambdaUtil.getReturnExpressions((PsiLambdaExpression)parent)) {
-          inReturnExpressions |= PsiTreeUtil.isAncestor(expression, context, false);
-        }
-        if (!inReturnExpressions) {
+
+      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
+      if (parent instanceof PsiCodeBlock) {
+        if (lambdaExpression == null) {
           break;
         }
+        else {
+          boolean inReturnExpressions = false;
+          for (PsiExpression expression : LambdaUtil.getReturnExpressions(lambdaExpression)) {
+            inReturnExpressions |= PsiTreeUtil.isAncestor(expression, context, false);
+          }
+
+          if (!inReturnExpressions) {
+            break;
+          }
+
+          if (LambdaUtil.getFunctionalTypeMap().containsKey(lambdaExpression)) {
+            break;
+          }
+        }
       }
+
+      if (parent instanceof PsiLambdaExpression && LambdaUtil.getFunctionalTypeMap().containsKey(parent)) {
+        break;
+      }
+      
       final PsiCall psiCall = PsiTreeUtil.getParentOfType(parent, PsiCall.class);
       if (psiCall == null) {
         break;

@@ -16,8 +16,14 @@
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
+import com.intellij.execution.JavaRunConfigurationExtensionManager;
+import com.intellij.execution.JavaTestConfigurationBase;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -153,7 +159,7 @@ public abstract class TestDiscoveryConfiguration extends JavaTestConfigurationBa
   @Nullable
   @Override
   public String getPackage() {
-    return null;
+    return "";
   }
 
   @Override

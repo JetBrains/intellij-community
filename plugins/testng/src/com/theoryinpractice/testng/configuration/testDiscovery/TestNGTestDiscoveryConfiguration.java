@@ -75,7 +75,17 @@ public class TestNGTestDiscoveryConfiguration extends TestDiscoveryConfiguration
     public TestNGTestDiscoveryRunnableState(ExecutionEnvironment environment) {
       super(environment, ((TestNGConfiguration)myDelegate));
     }
-    
+
+    @Override
+    protected TestSearchScope getScope() {
+      return TestSearchScope.MODULE_WITH_DEPENDENCIES;
+    }
+
+    @Override
+    protected boolean forkPerModule() {
+      return spansMultipleModules("");
+    }
+
     @Override
     public SearchingForTestsTask createSearchingForTestsTask() {
       return new SearchingForTestsTask(myServerSocket, getConfiguration(), myTempFile, client) {
@@ -88,6 +98,12 @@ public class TestNGTestDiscoveryConfiguration extends TestDiscoveryConfiguration
             module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(getProject());
           TestNGTestPattern.fillTestObjects(myClasses, patterns, TestSearchScope.MODULE_WITH_DEPENDENCIES, 
                                             TestNGTestDiscoveryConfiguration.this, searchScope);
+        }
+
+        @Override
+        protected void onFound() {
+          super.onFound();
+          writeClassesPerModule(myClasses);
         }
       };
     }

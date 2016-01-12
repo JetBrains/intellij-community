@@ -227,10 +227,12 @@ public class JarHandler extends ZipHandler {
       reportIOErrorWithJars(original, mirror, e);
       return original;
     }
-
-    if (progress != null) {
-      progress.popState();
+    finally {
+      if (progress != null) {
+        progress.popState();
+      }
     }
+
 
     return mirror;
   }

@@ -17,7 +17,7 @@ package com.intellij.ui.components;
 
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBScrollBar.Alignment;
+import com.intellij.ui.components.JBScrollPane.Alignment;
 
 import java.awt.AlphaComposite;
 import java.awt.Composite;

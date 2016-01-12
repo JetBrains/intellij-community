@@ -22,6 +22,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -75,6 +76,11 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       return true;
     }
     return false;
+  }
+
+  @Override
+  protected Module findModule(TestDiscoveryConfiguration configuration, Module contextModule) {
+    return null;
   }
 
   private static Pair<String, String> getPosition(Location location) {

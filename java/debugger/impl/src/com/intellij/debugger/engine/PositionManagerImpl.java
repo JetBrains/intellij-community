@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -230,14 +230,14 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       if (name != null && !name.equals(myExpectedClassName)) {
         return null;
       }
-      PsiParameterListOwner method = DebuggerUtilsEx.getContainingMethod(element);
+      PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
       if (!StringUtil.isEmpty(myExpectedMethodName)) {
         if (method == null) {
           return null;
         }
         else if (((method instanceof PsiMethod && myExpectedMethodName.equals(((PsiMethod)method).getName())) ||
                   (method instanceof PsiLambdaExpression && LambdaMethodFilter.isLambdaName(myExpectedMethodName))) &&
-                 insideBody(element, method.getBody())) {
+                 insideBody(element, DebuggerUtilsEx.getBody(method))) {
           return element;
         }
       }

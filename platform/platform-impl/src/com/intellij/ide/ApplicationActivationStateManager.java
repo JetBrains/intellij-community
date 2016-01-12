@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public class ApplicationActivationStateManager {
       state = State.DEACTIVATING;
       LOG.debug("The app is in the deactivating state");
 
-      Timer timer = new Timer(Registry.intValue("application.deactivation.timeout"), new ActionListener() {
+      Timer timer = UIUtil.createNamedTimer("ApplicationDeactivation",Registry.intValue("application.deactivation.timeout"), new ActionListener() {
         public void actionPerformed(ActionEvent evt) {
 
           if (state.equals(State.DEACTIVATING)) {

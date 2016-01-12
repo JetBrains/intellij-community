@@ -16,91 +16,32 @@
 package com.intellij.execution.process.impl;
 
 import com.intellij.execution.process.OSProcessManager;
-import com.intellij.execution.process.ProcessInfo;
-import com.intellij.execution.process.RunnerWinProcess;
-import com.intellij.execution.process.UnixProcessManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.execution.process.ProcessUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jvnet.winp.WinProcess;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author nik
  */
 public class OSProcessManagerImpl extends OSProcessManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.impl.OSProcessManagerImpl");
-
-  @NotNull
-  public static ProcessInfo[] getProcessList() {
-    return ProcessListUtil.getProcessList();
-  }
-
   @Override
   public boolean killProcessTree(@NotNull Process process) {
-    if (SystemInfo.isWindows) {
-      try {
-        WinProcess winProcess = createWinProcess(process);
-        winProcess.killRecursively();
-        return true;
-      }
-      catch (Throwable e) {
-        LOG.info("Cannot kill process tree", e);
-      }
-    }
-    else if (SystemInfo.isUnix) {
-      return UnixProcessManager.sendSigKillToProcessTree(process);
-    }
-    return false;
+    return ProcessUtils.killProcessTree(process);
   }
 
   public static void killProcess(@NotNull Process process) {
-    if (SystemInfo.isWindows) {
-      try {
-        WinProcess winProcess = createWinProcess(process);
-        winProcess.kill();
-      }
-      catch (Throwable e) {
-        LOG.info("Cannot kill process", e);
-      }
-    }
-    else if (SystemInfo.isUnix) {
-      UnixProcessManager.sendSignal(UnixProcessManager.getProcessPid(process), UnixProcessManager.SIGKILL);
-    }
-  }
-  
-  public static int getProcessID(@NotNull Process process) {
-    if (SystemInfo.isWindows) {
-      try {
-        return createWinProcess(process).getPid();
-      }
-      catch (Throwable e) {
-        LOG.info("Cannot get process id", e);
-        return -1;
-      }
-    }
-    else if (SystemInfo.isUnix) {
-      return UnixProcessManager.getProcessPid(process);
-    }
-    throw new IllegalStateException("Unknown OS: "  + SystemInfo.OS_NAME);
+    ProcessUtils.killProcess(process);
   }
 
-  @SuppressWarnings("deprecation")
-  @NotNull
-  private static WinProcess createWinProcess(@NotNull Process process) {
-    if (process instanceof RunnerWinProcess) process = ((RunnerWinProcess)process).getOriginalProcess();
-    return new WinProcess(process);
+  public static int getProcessID(@NotNull Process process) {
+    return ProcessUtils.getProcessID(process);
   }
 
   @Override
+  @Nullable
   public List<String> getCommandLinesOfRunningProcesses() {
-    List<String> result = new ArrayList<String>();
-    for (ProcessInfo each : getProcessList()) {
-      result.add(each.getCommandLine());
-    }
-    return Collections.unmodifiableList(result); 
+    return ProcessUtils.getCommandLinesOfRunningProcesses();
   }
 }

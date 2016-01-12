@@ -503,12 +503,12 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     @Override
     public int getLineNumber(int currentNumber) {
       int number = myViewer.transferLineFromOnesideStrict(mySide, currentNumber);
-      return number != -1 ? myLocalChangesProvider.getLineNumber(number) : -1;
+      return number != -1 ? myLocalChangesProvider.getLineNumber(number) : FAKE_LINE_NUMBER;
     }
 
     @Override
     public boolean isLineChanged(int currentNumber) {
-      return getLineNumber(currentNumber) == -1;
+      return getLineNumber(currentNumber) == ABSENT_LINE_NUMBER;
     }
 
     @Override

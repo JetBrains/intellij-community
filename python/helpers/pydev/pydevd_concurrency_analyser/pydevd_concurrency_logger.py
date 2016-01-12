@@ -239,7 +239,7 @@ class ThreadingLogger:
             traceback.print_exc()
 
 
-class NameManager():
+class NameManager:
     def __init__(self, name_prefix):
         self.tasks = {}
         self.last = 0

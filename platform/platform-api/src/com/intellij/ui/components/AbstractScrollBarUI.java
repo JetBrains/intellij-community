@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,18 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBScrollBar.Alignment;
+import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
 
-import java.awt.*;
-import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.ScrollBarUI;
+import java.awt.*;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -44,7 +44,7 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
   private static final JBColor TRACK_FOREGROUND = new JBColor(0xE6E6E6, 0x3C3F41);
 
   private final Listener myListener = new Listener();
-  private final Timer myScrollTimer = new Timer(60, myListener);
+  private final Timer myScrollTimer = UIUtil.createNamedTimer("ScrollBarUITimer",60, myListener);
 
   private final Rectangle myThumbBounds = new Rectangle();
   private final Rectangle myTrackBounds = new Rectangle();

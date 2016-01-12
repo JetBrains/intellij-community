@@ -19,7 +19,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.components.JBScrollBar.Alignment;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -357,6 +356,40 @@ public class JBScrollPane extends JScrollPane {
    */
   public enum Flip {
     NONE, VERTICAL, HORIZONTAL, BOTH
+  }
+
+  /**
+   * These client properties show a component position on a scroll pane.
+   * It is set by internal layout manager of the scroll pane.
+   */
+  enum Alignment {
+    TOP, LEFT, RIGHT, BOTTOM;
+
+    static Alignment get(JComponent component) {
+      if (component != null) {
+        Object property = component.getClientProperty(Alignment.class);
+        if (property instanceof Alignment) return (Alignment)property;
+
+        Container parent = component.getParent();
+        if (parent instanceof JScrollPane) {
+          JScrollPane pane = (JScrollPane)parent;
+          if (component == pane.getColumnHeader()) {
+            return TOP;
+          }
+          if (component == pane.getHorizontalScrollBar()) {
+            return BOTTOM;
+          }
+          boolean ltr = pane.getComponentOrientation().isLeftToRight();
+          if (component == pane.getVerticalScrollBar()) {
+            return ltr ? RIGHT : LEFT;
+          }
+          if (component == pane.getRowHeader()) {
+            return ltr ? LEFT : RIGHT;
+          }
+        }
+      }
+      return null;
+    }
   }
 
   /**

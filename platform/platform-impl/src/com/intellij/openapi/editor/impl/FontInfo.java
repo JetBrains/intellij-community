@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ public class FontInfo {
         String normalizedName = name.toLowerCase(Locale.getDefault());
         return normalizedName.startsWith(normalizedFamilyName) &&
                (normalizedName.endsWith(".otf") || normalizedName.endsWith(".ttf")) &&
-               (style == -1 || style == ComplementaryFontsRegistry.getFontStyle(name));
+               (style == -1 || style == getFontStyle(normalizedName));
       }
     };
     List<File> files = new ArrayList<File>();
@@ -141,6 +141,13 @@ public class FontInfo {
     }
     
     return Collections.min(files, BY_NAME);
+  }
+
+  private static int getFontStyle(@NotNull String fontFileNameLowercase) {
+    String baseName = fontFileNameLowercase.substring(0, fontFileNameLowercase.length() - 4);
+    if (baseName.endsWith("-it")) return Font.ITALIC;
+    else if (baseName.endsWith("-boldit")) return Font.BOLD | Font.ITALIC;
+    else return ComplementaryFontsRegistry.getFontStyle(fontFileNameLowercase);
   }
 
   private void parseProblemGlyphs() {
