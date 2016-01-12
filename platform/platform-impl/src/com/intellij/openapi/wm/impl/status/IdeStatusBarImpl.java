@@ -42,6 +42,9 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
@@ -53,7 +56,7 @@ import java.util.List;
 /**
  * User: spLeaner
  */
-public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
+public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx {
   private static final int MIN_ICON_HEIGHT = 18 + 1 + 1;
   private final InfoAndProgressPanel myInfoAndProgressPanel;
   private IdeFrame myFrame;
@@ -882,5 +885,20 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   @Override
   public IdeFrame getFrame() {
     return myFrame;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleIdeStatusBarImpl();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleIdeStatusBarImpl extends AccessibleJComponent {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.PANEL;
+    }
   }
 }
