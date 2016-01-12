@@ -37,11 +37,11 @@ import java.util.Collections;
 import java.util.List;
 
 
-class ProcessListUtil {
+public class ProcessListUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.impl.ProcessListUtil");
 
   @NotNull
-  static ProcessInfo[] getProcessList() {
+  public static ProcessInfo[] getProcessList() {
     List<ProcessInfo> result = doGetProcessList();
     return result.isEmpty() ? ProcessInfo.EMPTY_ARRAY : result.toArray(new ProcessInfo[result.size()]);
   }

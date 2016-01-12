@@ -31,14 +31,6 @@ public class OSProcessManagerImpl extends OSProcessManager {
     return ProcessUtils.killProcessTree(process);
   }
 
-  public static void killProcess(@NotNull Process process) {
-    ProcessUtils.killProcess(process);
-  }
-
-  public static int getProcessID(@NotNull Process process) {
-    return ProcessUtils.getProcessID(process);
-  }
-
   @Override
   @Nullable
   public List<String> getCommandLinesOfRunningProcesses() {

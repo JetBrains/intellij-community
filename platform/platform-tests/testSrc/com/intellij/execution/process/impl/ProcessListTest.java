@@ -16,6 +16,7 @@
 package com.intellij.execution.process.impl;
 
 import com.intellij.execution.process.ProcessInfo;
+import com.intellij.execution.process.ProcessUtils;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
@@ -49,7 +50,7 @@ public class ProcessListTest extends UsefulTestCase {
   }
 
   public void testWorksOnAllPlatforms() throws Exception {
-    assertNotEmpty(Arrays.asList(OSProcessManagerImpl.getProcessList()));
+    assertNotEmpty(Arrays.asList(ProcessUtils.getProcessList()));
 
     if (SystemInfo.isWindows) {
       assertNotEmpty(Arrays.asList(ProcessListUtil.getProcessList_WindowsTaskList()));
