@@ -340,6 +340,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  public void testReorderParamsOfFunctionalInterfaceExpandMethodReference() {
+    GenParams genParams = method -> new ParameterInfoImpl[]{
+      new ParameterInfoImpl(1, "b", PsiType.INT),
+      new ParameterInfoImpl(0, "a", PsiType.INT)
+    };
+    doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
+  }
+
   public void testMethodParametersAlignmentAfterMethodNameChange() {
     getJavaSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getJavaSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;

@@ -113,9 +113,16 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       else if (usage instanceof FunctionalInterfaceChangedUsageInfo) {
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(usage.getProject());
         final PsiElement element = usage.getElement();
+        final PsiMethod interfaceMethod = ((FunctionalInterfaceChangedUsageInfo)usage).getMethod();
         if (element instanceof PsiLambdaExpression) {
-          processMethodParams((JavaChangeInfo)changeInfo, ((FunctionalInterfaceChangedUsageInfo)usage).getMethod(),
-                               elementFactory, PsiSubstitutor.EMPTY, ((PsiLambdaExpression)element).getParameterList(), ((PsiLambdaExpression)element).getBody());
+          processMethodParams((JavaChangeInfo)changeInfo, interfaceMethod,
+                              elementFactory, PsiSubstitutor.EMPTY, ((PsiLambdaExpression)element).getParameterList(), ((PsiLambdaExpression)element).getBody());
+        }
+        else if (element instanceof PsiMethodReferenceExpression) {
+          final PsiLambdaExpression lambdaExpression =
+            LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)element, false, true);
+          processMethodParams(((JavaChangeInfo)changeInfo), interfaceMethod, elementFactory, PsiSubstitutor.EMPTY, 
+                              lambdaExpression.getParameterList(), lambdaExpression.getBody());
         }
         return true;
       }
@@ -981,7 +988,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           checkContract(conflictDescriptions, method);
         }
         else if (element instanceof PsiMethodReferenceExpression) {
-          conflictDescriptions.putValue(element, "Changed method is used in method reference");
+          conflictDescriptions.putValue(element, "Changed method is used in method reference. Proceeding would result in conversion to lambda expression");
         }
       }
 
