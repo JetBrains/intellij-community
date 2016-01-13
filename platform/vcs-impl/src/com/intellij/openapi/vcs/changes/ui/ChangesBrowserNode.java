@@ -35,9 +35,6 @@ import java.util.List;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
-/**
- * @author max
- */
 public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   private SimpleTextAttributes myAttributes;
 
@@ -81,10 +78,12 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
-  public static ChangesBrowserNode create(@NotNull final LocallyDeletedChange change) {
+  @NotNull
+  public static ChangesBrowserNode create(@NotNull LocallyDeletedChange change) {
     return new ChangesBrowserLocallyDeletedNode(change);
   }
 
+  @NotNull
   public static ChangesBrowserNode create(final Project project, @NotNull Object userObject) {
     if (userObject instanceof Change) {
       return new ChangesBrowserChangeNode(project, (Change) userObject, null);
@@ -146,11 +145,13 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     return false;
   }
 
+  @NotNull
   public List<Change> getAllChangesUnder() {
     return getAllObjectsUnder(Change.class);
   }
 
-  public <T> List<T> getAllObjectsUnder(final Class<T> clazz) {
+  @NotNull
+  public <T> List<T> getAllObjectsUnder(@NotNull Class<T> clazz) {
     List<T> changes = new ArrayList<T>();
     final Enumeration enumeration = preorderEnumeration();
     while (enumeration.hasMoreElements()) {
@@ -164,6 +165,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     return changes;
   }
 
+  @NotNull
   public List<VirtualFile> getAllFilesUnder() {
     List<VirtualFile> files = new ArrayList<VirtualFile>();
     final Enumeration enumeration = breadthFirstEnumeration();
@@ -181,6 +183,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     return files;
   }
 
+  @NotNull
   public List<FilePath> getAllFilePathsUnder() {
     List<FilePath> files = new ArrayList<FilePath>();
     final Enumeration enumeration = breadthFirstEnumeration();
