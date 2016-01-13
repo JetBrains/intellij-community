@@ -333,6 +333,13 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  public void testReorderParamsOfFunctionalInterface() {
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      new ParameterInfoImpl(1, "b", PsiType.INT),
+      new ParameterInfoImpl(0, "a", PsiType.BOOLEAN)
+    }, false);
+  }
+
   public void testMethodParametersAlignmentAfterMethodNameChange() {
     getJavaSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getJavaSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
