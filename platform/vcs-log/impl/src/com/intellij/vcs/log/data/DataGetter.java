@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Set;
 
 public interface DataGetter<T extends VcsShortCommitDetails> {
   @Nullable
@@ -31,7 +30,7 @@ public interface DataGetter<T extends VcsShortCommitDetails> {
 
   void loadCommitsData(@NotNull List<Integer> rows,
                        @NotNull GraphTableModel tableModel,
-                       @NotNull Consumer<Set<T>> consumer,
+                       @NotNull Consumer<List<T>> consumer,
                        @Nullable ProgressIndicator indicator);
 
   @Nullable

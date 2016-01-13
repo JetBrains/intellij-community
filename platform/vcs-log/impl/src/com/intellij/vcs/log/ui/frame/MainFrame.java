@@ -398,9 +398,9 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
         final EmptyProgressIndicator indicator = new EmptyProgressIndicator();
         myLastRequest = indicator;
-        myLog.requestSelectedDetails(new Consumer<Set<VcsFullCommitDetails>>() {
+        myLog.requestSelectedDetails(new Consumer<List<VcsFullCommitDetails>>() {
           @Override
-          public void consume(Set<VcsFullCommitDetails> detailsList) {
+          public void consume(List<VcsFullCommitDetails> detailsList) {
             if (myLastRequest == indicator && !(indicator.isCanceled())) {
               myLastRequest = null;
               List<Change> changes = ContainerUtil.newArrayList();

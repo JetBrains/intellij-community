@@ -34,8 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAction {
 
@@ -44,9 +44,9 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
 
-    log.requestSelectedDetails(new Consumer<Set<VcsFullCommitDetails>>() {
+    log.requestSelectedDetails(new Consumer<List<VcsFullCommitDetails>>() {
       @Override
-      public void consume(Set<VcsFullCommitDetails> details) {
+      public void consume(List<VcsFullCommitDetails> details) {
         MultiMap<Repo, VcsFullCommitDetails> grouped = groupCommits(project, details, new Function<VcsFullCommitDetails, VirtualFile>() {
           @Override
           public VirtualFile fun(VcsFullCommitDetails vcsFullCommitDetails) {

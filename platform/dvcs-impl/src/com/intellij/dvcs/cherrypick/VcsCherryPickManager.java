@@ -54,9 +54,9 @@ public class VcsCherryPickManager {
   }
 
   public void cherryPick(@NotNull VcsLog log) {
-    log.requestSelectedDetails(new Consumer<Set<VcsFullCommitDetails>>() {
+    log.requestSelectedDetails(new Consumer<List<VcsFullCommitDetails>>() {
       @Override
-      public void consume(Set<VcsFullCommitDetails> details) {
+      public void consume(List<VcsFullCommitDetails> details) {
         ProgressManager.getInstance().run(new CherryPickingTask(myProject, details));
       }
     }, null);
@@ -93,7 +93,7 @@ public class VcsCherryPickManager {
     @NotNull private final Collection<VcsFullCommitDetails> myAllCommits;
     @NotNull private final ChangeListManagerEx myChangeListManager;
 
-    public CherryPickingTask(@NotNull Project project, @NotNull Set<VcsFullCommitDetails> details) {
+    public CherryPickingTask(@NotNull Project project, @NotNull List<VcsFullCommitDetails> details) {
       super(project, "Cherry-Picking");
       myAllCommits = details;
       myChangeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);

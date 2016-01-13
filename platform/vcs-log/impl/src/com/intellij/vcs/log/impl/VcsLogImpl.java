@@ -83,7 +83,7 @@ public class VcsLogImpl implements VcsLog {
   }
 
   @Override
-  public void requestSelectedDetails(@NotNull Consumer<Set<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator) {
+  public void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator) {
     List<Integer> rowsList = Ints.asList(myUi.getTable().getSelectedRows());
     myDataHolder.getCommitDetailsGetter().loadCommitsData(rowsList, (GraphTableModel)myUi.getTable().getModel(), consumer, indicator);
   }

@@ -52,7 +52,7 @@ public interface VcsLog {
    * @param consumer called in EDT after all details are loaded.
    * @param indicator progress indicator to use in loading process, can be null.
    */
-  void requestSelectedDetails(@NotNull Consumer<Set<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator);
+  void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator);
 
   /**
    * Returns names of branches which contain the given commit, or null if this information is unavailable.

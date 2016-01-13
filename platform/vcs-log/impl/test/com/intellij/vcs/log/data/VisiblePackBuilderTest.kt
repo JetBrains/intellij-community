@@ -154,7 +154,7 @@ class VisiblePackBuilderTest {
           return null
         }
 
-        override fun loadCommitsData(rows: MutableList<Int>, tableModel: GraphTableModel, consumer: Consumer<MutableSet<VcsFullCommitDetails>>, indicator: ProgressIndicator?) {
+        override fun loadCommitsData(rows: MutableList<Int>, tableModel: GraphTableModel, consumer: Consumer<MutableList<VcsFullCommitDetails>>, indicator: ProgressIndicator?) {
         }
 
         override fun getCommitDataIfAvailable(hash: Int): VcsFullCommitDetails? {

@@ -81,9 +81,9 @@ public class HgQGotoFromLogAction extends HgMqAppliedPatchAction {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
 
-    log.requestSelectedDetails(new Consumer<Set<VcsFullCommitDetails>>() {
+    log.requestSelectedDetails(new Consumer<List<VcsFullCommitDetails>>() {
       @Override
-      public void consume(Set<VcsFullCommitDetails> selectedDetails) {
+      public void consume(List<VcsFullCommitDetails> selectedDetails) {
         VcsFullCommitDetails fullCommitDetails = ContainerUtil.getFirstItem(selectedDetails);
 
         assert fullCommitDetails != null;

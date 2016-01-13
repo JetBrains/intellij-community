@@ -6,8 +6,10 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -142,35 +144,35 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   @Override
   public void loadCommitsData(@NotNull List<Integer> rows,
                               @NotNull GraphTableModel tableModel,
-                              @NotNull Consumer<Set<T>> consumer,
+                              @NotNull Consumer<List<T>> consumer,
                               @Nullable ProgressIndicator indicator) {
     assert EventQueue.isDispatchThread();
     loadCommitsData(getCommitsForRows(rows, tableModel), consumer, indicator);
   }
 
-  private void loadCommitsData(@NotNull final MultiMap<VirtualFile, Integer> commits,
-                               @NotNull final Consumer<Set<T>> consumer,
+  private void loadCommitsData(@NotNull final Map<Pair<VirtualFile, Integer>, Integer> commits,
+                               @NotNull final Consumer<List<T>> consumer,
                                @Nullable ProgressIndicator indicator) {
-    final Set<T> result = ContainerUtil.newHashSet();
+    final List<T> result = ContainerUtil.newArrayList();
     final MultiMap<VirtualFile, Integer> toLoad = MultiMap.create();
 
     long taskNumber = myCurrentTaskIndex++;
 
-    for (VirtualFile root : commits.keySet()) {
-      Collection<Integer> hashesForRoot = commits.get(root);
-      for (final Integer commitId : hashesForRoot) {
-        T details = getFromCache(commitId);
-        if (details == null || details instanceof LoadingDetails) {
-          toLoad.putValue(root, commitId);
-          cacheCommit(commitId, root, taskNumber);
-        }
-        else {
-          result.add(details);
-        }
+    for (Pair<VirtualFile, Integer> rootAndCommit : commits.keySet()) {
+      VirtualFile root = rootAndCommit.getFirst();
+      Integer commitId = rootAndCommit.getSecond();
+      T details = getFromCache(commitId);
+      if (details == null || details instanceof LoadingDetails) {
+        toLoad.putValue(root, commitId);
+        cacheCommit(commitId, root, taskNumber);
+      }
+      else {
+        result.add(details);
       }
     }
 
     if (toLoad.isEmpty()) {
+      sortCommitsByRow(result, commits);
       consumer.consume(result);
     }
     else {
@@ -181,6 +183,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
             indicator.checkCanceled();
             try {
               result.addAll(preLoadCommitData(toLoad));
+              sortCommitsByRow(result, commits);
               notifyLoaded();
             }
             catch (VcsException e) {
@@ -200,6 +203,17 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
         ProgressManager.getInstance().run(task);
       }
     }
+  }
+
+  private void sortCommitsByRow(@NotNull List<T> result, @NotNull final Map<Pair<VirtualFile, Integer>, Integer> rowsForCommits) {
+    ContainerUtil.sort(result, new Comparator<T>() {
+      @Override
+      public int compare(T details1, T details2) {
+        Integer row1 = rowsForCommits.get(Pair.create(details1.getRoot(), myHashMap.getCommitIndex(details1.getId(), details1.getRoot())));
+        Integer row2 = rowsForCommits.get(Pair.create(details2.getRoot(), myHashMap.getCommitIndex(details2.getId(), details2.getRoot())));
+        return Comparing.compare(row1, row2);
+      }
+    });
   }
 
   @Override
@@ -232,17 +246,18 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   private void runLoadCommitsData(@NotNull GraphTableModel tableModel, @NotNull Iterable<Integer> rows) {
     long taskNumber = myCurrentTaskIndex++;
-    MultiMap<VirtualFile, Integer> commits = getCommitsForRows(rows, tableModel);
-    for (Map.Entry<VirtualFile, Collection<Integer>> hashesByRoots : commits.entrySet()) {
-      VirtualFile root = hashesByRoots.getKey();
-      Collection<Integer> hashes = hashesByRoots.getValue();
+    Map<Pair<VirtualFile, Integer>, Integer> commits = getCommitsForRows(rows, tableModel);
+    MultiMap<VirtualFile, Integer> toLoad = MultiMap.create();
 
-      for (final int commitId : hashes) {
-        cacheCommit(commitId, root, taskNumber);
-      }
+    for (Pair<VirtualFile, Integer> rootAndCommit : commits.keySet()) {
+      VirtualFile root = rootAndCommit.getFirst();
+      Integer commitId = rootAndCommit.getSecond();
+
+      cacheCommit(commitId, root, taskNumber);
+      toLoad.putValue(root, commitId);
     }
 
-    myLoader.queue(new TaskDescriptor(commits));
+    myLoader.queue(new TaskDescriptor(toLoad));
   }
 
   private void cacheCommit(final int commitId, VirtualFile root, long taskNumber) {
@@ -260,12 +275,13 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   @NotNull
-  private static MultiMap<VirtualFile, Integer> getCommitsForRows(@NotNull Iterable<Integer> rows, @NotNull GraphTableModel model) {
-    MultiMap<VirtualFile, Integer> commits = MultiMap.create();
+  private static Map<Pair<VirtualFile, Integer>, Integer> getCommitsForRows(@NotNull Iterable<Integer> rows,
+                                                                            @NotNull GraphTableModel model) {
+    Map<Pair<VirtualFile, Integer>, Integer> commits = ContainerUtil.newHashMap();
     for (int row : rows) {
       Integer commitId = model.getIdAtRow(row);
       VirtualFile root = model.getRoot(row);
-      commits.putValue(root, commitId);
+      commits.put(Pair.create(root, commitId), row);
     }
     return commits;
   }
