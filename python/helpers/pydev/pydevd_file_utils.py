@@ -73,14 +73,13 @@ PATHS_FROM_ECLIPSE_TO_PYTHON = []
 normcase = os_normcase # May be rebound on set_ide_os
 
 
-# Seems to be unused (just commented out for now).
-# from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
-# def norm_case(filename):
-#     filename = os_normcase(filename)
-#     if IS_PY3K:
-#         return filename
-#     enc = getfilesystemencoding()
-#     return filename.decode(enc).lower().encode(enc)
+from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
+def norm_case(filename):
+    filename = os_normcase(filename)
+    if IS_PY3K:
+        return filename
+    enc = getfilesystemencoding()
+    return filename.decode(enc).lower().encode(enc)
 
 
 def set_ide_os(os):
@@ -93,7 +92,7 @@ def set_ide_os(os):
     if os == 'UNIX':
         normcase = lambda f:f #Change to no-op if the client side is on unix/mac.
     else:
-        normcase = os_normcase
+        normcase = norm_case
 
     # After setting the ide OS, apply the normcase to the existing paths.
 

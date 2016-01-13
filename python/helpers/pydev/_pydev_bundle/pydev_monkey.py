@@ -134,7 +134,7 @@ def patch_args(args):
         # (i >= len(args) instead of i < len(args))
         # in practice it'd raise an exception here and would return original args, which is not what we want... providing
         # a proper fix for https://youtrack.jetbrains.com/issue/PY-9767 elsewhere.
-        if i < len(args) and _is_managed_arg(args[i]):  # no need to add pydevd twice
+        if i >= len(args) or _is_managed_arg(args[i]):  # no need to add pydevd twice
             return args
 
         for x in original:  # @UndefinedVariable
