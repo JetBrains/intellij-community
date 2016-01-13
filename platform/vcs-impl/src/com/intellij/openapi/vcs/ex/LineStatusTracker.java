@@ -405,8 +405,14 @@ public class LineStatusTracker {
       synchronized (myLock) {
         if (!myInitialized || myReleased || myBulkUpdate || myDuringRollback || myAnathemaThrown) return;
         if (myDirtyRange != null) {
-          doUpdateRanges(myDirtyRange.line1, myDirtyRange.line2, myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
-          myDirtyRange = null;
+          try {
+            doUpdateRanges(myDirtyRange.line1, myDirtyRange.line2, myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
+            myDirtyRange = null;
+          }
+          catch (Exception e) {
+            LOG.error(e);
+            reinstallRanges();
+          }
         }
       }
     }
