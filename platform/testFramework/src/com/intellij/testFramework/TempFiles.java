@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -106,14 +108,19 @@ public class TempFiles {
     }
   }
 
-  public VirtualFile createVFile(@NotNull VirtualFile parentDir, @NotNull String name, @NotNull String text) {
-    try {
-      final VirtualFile virtualFile = parentDir.createChildData(this, name);
-      VfsUtil.saveText(virtualFile, text + "\n");
-      return virtualFile;
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  public VirtualFile createVFile(@NotNull final VirtualFile parentDir, @NotNull final String name, @NotNull final String text) {
+    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        try {
+          final VirtualFile virtualFile = parentDir.createChildData(this, name);
+          VfsUtil.saveText(virtualFile, text + "\n");
+          return virtualFile;
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 }

@@ -126,6 +126,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
                 return StringUtil.capitalizeWords(UIUtil.removeMnemonic(StringUtil.trimEnd(templatesTitle, ":")), true);
               }
             };
+            ui.setHint("Visibility is applied according to File | Settings | Editor | Code Style | Java | Code Generation");
             ui.selectNodeInTree(templatesManager.getDefaultTemplate());
             if (ShowSettingsUtil.getInstance().editConfigurable(panel, ui)) {
               setComboboxModel(templatesManager, comboBox);

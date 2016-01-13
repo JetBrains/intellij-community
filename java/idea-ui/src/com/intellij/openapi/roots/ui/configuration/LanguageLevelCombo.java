@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -58,16 +59,16 @@ public abstract class LanguageLevelCombo extends ComboBox {
     });
   }
 
-  public void reset(Project project) {
+  public void reset(@NotNull Project project) {
     removeAllItems();
     for (LanguageLevel level : LanguageLevel.values()) {
       addItem(level);
     }
     Sdk sdk = ProjectRootManagerEx.getInstanceEx(project).getProjectSdk();
-    sdkUpdated(sdk);
+    sdkUpdated(sdk, project.isDefault());
 
     LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(project);
-    if (getDefaultLevel() != null && extension.isDefault()) {
+    if (extension.isDefault()) {
       setSelectedItem(myDefaultItem);
     }
     else {
@@ -77,7 +78,7 @@ public abstract class LanguageLevelCombo extends ComboBox {
 
   protected abstract LanguageLevel getDefaultLevel();
 
-  void sdkUpdated(Sdk sdk) {
+  void sdkUpdated(Sdk sdk, boolean isDefaultProject) {
     LanguageLevel newLevel = null;
     if (sdk != null) {
       JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
@@ -85,11 +86,11 @@ public abstract class LanguageLevelCombo extends ComboBox {
         newLevel = version.getMaxLanguageLevel();
       }
     }
-    updateDefaultLevel(newLevel);
+    updateDefaultLevel(newLevel, isDefaultProject);
   }
 
-  void updateDefaultLevel(LanguageLevel newLevel) {
-    if (newLevel == null) {
+  private void updateDefaultLevel(LanguageLevel newLevel, boolean isDefaultProject) {
+    if (newLevel == null && !isDefaultProject) {
       if (getSelectedItem() == myDefaultItem) {
         setSelectedItem(getDefaultLevel());
       }
@@ -97,6 +98,7 @@ public abstract class LanguageLevelCombo extends ComboBox {
     }
     else if (!(getItemAt(0) instanceof String)) {
       addDefaultItem();
+      setSelectedIndex(0);
     }
     repaint();
   }

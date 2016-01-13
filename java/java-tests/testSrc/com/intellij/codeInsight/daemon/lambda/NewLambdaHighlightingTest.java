@@ -248,6 +248,26 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA149224() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA149670() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA149709() throws Exception {
+    doTest();
+  }
+
+  public void testResolveOrderShouldTakeIntoAccountDependenciesOfAlreadyResolvedVars() throws Exception {
+    doTest();
+  }
+
+  public void testCodeBlockLambdaWithIsValueCompatibleChecks() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

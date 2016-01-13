@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -40,7 +41,7 @@ import java.nio.charset.Charset;
 /**
  * Git content revision
  */
-public class GitContentRevision implements ContentRevision {
+public class GitContentRevision implements ByteBackedContentRevision {
   /**
    * the file path
    */
@@ -68,18 +69,26 @@ public class GitContentRevision implements ContentRevision {
 
   @Nullable
   public String getContent() throws VcsException {
+    byte[] bytes = getContentAsBytes();
+    if (bytes == null) return null;
+    return ContentRevisionCache.getAsString(bytes, myFile, myCharset);
+  }
+
+  @Nullable
+  @Override
+  public byte[] getContentAsBytes() throws VcsException {
     if (myFile.isDirectory()) {
       return null;
     }
     try {
       return ContentRevisionCache
-        .getOrLoadAsString(myProject, myFile, myRevision, GitVcs.getKey(), ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
-                           new Throwable2Computable<byte[], VcsException, IOException>() {
-                             @Override
-                             public byte[] compute() throws VcsException, IOException {
-                               return loadContent();
-                             }
-                           }, myCharset);
+        .getOrLoadAsBytes(myProject, myFile, myRevision, GitVcs.getKey(), ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
+                          new Throwable2Computable<byte[], VcsException, IOException>() {
+                            @Override
+                            public byte[] compute() throws VcsException, IOException {
+                              return loadContent();
+                            }
+                          });
     }
     catch (IOException e) {
       throw new VcsException(e);

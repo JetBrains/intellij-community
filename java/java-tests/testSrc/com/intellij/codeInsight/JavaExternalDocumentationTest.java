@@ -180,13 +180,8 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
     finally {
       EditorFactory.getInstance().releaseEditor(editor);
     }
-  } 
-
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
   }
-  
+
   private static class MockDocumentationComponent extends DocumentationComponent {
     private String myText;
     

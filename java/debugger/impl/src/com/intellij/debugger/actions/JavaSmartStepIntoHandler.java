@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,8 +67,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     }
     TextRange curLineRange = DocumentUtil.getLineTextRange(doc, line);
     PsiElement element = position.getElementAt();
-    PsiParameterListOwner method = DebuggerUtilsEx.getContainingMethod(element);
-    PsiElement body = method != null ? method.getBody() : null;
+    PsiElement body = DebuggerUtilsEx.getBody(DebuggerUtilsEx.getContainingMethod(element));
     final TextRange lineRange = (body != null) ? curLineRange.intersection(body.getTextRange()) : curLineRange;
 
     if (lineRange == null || lineRange.isEmpty()) {
@@ -104,7 +103,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         @Override
         public void visitAnonymousClass(PsiAnonymousClass aClass) {
           for (PsiMethod psiMethod : aClass.getMethods()) {
-            targets.add(new MethodSmartStepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true, null));
+            targets.add(0, new MethodSmartStepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true, null));
           }
         }
 
@@ -113,7 +112,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           myInsideLambda = true;
           super.visitLambdaExpression(expression);
           myInsideLambda = inLambda;
-          targets.add(new LambdaSmartStepTarget(expression, getCurrentParamName(), expression.getBody(), myNextLambdaExpressionOrdinal++, null));
+          targets.add(0, new LambdaSmartStepTarget(expression, getCurrentParamName(), expression.getBody(), myNextLambdaExpressionOrdinal++, null));
         }
 
         @Override
@@ -122,7 +121,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           if (element instanceof PsiMethod) {
             PsiElement navMethod = element.getNavigationElement();
             if (navMethod instanceof PsiMethod) {
-              targets.add(new MethodSmartStepTarget(((PsiMethod)navMethod), null, expression, true, null));
+              targets.add(0, new MethodSmartStepTarget(((PsiMethod)navMethod), null, expression, true, null));
             }
           }
         }

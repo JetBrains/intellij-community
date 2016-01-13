@@ -215,8 +215,9 @@ public class ComplementaryFontsRegistry {
   }
 
   @Nullable
-  private static FontInfo doGetFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily) {
+  private static FontInfo doGetFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int originalStyle, @NotNull String defaultFontFamily) {
     synchronized (lock) {
+      @JdkConstants.FontStyle int style = originalStyle;
       if (Patches.JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND && style > 0 && style < 4) {
         Pair<String, Integer>[] replacement = ourStyledFontMap.get(defaultFontFamily);
         if (replacement != null) {
@@ -242,7 +243,7 @@ public class ComplementaryFontsRegistry {
 
       FontInfo defaultFont = ourUsedFonts.get(ourSharedKeyInstance);
       if (defaultFont == null) {
-        defaultFont = new FontInfo(defaultFontFamily, size, style);
+        defaultFont = new FontInfo(defaultFontFamily, size, style, originalStyle);
         ourUsedFonts.put(ourSharedKeyInstance, defaultFont);
         ourSharedKeyInstance = new FontKey("", 0, 0);
       }

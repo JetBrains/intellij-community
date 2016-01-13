@@ -30,6 +30,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author lambdamix
@@ -40,7 +42,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
   private static final ClassDataIndexer INDEXER = new ClassDataIndexer();
   private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
 
-  private static final int ourInternalVersion = 7;
+  private static final int ourInternalVersion = 8;
   private static final boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.bytecode.contract.inference", true);
 
   @NotNull
@@ -121,7 +123,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
   /**
    * Externalizer for compressed equations.
    */
-  public static class HEquationsExternalizer implements DataExternalizer<HEquations>, DifferentSerializableBytesImplyNonEqualityPolicy {
+  public static class HEquationsExternalizer implements DataExternalizer<HEquations> {
     @Override
     public void save(@NotNull DataOutput out, HEquations eqs) throws IOException {
       out.writeBoolean(eqs.stable);
@@ -134,7 +136,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
           out.writeBoolean(true); // final flag
           DataInputOutputUtil.writeINT(out, finalResult.value.ordinal());
         }
-        else {
+        else if (rhs instanceof HPending) {
           HPending pendResult = (HPending)rhs;
           out.writeBoolean(false); // pending flag
           DataInputOutputUtil.writeINT(out, pendResult.delta.length);
@@ -151,6 +153,50 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
             }
           }
         }
+        else if (rhs instanceof HEffects) {
+          HEffects effects = (HEffects)rhs;
+          DataInputOutputUtil.writeINT(out, effects.effects.size());
+          for (HEffectQuantum effect : effects.effects) {
+            if (effect == HEffectQuantum.TopEffectQuantum) {
+              DataInputOutputUtil.writeINT(out, -1);
+            }
+            else if (effect == HEffectQuantum.ThisChangeQuantum) {
+              DataInputOutputUtil.writeINT(out, -2);
+            }
+            else if (effect instanceof HEffectQuantum.CallQuantum) {
+              DataInputOutputUtil.writeINT(out, -3);
+              HEffectQuantum.CallQuantum callQuantum = (HEffectQuantum.CallQuantum)effect;
+              out.write(callQuantum.key.key);
+              DataInputOutputUtil.writeINT(out, callQuantum.key.dirKey);
+              out.writeBoolean(callQuantum.key.stable);
+              out.writeBoolean(callQuantum.isStatic);
+              DataInputOutputUtil.writeINT(out, callQuantum.data.length);
+              for (DataValue dataValue : callQuantum.data) {
+                if (dataValue == DataValue.ThisDataValue) {
+                  DataInputOutputUtil.writeINT(out, -1);
+                }
+                else if (dataValue == DataValue.LocalDataValue) {
+                  DataInputOutputUtil.writeINT(out, -2);
+                }
+                else if (dataValue == DataValue.OwnedDataValue) {
+                  DataInputOutputUtil.writeINT(out, -3);
+                }
+                else if (dataValue == DataValue.UnknownDataValue1) {
+                  DataInputOutputUtil.writeINT(out, -4);
+                }
+                else if (dataValue == DataValue.UnknownDataValue2) {
+                  DataInputOutputUtil.writeINT(out, -5);
+                }
+                else if (dataValue instanceof DataValue.ParameterDataValue) {
+                  DataInputOutputUtil.writeINT(out, ((DataValue.ParameterDataValue)dataValue).n);
+                }
+              }
+            }
+            else if (effect instanceof HEffectQuantum.ParamChangeQuantum) {
+              DataInputOutputUtil.writeINT(out, ((HEffectQuantum.ParamChangeQuantum)effect).n);
+            }
+          }
+        }
       }
     }
 
@@ -161,32 +207,86 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
       ArrayList<DirectionResultPair> results = new ArrayList<DirectionResultPair>(size);
       for (int k = 0; k < size; k++) {
         int directionKey = DataInputOutputUtil.readINT(in);
-        boolean isFinal = in.readBoolean(); // flag
-        if (isFinal) {
-          int ordinal = DataInputOutputUtil.readINT(in);
-          Value value = Value.values()[ordinal];
-          results.add(new DirectionResultPair(directionKey, new HFinal(value)));
-        }
-        else {
-          int sumLength = DataInputOutputUtil.readINT(in);
-          HComponent[] components = new HComponent[sumLength];
-
-          for (int i = 0; i < sumLength; i++) {
-            int ordinal = DataInputOutputUtil.readINT(in);
-            Value value = Value.values()[ordinal];
-            int componentSize = DataInputOutputUtil.readINT(in);
-            HKey[] ids = new HKey[componentSize];
-            for (int j = 0; j < componentSize; j++) {
+        Direction direction = BytecodeAnalysisConverter.extractDirection(directionKey);
+        if (direction == Direction.Pure) {
+          Set<HEffectQuantum> effects = new HashSet<HEffectQuantum>();
+          int effectsSize = DataInputOutputUtil.readINT(in);
+          for (int i = 0; i < effectsSize; i++) {
+            int effectMask = DataInputOutputUtil.readINT(in);
+            if (effectMask == -1) {
+              effects.add(HEffectQuantum.TopEffectQuantum);
+            }
+            else if (effectMask == -2) {
+              effects.add(HEffectQuantum.ThisChangeQuantum);
+            }
+            else if (effectMask == -3){
               byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
               for (int bi = 0; bi < bytes.length; bi++) {
                 bytes[bi] = in.readByte();
               }
               int rawDirKey = DataInputOutputUtil.readINT(in);
-              ids[j] = new HKey(bytes, Math.abs(rawDirKey), in.readBoolean(), rawDirKey < 0);
+              boolean isStable = in.readBoolean();
+              HKey key = new HKey(bytes, Math.abs(rawDirKey), isStable, false);
+              boolean isStatic = in.readBoolean();
+              int dataLength = DataInputOutputUtil.readINT(in);
+              DataValue[] data = new DataValue[dataLength];
+              for (int di = 0; di < dataLength; di++) {
+                int dataI = DataInputOutputUtil.readINT(in);
+                if (dataI == -1) {
+                  data[di] = DataValue.ThisDataValue;
+                }
+                else if (dataI == -2) {
+                  data[di] = DataValue.LocalDataValue;
+                }
+                else if (dataI == -3) {
+                  data[di] = DataValue.OwnedDataValue;
+                }
+                else if (dataI == -4) {
+                  data[di] = DataValue.UnknownDataValue1;
+                }
+                else if (dataI == -5) {
+                  data[di] = DataValue.UnknownDataValue2;
+                }
+                else {
+                  data[di] = new DataValue.ParameterDataValue(dataI);
+                }
+              }
+              effects.add(new HEffectQuantum.CallQuantum(key, data, isStatic));
             }
-            components[i] = new HComponent(value, ids);
+            else {
+              effects.add(new HEffectQuantum.ParamChangeQuantum(effectMask));
+            }
           }
-          results.add(new DirectionResultPair(directionKey, new HPending(components)));
+          results.add(new DirectionResultPair(directionKey, new HEffects(effects)));
+        }
+        else {
+          boolean isFinal = in.readBoolean(); // flag
+          if (isFinal) {
+            int ordinal = DataInputOutputUtil.readINT(in);
+            Value value = Value.values()[ordinal];
+            results.add(new DirectionResultPair(directionKey, new HFinal(value)));
+          }
+          else {
+            int sumLength = DataInputOutputUtil.readINT(in);
+            HComponent[] components = new HComponent[sumLength];
+
+            for (int i = 0; i < sumLength; i++) {
+              int ordinal = DataInputOutputUtil.readINT(in);
+              Value value = Value.values()[ordinal];
+              int componentSize = DataInputOutputUtil.readINT(in);
+              HKey[] ids = new HKey[componentSize];
+              for (int j = 0; j < componentSize; j++) {
+                byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
+                for (int bi = 0; bi < bytes.length; bi++) {
+                  bytes[bi] = in.readByte();
+                }
+                int rawDirKey = DataInputOutputUtil.readINT(in);
+                ids[j] = new HKey(bytes, Math.abs(rawDirKey), in.readBoolean(), rawDirKey < 0);
+              }
+              components[i] = new HComponent(value, ids);
+            }
+            results.add(new DirectionResultPair(directionKey, new HPending(components)));
+          }
         }
       }
       return new HEquations(results, stable);

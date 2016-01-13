@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Computable;
@@ -114,11 +115,23 @@ public class CopyClassTest extends CodeInsightTestCase {
     }
 
     final VirtualFile targetVDir = rootDir.findChild("p2");
-    CopyClassesHandler.doCopyClasses(map, null, myPsiManager.findDirectory(targetVDir), myProject);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        CopyClassesHandler.doCopyClasses(map, null, myPsiManager.findDirectory(targetVDir), myProject);
+      }
+    });
+
 
     String rootAfter = root + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
-    myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+      }
+    });
+
     PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
   }
 

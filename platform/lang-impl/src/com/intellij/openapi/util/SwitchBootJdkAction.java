@@ -229,15 +229,12 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
   }
 
   private static final String STANDARD_JDK_LOCATION_ON_MAC_OS_X = "/Library/Java/JavaVirtualMachines/";
-  private static final String STANDARD_JDK_6_LOCATION_ON_MAC_OS_X = "/System/Library/Java/JavaVirtualMachines/";
   private static final String [] STANDARD_JVM_LOCATIONS_ON_LINUX = new String[] {
     "/usr/lib/jvm/", // Ubuntu
     "/usr/java/"     // Fedora
   };
 
-  private static final Version JDK6_VERSION = new Version(1, 6, 0);
   private static final Version JDK8_VERSION = new Version(1, 8, 0);
-
 
   @NotNull
   private static JdkBundleList findJdkPaths() {
@@ -256,8 +253,6 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     }
 
     if (SystemInfo.isMac) {
-      jdkBundleList.addBundlesFromLocation(STANDARD_JDK_6_LOCATION_ON_MAC_OS_X, JDK6_VERSION, JDK6_VERSION);
-      jdkBundleList.addBundlesFromLocation(STANDARD_JDK_LOCATION_ON_MAC_OS_X, JDK6_VERSION, JDK6_VERSION);
       jdkBundleList.addBundlesFromLocation(STANDARD_JDK_LOCATION_ON_MAC_OS_X, JDK8_VERSION, null);
     }
     else if (SystemInfo.isLinux) {

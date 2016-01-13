@@ -932,6 +932,16 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  public void testProtectedClassNames() {
+    doTest();
+  }
+
+  public void testProtectedClassNameNoPrefix() {
+    final List<String> variants = doTestByFile();
+    assertNotNull(variants);
+    assertDoesntContain(variants, "_foo(self)");
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";

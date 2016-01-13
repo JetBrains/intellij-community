@@ -19,6 +19,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   private final List<String> myCurrentSuites = new ArrayList<String>();
   private final Map<String, Integer> myInvocationCounts = new HashMap<String, Integer>();
   private final Map<ExposedTestResult, String> myParamsMap = new HashMap<ExposedTestResult, String>();
+  private final Map<ExposedTestResult, DelegatedResult> myResults = new HashMap<ExposedTestResult, DelegatedResult>();
 
   public IDEATestNGRemoteListener() {
     this(System.out);
@@ -77,13 +78,13 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public synchronized void onConfigurationSuccess(ITestResult result) {
-    final DelegatedResult delegatedResult = new DelegatedResult(result);
+    final DelegatedResult delegatedResult = createDelegated(result);
     onConfigurationStart(delegatedResult);
     onConfigurationSuccess(delegatedResult);
   }
 
   public synchronized void onConfigurationFailure(ITestResult result) {
-    final DelegatedResult delegatedResult = new DelegatedResult(result);
+    final DelegatedResult delegatedResult = createDelegated(result);
     onConfigurationStart(delegatedResult);
     onConfigurationFailure(delegatedResult);
   }
@@ -91,19 +92,19 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   public synchronized void onConfigurationSkip(ITestResult itr) {}
 
   public synchronized void onTestStart(ITestResult result) {
-    onTestStart(new DelegatedResult(result));
+    onTestStart(createDelegated(result));
   }
 
   public synchronized void onTestSuccess(ITestResult result) {
-    onTestFinished(new DelegatedResult(result));
+    onTestFinished(createDelegated(result));
   }
 
   public synchronized void onTestFailure(ITestResult result) {
-    onTestFailure(new DelegatedResult(result));
+    onTestFailure(createDelegated(result));
   }
 
   public synchronized void onTestSkipped(ITestResult result) {
-    onTestSkipped(new DelegatedResult(result));
+    onTestSkipped(createDelegated(result));
   }
 
   public synchronized void onTestFailedButWithinSuccessPercentage(ITestResult result) {
@@ -294,11 +295,23 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     Throwable getThrowable();
   }
 
+  protected DelegatedResult createDelegated(ITestResult result) {
+    final DelegatedResult newResult = new DelegatedResult(result);
+    final DelegatedResult oldResult = myResults.get(newResult);
+    if (oldResult != null) {
+      return oldResult;
+    }
+    myResults.put(newResult, newResult);
+    return newResult;
+  }
+  
   protected static class DelegatedResult implements ExposedTestResult {
     private final ITestResult myResult;
+    private final String myTestName;
 
     public DelegatedResult(ITestResult result) {
       myResult = result;
+      myTestName = myResult.getTestName();
     }
 
     public Object[] getParameters() {
@@ -306,12 +319,11 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     }
 
     public String getMethodName() {
-      return  myResult.getMethod().getMethodName();
+      return myResult.getMethod().getMethodName();
     }
 
     public String getDisplayMethodName() {
-      final String testName = myResult.getTestName();
-      return testName != null ? testName : myResult.getMethod().getMethodName();
+      return myTestName != null && myTestName.length() > 0 ? myTestName : myResult.getMethod().getMethodName();
     }
 
     public String getClassName() {

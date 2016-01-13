@@ -18,6 +18,7 @@ package com.intellij.diff.contents;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see DiffRequest
  */
-public interface DiffContent {
+public interface DiffContent extends UserDataHolder {
   @Nullable
   FileType getContentType();
 

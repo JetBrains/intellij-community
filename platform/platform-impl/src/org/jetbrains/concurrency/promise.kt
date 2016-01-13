@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,6 @@ abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Ob
 }
 
 
-inline fun <T, SUB_RESULT> Promise<T>.then(crossinline handler: (T) -> SUB_RESULT) = then(Function<T, SUB_RESULT> { param -> handler(param) })
-
 inline fun <T, SUB_RESULT> Promise<T>.then(obsolescent: Obsolescent, crossinline handler: (T) -> SUB_RESULT) = then(object : ObsolescentFunction<T, SUB_RESULT> {
   override fun `fun`(param: T) = handler(param)
 
@@ -47,19 +45,26 @@ inline fun <T> Promise<T>.done(node: Obsolescent, crossinline handler: (T) -> Un
   override fun consume(param: T) = handler(param)
 })
 
+@Suppress("UNCHECKED_CAST")
+inline fun Promise<*>.doneRun(crossinline handler: () -> Unit) = (this as Promise<Any?>).done { handler() }
 
-inline fun <T, SUB_RESULT> Promise<T>.thenAsync(crossinline handler: (T) -> Promise<SUB_RESULT>) = then(AsyncFunction<T, SUB_RESULT> { param -> handler(param) })
+@Suppress("UNCHECKED_CAST")
+inline fun Promise<*>.then(crossinline handler: () -> Unit): Promise<*> = (this as Promise<Any?>).then { it: Any? -> handler() }
 
-inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline handler: (T) -> Promise<SUB_RESULT>) = then(object : ValueNodeAsyncFunction<T, SUB_RESULT>(node) {
+@Suppress("UNCHECKED_CAST")
+inline fun Promise<*>.processed(crossinline handler: () -> Unit): Promise<*> = (this as Promise<Any?>).processed { it: Any? -> handler() }
+
+
+inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline handler: (T) -> Promise<SUB_RESULT>) = thenAsync(object : ValueNodeAsyncFunction<T, SUB_RESULT>(node) {
   override fun `fun`(param: T) = handler(param)
 })
 
 @Suppress("UNCHECKED_CAST")
-inline fun <T> Promise<T>.thenAsyncAccept(node: Obsolescent, crossinline handler: (T) -> Promise<*>) = then(object : ValueNodeAsyncFunction<T, Any?>(node) {
+inline fun <T> Promise<T>.thenAsyncAccept(node: Obsolescent, crossinline handler: (T) -> Promise<*>) = thenAsync(object : ValueNodeAsyncFunction<T, Any?>(node) {
   override fun `fun`(param: T) = handler(param) as Promise<Any?>
 })
 
-inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = then(AsyncFunction<T, kotlin.Any?> { param ->
+inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = thenAsync(AsyncFunction<T, kotlin.Any?> { param ->
   @Suppress("UNCHECKED_CAST")
   (return@AsyncFunction handler(param) as Promise<Any?>)
 })

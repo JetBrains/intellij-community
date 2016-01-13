@@ -3,7 +3,7 @@ package org.jetbrains.builtInWebServer
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
-import com.intellij.util.net.NetUtils
+import com.intellij.util.net.loopbackSocketAddress
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
 import org.jetbrains.concurrency.AsyncPromise
@@ -11,7 +11,6 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.catchError
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.io.*
-import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicReference
 
 abstract class SingleConnectionNetService(project: Project) : NetService(project) {
@@ -29,7 +28,7 @@ abstract class SingleConnectionNetService(project: Project) : NetService(project
     this.bootstrap = bootstrap
     this.port = port
 
-    bootstrap.connect(InetSocketAddress(NetUtils.getLoopbackAddress(), port), promise)?.let {
+    bootstrap.connect(loopbackSocketAddress(port), promise)?.let {
       promise.catchError {
         processChannel.set(it)
         addCloseListener(it)
@@ -45,7 +44,7 @@ abstract class SingleConnectionNetService(project: Project) : NetService(project
     }
 
     val promise = AsyncPromise<Channel>()
-    bootstrap!!.connect(InetSocketAddress(NetUtils.getLoopbackAddress(), port), promise)?.let {
+    bootstrap!!.connect(loopbackSocketAddress(port), promise)?.let {
       promise.catchError {
         processChannel.set(it)
         addCloseListener(it)

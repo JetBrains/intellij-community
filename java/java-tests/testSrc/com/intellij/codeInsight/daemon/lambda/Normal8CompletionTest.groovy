@@ -66,12 +66,38 @@ interface I {
 }
 
 class Test {
-  public static void main(String[] args) {
+  public static void main(int x) {
     I i = <caret>
   }
 }"""
     def items = myFixture.completeBasic()
-    assert LookupElementPresentation.renderElement(items[0]).itemText == 'x -> {}'
+    assert LookupElementPresentation.renderElement(items[0]).itemText == 'x1 -> {}'
+  }
+
+  public void "test lambda signature duplicate parameter name"() {
+    myFixture.configureByText "a.java", """
+import java.util.function.Function;
+
+public class E {
+    public static void main(String[] args) {
+        Observable.just(new InterestingClass())
+                .doOnNext(interestingClass -> doSomething())
+                .doOnNext(inter<caret>)
+    }
+}
+
+class Observable {
+     static <T> Smth<T> just(T t) { }
+}
+
+class Smth<T> {
+    Smth<T> doOnNext(Function<T, Void> fun) { }
+}
+
+class InterestingClass {}
+"""
+    def items = myFixture.completeBasic()
+    assert LookupElementPresentation.renderElement(items[0]).itemText == 'interestingClass -> {}'
   }
 
   public void "test suggest this method references"() {

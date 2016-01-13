@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,6 +189,8 @@ class EditorCoordinateMapper {
   int visualLineToOffset(int visualLine) {
     int start = 0;
     int end = myDocument.getTextLength();
+    if (visualLine <= 0) return start;
+    if (visualLine >= myView.getEditor().getVisibleLineCount()) return end;
     int current = 0;
     while (start <= end) {
       current = (start + end) / 2;
@@ -242,6 +244,9 @@ class EditorCoordinateMapper {
       int maxOffset = 0;
       for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false)) {
         if (p.x <= fragment.getStartX()) {
+          if (fragment.getStartVisualColumn() == 0) {
+            return new VisualPosition(visualLine, 0);
+          }
           int markerWidth = myView.getEditor().getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
           float indent = fragment.getStartX() - markerWidth;
           if (p.x <= indent) {

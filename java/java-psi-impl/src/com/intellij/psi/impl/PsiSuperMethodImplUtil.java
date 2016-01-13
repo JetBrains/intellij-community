@@ -207,8 +207,8 @@ public class PsiSuperMethodImplUtil {
       }
       if (nameHint != null && !nameHint.equals(method.getName())) continue;
       if (!includePrivates && method.hasModifierProperty(PsiModifier.PRIVATE)) continue;
-      final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, substitutor, isInRawContext);
-      HierarchicalMethodSignatureImpl newH = new HierarchicalMethodSignatureImpl(signature);
+      final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY, isInRawContext);
+      HierarchicalMethodSignatureImpl newH = new HierarchicalMethodSignatureImpl(MethodSignatureBackedByPsiMethod.create(method, substitutor, isInRawContext));
 
       List<PsiMethod> list = sameParameterErasureMethods.get(signature);
       if (list == null) {
@@ -238,7 +238,7 @@ public class PsiSuperMethodImplUtil {
       List<Pair<MethodSignature, HierarchicalMethodSignature>> flattened = new ArrayList<Pair<MethodSignature, HierarchicalMethodSignature>>();
       for (Map.Entry<MethodSignature, HierarchicalMethodSignature> entry : superResult.entrySet()) {
         HierarchicalMethodSignature hms = entry.getValue();
-        MethodSignature signature = entry.getKey();
+        MethodSignature signature = MethodSignatureBackedByPsiMethod.create(hms.getMethod(), hms.getSubstitutor(), hms.isRaw());
         PsiClass containingClass = hms.getMethod().getContainingClass();
         List<HierarchicalMethodSignature> supers = new ArrayList<HierarchicalMethodSignature>(hms.getSuperSignatures());
         for (HierarchicalMethodSignature aSuper : supers) {
@@ -374,10 +374,10 @@ public class PsiSuperMethodImplUtil {
   }
 
   @NotNull
-  private static PsiSubstitutor obtainFinalSubstitutor(@NotNull PsiClass superClass,
-                                                       @NotNull PsiSubstitutor superSubstitutor,
-                                                       @NotNull PsiSubstitutor derivedSubstitutor,
-                                                       boolean inRawContext) {
+  public static PsiSubstitutor obtainFinalSubstitutor(@NotNull PsiClass superClass,
+                                                      @NotNull PsiSubstitutor superSubstitutor,
+                                                      @NotNull PsiSubstitutor derivedSubstitutor,
+                                                      boolean inRawContext) {
     if (inRawContext) {
       Set<PsiTypeParameter> typeParams = superSubstitutor.getSubstitutionMap().keySet();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(superClass.getProject());

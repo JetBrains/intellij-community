@@ -38,7 +38,6 @@ import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Map;
 
 public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     private static final Namer<TemplateResource> NAMER = new Namer<TemplateResource>() {
@@ -82,6 +81,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     };
   private final Project myProject;
   private final TemplatesManager myTemplatesManager;
+  private String myHint;
 
   public TemplatesPanel(Project project) {
     this(project, ToStringTemplatesManager.getInstance());
@@ -96,6 +96,10 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     myTemplatesManager = templatesManager;
   }
 
+    public void setHint(String hint) {
+      myHint = hint;
+    }
+  
     @Nls
     public String getDisplayName() {
         return "Templates";
@@ -123,7 +127,10 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     }
 
     protected UnnamedConfigurable createConfigurable(TemplateResource item) {
-        return new GenerateTemplateConfigurable(item, Collections.<String, PsiType>emptyMap(), myProject, onMultipleFields());
+      final GenerateTemplateConfigurable configurable =
+        new GenerateTemplateConfigurable(item, Collections.<String, PsiType>emptyMap(), myProject, onMultipleFields());
+      configurable.setHint(myHint);
+      return configurable;
     }
 
     protected boolean onMultipleFields() {

@@ -1,18 +1,11 @@
 Types:
 PsiField:f : B
-PsiMethodCallExpression:f.foo(s) : B
-PsiMethodCallExpression:s.add(f) : boolean
-PsiParameter:s : java.util.Set<B>
+PsiMethodCallExpression:f.foo(s) : A
 PsiReferenceExpression:f : B
 PsiReferenceExpression:f : B
-PsiReferenceExpression:s : java.util.Set<B>
-PsiReferenceExpression:s : java.util.Set<B>
 
 Conversions:
-f -> $
 f.foo(s) -> $
-s -> $
-s.add(f) -> $
 
 New expression type changes:
 Fails:

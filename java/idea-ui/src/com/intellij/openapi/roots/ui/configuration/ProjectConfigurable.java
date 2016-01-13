@@ -173,7 +173,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     myProjectJdkConfigurable.addChangeListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myLanguageLevelCombo.sdkUpdated(myProjectJdkConfigurable.getSelectedProjectJdk());
+        myLanguageLevelCombo.sdkUpdated(myProjectJdkConfigurable.getSelectedProjectJdk(), myProject.isDefault());
         LanguageLevelProjectExtensionImpl.getInstanceImpl(myProject).setCurrentLevel(myLanguageLevelCombo.getSelectedLevel());
       }
     });
@@ -245,7 +245,10 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
         }
 
         LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(myProject);
-        extension.setLanguageLevel(myLanguageLevelCombo.getSelectedLevel());
+        LanguageLevel level = myLanguageLevelCombo.getSelectedLevel();
+        if (level != null) {
+          extension.setLanguageLevel(level);
+        }
         extension.setDefault(myLanguageLevelCombo.isDefault());
         myProjectJdkConfigurable.apply();
 
@@ -295,8 +298,8 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isModified() {
     LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(myProject);
-    if (!extension.getLanguageLevel().equals(myLanguageLevelCombo.getSelectedLevel()) ||
-         extension.isDefault() != myLanguageLevelCombo.isDefault()) {
+    if (extension.isDefault() != myLanguageLevelCombo.isDefault() ||
+        !extension.isDefault() && !extension.getLanguageLevel().equals(myLanguageLevelCombo.getSelectedLevel())) {
       return true;
     }
     final String compilerOutput = getOriginalCompilerOutputUrl();

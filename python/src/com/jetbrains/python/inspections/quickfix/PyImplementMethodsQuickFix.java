@@ -15,15 +15,17 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.override.PyMethodMember;
 import com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -31,23 +33,24 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 /**
  * User: ktisha
  */
-public class PyImplementMethodsQuickFix implements LocalQuickFix {
+public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
 
-  private final PyClass myClass;
   private final Set<PyFunction> myToImplement;
 
-  public PyImplementMethodsQuickFix(PyClass aClass, Set<PyFunction> toBeImplemented) {
-    myClass = aClass;
-    myToImplement = toBeImplemented;
+  public PyImplementMethodsQuickFix(PyClass aClass, Set<PyFunction> toImplement) {
+   super(aClass);
+    myToImplement = toImplement;
   }
 
   @NotNull
-  public String getName() {
+  @Override
+  public String getText() {
     return PyBundle.message("QFIX.NAME.implement.methods");
   }
 
@@ -57,10 +60,26 @@ public class PyImplementMethodsQuickFix implements LocalQuickFix {
     return getName();
   }
 
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final Editor editor = getEditor(project, descriptor.getPsiElement().getContainingFile());
-    if (editor != null)
-      PyOverrideImplementUtil.chooseAndOverrideOrImplementMethods(project, editor, myClass, myToImplement, "Select Methods to Implement", true);
+  @Override
+  public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    final Editor editor = getEditor(project, file);
+
+    if (editor != null && startElement instanceof PyClass) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        ArrayList<PyMethodMember> list = new ArrayList<PyMethodMember>();
+        for (PyFunction function: myToImplement) {
+          list.add(new PyMethodMember(function));
+        }
+        PyOverrideImplementUtil.overrideMethods(editor, (PyClass)startElement, list, true);
+
+      }
+      else {
+        PyOverrideImplementUtil
+          .chooseAndOverrideOrImplementMethods(project, editor,
+                                               (PyClass)startElement, myToImplement,
+                                               "Select Methods to Implement", true);
+      }
+    }
   }
 
   @Nullable
@@ -76,5 +95,4 @@ public class PyImplementMethodsQuickFix implements LocalQuickFix {
     }
     return null;
   }
-
 }

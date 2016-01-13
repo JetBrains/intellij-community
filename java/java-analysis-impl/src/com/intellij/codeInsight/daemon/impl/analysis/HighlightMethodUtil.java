@@ -1300,11 +1300,10 @@ public class HighlightMethodUtil {
             continue;
           }
         }
-        if (currentMethod.getTypeParameters().length > 0 && JavaGenericsUtil.isRawToGeneric(currentType, otherSuperReturnType)) continue;
+        if (otherSuperMethod.getTypeParameters().length > 0 && JavaGenericsUtil.isRawToGeneric(currentType, otherSuperReturnType)) continue;
       }
-      return createIncompatibleReturnTypeMessage(currentMethod, otherSuperMethod, otherSuperReturnType,
-                                                 currentType, JavaErrorMessages.message("unrelated.overriding.methods.return.types"),
-                                                 TextRange.EMPTY_RANGE);
+      return createIncompatibleReturnTypeMessage(otherSuperMethod, currentMethod, currentType, otherSuperReturnType,  
+                                                 JavaErrorMessages.message("unrelated.overriding.methods.return.types"), TextRange.EMPTY_RANGE);
     }
     return null;
   }
@@ -1327,7 +1326,7 @@ public class HighlightMethodUtil {
       HighlightInfo highlightInfo;
       if (allAbstracts) {
         superSignatures = new ArrayList<HierarchicalMethodSignature>(superSignatures);
-        superSignatures.add(signature);
+        superSignatures.add(0, signature);
         highlightInfo = checkInterfaceInheritedMethodsReturnTypes(superSignatures, languageLevel);
       }
       else {

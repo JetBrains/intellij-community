@@ -21,8 +21,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
+/**
+ * Java symbols needed for hierarchy building. Mostly classes ({@link ClassSymbol}) or packages ({@link PackageSymbol}),
+ * but other {@link MemberSymbol}s are also sometimes needed for working with anonymous or local classes.
+ */
 public abstract class Symbol {
-
   public int myFlags;
   public int myShortName;
   public final QualifiedName myQualifiedName;
@@ -126,6 +129,9 @@ public abstract class Symbol {
     }
   }
 
+  /**
+   * Represents methods, fields and other constructs that may contain anonymous or local classes.
+   */
   public static class MemberSymbol extends Symbol {
     private ClassSymbol[] myMembers;
     public MemberSymbol(Symbol owner) {

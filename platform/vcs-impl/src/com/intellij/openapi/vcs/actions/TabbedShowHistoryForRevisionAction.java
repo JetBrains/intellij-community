@@ -59,11 +59,8 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     Project project = event.getProject();
     if (project == null) return false;
     if (getVcsHelper(project) == null) return false;
-    if (event.getData(VcsDataKeys.CHANGES) == null) return false;
-
     AbstractVcs vcs = getVcs(project, event.getData(VcsDataKeys.VCS));
     if (vcs == null) return false;
-
     VcsHistoryProvider vcsHistoryProvider = vcs.getVcsHistoryProvider();
     if (!(vcsHistoryProvider instanceof VcsHistoryProviderEx)) return false;
     return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,10 +72,12 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
         final StringBuilder tooltip = new StringBuilder();
         for (RunLineMarkerContributor.Info info : infos) {
           if (info.tooltipProvider != null) {
+            String string = info.tooltipProvider.fun(element);
+            if (string == null) continue;
             if (tooltip.length() != 0) {
               tooltip.append("\n");
             }
-            tooltip.append(info.tooltipProvider.fun(element));
+            tooltip.append(string);
           }
         }
 

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -773,6 +774,11 @@ public class EquivalenceChecker {
     final PsiArrayInitializerExpression arrayInitializer2 =
       newExpression2.getArrayInitializer();
     if (!expressionsAreEquivalentDecision(arrayInitializer1, arrayInitializer2).getExactlyMatches()) {
+      return EXACTLY_UN_MATCHES;
+    }
+    final PsiMethod constructor1 = newExpression1.resolveConstructor();
+    final PsiMethod constructor2 = newExpression2.resolveConstructor();
+    if (!Comparing.equal(constructor1, constructor2)) {
       return EXACTLY_UN_MATCHES;
     }
     final PsiExpression qualifier1 = newExpression1.getQualifier();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -132,7 +133,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       return null;
     }
 
-    PsiFile psiFile = getPsiFileByLocation(getDebugProcess().getProject(), location);
+    Project project = getDebugProcess().getProject();
+    PsiFile psiFile = getPsiFileByLocation(project, location);
     if(psiFile == null ) {
       return null;
     }
@@ -147,43 +149,48 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       lineNumber = -1;
     }
 
-    if (lineNumber > -1) {
-      SourcePosition position = calcLineMappedSourcePosition(psiFile, lineNumber);
-      if (position != null) {
-        return position;
+    // replace file with alternative
+    String altFileUrl = DebuggerUtilsEx.getAlternativeSourceUrl(location.declaringType().name(), project);
+    if (altFileUrl != null) {
+      VirtualFile altFile = VirtualFileManager.getInstance().findFileByUrl(altFileUrl);
+      if (altFile != null) {
+        PsiFile altPsiFile = psiFile.getManager().findFile(altFile);
+        if (altPsiFile != null) {
+          psiFile = altPsiFile;
+        }
       }
+    }
+
+    SourcePosition sourcePosition = null;
+    if (lineNumber > -1) {
+      sourcePosition = calcLineMappedSourcePosition(psiFile, lineNumber);
     }
 
     final Method method = location.method();
 
-    if (psiFile instanceof PsiCompiledElement || lineNumber < 0) {
-      final String methodSignature = method.signature();
-      if (methodSignature == null) {
+    if (sourcePosition == null && (psiFile instanceof PsiCompiledElement || lineNumber < 0)) {
+      String methodSignature = method.signature();
+      String methodName = method.name();
+      if (methodSignature != null && methodName != null && location.declaringType() != null) {
+        MethodFinder finder = new MethodFinder(location.declaringType().name(), methodName, methodSignature);
+        psiFile.accept(finder);
+        PsiMethod compiledMethod = finder.getCompiledMethod();
+        if (compiledMethod != null) {
+          sourcePosition = SourcePosition.createFromElement(compiledMethod);
+          if (lineNumber >= 0) {
+            sourcePosition = new ClsSourcePosition(sourcePosition, lineNumber);
+          }
+        }
+      }
+      else {
         return SourcePosition.createFromLine(psiFile, -1);
       }
-      final String methodName = method.name();
-      if (methodName == null) {
-        return SourcePosition.createFromLine(psiFile, -1);
-      }
-      if (location.declaringType() == null) {
-        return SourcePosition.createFromLine(psiFile, -1);
-      }
-
-      final MethodFinder finder = new MethodFinder(location.declaringType().name(), methodName, methodSignature);
-      psiFile.accept(finder);
-
-      final PsiMethod compiledMethod = finder.getCompiledMethod();
-      if (compiledMethod == null) {
-        return SourcePosition.createFromLine(psiFile, -1);
-      }
-      SourcePosition sourcePosition = SourcePosition.createFromElement(compiledMethod);
-      if (lineNumber >= 0) {
-        sourcePosition = new ClsSourcePosition(sourcePosition, lineNumber);
-      }
-      return sourcePosition;
     }
 
-    SourcePosition sourcePosition = SourcePosition.createFromLine(psiFile, lineNumber);
+    if (sourcePosition == null) {
+      sourcePosition = SourcePosition.createFromLine(psiFile, lineNumber);
+    }
+
     int lambdaOrdinal = -1;
     if (LambdaMethodFilter.isLambdaName(method.name())) {
       Set<Method> lambdas =
@@ -223,14 +230,14 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       if (name != null && !name.equals(myExpectedClassName)) {
         return null;
       }
-      PsiParameterListOwner method = DebuggerUtilsEx.getContainingMethod(element);
+      PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
       if (!StringUtil.isEmpty(myExpectedMethodName)) {
         if (method == null) {
           return null;
         }
         else if (((method instanceof PsiMethod && myExpectedMethodName.equals(((PsiMethod)method).getName())) ||
                   (method instanceof PsiLambdaExpression && LambdaMethodFilter.isLambdaName(myExpectedMethodName))) &&
-                 insideBody(element, method.getBody())) {
+                 insideBody(element, DebuggerUtilsEx.getBody(method))) {
           return element;
         }
       }
@@ -636,8 +643,10 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
     @Override
     public SourcePosition mapDelegate(SourcePosition original) {
-      if (myOriginalLine < 0) return original;
-      SourcePosition position = calcLineMappedSourcePosition(getFile(), myOriginalLine);
+      PsiFile file = getFile();
+      if (myOriginalLine < 0 || !file.isValid()) return original;
+      PsiDocumentManager.getInstance(file.getProject()).getDocument(file); // to ensure decompilation
+      SourcePosition position = calcLineMappedSourcePosition(file, myOriginalLine);
       return position != null ? position : original;
     }
   }

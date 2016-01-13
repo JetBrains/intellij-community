@@ -54,11 +54,11 @@ public class TypeEvaluator {
 
     if (types != null) {
       for (final Pair<TypeMigrationUsageInfo, PsiType> p : types) {
-        final LinkedList<PsiType> e = new LinkedList<PsiType>();
-
-        e.addFirst(p.getSecond());
-
-        myTypeMap.put(p.getFirst(), e);
+        if (!(p.getFirst().getElement() instanceof PsiExpression)) {
+          final LinkedList<PsiType> e = new LinkedList<PsiType>();
+          e.addFirst(p.getSecond());
+          myTypeMap.put(p.getFirst(), e);
+        }
       }
     }
 

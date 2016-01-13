@@ -57,6 +57,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -193,7 +194,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           conflicts.putValue(element, "Inlined method is used in javadoc");
         }
         if (element instanceof PsiMethodReferenceExpression) {
-          conflicts.putValue(element, "Inlined method is used in method reference");
+          final PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)element).getQualifierExpression();
+          if (qualifierExpression != null) {
+            final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
+            SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
+            if (!sideEffects.isEmpty()) {
+              conflicts.putValue(element, "Inlined method is used in method reference with side effects in qualifier");
+            }
+          }
         }
 
         final String errorMessage = checkCalledInSuperOrThisExpr(myMethod.getBody(), element);
@@ -412,14 +420,24 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     try {
       if (myInlineThisOnly) {
         if (myMethod.isConstructor() && InlineMethodHandler.isChainingConstructor(myMethod)) {
-          PsiCall constructorCall = RefactoringUtil.getEnclosingConstructorCall(myReference);
-          if (constructorCall != null) {
-            inlineConstructorCall(constructorCall);
+          if (myReference instanceof PsiMethodReferenceExpression) {
+            inlineMethodReference((PsiMethodReferenceExpression)myReference);
+          }
+          else {
+            PsiCall constructorCall = RefactoringUtil.getEnclosingConstructorCall(myReference);
+            if (constructorCall != null) {
+              inlineConstructorCall(constructorCall);
+            }
           }
         }
         else {
           myReference = addBracesWhenNeeded(new PsiReferenceExpression[]{(PsiReferenceExpression)myReference})[0];
-          inlineMethodCall((PsiReferenceExpression)myReference);
+          if (myReference instanceof PsiMethodReferenceExpression) {
+            inlineMethodReference((PsiMethodReferenceExpression)myReference);
+          }
+          else {
+            inlineMethodCall((PsiReferenceExpression)myReference);
+          }
         }
       }
       else {
@@ -427,7 +445,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         if (myMethod.isConstructor()) {
           for (UsageInfo usage : usages) {
             PsiElement element = usage.getElement();
-            if (element instanceof PsiJavaCodeReferenceElement) {
+            if (element instanceof PsiMethodReferenceExpression) {
+              inlineMethodReference((PsiMethodReferenceExpression)element);
+            }
+            else if (element instanceof PsiJavaCodeReferenceElement) {
               PsiCall constructorCall = RefactoringUtil.getEnclosingConstructorCall((PsiJavaCodeReferenceElement)element);
               if (constructorCall != null) {
                 inlineConstructorCall(constructorCall);
@@ -449,7 +470,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             final PsiElement element = usage.getElement();
             if (element instanceof PsiReferenceExpression) {
               refExprList.add((PsiReferenceExpression)element);
-            } else if (element instanceof PsiImportStaticReferenceElement) {
+            }
+            else if (element instanceof PsiImportStaticReferenceElement) {
               final JavaResolveResult[] resolveResults = ((PsiImportStaticReferenceElement)element).multiResolve(false);
               if (resolveResults.length < 2) {
                 //no overloads available: ensure broken import are deleted and
@@ -464,8 +486,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           PsiReferenceExpression[] refs = refExprList.toArray(new PsiReferenceExpression[refExprList.size()]);
           refs = addBracesWhenNeeded(refs);
           for (PsiReferenceExpression ref : refs) {
-            if (ref instanceof PsiMethodReferenceExpression) continue;
-            inlineMethodCall(ref);
+            if (ref instanceof PsiMethodReferenceExpression) {
+              inlineMethodReference((PsiMethodReferenceExpression)ref);
+            }
+            else {
+              inlineMethodCall(ref);
+            }
           }
           for (PsiElement psiElement : imports2Delete) {
             if (psiElement != null && psiElement.isValid()) {
@@ -479,6 +505,25 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
+    }
+  }
+
+  private void inlineMethodReference(PsiMethodReferenceExpression reference) {
+    final PsiLambdaExpression lambdaExpression = LambdaRefactoringUtil.convertMethodReferenceToLambda(reference, false, false);
+    final PsiExpression callExpression = LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody());
+    if (callExpression instanceof PsiMethodCallExpression) {
+      inlineMethodCall(((PsiMethodCallExpression)callExpression).getMethodExpression());
+    }
+    else if (callExpression instanceof PsiCall) {
+      inlineConstructorCall((PsiCall)callExpression);
+    }
+    else {
+      LOG.error("Unexpected expr: " + callExpression.getText());
+    }
+    LambdaRefactoringUtil.simplifyToExpressionLambda(lambdaExpression);
+
+    if (myInlineThisOnly) {
+      LambdaRefactoringUtil.removeSideEffectsFromLambdaBody(myEditor, lambdaExpression);
     }
   }
 
@@ -1234,12 +1279,17 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     myAddedClassInitializers = new HashMap<PsiField, PsiClassInitializer>();
 
     for (PsiReferenceExpression ref : refs) {
+      if (ref instanceof PsiMethodReferenceExpression) continue;
       ref.putCopyableUserData(MARK_KEY, "");
     }
 
     RefLoop:
     for (PsiReferenceExpression ref : refs) {
       if (!ref.isValid()) continue;
+      if (ref instanceof PsiMethodReferenceExpression) {
+        refsVector.add(ref);
+        continue;
+      }
 
       PsiElement parentStatement = RefactoringUtil.getParentStatement(ref, true);
       if (parentStatement != null) {

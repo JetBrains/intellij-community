@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.NotificationGroup;
@@ -440,7 +441,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         future.get(30, TimeUnit.SECONDS);
       }
       catch (Exception e) {
-        LOG.error(e);
+        LOG.error("Thread dump: \n"+ThreadDumper.dumpThreadsToString(), e);
       }
     }
 

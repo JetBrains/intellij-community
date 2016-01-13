@@ -25,6 +25,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
+import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.NotNullProducer;
@@ -44,15 +45,6 @@ import java.lang.reflect.Method;
  * @author Konstantin Bulenkov
  */
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
-  /**
-   * This key is used in the {@link ButtonlessScrollBarUI}
-   * to paint error stripes over the scrollbar track.
-   *
-   * @see RegionPainter
-   * @see UIUtil#putClientProperty
-   */
-  public static final Key<RegionPainter<Object>> EXTRA_TRACK = Key.create("BUTTONLESS_SCROLL_BAR_UI_EXTRA_TRACK");
-
   /**
    * This key is used in the {@link ButtonlessScrollBarUI}
    * to paint the scrollbar maxi thumb.
@@ -318,6 +310,9 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
    */
   @Override
   protected void setThumbBounds(int x, int y, int width, int height) {
+    // A logic to override Swing's "ScrollBar.alwaysShowThumb" property (set by GTK+ L&F).
+    // When the property is set, the thumb fits entire width/height of a scroll bar (see BasicScrollBarUI.layoutVScrollbar()).
+    // The fix detects such situations and resets thumb size, thus hiding the thumb when not needed.
     if (width > 0 && height > 0 && UIManager.getBoolean("ScrollBar.alwaysShowThumb") && !alwaysShowTrack()) {
       int w = trackRect.width, h = trackRect.height;
       if (w > h && w == width || w < h && h == height) {
@@ -645,7 +640,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     if (alwaysShowTrack() || myMouseOverScrollbarExpandLevel > 0) {
       doPaintTrack(g, c, trackBounds);
     }
-    RegionPainter<Object> painter = UIUtil.getClientProperty(c, EXTRA_TRACK);
+    RegionPainter<Object> painter = UIUtil.getClientProperty(c, JBScrollBar.TRACK);
     if (painter != null) {
       painter.paint((Graphics2D)g, trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height, null);
     }

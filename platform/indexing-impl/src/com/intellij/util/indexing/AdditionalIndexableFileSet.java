@@ -33,9 +33,9 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   private final Project myProject;
   private volatile Set<VirtualFile> cachedFiles;
   private volatile Set<VirtualFile> cachedDirectories;
-  private volatile IndexedRootsProvider[] myExtensions;
+  private volatile IndexableSetContributor[] myExtensions;
 
-  public AdditionalIndexableFileSet(Project project, IndexedRootsProvider... extensions) {
+  public AdditionalIndexableFileSet(Project project, IndexableSetContributor... extensions) {
     myProject = project;
     myExtensions = extensions;
   }
@@ -44,7 +44,7 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
     myProject = project;
   }
 
-  public AdditionalIndexableFileSet(IndexedRootsProvider... extensions) {
+  public AdditionalIndexableFileSet(IndexableSetContributor... extensions) {
     myProject = null;
     myExtensions = extensions;
   }
@@ -65,14 +65,14 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
     THashSet<VirtualFile> files = new THashSet<VirtualFile>();
     THashSet<VirtualFile> directories = new THashSet<VirtualFile>();
     if (myExtensions == null) {
-      myExtensions = Extensions.getExtensions(IndexedRootsProvider.EP_NAME);
+      myExtensions = Extensions.getExtensions(IndexableSetContributor.EP_NAME);
     }
-    for (IndexedRootsProvider provider : myExtensions) {
-      for (VirtualFile root : IndexableSetContributor.getRootsToIndex(provider)) {
+    for (IndexableSetContributor contributor : myExtensions) {
+      for (VirtualFile root : IndexableSetContributor.getRootsToIndex(contributor)) {
         (root.isDirectory() ? directories : files).add(root);
       }
       if (myProject != null) {
-        Set<VirtualFile> projectRoots = IndexableSetContributor.getProjectRootsToIndex(provider, myProject);
+        Set<VirtualFile> projectRoots = IndexableSetContributor.getProjectRootsToIndex(contributor, myProject);
         for (VirtualFile root : projectRoots) {
           (root.isDirectory() ? directories : files).add(root);
         }

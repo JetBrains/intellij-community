@@ -59,7 +59,7 @@ public class PersistentFsTest extends PlatformTestCase {
     int id = ((VirtualFileWithId)vFile).getId();
     assertEquals(vFile, myFs.findFileById(id));
 
-    vFile.delete(this);
+    delete(vFile);
     assertNull(myFs.findFileById(id));
   }
 

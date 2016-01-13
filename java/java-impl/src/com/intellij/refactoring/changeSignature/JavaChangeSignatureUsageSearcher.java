@@ -329,16 +329,4 @@ class JavaChangeSignatureUsageSearcher {
                                        RefactoringUIUtil.getDescription(myMethod, true));
     }
   }
-  
-  private static class FunctionalInterfaceChangedUsageInfo extends UnresolvableCollisionUsageInfo {
-
-    public FunctionalInterfaceChangedUsageInfo(PsiElement element, PsiElement referencedElement) {
-      super(element, referencedElement);
-    }
-
-    @Override
-    public String getDescription() {
-      return "Functional expression will be corrupted";
-    }
-  }
 }

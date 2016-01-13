@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,11 @@ import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -559,7 +559,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return myIsPhysical;
   }
 
-  @SuppressWarnings("UnusedDeclaration")  // used by Kotlin compiler
+  /** @deprecated override {@link #isPhysical()} instead (to be removed in IDEA 17) */
+  @SuppressWarnings("UnusedDeclaration")
   public void setPhysical(boolean isPhysical) {
     myIsPhysical = isPhysical;
   }
@@ -588,10 +589,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
     try {
       ClassReader reader = new ClassReader(bytes);
-      String internalName = reader.getClassName();
       String className = file.getNameWithoutExtension();
-      String fqn = StubBuildingVisitor.getFqn(internalName, className, null);
-      String packageName = getPackageName(fqn, className);
+      String packageName = getPackageName(reader.getClassName());
       PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl(packageName, true);
 
       try {
@@ -611,6 +610,11 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
   }
 
+  private static String getPackageName(String internalName) {
+    int p = internalName.lastIndexOf('/');
+    return p > 0 ? internalName.substring(0, p).replace('/', '.') : StringUtilRt.EMPTY_STRING;
+  }
+
   private static final InnerClassSourceStrategy<VirtualFile> STRATEGY = new InnerClassSourceStrategy<VirtualFile>() {
     @Nullable
     @Override
@@ -618,7 +622,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       String baseName = outerClass.getNameWithoutExtension();
       VirtualFile dir = outerClass.getParent();
       assert dir != null : outerClass;
-      return dir.findChild(baseName + "$" + innerName + ".class");
+      return dir.findChild(baseName + '$' + innerName + ".class");
     }
 
     @Override
@@ -630,14 +634,4 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       catch (IOException ignored) { }
     }
   };
-
-  private static String getPackageName(String fqn, String shortName) {
-    return fqn == null || Comparing.equal(shortName, fqn) ? "" : fqn.substring(0, fqn.lastIndexOf('.'));
-  }
-
-  /** @deprecated use {@link #ClsFileImpl(FileViewProvider)} (to remove in IDEA 15) */
-  @SuppressWarnings("unused")
-  public ClsFileImpl(@NotNull PsiManager manager, @NotNull FileViewProvider viewProvider) {
-    this(viewProvider);
-  }
 }

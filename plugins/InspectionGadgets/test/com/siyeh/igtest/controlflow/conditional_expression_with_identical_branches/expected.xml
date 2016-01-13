@@ -55,4 +55,11 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Conditional expression with identical or similar branches</problem_class>
     <description>Conditional expression &lt;code&gt;new Random().nextBoolean() ? &quot;2&quot; + &quot;q&quot; + &quot;1&quot; : &quot;2&quot; + &quot;qwe&quot; + &quot;1&quot;&lt;/code&gt; with identical or similar branches #loc</description>
   </problem>
+
+  <problem>
+    <file>ConditionalExpressionWithIdenticalBranches.java</file>
+    <line>62</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Conditional expression with identical or similar branches</problem_class>
+    <description>Conditional expression &lt;code&gt;i == 1 ? new Item(&quot;1&quot;) : new Item(&quot;2&quot;)&lt;/code&gt; with identical or similar branches #loc</description>
+  </problem>
 </problems>

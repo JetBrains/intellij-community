@@ -10,9 +10,9 @@ interface SecondParent {
     int doSomething();
 }
 
-class <error descr="Class 'SecondParent' must either be declared abstract or implement abstract method 'doSomething()' in 'SecondParent'">FirstSon</error> implements FirstParent, SecondParent {}
+class <error descr="Class 'FirstSon' must either be declared abstract or implement abstract method 'doSomething()' in 'SecondParent'">FirstSon</error> implements FirstParent, SecondParent {}
 
-<error descr="Class 'SecondSon' must either be declared abstract or implement abstract method 'doSomething()' in 'SecondParent'">class <error descr="SecondSon inherits abstract and default for doSomething() from types SecondParent and FirstParent">SecondSon</error> implements SecondParent, FirstParent</error> {}
+<error descr="Class 'SecondSon' must either be declared abstract or implement abstract method 'doSomething()' in 'SecondParent'">class <error descr="Class 'SecondSon' must either be declared abstract or implement abstract method 'doSomething()' in 'SecondParent'">SecondSon</error> implements SecondParent, FirstParent</error> {}
 
 interface A {
   default int foo() {

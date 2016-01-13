@@ -33,6 +33,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ServiceKt;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -103,7 +104,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final boolean myTestModeFlag;
   private final boolean myHeadlessMode;
   private final boolean myCommandLineMode;
-  private final boolean myIsRunningFromSources;
+  private static volatile Boolean ourIsRunningFromSources;
 
   private final boolean myIsInternal;
   private final String myName;
@@ -197,8 +198,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myHeadlessMode = isHeadless;
     myCommandLineMode = isCommandLine;
     
-    myIsRunningFromSources = new File(PathManager.getHomePath(), ".idea").isDirectory();
-
     myDoNotSave = isUnitTestMode || isHeadless;
 
     if (myTestModeFlag) {
@@ -357,8 +356,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myCommandLineMode;
   }
 
-  public boolean isRunningFromSources() {
-    return myIsRunningFromSources;
+  public static boolean isRunningFromSources() {
+    if (ourIsRunningFromSources == null) {
+      ourIsRunningFromSources = new File(PathManager.getHomePath(), ".idea").isDirectory();
+    }
+    return ourIsRunningFromSources;
   }
 
   @NotNull
@@ -509,7 +511,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       task.run();
     }
     else {
-      ProgressManager.getInstance().runProcess(task, indicator);
+      ProgressManager progressManager = ServiceManager.getService(ProgressManager.class);
+      if (progressManager == null) {
+        // https://youtrack.jetbrains.com/issue/IDEA-134164
+        task.run();
+      }
+      else {
+        progressManager.runProcess(task, indicator);
+      }
     }
   }
 

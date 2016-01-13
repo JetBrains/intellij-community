@@ -1,6 +1,5 @@
-public ##
 #if($field.modifierStatic)
-  static ##
+static ##
 #end
 $field.type ##
 #set($name = $StringUtil.capitalizeWithJavaBeanConvention($StringUtil.sanitizeJavaIdentifier($helper.getPropertyName($field, $project))))

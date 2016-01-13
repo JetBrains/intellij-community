@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -39,7 +40,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,6 +53,18 @@ import java.util.List;
  */
 public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#" + StreamApiMigrationInspection.class.getName());
+
+  public boolean REPLACE_TRIVIAL_FOREACH = false;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      "Replace trivial foreach statements",
+      this,
+      "REPLACE_TRIVIAL_FOREACH"
+    );
+  }
 
   @Nls
   @NotNull
@@ -113,9 +128,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                         isCollectCall(body, statement.getIterationParameter())) {
                       holder.registerProblem(iteratedValue, "Can be replaced with collect call",
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithCollectCallFix());
-                    } else if (!isTrivial(body, statement.getIterationParameter())) {
+                    }
+                    else if (REPLACE_TRIVIAL_FOREACH || !isTrivial(body, statement.getIterationParameter())) {
                       holder.registerProblem(iteratedValue, "Can be replaced with foreach call",
-                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithForeachCallFix());
+                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, 
+                                             new ReplaceWithForeachCallFix("forEach"),
+                                             new ReplaceWithForeachCallFix("forEachOrdered"));
                     }
                   }
                 }
@@ -250,6 +268,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   private static class ReplaceWithForeachCallFix implements LocalQuickFix {
+    private final String myForEachMethodName;
+
+    private ReplaceWithForeachCallFix(String forEachMethodName) {
+      myForEachMethodName = forEachMethodName;
+    }
+
     @NotNull
     @Override
     public String getName() {
@@ -259,7 +283,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with forEach";
+      return "Replace with " + myForEachMethodName;
     }
 
     @Override
@@ -284,7 +308,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             body = thenBranch;
           }
 
-          buffer.append(".forEach(");
+          buffer.append("." + myForEachMethodName + "(");
 
           final String functionalExpressionText = createForEachFunctionalExpressionText(project, body, parameter);
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);

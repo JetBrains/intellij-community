@@ -252,6 +252,11 @@ public final class NavigationUtil {
 
   @NotNull
   public static JBPopup getRelatedItemsPopup(final List<? extends GotoRelatedItem> items, String title) {
+    return getRelatedItemsPopup(items, title, false);
+  }
+
+  @NotNull
+  public static JBPopup getRelatedItemsPopup(final List<? extends GotoRelatedItem> items, String title, boolean requiresModuleShowing) {
     Object[] elements = new Object[items.size()];
     //todo[nik] move presentation logic to GotoRelatedItem class
     final Map<PsiElement, GotoRelatedItem> itemsMap = new HashMap<PsiElement, GotoRelatedItem>();
@@ -261,7 +266,7 @@ public final class NavigationUtil {
       itemsMap.put(item.getElement(), item);
     }
 
-    return getPsiElementPopup(elements, itemsMap, title, new Processor<Object>() {
+    return getPsiElementPopup(elements, itemsMap, title, requiresModuleShowing, new Processor<Object>() {
       @Override
       public boolean process(Object element) {
         if (element instanceof PsiElement) {
@@ -278,7 +283,7 @@ public final class NavigationUtil {
   }
 
   private static JBPopup getPsiElementPopup(final Object[] elements, final Map<PsiElement, GotoRelatedItem> itemsMap,
-                                           final String title, final Processor<Object> processor) {
+                                           final String title, final boolean requiresModuleShowing, final Processor<Object> processor) {
 
     final Ref<Boolean> hasMnemonic = Ref.create(false);
     final DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer() {
@@ -313,7 +318,7 @@ public final class NavigationUtil {
 
       @Override
       protected DefaultListCellRenderer getRightCellRenderer(Object value) {
-        return null;
+        return requiresModuleShowing ? super.getRightCellRenderer(value) : null;
       }
 
       @Override

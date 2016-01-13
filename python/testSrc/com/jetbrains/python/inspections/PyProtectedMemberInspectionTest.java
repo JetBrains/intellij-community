@@ -17,6 +17,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * User: ktisha
@@ -58,6 +59,14 @@ public class PyProtectedMemberInspectionTest extends PyTestCase {
 
   public void testFromImport() {
     doTest();
+  }
+
+  public void testAnnotation() {
+    setLanguageLevel(LanguageLevel.PYTHON34);
+    PyProtectedMemberInspection inspection = new PyProtectedMemberInspection();
+    inspection.ignoreAnnotations = true;
+    myFixture.configureByFile(getTestName(true) + ".py");
+    myFixture.checkHighlighting(false, false, true);
   }
 
   public void testModule() {

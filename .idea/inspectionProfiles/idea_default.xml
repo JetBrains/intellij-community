@@ -670,6 +670,17 @@
         <constraint name="n" within="" contains="" />
         <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def stringUtil = JavaPsiFacade.getInstance(e.getProject()).findClass(&quot;com.intellij.openapi.util.text.StringUtil&quot;, GlobalSearchScope.allScope(e.getProject()));&#10;def strVirtualFile = PsiUtil.getVirtualFile(stringUtil);&#10;&#10;e instanceof PsiLiteralExpression &amp;&amp;&#10;n instanceof PsiLiteralExpression &amp;&amp;&#10;((PsiLiteralExpression)e).getValue() instanceof String &amp;&amp;&#10;((PsiLiteralExpression)n).getValue() instanceof Integer &amp;&amp;&#10;((String)((PsiLiteralExpression)e).getValue()).length() ==&#10;((Integer)((PsiLiteralExpression)n).getValue()).intValue() &amp;&amp;&#10;e.getParent().getParent().getParent() instanceof PsiIfStatement &amp;&amp;&#10;((PsiIfStatement)e.getParent().getParent().getParent()).getElseBranch() == null &amp;&amp;  &#10;strVirtualFile != null &amp;&amp;  &#10;e.getResolveScope().contains(strVirtualFile)&quot;" target="true" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="anonymous Timer is discouraged, please supply name" text="new java.util.Timer()" recursive="false" caseInsensitive="true" type="JAVA">
+        <constraint name="myDir" within="" contains="" />
+        <constraint name="__context__" target="true" within="" contains="" />
+        <constraint name="t" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="anonymous Timer(daemon) is discouraged, please supply name" text="new java.util.Timer($b$)" recursive="false" caseInsensitive="true" type="JAVA">
+        <constraint name="myDir" within="" contains="" />
+        <constraint name="__context__" target="true" within="" contains="" />
+        <constraint name="t" within="" contains="" />
+        <constraint name="b" nameOfExprType="boolean" exprTypeWithinHierarchy="true" within="" contains="" />
+      </searchConfiguration>
     </inspection_tool>
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationsInconsistencyInspection" enabled="false" level="ERROR" enabled_by_default="false" />
@@ -809,7 +820,7 @@
     <inspection_tool class="WaitNotInLoop" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="WaitNotInSynchronizedContext" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="WaitWhileHoldingTwoLocks" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="WeakerAccess" enabled="true" level="WARNING" enabled_by_default="true">
+    <inspection_tool class="WeakerAccess" enabled="false" level="WARNING" enabled_by_default="true">
       <option name="SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS" value="false" />
       <option name="SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES" value="false" />
       <option name="SUGGEST_PRIVATE_FOR_INNERS" value="false" />

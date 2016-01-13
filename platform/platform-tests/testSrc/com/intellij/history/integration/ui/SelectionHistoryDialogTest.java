@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,10 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
 
-    f = myRoot.createChildData(null, "f.txt");
-    f.setBinaryContent("a\nb\nc\n".getBytes(), -1, 123);
-    f.setBinaryContent("a\nbc\nd\n".getBytes(), -1, 456);
-    f.setBinaryContent("a\nbcd\ne\n".getBytes(), -1, 789);
+    f = createChildData(myRoot, "f.txt");
+    setBinaryContent(f,"a\nb\nc\n".getBytes(), -1, 123,this);
+    setBinaryContent(f,"a\nbc\nd\n".getBytes(), -1, 456,this);
+    setBinaryContent(f,"a\nbcd\ne\n".getBytes(), -1, 789,this);
   }
 
   public void testDialogWorks() throws IOException {
@@ -53,8 +53,8 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
   }
 
   public void testTitles() throws IOException {
-    f.rename(null, "ff.txt");
-    f.setBinaryContent(new byte[0]);
+    rename(f, "ff.txt");
+    setBinaryContent(f,new byte[0]);
 
     initModelOnSecondLineAndSelectRevisions(0, 1);
 
@@ -107,7 +107,7 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
 
   public void testDiffForDeletedAndRecreatedFile() throws Exception {
     byte[] bytes = f.contentsToByteArray();
-    f.delete(this);
+    delete(f);
 
     f = createFile(f.getName(), new String(bytes));
     loadContent(f);

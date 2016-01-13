@@ -498,11 +498,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return null;
   }
 
-  // for VCSes, that tracks their dirty scopes themselves - for instance, P4
-  public VcsModifiableDirtyScope adjustDirtyScope(final VcsModifiableDirtyScope scope) {
-    return scope;
-  }
-
   @NotNull
   public Project getProject() {
     return myProject;

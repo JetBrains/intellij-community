@@ -259,6 +259,6 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
   }
 
   private static String getParamName(PsiParameter param, JavaCodeStyleManager javaCodeStyleManager, PsiElement originalPosition) {
-    return javaCodeStyleManager.suggestUniqueVariableName(param.getName(), originalPosition, true);
+    return javaCodeStyleManager.suggestUniqueVariableName(param.getName(), originalPosition, false);
   }
 }

@@ -16,7 +16,9 @@
 package com.intellij.remote;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author traff
@@ -29,11 +31,30 @@ public interface RemoteSdkCredentialsProducer<T extends RemoteSdkCredentials> {
    * @deprecated
    */
   @Deprecated
-  T getRemoteSdkCredentials() throws InterruptedException;
+  T getRemoteSdkCredentials() throws InterruptedException, ExecutionException;
 
+  /**
+   * Returns remote sdk credentials for instances saved on application level,
+   * e.g. only application level deployment configurations will be available.
+   * @return
+   * @throws InterruptedException
+   * @throws ExecutionException
+   * @deprecated
+   */
   T getRemoteSdkCredentials(boolean allowSynchronousInteraction) throws InterruptedException, ExecutionException;
 
+  T getRemoteSdkCredentials(@Nullable Project project, boolean allowSynchronousInteraction) throws InterruptedException, ExecutionException;
+
+  /**
+   * Produces remote sdk credentials for instances saved on application level,
+   * e.g. only application level deployment configurations will be available.
+   * @param allowSynchronousInteraction
+   * @param remoteSdkCredentialsConsumer
+   * @deprecated
+   */
   void produceRemoteSdkCredentials(boolean allowSynchronousInteraction, Consumer<T> remoteSdkCredentialsConsumer);
+
+  void produceRemoteSdkCredentials(@Nullable Project project, boolean allowSynchronousInteraction, Consumer<T> remoteSdkCredentialsConsumer);
 
   /**
    * @param remoteSdkCredentialsConsumer

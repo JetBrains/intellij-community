@@ -109,11 +109,11 @@ public class MavenProject {
   }
 
   @NotNull
-  private MavenProjectChanges set(@NotNull MavenProjectReaderResult readerResult,
-                                  @NotNull MavenGeneralSettings settings,
-                                  boolean updateLastReadStamp,
-                                  boolean resetArtifacts,
-                                  boolean resetProfiles) {
+  MavenProjectChanges set(@NotNull MavenProjectReaderResult readerResult,
+                          @NotNull MavenGeneralSettings settings,
+                          boolean updateLastReadStamp,
+                          boolean resetArtifacts,
+                          boolean resetProfiles) {
     State newState = myState.clone();
 
     if (updateLastReadStamp) newState.myLastReadStamp = myState.myLastReadStamp + 1;
@@ -632,11 +632,12 @@ public class MavenProject {
                                                                      @NotNull MavenProjectReaderProjectLocator locator,
                                                                      @NotNull ResolveContext context)
     throws MavenProcessCanceledException {
-    MavenProjectReaderResult result = reader.resolveProject(generalSettings,
+    Collection<MavenProjectReaderResult> results = reader.resolveProject(generalSettings,
                                                             embedder,
-                                                            getFile(),
+                                                            Collections.singleton(getFile()),
                                                             getActivatedProfilesIds(),
                                                             locator);
+    final MavenProjectReaderResult result = results.iterator().next();
     MavenProjectChanges changes = set(result, generalSettings, false, result.readingProblems.isEmpty(), false);
 
     if (result.nativeMavenProject != null) {

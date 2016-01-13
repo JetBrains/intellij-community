@@ -172,7 +172,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
                 return true;
               }
             });
-            if (!overriders.isEmpty()) {
+            if (overriders.size() > 1) {
               String message = RefactoringBundle.message("0.is.a.part.of.method.hierarchy.do.you.want.to.delete.multiple.type.parameters", UsageViewUtil.getLongName(owner));
               int result = ApplicationManager.getApplication().isUnitTestMode() 
                            ? Messages.YES :Messages.showYesNoCancelDialog(project, message, SafeDeleteHandler.REFACTORING_NAME, Messages.getQuestionIcon());
@@ -519,9 +519,13 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
           }
           LOG.assertTrue(element.getTextRange() != null);
           final PsiFile containingFile = psiClass.getContainingFile();
-          final boolean sameFileWithSingleClass = containingFile instanceof PsiClassOwner &&
-                                                  ((PsiClassOwner)containingFile).getClasses().length == 1 &&
-                                                  element.getContainingFile() == containingFile;
+          boolean sameFileWithSingleClass = false;
+          if (containingFile instanceof PsiClassOwner) {
+            final PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();
+            sameFileWithSingleClass = classes.length == 1 && 
+                                      classes[0] == psiClass && 
+                                      element.getContainingFile() == containingFile;
+          }
           usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, psiClass, sameFileWithSingleClass || isInNonStaticImport(element)));
         }
         return true;

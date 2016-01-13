@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -83,17 +81,17 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
 
           createDesktopEntry(globalEntry);
 
-          String message = ApplicationBundle.message("desktop.entry.success", ApplicationNamesInfo.getInstance().getProductName());
-          Notifications.Bus.notify(
-            new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Desktop Entry Created", message, NotificationType.INFORMATION),
-            getProject());
+          final String message = ApplicationBundle.message("desktop.entry.success", ApplicationNamesInfo.getInstance().getProductName());
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              Notifications.Bus.notify(
+                new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Desktop Entry Created", message, NotificationType.INFORMATION),
+                getProject());
+            }
+          }, ModalityState.NON_MODAL);
         }
         catch (Exception e) {
-          LOG.warn(e);
-          String message = ExceptionUtil.getNonEmptyMessage(e, "Internal error");
-          Notifications.Bus.notify(
-            new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Desktop Entry Creation Failed", message, NotificationType.ERROR),
-            getProject());
+          reportFailure(e, getProject());
         }
       }
     });
@@ -113,6 +111,19 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
         FileUtil.delete(entry);
       }
     }
+  }
+
+  public static void reportFailure(@NotNull Exception e, @Nullable final Project project) {
+    LOG.warn(e);
+    final String message = ExceptionUtil.getNonEmptyMessage(e, "Internal error");
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        Notifications.Bus.notify(
+          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Desktop Entry Creation Failed", message, NotificationType.ERROR),
+          project);
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   private static void check() throws ExecutionException, InterruptedException {

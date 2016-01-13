@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -323,18 +323,15 @@ public class LocalVariablesUtil {
         SourcePosition position = ContextUtil.getSourcePosition(context);
         if (position != null) {
           PsiElement element = position.getElementAt();
-          PsiParameterListOwner method = DebuggerUtilsEx.getContainingMethod(element);
+          PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
           if (method != null) {
-            PsiParameterList params = method.getParameterList();
             MultiMap<Integer, String> res = new MultiMap<Integer, String>();
-            int psiFirstLocalsSlot = getFirstLocalsSlot(method);
-            int slot = Math.max(0, firstLocalsSlot - psiFirstLocalsSlot);
-            for (int i = 0; i < params.getParametersCount(); i++) {
-              PsiParameter parameter = params.getParameters()[i];
+            int slot = Math.max(0, firstLocalsSlot - getFirstLocalsSlot(method));
+            for (PsiParameter parameter : DebuggerUtilsEx.getParameters(method)) {
               res.putValue(slot, parameter.getName());
               slot += getTypeSlotSize(parameter.getType());
             }
-            PsiElement body = method.getBody();
+            PsiElement body = DebuggerUtilsEx.getBody(method);
             if (body != null) {
               try {
                 body.accept(new LocalVariableNameFinder(firstLocalsSlot, res, element));
@@ -481,13 +478,12 @@ public class LocalVariablesUtil {
     }
   }
 
-  private static int getFirstLocalsSlot(PsiParameterListOwner method) {
+  private static int getFirstLocalsSlot(PsiElement method) {
     int startSlot = 0;
     if (method instanceof PsiModifierListOwner) {
       startSlot = ((PsiModifierListOwner)method).hasModifierProperty(PsiModifier.STATIC) ? 0 : 1;
     }
-    PsiParameterList params = method.getParameterList();
-    for (PsiParameter parameter : params.getParameters()) {
+    for (PsiParameter parameter : DebuggerUtilsEx.getParameters(method)) {
       startSlot += getTypeSlotSize(parameter.getType());
     }
     return startSlot;

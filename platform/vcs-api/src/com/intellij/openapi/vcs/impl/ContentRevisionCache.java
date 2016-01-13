@@ -34,6 +34,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,18 +153,37 @@ public class ContentRevisionCache {
   }
 
   @Nullable
-  public static String getOrLoadAsString(Project project,
-                                         FilePath file,
-                                         VcsRevisionNumber number,
-                                         VcsKey key,
-                                         UniqueType type,
-                                         Throwable2Computable<byte[], VcsException, IOException> loader, @Nullable Charset charset)
-    throws VcsException, IOException {
+  @Contract("!null, _, _ -> !null")
+  public static String getAsString(@Nullable byte[] bytes, @NotNull FilePath file, @Nullable Charset charset) {
+    if (bytes == null) return null;
     if (charset == null) {
-      return getOrLoadAsString(project, file, number, key, type, loader);
+      return bytesToString(file, bytes);
     }
+    else {
+      return CharsetToolkit.bytesToString(bytes, charset);
+    }
+  }
+
+  @Nullable
+  public static String getOrLoadAsString(@NotNull Project project,
+                                         @NotNull FilePath file,
+                                         VcsRevisionNumber number,
+                                         @NotNull VcsKey key,
+                                         @NotNull UniqueType type,
+                                         @NotNull Throwable2Computable<byte[], VcsException, IOException> loader,
+                                         @Nullable Charset charset)
+    throws VcsException, IOException {
     final byte[] bytes = getOrLoadAsBytes(project, file, number, key, type, loader);
-    return CharsetToolkit.bytesToString(bytes, charset);
+    if (bytes == null) return null;
+    return getAsString(bytes, file, charset);
+  }
+
+
+  @Nullable
+  public static String getOrLoadAsString(final Project project, FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey,
+                                         @NotNull UniqueType type, final Throwable2Computable<byte[], VcsException, IOException> loader)
+    throws VcsException, IOException {
+    return getOrLoadAsString(project, path, number, vcsKey, type, loader, null);
   }
 
   private static String bytesToString(FilePath path, @NotNull byte[] bytes) {
@@ -231,16 +251,6 @@ public class ContentRevisionCache {
                              StringUtil.formatFileSize(VcsUtil.getMaxVcsLoadedFileSize()) +
                              ".\n\nYou can relax this restriction by increasing " + VcsUtil.MAX_VCS_LOADED_SIZE_KB + " property in idea.properties file.");
     }
-  }
-
-  @Nullable
-  public static String getOrLoadAsString(final Project project, FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey,
-                                        @NotNull UniqueType type, final Throwable2Computable<byte[], VcsException, IOException> loader)
-    throws VcsException, IOException {
-    byte[] bytes = getOrLoadAsBytes(project, path, number, vcsKey, type, loader);
-    if (bytes == null) return null;
-    
-    return bytesToString(path, bytes);
   }
 
   private static VcsRevisionNumber putIntoCurrentCache(final ContentRevisionCache cache,

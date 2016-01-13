@@ -105,7 +105,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private final IgnoredFilesComponent myIgnoredIdeaLevel;
   private boolean myExcludedConvertedToIgnored;
-  private volatile ProgressIndicator myUpdateChangesProgressIndicator = createProgressIndicator();
+  @NotNull private volatile ProgressIndicator myUpdateChangesProgressIndicator = createProgressIndicator();
 
   public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED = new Topic<LocalChangeListsLoadedListener>(
     "LOCAL_CHANGE_LISTS_LOADED", LocalChangeListsLoadedListener.class);
@@ -531,13 +531,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
         myUpdateChangesProgressIndicator = indicator;
       }
-      final String scopeInString = !LOG.isDebugEnabled() ? "" : StringUtil.join(scopes, new Function<VcsDirtyScope, String>() {
-        @Override
-        public String fun(VcsDirtyScope scope) {
-          return scope.toString();
-        }
-      }, "->\n");
-      LOG.debug("refresh procedure started, everything = " + wasEverythingDirty + " dirty scope: " + scopeInString);
+      if (LOG.isDebugEnabled()) {
+        String scopeInString = StringUtil.join(scopes, new Function<VcsDirtyScope, String>() {
+          @Override
+          public String fun(VcsDirtyScope scope) {
+            return scope.toString();
+          }
+        }, "->\n");
+        LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
+                  "\ncurrent changes: " + myWorker);
+      }
       dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
 
@@ -574,8 +577,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
               myWorker = dataHolder.getChangeListWorker();
               myWorker.onAfterWorkerSwitch(oldWorker);
               myModifier.setWorker(myWorker);
-              LOG.debug("refresh procedure finished, unversioned size: " +
-                        dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize() + "\n changes: " + myWorker);
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("refresh procedure finished, unversioned size: " +
+                          dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize() + "\nchanges: " + myWorker);
+              }
               final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
               myComposite = dataHolder.getComposite();
               if (statusChanged) {
@@ -667,12 +672,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       final AbstractVcs vcs = scope.getVcs();
       if (vcs == null) continue;
       scope.setWasEverythingDirty(wasEverythingDirty);
-      final VcsModifiableDirtyScope adjustedScope = vcs.adjustDirtyScope((VcsModifiableDirtyScope)scope);
 
       myChangesViewManager.setBusy(true);
-      dataHolder.notifyStartProcessingChanges(adjustedScope);
+      dataHolder.notifyStartProcessingChanges((VcsModifiableDirtyScope)scope);
 
-      actualUpdate(builder, adjustedScope, vcs, dataHolder, gate);
+      actualUpdate(builder, scope, vcs, dataHolder, gate);
 
       if (myUpdateException != null) break;
     }
@@ -747,8 +751,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  private void actualUpdate(final UpdatingChangeListBuilder builder, final VcsDirtyScope scope, final AbstractVcs vcs,
-                            final DataHolder dataHolder, final ChangeListManagerGate gate) {
+  private void actualUpdate(@NotNull UpdatingChangeListBuilder builder,
+                            @NotNull VcsDirtyScope scope,
+                            @NotNull AbstractVcs vcs,
+                            @NotNull DataHolder dataHolder,
+                            @NotNull ChangeListManagerGate gate) {
     try {
       final ChangeProvider changeProvider = vcs.getChangeProvider();
       if (changeProvider != null) {

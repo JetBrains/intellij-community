@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -76,6 +75,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.PatternSyntaxException;
 
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
@@ -704,6 +704,23 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return text.replace("\t", StringUtil.repeat(" ", tabSize));
   }
 
+  private static final Key<Map<String, String>> DEBUGGER_ALTERNATIVE_SOURCE_MAPPING = Key.create("DEBUGGER_ALTERNATIVE_SOURCE_MAPPING");
+
+  public static void setAlternativeSourceUrl(String className, String source, Project project) {
+    Map<String, String> map = project.getUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING);
+    if (map == null) {
+      map = new ConcurrentHashMap<String, String>();
+      project.putUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING, map);
+    }
+    map.put(className, source);
+  }
+
+  @Nullable
+  public static String getAlternativeSourceUrl(@Nullable String className, Project project) {
+    Map<String, String> map = project.getUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING);
+    return map != null ? map.get(className) : null;
+  }
+
   @Nullable
   public static XSourcePosition toXSourcePosition(@NotNull SourcePosition position) {
     VirtualFile file = position.getFile().getVirtualFile();
@@ -714,13 +731,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return null;
     }
     return new JavaXSourcePosition(position, file);
-  }
-
-  private static final Key<VirtualFile> ALTERNATIVE_SOURCE_KEY = new Key<VirtualFile>("DEBUGGER_ALTERNATIVE_SOURCE");
-
-  public static void setAlternativeSource(VirtualFile source, VirtualFile dest) {
-    ALTERNATIVE_SOURCE_KEY.set(source, dest);
-    ALTERNATIVE_SOURCE_KEY.set(dest, null);
   }
 
   private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
@@ -745,19 +755,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @NotNull
     @Override
     public VirtualFile getFile() {
-      VirtualFile file = ALTERNATIVE_SOURCE_KEY.get(myFile);
-      if (file != null) {
-        return file;
-      }
       return myFile;
     }
 
     @NotNull
     @Override
     public Navigatable createNavigatable(@NotNull Project project) {
-      if (ALTERNATIVE_SOURCE_KEY.get(myFile) != null) {
-        return new OpenFileDescriptor(project, getFile(), getLine(), 0);
-      }
       return XSourcePositionImpl.doCreateOpenFileDescriptor(project, this);
     }
 
@@ -842,6 +845,25 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return lambdas;
   }
 
+  @Nullable
+  public static PsiElement getBody(PsiElement method) {
+    if (method instanceof PsiParameterListOwner) {
+      return ((PsiParameterListOwner)method).getBody();
+    }
+    else if (method instanceof PsiClassInitializer) {
+      return ((PsiClassInitializer)method).getBody();
+    }
+    return null;
+  }
+
+  @NotNull
+  public static PsiParameter[] getParameters(PsiElement method) {
+    if (method instanceof PsiParameterListOwner) {
+      return ((PsiParameterListOwner)method).getParameterList().getParameters();
+    }
+    return PsiParameter.EMPTY_ARRAY;
+  }
+
   public static boolean intersects(@NotNull TextRange range, @NotNull PsiElement elem) {
     TextRange elemRange = elem.getTextRange();
     return elemRange != null && elemRange.intersects(range);
@@ -885,12 +907,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @Nullable
-  public static PsiParameterListOwner getContainingMethod(@Nullable PsiElement elem) {
-    return PsiTreeUtil.getContextOfType(elem, PsiMethod.class, PsiLambdaExpression.class);
+  public static PsiElement getContainingMethod(@Nullable PsiElement elem) {
+    return PsiTreeUtil.getContextOfType(elem, PsiMethod.class, PsiLambdaExpression.class, PsiClassInitializer.class);
   }
 
   @Nullable
-  public static PsiParameterListOwner getContainingMethod(@Nullable SourcePosition position) {
+  public static PsiElement getContainingMethod(@Nullable SourcePosition position) {
     if (position == null) return null;
     return getContainingMethod(position.getElementAt());
   }

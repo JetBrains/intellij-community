@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.mock.MockVirtualFile
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Function
 import com.intellij.vcs.log.*
@@ -108,7 +109,7 @@ class VisiblePackBuilderTest {
       }
     }
 
-    graph.providers.entrySet().iterator().next().getValue().setFilteredCommitsProvider(func)
+    graph.providers.entries.iterator().next().value.setFilteredCommitsProvider(func)
     val visiblePack = graph.build(filters(VcsLogBranchFilterImpl.fromTextPresentation(setOf("-master"), setOf("master")), userFilter(DEFAULT_USER)))
     val visibleGraph = visiblePack.getVisibleGraph()
     assertEquals(3, visibleGraph.getVisibleCommitCount())
@@ -137,7 +138,7 @@ class VisiblePackBuilderTest {
       })
 
       val dataPack = DataPack.build(commits, mapOf(root to refs), providers, hashMap, true)
-      val detailsCache = data.entrySet().map {
+      val detailsCache = data.entries.map {
         val hash = hashMap.getHash(it.key.getId())
         val metadata = if (it.value.user == null)
           null
@@ -225,13 +226,13 @@ class VisiblePackBuilderTest {
   }
 
   class ConstantVcsLogHashMap(val map: Map<Hash, Int>) : VcsLogHashMap {
-    val reverseMap = map.entrySet().map { Pair(it.value, it.key) }.toMap()
+    val reverseMap = map.entries.map { Pair(it.value, it.key) }.toMap()
 
-    override fun getCommitIndex(hash: Hash) = map.get(hash)!!
+    override fun getCommitIndex(hash: Hash, root: VirtualFile) = map.get(hash)!!
 
     override fun getHash(commitIndex: Int) = reverseMap.get(commitIndex)!!
 
-    override fun findHashByString(string: String) = throw UnsupportedOperationException()
+    override fun findCommitId(condition: Condition<CommitId>): CommitId? = throw UnsupportedOperationException()
   }
 }
 

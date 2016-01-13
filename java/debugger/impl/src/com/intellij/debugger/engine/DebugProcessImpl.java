@@ -22,6 +22,7 @@ import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.apiAdapters.ConnectionServiceWrapper;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
@@ -185,7 +186,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             public void run() {
               final DebuggerSession session = mySession;
               if (session != null && session.isAttached()) {
-                session.refresh(true);
                 DebuggerAction.refreshViews(mySession.getXDebugSession());
               }
             }
@@ -1812,16 +1812,16 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private class PopFrameCommand extends SuspendContextCommandImpl {
+  private class PopFrameCommand extends DebuggerContextCommandImpl {
     private final StackFrameProxyImpl myStackFrame;
 
-    public PopFrameCommand(SuspendContextImpl context, StackFrameProxyImpl frameProxy) {
-      super(context);
+    public PopFrameCommand(DebuggerContextImpl context, StackFrameProxyImpl frameProxy) {
+      super(context, frameProxy.threadProxy());
       myStackFrame = frameProxy;
     }
 
     @Override
-    public void contextAction() {
+    public void threadAction() {
       final ThreadReferenceProxyImpl thread = myStackFrame.threadProxy();
       try {
         if (!getSuspendManager().isSuspended(thread)) {
@@ -2174,9 +2174,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @NotNull
   public SuspendContextCommandImpl createPopFrameCommand(DebuggerContextImpl context, StackFrameProxyImpl stackFrame) {
-    final SuspendContextImpl contextByThread =
-      SuspendManagerUtil.findContextByThread(context.getDebugProcess().getSuspendManager(), stackFrame.threadProxy());
-    return new PopFrameCommand(contextByThread, stackFrame);
+    return new PopFrameCommand(context, stackFrame);
   }
 
   //public void setBreakpointsMuted(final boolean muted) {

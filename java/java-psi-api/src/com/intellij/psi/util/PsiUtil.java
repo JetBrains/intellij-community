@@ -557,6 +557,9 @@ public final class PsiUtil extends PsiUtilCore {
           !JavaVersionService.getInstance().isAtLeast(((PsiCapturedWildcardType)lastParmType).getContext(), JavaSdkVersion.JDK_1_8)) {
         lastParmType = ((PsiCapturedWildcardType)lastParmType).getWildcard();
       }
+      if (lastParmType instanceof PsiClassType) {
+        lastParmType = ((PsiClassType)lastParmType).setLanguageLevel(languageLevel);
+      }
       for (int i = parms.length - 1; i < args.length; i++) {
         PsiType argType = args[i];
         if (argType == null || !function.isApplicable(lastParmType, argType, allowUncheckedConversion, i)) {

@@ -493,7 +493,7 @@ public class CustomizableActionsPanel {
           setText(((QuickList)userObject).getName());
           icon = AllIcons.Actions.QuickList;
         }
-        else {
+        else if (userObject != null) {
           throw new IllegalArgumentException("unknown userObject: " + userObject);
         }
 

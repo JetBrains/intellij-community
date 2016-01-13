@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import com.intellij.history.core.changes.StructuralChange;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.RunnableAdapter;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -119,10 +121,10 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = createFile("file.txt");
     assertEquals(2, getRevisionsFor(f).size());
 
-    f.setBinaryContent(new byte[]{1});
+    setBinaryContent(f,new byte[]{1});
     assertEquals(3, getRevisionsFor(f).size());
 
-    f.setBinaryContent(new byte[]{2});
+    setBinaryContent(f,new byte[]{2});
     assertEquals(4, getRevisionsFor(f).size());
   }
 
@@ -130,7 +132,7 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = createFile("file.txt");
     assertEquals(2, getRevisionsFor(f).size());
 
-    f.rename(this, "file2.txt");
+    rename(f, "file2.txt");
     assertEquals(3, getRevisionsFor(f).size());
   }
 
@@ -155,7 +157,7 @@ public class FileListeningTest extends IntegrationTestCase {
     addFileListenerDuring(l, new RunnableAdapter() {
       @Override
       public void doRun() throws IOException {
-        f.rename(this, "new.txt");
+        rename(f, "new.txt");
       }
     });
 
@@ -169,7 +171,7 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = createFile("file.hprof");
     assertEquals(before, getRevisionsFor(myRoot).size());
 
-    f.rename(this, "file.txt");
+    rename(f, "file.txt");
     assertEquals(before + 1, getRevisionsFor(myRoot).size());
 
     assertEquals(2, getRevisionsFor(f).size());
@@ -181,7 +183,7 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = createFile("file.txt");
     assertEquals(before + 1, getRevisionsFor(myRoot).size());
 
-    f.rename(this, "file.hprof");
+    rename(f, "file.hprof");
     assertEquals(before + 2, getRevisionsFor(myRoot).size());
   }
 
@@ -191,7 +193,7 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = createFile(FILTERED_DIR_NAME);
     assertEquals(before, getRevisionsFor(myRoot).size());
 
-    f.rename(this, "not_filtered");
+    rename(f, "not_filtered");
     assertEquals(before + 1, getRevisionsFor(myRoot).size());
 
     assertEquals(2, getRevisionsFor(f).size());
@@ -203,7 +205,7 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = createDirectory("not_filtered");
     assertEquals(before + 1, getRevisionsFor(myRoot).size());
 
-    f.rename(this, FILTERED_DIR_NAME);
+    rename(f, FILTERED_DIR_NAME);
     assertEquals(before + 2, getRevisionsFor(myRoot).size());
   }
 
@@ -211,10 +213,10 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = createFile("f.txt");
     assertEquals(2, getRevisionsFor(f).size());
 
-    ReadOnlyAttributeUtil.setReadOnlyAttribute(f, true);
+    setReadOnlyAttribute(f, true);
     assertEquals(3, getRevisionsFor(f).size());
 
-    ReadOnlyAttributeUtil.setReadOnlyAttribute(f, false);
+    setReadOnlyAttribute(f, false);
     assertEquals(4, getRevisionsFor(f).size());
   }
 
@@ -222,9 +224,19 @@ public class FileListeningTest extends IntegrationTestCase {
     int before = getRevisionsFor(myRoot).size();
 
     VirtualFile f = createFile("f.hprof");
-    ReadOnlyAttributeUtil.setReadOnlyAttribute(f, true); // shouldn't throw
+    setReadOnlyAttribute(f, true);
 
     assertEquals(before, getRevisionsFor(myRoot).size());
+  }
+
+  private void setReadOnlyAttribute(VirtualFile f, boolean status) throws IOException {
+    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
+      @Override
+      public Object compute() throws IOException {
+        ReadOnlyAttributeUtil.setReadOnlyAttribute(f, status); // shouldn't throw
+        return null;
+      }
+    });
   }
 
   public void testDeletion() throws Exception {
@@ -232,7 +244,7 @@ public class FileListeningTest extends IntegrationTestCase {
 
     int before = getRevisionsFor(myRoot).size();
 
-    f.delete(this);
+    delete(f);
     assertEquals(before + 1, getRevisionsFor(myRoot).size());
   }
 
@@ -240,7 +252,7 @@ public class FileListeningTest extends IntegrationTestCase {
     int before = getRevisionsFor(myRoot).size();
 
     VirtualFile f = createDirectory(FILTERED_DIR_NAME);
-    f.delete(this);
+    delete(f);
     assertEquals(before, getRevisionsFor(myRoot).size());
   }
 
@@ -259,7 +271,7 @@ public class FileListeningTest extends IntegrationTestCase {
 
     final VirtualFile vDir1 = LocalFileSystem.getInstance().findFileByPath(dir1);
     assertNotNull(dir1, vDir1);
-    vDir1.delete(this);
+    delete(vDir1);
 
     List<Change> changes = getVcs().getChangeListInTests().getChangesInTests().get(0).getChanges();
     assertEquals(1, changes.size());

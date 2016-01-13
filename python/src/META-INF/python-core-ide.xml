@@ -1,0 +1,11 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- Components and extensions declared in this file work ONLY in PyCharm, not in Python plugin.
+       Both Community and Professional editions. -->
+
+  <xi:include href="/META-INF/python-core-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
+                    serviceImplementation="com.jetbrains.python.psi.search.PyProjectScopeBuilder"
+                    overrides="true"/>
+  </extensions>
+</idea-plugin>

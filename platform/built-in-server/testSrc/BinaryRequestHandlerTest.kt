@@ -1,9 +1,8 @@
 package org.jetbrains.ide
 
 import com.intellij.testFramework.ProjectRule
-import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
-import com.intellij.util.net.NetUtils
+import com.intellij.util.net.loopbackSocketAddress
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler
@@ -41,7 +40,7 @@ internal class BinaryRequestHandlerTest {
     }
 
     val port = BuiltInServerManager.getInstance().waitForStart().port
-    val channel = bootstrap.connect(NetUtils.getLoopbackAddress(), port).syncUninterruptibly().channel()
+    val channel = bootstrap.connect(loopbackSocketAddress(port)).syncUninterruptibly().channel()
     val buffer = channel.alloc().buffer()
     buffer.writeByte('C'.toInt())
     buffer.writeByte('H'.toInt())
@@ -54,11 +53,7 @@ internal class BinaryRequestHandlerTest {
     channel.writeAndFlush(message).await(5, TimeUnit.SECONDS)
 
     try {
-      result.rejected(object : Consumer<Throwable> {
-        override fun consume(error: Throwable) {
-          TestCase.fail(error.getMessage())
-        }
-      })
+      result.rejected { error -> TestCase.fail(error.message) }
 
       if (result.state == Promise.State.PENDING) {
         val semaphore = Semaphore()

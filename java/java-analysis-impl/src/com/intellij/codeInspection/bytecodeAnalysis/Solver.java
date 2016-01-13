@@ -22,6 +22,9 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import java.util.*;
 
+/**
+ * For lattice, equations and solver description, see http://pat.keldysh.ru/~ilya/faba.pdf (in Russian)
+ */
 final class ELattice<T extends Enum<T>> {
   final T bot;
   final T top;
@@ -47,15 +50,15 @@ final class ELattice<T extends Enum<T>> {
 }
 
 
-class ResultUtil<Id, T extends Enum<T>> {
-  private final ELattice<T> lattice;
-  final T top;
-  ResultUtil(ELattice<T> lattice) {
+class ResultUtil {
+  private final ELattice<Value> lattice;
+  final Value top;
+  ResultUtil(ELattice<Value> lattice) {
     this.lattice = lattice;
     top = lattice.top;
   }
 
-  Result<Id, T> join(Result<Id, T> r1, Result<Id, T> r2) throws AnalyzerException {
+  Result join(Result r1, Result r2) throws AnalyzerException {
     if (r1 instanceof Final && ((Final) r1).value == top) {
       return r1;
     }
@@ -63,34 +66,34 @@ class ResultUtil<Id, T extends Enum<T>> {
       return r2;
     }
     if (r1 instanceof Final && r2 instanceof Final) {
-      return new Final<Id, T>(lattice.join(((Final<?, T>) r1).value, ((Final<?, T>) r2).value));
+      return new Final(lattice.join(((Final) r1).value, ((Final) r2).value));
     }
     if (r1 instanceof Final && r2 instanceof Pending) {
-      Final<?, T> f1 = (Final<?, T>)r1;
-      Pending<Id, T> pending = (Pending<Id, T>) r2;
-      Set<Product<Id, T>> sum1 = new HashSet<Product<Id, T>>(pending.sum);
-      sum1.add(new Product<Id, T>(f1.value, Collections.<Id>emptySet()));
-      return new Pending<Id, T>(sum1);
+      Final f1 = (Final)r1;
+      Pending pending = (Pending) r2;
+      Set<Product> sum1 = new HashSet<Product>(pending.sum);
+      sum1.add(new Product(f1.value, Collections.<Key>emptySet()));
+      return new Pending(sum1);
     }
     if (r1 instanceof Pending && r2 instanceof Final) {
-      Final<?, T> f2 = (Final<?, T>)r2;
-      Pending<Id, T> pending = (Pending<Id, T>) r1;
-      Set<Product<Id, T>> sum1 = new HashSet<Product<Id, T>>(pending.sum);
-      sum1.add(new Product<Id, T>(f2.value, Collections.<Id>emptySet()));
-      return new Pending<Id, T>(sum1);
+      Final f2 = (Final)r2;
+      Pending pending = (Pending) r1;
+      Set<Product> sum1 = new HashSet<Product>(pending.sum);
+      sum1.add(new Product(f2.value, Collections.<Key>emptySet()));
+      return new Pending(sum1);
     }
-    Pending<Id, T> pending1 = (Pending<Id, T>) r1;
-    Pending<Id, T> pending2 = (Pending<Id, T>) r2;
-    Set<Product<Id, T>> sum = new HashSet<Product<Id, T>>();
+    Pending pending1 = (Pending) r1;
+    Pending pending2 = (Pending) r2;
+    Set<Product> sum = new HashSet<Product>();
     sum.addAll(pending1.sum);
     sum.addAll(pending2.sum);
     checkLimit(sum);
-    return new Pending<Id, T>(sum);
+    return new Pending(sum);
   }
 
-  private void checkLimit(Set<Product<Id, T>> sum) throws AnalyzerException {
+  private static void checkLimit(Set<Product> sum) throws AnalyzerException {
     int size = 0;
-    for (Product<Id, T> prod : sum) {
+    for (Product prod : sum) {
       size += prod.ids.size();
     }
     if (size > Analysis.EQUATION_SIZE_LIMIT) {
@@ -148,11 +151,11 @@ class HResultUtil {
   }
 }
 
-final class Product<K, V> {
-  @NotNull final V value;
-  @NotNull final Set<K> ids;
+final class Product {
+  @NotNull final Value value;
+  @NotNull final Set<Key> ids;
 
-  Product(@NotNull V value, @NotNull Set<K> ids) {
+  Product(@NotNull Value value, @NotNull Set<Key> ids) {
     this.value = value;
     this.ids = ids;
   }
@@ -178,10 +181,10 @@ final class Product<K, V> {
   }
 }
 
-interface Result<Id, T> {}
-final class Final<Id, T> implements Result<Id, T> {
-  final T value;
-  Final(T value) {
+interface Result {}
+final class Final implements Result {
+  final Value value;
+  Final(Value value) {
     this.value = value;
   }
 
@@ -191,30 +194,28 @@ final class Final<Id, T> implements Result<Id, T> {
   }
 }
 
-final class Pending<Id, T> implements Result<Id, T> {
-  final Set<Product<Id, T>> sum;
+final class Pending implements Result {
+  final Set<Product> sum;
 
-  Pending(Set<Product<Id, T>> sum) {
+  Pending(Set<Product> sum) {
     this.sum = sum;
   }
 
 }
 
-final class Solution<Id, Val> {
-  final Id id;
-  final Val value;
+final class Effects implements Result {
+  final Set<EffectQuantum> effects;
 
-  Solution(Id id, Val value) {
-    this.id = id;
-    this.value = value;
+  Effects(Set<EffectQuantum> effects) {
+    this.effects = effects;
   }
 }
 
-final class Equation<Id, T> {
-  final Id id;
-  final Result<Id, T> rhs;
+final class Equation {
+  final Key id;
+  final Result rhs;
 
-  Equation(Id id, Result<Id, T> rhs) {
+  Equation(Key id, Result rhs) {
     this.id = id;
     this.rhs = rhs;
   }
@@ -328,7 +329,7 @@ final class Solver {
     }
   }
 
-  HashMap<HKey, Value> solve() {
+  Map<HKey, Value> solve() {
     for (HEquation hEquation : equations.values()) {
       queueEquation(hEquation);
     }

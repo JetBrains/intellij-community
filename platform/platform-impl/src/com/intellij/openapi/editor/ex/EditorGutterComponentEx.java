@@ -72,4 +72,6 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public abstract void setGutterPopupGroup(@Nullable ActionGroup group);
   
   public abstract void setPaintBackground(boolean value);
+
+  public abstract void setShowRightFreePaintersArea(boolean value);
 }

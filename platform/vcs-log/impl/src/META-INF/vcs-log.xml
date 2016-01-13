@@ -13,6 +13,7 @@
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogSettings" serviceImplementation="com.intellij.vcs.log.impl.VcsLogSettingsImpl"/>
     <projectService serviceInterface="com.intellij.vcs.log.data.VcsLogUiProperties" serviceImplementation="com.intellij.vcs.log.data.VcsLogUiProperties"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry" serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
+    <projectService serviceInterface="com.intellij.vcs.log.impl.VcsRootsRegistry" serviceImplementation="com.intellij.vcs.log.impl.VcsRootsRegistryImpl"/>
 
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector" />
 

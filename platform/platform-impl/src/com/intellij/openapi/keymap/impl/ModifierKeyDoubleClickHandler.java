@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ public class ModifierKeyDoubleClickHandler {
         } else if (ourPressed.first.get() && ourReleased.first.get() && ourPressed.second.get() && myActionKeyCode != -1) {
           if (keyCode == myActionKeyCode) {
             if (event.getID() == KeyEvent.KEY_PRESSED) {
-              run(keyEvent);
+              return run(keyEvent);
             }
             return true;
           }
@@ -202,17 +202,20 @@ public class ModifierKeyDoubleClickHandler {
       ourReleased.second.set(false);
     }
 
-    private void run(KeyEvent event) {
+    private boolean run(KeyEvent event) {
       myIsRunningAction = true;
       try {
         ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
         AnAction action = actionManager.getAction(myActionId);
         DataContext context = DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner());
         AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.MAIN_MENU, context);
+        action.update(anActionEvent);
+        if (!anActionEvent.getPresentation().isEnabled()) return false;
 
         actionManager.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
         action.actionPerformed(anActionEvent);
         actionManager.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
+        return true;
       }
       finally {
         myIsRunningAction = false;

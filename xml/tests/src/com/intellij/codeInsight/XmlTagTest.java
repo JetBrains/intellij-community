@@ -1017,4 +1017,18 @@ public class XmlTagTest extends LightCodeInsightTestCase {
       }
     });
   }
+
+  public void testSetAttributeValue() {
+    XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("dummy.xml", XmlFileType.INSTANCE, "<fooBarGoo attr>1</fooBarGoo>", 0, true);
+    final XmlTag tag = file.getDocument().getRootTag();
+    final Document document = file.getViewProvider().getDocument();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        tag.setAttribute("attr", "");
+        assertEquals("<fooBarGoo attr=\"\">1</fooBarGoo>", tag.getText());
+        assertEquals("<fooBarGoo attr=\"\">1</fooBarGoo>", document.getText());
+      }
+    });
+  }
 }

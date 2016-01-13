@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,11 @@ public class UIUtil {
     if (isUnderAquaBasedLookAndFeel()) {
       c.putClientProperty("JComponent.sizeVariant", StringUtil.toLowerCase(componentStyle.name()));
     }
-    FontSize fontSize = componentStyle == ComponentStyle.REGULAR ? FontSize.NORMAL : componentStyle == ComponentStyle.SMALL ? FontSize.SMALL : FontSize.MINI;
+    FontSize fontSize = componentStyle == ComponentStyle.MINI
+                        ? FontSize.MINI
+                        : componentStyle == ComponentStyle.SMALL
+                          ? FontSize.SMALL
+                          : FontSize.NORMAL;
     c.setFont(getFont(fontSize, c.getFont()));
     Container p = c.getParent();
     if (p != null) {
@@ -210,7 +214,7 @@ public class UIUtil {
 
   public enum FontSize {NORMAL, SMALL, MINI}
 
-  public enum ComponentStyle {REGULAR, SMALL, MINI}
+  public enum ComponentStyle {LARGE, REGULAR, SMALL, MINI}
 
   public enum FontColor {NORMAL, BRIGHTER}
 
@@ -1853,7 +1857,7 @@ public class UIUtil {
     //noinspection StatementWithEmptyBody
     while(dispatchInvocationEvent());
   }
-  
+
   @TestOnly
   public static boolean dispatchInvocationEvent() {
     assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
@@ -1871,7 +1875,7 @@ public class UIUtil {
     }
     return true;
   }
-  
+
   private static Thread getEventQueueThread() {
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     try {
@@ -2128,7 +2132,7 @@ public class UIUtil {
     for (MouseWheelListener each : mouseWheelListeners) {
       c.removeMouseWheelListener(each);
     }
-    
+
     if (c instanceof AbstractButton) {
       final ActionListener[] listeners = ((AbstractButton)c).getActionListeners();
       for (ActionListener listener : listeners) {
@@ -2240,7 +2244,7 @@ public class UIUtil {
   public static HTMLEditorKit getHTMLEditorKit() {
     return getHTMLEditorKit(true);
   }
-  
+
   public static HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
     Font font = getLabelFont();
     @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
@@ -2940,7 +2944,7 @@ public class UIUtil {
           g.drawString(text, xOffset, yOffset[0]);
           if (!StringUtil.isEmpty(shortcut)) {
             Color oldColor = g.getColor();
-            g.setColor(new JBColor(new Color(82, 99, 155), 
+            g.setColor(new JBColor(new Color(82, 99, 155),
                                    new Color(88, 157, 246)));
             g.drawString(shortcut, xOffset + fm.stringWidth(text + (isUnderDarcula() ? " " : "")), yOffset[0]);
             g.setColor(oldColor);
@@ -3016,8 +3020,18 @@ public class UIUtil {
     return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
   }
 
+  @NotNull
   public static Timer createNamedTimer(@NonNls @NotNull final String name, int delay, @NotNull ActionListener listener) {
     return new Timer(delay, listener) {
+      @Override
+      public String toString() {
+        return name;
+      }
+    };
+  }
+  @NotNull
+  public static Timer createNamedTimer(@NonNls @NotNull final String name, int delay) {
+    return new Timer(delay, null) {
       @Override
       public String toString() {
         return name;
@@ -3063,9 +3077,9 @@ public class UIUtil {
   public static void setNotOpaqueRecursively(@NotNull Component component) {
     if (!isUnderAquaLookAndFeel()) return;
 
-    if (component.getBackground().equals(getPanelBackground()) 
-        || component instanceof JScrollPane 
-        || component instanceof JViewport 
+    if (component.getBackground().equals(getPanelBackground())
+        || component instanceof JScrollPane
+        || component instanceof JViewport
         || component instanceof JLayeredPane) {
       if (component instanceof JComponent) {
         ((JComponent)component).setOpaque(false);
@@ -3549,5 +3563,22 @@ public class UIUtil {
     }
     Component component = policy.getFirstComponent(container);
     return component instanceof JComponent ? (JComponent)component : null;
+  }
+
+  /**
+   * Calculates a component style from the corresponding client property.
+   * The key "JComponent.sizeVariant" is used by Apple's L&F to scale components.
+   *
+   * @param component a component to process
+   * @return a component style of the specified component
+   */
+  public static ComponentStyle getComponentStyle(Component component) {
+    if (component instanceof JComponent) {
+      Object property = ((JComponent)component).getClientProperty("JComponent.sizeVariant");
+      if ("large".equals(property)) return ComponentStyle.LARGE;
+      if ("small".equals(property)) return ComponentStyle.SMALL;
+      if ("mini".equals(property)) return ComponentStyle.MINI;
+    }
+    return ComponentStyle.REGULAR;
   }
 }

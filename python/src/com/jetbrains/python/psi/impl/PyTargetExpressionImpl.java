@@ -19,11 +19,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.ResolveResult;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -126,11 +124,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    return getTypeWithAnchor(context, null);
-  }
-
-  @Nullable
-  public PyType getTypeWithAnchor(TypeEvalContext context, @Nullable PsiElement anchor) {
     if (!TypeEvalStack.mayEvaluate(this)) {
       return null;
     }
@@ -140,7 +133,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         // imported via __all__
         return null;
       }
-      final PyType pyType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(this, context, anchor);
+      final PyType pyType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(this, context, null);
       if (pyType != null) {
         return pyType;
       }
@@ -171,33 +164,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
           assignedValue = ((PyParenthesizedExpression)assignedValue).getContainedExpression();
         }
         if (assignedValue != null) {
-          if (assignedValue instanceof PyReferenceExpressionImpl) {
-            final PyReferenceExpressionImpl refex = (PyReferenceExpressionImpl)assignedValue;
-            PyType maybe_type = PyUtil.getSpecialAttributeType(refex, context);
-            if (maybe_type != null) return maybe_type;
-            final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-            final ResolveResult[] resolveResult = refex.getReference(resolveContext).multiResolve(false);
-            if (resolveResult.length == 1) {
-              PsiElement target = resolveResult[0].getElement();
-              if (target == this || target == null) {
-                return null;  // fix SOE on "a = a"
-              }
-              final PyType typeFromTarget = PyReferenceExpressionImpl.getTypeFromTarget(target, context, refex);
-              if (target instanceof PyTargetExpression && typeFromTarget instanceof PyNoneType) {
-                // this usually means that the variable is initialized to a non-None value somewhere else where we haven't looked
-                return null;
-              }
-              Ref<PyType> typeOfProperty = refex.getTypeOfProperty(context);
-              if (typeOfProperty != null) {
-                return typeOfProperty.get();
-              }
-              final PyType cfgType = refex.getQualifiedReferenceTypeByControlFlow(context);
-              if (cfgType != null) {
-                return cfgType;
-              }
-              return typeFromTarget;
-            }
-          }
           if (assignedValue instanceof PyYieldExpression) {
             return null;
           }

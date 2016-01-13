@@ -3,13 +3,15 @@
   "repo": "borisyankov/DefinitelyTyped",
   "ref": "master",
   "path": "typings",
-  "bundle": "typings/tsd.d.ts",
   "installed": {
     "node/node.d.ts": {
-      "commit": "35fffaa44bff5392741b3022d805fe3563023a3d"
+      "commit": "dc9dabe74a5be62613b17a3605309783a12ff28a"
     },
     "bluebird/bluebird.d.ts": {
-      "commit": "cf7c97b2a68a385c98c75fb6edd81083c97c983c"
+      "commit": "dc9dabe74a5be62613b17a3605309783a12ff28a"
+    },
+    "debug/debug.d.ts": {
+      "commit": "627b6c158b73494c803f36fc2fe00ad75faa8fde"
     }
   }
 }

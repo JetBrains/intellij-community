@@ -1,11 +1,15 @@
 import com.google.common.collect.FluentIterable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
-class CopyInto {
-  void m(FluentIterable<String> i<caret>t) {
-    ArrayList<String> collection = new ArrayList<>();
-    List<String> collection2 = it.copyInto(collection);
+public class Main {
+
+  public <T, C extends Collection<T>> C copyInto1(FluentIterable<T> fi, C collection) {
+    return fi.copyInto(collection);
+  }
+
+
+  public <T, C extends Collection<? super T>> C copyInto2(FluentIterable<T> fi, C collection) {
+    return fi.copyInto(collection);
   }
 }

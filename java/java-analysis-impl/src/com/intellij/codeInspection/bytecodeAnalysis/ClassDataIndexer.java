@@ -33,15 +33,20 @@ import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
 /**
+ * Scala code (same algorithm, but easier to read): https://github.com/ilya-klyuchnikov/faba
+ *
+ * Based on "Nullness Analysis of Java Bytecode via Supercompilation over Abstract Values" by Ilya Klyuchnikov
+ *     (http://meta2014.pereslavl.ru/papers/2014_Klyuchnikov__Nullness_Analysis_of_Java_Bytecode_via_Supercompilation_over_Abstract_Values.pdf)
+ *
  * @author lambdamix
  */
 public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileContent> {
 
   private static final int STABLE_FLAGS = Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC;
-  public static final Final<Key, Value> FINAL_TOP = new Final<Key, Value>(Value.Top);
-  public static final Final<Key, Value> FINAL_BOT = new Final<Key, Value>(Value.Bot);
-  public static final Final<Key, Value> FINAL_NOT_NULL = new Final<Key, Value>(Value.NotNull);
-  public static final Final<Key, Value> FINAL_NULL = new Final<Key, Value>(Value.Null);
+  public static final Final FINAL_TOP = new Final(Value.Top);
+  public static final Final FINAL_BOT = new Final(Value.Bot);
+  public static final Final FINAL_NOT_NULL = new Final(Value.NotNull);
+  public static final Final FINAL_NULL = new Final(Value.Null);
 
   @NotNull
   @Override
@@ -49,16 +54,16 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
     HashMap<Bytes, HEquations> map = new HashMap<Bytes, HEquations>();
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
-      Map<Key, List<Equation<Key, Value>>> allEquations = processClass(new ClassReader(inputData.getContent()), inputData.getFile().getPresentableUrl());
-      for (Map.Entry<Key, List<Equation<Key, Value>>> entry: allEquations.entrySet()) {
+      Map<Key, List<Equation>> allEquations = processClass(new ClassReader(inputData.getContent()), inputData.getFile().getPresentableUrl());
+      for (Map.Entry<Key, List<Equation>> entry: allEquations.entrySet()) {
 
         Key methodKey = entry.getKey();
         // method equations with raw (not-compressed keys)
-        List<Equation<Key, Value>> rawMethodEquations = entry.getValue();
+        List<Equation> rawMethodEquations = entry.getValue();
         //
         List<DirectionResultPair> compressedMethodEquations =
           new ArrayList<DirectionResultPair>(rawMethodEquations.size());
-        for (Equation<Key, Value> equation : rawMethodEquations) {
+        for (Equation equation : rawMethodEquations) {
           compressedMethodEquations.add(BytecodeAnalysisConverter.convert(equation, md));
         }
         map.put(new Bytes(BytecodeAnalysisConverter.asmKey(methodKey, md).key), new HEquations(compressedMethodEquations, methodKey.stable));
@@ -75,7 +80,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
     return map;
   }
 
-  public static Map<Key, List<Equation<Key, Value>>> processClass(final ClassReader classReader, final String presentableUrl) {
+  public static Map<Key, List<Equation>> processClass(final ClassReader classReader, final String presentableUrl) {
 
     // It is OK to share pending states, actions and results for analyses.
     // Analyses are designed in such a way that they first write to states/actions/results and then read only those portion
@@ -84,7 +89,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
     final State[] sharedPendingStates = new State[Analysis.STEPS_LIMIT];
     final PendingAction[] sharedPendingActions = new PendingAction[Analysis.STEPS_LIMIT];
     final PResults.PResult[] sharedResults = new PResults.PResult[Analysis.STEPS_LIMIT];
-    final Map<Key, List<Equation<Key, Value>>> equations = new HashMap<Key, List<Equation<Key, Value>>>();
+    final Map<Key, List<Equation>> equations = new HashMap<Key, List<Equation>>();
 
     classReader.accept(new ClassVisitor(Opcodes.ASM5) {
       private String className;
@@ -114,7 +119,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
           @Override
           public void visitEnd() {
             super.visitEnd();
-            Pair<Key, List<Equation<Key, Value>>> methodEquations = processMethod(node, jsr);
+            Pair<Key, List<Equation>> methodEquations = processMethod(node, jsr);
             equations.put(methodEquations.first, methodEquations.second);
           }
         };
@@ -127,7 +132,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
        * @param jsr whether a method has jsr instruction
        * @return pair of (primaryKey, equations)
        */
-      private Pair<Key, List<Equation<Key, Value>>> processMethod(final MethodNode methodNode, boolean jsr) {
+      private Pair<Key, List<Equation>> processMethod(final MethodNode methodNode, boolean jsr) {
         ProgressManager.checkCanceled();
         final Type[] argumentTypes = Type.getArgumentTypes(methodNode.desc);
         final Type resultType = Type.getReturnType(methodNode.desc);
@@ -142,7 +147,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
 
         // 4*n: for each reference parameter: @NotNull IN, @Nullable, null -> ... contract, !null -> contract
         // 3: @NotNull OUT, @Nullable OUT, purity analysis
-        List<Equation<Key, Value>> equations = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 4 + 3);
+        List<Equation> equations = new ArrayList<Equation>(argumentTypes.length * 4 + 3);
         equations.add(PurityAnalysis.analyze(method, methodNode, stable));
 
         if (argumentTypes.length == 0 && !isInterestingResult) {
@@ -289,7 +294,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                                           boolean isBooleanResult,
                                           final boolean stable,
                                           boolean jsr,
-                                          List<Equation<Key, Value>> result,
+                                          List<Equation> result,
                                           NegationAnalysis negatedAnalysis) throws AnalyzerException {
         boolean isInterestingResult = isBooleanResult || isReferenceResult;
         boolean maybeLeakingParameter = isInterestingResult;
@@ -313,14 +318,14 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
           OriginsAnalysis.resultOrigins(leakingParametersAndFrames.frames, methodNode.instructions, richControlFlow.controlFlow) :
           null;
 
-        Equation<Key, Value> outEquation =
+        Equation outEquation =
           isInterestingResult ?
           new InOutAnalysis(richControlFlow, Out, origins, stable, sharedPendingStates).analyze() :
           null;
 
         if (isReferenceResult) {
           result.add(outEquation);
-          result.add(new Equation<Key, Value>(new Key(method, NullableOut, stable), NullableMethodAnalysis.analyze(methodNode, origins, jsr)));
+          result.add(new Equation(new Key(method, NullableOut, stable), NullableMethodAnalysis.analyze(methodNode, origins, jsr)));
         }
 
         boolean withCycle = !richControlFlow.dfsTree.back.isEmpty();
@@ -338,33 +343,33 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
             if (leakingParameters[i]) {
               NonNullInAnalysis notNullInAnalysis =
                 new NonNullInAnalysis(richControlFlow, new In(i, In.NOT_NULL_MASK), stable, sharedPendingActions, sharedResults);
-              Equation<Key, Value> notNullParamEquation = notNullInAnalysis.analyze();
+              Equation notNullParamEquation = notNullInAnalysis.analyze();
               possibleNPE = notNullInAnalysis.possibleNPE;
               notNullParam = notNullParamEquation.rhs.equals(FINAL_NOT_NULL);
               result.add(notNullParamEquation);
             }
             else {
               // parameter is not leaking, so it is definitely NOT @NotNull
-              result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NOT_NULL_MASK), stable), FINAL_TOP));
+              result.add(new Equation(new Key(method, new In(i, In.NOT_NULL_MASK), stable), FINAL_TOP));
             }
 
             if (leakingNullableParameters[i]) {
               if (notNullParam || possibleNPE) {
-                result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NULLABLE_MASK), stable), FINAL_TOP));
+                result.add(new Equation(new Key(method, new In(i, In.NULLABLE_MASK), stable), FINAL_TOP));
               }
               else {
                 result.add(new NullableInAnalysis(richControlFlow, new In(i, In.NULLABLE_MASK), stable, sharedPendingStates).analyze());
               }
             }
             else {
-              result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NULLABLE_MASK), stable), FINAL_NULL));
+              result.add(new Equation(new Key(method, new In(i, In.NULLABLE_MASK), stable), FINAL_NULL));
             }
 
             if (isInterestingResult) {
               if (leakingParameters[i]) {
                 if (notNullParam) {
                   // @NotNull, so "null->fail"
-                  result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_BOT));
+                  result.add(new Equation(new Key(method, new InOut(i, Value.Null), stable), FINAL_BOT));
                 }
                 else {
                   // may be null on some branch, running "null->..." analysis
@@ -384,8 +389,8 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
               }
               else {
                 // parameter is not leaking, so a contract is the same as for the whole method
-                result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), outEquation.rhs));
-                result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), outEquation.rhs));
+                result.add(new Equation(new Key(method, new InOut(i, Value.Null), stable), outEquation.rhs));
+                result.add(new Equation(new Key(method, new InOut(i, Value.NotNull), stable), outEquation.rhs));
               }
             }
           }
@@ -398,7 +403,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
                                              boolean isReferenceResult,
                                              boolean isBooleanResult,
                                              boolean stable,
-                                             List<Equation<Key, Value>> result) throws AnalyzerException {
+                                             List<Equation> result) throws AnalyzerException {
         CombinedAnalysis analyzer = new CombinedAnalysis(method, graph);
         analyzer.analyze();
         if (isReferenceResult) {
@@ -418,24 +423,24 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
         }
       }
 
-      private List<Equation<Key, Value>> topEquations(Method method,
+      private List<Equation> topEquations(Method method,
                                                       Type[] argumentTypes,
                                                       boolean isReferenceResult,
                                                       boolean isInterestingResult,
                                                       boolean stable) {
         // 4 = @NotNull parameter, @Nullable parameter, null -> ..., !null -> ...
-        List<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>(argumentTypes.length * 4 + 2);
+        List<Equation> result = new ArrayList<Equation>(argumentTypes.length * 4 + 2);
         if (isReferenceResult) {
-          result.add(new Equation<Key, Value>(new Key(method, Out, stable), FINAL_TOP));
-          result.add(new Equation<Key, Value>(new Key(method, NullableOut, stable), FINAL_BOT));
+          result.add(new Equation(new Key(method, Out, stable), FINAL_TOP));
+          result.add(new Equation(new Key(method, NullableOut, stable), FINAL_BOT));
         }
         for (int i = 0; i < argumentTypes.length; i++) {
           if (ASMUtils.isReferenceType(argumentTypes[i])) {
-            result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NOT_NULL_MASK), stable), FINAL_TOP));
-            result.add(new Equation<Key, Value>(new Key(method, new In(i, In.NULLABLE_MASK), stable), FINAL_TOP));
+            result.add(new Equation(new Key(method, new In(i, In.NOT_NULL_MASK), stable), FINAL_TOP));
+            result.add(new Equation(new Key(method, new In(i, In.NULLABLE_MASK), stable), FINAL_TOP));
             if (isInterestingResult) {
-              result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));
-              result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
+              result.add(new Equation(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));
+              result.add(new Equation(new Key(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
             }
           }
         }

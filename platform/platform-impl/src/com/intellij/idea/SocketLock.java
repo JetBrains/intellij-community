@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.idea;
 
+import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,6 +32,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.oio.OioEventLoopGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
@@ -131,13 +133,20 @@ public final class SocketLock {
 
         final String[] lockedPaths = {myConfigPath, mySystemPath};
         int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr() ? 1 : 2;
-        myServer = BuiltInServer.start(workerCount, 6942, 50, false, new NotNullProducer<ChannelHandler>() {
+        NotNullProducer<ChannelHandler> handler = new NotNullProducer<ChannelHandler>() {
           @NotNull
           @Override
           public ChannelHandler produce() {
             return new MyChannelInboundHandler(lockedPaths, myActivateListener);
           }
-        });
+        };
+        try {
+          myServer = BuiltInServer.start(workerCount, 6942, 50, false, handler);
+        }
+        catch (IllegalStateException e) {
+          Logger.getInstance(SocketLock.class).warn(e);
+          myServer = BuiltInServer.start(new OioEventLoopGroup(1, new BuiltInServer.BuiltInServerThreadFactory()), true, 6942, 50, false, handler);
+        }
 
         byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
         FileUtil.writeToFile(portMarkerC, portBytes);
@@ -181,6 +190,7 @@ public final class SocketLock {
   @NotNull
   private static ActivateStatus tryActivate(int portNumber, @NotNull Collection<String> paths, @NotNull String[] args) {
     log("trying: port=%s", portNumber);
+    args = checkForJetBrainsProtocolCommand(args);
     try {
       Socket socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
       try {
@@ -235,6 +245,14 @@ public final class SocketLock {
     }
 
     return ActivateStatus.NO_INSTANCE;
+  }
+
+  private static String[] checkForJetBrainsProtocolCommand(String[] args) {
+    final String jbUrl = System.getProperty(JetBrainsProtocolHandler.class.getName());
+    if (jbUrl != null) {
+      return new String[]{jbUrl};
+    }
+    return args;
   }
 
   private static class MyChannelInboundHandler extends MessageDecoder {

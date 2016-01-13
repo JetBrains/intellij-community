@@ -354,7 +354,7 @@ private fun checkSchemes(baseDir: File, expected: String, ignoreDeleted: Boolean
     }
   }
 
-  for (file in fileToSchemeMap.keySet()) {
+  for (file in fileToSchemeMap.keys) {
     assertThat(File(baseDir, "$file.xml")).isFile()
   }
 

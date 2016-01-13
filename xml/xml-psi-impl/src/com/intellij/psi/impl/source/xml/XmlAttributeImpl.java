@@ -104,6 +104,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
         }
         else {
           if (newValue != null) {
+            att.addChild(newValue.getTreePrev().copyElement());
             att.addChild(newValue.copyElement());
           }
         }
@@ -310,7 +311,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     final String oldName = name.getText();
     final PomModel model = PomManager.getModel(getProject());
-    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createXmlAttribute(nameText, "");
+    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createAttribute(nameText, "", this);
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(getParent(), aspect) {

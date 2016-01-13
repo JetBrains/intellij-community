@@ -37,6 +37,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -61,6 +62,8 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -126,12 +129,18 @@ public class DiffUtil {
   public static EditorHighlighter createEditorHighlighter(@Nullable Project project, @NotNull DocumentContent content) {
     FileType type = content.getContentType();
     VirtualFile file = content.getHighlightFile();
+    Language language = content.getUserData(DiffUserDataKeys.LANGUAGE);
 
-    if ((file != null && file.getFileType() == type) || file instanceof LightVirtualFile) {
-      return EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file);
+    EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
+    if (language != null) {
+      SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
+      return highlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
+    }
+    else if ((file != null && file.getFileType() == type) || file instanceof LightVirtualFile) {
+      return highlighterFactory.createEditorHighlighter(project, file);
     }
     if (type != null) {
-      return EditorHighlighterFactory.getInstance().createEditorHighlighter(project, type);
+      return highlighterFactory.createEditorHighlighter(project, type);
     }
 
     return null;
@@ -178,6 +187,7 @@ public class DiffUtil {
     editor.getSettings().setShowIntentionBulb(false);
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
     editor.getGutterComponentEx().setShowDefaultGutterPopup(false);
+    editor.getGutterComponentEx().setShowRightFreePaintersArea(false);
 
     if (enableFolding) {
       setFoldingModelSupport(editor);
@@ -350,6 +360,7 @@ public class DiffUtil {
 
   @NotNull
   public static List<JComponent> createSimpleTitles(@NotNull ContentDiffRequest request) {
+    List<DiffContent> contents = request.getContents();
     List<String> titles = request.getContentTitles();
 
     if (!ContainerUtil.exists(titles, Condition.NOT_NULL)) {
@@ -357,8 +368,10 @@ public class DiffUtil {
     }
 
     List<JComponent> components = new ArrayList<JComponent>(titles.size());
-    for (String title : titles) {
-      components.add(createTitle(StringUtil.notNullize(title)));
+    for (int i = 0; i < contents.size(); i++) {
+      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)));
+      title = createTitleWithNotifications(title, contents.get(i));
+      components.add(title);
     }
 
     return components;
@@ -394,10 +407,24 @@ public class DiffUtil {
     }
 
     for (int i = 0; i < contents.size(); i++) {
-      result.add(createTitle(StringUtil.notNullize(titles.get(i)), contents.get(i), equalCharsets, equalSeparators, editors.get(i)));
+      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)), contents.get(i), equalCharsets, equalSeparators, editors.get(i));
+      title = createTitleWithNotifications(title, contents.get(i));
+      result.add(title);
     }
 
     return result;
+  }
+
+  @Nullable
+  private static JComponent createTitleWithNotifications(@Nullable JComponent title,
+                                                         @NotNull DiffContent content) {
+    List<JComponent> notifications = getCustomNotifications(content);
+    if (notifications.isEmpty()) return title;
+
+    List<JComponent> components = new ArrayList<JComponent>();
+    if (title != null) components.add(title);
+    components.addAll(notifications);
+    return createStackedComponents(components, TITLE_GAP);
   }
 
   private static boolean isEqualElements(@NotNull List elements) {
@@ -1062,6 +1089,11 @@ public class DiffUtil {
     List<JComponent> requestComponents = request.getUserData(DiffUserDataKeys.NOTIFICATIONS);
     List<JComponent> contextComponents = context.getUserData(DiffUserDataKeys.NOTIFICATIONS);
     return ContainerUtil.concat(ContainerUtil.notNullize(contextComponents), ContainerUtil.notNullize(requestComponents));
+  }
+
+  @NotNull
+  public static List<JComponent> getCustomNotifications(@NotNull DiffContent content) {
+    return ContainerUtil.notNullize(content.getUserData(DiffUserDataKeys.NOTIFICATIONS));
   }
 
   //

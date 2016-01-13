@@ -1,0 +1,34 @@
+<idea-plugin version="2">
+  <!-- Components and extensions declared in this file work ONLY in the Python plugin,
+       both Community and Professional versions. -->
+  <extensions defaultExtensionNs="com.intellij">
+    <moduleType id="PYTHON_MODULE" implementationClass="com.jetbrains.python.module.PythonModuleType"/>
+    <facetType implementation="com.jetbrains.python.facet.PythonFacetType"/>
+    <framework.detector implementation="com.jetbrains.python.facet.PythonFacetType$PythonFrameworkDetector"/>
+    <frameworkSupport implementation="com.jetbrains.python.facet.PythonFrameworkSupportProvider"/>
+    <projectStructureDetector implementation="com.jetbrains.python.module.PyProjectStructureDetector"/>
+    <moduleConfigurationEditorProvider implementation="com.jetbrains.python.module.PythonModuleConfigurationEditorProvider"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.psi.impl.PyConstructorArgumentCompletionContributor"/>
+    <!-- Console folding for Jython only, thus it's located in python-plugin only -->
+    <stacktrace.fold substring="*sys-package-mgr*:"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <importResolver implementation="com.jetbrains.python.psi.impl.PyJavaImportResolver"/>
+    <typeProvider implementation="com.jetbrains.python.psi.impl.PyJavaTypeProvider"/>
+    <pySuperMethodsSearch implementation="com.jetbrains.python.psi.impl.PyJavaSuperMethodsSearchExecutor"/>
+    <importCandidateProvider implementation="com.jetbrains.python.psi.impl.PyJavaImportCandidateProvider"/>
+  </extensions>
+
+  <application-components>
+    <component>
+      <implementation-class>com.jetbrains.python.facet.PythonSdkTableListener</implementation-class>
+    </component>
+  </application-components>
+
+  <module-components>
+    <component>
+      <implementation-class>com.jetbrains.python.facet.PythonFacetListener</implementation-class>
+    </component>
+  </module-components>
+</idea-plugin>

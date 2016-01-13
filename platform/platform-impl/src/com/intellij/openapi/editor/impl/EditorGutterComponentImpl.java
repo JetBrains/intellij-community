@@ -103,7 +103,7 @@ import java.util.List;
  *     <ul>
  *       <li>Left free painters</li>
  *       <li>Icons</li>
- *       <li>GAP_BETWEEN_AREAS</li>
+ *       <li>Debugger additional area</li>
  *       <li>Free painters</li>
  *     </ul>
  *   </li>
@@ -146,6 +146,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private TIntObjectHashMap<Color> myTextFgColors = new TIntObjectHashMap<Color>();
   private boolean myPaintBackground = true;
   private boolean myLeftFreePaintersAreaShown;
+  private boolean myRightFreePaintersAreaShown = true;
   private int myLastNonDumbModeIconAreaWidth = 0;
 
   @SuppressWarnings("unchecked")
@@ -884,8 +885,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                            ((LineMarkerRendererEx)renderer).getPosition() == LineMarkerRendererEx.Position.LEFT;
 
     int height = endY - startY;
-    int w = leftPosition ? FREE_PAINTERS_LEFT_AREA_WIDTH : FREE_PAINTERS_RIGHT_AREA_WIDTH;
-    int x = leftPosition ? getLineMarkerAreaOffset() : getLineMarkerFreePaintersAreaOffset() - 1;
+    int w = leftPosition ? getLeftFreePaintersAreaWidth() : getRightFreePaintersAreaWidth();
+    int x = leftPosition ? getLeftFreePaintersAreaOffset() : getLineMarkerFreePaintersAreaOffset() - 1;
     return new Rectangle(x, startY, w, height);
   }
 
@@ -1184,9 +1185,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public int getLineMarkerAreaWidth() {
-    return isLineMarkersShown() ? ((myLeftFreePaintersAreaShown ? FREE_PAINTERS_LEFT_AREA_WIDTH : 0) + 
-                                   myIconsAreaWidth + GAP_BETWEEN_AREAS + FREE_PAINTERS_RIGHT_AREA_WIDTH) :
-           0;
+    return isLineMarkersShown() ? getLeftFreePaintersAreaWidth() + myIconsAreaWidth +
+                                  getDebuggerAdditionalAreaWidth() + getRightFreePaintersAreaWidth() : 0;
   }
 
   public void setLineNumberAreaWidthFunction(@NotNull TIntFunction calculator) {
@@ -1218,19 +1218,19 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Nullable
   public EditorMouseEventArea getEditorMouseAreaByOffset(int offset) {
-    if (offset < getAnnotationsAreaOffset()) {
+    if (isLineNumbersShown() && offset < getLineNumberAreaOffset() + getLineNumberAreaWidth()) {
       return EditorMouseEventArea.LINE_NUMBERS_AREA;
     }
 
-    if (offset < getAnnotationsAreaOffset() + getAnnotationsAreaWidth()) {
+    if (isAnnotationsShown() && offset < getAnnotationsAreaOffset() + getAnnotationsAreaWidth()) {
       return EditorMouseEventArea.ANNOTATIONS_AREA;
     }
 
-    if (offset < getFoldingAreaOffset()) {
+    if (isLineMarkersShown() && offset < getFoldingAreaOffset()) {
       return EditorMouseEventArea.LINE_MARKERS_AREA;
     }
 
-    if (offset < getFoldingAreaOffset() + getFoldingAreaWidth()) {
+    if (isFoldingOutlineShown() && offset < getFoldingAreaOffset() + getFoldingAreaWidth()) {
       return EditorMouseEventArea.FOLDING_OUTLINE_AREA;
     }
 
@@ -1267,17 +1267,33 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public int getIconAreaOffset() {
-    return getLineMarkerAreaOffset() + (myLeftFreePaintersAreaShown ? FREE_PAINTERS_LEFT_AREA_WIDTH : 0);
+    return getLineMarkerAreaOffset() + getLeftFreePaintersAreaWidth();
+  }
+
+  public int getLeftFreePaintersAreaOffset() {
+    return getLineMarkerAreaOffset();
   }
   
   @Override
   public int getLineMarkerFreePaintersAreaOffset() {
-    return getIconAreaOffset() + myIconsAreaWidth + GAP_BETWEEN_AREAS;
+    return getIconAreaOffset() + myIconsAreaWidth + getDebuggerAdditionalAreaWidth();
+  }
+
+  public int getLeftFreePaintersAreaWidth() {
+    return myLeftFreePaintersAreaShown ? FREE_PAINTERS_LEFT_AREA_WIDTH : 0;
+  }
+
+  public int getRightFreePaintersAreaWidth() {
+    return myRightFreePaintersAreaShown ? FREE_PAINTERS_RIGHT_AREA_WIDTH : 0;
   }
 
   @Override
   public int getIconsAreaWidth() {
     return myIconsAreaWidth;
+  }
+
+  public int getDebuggerAdditionalAreaWidth() {
+    return isRealEditor() ? GAP_BETWEEN_AREAS : 0;
   }
 
   private boolean isMirrored() {
@@ -1656,6 +1672,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public void setPaintBackground(boolean value) {
     myPaintBackground = value;
+  }
+
+  @Override
+  public void setShowRightFreePaintersArea(boolean value) {
+    myRightFreePaintersAreaShown = value;
   }
 
   private void invokePopup(MouseEvent e) {

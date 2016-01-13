@@ -16,6 +16,7 @@
 package com.intellij.module;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.*;
@@ -78,7 +79,13 @@ public class ModulePointerTest extends PlatformTestCase {
     assertSame(module, pointer.getModule());
     assertEquals("xxx", pointer.getModuleName());
 
-    modifiableModel.dispose();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        modifiableModel.dispose();
+      }
+    });
+
 
     assertNull(pointer.getModule());
     assertEquals("xxx", pointer.getModuleName());

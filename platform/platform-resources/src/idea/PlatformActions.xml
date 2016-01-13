@@ -670,7 +670,6 @@
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction" text="Dumb Mode"/>
       <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging mode"/>
-      <action id="AskForLicense" internal="true" class="com.intellij.util.AskForLicenseAction" text="Ask For License with 5 sec delay" />
       <separator/>
       <group id="Internal.UI" popup="true" text="&amp;UI">
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"

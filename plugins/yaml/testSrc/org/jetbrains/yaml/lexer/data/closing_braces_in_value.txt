@@ -1,0 +1,7 @@
+scalar key ('pattern:')
+whitespace ('  ')
+text ('/boo/{id}')
+Eol ('\n')
+scalar key ('pattern:')
+whitespace ('  ')
+text ('/boo/[id]')

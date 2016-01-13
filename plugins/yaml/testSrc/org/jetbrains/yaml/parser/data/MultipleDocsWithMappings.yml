@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: bar
+---
+spring:
+  application:
+    name: bar

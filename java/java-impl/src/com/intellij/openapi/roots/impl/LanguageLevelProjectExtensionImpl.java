@@ -37,7 +37,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   private static final String DEFAULT_ATTRIBUTE = "default";
 
   private final Project myProject;
-  private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_6;
+  private LanguageLevel myLanguageLevel = LanguageLevel.HIGHEST;
   private LanguageLevel myCurrentLevel;
 
   public LanguageLevelProjectExtensionImpl(final Project project) {
@@ -76,7 +76,9 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   }
 
   private void writeExternal(final Element element) {
-    element.setAttribute(LANGUAGE_LEVEL, myLanguageLevel.name());
+    if (myLanguageLevel != null) {
+      element.setAttribute(LANGUAGE_LEVEL, myLanguageLevel.name());
+    }
     Boolean aBoolean = getDefault();
     if (aBoolean != null) {
       element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
@@ -86,7 +88,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
 
   private void writeAttributesForIdea7(Element element) {
     final boolean is14 = LanguageLevel.JDK_1_4.equals(myLanguageLevel);
-    final boolean is15 = myLanguageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
+    final boolean is15 = myLanguageLevel != null && myLanguageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
     element.setAttribute(ASSERT_KEYWORD_ATTR, Boolean.toString(is14 || is15));
     element.setAttribute(JDK_15_ATTR, Boolean.toString(is15));
   }

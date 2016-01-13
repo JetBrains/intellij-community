@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
@@ -69,6 +70,8 @@ public abstract class DiffActionExecutor {
   @Nullable
   protected DiffContent createRemote(final VcsRevisionNumber revisionNumber) throws IOException, VcsException {
     final ContentRevision fileRevision = myDiffProvider.createFileContent(revisionNumber, mySelectedFile);
+    if (fileRevision == null) return null;
+
     if (fileRevision instanceof BinaryContentRevision) {
       FilePath filePath = fileRevision.getFile();
       final byte[] content = ((BinaryContentRevision)fileRevision).getBinaryContent();
@@ -77,14 +80,16 @@ public abstract class DiffActionExecutor {
       return DiffContentFactory.getInstance().createBinary(myProject, filePath.getName(), filePath.getFileType(), content);
     }
 
-    if (fileRevision != null) {
-      final String content = fileRevision.getContent();
-      if (content == null) {
-        throw new VcsException("Failed to load content");
-      }
+    if (fileRevision instanceof ByteBackedContentRevision) {
+      byte[] content = ((ByteBackedContentRevision)fileRevision).getContentAsBytes();
+      if (content == null) throw new VcsException("Failed to load content");
       return FileAwareDocumentContent.create(myProject, content, fileRevision.getFile());
     }
-    return null;
+    else {
+      String content = fileRevision.getContent();
+      if (content == null) throw new VcsException("Failed to load content");
+      return FileAwareDocumentContent.create(myProject, content, fileRevision.getFile());
+    }
   }
 
   public void showDiff() {

@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Random;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,6 +42,15 @@ public class BuiltInServer implements Disposable {
   private final int port;
   private final ChannelRegistrar channelRegistrar;
   private final boolean isOwnerOfEventLoopGroup;
+
+  static {
+    // IDEA-120811
+    if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
+      System.setProperty("io.netty.machineId", "9e43d860");
+      System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
+      System.setProperty("io.netty.serviceThreadPrefix", "Netty ");
+    }
+  }
 
   private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup,
                         int port,
@@ -76,13 +87,7 @@ public class BuiltInServer implements Disposable {
                                     int portsCount,
                                     boolean tryAnyPort,
                                     @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
-    return start(new NioEventLoopGroup(workerCount, new ThreadFactory() {
-      private final AtomicInteger counter = new AtomicInteger();
-      @Override
-      public Thread newThread(Runnable r) {
-        return new Thread(r, "Netty Builtin Server " + counter.incrementAndGet());
-      }
-    }), true, firstPort, portsCount, tryAnyPort, handler);
+    return start(new NioEventLoopGroup(workerCount, new BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler);
   }
 
   @NotNull
@@ -93,7 +98,7 @@ public class BuiltInServer implements Disposable {
                                     boolean tryAnyPort,
                                     @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
     ChannelRegistrar channelRegistrar = new ChannelRegistrar();
-    ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(eventLoopGroup);
+    ServerBootstrap bootstrap = NettyKt.serverBootstrap(eventLoopGroup);
     configureChildHandler(bootstrap, channelRegistrar, handler);
     int port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar);
     return new BuiltInServer(eventLoopGroup, port, channelRegistrar, isEventLoopGroupOwner);
@@ -148,5 +153,14 @@ public class BuiltInServer implements Disposable {
 
   public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull ChannelHandler channelHandler) {
     context.pipeline().replace(DelegatingHttpRequestHandler.class, "replacedDefaultHandler", channelHandler);
+  }
+
+  public static class BuiltInServerThreadFactory implements ThreadFactory {
+    private final AtomicInteger counter = new AtomicInteger();
+
+    @Override
+    public Thread newThread(Runnable r) {
+      return new Thread(r, "Netty Builtin Server " + counter.incrementAndGet());
+    }
   }
 }
