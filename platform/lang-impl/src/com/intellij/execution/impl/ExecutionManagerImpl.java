@@ -47,6 +47,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.Alarm;
@@ -340,7 +341,11 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
         @Override
         public void run() {
           if (!myProject.isDisposed()) {
-            DumbService.getInstance(myProject).runWhenSmart(startRunnable);
+            if (!Registry.is("dumb.aware.run.configurations")) {
+              DumbService.getInstance(myProject).runWhenSmart(startRunnable);
+            } else {
+              startRunnable.run();
+            }
           }
         }
       });
@@ -488,7 +493,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
     awaitingTerminationAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (DumbService.getInstance(myProject).isDumb() || ExecutorRegistry.getInstance().isStarting(environment)) {
+        if ((DumbService.getInstance(myProject).isDumb() && !Registry.is("dumb.aware.run.configurations")) || ExecutorRegistry.getInstance().isStarting(environment)) {
           awaitingTerminationAlarm.addRequest(this, 100);
           return;
         }

@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.IdeBorderFactory;
@@ -273,6 +274,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                          RunManagerEx.getInstanceEx(myProject).getSelectedConfiguration(),
                          myProject,
                          e.getPresentation());
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return Registry.is("dumb.aware.run.configurations");
     }
   }
 
