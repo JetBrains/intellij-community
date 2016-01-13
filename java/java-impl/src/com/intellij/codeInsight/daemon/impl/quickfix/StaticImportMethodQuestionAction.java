@@ -135,25 +135,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
             return FINAL_CHOICE;
           }
 
-          String qname = PsiUtil.getMemberQualifiedName(selectedValue);
-          if (qname == null) return FINAL_CHOICE;
-          List<String> excludableStrings = AddImportAction.getAllExcludableStrings(qname);
-          return new BaseListPopupStep<String>(null, excludableStrings) {
-            @NotNull
-            @Override
-            public String getTextFor(String value) {
-              return "Exclude '" + value + "' from auto-import";
-            }
-
-            @Override
-            public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-              if (finalChoice) {
-                AddImportAction.excludeFromImport(project, selectedValue);
-              }
-
-              return super.onChosen(selectedValue, finalChoice);
-            }
-          };
+          return AddImportAction.getExcludesStep(PsiUtil.getMemberQualifiedName(selectedValue), project);
         }
 
         @Override
