@@ -24,25 +24,12 @@ elif use_cython is None:
     except ImportError:
         from _pydevd_bundle.pydevd_additional_thread_info_regular import PyDBAdditionalThreadInfo  # @UnusedImport
         from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch  # @UnusedImport
+        from _pydevd_bundle.pydevd_constants import CYTHON_SUPPORTED
 
-        try:
-            import platform
-            python_implementation = platform.python_implementation()
-        except:
-            pass
-        else:
-            if python_implementation == 'CPython':
-                # Only available for CPython!
-                import sys
-                if (
-                    (sys.version_info[0] == 2 and sys.version_info[1] >= 7)
-                    or (sys.version_info[0] == 3 and sys.version_info[1] >= 3)
-                    or (sys.version_info[0] > 3)
-                    ):
-                    # Warn for 2.7 or 3.3 onwards (32 or 64)
-                    from _pydev_bundle.pydev_monkey import log_error_once
-                    log_error_once('warning: Debugger speedups using cython not found. Run "python %s build_ext --inplace" to build.' % (
-                        os.path.join(os.path.dirname(os.path.dirname(__file__)), 'setup_cython.py')))
+        if CYTHON_SUPPORTED:
+            from _pydev_bundle.pydev_monkey import log_error_once
+            log_error_once('warning: Debugger speedups using cython not found. Run "python %s build_ext --inplace" to build.' % (
+                os.path.join(os.path.dirname(os.path.dirname(__file__)), 'setup_cython.py')))
 
 else:
     raise RuntimeError('Unexpected value for PYDEVD_USE_CYTHON: %s (accepted: YES, NO)' % (use_cython,))

@@ -2,10 +2,36 @@ import debugger_unittest
 import sys
 import re
 import os
-import pydevd
+
+CHECK_BASELINE, CHECK_REGULAR, CHECK_CYTHON = 'baseline', 'regular', 'cython'
+
+class PerformanceWriterThread(debugger_unittest.AbstractWriterThread):
+
+    CHECK = None
+
+    debugger_unittest.AbstractWriterThread.get_environ # overrides
+    def get_environ(self):
+        env = os.environ.copy()
+        if self.CHECK == CHECK_BASELINE:
+            env['PYTHONPATH'] = r'X:\PyDev.Debugger.baseline'
+        elif self.CHECK == CHECK_CYTHON:
+            env['PYDEVD_USE_CYTHON'] = 'YES'
+        elif self.CHECK == CHECK_REGULAR:
+            env['PYDEVD_USE_CYTHON'] = 'NO'
+        else:
+            raise AssertionError("Don't know what to check.")
+        return env
+
+    debugger_unittest.AbstractWriterThread.get_pydevd_file # overrides
+    def get_pydevd_file(self):
+        if self.CHECK == CHECK_BASELINE:
+            return os.path.abspath(os.path.join(r'X:\PyDev.Debugger.baseline', 'pydevd.py'))
+        dirname = os.path.dirname(__file__)
+        dirname = os.path.dirname(dirname)
+        return os.path.abspath(os.path.join(dirname, 'pydevd.py'))
 
 
-class WriterThreadPerformance1(debugger_unittest.AbstractWriterThread):
+class WriterThreadPerformance1(PerformanceWriterThread):
 
     TEST_FILE = debugger_unittest._get_debugger_test_file('_performance_1.py')
     BENCHMARK_NAME = 'method_calls_with_breakpoint'
@@ -16,7 +42,7 @@ class WriterThreadPerformance1(debugger_unittest.AbstractWriterThread):
         self.write_make_initial_run()
         self.finished_ok = True
 
-class WriterThreadPerformance2(debugger_unittest.AbstractWriterThread):
+class WriterThreadPerformance2(PerformanceWriterThread):
 
     TEST_FILE = debugger_unittest._get_debugger_test_file('_performance_1.py')
     BENCHMARK_NAME = 'method_calls_without_breakpoint'
@@ -26,7 +52,7 @@ class WriterThreadPerformance2(debugger_unittest.AbstractWriterThread):
         self.write_make_initial_run()
         self.finished_ok = True
 
-class WriterThreadPerformance3(debugger_unittest.AbstractWriterThread):
+class WriterThreadPerformance3(PerformanceWriterThread):
 
     TEST_FILE = debugger_unittest._get_debugger_test_file('_performance_1.py')
     BENCHMARK_NAME = 'method_calls_with_step_over'
@@ -44,7 +70,7 @@ class WriterThreadPerformance3(debugger_unittest.AbstractWriterThread):
         self.write_run_thread(thread_id)
         self.finished_ok = True
 
-class WriterThreadPerformance4(debugger_unittest.AbstractWriterThread):
+class WriterThreadPerformance4(PerformanceWriterThread):
 
     TEST_FILE = debugger_unittest._get_debugger_test_file('_performance_1.py')
     BENCHMARK_NAME = 'method_calls_with_exception_breakpoint'
@@ -77,31 +103,40 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
         simple_trace_time = self._get_time_from_result(self.run_process(args+['--regular-trace'], writer_thread=None))
         print(writer_thread_class.BENCHMARK_NAME, time_when_debugged, regular_time, simple_trace_time)
 
-        if 'SPEEDTIN_AUTHORIZATION_KEY' in os.environ and 'SPEEDTIN_PROJECT_ID_REGULAR' in os.environ \
-            and 'SPEEDTIN_PROJECT_ID_NOTRACE' in os.environ and 'SPEEDTIN_PROJECT_ID_SIMPLETRACE' in os.environ:
+        assert 'SPEEDTIN_AUTHORIZATION_KEY' in os.environ
+        if 'SPEEDTIN_AUTHORIZATION_KEY' in os.environ:
 
             SPEEDTIN_AUTHORIZATION_KEY = os.environ['SPEEDTIN_AUTHORIZATION_KEY']
-            SPEEDTIN_PROJECT_ID_REGULAR = os.environ['SPEEDTIN_PROJECT_ID_REGULAR']
-            SPEEDTIN_PROJECT_ID_NOTRACE = os.environ['SPEEDTIN_PROJECT_ID_NOTRACE']
-            SPEEDTIN_PROJECT_ID_SIMPLETRACE = os.environ['SPEEDTIN_PROJECT_ID_SIMPLETRACE']
 
-            # Upload data to https://www.speedtin.com
-            for project_id, value in (
-                (SPEEDTIN_PROJECT_ID_REGULAR, time_when_debugged),
-                (SPEEDTIN_PROJECT_ID_NOTRACE, regular_time),
-                (SPEEDTIN_PROJECT_ID_SIMPLETRACE, simple_trace_time),
-                ):
-                try:
-                    import pyspeedtin
-                except ImportError:
-                    continue
+            # sys.path.append(r'X:\speedtin\pyspeedtin')
+            import pyspeedtin # If the authorization key is there, pyspeedtin must be available
+            import pydevd
+            pydevd_cython_project_id, pydevd_pure_python_project_id = 6, 7
+            if writer_thread_class.CHECK == CHECK_BASELINE:
+                project_ids = (pydevd_cython_project_id, pydevd_pure_python_project_id)
+            elif writer_thread_class.CHECK == CHECK_REGULAR:
+                project_ids = (pydevd_pure_python_project_id,)
+            elif writer_thread_class.CHECK == CHECK_CYTHON:
+                project_ids = (pydevd_cython_project_id,)
+            else:
+                raise AssertionError('Wrong check: %s' % (writer_thread_class.CHECK))
+            for project_id in project_ids:
                 api = pyspeedtin.PySpeedTinApi(authorization_key=SPEEDTIN_AUTHORIZATION_KEY, project_id=project_id)
-                api.add_benchmark(writer_thread_class.BENCHMARK_NAME)
-                commit_id, branch, commit_date = api.git_commit_id_branch_and_date_from_path(__file__)
-                api.add_measurement(
-                    writer_thread_class.BENCHMARK_NAME,
-                    value=value, # How many times slower than without debugging
+                
+                benchmark_name = writer_thread_class.BENCHMARK_NAME
+                
+                if writer_thread_class.CHECK == CHECK_BASELINE:
+                    version = '0.0.1_baseline'
+                    return # No longer commit the baseline (it's immutable right now).
+                else:
                     version=pydevd.__version__,
+                
+                commit_id, branch, commit_date = api.git_commit_id_branch_and_date_from_path(pydevd.__file__)
+                api.add_benchmark(benchmark_name)
+                api.add_measurement(
+                    benchmark_name,
+                    value=time_when_debugged, 
+                    version=version,
                     released=False,
                     branch=branch,
                     commit_id=commit_id,
@@ -127,8 +162,15 @@ if __name__ == '__main__':
     debugger_unittest.SHOW_OTHER_DEBUG_INFO = False
     debugger_unittest.SHOW_STDOUT = False
 
-    check_debugger_performance = CheckDebuggerPerformance()
-    check_debugger_performance.check_performance1()
-    check_debugger_performance.check_performance2()
-    check_debugger_performance.check_performance3()
-    check_debugger_performance.check_performance4()
+    for check in (
+            # CHECK_BASELINE, -- Checks against the version checked out at X:\PyDev.Debugger.baseline.
+            CHECK_REGULAR, 
+            CHECK_CYTHON
+        ):
+        PerformanceWriterThread.CHECK = check
+        print('Checking: %s' % (check,))
+        check_debugger_performance = CheckDebuggerPerformance()
+        check_debugger_performance.check_performance1()
+        check_debugger_performance.check_performance2()
+        check_debugger_performance.check_performance3()
+        check_debugger_performance.check_performance4()

@@ -49,6 +49,25 @@ if IS_JYTHON:
     if sys.version_info[0] == 2 and sys.version_info[1] < 5:
         IS_JYTH_LESS25 = True
 
+CYTHON_SUPPORTED = False
+
+try:
+    import platform
+    python_implementation = platform.python_implementation()
+except:
+    pass
+else:
+    if python_implementation == 'CPython':
+        # Only available for CPython!
+        if (
+            (sys.version_info[0] == 2 and sys.version_info[1] >= 7)
+            or (sys.version_info[0] == 3 and sys.version_info[1] >= 3)
+            or (sys.version_info[0] > 3)
+            ):
+            # Supported in 2.7 or 3.3 onwards (32 or 64)
+            CYTHON_SUPPORTED = True
+
+
 #=======================================================================================================================
 # Python 3?
 #=======================================================================================================================

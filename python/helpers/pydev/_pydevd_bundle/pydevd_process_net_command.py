@@ -4,7 +4,7 @@ import traceback
 
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_traceproperty, pydevd_tracing, pydevd_dont_trace
-from pydevd_file_utils import norm_file_to_server
+import pydevd_file_utils
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, update_exception_hook
 from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, CMD_THREAD_KILL, InternalTerminateThread, \
     CMD_THREAD_SUSPEND, pydevd_find_thread_by_id, CMD_THREAD_RUN, InternalRunThread, CMD_STEP_INTO, CMD_STEP_OVER, \
@@ -255,7 +255,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
                     file = file.encode(file_system_encoding)
 
-                file = norm_file_to_server(file)
+                file = pydevd_file_utils.norm_file_to_server(file)
 
                 if not pydevd_file_utils.exists(file):
                     sys.stderr.write('pydev debugger: warning: trying to add breakpoint'\
@@ -314,7 +314,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
                     file = file.encode(file_system_encoding)
 
-                file = norm_file_to_server(file)
+                file = pydevd_file_utils.norm_file_to_server(file)
 
                 try:
                     breakpoint_id = int(breakpoint_id)
@@ -622,7 +622,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                             if not IS_PY3K:
                                 filename = filename.encode(file_system_encoding)
 
-                            filename = norm_file_to_server(filename)
+                            filename = pydevd_file_utils.norm_file_to_server(filename)
 
                             if os.path.exists(filename):
                                 lines_ignored = py_db.filename_to_lines_where_exceptions_are_ignored.get(filename)

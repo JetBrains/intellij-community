@@ -40,8 +40,12 @@ from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogge
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
 
 
-__version_info__ = (0, 0, 3)
-__version__ = '.'.join(str(x) for x in __version_info__)
+__version_info__ = (0, 0, 4)
+__version_info_str__ = []
+for v in __version_info__:
+    __version_info_str__.append(str(v))
+    
+__version__ = '.'.join(__version_info_str__)
 
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
 
@@ -56,10 +60,6 @@ PluginManager = None
 if SUPPORT_PLUGINS:
     from _pydevd_bundle.pydevd_plugin_utils import PluginManager
 
-if IS_PY3K:
-    import pkgutil
-else:
-    from _pydev_imps import _pydev_pkgutil_old as pkgutil
 
 threadingEnumerate = threading.enumerate
 threadingCurrentThread = threading.currentThread
@@ -846,6 +846,10 @@ class PyDB:
         patch_thread_modules()
 
     def get_fullname(self, mod_name):
+        if IS_PY3K:
+            import pkgutil
+        else:
+            from _pydev_imps import _pydev_pkgutil_old as pkgutil
         try:
             loader = pkgutil.get_loader(mod_name)
         except:

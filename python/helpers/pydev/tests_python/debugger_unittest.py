@@ -1,5 +1,8 @@
-from _pydev_bundle.pydev_imports import quote_plus, quote, unquote_plus
-from _pydevd_bundle.pydevd_constants import IS_PY3K
+try:
+    from urllib import quote, quote_plus, unquote_plus
+except ImportError:
+    from urllib.parse import quote, quote_plus, unquote_plus #@UnresolvedImport
+
 
 import socket
 import os
@@ -9,6 +12,7 @@ from _pydev_bundle import pydev_localhost
 import subprocess
 import sys
 
+IS_PY3K = sys.version_info[0] >= 3
 CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
 
 # Always True (because otherwise when we do have an error, it's hard to diagnose).
@@ -17,8 +21,6 @@ SHOW_WRITES_AND_READS = True
 SHOW_OTHER_DEBUG_INFO = True
 SHOW_STDOUT = True
 
-import pydevd
-PYDEVD_FILE = pydevd.__file__
 
 try:
     from thread import start_new_thread
@@ -85,7 +87,7 @@ class DebuggerRunner(object):
 
         localhost = pydev_localhost.get_localhost()
         return args + [
-            PYDEVD_FILE,
+            writer_thread.get_pydevd_file(),
             '--DEBUG_RECORD_SOCKET_READS',
             '--qt-support',
             '--client',
@@ -112,12 +114,18 @@ class DebuggerRunner(object):
 
         return self.run_process(args, writer_thread)
 
-    def create_process(self, args):
-        process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=os.path.dirname(PYDEVD_FILE))
+    def create_process(self, args, writer_thread):
+        process = subprocess.Popen(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=writer_thread.get_cwd() if writer_thread is not None else '.',
+            env=writer_thread.get_environ() if writer_thread is not None else None,
+        )
         return process
 
     def run_process(self, args, writer_thread):
-        process = self.create_process(args)
+        process = self.create_process(args, writer_thread)
         stdout = []
         stderr = []
 
@@ -161,21 +169,22 @@ class DebuggerRunner(object):
                             )
             time.sleep(.2)
 
-        if not writer_thread.FORCE_KILL_PROCESS_WHEN_FINISHED_OK:
-            poll = process.poll()
-            if poll < 0:
-                self.fail_with_message(
-                    "The other process exited with error code: " + str(poll), stdout, stderr, writer_thread)
-
-
-            if stdout is None:
-                self.fail_with_message(
-                    "The other process may still be running -- and didn't give any output.", stdout, stderr, writer_thread)
-
-            if 'TEST SUCEEDED' not in ''.join(stdout):
-                self.fail_with_message("TEST SUCEEDED not found in stdout.", stdout, stderr, writer_thread)
 
         if writer_thread is not None:
+            if not writer_thread.FORCE_KILL_PROCESS_WHEN_FINISHED_OK:
+                poll = process.poll()
+                if poll < 0:
+                    self.fail_with_message(
+                        "The other process exited with error code: " + str(poll), stdout, stderr, writer_thread)
+
+
+                if stdout is None:
+                    self.fail_with_message(
+                        "The other process may still be running -- and didn't give any output.", stdout, stderr, writer_thread)
+
+                if 'TEST SUCEEDED' not in ''.join(stdout):
+                    self.fail_with_message("TEST SUCEEDED not found in stdout.", stdout, stderr, writer_thread)
+
             for i in xrange(100):
                 if not writer_thread.finished_ok:
                     time.sleep(.1)
@@ -207,6 +216,17 @@ class AbstractWriterThread(threading.Thread):
         self.finished_ok = False
         self._next_breakpoint_id = 0
         self.log = []
+
+    def get_environ(self):
+        return None
+
+    def get_pydevd_file(self):
+        dirname = os.path.dirname(__file__)
+        dirname = os.path.dirname(dirname)
+        return os.path.abspath(os.path.join(dirname, 'pydevd.py'))
+
+    def get_cwd(self):
+        return os.path.dirname(self.get_pydevd_file())
 
     def get_command_line_args(self):
         return [self.TEST_FILE]

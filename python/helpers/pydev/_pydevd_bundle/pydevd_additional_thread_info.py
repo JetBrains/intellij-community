@@ -12,7 +12,7 @@ elif use_cython == 'NO':
     from _pydevd_bundle.pydevd_additional_thread_info_regular import PyDBAdditionalThreadInfo  # @UnusedImport @Reimport
 
 elif use_cython is None:
-    # Regular: use fallback if not found and give message to user
+    # Regular: use fallback if not found (message is already given elsewhere).
     try:
         from _pydevd_bundle.pydevd_cython_wrapper import PyDBAdditionalThreadInfo
     except ImportError:

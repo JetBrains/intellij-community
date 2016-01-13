@@ -230,8 +230,28 @@ except:
     #Don't fail if there's something not correct here -- but at least print it to the user so that we can correct that
     traceback.print_exc()
 
+norm_file_to_client = _AbsFile
+norm_file_to_server = _NormFile
 
-if PATHS_FROM_ECLIPSE_TO_PYTHON:
+def setup_client_server_paths(paths):
+    '''paths is the same format as PATHS_FROM_ECLIPSE_TO_PYTHON'''
+    
+    global NORM_FILENAME_TO_SERVER_CONTAINER
+    global NORM_FILENAME_TO_CLIENT_CONTAINER
+    global PATHS_FROM_ECLIPSE_TO_PYTHON
+    global norm_file_to_client
+    global norm_file_to_server
+    
+    NORM_FILENAME_TO_SERVER_CONTAINER = {}
+    NORM_FILENAME_TO_CLIENT_CONTAINER = {}
+    PATHS_FROM_ECLIPSE_TO_PYTHON = paths[:]
+    
+    if not PATHS_FROM_ECLIPSE_TO_PYTHON:
+        #no translation step needed (just inline the calls)
+        norm_file_to_client = _AbsFile
+        norm_file_to_server = _NormFile
+        return
+            
     #Work on the client and server slashes.
     eclipse_sep = None
     python_sep = None
@@ -257,7 +277,7 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
 
 
     #only setup translation functions if absolutely needed!
-    def norm_file_to_server(filename):
+    def _norm_file_to_server(filename):
         #Eclipse will send the passed filename to be translated to the python process
         #So, this would be 'NormFileFromEclipseToPython'
         try:
@@ -286,8 +306,7 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
             NORM_FILENAME_TO_SERVER_CONTAINER[filename] = translated
             return translated
 
-
-    def norm_file_to_client(filename):
+    def _norm_file_to_client(filename):
         #The result of this method will be passed to eclipse
         #So, this would be 'NormFileFromPythonToEclipse'
         try:
@@ -315,12 +334,11 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
             #only at the beginning of this method.
             NORM_FILENAME_TO_CLIENT_CONTAINER[filename] = translated
             return translated
+    
+    norm_file_to_server = _norm_file_to_server        
+    norm_file_to_client = _norm_file_to_client
 
-else:
-    #no translation step needed (just inline the calls)
-    norm_file_to_client = _AbsFile
-    norm_file_to_server = _NormFile
-
+setup_client_server_paths(PATHS_FROM_ECLIPSE_TO_PYTHON)
 
 # For given file f returns tuple of its absolute path, real path and base name
 def get_abs_path_real_path_and_base_from_file(f):

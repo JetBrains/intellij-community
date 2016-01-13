@@ -100,7 +100,7 @@ def main():
     for i, python_install in enumerate(python_installations):
         new_name = 'pydevd_cython_%s_%s' % (sys.platform, extract_version(python_install))
         args = [
-            python_install, os.path.join(root_dir, 'build_tools', 'build.py'), '--no-remove-binaries', '--target-pyd-name=%s' % new_name]
+            python_install, os.path.join(root_dir, 'build_tools', 'build.py'), '--no-remove-binaries', '--target-pyd-name=%s' % new_name, '--force-cython']
         if i != 0:
             args.append('--no-regenerate-files')
         print('Calling: %s' % (' '.join(args)))
@@ -113,7 +113,7 @@ if __name__ == '__main__':
 
 '''
 To run do:
-cdd x:\PyDev.Debugger
+cd /D x:\PyDev.Debugger
 set PYTHONPATH=x:\PyDev.Debugger
 C:\tools\Miniconda32\envs\py27_32\python build_tools\build_binaries_windows.py
 '''
