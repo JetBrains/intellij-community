@@ -29,6 +29,7 @@ import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsol
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
+import com.intellij.execution.testframework.ui.TestStatusLine;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -793,6 +794,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myIgnoredTestCount++;
     updateProgressOnTestDone();
     updateStatusLabel(false);
+  }
+
+  public void setStatusLine(TestStatusLine statusLine) {
+    myStatusLine = statusLine;
   }
 
   private boolean isModeConsistent(boolean isCustomMessage) {
