@@ -17,6 +17,8 @@ package com.intellij.application.options;
 
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.PackageEntry;
@@ -102,6 +104,11 @@ public abstract class ImportLayoutPanel extends JPanel {
         public void actionPerformed(AnActionEvent e) {
           addPackageToImportLayouts();
         }
+
+        @Override
+        public ShortcutSet getShortcut() {
+          return CommonShortcuts.getNewForDialogs();
+        }
       })
       .addExtraAction(new DumbAwareActionButton(ApplicationBundle.message("button.add.blank"), IconUtil.getAddBlankLineIcon()) {
         @Override
@@ -109,31 +116,13 @@ public abstract class ImportLayoutPanel extends JPanel {
           addBlankLine();
         }
       })
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          removeEntryFromImportLayouts();
-        }
-      })
-      .setMoveUpAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          moveRowUp();
-        }
-      })
-      .setMoveDownAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          moveRowDown();
-        }
-      })
-      .setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(AnActionEvent e) {
+      .setRemoveAction(button -> removeEntryFromImportLayouts())
+      .setMoveUpAction(button -> moveRowUp())
+      .setMoveDownAction(button -> moveRowDown())
+      .setRemoveActionUpdater(e -> {
           int selectedImport = myImportLayoutTable.getSelectedRow();
           PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
           return entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
-        }
       })
       .setButtonComparator(ApplicationBundle.message("button.add.package"), ApplicationBundle.message("button.add.blank"), "Remove", "Up", "Down")
       .setPreferredSize(new Dimension(-1, 100)).createPanel();
