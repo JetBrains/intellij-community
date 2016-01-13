@@ -93,45 +93,53 @@ public abstract class ImportLayoutPanel extends JPanel {
         refresh();
       }
     });
-    this.add(myCbLayoutStaticImportsSeparately, BorderLayout.NORTH);
-
-    this.add(
-      ToolbarDecorator.createDecorator(myImportLayoutTable = createTableForPackageEntries(myImportLayoutList, this))
-        .addExtraAction(new DumbAwareActionButton(ApplicationBundle.message("button.add.package"), IconUtil.getAddPackageIcon()) {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            addPackageToImportLayouts();
-          }
-        }).addExtraAction(new DumbAwareActionButton(ApplicationBundle.message("button.add.blank"), IconUtil.getAddBlankLineIcon()) {
+    
+    add(myCbLayoutStaticImportsSeparately, BorderLayout.NORTH);
+    
+    JPanel importLayoutPanel = ToolbarDecorator.createDecorator(myImportLayoutTable = createTableForPackageEntries(myImportLayoutList, this))
+      .addExtraAction(new DumbAwareActionButton(ApplicationBundle.message("button.add.package"), IconUtil.getAddPackageIcon()) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          addPackageToImportLayouts();
+        }
+      })
+      .addExtraAction(new DumbAwareActionButton(ApplicationBundle.message("button.add.blank"), IconUtil.getAddBlankLineIcon()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           addBlankLine();
         }
-      }).setRemoveAction(new AnActionButtonRunnable() {
+      })
+      .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           removeEntryFromImportLayouts();
         }
-      }).setMoveUpAction(new AnActionButtonRunnable() {
+      })
+      .setMoveUpAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           moveRowUp();
         }
-      }).setMoveDownAction(new AnActionButtonRunnable() {
+      })
+      .setMoveDownAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           moveRowDown();
         }
-      }).setRemoveActionUpdater(new AnActionButtonUpdater() {
+      })
+      .setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
         public boolean isEnabled(AnActionEvent e) {
           int selectedImport = myImportLayoutTable.getSelectedRow();
           PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
           return entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
         }
-      }).setButtonComparator(ApplicationBundle.message("button.add.package"), ApplicationBundle.message("button.add.blank"),
-                             "Remove", "Up", "Down")
-        .setPreferredSize(new Dimension(-1, 100)).createPanel(), BorderLayout.CENTER);
+      })
+      .setButtonComparator(ApplicationBundle.message("button.add.package"), ApplicationBundle.message("button.add.blank"), "Remove", "Up", "Down")
+      .setPreferredSize(new Dimension(-1, 100)).createPanel();
+    
+    
+    add(importLayoutPanel, BorderLayout.CENTER);
   }
 
 
