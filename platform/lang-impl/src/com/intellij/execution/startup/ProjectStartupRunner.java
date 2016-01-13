@@ -22,7 +22,6 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
@@ -42,20 +41,6 @@ public class ProjectStartupRunner implements StartupActivity, DumbAware {
 
   @Override
   public void runActivity(@NotNull final Project project) {
-    if (Registry.is("dumb.aware.run.configurations")) {
-      doRunActivity(project);
-    } else {
-      DumbService.getInstance(project).runWhenSmart(new Runnable() {
-        @Override
-        public void run() {
-          if (project.isDisposed()) return;
-          doRunActivity(project);
-        }
-      });
-    }
-  }
-
-  protected void doRunActivity(@NotNull Project project) {
     final ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(project);
     if (projectStartupTaskManager.isEmpty()) return;
 
