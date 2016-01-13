@@ -59,17 +59,20 @@ class GitAbortRebaseProcess {
 
   @Nullable private final GitRepository myRepositoryToAbort;
   @NotNull private final Map<GitRepository, String> myRepositoriesToRollback;
+  @NotNull private final Map<GitRepository, String> myInitialCurrentBranches;
   @NotNull private final ProgressIndicator myIndicator;
   @Nullable private final GitChangesSaver mySaver;
 
   GitAbortRebaseProcess(@NotNull Project project,
                         @Nullable GitRepository repositoryToAbort,
                         @NotNull Map<GitRepository, String> repositoriesToRollback,
+                        @NotNull Map<GitRepository, String> initialCurrentBranches,
                         @NotNull ProgressIndicator progressIndicator,
                         @Nullable GitChangesSaver changesSaver) {
     myProject = project;
     myRepositoryToAbort = repositoryToAbort;
     myRepositoriesToRollback = repositoriesToRollback;
+    myInitialCurrentBranches = initialCurrentBranches;
     myIndicator = progressIndicator;
     mySaver = changesSaver;
 
@@ -126,7 +129,7 @@ class GitAbortRebaseProcess {
         LOG.error(new Throwable());
       }
       else {
-        String description = "Do you want rollback the successful rebase" + GitUtil.mention(myRepositoriesToRollback.keySet()) + "?";
+        String description = "Do you want to rollback the successful rebase" + GitUtil.mention(myRepositoriesToRollback.keySet()) + "?";
         int choice = DialogManager.showOkCancelDialog(myProject, description, title, "Rollback", getCancelButtonText(), getQuestionIcon());
         if (choice == Messages.YES) {
           return AbortChoice.ROLLBACK_AND_ABORT;
@@ -164,9 +167,18 @@ class GitAbortRebaseProcess {
               myIndicator.setText2("git reset --keep" + GitUtil.mention(repo));
               GitCommandResult res = myGit.reset(repo, GitResetMode.KEEP, myRepositoriesToRollback.get(repo));
               repositoriesToRefresh.add(repo);
+
+              if (res.success()) {
+                String initialBranchPosition = myInitialCurrentBranches.get(repo);
+                if (initialBranchPosition != null && !initialBranchPosition.equals(repo.getCurrentBranchName())) {
+                  myIndicator.setText2("git checkout " + initialBranchPosition + GitUtil.mention(repo));
+                  res = myGit.checkout(repo, initialBranchPosition, null, true, false);
+                }
+              }
+
               if (!res.success()) {
                 String description = myRepositoryToAbort != null ?
-                                     "Rebase abort was successful" + GitUtil.mention(myRepositoryToAbort) + ", but rollback failed":
+                                     "Rebase abort was successful" + GitUtil.mention(myRepositoryToAbort) + ", but rollback failed" :
                                      "Rollback failed";
                 description += GitUtil.mention(repo) + ":" + res.getErrorOutputAsHtmlString() +
                                mentionLocalChangesRemainingInStash(mySaver);

@@ -350,7 +350,11 @@ public class GitRebaseProcess {
                                          });
     SuccessType commonType = getItemIfAllTheSame(successTypes, SuccessType.REBASED);
     GitRebaseParams params = myRebaseSpec.getParams();
-    String message = commonType.formatMessage(rebasedBranch, params == null ? null : notNull(params.getNewBase(), params.getUpstream()));
+    String baseBranch = params == null ? null : notNull(params.getNewBase(), params.getUpstream());
+    if ("HEAD".equals(baseBranch)) {
+      baseBranch = getItemIfAllTheSame(myRebaseSpec.getInitialBranchNames().values(), baseBranch);
+    }
+    String message = commonType.formatMessage(rebasedBranch, baseBranch, params != null && params.getBranch() != null);
     message += mentionSkippedCommits(skippedCommits);
     myNotifier.notifyMinorInfo("Rebase Successful", message, new NotificationListener.Adapter() {
       @Override

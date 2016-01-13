@@ -25,6 +25,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
+import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
@@ -46,17 +48,20 @@ public class GitRebaseSpec {
   @Nullable private final GitRebaseParams myParams;
   @NotNull private final Map<GitRepository, GitRebaseStatus> myStatuses;
   @NotNull private final Map<GitRepository, String> myInitialHeadPositions;
+  @NotNull private final Map<GitRepository, String> myInitialBranchNames;
   @NotNull private final GitChangesSaver mySaver;
   private final boolean myShouldBeSaved;
 
   public GitRebaseSpec(@Nullable GitRebaseParams params,
                        @NotNull Map<GitRepository, GitRebaseStatus> statuses,
                        @NotNull Map<GitRepository, String> initialHeadPositions,
+                       @NotNull Map<GitRepository, String> initialBranchNames,
                        @NotNull GitChangesSaver saver,
                        boolean shouldBeSaved) {
     myParams = params;
     myStatuses = statuses;
     myInitialHeadPositions = initialHeadPositions;
+    myInitialBranchNames = initialBranchNames;
     mySaver = saver;
     myShouldBeSaved = shouldBeSaved;
   }
@@ -66,12 +71,14 @@ public class GitRebaseSpec {
                                            @NotNull GitRebaseParams params,
                                            @NotNull Collection<GitRepository> repositories,
                                            @NotNull ProgressIndicator indicator) {
-    Map<GitRepository, String> initialHeadPositions = readInitialHeadPositions(repositories);
+    GitUtil.updateRepositories(repositories);
+    Map<GitRepository, String> initialHeadPositions = findInitialHeadPositions(repositories, params.getBranch());
+    Map<GitRepository, String> initialBranchNames = findInitialBranchNames(repositories);
     Map<GitRepository, GitRebaseStatus> initialStatusMap = new TreeMap<GitRepository, GitRebaseStatus>(DvcsUtil.REPOSITORY_COMPARATOR);
     for (GitRepository repository : repositories) {
       initialStatusMap.put(repository, GitRebaseStatus.notStarted());
     }
-    return new GitRebaseSpec(params, initialStatusMap, initialHeadPositions, newSaver(project, indicator), true);
+    return new GitRebaseSpec(params, initialStatusMap, initialHeadPositions, initialBranchNames, newSaver(project, indicator), true);
   }
 
   @Nullable
@@ -81,7 +88,7 @@ public class GitRebaseSpec {
     if (!repository.isRebaseInProgress()) return null;
     GitRebaseStatus suspended = new GitRebaseStatus(GitRebaseStatus.Type.SUSPENDED, Collections.<GitRebaseUtils.CommitInfo>emptyList());
     return new GitRebaseSpec(null, Collections.singletonMap(repository, suspended),
-                             Collections.<GitRepository, String>emptyMap(), newSaver(project, indicator), false);
+                             Collections.<GitRepository, String>emptyMap(), Collections.<GitRepository, String>emptyMap(), newSaver(project, indicator), false);
   }
 
   public boolean isValid() {
@@ -123,9 +130,18 @@ public class GitRebaseSpec {
     });
   }
 
+  /**
+   * Returns names of branches which were current at the moment of this GitRebaseSpec creation. <br/>
+   * The map may contain null elements, if some repositories were in the detached HEAD state.
+   */
+  @NotNull
+  public Map<GitRepository, String> getInitialBranchNames() {
+    return myInitialBranchNames;
+  }
+
   @NotNull
   public GitRebaseSpec cloneWithNewStatuses(@NotNull Map<GitRepository, GitRebaseStatus> statuses) {
-    return new GitRebaseSpec(myParams, statuses, myInitialHeadPositions, mySaver, true);
+    return new GitRebaseSpec(myParams, statuses, myInitialHeadPositions, myInitialBranchNames, mySaver, true);
   }
 
   public boolean shouldBeSaved() {
@@ -158,14 +174,46 @@ public class GitRebaseSpec {
   }
 
   @NotNull
-  private static Map<GitRepository, String> readInitialHeadPositions(@NotNull Collection<GitRepository> repositories) {
-    GitUtil.updateRepositories(repositories);
+  private static Map<GitRepository, String> findInitialHeadPositions(@NotNull Collection<GitRepository> repositories,
+                                                                     @Nullable final String branchToCheckout) {
     return ContainerUtil.map2Map(repositories, new Function<GitRepository, Pair<GitRepository, String>>() {
       @Override
       public Pair<GitRepository, String> fun(@NotNull GitRepository repository) {
-        String currentRevision = repository.getCurrentRevision();
+        String currentRevision = findCurrentRevision(repository, branchToCheckout);
         LOG.debug("Current revision in [" + repository.getRoot().getName() + "] is [" + currentRevision + "]");
         return Pair.create(repository, currentRevision);
+      }
+    });
+  }
+
+  @Nullable
+  private static String findCurrentRevision(@NotNull GitRepository repository, @Nullable String branchToCheckout) {
+    if (branchToCheckout != null) {
+      GitLocalBranch branch = repository.getBranches().findLocalBranch(branchToCheckout);
+      if (branch != null) {
+        Hash hash = repository.getBranches().getHash(branch);
+        if (hash != null) {
+          return hash.asString();
+        }
+        else {
+          LOG.warn("The hash for branch [" + branchToCheckout + "] is not known!");
+        }
+      }
+      else {
+        LOG.warn("The branch [" + branchToCheckout + "] is not known!");
+      }
+    }
+    return repository.getCurrentRevision();
+  }
+
+  @NotNull
+  private static Map<GitRepository, String> findInitialBranchNames(@NotNull Collection<GitRepository> repositories) {
+    return ContainerUtil.map2Map(repositories, new Function<GitRepository, Pair<GitRepository, String>>() {
+      @Override
+      public Pair<GitRepository, String> fun(@NotNull GitRepository repository) {
+        String currentBranchName = repository.getCurrentBranchName();
+        LOG.debug("Current branch in [" + repository.getRoot().getName() + "] is [" + currentBranchName + "]");
+        return Pair.create(repository, currentBranchName);
       }
     });
   }

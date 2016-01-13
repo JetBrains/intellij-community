@@ -44,24 +44,34 @@ class GitSuccessfulRebase extends GitRebaseStatus {
     REBASED {
       @NotNull
       @Override
-      public String formatMessage(@Nullable String currentBranch, @Nullable String baseBranch) {
-        return "Rebased" + mention(currentBranch) + (baseBranch == null ? "" : " on " + baseBranch);
+      public String formatMessage(@Nullable String currentBranch, @NotNull String baseBranch, boolean withCheckout) {
+        if (withCheckout) {
+          return "Checked out" + mention(currentBranch) + " and rebased it on " + baseBranch;
+        }
+        else {
+          return "Rebased" + mention(currentBranch) + " on " + baseBranch;
+        }
       }
     },
     UP_TO_DATE {
       @NotNull
       @Override
-      public String formatMessage(@Nullable String currentBranch, @Nullable String baseBranch) {
+      public String formatMessage(@Nullable String currentBranch, @NotNull String baseBranch, boolean withCheckout) {
         String msg = currentBranch != null ? currentBranch + " is up-to-date" : "Up-to-date";
-        if (baseBranch != null) msg += " with " + baseBranch;
+        msg += " with " + baseBranch;
         return msg;
       }
     },
     FAST_FORWARDED {
       @NotNull
       @Override
-      public String formatMessage(@Nullable String currentBranch, @Nullable String baseBranch) {
-        return "Fast-forwarded" + mention(currentBranch) + (baseBranch == null ? "" : " to " + baseBranch);
+      public String formatMessage(@Nullable String currentBranch, @NotNull String baseBranch, boolean withCheckout) {
+        if (withCheckout) {
+          return "Checked out" + mention(currentBranch) + " and fast-forwarded it to " + baseBranch;
+        }
+        else {
+          return "Fast-forwarded" + mention(currentBranch) + " to " + baseBranch;
+        }
       }
     };
 
@@ -71,7 +81,7 @@ class GitSuccessfulRebase extends GitRebaseStatus {
     }
 
     @NotNull
-    abstract String formatMessage(@Nullable String currentBranch, @Nullable String baseBranch);
+    abstract String formatMessage(@Nullable String currentBranch, @NotNull String baseBranch, boolean withCheckout);
 
     @NotNull
     public static SuccessType fromOutput(@NotNull List<String> output) {

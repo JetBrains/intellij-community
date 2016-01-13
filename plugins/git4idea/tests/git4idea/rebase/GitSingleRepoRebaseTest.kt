@@ -19,6 +19,8 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.LineSeparator
+import git4idea.branch.GitBranchUiHandler
+import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
 import git4idea.test.GitExecutor.file
@@ -26,6 +28,8 @@ import git4idea.test.GitExecutor.git
 import git4idea.test.RepoBuilder
 import git4idea.test.UNKNOWN_ERROR_TEXT
 import git4idea.test.build
+import org.mockito.Mockito
+import org.mockito.Mockito.`when`
 import kotlin.properties.Delegates
 
 class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
@@ -421,6 +425,19 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     GitRebaseUtils.continueRebase(myProject)
 
     assertSuccessfulNotification("Rebased feature on master")
+    myRepo.`assert feature rebased on master`()
+    assertNoRebaseInProgress(myRepo)
+  }
+
+  fun `test checkout with rebase`() {
+    myRepo.`diverge feature and master`()
+    git(myRepo, "checkout master")
+
+    val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
+    `when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
+    GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler).rebaseOnCurrent(listOf(myRepo), "feature")
+
+    assertSuccessfulNotification("Checked out feature and rebased it on master")
     myRepo.`assert feature rebased on master`()
     assertNoRebaseInProgress(myRepo)
   }

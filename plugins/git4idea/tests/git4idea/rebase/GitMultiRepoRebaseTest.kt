@@ -20,11 +20,14 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.mkdir
 import com.intellij.openapi.vcs.Executor.touch
+import git4idea.branch.GitBranchUiHandler
+import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
 import git4idea.test.GitExecutor.git
 import git4idea.test.GitTestUtil.cleanupForAssertion
 import git4idea.test.UNKNOWN_ERROR_TEXT
+import org.mockito.Mockito
 import kotlin.properties.Delegates
 
 class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
@@ -91,7 +94,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     assertNotNull(confirmation, "Abort confirmation message was not shown")
     assertEquals("Incorrect confirmation message text",
-                 cleanupForAssertion("Do you want rollback the successful rebase in project?"),
+                 cleanupForAssertion("Do you want to rollback the successful rebase in project?"),
                  cleanupForAssertion(confirmation!!));
     assertNoRebaseInProgress(myAllRepositories)
     myAllRepositories.forEach { it.`assert feature not rebased on master`() }
@@ -197,6 +200,40 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     assertTrue("Merge dialog was not shown", mergeDialogShown)
     assertAllRebased()
+  }
+
+  fun `test rollback if checkout with rebase fails on 2nd root`() {
+    myAllRepositories.forEach {
+      it.`diverge feature and master`()
+      git(it, "checkout master")
+    }
+    myGit.setShouldRebaseFail { it == myCommunity }
+
+    val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
+    Mockito.`when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
+    try {
+      GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler).rebaseOnCurrent(myAllRepositories, "feature")
+    }
+    finally {
+      myGit.setShouldRebaseFail { false }
+    }
+
+    var confirmation: String? = null
+    myDialogManager.onMessage {
+      confirmation = it
+      Messages.YES;
+    }
+
+    abortOngoingRebase()
+
+    assertNotNull(confirmation, "Abort confirmation message was not shown")
+    assertEquals("Incorrect confirmation message text",
+                 cleanupForAssertion("Do you want to rollback the successful rebase in project?"),
+                 cleanupForAssertion(confirmation!!));
+    assertNoRebaseInProgress(myAllRepositories)
+    myAllRepositories.forEach {
+      it.`assert feature not rebased on master`()
+      assertEquals("Incorrect current branch", "master", it.currentBranchName) }
   }
 
   private fun `fail with critical error while rebasing 2nd root`(localChange: LocalChange? = null) {

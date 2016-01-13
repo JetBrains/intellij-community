@@ -141,6 +141,16 @@ class GitBrancherImpl implements GitBrancher {
     }.runInBackground();
   }
 
+  @Override
+  public void rebaseOnCurrent(@NotNull final List<GitRepository> repositories, @NotNull final String branchName) {
+    new CommonBackgroundTask(myProject, "Rebasing " + branchName + "...", null) {
+      @Override
+      void execute(@NotNull ProgressIndicator indicator) {
+        newWorker(indicator).rebaseOnCurrent(repositories, branchName);
+      }
+    }.runInBackground();
+  }
+
   /**
    * Executes common operations before/after executing the actual branch operation.
    */

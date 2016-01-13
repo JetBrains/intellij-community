@@ -85,4 +85,9 @@ public class GitRebaseParams {
   public boolean isInteractive() {
     return myInteractive;
   }
+
+  @Nullable
+  public String getBranch() {
+    return myBranch;
+  }
 }
