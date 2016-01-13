@@ -26,80 +26,41 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-
-/**
- * author: lesya
- */
 
 public class RangesBuilder {
   private static final Logger LOG = Logger.getInstance(RangesBuilder.class);
 
-  @NotNull private final List<Range> myRanges;
-
-  public RangesBuilder(@NotNull Document current,
-                       @NotNull Document vcs) throws FilesTooBigForDiffException {
-    this(current, vcs, LineStatusTracker.Mode.DEFAULT);
-  }
-
-  public RangesBuilder(@NotNull Document current,
-                       @NotNull Document vcs,
-                       @NotNull LineStatusTracker.Mode mode)
-    throws FilesTooBigForDiffException {
-    this(DiffUtil.getLines(current), DiffUtil.getLines(vcs), 0, 0, mode);
-  }
-
-  public RangesBuilder(@NotNull List<String> current,
-                       @NotNull List<String> vcs,
-                       int shift,
-                       int vcsShift,
-                       @NotNull LineStatusTracker.Mode mode)
-    throws FilesTooBigForDiffException {
-    myRanges = new LinkedList<Range>();
-
-    switch (mode) {
-      case DEFAULT:
-      case SILENT:
-        processDefault(current, vcs, shift, vcsShift);
-        break;
-      case SMART:
-        processSmart(current, vcs, shift, vcsShift);
-        break;
-      default:
-        throw new IllegalStateException();
-    }
+  @NotNull
+  public static List<Range> createRanges(@NotNull Document current, @NotNull Document vcs) throws FilesTooBigForDiffException {
+    return createRanges(current, vcs, false);
   }
 
   @NotNull
-  public List<Range> getRanges() {
-    return myRanges;
+  public static List<Range> createRanges(@NotNull Document current, @NotNull Document vcs, boolean innerWhitespaceChanges)
+    throws FilesTooBigForDiffException {
+    return createRanges(DiffUtil.getLines(current), DiffUtil.getLines(vcs), 0, 0, innerWhitespaceChanges);
   }
 
-  private void processDefault(@NotNull List<String> current,
-                              @NotNull List<String> vcs,
-                              int shift,
-                              int vcsShift) throws FilesTooBigForDiffException {
+  @NotNull
+  public static List<Range> createRanges(@NotNull List<String> current,
+                                         @NotNull List<String> vcs,
+                                         int shift,
+                                         int vcsShift,
+                                         boolean innerWhitespaceChanges) throws FilesTooBigForDiffException {
     Diff.Change ch = Diff.buildChanges(ArrayUtil.toStringArray(vcs), ArrayUtil.toStringArray(current));
 
+    List<Range> result = new ArrayList<Range>();
     while (ch != null) {
-      Range range = createOn(ch, shift, vcsShift);
-      myRanges.add(range);
+      if (innerWhitespaceChanges) {
+        result.add(createOnSmart(ch, shift, vcsShift, current, vcs));
+      }
+      else {
+        result.add(createOn(ch, shift, vcsShift));
+      }
       ch = ch.link;
     }
-  }
-
-  private void processSmart(@NotNull List<String> current,
-                            @NotNull List<String> vcs,
-                            int shift,
-                            int vcsShift) throws FilesTooBigForDiffException {
-    Diff.Change ch = Diff.buildChanges(ArrayUtil.toStringArray(vcs), ArrayUtil.toStringArray(current));
-
-    while (ch != null) {
-      Range range = createOnSmart(ch, shift, vcsShift, current, vcs);
-      myRanges.add(range);
-      ch = ch.link;
-    }
+    return result;
   }
 
   private static Range createOn(@NotNull Diff.Change change, int shift, int vcsShift) {

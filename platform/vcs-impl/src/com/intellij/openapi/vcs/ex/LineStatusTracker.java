@@ -152,7 +152,7 @@ public class LineStatusTracker {
 
       destroyRanges();
       try {
-        myRanges = new RangesBuilder(myDocument, myVcsDocument, myMode).getRanges();
+        myRanges = RangesBuilder.createRanges(myDocument, myVcsDocument, myMode == Mode.SMART);
         for (final Range range : myRanges) {
           createHighlighter(range);
         }
@@ -631,7 +631,7 @@ public class LineStatusTracker {
     List<String> lines = DiffUtil.getLines(myDocument, changedLine1, changedLine2);
     List<String> vcsLines = DiffUtil.getLines(myVcsDocument, vcsLine1, vcsLine2);
 
-    return new RangesBuilder(lines, vcsLines, changedLine1, vcsLine1, myMode).getRanges();
+    return RangesBuilder.createRanges(lines, vcsLines, changedLine1, vcsLine1, myMode == Mode.SMART);
   }
 
   private static void shiftRanges(@NotNull List<Range> rangesAfterChange, int shift) {
