@@ -330,19 +330,6 @@ public class PyOverrideImplementUtil {
   private static class IfVisitor extends PyRecursiveElementVisitor {
     private boolean hasReturnInside;
     private boolean raiseNotImplemented;
-    @Override
-    public void visitPyIfStatement(PyIfStatement node) {
-      node.getIfPart().getStatementList().accept(this);
-      final PyIfPart[] elifParts = node.getElifParts();
-      for (PyIfPart part: elifParts) {
-        part.accept(this);
-      }
-
-      final PyElsePart elsePart = node.getElsePart();
-      if (elsePart != null) {
-        elsePart.accept(this);
-      }
-    }
 
     @Override
     public void visitPyReturnStatement(PyReturnStatement node) {
