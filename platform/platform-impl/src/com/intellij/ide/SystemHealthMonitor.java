@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
@@ -114,6 +115,15 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     }
     else if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
       showNotification("unsupported.jvm.ea.message");
+    }
+
+    if (SystemInfoRt.isMac &&
+        !SystemInfo.isJetbrainsJvm &&
+        SystemInfo.isJavaVersionAtLeast("1.8.0_60") &&
+        !SystemInfo.isJavaVersionAtLeast("1.8.0_76")) {
+      // Upstream JDK8 bug tracked by https://bugs.openjdk.java.net/browse/JDK-8134917, affecting 1.8.0_60 up to 1.8.0_76.
+      // Fixed by Jetbrains in their 1.8.0_40-b108 JRE and tracked in https://youtrack.jetbrains.com/issue/IDEA-146691
+      showNotification("unsupported.jvm.dragndrop.message");
     }
   }
 
