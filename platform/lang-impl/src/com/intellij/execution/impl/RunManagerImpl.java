@@ -536,6 +536,9 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     try {
       configuration.checkSettings(executor);
     }
+    catch (IndexNotReadyException ignored) {
+      return Registry.is("dumb.aware.run.configurations");
+    }
     catch (RuntimeConfigurationError ignored) {
       return false;
     }
