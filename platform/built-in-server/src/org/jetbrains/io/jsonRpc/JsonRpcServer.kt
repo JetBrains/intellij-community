@@ -138,7 +138,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
             }
           }
           else {
-            client.send(encodeMessage(client.byteBufAllocator, messageId, params = arrayOf(result)))
+            client.send(encodeMessage(client.byteBufAllocator, messageId, params = if (result == null) ArrayUtil.EMPTY_OBJECT_ARRAY else arrayOf(result)))
           }
         }
         return

@@ -5,7 +5,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="community-main" />
-    <orderEntry type="module" module-name="python-community-plugin" />
+    <orderEntry type="module" module-name="python-community-plugin-core" />
+    <orderEntry type="module" module-name="python-community-plugin-java" />
     <orderEntry type="module" module-name="python-plugin-tests" />
   </component>
 </module>

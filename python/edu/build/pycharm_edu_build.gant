@@ -48,8 +48,8 @@ private List<String> pycharmPlatformApiModules() {
 
 
 private List pycharmImplementationModules() {   //modules to put into pycharm.jar
-  return [platformImplementationModules, "dom-impl", "python-community", "python-ide-community", "python-educational", "python-openapi", "python-psi-api",
-    "platform-main"].flatten()
+  return [platformImplementationModules, "dom-impl", "python-community", "python-community-ide-resources", 
+    "python-ide-community", "python-community-configure", "python-educational", "python-openapi", "python-psi-api", "platform-main"].flatten()
 }
 
 private List modules() {
@@ -93,10 +93,6 @@ setProperty("paths", new Paths(home))
 target('default': "Build artifacts") {
 
   loadProject()
-
-  List resourcePaths = ["$ch/community-resources/src",
-                        "$ch/platform/icons/src",
-                        "$pythonEduHome/resources"]
 
   projectBuilder.stage("Cleaning up sandbox folder")
 
@@ -202,6 +198,7 @@ public layoutEducational(String classesPath, Set usedJars) {
   def launcher = "${paths.distWin}/bin/pycharm.exe"
   List resourcePaths = ["$ch/community-resources/src",
     "$ch/platform/icons/src",
+    "$pythonCommunityHome/python-community-ide-resources/resources",
     "$pythonCommunityHome/resources",
     "$pythonEduHome/resources"]
   buildWinLauncher(ch, "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
@@ -299,8 +296,10 @@ private layoutFull(Map args, String target, Set usedJars) {
       //noinspection GroovyAssignabilityCheck
       jar([name: "resources_en.jar", duplicate: "preserve"]) {
         // custom resources should go first
-        fileset(dir: "$pythonCommunityHome/resources") {
-          include(name: "**/tips/**")
+        module("python-community-ide-resources") {
+          ant.patternset {
+            include(name: "**/tips/**")
+          }
         }
         module("platform-resources-en") {
           ant.patternset {

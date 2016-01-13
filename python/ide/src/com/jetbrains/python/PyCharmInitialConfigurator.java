@@ -76,6 +76,11 @@ public class PyCharmInitialConfigurator {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V5", true);
       CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
     }
+    if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration.V6")) {
+      propertiesComponent.setValue("PyCharm.InitialConfiguration.V6", true);
+      CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE = true;
+    }
+
     if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
       bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
         @Override

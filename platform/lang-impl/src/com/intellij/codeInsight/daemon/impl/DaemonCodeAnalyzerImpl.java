@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -851,7 +851,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         }
         if (HeavyProcessLatch.INSTANCE.isRunning()) {
           final Disposable removeListenerDisposable = Disposer.newDisposable();
-          Disposer.register(DaemonCodeAnalyzerImpl.this, removeListenerDisposable);
           // wait for heavy processing to stop, re-schedule daemon but not too soon
           HeavyProcessLatch.HeavyProcessListener heavyProcessListener = new HeavyProcessLatch.HeavyProcessListener() {
             @Override
@@ -865,6 +864,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
             }
           };
           HeavyProcessLatch.INSTANCE.addListener(removeListenerDisposable, heavyProcessListener);
+          Disposer.register(DaemonCodeAnalyzerImpl.this, removeListenerDisposable);
+
           if (!HeavyProcessLatch.INSTANCE.isRunning()) {
             // in case heavy operation finished right before listener added
             heavyProcessListener.processFinished();
@@ -925,6 +926,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @NotNull
   private Collection<FileEditor> getSelectedEditors() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     // Editors in modal context
     List<Editor> editors = getActiveEditors();
 

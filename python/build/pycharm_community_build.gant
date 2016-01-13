@@ -13,7 +13,7 @@ setProperty("ch", home)
 setProperty("pythonCommunityHome", "$home/python")
 
 // load ApplicationInfo.xml properties
-ant.xmlproperty(file: "$pythonCommunityHome/resources/idea/PyCharmCoreApplicationInfo.xml", collapseAttributes: "true")
+ant.xmlproperty(file: "$pythonCommunityHome/python-community-ide-resources/resources/idea/PyCharmCoreApplicationInfo.xml", collapseAttributes: "true")
 
 setProperty("system_selector", "PyCharmCE${p("component.version.major")}0")
 setProperty("dryRun", false)
@@ -28,8 +28,8 @@ private List<String> pycharmPlatformApiModules() {
 
 
 private List pycharmImplementationModules() {   //modules to put into pycharm.jar
-  return [platformImplementationModules, "dom-impl", "python-community", "python-ide-community", "python-openapi", "python-psi-api",
-    "platform-main"].flatten()
+  return [platformImplementationModules, "dom-impl", "python-community", "python-community-ide-resources",
+    "python-ide-community", "python-community-configure", "python-openapi", "python-psi-api", "platform-main"].flatten()
 }
 
 private List modules() {
@@ -165,6 +165,7 @@ public layoutCommunity(String classesPath, Set usedJars) {
   def launcher64 = "${paths.distWin}/bin/pycharm64.exe"
   List resourcePaths = ["$ch/community-resources/src",
     "$ch/platform/icons/src",
+    "$pythonCommunityHome/python-community-ide-resources/resources",
     "$pythonCommunityHome/resources"]
   buildWinLauncher("$ch", "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
                    appInfo, "$pythonCommunityHome/build/pycharm_community_launcher.properties", system_selector, resourcePaths)
@@ -197,7 +198,7 @@ private layoutPlugins(layouts) {
 }
 
 private String appInfoFile(String classesPath) {
-  return "$classesPath/python-community/idea/PyCharmCoreApplicationInfo.xml"
+  return "$classesPath/python-community-ide-resources/idea/PyCharmCoreApplicationInfo.xml"
 }
 
 private layoutFull(Map args, String target, Set usedJars) {
@@ -248,8 +249,10 @@ private layoutFull(Map args, String target, Set usedJars) {
       //noinspection GroovyAssignabilityCheck
       jar([name: "resources_en.jar", duplicate: "preserve"]) {
         // custom resources should go first
-        fileset(dir: "$pythonCommunityHome/resources") {
-          include(name: "**/tips/**")
+        module("python-community-ide-resources") {
+          ant.patternset {
+            include(name: "**/tips/**")
+          }
         }
         module("platform-resources-en") {
           ant.patternset {

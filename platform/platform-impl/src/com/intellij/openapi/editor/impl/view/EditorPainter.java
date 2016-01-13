@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -374,8 +374,9 @@ class EditorPainter implements TextDrawingCallback {
             }
             paintWhitespace(g, text, xStart, y, start, end, whitespacePaintingStrategy, fragment);
           }
-          if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType())) {
-            paintTextEffect(g, xStart, xEnd, y, attributes.getEffectColor(), attributes.getEffectType());
+          boolean allowBorder = fragment.getCurrentFoldRegion() != null;
+          if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType(), allowBorder)) {
+            paintTextEffect(g, xStart, xEnd, y, attributes.getEffectColor(), attributes.getEffectType(), allowBorder);
           }
         }
 
@@ -405,21 +406,22 @@ class EditorPainter implements TextDrawingCallback {
       x = fragment.getEndX();
 
     }
-    if (hasTextEffect(effectColor, effectType)) {
-      paintTextEffect(g, initialX, x, (int)y, effectColor, effectType);
+    if (hasTextEffect(effectColor, effectType, false)) {
+      paintTextEffect(g, initialX, x, (int)y, effectColor, effectType, false);
     }
     return x;
   }
 
-  private static boolean hasTextEffect(@Nullable Color effectColor, @Nullable EffectType effectType) {
+  private static boolean hasTextEffect(@Nullable Color effectColor, @Nullable EffectType effectType, boolean allowBorder) {
     return effectColor != null && (effectType == EffectType.LINE_UNDERSCORE ||
                                    effectType == EffectType.BOLD_LINE_UNDERSCORE ||
                                    effectType == EffectType.BOLD_DOTTED_LINE ||
                                    effectType == EffectType.WAVE_UNDERSCORE ||
-                                   effectType == EffectType.STRIKEOUT);
+                                   effectType == EffectType.STRIKEOUT ||
+                                   allowBorder && (effectType == EffectType.BOXED || effectType == EffectType.ROUNDED_BOX));
   }
 
-  private void paintTextEffect(Graphics2D g, float xFrom, float xTo, int y, Color effectColor, EffectType effectType) {
+  private void paintTextEffect(Graphics2D g, float xFrom, float xTo, int y, Color effectColor, EffectType effectType, boolean allowBorder) {
     int xStart = (int)xFrom;
     int xEnd = (int)xTo;
     g.setColor(effectColor);
@@ -439,6 +441,9 @@ class EditorPainter implements TextDrawingCallback {
     }
     else if (effectType == EffectType.BOLD_DOTTED_LINE) {
       UIUtil.drawBoldDottedLine(g, xStart, xEnd, SystemInfo.isMac ? y : y + 1, myEditor.getBackgroundColor(), g.getColor(), false);
+    }
+    else if (allowBorder && (effectType == EffectType.BOXED || effectType == EffectType.ROUNDED_BOX)) {
+      drawSimpleBorder(g, xStart, xEnd - 1, y - myView.getAscent(), effectType == EffectType.ROUNDED_BOX);
     }
   }
 
@@ -525,9 +530,9 @@ class EditorPainter implements TextDrawingCallback {
     int y = lineEnd.y;
     TextAttributes attributes = highlighter.getTextAttributes();
     paintBackground(g, attributes, x, y, myView.getPlainSpaceWidth());
-    if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType())) {
+    if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType(), false)) {
       paintTextEffect(g, x, x + myView.getPlainSpaceWidth() - 1, y + myView.getAscent(), 
-                      attributes.getEffectColor(), attributes.getEffectType());
+                      attributes.getEffectColor(), attributes.getEffectType(), false);
     }
   }
 
@@ -585,7 +590,6 @@ class EditorPainter implements TextDrawingCallback {
     }
   
     boolean rounded = attributes.getEffectType() == EffectType.ROUNDED_BOX;
-    int lineHeight = myView.getLineHeight() - 1;
     g.setColor(attributes.getEffectColor());
     VisualPosition startPosition = myView.offsetToVisualPosition(startOffset, true, false);
     VisualPosition endPosition = myView.offsetToVisualPosition(endOffset, false, true);
@@ -595,12 +599,7 @@ class EditorPainter implements TextDrawingCallback {
       for (int i = 0; i < ranges.size() - 1; i+= 2) {
         int startX = (int)ranges.get(i);
         int endX = (int)ranges.get(i + 1);
-        if (rounded) {
-          UIUtil.drawRectPickedOut(g, startX, y, endX - startX, lineHeight);
-        } 
-        else {
-          g.drawRect(startX, y, endX - startX, lineHeight);
-        }
+        drawSimpleBorder(g, startX, endX, y, rounded);
       }
     }
     else {
@@ -612,6 +611,7 @@ class EditorPainter implements TextDrawingCallback {
         int maxWidth = Math.max(myView.getMaxWidthInLineRange(startPosition.line, endPosition.line - 1) - 1,
                                 (int)trailingRanges.get(trailingRanges.size() - 1));
         boolean containsInnerLines = endPosition.line > startPosition.line + 1;
+        int lineHeight = myView.getLineHeight() - 1;
         int leadingTopY = myView.visualLineToY(startPosition.line);
         int leadingBottomY = leadingTopY + lineHeight;
         int trailingTopY = myView.visualLineToY(endPosition.line);
@@ -670,6 +670,16 @@ class EditorPainter implements TextDrawingCallback {
           drawLine(g, lastX, leadingBottomY, targetX, leadingBottomY, rounded);
         }
       }
+    }
+  }
+  
+  private void drawSimpleBorder(Graphics2D g, int xStart, int xEnd, int y, boolean rounded) {
+    int height = myView.getLineHeight() - 1;
+    if (rounded) {
+      UIUtil.drawRectPickedOut(g, xStart, y, xEnd - xStart, height);
+    }
+    else {
+      g.drawRect(xStart, y, xEnd - xStart, height);
     }
   }
   
@@ -907,9 +917,18 @@ class EditorPainter implements TextDrawingCallback {
   }
 
   private TextAttributes getFoldRegionAttributes(FoldRegion foldRegion) {
-    TextAttributes foldAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
     TextAttributes selectionAttributes = isSelected(foldRegion) ? myEditor.getSelectionModel().getTextAttributes() : null;
-    return mergeAttributes(selectionAttributes, foldAttributes);
+    TextAttributes foldAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
+    TextAttributes defaultAttributes = getDefaultAttributes();
+    return mergeAttributes(mergeAttributes(selectionAttributes, foldAttributes), defaultAttributes);
+  }
+
+  @SuppressWarnings("UseJBColor")
+  private TextAttributes getDefaultAttributes() {
+    TextAttributes attributes = myEditor.getColorsScheme().getAttributes(HighlighterColors.TEXT);
+    if (attributes.getForegroundColor() == null) attributes.setForegroundColor(Color.black);
+    if (attributes.getBackgroundColor() == null) attributes.setBackgroundColor(Color.white);
+    return attributes;
   }
 
   private static boolean isSelected(FoldRegion foldRegion) {

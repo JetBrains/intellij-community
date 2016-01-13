@@ -475,7 +475,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     List<Object> ret = new ArrayList<Object>();
 
     boolean suppressParentheses = context.get(CTX_SUPPRESS_PARENTHESES) != null;
-    addOwnClassMembers(location, namesAlready, suppressParentheses, ret);
+    addOwnClassMembers(location, namesAlready, suppressParentheses, ret, prefix);
 
     PsiFile origin = (location != null) ?
                      CompletionUtil.getOriginalOrSelf(location)
@@ -534,7 +534,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
   }
 
-  private void addOwnClassMembers(PsiElement expressionHook, Set<String> namesAlready, boolean suppressParentheses, List<Object> ret) {
+  private void addOwnClassMembers(PsiElement expressionHook,
+                                  Set<String> namesAlready,
+                                  boolean suppressParentheses,
+                                  List<Object> ret,
+                                  @Nullable final String prefix) {
     PyClass containingClass = PsiTreeUtil.getParentOfType(expressionHook, PyClass.class);
     if (containingClass != null) {
       containingClass = CompletionUtil.getOriginalElement(containingClass);
@@ -563,6 +567,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       String name = le.getLookupString();
       if (namesAlready.contains(name)) continue;
       if (!withinOurClass && isClassPrivate(name)) continue;
+      if (!withinOurClass && isClassProtected(name) && prefix == null) continue;
       namesAlready.add(name);
       ret.add(le);
     }
@@ -621,6 +626,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   private static boolean isClassPrivate(String lookup_string) {
     return lookup_string.startsWith("__") && !lookup_string.endsWith("__");
+  }
+
+  private static boolean isClassProtected(@NotNull final String lookupString) {
+    return lookupString.startsWith("_") && !lookupString.startsWith("__");
   }
 
   public String getName() {

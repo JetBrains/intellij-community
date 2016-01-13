@@ -1,0 +1,8 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- Components and extensions declared in this file work both in PyCharm and Python plugin.
+       Both Community and Professional editions. -->
+
+  <!-- python-core-common.xml need to be the first for resource-bundle definition -->
+  <xi:include href="/META-INF/python-core-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/python-core-buildout.xml" xpointer="xpointer(/idea-plugin/*)"/>
+</idea-plugin>

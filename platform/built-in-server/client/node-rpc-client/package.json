@@ -1,6 +1,6 @@
 {
   "name": "ij-rpc-client",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "description": "IntelliJ Platform RPC client",
   "license": "Apache-2.0",
   "main": "./out/rpc-node.js",

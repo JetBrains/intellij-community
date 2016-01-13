@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -236,24 +237,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
   }
 
   private static Action createNumberAction(final int number, final ListPopupImpl listPopup, final Executor executor) {
-    return new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (listPopup.getSpeedSearch().isHoldingFilter())
-          return;
-        for (final Object item : listPopup.getListStep().getValues()) {
-          if (item instanceof ItemWrapper && ((ItemWrapper)item).getMnemonic() == number) {
-            listPopup.setFinalRunnable(new Runnable() {
-              @Override
-              public void run() {
-                execute((ItemWrapper)item, executor);
-              }
-            });
-            listPopup.closeOk(null);
-          }
-        }
-      }
-    };
+    return new MyAbstractAction(listPopup, number, executor);
   }
 
   private abstract static class Wrapper {
@@ -748,6 +732,35 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
             }
           }
           myLabel.setText("");
+        }
+      }
+    }
+  }
+
+  private static class MyAbstractAction extends AbstractAction implements DumbAware {
+    private final ListPopupImpl myListPopup;
+    private final int myNumber;
+    private final Executor myExecutor;
+
+    public MyAbstractAction(ListPopupImpl listPopup, int number, Executor executor) {
+      myListPopup = listPopup;
+      myNumber = number;
+      myExecutor = executor;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      if (myListPopup.getSpeedSearch().isHoldingFilter())
+        return;
+      for (final Object item : myListPopup.getListStep().getValues()) {
+        if (item instanceof ItemWrapper && ((ItemWrapper)item).getMnemonic() == myNumber) {
+          myListPopup.setFinalRunnable(new Runnable() {
+            @Override
+            public void run() {
+              execute((ItemWrapper)item, myExecutor);
+            }
+          });
+          myListPopup.closeOk(null);
         }
       }
     }

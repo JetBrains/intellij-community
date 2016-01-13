@@ -61,6 +61,10 @@ export class JsonRpc {
     this.domains.set(name, commands)
   }
 
+  public send(domain: string, command: string, ...params: any[]) {
+    this.transport.send(-1, domain, command, params)
+  }
+
   public call<T>(domain: string, command: string, ...params: any[]): Promise<T> {
     return new Promise((resolve: (value: T) => void, reject: (error?: any) => void) => {
       const id = this.messageIdCounter++
