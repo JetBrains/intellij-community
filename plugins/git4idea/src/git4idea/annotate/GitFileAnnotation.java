@@ -16,7 +16,6 @@
 package git4idea.annotate;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -33,13 +32,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class GitFileAnnotation extends FileAnnotation {
-  private final StringBuffer myContentBuffer = new StringBuffer(); // annotated content
-  private final ArrayList<LineInfo> myLines = new ArrayList<LineInfo>(); // The currently annotated lines
   private final Project myProject;
-  private final VcsRevisionNumber myBaseRevision;
-  @NotNull private final Map<VcsRevisionNumber, VcsFileRevision> myRevisionMap = new HashMap<VcsRevisionNumber, VcsFileRevision>();
   @NotNull private final VirtualFile myFile;
   @NotNull private final GitVcs myVcs;
+  @Nullable private final VcsRevisionNumber myBaseRevision;
+
+  @NotNull private final String myAnnotatedContent;
+  @NotNull private final List<LineInfo> myLines;
+  @NotNull private final Map<VcsRevisionNumber, VcsFileRevision> myRevisionMap = new HashMap<VcsRevisionNumber, VcsFileRevision>();
 
   private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.DATE, true) {
     @Override
@@ -67,15 +67,18 @@ public class GitFileAnnotation extends FileAnnotation {
 
   public GitFileAnnotation(@NotNull final Project project,
                            @NotNull VirtualFile file,
-                           final VcsRevisionNumber revision) {
+                           @Nullable final VcsRevisionNumber revision,
+                           @NotNull String annotatedContent,
+                           @NotNull List<LineInfo> lines,
+                           @NotNull List<VcsFileRevision> revisions) {
     super(project);
     myProject = project;
-    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(myProject));
     myFile = file;
+    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(myProject));
     myBaseRevision = revision == null ? (myVcs.getDiffProvider().getCurrentRevision(file)) : revision;
-  }
 
-  public void addLogEntries(List<VcsFileRevision> revisions) {
+    myAnnotatedContent = annotatedContent;
+    myLines = lines;
     for (VcsFileRevision vcsFileRevision : revisions) {
       myRevisionMap.put(vcsFileRevision.getRevisionNumber(), vcsFileRevision);
     }
@@ -108,7 +111,7 @@ public class GitFileAnnotation extends FileAnnotation {
 
   @Override
   public String getAnnotatedContent() {
-    return myContentBuffer.toString();
+    return myAnnotatedContent;
   }
 
   @Override
@@ -164,29 +167,6 @@ public class GitFileAnnotation extends FileAnnotation {
   @Override
   public VcsRevisionNumber originalRevision(int lineNumber) {
     return getLineRevisionNumber(lineNumber);
-  }
-
-  /**
-   * Append line info
-   *
-   * @param date       the revision date
-   * @param revision   the revision number
-   * @param author     the author
-   * @param line       the line content
-   * @param lineNumber the line number for revision
-   * @throws VcsException in case when line could not be processed
-   */
-  public void appendLineInfo(final Date date,
-                             final GitRevisionNumber revision,
-                             final String author,
-                             final String line,
-                             final long lineNumber) throws VcsException {
-    int expectedLineNo = myLines.size() + 1;
-    if (lineNumber != expectedLineNo) {
-      throw new VcsException("Adding for info for line " + lineNumber + " but we are expecting it to be for " + expectedLineNo);
-    }
-    myLines.add(new LineInfo(date, revision, author));
-    myContentBuffer.append(line);
   }
 
   public int getNumLines() {
