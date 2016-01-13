@@ -166,6 +166,10 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     assertTrue(isInner("pkg/Nested$Inner1$Inner2"));
     assertTrue(isInner("pkg/NormalClass$1"));
     assertTrue(isInner("pkg/LocalClass$1MyRunnable"));
+    assertTrue(isInner("pkg/KindaInner$RealInner$"));
+    assertTrue(isInner("pkg/KindaInner$Real$Inner"));
+    assertTrue(isInner("pkg/Groovy$Inner"));
+    assertTrue(isInner("pkg/Groovy$_closure1"));
     assertTrue(isInner("weird/ToStringStyle$1"));
 
     assertFalse(isInner("pkg/KindaInner$Class"));
