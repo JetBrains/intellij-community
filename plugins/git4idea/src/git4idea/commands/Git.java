@@ -171,5 +171,17 @@ public interface Git {
   GitCommandResult remotePrune(@NotNull GitRepository repository, @NotNull GitRemote remote);
 
   @NotNull
-  GitCommandResult rebase(@NotNull GitRepository repository, @NotNull GitRebaseParams params, @NotNull GitLineHandlerListener... listeners);
+  GitCommandResult rebase(@NotNull GitRepository repository,
+                          @NotNull GitRebaseParams parameters,
+                          @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
+  GitCommandResult rebaseAbort(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
+  GitCommandResult rebaseContinue(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
+  GitCommandResult rebaseSkip(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
+
 }

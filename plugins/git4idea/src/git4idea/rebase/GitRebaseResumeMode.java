@@ -13,36 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.branch;
+package git4idea.rebase;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+public enum GitRebaseResumeMode {
+  CONTINUE("--continue"),
+  SKIP("--skip");
 
-public class GitRebaseParams {
+  @NotNull private final String myCommandLineArgument;
 
-  @NotNull private final String myNewBase;
-
-  public GitRebaseParams(@NotNull String newBase) {
-    myNewBase = newBase;
+  GitRebaseResumeMode(@NotNull String argument) {
+    myCommandLineArgument = argument;
   }
 
   @NotNull
-  public List<String> asCommandLineArguments() {
-    List<String> args = ContainerUtil.newArrayList();
-    args.add(myNewBase);
-    return args;
-  }
-
-  @NotNull
-  public String getNewBase() {
-    return myNewBase;
-  }
-
-  @Override
-  public String toString() {
-    return StringUtil.join(asCommandLineArguments(), " ");
+  public String asCommandLineArgument() {
+    return myCommandLineArgument;
   }
 }

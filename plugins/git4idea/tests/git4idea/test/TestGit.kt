@@ -44,10 +44,27 @@ class TestGitImpl : GitImpl() {
   }
 
   override fun rebase(repository: GitRepository, params: GitRebaseParams, vararg listeners: GitLineHandlerListener): GitCommandResult {
-    return if (myRebaseShouldFail(repository))
-      GitCommandResult(false, 128, listOf("fatal: error: $UNKNOWN_ERROR_TEXT"), emptyList<String>(), null)
-    else
+    return failOrCall(repository) {
       super.rebase(repository, params, *listeners)
+    }
+  }
+
+  override fun rebaseAbort(repository: GitRepository, vararg listeners: GitLineHandlerListener?): GitCommandResult {
+    return failOrCall(repository) {
+      super.rebaseAbort(repository, *listeners)
+    }
+  }
+
+  override fun rebaseContinue(repository: GitRepository, vararg listeners: GitLineHandlerListener?): GitCommandResult {
+    return failOrCall(repository) {
+      super.rebaseContinue(repository, *listeners)
+    }
+  }
+
+  override fun rebaseSkip(repository: GitRepository, vararg listeners: GitLineHandlerListener?): GitCommandResult {
+    return failOrCall(repository) {
+      super.rebaseSkip(repository, *listeners)
+    }
   }
 
   fun setShouldRebaseFail(shouldFail: (GitRepository) -> Boolean) {
@@ -62,6 +79,17 @@ class TestGitImpl : GitImpl() {
     myRebaseShouldFail = { false }
     myPushHandler = { null }
   }
+
+  private fun failOrCall(repository: GitRepository, delegate: () -> GitCommandResult): GitCommandResult {
+    return if (myRebaseShouldFail(repository)) {
+      fatalResult()
+    }
+    else {
+      delegate()
+    }
+  }
+
+  private fun fatalResult() = GitCommandResult(false, 128, listOf("fatal: error: $UNKNOWN_ERROR_TEXT"), emptyList<String>(), null)
 }
 
 

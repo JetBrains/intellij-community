@@ -21,8 +21,10 @@ import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.project.Project;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
+import git4idea.rebase.GitRebaseSpec;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -30,6 +32,8 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
 
   @NotNull private final GitPlatformFacade myPlatformFacade;
   @NotNull private final Project myProject;
+
+  @Nullable private volatile GitRebaseSpec myOngoingRebaseSpec;
 
   public GitRepositoryManager(@NotNull Project project, @NotNull GitPlatformFacade platformFacade,
                               @NotNull VcsRepositoryManager vcsRepositoryManager) {
@@ -48,5 +52,19 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
   @Override
   public List<GitRepository> getRepositories() {
     return getRepositories(GitRepository.class);
+  }
+
+  @Nullable
+  public GitRebaseSpec getOngoingRebaseSpec() {
+    GitRebaseSpec rebaseSpec = myOngoingRebaseSpec;
+    return rebaseSpec != null && rebaseSpec.isValid() ? rebaseSpec : null;
+  }
+
+  public boolean hasOngoingRebase() {
+    return getOngoingRebaseSpec() != null;
+  }
+
+  public void setOngoingRebaseSpec(@Nullable GitRebaseSpec ongoingRebaseSpec) {
+    myOngoingRebaseSpec = ongoingRebaseSpec != null && ongoingRebaseSpec.isValid() ? ongoingRebaseSpec : null;
   }
 }

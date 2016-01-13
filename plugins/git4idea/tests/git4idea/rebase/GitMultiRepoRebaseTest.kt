@@ -66,12 +66,11 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
   fun `test abort from critical error during rebasing 2nd root, before any commits were applied`() {
     val localChange = LocalChange(myUltimate, "new.txt", "Some content")
-    val rebaseProcess = `fail with critical error while rebasing 2nd root`(localChange)
+    `fail with critical error while rebasing 2nd root`(localChange)
 
     assertErrorNotification("Rebase Failed",
         """
-        Rebase failed with error in community: <br/>
-        $UNKNOWN_ERROR_TEXT
+        community: $UNKNOWN_ERROR_TEXT <br/>
         You can <a>retry</a> or <a>abort</a> rebase.
         $LOCAL_CHANGES_WARNING
         """)
@@ -88,7 +87,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
       Messages.YES;
     }
 
-    rebaseProcess.abort(null, listOf(myUltimate), EmptyProgressIndicator())
+    abortOngoingRebase()
 
     assertNotNull(confirmation, "Abort confirmation message was not shown")
     assertEquals("Incorrect confirmation message text",
@@ -102,7 +101,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
   fun `test abort from critical error while rebasing 2nd root, after some commits were applied`() {
     val localChange = LocalChange(myUltimate, "new.txt", "Some content")
-    val rebaseProcess = `fail with critical error while rebasing 2nd root after some commits are applied`(localChange)
+    `fail with critical error while rebasing 2nd root after some commits are applied`(localChange)
 
     myVcsNotifier.lastNotification
 
@@ -112,7 +111,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
       Messages.YES;
     }
 
-    rebaseProcess.abort(myCommunity, listOf(myUltimate), EmptyProgressIndicator())
+    abortOngoingRebase()
 
     assertNotNull(confirmation, "Abort confirmation message was not shown")
     assertEquals("Incorrect confirmation message text",
@@ -129,28 +128,28 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     myCommunity.`prepare simple conflict`()
     myContrib.`diverge feature and master`()
 
-    var conflictInUltimate = false
-    var conflictInCommunity = false
+    var facedConflictInUltimate = false
+    var facedConflictInCommunity = false
     myVcsHelper.onMerge({
-      if (!conflictInUltimate) {
-        myUltimate.assertConflict("c.txt")
+      assertFalse(facedConflictInCommunity && facedConflictInUltimate)
+      if (myUltimate.hasConflict("c.txt")) {
+        assertFalse(facedConflictInUltimate)
+        facedConflictInUltimate = true
         assertNoRebaseInProgress(myCommunity)
         resolveConflicts(myUltimate)
-        conflictInUltimate = true
       }
-      else {
-        assertFalse(conflictInCommunity)
-        myCommunity.assertConflict("c.txt")
+      else if (myCommunity.hasConflict("c.txt")) {
+        assertFalse(facedConflictInCommunity)
+        facedConflictInCommunity = true
         assertNoRebaseInProgress(myUltimate)
         resolveConflicts(myCommunity)
-        conflictInCommunity = true
       }
     })
 
     rebase("master")
 
-    assertTrue(conflictInUltimate)
-    assertTrue(conflictInCommunity)
+    assertTrue(facedConflictInUltimate)
+    assertTrue(facedConflictInCommunity)
     myAllRepositories.forEach {
       it.`assert feature rebased on master`()
       assertNoRebaseInProgress(it)
@@ -159,42 +158,80 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
   }
 
   fun `test retry doesn't touch successful repositories`() {
-    val rebaseProcess = `fail with critical error while rebasing 2nd root`()
+    `fail with critical error while rebasing 2nd root`()
 
-    rebaseProcess.retry(false)
+    GitRebaseUtils.continueRebase(myProject)
 
     assertSuccessfulNotification("Rebased feature on master")
     assertAllRebased()
     assertNoRebaseInProgress(myAllRepositories)
   }
 
-  private fun `fail with critical error while rebasing 2nd root`(localChange: LocalChange? = null): GitRebaseProcess {
+  public fun `test continue rebase shouldn't attempt to stash`() {
+    myUltimate.`diverge feature and master`()
+    myCommunity.`prepare simple conflict`()
+    myContrib.`diverge feature and master`()
+
+    `do nothing on merge`()
+    rebase("master")
+    GitRebaseUtils.continueRebase(myProject)
+
+    `assert conflict not resolved notification`()
+    assertNotRebased("feature", "master", myCommunity)
+  }
+
+  public fun `test continue rebase with unresolved conflicts should show merge dialog`() {
+    myUltimate.`diverge feature and master`()
+    myCommunity.`prepare simple conflict`()
+    myContrib.`diverge feature and master`()
+
+    `do nothing on merge`()
+    rebase("master")
+
+    var mergeDialogShown = false
+    myVcsHelper.onMerge {
+      mergeDialogShown = true
+      resolveConflicts(myCommunity)
+    }
+    GitRebaseUtils.continueRebase(myProject)
+
+    assertTrue("Merge dialog was not shown", mergeDialogShown)
+    assertAllRebased()
+  }
+
+  private fun `fail with critical error while rebasing 2nd root`(localChange: LocalChange? = null) {
     myAllRepositories.forEach { it.`diverge feature and master`() }
     localChange?.generate()
 
     myGit.setShouldRebaseFail { it == myCommunity }
-    val rebaseProcess = rebase("master")
-
-    myGit.setShouldRebaseFail { false }
-    return rebaseProcess
+    try {
+      rebase("master")
+    }
+    finally {
+      myGit.setShouldRebaseFail { false }
+    }
   }
 
-  private fun `fail with critical error while rebasing 2nd root after some commits are applied`(localChange: LocalChange? = null): GitRebaseProcess {
+  private fun `fail with critical error while rebasing 2nd root after some commits are applied`(localChange: LocalChange? = null) {
     myUltimate.`diverge feature and master`()
     myCommunity.`make rebase fail on 2nd commit`()
     myContrib.`diverge feature and master`()
     localChange?.generate()
 
-    val rebaseProcess = rebase("master")
-
-    myGit.setShouldRebaseFail { false }
-    return rebaseProcess
+    try {
+      rebase("master")
+    }
+    finally {
+      myGit.setShouldRebaseFail { false }
+    }
   }
 
-  private fun rebase(onto: String): GitRebaseProcess {
-    val rebaseProcess = GitRebaseProcess(myProject, myAllRepositories, GitRebaseParams(onto), EmptyProgressIndicator())
-    rebaseProcess.rebase()
-    return rebaseProcess
+  private fun rebase(onto: String) {
+    GitTestingRebaseProcess(myProject, GitRebaseParams(onto), myAllRepositories).rebase()
+  }
+
+  private fun abortOngoingRebase() {
+    GitRebaseUtils.abort(myProject, EmptyProgressIndicator())
   }
 
   private fun assertAllRebased() {

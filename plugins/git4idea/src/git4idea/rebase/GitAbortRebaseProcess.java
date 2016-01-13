@@ -30,7 +30,6 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.DialogManager;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
-import git4idea.branch.GitRebaseParams;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRepository;
@@ -79,7 +78,7 @@ class GitAbortRebaseProcess {
   }
 
   void abortWithConfirmation() {
-    LOG.debug("Abort rebase. " + (myRepositoryToAbort == null ? "Nothing to abort" : getShortRepositoryName(myRepositoryToAbort)) +
+    LOG.info("Abort rebase. " + (myRepositoryToAbort == null ? "Nothing to abort" : getShortRepositoryName(myRepositoryToAbort)) +
               ". Roots to rollback: " + DvcsUtil.joinShortNames(myRepositoriesToRollback.keySet()));
     final Ref<AbortChoice> ref = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
@@ -89,7 +88,7 @@ class GitAbortRebaseProcess {
       }
     }, ModalityState.defaultModalityState());
 
-    LOG.debug("User choice: " + ref.get());
+    LOG.info("User choice: " + ref.get());
     if (ref.get() == AbortChoice.ROLLBACK_AND_ABORT) {
       doAbort(true);
     }
@@ -151,7 +150,7 @@ class GitAbortRebaseProcess {
         try {
           if (myRepositoryToAbort != null) {
             myIndicator.setText2("git rebase --abort" + GitUtil.mention(myRepositoryToAbort));
-            GitCommandResult result = myGit.rebase(myRepositoryToAbort, GitRebaseParams.abort());
+            GitCommandResult result = myGit.rebaseAbort(myRepositoryToAbort);
             repositoriesToRefresh.add(myRepositoryToAbort);
             if (!result.success()) {
               myNotifier.notifyError("Rebase Abort Failed",

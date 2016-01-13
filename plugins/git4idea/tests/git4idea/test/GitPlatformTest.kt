@@ -226,6 +226,7 @@ abstract class GitPlatformTest : PlatformTestCase() {
 
   protected fun assertErrorNotification(title: String, message: String) : Notification {
     val notification = myVcsNotifier.lastNotification
+    assertNotNull("No notification was shown", notification)
     GitTestUtil.assertNotification(NotificationType.ERROR, title, message, notification)
     return notification
   }

@@ -34,6 +34,7 @@ public class GitRebaseProblemDetector extends GitLineHandlerAdapter {
   private final static String[] REBASE_CONFLICT_INDICATORS = {
     "Merge conflict in",
     "hint: after resolving the conflicts, mark the corrected paths",
+    "You must edit all merge conflicts",
     "Failed to merge in the changes",
     "could not apply"};
   private static final String REBASE_NO_CHANGE_INDICATOR = "No changes - did you forget to use 'git add'?";
