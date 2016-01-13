@@ -39,9 +39,4 @@ public class JavaRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
   protected Filter getFilter(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     return super.getFilter(project, searchScope).and(JavaAwareFilter.METHOD(project, searchScope));
   }
-
-  @Override
-  public boolean isDumbAware() {
-    return false;
-  }
 }
