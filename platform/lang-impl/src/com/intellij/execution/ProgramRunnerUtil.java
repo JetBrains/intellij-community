@@ -28,11 +28,16 @@ import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +54,7 @@ public class ProgramRunnerUtil {
     return configuration == null ? null : RunnerRegistry.getInstance().getRunner(executorId, configuration.getConfiguration());
   }
 
-  public static void executeConfiguration(@NotNull ExecutionEnvironment environment, boolean showSettings, boolean assignNewId) {
+  public static void executeConfiguration(@NotNull final ExecutionEnvironment environment, boolean showSettings, boolean assignNewId) {
     if (ExecutorRegistry.getInstance().isStarting(environment)) {
       return;
     }
@@ -91,6 +96,27 @@ public class ProgramRunnerUtil {
       if (assignNewId) {
         environment.assignNewExecutionId();
       }
+      final Project project = environment.getProject();
+      if (DumbService.isDumb(project) && Registry.is("dumb.aware.run.configurations")) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            if (project.isDisposed()) {
+              return;
+            }
+
+            final String toolWindowId = environment.getExecutor().getToolWindowId();
+            ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+            if (toolWindowManager.canShowNotification(toolWindowId)) {
+              //noinspection SSBasedInspection
+              toolWindowManager.notifyByBalloon(toolWindowId, MessageType.INFO,
+                                                "Some actions may not work as expected if you start a Run/debug configuration while indexing is in progress.");
+            }
+          }
+        });
+
+      }
+
       environment.getRunner().execute(environment);
     }
     catch (ExecutionException e) {
