@@ -1100,7 +1100,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
                                                   }
                                                   else {
                                                     try {
-                                                      DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
+                                                      DumbService.getInstance(myProject).setAlternativeResolveEnabled(Registry.is("dumb.aware.run.configurations"));
                                                       settings.checkSettings();
                                                       icon = ProgramRunnerUtil.getConfigurationIcon(settings, false);
                                                     }
