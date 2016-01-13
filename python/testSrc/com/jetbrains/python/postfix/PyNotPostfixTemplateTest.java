@@ -30,7 +30,7 @@ public class PyNotPostfixTemplateTest extends PyPostfixTemplateTestCase {
   }
 
   @Override
-  protected String getTestDataPath() {
-    return super.getTestDataPath() + "not/";
+  protected String getTestDataDir() {
+    return "not/";
   }
 }

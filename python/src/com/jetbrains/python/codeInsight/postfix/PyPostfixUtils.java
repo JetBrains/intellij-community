@@ -22,7 +22,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,5 +76,20 @@ public class PyPostfixUtils {
 
   public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset() {
     return selectorAllExpressionsWithCurrentOffset(Conditions.<PsiElement>alwaysTrue());
+  }
+
+  public static PostfixTemplateExpressionSelector selectorTopmost() {
+    return selectorTopmost(Conditions.<PsiElement>alwaysTrue());
+  }
+
+  public static PostfixTemplateExpressionSelector selectorTopmost(Condition<PsiElement> additionalFilter) {
+    return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
+      @Override
+      protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
+        PyExpressionStatement exprStatement = PsiTreeUtil.getNonStrictParentOfType(context, PyExpressionStatement.class);
+        PyExpression statement = exprStatement != null ? PsiTreeUtil.getChildOfType(exprStatement, PyExpression.class) : null;
+        return ContainerUtil.<PsiElement>createMaybeSingletonList((statement));
+      }
+    };
   }
 }

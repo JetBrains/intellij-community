@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.postfix;
+package com.jetbrains.python.codeInsight.postfix;
 
-import com.jetbrains.python.PythonTestUtil;
-import com.jetbrains.python.fixtures.PyTestCase;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public abstract class PyPostfixTemplateTestCase extends PyTestCase {
-  protected void doTest() {
-    myFixture.configureByFile(getTestName(true) + ".py");
-    myFixture.type("\t");
-    myFixture.checkResultByFile(getTestName(true) + "_after" + ".py", true);
+public class PyReturnPostfixTemplate extends StringBasedPostfixTemplate {
+  public PyReturnPostfixTemplate() {
+    super("return", "return expr", PyPostfixUtils.selectorTopmost());
   }
 
-  abstract protected String getTestDataDir();
 
+  @Nullable
   @Override
-  @NonNls
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/postfix/" + getTestDataDir();
+  public String getTemplateString(@NotNull PsiElement element) {
+    return "return $expr$$END$";
   }
 }

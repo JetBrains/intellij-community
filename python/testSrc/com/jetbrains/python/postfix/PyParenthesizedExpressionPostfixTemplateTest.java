@@ -30,7 +30,7 @@ public class PyParenthesizedExpressionPostfixTemplateTest extends PyPostfixTempl
   }
 
   @Override
-  protected String getTestDataPath() {
-    return super.getTestDataPath() + "par/";
+  protected String getTestDataDir() {
+    return "par/";
   }
 }

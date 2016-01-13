@@ -15,22 +15,26 @@
  */
 package com.jetbrains.python.postfix;
 
-import com.jetbrains.python.PythonTestUtil;
-import com.jetbrains.python.fixtures.PyTestCase;
-import org.jetbrains.annotations.NonNls;
+public class PyReturnPostfixTemplateTest extends PyPostfixTemplateTestCase {
 
-public abstract class PyPostfixTemplateTestCase extends PyTestCase {
-  protected void doTest() {
-    myFixture.configureByFile(getTestName(true) + ".py");
-    myFixture.type("\t");
-    myFixture.checkResultByFile(getTestName(true) + "_after" + ".py", true);
+  public void testNumber() {
+    doTest();
   }
 
-  abstract protected String getTestDataDir();
+  public void testComplexExpression() {
+    doTest();
+  }
+
+  public void testNotApplicable() {
+    doTest();
+  }
+
+  public void testIf() {
+    doTest();
+  }
 
   @Override
-  @NonNls
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/postfix/" + getTestDataDir();
+  protected String getTestDataDir() {
+    return "return/";
   }
 }
