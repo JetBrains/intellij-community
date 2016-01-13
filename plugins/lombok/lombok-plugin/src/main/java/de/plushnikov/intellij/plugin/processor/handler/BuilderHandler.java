@@ -99,7 +99,7 @@ public class BuilderHandler {
     boolean result = true;
 
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass);
-    final Collection<PsiField> builderFields = getBuilderFields(psiClass, Collections.<PsiField>emptySet());
+    final Collection<PsiField> builderFields = getBuilderFields(psiClass, Collections.<PsiField>emptySet(), accessorsInfo);
     for (PsiVariable builderVariable : builderFields) {
       final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(builderVariable, Singular.class);
       if (null != singularAnnotation) {
@@ -289,8 +289,9 @@ public class BuilderHandler {
     LombokLightClassBuilder builderClass = createBuilderClass(psiClass, psiClass, builderClassName, psiAnnotation);
     builderClass.withConstructors(createConstructors(builderClass, psiAnnotation));
 
-    final Collection<PsiField> psiFields = getBuilderFields(psiClass, Collections.<PsiField>emptySet());
-    builderClass.withFields(generateFields(psiFields, builderClass, AccessorsInfo.build(psiClass)));
+    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass);
+    final Collection<PsiField> psiFields = getBuilderFields(psiClass, Collections.<PsiField>emptySet(), accessorsInfo);
+    builderClass.withFields(generateFields(psiFields, builderClass, accessorsInfo));
     builderClass.withMethods(createMethods(psiClass, null, builderClass, psiBuilderType, psiAnnotation, psiFields));
 
     return builderClass;
@@ -368,7 +369,7 @@ public class BuilderHandler {
   }
 
   @NotNull
-  public Collection<PsiField> getBuilderFields(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> existedFields) {
+  public Collection<PsiField> getBuilderFields(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> existedFields, @NotNull AccessorsInfo accessorsInfo) {
     final List<PsiField> fields = new ArrayList<PsiField>();
 
     final Set<String> existedFieldNames = new HashSet<String>(existedFields.size());
@@ -382,13 +383,21 @@ public class BuilderHandler {
       if (null != modifierList) {
         //Skip static fields.
         selectField = !modifierList.hasModifierProperty(PsiModifier.STATIC);
-        //Skip fields that start with $
-        selectField &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
         // skip initialized final fields
         selectField &= !(null != psiField.getInitializer() && modifierList.hasModifierProperty(PsiModifier.FINAL));
-        // skip fields already defined in builder class
-        selectField &= !existedFieldNames.contains(psiField.getName());
       }
+      //Skip fields that start with $
+      final String psiFieldName = psiField.getName();
+      if (null != psiFieldName) {
+        selectField &= !psiFieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
+
+        if (!existedFieldNames.isEmpty()) {
+          // skip fields already defined in builder class
+          final String fieldName = accessorsInfo.removePrefix(psiFieldName);
+          selectField &= !existedFieldNames.contains(fieldName);
+        }
+      }
+
       if (selectField) {
         fields.add(psiField);
       }

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
+import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderP
   protected void generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiClass psiBuilderClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final PsiType psiBuilderType = builderHandler.getBuilderType(psiParentClass, psiParentMethod);
     if (null == psiParentMethod) {
-      final Collection<PsiField> builderFields = builderHandler.getBuilderFields(psiParentClass, Collections.<PsiField>emptySet());
+      final Collection<PsiField> builderFields = builderHandler.getBuilderFields(psiParentClass, Collections.<PsiField>emptySet(), AccessorsInfo.EMPTY);
       target.addAll(builderHandler.createConstructors(psiBuilderClass, psiAnnotation));
       target.addAll(builderHandler.createMethods(psiParentClass, null, psiBuilderClass, psiBuilderType, psiAnnotation, builderFields));
     } else {

@@ -116,7 +116,7 @@ public class AccessorsInfo {
   }
 
   private String decapitalizeLikeLombok(String name) {
-    if (name == null || name.length() == 0) {
+    if (name == null || name.isEmpty()) {
       return name;
     }
     char chars[] = name.toCharArray();

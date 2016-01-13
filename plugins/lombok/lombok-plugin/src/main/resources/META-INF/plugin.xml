@@ -207,6 +207,7 @@
 		<ul>
 		<li>0.9.8
 				<ol>
+				     <li>Fixed #151: Builder issues with Accessors</li>
 				     <li>Fixed #153: IntelliJ produces warning when specifying generic type on val declaration</li>
 				     <li>Fixed #156: Exception in @Singular handling</li>
 				     <li>Fixed #165: Can't correctly resolve multiple @Builder methods in same class having partial implementations</li>
