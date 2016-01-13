@@ -57,6 +57,11 @@
     <renamePsiElementProcessor implementation="de.plushnikov.intellij.plugin.extension.LombokRenameFieldReferenceProcessor"/>
 
 		<java.elementFinder implementation="de.plushnikov.intellij.plugin.extension.LombokElementFinder" order="last"/>
+
+    <!--Overwrite IntelliJ Diamond inspection, to filter out val declarations-->
+    <localInspection groupPath="Java" language="JAVA" shortName="Convert2Diamond" displayName="Explicit type can be replaced with &lt;&gt;"
+                     groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
+                     implementationClass="de.plushnikov.intellij.plugin.inspection.LombokExplicitTypeCanBeDiamondInspection" order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="Lombook Plugin">
@@ -202,6 +207,7 @@
 		<ul>
 		<li>0.9.8
 				<ol>
+				     <li>Fixed #153: IntelliJ produces warning when specifying generic type on val declaration</li>
 				     <li>Fixed #156: Exception in @Singular handling</li>
 				     <li>Fixed #165: Can't correctly resolve multiple @Builder methods in same class having partial implementations</li>
 				     <li>Fixed #172: "Lombok needs a default constructor in the base class" error in enum</li>

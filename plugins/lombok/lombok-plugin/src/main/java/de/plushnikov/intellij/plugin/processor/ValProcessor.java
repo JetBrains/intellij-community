@@ -86,16 +86,21 @@ public class ValProcessor extends AbstractProcessor {
     }
   }
 
-  protected boolean isVal(@NotNull PsiTypeElement psiTypeElement) {
+  public static boolean isVal(@NotNull PsiTypeElement psiTypeElement) {
     final PsiJavaCodeReferenceElement referenceElement = psiTypeElement.getInnermostComponentReferenceElement();
     if (null != referenceElement) {
       final PsiElement psiElement = referenceElement.resolve();
       if (psiElement instanceof PsiClass) {
-        final String qualifiedName = ((PsiClass) psiElement).getQualifiedName();
-        return LOMBOK_VAL_FQN.equals(qualifiedName) || LOMBOK_VAL_SHORT_NAME.equals(qualifiedName);
+        final PsiClass psiClass = (PsiClass) psiElement;
+
+        return isSameName(psiClass.getName()) && isSameName(psiClass.getQualifiedName());
       }
     }
     return false;
+  }
+
+  protected static boolean isSameName(String className) {
+    return LOMBOK_VAL_FQN.equals(className) || LOMBOK_VAL_SHORT_NAME.equals(className);
   }
 
   @Nullable
