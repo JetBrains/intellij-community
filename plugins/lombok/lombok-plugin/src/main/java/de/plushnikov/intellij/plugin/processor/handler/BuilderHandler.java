@@ -271,7 +271,6 @@ public class BuilderHandler {
   @NotNull
   public PsiClass createBuilderClass(@NotNull PsiClass psiClass, @NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
     final PsiType psiBuilderType = getBuilderType(psiClass, psiMethod);
-
     final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
 
     LombokLightClassBuilder builderClass = createBuilderClass(psiClass, psiMethod, builderClassName, psiAnnotation);
@@ -310,9 +309,11 @@ public class BuilderHandler {
 
     List<PsiMethod> psiMethods = new ArrayList<PsiMethod>();
 
+    // use AccessorsInfo only for @Builder on class, not on method
+    final AccessorsInfo accessorsInfo = null == psiMethod ? AccessorsInfo.build(psiParentClass) : AccessorsInfo.EMPTY;
+
     final StringBuilder buildMethodParameterString = new StringBuilder(psiVariables.size() * 20);
     for (PsiVariable psiVariable : psiVariables) {
-      final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiParentClass);
       final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
 
       final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(psiVariable, Singular.class);
