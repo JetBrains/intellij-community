@@ -12,4 +12,18 @@ class BuilderWithToBuilderOnConstructor<T> {
 	@lombok.Builder(toBuilder = true)
 	public BuilderWithToBuilderOnConstructor(String mOne, @lombok.Builder.ObtainVia(field = "foo") T bar) {
 	}
+
+	public static void main(String[] args) {
+		BuilderWithToBuilderOnConstructor<String> bean = new BuilderWithToBuilderOnConstructor<String>("mOneParam", "barParam");
+		bean.mOne = "mOne";
+		bean.mTwo = "mTwo";
+		bean.foo = "foo";
+
+		BuilderWithToBuilderOnConstructor.BuilderWithToBuilderOnConstructorBuilder x = bean.toBuilder();
+		System.out.println(x);
+
+		x.mOne("builderOne");
+		x.bar("builderBar");
+		System.out.println(x);
+	}
 }

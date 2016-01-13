@@ -71,7 +71,8 @@ public class BuilderHandler {
   private final static String BUILDER_CLASS_NAME = "Builder";
   private final static String BUILD_METHOD_NAME = "build";
   private final static String BUILDER_METHOD_NAME = "builder";
-  public static final String TO_BUILDER_METHOD_NAME = "toBuilder";
+  private static final String TO_BUILDER_METHOD_NAME = "toBuilder";
+  private static final String TO_BUILDER_ANNOTATION_KEY = "toBuilder";
 
   @SuppressWarnings("deprecation")
   private static final Collection<String> INVALID_ON_BUILDERS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
@@ -243,11 +244,13 @@ public class BuilderHandler {
     }
   }
 
-  @NotNull
-  public PsiMethod createToBuilderMethod(@NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
-    LombokLightMethodBuilder method = createBuilderMethod(containingClass, psiMethod, builderPsiClass, psiAnnotation, TO_BUILDER_METHOD_NAME);
-    method.withModifier(PsiModifier.PUBLIC);
-    return method;
+  public void createToBuilderMethodIfNecessary(@NotNull Collection<? super PsiElement> target, @NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
+    if (PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, TO_BUILDER_ANNOTATION_KEY, false)) {
+      LombokLightMethodBuilder method = createBuilderMethod(containingClass, psiMethod, builderPsiClass, psiAnnotation, TO_BUILDER_METHOD_NAME);
+      method.withModifier(PsiModifier.PUBLIC);
+
+      target.add(method);
+    }
   }
 
   @NotNull

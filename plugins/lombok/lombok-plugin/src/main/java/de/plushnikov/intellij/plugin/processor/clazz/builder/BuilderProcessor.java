@@ -31,7 +31,6 @@ import java.util.List;
  */
 public class BuilderProcessor extends AbstractClassProcessor {
 
-  public static final String TO_BUILDER_ANNOTATION_KEY = "toBuilder";
   private final BuilderHandler builderHandler = new BuilderHandler();
   private final AllArgsConstructorProcessor allArgsConstructorProcessor = new AllArgsConstructorProcessor();
 
@@ -67,9 +66,7 @@ public class BuilderProcessor extends AbstractClassProcessor {
 
     builderHandler.createBuilderMethodIfNecessary(target, psiClass, null, builderClass, psiAnnotation);
 
-    if (PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, TO_BUILDER_ANNOTATION_KEY, false)) {
-      target.add(builderHandler.createToBuilderMethod(psiClass, null, builderClass, psiAnnotation));
-    }
+    builderHandler.createToBuilderMethodIfNecessary(target, psiClass, null, builderClass, psiAnnotation);
   }
 
   @Override
