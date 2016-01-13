@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -104,7 +103,7 @@ public class AccessorsInfo {
   public String removePrefix(String fieldName) {
     for (String prefix : prefixes) {
       if (canPrefixApply(fieldName, prefix)) {
-        return StringUtil.decapitalize(fieldName.substring(prefix.length()));
+        return prefix.isEmpty() ? fieldName : decapitalizeLikeLombok(fieldName.substring(prefix.length()));
       }
     }
     return fieldName;
@@ -112,7 +111,16 @@ public class AccessorsInfo {
 
   private boolean canPrefixApply(String fieldName, String prefix) {
     final int prefixLength = prefix.length();
-    return fieldName.startsWith(prefix) && fieldName.length() > prefixLength &&
-        (prefixLength == 0 || Character.isUpperCase(fieldName.charAt(prefixLength)) || !Character.isLetter(fieldName.charAt(prefixLength - 1)));
+    return prefixLength == 0 || fieldName.startsWith(prefix) && fieldName.length() > prefixLength &&
+        (!Character.isLetter(prefix.charAt(prefix.length() - 1)) || Character.isUpperCase(fieldName.charAt(prefixLength)));
+  }
+
+  private String decapitalizeLikeLombok(String name) {
+    if (name == null || name.length() == 0) {
+      return name;
+    }
+    char chars[] = name.toCharArray();
+    chars[0] = Character.toLowerCase(chars[0]);
+    return new String(chars);
   }
 }

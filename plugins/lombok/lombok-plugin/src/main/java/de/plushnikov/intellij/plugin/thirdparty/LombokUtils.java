@@ -26,7 +26,7 @@ Various problems with spring have also been reported. See issue #287, issue #271
 
   /**
    * Generates a getter name from a given field name.
-   *
+   * <p/>
    * Strategy:
    * <ul>
    * <li>Reduce the field's name to its base name by stripping off any prefix (from {@code Accessors}). If the field name does not fit
@@ -50,7 +50,7 @@ Various problems with spring have also been reported. See issue #287, issue #271
 
   /**
    * Generates a setter name from a given field name.
-   *
+   * <p/>
    * Strategy:
    * <ul>
    * <li>Reduce the field's name to its base name by stripping off any prefix (from {@code Accessors}). If the field name does not fit
@@ -100,7 +100,7 @@ Various problems with spring have also been reported. See issue #287, issue #271
 
     fieldName = accessorsInfo.removePrefix(fieldName);
     if (accessorsInfo.isFluent()) {
-      return StringUtil.decapitalize(fieldName);
+      return fieldName;
     }
 
     final boolean useBooleanPrefix = isBoolean && !accessorsInfo.isDontUseIsPrefix();
@@ -126,8 +126,8 @@ Various problems with spring have also been reported. See issue #287, issue #271
    * {@code [isRunning, getRunning, isIsRunning, getIsRunning]}
    *
    * @param accessorsInfo
-   * @param fieldName the name of the field.
-   * @param isBoolean if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
+   * @param fieldName     the name of the field.
+   * @param isBoolean     if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */
   public static Collection<String> toAllGetterNames(AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean) {
     return toAllAccessorNames(accessorsInfo, fieldName, isBoolean, "is", "get");
@@ -140,8 +140,8 @@ Various problems with spring have also been reported. See issue #287, issue #271
    * {@code [setRunning, setIsRunning]}
    *
    * @param accessorsInfo
-   * @param fieldName the name of the field.
-   * @param isBoolean if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
+   * @param fieldName     the name of the field.
+   * @param isBoolean     if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */
   public static Collection<String> toAllSetterNames(AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean) {
     return toAllAccessorNames(accessorsInfo, fieldName, isBoolean, "set", "set");

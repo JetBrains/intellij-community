@@ -163,7 +163,7 @@ public class LombokHandlerUtil {
 		if (Boolean.TRUE.equals(accessors.isDontUseIsPrefix())) {
 			isBoolean = false;
 		}
-    boolean explicitPrefix = accessors != null && false;//accessors.isExplicit("prefix");
+    boolean explicitPrefix = accessors != null;//accessors.isExplicit("prefix");
     boolean explicitFluent = accessors != null && accessors.isFluent();//accessors.isExplicit("fluent");
 
     List<String> prefix = explicitPrefix ? Arrays.asList(accessors.getPrefixes()) : null;
