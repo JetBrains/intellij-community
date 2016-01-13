@@ -60,7 +60,7 @@ public class SingularMapHandler extends AbstractSingularHandler {
 
   @NotNull
   protected PsiType getBuilderFieldType(@NotNull PsiType psiType, @NotNull Project project) {
-    return PsiTypeUtil.getGenericCollectionClassType((PsiClassType) psiType, project, CommonClassNames.JAVA_UTIL_ARRAY_LIST);
+    return PsiTypeUtil.getGenericCollectionClassType(psiType, project, CommonClassNames.JAVA_UTIL_ARRAY_LIST);
   }
 
   protected void addOneMethodParameter(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, @NotNull LombokLightMethodBuilder methodBuilder) {

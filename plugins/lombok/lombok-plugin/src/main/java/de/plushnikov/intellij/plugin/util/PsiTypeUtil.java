@@ -49,7 +49,7 @@ public class PsiTypeUtil {
   }
 
   @NotNull
-  public static PsiClassType getGenericCollectionClassType(@NotNull PsiClassType psiType, @NotNull Project project, @NotNull String qualifiedName) {
+  public static PsiClassType getGenericCollectionClassType(@NotNull PsiType psiType, @NotNull Project project, @NotNull String qualifiedName) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final GlobalSearchScope globalsearchscope = GlobalSearchScope.allScope(project);
