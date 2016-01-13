@@ -19,7 +19,8 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
-import com.intellij.ide.util.MethodCellRenderer;
+import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
@@ -42,33 +43,38 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class StaticImportMethodQuestionAction implements QuestionAction {
+public class StaticImportMethodQuestionAction<T extends PsiMember> implements QuestionAction {
   private static final Logger LOG = Logger.getInstance("#" + StaticImportMethodQuestionAction.class.getName());
   private final Project myProject;
   private final Editor myEditor;
-  private List<PsiMethod> myCandidates;
-  private final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
+  private List<T> myCandidates;
+  private final SmartPsiElementPointer<? extends PsiElement> myRef;
 
   public StaticImportMethodQuestionAction(Project project,
                                           Editor editor,
-                                          List<PsiMethod> candidates,
-                                          SmartPsiElementPointer<PsiMethodCallExpression> methodCall) {
+                                          List<T> candidates,
+                                          SmartPsiElementPointer<? extends PsiElement> ref) {
     myProject = project;
     myEditor = editor;
     myCandidates = candidates;
-    myMethodCall = methodCall;
+    myRef = ref;
+  }
+
+  @NotNull
+  protected String getPopupTitle() {
+    return QuickFixBundle.message("method.to.import.chooser.title");
   }
 
   @Override
   public boolean execute() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    final PsiMethodCallExpression element = myMethodCall.getElement();
+    final PsiElement element = myRef.getElement();
     if (element == null || !element.isValid()){
       return false;
     }
 
-    for (PsiMethod targetMethod : myCandidates) {
+    for (T targetMethod : myCandidates) {
       if (!targetMethod.isValid()) {
         return false;
       }
@@ -83,7 +89,7 @@ public class StaticImportMethodQuestionAction implements QuestionAction {
     return true;
   }
 
-  private void doImport(final PsiMethod toImport) {
+  private void doImport(final T toImport) {
     final Project project = toImport.getProject();
     CommandProcessor.getInstance().executeCommand(project, new Runnable(){
       @Override
@@ -92,7 +98,7 @@ public class StaticImportMethodQuestionAction implements QuestionAction {
           @Override
           public void run() {
             try {
-              PsiMethodCallExpression element = myMethodCall.getElement();
+              PsiElement element = myRef.getElement();
               if (element != null) {
                 AddSingleMemberStaticImportAction.bindAllClassRefs(element.getContainingFile(), toImport, toImport.getName(), toImport.getContainingClass());
               }
@@ -113,11 +119,11 @@ public class StaticImportMethodQuestionAction implements QuestionAction {
       doImport(myCandidates.get(0));
       return;
     }
-    final BaseListPopupStep<PsiMethod> step =
-      new BaseListPopupStep<PsiMethod>(QuickFixBundle.message("method.to.import.chooser.title"), myCandidates) {
+    final BaseListPopupStep<T> step =
+      new BaseListPopupStep<T>(getPopupTitle(), myCandidates) {
 
         @Override
-        public PopupStep onChosen(PsiMethod selectedValue, boolean finalChoice) {
+        public PopupStep onChosen(T selectedValue, boolean finalChoice) {
           if (selectedValue == null) {
             return FINAL_CHOICE;
           }
@@ -151,18 +157,18 @@ public class StaticImportMethodQuestionAction implements QuestionAction {
         }
 
         @Override
-        public boolean hasSubstep(PsiMethod selectedValue) {
+        public boolean hasSubstep(T selectedValue) {
           return true;
         }
 
         @NotNull
         @Override
-        public String getTextFor(PsiMethod value) {
+        public String getTextFor(T value) {
           return ObjectUtils.assertNotNull(value.getName());
         }
 
         @Override
-        public Icon getIconFor(PsiMethod aValue) {
+        public Icon getIconFor(T aValue) {
           return aValue.getIcon(0);
         }
       };
@@ -171,14 +177,27 @@ public class StaticImportMethodQuestionAction implements QuestionAction {
       final PopupListElementRenderer rightArrow = new PopupListElementRenderer(this);
       @Override
       protected ListCellRenderer getListElementRenderer() {
-        return new MethodCellRenderer(true, PsiFormatUtilBase.SHOW_NAME){
+        return new PsiElementListCellRenderer<T>() {
+          public String getElementText(T element) {
+            final PsiClass aClass = element.getContainingClass();
+            LOG.assertTrue(aClass != null);
+            return ClassPresentationUtil.getNameForClass(aClass, false) + "." + element.getName();
+          }
+
+          public String getContainerText(final T element, final String name) {
+            return PsiClassListCellRenderer.getContainerTextStatic(element);
+          }
+
+          public int getIconFlags() {
+            return 0;
+          }
 
           @Nullable
           @Override
           protected TextAttributes getNavigationItemAttributes(Object value) {
             TextAttributes attrs = super.getNavigationItemAttributes(value);
-            if (value instanceof PsiMethod && !((PsiMethod)value).isDeprecated()) {
-              PsiClass psiClass = ((PsiMethod)value).getContainingClass();
+            if (value instanceof PsiDocCommentOwner && !((PsiDocCommentOwner)value).isDeprecated()) {
+              PsiClass psiClass = ((T)value).getContainingClass();
               if (psiClass != null && psiClass.isDeprecated()) {
                 return TextAttributes.merge(attrs, super.getNavigationItemAttributes(psiClass));
               }
