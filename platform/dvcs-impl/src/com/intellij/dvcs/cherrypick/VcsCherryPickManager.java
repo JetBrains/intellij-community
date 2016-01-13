@@ -57,7 +57,7 @@ public class VcsCherryPickManager {
     log.requestSelectedDetails(new Consumer<List<VcsFullCommitDetails>>() {
       @Override
       public void consume(List<VcsFullCommitDetails> details) {
-        ProgressManager.getInstance().run(new CherryPickingTask(myProject, details));
+        ProgressManager.getInstance().run(new CherryPickingTask(myProject, ContainerUtil.reverse(details)));
       }
     }, null);
   }
@@ -90,12 +90,12 @@ public class VcsCherryPickManager {
   }
 
   private class CherryPickingTask extends Task.Backgroundable {
-    @NotNull private final Collection<VcsFullCommitDetails> myAllCommits;
+    @NotNull private final List<VcsFullCommitDetails> myAllDetailsInReverseOrder;
     @NotNull private final ChangeListManagerEx myChangeListManager;
 
-    public CherryPickingTask(@NotNull Project project, @NotNull List<VcsFullCommitDetails> details) {
+    public CherryPickingTask(@NotNull Project project, @NotNull List<VcsFullCommitDetails> detailsInReverseOrder) {
       super(project, "Cherry-Picking");
-      myAllCommits = details;
+      myAllDetailsInReverseOrder = detailsInReverseOrder;
       myChangeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);
       myChangeListManager.blockModalNotifications();
     }
@@ -131,7 +131,7 @@ public class VcsCherryPickManager {
       try {
         boolean isOk = true;
         MultiMap<VcsCherryPicker, VcsFullCommitDetails> groupedCommits = createArrayMultiMap();
-        for (VcsFullCommitDetails details : myAllCommits) {
+        for (VcsFullCommitDetails details : myAllDetailsInReverseOrder) {
           VcsCherryPicker cherryPicker = getCherryPickerOrReportError(details);
           if (cherryPicker == null) {
             isOk = false;
@@ -142,8 +142,7 @@ public class VcsCherryPickManager {
 
         if (isOk) {
           for (Map.Entry<VcsCherryPicker, Collection<VcsFullCommitDetails>> entry : groupedCommits.entrySet()) {
-            List<VcsFullCommitDetails> commits = Lists.reverse(Lists.newArrayList(entry.getValue()));
-            entry.getKey().cherryPick(commits);
+            entry.getKey().cherryPick(Lists.newArrayList(entry.getValue()));
           }
         }
       }
@@ -151,7 +150,7 @@ public class VcsCherryPickManager {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             myChangeListManager.unblockModalNotifications();
-            for (VcsFullCommitDetails details : myAllCommits) {
+            for (VcsFullCommitDetails details : myAllDetailsInReverseOrder) {
               myIdsInProgress.remove(new CommitId(details.getId(), details.getRoot()));
             }
           }
