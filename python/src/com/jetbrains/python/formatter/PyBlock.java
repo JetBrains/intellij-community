@@ -324,7 +324,9 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNoneIndent();
       }
       else {
-        if (parentType == PyElementTypes.PARAMETER_LIST || argumentMayHaveSameIndentAsFollowingStatementList()) {
+        if (parentType == PyElementTypes.PARAMETER_LIST ||
+            settings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS || 
+            argumentMayHaveSameIndentAsFollowingStatementList()) {
           childIndent = Indent.getContinuationIndent();
         }
         else {
