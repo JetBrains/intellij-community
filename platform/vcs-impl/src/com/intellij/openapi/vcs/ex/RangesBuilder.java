@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.ex;
 
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +47,7 @@ public class RangesBuilder {
                        @NotNull Document vcs,
                        @NotNull LineStatusTracker.Mode mode)
     throws FilesTooBigForDiffException {
-    this(new DocumentWrapper(current).getLines(), new DocumentWrapper(vcs).getLines(), 0, 0, mode);
+    this(DiffUtil.getLines(current), DiffUtil.getLines(vcs), 0, 0, mode);
   }
 
   public RangesBuilder(@NotNull List<String> current,

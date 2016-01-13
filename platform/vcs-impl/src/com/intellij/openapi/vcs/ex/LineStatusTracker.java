@@ -628,8 +628,8 @@ public class LineStatusTracker {
       return Collections.singletonList(new Range(changedLine1, changedLine2, vcsLine1, vcsLine2));
     }
 
-    List<String> lines = new DocumentWrapper(myDocument).getLines(changedLine1, changedLine2 - 1);
-    List<String> vcsLines = new DocumentWrapper(myVcsDocument).getLines(vcsLine1, vcsLine2 - 1);
+    List<String> lines = DiffUtil.getLines(myDocument, changedLine1, changedLine2);
+    List<String> vcsLines = DiffUtil.getLines(myVcsDocument, vcsLine1, vcsLine2);
 
     return new RangesBuilder(lines, vcsLines, changedLine1, vcsLine1, myMode).getRanges();
   }
