@@ -88,7 +88,6 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
         }
       }, EMPTY_ATTRIBUTES, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
     }
-    catch (ProcessCanceledException ignored) { }
     catch (Exception e) {
       Logger.getInstance(ClassFileViewProvider.class).warn(file.getPath(), e);
     }
