@@ -40,6 +40,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -344,7 +345,14 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
             if (!Registry.is("dumb.aware.run.configurations")) {
               DumbService.getInstance(myProject).runWhenSmart(startRunnable);
             } else {
-              startRunnable.run();
+              try {
+                DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
+                startRunnable.run();
+              } catch (IndexNotReadyException ignored) {
+                ExecutionUtil.handleExecutionError(environment, new ExecutionException("cannot start while indexing is in progress."));
+              } finally {
+                DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
+              }
             }
           }
         }

@@ -511,6 +511,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
             final PsiElement resolved = expression.resolve();
             if (resolved instanceof PsiField && 
                 ((PsiField)resolved).hasModifierProperty(PsiModifier.FINAL) &&
+                ((PsiField)resolved).getInitializer() == null &&
                 ((PsiField)resolved).getContainingClass() == method.getContainingClass()) {
               try {
                 final PsiCodeBlock constructorBody = method.getBody();

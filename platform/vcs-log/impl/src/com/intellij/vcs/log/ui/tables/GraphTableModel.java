@@ -5,14 +5,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
-import com.intellij.vcs.log.data.LoadingDetails;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.GraphCommit;
@@ -61,7 +62,7 @@ public class GraphTableModel extends AbstractTableModel {
     int head = myDataPack.getVisibleGraph().getRowInfo(rowIndex).getOneOfHeads();
     Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(head);
     if (refs.isEmpty()) {
-      LOG.error("No references pointing to head " + myDataHolder.getHash(head) + " identified for commit at row " + rowIndex,
+      LOG.error("No references pointing to head " + myDataHolder.getCommitId(head) + " identified for commit at row " + rowIndex,
                 new Attachment("details.txt", getErrorDetails()));
       // take the first root: it is the right choice in one-repo case, though it will likely fail in multi-repo case
       return myDataPack.getLogProviders().keySet().iterator().next();
@@ -76,7 +77,7 @@ public class GraphTableModel extends AbstractTableModel {
     List<GraphCommit<Integer>> commits = myDataPack.getPermanentGraph().getAllCommits();
     for (int i = 0; i < 100 && i < commits.size(); i++) {
       GraphCommit<Integer> commit = commits.get(i);
-      sb.append(String.format("%s -> %s\n", myDataHolder.getHash(commit.getId()).toShortString(), getParents(commit)));
+      sb.append(String.format("%s -> %s\n", myDataHolder.getCommitId(commit.getId()).getHash().toShortString(), getParents(commit)));
     }
     sb.append("\nALL REFS:\n");
     printRefs(sb, myDataPack.getRefsModel().getAllRefsByRoot());
@@ -88,7 +89,7 @@ public class GraphTableModel extends AbstractTableModel {
     return StringUtil.join(commit.getParents(), new Function<Integer, String>() {
       @Override
       public String fun(Integer integer) {
-        return myDataHolder.getHash(integer).toShortString();
+        return myDataHolder.getCommitId(integer).getHash().toShortString();
       }
     }, ", ");
   }
@@ -117,13 +118,13 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   @NotNull
-  public Integer getCommitIdAtRow(int row) {
+  public Integer getIdAtRow(int row) {
     return myDataPack.getVisibleGraph().getRowInfo(row).getCommit();
   }
 
-  @Nullable
-  public Hash getHashAtRow(int row) {
-    return myDataHolder.getHash(getCommitIdAtRow(row));
+  @NotNull
+  public CommitId getCommitIdAtRow(int row) {
+    return myDataHolder.getCommitId(getIdAtRow(row));
   }
 
   public int getRowOfCommit(@NotNull final Hash hash, @NotNull VirtualFile root) {
@@ -152,16 +153,6 @@ public class GraphTableModel extends AbstractTableModel {
     return COLUMN_COUNT;
   }
 
-  @Nullable
-  private VcsShortCommitDetails getShortDetails(int rowIndex) {
-    return myLogDataHolder.getMiniDetailsGetter().getCommitData(rowIndex, this);
-  }
-
-  @Nullable
-  public VcsFullCommitDetails getFullCommitDetails(int rowIndex) {
-    return myLogDataHolder.getCommitDetailsGetter().getCommitData(rowIndex, this);
-  }
-
   /**
    * Requests the proper data provider to load more data from the log & recreate the model.
    *
@@ -180,7 +171,7 @@ public class GraphTableModel extends AbstractTableModel {
       requestToLoadMore(EmptyRunnable.INSTANCE);
     }
 
-    VcsShortCommitDetails data = getShortDetails(rowIndex);
+    VcsShortCommitDetails data = myLogDataHolder.getMiniDetailsGetter().getCommitData(rowIndex, this);
     switch (columnIndex) {
       case ROOT_COLUMN:
         return getRoot(rowIndex);
@@ -212,26 +203,6 @@ public class GraphTableModel extends AbstractTableModel {
    */
   public boolean canRequestMore() {
     return !myMoreRequested && myDataPack.canRequestMore();
-  }
-
-  /**
-   * Returns Changes for commits at selected rows.<br/>
-   * Rows are given in the order as they appear in the table, i. e. in reverse chronological order. <br/>
-   * Changes can be returned as-is, i.e. with duplicate changes for a single file.
-   *
-   * @return Changes selected in all rows, or null if this data is not ready yet.
-   */
-  @Nullable
-  public List<Change> getSelectedChanges(@NotNull List<Integer> selectedRows) {
-    List<Change> changes = new ArrayList<Change>();
-    for (int row : selectedRows) {
-      VcsFullCommitDetails commitData = getFullCommitDetails(row);
-      if (commitData == null || commitData instanceof LoadingDetails) {
-        return null;
-      }
-      changes.addAll(commitData.getChanges());
-    }
-    return changes;
   }
 
   @Override

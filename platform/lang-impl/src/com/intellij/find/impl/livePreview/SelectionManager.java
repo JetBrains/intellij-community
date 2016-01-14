@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,12 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SelectionManager {
   @NotNull private final SearchResults mySearchResults;
+  private final List<FoldRegion> myRegionsToRestore = new ArrayList<FoldRegion>();
 
   public SelectionManager(@NotNull SearchResults results) {
     mySearchResults = results;
@@ -45,10 +49,17 @@ public class SelectionManager {
         foldingModel.runBatchFoldingOperation(new Runnable() {
           @Override
           public void run() {
+            for (FoldRegion region : myRegionsToRestore) {
+              if (region.isValid()) region.setExpanded(false);
+            }
+            myRegionsToRestore.clear();
             for (FoldRegion region : allRegions) {
               if (!region.isValid()) continue;
               if (cursor.intersects(TextRange.create(region))) {
-                region.setExpanded(true);
+                if (!region.isExpanded()) {
+                  region.setExpanded(true);
+                  myRegionsToRestore.add(region);
+                }
               }
             }
           }

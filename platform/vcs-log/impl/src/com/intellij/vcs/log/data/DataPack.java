@@ -55,7 +55,7 @@ public class DataPack {
       @NotNull
       @Override
       public Hash fun(Integer commitIndex) {
-        return hashMap.getHash(commitIndex);
+        return hashMap.getCommitId(commitIndex).getHash();
       }
     };
     GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));

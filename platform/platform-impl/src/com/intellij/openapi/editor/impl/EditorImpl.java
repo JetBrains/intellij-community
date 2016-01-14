@@ -100,6 +100,8 @@ import javax.swing.border.Border;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Graphics;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
@@ -3187,6 +3189,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           g.setFont(myFontType.getFont());
         }
         Color currentColor = null;
+        int whiteSpaceStrokeWidth = JBUI.scale(1);
+        BasicStroke whiteSpaceStroke = new BasicStroke(whiteSpaceStrokeWidth);
+
         for (int i = 0; i < myCount; i++) {
           if (!Comparing.equal(color[i], currentColor)) {
             currentColor = color[i] != null ? color[i] : JBColor.black;
@@ -3194,7 +3199,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             g.setColor(currentColor);
           }
 
-          drawChars(g, data[i], starts[i], ends[i], x[i], y[i], whitespaceShown[i]);
+          drawChars(g, data[i], starts[i], ends[i], x[i], y[i], whitespaceShown[i], whiteSpaceStroke, whiteSpaceStrokeWidth);
           color[i] = null;
           data[i] = null;
         }
@@ -3663,28 +3668,45 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return true;
   }
 
-  private void drawChars(@NotNull Graphics g, CharSequence data, int start, int end, int x, int y, boolean drawWhitespace) {
+  private void drawChars(@NotNull Graphics g,
+                         CharSequence data,
+                         int start,
+                         int end,
+                         int x,
+                         int y,
+                         boolean drawWhitespace,
+                         BasicStroke stroke,
+                         int strokeWidth) {
     g.drawString(data.subSequence(start, end).toString(), x, y);
 
     if (drawWhitespace) {
+      Stroke oldStroke = ((Graphics2D)g).getStroke();
       Color oldColor = g.getColor();
-      g.setColor(myScheme.getColor(EditorColors.WHITESPACES_COLOR));
-      final FontMetrics metrics = g.getFontMetrics();
+      try {
+        g.setColor(myScheme.getColor(EditorColors.WHITESPACES_COLOR));
+        ((Graphics2D)g).setStroke(stroke);
+        final FontMetrics metrics = g.getFontMetrics();
+        y -= 1;
 
-      for (int i = start; i < end; i++) {
-        final char c = data.charAt(i);
-        final int charWidth = isOracleRetina ? GraphicsUtil.charWidth(c, g.getFont()) : metrics.charWidth(c);
+        for (int i = start; i < end; i++) {
+          final char c = data.charAt(i);
+          final int charWidth = isOracleRetina ? GraphicsUtil.charWidth(c, g.getFont()) : metrics.charWidth(c);
 
-        if (c == ' ') {
-          g.fillRect(x + (charWidth >> 1), y, 1, 1);
-        } else if (c == IDEOGRAPHIC_SPACE) {
-          final int charHeight = getCharHeight();
-          g.drawRect(x + 2, y - charHeight, charWidth - 4, charHeight);
+          if (c == ' ') {
+            g.fillRect(x + (charWidth - strokeWidth >> 1), y - strokeWidth + 1, strokeWidth, strokeWidth);
+          }
+          else if (c == IDEOGRAPHIC_SPACE) {
+            final int charHeight = getCharHeight();
+            g.drawRect(x + JBUI.scale(2) + strokeWidth/2, y - charHeight + strokeWidth/2,
+                       charWidth - JBUI.scale(4) - (strokeWidth - 1), charHeight - (strokeWidth - 1));
+          }
+
+          x += charWidth;
         }
-
-        x += charWidth;
+      } finally {
+        g.setColor(oldColor);
+        ((Graphics2D)g).setStroke(oldStroke);
       }
-      g.setColor(oldColor);
     }
   }
 

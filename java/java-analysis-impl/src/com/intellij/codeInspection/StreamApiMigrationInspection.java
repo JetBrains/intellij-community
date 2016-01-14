@@ -131,7 +131,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                     }
                     else if (REPLACE_TRIVIAL_FOREACH || !isTrivial(body, statement.getIterationParameter())) {
                       holder.registerProblem(iteratedValue, "Can be replaced with foreach call",
-                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithForeachCallFix());
+                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, 
+                                             new ReplaceWithForeachCallFix("forEach"),
+                                             new ReplaceWithForeachCallFix("forEachOrdered"));
                     }
                   }
                 }
@@ -266,6 +268,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   private static class ReplaceWithForeachCallFix implements LocalQuickFix {
+    private final String myForEachMethodName;
+
+    private ReplaceWithForeachCallFix(String forEachMethodName) {
+      myForEachMethodName = forEachMethodName;
+    }
+
     @NotNull
     @Override
     public String getName() {
@@ -275,7 +283,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with forEach";
+      return "Replace with " + myForEachMethodName;
     }
 
     @Override
@@ -300,7 +308,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             body = thenBranch;
           }
 
-          buffer.append(".forEach(");
+          buffer.append("." + myForEachMethodName + "(");
 
           final String functionalExpressionText = createForEachFunctionalExpressionText(project, body, parameter);
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);

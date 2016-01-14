@@ -174,7 +174,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       shouldUpdateUI = true;
     }
 
-    if (!myComponent.myAntialiasingInIDE.getSelectedItem().equals(settings.IDE_AA_TYPE)) {
+    if (myComponent.myAntialiasingInIDE.getSelectedItem() != settings.IDE_AA_TYPE) {
       settings.IDE_AA_TYPE = (AntialiasingType)myComponent.myAntialiasingInIDE.getSelectedItem();
       for (Window w : Window.getWindows()) {
         for (JComponent c : UIUtil.uiTraverser(w).filter(JComponent.class)) {
@@ -184,7 +184,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       shouldUpdateUI = true;
     }
 
-    if (!myComponent.myAntialiasingInEditor.getSelectedItem().equals(settings.EDITOR_AA_TYPE)) {
+    if (myComponent.myAntialiasingInEditor.getSelectedItem() != settings.EDITOR_AA_TYPE) {
       settings.EDITOR_AA_TYPE = (AntialiasingType)myComponent.myAntialiasingInEditor.getSelectedItem();
       shouldUpdateUI = true;
     }
@@ -401,8 +401,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.FONT_FACE);
     isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.FONT_SIZE));
 
-    isModified |= !myComponent.myAntialiasingInIDE.getSelectedItem().equals(settings.IDE_AA_TYPE);
-    isModified |= !myComponent.myAntialiasingInEditor.getSelectedItem().equals(settings.EDITOR_AA_TYPE);
+    isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settings.IDE_AA_TYPE;
+    isModified |= myComponent.myAntialiasingInEditor.getSelectedItem() != settings.EDITOR_AA_TYPE;
 
     isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settings.ANIMATE_WINDOWS;
     isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.SHOW_TOOL_WINDOW_NUMBERS;

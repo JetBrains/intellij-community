@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -301,7 +301,7 @@ public class UrlClassLoader extends ClassLoader {
     return getClassPath().getResources(name, true);
   }
 
-  public static void loadPlatformLibrary(@NotNull String libName) {
+  private static boolean loadPlatformLibrary(@NotNull String libName, boolean reportError) {
     String libFileName = mapLibraryName(libName);
 
     String libPath = null;
@@ -314,6 +314,11 @@ public class UrlClassLoader extends ClassLoader {
       }
     }
     if (libPath == null) {
+      // If we're not running inside IDEA and don't need to report errors, fail silently
+      if (!reportError && PathManager.getHomePathFor(PathManager.class) == null) {
+        return false;
+      }
+
       libPath = PathManager.getBinPath() + "/" + libFileName;
     }
 
@@ -322,6 +327,9 @@ public class UrlClassLoader extends ClassLoader {
       if (!new File(libPath = PathManager.getHomePath() + "/community/bin/" + platform + libFileName).exists()) {
         if (!new File(libPath = PathManager.getHomePath() + "/bin/" + platform + libFileName).exists()) {
           if (!new File(libPath = PathManager.getHomePathFor(IdeaWin32.class) + "/bin/" + libFileName).exists()) {
+            if (!reportError) {
+              return false;
+            }
             File libDir = new File(PathManager.getBinPath());
             throw new UnsatisfiedLinkError("'" + libFileName + "' not found in '" + libDir + "' among " + Arrays.toString(libDir.list()));
           }
@@ -330,6 +338,15 @@ public class UrlClassLoader extends ClassLoader {
     }
 
     System.load(libPath);
+    return true;
+  }
+
+  public static boolean tryLoadPlatformLibrary(@NotNull String libName) {
+    return loadPlatformLibrary(libName, false);
+  }
+
+  public static void loadPlatformLibrary(@NotNull String libName) {
+    loadPlatformLibrary(libName, true);
   }
 
   private static String mapLibraryName(String libName) {

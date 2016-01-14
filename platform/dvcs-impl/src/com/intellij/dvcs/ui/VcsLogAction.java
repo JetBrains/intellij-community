@@ -24,26 +24,40 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
-    List<VcsFullCommitDetails> details = log.getSelectedDetails();
-    MultiMap<Repo, VcsFullCommitDetails> grouped = groupByRootWithCheck(project, details);
-    assert grouped != null;
-    actionPerformed(project, grouped);
+
+    log.requestSelectedDetails(new Consumer<List<VcsFullCommitDetails>>() {
+      @Override
+      public void consume(List<VcsFullCommitDetails> details) {
+        MultiMap<Repo, VcsFullCommitDetails> grouped = groupCommits(project, details, new Function<VcsFullCommitDetails, VirtualFile>() {
+          @Override
+          public VirtualFile fun(VcsFullCommitDetails vcsFullCommitDetails) {
+            return vcsFullCommitDetails.getRoot();
+          }
+        });
+
+        if (grouped == null) return;
+        actionPerformed(project, grouped);
+      }
+    }, null);
   }
 
   @Override
@@ -55,8 +69,7 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
       return;
     }
 
-    List<VcsFullCommitDetails> details = log.getSelectedDetails();
-    MultiMap<Repo, VcsFullCommitDetails> grouped = groupByRootWithCheck(project, details);
+    MultiMap<Repo, Hash> grouped = groupFirstPackOfCommits(project, log);
     if (grouped == null) {
       e.getPresentation().setEnabledAndVisible(false);
     }
@@ -68,9 +81,9 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
 
   protected abstract void actionPerformed(@NotNull Project project, @NotNull MultiMap<Repo, VcsFullCommitDetails> grouped);
 
-  protected abstract boolean isEnabled(@NotNull MultiMap<Repo, VcsFullCommitDetails> grouped);
+  protected abstract boolean isEnabled(@NotNull MultiMap<Repo, Hash> grouped);
 
-  protected boolean isVisible(@NotNull final Project project, @NotNull MultiMap<Repo, VcsFullCommitDetails> grouped) {
+  protected boolean isVisible(@NotNull final Project project, @NotNull MultiMap<Repo, Hash> grouped) {
     return ContainerUtil.and(grouped.keySet(), new Condition<Repo>() {
       @Override
       public boolean value(Repo repo) {
@@ -86,11 +99,42 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
   @Nullable
   protected abstract Repo getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root);
 
+  /**
+   * Collects no more than VcsLogUtil.MAX_SELECTED_COMMITS and groups them by repository.
+   * To use only during update.
+   */
   @Nullable
-  private MultiMap<Repo, VcsFullCommitDetails> groupByRootWithCheck(@NotNull Project project, @NotNull List<VcsFullCommitDetails> commits) {
-    MultiMap<Repo, VcsFullCommitDetails> map = MultiMap.create();
-    for (VcsFullCommitDetails commit : commits) {
-      Repo root = getRepositoryForRoot(project, commit.getRoot());
+  private MultiMap<Repo, Hash> groupFirstPackOfCommits(@NotNull Project project, @NotNull VcsLog log) {
+    MultiMap<Repo, CommitId> commitIds =
+      groupCommits(project, VcsLogUtil.collectFirstPack(log.getSelectedCommits(), VcsLogUtil.MAX_SELECTED_COMMITS),
+                   new Function<CommitId, VirtualFile>() {
+                     @Override
+                     public VirtualFile fun(CommitId hash) {
+                       return hash.getRoot();
+                     }
+                   });
+    if (commitIds == null) return null;
+
+    MultiMap<Repo, Hash> hashes = MultiMap.create();
+    for (Map.Entry<Repo, Collection<CommitId>> entry: commitIds.entrySet()) {
+      hashes.putValues(entry.getKey(), ContainerUtil.map(entry.getValue(), new Function<CommitId, Hash>() {
+        @Override
+        public Hash fun(CommitId commitId) {
+          return commitId.getHash();
+        }
+      }));
+    }
+
+    return hashes;
+  }
+
+  @Nullable
+  private <T> MultiMap<Repo, T> groupCommits(@NotNull Project project,
+                                             @NotNull Collection<T> commits,
+                                             @NotNull Function<T, VirtualFile> rootGetter) {
+    MultiMap<Repo, T> map = MultiMap.create();
+    for (T commit : commits) {
+      Repo root = getRepositoryForRoot(project, rootGetter.fun(commit));
       if (root == null) { // commit from some other VCS
         return null;
       }

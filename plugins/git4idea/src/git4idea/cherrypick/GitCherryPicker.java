@@ -36,6 +36,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
 import git4idea.GitLocalBranch;
@@ -546,20 +548,23 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   @Override
-  public boolean isEnabled(@NotNull VcsLog log, @NotNull List<VcsFullCommitDetails> details) {
-    if (details.isEmpty()) {
+  public boolean isEnabled(@NotNull VcsLog log, @NotNull Map<VirtualFile, List<Hash>> commits) {
+    if (commits.isEmpty()) {
       return false;
     }
-    for (VcsFullCommitDetails commit : details) {
-      GitRepository repository = myPlatformFacade.getRepositoryManager(myProject).getRepositoryForRoot(commit.getRoot());
+
+    for (VirtualFile root : commits.keySet()) {
+      GitRepository repository = myPlatformFacade.getRepositoryManager(myProject).getRepositoryForRoot(root);
       if (repository == null) {
         return false;
       }
-      GitLocalBranch currentBranch = repository.getCurrentBranch();
-      Collection<String> containingBranches = log.getContainingBranches(commit.getId());
-      if (currentBranch != null && containingBranches != null && containingBranches.contains(currentBranch.getName())) {
-        // already is contained in the current branch
-        return false;
+      for (Hash commit : commits.get(root)) {
+        GitLocalBranch currentBranch = repository.getCurrentBranch();
+        Collection<String> containingBranches = log.getContainingBranches(commit);
+        if (currentBranch != null && containingBranches != null && containingBranches.contains(currentBranch.getName())) {
+          // already is contained in the current branch
+          return false;
+        }
       }
     }
     return true;

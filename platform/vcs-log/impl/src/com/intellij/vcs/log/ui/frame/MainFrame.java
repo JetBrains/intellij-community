@@ -4,6 +4,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -12,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -19,9 +22,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
@@ -30,6 +33,7 @@ import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
@@ -47,11 +51,9 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
-import static com.intellij.vcs.log.impl.VcsLogUtil.groupByRoot;
 
 public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
-  public static final int MAX_SELECTED_COMMITS = 100;
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final VcsLogUiImpl myUI;
   @NotNull private final Project myProject;
@@ -154,7 +156,6 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     myLogDataHolder.getCommitDetailsGetter().addDetailsLoadedListener(new Runnable() {
       @Override
       public void run() {
-        selectionChangeListener.valueChanged(null);
         myDetailsPanel.valueChanged(null);
       }
     });
@@ -291,11 +292,6 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     myBranchesPanel.setVisible(visible);
   }
 
-  @Nullable
-  public List<Change> getSelectedChanges() {
-    return myGraphTable.getSelectedChanges();
-  }
-
   @Override
   public void calcData(DataKey key, DataSink sink) {
     if (VcsLogDataKeys.VCS_LOG == key) {
@@ -308,15 +304,13 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       sink.put(key, myLogDataHolder);
     }
     else if (VcsDataKeys.CHANGES == key || VcsDataKeys.SELECTED_CHANGES == key) {
-      List<Change> selectedChanges = getSelectedChanges();
-      if (selectedChanges != null) {
-        sink.put(key, ArrayUtil.toObjectArray(selectedChanges, Change.class));
-      }
+      sink.put(key, ArrayUtil.toObjectArray(myChangesBrowser.getCurrentDisplayedChanges(), Change.class));
     }
     else if (VcsDataKeys.CHANGE_LISTS == key) {
       List<VcsFullCommitDetails> details = myUI.getVcsLog().getSelectedDetails();
-      sink.put(key, ContainerUtil.map2Array(details, CommittedChangeListForRevision.class,
-        new Function<VcsFullCommitDetails, CommittedChangeListForRevision>() {
+      if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return;
+      sink.put(key, ContainerUtil
+        .map2Array(details, CommittedChangeListForRevision.class, new Function<VcsFullCommitDetails, CommittedChangeListForRevision>() {
           @Override
           public CommittedChangeListForRevision fun(@NotNull VcsFullCommitDetails details) {
             return new CommittedChangeListForRevision(details.getSubject(), details.getFullMessage(), details.getCommitter().getName(),
@@ -326,17 +320,32 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         }));
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS == key) {
-      List<Hash> hashes = myUI.getVcsLog().getSelectedCommits();
-      sink.put(key, ArrayUtil.toObjectArray(ContainerUtil.map(hashes, new Function<Hash, VcsRevisionNumber>() {
+      List<CommitId> hashes = myUI.getVcsLog().getSelectedCommits();
+      if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return;
+      sink.put(key, ArrayUtil.toObjectArray(ContainerUtil.map(hashes, new Function<CommitId, VcsRevisionNumber>() {
         @Override
-        public VcsRevisionNumber fun(Hash hash) {
-          return convertToRevisionNumber(hash);
+        public VcsRevisionNumber fun(CommitId commitId) {
+          return convertToRevisionNumber(commitId.getHash());
         }
       }), VcsRevisionNumber.class));
     }
     else if (VcsDataKeys.VCS == key) {
-      MultiMap<VirtualFile, VcsFullCommitDetails> commitsByRoots = groupByRoot(myUI.getVcsLog().getSelectedDetails());
-      Set<VirtualFile> roots = commitsByRoots.keySet();
+      List<CommitId> commits = myUI.getVcsLog().getSelectedCommits();
+      Collection<VcsLogProvider> logProviders = myUI.getVcsLog().getLogProviders();
+      if (logProviders.size() == 1) {
+        if (!commits.isEmpty()) {
+          sink.put(key, myLogDataHolder.getLogProvider(assertNotNull(getFirstItem(commits)).getRoot()).getSupportedVcs());
+        }
+        return;
+      }
+      if (commits.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return;
+
+      Set<VirtualFile> roots = ContainerUtil.map2Set(commits, new Function<CommitId, VirtualFile>() {
+        @Override
+        public VirtualFile fun(CommitId commitId) {
+          return commitId.getRoot();
+        }
+      });
       if (roots.size() == 1) {
         sink.put(key, myLogDataHolder.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs());
       }
@@ -363,6 +372,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   private class CommitSelectionListener implements ListSelectionListener {
     private final ChangesBrowser myChangesBrowser;
+    private ProgressIndicator myLastRequest;
 
     public CommitSelectionListener(ChangesBrowser changesBrowser) {
       myChangesBrowser = changesBrowser;
@@ -371,23 +381,38 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     @Override
     public void valueChanged(@Nullable ListSelectionEvent event) {
       if (event != null && event.getValueIsAdjusting()) return;
+
+      if (myLastRequest != null) myLastRequest.cancel();
+      myLastRequest = null;
+
       int rows = getGraphTable().getSelectedRowCount();
-      if (rows < 1 || rows > MAX_SELECTED_COMMITS) {
+      if (rows < 1) {
         myChangesLoadingPane.stopLoading();
-        myChangesBrowser.getViewer().setEmptyText(rows < 1 ? "" : "Too many commits selected.");
+        myChangesBrowser.getViewer().setEmptyText("");
         myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
       }
       else {
-        List<Change> selectedChanges = getSelectedChanges();
-        if (selectedChanges != null) {
-          myChangesLoadingPane.stopLoading();
-          myChangesBrowser.setChangesToDisplay(selectedChanges);
-        }
-        else {
-          myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
-          setDefaultEmptyText(myChangesBrowser);
-          myChangesLoadingPane.startLoading();
-        }
+        myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
+        setDefaultEmptyText(myChangesBrowser);
+        myChangesLoadingPane.startLoading();
+
+        final EmptyProgressIndicator indicator = new EmptyProgressIndicator();
+        myLastRequest = indicator;
+        myLog.requestSelectedDetails(new Consumer<List<VcsFullCommitDetails>>() {
+          @Override
+          public void consume(List<VcsFullCommitDetails> detailsList) {
+            if (myLastRequest == indicator && !(indicator.isCanceled())) {
+              myLastRequest = null;
+              List<Change> changes = ContainerUtil.newArrayList();
+              for (VcsFullCommitDetails details : detailsList) {
+                changes.addAll(details.getChanges());
+              }
+              changes = CommittedChangesTreeBrowser.zipChanges(changes);
+              myChangesLoadingPane.stopLoading();
+              myChangesBrowser.setChangesToDisplay(changes);
+            }
+          }
+        }, indicator);
       }
     }
   }

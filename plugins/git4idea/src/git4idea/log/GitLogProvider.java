@@ -18,6 +18,7 @@ package git4idea.log;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
@@ -33,6 +34,7 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.util.StopWatch;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
@@ -332,19 +334,35 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
+  public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull final VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
-    return GitHistoryUtils.readMiniDetails(myProject, root, hashes);
+    return VcsFileUtil
+      .foreachChunk(hashes, new ThrowableNotNullFunction<List<String>, List<? extends VcsShortCommitDetails>, VcsException>() {
+        @NotNull
+        @Override
+        public List<? extends VcsShortCommitDetails> fun(@NotNull List<String> hashes) throws VcsException {
+          return GitHistoryUtils.readMiniDetails(myProject, root, hashes);
+        }
+      });
   }
 
   @NotNull
   @Override
-  public List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
-    String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(myVcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
-    List<String> params = new ArrayList<String>();
-    params.add(noWalk);
-    params.addAll(hashes);
-    return GitHistoryUtils.history(myProject, root, ArrayUtil.toStringArray(params));
+  public List<? extends VcsFullCommitDetails> readFullDetails(@NotNull final VirtualFile root, @NotNull List<String> hashes)
+    throws VcsException {
+    return VcsFileUtil
+      .foreachChunk(hashes, new ThrowableNotNullFunction<List<String>, List<? extends VcsFullCommitDetails>, VcsException>() {
+        @NotNull
+        @Override
+        public List<? extends VcsFullCommitDetails> fun(@NotNull List<String> hashes) throws VcsException {
+          String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(myVcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
+          List<String> params = new ArrayList<String>();
+          params.add(noWalk);
+          params.addAll(hashes);
+
+          return GitHistoryUtils.history(myProject, root, ArrayUtil.toStringArray(params));
+        }
+      });
   }
 
   @NotNull

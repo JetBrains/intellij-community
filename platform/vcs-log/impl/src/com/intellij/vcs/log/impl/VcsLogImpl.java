@@ -15,8 +15,11 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.google.common.primitives.Ints;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -26,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -34,7 +37,7 @@ import java.util.concurrent.Future;
  *
  */
 public class VcsLogImpl implements VcsLog {
-
+  private static final int SLICE_SIZE = 50;
   @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final VcsLogUiImpl myUi;
 
@@ -45,32 +48,44 @@ public class VcsLogImpl implements VcsLog {
 
   @Override
   @NotNull
-  public List<Hash> getSelectedCommits() {
-    List<Hash> hashes = ContainerUtil.newArrayList();
-    JBTable table = myUi.getTable();
-    for (int row : table.getSelectedRows()) {
-      Hash hash = ((GraphTableModel)table.getModel()).getHashAtRow(row);
-      if (hash != null) {
-        hashes.add(hash);
+  public List<CommitId> getSelectedCommits() {
+    final int[] rows = myUi.getTable().getSelectedRows();
+    return new AbstractList<CommitId>() {
+      @NotNull
+      @Override
+      public CommitId get(int index) {
+        return ((GraphTableModel)myUi.getTable().getModel()).getCommitIdAtRow(rows[index]);
       }
-    }
-    return hashes;
+
+      @Override
+      public int size() {
+        return rows.length;
+      }
+    };
   }
 
   @NotNull
   @Override
   public List<VcsFullCommitDetails> getSelectedDetails() {
-    List<VcsFullCommitDetails> details = ContainerUtil.newArrayList();
-    JBTable table = myUi.getTable();
-    for (int row : table.getSelectedRows()) {
-      GraphTableModel model = (GraphTableModel)table.getModel();
-      VcsFullCommitDetails commitDetails = model.getFullCommitDetails(row);
-      if (commitDetails == null) {
-        return ContainerUtil.emptyList();
+    final int[] rows = myUi.getTable().getSelectedRows();
+    return new AbstractList<VcsFullCommitDetails>() {
+      @NotNull
+      @Override
+      public VcsFullCommitDetails get(int index) {
+        return myDataHolder.getCommitDetailsGetter().getCommitData(rows[index], (GraphTableModel)myUi.getTable().getModel());
       }
-      details.add(commitDetails);
-    }
-    return details;
+
+      @Override
+      public int size() {
+        return rows.length;
+      }
+    };
+  }
+
+  @Override
+  public void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator) {
+    List<Integer> rowsList = Ints.asList(myUi.getTable().getSelectedRows());
+    myDataHolder.getCommitDetailsGetter().loadCommitsData(rowsList, (GraphTableModel)myUi.getTable().getModel(), consumer, indicator);
   }
 
   @Nullable
