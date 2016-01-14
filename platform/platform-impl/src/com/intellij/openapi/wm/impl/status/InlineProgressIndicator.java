@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
                                                       AllIcons.Process.Stop,
                                                       AllIcons.Process.StopHovered) {
     }, new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         cancelRequest();
       }
@@ -163,7 +164,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myText.setText(getText() != null ? getText() : "");
     myText2.setText(getText2() != null ? getText2() : "");
 
-    if (myCompact && myText.getText().length() == 0) {
+    if (myCompact && myText.getText().isEmpty()) {
       myText.setText(myInfo.getTitle());
     }
 
@@ -197,10 +198,11 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     updateAndRepaint();
   }
 
-  protected void queueRunningUpdate(Runnable update) {
+  protected void queueRunningUpdate(@NotNull Runnable update) {
     update.run();
   }
 
+  @Override
   protected void onProgressChange() {
     updateProgress();
   }
@@ -225,6 +227,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myCompact = compact;
       myProcessName = processName;
       addMouseListener(new MouseAdapter() {
+        @Override
         public void mousePressed(final MouseEvent e) {
           if (UIUtil.isCloseClick(e) && getBounds().contains(e.getX(), e.getY())) {
             cancelRequest();
@@ -233,6 +236,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       });
     }
 
+    @Override
     protected void paintComponent(final Graphics g) {
       if (myCompact) {
         super.paintComponent(g);
@@ -272,6 +276,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     }
   }
 
+  @Override
   public void dispose() {
     if (myDisposed) return;
 

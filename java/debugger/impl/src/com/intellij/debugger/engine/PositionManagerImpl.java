@@ -41,6 +41,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterable;
 import com.sun.jdi.AbsentInformationException;
@@ -432,7 +433,15 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
             }
           }
           else {
-            LOG.error("Local or anonymous class has no non-local parent");
+            final StringBuilder sb = new StringBuilder();
+            PsiTreeUtil.treeWalkUp(psiClass, null, new PairProcessor<PsiElement, PsiElement>() {
+              @Override
+              public boolean process(PsiElement element, PsiElement element2) {
+                sb.append(element);
+                return true;
+              }
+            });
+            LOG.error("Local or anonymous class " + psiClass + " has no non-local parent, parents:" + sb);
           }
         }
         else {

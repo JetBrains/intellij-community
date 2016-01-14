@@ -103,7 +103,7 @@ import java.util.List;
  *     <ul>
  *       <li>Left free painters</li>
  *       <li>Icons</li>
- *       <li>Debugger additional area</li>
+ *       <li>Gap (required by debugger to set breakpoints with mouse click - IDEA-137353) </li>
  *       <li>Free painters</li>
  *     </ul>
  *   </li>
@@ -1186,7 +1186,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   public int getLineMarkerAreaWidth() {
     return isLineMarkersShown() ? getLeftFreePaintersAreaWidth() + myIconsAreaWidth +
-                                  getDebuggerAdditionalAreaWidth() + getRightFreePaintersAreaWidth() : 0;
+                                  getGapAfterIconsArea() + getRightFreePaintersAreaWidth() : 0;
   }
 
   public void setLineNumberAreaWidthFunction(@NotNull TIntFunction calculator) {
@@ -1276,7 +1276,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   
   @Override
   public int getLineMarkerFreePaintersAreaOffset() {
-    return getIconAreaOffset() + myIconsAreaWidth + getDebuggerAdditionalAreaWidth();
+    return getIconAreaOffset() + myIconsAreaWidth + getGapAfterIconsArea();
   }
 
   public int getLeftFreePaintersAreaWidth() {
@@ -1292,7 +1292,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return myIconsAreaWidth;
   }
 
-  public int getDebuggerAdditionalAreaWidth() {
+  public int getGapAfterIconsArea() {
     return isRealEditor() ? GAP_BETWEEN_AREAS : 0;
   }
 

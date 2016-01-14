@@ -113,7 +113,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
                                        @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException
   {
     Document documentFromVcs = ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(contentFromVcs, true, false);
-    return new RangesBuilder(document, documentFromVcs).getRanges();
+    return RangesBuilder.createRanges(document, documentFromVcs);
   }
 
   @Override

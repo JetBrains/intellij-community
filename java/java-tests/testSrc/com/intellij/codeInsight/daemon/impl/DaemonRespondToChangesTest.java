@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
+import com.intellij.codeInsight.EditorInfo;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix;
@@ -112,6 +113,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.*;
@@ -1284,8 +1286,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     ((EditorImpl)myEditor).getScrollPane().getViewport().setViewPosition(viewPosition);
     ((EditorImpl)myEditor).getScrollPane().getViewport().setExtentSize(new Dimension(100, ((EditorImpl)myEditor).getPreferredHeight() - 
                                                                                           viewPosition.y));
-    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(getEditor());
-    return visibleRange;
+    return VisibleHighlightingPassFactory.calculateVisibleRange(getEditor());
   }
 
 
@@ -2180,6 +2181,46 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   
   private boolean daemonIsWorkingOrPending() {
     return PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument()) || myDaemonCodeAnalyzer.isRunningOrPending();
+  }
+
+  public void testRehighlightInDebuggerExpressionFragment() throws Exception {
+    PsiExpressionCodeFragment fragment = JavaCodeFragmentFactory.getInstance(getProject()).createExpressionCodeFragment("+ <caret>\"a\"", null,
+                                    PsiType.getJavaLangObject(getPsiManager(), GlobalSearchScope.allScope(getProject())), true);
+    myFile = fragment;
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(fragment);
+    myEditor = EditorFactory.getInstance().createEditor(document, getProject(), StdFileTypes.JAVA, false);
+
+    ProperTextRange visibleRange = makeEditorWindowVisible(new Point(0, 0));
+    assertEquals(document.getTextLength(), visibleRange.getLength());
+
+    try {
+      final EditorInfo editorInfo = new EditorInfo(document.getText());
+
+      final String newFileText = editorInfo.getNewFileText();
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        if (!document.getText().equals(newFileText)) {
+          document.setText(newFileText);
+        }
+
+        editorInfo.applyToEditor(myEditor);
+      });
+
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+
+      List<HighlightInfo> errors = highlightErrors();
+      HighlightInfo error = assertOneElement(errors);
+      assertEquals("Operator '+' cannot be applied to 'java.lang.String'", error.getDescription());
+
+      type(" ");
+
+      Collection<HighlightInfo> afterTyping = highlightErrors();
+      HighlightInfo after = assertOneElement(afterTyping);
+      assertEquals("Operator '+' cannot be applied to 'java.lang.String'", after.getDescription());
+    }
+    finally {
+      EditorFactory.getInstance().releaseEditor(myEditor);
+    }
   }
 }
 

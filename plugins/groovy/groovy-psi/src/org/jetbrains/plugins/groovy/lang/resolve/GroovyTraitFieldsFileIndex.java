@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.compiled.SignatureParsing;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
+import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.FileBasedIndex.InputFilter;
@@ -32,10 +33,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.FieldVisitor;
+import org.jetbrains.org.objectweb.asm.Type;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.text.StringCharacterIterator;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -53,10 +56,13 @@ public class GroovyTraitFieldsFileIndex
              DataExternalizer<Collection<TraitFieldDescriptor>> {
 
   public static final ID<Integer, Collection<TraitFieldDescriptor>> INDEX_ID = ID.create("groovy.trait.fields");
+
+  public static final String HELPER_SUFFIX = "$Trait$FieldHelper.class";
+
   public static final InputFilter INPUT_FILTER = new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE) {
     @Override
     public boolean acceptInput(@NotNull VirtualFile file) {
-      return StringUtil.endsWith(file.getNameSequence(), "$Trait$FieldHelper.class");
+      return StringUtil.endsWith(file.getNameSequence(), HELPER_SUFFIX);
     }
   };
 
@@ -123,8 +129,8 @@ public class GroovyTraitFieldsFileIndex
   private static Map<Integer, Collection<TraitFieldDescriptor>> mapInner(@NotNull FileContent inputData) {
     final int key = FileBasedIndex.getFileId(inputData.getFile());
     final Map<Integer, Collection<TraitFieldDescriptor>> result = ContainerUtil.newHashMap();
-    new ClassReader(inputData.getContent()).accept(new ClassVisitor(ASM5) {
 
+    new ClassReader(inputData.getContent()).accept(new ClassVisitor(ASM5) {
       @Override
       public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
         processField(access, name, desc, signature);
@@ -133,6 +139,7 @@ public class GroovyTraitFieldsFileIndex
 
       private void processField(int access, String name, String desc, String signature) {
         if ((access & ACC_SYNTHETIC) == 0) return;
+
         final boolean isStatic;
         final boolean isPublic;
         Pair<Boolean, String> p;
@@ -151,7 +158,7 @@ public class GroovyTraitFieldsFileIndex
           return;
         }
 
-        final String typeString = TypeInfo.createTypeText(StubBuildingVisitor.fieldType(desc, signature));
+        final String typeString = fieldType(desc, signature);
         if (typeString == null) return;
 
         final int delimiter = name.indexOf(DELIMITER);
@@ -178,7 +185,20 @@ public class GroovyTraitFieldsFileIndex
           return Pair.create(null, input);
         }
       }
-    }, ClassReader.SKIP_FRAMES);
+
+      private String fieldType(String desc, String signature) {
+        if (signature != null) {
+          try {
+            return SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
+          }
+          catch (ClsFormatException ignored) { }
+        }
+
+        String raw = Type.getType(desc).getClassName();
+        return StubBuildingVisitor.GUESSING_MAPPER.fun(raw);
+      }
+    }, ClassReader.SKIP_CODE);
+
     return result;
   }
 
