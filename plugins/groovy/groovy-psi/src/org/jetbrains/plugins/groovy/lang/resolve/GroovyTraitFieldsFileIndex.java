@@ -56,10 +56,13 @@ public class GroovyTraitFieldsFileIndex
              DataExternalizer<Collection<TraitFieldDescriptor>> {
 
   public static final ID<Integer, Collection<TraitFieldDescriptor>> INDEX_ID = ID.create("groovy.trait.fields");
+
+  public static final String HELPER_SUFFIX = "$Trait$FieldHelper.class";
+
   public static final InputFilter INPUT_FILTER = new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE) {
     @Override
     public boolean acceptInput(@NotNull VirtualFile file) {
-      return StringUtil.endsWith(file.getNameSequence(), "$Trait$FieldHelper.class");
+      return StringUtil.endsWith(file.getNameSequence(), HELPER_SUFFIX);
     }
   };
 
