@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
@@ -60,8 +61,10 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
     final CommitContext commitContext = new CommitContext();
     applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
     final Collection<PatchApplier> appliers = getPatchAppliers(patchGroups, localList, commitContext);
-    executeAndApplyAdditionalInfo(localList, additionalInfo, commitContext, appliers);
-    removeAppliedAndSaveRemainedIfNeeded(appliers, commitContext);
+    final ApplyPatchStatus patchStatus = executeAndApplyAdditionalInfo(localList, additionalInfo, commitContext, appliers);
+    if (patchStatus != ApplyPatchStatus.ABORT && patchStatus != ApplyPatchStatus.FAILURE) {
+      removeAppliedAndSaveRemainedIfNeeded(appliers, commitContext); // remove only if partly applied or successful
+    }
   }
 
   private void removeAppliedAndSaveRemainedIfNeeded(@NotNull Collection<PatchApplier> appliers, @NotNull CommitContext commitContext) {
