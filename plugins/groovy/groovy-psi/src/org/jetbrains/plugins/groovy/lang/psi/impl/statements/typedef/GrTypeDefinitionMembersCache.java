@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
 
@@ -308,6 +309,7 @@ public class GrTypeDefinitionMembersCache {
         LOG.assertTrue(trait != null);
 
         List<CandidateInfo> traitFields = new TraitProcessor<PsiField>(trait, resolveResult.getSubstitutor()) {
+          @Override
           protected void processTrait(@NotNull final PsiClass trait, @NotNull final PsiSubstitutor substitutor) {
             if (trait instanceof GrTypeDefinition) {
               for (GrField field : ((GrTypeDefinition)trait).getCodeFields()) {
@@ -315,15 +317,14 @@ public class GrTypeDefinitionMembersCache {
               }
             }
             else if (trait instanceof ClsClassImpl) {
-              final PsiClass traitFieldHelper = JavaPsiFacade.getInstance(trait.getProject()).findClass(
-                trait.getQualifiedName() + "$Trait$FieldHelper", trait.getResolveScope()
-              );
-              if (traitFieldHelper == null) return;
+              final VirtualFile traitFile = trait.getContainingFile().getVirtualFile();
+              if (traitFile == null) return;
+              final VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + GroovyTraitFieldsFileIndex.HELPER_SUFFIX);
+              if (helperFile == null) return;
 
-              final VirtualFile virtualFile = traitFieldHelper.getContainingFile().getVirtualFile();
               final List<Collection<TraitFieldDescriptor>> descriptors = FileBasedIndex.getInstance().getValues(
                 INDEX_ID,
-                FileBasedIndex.getFileId(virtualFile),
+                FileBasedIndex.getFileId(helperFile),
                 trait.getResolveScope()
               );
               for (Collection<TraitFieldDescriptor> traitFieldDescriptors : descriptors) {
