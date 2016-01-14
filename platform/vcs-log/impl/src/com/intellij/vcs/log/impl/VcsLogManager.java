@@ -74,8 +74,14 @@ public class VcsLogManager implements Disposable {
     return Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots());
   }
 
-  public void watchTab(@NotNull String contentTabName, @NotNull VcsLogUiImpl logUi) {
+  public void watchTab(@NotNull final String contentTabName, @NotNull VcsLogUiImpl logUi) {
     myTabsLogRefresher.addTabToWatch(contentTabName, logUi.getFilterer());
+    Disposer.register(logUi, new Disposable() {
+      @Override
+      public void dispose() {
+        unwatchTab(contentTabName);
+      }
+    });
   }
 
   public void unwatchTab(@NotNull String contentTabName) {
