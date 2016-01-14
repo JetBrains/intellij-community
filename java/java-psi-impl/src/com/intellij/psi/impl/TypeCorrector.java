@@ -204,6 +204,11 @@ class TypeCorrector extends PsiTypeMapper {
       });
     }
 
+    @Override
+    public int getParameterCount() {
+      return myDelegate.getParameters().length;
+    }
+
     @NotNull
     @Override
     public ClassResolveResult resolveGenerics() {
