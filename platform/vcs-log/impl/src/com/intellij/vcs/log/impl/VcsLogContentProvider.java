@@ -20,9 +20,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.content.TabbedContent;
+import com.intellij.util.ContentUtilEx;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,7 +41,6 @@ import java.util.Arrays;
  * Delegates to the VcsLogManager.
  */
 public class VcsLogContentProvider implements ChangesViewContentProvider {
-
   public static final String TAB_NAME = "Log";
 
   @NotNull private final Project myProject;
@@ -66,6 +71,26 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     myConnection.disconnect();
     myContainer.removeAll();
     myLogManager.disposeLog();
+  }
+
+  public static void openAnotherLogTab(@NotNull Project project) {
+    VcsLogManager logManager = VcsLogManager.getInstance(project);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+
+    TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(toolWindow.getContentManager(), TAB_NAME);
+    String shortName = String.valueOf(tabbedContent == null ? 1 : tabbedContent.getTabs().size() + 1);
+    VcsLogUiImpl logUi = logManager.createLog(ContentUtilEx.getFullName(TAB_NAME, shortName));
+    addLogTab(logManager, toolWindow, logUi, shortName);
+  }
+
+  private static void addLogTab(@NotNull VcsLogManager logManager,
+                                @NotNull ToolWindow toolWindow,
+                                @NotNull VcsLogUiImpl logUi,
+                                @NotNull String shortName) {
+    logManager.watchTab(ContentUtilEx.getFullName(TAB_NAME, shortName), logUi);
+    logUi.requestFocus();
+    ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), logUi.getMainFrame().getMainComponent(), TAB_NAME, shortName, true);
+    toolWindow.activate(null);
   }
 
   private class MyVcsListener implements VcsListener {

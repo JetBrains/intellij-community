@@ -47,6 +47,7 @@
     <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowBranchesPanelAction" id="Vcs.Log.ShowBranchesPanelAction"/>
     <group class="com.intellij.vcs.log.ui.actions.HighlightersActionGroup" id="Vcs.Log.HighlightersActionGroup"/>
+    <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction" id="Vcs.Log.OpenAnotherTab"/>
 
     <group id="Vcs.Log.Settings">
       <reference id="Vcs.Log.ShowBranchesPanelAction"/>
@@ -56,9 +57,12 @@
       <reference id="Vcs.Log.ExpandAll"/>
       <reference id="Vcs.Log.HighlightersActionGroup"/>
     </group>
-    <group id="Vcs.Log.Toolbar">
+    <group id="Vcs.Log.Toolbar.Internal">
       <reference id="Vcs.Log.ShowLongEdges"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
+      <group id="Vcs.Log.Toolbar"/>
+      <separator/>
+      <reference ref="Vcs.Log.OpenAnotherTab"/>
     </group>
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>

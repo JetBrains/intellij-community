@@ -43,7 +43,7 @@ public class ContentUtilEx extends ContentsUtil {
 
   public static void addTabbedContent(ContentManager manager, JComponent contentComponent, String groupPrefix, String tabName, boolean select, @Nullable Disposable childDisposable) {
     if (PropertiesComponent.getInstance().getBoolean(TabbedContent.SPLIT_PROPERTY_PREFIX + groupPrefix)) {
-      final Content content = ContentFactory.SERVICE.getInstance().createContent(contentComponent, groupPrefix + ": " + tabName, true);
+      final Content content = ContentFactory.SERVICE.getInstance().createContent(contentComponent, getFullName(groupPrefix, tabName), true);
       content.putUserData(Content.TABBED_CONTENT_KEY, Boolean.TRUE);
       content.putUserData(Content.TAB_GROUP_NAME_KEY, groupPrefix);
 
@@ -59,20 +59,15 @@ public class ContentUtilEx extends ContentsUtil {
       return;
     }
 
-    TabbedContent tabbedContent = null;
-    for (Content content : manager.getContents()) {
-      if (content instanceof TabbedContent && content.getTabName().startsWith(groupPrefix + ": ")) {
-        tabbedContent = (TabbedContent)content;
-        break;
-      }
-    }
+    TabbedContent tabbedContent = findTabbedContent(manager, groupPrefix);
 
     if (tabbedContent == null) {
       final Disposable disposable = Disposer.newDisposable();
       tabbedContent = new TabbedContentImpl(contentComponent, tabName, true, groupPrefix);
       ContentsUtil.addOrReplaceContent(manager, tabbedContent, select);
       Disposer.register(tabbedContent, disposable);
-    } else {
+    }
+    else {
       for (Pair<String, JComponent> tab : new ArrayList<Pair<String, JComponent>>(tabbedContent.getTabs())) {
         if (Comparing.equal(tab.second, contentComponent)) {
           tabbedContent.removeContent(tab.second);
@@ -87,6 +82,28 @@ public class ContentUtilEx extends ContentsUtil {
     if (childDisposable != null) {
       Disposer.register(tabbedContent, childDisposable);
     }
+  }
+
+  @Nullable
+  public static TabbedContent findTabbedContent(ContentManager manager, String groupPrefix) {
+    TabbedContent tabbedContent = null;
+    for (Content content : manager.getContents()) {
+      if (content instanceof TabbedContent && content.getTabName().startsWith(getFullPrefix(groupPrefix))) {
+        tabbedContent = (TabbedContent)content;
+        break;
+      }
+    }
+    return tabbedContent;
+  }
+
+  @NotNull
+  public static String getFullName(@NotNull String groupPrefix, @NotNull String tabName) {
+    return getFullPrefix(groupPrefix) + tabName;
+  }
+
+  @NotNull
+  private static String getFullPrefix(@NotNull String groupPrefix) {
+    return groupPrefix + ": ";
   }
 
   /**
