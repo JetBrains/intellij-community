@@ -54,6 +54,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.remote.*;
+import com.intellij.remote.ext.CredentialsCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
@@ -883,24 +884,21 @@ public class PythonSdkType extends SdkType {
     if (PySdkUtil.isRemote(sdk)) {
       final Ref<Boolean> result = Ref.create(false);
       //noinspection ConstantConditions
-      ((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).switchOnConnectionType(new RemoteSdkConnectionAcceptor() {
-        @Override
-        public void ssh(@NotNull RemoteCredentialsHolder cred) {
+      ((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).switchOnConnectionType(
+        new CredentialsCase.Vagrant() {
+          @Override
+          public void process(VagrantBasedCredentialsHolder cred) {
+            result.set(StringUtil.isEmpty(cred.getVagrantFolder()));
+          }
+        },
+        new CredentialsCase.Docker() {
+          @Override
+          public void process(DockerCredentialsHolder credentials) {
+            // TODO: validate if account exists
+            //credentials.getAccountName()
+          }
         }
-
-        @Override
-        public void vagrant(@NotNull VagrantBasedCredentialsHolder cred) {
-          result.set(StringUtil.isEmpty(cred.getVagrantFolder()));
-        }
-
-        @Override
-        public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
-        }
-
-        @Override
-        public void docker(@NotNull DockerCredentialsHolder credentials) {
-        }
-      });
+      );
       return result.get();
     }
     return false;

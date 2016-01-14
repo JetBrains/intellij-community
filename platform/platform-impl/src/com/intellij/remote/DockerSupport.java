@@ -76,7 +76,9 @@ public abstract class DockerSupport {
    * @return list of set of repository tags for every available (built and pulled) image
    */
   @NotNull
-  public abstract List<String[]> getImages(@NotNull String machineName);
+  public abstract List<String[]> getImages(@NotNull String accountName);
+  // TODO: alternative would require docker-support, so need to move first
+  //public abstract List<String[]> getImages(@NotNull RemoteServer<DockerCloudConfiguration> account);
 
   public static class ConnectionInfo {
     @NotNull private final String myApiUrl;

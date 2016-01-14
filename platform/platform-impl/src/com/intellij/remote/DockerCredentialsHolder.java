@@ -23,12 +23,12 @@ import org.jetbrains.annotations.NotNull;
  * @author Alexander Koshevoy
  */
 public class DockerCredentialsHolder {
-  public static final String DOCKER_MACHINE_NAME = "DOCKER_MACHINE_NAME";
+  public static final String DOCKER_ACCOUNT_NAME = "DOCKER_ACCOUNT_NAME";
   public static final String DOCKER_IMAGE_NAME = "DOCKER_IMAGE_NAME";
   public static final String DOCKER_CONTAINER_NAME = "DOCKER_CONTAINER_NAME";
   public static final String DOCKER_REMOTE_PROJECT_PATH = "DOCKER_REMOTE_PROJECT_PATH";
 
-  private String myMachineName;
+  private String myAccountName;
 
   private String myImageName;
 
@@ -39,18 +39,18 @@ public class DockerCredentialsHolder {
   public DockerCredentialsHolder() {
   }
 
-  public DockerCredentialsHolder(String machineName,
+  public DockerCredentialsHolder(String accountName,
                                  String imageName,
                                  String containerName,
                                  String remoteProjectPath) {
-    myMachineName = machineName;
+    myAccountName = accountName;
     myImageName = imageName;
     myContainerName = containerName;
     myRemoteProjectPath = remoteProjectPath;
   }
 
-  public String getMachineName() {
-    return myMachineName;
+  public String getAccountName() {
+    return myAccountName;
   }
 
   public String getImageName() {
@@ -65,9 +65,25 @@ public class DockerCredentialsHolder {
     return myRemoteProjectPath;
   }
 
+  public void setAccountName(String accountName) {
+    myAccountName = accountName;
+  }
+
+  public void setImageName(String imageName) {
+    myImageName = imageName;
+  }
+
+  public void setContainerName(String containerName) {
+    myContainerName = containerName;
+  }
+
+  public void setRemoteProjectPath(String remoteProjectPath) {
+    myRemoteProjectPath = remoteProjectPath;
+  }
+
   public void save(@NotNull Element element) {
-    if (StringUtil.isNotEmpty(myMachineName)) {
-      element.setAttribute(DOCKER_MACHINE_NAME, myMachineName);
+    if (StringUtil.isNotEmpty(myAccountName)) {
+      element.setAttribute(DOCKER_ACCOUNT_NAME, myAccountName);
     }
     element.setAttribute(DOCKER_IMAGE_NAME, myImageName);
     if (StringUtil.isNotEmpty(myContainerName)) {
@@ -77,7 +93,7 @@ public class DockerCredentialsHolder {
   }
 
   public void load(@NotNull Element element) {
-    myMachineName = element.getAttributeValue(DOCKER_MACHINE_NAME);
+    myAccountName = element.getAttributeValue(DOCKER_ACCOUNT_NAME);
     myImageName = element.getAttributeValue(DOCKER_IMAGE_NAME);
     myContainerName = element.getAttributeValue(DOCKER_CONTAINER_NAME);
     myRemoteProjectPath = element.getAttributeValue(DOCKER_REMOTE_PROJECT_PATH);

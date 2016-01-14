@@ -67,21 +67,9 @@ public class PyInterpreterUsagesCollector extends AbstractApplicationUsagesColle
 
   @NotNull
   private static String getRemoteSuffix(@NotNull Sdk pythonSdk) {
-    if (pythonSdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
-      switch (((PyRemoteSdkAdditionalDataBase)pythonSdk.getSdkAdditionalData()).connectionCredentials().getRemoteConnectionType()) {
-        case DOCKER:
-          return "Remote Docker";
-        case VAGRANT:
-          return "Remote Vagrant";
-        case WEB_DEPLOYMENT:
-          return "Remote Deployment";
-        case SSH_HOST:
-          return "Remote SSH";
-        default:
-          return "Remote";
-      }
-    }
-    return "";
+    return pythonSdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase
+           ? "Remote " + (((PyRemoteSdkAdditionalDataBase)pythonSdk.getSdkAdditionalData()).getRemoteConnectionType()).getName()
+           : "";
   }
 
   @NotNull

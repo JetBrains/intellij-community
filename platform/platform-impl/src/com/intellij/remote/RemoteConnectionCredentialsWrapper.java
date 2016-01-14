@@ -16,120 +16,33 @@
 package com.intellij.remote;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remote.ext.CredentialsCase;
+import com.intellij.remote.ext.RemoteCredentialsHandler;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author traff
  */
+// TODO: rename to 'RemoteSdkDataDelegate' ?
 public class RemoteConnectionCredentialsWrapper {
-  public static final String VAGRANT_PREFIX = "vagrant://";
-  public static final String SFTP_DEPLOYMENT_PREFIX = "sftp://";
-  public static final String DOCKER_PREFIX = "docker://";
-
-  /**
-   * Connection types
-   */
-  public final Key<VagrantBasedCredentialsHolder> VAGRANT_BASED_CREDENTIALS = Key.create("VAGRANT_BASED_CREDENTIALS");
-  public final Key<WebDeploymentCredentialsHolder> WEB_DEPLOYMENT_BASED_CREDENTIALS = Key.create("WEB_DEPLOYMENT_BASED_CREDENTIALS");
-  public final Key<RemoteCredentialsHolder> PLAIN_SSH_CREDENTIALS = Key.create("PLAIN_SSH_CREDENTIALS");
-  public final Key<DockerCredentialsHolder> DOCKER_CREDENTIALS = Key.create("DOCKER_CREDENTIALS");
 
   private UserDataHolderBase myCredentialsTypeHolder = new UserDataHolderBase();
 
-  public void setVagrantConnectionType(VagrantBasedCredentialsHolder vagrantBasedCredentials) {
+  public <C> void setCredentials(Key<C> key, C credentials) {
     myCredentialsTypeHolder = new UserDataHolderBase();
-    myCredentialsTypeHolder.putUserData(VAGRANT_BASED_CREDENTIALS, vagrantBasedCredentials);
+    myCredentialsTypeHolder.putUserData(key, credentials);
   }
 
-
-  private VagrantBasedCredentialsHolder getVagrantCredentials() {
-    return myCredentialsTypeHolder.getUserData(VAGRANT_BASED_CREDENTIALS);
-  }
-
-  public void setPlainSshCredentials(RemoteCredentialsHolder credentials) {
-    myCredentialsTypeHolder = new UserDataHolderBase();
-    myCredentialsTypeHolder.putUserData(PLAIN_SSH_CREDENTIALS, credentials);
-  }
-
-  private RemoteCredentialsHolder getPlainSshCredentials() {
-    return myCredentialsTypeHolder.getUserData(PLAIN_SSH_CREDENTIALS);
-  }
-
-
-  public void setWebDeploymentCredentials(WebDeploymentCredentialsHolder webDeploymentCredentials) {
-    myCredentialsTypeHolder = new UserDataHolderBase();
-    myCredentialsTypeHolder.putUserData(WEB_DEPLOYMENT_BASED_CREDENTIALS, webDeploymentCredentials);
-  }
-
-  private WebDeploymentCredentialsHolder getWebDeploymentCredentials() {
-    return myCredentialsTypeHolder.getUserData(WEB_DEPLOYMENT_BASED_CREDENTIALS);
-  }
-
-  private DockerCredentialsHolder getDockerCredentials() {
-    return myCredentialsTypeHolder.getUserData(DOCKER_CREDENTIALS);
-  }
-
-  private boolean isVagrantConnection() {
-    return getVagrantCredentials() != null;
-  }
-
-  private boolean isPlainSshConnection() {
-    return getPlainSshCredentials() != null;
-  }
-
-  private boolean isWebDeploymentConnection() {
-    return getWebDeploymentCredentials() != null;
-  }
-
-  private boolean isDockerConnection() {
-    return getDockerCredentials() != null;
-  }
-
+  // TODO: may just call instead
   public Object getConnectionKey() {
-    if (isVagrantConnection()) {
-      return getVagrantCredentials();
-    }
-    else if (isPlainSshConnection()) {
-      return getPlainSshCredentials();
-    }
-    else if (isWebDeploymentConnection()) {
-      return getWebDeploymentCredentials();
-    }
-    else if (isDockerConnection()) {
-      return getDockerCredentials();
-    }
-    else {
-      throw unknownConnectionType();
-    }
+    return getCredentials();
   }
 
   public void save(final Element rootElement) {
-    switchType(new RemoteSdkConnectionAcceptor() {
-      @Override
-      public void ssh(@NotNull RemoteCredentialsHolder cred) {
-        cred.save(rootElement);
-      }
-
-      @Override
-      public void vagrant(@NotNull VagrantBasedCredentialsHolder cred) {
-        cred.save(rootElement);
-      }
-
-      @Override
-      public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
-        cred.save(rootElement);
-      }
-
-      @Override
-      public void docker(@NotNull DockerCredentialsHolder cred) {
-        cred.save(rootElement);
-      }
-    });
+    getTypeHandler().save(rootElement);
   }
 
   public static IllegalStateException unknownConnectionType() {
@@ -138,91 +51,48 @@ public class RemoteConnectionCredentialsWrapper {
 
   public void copyTo(final RemoteConnectionCredentialsWrapper copy) {
     copy.myCredentialsTypeHolder = new UserDataHolderBase();
-    switchType(new RemoteSdkConnectionAcceptor() {
-      @Override
-      public void ssh(@NotNull RemoteCredentialsHolder cred) {
-        copy.setPlainSshCredentials(getPlainSshCredentials());
-      }
 
-      @Override
-      public void vagrant(@NotNull VagrantBasedCredentialsHolder cred) {
-        copy.setVagrantConnectionType(getVagrantCredentials());
-      }
+    Pair<Object, CredentialsType> credentialsAndProvider = getCredentialsAndType();
 
-      @Override
-      public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
-        copy.setWebDeploymentCredentials(getWebDeploymentCredentials());
-      }
-
-      @Override
-      public void docker(@NotNull DockerCredentialsHolder credentials) {
-        copy.setDockerDeploymentCredentials(getDockerCredentials());
-      }
-    });
+    credentialsAndProvider.getSecond().putCredentials(copy.myCredentialsTypeHolder, credentialsAndProvider.getFirst());
   }
 
   @NotNull
   public String getId() {
-    final Ref<String> result = Ref.create();
-    switchType(new RemoteSdkConnectionAcceptor() {
-      @Override
-      public void ssh(@NotNull RemoteCredentialsHolder cred) {
-        result.set(constructSshCredentialsFullPath(cred));
-      }
-
-      @Override
-      public void vagrant(@NotNull VagrantBasedCredentialsHolder cred) {
-        result.set(VAGRANT_PREFIX + cred.getVagrantFolder()
-                   + (StringUtil.isNotEmpty(cred.getMachineName()) ?
-                      "@" + cred.getMachineName() : ""));
-      }
-
-      @Override
-      public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
-        result.set(constructSftpCredentialsFullPath(cred.getSshCredentials()));
-      }
-
-      @Override
-      public void docker(@NotNull DockerCredentialsHolder cred) {
-        // TODO [Docker] review
-        String name = StringUtil.isNotEmpty(cred.getContainerName()) ? cred.getContainerName() : cred.getImageName();
-        result.set(DOCKER_PREFIX + name + "/");
-      }
-    });
-
-    return result.get();
+    return getTypeHandler().getId();
   }
 
-  @NotNull
-  private static String constructSftpCredentialsFullPath(RemoteCredentials cred) {
-    return SFTP_DEPLOYMENT_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getPort();
-  }
-
-
-  @NotNull
-  public static String constructSshCredentialsFullPath(RemoteCredentials cred) {
-    return RemoteCredentialsHolder.SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getPort();
+  public RemoteCredentialsHandler getTypeHandler() {
+    Pair<Object, CredentialsType> credentialsAndType = getCredentialsAndType();
+    return credentialsAndType.getSecond().getHandler(credentialsAndType.getFirst());
   }
 
   public CredentialsType getRemoteConnectionType() {
-    return DefaultRemoteSdkConnectionAcceptor.getRemoteConnectionType(this);
+    return getCredentialsAndType().getSecond();
   }
 
-  public void switchType(@NotNull final RemoteSdkConnectionAcceptor acceptor) {
-    if (isVagrantConnection()) {
-      acceptor.vagrant(getVagrantCredentials());
+  public Object getCredentials() {
+    return getCredentialsAndType().getFirst();
+  }
+
+  private Pair<Object, CredentialsType> getCredentialsAndType() {
+    for (CredentialsType type : CredentialsType.TYPES) {
+      Object credentials = type.getCredentials(myCredentialsTypeHolder);
+      if (credentials != null) {
+        return Pair.create(credentials, type);
+      }
     }
-    else if (isPlainSshConnection()) {
-      acceptor.ssh(getPlainSshCredentials());
-    }
-    else if (isWebDeploymentConnection()) {
-      acceptor.deployment(getWebDeploymentCredentials());
-    }
-    else if (isDockerConnection()) {
-      acceptor.docker(getDockerCredentials());
-    }
-    else {
-      throw unknownConnectionType();
+    throw unknownConnectionType();
+  }
+
+  public void switchType(CredentialsCase... cases) {
+    Pair<Object, CredentialsType> credentialsAndType = getCredentialsAndType();
+    CredentialsType type = credentialsAndType.getSecond();
+    for (CredentialsCase credentialsCase : cases) {
+      if (credentialsCase.getType() == type) {
+        credentialsCase.process(credentialsAndType.getFirst());
+        return;
+      }
     }
   }
 
@@ -230,79 +100,19 @@ public class RemoteConnectionCredentialsWrapper {
   public boolean equals(Object obj) {
     if (obj instanceof RemoteConnectionCredentialsWrapper) {
       RemoteConnectionCredentialsWrapper w = (RemoteConnectionCredentialsWrapper)obj;
-      if (isVagrantConnection()) {
-        return w.isVagrantConnection() && getVagrantCredentials().equals(w.getVagrantCredentials());
+      try {
+        Object credentials = getCredentials();
+        Object counterCredentials = w.getCredentials();
+        return credentials.equals(counterCredentials);
       }
-      else if (isWebDeploymentConnection()) {
-        return w.isWebDeploymentConnection() && getWebDeploymentCredentials().equals(w.getWebDeploymentCredentials());
-      }
-      else if (isPlainSshConnection()) {
-        return w.isPlainSshConnection() && getPlainSshCredentials().equals(w.getPlainSshCredentials());
+      catch (IllegalStateException e) {
+        return false;
       }
     }
     return false;
   }
 
   public String getPresentableDetails(final String interpreterPath) {
-    final Ref<String> result = Ref.create();
-    switchType(new RemoteSdkConnectionAcceptor() {
-      @Override
-      public void ssh(@NotNull RemoteCredentialsHolder cred) {
-        result.set("(" + constructSshCredentialsFullPath(cred) + interpreterPath + ")");
-      }
-
-      @Override
-      public void vagrant(@NotNull VagrantBasedCredentialsHolder cred) {
-        String pathRelativeToHome = FileUtil.getLocationRelativeToUserHome(cred.getVagrantFolder());
-
-        result.set("Vagrant VM " +
-                   (StringUtil.isNotEmpty(cred.getMachineName()) ? "'" + cred.getMachineName() + "' " : "") +
-                   "at " + (pathRelativeToHome.length() < cred.getVagrantFolder().length() ? pathRelativeToHome : cred.getVagrantFolder())
-                   + " (" + interpreterPath + ")");
-      }
-
-      @Override
-      public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
-        result.set("(" + constructSftpCredentialsFullPath(cred.getSshCredentials()) + interpreterPath + ")");
-      }
-
-      @Override
-      public void docker(@NotNull DockerCredentialsHolder credentials) {
-        String containerName = StringUtil.isNotEmpty(credentials.getContainerName())
-                               ? credentials.getContainerName() + " " : "";
-        result.set("Docker " + containerName + "(" + credentials.getImageName() + ")");
-      }
-    });
-
-    return result.get();
-  }
-
-
-  public void setDockerDeploymentCredentials(DockerCredentialsHolder credentials) {
-    myCredentialsTypeHolder = new UserDataHolderBase();
-    myCredentialsTypeHolder.putUserData(DOCKER_CREDENTIALS, credentials);
-  }
-
-  public void loadCredentials(@NotNull final String interpreterPath, @NotNull final Element element) {
-    if (interpreterPath.startsWith(RemoteCredentialsHolder.SSH_PREFIX)) {
-      RemoteCredentialsHolder remoteSdkCred = new RemoteCredentialsHolder();
-      remoteSdkCred.load(element);
-      setPlainSshCredentials(remoteSdkCred);
-    }
-    else if (interpreterPath.startsWith(VAGRANT_PREFIX)) {
-      VagrantBasedCredentialsHolder vagrantCred = new VagrantBasedCredentialsHolder();
-      vagrantCred.load(element);
-      setVagrantConnectionType(vagrantCred);
-    }
-    else if (interpreterPath.startsWith(SFTP_DEPLOYMENT_PREFIX)) {
-      WebDeploymentCredentialsHolder deploymentCred = new WebDeploymentCredentialsHolder();
-      deploymentCred.load(element);
-      setWebDeploymentCredentials(deploymentCred);
-    }
-    else if (interpreterPath.startsWith(DOCKER_PREFIX)) {
-      DockerCredentialsHolder dockerCred = new DockerCredentialsHolder();
-      dockerCred.load(element);
-      setDockerDeploymentCredentials(dockerCred);
-    }
+    return getTypeHandler().getPresentableDetails(interpreterPath);
   }
 }

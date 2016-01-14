@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remote;
+package com.intellij.remote.ext;
 
-import org.jetbrains.annotations.NotNull;
+import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
-/**
-* @author traff
-*/
-public interface RemoteSdkConnectionAcceptor {
-  void ssh(@NotNull RemoteCredentialsHolder cred);
-  void vagrant(@NotNull VagrantBasedCredentialsHolder cred);
-  void deployment(@NotNull WebDeploymentCredentialsHolder cred);
-  void docker(@NotNull DockerCredentialsHolder credentials);
+// TODO: wrapper?
+public interface RemoteCredentialsHandler {
+
+  String getId();
+
+  void save(Element rootElement);
+
+  String getPresentableDetails(String interpreterPath);
+
+  void load(@Nullable Element rootElement);
 }
