@@ -31,8 +31,8 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogDataManager;
-import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.data.VcsLogFiltererImpl;
+import com.intellij.vcs.log.data.VcsLogTabsProperties;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
@@ -51,14 +51,14 @@ public class VcsLogManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogManager.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final VcsLogUiProperties myUiProperties;
+  @NotNull private final VcsLogTabsProperties myUiProperties;
 
   private volatile VcsLogUiImpl myUi;
   private VcsLogDataManager myDataManager;
   private VcsLogColorManagerImpl myColorManager;
   private VcsLogTabsRefresher myTabsLogRefresher;
 
-  public VcsLogManager(@NotNull Project project, @NotNull VcsLogUiProperties uiProperties) {
+  public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
     myProject = project;
     myUiProperties = uiProperties;
 
@@ -74,8 +74,8 @@ public class VcsLogManager implements Disposable {
     return Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots());
   }
 
-  public void watchTab(@NotNull String contentTabName, @NotNull VcsLogFilterer filterer) {
-    myTabsLogRefresher.addTabToWatch(contentTabName, filterer);
+  public void watchTab(@NotNull String contentTabName, @NotNull VcsLogUiImpl logUi) {
+    myTabsLogRefresher.addTabToWatch(contentTabName, logUi.getFilterer());
   }
 
   public void unwatchTab(@NotNull String contentTabName) {
@@ -83,23 +83,23 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public JComponent initMainLog(@Nullable final String contentTabName) {
-    myUi = createLog(contentTabName);
+  public JComponent initMainLog(@Nullable String contentTabName) {
+    myUi = createLog(VcsLogTabsProperties.MAIN_LOG_ID);
+    if (contentTabName != null) {
+      watchTab(contentTabName, myUi);
+    }
     myUi.requestFocus();
     return myUi.getMainFrame().getMainComponent();
   }
 
   @NotNull
-  public VcsLogUiImpl createLog(@Nullable String contentTabName) {
+  public VcsLogUiImpl createLog(@NotNull String logId) {
     initData();
 
+    VcsLogUiProperties properties = myUiProperties.createProperties(logId);
     VcsLogFiltererImpl filterer =
-      new VcsLogFiltererImpl(myProject, myDataManager, PermanentGraph.SortType.values()[myUiProperties.getBekSortType()]);
-    VcsLogUiImpl ui = new VcsLogUiImpl(myDataManager, myProject, myColorManager, myUiProperties, filterer);
-    if (contentTabName != null) {
-      watchTab(contentTabName, filterer);
-    }
-    return ui;
+      new VcsLogFiltererImpl(myProject, myDataManager, PermanentGraph.SortType.values()[properties.getBekSortType()]);
+    return new VcsLogUiImpl(myDataManager, myProject, myColorManager, properties, filterer);
   }
 
   public boolean initData() {
