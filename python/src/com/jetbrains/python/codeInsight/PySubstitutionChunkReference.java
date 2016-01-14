@@ -91,34 +91,87 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     return null;
   }
 
+  @Nullable
   private PsiElement resolvePercentString() {
-    final PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(getElement(), PyBinaryExpression.class);
+    PsiElement result = null;
 
+    final PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(getElement(), PyBinaryExpression.class);
     if (binaryExpression != null) {
       final PyExpression rightExpression = binaryExpression.getRightExpression();
       if (rightExpression instanceof PyParenthesizedExpression) {
-        final PyParenthesizedExpression expression = (PyParenthesizedExpression)rightExpression;
-        final PyExpression containedExpression = expression.getContainedExpression();
-        if (containedExpression instanceof PyTupleExpression ) {
-          final PyExpression[] elements = ((PySequenceExpression)containedExpression).getElements();
-          if (elements.length > myPosition) {
-            return elements[myPosition];
-          }
-        }
+        result = resolvePositional((PyParenthesizedExpression)rightExpression);
       }
       else if (rightExpression instanceof PyDictLiteralExpression) {
-        if (myChunk.getMappingKey() != null) {
-          final PyKeyValueExpression[] keyValueExpressions = ((PyDictLiteralExpression)rightExpression).getElements();
-          for (PyKeyValueExpression keyValueExpression: keyValueExpressions) {
-            final PyStringLiteralExpression key = (PyStringLiteralExpression)keyValueExpression.getKey();
-              if (key.getStringValue().equals(myChunk.getMappingKey())) {
-                return key;
-              }
+        result = resolveKeyword((PyDictLiteralExpression)rightExpression);
+      }
+    }
+    return result == null ? getElement() : result;
+  }
+
+  @Nullable
+  private PsiElement resolveKeyword(PyDictLiteralExpression rightExpression) {
+    if (myChunk.getMappingKey() != null) {
+      final PyKeyValueExpression[] keyValueExpressions = rightExpression.getElements();
+      for (PyKeyValueExpression keyValueExpression: keyValueExpressions) {
+        final PyStringLiteralExpression key = (PyStringLiteralExpression)keyValueExpression.getKey();
+          if (key.getStringValue().equals(myChunk.getMappingKey())) {
+            return key;
+          }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private PsiElement resolvePositional(PyParenthesizedExpression rightExpression) {
+    PsiElement result = null;
+
+    final PyExpression containedExpression = getContainedExpression(rightExpression);
+    if (containedExpression instanceof PyTupleExpression) {
+      final PyExpression[] elements = ((PySequenceExpression)containedExpression).getElements();
+      if (elements.length > myPosition) {
+        result = elements[myPosition];
+      }
+    }
+    else if (containedExpression instanceof PyBinaryExpression && ((PyBinaryExpression)containedExpression).isOperator("+")) {
+      result = processNotNestedBinaryExpression((PyBinaryExpression)containedExpression);
+    }
+    return result;
+  }
+
+  @Nullable
+  private PsiElement processNotNestedBinaryExpression(PyBinaryExpression containedExpression) {
+    PyExpression left = containedExpression.getLeftExpression();
+    PyExpression right = containedExpression.getRightExpression();
+    if (left instanceof PyParenthesizedExpression) {
+      PyExpression leftTuple = getContainedExpression((PyParenthesizedExpression)left);
+      if (leftTuple instanceof PyTupleExpression) {
+        PyExpression[] leftTupleElements = ((PyTupleExpression)leftTuple).getElements();
+        int leftTupleLength = leftTupleElements.length;
+        if (leftTupleLength > myPosition) {
+          return leftTupleElements[myPosition];
+        }
+        if (right instanceof PyParenthesizedExpression) {
+          PyExpression rightTuple = ((PyParenthesizedExpression)right).getContainedExpression();
+          if (rightTuple instanceof PyTupleExpression) {
+            PyExpression[] rigthTupleElements = ((PyTupleExpression)rightTuple).getElements();
+            int rightLength = rigthTupleElements.length;
+            if (leftTupleLength + rightLength > myPosition)
+              return rigthTupleElements[myPosition - leftTupleLength];
           }
         }
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static PyExpression getContainedExpression(@NotNull final PyParenthesizedExpression parenthesizedExpression) {
+    PyExpression containedExpression = parenthesizedExpression.getContainedExpression();
+    while (containedExpression instanceof PyParenthesizedExpression) {
+      containedExpression = ((PyParenthesizedExpression)containedExpression).getContainedExpression();
+    }
+    return containedExpression;
   }
 
   @Nullable

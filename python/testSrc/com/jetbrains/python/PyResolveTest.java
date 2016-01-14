@@ -659,4 +659,17 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testGlobalNotDefinedAtTopLevel() {
     assertResolvesTo(PyTargetExpression.class, "foo");
   }
+
+  //PY-2478
+  public void testPercentStringBinaryStatementArg() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PyStringLiteralExpression);
+    assertTrue(((PyStringLiteralExpression)target).getStringValue().equals("1"));
+  }
+
+  public void testPercentStringArgWithRedundantParentheses() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PyStringLiteralExpression);
+    assertTrue(((PyStringLiteralExpression)target).getStringValue().equals("1"));
+  }
 }
