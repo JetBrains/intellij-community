@@ -168,10 +168,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       int row = rows[0];
       GraphTableModel tableModel = (GraphTableModel)myGraphTable.getModel();
       VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(row, tableModel);
-      if (commitData == null) {
-        showMessage("No commits selected");
-        return;
-      }
       if (commitData instanceof LoadingDetails) {
         myLoadingPanel.startLoading();
         myCommitDetailsPanel.setData(null);

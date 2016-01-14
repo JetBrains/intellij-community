@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
@@ -176,7 +175,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private static void addAssociatedFrameworkComponent(JPanel component, JPanel panel) {
     panel.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+                                                GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
   }
 
   protected void onFrameworkStateChanged() {}

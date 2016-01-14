@@ -112,11 +112,11 @@ import java.util.List;
  */
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
-  private static final int START_ICON_AREA_WIDTH = 15;
-  private static final int FREE_PAINTERS_LEFT_AREA_WIDTH = 8;
-  private static final int FREE_PAINTERS_RIGHT_AREA_WIDTH = 5;
-  private static final int GAP_BETWEEN_ICONS = 3;
-  private static final int GAP_BETWEEN_AREAS = 5;
+  private static final int START_ICON_AREA_WIDTH = JBUI.scale(15);
+  private static final int FREE_PAINTERS_LEFT_AREA_WIDTH = JBUI.scale(8);
+  private static final int FREE_PAINTERS_RIGHT_AREA_WIDTH = JBUI.scale(5);
+  private static final int GAP_BETWEEN_ICONS = JBUI.scale(3);
+  private static final int GAP_BETWEEN_AREAS = JBUI.scale(5);
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
   public static final TIntFunction ID = new TIntFunction() {
     @Override

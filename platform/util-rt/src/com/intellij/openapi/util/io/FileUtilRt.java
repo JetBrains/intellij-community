@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.util.io;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -616,6 +617,9 @@ public class FileUtilRt {
 
   @NotNull
   public static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
+    if (length == 0) {
+      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+    }
     byte[] bytes = new byte[length];
     int count = 0;
     while (count < length) {

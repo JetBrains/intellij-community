@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,13 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import org.jdom.Element
+import org.jdom.JDOMException
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 
 class UpdatesInfo(node: Element) {
-  private val products = node.children.map { Product(it) }
+  private val products = node.getChildren("product").map { Product(it) }
 
   val productsCount: Int
     get() = products.size
@@ -34,9 +35,9 @@ class UpdatesInfo(node: Element) {
 }
 
 class Product(node: Element) {
-  val name: String = node.getAttributeValue("name")!!
+  val name: String = node.getAttributeValue("name") ?: throw JDOMException("product.name missing")
   val channels: List<UpdateChannel> = node.getChildren("channel").map { UpdateChannel(it) }
-  private val codes = node.getChildren("code").map { it.value }.toSet()
+  private val codes = node.getChildren("code").map { it.value.trim() }.toSet()
 
   fun hasCode(code: String): Boolean = codes.contains(code)
 
@@ -51,8 +52,8 @@ class UpdateChannel(node: Element) {
     const val LICENSING_PRODUCTION = "production"
   }
 
-  val id: String = node.getAttributeValue("id")!!
-  val name: String = node.getAttributeValue("name")!!
+  val id: String = node.getAttributeValue("id") ?: throw JDOMException("channel.id missing")
+  val name: String = node.getAttributeValue("name") ?: throw JDOMException("channel.name missing")
   val status: ChannelStatus = ChannelStatus.fromCode(node.getAttributeValue("status"))
   val licensing: String = node.getAttributeValue("licensing", LICENSING_PRODUCTION)
   val majorVersion: Int = node.getAttributeValue("majorVersion")?.toInt() ?: -1
@@ -69,7 +70,7 @@ class UpdateChannel(node: Element) {
 }
 
 class BuildInfo(node: Element) : Comparable<BuildInfo> {
-  val number: BuildNumber = BuildNumber.fromString(node.getAttributeValue("number")!!)
+  val number: BuildNumber = BuildNumber.fromString(node.getAttributeValue("number") ?: throw JDOMException("build.number missing"))
   val apiVersion: BuildNumber = node.getAttributeValue("apiVersion")?.let { BuildNumber.fromString(it, number.productCode) } ?: number
   val version: String = node.getAttributeValue("version") ?: ""
   val message: String = node.getChild("message")?.value ?: ""
@@ -110,13 +111,13 @@ class BuildInfo(node: Element) : Comparable<BuildInfo> {
 }
 
 class ButtonInfo(node: Element) {
-  val name: String = node.getAttributeValue("name")!!
-  val url: String = node.getAttributeValue("url")!!
+  val name: String = node.getAttributeValue("name") ?: throw JDOMException("button.name missing")
+  val url: String = node.getAttributeValue("url") ?: throw JDOMException("button.url missing")
   val isDownload: Boolean = node.getAttributeValue("download") != null  // a button marked with this attribute is hidden when a patch is available
 }
 
 class PatchInfo(node: Element) {
-  val fromBuild: BuildNumber = BuildNumber.fromString(node.getAttributeValue("from")!!)
+  val fromBuild: BuildNumber = BuildNumber.fromString(node.getAttributeValue("from") ?: throw JDOMException("patch.from missing"))
   val size: String? = node.getAttributeValue("size")
   val isAvailable: Boolean = node.getAttributeValue("exclusions")?.split(",")?.none { it.trim() == osSuffix } ?: true
 
