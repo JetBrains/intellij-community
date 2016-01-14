@@ -3189,6 +3189,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           g.setFont(myFontType.getFont());
         }
         Color currentColor = null;
+        int whiteSpaceStrokeWidth = JBUI.scale(1);
+        BasicStroke whiteSpaceStroke = new BasicStroke(whiteSpaceStrokeWidth);
+
         for (int i = 0; i < myCount; i++) {
           if (!Comparing.equal(color[i], currentColor)) {
             currentColor = color[i] != null ? color[i] : JBColor.black;
@@ -3196,7 +3199,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             g.setColor(currentColor);
           }
 
-          drawChars(g, data[i], starts[i], ends[i], x[i], y[i], whitespaceShown[i]);
+          drawChars(g, data[i], starts[i], ends[i], x[i], y[i], whitespaceShown[i], whiteSpaceStroke, whiteSpaceStrokeWidth);
           color[i] = null;
           data[i] = null;
         }
@@ -3665,7 +3668,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return true;
   }
 
-  private void drawChars(@NotNull Graphics g, CharSequence data, int start, int end, int x, int y, boolean drawWhitespace) {
+  private void drawChars(@NotNull Graphics g,
+                         CharSequence data,
+                         int start,
+                         int end,
+                         int x,
+                         int y,
+                         boolean drawWhitespace,
+                         BasicStroke stroke,
+                         int strokeWidth) {
     g.drawString(data.subSequence(start, end).toString(), x, y);
 
     if (drawWhitespace) {
@@ -3673,19 +3684,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Color oldColor = g.getColor();
       try {
         g.setColor(myScheme.getColor(EditorColors.WHITESPACES_COLOR));
+        ((Graphics2D)g).setStroke(stroke);
         final FontMetrics metrics = g.getFontMetrics();
         y -= 1;
-
-        int rectSize = JBUI.scale(1);
-        int strokeWidth = JBUI.scale(1);
-        ((Graphics2D)g).setStroke(new BasicStroke(strokeWidth));
 
         for (int i = start; i < end; i++) {
           final char c = data.charAt(i);
           final int charWidth = isOracleRetina ? GraphicsUtil.charWidth(c, g.getFont()) : metrics.charWidth(c);
 
           if (c == ' ') {
-            g.fillRect(x + (charWidth - rectSize >> 1), y - rectSize + 1, rectSize, rectSize);
+            g.fillRect(x + (charWidth - strokeWidth >> 1), y - strokeWidth + 1, strokeWidth, strokeWidth);
           }
           else if (c == IDEOGRAPHIC_SPACE) {
             final int charHeight = getCharHeight();

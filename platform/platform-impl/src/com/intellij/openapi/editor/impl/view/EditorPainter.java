@@ -330,6 +330,8 @@ class EditorPainter implements TextDrawingCallback {
     final EditorImpl.LineWhitespacePaintingStrategy whitespacePaintingStrategy = myEditor.new LineWhitespacePaintingStrategy();
     boolean paintAllSoftWraps = myEditor.getSettings().isAllSoftWrapsShown();
     int lineCount = myEditor.getVisibleLineCount();
+    final int whiteSpaceStrokeWidth = JBUI.scale(1);
+    final Stroke whiteSpaceStroke = new BasicStroke(whiteSpaceStrokeWidth);
 
     LineLayout prefixLayout = myView.getPrefixLayout();
     if (startVisualLine == 0 && prefixLayout != null) {
@@ -372,7 +374,7 @@ class EditorPainter implements TextDrawingCallback {
               whitespacePaintingStrategy.update(text, myDocument.getLineStartOffset(logicalLine), myDocument.getLineEndOffset(logicalLine));
               currentLogicalLine[0] = logicalLine;
             }
-            paintWhitespace(g, text, xStart, y, start, end, whitespacePaintingStrategy, fragment);
+            paintWhitespace(g, text, xStart, y, start, end, whitespacePaintingStrategy, fragment, whiteSpaceStroke, whiteSpaceStrokeWidth);
           }
           boolean allowBorder = fragment.getCurrentFoldRegion() != null;
           if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType(), allowBorder)) {
@@ -449,15 +451,11 @@ class EditorPainter implements TextDrawingCallback {
 
   private void paintWhitespace(Graphics2D g, CharSequence text, float x, int y, int start, int end,
                                EditorImpl.LineWhitespacePaintingStrategy whitespacePaintingStrategy,
-                               VisualLineFragmentsIterator.Fragment fragment) {
-    Color oldColor = g.getColor();
+                               VisualLineFragmentsIterator.Fragment fragment, Stroke stroke, int strokeWidth) {
     Stroke oldStroke = g.getStroke();
     try {
       g.setColor(myEditor.getColorsScheme().getColor(EditorColors.WHITESPACES_COLOR));
-
-      int strokeWidth = JBUI.scale(1);
-      g.setStroke(new BasicStroke(strokeWidth));
-      int rectSize = JBUI.scale(1);
+      g.setStroke(stroke); // applied for tab & ideographic space
 
       boolean isRtl = fragment.isRtl();
       int baseStartOffset = fragment.getStartOffset();
@@ -472,7 +470,7 @@ class EditorPainter implements TextDrawingCallback {
           int endX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i - 1 : baseStartOffset + i + 1);
 
           if (c == ' ') {
-            g.fillRect((startX + endX - rectSize) / 2, y - rectSize + 1, rectSize, rectSize);
+            g.fillRect((startX + endX - strokeWidth) / 2, y - strokeWidth + 1, strokeWidth, strokeWidth);
           }
           else if (c == '\t') {
             endX -= myView.getPlainSpaceWidth() / 4;
@@ -493,7 +491,6 @@ class EditorPainter implements TextDrawingCallback {
       }
     } finally {
       g.setStroke(oldStroke);
-      g.setColor(oldColor);
     }
   }
 
