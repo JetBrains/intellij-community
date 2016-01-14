@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.ex.DisposableIterator;
+import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -564,7 +564,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
   }
 
   @NotNull
-  private DisposableIterator<T> overlappingIterator(@NotNull final TextRangeInterval rangeInterval) {
+  private MarkupIterator<T> overlappingIterator(@NotNull final TextRangeInterval rangeInterval) {
     l.readLock().lock();
 
     try {
@@ -574,13 +574,13 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
       if (firstOverlap == null) {
         l.readLock().unlock();
         //noinspection unchecked
-        return DisposableIterator.EMPTY;
+        return MarkupIterator.EMPTY;
       }
       final int firstOverlapDelta = firstOverlap.computeDeltaUpToRoot();
       final int firstOverlapStart = firstOverlap.intervalStart() + firstOverlapDelta;
       final int modCountBefore = modCount;
 
-      return new DisposableIterator<T>() {
+      return new MarkupIterator<T>() {
         private IntervalNode<T> currentNode = firstOverlap;
         private int deltaUpToRootExclusive = firstOverlapDelta-firstOverlap.delta;
         private int indexInCurrentList;
@@ -1365,21 +1365,21 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
 
   // combines iterators for two trees in one using specified comparator
   @NotNull
-  static <T extends MutableInterval> DisposableIterator<T> mergingOverlappingIterator(@NotNull IntervalTreeImpl<T> tree1,
-                                                                                      @NotNull TextRangeInterval tree1Range,
-                                                                                      @NotNull IntervalTreeImpl<T> tree2,
-                                                                                      @NotNull TextRangeInterval tree2Range,
-                                                                                      @NotNull Comparator<? super T> comparator) {
-    DisposableIterator<T> exact = tree1.overlappingIterator(tree1Range);
-    DisposableIterator<T> lines = tree2.overlappingIterator(tree2Range);
+  static <T extends MutableInterval> MarkupIterator<T> mergingOverlappingIterator(@NotNull IntervalTreeImpl<T> tree1,
+                                                                                  @NotNull TextRangeInterval tree1Range,
+                                                                                  @NotNull IntervalTreeImpl<T> tree2,
+                                                                                  @NotNull TextRangeInterval tree2Range,
+                                                                                  @NotNull Comparator<? super T> comparator) {
+    MarkupIterator<T> exact = tree1.overlappingIterator(tree1Range);
+    MarkupIterator<T> lines = tree2.overlappingIterator(tree2Range);
     return mergeIterators(exact, lines, comparator);
   }
 
   @NotNull
-  static <T extends MutableInterval> DisposableIterator<T> mergeIterators(@NotNull final DisposableIterator<T> iterator1,
-                                                                          @NotNull final DisposableIterator<T> iterator2,
-                                                                          @NotNull final Comparator<? super T> comparator) {
-    return new DisposableIterator<T>() {
+  static <T extends MutableInterval> MarkupIterator<T> mergeIterators(@NotNull final MarkupIterator<T> iterator1,
+                                                                      @NotNull final MarkupIterator<T> iterator2,
+                                                                      @NotNull final Comparator<? super T> comparator) {
+    return new MarkupIterator<T>() {
       @Override
       public void dispose() {
         iterator1.dispose();
@@ -1397,7 +1397,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
       }
 
       @NotNull
-      private DisposableIterator<T> choose() {
+      private MarkupIterator<T> choose() {
         T t1 = iterator1.hasNext() ? iterator1.peek() : null;
         T t2 = iterator2.hasNext() ? iterator2.peek() : null;
         if (t1 == null) {

@@ -58,7 +58,7 @@ public interface MarkupModelEx extends MarkupModel {
   boolean processRangeHighlightersOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
 
   @NotNull
-  DisposableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
+  MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
 
   // optimization: creates highlighter and fires only one event: highlighterCreated
   @NotNull

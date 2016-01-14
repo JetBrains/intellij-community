@@ -22,10 +22,10 @@ import java.util.NoSuchElementException;
 /**
  * An iterator you must to {@link #dispose()} after use
  */
-public interface DisposableIterator<T> extends PeekableIterator<T> {
+public interface MarkupIterator<T> extends PeekableIterator<T> {
   void dispose();
 
-  DisposableIterator EMPTY = new DisposableIterator() {
+  MarkupIterator EMPTY = new MarkupIterator() {
     @Override
     public void dispose() {
     }

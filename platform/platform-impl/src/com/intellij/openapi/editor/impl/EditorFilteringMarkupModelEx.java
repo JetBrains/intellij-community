@@ -17,7 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.DisposableIterator;
+import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -78,7 +78,7 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
 
   @Override
   @NotNull
-  public DisposableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
+  public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
     return new MyFilteringIterator(myDelegate.overlappingIterator(startOffset, endOffset));
   }
 
@@ -94,10 +94,10 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   }
 
   private class MyFilteringIterator extends FilteringIterator<RangeHighlighterEx, RangeHighlighterEx>
-    implements DisposableIterator<RangeHighlighterEx> {
-    private DisposableIterator<RangeHighlighterEx> myDelegate;
+    implements MarkupIterator<RangeHighlighterEx> {
+    private MarkupIterator<RangeHighlighterEx> myDelegate;
 
-    public MyFilteringIterator(@NotNull DisposableIterator<RangeHighlighterEx> delegate) {
+    public MyFilteringIterator(@NotNull MarkupIterator<RangeHighlighterEx> delegate) {
       super(delegate, IS_AVAILABLE);
       myDelegate = delegate;
     }
