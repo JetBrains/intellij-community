@@ -31,6 +31,8 @@ import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
 
+import static com.intellij.psi.impl.compiled.ClsFileImpl.EMPTY_ATTRIBUTES;
+
 /**
  * @author max
  */
@@ -60,7 +62,8 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
 
   public static boolean isInnerClass(@NotNull VirtualFile file) {
     String name = file.getNameWithoutExtension();
-    return name.indexOf('$') >= 0 && detectInnerClass(file);
+    int p = name.lastIndexOf('$', name.length() - 2);
+    return p > 0 && detectInnerClass(file);
   }
 
   private static boolean detectInnerClass(VirtualFile file) {
@@ -75,22 +78,15 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
         @Override
         public void visitOuterClass(String owner, String name, String desc) {
           ref.set(Boolean.TRUE);
-          throw new ProcessCanceledException();
         }
 
         @Override
         public void visitInnerClass(String name, String outer, String inner, int access) {
           if (className.equals(name)) {
             ref.set(Boolean.TRUE);
-            throw new ProcessCanceledException();
           }
         }
-
-        @Override
-        public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-          throw new ProcessCanceledException();
-        }
-      }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+      }, EMPTY_ATTRIBUTES, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
     }
     catch (ProcessCanceledException ignored) { }
     catch (Exception e) {
