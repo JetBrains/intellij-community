@@ -164,6 +164,8 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
   private Editor createEditor(){
     Editor editor = EditorFactory.getInstance().createEditor(myDocument, myProject);
     ((EditorMarkupModel) editor.getMarkupModel()).setErrorStripeVisible(true);
+    ((EditorEx) editor).getGutterComponentEx().setForceShowRightFreePaintersArea(true);
+
     EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
     ((EditorEx) editor).setHighlighter(highlighter);
     ((EditorEx) editor).setFile(myFile);

@@ -58,10 +58,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Function;
-import com.intellij.util.IconUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -146,7 +143,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private TIntObjectHashMap<Color> myTextFgColors = new TIntObjectHashMap<Color>();
   private boolean myPaintBackground = true;
   private boolean myLeftFreePaintersAreaShown;
-  private boolean myRightFreePaintersAreaShown = true;
+  private boolean myRightFreePaintersAreaShown;
+  private boolean myForceLeftFreePaintersAreaShown = false;
+  private boolean myForceRightFreePaintersAreaShown = false;
   private int myLastNonDumbModeIconAreaWidth = 0;
 
   @SuppressWarnings("unchecked")
@@ -717,18 +716,19 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void calcLineMarkerAreaWidth() {
     myLineToGutterRenderers = new TIntObjectHashMap<List<GutterMark>>();
-    myLeftFreePaintersAreaShown = false;
+    myLeftFreePaintersAreaShown = myForceLeftFreePaintersAreaShown;
+    myRightFreePaintersAreaShown = myForceRightFreePaintersAreaShown;
 
     processRangeHighlighters(0, myEditor.getDocument().getTextLength(), new RangeHighlighterProcessor() {
       @Override
       public void process(@NotNull RangeHighlighter highlighter) {
         LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
-        if (lineMarkerRenderer instanceof LineMarkerRendererEx && 
-            ((LineMarkerRendererEx)lineMarkerRenderer).getPosition() == LineMarkerRendererEx.Position.LEFT && 
-            isLineMarkerVisible(highlighter)) {
-          myLeftFreePaintersAreaShown = true;
+        if (lineMarkerRenderer != null) {
+          LineMarkerRendererEx.Position position = getLineMarkerPosition(lineMarkerRenderer);
+          if (position == LineMarkerRendererEx.Position.LEFT && isLineMarkerVisible(highlighter)) myLeftFreePaintersAreaShown = true;
+          if (position == LineMarkerRendererEx.Position.RIGHT && isLineMarkerVisible(highlighter)) myRightFreePaintersAreaShown = true;
         }
-        
+
         GutterMark renderer = highlighter.getGutterIconRenderer();
         if (renderer == null) {
           return;
@@ -871,13 +871,29 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       endY += myEditor.getLineHeight();
     }
 
-    LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
-    boolean leftPosition = renderer instanceof LineMarkerRendererEx && 
-                           ((LineMarkerRendererEx)renderer).getPosition() == LineMarkerRendererEx.Position.LEFT;
+    LineMarkerRenderer renderer = ObjectUtils.assertNotNull(highlighter.getLineMarkerRenderer());
+    LineMarkerRendererEx.Position position = getLineMarkerPosition(renderer);
+
+    int w;
+    int x;
+    switch (position) {
+      case LEFT:
+        w = getLeftFreePaintersAreaWidth();
+        x = getLeftFreePaintersAreaOffset();
+        break;
+      case RIGHT:
+        w = getRightFreePaintersAreaWidth();
+        x = getLineMarkerFreePaintersAreaOffset() - 1;
+        break;
+      case CUSTOM:
+        w = getWidth();
+        x = 0;
+        break;
+      default:
+        throw new IllegalArgumentException(position.name());
+    }
 
     int height = endY - startY;
-    int w = leftPosition ? getLeftFreePaintersAreaWidth() : getRightFreePaintersAreaWidth();
-    int x = leftPosition ? getLeftFreePaintersAreaOffset() : getLineMarkerFreePaintersAreaOffset() - 1;
     return new Rectangle(x, startY, w, height);
   }
 
@@ -1685,8 +1701,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Override
-  public void setShowRightFreePaintersArea(boolean value) {
-    myRightFreePaintersAreaShown = value;
+  public void setForceShowLeftFreePaintersArea(boolean value) {
+    myForceLeftFreePaintersAreaShown = value;
+  }
+
+  @Override
+  public void setForceShowRightFreePaintersArea(boolean value) {
+    myForceRightFreePaintersAreaShown = value;
   }
 
   private void invokePopup(MouseEvent e) {
@@ -1806,6 +1827,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Nullable
   private GutterIconRenderer getGutterRenderer(final MouseEvent e) {
     return (GutterIconRenderer)getGutterRenderer(e.getPoint());
+  }
+
+  @NotNull
+  private static LineMarkerRendererEx.Position getLineMarkerPosition(@NotNull LineMarkerRenderer renderer) {
+    if (renderer instanceof LineMarkerRendererEx) {
+      return ((LineMarkerRendererEx)renderer).getPosition();
+    }
+    return LineMarkerRendererEx.Position.RIGHT;
   }
 
   public int convertX(int x) {
