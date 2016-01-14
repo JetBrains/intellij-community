@@ -27,7 +27,6 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -91,14 +90,10 @@ public class GeneralCommandLine implements UserDataHolder {
    */
   public enum ParentEnvironmentType {NONE, SYSTEM, CONSOLE}
 
-  // todo revise usages, then set to ParentEnvironmentType.CONSOLE and inline
-  private static final ParentEnvironmentType defaultParentEnvironmentType =
-    PlatformUtils.isAppCode() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.CONSOLE;
-
   private String myExePath;
   private File myWorkDirectory;
   private final Map<String, String> myEnvParams = new MyTHashMap();
-  private ParentEnvironmentType myParentEnvironmentType = defaultParentEnvironmentType;
+  private ParentEnvironmentType myParentEnvironmentType = ParentEnvironmentType.CONSOLE;
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myRedirectErrorStream;
@@ -187,13 +182,13 @@ public class GeneralCommandLine implements UserDataHolder {
   /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 17) */
   @SuppressWarnings("unused")
   public GeneralCommandLine withPassParentEnvironment(boolean passParentEnvironment) {
-    return withParentEnvironmentType(passParentEnvironment ? defaultParentEnvironmentType : ParentEnvironmentType.NONE);
+    return withParentEnvironmentType(passParentEnvironment ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
   }
 
   /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 17) */
   @SuppressWarnings("unused")
   public void setPassParentEnvironment(boolean passParentEnvironment) {
-    withParentEnvironmentType(passParentEnvironment ? defaultParentEnvironmentType : ParentEnvironmentType.NONE);
+    withParentEnvironmentType(passParentEnvironment ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
   }
 
   @NotNull
