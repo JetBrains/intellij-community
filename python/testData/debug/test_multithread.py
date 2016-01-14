@@ -13,6 +13,7 @@ def foo(x):
     y = x + 1
     print("Y=%d"%y)
 
+    global t
     t = threading.Thread(target=bar, args=(y,))
     t.start()
 
