@@ -450,35 +450,50 @@ class EditorPainter implements TextDrawingCallback {
   private void paintWhitespace(Graphics2D g, CharSequence text, float x, int y, int start, int end,
                                EditorImpl.LineWhitespacePaintingStrategy whitespacePaintingStrategy,
                                VisualLineFragmentsIterator.Fragment fragment) {
-    g.setColor(myEditor.getColorsScheme().getColor(EditorColors.WHITESPACES_COLOR));
-    boolean isRtl = fragment.isRtl();
-    int baseStartOffset = fragment.getStartOffset();
-    int startOffset = isRtl ? baseStartOffset - start : baseStartOffset + start;
-    for (int i = start; i < end; i++) {
-      int charOffset = isRtl ? baseStartOffset - i - 1 : baseStartOffset + i;
-      char c = text.charAt(charOffset);
-      if (" \t\u3000".indexOf(c) >= 0 && whitespacePaintingStrategy.showWhitespaceAtOffset(charOffset)) {
-        int startX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i : baseStartOffset + i);
-        int endX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i - 1 : baseStartOffset + i + 1);
+    Color oldColor = g.getColor();
+    Stroke oldStroke = g.getStroke();
+    try {
+      g.setColor(myEditor.getColorsScheme().getColor(EditorColors.WHITESPACES_COLOR));
 
-        if (c == ' ') {
-          g.fillRect((startX + endX) / 2, y, 1, 1);
-        }
-        else if (c == '\t') {
-          endX -= myView.getPlainSpaceWidth() / 4;
-          int height = myView.getCharHeight();
-          int halfHeight = height / 2;
-          int mid = y - halfHeight;
-          int top = y - height;
-          UIUtil.drawLine(g, startX, mid, endX, mid);
-          UIUtil.drawLine(g, endX, y, endX, top);
-          g.fillPolygon(new int[]{endX - halfHeight, endX - halfHeight, endX}, new int[]{y, y - height, y - halfHeight}, 3);
-        }
-        else if (c == '\u3000') { // ideographic space
-          final int charHeight = myView.getCharHeight();
-          g.drawRect(startX + 2, y - charHeight, endX - startX - 4, charHeight);
+      int strokeWidth = JBUI.scale(1);
+      g.setStroke(new BasicStroke(strokeWidth));
+      int rectSize = JBUI.scale(1);
+
+      boolean isRtl = fragment.isRtl();
+      int baseStartOffset = fragment.getStartOffset();
+      int startOffset = isRtl ? baseStartOffset - start : baseStartOffset + start;
+      y -= 1;
+
+      for (int i = start; i < end; i++) {
+        int charOffset = isRtl ? baseStartOffset - i - 1 : baseStartOffset + i;
+        char c = text.charAt(charOffset);
+        if (" \t\u3000".indexOf(c) >= 0 && whitespacePaintingStrategy.showWhitespaceAtOffset(charOffset)) {
+          int startX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i : baseStartOffset + i);
+          int endX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i - 1 : baseStartOffset + i + 1);
+
+          if (c == ' ') {
+            g.fillRect((startX + endX - rectSize) / 2, y - rectSize + 1, rectSize, rectSize);
+          }
+          else if (c == '\t') {
+            endX -= myView.getPlainSpaceWidth() / 4;
+            int height = myView.getCharHeight();
+            int halfHeight = height / 2;
+            int mid = y - halfHeight;
+            int top = y - height;
+            UIUtil.drawLine(g, startX, mid, endX, mid);
+            UIUtil.drawLine(g, endX, y, endX, top);
+            g.fillPolygon(new int[]{endX - halfHeight, endX - halfHeight, endX}, new int[]{y, y - height, y - halfHeight}, 3);
+          }
+          else if (c == '\u3000') { // ideographic space
+            int charHeight = myView.getCharHeight();
+            g.drawRect(startX + JBUI.scale(2) + strokeWidth/2, y - charHeight + strokeWidth/2,
+                       endX - startX - JBUI.scale(4) - (strokeWidth - 1), charHeight - (strokeWidth - 1));
+          }
         }
       }
+    } finally {
+      g.setStroke(oldStroke);
+      g.setColor(oldColor);
     }
   }
 

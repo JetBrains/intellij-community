@@ -100,6 +100,8 @@ import javax.swing.border.Border;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Graphics;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
@@ -3667,24 +3669,36 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     g.drawString(data.subSequence(start, end).toString(), x, y);
 
     if (drawWhitespace) {
+      Stroke oldStroke = ((Graphics2D)g).getStroke();
       Color oldColor = g.getColor();
-      g.setColor(myScheme.getColor(EditorColors.WHITESPACES_COLOR));
-      final FontMetrics metrics = g.getFontMetrics();
+      try {
+        g.setColor(myScheme.getColor(EditorColors.WHITESPACES_COLOR));
+        final FontMetrics metrics = g.getFontMetrics();
+        y -= 1;
 
-      for (int i = start; i < end; i++) {
-        final char c = data.charAt(i);
-        final int charWidth = isOracleRetina ? GraphicsUtil.charWidth(c, g.getFont()) : metrics.charWidth(c);
+        int rectSize = JBUI.scale(1);
+        int strokeWidth = JBUI.scale(1);
+        ((Graphics2D)g).setStroke(new BasicStroke(strokeWidth));
 
-        if (c == ' ') {
-          g.fillRect(x + (charWidth >> 1), y, 1, 1);
-        } else if (c == IDEOGRAPHIC_SPACE) {
-          final int charHeight = getCharHeight();
-          g.drawRect(x + 2, y - charHeight, charWidth - 4, charHeight);
+        for (int i = start; i < end; i++) {
+          final char c = data.charAt(i);
+          final int charWidth = isOracleRetina ? GraphicsUtil.charWidth(c, g.getFont()) : metrics.charWidth(c);
+
+          if (c == ' ') {
+            g.fillRect(x + (charWidth - rectSize >> 1), y - rectSize + 1, rectSize, rectSize);
+          }
+          else if (c == IDEOGRAPHIC_SPACE) {
+            final int charHeight = getCharHeight();
+            g.drawRect(x + JBUI.scale(2) + strokeWidth/2, y - charHeight + strokeWidth/2,
+                       charWidth - JBUI.scale(4) - (strokeWidth - 1), charHeight - (strokeWidth - 1));
+          }
+
+          x += charWidth;
         }
-
-        x += charWidth;
+      } finally {
+        g.setColor(oldColor);
+        ((Graphics2D)g).setStroke(oldStroke);
       }
-      g.setColor(oldColor);
     }
   }
 
