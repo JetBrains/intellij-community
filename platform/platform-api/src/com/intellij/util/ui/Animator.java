@@ -106,7 +106,9 @@ public abstract class Animator implements Disposable {
   }
 
   private void animationDone() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    // NOT ApplicationManager.getApplication().assertIsDispatchThread() as Application may not be available when e.g. importing settings
+    assert SwingUtilities.isEventDispatchThread();
+
     stopTicker();
     paintCycleEnd();
   }
