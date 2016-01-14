@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,13 +43,14 @@ public class ProgramParametersConfigurator {
 
     parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
 
-    parameters.setupEnvs(configuration.getEnvs(), configuration.isPassParentEnvs());
-
-    Map<String, String> expanded = new HashMap<String, String>();
-    for (Map.Entry<String, String> each : parameters.getEnv().entrySet()) {
-      expanded.put(each.getKey(), expandPath(each.getValue(), module, project));
+    Map<String, String> envs = new HashMap<String, String>(configuration.getEnvs());
+    EnvironmentUtil.inlineParentOccurrences(envs);
+    for (Map.Entry<String, String> each : envs.entrySet()) {
+      each.setValue(expandPath(each.getValue(), module, project));
     }
-    parameters.setEnv(expanded);
+    
+    parameters.setEnv(envs);
+    parameters.setPassParentEnvs(configuration.isPassParentEnvs());
   }
 
   @Nullable

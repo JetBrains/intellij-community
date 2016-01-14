@@ -189,7 +189,6 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createJavaParameters();
-    javaParameters.setupEnvs(getConfiguration().getPersistantData().getEnvs(), getConfiguration().getPersistantData().PASS_PARENT_ENVS);
     javaParameters.setMainClass("org.testng.RemoteTestNGStarter");
 
     try {
