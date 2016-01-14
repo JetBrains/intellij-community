@@ -38,7 +38,7 @@ import static com.intellij.psi.compiled.ClassFileDecompilers.Full;
 public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClassFileStubBuilder");
 
-  public static final int STUB_VERSION = 12;
+  public static final int STUB_VERSION = 13;
 
   @Override
   public boolean acceptsFile(@NotNull VirtualFile file) {
@@ -59,7 +59,8 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
         }
       }
       catch (ClsFormatException e) {
-        LOG.debug(e);
+        if (LOG.isDebugEnabled()) LOG.debug(file.getPath(), e);
+        else LOG.info(file.getPath() + ": " + e.getMessage());
       }
 
       try {
@@ -70,7 +71,8 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
         return stub;
       }
       catch (ClsFormatException e) {
-        LOG.debug(e);
+        if (LOG.isDebugEnabled()) LOG.debug(file.getPath(), e);
+        else LOG.info(file.getPath() + ": " + e.getMessage());
       }
     }
     finally {
