@@ -50,7 +50,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         return assignmentCompatible;
       }
     
-      final PsiType exprType = myExpression.getType();
+      PsiType exprType = myExpression.getType();
 
       if (exprType instanceof PsiLambdaParameterType) {
         return false;
@@ -67,6 +67,10 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       }
 
       if (exprType != null && exprType != PsiType.NULL) {
+        if (exprType instanceof PsiDisjunctionType) {
+          exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
+        }
+
         constraints.add(new TypeCompatibilityConstraint(myT, exprType));
       }
       return true;
