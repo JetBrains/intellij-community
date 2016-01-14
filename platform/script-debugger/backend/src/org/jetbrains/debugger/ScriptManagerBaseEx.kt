@@ -48,5 +48,5 @@ abstract class ScriptManagerBaseEx<SCRIPT : ScriptBase> : ScriptManagerBase<SCRI
     return null
   }
 
-  protected open fun rawUrlToOurUrl(rawUrl: String) = Urls.parseEncoded(rawUrl)!!
+  open fun rawUrlToOurUrl(rawUrl: String) = Urls.parseEncoded(rawUrl)!!
 }
