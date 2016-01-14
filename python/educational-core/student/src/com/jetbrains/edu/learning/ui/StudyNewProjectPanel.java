@@ -75,6 +75,7 @@ public class StudyNewProjectPanel{
     }
     initListeners();
     myRefreshButton.setVisible(true);
+    myRefreshButton.putClientProperty("JButton.buttonType", "null");
     myRefreshButton.setIcon(AllIcons.Actions.Refresh);
 
     myLabel.setPreferredSize(new JLabel("Project name").getPreferredSize());
@@ -82,6 +83,7 @@ public class StudyNewProjectPanel{
   }
 
   private void setupBrowseButton() {
+    myBrowseButton.putClientProperty("JButton.buttonType", "null");
     myBrowseButton.setIcon(InteractiveLearningIcons.InterpreterGear);
     final FileChooserDescriptor fileChooser = new FileChooserDescriptor(true, false, false, true, false, false) {
       @Override
