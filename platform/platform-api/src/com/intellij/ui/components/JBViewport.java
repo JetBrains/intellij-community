@@ -201,6 +201,33 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     return size;
   }
 
+  @Override
+  public Point getViewPosition() {
+    return updateViewPosition(super.getViewPosition(), false);
+  }
+
+  @Override
+  public void setViewPosition(Point p) {
+    super.setViewPosition(updateViewPosition(p, true));
+  }
+
+  private Point updateViewPosition(Point p, boolean minus) {
+    JScrollPane pane = getScrollPane(this);
+    if (pane != null) {
+      JScrollBar vsb = pane.getVerticalScrollBar();
+      if (Alignment.LEFT == getAlignment(vsb)) {
+        int width = vsb.getWidth();
+        p.x += minus ? -width : width;
+      }
+      JScrollBar hsb = pane.getHorizontalScrollBar();
+      if (Alignment.TOP == getAlignment(hsb)) {
+        int height = hsb.getHeight();
+        p.y += minus ? -height : height;
+      }
+    }
+    return p;
+  }
+
   /**
    * Returns the alignment of the specified scroll bar
    * if and only if the specified scroll bar
@@ -256,7 +283,6 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       }
     }
     else {
-      // NOT SUPPORTED YET
       viewPosition.x = maxX < 0 ? maxX : Math.max(0, Math.min(maxX, viewPosition.x));
     }
     // If the new viewport size would leave empty space below the view,
@@ -278,11 +304,11 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     if (!(view instanceof TypingTarget)) {
       if (ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER == pane.getHorizontalScrollBarPolicy()) {
         viewPosition.x = 0;
-        viewSize.width = actualSize.width;
+        viewSize.width = extentSize.width;
       }
       if (ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER == pane.getVerticalScrollBarPolicy()) {
         viewPosition.y = 0;
-        viewSize.height = actualSize.height;
+        viewSize.height = extentSize.height;
       }
     }
     viewport.setViewPosition(viewPosition);
