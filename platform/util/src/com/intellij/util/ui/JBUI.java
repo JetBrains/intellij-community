@@ -101,7 +101,7 @@ public class JBUI {
   }
 
   public static int scale(int i) {
-    return (int)(SCALE_FACTOR * i);
+    return Math.round(SCALE_FACTOR * i);
   }
 
   public static int scaleFontSize(int fontSize) {

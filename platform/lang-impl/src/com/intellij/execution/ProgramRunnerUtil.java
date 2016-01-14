@@ -60,6 +60,7 @@ public class ProgramRunnerUtil {
     }
 
     RunnerAndConfigurationSettings runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
+    final Project project = environment.getProject();
     if (runnerAndConfigurationSettings != null) {
       if (!ExecutionTargetManager.canRun(environment)) {
         ExecutionUtil.handleExecutionError(environment, new ExecutionException(
@@ -67,14 +68,15 @@ public class ProgramRunnerUtil {
         return;
       }
 
-      if (!RunManagerImpl.canRunConfiguration(environment) || (showSettings && runnerAndConfigurationSettings.isEditBeforeRun())) {
+      if ((!RunManagerImpl.canRunConfiguration(environment) || (showSettings && runnerAndConfigurationSettings.isEditBeforeRun())) &&
+          !DumbService.isDumb(project)) {
         if (!RunDialog.editConfiguration(environment, "Edit configuration")) {
           return;
         }
 
         while (!RunManagerImpl.canRunConfiguration(environment)) {
           if (Messages.YES == Messages
-            .showYesNoDialog(environment.getProject(), "Configuration is still incorrect. Do you want to edit it again?", "Change Configuration Settings",
+            .showYesNoDialog(project, "Configuration is still incorrect. Do you want to edit it again?", "Change Configuration Settings",
                              "Edit", "Continue Anyway", Messages.getErrorIcon())) {
             if (!RunDialog.editConfiguration(environment, "Edit configuration")) {
               return;
@@ -96,7 +98,6 @@ public class ProgramRunnerUtil {
       if (assignNewId) {
         environment.assignNewExecutionId();
       }
-      final Project project = environment.getProject();
       if (DumbService.isDumb(project) && Registry.is("dumb.aware.run.configurations")) {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
@@ -130,7 +131,7 @@ public class ProgramRunnerUtil {
       if (name == null) {
         name = "<Unknown>";
       }
-      ExecutionUtil.handleExecutionError(environment.getProject(), environment.getExecutor().getToolWindowId(), name, e);
+      ExecutionUtil.handleExecutionError(project, environment.getExecutor().getToolWindowId(), name, e);
     }
   }
 
