@@ -15,10 +15,7 @@
  */
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -43,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
@@ -224,6 +223,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
           myFilterModel.setFilter(null);
         }
       };
+      textFilter.setPreferredSize(new Dimension(textFilter.getPreferredSize().width, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height));
       textFilter.setText(myFilterModel.getText());
       textFilter.getTextEditor().addActionListener(new ActionListener() {
         @Override
@@ -243,6 +243,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
           }
         }
       });
+      textFilter.setBorder(IdeBorderFactory.createEmptyBorder());
       return textFilter;
     }
 
