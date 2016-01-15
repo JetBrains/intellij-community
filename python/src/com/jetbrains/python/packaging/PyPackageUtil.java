@@ -37,7 +37,8 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.remote.PyCredentialsContribution;
+import com.jetbrains.python.sdk.CredentialsTypeExChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,6 +195,11 @@ public class PyPackageUtil {
   }
 
   public static boolean packageManagementEnabled(@Nullable Sdk sdk) {
-    return !PythonSdkType.isDocker(sdk);
+    return new CredentialsTypeExChecker() {
+      @Override
+      protected boolean checkLanguageContribution(PyCredentialsContribution languageContribution) {
+        return languageContribution.isPackageManagementEnabled();
+      }
+    }.check(sdk);
   }
 }

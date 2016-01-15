@@ -18,11 +18,6 @@ package com.intellij.remote;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.remote.ext.*;
-import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author traff
@@ -31,16 +26,13 @@ public abstract class CredentialsType<T> {
 
   public static final String VAGRANT_PREFIX = "vagrant://";
   public static final String SFTP_DEPLOYMENT_PREFIX = "sftp://";
-  public static final String DOCKER_PREFIX = "docker://";
-
 
   public static final Key<VagrantBasedCredentialsHolder> VAGRANT_BASED_CREDENTIALS = Key.create("VAGRANT_BASED_CREDENTIALS");
   public static final Key<WebDeploymentCredentialsHolder> WEB_DEPLOYMENT_BASED_CREDENTIALS = Key.create("WEB_DEPLOYMENT_BASED_CREDENTIALS");
   public static final Key<RemoteCredentialsHolder> PLAIN_SSH_CREDENTIALS = Key.create("PLAIN_SSH_CREDENTIALS");
-  public static final Key<DockerCredentialsHolder> DOCKER_CREDENTIALS = Key.create("DOCKER_CREDENTIALS");
 
   public static final CredentialsType<RemoteCredentialsHolder> SSH_HOST
-    = new CredentialsType<RemoteCredentialsHolder>("SSH Credentials") {
+    = new CredentialsType<RemoteCredentialsHolder>("SSH Credentials", RemoteCredentialsHolder.SSH_PREFIX) {
 
     @Override
     public Key<RemoteCredentialsHolder> getCredentialsKey() {
@@ -53,17 +45,12 @@ public abstract class CredentialsType<T> {
     }
 
     @Override
-    public String getPrefix() {
-      return RemoteCredentialsHolder.SSH_PREFIX;
-    }
-
-    @Override
     public RemoteCredentialsHolder createCredentials() {
       return new RemoteCredentialsHolder();
     }
   };
   public static final CredentialsType<VagrantBasedCredentialsHolder> VAGRANT
-    = new CredentialsType<VagrantBasedCredentialsHolder>("Vagrant") {
+    = new CredentialsType<VagrantBasedCredentialsHolder>("Vagrant", VAGRANT_PREFIX) {
 
     @Override
     public Key<VagrantBasedCredentialsHolder> getCredentialsKey() {
@@ -76,18 +63,13 @@ public abstract class CredentialsType<T> {
     }
 
     @Override
-    public String getPrefix() {
-      return VAGRANT_PREFIX;
-    }
-
-    @Override
     public VagrantBasedCredentialsHolder createCredentials() {
       return new VagrantBasedCredentialsHolder();
     }
   };
 
   public static final CredentialsType<WebDeploymentCredentialsHolder> WEB_DEPLOYMENT
-    = new CredentialsType<WebDeploymentCredentialsHolder>("Web Deployment") {
+    = new CredentialsType<WebDeploymentCredentialsHolder>("Web Deployment", SFTP_DEPLOYMENT_PREFIX) {
 
     @Override
     public Key<WebDeploymentCredentialsHolder> getCredentialsKey() {
@@ -100,52 +82,17 @@ public abstract class CredentialsType<T> {
     }
 
     @Override
-    public String getPrefix() {
-      return SFTP_DEPLOYMENT_PREFIX;
-    }
-
-    @Override
     public WebDeploymentCredentialsHolder createCredentials() {
       return new WebDeploymentCredentialsHolder();
     }
   };
 
-  // TODO: contribute
-  public static final CredentialsType<DockerCredentialsHolder> DOCKER
-    = new CredentialsType<DockerCredentialsHolder>("Docker") {
-
-    @Override
-    public Key<DockerCredentialsHolder> getCredentialsKey() {
-      return DOCKER_CREDENTIALS;
-    }
-
-    @Override
-    public RemoteCredentialsHandler getHandler(DockerCredentialsHolder credentials) {
-      return new DockerCredentialsHandler(credentials);
-    }
-
-    @Override
-    public String getPrefix() {
-      return DOCKER_PREFIX;
-    }
-
-    @Override
-    public DockerCredentialsHolder createCredentials() {
-      return new DockerCredentialsHolder();
-    }
-  };
-
-  public static final List<CredentialsType> TYPES = Arrays.<CredentialsType>asList(
-    SSH_HOST,
-    VAGRANT,
-    WEB_DEPLOYMENT,
-    DOCKER);
-
-
   private final String myName;
+  private final String myPrefix;
 
-  protected CredentialsType(String name) {
+  protected CredentialsType(String name, String prefix) {
     myName = name;
+    myPrefix = prefix;
   }
 
   public String getName() {
@@ -164,19 +111,11 @@ public abstract class CredentialsType<T> {
 
   public abstract RemoteCredentialsHandler getHandler(T credentials);
 
-  public abstract String getPrefix();
+  public boolean hasPrefix(String path) {
+    return path.startsWith(myPrefix);
+  }
 
   public abstract T createCredentials();
-
-  public static void loadCredentials(String interpreterPath, @Nullable Element element, RemoteSdkAdditionalData data) {
-    for (CredentialsType type : TYPES) {
-      if (interpreterPath.startsWith(type.getPrefix())) {
-        Object credentials = type.createCredentials();
-        type.getHandler(credentials).load(element);
-        data.setCredentials(type.getCredentialsKey(), credentials);
-      }
-    }
-  }
 
   public void saveCredentials(RemoteSdkAdditionalData data, CredentialsCase... cases) {
     for (CredentialsCase credentialsCase : cases) {

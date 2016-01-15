@@ -15,18 +15,19 @@
  */
 package com.intellij.remote.ext;
 
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.ui.ValidationInfo;
 
-// TODO: (next) rename to wrapper?
-public interface RemoteCredentialsHandler {
+import javax.swing.*;
 
-  String getId();
+public interface CredentialsEditor<T> {
 
-  void save(@NotNull Element rootElement);
+  JPanel getMainPanel();
 
-  String getPresentableDetails(String interpreterPath);
+  void onSelected();
 
-  void load(@Nullable Element rootElement);
+  ValidationInfo validate();
+
+  void saveCredentials(T credentials);
+
+  void init(T credentials);
 }

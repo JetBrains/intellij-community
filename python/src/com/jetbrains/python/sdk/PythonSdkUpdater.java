@@ -44,6 +44,7 @@ import com.intellij.util.concurrency.BlockingSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
@@ -156,7 +157,13 @@ public class PythonSdkUpdater implements StartupActivity {
                   updateRemoteSdkPaths(sdk);
                 }
                 catch (InvalidSdkException e) {
-                  if (PythonSdkType.isVagrant(sdk) || PythonSdkType.isDocker(sdk)) {
+                  if (PythonSdkType.isVagrant(sdk)
+                      || new CredentialsTypeExChecker() {
+                    @Override
+                    protected boolean checkLanguageContribution(PyCredentialsContribution languageContribution) {
+                      return languageContribution.shouldNotifySdkSkeletonFail();
+                    }
+                  }.check(sdk)) {
                     PythonSdkType.notifyRemoteSdkSkeletonsFail(e, new Runnable() {
                       @Override
                       public void run() {

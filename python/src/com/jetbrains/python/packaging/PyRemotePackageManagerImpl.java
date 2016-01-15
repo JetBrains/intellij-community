@@ -24,7 +24,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.remote.*;
+import com.intellij.remote.RemoteFile;
+import com.intellij.remote.RemoteSdkAdditionalData;
+import com.intellij.remote.RemoteSdkCredentials;
+import com.intellij.remote.VagrantNotStartedException;
+import com.intellij.remote.ext.CaseCollector;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -58,7 +62,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
       final PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase) sdkData;
       try {
         String helpersPath;
-        if (remoteSdkData.connectionCredentials().getRemoteConnectionType() != CredentialsType.DOCKER) {
+        if (CaseCollector.useRemoteCredentials(remoteSdkData)) {
           final RemoteSdkCredentials remoteSdkCredentials = remoteSdkData.getRemoteSdkCredentials(false);
           helpersPath = remoteSdkCredentials.getHelpersPath();
         }
@@ -98,7 +102,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
 
       RemoteSdkCredentials remoteSdkCredentials;
-      if (((PyRemoteSdkAdditionalDataBase)sdkData).connectionCredentials().getRemoteConnectionType() != CredentialsType.DOCKER) {
+      if (CaseCollector.useRemoteCredentials((PyRemoteSdkAdditionalDataBase)sdkData)) {
         try {
           remoteSdkCredentials = ((RemoteSdkAdditionalData)sdkData).getRemoteSdkCredentials(false);
         }

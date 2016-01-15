@@ -15,18 +15,23 @@
  */
 package com.intellij.remote.ext;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.remote.CredentialsType;
+import com.intellij.remote.RemoteSdkAdditionalData;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-// TODO: (next) rename to wrapper?
-public interface RemoteCredentialsHandler {
+import java.util.List;
 
-  String getId();
+public abstract class CredentialsManager {
 
-  void save(@NotNull Element rootElement);
+  public static CredentialsManager getInstance() {
+    return ServiceManager.getService(CredentialsManager.class);
+  }
 
-  String getPresentableDetails(String interpreterPath);
+  public abstract List<CredentialsType> getAllTypes();
 
-  void load(@Nullable Element rootElement);
+  public abstract List<CredentialsTypeEx> getExTypes();
+
+  public abstract void loadCredentials(String interpreterPath, @Nullable Element element, RemoteSdkAdditionalData data);
 }

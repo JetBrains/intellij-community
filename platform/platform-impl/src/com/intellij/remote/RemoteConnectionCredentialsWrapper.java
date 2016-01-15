@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.remote.ext.CredentialsCase;
+import com.intellij.remote.ext.CredentialsManager;
 import com.intellij.remote.ext.RemoteCredentialsHandler;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author traff
  */
-// TODO: rename to 'RemoteSdkDataDelegate' ?
+// TODO: (next) rename to 'RemoteSdkDataDelegate' ?
 public class RemoteConnectionCredentialsWrapper {
 
   private UserDataHolderBase myCredentialsTypeHolder = new UserDataHolderBase();
@@ -36,7 +37,6 @@ public class RemoteConnectionCredentialsWrapper {
     myCredentialsTypeHolder.putUserData(key, credentials);
   }
 
-  // TODO: may just call instead
   public Object getConnectionKey() {
     return getCredentials();
   }
@@ -76,7 +76,7 @@ public class RemoteConnectionCredentialsWrapper {
   }
 
   private Pair<Object, CredentialsType> getCredentialsAndType() {
-    for (CredentialsType type : CredentialsType.TYPES) {
+    for (CredentialsType type : CredentialsManager.getInstance().getAllTypes()) {
       Object credentials = type.getCredentials(myCredentialsTypeHolder);
       if (credentials != null) {
         return Pair.create(credentials, type);

@@ -15,7 +15,10 @@
  */
 package com.intellij.remote.ext;
 
-import com.intellij.remote.*;
+import com.intellij.remote.CredentialsType;
+import com.intellij.remote.RemoteCredentialsHolder;
+import com.intellij.remote.VagrantBasedCredentialsHolder;
+import com.intellij.remote.WebDeploymentCredentialsHolder;
 
 public interface CredentialsCase<T> {
 
@@ -45,15 +48,6 @@ public interface CredentialsCase<T> {
     @Override
     public CredentialsType<WebDeploymentCredentialsHolder> getType() {
       return CredentialsType.WEB_DEPLOYMENT;
-    }
-  }
-
-  // TODO: ! contribute
-  abstract class Docker implements CredentialsCase<DockerCredentialsHolder> {
-
-    @Override
-    public CredentialsType<DockerCredentialsHolder> getType() {
-      return CredentialsType.DOCKER;
     }
   }
 }

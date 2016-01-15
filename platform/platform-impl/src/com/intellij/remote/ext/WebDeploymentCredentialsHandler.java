@@ -35,7 +35,7 @@ public class WebDeploymentCredentialsHandler extends RemoteCredentialsHandlerBas
   }
 
   @Override
-  public void save(Element rootElement) {
+  public void save(@NotNull Element rootElement) {
     getCredentials().save(rootElement);
   }
 

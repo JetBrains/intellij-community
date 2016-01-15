@@ -1,5 +1,6 @@
 package com.intellij.remote;
 
+import com.intellij.remote.ext.CredentialsManager;
 import com.intellij.util.PathMappingSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -156,8 +157,8 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
 
   public static boolean isRemoteSdk(@Nullable String path) {
     if (path != null) {
-      for (CredentialsType type : CredentialsType.TYPES) {
-        if (path.startsWith(type.getPrefix())) { // TODO: may encapsulate
+      for (CredentialsType type : CredentialsManager.getInstance().getAllTypes()) {
+        if (type.hasPrefix(path)) {
           return true;
         }
       }

@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remote.ext;
+package com.jetbrains.python.remote;
 
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+public interface PyCredentialsContribution<T> {
 
-// TODO: (next) rename to wrapper?
-public interface RemoteCredentialsHandler {
+  boolean isValid(T credentials);
 
-  String getId();
+  boolean shouldNotifySdkSkeletonFail();
 
-  void save(@NotNull Element rootElement);
+  boolean isPackageManagementEnabled();
 
-  String getPresentableDetails(String interpreterPath);
+  boolean isSpecificCoverageAttach();
 
-  void load(@Nullable Element rootElement);
+  boolean isSpecificCoveragePatch();
+
+  boolean isRemoteProcessStartSupported();
 }

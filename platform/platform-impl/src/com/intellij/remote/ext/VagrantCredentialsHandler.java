@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.VagrantBasedCredentialsHolder;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class VagrantCredentialsHandler extends RemoteCredentialsHandlerBase<VagrantBasedCredentialsHolder> {
@@ -38,7 +39,7 @@ public class VagrantCredentialsHandler extends RemoteCredentialsHandlerBase<Vagr
   }
 
   @Override
-  public void save(Element rootElement) {
+  public void save(@NotNull Element rootElement) {
     getCredentials().save(rootElement);
   }
 
