@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
@@ -44,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
@@ -220,15 +218,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     @Override
     public JComponent createCustomComponent(Presentation presentation) {
-      JPanel panel = new JPanel();
-      JLabel filterCaption = new JLabel("Filter:");
-      filterCaption.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
-      panel.add(filterCaption);
-      panel.add(createSearchField());
-      return panel;
-    }
-
-    private Component createSearchField() {
       final SearchTextFieldWithStoredHistory textFilter = new SearchTextFieldWithStoredHistory(VCS_LOG_TEXT_FILTER_HISTORY) {
         @Override
         protected void onFieldCleared() {
