@@ -76,8 +76,14 @@ final class DefaultScrollBarUI extends AbstractScrollBarUI {
   @Override
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
     Composite old = g.getComposite();
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .4f + .1f * myThumbValue));
-    if (!c.isOpaque()) {
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .4f + .2f * myThumbValue));
+    if (c.isOpaque()) {
+      x += 1;
+      y += 1;
+      width -= 2;
+      height -= 2;
+    }
+    else {
       Alignment alignment = Alignment.get(c);
       if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
         int offset = width - getMinimalThickness();
