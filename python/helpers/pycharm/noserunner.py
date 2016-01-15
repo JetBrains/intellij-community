@@ -90,7 +90,7 @@ def process_args():
   config = MyConfig(plugins=manager)
   config.configure(argv)
 
-  TestProgram(argv=argv, config=config)
+  TestProgram(argv=argv, config=config, exit=False)
 
 if __name__ == "__main__":
   process_args()
