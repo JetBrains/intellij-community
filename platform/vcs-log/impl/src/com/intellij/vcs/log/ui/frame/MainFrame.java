@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
@@ -100,7 +101,7 @@ public class MainFrame extends JPanel implements DataProvider {
     // layout
     myToolbar = createActionsToolbar();
 
-    myDetailsSplitter = new Splitter(true, 0.7f);
+    myDetailsSplitter = new OnePixelSplitter(true, 0.7f);
     myDetailsSplitter.setFirstComponent(setupScrolledGraph());
     setupDetailsSplitter(uiProperties.isShowDetails());
 
@@ -111,7 +112,7 @@ public class MainFrame extends JPanel implements DataProvider {
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(myDetailsSplitter, BorderLayout.CENTER);
 
-    final Splitter changesBrowserSplitter = new Splitter(false, 0.7f);
+    final Splitter changesBrowserSplitter = new OnePixelSplitter(false, 0.7f);
     changesBrowserSplitter.setFirstComponent(toolbarsAndTable);
     changesBrowserSplitter.setSecondComponent(myChangesLoadingPane);
 
