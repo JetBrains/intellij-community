@@ -12,7 +12,6 @@
 ; thus ${PRODUCT_WITH_VER} is used for uninstall registry information
 !define PRODUCT_REG_VER "${MUI_PRODUCT}\${VER_BUILD}"
 
-!define INSTALL_OPTION_ELEMENTS 4
 Name "${MUI_PRODUCT}"
 SetCompressor lzma
 ; http://nsis.sourceforge.net/Shortcuts_removal_fails_on_Windows_Vista
@@ -27,6 +26,8 @@ RequestExecutionLevel user
 !include "InstallOptions.nsh"
 !include StrFunc.nsh
 !include LogicLib.nsh
+
+!include "customInstallActions.nsi"
 
 ${UnStrStr}
 ${UnStrLoc}
@@ -686,9 +687,9 @@ FunctionEnd
 
 Function ProductRegistration
   StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" eapInfo releaseInfo
-eapInfo:  
+eapInfo:
   StrCpy $3 "${PRODUCT_WITH_VER}(EAP)"
-  goto createRegistration  
+  goto createRegistration
 releaseInfo:
   StrCpy $3 "${PRODUCT_WITH_VER}"
 createRegistration:
@@ -742,31 +743,34 @@ Section "IDEA Files" CopyIdeaFiles
 skip_desktop_shortcut:
   ; OS is not win7
   Call winVersion
-  ${If} $0 == "0" 
+  ${If} $0 == "0"
     !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 2" "State"
     StrCmp $R2 1 "" skip_quicklaunch_shortcut
     CreateShortCut "$QUICKLAUNCH\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
                    "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
-  ${EndIf}	
+  ${EndIf}
 skip_quicklaunch_shortcut:
   !insertmacro INSTALLOPTIONS_READ $R1 "Desktop.ini" "Settings" "NumFields"
   IntCmp $R1 ${INSTALL_OPTION_ELEMENTS} do_association done do_association
 do_association:
-  StrCpy $R2 ${INSTALL_OPTION_ELEMENTS}  
+  StrCpy $R2 ${INSTALL_OPTION_ELEMENTS}
 get_user_choice:
   !insertmacro INSTALLOPTIONS_READ $R3 "Desktop.ini" "Field $R2" "State"
   StrCmp $R3 1 "" next_association
   !insertmacro INSTALLOPTIONS_READ $R4 "Desktop.ini" "Field $R2" "Text"
   call ProductAssociation
-next_association:  
+next_association:
   IntOp $R2 $R2 + 1
   IntCmp $R1 $R2 get_user_choice done get_user_choice
 
 done:
+
+  Call customInstallActions 
+
   ;registration application to be presented in Open With list
   call ProductRegistration
   ;reset icon cache
-  System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'	
+  System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
 !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 ; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
 ; save it name in the "MenuFolder" RegValue
@@ -863,47 +867,6 @@ skip_properties:
       "$INSTDIR\bin\$0" "(S-1-5-32-545)" "GenericRead + GenericWrite"
   ${EndIf}
 SectionEnd
-
-;------------------------------------------------------------------------------
-; Descriptions of sections
-;------------------------------------------------------------------------------
-; LangString DESC_CopyRuntime ${LANG_ENGLISH} "${MUI_PRODUCT} files"
-
-;------------------------------------------------------------------------------
-; custom install pages
-;------------------------------------------------------------------------------
-
-Function ConfirmDesktopShortcut
-  !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 1" "Text" "$(create_desktop_shortcut)"
-  call winVersion
-  ${If} $0 == "1"
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Type" "Label"
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" ""
-  ${Else}
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" "$(create_quick_launch_shortcut)"
-  ${EndIf}
-  StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
-  StrCpy $R0 3
-  push "${ASSOCIATION}"
-loop:
-  call SplitStr
-  Pop $0
-  StrCmp $0 "" done
-  IntOp $R0 $R0 + 1
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
-  goto loop
-skip_association:
-  StrCpy $R0 2
-  call winVersion
-  ${If} $0 == "1"
-  IntOp $R0 $R0 - 1
-  ${EndIf}
-done:
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
-  !insertmacro INSTALLOPTIONS_DISPLAY "Desktop.ini"
-FunctionEnd
-
 
 ;------------------------------------------------------------------------------
 ; custom uninstall functions

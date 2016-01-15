@@ -112,9 +112,6 @@ target('default': "Build artifacts") {
   }
 
   bundledJDKs()
-  //EDU installation with a custom page dialog
-  ant.copy(file: "$ch/python/edu/build/desktop.ini", tofile: "$ch/build/conf/nsis/desktop.ini", overwrite: "true")
-  ant.copy(file: "$ch/python/edu/build/idea.nsi",    tofile: "$ch/build/conf/nsis/idea.nsi", overwrite: "true")
 
   ant.patternset(id: "resources.included") {
     include(name: "**/*.properties")
@@ -207,6 +204,9 @@ public layoutEducational(String classesPath, Set usedJars) {
 
   buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.win"])
 
+  //EDU installation with a custom page dialog
+  ant.copy(file: "$ch/python/edu/build/desktop.ini", tofile: "${paths.sandbox}/nsiconf/desktop.ini", overwrite: "true")
+  ant.copy(file: "$ch/python/edu/build/customInstallActions.nsi", tofile: "${paths.sandbox}/nsiconf/customInstallActions.nsi", overwrite: "true")
   buildNSIS([paths.distAll, paths.distWin],
             "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
             "pycharmEDU-", false, true, system_selector)
