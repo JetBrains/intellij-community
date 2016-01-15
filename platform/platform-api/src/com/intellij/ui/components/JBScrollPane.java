@@ -574,6 +574,13 @@ public class JBScrollPane extends JScrollPane {
         colHead.setBounds(colHeadBounds);
         colHead.putClientProperty(Alignment.class, hsbOnTop ? Alignment.BOTTOM : Alignment.TOP);
       }
+      // Calculate overlaps for translucent scroll bars
+      int overlapWidth = 0;
+      int overlapHeight = 0;
+      if (vsbNeeded && !vsbOpaque && hsbNeeded && !hsbOpaque) {
+        overlapWidth = vsbBounds.width; // shrink horizontally
+        //overlapHeight = hsbBounds.height; // shrink vertically
+      }
       // Set the bounds of the vertical scroll bar.
       vsbBounds.y = bounds.y - insets.top;
       vsbBounds.height = bounds.height + insets.top + insets.bottom;
@@ -590,7 +597,8 @@ public class JBScrollPane extends JScrollPane {
               vsbBounds.height += colHeadBounds.height;
             }
           }
-          vsb.setBounds(vsbBounds);
+          int overlapY = !hsbOnTop ? 0 : overlapHeight;
+          vsb.setBounds(vsbBounds.x, vsbBounds.y + overlapY, vsbBounds.width, vsbBounds.height - overlapHeight);
           vsb.putClientProperty(Alignment.class, vsbOnLeft ? Alignment.LEFT : Alignment.RIGHT);
           pane.setComponentZOrder(vsb, 0);
         }
@@ -616,7 +624,8 @@ public class JBScrollPane extends JScrollPane {
               hsbBounds.width += rowHeadBounds.width;
             }
           }
-          hsb.setBounds(hsbBounds);
+          int overlapX = !vsbOnLeft ? 0 : overlapWidth;
+          hsb.setBounds(hsbBounds.x + overlapX, hsbBounds.y, hsbBounds.width - overlapWidth, hsbBounds.height);
           hsb.putClientProperty(Alignment.class, hsbOnTop ? Alignment.TOP : Alignment.BOTTOM);
         }
         // Modify the bounds of the translucent scroll bar.
