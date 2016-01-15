@@ -116,15 +116,12 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
     setShowHorizontalLines(false);
     setIntercellSpacing(JBUI.emptySize());
+    setTableHeader(null);
 
     MouseAdapter mouseAdapter = new MyMouseAdapter();
     addMouseMotionListener(mouseAdapter);
     addMouseListener(mouseAdapter);
-    MyHeaderMouseAdapter headerAdapter = new MyHeaderMouseAdapter();
-    getTableHeader().addMouseListener(headerAdapter);
-    getTableHeader().addMouseMotionListener(headerAdapter);
 
-    getTableHeader().setReorderingAllowed(false);
 
     PopupHandler.installPopupHandler(this, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     ScrollingUtil.installActions(this, false);
@@ -147,7 +144,6 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       myColumnsSizeInitialized = setColumnPreferredSize();
       if (myColumnsSizeInitialized) {
         setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
-        getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN).setHeaderRenderer(new RootHeaderRenderer());
       }
       return myColumnsSizeInitialized;
     }
@@ -533,28 +529,6 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
   }
 
-  private class MyHeaderMouseAdapter extends MouseAdapter {
-    @Override
-    public void mouseMoved(MouseEvent e) {
-      Component component = e.getComponent();
-      if (component != null) {
-        if (getRootColumnOrNull(e) != null) {
-          component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        }
-        else {
-          component.setCursor(null);
-        }
-      }
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-      if (e.getClickCount() == 1) {
-        expandOrCollapseRoots(e);
-      }
-    }
-  }
-
   private class MyMouseAdapter extends MouseAdapter {
     private final TableLinkMouseListener myLinkListener;
 
@@ -736,38 +710,6 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       setBorder(null);
     }
 
-  }
-
-  private class RootHeaderRenderer extends DefaultTableCellHeaderRenderer {
-    private final Icon myIcon = AllIcons.General.ComboArrowRight;
-
-    @NotNull
-    @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-      if (myUI.isShowRootNames()) {
-        setIcon(null);
-        setText("Roots");
-      }
-      else {
-        setIcon(myIcon);
-        setText("");
-      }
-      return this;
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension dimension = super.getPreferredSize();
-      if (getText() == null || getText().isEmpty()) {
-        setText("Roots");
-        dimension.height = super.getPreferredSize().height;
-        setText("");
-        return dimension;
-      }
-      return dimension;
-    }
   }
 
   private class MyDummyTableCellEditor implements TableCellEditor {
