@@ -502,7 +502,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void before() throws Exception {
         toggleBreakpoint(getScriptPath(), 9);
-        toggleBreakpoint(getScriptPath(), 13);
+        toggleBreakpoint(getScriptPath(), 15);
       }
 
       @Override

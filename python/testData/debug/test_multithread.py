@@ -9,11 +9,12 @@ def bar(y):
     z = 100 + y
     print("Z=%d"%z)
 
+t = None
 def foo(x):
+    global t
     y = x + 1
     print("Y=%d"%y)
 
-    global t
     t = threading.Thread(target=bar, args=(y,))
     t.start()
 
