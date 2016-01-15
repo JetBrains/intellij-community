@@ -983,6 +983,16 @@ public class PyTypeTest extends PyTestCase {
            "expr = y.foo\n");
   }
 
+  public void testConditionInnerScope() {
+    doTest("Union[str, int]",
+           "if something:\n" +
+           "    foo = 'foo'\n" +
+           "else:\n" +
+           "    foo = 0\n" +
+           "\n" +
+           "expr = foo\n");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
