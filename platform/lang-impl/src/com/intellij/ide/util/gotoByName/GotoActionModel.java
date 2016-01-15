@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,11 +59,14 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
 
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
 
 public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object>, EdtSortingModel, DumbAware {
+  private static java.util.regex.Pattern INNER_GROUP_WITH_IDS = java.util.regex.Pattern.compile("(.*) \\(\\d+\\)");
+
   @Nullable private final Project myProject;
   private final Component myContextComponent;
 
@@ -322,7 +325,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return settings + " > " + name;
   }
 
-  private void collectActions(Map<AnAction, String> result, ActionGroup group, String containingGroupName) {
+  private void collectActions(@NotNull Map<AnAction, String> result, @NotNull ActionGroup group, @Nullable String containingGroupName) {
     AnAction[] actions = group.getChildren(null);
     includeGroup(result, group, actions, containingGroupName);
     for (AnAction action : actions) {
@@ -330,7 +333,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       if (action instanceof ActionGroup) {
         ActionGroup actionGroup = (ActionGroup)action;
         String groupName = actionGroup.getTemplatePresentation().getText();
-        collectActions(result, actionGroup, StringUtil.isEmpty(groupName) || !actionGroup.isPopup() ? containingGroupName : groupName);
+        collectActions(result, actionGroup, getGroupName(StringUtil.isEmpty(groupName) || !actionGroup.isPopup() ? containingGroupName : groupName));
       }
       else {
         String groupName = group.getTemplatePresentation().getText();
@@ -338,16 +341,25 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           result.put(action, null);
         }
         else {
-          result.put(action, StringUtil.isEmpty(groupName) ? containingGroupName : groupName);
+          result.put(action, getGroupName(StringUtil.isEmpty(groupName) ? containingGroupName : groupName));
         }
       }
     }
   }
 
-  private void includeGroup(Map<AnAction, String> result,
-                            ActionGroup group,
-                            AnAction[] actions,
-                            String containingGroupName) {
+  @Nullable
+  private static String getGroupName(@Nullable String groupName) {
+    if (groupName != null) {
+      Matcher matcher = INNER_GROUP_WITH_IDS.matcher(groupName);
+      if (matcher.matches()) return matcher.group(1);
+    }
+    return groupName;  
+  }
+
+  private void includeGroup(@NotNull Map<AnAction, String> result,
+                            @NotNull ActionGroup group,
+                            @NotNull AnAction[] actions,
+                            @Nullable String containingGroupName) {
     boolean showGroup = true;
     for (AnAction action : actions) {
       if (myActionManager.getId(action) != null) {
@@ -356,7 +368,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       }
     }
     if (showGroup) {
-      result.put(group, containingGroupName);
+      result.put(group, getGroupName(containingGroupName));
     }
   }
 
