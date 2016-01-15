@@ -145,3 +145,9 @@ betas.)
      </module>
     \ No newline at end of file
     ```
+
+10. Ensure that the default Update channel (for new users downloading this build)
+    is set to stable, not something else.
+
+    Edit UpdateSettings.State.UPDATE_CHANNEL_TYPE and make sure it's set
+    to ChannelStatus.RELEASE.getCode();
