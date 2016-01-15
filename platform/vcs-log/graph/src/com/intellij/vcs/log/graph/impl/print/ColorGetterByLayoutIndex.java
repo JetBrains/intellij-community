@@ -28,10 +28,14 @@ import org.jetbrains.annotations.NotNull;
 public class ColorGetterByLayoutIndex<CommitId> {
   @NotNull private final LinearGraph myLinearGraph;
   @NotNull private final PermanentGraphInfo<CommitId> myPermanentGraphInfo;
+  @NotNull private final GraphColorManager<CommitId> myColorManager;
 
-  public ColorGetterByLayoutIndex(@NotNull LinearGraph linearGraph, @NotNull PermanentGraphInfo<CommitId> permanentGraphInfo) {
+  public ColorGetterByLayoutIndex(@NotNull LinearGraph linearGraph,
+                                  @NotNull PermanentGraphInfo<CommitId> permanentGraphInfo,
+                                  @NotNull GraphColorManager<CommitId> colorManager) {
     myLinearGraph = linearGraph;
     myPermanentGraphInfo = permanentGraphInfo;
+    myColorManager = colorManager;
   }
 
   public int getColorId(@NotNull GraphElement element) {
@@ -57,7 +61,6 @@ public class ColorGetterByLayoutIndex<CommitId> {
     int downLayoutIndex = getLayoutIndex(downNodeIndex);
 
     CommitId headCommitId = getOneOfHeads(upNodeIndex);
-    GraphColorManager<CommitId> myColorManager = myPermanentGraphInfo.getGraphColorManager();
     if (upLayoutIndex != downLayoutIndex) {
       return myColorManager.getColorOfFragment(headCommitId, Math.max(upLayoutIndex, downLayoutIndex));
     }

@@ -210,30 +210,6 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
     return myBranchNodeIds;
   }
 
-  @NotNull
-  @Override
-  public GraphColorManager<CommitId> getGraphColorManager() {
-    // no colors
-    // since we do not have ref model here yet
-    return new GraphColorManager<CommitId>() {
-      @Override
-      public int getColorOfBranch(CommitId headCommit) {
-        return 0;
-      }
-
-      @Override
-      public int getColorOfFragment(CommitId headCommit, int magicIndex) {
-        return 0;
-      }
-
-      @Override
-      public int compareHeads(CommitId head1, CommitId head2) {
-        return myGraphLayout.getLayoutIndex(getPermanentCommitsInfo().getNodeId(head1)) -
-               myGraphLayout.getLayoutIndex(getPermanentCommitsInfo().getNodeId(head2));
-      }
-    };
-  }
-
   private static class CommitIdMapFunction<CommitId> implements NotNullFunction<Integer, CommitId> {
     private final List<CommitId> myCommitsIdMap;
 

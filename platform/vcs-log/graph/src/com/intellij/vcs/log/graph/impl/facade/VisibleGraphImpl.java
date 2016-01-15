@@ -40,14 +40,16 @@ import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getCursor;
 public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   @NotNull private final LinearGraphController myGraphController;
   @NotNull private final PermanentGraphInfo<CommitId> myPermanentGraph;
+  @NotNull private final GraphColorManager<CommitId> myColorManager;
 
   private PrintElementManagerImpl myPrintElementManager;
   private PrintElementGenerator myPrintElementGenerator;
   private boolean myShowLongEdges = false;
 
-  public VisibleGraphImpl(@NotNull LinearGraphController graphController, @NotNull PermanentGraphInfo<CommitId> permanentGraph) {
+  public VisibleGraphImpl(@NotNull LinearGraphController graphController, @NotNull PermanentGraphInfo<CommitId> permanentGraph, @NotNull GraphColorManager<CommitId> colorManager) {
     myGraphController = graphController;
     myPermanentGraph = permanentGraph;
+    myColorManager = colorManager;
     updatePrintElementGenerator();
   }
 
@@ -111,7 +113,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   }
 
   private void updatePrintElementGenerator() {
-    myPrintElementManager = new PrintElementManagerImpl(myGraphController.getCompiledGraph(), myPermanentGraph);
+    myPrintElementManager = new PrintElementManagerImpl(myGraphController.getCompiledGraph(), myPermanentGraph, myColorManager);
     myPrintElementGenerator = new PrintElementGeneratorImpl(myGraphController.getCompiledGraph(), myPrintElementManager, myShowLongEdges);
   }
 

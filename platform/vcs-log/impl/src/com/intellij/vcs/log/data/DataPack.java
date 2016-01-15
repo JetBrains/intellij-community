@@ -56,13 +56,7 @@ public class DataPack extends DataPackBase {
     }
     else {
       refsModel = new RefsModel(refs, getHeads(commits), hashMap);
-      NotNullFunction<Integer, Hash> hashGetter = new NotNullFunction<Integer, Hash>() {
-        @NotNull
-        @Override
-        public Hash fun(Integer commitIndex) {
-          return hashMap.getCommitId(commitIndex).getHash();
-        }
-      };
+      NotNullFunction<Integer, Hash> hashGetter = createHashGetter(hashMap);
       GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
       Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), hashMap);
 
@@ -73,6 +67,17 @@ public class DataPack extends DataPackBase {
     }
 
     return new DataPack(refsModel, permanentGraph, providers, full);
+  }
+
+  @NotNull
+  public static NotNullFunction<Integer, Hash> createHashGetter(@NotNull final VcsLogHashMap hashMap) {
+    return new NotNullFunction<Integer, Hash>() {
+      @NotNull
+      @Override
+      public Hash fun(Integer commitIndex) {
+        return hashMap.getCommitId(commitIndex).getHash();
+      }
+    };
   }
 
   @NotNull
@@ -103,7 +108,7 @@ public class DataPack extends DataPackBase {
   }
 
   @NotNull
-  private static Map<VirtualFile, VcsLogRefManager> getRefManagerMap(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+  public static Map<VirtualFile, VcsLogRefManager> getRefManagerMap(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
     Map<VirtualFile, VcsLogRefManager> map = ContainerUtil.newHashMap();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : logProviders.entrySet()) {
       map.put(entry.getKey(), entry.getValue().getReferenceManager());

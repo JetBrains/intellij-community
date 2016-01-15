@@ -128,7 +128,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       controller = new CollapsedController(baseController, this, idOfVisibleBranches);
     }
 
-    return new VisibleGraphImpl<CommitId>(controller, this);
+    return new VisibleGraphImpl<CommitId>(controller, this, myGraphColorManager);
   }
 
   @NotNull
