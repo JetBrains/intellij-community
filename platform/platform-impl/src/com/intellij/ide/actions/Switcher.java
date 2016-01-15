@@ -430,6 +430,7 @@ public class Switcher extends AnAction implements DumbAware {
                                                       int index,
                                                       boolean selected,
                                                       boolean hasFocus) {
+          assert value instanceof FileInfo;
           final Component c = super.getListCellRendererComponent(list, value, index, selected, selected);
           final Color bg = UIUtil.getListBackground();
           final Color fg = UIUtil.getListForeground();
@@ -439,6 +440,13 @@ public class Switcher extends AnAction implements DumbAware {
           myPanel.removeAll();
           myPanel.add(myLabel, BorderLayout.WEST);
           myPanel.add(c, BorderLayout.CENTER);
+
+          // Note: Name=name rendered in cell, Description=path to file, as displayed in bottom panel
+          myPanel.getAccessibleContext().setAccessibleName(c.getAccessibleContext().getAccessibleName());
+          VirtualFile file = ((FileInfo)value).first;
+          String presentableUrl = ObjectUtils.notNull(file.getParent(), file).getPresentableUrl();
+          String location = FileUtil.getLocationRelativeToUserHome(presentableUrl);
+          myPanel.getAccessibleContext().setAccessibleDescription(location);
           return myPanel;
         }
 

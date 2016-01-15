@@ -40,6 +40,8 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
@@ -455,8 +457,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       TableColumnModel columnModel = table.getColumnModel();
       TableColumn propertyColumn = columnModel.getColumn(0);
-      propertyColumn.setMinWidth(150);
-      propertyColumn.setMaxWidth(150);
+      propertyColumn.setMinWidth(200);
+      propertyColumn.setMaxWidth(200);
       propertyColumn.setResizable(false);
 
       TableColumn valueColumn = columnModel.getColumn(1);
@@ -737,6 +739,15 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       "isValid", "isDisplayable", "isLightweight"
     );
 
+    final List<String> ACCESSIBLE_CONTEXT_PROPERTIES = Arrays.asList(
+      "getAccessibleRole", "getAccessibleName", "getAccessibleDescription",
+      "getAccessibleAction", "getAccessibleChildrenCount",
+      "getAccessibleIndexInParent", "getAccessibleRelationSet",
+      "getAccessibleStateSet", "getAccessibleEditableText",
+      "getAccessibleTable", "getAccessibleText",
+      "getAccessibleValue", "accessibleChangeSupport"
+    );
+
     final Component myComponent;
     final List<PropertyBean> myProperties = ContainerUtil.newArrayList();
 
@@ -747,27 +758,41 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
 
     void fillTable() {
-      Class<?> clazz0 = myComponent.getClass();
+      addProperties("", myComponent, PROPERTIES);
+      Object addedAt = myComponent instanceof JComponent ? ((JComponent)myComponent).getClientProperty("uiInspector.addedAt") : null;
+      myProperties.add(new PropertyBean("added-at", addedAt));
+
+      // Add properties related to Accessibility support. This is useful for manually
+      // inspecting what kind (if any) of accessibility support components expose.
+      boolean isAccessible = myComponent instanceof Accessible;
+      myProperties.add(new PropertyBean("accessible", isAccessible));
+      AccessibleContext context = myComponent.getAccessibleContext();
+      myProperties.add(new PropertyBean("accessibleContext", context));
+      if (isAccessible) {
+        addProperties("  ", myComponent.getAccessibleContext(), ACCESSIBLE_CONTEXT_PROPERTIES);
+      }
+    }
+
+    private void addProperties(@NotNull String prefix, @NotNull Object component, @NotNull List<String> methodNames) {
+      Class<?> clazz0 = component.getClass();
       Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
-      myProperties.add(new PropertyBean("class", clazz.getName()));
-      for (String name: PROPERTIES) {
+      myProperties.add(new PropertyBean(prefix + "class", clazz.getName()));
+      for (String name: methodNames) {
         String propertyName = ObjectUtils.notNull(StringUtil.getPropertyName(name), name);
         Object propertyValue;
         try {
           try {
             //noinspection ConstantConditions
-            propertyValue = ReflectionUtil.findMethod(Arrays.asList(clazz.getMethods()), name).invoke(myComponent);
+            propertyValue = ReflectionUtil.findMethod(Arrays.asList(clazz.getMethods()), name).invoke(component);
           }
           catch (Exception e) {
-            propertyValue = ReflectionUtil.findField(clazz, null, name).get(myComponent);
+            propertyValue = ReflectionUtil.findField(clazz, null, name).get(component);
           }
-          myProperties.add(new PropertyBean(propertyName, propertyValue));
+          myProperties.add(new PropertyBean(prefix + propertyName, propertyValue));
         }
         catch (Exception ignored) {
         }
       }
-      Object addedAt = myComponent instanceof JComponent ? ((JComponent)myComponent).getClientProperty("uiInspector.addedAt") : null;
-      myProperties.add(new PropertyBean("added-at", addedAt));
     }
 
     @Nullable

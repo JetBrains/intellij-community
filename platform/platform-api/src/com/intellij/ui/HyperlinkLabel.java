@@ -16,6 +16,9 @@
 
 package com.intellij.ui;
 
+import javax.accessibility.AccessibleAction;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -244,5 +247,54 @@ public class HyperlinkLabel extends HighlightableComponent {
   @Override
   public void updateUI() {
     setFont(UIUtil.getLabelFont());
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleHyperlinkLabel();
+    }
+    return accessibleContext;
+  }
+
+  /**
+   * Hyperlink accessibility: "HYPERLINK" role and expose a "click" action.
+   * @see javax.swing.AbstractButton.AccessibleAbstractButton
+   */
+  protected class AccessibleHyperlinkLabel extends AccessibleHighlightable implements AccessibleAction {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.HYPERLINK;
+    }
+
+    @Override
+    public AccessibleAction getAccessibleAction() {
+      return this;
+    }
+
+    @Override
+    public int getAccessibleActionCount() {
+      return 1;
+    }
+
+    @Override
+    public String getAccessibleActionDescription(int i) {
+      if (i == 0) {
+        return UIManager.getString("AbstractButton.clickText");
+      }
+      else {
+        return null;
+      }
+    }
+
+    @Override
+    public boolean doAccessibleAction(int i) {
+      if (i == 0) {
+        doClick();
+        return true;
+      } else {
+        return false;
+      }
+    }
   }
 }

@@ -41,7 +41,9 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -66,7 +68,7 @@ import java.util.List;
 /**
  * @author Sergey.Malenkov
  */
-final class SettingsTreeView extends JComponent implements Disposable, OptionsEditorColleague {
+final class SettingsTreeView extends JComponent implements Accessible, Disposable, OptionsEditorColleague {
   private static final int ICON_GAP = 5;
   private static final String NODE_ICON = "settings.tree.view.icon";
   private static final Color WRONG_CONTENT = JBColor.RED;
@@ -863,6 +865,21 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       for (TreePath each : toCollapse) {
         myTree.collapsePath(each);
       }
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleSettingsTreeView();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleSettingsTreeView extends AccessibleJComponent {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.PANEL;
     }
   }
 }

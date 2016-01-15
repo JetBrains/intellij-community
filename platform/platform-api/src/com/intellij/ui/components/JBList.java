@@ -18,6 +18,7 @@ package com.intellij.ui.components;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -27,6 +28,9 @@ import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import javax.swing.text.JTextComponent;
@@ -312,6 +316,60 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
         setBackground(UIUtil.getDecoratedRowColor());
       }
       return this;
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleJBList();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleJBList extends AccessibleJList {
+    @Override
+    public Accessible getAccessibleAt(Point p) {
+      return getAccessibleChild(locationToIndex(p));
+    }
+
+    @Override
+    public Accessible getAccessibleChild(int i) {
+      if (i < 0 || i >= getModel().getSize()) {
+        return null;
+      } else {
+        return new AccessibleJBListChild(JBList.this, i);
+      }
+    }
+
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      // In some cases, this method is called from the Access Bridge thread
+      // instead of the AWT thread. See https://code.google.com/p/android/issues/detail?id=193072
+      return UIUtil.invokeAndWaitIfNeeded(new Computable<AccessibleRole>() {
+        @Override
+        public AccessibleRole compute() {
+          return AccessibleJBList.super.getAccessibleRole();
+        }
+      });
+    }
+
+    protected class AccessibleJBListChild extends AccessibleJListChild {
+      public AccessibleJBListChild(JBList parent, int indexInParent) {
+        super(parent, indexInParent);
+      }
+
+      @Override
+      public AccessibleRole getAccessibleRole() {
+        // In some cases, this method is called from the Access Bridge thread
+        // instead of the AWT thread. See https://code.google.com/p/android/issues/detail?id=193072
+        return UIUtil.invokeAndWaitIfNeeded(new Computable<AccessibleRole>() {
+          @Override
+          public AccessibleRole compute() {
+            return AccessibleJBListChild.super.getAccessibleRole();
+          }
+        });
+      }
     }
   }
 }

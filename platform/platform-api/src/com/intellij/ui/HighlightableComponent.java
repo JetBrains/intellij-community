@@ -19,10 +19,15 @@ package com.intellij.ui;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleAction;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -30,7 +35,7 @@ import java.util.ArrayList;
 /**
  * @author Eugene Belyaev
  */
-public class HighlightableComponent extends JComponent {
+public class HighlightableComponent extends JComponent implements Accessible {
   protected String myText = "";
   protected Icon myIcon;
   protected int myIconTextGap;
@@ -60,11 +65,23 @@ public class HighlightableComponent extends JComponent {
   }
 
   public void setText(String text) {
+    String oldAccessibleName = null;
+    if (accessibleContext != null) {
+      oldAccessibleName = accessibleContext.getAccessibleName();
+    }
+
     if (text == null) {
       text = "";
     }
     myText = text;
     myHighlightedRegions = new ArrayList<HighlightedRegion>(4);
+
+    if ((accessibleContext != null) && !StringUtil.equals(accessibleContext.getAccessibleName(), oldAccessibleName)) {
+      accessibleContext.firePropertyChange(
+        AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+        oldAccessibleName,
+        accessibleContext.getAccessibleName());
+    }
   }
 
   public void setIcon(Icon icon) {
@@ -422,5 +439,25 @@ public class HighlightableComponent extends JComponent {
       text = myText.substring(hRegion.startOffset, hRegion.endOffset);
     }
     return text;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleHighlightable();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleHighlightable extends JComponent.AccessibleJComponent {
+    @Override
+    public String getAccessibleName() {
+      return myText;
+    }
+
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.LABEL;
+    }
   }
 }
