@@ -17,7 +17,7 @@
   </condition>
 
   <condition property="test.patterns" value="${testpatterns}"
-             else="org.jetbrains.android.*;com.android.tools.idea.*;com.android.tools.ndk.*;com.google.gct.*;com.intellij.android.*">
+             else="org.jetbrains.android.*;com.android.tools.idea.*;com.android.tools.ndk.*;com.google.gct.*;com.intellij.android.*;com.google.idea.blaze.*">
     <isset property="testpatterns" />
   </condition>
 
@@ -31,6 +31,10 @@
 
   <condition property="studio.ui.tests" value="${enable.ui.tests}" else="">
     <isset property="enable.ui.tests" />
+  </condition>
+
+  <condition property="enable.blaze" value="${include.blaze}" else="">
+    <isset property="include.blaze" />
   </condition>
 
   <property name="tmp.dir" value="${out.dir}/tmp"/>
@@ -66,6 +70,7 @@
         <jvmarg value="-Dproduct=${product.name}" />
         <jvmarg value="-DproductPropertiesPath=${productPropertiesPath}" />
         <jvmarg value="-Dstudio.ui.tests=${studio.ui.tests}" />
+        <jvmarg value="-Denable.blaze=${enable.blaze}" />
         <sysproperty key="java.awt.headless" value="true"/>
         <arg line="&quot;-Dgant.script=@{script}&quot;"/>
         <arg line="&quot;-Dteamcity.build.tempDir=${tmp.dir}&quot;"/>
