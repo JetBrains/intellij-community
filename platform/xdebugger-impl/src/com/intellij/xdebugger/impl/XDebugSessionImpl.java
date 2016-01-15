@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -262,10 +262,9 @@ public class XDebugSessionImpl implements XDebugSession {
     return myTopFramePosition;
   }
 
-  public XDebugSessionTab init(@NotNull XDebugProcess process, @NotNull XDebugSessionData sessionData, @Nullable RunContentDescriptor contentToReuse) {
+  XDebugSessionTab init(@NotNull XDebugProcess process, @Nullable RunContentDescriptor contentToReuse) {
     LOG.assertTrue(myDebugProcess == null);
     myDebugProcess = process;
-    mySessionData = sessionData;
 
     if (myDebugProcess.checkCanInitBreakpoints()) {
       initBreakpoints();
@@ -285,6 +284,14 @@ public class XDebugSessionImpl implements XDebugSession {
     }
 
     return mySessionTab;
+  }
+
+  void initSessionData(@Nullable XDebugSessionData sessionData) {
+    String currentConfigurationName = getConfigurationName();
+    if (sessionData == null || !sessionData.getConfigurationName().equals(currentConfigurationName)) {
+      sessionData = new XDebugSessionData(getWatchExpressions(), currentConfigurationName);
+    }
+    mySessionData = sessionData;
   }
 
   public void reset() {
@@ -1013,7 +1020,8 @@ public class XDebugSessionImpl implements XDebugSession {
     }
   }
 
-  private String getWatchesKey() {
+  @NotNull
+  private String getConfigurationName() {
     if (myEnvironment != null) {
       RunProfile profile = myEnvironment.getRunProfile();
       if (profile instanceof RunConfiguration) {
@@ -1025,13 +1033,13 @@ public class XDebugSessionImpl implements XDebugSession {
 
   public void setWatchExpressions(@NotNull XExpression[] watchExpressions) {
     mySessionData.setWatchExpressions(watchExpressions);
-    myDebuggerManager.getWatchesManager().setWatches(getWatchesKey(), watchExpressions);
+    myDebuggerManager.getWatchesManager().setWatches(getConfigurationName(), watchExpressions);
     if (Registry.is("debugger.watches.in.variables")) {
       rebuildViews();
     }
   }
 
   XExpression[] getWatchExpressions() {
-    return myDebuggerManager.getWatchesManager().getWatches(getWatchesKey());
+    return myDebuggerManager.getWatchesManager().getWatches(getConfigurationName());
   }
 }

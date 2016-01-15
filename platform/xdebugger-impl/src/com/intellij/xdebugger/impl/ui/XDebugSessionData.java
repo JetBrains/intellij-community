@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,12 @@ public class XDebugSessionData {
 
   @NotNull
   private XExpression[] myWatchExpressions;
+  private final String myConfigurationName;
   private boolean myBreakpointsMuted = false;
 
-  public XDebugSessionData(final @NotNull XExpression[] watchExpressions) {
+  public XDebugSessionData(@NotNull XExpression[] watchExpressions, @NotNull String configurationName) {
     myWatchExpressions = watchExpressions;
+    myConfigurationName = configurationName;
   }
 
   public void setWatchExpressions(@NotNull XExpression[] watchExpressions) {
@@ -48,5 +50,10 @@ public class XDebugSessionData {
 
   public void setBreakpointsMuted(boolean breakpointsMuted) {
     myBreakpointsMuted = breakpointsMuted;
+  }
+
+  @NotNull
+  public String getConfigurationName() {
+    return myConfigurationName;
   }
 }
