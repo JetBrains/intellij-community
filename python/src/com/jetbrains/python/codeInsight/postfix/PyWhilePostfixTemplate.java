@@ -18,45 +18,44 @@ package com.jetbrains.python.codeInsight.postfix;
 import com.intellij.codeInsight.template.postfix.templates.SurroundPostfixTemplateBase;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementListContainer;
+import com.jetbrains.python.psi.PyWhileStatement;
 import org.jetbrains.annotations.NotNull;
 
-public class PyIfPostfixTemplate extends SurroundPostfixTemplateBase {
+public class PyWhilePostfixTemplate extends SurroundPostfixTemplateBase {
 
-  public static final String TEMPLATE_DESCRIPTION = "if expr";
+  public static final String TEMPLATE_DESCRIPTION = "while expr";
 
-  public PyIfPostfixTemplate() {
-    super("if", TEMPLATE_DESCRIPTION, PyPostfixUtils.PY_PSI_INFO, PyPostfixUtils.selectorTopmost());
+  public PyWhilePostfixTemplate() {
+    super("while", TEMPLATE_DESCRIPTION, PyPostfixUtils.PY_PSI_INFO, PyPostfixUtils.selectorTopmost());
   }
 
   @NotNull
   @Override
   protected Surrounder getSurrounder() {
-    return new PyIfSurrounder();
+    return new PyWhileSurrounder();
   }
 
-
-  private static class PyIfSurrounder extends PyExpressionAsConditionSurrounder {
+  private static class PyWhileSurrounder extends PyExpressionAsConditionSurrounder {
 
     @Override
     protected String getTextToGenerate() {
-      return "if a:\n pass";
+      return "while a:\n pass";
     }
 
     @Override
     protected PyExpression getCondition(PyStatement statement) {
-      if (statement instanceof PyIfStatement) {
-        return ((PyIfStatement)statement).getIfPart().getCondition();
+      if (statement instanceof PyWhileStatement) {
+        return ((PyWhileStatement)statement).getWhilePart().getCondition();
       }
       return null;
     }
 
     @Override
     protected PyStatementListContainer getStatementListContainer(PyStatement statement) {
-      if (statement instanceof PyIfStatement) {
-        return ((PyIfStatement)statement).getIfPart();
+      if (statement instanceof PyWhileStatement) {
+        return ((PyWhileStatement)statement).getWhilePart();
       }
       return null;
     }
