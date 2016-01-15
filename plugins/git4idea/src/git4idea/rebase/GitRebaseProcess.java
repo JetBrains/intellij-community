@@ -200,6 +200,10 @@ public class GitRebaseProcess {
       boolean somethingRebased = customMode != null || progressListener.getResult().current > 1;
 
       if (result.success()) {
+        if (rebaseDetector.hasStoppedForEditing()) {
+          showStoppedForEditingMessage(repository);
+          return new GitRebaseStatus(GitRebaseStatus.Type.SUSPENDED, skippedCommits);
+        }
         LOG.debug("Successfully rebased " + repoName);
         return GitSuccessfulRebase.parseFromOutput(result.getOutput(), skippedCommits);
       }
@@ -346,7 +350,7 @@ public class GitRebaseProcess {
                                          });
     SuccessType commonType = getItemIfAllTheSame(successTypes, SuccessType.REBASED);
     GitRebaseParams params = myRebaseSpec.getParams();
-    String message = commonType.formatMessage(rebasedBranch, params == null ? null : params.getNewBase());
+    String message = commonType.formatMessage(rebasedBranch, params == null ? null : notNull(params.getNewBase(), params.getUpstream()));
     message += mentionSkippedCommits(skippedCommits);
     myNotifier.notifyMinorInfo("Rebase Successful", message, new NotificationListener.Adapter() {
       @Override
@@ -389,6 +393,12 @@ public class GitRebaseProcess {
     if (conflictResolver.myWasNothingToMerge) return ResolveConflictResult.NOTHING_TO_MERGE;
     if (allResolved) return ResolveConflictResult.ALL_RESOLVED;
     return ResolveConflictResult.UNRESOLVED_REMAIN;
+  }
+
+  private void showStoppedForEditingMessage(@NotNull GitRepository repository) {
+    String description = "Once you are satisfied with your changes you may <a href='continue'>continue</a>";
+    myNotifier.notifyImportantInfo("Rebase Stopped for Editing", description,
+                                   new RebaseNotificationListener(repository, MultiMap.<GitRepository, GitRebaseUtils.CommitInfo>empty()));
   }
 
   private void showFatalError(@NotNull final String error,
@@ -507,10 +517,10 @@ public class GitRebaseProcess {
 
   private class RebaseNotificationListener extends NotificationListener.Adapter {
     @NotNull private final GitRepository myCurrentRepository;
-    private final MultiMap<GitRepository, GitRebaseUtils.CommitInfo> mySkippedCommits;
+    @NotNull private final MultiMap<GitRepository, GitRebaseUtils.CommitInfo> mySkippedCommits;
 
     RebaseNotificationListener(@NotNull GitRepository currentRepository,
-                               MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
+                               @NotNull MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
       myCurrentRepository = currentRepository;
       mySkippedCommits = skippedCommits;
     }

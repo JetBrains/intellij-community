@@ -15,6 +15,7 @@
  */
 package git4idea.commands;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -567,10 +568,12 @@ public class GitImpl implements Git {
   public GitCommandResult rebase(@NotNull GitRepository repository,
                                  @NotNull GitRebaseParams parameters,
                                  @NotNull GitLineHandlerListener... listeners) {
-    GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REBASE);
+    Project project = repository.getProject();
+    VirtualFile root = repository.getRoot();
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE);
     handler.addParameters(parameters.asCommandLineArguments());
     addListeners(handler, listeners);
-    return run(handler);
+    return parameters.isInteractive() ? runWithEditor(project, root, handler, true) : run(handler);
   }
 
   @NotNull
@@ -595,9 +598,9 @@ public class GitImpl implements Git {
   }
 
   @NotNull
-  private static GitCommandResult rebaseResume(@NotNull GitRepository repository,
-                                               @NotNull GitRebaseResumeMode rebaseMode,
-                                               @NotNull GitLineHandlerListener[] listeners) {
+  private GitCommandResult rebaseResume(@NotNull GitRepository repository,
+                                        @NotNull GitRebaseResumeMode rebaseMode,
+                                        @NotNull GitLineHandlerListener[] listeners) {
     Project project = repository.getProject();
     VirtualFile root = repository.getRoot();
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE);
@@ -607,10 +610,10 @@ public class GitImpl implements Git {
   }
 
   @NotNull
-  private static GitCommandResult runWithEditor(@NotNull Project project,
-                                                @NotNull VirtualFile root,
-                                                @NotNull GitLineHandler handler,
-                                                boolean commitListAware) {
+  private GitCommandResult runWithEditor(@NotNull Project project,
+                                         @NotNull VirtualFile root,
+                                         @NotNull GitLineHandler handler,
+                                         boolean commitListAware) {
     GitInteractiveRebaseEditorHandler editor = configureEditor(project, root, handler, commitListAware);
     try {
       return run(handler);
@@ -620,11 +623,12 @@ public class GitImpl implements Git {
     }
   }
 
+  @VisibleForTesting
   @NotNull
-  private static GitInteractiveRebaseEditorHandler configureEditor(@NotNull Project project,
-                                                                   @NotNull VirtualFile root,
-                                                                   @NotNull GitLineHandler handler,
-                                                                   boolean commitListAware) {
+  protected GitInteractiveRebaseEditorHandler configureEditor(@NotNull Project project,
+                                                              @NotNull VirtualFile root,
+                                                              @NotNull GitLineHandler handler,
+                                                              boolean commitListAware) {
     GitRebaseEditorService service = GitRebaseEditorService.getInstance();
     GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(service, project, root, handler);
     if (!commitListAware) {

@@ -18,31 +18,71 @@ package git4idea.branch;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.openapi.util.text.StringUtil.nullize;
+import static java.util.Arrays.asList;
+
 public class GitRebaseParams {
 
-  @NotNull private final String myNewBase;
+  @Nullable private final String myBranch;
+  @Nullable private final String myNewBase;
+  @NotNull private final String myUpstream;
+  private final boolean myInteractive;
+  private final boolean myPreserveMerges;
 
-  public GitRebaseParams(@NotNull String newBase) {
-    myNewBase = newBase;
+  public GitRebaseParams(@NotNull String upstream) {
+    this(null, null, upstream, false, false);
+  }
+  public GitRebaseParams(@Nullable String branch,
+                         @Nullable String newBase,
+                         @NotNull String upstream,
+                         boolean interactive,
+                         boolean preserveMerges) {
+    myBranch = nullize(branch, true);
+    myNewBase = nullize(newBase, true);
+    myUpstream = upstream;
+    myInteractive = interactive;
+    myPreserveMerges = preserveMerges;
   }
 
   @NotNull
   public List<String> asCommandLineArguments() {
     List<String> args = ContainerUtil.newArrayList();
-    args.add(myNewBase);
+    if (myInteractive) {
+      args.add("--interactive");
+    }
+    if (myPreserveMerges) {
+      args.add("--preserve-merges");
+    }
+    if (myNewBase != null) {
+      args.addAll(asList("--onto", myNewBase));
+    }
+    args.add(myUpstream);
+    if (myBranch != null) {
+      args.add(myBranch);
+    }
     return args;
   }
 
-  @NotNull
+  @Nullable
   public String getNewBase() {
     return myNewBase;
+  }
+
+  @NotNull
+  public String getUpstream() {
+    return myUpstream;
   }
 
   @Override
   public String toString() {
     return StringUtil.join(asCommandLineArguments(), " ");
+  }
+
+  public boolean isInteractive() {
+    return myInteractive;
   }
 }

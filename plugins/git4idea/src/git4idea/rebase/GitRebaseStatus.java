@@ -29,7 +29,7 @@ class GitRebaseStatus {
     SUCCESS,
     /**
      * Rebase started, and some commits were already applied,
-     * but then rebase stopped because of conflicts, or because of an error.<br/>
+     * but then rebase stopped because of conflicts, or to edit during interactive rebase, or because of an error.<br/>
      * Such rebase can be retried/continued by calling `git rebase --continue/--skip`, or
      * it can be aborted by calling `git rebase --abort`.
      */

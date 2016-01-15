@@ -18,6 +18,7 @@ package git4idea.rebase
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.Messages
+import com.intellij.util.LineSeparator
 import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
 import git4idea.test.GitExecutor.file
@@ -174,7 +175,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     myRepo.`diverge feature and master`()
     val localChange = LocalChange(myRepo, "new.txt").generate()
 
-    object : GitTestingRebaseProcess(myProject, GitRebaseParams("master"), myRepo) {
+    object : GitTestingRebaseProcess(myProject, simpleParams("master"), myRepo) {
       override fun getDirtyRoots(repositories: Collection<GitRepository>): Collection<GitRepository> {
         return listOf(myRepo)
       }
@@ -190,7 +191,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     myRepo.`diverge feature and master`()
     val localChange = LocalChange(myRepo, "new.txt").generate()
 
-    object : GitTestingRebaseProcess(myProject, GitRebaseParams("master"), myRepo) {
+    object : GitTestingRebaseProcess(myProject, simpleParams("master"), myRepo) {
       override fun getDirtyRoots(repositories: Collection<GitRepository>): Collection<GitRepository> {
         return emptyList()
       }
@@ -392,12 +393,48 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
         """)
   }
 
+  fun `test interactive rebase stopped for editing`() {
+    build {
+      master {
+        0()
+        1()
+      }
+      feature(1) {
+        2()
+        3()
+      }
+    }
+
+
+    myGit.setInteractiveRebaseEditor {
+      it.lines().mapIndexed { i, s ->
+        if (i != 0) s
+        else s.replace("pick", "edit")
+      }.joinToString(LineSeparator.getSystemLineSeparator().separatorString)
+    }
+
+    GitTestingRebaseProcess(myProject, GitRebaseParams(null, null, "master", true, false), myRepo).rebase()
+
+    assertSuccessfulNotification("Rebase Stopped for Editing", "Once you are satisfied with your changes you may <a href='continue'>continue</a>")
+    assertEquals("The repository must be in the 'SUSPENDED' state", myRepo, myGitRepositoryManager.ongoingRebaseSpec!!.ongoingRebase)
+
+    GitRebaseUtils.continueRebase(myProject)
+
+    assertSuccessfulNotification("Rebased feature on master")
+    myRepo.`assert feature rebased on master`()
+    assertNoRebaseInProgress(myRepo)
+  }
+
   private fun build(f: RepoBuilder.() -> Unit) {
     build(myRepo, f)
   }
 
   private fun rebaseOnMaster() {
-    GitTestingRebaseProcess(myProject, GitRebaseParams("master"), myRepo).rebase()
+    GitTestingRebaseProcess(myProject, simpleParams("master"), myRepo).rebase()
+  }
+
+  private fun simpleParams(newBase: String): GitRebaseParams {
+    return GitRebaseParams(newBase)
   }
 }
 

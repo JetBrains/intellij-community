@@ -44,7 +44,7 @@ abstract class GitAbstractRebaseAction extends DumbAwareAction {
     super.update(e);
     Project project = e.getProject();
     if (project == null || !hasGitRepositories(project)) {
-      e.getPresentation().setVisible(false);
+      e.getPresentation().setEnabledAndVisible(false);
     }
     else {
       e.getPresentation().setEnabledAndVisible(hasRebaseInProgress(project));

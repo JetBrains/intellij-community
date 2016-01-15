@@ -444,7 +444,7 @@ public class DvcsUtil {
   }
 
   @Nullable
-  private static VirtualFile guessVcsRoot(@NotNull Project project, @Nullable VirtualFile file) {
+  public static VirtualFile guessVcsRoot(@NotNull Project project, @Nullable VirtualFile file) {
     VirtualFile root = null;
     if (file != null) {
       root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);

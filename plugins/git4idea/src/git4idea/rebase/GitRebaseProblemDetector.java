@@ -42,10 +42,12 @@ public class GitRebaseProblemDetector extends GitLineHandlerAdapter {
     "you have unstaged changes",
     "your index contains uncommitted changes"
   };
+  private static final String STOPPED_FOR_EDITING = "You can amend the commit now";
 
   private volatile boolean myMergeConflict;
   private volatile boolean myNoChangeError;
   private volatile boolean myDirtyTree;
+  private volatile boolean myStoppedForEditing;
 
   public boolean isNoChangeError() {
     return myNoChangeError;
@@ -57,6 +59,10 @@ public class GitRebaseProblemDetector extends GitLineHandlerAdapter {
 
   public boolean isDirtyTree() {
     return myDirtyTree;
+  }
+
+  public boolean hasStoppedForEditing() {
+    return myStoppedForEditing;
   }
 
   @Override
@@ -78,6 +84,10 @@ public class GitRebaseProblemDetector extends GitLineHandlerAdapter {
         myDirtyTree = true;
         return;
       }
+    }
+
+    if (StringUtil.containsIgnoreCase(line, STOPPED_FOR_EDITING)) {
+      myStoppedForEditing = true;
     }
   }
 }

@@ -216,8 +216,12 @@ abstract class GitPlatformTest : PlatformTestCase() {
     hookFile.setExecutable(true, false)
   }
 
+  protected fun assertSuccessfulNotification(title: String, message: String) {
+    GitTestUtil.assertNotification(NotificationType.INFORMATION, title, message, myVcsNotifier.lastNotification)
+  }
+
   protected fun assertSuccessfulNotification(message: String) {
-      GitTestUtil.assertNotification(NotificationType.INFORMATION, "Rebase Successful", message, myVcsNotifier.lastNotification)
+    assertSuccessfulNotification("Rebase Successful", message)
   }
 
   protected fun assertWarningNotification(title: String, message: String) {
