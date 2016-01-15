@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,7 @@ import java.util.regex.Pattern
 
 private val UNNAMED_FUNCTION_PATTERN = Pattern.compile("^function[\\t ]*\\(")
 
-private val NATURAL_NAME_COMPARATOR = object : Comparator<Variable> {
-  override fun compare(o1: Variable, o2: Variable) = naturalCompare(o1.name, o2.name)
-}
+private val NATURAL_NAME_COMPARATOR = Comparator<Variable> { o1, o2 -> naturalCompare(o1.name, o2.name) }
 
 // start properties loading to achieve, possibly, parallel execution (properties loading & member filter computation)
 fun processVariables(context: VariableContext,
@@ -69,10 +67,10 @@ fun processScopeVariables(scope: Scope,
   }
 
   val comparator = if (memberFilter.hasNameMappings()) comparator { o1, o2 -> naturalCompare(memberFilter.rawNameToSource(o1), memberFilter.rawNameToSource(o2)) } else NATURAL_NAME_COMPARATOR
-  Collections.sort(properties, comparator)
-  Collections.sort(functions, comparator)
+  properties.sortWith(comparator)
+  functions.sortWith(comparator)
 
-  addAditionalVariables(variables, additionalVariables, properties, memberFilter)
+  addAditionalVariables(additionalVariables, properties, memberFilter)
 
   if (!properties.isEmpty()) {
     node.addChildren(createVariablesList(properties, context, memberFilter), functions.isEmpty() && isLast)
@@ -124,22 +122,41 @@ fun filterAndSort(variables: List<Variable>, memberFilter: MemberFilter): List<V
       result.add(variable)
     }
   }
-  Collections.sort(result, NATURAL_NAME_COMPARATOR)
+  result.sortWith(NATURAL_NAME_COMPARATOR)
 
-  addAditionalVariables(variables, additionalVariables, result, memberFilter)
+  addAditionalVariables(additionalVariables, result, memberFilter)
   return result
 }
 
-private fun addAditionalVariables(variables: List<Variable>,
-                                  additionalVariables: Collection<Variable>,
+private fun addAditionalVariables(additionalVariables: Collection<Variable>,
                                   result: MutableList<Variable>,
-                                  memberFilter: MemberFilter) {
+                                  memberFilter: MemberFilter,
+                                  functions: MutableList<Variable>? = null) {
+  val oldSize = result.size
   ol@ for (variable in additionalVariables) {
-    for (frameVariable in variables) {
-      if (memberFilter.rawNameToSource(frameVariable) == memberFilter.rawNameToSource(variable)) {
+    for (i in 0..(oldSize - 1)) {
+      val vmVariable = result[i]
+      if (memberFilter.rawNameToSource(vmVariable) == memberFilter.rawNameToSource(variable)) {
+        // we prefer additionalVariable here because it is more smart variable (e.g. NavigatableVariable)
+        val vmValue = vmVariable.value
+        // to avoid evaluation, use vm value directly
+        if (vmValue != null && variable.value == null) {
+          variable.value = vmValue
+        }
+
+        result.set(i, variable)
         continue@ol
       }
     }
+
+    if (functions != null) {
+      for (function in functions) {
+        if (memberFilter.rawNameToSource(function) == memberFilter.rawNameToSource(variable)) {
+          continue@ol
+        }
+      }
+    }
+
     result.add(variable)
   }
 }
