@@ -216,9 +216,22 @@ public class MainFrame extends JPanel implements DataProvider {
       }
     }
     mainGroup.add(toolbarGroup);
+
+    ActionToolbar toolbar = createActionsToolbar(mainGroup);
+    ActionToolbar settings = createActionsToolbar(new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_QUICK_SETTINGS_ACTION)));
+    settings.setReservePlaceAutoPopupIcon(false);
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(toolbar.getComponent(), BorderLayout.CENTER);
+    panel.add(settings.getComponent(), BorderLayout.LINE_END);
+    return panel;
+  }
+
+  @NotNull
+  private ActionToolbar createActionsToolbar(@NotNull DefaultActionGroup mainGroup) {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, mainGroup, true);
     toolbar.setTargetComponent(this);
-    return toolbar.getComponent();
+    return toolbar;
   }
 
   public JComponent getMainComponent() {

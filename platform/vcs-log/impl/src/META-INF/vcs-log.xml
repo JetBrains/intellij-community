@@ -56,7 +56,6 @@
       <reference id="Vcs.Log.ExpandAll"/>
       <reference id="Vcs.Log.ShowLongEdges"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
-      <reference id="Vcs.Log.QuickSettings" />
     </group>
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
