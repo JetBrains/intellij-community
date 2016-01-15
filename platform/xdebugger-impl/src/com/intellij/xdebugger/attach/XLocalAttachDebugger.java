@@ -13,27 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.process.impl;
+package com.intellij.xdebugger.attach;
 
-import com.intellij.execution.process.OSProcessManager;
-import com.intellij.execution.process.OSProcessUtil;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.ProcessInfo;
+import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+public interface XLocalAttachDebugger {
+  @NotNull
+  String getDebuggerDisplayName();
 
-/**
- * @author nik
- */
-public class OSProcessManagerImpl extends OSProcessManager {
-  @Override
-  public boolean killProcessTree(@NotNull Process process) {
-    return OSProcessUtil.killProcessTree(process);
-  }
-
-  @Override
-  @Nullable
-  public List<String> getCommandLinesOfRunningProcesses() {
-    return OSProcessUtil.getCommandLinesOfRunningProcesses();
-  }
+  @NotNull
+  XDebugSession attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException;
 }
