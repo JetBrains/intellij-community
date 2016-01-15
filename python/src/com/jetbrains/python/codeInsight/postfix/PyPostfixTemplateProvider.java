@@ -30,7 +30,8 @@ public class PyPostfixTemplateProvider implements PostfixTemplateProvider {
   public Set<PostfixTemplate> getTemplates() {
     return ContainerUtil.<PostfixTemplate>newHashSet(new PyNotPostfixTemplate(),
                                                      new PyParenthesizedExpressionPostfixTemplate(),
-                                                     new PyReturnPostfixTemplate());
+                                                     new PyReturnPostfixTemplate(),
+                                                     new PyIfPostfixTemplate());
   }
 
   @Override
