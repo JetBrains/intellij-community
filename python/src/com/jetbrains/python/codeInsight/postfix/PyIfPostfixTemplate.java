@@ -21,13 +21,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.refactoring.surround.surrounders.statements.PyStatementSurrounder;
+import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyExpressionSurrounder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PyIfPostfixTemplate extends SurroundPostfixTemplateBase {
 
@@ -43,22 +41,24 @@ public class PyIfPostfixTemplate extends SurroundPostfixTemplateBase {
     return new PyIfSurrounder();
   }
 
-  private static class PyIfSurrounder extends PyStatementSurrounder {
-
-    @Nullable
+  private static class PyIfSurrounder extends PyExpressionSurrounder {
     @Override
-    protected TextRange surroundStatement(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiElement[] elements)
+    public boolean isApplicable(@NotNull PyExpression expr) {
+      return true;
+    }
+
+    @Override
+    public TextRange surroundExpression(@NotNull Project project, @NotNull Editor editor, @NotNull PyExpression expression)
       throws IncorrectOperationException {
       String text = "if a:\n pass";
       PyIfStatement ifStatement = PyElementGenerator.getInstance(project).
         createFromText(LanguageLevel.getDefault(), PyIfStatement.class, text);
-      final PsiElement element = elements[0];
       final PyExpression condition = ifStatement.getIfPart().getCondition();
       if (condition != null) {
-        condition.replace(element);
+        condition.replace(expression);
       }
       ifStatement = (PyIfStatement)CodeStyleManager.getInstance(project).reformat(ifStatement);
-      ifStatement = (PyIfStatement)element.getParent().replace(ifStatement);
+      ifStatement = (PyIfStatement)expression.getParent().replace(ifStatement);
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
       PyStatementList statementList = ifStatement.getIfPart().getStatementList();
       PyStatement[] statements = statementList.getStatements();
