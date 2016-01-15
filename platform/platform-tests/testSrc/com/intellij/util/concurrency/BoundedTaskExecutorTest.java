@@ -17,11 +17,15 @@ package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
+import org.jetbrains.ide.PooledThreadExecutor;
 
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -290,5 +294,80 @@ public class BoundedTaskExecutorTest extends TestCase {
     assertTrue("Max threads was: "+maxThreads+" but bound was 1", maxThreads.get() == 1);
     backendExecutor.shutdownNow();
     assertTrue(backendExecutor.awaitTermination(1, TimeUnit.MINUTES));
+  }
+
+  public void testShutdownNowMustCancel() throws ExecutionException, InterruptedException {
+    ExecutorService executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
+    int N = 100000;
+    StringBuffer log = new StringBuffer(N*4);
+
+    Future[] futures = new Future[N];
+    for (int i = 0; i < N; i++) {
+      futures[i] = executor.submit(() -> log.append(" "));
+    }
+    List<Runnable> runnables = executor.shutdownNow();
+    assertTrue(executor.isShutdown());
+
+    Thread.sleep(1000); // wait for a rare chance of a task executing right now
+    assertEquals(N - log.length(), runnables.size());
+
+    try {
+      executor.submit(EmptyRunnable.getInstance());
+      fail("Must reject");
+    }
+    catch (RejectedExecutionException ignored) {
+    }
+    try {
+      executor.execute(EmptyRunnable.getInstance());
+      fail("Must reject");
+    }
+    catch (RejectedExecutionException ignored) {
+    }
+
+    for (int i = 0; i < log.length(); i++) {
+      assertFalse(futures[i].isCancelled());
+      assertTrue(futures[i].isDone());
+    }
+    for (int i = log.length(); i < N; i++) {
+      assertTrue(futures[i].isCancelled());
+      assertTrue(futures[i].isDone());
+    }
+
+    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+  }
+
+  public void testShutdownMustDisableSubmit() throws ExecutionException, InterruptedException {
+    ExecutorService executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
+    int N = 100000;
+    StringBuffer log = new StringBuffer(N*4);
+
+    Future[] futures = new Future[N];
+    for (int i = 0; i < N; i++) {
+      futures[i] = executor.submit(() -> log.append(" "));
+    }
+    executor.shutdown();
+    assertTrue(executor.isShutdown());
+
+    try {
+      executor.submit(EmptyRunnable.getInstance());
+      fail("Must reject");
+    }
+    catch (RejectedExecutionException ignored) {
+    }
+    try {
+      executor.execute(EmptyRunnable.getInstance());
+      fail("Must reject");
+    }
+    catch (RejectedExecutionException ignored) {
+    }
+
+    for (int i = 0; i < N; i++) {
+      assertFalse(futures[i].isCancelled());
+      futures[i].get();
+    }
+
+    String logs = log.toString();
+    assertEquals(StringUtil.repeat(" ",N), logs);
+    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
   }
 }
