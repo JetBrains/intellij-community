@@ -26,14 +26,12 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
-import com.intellij.vcs.log.data.VcsLogDataManager;
-import com.intellij.vcs.log.data.VcsLogFiltererImpl;
-import com.intellij.vcs.log.data.VcsLogTabsProperties;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -88,11 +86,30 @@ public class VcsLogManager implements Disposable {
     myTabsLogRefresher.removeTabFromWatch(contentTabName);
   }
 
+  private void watch(@NotNull final VcsLogUiImpl ui) {
+    final Consumer<DataPack> consumer = new Consumer<DataPack>() {
+      @Override
+      public void consume(DataPack dataPack) {
+        ui.getFilterer().onRefresh();
+      }
+    };
+    myDataManager.addConsumer(consumer);
+    Disposer.register(ui, new Disposable() {
+      @Override
+      public void dispose() {
+        myDataManager.removeConsumer(consumer);
+      }
+    });
+  }
+
   @NotNull
   public JComponent initMainLog(@Nullable String contentTabName) {
     myUi = createLog(VcsLogTabsProperties.MAIN_LOG_ID);
     if (contentTabName != null) {
       watchTab(contentTabName, myUi);
+    }
+    else {
+      watch(myUi);
     }
     myUi.requestFocus();
     return myUi.getMainFrame().getMainComponent();
