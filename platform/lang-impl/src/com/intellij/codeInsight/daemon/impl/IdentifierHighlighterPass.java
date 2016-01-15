@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,8 +129,8 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
    * @return a pair where first element is read usages and second is write usages
    */
   public static Couple<Collection<TextRange>> getHighlightUsages(@NotNull PsiElement target, PsiElement psiElement, boolean withDeclarations) {
-    Collection<TextRange> readRanges = new ArrayList<TextRange>();
-    Collection<TextRange> writeRanges = new ArrayList<TextRange>();
+    List<TextRange> readRanges = new ArrayList<TextRange>();
+    List<TextRange> writeRanges = new ArrayList<TextRange>();
     final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(target);
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(target.getProject())).getFindUsagesManager();
     final FindUsagesHandler findUsagesHandler = findUsagesManager.getFindUsagesHandler(target, true);
@@ -143,13 +143,14 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
         LOG.error("Null reference returned, findUsagesHandler=" + findUsagesHandler + "; target=" + target + " of " + target.getClass());
         continue;
       }
-      final List<TextRange> textRanges = HighlightUsagesHandler.getRangesToHighlight(psiReference);
+      List<TextRange> destination;
       if (detector == null || detector.getReferenceAccess(target, psiReference) == ReadWriteAccessDetector.Access.Read) {
-        readRanges.addAll(textRanges);
+        destination = readRanges;
       }
       else {
-        writeRanges.addAll(textRanges);
+        destination = writeRanges;
       }
+      HighlightUsagesHandler.collectRangesToHighlight(psiReference, destination);
     }
 
     if (withDeclarations) {
@@ -164,7 +165,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       }
     }
 
-    return Couple.of(readRanges, writeRanges);
+    return Couple.<Collection<TextRange>>of(readRanges, writeRanges);
   }
 
   private void highlightTargetUsages(@NotNull PsiElement target) {

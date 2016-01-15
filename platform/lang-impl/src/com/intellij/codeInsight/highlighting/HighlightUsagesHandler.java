@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -406,21 +406,35 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
                                       TextAttributes attributes, boolean clearHighlights) {
     List<TextRange> textRanges = new ArrayList<TextRange>(refs.size());
     for (PsiReference ref : refs) {
-      textRanges.addAll(getRangesToHighlight(ref));
+      collectRangesToHighlight(ref, textRanges);
     }
     highlightRanges(highlightManager, editor, attributes, clearHighlights, textRanges);
   }
 
-  public static List<TextRange> getRangesToHighlight(final PsiReference ref) {
+  @SuppressWarnings("unused")
+  @NotNull
+  @Deprecated
+  /**
+   * @deprecated Use {@link #collectRangesToHighlight}
+   */
+  public static List<TextRange> getRangesToHighlight(@NotNull PsiReference ref) {
+    return collectRangesToHighlight(ref, null);
+  }
+
+  @NotNull
+  public static List<TextRange> collectRangesToHighlight(@NotNull PsiReference ref, @Nullable List<TextRange> result) {
     final List<TextRange> relativeRanges = ReferenceRange.getRanges(ref);
-    List<TextRange> answer = new ArrayList<TextRange>(relativeRanges.size());
+    if (result == null) {
+      result = new ArrayList<TextRange>(relativeRanges.size());
+    }
+
     for (TextRange relativeRange : relativeRanges) {
       PsiElement element = ref.getElement();
       TextRange range = safeCut(element.getTextRange(), relativeRange);
       // injection occurs
-      answer.add(InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range));
+      result.add(InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range));
     }
-    return answer;
+    return result;
   }
 
   private static TextRange safeCut(TextRange range, TextRange relative) {
