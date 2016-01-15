@@ -633,6 +633,14 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     FindUtil.replace(myProject, myEditor, 0, model);
     assertEquals("FooBar fooBar", myEditor.getDocument().getText());
+
+    configureByText(FileTypes.PLAIN_TEXT, "abc1 Abc1 ABC1");
+
+    model.setStringToFind("ABC1");
+    model.setStringToReplace("DEF1");
+
+    FindUtil.replace(myProject, myEditor, 0, model);
+    assertEquals("def1 Def1 DEF1", myEditor.getDocument().getText());
   }
 
   public void testFindWholeWords() {

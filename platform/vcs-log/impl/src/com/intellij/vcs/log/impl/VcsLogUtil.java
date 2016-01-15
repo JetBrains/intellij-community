@@ -23,6 +23,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class VcsLogUtil {
+  public static final int MAX_SELECTED_COMMITS = 1000;
 
   @NotNull
   public static MultiMap<VirtualFile, VcsRef> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
@@ -166,6 +168,29 @@ public class VcsLogUtil {
       collectRoots(filterCollection.getStructureFilter().getFiles(), Collections.singleton(root));
 
     return new HashSet<VirtualFile>(rootsAndFiles.second.get(root));
+  }
+
+  // If this method stumbles on LoadingDetails instance it returns empty list
+  @NotNull
+  public static List<VcsFullCommitDetails> collectFirstPackOfLoadedSelectedDetails(@NotNull VcsLog log) {
+    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+
+    for (VcsFullCommitDetails next : log.getSelectedDetails()) {
+      if (next instanceof LoadingDetails) {
+        return Collections.emptyList();
+      }
+      else {
+        result.add(next);
+        if (result.size() >= VcsLogUtil.MAX_SELECTED_COMMITS) break;
+      }
+    }
+
+    return result;
+  }
+
+  @NotNull
+  public static <T> List<T> collectFirstPack(@NotNull List<T> list, int max) {
+    return list.subList(0, Math.min(list.size(), max));
   }
 
   @NotNull

@@ -353,7 +353,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     printToConsole("Connected to pydev debugger (build " + remoteVersion + ")\n", ConsoleViewContentType.SYSTEM_OUTPUT);
 
     if (remoteVersion != null) {
-      if (!remoteVersion.equals(currentBuild)) {
+      if (!(remoteVersion.equals(currentBuild) || remoteVersion.startsWith(currentBuild))) {
         LOG.warn(String.format("Wrong debugger version. Remote version: %s Current build: %s", remoteVersion, currentBuild));
         printToConsole("Warning: wrong debugger version. Use pycharm-debugger.egg from PyCharm installation folder.\n",
                        ConsoleViewContentType.ERROR_OUTPUT);

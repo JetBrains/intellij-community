@@ -18,9 +18,9 @@ helpers_dir = str(os.path.split(__file__)[0])
 class _Unit2(object):
     def fix(self, command, dir_to_run):
         if command[0] == "unit2":
-            return [os.path.join(helpers_dir, "utrunner.py"), dir_to_run] + command[1:] + ["true"]
+            return ["python", os.path.join(helpers_dir, "utrunner.py"), dir_to_run] + command[1:] + ["true"]
         elif command == ["python", "-m", "unittest", "discover"]:
-            return [os.path.join(helpers_dir, "utrunner.py"), dir_to_run] + ["true"]
+            return ["python", os.path.join(helpers_dir, "utrunner.py"), dir_to_run, "true"]
         return None
 
 

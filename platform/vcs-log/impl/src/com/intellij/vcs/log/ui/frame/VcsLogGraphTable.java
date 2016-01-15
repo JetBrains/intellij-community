@@ -43,6 +43,7 @@ import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.printer.idea.GraphCellPainter;
 import com.intellij.vcs.log.printer.idea.PositionUtil;
 import com.intellij.vcs.log.printer.idea.SimpleGraphCellPainter;
@@ -259,26 +260,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     }
   }
 
-  @Nullable
-  public List<Change> getSelectedChanges() {
-    TableModel model = getModel();
-    if (!(model instanceof GraphTableModel)) {
-      return null;
-    }
-    List<Change> changes = ((GraphTableModel)model).getSelectedChanges(sortSelectedRows());
-    return changes == null ? null : CommittedChangesTreeBrowser.zipChanges(changes);
-  }
-
-  @NotNull
-  private List<Integer> sortSelectedRows() {
-    List<Integer> rows = ContainerUtil.newArrayList();
-    for (int row : getSelectedRows()) {
-      rows.add(row);
-    }
-    Collections.sort(rows, Collections.reverseOrder());
-    return rows;
-  }
-
   @Override
   public void calcData(DataKey key, DataSink sink) {
     if (PlatformDataKeys.COPY_PROVIDER == key) {
@@ -288,7 +269,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    List<VcsFullCommitDetails> details = myUI.getVcsLog().getSelectedDetails();
+    List<VcsFullCommitDetails> details = VcsLogUtil.collectFirstPackOfLoadedSelectedDetails(myUI.getVcsLog());
     if (!details.isEmpty()) {
       CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(details, new Function<VcsFullCommitDetails, String>() {
         @Override

@@ -28,7 +28,7 @@ public interface VcsLogHashMap {
   int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root);
 
   @NotNull
-  Hash getHash(int commitIndex);
+  CommitId getCommitId(int commitIndex);
 
   /**
    * Iterates over known commid id to find the first one which satisfies given condition.

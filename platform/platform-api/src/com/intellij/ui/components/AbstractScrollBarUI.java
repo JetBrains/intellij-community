@@ -226,6 +226,7 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
         int value = getValue();
         int maxX = myTrackBounds.x + myTrackBounds.width - width;
         int x = (value < max - extent) ? (myTrackBounds.width - width) * (value - min) / (range - extent) : maxX;
+        if (!myScrollBar.getComponentOrientation().isLeftToRight()) x = myTrackBounds.x - x + maxX;
         myThumbBounds.setBounds(adjust(x, myTrackBounds.x, maxX), myTrackBounds.y, width, myTrackBounds.height);
       }
     }

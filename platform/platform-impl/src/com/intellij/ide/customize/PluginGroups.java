@@ -135,7 +135,7 @@ public class PluginGroups {
       "com.intellij.freemarker",
       "com.intellij.tapestry",
       "com.intellij.velocity",
-      "GuiceyIDEA",
+      "Guice",
       "com.intellij.aspectj",
       "Osmorc"
     )));

@@ -194,6 +194,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("ImportingClass.Constants", "ImportingClass.ImportantConstants", 0);
   }
 
+  public void testStaticProblemsShouldNotRaiseAConflict() throws Exception {
+    doTest("A", "B", 0);
+  }
+
   public void testFromNestedToOuterMethodRef() throws Exception {
     final LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
     final LanguageLevel oldLevel = projectExtension.getLanguageLevel();

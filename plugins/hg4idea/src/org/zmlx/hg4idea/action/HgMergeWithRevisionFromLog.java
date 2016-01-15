@@ -17,15 +17,16 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.HgMergeCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 public class HgMergeWithRevisionFromLog extends HgLogSingleCommitAction {
+
   @Override
-  protected void actionPerformed(@NotNull final HgRepository repository, @NotNull VcsFullCommitDetails commit) {
+  protected void actionPerformed(@NotNull HgRepository repository, @NotNull Hash commit) {
     FileDocumentManager.getInstance().saveAllDocuments();
-    HgMergeCommand.mergeWith(repository, commit.getId().asString(), UpdatedFiles.create());
+    HgMergeCommand.mergeWith(repository, commit.asString(), UpdatedFiles.create());
   }
 }

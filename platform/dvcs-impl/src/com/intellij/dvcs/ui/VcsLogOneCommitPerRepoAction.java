@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,16 +38,16 @@ public abstract class VcsLogOneCommitPerRepoAction<Repo extends Repository> exte
   }
 
   @Override
-  protected boolean isEnabled(@NotNull MultiMap<Repo, VcsFullCommitDetails> grouped) {
+  protected boolean isEnabled(@NotNull MultiMap<Repo, Hash> grouped) {
     return allValuesAreSingletons(grouped);
   }
 
   protected abstract void actionPerformed(@NotNull Project project, @NotNull Map<Repo, VcsFullCommitDetails> commits);
 
-  private boolean allValuesAreSingletons(@NotNull MultiMap<Repo, VcsFullCommitDetails> grouped) {
-    return !ContainerUtil.exists(grouped.entrySet(), new Condition<Map.Entry<Repo, Collection<VcsFullCommitDetails>>>() {
+  private boolean allValuesAreSingletons(@NotNull MultiMap<Repo, Hash> grouped) {
+    return !ContainerUtil.exists(grouped.entrySet(), new Condition<Map.Entry<Repo, Collection<Hash>>>() {
       @Override
-      public boolean value(Map.Entry<Repo, Collection<VcsFullCommitDetails>> entry) {
+      public boolean value(Map.Entry<Repo, Collection<Hash>> entry) {
         return entry.getValue().size() != 1;
       }
     });
