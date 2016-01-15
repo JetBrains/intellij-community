@@ -18,6 +18,7 @@ package com.intellij.remote;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Koshevoy
@@ -28,11 +29,18 @@ public class DockerCredentialsHolder {
   public static final String DOCKER_CONTAINER_NAME = "DOCKER_CONTAINER_NAME";
   public static final String DOCKER_REMOTE_PROJECT_PATH = "DOCKER_REMOTE_PROJECT_PATH";
 
+  public static final String DOCKER_COMPOSE_FILE_PATH = "DOCKER_COMPOSE_FILE_PATH";
+  public static final String DOCKER_COMPOSE_SERVICE_NAME = "DOCKER_COMPOSE_SERVICE_NAME";
+
   private String myMachineName;
 
   private String myImageName;
 
   private String myContainerName;
+
+  private String myComposeFilePath;
+
+  private String myComposeServiceName;
 
   private String myRemoteProjectPath;
 
@@ -44,6 +52,20 @@ public class DockerCredentialsHolder {
                                  String containerName,
                                  String remoteProjectPath) {
     myMachineName = machineName;
+    myImageName = imageName;
+    myContainerName = containerName;
+    myRemoteProjectPath = remoteProjectPath;
+  }
+
+  public DockerCredentialsHolder(String machineName,
+                                 String composeFilePath,
+                                 String composeServiceName,
+                                 String imageName,
+                                 String containerName,
+                                 String remoteProjectPath) {
+    myMachineName = machineName;
+    myComposeFilePath = composeFilePath;
+    myComposeServiceName = composeServiceName;
     myImageName = imageName;
     myContainerName = containerName;
     myRemoteProjectPath = remoteProjectPath;
@@ -65,21 +87,47 @@ public class DockerCredentialsHolder {
     return myRemoteProjectPath;
   }
 
+  public String getComposeFilePath() {
+    return myComposeFilePath;
+  }
+
+  public String getComposeServiceName() {
+    return myComposeServiceName;
+  }
+
   public void save(@NotNull Element element) {
-    if (StringUtil.isNotEmpty(myMachineName)) {
-      element.setAttribute(DOCKER_MACHINE_NAME, myMachineName);
-    }
-    element.setAttribute(DOCKER_IMAGE_NAME, myImageName);
-    if (StringUtil.isNotEmpty(myContainerName)) {
-      element.setAttribute(DOCKER_CONTAINER_NAME, myContainerName);
-    }
+    setAttributeIfNotEmpty(element, DOCKER_MACHINE_NAME, myMachineName);
+    setAttributeIfNotEmpty(element, DOCKER_IMAGE_NAME, myImageName);
+    setAttributeIfNotEmpty(element, DOCKER_CONTAINER_NAME, myContainerName);
+    setAttributeIfNotEmpty(element, DOCKER_COMPOSE_FILE_PATH, myComposeFilePath);
+    setAttributeIfNotEmpty(element, DOCKER_COMPOSE_SERVICE_NAME, myComposeServiceName);
     element.setAttribute(DOCKER_REMOTE_PROJECT_PATH, myRemoteProjectPath);
+  }
+
+  private static void setAttributeIfNotEmpty(@NotNull Element element, @NotNull String attribute, @Nullable String value) {
+    if (StringUtil.isNotEmpty(value)) {
+      element.setAttribute(attribute, value);
+    }
   }
 
   public void load(@NotNull Element element) {
     myMachineName = element.getAttributeValue(DOCKER_MACHINE_NAME);
     myImageName = element.getAttributeValue(DOCKER_IMAGE_NAME);
     myContainerName = element.getAttributeValue(DOCKER_CONTAINER_NAME);
+    myComposeFilePath = element.getAttributeValue(DOCKER_COMPOSE_FILE_PATH);
+    myComposeServiceName = element.getAttributeValue(DOCKER_COMPOSE_SERVICE_NAME);
     myRemoteProjectPath = element.getAttributeValue(DOCKER_REMOTE_PROJECT_PATH);
+  }
+
+  public boolean isDockerComposeCredentials() {
+    return myComposeFilePath != null;
+  }
+
+  @NotNull
+  public static DockerCredentialsHolder newDockerComposeCredentials(@Nullable String machineName,
+                                                                    @Nullable String composeFilePath,
+                                                                    @Nullable String composeServiceName,
+                                                                    @Nullable String remoteProjectPath) {
+    return new DockerCredentialsHolder(machineName, composeFilePath, composeServiceName, null, null, remoteProjectPath);
   }
 }

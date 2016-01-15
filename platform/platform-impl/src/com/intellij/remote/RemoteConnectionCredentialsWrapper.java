@@ -185,7 +185,13 @@ public class RemoteConnectionCredentialsWrapper {
       @Override
       public void docker(@NotNull DockerCredentialsHolder cred) {
         // TODO [Docker] review
-        String name = StringUtil.isNotEmpty(cred.getContainerName()) ? cred.getContainerName() : cred.getImageName();
+        String name;
+        if (cred.isDockerComposeCredentials()) {
+          name = cred.getComposeFilePath() + ":" + cred.getComposeServiceName();
+        }
+        else {
+          name = StringUtil.isNotEmpty(cred.getContainerName()) ? cred.getContainerName() : cred.getImageName();
+        }
         result.set(DOCKER_PREFIX + name + "/");
       }
     });
@@ -270,7 +276,12 @@ public class RemoteConnectionCredentialsWrapper {
       public void docker(@NotNull DockerCredentialsHolder credentials) {
         String containerName = StringUtil.isNotEmpty(credentials.getContainerName())
                                ? credentials.getContainerName() + " " : "";
-        result.set("Docker " + containerName + "(" + credentials.getImageName() + ")");
+        if (credentials.isDockerComposeCredentials()) {
+          result.set("Docker Compose " + credentials.getComposeFilePath() + ":" + credentials.getComposeServiceName());
+        }
+        else {
+          result.set("Docker " + containerName + "(" + credentials.getImageName() + ")");
+        }
       }
     });
 
