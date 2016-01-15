@@ -64,8 +64,9 @@ import java.util.regex.Matcher;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
 
+@SuppressWarnings("TestOnlyProblems")
 public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object>, EdtSortingModel, DumbAware {
-  private static java.util.regex.Pattern INNER_GROUP_WITH_IDS = java.util.regex.Pattern.compile("(.*) \\(\\d+\\)");
+  @NotNull private static java.util.regex.Pattern INNER_GROUP_WITH_IDS = java.util.regex.Pattern.compile("(.*) \\(\\d+\\)");
 
   @Nullable private final Project myProject;
   private final Component myContextComponent;
@@ -106,7 +107,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     fillConfigurablesNames(ShowSettingsUtilImpl.getConfigurables(project, true));
   }
 
-  private void fillConfigurablesNames(Configurable[] configurables) {
+  private void fillConfigurablesNames(@NotNull Configurable[] configurables) {
     for (Configurable configurable : configurables) {
       if (configurable instanceof SearchableConfigurable) {
         myConfigurablesNames.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
@@ -119,6 +120,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return IdeBundle.message("prompt.gotoaction.enter.action");
   }
 
+  @Nullable
   @Override
   public String getCheckBoxName() {
     return null;
@@ -165,6 +167,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       return ((ActionWrapper)value).getAction().getTemplatePresentation().getText();
     }
 
+    @Nullable
     @Override
     public String toString() {
       return getMatchingDegree() + " " + getValueText();
@@ -233,8 +236,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   @Override
   public ListCellRenderer getListCellRenderer() {
     return new GotoActionListCellRenderer(new Function<OptionDescription, String>() {
+      @NotNull
       @Override
-      public String fun(OptionDescription description) {
+      public String fun(@NotNull OptionDescription description) {
         return getGroupName(description);
       }
     });
@@ -244,7 +248,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return myActionManager.getId(anAction);
   }
 
-  private static JLabel createIconLabel(Icon icon) {
+  @NotNull
+  private static JLabel createIconLabel(@Nullable Icon icon) {
     LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
     if (icon != null && icon.getIconWidth() <= EMPTY_ICON.getIconWidth() && icon.getIconHeight() <= EMPTY_ICON.getIconHeight()) {
@@ -256,9 +261,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   }
 
 
-  protected JLabel createActionLabel(AnAction anAction, String anActionName,
+  @NotNull
+  protected JLabel createActionLabel(@NotNull AnAction anAction, String anActionName,
                                      Color fg, Color bg,
-                                     Icon icon) {
+                                     @Nullable Icon icon) {
     LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
     if (icon != null && icon.getIconWidth() <= EMPTY_ICON.getIconWidth() && icon.getIconHeight() <= EMPTY_ICON.getIconHeight()) {
@@ -274,7 +280,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return actionLabel;
   }
 
-  private static Shortcut preferKeyboardShortcut(Shortcut[] shortcuts) {
+  @Nullable
+  private static Shortcut preferKeyboardShortcut(@Nullable Shortcut[] shortcuts) {
     if (shortcuts != null) {
       for (Shortcut shortcut : shortcuts) {
         if (shortcut.isKeyboard()) return shortcut;
@@ -291,7 +298,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return ((MatchedValue)o1).compareTo((MatchedValue)o2);
   }
 
-  public static AnActionEvent updateActionBeforeShow(AnAction anAction, DataContext dataContext) {
+  @NotNull
+  public static AnActionEvent updateActionBeforeShow(@NotNull AnAction anAction, @NotNull DataContext dataContext) {
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, dataContext);
     ActionUtil.performDumbAwareUpdate(anAction, event, false);
     ActionUtil.performDumbAwareUpdate(anAction, event, true);
@@ -374,7 +382,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   @Override
   @Nullable
-  public String getFullName(Object element) {
+  public String getFullName(@NotNull Object element) {
     return getElementName(element);
   }
 
@@ -390,8 +398,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Nullable
   @Override
-  public String getElementName(Object mv) {
+  public String getElementName(@NotNull Object mv) {
     return ((MatchedValue) mv).getValueText();
   }
 
@@ -402,7 +411,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return actionMatches(pattern, anAction) != MatchMode.NONE;
   }
 
-  protected MatchMode actionMatches(String pattern, @NotNull AnAction anAction) {
+  protected MatchMode actionMatches(@NotNull String pattern, @NotNull AnAction anAction) {
     Pattern compiledPattern = getPattern(pattern);
     Presentation presentation = anAction.getTemplatePresentation();
     String text = presentation.getText();
@@ -427,7 +436,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return matches(pattern, compiledPattern, matcher, text + " " + groupName) ? MatchMode.GROUP : MatchMode.NONE;
   }
 
-  private static boolean matches(String pattern, Pattern compiledPattern, PatternMatcher matcher, String str) {
+  private static boolean matches(@NotNull String pattern, Pattern compiledPattern, @NotNull PatternMatcher matcher, @NotNull String str) {
     return StringUtil.containsIgnoreCase(str, pattern) || matcher.matches(str, compiledPattern);
   }
 
@@ -472,7 +481,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     NONE, INTENTION, NAME, DESCRIPTION, GROUP, NON_MENU
   }
 
-  static String convertPattern(String pattern) {
+  static String convertPattern(@NotNull String pattern) {
     int eol = pattern.indexOf('\n');
     if (eol != -1) {
       pattern = pattern.substring(0, eol);
@@ -552,7 +561,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return buffer.toString();
   }
 
-  private static boolean containsOnlyUppercaseLetters(String s) {
+  private static boolean containsOnlyUppercaseLetters(@NotNull String s) {
     for (int i = 0; i < s.length(); i++) {
       char c = s.charAt(i);
       if (c != '*' && c != ' ' && !Character.isUpperCase(c)) return false;
@@ -571,6 +580,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   }
 
   private final ThreadLocal<PatternMatcher> myMatcher = new ThreadLocal<PatternMatcher>() {
+    @NotNull
     @Override
     protected PatternMatcher initialValue() {
       return new Perl5Matcher();
@@ -666,6 +676,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       myGroupNamer = groupNamer;
     }
 
+    @NotNull
     @Override
     public Component getListCellRendererComponent(@NotNull JList list,
                                                   Object matchedValue,
@@ -775,13 +786,16 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 2, 0, 2));
     }
 
-    public String getName(String text, String groupName, boolean toggle) {
-      return toggle && StringUtil.isNotEmpty(groupName)? groupName + ": "+ text : text;
+    @NotNull
+    private static String getName(@Nullable String text, @Nullable String groupName, boolean toggle) {
+      return toggle && StringUtil.isNotEmpty(groupName)
+             ? StringUtil.isNotEmpty(text) ? groupName + ": " + text 
+                                           : groupName : StringUtil.notNullize(text);
     }
 
     private static void appendWithColoredMatches(SimpleColoredComponent nameComponent,
-                                                 String name,
-                                                 String pattern,
+                                                 @NotNull String name,
+                                                 @NotNull String pattern,
                                                  Color fg,
                                                  boolean selected) {
       SimpleTextAttributes plain = new SimpleTextAttributes(STYLE_PLAIN, fg);
