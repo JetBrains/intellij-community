@@ -32,7 +32,7 @@ import java.util.Map;
 public class BranchesPanel extends JPanel {
   private static final int SMALL_ROOTS_GAP = 3;
   private static final int BIG_ROOTS_GAP = 7;
-  private static final int TOP = 0;
+  private static final int TOP = 2;
   private static final int BOTTOM = 3;
   @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final VcsLogUiImpl myUI;
