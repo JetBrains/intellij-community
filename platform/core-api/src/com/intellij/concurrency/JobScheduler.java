@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,11 @@
 package com.intellij.concurrency;
 
 import com.intellij.Patches;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
 
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
@@ -87,10 +85,6 @@ public abstract class JobScheduler {
       catch (Exception ignored) {
       }
     }
-  }
-
-  public static JobScheduler getInstance() {
-    return ServiceManager.getService(JobScheduler.class);
   }
 
   @NotNull
