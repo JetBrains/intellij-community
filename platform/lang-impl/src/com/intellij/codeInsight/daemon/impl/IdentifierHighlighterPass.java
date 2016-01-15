@@ -128,10 +128,27 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
    * @param psiElement psi element to search in
    * @return a pair where first element is read usages and second is write usages
    */
+  @NotNull
   public static Couple<Collection<TextRange>> getHighlightUsages(@NotNull PsiElement target, PsiElement psiElement, boolean withDeclarations) {
+    return getUsages(target, psiElement, withDeclarations, true);
+  }
+
+  /**
+   * Returns usages of psi element inside a single element
+   *
+   * @param target target psi element
+   * @param psiElement psi element to search in
+   */
+  @NotNull
+  public static Collection<TextRange> getUsages(@NotNull PsiElement target, PsiElement psiElement, boolean withDeclarations) {
+    return getUsages(target, psiElement, withDeclarations, false).first;
+  }
+
+  @NotNull
+  private static Couple<Collection<TextRange>> getUsages(@NotNull PsiElement target, PsiElement psiElement, boolean withDeclarations, boolean detectAccess) {
     List<TextRange> readRanges = new ArrayList<TextRange>();
     List<TextRange> writeRanges = new ArrayList<TextRange>();
-    final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(target);
+    final ReadWriteAccessDetector detector = detectAccess ? ReadWriteAccessDetector.findDetector(target) : null;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(target.getProject())).getFindUsagesManager();
     final FindUsagesHandler findUsagesHandler = findUsagesManager.getFindUsagesHandler(target, true);
     final LocalSearchScope scope = new LocalSearchScope(psiElement);

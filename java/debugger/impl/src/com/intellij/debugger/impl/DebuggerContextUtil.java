@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -37,9 +36,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 public class DebuggerContextUtil {
   public static void setStackFrame(final DebuggerStateManager manager, final StackFrameProxyImpl stackFrame) {
@@ -98,11 +95,8 @@ public class DebuggerContextUtil {
           //final Editor editor = fileEditor instanceof TextEditorImpl ? ((TextEditorImpl)fileEditor).getEditor() : null;
           if (editor != null && position != null && file.getVirtualFile().equals(position.getFile())) {
             PsiMethod method = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class, false);
-            final Couple<Collection<TextRange>> usages =
-              IdentifierHighlighterPass.getHighlightUsages(psi, method != null ? method : file, false);
-            final List<TextRange> ranges = new ArrayList<TextRange>();
-            ranges.addAll(usages.first);
-            ranges.addAll(usages.second);
+            final Collection<TextRange> ranges =
+              IdentifierHighlighterPass.getUsages(psi, method != null ? method : file, false);
             final int breakPointLine = position.getLine();
             int bestLine = -1;
             int bestOffset = -1;
