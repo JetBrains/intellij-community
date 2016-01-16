@@ -211,7 +211,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   private static class TextFilterComponent extends DumbAwareAction implements CustomComponentAction {
-
+    private static final String VCS_LOG_TEXT_FILTER_HISTORY = "Vcs.Log.Text.Filter.History";
     private final TextFilterModel myFilterModel;
 
     public TextFilterComponent(TextFilterModel filterModel) {
@@ -229,7 +229,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
 
     private Component createSearchField() {
-      final SearchTextFieldWithStoredHistory textFilter = new SearchTextFieldWithStoredHistory("Vcs.Log.Text.Filter.History") {
+      final SearchTextFieldWithStoredHistory textFilter = new SearchTextFieldWithStoredHistory(VCS_LOG_TEXT_FILTER_HISTORY) {
         @Override
         protected void onFieldCleared() {
           myFilterModel.setFilter(null);
