@@ -253,7 +253,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
                                          : new EntireFileHistoryDialogModel(project, myGateway, myVcs, f);
     int leftRev = findRevisionIndexToRevert(dirHistoryModel, label);
     if (leftRev < 0) {
-      LocalHistoryLog.LOG.warn(
+      LocalHistoryLog.LOG.error(
         String.format("Couldn't find label revision. try to Use local history dialog for %s and perform revert manually.", f.getName()));
       return;
     }

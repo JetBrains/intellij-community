@@ -32,6 +32,14 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
     assertNotNull(myRoot.findChild("first.txt"));
   }
 
+  public void testFileCreationAsFirstAction() throws Exception {
+    final LocalHistory localHistory = LocalHistory.getInstance();
+    final Label testLabel = localHistory.putSystemLabel(myProject, "testLabel");
+    createChildData(myRoot, "foo.txt");
+    localHistory.revertToLabel(myProject, myRoot, testLabel);
+    assertNull(myRoot.findChild("foo.txt"));
+  }
+
   public void testFileDeletion() throws Exception {
     VirtualFile f = createChildData(myRoot, "foo.txt");
     setBinaryContent(f, new byte[]{123}, -1, 4000, this);

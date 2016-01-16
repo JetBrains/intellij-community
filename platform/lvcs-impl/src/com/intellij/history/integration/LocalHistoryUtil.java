@@ -32,9 +32,9 @@ public class LocalHistoryUtil {
     List<RevisionItem> revs = dirHistoryModel.getRevisions();
     for (int i = 0; i < revs.size(); i++) {
       final RevisionItem rev = revs.get(i);
-      if (isLabelRevision(rev, label)) {
-        return i;
-      }
+      if (isLabelRevision(rev, label)) return i;
+      //when lvcs model not constructed yet or empty then putLableChange created but without label, so we need to scan revisions themselves
+      if (isChangeWithId(rev.revision, label.getLabelChangeId())) return i;
     }
     return -1;
   }
@@ -44,8 +44,12 @@ public class LocalHistoryUtil {
     return ContainerUtil.exists(rev.labels, new Condition<Revision>() {
       @Override
       public boolean value(Revision revision) {
-        return revision instanceof ChangeRevision && ((ChangeRevision)revision).containsChangeWithId(targetChangeId);
+        return isChangeWithId(revision, targetChangeId);
       }
     });
+  }
+
+  private static boolean isChangeWithId(@NotNull Revision revision, long targetChangeId) {
+    return revision instanceof ChangeRevision && ((ChangeRevision)revision).containsChangeWithId(targetChangeId);
   }
 }
