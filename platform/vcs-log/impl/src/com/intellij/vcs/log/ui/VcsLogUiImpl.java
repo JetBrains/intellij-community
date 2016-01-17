@@ -41,7 +41,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     ExtensionPointName.create("com.intellij.logHighlighterFactory");
 
   @NotNull private final MainFrame myMainFrame;
-  @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final Project myProject;
   @NotNull private final VcsLogSettings mySettings;
   @NotNull private final VcsLogColorManager myColorManager;
@@ -59,7 +58,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
                       @NotNull VcsLogColorManager manager,
                       @NotNull VcsLogUiProperties uiProperties,
                       @NotNull VcsLogFilterer filterer) {
-    myLogDataHolder = logDataHolder;
     myProject = project;
     mySettings = settings;
     myColorManager = manager;
@@ -72,7 +70,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myMainFrame = new MainFrame(logDataHolder, this, project, settings, uiProperties, myLog, myVisiblePack);
 
     for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
-      addHighlighter(factory.createHighlighter(myLogDataHolder, myUiProperties, myMainFrame.getFilterUi()));
+      addHighlighter(factory.createHighlighter(logDataHolder, myUiProperties, myMainFrame.getFilterUi()));
     }
   }
 
