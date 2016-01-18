@@ -33,11 +33,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.Future;
 
-/**
- *
- */
 public class VcsLogImpl implements VcsLog {
-  private static final int SLICE_SIZE = 50;
   @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final VcsLogUiImpl myUi;
 
