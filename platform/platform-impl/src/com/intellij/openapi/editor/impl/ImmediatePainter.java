@@ -84,10 +84,6 @@ class ImmediatePainter {
 
   public static final int DEBUG_PAUSE_DURATION = 1000;
 
-  public static final String TYPING_LATENCY_STATS_KEY = "editor.typing.latency.stats";
-
-  private static final int TYPING_STATS_SAMPLE_SIZE = 50;
-
   // TODO Should be removed when IDEA adopts typing without starting write actions.
   private static final boolean VIM_PLUGIN_LOADED = isPluginLoaded("IdeaVIM");
 
@@ -96,10 +92,6 @@ class ImmediatePainter {
   private boolean myImmediateEditingInProgress;
 
   private final EditorImpl myEditor;
-
-  private int myCharsTyped;
-  private final DelayMeter myTypingLatencyMeter = new DelayMeter();
-  private boolean myZeroLatencyTypingWasEnabled = isZeroLatencyTypingEnabled();
 
 
   ImmediatePainter(EditorImpl editor) {
@@ -149,52 +141,10 @@ class ImmediatePainter {
   }
 
   public void paintCharacter(Graphics g, char c) {
-    if (isTypingLatencyStatsEnabled()) {
-      if (myZeroLatencyTypingWasEnabled != isZeroLatencyTypingEnabled()) {
-        resetTypingLatencyStats();
-        myZeroLatencyTypingWasEnabled = isZeroLatencyTypingEnabled();
-      }
-      myTypingLatencyMeter.registerStart();
-    }
-
     if (isZeroLatencyTypingEnabled() && getDocument().isWritable() && !myEditor.isViewer() && canPaintImmediately(c)) {
       for (Caret caret : getCaretModel().getAllCarets()) {
         paintImmediately(g, caret.getOffset(), c, myEditor.isInsertMode());
       }
-      if (isTypingLatencyStatsEnabled()) {
-        // not all chars are painted immediately, so type usual letters / digits to compute precise stats
-        myTypingLatencyMeter.registerFinish();
-      }
-    }
-
-    if (isTypingLatencyStatsEnabled()) {
-      myCharsTyped++;
-
-      if (myCharsTyped == TYPING_STATS_SAMPLE_SIZE) {
-        String stats = "Zero-latency: "+isZeroLatencyTypingEnabled()+"; "+myTypingLatencyMeter.stat();
-        printToEventLog(stats);
-
-        resetTypingLatencyStats();
-      }
-    }
-  }
-
-  private void printToEventLog(String message) {
-    NotificationGroup group = NotificationGroup.logOnlyGroup("typing-delay-stats");
-    Notification notification = group.createNotification(message, NotificationType.INFORMATION);
-    notification.setImportant(true);
-    notification.notify(myEditor.getProject());
-    notification.hideBalloon();
-  }
-
-  private void resetTypingLatencyStats() {
-    myCharsTyped = 0;
-    myTypingLatencyMeter.reset();
-  }
-
-  public void afterPainting() {
-    if (isTypingLatencyStatsEnabled()) {
-      myTypingLatencyMeter.registerFinish();
     }
   }
 
@@ -226,10 +176,6 @@ class ImmediatePainter {
 
   private static boolean isZeroLatencyTypingDebugEnabled() {
     return Registry.is(ZERO_LATENCY_TYPING_DEBUG_KEY);
-  }
-
-  private static boolean isTypingLatencyStatsEnabled() {
-    return Registry.is(TYPING_LATENCY_STATS_KEY);
   }
 
   private static boolean isPluginLoaded(@NotNull String id) {

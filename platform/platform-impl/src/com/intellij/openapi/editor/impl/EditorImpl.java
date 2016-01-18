@@ -2172,8 +2172,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       paintComposedTextDecoration(g);
     }
-
-    myImmediatePainter.afterPainting();
   }
 
   private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
