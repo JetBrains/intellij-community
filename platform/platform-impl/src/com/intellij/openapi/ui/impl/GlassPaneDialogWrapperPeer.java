@@ -734,6 +734,13 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     public void setDefaultButton(final JButton defaultButton) {
       myDialog.setDefaultButton(defaultButton);
     }
+
+    @Override
+    public void setContentPane(Container contentPane) {
+      if (contentPane != null) {
+        contentPane.addMouseMotionListener(new MouseMotionAdapter() {}); // listen to mouse motion events for a11y
+      }
+    }
   }
 
   public static class GlasspanePeerUnavailableException extends Exception {
