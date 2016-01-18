@@ -96,7 +96,7 @@ public class InferenceSession {
     myInferenceVariables.addAll(initialState.getInferenceVariables());
     mySiteSubstitutor = initialState.getSiteSubstitutor();
 
-    for (Pair<PsiTypeParameter[], PsiClassType> capture : initialState.getCaptures()) {
+    for (Pair<InferenceVariable[], PsiClassType> capture : initialState.getCaptures()) {
       myIncorporationPhase.addCapture(capture.first, capture.second);
     }
     myInferenceSessionContainer = initialState.getInferenceSessionContainer();
@@ -647,7 +647,7 @@ public class InferenceSession {
     final InferenceVariable inferenceVariable = shouldResolveAndInstantiate(returnType, targetType);
     if (inferenceVariable != null) {
       final PsiSubstitutor substitutor = resolveSubset(Collections.singletonList(inferenceVariable), mySiteSubstitutor);
-      final PsiType substitutedReturnType = substitutor.substitute(inferenceVariable.getParameter());
+      final PsiType substitutedReturnType = substitutor.substitute(inferenceVariable);
       if (substitutedReturnType != null) {
         addConstraint(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(substitutedReturnType, myContext)));
       }
@@ -1020,7 +1020,7 @@ public class InferenceSession {
     for (int i = 0; i < vars.size(); i++) {
       InferenceVariable var = vars.get(i);
       final PsiTypeParameter parameter = var.getParameter();
-      yVars[i] = elementFactory.createTypeParameterFromText(getFreshVariableName(var), parameter);
+      yVars[i] = elementFactory.createTypeParameterFromText(parameter.getName(), parameter);
       ySubstitutor = ySubstitutor.put(var, elementFactory.createType(yVars[i]));
     }
     for (int i = 0; i < yVars.length; i++) {
@@ -1043,10 +1043,6 @@ public class InferenceSession {
       }
     }
     return true;
-  }
-
-  private static String getFreshVariableName(InferenceVariable var) {
-    return var.getName();
   }
 
   private PsiSubstitutor resolveSubsetOrdered(Set<InferenceVariable> varsToResolve, PsiSubstitutor siteSubstitutor) {

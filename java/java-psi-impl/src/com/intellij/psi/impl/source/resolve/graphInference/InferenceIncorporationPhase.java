@@ -35,21 +35,21 @@ import java.util.*;
 public class InferenceIncorporationPhase {
   private static final Logger LOG = Logger.getInstance("#" + InferenceIncorporationPhase.class.getName());
   private final InferenceSession mySession;
-  private final List<Pair<PsiTypeParameter[], PsiClassType>> myCaptures = new ArrayList<Pair<PsiTypeParameter[], PsiClassType>>();
+  private final List<Pair<InferenceVariable[], PsiClassType>> myCaptures = new ArrayList<Pair<InferenceVariable[], PsiClassType>>();
 
   public InferenceIncorporationPhase(InferenceSession session) {
     mySession = session;
   }
 
-  public void addCapture(PsiTypeParameter[] typeParameters, PsiClassType rightType) {
+  public void addCapture(InferenceVariable[] typeParameters, PsiClassType rightType) {
     myCaptures.add(Pair.create(typeParameters, rightType));
   }
 
   public void forgetCaptures(List<InferenceVariable> variables) {
     for (InferenceVariable variable : variables) {
       final PsiTypeParameter parameter = variable.getParameter();
-      for (Iterator<Pair<PsiTypeParameter[], PsiClassType>> iterator = myCaptures.iterator(); iterator.hasNext(); ) {
-        Pair<PsiTypeParameter[], PsiClassType> capture = iterator.next();
+      for (Iterator<Pair<InferenceVariable[], PsiClassType>> iterator = myCaptures.iterator(); iterator.hasNext(); ) {
+        Pair<InferenceVariable[], PsiClassType> capture = iterator.next();
         for (PsiTypeParameter typeParameter : capture.first) {
           if (parameter == typeParameter) {
             iterator.remove();
@@ -63,7 +63,7 @@ public class InferenceIncorporationPhase {
   public boolean hasCaptureConstraints(Iterable<InferenceVariable> variables) {
     for (InferenceVariable variable : variables) {
       final PsiTypeParameter parameter = variable.getParameter();
-      for (Pair<PsiTypeParameter[], PsiClassType> capture : myCaptures) {
+      for (Pair<InferenceVariable[], PsiClassType> capture : myCaptures) {
         for (PsiTypeParameter typeParameter : capture.first) {
           if (parameter == typeParameter){
             return true;
@@ -91,7 +91,7 @@ public class InferenceIncorporationPhase {
       upUp(upperBounds);
     }
 
-    for (Pair<PsiTypeParameter[], PsiClassType> capture : myCaptures) {
+    for (Pair<InferenceVariable[], PsiClassType> capture : myCaptures) {
       final PsiClassType right = capture.second;
       final PsiClass gClass = right.resolve();
       LOG.assertTrue(gClass != null);
@@ -316,7 +316,7 @@ public class InferenceIncorporationPhase {
 
   public void collectCaptureDependencies(InferenceVariable variable, Set<InferenceVariable> dependencies) {
     final PsiTypeParameter parameter = variable.getParameter();
-    for (Pair<PsiTypeParameter[], PsiClassType> capture : myCaptures) {
+    for (Pair<InferenceVariable[], PsiClassType> capture : myCaptures) {
       for (PsiTypeParameter typeParameter : capture.first) {
         if (typeParameter == parameter) {
           collectAllVariablesOnBothSides(dependencies, capture);
@@ -326,7 +326,7 @@ public class InferenceIncorporationPhase {
     }
   }
 
-  protected void collectAllVariablesOnBothSides(Set<InferenceVariable> dependencies, Pair<PsiTypeParameter[], PsiClassType> capture) {
+  protected void collectAllVariablesOnBothSides(Set<InferenceVariable> dependencies, Pair<InferenceVariable[], PsiClassType> capture) {
     mySession.collectDependencies(capture.second, dependencies);
     for (PsiTypeParameter psiTypeParameter : capture.first) {
       final InferenceVariable var = mySession.getInferenceVariable(psiTypeParameter);
@@ -336,7 +336,7 @@ public class InferenceIncorporationPhase {
     }
   }
 
-  public List<Pair<PsiTypeParameter[], PsiClassType>> getCaptures() {
+  public List<Pair<InferenceVariable[], PsiClassType>> getCaptures() {
     return myCaptures;
   }
 }
