@@ -20,6 +20,7 @@ import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -35,11 +36,13 @@ public class InferenceVariable extends LightTypeParameter {
 
   private boolean myThrownBound = false;
   private final Map<InferenceBound, List<PsiType>> myBounds = new HashMap<InferenceBound, List<PsiType>>();
+  private final String myName;
 
   private PsiType myInstantiation = PsiType.NULL;
 
-  InferenceVariable(PsiElement context, PsiTypeParameter parameter) {
+  InferenceVariable(PsiElement context, PsiTypeParameter parameter, String name) {
     super(parameter);
+    myName = name;
     myContext = context;
   }
 
@@ -172,6 +175,12 @@ public class InferenceVariable extends LightTypeParameter {
   @Override
   public PsiTypeParameterListOwner getOwner() {
     return null;
+  }
+
+  @Nullable
+  @Override
+  public String getName() {
+    return myName;
   }
 
   public PsiElement getCallContext() {

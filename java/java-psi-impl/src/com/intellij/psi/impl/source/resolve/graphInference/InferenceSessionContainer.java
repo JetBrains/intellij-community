@@ -167,7 +167,7 @@ public class InferenceSessionContainer {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     final InferenceVariable[] oldVars = inferenceVariables.toArray(new InferenceVariable[inferenceVariables.size()]);
     for (InferenceVariable variable : oldVars) {
-      final InferenceVariable newVariable = new InferenceVariable(variable.getCallContext(), variable.getParameter());
+      final InferenceVariable newVariable = new InferenceVariable(variable.getCallContext(), variable.getParameter(), variable.getName());
       substitutor = substitutor.put(variable, JavaPsiFacade.getElementFactory(variable.getProject()).createType(newVariable));
       targetVars.add(newVariable);
       if (variable.isThrownBound()) {

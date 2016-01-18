@@ -87,6 +87,7 @@ public class InferenceSession {
   private final PsiElement myContext;
 
   private PsiSubstitutor myInferenceSubstitution = PsiSubstitutor.EMPTY;
+  private PsiSubstitutor myRestoreNameSubstitution = PsiSubstitutor.EMPTY;
 
   public InferenceSession(InitialInferenceState initialState) {
     myContext = initialState.getContext();
@@ -562,7 +563,7 @@ public class InferenceSession {
     for (InferenceVariable variable : variables) {
       final PsiType equalsBound = getEqualsBound(variable, substitutor);
       if (equalsBound != null && !PsiType.NULL.equals(equalsBound)) {
-        substitutor = substitutor.put(variable, equalsBound);
+        substitutor = substitutor.put(variable.getParameter(), equalsBound);
       }
     }
     return substitutor;
@@ -604,10 +605,15 @@ public class InferenceSession {
   public InferenceVariable[] initBounds(PsiElement context, PsiTypeParameter... typeParameters) {
     List<InferenceVariable> result = new ArrayList<InferenceVariable>(typeParameters.length);
     for (PsiTypeParameter parameter : typeParameters) {
-      InferenceVariable variable = new InferenceVariable(context, parameter);
+      String name = parameter.getName();
+      if (myContext != null) {
+        name += Math.abs(myContext.getText().hashCode());
+      }
+      InferenceVariable variable = new InferenceVariable(context, parameter, name);
       result.add(variable);
-      myInferenceSubstitution = myInferenceSubstitution.put(parameter,
-                                                            JavaPsiFacade.getElementFactory(variable.getProject()).createType(variable));
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(parameter.getProject());
+      myInferenceSubstitution = myInferenceSubstitution.put(parameter, elementFactory.createType(variable));
+      myRestoreNameSubstitution = myRestoreNameSubstitution.put(variable, elementFactory.createType(parameter));
     }
     for (InferenceVariable variable : result) {
       PsiTypeParameter parameter = variable.getParameter();
@@ -1100,7 +1106,7 @@ public class InferenceSession {
       if (type instanceof PsiIntersectionType) {
         final String conflictingConjunctsMessage = ((PsiIntersectionType)type).getConflictingConjunctsMessage();
         if (conflictingConjunctsMessage != null) {
-          return registerIncompatibleErrorMessage(var, "Type parameter " + var.getName() + " has incompatible upper bounds: " + conflictingConjunctsMessage);
+          return registerIncompatibleErrorMessage(var, "Type parameter " + var.getParameter().getName() + " has incompatible upper bounds: " + conflictingConjunctsMessage);
         }
       }
     }
@@ -1123,6 +1129,10 @@ public class InferenceSession {
     return type;
   }
 
+  public String getPresentableText(PsiType psiType) {
+    return myRestoreNameSubstitution.substitute(psiType).getPresentableText();
+  }
+  
   private PsiType registerIncompatibleErrorMessage(InferenceVariable var, @NotNull String incompatibleBoundsMessage) {
     if (var.getCallContext() == myContext) {
       registerIncompatibleErrorMessage(incompatibleBoundsMessage);
@@ -1134,7 +1144,7 @@ public class InferenceSession {
     final String variablesEnumeration = StringUtil.join(variables, new Function<InferenceVariable, String>() {
       @Override
       public String fun(InferenceVariable variable) {
-        return variable.getName();
+        return variable.getParameter().getName();
       }
     }, ", ");
     registerIncompatibleErrorMessage("no instance(s) of type variable(s) " + variablesEnumeration + " exist so that " + incompatibleTypesMessage);
@@ -1162,7 +1172,7 @@ public class InferenceSession {
         return (substituted != null ? substituted : type).getPresentableText();
       }
     };
-    return "inference variable " + var.getName() + " has incompatible bounds:\n " + 
+    return "inference variable " + var.getParameter().getName() + " has incompatible bounds:\n " + 
            lowBoundName  + ": " + StringUtil.join(var.getBounds(lowBound), typePresentation, ", ") + "\n" + 
            upperBoundName + ": " + StringUtil.join(var.getBounds(upperBound), typePresentation, ", ");
   }

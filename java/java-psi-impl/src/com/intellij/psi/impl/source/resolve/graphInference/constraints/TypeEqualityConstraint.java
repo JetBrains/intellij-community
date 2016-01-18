@@ -68,14 +68,14 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     }
 
     if (myT instanceof PsiWildcardType || myS instanceof PsiWildcardType) {
-      session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + myT.getPresentableText() + " and " + myS.getPresentableText());
+      session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + session.getPresentableText(myT) + " and " + session.getPresentableText(myS));
       return false;
     }
 
     if (session.isProperType(myT) && session.isProperType(myS)) {
       final boolean equal = Comparing.equal(myT, myS);
       if (!equal) {
-        session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + myT.getPresentableText() + " and " + myS.getPresentableText());
+        session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + session.getPresentableText(myT) + " and " + session.getPresentableText(myS));
       }
       return equal;
     }
@@ -108,7 +108,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
             constraints.add(new TypeEqualityConstraint(tSubstituted, sSubstituted));
           }
           if (tSubstituted == null ^ sSubstituted == null) {
-            session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + myT.getPresentableText() + " and " + myS.getPresentableText());
+            session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + session.getPresentableText(myT) + " and " + session.getPresentableText(myS));
             return false;
           }
         }
@@ -120,7 +120,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       return true;
     }
 
-    session.registerIncompatibleErrorMessage(session.getInferenceVariables(), myS.getPresentableText() + " conforms to " + myT.getPresentableText());
+    session.registerIncompatibleErrorMessage(session.getInferenceVariables(), session.getPresentableText(myS) + " conforms to " + session.getPresentableText(myT));
     return false;
   }
 
