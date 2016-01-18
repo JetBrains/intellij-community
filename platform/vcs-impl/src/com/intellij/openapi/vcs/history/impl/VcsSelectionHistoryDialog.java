@@ -24,27 +24,31 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.MessageDiffRequest;
 import com.intellij.diff.requests.NoDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -218,6 +222,18 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
     updateRevisionsList();
     myList.getSelectionModel().setSelectionInterval(0, 0);
+
+    final DefaultActionGroup popupActions = new DefaultActionGroup();
+    popupActions.add(new MyDiffAction());
+    popupActions.add(new MyDiffLocalAction());
+    popupActions.add(ShowAllAffectedGenericAction.getInstance());
+    popupActions.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
+    myList.addMouseListener(new PopupHandler() {
+      public void invokePopup(Component comp, int x, int y) {
+        ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UPDATE_POPUP, popupActions);
+        popupMenu.getComponent().show(comp, x, y);
+      }
+    });
 
     setTitle(title);
     setComponent(mySplitter);
@@ -426,7 +442,18 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       return myFile;
     }
     else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
-      return myList.getSelectedObject();
+      VcsFileRevision selectedObject = myList.getSelectedObject();
+      return selectedObject instanceof CurrentRevision ? null : selectedObject;
+    }
+    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
+      List<VcsFileRevision> objects = myList.getSelectedObjects();
+      List<VcsRevisionNumber> revisionNumbers = ContainerUtil.mapNotNull(objects, new Function<VcsFileRevision, VcsRevisionNumber>() {
+        @Override
+        public VcsRevisionNumber fun(VcsFileRevision revision) {
+          return revision instanceof CurrentRevision ? null : revision.getRevisionNumber();
+        }
+      });
+      return ArrayUtil.toObjectArray(revisionNumbers, VcsRevisionNumber.class);
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
       return myActiveVcs.getKeyInstanceMethod();
@@ -467,5 +494,68 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       ensureBlocksCreated(index);
     }
     return myBlocks.get(index);
+  }
+
+  private class MyDiffAction extends DumbAwareAction {
+    public MyDiffAction() {
+      super(VcsBundle.message("action.name.compare"), VcsBundle.message("action.description.compare"), AllIcons.Actions.Diff);
+    }
+
+    public void update(final AnActionEvent e) {
+      e.getPresentation().setEnabled(myList.getSelectedRowCount() > 1 ||
+                                     myList.getSelectedRowCount() == 1 && myList.getSelectedRow() != 0);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      int minIndex = myList.getSelectionModel().getMinSelectionIndex();
+      int maxIndex = myList.getSelectionModel().getMaxSelectionIndex();
+      if (minIndex == -1 || maxIndex == -1) return;
+
+      VcsFileRevision minRevision = myList.getRow(minIndex);
+      VcsFileRevision maxRevision = myList.getRow(maxIndex);
+      int startIndex = myRevisions.indexOf(minRevision);
+      int endIndex = myRevisions.indexOf(maxRevision);
+      if (startIndex == -1 || endIndex == -1) return;
+
+      VcsFileRevision revision = myRevisions.get(startIndex);
+      VcsFileRevision prevRevision = endIndex + 1 < myRevisions.size() ? myRevisions.get(endIndex + 1) : VcsFileRevision.NULL;
+      FilePath filePath = VcsUtil.getFilePath(myFile);
+
+      if (startIndex != endIndex) {
+        getDiffHandler().showDiffForTwo(myProject, filePath, prevRevision, revision);
+      }
+      else {
+        getDiffHandler().showDiffForOne(e, myProject, filePath, prevRevision, revision);
+      }
+    }
+  }
+
+  private class MyDiffLocalAction extends DumbAwareAction {
+    public MyDiffLocalAction() {
+      super(VcsBundle.message("show.diff.with.local.action.text"),
+            VcsBundle.message("show.diff.with.local.action.description"),
+            AllIcons.Actions.DiffWithCurrent);
+    }
+
+    public void update(final AnActionEvent e) {
+      e.getPresentation().setEnabled(myList.getSelectedRowCount() == 1 && myList.getSelectedRow() != 0);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      VcsFileRevision revision = myList.getSelectedObject();
+      if (revision == null) return;
+
+      VcsFileRevision localRevision = myRevisions.get(0);
+      FilePath filePath = VcsUtil.getFilePath(myFile);
+
+      getDiffHandler().showDiffForTwo(myProject, filePath, revision, localRevision);
+    }
+  }
+
+  @NotNull
+  private DiffFromHistoryHandler getDiffHandler() {
+    VcsHistoryProvider historyProvider = myActiveVcs.getVcsHistoryProvider();
+    DiffFromHistoryHandler handler = historyProvider != null ? historyProvider.getHistoryDiffHandler() : null;
+    return handler != null ? handler : new StandardDiffFromHistoryHandler();
   }
 }
