@@ -421,13 +421,21 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
     return null;
   }
 
+  private void ensureBlocksCreated(int requiredIndex) throws VcsException {
+    for (int i = 0; i <= requiredIndex; i++) {
+      if (myBlocks.get(i) == null) {
+        myBlocks.set(i, createBlock(i));
+      }
+    }
+  }
+
   @NotNull
   private Block createBlock(int index) throws VcsException {
     if (index == 0) {
       return new Block(myEditor.getDocument().getText(), mySelectionStart, mySelectionEnd + 1);
     }
 
-    Block previousBlock = getBlock(index - 1);
+    Block previousBlock = myBlocks.get(index - 1);
     if (previousBlock == EMPTY_BLOCK) return EMPTY_BLOCK;
 
     String revisionContent = getContentOf(myRevisions.get(index));
@@ -440,7 +448,7 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   @NotNull
   private Block getBlock(int index) throws VcsException {
     if (myBlocks.get(index) == null) {
-      myBlocks.set(index, createBlock(index));
+      ensureBlocksCreated(index);
     }
     return myBlocks.get(index);
   }
