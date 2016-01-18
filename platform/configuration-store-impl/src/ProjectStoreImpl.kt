@@ -162,12 +162,8 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       val nameFile = File(File(projectBasePath, Project.DIRECTORY_STORE_FOLDER), ProjectImpl.NAME_FILE)
       if (nameFile.exists()) {
         try {
-          val name = nameFile.inputStream().reader().useLines() {
-            it.firstOrNull { !it.isEmpty() }?.trim()
-          }
-
-          if (name != null) {
-            return name
+          nameFile.inputStream().reader().useLines() { it.firstOrNull { !it.isEmpty() }?.trim() }?.let {
+            return it
           }
         }
         catch (ignored: IOException) {
