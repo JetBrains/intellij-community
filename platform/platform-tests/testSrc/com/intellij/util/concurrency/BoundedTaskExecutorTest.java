@@ -90,7 +90,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(getName()));
     BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, 1);
 
-    int delay = 500;
+    int delay = 1000;
     Future<?> s1 = executor.submit((Runnable)() -> TimeoutUtil.sleep(delay));
     Future<Integer> f1 = executor.submit(() -> {
       run.set(true);
