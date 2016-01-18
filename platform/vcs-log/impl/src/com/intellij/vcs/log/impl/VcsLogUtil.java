@@ -181,7 +181,7 @@ public class VcsLogUtil {
       }
       else {
         result.add(next);
-        if (result.size() >= VcsLogUtil.MAX_SELECTED_COMMITS) break;
+        if (result.size() >= MAX_SELECTED_COMMITS) break;
       }
     }
 
