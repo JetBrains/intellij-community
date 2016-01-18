@@ -426,7 +426,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   @NotNull
-  private GraphTableModel getGraphTableModel() {
+  public GraphTableModel getGraphTableModel() {
     return (GraphTableModel)getModel();
   }
 

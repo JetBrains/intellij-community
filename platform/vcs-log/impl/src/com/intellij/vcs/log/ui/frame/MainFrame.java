@@ -296,7 +296,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   }
 
   public boolean areGraphActionsEnabled() {
-    return myGraphTable.getModel() instanceof GraphTableModel && myGraphTable.getRowCount() > 0;
+    return myGraphTable.getRowCount() > 0;
   }
 
   public void onFiltersChange(@NotNull VcsLogFilterCollection filters) {

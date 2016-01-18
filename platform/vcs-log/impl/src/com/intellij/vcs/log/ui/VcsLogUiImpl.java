@@ -27,9 +27,7 @@ import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -217,16 +215,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
                           @NotNull final SettableFuture<Boolean> future) {
     if (future.isCancelled()) return;
 
-    GraphTableModel model = getModel();
-    if (model == null) {
-      invokeOnChange(new Runnable() {
-        @Override
-        public void run() {
-          jumpTo(commitId, rowGetter, future);
-        }
-      });
-      return;
-    }
+    GraphTableModel model = getTable().getGraphTableModel();
 
     int row = rowGetter.fun(model, commitId);
     if (row >= 0) {
@@ -253,15 +242,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       commitNotFound(commitId.toString());
       future.set(false);
     }
-  }
-
-  @Nullable
-  private GraphTableModel getModel() {
-    TableModel model = getTable().getModel();
-    if (model instanceof GraphTableModel) {
-      return (GraphTableModel)model;
-    }
-    return null;
   }
 
   private void showMessage(@NotNull MessageType messageType, @NotNull String message) {
