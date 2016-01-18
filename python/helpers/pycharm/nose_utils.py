@@ -7,6 +7,7 @@ from tcmessages import TeamcityServiceMessages
 from tcunittest import strclass
 from tcunittest import TeamcityTestResult
 
+_ERROR_TEST_NAME = "ERROR"
 
 try:
   from nose.failure import Failure
@@ -53,9 +54,15 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
     self.conf = conf
 
 
+  def _is_failure(self, test):
+    return isinstance(test.test, Failure)
+
   def addError(self, test, err):
     exctype, value, tb = err
     err = self.formatErr(err)
+    if self._is_failure(test):
+        self.messages.testError(_ERROR_TEST_NAME, message='Error', details=err, duration=self.__getDuration(test))
+        return
 
     if exctype == SkipTest:
       self.messages.testIgnored(self.getTestName(test), message='Skip')
@@ -79,8 +86,6 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
 
 
   def getTestName(self, test):
-    if isinstance(test.test, Failure):
-      return "ERROR"
     if hasattr(test, "error_context"):
       return test.error_context
     test_name_full = str(test)
@@ -159,8 +164,6 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
 
 
   def getSuiteName(self, test):
-    if isinstance(test.test, Failure):
-      return "ERROR"
     test_name_full = str(test)
 
     ind_1 = test_name_full.rfind('(')
@@ -179,6 +182,9 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
 
   def startTest(self, test):
     location, suite_location = self._getSuite(test)
+    if self._is_failure(test):
+      self.messages.testStarted(_ERROR_TEST_NAME, location=suite_location)
+      return
     suite = self.getSuiteName(test)
     if suite != self.current_suite:
       if self.current_suite:
@@ -192,6 +198,8 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
 
   def stopTest(self, test):
     duration = self.__getDuration(test)
+    if self._is_failure(test):
+      return  # Finish reported by testError
     self.messages.testFinished(self.getTestName(test),
                                duration=int(duration))
 
