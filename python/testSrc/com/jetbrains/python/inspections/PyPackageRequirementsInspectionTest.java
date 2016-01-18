@@ -41,12 +41,20 @@ public class PyPackageRequirementsInspectionTest extends PyTestCase {
 
   // PY-16753
   public void testIpAddressNotInRequirements() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("test1.py"));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, new Runnable() {
+      public void run() {
+        doTest("test1.py");
+      }
+    });
   }
 
   // PY-17422
   public void testTypingNotInRequirements() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("test1.py"));
+    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
+      public void run() {
+        doTest("test1.py");
+      }
+    });
   }
 
   private void doTest(@NotNull final String filename) {

@@ -29,6 +29,7 @@ import static org.easymock.classextension.EasyMock.expect;
 
 /**
  * Checks how test classes are created
+ *
  * @author Ilya.Kazakevich
  */
 public final class PyTestCreatorTest extends PyTestCase {
@@ -47,10 +48,16 @@ public final class PyTestCreatorTest extends PyTestCase {
     mockControl.replay();
 
 
-    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
-      final PsiFile file = PyTestCreator.generateTest(myFixture.getProject(), dialog).getContainingFile();
-      myFixture.configureByText(file.getFileType(), file.getText());
-      myFixture.checkResultByFile("/create_tests/create_tst.expected.py");
-    });
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(),
+                                             new Runnable() {
+                                               public void run() {
+                                                 final PsiFile file =
+                                                   PyTestCreator.generateTest(myFixture.getProject(), dialog).getContainingFile();
+                                                 myFixture.configureByText(file.getFileType(), file.getText());
+                                                 myFixture.checkResultByFile("/create_tests/create_tst.expected.py");
+                                               }
+                                             }
+
+    );
   }
 }
