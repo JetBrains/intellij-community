@@ -171,8 +171,9 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       addChild(newChild, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, pattern);
     }
 
+    boolean savingStateInNewFormatAllowed = Registry.is("saving.state.in.new.format.is.allowed", false);
     if ((myWildcardPatternsInitialized || !myWildcardPatterns.isEmpty()) &&
-        (!Registry.is("saving.state.in.new.format.is.allowed", false) || !DEFAULT_WILDCARD_PATTERNS.equals(myWildcardPatterns))) {
+        (!savingStateInNewFormatAllowed || !DEFAULT_WILDCARD_PATTERNS.equals(myWildcardPatterns))) {
       final Element wildcardPatterns = addChild(state, JpsJavaCompilerConfigurationSerializer.WILDCARD_RESOURCE_PATTERNS);
       for (final String wildcardPattern : myWildcardPatterns) {
         addChild(wildcardPatterns, JpsJavaCompilerConfigurationSerializer.ENTRY)
@@ -180,12 +181,26 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
     }
 
-    final Element annotationProcessingSettings = addChild(state, JpsJavaCompilerConfigurationSerializer.ANNOTATION_PROCESSING);
-    final Element defaultProfileElem = addChild(annotationProcessingSettings, "profile").setAttribute("default", "true");
-    AnnotationProcessorProfileSerializer.writeExternal(myDefaultProcessorsProfile, defaultProfileElem);
+    Element annotationProcessingSettings = new Element(JpsJavaCompilerConfigurationSerializer.ANNOTATION_PROCESSING);
+
+    Element profileElement = new Element("profile");
+    profileElement.setAttribute("default", "true");
+    AnnotationProcessorProfileSerializer.writeExternal(myDefaultProcessorsProfile, profileElement);
+    if (!savingStateInNewFormatAllowed || !JDOMUtil.isEmpty(profileElement, 2)) {
+      annotationProcessingSettings.addContent(profileElement);
+    }
+
     for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
-      final Element profileElem = addChild(annotationProcessingSettings, "profile").setAttribute("default", "false");
-      AnnotationProcessorProfileSerializer.writeExternal(profile, profileElem);
+      Element element = new Element("profile");
+      if (!savingStateInNewFormatAllowed) {
+        element.setAttribute("default", "false");
+      }
+      AnnotationProcessorProfileSerializer.writeExternal(profile, element);
+      annotationProcessingSettings.addContent(element);
+    }
+
+    if (!savingStateInNewFormatAllowed || !JDOMUtil.isEmpty(annotationProcessingSettings)) {
+      state.addContent(annotationProcessingSettings);
     }
 
     if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !myModuleBytecodeTarget.isEmpty()) {
