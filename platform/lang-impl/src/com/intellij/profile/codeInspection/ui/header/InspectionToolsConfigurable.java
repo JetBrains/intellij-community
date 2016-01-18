@@ -71,8 +71,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -416,12 +414,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
     toolbar.setLayout(new GridBagLayout());
     final JLabel headerTitleLabel = new JLabel(HEADER_TITLE);
-    headerTitleLabel.addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        System.out.println("HERE");
-      }
-    });
     headerTitleLabel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 0, 0));
     toolbar.add(headerTitleLabel, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
