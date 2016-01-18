@@ -209,8 +209,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   }
 
   private void upgradeGroup(final GroupItem group, final Element groupElement) {
-    for (Object o : groupElement.getChildren(ELEMENT_ITEM)) {
-      Element itemElement = (Element)o;
+    for (Element itemElement : groupElement.getChildren(ELEMENT_ITEM)) {
       if (itemElement.getAttributeValue(ATTRIBUTE_SINCE_VERSION, "").equals("2")) {
         processItemElement(itemElement, group, true);
       }
@@ -584,7 +583,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   @NotNull
   public IntrospectedProperty[] getIntrospectedProperties(@NotNull final Class aClass, @NotNull final Class delegeeClass) {
     // Try the cache first
-    // TODO[vova, anton] update cache after class reloading (its properties caould be hanged).
+    // TODO[vova, anton] update cache after class reloading (its properties could be hanged).
     if (myClass2Properties.containsKey(aClass)) {
       return myClass2Properties.get(aClass);
     }
