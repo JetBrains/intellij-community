@@ -634,7 +634,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       }
 
       @Override
-      public void finished() {
+      public void onFinished() {
         myTemplatesList.setPaintBusy(false);
         chooseTemplateStep.getTemplateList().setPaintBusy(false);
       }
