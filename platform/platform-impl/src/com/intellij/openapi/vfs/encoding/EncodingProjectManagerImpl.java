@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,10 +58,10 @@ import java.util.*;
   name = "Encoding",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/encodings.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage(file = "encodings.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
-public class EncodingProjectManagerImpl extends EncodingProjectManager implements BaseComponent, PersistentStateComponent<Element> {
+public class EncodingProjectManagerImpl extends EncodingProjectManager implements PersistentStateComponent<Element> {
   @NonNls private static final String PROJECT_URL = "PROJECT";
   private final Project myProject;
   private final EncodingManagerImpl myIdeEncodingManager;
@@ -165,13 +165,6 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       myOldUTFGuessing = element.getAttributeValue("useUTFGuessing");
       myNative2AsciiForPropertiesFilesWasSpecified = native2AsciiForPropertiesFiles != null;
     }
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "EncodingProjectManager";
   }
 
   @Override
@@ -388,7 +381,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   @NotNull
   public Charset getDefaultCharset() {
     Charset charset = myProjectCharset;
-    return charset == null ? Charset.defaultCharset() : charset;
+    // if the project charset was not specified, use the IDE encoding, save this back
+    return charset == null ? myIdeEncodingManager.getDefaultCharset() : charset;
   }
 
   @Override
@@ -503,17 +497,5 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   @Nullable
   public Charset getCachedCharsetFromContent(@NotNull Document document) {
     return myIdeEncodingManager.getCachedCharsetFromContent(document);
-  }
-
-  @Override
-  public void initComponent() {
-    if (myProjectCharset == null) {
-      // if the project charset was not specified, use the IDE encoding, save this back
-      myProjectCharset = myIdeEncodingManager.getDefaultCharset();
-    }
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 }
