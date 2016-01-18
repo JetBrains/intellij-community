@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
+import com.intellij.util.Url
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.TObjectHashingStrategy
 import org.jetbrains.concurrency.Promise
@@ -47,9 +48,9 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
 
   protected abstract fun createBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean): T
 
-  protected abstract fun doSetBreakpoint(target: BreakpointTarget, breakpoint: T): Promise<out Breakpoint>
+  protected abstract fun doSetBreakpoint(target: BreakpointTarget, url: Url?, breakpoint: T): Promise<out Breakpoint>
 
-  override final fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean, promiseRef: Ref<Promise<out Breakpoint>>?): Breakpoint {
+  override fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, url: Url?, condition: String?, ignoreCount: Int, enabled: Boolean, promiseRef: Ref<Promise<out Breakpoint>>?): Breakpoint {
     val breakpoint = createBreakpoint(target, line, column, condition, ignoreCount, enabled)
     val existingBreakpoint = breakpointDuplicationByTarget.putIfAbsent(breakpoint, breakpoint)
     if (existingBreakpoint != null) {
@@ -59,7 +60,7 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
 
     breakpoints.add(breakpoint)
     if (enabled) {
-      val promise = doSetBreakpoint(target, breakpoint)
+      val promise = doSetBreakpoint(target, url, breakpoint)
         .rejected { dispatcher.multicaster.errorOccurred(breakpoint, it.message ?: it.toString()) }
       promiseRef?.set(promise)
     }
@@ -114,7 +115,7 @@ class DummyBreakpointManager : BreakpointManager {
   override val breakpoints: Iterable<Breakpoint>
     get() = emptyList()
 
-  override fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean, promiseRef: Ref<Promise<out Breakpoint>>?): Breakpoint {
+  override fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, url: Url?, condition: String?, ignoreCount: Int, enabled: Boolean, promiseRef: Ref<Promise<out Breakpoint>>?): Breakpoint {
     throw UnsupportedOperationException()
   }
 
