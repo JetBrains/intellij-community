@@ -21,7 +21,7 @@
   <description>
       <![CDATA[
       <a href="http://www.gradle.org">Gradle</a> is a build and automation system. Gradle can automate the building, testing, publishing, deployment and etc.
-      of software packages or other types of projects. The Gradle versions 1.8 to 1.11 are supported.
+      of software packages or other types of projects. Gradle versions 1.8 to 2.+ are supported.
       This plugin provides Gradle integration.
       The following features are available:
       <ul>
