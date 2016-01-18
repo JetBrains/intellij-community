@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ import java.util.*;
   name = "CompilerConfiguration",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage(file = "compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
 public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
@@ -206,6 +206,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     readExternal(state);
   }
 
+  @Override
   public int getBuildProcessHeapSize(final int javacPreferredHeapSize) {
     final int heapSize = myState.BUILD_PROCESS_HEAP_SIZE;
     if (heapSize != DEFAULT_BUILD_PROCESS_HEAP_SIZE) {
@@ -215,14 +216,17 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return Math.max(heapSize, javacPreferredHeapSize);
   }
 
+  @Override
   public void setBuildProcessHeapSize(int size) {
     myState.BUILD_PROCESS_HEAP_SIZE = size > 0? size : DEFAULT_BUILD_PROCESS_HEAP_SIZE;
   }
 
+  @Override
   public String getBuildProcessVMOptions() {
     return myState.BUILD_PROCESS_ADDITIONAL_VM_OPTIONS;
   }
 
+  @Override
   public void setBuildProcessVMOptions(String options) {
     myState.BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = options == null? "" : options.trim();
   }
@@ -719,8 +723,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       node = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.WILDCARD_RESOURCE_PATTERNS);
       if (node != null) {
         myWildcardPatternsInitialized = true;
-        for (final Object o : node.getChildren(JpsJavaCompilerConfigurationSerializer.ENTRY)) {
-          final Element element = (Element)o;
+        for (Element element : node.getChildren(JpsJavaCompilerConfigurationSerializer.ENTRY)) {
           String pattern = element.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME);
           if (!StringUtil.isEmpty(pattern)) {
             addWildcardResourcePattern(pattern);
