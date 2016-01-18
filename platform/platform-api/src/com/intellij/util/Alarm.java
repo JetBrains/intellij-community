@@ -15,7 +15,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.Patches;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -26,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -39,8 +39,10 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Allows to schedule Runnable instances (requests) to be executed after a specific time interval on a specific thread.
@@ -55,9 +57,7 @@ public class Alarm implements Disposable {
   private final List<Request> myRequests = new SmartList<Request>(); // guarded by LOCK
   private final List<Request> myPendingRequests = new SmartList<Request>(); // guarded by LOCK
 
-  private final ExecutorService myExecutorService;
-
-  private static final ThreadPoolExecutor ourSharedExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Alarm pool(shared)", Thread.NORM_PRIORITY - 2);
+  private final ScheduledExecutorService myExecutorService;
 
   private final Object LOCK = new Object();
   final ThreadToUse myThreadToUse;
@@ -66,15 +66,13 @@ public class Alarm implements Disposable {
 
   @Override
   public void dispose() {
-    myDisposed = true;
-    cancelAllRequests();
+    if (!myDisposed) {
+      myDisposed = true;
+      cancelAllRequests();
 
-    if (myThreadToUse == ThreadToUse.POOLED_THREAD) {
-      myExecutorService.shutdown();
-    }
-    else if (myThreadToUse == ThreadToUse.OWN_THREAD) {
-      myExecutorService.shutdown();
-      ((ThreadPoolExecutor)myExecutorService).getQueue().clear();
+      if (myExecutorService != JobScheduler.getScheduler()) {
+        myExecutorService.shutdownNow();
+      }
     }
   }
 
@@ -128,16 +126,10 @@ public class Alarm implements Disposable {
   public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
     myThreadToUse = threadToUse;
 
-    if (threadToUse == ThreadToUse.POOLED_THREAD) {
-      myExecutorService = new MyExecutor();
-    }
-    else if(threadToUse == ThreadToUse.OWN_THREAD) {
-      myExecutorService = ConcurrencyUtil.newSingleThreadExecutor(
-        "Alarm pool(own)", Thread.NORM_PRIORITY - 2);
-    }
-    else {
-      myExecutorService = ourSharedExecutorService;
-    }
+    myExecutorService = threadToUse == ThreadToUse.POOLED_THREAD ? JobScheduler.getScheduler() :
+                        // have to restrict the number of running tasks because otherwise the (implicit) contract of
+                        // "addRequests with the same delay are executed in order" will be broken
+                        AppExecutorUtil.createBoundedScheduledExecutorService(1);
 
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, this);
@@ -311,6 +303,7 @@ public class Alarm implements Disposable {
     private Request(@NotNull final Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
       synchronized (LOCK) {
         myTask = task;
+
         myModalityState = modalityState;
         myDelay = delayMillis;
       }
@@ -364,10 +357,7 @@ public class Alarm implements Disposable {
         };
 
         if (myModalityState == null) {
-          Future<?> future = myExecutorService.submit(scheduledTask);
-          synchronized (LOCK) {
-            myFuture = future;
-          }
+          scheduledTask.run();
         }
         else {
           final Application app = ApplicationManager.getApplication();
@@ -390,7 +380,7 @@ public class Alarm implements Disposable {
 
     // must be called under LOCK
     private void schedule() {
-      myFuture = JobScheduler.getScheduler().schedule(this, myDelay, TimeUnit.MILLISECONDS);
+      myFuture = myExecutorService.schedule(this, myDelay, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -402,11 +392,6 @@ public class Alarm implements Disposable {
         Future<?> future = myFuture;
         if (future != null) {
           future.cancel(false);
-          assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
-          // TODO Use java.util.concurrent.ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true) when on jdk 1.7
-          if (JobScheduler.getScheduler() instanceof ThreadPoolExecutor) {
-            ((ThreadPoolExecutor)JobScheduler.getScheduler()).remove((Runnable)future);
-          }
           myFuture = null;
         }
         Runnable task = myTask;
@@ -445,42 +430,5 @@ public class Alarm implements Disposable {
 
   public boolean isDisposed() {
     return myDisposed;
-  }
-
-  private class MyExecutor extends AbstractExecutorService {
-    private final AtomicBoolean isShuttingDown = new AtomicBoolean();
-    private final QueueProcessor<Runnable> myProcessor = QueueProcessor.createRunnableQueueProcessor();
-
-    @Override
-    public void shutdown() {
-      myProcessor.clear();
-      isShuttingDown.set(myDisposed);
-    }
-
-    @NotNull
-    @Override
-    public List<Runnable> shutdownNow() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isShutdown() {
-      return isShuttingDown.get();
-    }
-
-    @Override
-    public boolean isTerminated() {
-      return isShutdown() && myProcessor.isEmpty();
-    }
-
-    @Override
-    public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void execute(@NotNull Runnable command) {
-      myProcessor.add(command);
-    }
   }
 }

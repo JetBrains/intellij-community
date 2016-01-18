@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.util.concurrency;
 
-/*
- * @author max
- */
-package com.intellij.concurrency;
-
-import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-public abstract class JobScheduler {
+public class AppExecutorUtil {
   /**
    * Returns application-wide instance of {@link ScheduledExecutorService} which is:
    * <ul>
@@ -33,10 +30,32 @@ public abstract class JobScheduler {
    * <li>Backed by the application thread pool. I.e. every scheduled task will be executed in IDEA own thread pool. See {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable)}</li>
    * <li>Non-shutdownable singleton. Any attempts to call {@link ExecutorService#shutdown()}, {@link ExecutorService#shutdownNow()} will be severely punished.</li>
    * </ul>
-   * If you need to execute only one task (when it's ready) at a time, you can use {@link AppExecutorUtil#createBoundedScheduledExecutorService(int)}.
    */
   @NotNull
-  public static ScheduledExecutorService getScheduler() {
-    return AppExecutorUtil.getAppScheduledExecutorService();
+  public static ScheduledExecutorService getAppScheduledExecutorService() {
+    return AppScheduledExecutorService.getInstance();
+  }
+
+  /**
+   * Application tread pool.
+   * This pool is<ul>
+   * <li>Unbounded.</li>
+   * <li>Application-wide, always active, non-shutdownable singleton.</li>
+   * </ul>
+   * You can use this pool for long-running and/or IO-bound tasks.
+   * @see com.intellij.openapi.application.Application#executeOnPooledThread(Runnable)
+   */
+  @NotNull
+  public static ExecutorService getAppExecutorService() {
+    return ((AppScheduledExecutorService)getAppScheduledExecutorService()).backendExecutorService;
+  }
+
+  /**
+   * Returns {@link ScheduledExecutorService} which allows to {@link ScheduledExecutorService#schedule(Callable, long, TimeUnit)} tasks later
+   * and execute them in parallel in the application pool (see {@link #getAppExecutorService()} not more than at {@code maxSimultaneousTasks} at a time.
+   */
+  @NotNull
+  public static ScheduledExecutorService createBoundedScheduledExecutorService(int maxSimultaneousTasks) {
+    return new BoundedScheduledExecutorService(getAppExecutorService(), maxSimultaneousTasks);
   }
 }
