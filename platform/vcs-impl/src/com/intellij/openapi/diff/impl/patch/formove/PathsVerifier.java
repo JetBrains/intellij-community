@@ -223,7 +223,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
       if (fileType == null) {
         PatchApplier
           .showError(myProject,
-                     "Cannot apply file " + file.getPresentableName() + " from patch because its type not defined.", true);
+                     "Cannot apply content for " + file.getPresentableName() + " file from patch because its type not defined.", true);
         return false;
       }
     }
