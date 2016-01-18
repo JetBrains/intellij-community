@@ -20,6 +20,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.VcsShowConfirmationOptionImpl;
 import com.intellij.openapi.vcs.VcsShowOptionsSettingImpl;
+import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -35,11 +36,11 @@ public class ProjectLevelVcsManagerSerialization {
   private final Map<String, VcsShowConfirmationOption.Value> myReadValue;
 
   public ProjectLevelVcsManagerSerialization() {
-    myReadValue = new com.intellij.util.containers.HashMap<String, VcsShowConfirmationOption.Value>();
+    myReadValue = new HashMap<String, VcsShowConfirmationOption.Value>();
   }
 
-  private static VcsShowOptionsSettingImpl getOrCreateOption(final Map<String, VcsShowOptionsSettingImpl> options, final String actionName) {
-    if (! options.containsKey(actionName)) {
+  private static VcsShowOptionsSettingImpl getOrCreateOption(Map<String, VcsShowOptionsSettingImpl> options, String actionName) {
+    if (!options.containsKey(actionName)) {
       options.put(actionName, new VcsShowOptionsSettingImpl(actionName));
     }
     return options.get(actionName);

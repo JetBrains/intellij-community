@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
-
-public class VcsShowConfirmationOptionImpl extends VcsAbstractSetting implements VcsShowConfirmationOption{
+public class VcsShowConfirmationOptionImpl extends VcsAbstractSetting implements VcsShowConfirmationOption {
   private Value myValue = Value.SHOW_CONFIRMATION;
 
   private final String myCaption;
@@ -37,10 +36,12 @@ public class VcsShowConfirmationOptionImpl extends VcsAbstractSetting implements
     myDoActionSilentlyCaption = doActionSilentlyCaption;
   }
 
+  @Override
   public Value getValue() {
     return myValue;
   }
 
+  @Override
   public void setValue(Value value) {
     myValue = value;
   }
