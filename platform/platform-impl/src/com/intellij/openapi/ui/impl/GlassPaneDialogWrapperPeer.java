@@ -737,6 +737,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
 
     @Override
     public void setContentPane(Container contentPane) {
+      super.setContentPane(contentPane);
       if (contentPane != null) {
         contentPane.addMouseMotionListener(new MouseMotionAdapter() {}); // listen to mouse motion events for a11y
       }

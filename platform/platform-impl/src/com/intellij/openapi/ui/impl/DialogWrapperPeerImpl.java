@@ -1094,6 +1094,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
       @Override
       public void setContentPane(Container contentPane) {
+        super.setContentPane(contentPane);
         if (contentPane != null) {
           contentPane.addMouseMotionListener(new MouseMotionAdapter() {}); // listen to mouse motino events for a11y
         }
