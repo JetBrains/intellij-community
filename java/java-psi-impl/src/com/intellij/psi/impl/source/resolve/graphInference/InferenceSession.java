@@ -1169,7 +1169,7 @@ public class InferenceSession {
       @Override
       public String fun(PsiType type) {
         final PsiType substituted = substituteNonProperBound(type, substitutor);
-        return (substituted != null ? substituted : type).getPresentableText();
+        return getPresentableText(substituted != null ? substituted : type);
       }
     };
     return "inference variable " + var.getParameter().getName() + " has incompatible bounds:\n " + 
