@@ -37,6 +37,14 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
 
   private static final Key<Class> TEMPLATE_VIEW_PROVIDER_CLASS_KEY = Key.create("TEMPLATE_VIEW_PROVIDER_CLASS");
 
+  // this redundant ctr is here because ExtensionComponentAdapter.getComponentInstance() is not aware of varargs
+  protected TemplateLanguageErrorFilter(
+    @NotNull final TokenSet templateExpressionStartTokens,
+    @NotNull final Class templateFileViewProviderClass)
+  {
+    this(templateExpressionStartTokens, templateFileViewProviderClass, new String[0]);
+  }
+
   protected TemplateLanguageErrorFilter(@NotNull final TokenSet templateExpressionStartTokens,
                                         @NotNull final Class templateFileViewProviderClass,
                                         @NotNull final String... knownSubLanguageNames) {
