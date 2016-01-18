@@ -57,7 +57,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     PsiFile newFile = (PsiFile)dir.add(fileCopy);
     assertInstanceOf(newFile, PsiPlainTextFile.class);
 
-    assertEquals(text, LoadTextUtil.loadText(newFile.getVirtualFile()));
+    assertEquals(text, LoadTextUtil.loadText(newFile.getVirtualFile()).toString());
     assertEquals(newFile.getVirtualFile().getModificationStamp(), newFile.getViewProvider().getModificationStamp());
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(newFile);
     assertEquals(newFile.getVirtualFile().getModificationStamp(), document.getModificationStamp());
