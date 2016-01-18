@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     PsiFile newFile = (PsiFile)dir.add(fileCopy);
     assertInstanceOf(newFile, PsiPlainTextFile.class);
 
-    assertEquals(text, new String(newFile.getVirtualFile().contentsToByteArray()));
+    assertEquals(text, LoadTextUtil.loadText(newFile.getVirtualFile()));
     assertEquals(newFile.getVirtualFile().getModificationStamp(), newFile.getViewProvider().getModificationStamp());
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(newFile);
     assertEquals(newFile.getVirtualFile().getModificationStamp(), document.getModificationStamp());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -28,8 +29,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
-import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
 /**
  * @author lambdamix
@@ -121,9 +122,9 @@ public class BytecodeAnalysisConverter {
    */
   @NotNull
   public static HKey asmKey(@NotNull Key key, @NotNull MessageDigest md) {
-    byte[] classDigest = md.digest(key.method.internalClassName.getBytes());
-    md.update(key.method.methodName.getBytes());
-    md.update(key.method.methodDesc.getBytes());
+    byte[] classDigest = md.digest(key.method.internalClassName.getBytes(CharsetToolkit.UTF8_CHARSET));
+    md.update(key.method.methodName.getBytes(CharsetToolkit.UTF8_CHARSET));
+    md.update(key.method.methodDesc.getBytes(CharsetToolkit.UTF8_CHARSET));
     byte[] sigDigest = md.digest();
     byte[] digest = new byte[HASH_SIZE];
     System.arraycopy(classDigest, 0, digest, 0, CLASS_HASH_SIZE);
@@ -161,7 +162,7 @@ public class BytecodeAnalysisConverter {
     if (descriptor == null) {
       return null;
     }
-    return md.digest(descriptor.getBytes());
+    return md.digest(descriptor.getBytes(CharsetToolkit.UTF8_CHARSET));
   }
 
   @Nullable
@@ -170,7 +171,7 @@ public class BytecodeAnalysisConverter {
     if (descriptor == null) {
       return null;
     }
-    return md.digest(descriptor.getBytes());
+    return md.digest(descriptor.getBytes(CharsetToolkit.UTF8_CHARSET));
   }
 
   @Nullable

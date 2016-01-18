@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,18 +37,9 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
 
   private static final Key<Class> TEMPLATE_VIEW_PROVIDER_CLASS_KEY = Key.create("TEMPLATE_VIEW_PROVIDER_CLASS");
 
-  protected TemplateLanguageErrorFilter(
-    @NotNull final TokenSet templateExpressionStartTokens,
-    @NotNull final Class templateFileViewProviderClass)
-  {
-    this(templateExpressionStartTokens, templateFileViewProviderClass, new String[0]);
-  }
-
-  protected TemplateLanguageErrorFilter(
-    @NotNull final TokenSet templateExpressionStartTokens,
-    @NotNull final Class templateFileViewProviderClass,
-    @NotNull final String... knownSubLanguageNames)
-  {
+  protected TemplateLanguageErrorFilter(@NotNull final TokenSet templateExpressionStartTokens,
+                                        @NotNull final Class templateFileViewProviderClass,
+                                        @NotNull final String... knownSubLanguageNames) {
     myTemplateExpressionStartTokens = TokenSet.create(templateExpressionStartTokens.getTypes());
     myTemplateFileViewProviderClass = templateFileViewProviderClass;
 

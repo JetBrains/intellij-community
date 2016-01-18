@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -108,7 +109,7 @@ public class UpdateCacheTest extends PsiTestCase {
     VirtualFile root = ProjectRootManager.getInstance(myProject).getContentRoots()[0];
 
     String newFilePath = root.getPresentableUrl() + File.separatorChar + "New.java";
-    FileUtil.writeToFile(new File(newFilePath), "class A{ Object o;}".getBytes());
+    FileUtil.writeToFile(new File(newFilePath), "class A{ Object o;}".getBytes(CharsetToolkit.UTF8_CHARSET));
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(newFilePath.replace(File.separatorChar, '/'));
     assertNotNull(file);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -165,7 +166,7 @@ public class UpdateCacheTest extends PsiTestCase {
     final File file = new File(root.getPath(), "1.java");
     assertTrue(file.exists());
 
-    FileUtil.writeToFile(file, "class A{ Object o;}".getBytes());
+    FileUtil.writeToFile(file, "class A{ Object o;}".getBytes(CharsetToolkit.UTF8_CHARSET));
     root.refresh(false, true);
 
     LocalFileSystem.getInstance().refresh(false);
@@ -195,7 +196,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     String newFilePath = root.getPresentableUrl() + File.separatorChar + "dir" + File.separatorChar + "New.java";
     LOG.assertTrue(new File(newFilePath).getParentFile().mkdir());
-    FileUtil.writeToFile(new File(newFilePath), "class A{ Object o;}".getBytes());
+    FileUtil.writeToFile(new File(newFilePath), "class A{ Object o;}".getBytes(CharsetToolkit.UTF8_CHARSET));
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(newFilePath.replace(File.separatorChar, '/'));
     assertNotNull(file);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
