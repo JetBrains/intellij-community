@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,11 +92,6 @@ public interface XDebugSession extends AbstractDebuggerSession {
   void showExecutionPoint();
 
   void setCurrentStackFrame(@NotNull XExecutionStack executionStack, @NotNull XStackFrame frame, boolean isTopFrame);
-
-  /**
-   * @deprecated use {@link #setCurrentStackFrame(com.intellij.xdebugger.frame.XExecutionStack, com.intellij.xdebugger.frame.XStackFrame, boolean)} instead
-   */
-  void setCurrentStackFrame(@NotNull XExecutionStack executionStack, @NotNull XStackFrame frame);
 
   /**
    * Call this method to setup custom icon and/or error message (it will be shown in tooltip) for breakpoint
