@@ -1,3 +1,9 @@
+# Projectional Editing of Variation
+### Purpose
+To provide a useful user interface for selecting down variation paths, editing code, and projecting back up to the main project.
+
+
+
 # IntelliJ IDEA Community Edition
 ### Building and Running from the IDE
 To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate not older than 15.0. To build and run the code:
