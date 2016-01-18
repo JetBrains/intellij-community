@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ import java.util.Map;
   defaultStateAsResource = true,
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage(file = "uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
 public final class Palette implements Disposable, PersistentStateComponent<Element> {
@@ -577,7 +577,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   }
 
   /**
-   * @return arrys of all properties that can be introspected from the
+   * @return arrays of all properties that can be introspected from the
    * specified class. Only properties with getter and setter methods are
    * returned.
    */
