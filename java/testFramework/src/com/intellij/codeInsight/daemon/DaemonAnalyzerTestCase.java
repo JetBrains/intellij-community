@@ -216,7 +216,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       public HighlightTestInfo doTest() {
         try { configureByFiles(projectRoot, filePaths); }
         catch (Exception e) { throw new RuntimeException(e); }
-        ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
+        ExpectedHighlightingData data = new JavaExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
         if (checkSymbolNames) data.checkSymbolNames();
         checkHighlighting(data);
         return this;

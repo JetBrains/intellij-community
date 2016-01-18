@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.actions;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -269,7 +269,7 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
 
   public static Color getAutoMarkupColor() {
     final EditorColorsManager manager = EditorColorsManager.getInstance();
-    final TextAttributes textAttributes = manager.getGlobalScheme().getAttributes(HighlightInfoType.STATIC_FIELD.getAttributesKey());
+    final TextAttributes textAttributes = manager.getGlobalScheme().getAttributes(JavaHighlightInfoTypes.STATIC_FIELD.getAttributesKey());
     return textAttributes.getForegroundColor();
   }
 }
