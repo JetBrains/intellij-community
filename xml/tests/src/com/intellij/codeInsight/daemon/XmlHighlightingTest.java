@@ -627,6 +627,10 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(getFullRelativeTestName("2.xsd"), true, false);
   }
 
+  public void testWrongRegExpCategory() throws Exception {
+    doTest(getFullRelativeTestName(".xsd"), true, false);
+  }
+
   public void testXercesMessagesBinding2() throws Exception {
     final String url = getTestName(false) + ".xsd";
     ExternalResourceManagerExImpl.registerResourceTemporarily(url, url, getTestRootDisposable());
