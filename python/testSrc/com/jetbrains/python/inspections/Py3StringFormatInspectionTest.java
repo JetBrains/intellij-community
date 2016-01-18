@@ -34,7 +34,12 @@ public class Py3StringFormatInspectionTest extends PyTestCase {
 
   // PY-16938
   public void testByteString() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
   }
 
   private void doTest() {
