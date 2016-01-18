@@ -34,6 +34,7 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,8 +52,8 @@ public class Alarm implements Disposable {
 
   private volatile boolean myDisposed;
 
-  private final List<Request> myRequests = new SmartList<Request>();
-  private final List<Request> myPendingRequests = new SmartList<Request>();
+  private final List<Request> myRequests = new SmartList<Request>(); // guarded by LOCK
+  private final List<Request> myPendingRequests = new SmartList<Request>(); // guarded by LOCK
 
   private final ExecutorService myExecutorService;
 
@@ -89,13 +90,13 @@ public class Alarm implements Disposable {
 
     /**
      * The action will be executed on a dedicated single shared thread, one per IDEA instance.
-     * The actions should be very fast to avoid blocking other Alarm instances that need the same thread. 
+     * The actions should be very fast to avoid blocking other Alarm instances that need the same thread.
      */
     SHARED_THREAD,
 
     /**
-     * Alarm requests are run on one of application pooled threads. 
-     * 
+     * Alarm requests are run on one of application pooled threads.
+     *
      * @see Application#executeOnPooledThread(Callable)
      */
     POOLED_THREAD,
@@ -114,7 +115,7 @@ public class Alarm implements Disposable {
     this(ThreadToUse.SWING_THREAD);
   }
 
-  public Alarm(Disposable parentDisposable) {
+  public Alarm(@NotNull Disposable parentDisposable) {
     this(ThreadToUse.SWING_THREAD, parentDisposable);
   }
 
@@ -154,7 +155,8 @@ public class Alarm implements Disposable {
           addRequest(request, delay);
         }
       });
-    } else {
+    }
+    else {
       addRequest(request, delay);
     }
   }
@@ -187,7 +189,7 @@ public class Alarm implements Disposable {
     _addRequest(request, delayMillis, modalityState);
   }
 
-  void _addRequest(@NotNull Runnable request, long delayMillis, ModalityState modalityState) {
+  void _addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
     synchronized (LOCK) {
       checkDisposed();
       final Request requestToSchedule = new Request(request, modalityState, delayMillis);
@@ -195,26 +197,26 @@ public class Alarm implements Disposable {
       if (myActivationComponent == null || myActivationComponent.isShowing()) {
         _add(requestToSchedule);
       }
-      else {
-        if (!myPendingRequests.contains(requestToSchedule)) {
-          myPendingRequests.add(requestToSchedule);
-        }
+      else if (!myPendingRequests.contains(requestToSchedule)) {
+        myPendingRequests.add(requestToSchedule);
       }
     }
   }
 
+  // must be called under LOCK
   private void _add(@NotNull Request requestToSchedule) {
-    final ScheduledFuture<?> future = JobScheduler.getScheduler().schedule(requestToSchedule, requestToSchedule.myDelay, TimeUnit.MILLISECONDS);
-    requestToSchedule.setFuture(future);
+    requestToSchedule.schedule();
     myRequests.add(requestToSchedule);
   }
 
   private void flushPending() {
-    for (Request each : myPendingRequests) {
-      _add(each);
-    }
+    synchronized (LOCK) {
+      for (Request each : myPendingRequests) {
+        _add(each);
+      }
 
-    myPendingRequests.clear();
+      myPendingRequests.clear();
+    }
   }
 
   public boolean cancelRequest(@NotNull Runnable request) {
@@ -228,7 +230,7 @@ public class Alarm implements Disposable {
   private void cancelRequest(@NotNull Runnable request, @NotNull List<Request> list) {
     for (int i = list.size()-1; i>=0; i--) {
       Request r = list.get(i);
-      if (r.getTask() == request) {
+      if (r.myTask == request) {
         r.cancel();
         list.remove(i);
       }
@@ -253,6 +255,7 @@ public class Alarm implements Disposable {
     return count;
   }
 
+  @TestOnly
   public void flush() {
     List<Pair<Request, Runnable>> requests;
     synchronized (LOCK) {
@@ -331,12 +334,12 @@ public class Alarm implements Disposable {
             final Runnable task;
             synchronized (LOCK) {
               task = myTask;
-              if (task == null) return;
               myTask = null;
 
               myRequests.remove(Request.this);
               myFuture = null;
             }
+            if (task == null) return;
 
             if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
               //noinspection SSBasedInspection
@@ -385,16 +388,9 @@ public class Alarm implements Disposable {
       }
     }
 
-    private Runnable getTask() {
-      synchronized (LOCK) {
-        return myTask;
-      }
-    }
-
-    private void setFuture(@NotNull ScheduledFuture<?> future) {
-      synchronized (LOCK) {
-        myFuture = future;
-      }
+    // must be called under LOCK
+    private void schedule() {
+      myFuture = JobScheduler.getScheduler().schedule(this, myDelay, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -421,8 +417,10 @@ public class Alarm implements Disposable {
 
     @Override
     public String toString() {
-      Runnable task = getTask();
-      return super.toString() + (task != null ? ": "+task : "");
+      synchronized (LOCK) {
+        Runnable task = myTask;
+        return super.toString() + (task != null ? ": "+task : "");
+      }
     }
   }
 
