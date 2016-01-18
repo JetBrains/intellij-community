@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ public class UIDesignerPaletteProvider implements PaletteItemProvider {
     myPropertyChangeSupport.firePropertyChange(PROPERTY_GROUPS, null, null);
   }
 
+  @Override
   public PaletteGroup[] getActiveGroups(VirtualFile vFile) {
     if (vFile.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
       Palette palette = Palette.getInstance(myProject);
@@ -61,10 +62,12 @@ public class UIDesignerPaletteProvider implements PaletteItemProvider {
     return PaletteGroup.EMPTY_ARRAY;
   }
 
+  @Override
   public void addListener(PropertyChangeListener listener) {
     myPropertyChangeSupport.addPropertyChangeListener(listener);
   }
 
+  @Override
   public void removeListener(PropertyChangeListener listener) {
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
