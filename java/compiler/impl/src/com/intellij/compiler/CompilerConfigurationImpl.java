@@ -166,12 +166,16 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       myExcludesConfiguration.getDelegate().writeExternal(addChild(state, JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE));
     }
 
-    final Element newChild = addChild(state, JpsJavaCompilerConfigurationSerializer.RESOURCE_EXTENSIONS);
-    for (final String pattern : getRegexpPatterns()) {
-      addChild(newChild, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, pattern);
+    boolean savingStateInNewFormatAllowed = Registry.is("saving.state.in.new.format.is.allowed", false);
+
+    Element resourceExtensions = new Element(JpsJavaCompilerConfigurationSerializer.RESOURCE_EXTENSIONS);
+    for (String pattern : getRegexpPatterns()) {
+      addChild(resourceExtensions, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, pattern);
+    }
+    if (!savingStateInNewFormatAllowed || !JDOMUtil.isEmpty(resourceExtensions)) {
+      state.addContent(resourceExtensions);
     }
 
-    boolean savingStateInNewFormatAllowed = Registry.is("saving.state.in.new.format.is.allowed", false);
     if ((myWildcardPatternsInitialized || !myWildcardPatterns.isEmpty()) &&
         (!savingStateInNewFormatAllowed || !DEFAULT_WILDCARD_PATTERNS.equals(myWildcardPatterns))) {
       final Element wildcardPatterns = addChild(state, JpsJavaCompilerConfigurationSerializer.WILDCARD_RESOURCE_PATTERNS);
