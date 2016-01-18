@@ -17,12 +17,14 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.VcsShowConfirmationOptionImpl;
 import com.intellij.openapi.vcs.VcsShowOptionsSettingImpl;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -73,22 +75,26 @@ public class ProjectLevelVcsManagerSerialization {
     }
   }
 
-  public void writeExternalUtil(final Element element, final OptionsAndConfirmations optionsAndConfirmations) throws WriteExternalException {
+  public void writeExternalUtil(@NotNull Element element, @NotNull OptionsAndConfirmations optionsAndConfirmations) throws WriteExternalException {
     final Map<String, VcsShowOptionsSettingImpl> options = optionsAndConfirmations.getOptions();
     final Map<String, VcsShowConfirmationOptionImpl> confirmations = optionsAndConfirmations.getConfirmations();
     
     for (VcsShowOptionsSettingImpl setting : options.values()) {
-      final Element settingElement = new Element(OPTIONS_SETTING);
-      element.addContent(settingElement);
-      settingElement.setAttribute(VALUE_ATTTIBUTE, Boolean.toString(setting.getValue()));
-      settingElement.setAttribute(ID_ATTRIBUTE, setting.getDisplayName());
+      if (!Registry.is("saving.state.in.new.format.is.allowed", false) || !setting.getValue()) {
+        Element settingElement = new Element(OPTIONS_SETTING);
+        element.addContent(settingElement);
+        settingElement.setAttribute(VALUE_ATTTIBUTE, Boolean.toString(setting.getValue()));
+        settingElement.setAttribute(ID_ATTRIBUTE, setting.getDisplayName());
+      }
     }
 
     for (VcsShowConfirmationOptionImpl setting : confirmations.values()) {
-      final Element settingElement = new Element(CONFIRMATIONS_SETTING);
-      element.addContent(settingElement);
-      settingElement.setAttribute(VALUE_ATTTIBUTE, setting.getValue().toString());
-      settingElement.setAttribute(ID_ATTRIBUTE, setting.getDisplayName());
+      if (!Registry.is("saving.state.in.new.format.is.allowed", false) || setting.getValue() != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
+        final Element settingElement = new Element(CONFIRMATIONS_SETTING);
+        element.addContent(settingElement);
+        settingElement.setAttribute(VALUE_ATTTIBUTE, setting.getValue().toString());
+        settingElement.setAttribute(ID_ATTRIBUTE, setting.getDisplayName());
+      }
     }
   }
 
