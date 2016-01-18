@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.Map;
 
@@ -69,12 +68,6 @@ public abstract class SettingsConnectionService {
       .connect(new HttpRequests.RequestProcessor<Map<String, String>>() {
         @Override
         public Map<String, String> process(@NotNull HttpRequests.Request request) throws IOException {
-          if (!request.isSuccessful()) {
-            HttpURLConnection connection = (HttpURLConnection)request.getConnection();
-            LOG.warn(connection.getResponseCode() + " " + connection.getResponseMessage());
-            return Collections.emptyMap();
-          }
-
           Map<String, String> settings = ContainerUtilRt.newLinkedHashMap();
           try {
             Element root = JDOMUtil.load(request.getReader());

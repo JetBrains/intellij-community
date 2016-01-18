@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.net.ssl.HostnameVerifier;
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URLConnection;
 
 public final class RequestBuilder {
   private static final boolean ourWrapClassLoader =
@@ -121,6 +123,23 @@ public final class RequestBuilder {
 
   public <T> T connect(@NotNull HttpRequests.RequestProcessor<T> processor) throws IOException {
     // todo[r.sh] drop condition in IDEA 15
+    if (ourWrapClassLoader) {
+      return HttpRequests.wrapAndProcess(this, processor);
+    }
+    else {
+      return HttpRequests.process(this, processor);
+    }
+  }
+
+  public int tryConnect() throws IOException {
+    HttpRequests.RequestProcessor<Integer> processor = new HttpRequests.RequestProcessor<Integer>() {
+      @Override
+      public Integer process(@NotNull HttpRequests.Request request) throws IOException {
+        URLConnection connection = request.getConnection();
+        return connection instanceof HttpURLConnection ? ((HttpURLConnection)connection).getResponseCode() : -1;
+      }
+    };
+
     if (ourWrapClassLoader) {
       return HttpRequests.wrapAndProcess(this, processor);
     }

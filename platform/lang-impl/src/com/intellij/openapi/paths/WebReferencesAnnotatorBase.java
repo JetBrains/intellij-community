@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -188,14 +186,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     }
 
     try {
-      return HttpRequests.request(url).connectTimeout(3000).readTimeout(3000).connect(new HttpRequests.RequestProcessor<MyFetchResult>() {
-        @Override
-        public MyFetchResult process(@NotNull HttpRequests.Request request) throws IOException {
-          URLConnection connection = request.getConnection();
-          int code = connection instanceof HttpURLConnection ? ((HttpURLConnection)connection).getResponseCode() : 0;
-          return code == 200 || code == 408 ? MyFetchResult.OK : MyFetchResult.NONEXISTENCE;
-        }
-      });
+      HttpRequests.request(url).connectTimeout(3000).readTimeout(3000).tryConnect();
     }
     catch (UnknownHostException e) {
       LOG.info(e);
@@ -203,12 +194,11 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     }
     catch (IOException e) {
       LOG.info(e);
-      return MyFetchResult.OK;
     }
     catch (IllegalArgumentException e) {
       LOG.debug(e);
-      return MyFetchResult.OK;
     }
+    return MyFetchResult.OK;
   }
 
   private static class MyFetchCacheEntry {
