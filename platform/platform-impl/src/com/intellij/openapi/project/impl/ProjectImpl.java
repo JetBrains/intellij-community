@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.TimedReference;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NonNls;
@@ -57,6 +58,7 @@ import org.picocontainer.*;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -307,19 +309,43 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
   }
 
-  private boolean isToSaveProjectName() {
-    if (!isDefault()) {
-      IProjectStore stateStore = getStateStore();
-      if (stateStore.getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
-        String basePath = stateStore.getProjectBasePath();
-        File baseDir = basePath == null ? null : new File(basePath);
-        if (baseDir != null && baseDir.exists()) {
-          return myOldName != null && !myOldName.equals(getName());
-        }
-      }
+  private void saveProjectName() throws IOException {
+    if (isDefault()) {
+      return;
     }
 
-    return false;
+    IProjectStore stateStore = getStateStore();
+    if (!stateStore.getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
+      return;
+    }
+
+    String basePath = stateStore.getProjectBasePath();
+    File baseDir = basePath == null ? null : new File(basePath);
+    if (baseDir == null || !baseDir.isDirectory()) {
+      return;
+    }
+
+    boolean update = false;
+    if (myOldName != null && !myOldName.equals(myName)) {
+      update = true;
+    }
+    else if (!PathUtilRt.getFileName(basePath).equals(myName)) {
+      return;
+    }
+
+    File ideaDir = new File(baseDir, DIRECTORY_STORE_FOLDER);
+    if (ideaDir.isDirectory()) {
+      File nameFile = new File(ideaDir, NAME_FILE);
+      if (update) {
+        FileUtil.writeToFile(nameFile, getName());
+        myOldName = null;
+        RecentProjectsManager.getInstance().clearNameCache();
+      }
+      else if (nameFile.isFile()) {
+        // name equals to base path name - just remove name
+        FileUtil.delete(nameFile);
+      }
+    }
   }
 
   @Override
@@ -334,23 +360,11 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
 
     try {
-      if (isToSaveProjectName()) {
-        try {
-          String basePath = getStateStore().getProjectBasePath();
-          File baseDir = basePath == null ? null : new File(basePath);
-          if (baseDir != null && baseDir.exists()) {
-            File ideaDir = new File(baseDir, DIRECTORY_STORE_FOLDER);
-            if (ideaDir.exists() && ideaDir.isDirectory()) {
-              FileUtil.writeToFile(new File(ideaDir, NAME_FILE), getName());
-              myOldName = null;
-
-              RecentProjectsManager.getInstance().clearNameCache();
-            }
-          }
-        }
-        catch (Throwable e) {
-          LOG.error("Unable to store project name", e);
-        }
+      try {
+        saveProjectName();
+      }
+      catch (Throwable e) {
+        LOG.error("Unable to store project name", e);
       }
 
       StoreUtil.save(ServiceKt.getStateStore(this), this);
