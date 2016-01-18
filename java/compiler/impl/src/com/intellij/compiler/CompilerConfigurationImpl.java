@@ -146,11 +146,13 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   @Override
   public Element getState() {
+    final boolean savingStateInNewFormatAllowed = Registry.is("saving.state.in.new.format.is.allowed", false);
+
     Element state = new Element("state");
     XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters() {
       @Override
       public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
-        if (myState.compilerWasSpecified && "DEFAULT_COMPILER".equals(accessor.getName())) {
+        if (!savingStateInNewFormatAllowed && myState.compilerWasSpecified && "DEFAULT_COMPILER".equals(accessor.getName())) {
           return true;
         }
         return super.accepts(accessor, bean);
@@ -165,8 +167,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     if (myExcludesConfiguration.getExcludeEntryDescriptions().length > 0) {
       myExcludesConfiguration.getDelegate().writeExternal(addChild(state, JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE));
     }
-
-    boolean savingStateInNewFormatAllowed = Registry.is("saving.state.in.new.format.is.allowed", false);
 
     Element resourceExtensions = new Element(JpsJavaCompilerConfigurationSerializer.RESOURCE_EXTENSIONS);
     for (String pattern : getRegexpPatterns()) {
