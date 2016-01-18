@@ -49,10 +49,10 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   @Nullable
   protected static final Language ourDefaultLanguage = Language.findLanguageByID("JavaScript");
 
-  private boolean seenTag;
-  private boolean seenAttribute;
-  private boolean seenStyle;
-  private boolean seenScript;
+  protected boolean seenTag;
+  protected boolean seenAttribute;
+  protected boolean seenStyle;
+  protected boolean seenScript;
 
   @Nullable
   protected String scriptType = null;
