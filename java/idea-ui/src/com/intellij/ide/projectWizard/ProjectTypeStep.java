@@ -604,39 +604,39 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   }
 
   void loadRemoteTemplates(final ChooseTemplateStep chooseTemplateStep) {
+    myTemplatesList.setPaintBusy(true);
+    chooseTemplateStep.getTemplateList().setPaintBusy(true);
     ProgressManager.getInstance().run(new Task.Backgroundable(myContext.getProject(), "Loading Templates") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          myTemplatesList.setPaintBusy(true);
-          chooseTemplateStep.getTemplateList().setPaintBusy(true);
-          RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
-          for (String group : factory.getGroups()) {
-            ProjectTemplate[] templates = factory.createTemplates(group, myContext);
-            for (ProjectTemplate template : templates) {
-              String id = ((ArchivedProjectTemplate)template).getCategory();
-              for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
-                if (Comparing.equal(id, templatesGroup.getId()) || Comparing.equal(group, templatesGroup.getName())) {
-                  myTemplatesMap.putValue(templatesGroup, template);
-                }
+        RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
+        for (String group : factory.getGroups()) {
+          ProjectTemplate[] templates = factory.createTemplates(group, myContext);
+          for (ProjectTemplate template : templates) {
+            String id = ((ArchivedProjectTemplate)template).getCategory();
+            for (TemplatesGroup templatesGroup : myTemplatesMap.keySet()) {
+              if (Comparing.equal(id, templatesGroup.getId()) || Comparing.equal(group, templatesGroup.getName())) {
+                myTemplatesMap.putValue(templatesGroup, template);
               }
             }
           }
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              TemplatesGroup group = getSelectedGroup();
-              if (group == null) return;
-              Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
-              setTemplatesList(group, templates, true);
-              chooseTemplateStep.updateStep();
-            }
-          });
         }
-        finally {
-          myTemplatesList.setPaintBusy(false);
-          chooseTemplateStep.getTemplateList().setPaintBusy(false);
-        }
+      }
+
+      @Override
+      public void onSuccess() {
+        super.onSuccess();
+        TemplatesGroup group = getSelectedGroup();
+        if (group == null) return;
+        Collection<ProjectTemplate> templates = myTemplatesMap.get(group);
+        setTemplatesList(group, templates, true);
+        chooseTemplateStep.updateStep();
+      }
+
+      @Override
+      public void finished() {
+        myTemplatesList.setPaintBusy(false);
+        chooseTemplateStep.getTemplateList().setPaintBusy(false);
       }
     });
   }
