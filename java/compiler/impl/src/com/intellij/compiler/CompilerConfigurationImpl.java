@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -81,6 +82,9 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
   public static final int DEFAULT_BUILD_PROCESS_HEAP_SIZE = 700;
+
+  private static final List<String> DEFAULT_WILDCARD_PATTERNS =
+    Arrays.asList("!?*.java", "!?*.form", "!?*.class", "!?*.groovy", "!?*.scala", "!?*.flex", "!?*.kt", "!?*.clj", "!?*.aj");
 
   private BackendCompiler myDefaultJavaCompiler;
   private State myState = new State();
@@ -167,10 +171,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       addChild(newChild, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, pattern);
     }
 
-    if (myWildcardPatternsInitialized || !myWildcardPatterns.isEmpty()) {
+    if ((myWildcardPatternsInitialized || !myWildcardPatterns.isEmpty()) &&
+        (!Registry.is("saving.state.in.new.format.is.allowed", false) || !DEFAULT_WILDCARD_PATTERNS.equals(myWildcardPatterns))) {
       final Element wildcardPatterns = addChild(state, JpsJavaCompilerConfigurationSerializer.WILDCARD_RESOURCE_PATTERNS);
       for (final String wildcardPattern : myWildcardPatterns) {
-        addChild(wildcardPatterns, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, wildcardPattern);
+        addChild(wildcardPatterns, JpsJavaCompilerConfigurationSerializer.ENTRY)
+          .setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, wildcardPattern);
       }
     }
 
@@ -291,15 +297,9 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       removeWildcardPatterns();
     }
     try {
-      addWildcardResourcePattern("!?*.java");
-      addWildcardResourcePattern("!?*.form");
-      addWildcardResourcePattern("!?*.class");
-      addWildcardResourcePattern("!?*.groovy");
-      addWildcardResourcePattern("!?*.scala");
-      addWildcardResourcePattern("!?*.flex");
-      addWildcardResourcePattern("!?*.kt");
-      addWildcardResourcePattern("!?*.clj");
-      addWildcardResourcePattern("!?*.aj");
+      for (String pattern : DEFAULT_WILDCARD_PATTERNS) {
+        addWildcardResourcePattern(pattern);
+      }
     }
     catch (MalformedPatternException e) {
       LOG.error(e);
