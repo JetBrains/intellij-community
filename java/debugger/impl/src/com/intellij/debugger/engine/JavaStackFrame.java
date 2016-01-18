@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,18 +139,20 @@ public class JavaStackFrame extends XStackFrame {
       public void threadAction() {
         if (node.isObsolete()) return;
         XValueChildrenList children = new XValueChildrenList();
-        buildVariablesThreadAction(getFrameDebuggerContext(), children, node);
+        buildVariablesThreadAction(getFrameDebuggerContext(getDebuggerContext()), children, node);
         node.addChildren(children, true);
       }
     });
   }
 
-  DebuggerContextImpl getFrameDebuggerContext() {
+  DebuggerContextImpl getFrameDebuggerContext(@Nullable DebuggerContextImpl context) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    DebuggerContextImpl context = myDebugProcess.getDebuggerContext();
+    if (context == null) {
+      context = myDebugProcess.getDebuggerContext();
+    }
     if (context.getFrameProxy() != getStackFrameProxy()) {
-      SuspendContextImpl threadSuspendContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(),
-                                                                                              getStackFrameProxy().threadProxy());
+      SuspendContextImpl threadSuspendContext =
+        SuspendManagerUtil.findContextByThread(myDebugProcess.getSuspendManager(), getStackFrameProxy().threadProxy());
       context = DebuggerContextImpl.createDebuggerContext(
         myDebugProcess.mySession,
         threadSuspendContext,

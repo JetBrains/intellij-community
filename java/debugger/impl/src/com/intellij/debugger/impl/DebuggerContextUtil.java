@@ -53,8 +53,10 @@ public class DebuggerContextUtil {
 
         @Override
         protected void action() throws Exception {
-          SuspendContextImpl threadSuspendContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(), stackFrame.threadProxy());
-          final DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(session, threadSuspendContext, stackFrame.threadProxy(), stackFrame);
+          SuspendContextImpl threadSuspendContext =
+            SuspendManagerUtil.findContextByThread(session.getProcess().getSuspendManager(), stackFrame.threadProxy());
+          final DebuggerContextImpl newContext =
+            DebuggerContextImpl.createDebuggerContext(session, threadSuspendContext, stackFrame.threadProxy(), stackFrame);
           DebuggerInvocationUtil.swingInvokeLater(session.getProject(), new Runnable() {
             @Override
             public void run() {
