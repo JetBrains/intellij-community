@@ -42,6 +42,10 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     '+', '-', '*', '/', '%', '&', '^', '|', '<', '>', '!', '=', ' ' 
   };
 
+  private Document myLastEditedDocument;
+  private char myLastTypedChar;
+  private int myLastTypedOffset;
+
   public AutoFormatTypedHandler(@Nullable TypedActionHandler originalHandler) {
     super(originalHandler);
   }
@@ -58,18 +62,35 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
   
   @Override
   public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
+    if (!isEnabled()) {
+      executeOriginalHandler(editor, charTyped, dataContext);
+      return;
+    }
+
     Document document = editor.getDocument();
     int caretOffset = editor.getCaretModel().getOffset();
     CharSequence text = document.getImmutableCharSequence();
     
-    if (isEnabled() && charTyped == '='
-        && isSpaceAroundAssignment(editor, dataContext)
-        && shouldInsertBefore(caretOffset, text)) 
-    {
+    if (charTyped == '=' && isSpaceAroundAssignment(editor, dataContext) && shouldInsertBefore(caretOffset, text)) {
+      EditorModificationUtil.insertStringAtCaret(editor, " ");
+    }
+    if (isSameDocumentAsPrevious(editor) && myLastTypedChar == '=' && charTyped != '=' && charTyped != ' ') {
       EditorModificationUtil.insertStringAtCaret(editor, " ");
     }
     
+    executeOriginalHandler(editor, charTyped, dataContext);
+    
+    myLastTypedChar = charTyped;
+    myLastTypedOffset = editor.getCaretModel().getOffset();
+    myLastEditedDocument = editor.getDocument();
+  }
+
+  private void executeOriginalHandler(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
     if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
+  }
+
+  private boolean isSameDocumentAsPrevious(Editor editor) {
+    return editor.getDocument() == myLastEditedDocument && editor.getCaretModel().getOffset() == myLastTypedOffset;
   }
 
   private static boolean shouldInsertBefore(int caretOffset, CharSequence text) {

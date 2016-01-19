@@ -47,7 +47,7 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
   }
 
   public void test_AddSpacesAroundAssignmentOperator() throws Exception {
-    doTest("class T { int<caret> }", "=", "class T { int = <caret> }");
+    doTest("class T { int<caret> }", "=", "class T { int =<caret> }");
   }
   
   public void test_IgnoreSpacePressedAfterAssignmentOperator() {
@@ -59,9 +59,7 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
   }
   
   public void test_DoNotInsertDoubleSpaceBeforeAssignment() {
-    doTest("class T { int <caret> }", 
-           "=", 
-           "class T { int = <caret> }");
+    doTest("class T { int <caret> }", "=", "class T { int =<caret> }");
   }
   
   public void test_DoNotInsertDoubleSpaceAnywhere() {
@@ -73,21 +71,21 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
   }
   
   public void test_DoNotInsertSpaceIfNotAssignment() {
-    doTest("1 <caret>", "!=", "1 != <caret>");
-    doTest("c <caret>", ">=", "c >= <caret>");
-    doTest("c <caret>", "<=", "c <= <caret>");
-    doTest("c <caret>", "+=", "c += <caret>");
-    doTest("c <caret>", "-=", "c -= <caret>");
-    doTest("c <caret>", "*=", "c *= <caret>");
-    doTest("c <caret>", "/=", "c /= <caret>");
-    doTest("c <caret>", "&=", "c &= <caret>");
-    doTest("c <caret>", "%=", "c %= <caret>");
-    doTest("c <caret>", "^=", "c ^= <caret>");
-    doTest("c <caret>", "|=", "c |= <caret>");
+    doTest("1 <caret>", "!=a", "1 != a<caret>");
+    doTest("c <caret>", ">=a", "c >= a<caret>");
+    doTest("c <caret>", "<=a", "c <= a<caret>");
+    doTest("c <caret>", "+=a", "c += a<caret>");
+    doTest("c <caret>", "-=a", "c -= a<caret>");
+    doTest("c <caret>", "*=a", "c *= a<caret>");
+    doTest("c <caret>", "/=a", "c /= a<caret>");
+    doTest("c <caret>", "&=a", "c &= a<caret>");
+    doTest("c <caret>", "%=a", "c %= a<caret>");
+    doTest("c <caret>", "^=a", "c ^= a<caret>");
+    doTest("c <caret>", "|=a", "c |= a<caret>");
   }
   
   public void test_DistinguishAssignmentAndEquality() {
-    doTest("class T { boolean b = 1 <caret> }", "==", "class T { boolean b = 1 == <caret> }");
+    doTest("class T { boolean b = 1 <caret> }", "==", "class T { boolean b = 1 ==<caret> }");
   }
 
   private void doTest(String before, String typing, String after) {
