@@ -44,7 +44,4 @@ public abstract class LocalHistory {
 
   public abstract boolean isUnderControl(VirtualFile f);
 
-  public void revertToLabel(@NotNull Project project, @NotNull VirtualFile f, @NotNull Label label) {
-  }
-
 }

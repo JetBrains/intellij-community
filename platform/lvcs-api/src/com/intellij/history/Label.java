@@ -16,12 +16,15 @@
 
 package com.intellij.history;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+
 public interface Label {
   Label NULL_INSTANCE = new Label() {
 
     @Override
-    public long getLabelChangeId() {
-      return -1;
+    public void revert(@NotNull Project project, @NotNull VirtualFile file) {
     }
 
     public ByteContent getByteContent(String path) {
@@ -29,7 +32,7 @@ public interface Label {
     }
   };
 
-  long getLabelChangeId();
+  void revert(@NotNull Project project, @NotNull VirtualFile file);
 
   ByteContent getByteContent(String path);
 }

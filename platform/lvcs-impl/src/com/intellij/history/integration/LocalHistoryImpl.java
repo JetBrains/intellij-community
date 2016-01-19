@@ -193,8 +193,8 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   private Label label(final LabelImpl impl) {
     return new Label() {
       @Override
-      public long getLabelChangeId() {
-        return impl.getLabelChangeId();
+      public void revert(@NotNull Project project, @NotNull VirtualFile file) {
+        revertToLabel(project, file, impl);
       }
 
       @Override
@@ -249,8 +249,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     return myGateway;
   }
 
-  @Override
-  public void revertToLabel(@NotNull Project project, @NotNull VirtualFile f, @NotNull Label label) {
+  private void revertToLabel(@NotNull Project project, @NotNull VirtualFile f, LabelImpl impl) {
     if (!f.exists() || !f.isValid()) {
       notifyUser(project, String.format("File %s is not valid or doesn't exist", f.getName()));
       return;
@@ -258,7 +257,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     HistoryDialogModel dirHistoryModel = f.isDirectory()
                                          ? new DirectoryHistoryDialogModel(project, myGateway, myVcs, f)
                                          : new EntireFileHistoryDialogModel(project, myGateway, myVcs, f);
-    int leftRev = findRevisionIndexToRevert(dirHistoryModel, label);
+    int leftRev = findRevisionIndexToRevert(dirHistoryModel, impl);
     if (leftRev < 0) {
       notifyUser(project,
                  String.format("Couldn't find label revision. Try to use local history dialog for %s and perform revert manually.",

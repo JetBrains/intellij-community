@@ -15,7 +15,7 @@
  */
 package com.intellij.history.integration;
 
-import com.intellij.history.Label;
+import com.intellij.history.core.LabelImpl;
 import com.intellij.history.core.revisions.ChangeRevision;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
@@ -28,7 +28,7 @@ import java.util.List;
 
 public class LocalHistoryUtil {
 
-  static int findRevisionIndexToRevert(@NotNull HistoryDialogModel dirHistoryModel, @NotNull Label label) {
+  static int findRevisionIndexToRevert(@NotNull HistoryDialogModel dirHistoryModel, @NotNull LabelImpl label) {
     List<RevisionItem> revs = dirHistoryModel.getRevisions();
     for (int i = 0; i < revs.size(); i++) {
       final RevisionItem rev = revs.get(i);
@@ -39,7 +39,7 @@ public class LocalHistoryUtil {
     return -1;
   }
 
-  static boolean isLabelRevision(@NotNull RevisionItem rev, @NotNull Label label) {
+  static boolean isLabelRevision(@NotNull RevisionItem rev, @NotNull LabelImpl label) {
     final long targetChangeId = label.getLabelChangeId();
     return ContainerUtil.exists(rev.labels, new Condition<Revision>() {
       @Override

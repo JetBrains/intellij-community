@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.history.Label;
-import com.intellij.history.LocalHistory;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -75,7 +74,7 @@ class UndoApplyPatchDialog extends DialogWrapper {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        LocalHistory.getInstance().revertToLabel(myProject, myProject.getBaseDir(), myBeforeLabel);
+        myBeforeLabel.revert(myProject, myProject.getBaseDir());
       }
     }, "Rollback Applied Changes...", true, myProject);
   }
