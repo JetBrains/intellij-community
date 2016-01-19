@@ -24,6 +24,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.PyChangeBaseClassQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyConvertToNewStyleQuickFix;
 import com.jetbrains.python.psi.*;
@@ -68,14 +69,14 @@ public class PyOldStyleClassesInspection extends PyInspection {
       if (!expressions.isEmpty()) {
         quickFixes.add(new PyChangeBaseClassQuickFix());
       }
-      if (!node.isNewStyleClass(null)) {
+      if (!node.isNewStyleClass(myTypeEvalContext)) {
         for (PyTargetExpression attr : node.getClassAttributes()) {
-          if ("__slots__".equals(attr.getName())) {
+          if (PyNames.SLOTS.equals(attr.getName())) {
             registerProblem(attr, "Old-style class contains __slots__ definition", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
           }
         }
         for (PyFunction attr : node.getMethods()) {
-          if ("__getattribute__".equals(attr.getName())) {
+          if (PyNames.GETATTRIBUTE.equals(attr.getName())) {
             final ASTNode nameNode = attr.getNameNode();
             assert nameNode != null;
             registerProblem(nameNode.getPsi(), "Old-style class contains __getattribute__ definition", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
@@ -87,7 +88,7 @@ public class PyOldStyleClassesInspection extends PyInspection {
     @Override
     public void visitPyCallExpression(final PyCallExpression node) {
       PyClass klass = PsiTreeUtil.getParentOfType(node, PyClass.class);
-      if (klass != null && !klass.isNewStyleClass(null)) {
+      if (klass != null && !klass.isNewStyleClass(myTypeEvalContext)) {
         final List<PyClassLikeType> types = klass.getSuperClassTypes(myTypeEvalContext);
         for (PyClassLikeType type : types) {
           if (type == null) return;

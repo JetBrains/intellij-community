@@ -1104,7 +1104,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     if (containingFile instanceof PyFile && ((PyFile)containingFile).getLanguageLevel().isPy3K()) {
       return true;
     }
-    final PyClass objClass = PyBuiltinCache.getInstance(this).getClass("object");
+    final PyClass objClass = PyBuiltinCache.getInstance(this).getClass(PyNames.OBJECT);
     if (this == objClass) return true; // a rare but possible case
     if (hasNewStyleMetaClass(this)) return true;
     TypeEvalContext contextToUse = (context != null ? context : TypeEvalContext.codeInsightFallback(getProject()));
