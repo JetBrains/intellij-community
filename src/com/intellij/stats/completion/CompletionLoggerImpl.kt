@@ -169,8 +169,13 @@ class CompletionFileLogger(private val installationUID: String,
             builder.addPair("POS", pos)
             builder.addPair("COMP_LIST_LEN", items.size)
             val ids = createIdListAddUntrackedItems(items)
-            val id = getItemId(itemName)!!
-            builder.addPair("ID", id)
+            val id = getItemId(itemName)
+            if (id != null) {
+                builder.addPair("ID", id)
+            }
+            else {
+                builder.addPair("ID", "NULL($itemName)")
+            }
             builder.addText(ids)
             log(builder)
         }
