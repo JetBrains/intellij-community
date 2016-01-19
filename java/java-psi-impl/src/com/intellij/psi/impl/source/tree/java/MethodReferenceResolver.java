@@ -121,7 +121,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                     return psiSubstitutor;
                   }
 
-                  if (!session.repeatInferencePhases(false)) {
+                  if (!session.repeatInferencePhases(true)) {
                     return substitutor;
                   }
 
