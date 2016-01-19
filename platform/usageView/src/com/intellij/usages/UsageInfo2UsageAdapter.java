@@ -519,7 +519,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
       usageType = UsageType.UNCLASSIFIED;
       PsiFile file = getPsiFile();
 
-      if (file != null) {
+      // Android Studio: Skip binary files here. Needed for unused resource refactoring preview.
+      if (file != null && !file.getFileType().isBinary()) {
         ChunkExtractor extractor = ChunkExtractor.getExtractor(file);
         Segment segment = getFirstSegment();
 
