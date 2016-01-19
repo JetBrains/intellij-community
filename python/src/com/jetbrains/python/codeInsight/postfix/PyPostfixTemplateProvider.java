@@ -32,7 +32,9 @@ public class PyPostfixTemplateProvider implements PostfixTemplateProvider {
                                                      new PyParenthesizedExpressionPostfixTemplate(),
                                                      new PyReturnPostfixTemplate(),
                                                      new PyIfPostfixTemplate(),
-                                                     new PyWhilePostfixTemplate());
+                                                     new PyWhilePostfixTemplate(),
+                                                     new PyIsNonePostfixTemplate(),
+                                                     new PyIsNotNonePostfixTemplate());
   }
 
   @Override
