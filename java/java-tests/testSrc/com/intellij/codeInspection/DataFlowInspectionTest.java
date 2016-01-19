@@ -431,6 +431,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testConstantConditionsWithAssignmentsInside() { doTest(); }
   public void testIfConditionsWithAssignmentInside() { doTest(); }
+  public void testBitwiseNegatedBoxed() { doTest(); }
 
   public void testLiteralIfCondition() {
     doTest();
