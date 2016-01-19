@@ -160,14 +160,14 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           callSession.initExpressionConstraints(parameters, args, expression, method, InferenceSession
             .chooseVarargsMode(candidateProperties, resolveResult));
         }
-        if (callSession.repeatInferencePhases(true)) {
+        if (callSession.repeatInferencePhases()) {
 
           if (PsiType.VOID.equals(targetType)) {
             return callSession;
           }
 
           callSession.registerReturnTypeConstraints(siteSubstitutor.substitute(returnType), targetType);
-          if (callSession.repeatInferencePhases(true)) {
+          if (callSession.repeatInferencePhases()) {
             return callSession;
           }
         }

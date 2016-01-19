@@ -105,7 +105,7 @@ public class FunctionalInterfaceParameterizationUtil {
                                                          session.substituteWithInferenceVariables(targetMethodParams[i].getType())));
       }
 
-      if (!session.repeatInferencePhases(true)) {
+      if (!session.repeatInferencePhases()) {
         return null;
       }
 
