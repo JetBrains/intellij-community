@@ -570,9 +570,9 @@ public class InferenceSession {
   }
   
   PsiSubstitutor prepareSubstitution() {
-    ArrayList<InferenceVariable> allVars = new ArrayList<InferenceVariable>(myInferenceVariables);
-    while (!allVars.isEmpty()) {
-      final List<InferenceVariable> variables = InferenceVariablesOrder.resolveOrder(allVars, this);
+    Iterator<List<InferenceVariable>> iterator = InferenceVariablesOrder.resolveOrderIterator(myInferenceVariables, this);
+    while (iterator.hasNext()) {
+      final List<InferenceVariable> variables = iterator.next();
       for (InferenceVariable inferenceVariable : variables) {
         final PsiTypeParameter typeParameter = inferenceVariable.getParameter();
         PsiType instantiation = inferenceVariable.getInstantiation();
@@ -583,7 +583,6 @@ public class InferenceSession {
             .put(typeParameter, JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter));
         }
       }
-      allVars.removeAll(variables);
     }
     return mySiteSubstitutor;
   }
@@ -1053,11 +1052,10 @@ public class InferenceSession {
 
   private PsiSubstitutor resolveSubsetOrdered(Set<InferenceVariable> varsToResolve, PsiSubstitutor siteSubstitutor) {
     PsiSubstitutor substitutor = siteSubstitutor;
-    final HashSet<InferenceVariable> copy = new HashSet<InferenceVariable>(varsToResolve);
-    while (!copy.isEmpty()) {
-      final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(copy, this);
+    final Iterator<List<InferenceVariable>> varsIterator = InferenceVariablesOrder.resolveOrderIterator(varsToResolve, this);
+    while (varsIterator.hasNext()) {
+      List<InferenceVariable> vars = varsIterator.next();
       final PsiSubstitutor resolveSubset = resolveSubset(vars, substitutor);
-      copy.removeAll(vars);
       substitutor = substitutor.putAll(resolveSubset);
     }
     return substitutor;
