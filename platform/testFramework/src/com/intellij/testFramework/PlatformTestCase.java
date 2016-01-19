@@ -97,6 +97,7 @@ import java.util.Set;
  */
 public abstract class PlatformTestCase extends UsefulTestCase implements DataProvider {
   private static IdeaTestApplication ourApplication;
+  private static boolean ourReportedLeakedProjects;
   protected ProjectManagerEx myProjectManager;
   protected Project myProject;
   protected Module myModule;
@@ -261,6 +262,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       return project;
     }
     catch (TooManyProjectLeakedException e) {
+      if (ourReportedLeakedProjects) {
+        fail("Too many projects leaked, again.");
+        return null;
+      }
+      ourReportedLeakedProjects = true;
+
       StringBuilder leakers = new StringBuilder();
       leakers.append("Too many projects leaked: \n");
       for (Project project : e.getLeakedProjects()) {
