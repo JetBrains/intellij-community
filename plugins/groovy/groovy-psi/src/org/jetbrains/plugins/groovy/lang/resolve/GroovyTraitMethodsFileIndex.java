@@ -41,6 +41,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import static com.intellij.psi.impl.compiled.ClsFileImpl.EMPTY_ATTRIBUTES;
 import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
 
@@ -102,7 +103,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
   private static PsiJavaFileStub index(VirtualFile file, byte[] content) {
     try {
       PsiJavaFileStub root = new PsiJavaFileStubImpl(StringUtilRt.EMPTY_STRING, true);
-      new ClassReader(content).accept(new GrTraitMethodVisitor(file, root), ClassReader.SKIP_CODE);
+      new ClassReader(content).accept(new GrTraitMethodVisitor(file, root), EMPTY_ATTRIBUTES, ClassReader.SKIP_CODE);
       return root;
     }
     catch (Exception e) {

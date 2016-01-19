@@ -48,6 +48,7 @@ import java.util.Map;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.psi.impl.compiled.ClsFileImpl.EMPTY_ATTRIBUTES;
 
 /**
  * @author max
@@ -749,7 +750,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
               mapping.put(name, pair(outerName, innerName));
             }
           }
-        }, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
+        }, EMPTY_ATTRIBUTES, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
 
         if (!mapping.isEmpty()) {
           return mapping;

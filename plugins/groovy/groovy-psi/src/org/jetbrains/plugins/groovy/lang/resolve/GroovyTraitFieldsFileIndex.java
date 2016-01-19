@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.text.StringCharacterIterator;
 import java.util.Collection;
 
+import static com.intellij.psi.impl.compiled.ClsFileImpl.EMPTY_ATTRIBUTES;
 import static com.intellij.util.io.DataInputOutputUtil.readINT;
 import static com.intellij.util.io.DataInputOutputUtil.writeINT;
 import static com.intellij.util.io.IOUtil.readUTF;
@@ -173,7 +174,7 @@ public class GroovyTraitFieldsFileIndex
         String raw = Type.getType(desc).getClassName();
         return StubBuildingVisitor.GUESSING_MAPPER.fun(raw);
       }
-    }, ClassReader.SKIP_CODE);
+    }, EMPTY_ATTRIBUTES, ClassReader.SKIP_CODE);
 
     return values;
   }
