@@ -72,14 +72,14 @@ public class PyOldStyleClassesInspection extends PyInspection {
       if (!node.isNewStyleClass(myTypeEvalContext)) {
         for (PyTargetExpression attr : node.getClassAttributes()) {
           if (PyNames.SLOTS.equals(attr.getName())) {
-            registerProblem(attr, "Old-style class contains __slots__ definition", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
+            registerProblem(attr, PyBundle.message("INSP.oldstyle.class.slots"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
           }
         }
         for (PyFunction attr : node.getMethods()) {
           if (PyNames.GETATTRIBUTE.equals(attr.getName())) {
             final ASTNode nameNode = attr.getNameNode();
             assert nameNode != null;
-            registerProblem(nameNode.getPsi(), "Old-style class contains __getattribute__ definition", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
+            registerProblem(nameNode.getPsi(), PyBundle.message("INSP.oldstyle.class.getattribute"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
           }
         }
       }
@@ -104,7 +104,7 @@ public class PyOldStyleClassesInspection extends PyInspection {
         if (PyUtil.isSuperCall(node)) {
           final PyExpression callee = node.getCallee();
           if (callee != null) {
-            registerProblem(callee, "Old-style class contains call for super method", ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+            registerProblem(callee, PyBundle.message("INSP.oldstyle.class.super"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                             null, quickFixes.toArray(quickFixes.toArray(new LocalQuickFix[quickFixes.size()])));
           }
         }
