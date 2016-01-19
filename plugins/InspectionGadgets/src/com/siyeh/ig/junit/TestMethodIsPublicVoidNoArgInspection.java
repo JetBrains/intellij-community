@@ -30,6 +30,6 @@ public class TestMethodIsPublicVoidNoArgInspection extends TestMethodIsPublicVoi
   @Override
   public JComponent createOptionsPanel() {
     return SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
+      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.parameter.if.annotated.by"));
   }
 }
