@@ -17,7 +17,6 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -56,8 +55,6 @@ import static com.intellij.psi.impl.compiled.ClsFileImpl.EMPTY_ATTRIBUTES;
 public class StubBuildingVisitor<T> extends ClassVisitor {
   private static final Logger LOG = Logger.getInstance(StubBuildingVisitor.class);
 
-  private static final boolean MAP_INNER_CLASSES_BY_TABLE = Registry.is("java.lib.inner.class.detection.by.table");
-
   private static final String DOUBLE_POSITIVE_INF = "1.0 / 0.0";
   private static final String DOUBLE_NEGATIVE_INF = "-1.0 / 0.0";
   private static final String DOUBLE_NAN = "0.0d / 0.0";
@@ -86,9 +83,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     myParent = parent;
     myAccess = access;
     myShortName = shortName;
-
-    Map<String, Pair<String, String>> mapping = loadMapping(classSource);
-    myMapping = mapping != null ? createMapping(mapping) : GUESSING_MAPPER;
+    myMapping = createMapping(classSource);
   }
 
   public PsiClassStub<?> getResult() {
@@ -737,11 +732,11 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     return text;
   }
 
-  private static Map<String, Pair<String, String>> loadMapping(Object classSource) {
-    if (MAP_INNER_CLASSES_BY_TABLE && classSource instanceof VirtualFile) {
-      try {
-        final Map<String, Pair<String, String>> mapping = ContainerUtil.newHashMap();
+  private static Function<String, String> createMapping(Object classSource) {
+    if (classSource instanceof VirtualFile) {
+      final Map<String, Pair<String, String>> mapping = ContainerUtil.newHashMap();
 
+      try {
         byte[] bytes = ((VirtualFile)classSource).contentsToByteArray(false);
         new ClassReader(bytes).accept(new ClassVisitor(ASM_API) {
           @Override
@@ -751,37 +746,34 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
             }
           }
         }, EMPTY_ATTRIBUTES, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
-
-        if (!mapping.isEmpty()) {
-          return mapping;
-        }
       }
       catch (Exception ignored) { }
+
+      if (!mapping.isEmpty()) {
+        return new Function<String, String>() {
+          @Override
+          public String fun(String internalName) {
+            String className = internalName;
+
+            if (className.indexOf('$') >= 0) {
+              Pair<String, String> p = mapping.get(className);
+              if (p == null) {
+                return GUESSING_MAPPER.fun(className);
+              }
+              className = p.first;
+              if (p.second != null) {
+                className = fun(p.first) + '.' + p.second;
+                mapping.put(className, pair(className, (String)null));
+              }
+            }
+
+            return className.replace('/', '.');
+          }
+        };
+      }
     }
 
-    return null;
-  }
-
-  private static Function<String, String> createMapping(final Map<String, Pair<String, String>> mapping) {
-    return new Function<String, String>() {
-      @Override
-      public String fun(String internalName) {
-        String className = internalName;
-
-        if (className.indexOf('$') >= 0) {
-          Pair<String, String> p = mapping.get(className);
-          if (p != null) {
-            className = p.first;
-            if (p.second != null) {
-              className = fun(p.first) + '.' + p.second;
-              mapping.put(className, pair(className, (String)null));
-            }
-          }
-        }
-
-        return className.replace('/', '.');
-      }
-    };
+    return GUESSING_MAPPER;
   }
 
   public static final Function<String, String> GUESSING_MAPPER = new Function<String, String>() {
