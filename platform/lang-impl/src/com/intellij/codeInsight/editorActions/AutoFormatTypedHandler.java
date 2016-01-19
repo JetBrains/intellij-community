@@ -20,7 +20,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -39,11 +38,9 @@ import org.jetbrains.annotations.TestOnly;
 public class AutoFormatTypedHandler extends TypedActionHandlerBase {
   private static boolean myIsEnabledInTests = false;
   
-  private static char[] NO_SPACE_AFTER = { '+', '-', '*', '/', '%', '&', '^', '|', '<', '>', '!', '=', ' ' };
-  
-  private boolean myIgnoreNextSpace = false;
-  private Document myLastModifiedDocument = null;
-  private int myLastOffset = -1;
+  private static char[] NO_SPACE_AFTER = { 
+    '+', '-', '*', '/', '%', '&', '^', '|', '<', '>', '!', '=', ' ' 
+  };
 
   public AutoFormatTypedHandler(@Nullable TypedActionHandler originalHandler) {
     super(originalHandler);
@@ -61,31 +58,18 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
   
   @Override
   public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
-    if (isEnabled() && charTyped == ' ' && shouldIgnoreSpace(editor)) {
-      myIgnoreNextSpace = false;
-      return;
-    }
-    
     Document document = editor.getDocument();
-    boolean addSpaces = isEnabled() && charTyped == '=' && shouldInsertSpaces(editor, dataContext);
-    
     int caretOffset = editor.getCaretModel().getOffset();
     CharSequence text = document.getImmutableCharSequence();
-    if (addSpaces && shouldInsertBefore(caretOffset, text)) {
-        EditorModificationUtil.insertStringAtCaret(editor, " ");
-    }
-
-    if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
     
-    if (addSpaces) {
+    if (isEnabled() && charTyped == '='
+        && isSpaceAroundAssignment(editor, dataContext)
+        && shouldInsertBefore(caretOffset, text)) 
+    {
       EditorModificationUtil.insertStringAtCaret(editor, " ");
-      myIgnoreNextSpace = true;
-      myLastModifiedDocument = document;
-      myLastOffset = editor.getCaretModel().getOffset();
     }
-    else {
-      myIgnoreNextSpace = false;
-    }
+    
+    if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
   }
 
   private static boolean shouldInsertBefore(int caretOffset, CharSequence text) {
@@ -101,7 +85,7 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     return true;
   }
 
-  private static boolean shouldInsertSpaces(Editor editor, DataContext dataContext) {
+  private static boolean isSpaceAroundAssignment(Editor editor, DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     PsiFile file = project == null ? null : PsiUtilBase.getPsiFileInEditor(editor, project);
     if (file != null) {
@@ -111,15 +95,6 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
       return common.SPACE_AROUND_ASSIGNMENT_OPERATORS;
     }
     return false;
-  }
-  
-  private boolean shouldIgnoreSpace(@NotNull Editor editor) {
-    if (!myIgnoreNextSpace) {
-      return false;
-    }
-    Document document = editor.getDocument();
-    CaretModel caretModel = editor.getCaretModel();
-    return myLastModifiedDocument == document && myLastOffset == caretModel.getOffset();
   }
   
 }

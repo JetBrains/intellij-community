@@ -85,6 +85,10 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
     doTest("c <caret>", "^=", "c ^= <caret>");
     doTest("c <caret>", "|=", "c |= <caret>");
   }
+  
+  public void test_DistinguishAssignmentAndEquality() {
+    doTest("class T { boolean b = 1 <caret> }", "==", "class T { boolean b = 1 == <caret> }");
+  }
 
   private void doTest(String before, String typing, String after) {
     useSpacesAroundAssignmentOperator(true, myFixture.getProject(), JavaLanguage.INSTANCE);
