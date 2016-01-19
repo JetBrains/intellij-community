@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -921,8 +921,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private static int getInvokePolicy(SuspendContext suspendContext) {
-    //return ThreadReference.INVOKE_SINGLE_THREADED;
-    return suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? ObjectReference.INVOKE_SINGLE_THREADED : 0;
+    if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD || Registry.is("debugger.step.resumes.one.thread")) {
+      return ObjectReference.INVOKE_SINGLE_THREADED;
+    }
+    return 0;
   }
 
   @Override

@@ -30,15 +30,15 @@ class InitialInferenceState {
 
   private final PsiSubstitutor myInferenceSubstitutor;
   private final PsiSubstitutor mySiteSubstitutor;
-  private final List<Pair<PsiTypeParameter[], PsiClassType>> myCaptures;
+  private final ArrayList<Pair<InferenceVariable[], PsiClassType>> myCaptures;
   private final InferenceSessionContainer myInferenceSessionContainer;
 
   InitialInferenceState(Set<InferenceVariable> inferenceVariables,
-                        PsiSubstitutor topInferenceSubstitutor, 
+                        PsiSubstitutor topInferenceSubstitutor,
                         PsiElement context,
                         PsiSubstitutor inferenceSubstitutor,
                         PsiSubstitutor siteSubstitutor,
-                        List<Pair<PsiTypeParameter[], PsiClassType>> captures,
+                        List<Pair<InferenceVariable[], PsiClassType>> captures,
                         InferenceSessionContainer inferenceSessionContainer) {
     myInferenceVariables = new HashSet<InferenceVariable>();
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -57,13 +57,13 @@ class InitialInferenceState {
     myInferenceSubstitutor = substitutor;
     myContext = context;
     mySiteSubstitutor = siteSubstitutor;
-    myCaptures = new ArrayList<Pair<PsiTypeParameter[], PsiClassType>>();
-    for (Pair<PsiTypeParameter[], PsiClassType> capture : captures) {
-      PsiTypeParameter[] newParameters = new PsiTypeParameter[capture.first.length];
-      PsiTypeParameter[] parameters = capture.first;
+    myCaptures = new ArrayList<Pair<InferenceVariable[], PsiClassType>>();
+    for (Pair<InferenceVariable[], PsiClassType> capture : captures) {
+      InferenceVariable[] newParameters = new InferenceVariable[capture.first.length];
+      InferenceVariable[] parameters = capture.first;
       for (int i = 0; i < parameters.length; i++) {
         final PsiType substitute = topInferenceSubstitutor.substitute(parameters[i]);
-        newParameters[i] = (PsiTypeParameter)PsiUtil.resolveClassInClassTypeOnly(substitute);
+        newParameters[i] = (InferenceVariable)PsiUtil.resolveClassInClassTypeOnly(substitute);
       }
       myCaptures.add(Pair.create(newParameters, (PsiClassType)subst.substitute(capture.second)));
     }
@@ -90,7 +90,7 @@ class InitialInferenceState {
     return mySiteSubstitutor;
   }
 
-  public List<Pair<PsiTypeParameter[], PsiClassType>> getCaptures() {
+  public ArrayList<Pair<InferenceVariable[], PsiClassType>> getCaptures() {
     return myCaptures;
   }
 }

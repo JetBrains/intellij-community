@@ -50,7 +50,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
     final HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
     final boolean reduceResult = doReduce(session, dependencies, constraints);
     if (!reduceResult) {
-      session.registerIncompatibleErrorMessage(dependencies, myS.getPresentableText() + " conforms to " + myT.getPresentableText());
+      session.registerIncompatibleErrorMessage(dependencies, session.getPresentableText(myS) + " conforms to " + session.getPresentableText(myT));
     }
     return reduceResult;
   }
@@ -69,12 +69,12 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
     if (inferenceVariable != null) {
-      inferenceVariable.addBound(myT, InferenceBound.UPPER);
+      inferenceVariable.addBound(myT, InferenceBound.UPPER, session.myIncorporationPhase);
       return true;
     }
     inferenceVariable = session.getInferenceVariable(myT);
     if (inferenceVariable != null) {
-      inferenceVariable.addBound(myS, InferenceBound.LOWER);
+      inferenceVariable.addBound(myS, InferenceBound.LOWER, session.myIncorporationPhase);
       return true;
     }
     if (myT instanceof PsiArrayType) {
