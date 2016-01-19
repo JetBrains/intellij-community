@@ -471,6 +471,8 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
            ", char height: " + myCharHeight +
            ", max char width: " + myMaxCharWidth +
            ", tab size: " + myTabSize + 
-           " ,size manager: " + mySizeManager.dumpState() + "]";
+           " ,size manager: " + mySizeManager.dumpState() + 
+           " ,logical position cache: " + myLogicalPositionCache.dumpState() +
+           "]";
   }
 }
