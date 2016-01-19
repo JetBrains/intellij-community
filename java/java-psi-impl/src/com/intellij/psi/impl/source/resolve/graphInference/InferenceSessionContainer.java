@@ -186,7 +186,7 @@ public class InferenceSessionContainer {
       InferenceVariable var = targetVars.get(i);
       for (InferenceBound boundType : InferenceBound.values()) {
         for (PsiType bound : oldVars[i].getBounds(boundType)) {
-          var.addBound(substitutor.substitute(bound), boundType);
+          var.addBound(substitutor.substitute(bound), boundType, null);
         }
       }
     }

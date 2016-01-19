@@ -36,6 +36,8 @@ public class InferenceIncorporationPhase {
   private static final Logger LOG = Logger.getInstance("#" + InferenceIncorporationPhase.class.getName());
   private final InferenceSession mySession;
   private final List<Pair<InferenceVariable[], PsiClassType>> myCaptures = new ArrayList<Pair<InferenceVariable[], PsiClassType>>();
+  private final Map<InferenceVariable, Map<InferenceBound, Set<PsiType>>> myCurrentBounds =
+    new HashMap<InferenceVariable, Map<InferenceBound, Set<PsiType>>>();
 
   public InferenceIncorporationPhase(InferenceSession session) {
     mySession = session;
@@ -78,17 +80,28 @@ public class InferenceIncorporationPhase {
     final Collection<InferenceVariable> inferenceVariables = mySession.getInferenceVariables();
     for (InferenceVariable inferenceVariable : inferenceVariables) {
       if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
+      final Map<InferenceBound, Set<PsiType>> boundsMap = myCurrentBounds.get(inferenceVariable);
+      if (boundsMap == null) continue;
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
       final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
       final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
 
-      eqEq(eqBounds);
+      final Collection<PsiType> changedEqBounds = boundsMap.get(InferenceBound.EQ);
+      final Collection<PsiType> changedUpperBounds = boundsMap.get(InferenceBound.UPPER);
+      final Collection<PsiType> changedLowerBounds = boundsMap.get(InferenceBound.LOWER);
 
-      upDown(lowerBounds, upperBounds);
-      upDown(eqBounds, upperBounds);
-      upDown(lowerBounds, eqBounds);
+      //no new eq constraints were added -> no new constraints could be inferred
+      if (changedEqBounds != null) {
+        eqEq(eqBounds, changedEqBounds);
+      }
 
-      upUp(upperBounds);
+      upDown(lowerBounds, changedLowerBounds, upperBounds, changedUpperBounds);
+      upDown(eqBounds, changedEqBounds, upperBounds, changedUpperBounds);
+      upDown(lowerBounds, changedLowerBounds, eqBounds, changedEqBounds);
+
+      if (changedUpperBounds != null) {
+        upUp(upperBounds);
+      }
     }
 
     for (Pair<InferenceVariable[], PsiClassType> capture : myCaptures) {
@@ -173,11 +186,23 @@ public class InferenceIncorporationPhase {
             }
           }
         } else {
-          inferenceVariable.addBound(aType, InferenceBound.EQ);
+          inferenceVariable.addBound(aType, InferenceBound.EQ, this);
         }
       }
     }
     return true;
+  }
+
+  protected void upDown(List<PsiType> lowerBounds,
+                        Collection<PsiType> changedLowerBounds,
+                        List<PsiType> upperBounds,
+                        Collection<PsiType> changedUpperBounds) {
+    if (changedLowerBounds != null) {
+      upDown(changedLowerBounds, upperBounds);
+    }
+    if (changedUpperBounds != null) {
+      upDown(lowerBounds, changedUpperBounds);
+    }
   }
 
   private static Boolean isInferenceVariableOrFreshTypeParameter(PsiType eqBound) {
@@ -191,13 +216,17 @@ public class InferenceIncorporationPhase {
     boolean needFurtherIncorporation = false;
     for (InferenceVariable inferenceVariable : mySession.getInferenceVariables()) {
       if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
-      final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
+      Map<InferenceBound, Set<PsiType>> boundsMap = myCurrentBounds.remove(inferenceVariable);
+      if (boundsMap == null) continue;
+      final Collection<PsiType> eqBounds = boundsMap.get(InferenceBound.EQ);
       final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
       final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
       needFurtherIncorporation |= crossVariables(inferenceVariable, upperBounds, lowerBounds, InferenceBound.LOWER);
       needFurtherIncorporation |= crossVariables(inferenceVariable, lowerBounds, upperBounds, InferenceBound.UPPER);
 
-      needFurtherIncorporation |= eqCrossVariables(inferenceVariable, eqBounds);
+      if (eqBounds != null) {
+        needFurtherIncorporation |= eqCrossVariables(inferenceVariable, eqBounds);
+      }
     }
     return !needFurtherIncorporation;
   }
@@ -205,20 +234,24 @@ public class InferenceIncorporationPhase {
   /**
    * a = b imply every bound of a matches a bound of b and vice versa
    */
-  private boolean eqCrossVariables(InferenceVariable inferenceVariable, List<PsiType> eqBounds) {
+  private boolean eqCrossVariables(InferenceVariable inferenceVariable, Collection<PsiType> eqBounds) {
     boolean needFurtherIncorporation = false;
     for (PsiType eqBound : eqBounds) {
       final InferenceVariable inferenceVar = mySession.getInferenceVariable(eqBound);
       if (inferenceVar != null) {
         for (InferenceBound inferenceBound : InferenceBound.values()) {
-          for (PsiType bound : inferenceVariable.getBounds(inferenceBound)) {
-            if (mySession.getInferenceVariable(bound) != inferenceVar) {
-              needFurtherIncorporation |= inferenceVar.addBound(bound, inferenceBound);
+          final Set<PsiType> oldVarBounds = inferenceVar.getReadOnlyBoundsSet(inferenceBound);
+          final Set<PsiType> oldVariableBounds = inferenceVariable.getReadOnlyBoundsSet(inferenceBound);
+
+          for (PsiType bound : oldVariableBounds) {
+            if (!oldVarBounds.contains(bound) && mySession.getInferenceVariable(bound) != inferenceVar) {
+              needFurtherIncorporation |= inferenceVar.addBound(bound, inferenceBound, this);
             }
           }
-          for (PsiType bound : inferenceVar.getBounds(inferenceBound)) {
-            if (mySession.getInferenceVariable(bound) != inferenceVariable) {
-              needFurtherIncorporation |= inferenceVariable.addBound(bound, inferenceBound);
+          
+          for (PsiType bound : oldVarBounds) {
+            if (!oldVariableBounds.contains(bound) && mySession.getInferenceVariable(bound) != inferenceVariable) {
+              needFurtherIncorporation |= inferenceVariable.addBound(bound, inferenceBound, this);
             }
           }
         }
@@ -244,11 +277,11 @@ public class InferenceIncorporationPhase {
       if (inferenceVar != null && inferenceVariable != inferenceVar) {
 
         for (PsiType lowerBound : lowerBounds) {
-          result |= inferenceVar.addBound(lowerBound, inferenceBound);
+          result |= inferenceVar.addBound(lowerBound, inferenceBound, this);
         }
 
         for (PsiType varUpperBound : inferenceVar.getBounds(oppositeBound)) {
-          result |= inferenceVariable.addBound(varUpperBound, oppositeBound);
+          result |= inferenceVariable.addBound(varUpperBound, oppositeBound, this);
         }
       }
     }
@@ -262,7 +295,7 @@ public class InferenceIncorporationPhase {
    *           or
    * S <: a & a <: T imply S <: T
    */
-  private void upDown(List<PsiType> eqBounds, List<PsiType> upperBounds) {
+  private void upDown(Collection<PsiType> eqBounds, Collection<PsiType> upperBounds) {
     for (PsiType upperBound : upperBounds) {
       if (upperBound == null || PsiType.NULL.equals(upperBound) || upperBound instanceof PsiWildcardType) continue;
 
@@ -280,12 +313,15 @@ public class InferenceIncorporationPhase {
   /**
    * a = S & a = T imply S = T
    */
-  private void eqEq(List<PsiType> eqBounds) {
+  private void eqEq(List<PsiType> eqBounds, Collection<PsiType> changedEqBounds) {
     for (int i = 0; i < eqBounds.size(); i++) {
       PsiType sBound = eqBounds.get(i);
+      boolean changed = changedEqBounds.contains(sBound);
       for (int j = i + 1; j < eqBounds.size(); j++) {
         final PsiType tBound = eqBounds.get(j);
-        addConstraint(new TypeEqualityConstraint(tBound, sBound));
+        if (changed || changedEqBounds.contains(tBound)) {
+          addConstraint(new TypeEqualityConstraint(tBound, sBound));
+        }
       }
     }
   }
@@ -338,5 +374,19 @@ public class InferenceIncorporationPhase {
 
   public List<Pair<InferenceVariable[], PsiClassType>> getCaptures() {
     return myCaptures;
+  }
+
+  public void addBound(InferenceVariable variable, PsiType type, InferenceBound bound) {
+    Map<InferenceBound, Set<PsiType>> bounds = myCurrentBounds.get(variable);
+    if (bounds == null) {
+      bounds = new HashMap<InferenceBound, Set<PsiType>>();
+      myCurrentBounds.put(variable, bounds);
+    }
+    Set<PsiType> types = bounds.get(bound);
+    if (types == null) {
+      types = new LinkedHashSet<PsiType>();
+      bounds.put(bound, types);
+    }
+    types.add(type);
   }
 }

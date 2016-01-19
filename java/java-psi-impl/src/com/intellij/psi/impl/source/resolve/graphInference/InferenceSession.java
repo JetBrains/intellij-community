@@ -82,7 +82,7 @@ public class InferenceSession {
   
   private boolean myErased = false;
 
-  private final InferenceIncorporationPhase myIncorporationPhase = new InferenceIncorporationPhase(this);
+  public final InferenceIncorporationPhase myIncorporationPhase = new InferenceIncorporationPhase(this);
 
   private final PsiElement myContext;
 
@@ -624,11 +624,11 @@ public class InferenceSession {
         if (isProperType(classType)) {
           added = true;
         }
-        variable.addBound(classType, InferenceBound.UPPER);
+        variable.addBound(classType, InferenceBound.UPPER, null);
       }
       if (!added) {
         variable.addBound(PsiType.getJavaLangObject(parameter.getManager(), parameter.getResolveScope()),
-                          InferenceBound.UPPER);
+                          InferenceBound.UPPER, null);
       }
     }
     myInferenceVariables.addAll(result);
@@ -1044,7 +1044,7 @@ public class InferenceSession {
       parameter.putUserData(UPPER_BOUND,
                             composeBound(var, InferenceBound.UPPER, UPPER_BOUND_FUNCTION, ySubstitutor.putAll(substitutor), true));
       TypeConversionUtil.markAsFreshVariable(parameter, myContext);
-      if (!var.addBound(elementFactory.createType(parameter), InferenceBound.EQ)) {
+      if (!var.addBound(elementFactory.createType(parameter), InferenceBound.EQ, myIncorporationPhase)) {
         return false;
       }
     }
