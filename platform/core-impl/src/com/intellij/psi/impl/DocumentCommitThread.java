@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 public class DocumentCommitThread extends DocumentCommitProcessor implements Runnable, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
@@ -137,8 +136,10 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     log("Enabled", null, false, reason);
   }
 
-  private Future<?> wakeUpQueue() {
-    return executor.submit(this);
+  private void wakeUpQueue() {
+    if (!isDisposed) {
+      executor.execute(this);
+    }
   }
 
   private void cancel(@NonNls @NotNull Object reason) {

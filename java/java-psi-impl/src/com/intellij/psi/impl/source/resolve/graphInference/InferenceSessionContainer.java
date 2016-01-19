@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -97,7 +98,13 @@ public class InferenceSessionContainer {
             final CompoundInitialState compoundInitialState = createState(session);
             final InitialInferenceState initialInferenceState = compoundInitialState.getInitialState(PsiTreeUtil.getParentOfType(argumentList, PsiCall.class));
             if (initialInferenceState != null) {
-              return new InferenceSession(initialInferenceState)
+              InferenceSession childSession = new InferenceSession(initialInferenceState);
+              final List<String> errorMessages = session.getIncompatibleErrorMessages();
+              if (errorMessages != null) {
+                properties.getInfo().setInferenceError(StringUtil.join(errorMessages, "\n"));
+                return childSession.prepareSubstitution();
+              }
+              return childSession
                 .collectAdditionalAndInfer(parameters, arguments, properties, compoundInitialState.getInitialSubstitutor());
             }
           }
@@ -167,7 +174,7 @@ public class InferenceSessionContainer {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     final InferenceVariable[] oldVars = inferenceVariables.toArray(new InferenceVariable[inferenceVariables.size()]);
     for (InferenceVariable variable : oldVars) {
-      final InferenceVariable newVariable = new InferenceVariable(variable.getCallContext(), variable.getParameter());
+      final InferenceVariable newVariable = new InferenceVariable(variable.getCallContext(), variable.getParameter(), variable.getName());
       substitutor = substitutor.put(variable, JavaPsiFacade.getElementFactory(variable.getProject()).createType(newVariable));
       targetVars.add(newVariable);
       if (variable.isThrownBound()) {
@@ -179,7 +186,7 @@ public class InferenceSessionContainer {
       InferenceVariable var = targetVars.get(i);
       for (InferenceBound boundType : InferenceBound.values()) {
         for (PsiType bound : oldVars[i].getBounds(boundType)) {
-          var.addBound(substitutor.substitute(bound), boundType);
+          var.addBound(substitutor.substitute(bound), boundType, null);
         }
       }
     }

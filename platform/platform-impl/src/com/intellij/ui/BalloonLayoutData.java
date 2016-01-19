@@ -13,12 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.frame;
+package com.intellij.ui;
+
+import com.intellij.openapi.project.Project;
 
 /**
- * @deprecated override {@link XValue#computeInlineDebuggerData(XInlineDebuggerDataCallback)} instead
- * @author egor
+ * @author Alexander Lobas
  */
-@Deprecated
-public interface XInlineSourcePosition extends XNavigatable {
+public class BalloonLayoutData {
+  public int height;
+  public int twoLineHeight;
+  public int fullHeight;
+  public int maxScrollHeight;
+
+  public boolean showMinSize;
+
+  public Runnable closeAll;
+  public Runnable doLayout;
+
+  public Project project;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String RENDERER_ID = "ID";
 
   private final EventDispatcher<NodeRendererSettingsListener> myDispatcher = EventDispatcher.create(NodeRendererSettingsListener.class);
-  private final List<NodeRenderer> myPluginRenderers = new ArrayList<NodeRenderer>();
   private RendererConfiguration myCustomRenderers = new RendererConfiguration(this);
 
   // base renderers
@@ -110,20 +109,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return ServiceManager.getService(NodeRendererSettings.class);
   }
 
-  /**
-   * use {@link NodeRenderer} extension
-   * @param renderer
-   */
-  @Deprecated
-  public void addPluginRenderer(NodeRenderer renderer) {
-    myPluginRenderers.add(renderer);
-  }
-
-  @Deprecated
-  public void removePluginRenderer(NodeRenderer renderer) {
-    myPluginRenderers.remove(renderer);
-  }
-  
   public void setAlternateCollectionViewsEnabled(boolean enabled) {
     for (NodeRenderer myAlternateCollectionRenderer : myAlternateCollectionRenderers) {
       myAlternateCollectionRenderer.setEnabled(enabled);
@@ -227,10 +212,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
   }
 
-  public List<NodeRenderer> getPluginRenderers() {
-    return new ArrayList<NodeRenderer>(myPluginRenderers);
-  }
-  
   public PrimitiveRenderer getPrimitiveRenderer() {
     return myPrimitiveRenderer;
   }
@@ -272,7 +253,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     });
 
     // plugins registered renderers come after that
-    allRenderers.addAll(myPluginRenderers);
     Collections.addAll(allRenderers, NodeRenderer.EP_NAME.getExtensions());
 
     // now all predefined stuff

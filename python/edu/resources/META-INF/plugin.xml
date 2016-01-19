@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>com.jetbrains.python.edu.core</id>
   <name>Python-specific part for Stepic connector</name>
-  <version>2.0</version>
+  <version>2.0.3</version>
   <idea-version since-build="143.403"/>
   <description><![CDATA[
       Python-specific Stepic connector plugin for both PyCharm educational plugins.

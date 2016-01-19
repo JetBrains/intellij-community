@@ -48,6 +48,7 @@ class _Reporter(Reporter):
     def logaction_start(self, action):
         super(_Reporter, self).logaction_start(action)
         if action.activity == "getenv":
+            teamcity.output.write("\n")
             teamcity.testSuiteStarted(action.id, location="tox_env://" + str(action.id))
             self.current_suite = action.id
 
@@ -55,6 +56,7 @@ class _Reporter(Reporter):
         super(_Reporter, self).logaction_finish(action)
         if action.activity == "runtests":
             teamcity.testSuiteFinished(action.id)
+            teamcity.output.write("\n")
 
     def error(self, msg):
         super(_Reporter, self).error(msg)

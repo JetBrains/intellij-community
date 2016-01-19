@@ -242,7 +242,7 @@ public class PluginGroups {
   }
 
   protected static void addMarkdownPlugin(Map<String, String> featuredPlugins) {
-    featuredPlugins.put("Markdown", "Custom Languages:Markdown language integration:net.nicoulaj.idea.markdown");
+    featuredPlugins.put("Markdown", "Custom Languages:Markdown language support:org.intellij.plugins.markdown");
   }
 
   protected static void addConfigurationServerPlugin(Map<String, String> featuredPlugins) {

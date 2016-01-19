@@ -608,11 +608,6 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   @Override
-  public void setCurrentStackFrame(@NotNull XExecutionStack executionStack, @NotNull XStackFrame frame) {
-    setCurrentStackFrame(myCurrentExecutionStack, frame, frame == executionStack.getTopFrame());
-  }
-
-  @Override
   public void setCurrentStackFrame(@NotNull XExecutionStack executionStack, @NotNull XStackFrame frame, boolean isTopFrame) {
     if (mySuspendContext == null) return;
 

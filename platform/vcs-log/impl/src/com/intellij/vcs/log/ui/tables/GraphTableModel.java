@@ -178,16 +178,11 @@ public class GraphTableModel extends AbstractTableModel {
       case COMMIT_COLUMN:
         return getCommitColumnCell(rowIndex, data);
       case AUTHOR_COLUMN:
-        if (data == null) {
-          return "";
-        }
-        else {
-          String authorString = data.getAuthor().getName();
-          if (authorString.isEmpty()) authorString = data.getAuthor().getEmail();
-          return authorString + (data.getAuthor().equals(data.getCommitter()) ? "" : "*");
-        }
+        String authorString = data.getAuthor().getName();
+        if (authorString.isEmpty()) authorString = data.getAuthor().getEmail();
+        return authorString + (data.getAuthor().equals(data.getCommitter()) ? "" : "*");
       case DATE_COLUMN:
-        if (data == null || data.getAuthorTime() < 0) {
+        if (data.getAuthorTime() < 0) {
           return "";
         }
         else {

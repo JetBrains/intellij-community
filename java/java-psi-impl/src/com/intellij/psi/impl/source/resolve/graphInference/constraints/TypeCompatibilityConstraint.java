@@ -41,7 +41,7 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
     if (session.isProperType(myT) && session.isProperType(myS)) {
       final boolean assignable = TypeConversionUtil.isAssignable(myT, myS);
       if (!assignable) {
-        session.registerIncompatibleErrorMessage("Incompatible types: " + myS.getPresentableText() + " is not convertible to " + myS.getPresentableText());
+        session.registerIncompatibleErrorMessage("Incompatible types: " + session.getPresentableText(myS) + " is not convertible to " + session.getPresentableText(myT));
       }
       return assignable;
     }

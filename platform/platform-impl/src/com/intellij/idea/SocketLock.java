@@ -32,7 +32,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.oio.OioEventLoopGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
@@ -133,21 +132,13 @@ public final class SocketLock {
 
         final String[] lockedPaths = {myConfigPath, mySystemPath};
         int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr() ? 1 : 2;
-        NotNullProducer<ChannelHandler> handler = new NotNullProducer<ChannelHandler>() {
+        myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false, new NotNullProducer<ChannelHandler>() {
           @NotNull
           @Override
           public ChannelHandler produce() {
             return new MyChannelInboundHandler(lockedPaths, myActivateListener);
           }
-        };
-        try {
-          myServer = BuiltInServer.start(workerCount, 6942, 50, false, handler);
-        }
-        catch (IllegalStateException e) {
-          Logger.getInstance(SocketLock.class).warn(e);
-          myServer = BuiltInServer.start(new OioEventLoopGroup(1, new BuiltInServer.BuiltInServerThreadFactory()), true, 6942, 50, false, handler);
-        }
-
+        });
         byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
         FileUtil.writeToFile(portMarkerC, portBytes);
         FileUtil.writeToFile(portMarkerS, portBytes);

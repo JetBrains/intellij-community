@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.frame;
+package com.intellij.vcs.log.ui;
 
-/**
- * @deprecated override {@link XValue#computeInlineDebuggerData(XInlineDebuggerDataCallback)} instead
- * @author Konstantin Bulenkov
- */
-@Deprecated
-public interface XNearestSourcePosition extends XInlineSourcePosition {
+public class VcsLogActionPlaces {
+  public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
+  public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar";
+  public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
+  public static final String VCS_LOG_INTELLI_SORT_ACTION = "Vcs.Log.IntelliSortChooser";
 }

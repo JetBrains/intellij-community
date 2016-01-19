@@ -111,6 +111,9 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
 
   @Override
   public void execute(@NotNull Runnable task) {
+    if (isShutdown()) {
+      throw new RejectedExecutionException("Already shutdown");
+    }
     long status = myStatus.addAndGet(1 + (1L << 32)); // increment inProgress and queue stamp atomically
 
     if (tryToExecute(status, task)) {
@@ -128,7 +131,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       assert inProgress > 0 : inProgress;
 
       Runnable next;
-      if (inProgress <= myMaxTasks && !isShutdown() && (next = myTaskQueue.poll()) != null) {
+      if (inProgress <= myMaxTasks && (next = myTaskQueue.poll()) != null) {
         tryToExecute(status, next);
         break;
       }
@@ -144,7 +147,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     int inProgress = (int)status;
 
     assert inProgress > 0 : inProgress;
-    if (inProgress <= myMaxTasks && !isShutdown()) {
+    if (inProgress <= myMaxTasks) {
       try {
         myBackendExecutor.execute(wrap(task));
       }

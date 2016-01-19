@@ -63,7 +63,10 @@ public class VcsCherryPickAction extends DumbAwareAction {
 
     final VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
     Project project = e.getProject();
-    assert project != null;
+    if (project == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
     VcsCherryPickManager cherryPickManager = VcsCherryPickManager.getInstance(project);
 
     List<VcsCherryPicker> cherryPickers = getActiveCherryPickersForProject(project);

@@ -584,11 +584,11 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Nullable
   public static PsiJavaFileStub buildFileStub(@NotNull VirtualFile file, @NotNull byte[] bytes) throws ClsFormatException {
-    if (ClassFileViewProvider.isInnerClass(file)) {
-      return null;
-    }
-
     try {
+      if (ClassFileViewProvider.isInnerClass(file, bytes)) {
+        return null;
+      }
+
       ClassReader reader = new ClassReader(bytes);
       String className = file.getNameWithoutExtension();
       String packageName = getPackageName(reader.getClassName());

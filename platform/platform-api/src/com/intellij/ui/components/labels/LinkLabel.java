@@ -89,6 +89,12 @@ public class LinkLabel<T> extends JLabel {
     myVisitedLinksKey = aVisitedLinksKey;
   }
 
+  @Override
+  public void setIcon(Icon icon) {
+    super.setIcon(icon);
+    myInactiveIcon = icon;
+  }
+
   public void setHoveringIcon(Icon iconForHovering) {
     myHoveringIcon = iconForHovering;
   }
@@ -96,6 +102,10 @@ public class LinkLabel<T> extends JLabel {
   public void setListener(LinkListener<T> listener, @Nullable T linkData) {
     myLinkListener = listener;
     myLinkData = linkData;
+  }
+
+  public T getLinkData() {
+    return myLinkData;
   }
 
   public void doClick() {
@@ -211,7 +221,7 @@ public class LinkLabel<T> extends JLabel {
     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     myUnderline = true;
     if (myHoveringIcon != null) {
-      setIcon(myHoveringIcon);
+      super.setIcon(myHoveringIcon);
     }
     setStatusBarText(getStatusBarText());
     repaint();
@@ -224,7 +234,7 @@ public class LinkLabel<T> extends JLabel {
   private void disableUnderline() {
     setCursor(Cursor.getDefaultCursor());
     myUnderline = false;
-    setIcon(myInactiveIcon);
+    super.setIcon(myInactiveIcon);
     setStatusBarText(null);
     setActive(false);
   }

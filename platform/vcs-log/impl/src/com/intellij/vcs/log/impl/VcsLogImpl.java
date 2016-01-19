@@ -18,7 +18,7 @@ package com.intellij.vcs.log.impl;
 import com.google.common.primitives.Ints;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Condition;
-import com.intellij.ui.table.JBTable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -33,11 +33,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.Future;
 
-/**
- *
- */
 public class VcsLogImpl implements VcsLog {
-  private static final int SLICE_SIZE = 50;
   @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final VcsLogUiImpl myUi;
 
@@ -90,8 +86,8 @@ public class VcsLogImpl implements VcsLog {
 
   @Nullable
   @Override
-  public Collection<String> getContainingBranches(@NotNull Hash commitHash) {
-    return null;
+  public Collection<String> getContainingBranches(@NotNull Hash commitHash, @NotNull VirtualFile root) {
+    return myDataHolder.getContainingBranchesGetter().getContainingBranchesFromCache(root, commitHash);
   }
 
   @NotNull
@@ -116,12 +112,6 @@ public class VcsLogImpl implements VcsLog {
     else {
       return myUi.jumpToCommitByPartOfHash(reference);
     }
-  }
-
-  @NotNull
-  @Override
-  public Component getToolbar() {
-    return myUi.getToolbar();
   }
 
   @NotNull
