@@ -23,6 +23,9 @@ import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.utils.LocalHistoryLog;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -248,15 +251,21 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
   @Override
   public void revertToLabel(@NotNull Project project, @NotNull VirtualFile f, @NotNull Label label) {
+    if (!f.exists() || !f.isValid()) {
+      notifyUser(project, String.format("File %s is not valid or doesn't exist", f.getName()));
+      return;
+    }
     HistoryDialogModel dirHistoryModel = f.isDirectory()
                                          ? new DirectoryHistoryDialogModel(project, myGateway, myVcs, f)
                                          : new EntireFileHistoryDialogModel(project, myGateway, myVcs, f);
     int leftRev = findRevisionIndexToRevert(dirHistoryModel, label);
     if (leftRev < 0) {
-      LocalHistoryLog.LOG.error(
-        String.format("Couldn't find label revision. try to Use local history dialog for %s and perform revert manually.", f.getName()));
+      notifyUser(project,
+                 String.format("Couldn't find label revision. Try to use local history dialog for %s and perform revert manually.",
+                               f.getName()));
       return;
     }
+    if (leftRev == 0) return; // we shouldn't revert because not changes found to revert;
     try {
       dirHistoryModel.selectRevisions(-1, leftRev - 1); //-1 because we should revert all changes up to previous one, but not label-related.
       dirHistoryModel.createReverter().revert();
@@ -264,5 +273,10 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     catch (IOException e) {
       LocalHistoryLog.LOG.error(String.format("Couldn't revert %s to local history label.", f.getName()), e);
     }
+  }
+
+  private static void notifyUser(@NotNull Project project, @NotNull String message) {
+    new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Can't rollback some changes", message,
+                     NotificationType.ERROR).notify(project);
   }
 }

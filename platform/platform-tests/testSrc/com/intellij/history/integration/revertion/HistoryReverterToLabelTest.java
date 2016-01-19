@@ -20,6 +20,8 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.integration.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.io.IOException;
+
 public class HistoryReverterToLabelTest extends IntegrationTestCase {
 
   public void testFileCreation() throws Exception {
@@ -38,6 +40,18 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
     createChildData(myRoot, "foo.txt");
     localHistory.revertToLabel(myProject, myRoot, testLabel);
     assertNull(myRoot.findChild("foo.txt"));
+  }
+
+  public void testPutLabelAndRevertInstantly() throws IOException {
+    VirtualFile f = createChildData(myRoot, "foo.txt");
+    setBinaryContent(f, new byte[]{123}, -1, 4000, this);
+    final LocalHistory localHistory = LocalHistory.getInstance();
+    final Label testLabel = localHistory.putSystemLabel(myProject, "testLabel");
+    localHistory.revertToLabel(myProject, myRoot, testLabel);
+    f = myRoot.findChild("foo.txt");
+    assertNotNull(f);
+    assertEquals(123, f.contentsToByteArray()[0]);
+    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testFileDeletion() throws Exception {
@@ -76,7 +90,7 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
     final Label testLabel2 = localHistory.putSystemLabel(myProject, "testLabel");
     rename(f, "bar.txt");
 
-    localHistory.revertToLabel(myProject, myRoot, testLabel2);
+    localHistory.revertToLabel(myProject, f, testLabel2);
 
     assertNotNull(myRoot.findChild("dir2"));
     dir = myRoot.findChild("dir2");
@@ -114,5 +128,27 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
     assertNotNull(f);
     assertEquals(1, f.contentsToByteArray()[0]);
     assertEquals(1000, f.getTimeStamp());
+  }
+
+  public void testRevertContentChangeOnlyForFile() throws Exception {
+    VirtualFile f = createChildData(myRoot, "foo.txt");
+    int modificationStamp1 = -1;
+    setBinaryContent(f, new byte[]{1}, modificationStamp1, 1000, this);
+    VirtualFile f2 = createChildData(myRoot, "foo2.txt");
+    setBinaryContent(f, new byte[]{1}, modificationStamp1, 1000, this);
+    final LocalHistory localHistory = LocalHistory.getInstance();
+    final Label testLabel = localHistory.putSystemLabel(myProject, "testLabel");
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{2}, modificationStamp, 2000, this);
+    setBinaryContent(f2, new byte[]{3}, modificationStamp, 3000, this);
+    localHistory.revertToLabel(myProject, f, testLabel);
+    f = myRoot.findChild("foo.txt");
+    assertNotNull(f);
+    assertEquals(1, f.contentsToByteArray()[0]);
+    assertEquals(1000, f.getTimeStamp());
+    f2 = myRoot.findChild("foo2.txt");
+    assertNotNull(f2);
+    assertEquals(3, f2.contentsToByteArray()[0]);
+    assertEquals(3000, f2.getTimeStamp());
   }
 }
