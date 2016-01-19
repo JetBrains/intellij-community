@@ -1,7 +1,5 @@
 package com.intellij.vcs.log.ui.frame;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -40,6 +38,7 @@ import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
+import com.intellij.vcs.log.ui.actions.RefreshLogAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.util.BekUtil;
 import net.miginfocom.swing.MigLayout;
@@ -200,12 +199,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   private JComponent createActionsToolbar() {
-    RefreshLogAction refreshLogAction = new RefreshLogAction();
-    refreshLogAction.registerShortcutOn(this);
+    AnAction refreshLogAction = ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_REFRESH_ACTION);
+    if (refreshLogAction instanceof RefreshLogAction) {
+      ((RefreshLogAction)refreshLogAction).registerShortcutOn(this);
+    }
 
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
-    toolbarGroup.add(refreshLogAction);
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
     mainGroup.add(myFilterUi.createActionGroup());
@@ -410,19 +410,4 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
   }
 
-  private class RefreshLogAction extends RefreshAction {
-    public RefreshLogAction() {
-      super("Refresh", "Refresh", AllIcons.Actions.Refresh);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      myLogDataManager.refreshCompletely();
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(true);
-    }
-  }
 }
