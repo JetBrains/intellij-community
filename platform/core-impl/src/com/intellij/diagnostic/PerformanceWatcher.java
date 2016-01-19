@@ -92,7 +92,7 @@ public class PerformanceWatcher implements ApplicationComponent {
                                + "-" + ApplicationInfo.getInstance().getBuild().asString());
     myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
     myThreadMXBean = ManagementFactory.getThreadMXBean();
-    myThread = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+    myThread = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
       @Override
       public void run() {
         checkEDTResponsiveness();
