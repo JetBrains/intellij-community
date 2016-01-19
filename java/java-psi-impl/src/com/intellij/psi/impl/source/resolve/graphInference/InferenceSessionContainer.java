@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -97,7 +98,13 @@ public class InferenceSessionContainer {
             final CompoundInitialState compoundInitialState = createState(session);
             final InitialInferenceState initialInferenceState = compoundInitialState.getInitialState(PsiTreeUtil.getParentOfType(argumentList, PsiCall.class));
             if (initialInferenceState != null) {
-              return new InferenceSession(initialInferenceState)
+              InferenceSession childSession = new InferenceSession(initialInferenceState);
+              final List<String> errorMessages = session.getIncompatibleErrorMessages();
+              if (errorMessages != null) {
+                properties.getInfo().setInferenceError(StringUtil.join(errorMessages, "\n"));
+                return childSession.prepareSubstitution();
+              }
+              return childSession
                 .collectAdditionalAndInfer(parameters, arguments, properties, compoundInitialState.getInitialSubstitutor());
             }
           }

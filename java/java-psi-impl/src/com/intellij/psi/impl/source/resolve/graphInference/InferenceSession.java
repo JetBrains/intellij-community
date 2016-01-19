@@ -569,7 +569,7 @@ public class InferenceSession {
     return substitutor;
   }
   
-  private PsiSubstitutor prepareSubstitution() {
+  PsiSubstitutor prepareSubstitution() {
     ArrayList<InferenceVariable> allVars = new ArrayList<InferenceVariable>(myInferenceVariables);
     while (!allVars.isEmpty()) {
       final List<InferenceVariable> variables = InferenceVariablesOrder.resolveOrder(allVars, this);
