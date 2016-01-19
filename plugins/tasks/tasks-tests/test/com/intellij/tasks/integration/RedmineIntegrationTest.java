@@ -18,6 +18,7 @@ import java.util.List;
  */
 public class RedmineIntegrationTest extends TaskManagerTestCase {
   private static final String REDMINE_2_0_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8072";
+  private static final String API_ACCESS_KEY = "b60d03b2449869ee1a4ba331011a32e50475f820";
 
   private RedmineRepository myRepository;
 
@@ -123,6 +124,19 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
     assertNotNull(issues);
     assertEquals(1, issues.length);
     assertEquals(issues[0].getSummary(), "This issue was created for project filtering tests. Do not change it.");
+  }
+
+  // ZD-611794
+  public void testSingleIssueRequestedWithApiKey() throws Exception {
+    myRepository.setUseHttpAuthentication(false);
+    myRepository.setAPIKey(API_ACCESS_KEY);
+    try {
+      assertNotNull(myRepository.findTask("1"));
+    }
+    finally {
+      myRepository.setAPIKey("");
+      myRepository.setUseHttpAuthentication(true);
+    }
   }
 
   @Override
