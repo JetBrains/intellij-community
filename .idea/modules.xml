@@ -8,6 +8,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/IntelliLang-python/IntelliLang-python.iml" filepath="$PROJECT_DIR$/python/IntelliLang-python/IntelliLang-python.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-tests/IntelliLang-tests.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-tests/IntelliLang-tests.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-xml.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-xml.iml" group="plugins/IntelliLang" />
+      <module fileurl="file://$PROJECT_DIR$/ProjectionalEditing/ProjectionalEditing.iml" filepath="$PROJECT_DIR$/ProjectionalEditing/ProjectionalEditing.iml" />
       <module fileurl="file://$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" filepath="$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ShortcutPromoter/ShortcutPromoter.iml" filepath="$PROJECT_DIR$/plugins/ShortcutPromoter/ShortcutPromoter.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/android/adt-branding/adt-branding.iml" filepath="$PROJECT_DIR$/android/adt-branding/adt-branding.iml" group="android" />
