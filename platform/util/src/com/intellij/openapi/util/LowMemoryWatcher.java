@@ -134,6 +134,7 @@ public class LowMemoryWatcher {
     synchronized (ourJanitor) {
       if (ourSubmitted != null) {
         ourSubmitted.cancel(false);
+        ourSubmitted = null;
       }
     }
     ourInstances.clear();
