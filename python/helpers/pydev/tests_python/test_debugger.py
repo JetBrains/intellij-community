@@ -36,6 +36,39 @@ if sys.version_info[:2] == (2, 7):
 TEST_CYTHON = os.getenv('PYDEVD_USE_CYTHON', None) == 'YES'
 
 #=======================================================================================================================
+# WriterThreadCaseSetNextStatement
+#======================================================================================================================
+class WriterThreadCaseSetNextStatement(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_set_next_statement.py')
+
+    def run(self):
+        self.start_socket()
+        breakpoint_id = self.write_add_breakpoint(6, None)
+        self.write_make_initial_run()
+
+        thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
+
+        assert line == 6, 'Expected return to be in line 6, was: %s' % line
+
+        self.write_evaluate_expression('%s\t%s\t%s' % (thread_id, frame_id, 'LOCAL'), 'a')
+        self.wait_for_evaluation('<var name="a" type="int" value="int: 2"')
+        self.write_set_next_statement(thread_id, 2, 'method')
+        thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
+        assert line == 2, 'Expected return to be in line 2, was: %s' % line
+
+        self.write_step_over(thread_id)
+        thread_id, frame_id, line = self.wait_for_breakpoint_hit('108', True)
+
+        self.write_evaluate_expression('%s\t%s\t%s' % (thread_id, frame_id, 'LOCAL'), 'a')
+        self.wait_for_evaluation('<var name="a" type="int" value="int: 1"')
+
+        self.write_remove_breakpoint(breakpoint_id)
+        self.write_run_thread(thread_id)
+
+        self.finished_ok = True
+
+#=======================================================================================================================
 # WriterThreadCaseDjango
 #======================================================================================================================
 class WriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
@@ -977,6 +1010,10 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
 class TestPython(unittest.TestCase, DebuggerBase):
     def get_command_line(self):
         return [PYTHON_EXE, '-u']
+
+    def test_case_set_next_statement(self):
+        # Set next only for Python.
+        self.check_case(WriterThreadCaseSetNextStatement)
 
 class TestJython(unittest.TestCase, DebuggerBase):
     def get_command_line(self):

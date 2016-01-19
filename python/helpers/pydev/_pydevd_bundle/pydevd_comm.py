@@ -896,6 +896,7 @@ class InternalStepThread(InternalThreadCommand):
             t.additional_info.pydev_step_cmd = self.cmd_id
             t.additional_info.pydev_state = STATE_RUN
 
+
 #=======================================================================================================================
 # InternalSetNextStatementThread
 #=======================================================================================================================
@@ -904,6 +905,12 @@ class InternalSetNextStatementThread(InternalThreadCommand):
         self.thread_id = thread_id
         self.cmd_id = cmd_id
         self.line = line
+
+        if IS_PY2:
+            if isinstance(func_name, unicode):
+                # On cython with python 2.X it requires an str, not unicode (but on python 3.3 it should be a str, not bytes).
+                func_name = func_name.encode('utf-8')
+
         self.func_name = func_name
 
     def do_it(self, dbg):

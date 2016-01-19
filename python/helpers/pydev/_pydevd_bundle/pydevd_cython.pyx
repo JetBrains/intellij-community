@@ -293,7 +293,10 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                         if exception_breakpoint.notify_on_first_raise_only:
                             if main_debugger.first_appearance_in_scope(trace):
                                 add_exception_to_frame(frame, (exception, value, trace))
-                                info.pydev_message = exception_breakpoint.qname
+                                try:
+                                    info.pydev_message = exception_breakpoint.qname
+                                except:
+                                    info.pydev_message = exception_breakpoint.qname.encode('utf-8')
                                 flag = True
                             else:
                                 pydev_log.debug("Ignore exception %s in library %s" % (exception, frame.f_code.co_filename))
@@ -301,7 +304,10 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                     else:
                         if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
                             add_exception_to_frame(frame, (exception, value, trace))
-                            info.pydev_message = exception_breakpoint.qname
+                            try:
+                                info.pydev_message = exception_breakpoint.qname
+                            except:
+                                info.pydev_message = exception_breakpoint.qname.encode('utf-8')
                             flag = True
                         else:
                             flag = False

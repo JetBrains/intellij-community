@@ -142,6 +142,9 @@ def build():
     for arg in sys.argv:
         if arg.startswith('--target-pyd-name='):
             additional_args.append(arg)
+            break
+    else:
+        additional_args.append('--force-cython')  # Build always forces cython!
 
     args = [
         sys.executable, os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'), 'build_ext', '--inplace',
@@ -157,7 +160,7 @@ if __name__ == '__main__':
         remove_binaries()
     elif use_cython is None:
         # Regular process
-        if not '--no-regenerate-files':
+        if '--no-regenerate-files' not in sys.argv:
             generate_dont_trace_files()
             generate_cython_module()
         build()

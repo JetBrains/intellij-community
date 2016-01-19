@@ -233,10 +233,6 @@ def cmd_step_into(plugin, pydb, frame, event, args, stop_info, stop):
     pydb, filename, info, thread = args
     plugin_stop = False
     stop_info['jinja2_stop'] = False
-    if not hasattr(info, 'pydev_call_from_jinja2'):
-        info.pydev_call_from_jinja2 = None
-    if not hasattr(info, 'pydev_call_inside_jinja2'):
-        info.pydev_call_inside_jinja2 = None
     if _is_jinja2_suspended(thread):
         stop_info['jinja2_stop'] = event in ('call', 'line') and _is_jinja2_render_call(frame)
         plugin_stop = stop_info['jinja2_stop']
@@ -270,10 +266,6 @@ def cmd_step_over(plugin, pydb, frame, event, args, stop_info, stop):
     pydb, filename, info, thread = args
     plugin_stop = False
     stop_info['jinja2_stop'] = False
-    if not hasattr(info, 'pydev_call_from_jinja2'):
-        info.pydev_call_from_jinja2 = None
-    if not hasattr(info, 'pydev_call_inside_jinja2'):
-        info.pydev_call_inside_jinja2 = None
     if _is_jinja2_suspended(thread):
         stop = False
 

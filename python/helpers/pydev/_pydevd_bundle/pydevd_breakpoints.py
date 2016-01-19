@@ -115,7 +115,10 @@ def _excepthook(exctype, value, tb):
     else:
         frame = frames[-1]
     exception = (exctype, value, tb)
-    thread.additional_info.pydev_message = exception_breakpoint.qname
+    try:
+        thread.additional_info.pydev_message = exception_breakpoint.qname
+    except:
+        thread.additional_info.pydev_message = exception_breakpoint.qname.encode('utf-8')
 
     pydevd_tracing.SetTrace(None) #no tracing from here
 

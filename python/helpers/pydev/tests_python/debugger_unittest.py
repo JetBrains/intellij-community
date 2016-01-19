@@ -13,7 +13,66 @@ import subprocess
 import sys
 
 IS_PY3K = sys.version_info[0] >= 3
-CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
+
+# Note: copied (don't import because we want it to be independent on the actual code because of backward compatibility).
+CMD_RUN = 101
+CMD_LIST_THREADS = 102
+CMD_THREAD_CREATE = 103
+CMD_THREAD_KILL = 104
+CMD_THREAD_SUSPEND = 105
+CMD_THREAD_RUN = 106
+CMD_STEP_INTO = 107
+CMD_STEP_OVER = 108
+CMD_STEP_RETURN = 109
+CMD_GET_VARIABLE = 110
+CMD_SET_BREAK = 111
+CMD_REMOVE_BREAK = 112
+CMD_EVALUATE_EXPRESSION = 113
+CMD_GET_FRAME = 114
+CMD_EXEC_EXPRESSION = 115
+CMD_WRITE_TO_CONSOLE = 116
+CMD_CHANGE_VARIABLE = 117
+CMD_RUN_TO_LINE = 118
+CMD_RELOAD_CODE = 119
+CMD_GET_COMPLETIONS = 120
+
+# Note: renumbered (conflicted on merge)
+CMD_CONSOLE_EXEC = 121
+CMD_ADD_EXCEPTION_BREAK = 122
+CMD_REMOVE_EXCEPTION_BREAK = 123
+CMD_LOAD_SOURCE = 124
+CMD_ADD_DJANGO_EXCEPTION_BREAK = 125
+CMD_REMOVE_DJANGO_EXCEPTION_BREAK = 126
+CMD_SET_NEXT_STATEMENT = 127
+CMD_SMART_STEP_INTO = 128
+CMD_EXIT = 129
+CMD_SIGNATURE_CALL_TRACE = 130
+
+
+
+CMD_SET_PY_EXCEPTION = 131
+CMD_GET_FILE_CONTENTS = 132
+CMD_SET_PROPERTY_TRACE = 133
+# Pydev debug console commands
+CMD_EVALUATE_CONSOLE_EXPRESSION = 134
+CMD_RUN_CUSTOM_OPERATION = 135
+CMD_GET_BREAKPOINT_EXCEPTION = 136
+CMD_STEP_CAUGHT_EXCEPTION = 137
+CMD_SEND_CURR_EXCEPTION_TRACE = 138
+CMD_SEND_CURR_EXCEPTION_TRACE_PROCEEDED = 139
+CMD_IGNORE_THROWN_EXCEPTION_AT = 140
+CMD_ENABLE_DONT_TRACE = 141
+CMD_SHOW_CONSOLE = 142
+
+CMD_GET_ARRAY = 143
+CMD_STEP_INTO_MY_CODE = 144
+CMD_GET_CONCURRENCY_EVENT = 145
+
+CMD_VERSION = 501
+CMD_RETURN = 502
+CMD_ERROR = 901
+
+
 
 # Always True (because otherwise when we do have an error, it's hard to diagnose).
 # Note: set to False because we seem to be using too much memory (and subprocess uses fork which can throw an error on travis).
@@ -297,8 +356,8 @@ class AbstractWriterThread(threading.Thread):
 
         # we have something like <xml><thread name="MainThread" id="12103472" /></xml>
         splitted = self.reader_thread.last_received.split('"')
-        threadId = splitted[3]
-        return threadId
+        thread_id = splitted[3]
+        return thread_id
 
     def wait_for_breakpoint_hit(self, reason='111', get_line=False):
         '''
@@ -320,18 +379,18 @@ class AbstractWriterThread(threading.Thread):
 
         # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" ...
         splitted = last.split('"')
-        threadId = splitted[1]
+        thread_id = splitted[1]
         frameId = splitted[7]
         if get_line:
             self.log.append('End(0): wait_for_breakpoint_hit')
             try:
-                return threadId, frameId, int(splitted[13])
+                return thread_id, frameId, int(splitted[13])
             except:
                 raise AssertionError('Error with: %s, %s, %s.\nLast: %s.\n\nAll: %s\n\nSplitted: %s' % (
-                    threadId, frameId, splitted[13], last, '\n'.join(self.reader_thread.all_received), splitted))
+                    thread_id, frameId, splitted[13], last, '\n'.join(self.reader_thread.all_received), splitted))
 
         self.log.append('End(1): wait_for_breakpoint_hit')
-        return threadId, frameId
+        return thread_id, frameId
 
     def wait_for_custom_operation(self, expected):
         i = 0
@@ -382,6 +441,13 @@ class AbstractWriterThread(threading.Thread):
                     found = True
                     break
 
+            last = unquote_plus(last)
+            for e in expected:
+                if e in last:
+                    found = True
+                    break
+
+            # We actually quote 2 times on the backend...
             last = unquote_plus(last)
             for e in expected:
                 if e in last:
@@ -443,31 +509,34 @@ class AbstractWriterThread(threading.Thread):
     def write_change_variable(self, thread_id, frame_id, varname, value):
         self.write("117\t%s\t%s\t%s\t%s\t%s\t%s" % (self.next_seq(), thread_id, frame_id, 'FRAME', varname, value))
 
-    def write_get_frame(self, threadId, frameId):
-        self.write("114\t%s\t%s\t%s\tFRAME" % (self.next_seq(), threadId, frameId))
+    def write_get_frame(self, thread_id, frameId):
+        self.write("114\t%s\t%s\t%s\tFRAME" % (self.next_seq(), thread_id, frameId))
         self.log.append('write_get_frame')
 
-    def write_get_variable(self, threadId, frameId, var_attrs):
-        self.write("110\t%s\t%s\t%s\tFRAME\t%s" % (self.next_seq(), threadId, frameId, var_attrs))
+    def write_get_variable(self, thread_id, frameId, var_attrs):
+        self.write("110\t%s\t%s\t%s\tFRAME\t%s" % (self.next_seq(), thread_id, frameId, var_attrs))
 
-    def write_step_over(self, threadId):
-        self.write("108\t%s\t%s" % (self.next_seq(), threadId,))
+    def write_step_over(self, thread_id):
+        self.write("108\t%s\t%s" % (self.next_seq(), thread_id,))
 
-    def write_step_in(self, threadId):
-        self.write("107\t%s\t%s" % (self.next_seq(), threadId,))
+    def write_step_in(self, thread_id):
+        self.write("107\t%s\t%s" % (self.next_seq(), thread_id,))
 
-    def write_step_return(self, threadId):
-        self.write("109\t%s\t%s" % (self.next_seq(), threadId,))
+    def write_step_return(self, thread_id):
+        self.write("109\t%s\t%s" % (self.next_seq(), thread_id,))
 
-    def write_suspend_thread(self, threadId):
-        self.write("105\t%s\t%s" % (self.next_seq(), threadId,))
+    def write_suspend_thread(self, thread_id):
+        self.write("105\t%s\t%s" % (self.next_seq(), thread_id,))
 
-    def write_run_thread(self, threadId):
+    def write_run_thread(self, thread_id):
         self.log.append('write_run_thread')
-        self.write("106\t%s\t%s" % (self.next_seq(), threadId,))
+        self.write("106\t%s\t%s" % (self.next_seq(), thread_id,))
 
-    def write_kill_thread(self, threadId):
-        self.write("104\t%s\t%s" % (self.next_seq(), threadId,))
+    def write_kill_thread(self, thread_id):
+        self.write("104\t%s\t%s" % (self.next_seq(), thread_id,))
+
+    def write_set_next_statement(self, thread_id, line, func_name):
+        self.write("%s\t%s\t%s\t%s\t%s" % (CMD_SET_NEXT_STATEMENT, self.next_seq(), thread_id, line, func_name,))
 
     def write_debug_console_expression(self, locator):
         self.write("%s\t%s\t%s" % (CMD_EVALUATE_CONSOLE_EXPRESSION, self.next_seq(), locator))

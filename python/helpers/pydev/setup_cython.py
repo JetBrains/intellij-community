@@ -11,10 +11,15 @@ the .pyx file by running "python build_tools/build.py"
 
 import sys
 target_pydevd_name = 'pydevd_cython'
+force_cython=False
 for i, arg in enumerate(sys.argv[:]):
     if arg.startswith('--target-pyd-name='):
         del sys.argv[i]
         target_pydevd_name = arg[len('--target-pyd-name='):]
+    if arg == '--force-cython':
+        del sys.argv[i]
+        force_cython=True
+
 
 
 from setuptools import setup
@@ -26,12 +31,10 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 pyx_file = os.path.join(os.path.dirname(__file__), "_pydevd_bundle", "pydevd_cython.pyx")
 c_file = os.path.join(os.path.dirname(__file__), "_pydevd_bundle", "pydevd_cython.c")
 
-force_cython = False
 if target_pydevd_name != 'pydevd_cython':
     # It MUST be there in this case!
     # (otherwise we'll have unresolved externals because the .c file had another name initially).
     import shutil
-    from Cython.Build import cythonize # @UnusedImport
 
     # We must force cython in this case (but only in this case -- for the regular setup in the user machine, we
     # should always compile the .c file).
@@ -45,6 +48,7 @@ if target_pydevd_name != 'pydevd_cython':
 
 try:
     if force_cython:
+        from Cython.Build import cythonize # @UnusedImport
         ext_modules = cythonize([
             "_pydevd_bundle/%s.pyx" % (target_pydevd_name,),
         ])
