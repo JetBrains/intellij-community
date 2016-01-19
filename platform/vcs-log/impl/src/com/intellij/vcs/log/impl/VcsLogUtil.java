@@ -184,13 +184,20 @@ public class VcsLogUtil {
   // same if root is invisible as a whole
   // so check that before calling this method
   @NotNull
-  public static Set<FilePath> getFilteredFilesForRoot(@NotNull VirtualFile root, VcsLogFilterCollection filterCollection) {
+  public static Set<FilePath> getFilteredFilesForRoot(@NotNull final VirtualFile root, @NotNull VcsLogFilterCollection filterCollection) {
     if (filterCollection.getStructureFilter() == null) return Collections.emptySet();
+    Collection<FilePath> files = filterCollection.getStructureFilter().getFiles();
 
-    Pair<Set<VirtualFile>, MultiMap<VirtualFile, FilePath>> rootsAndFiles =
-      collectRoots(filterCollection.getStructureFilter().getFiles(), Collections.singleton(root));
-
-    return new HashSet<FilePath>(rootsAndFiles.second.get(root));
+    return new HashSet<FilePath>(ContainerUtil.filter(files, new Condition<FilePath>() {
+      @Override
+      public boolean value(FilePath filePath) {
+        VirtualFile virtualFileParent = ChangesUtil.findValidParentAccurately(filePath);
+        if (virtualFileParent != null) {
+          return root.equals(virtualFileParent) || VfsUtilCore.isAncestor(root, virtualFileParent, false);
+        }
+        return false;
+      }
+    }));
   }
 
   // If this method stumbles on LoadingDetails instance it returns empty list
