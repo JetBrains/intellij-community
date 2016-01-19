@@ -52,10 +52,12 @@ import com.intellij.ui.*;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.PowerSupplyKit;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -68,7 +70,7 @@ import java.io.File;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
+public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
 
   private static final String FULL_SCREEN = "FullScreen";
@@ -346,6 +348,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     ((IdeRootPane)getRootPane()).updateToolbar();
     ((IdeRootPane)getRootPane()).updateMainMenuActions();
     ((IdeRootPane)getRootPane()).updateNorthComponents();
+  }
+
+  @Override
+  public AccessibleContext getCurrentAccessibleContext() {
+    return accessibleContext;
   }
 
   private static final class Builder {
