@@ -49,7 +49,7 @@ class AppScheduledExecutorService extends SchedulingWrapper {
       @NotNull
       @Override
       public Thread newThread(@NotNull final Runnable r) {
-        Thread thread = new Thread(r, "ApplicationImpl pooled thread" + " " + counter.incrementAndGet());
+        Thread thread = new Thread(r, "ApplicationImpl pooled thread " + counter.incrementAndGet());
 
         thread.setPriority(Thread.NORM_PRIORITY - 1);
 
