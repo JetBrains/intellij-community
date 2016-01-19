@@ -21,6 +21,10 @@
     <isset property="testpatterns" />
   </condition>
 
+  <condition property="compile.parallel" value="${parallel.build}" else="true">
+    <isset property="parallel.build" />
+  </condition>
+
   <condition property="product.name" value="${product}" else="studio">
     <isset property="product" />
   </condition>
@@ -67,6 +71,7 @@
         <jvmarg value="-Dproduct=${product.name}" />
         <jvmarg value="-DproductPropertiesPath=${productPropertiesPath}" />
         <jvmarg value="-Dstudio.ui.tests=${studio.ui.tests}" />
+        <jvmarg value="-Dcompile.parallel=${compile.parallel}" />
         <sysproperty key="java.awt.headless" value="true"/>
         <arg line="&quot;-Dgant.script=@{script}&quot;"/>
         <arg line="&quot;-Dteamcity.build.tempDir=${tmp.dir}&quot;"/>
