@@ -1267,8 +1267,9 @@ public class InferenceSession {
         }
       }
 
+      final PsiSubstitutor substitutor = resolveSubsetOrdered(varsToResolve, siteSubstitutor);
       for (ConstraintFormula formula : subset) {
-        if (!processOneConstraint(formula, siteSubstitutor, varsToResolve, additionalConstraints)) return false;
+        if (!processOneConstraint(formula, additionalConstraints, substitutor)) return false;
       }
     }
     return true;
@@ -1285,11 +1286,8 @@ public class InferenceSession {
   }
 
   private boolean processOneConstraint(ConstraintFormula formula,
-                                       PsiSubstitutor siteSubstitutor,
-                                       Set<InferenceVariable> varsToResolve,
-                                       Set<ConstraintFormula> additionalConstraints) {
-    //resolve input variables
-    PsiSubstitutor substitutor = resolveSubsetOrdered(varsToResolve, siteSubstitutor);
+                                       Set<ConstraintFormula> additionalConstraints, 
+                                       PsiSubstitutor substitutor) {
 
     if (myContext instanceof PsiCall) {
       PsiExpressionList argumentList = ((PsiCall)myContext).getArgumentList();

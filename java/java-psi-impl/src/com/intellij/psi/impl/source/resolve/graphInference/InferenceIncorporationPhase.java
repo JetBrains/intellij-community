@@ -240,17 +240,17 @@ public class InferenceIncorporationPhase {
       final InferenceVariable inferenceVar = mySession.getInferenceVariable(eqBound);
       if (inferenceVar != null) {
         for (InferenceBound inferenceBound : InferenceBound.values()) {
-          final Set<PsiType> oldVarBounds = inferenceVar.getReadOnlyBoundsSet(inferenceBound);
-          final Set<PsiType> oldVariableBounds = inferenceVariable.getReadOnlyBoundsSet(inferenceBound);
+          final List<PsiType> oldVarBounds = inferenceVar.getReadOnlyBounds(inferenceBound);
+          final List<PsiType> oldVariableBounds = inferenceVariable.getReadOnlyBounds(inferenceBound);
 
           for (PsiType bound : oldVariableBounds) {
-            if (!oldVarBounds.contains(bound) && mySession.getInferenceVariable(bound) != inferenceVar) {
+            if (mySession.getInferenceVariable(bound) != inferenceVar) {
               needFurtherIncorporation |= inferenceVar.addBound(bound, inferenceBound, this);
             }
           }
           
           for (PsiType bound : oldVarBounds) {
-            if (!oldVariableBounds.contains(bound) && mySession.getInferenceVariable(bound) != inferenceVariable) {
+            if (mySession.getInferenceVariable(bound) != inferenceVariable) {
               needFurtherIncorporation |= inferenceVariable.addBound(bound, inferenceBound, this);
             }
           }
