@@ -231,7 +231,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
             return ObjectUtils.chooseNotNull(psi.getText(), defaultPresentation);
           }
         }, "\n");
-        
+
         String htmlText = "<body>\n" + text + "\n</body>";
         return new TextTransferable(XmlStringUtil.wrapInHtml(htmlText), text);
       }
@@ -354,7 +354,9 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       myPopup.showCenteredInCurrentWindow(myProject);
     }
 
-    ((AbstractPopup)myPopup).setShowHints(true);
+    if(myPopup instanceof AbstractPopup) {
+      ((AbstractPopup)myPopup).setShowHints(true);
+    }
     if (shouldSetWidth) {
       myPopup.setSize(new Dimension(myPreferredWidth + 10, myPopup.getSize().height));
     }
@@ -370,6 +372,10 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         myPopup.cancel();
       }
     });
+    rebuildTree();
+  }
+
+  protected void rebuildTree() {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
@@ -409,7 +415,9 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   }
 
   private void installUpdater() {
-    if (ApplicationManager.getApplication().isUnitTestMode() || myPopup.isDisposed()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()
+        || ApplicationManager.getApplication().isOnAir()
+        || myPopup.isDisposed()) {
       return;
     }
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myPopup);

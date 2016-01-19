@@ -21,6 +21,7 @@ import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.FileStructurePopup;
+import com.intellij.ide.util.FileStructurePopupFactory;
 import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -88,7 +89,7 @@ public class ViewStructureAction extends DumbAwareAction {
   private static FileStructurePopup createStructureViewPopup(Project project,
                                                              FileEditor fileEditor,
                                                              StructureView structureView) {
-    return new FileStructurePopup(project, fileEditor, structureView, true);
+    return FileStructurePopupFactory.SERVICE.getInstance().createFileStructurePopup(project, fileEditor, structureView, true);
   }
 
   @Override
