@@ -632,7 +632,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   }
 
   private void createComponent() {
-    myComp = new MyComponent(myContent, this, myShadowBorderProvider == null ? null :
+    myComp = new MyComponent(myContent, this, myShadowBorderProvider != null ? null :
                                               myShowPointer ? myPosition.createBorder(this) : getPointlessBorder());
 
     if (myActionProvider == null) {
