@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -88,6 +87,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private boolean myFullScreen;
 
   public IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager, Application application, final IdeFrame frame) {
+    if (SystemInfo.isWindows && frame instanceof IdeFrameImpl) {
+      setWindowDecorationStyle(FRAME);
+    }
     myActionManager = actionManager;
     myUISettings = uiSettings;
 

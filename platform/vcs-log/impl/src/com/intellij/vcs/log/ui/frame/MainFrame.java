@@ -346,7 +346,8 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
             if (myLastRequest == indicator && !(indicator.isCanceled())) {
               myLastRequest = null;
               List<Change> changes = ContainerUtil.newArrayList();
-              for (VcsFullCommitDetails details : detailsList) {
+              List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
+              for (VcsFullCommitDetails details : detailsListReversed) {
                 changes.addAll(details.getChanges());
               }
               changes = CommittedChangesTreeBrowser.zipChanges(changes);

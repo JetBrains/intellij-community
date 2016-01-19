@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,5 +238,11 @@ public class EditorImplTest extends AbstractEditorTest {
     configureSoftWraps(1000); // to make sure soft wrap character width is properly mocked
     ((EditorEx)myEditor).setPrefixTextAndAttributes(">", new TextAttributes());
     assertEquals(new VisualPosition(0, 0), myEditor.xyToVisualPosition(new Point(1, 0)));
+  }
+  
+  public void testLogicalPositionCacheInvalidationAfterLineDeletion() throws Exception {
+    initText("<caret>\n\t");
+    delete();
+    assertEquals(new LogicalPosition(0, 4), myEditor.offsetToLogicalPosition(1));
   }
 }

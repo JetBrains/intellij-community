@@ -20,6 +20,7 @@ import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -34,12 +35,14 @@ public class InferenceVariable extends LightTypeParameter {
   }
 
   private boolean myThrownBound = false;
-  private final Map<InferenceBound, List<PsiType>> myBounds = new HashMap<InferenceBound, List<PsiType>>();
+  private final Map<InferenceBound, Set<PsiType>> myBounds = new HashMap<InferenceBound, Set<PsiType>>();
+  private final String myName;
 
   private PsiType myInstantiation = PsiType.NULL;
 
-  InferenceVariable(PsiElement context, PsiTypeParameter parameter) {
+  InferenceVariable(PsiElement context, PsiTypeParameter parameter, String name) {
     super(parameter);
+    myName = name;
     myContext = context;
   }
 
@@ -63,37 +66,43 @@ public class InferenceVariable extends LightTypeParameter {
     return result.toArray(new PsiClassType[result.size()]);
   }
 
-  public boolean addBound(PsiType classType, InferenceBound inferenceBound) {
+  public boolean addBound(PsiType classType, InferenceBound inferenceBound, @Nullable InferenceIncorporationPhase incorporationPhase) {
     if (inferenceBound == InferenceBound.EQ &&
         PsiUtil.resolveClassInClassTypeOnly(classType) == this) {
       return false;
     }
-    List<PsiType> list = myBounds.get(inferenceBound);
-    if (list == null) {
-      list = new ArrayList<PsiType>();
-      myBounds.put(inferenceBound, list);
+    Set<PsiType> bounds = myBounds.get(inferenceBound);
+    if (bounds == null) {
+      bounds = new LinkedHashSet<PsiType>();
+      myBounds.put(inferenceBound, bounds);
     }
 
     if (classType == null) {
       classType = PsiType.NULL;
     }
 
-    final int idx = list.indexOf(classType);
-    if (idx < 0) {
-      list.add(classType);
+    if (bounds.add(classType)) {
+      if (incorporationPhase != null) {
+        incorporationPhase.addBound(this, classType, inferenceBound);
+      }
       return true;
     }
     return false;
   }
 
   public List<PsiType> getBounds(InferenceBound inferenceBound) {
-    final List<PsiType> bounds = myBounds.get(inferenceBound);
+    final Set<PsiType> bounds = myBounds.get(inferenceBound);
     return bounds != null ? new ArrayList<PsiType>(bounds) : Collections.<PsiType>emptyList();
+  }
+
+  public Set<PsiType> getReadOnlyBoundsSet(InferenceBound inferenceBound) {
+    final Set<PsiType> bounds = myBounds.get(inferenceBound);
+    return bounds != null ? bounds : Collections.<PsiType>emptySet();
   }
 
   public Set<InferenceVariable> getDependencies(InferenceSession session) {
     final Set<InferenceVariable> dependencies = new LinkedHashSet<InferenceVariable>();
-    for (List<PsiType> boundTypes : myBounds.values()) {
+    for (Set<PsiType> boundTypes : myBounds.values()) {
       if (boundTypes != null) {
         for (PsiType bound : boundTypes) {
           session.collectDependencies(bound, dependencies);
@@ -172,6 +181,12 @@ public class InferenceVariable extends LightTypeParameter {
   @Override
   public PsiTypeParameterListOwner getOwner() {
     return null;
+  }
+
+  @Nullable
+  @Override
+  public String getName() {
+    return myName;
   }
 
   public PsiElement getCallContext() {

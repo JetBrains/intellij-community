@@ -1667,7 +1667,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void flushIncrementedValue(@Nullable PsiExpression operand) {
-    if (operand instanceof PsiReferenceExpression) {
+    if (operand instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting(operand)) {
       PsiVariable psiVariable = DfaValueFactory.resolveUnqualifiedVariable((PsiReferenceExpression)operand);
       if (psiVariable != null) {
         DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(psiVariable, false);
