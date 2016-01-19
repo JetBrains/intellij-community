@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,8 +52,7 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.block.statement.problem.descriptor");
+    return InspectionGadgetsBundle.message("unnecessary.block.statement.problem.descriptor");
   }
 
   @Override
@@ -140,10 +139,6 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
         return;
       }
       registerError(brace);
-      final PsiJavaToken rbrace = codeBlock.getRBrace();
-      if (rbrace != null) {
-        registerError(rbrace);
-      }
     }
   }
 }
