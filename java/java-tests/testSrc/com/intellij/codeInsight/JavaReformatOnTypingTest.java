@@ -94,7 +94,7 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
   
   public void test_IgnoreIfInsideStringLiteral() {
     doTest("class X { String s = \"xxxxx<caret>\"; }", "=x", 
-           "class X { String s = \"xxxxx=<caret>\"; }");
+           "class X { String s = \"xxxxx=x<caret>\"; }");
   }
   
   public void test_DistinguishAssignmentAndEquality() {

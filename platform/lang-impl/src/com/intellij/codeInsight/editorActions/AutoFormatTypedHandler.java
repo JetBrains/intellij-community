@@ -69,18 +69,9 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
       executeOriginalHandler(editor, charTyped, dataContext);
       return;
     }
-
-    Document document = editor.getDocument();
-    int caretOffset = editor.getCaretModel().getOffset();
-    CharSequence text = document.getImmutableCharSequence();
-
-    if (isSpaceAroundAssignment(editor, dataContext) && !isInsideStringLiteral(editor)) {
-      if (charTyped == '=' && shouldInsertBefore(caretOffset, text)) {
-        EditorModificationUtil.insertStringAtCaret(editor, " ");
-      }
-      else if (isSameDocumentAsPrevious(editor) && myLastTypedChar == '=' && charTyped != '=' && charTyped != ' ') {
-        EditorModificationUtil.insertStringAtCaret(editor, " ");
-      }
+    
+    if (isInsertSpaceAtCaret(editor, charTyped, dataContext)) {
+      EditorModificationUtil.insertStringAtCaret(editor, " ");
     }
     
     executeOriginalHandler(editor, charTyped, dataContext);
@@ -88,6 +79,25 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     myLastTypedChar = charTyped;
     myLastTypedOffset = editor.getCaretModel().getOffset();
     myLastEditedDocument = editor.getDocument();
+  }
+
+  private boolean isInsertSpaceAtCaret(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
+    if (!isSpaceAroundAssignment(editor, dataContext)) {
+      return false;
+    }
+    
+    int caretOffset = editor.getCaretModel().getOffset();
+    CharSequence text = editor.getDocument().getImmutableCharSequence();
+
+    boolean insertBeforeEq = charTyped == '=' && isInsertSpaceBeforeEq(caretOffset, text);
+    boolean insertAfterEq = myLastTypedChar == '=' && isInsertSpaceBeforeNewChar(charTyped) 
+                            && isSameDocumentAsPrevious(editor);
+    
+    return (insertBeforeEq || insertAfterEq) && !isInsideStringLiteral(editor);
+  }
+
+  private static boolean isInsertSpaceBeforeNewChar(char charTyped) {
+    return charTyped != '=' && charTyped != ' ';
   }
 
   private static boolean isInsideStringLiteral(Editor editor) {
@@ -113,7 +123,7 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     return editor.getDocument() == myLastEditedDocument && editor.getCaretModel().getOffset() == myLastTypedOffset;
   }
 
-  private static boolean shouldInsertBefore(int caretOffset, CharSequence text) {
+  private static boolean isInsertSpaceBeforeEq(int caretOffset, CharSequence text) {
     if (caretOffset == 0) return false;
     char charBefore = text.charAt(caretOffset - 1);
 
