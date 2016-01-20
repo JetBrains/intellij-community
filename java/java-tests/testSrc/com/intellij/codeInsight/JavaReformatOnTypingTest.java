@@ -31,6 +31,7 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
   public void setUp() throws Exception {
     super.setUp();
     AutoFormatTypedHandler.setEnabledInTests(true);
+    useSpacesAroundAssignmentOperator(true, myFixture.getProject(), JavaLanguage.INSTANCE);
   }
 
   @Override
@@ -41,9 +42,19 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
   }
 
   private static void useSpacesAroundAssignmentOperator(boolean value, Project project, Language language) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     CommonCodeStyleSettings common = settings.getCommonSettings(language);
     common.SPACE_AROUND_ASSIGNMENT_OPERATORS = value;
+  }
+  
+  public void test_DoNotInsertSpaceIfSettingDisabled() {
+    useSpacesAroundAssignmentOperator(false, myFixture.getProject(), JavaLanguage.INSTANCE);
+    doTest("class T { int<caret> }", "=", "class T { int=<caret> }");
+  }
+  
+  public void test_DoNotInsertAfterIfSettingDisabled() {
+    useSpacesAroundAssignmentOperator(false, myFixture.getProject(), JavaLanguage.INSTANCE);
+    doTest("class T { int a=<caret> }", "2", "class T { int a=2 }");
   }
 
   public void test_AddSpacesAroundAssignmentOperator() throws Exception {
@@ -51,11 +62,7 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
   }
   
   public void test_IgnoreSpacePressedAfterAssignmentOperator() {
-    useSpacesAroundAssignmentOperator(true, myFixture.getProject(), JavaLanguage.INSTANCE);
-    myFixture.configureByText(JavaFileType.INSTANCE, "class T { int<caret> }");
-    myFixture.type('=');
-    myFixture.type(' ');
-    myFixture.checkResult("class T { int = <caret> }");
+    doTest("class T { int<caret> }", "= ", "class T { int = <caret> }");
   }
   
   public void test_DoNotInsertDoubleSpaceBeforeAssignment() {
@@ -63,11 +70,7 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
   }
   
   public void test_DoNotInsertDoubleSpaceAnywhere() {
-    useSpacesAroundAssignmentOperator(true, myFixture.getProject(), JavaLanguage.INSTANCE);
-    myFixture.configureByText(JavaFileType.INSTANCE, "class T { int <caret> }");
-    myFixture.type('=');
-    myFixture.type(' ');
-    myFixture.checkResult("class T { int = <caret> }");
+    doTest("class T { int <caret> }", "= ", "class T { int = <caret> }");
   }
   
   public void test_DoNotInsertSpaceIfNotAssignment() {
@@ -89,7 +92,6 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
   }
 
   private void doTest(String before, String typing, String after) {
-    useSpacesAroundAssignmentOperator(true, myFixture.getProject(), JavaLanguage.INSTANCE);
     myFixture.configureByText(JavaFileType.INSTANCE, before);
     myFixture.type(typing);
     myFixture.checkResult(after);

@@ -70,12 +70,14 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     Document document = editor.getDocument();
     int caretOffset = editor.getCaretModel().getOffset();
     CharSequence text = document.getImmutableCharSequence();
-    
-    if (charTyped == '=' && isSpaceAroundAssignment(editor, dataContext) && shouldInsertBefore(caretOffset, text)) {
-      EditorModificationUtil.insertStringAtCaret(editor, " ");
-    }
-    if (isSameDocumentAsPrevious(editor) && myLastTypedChar == '=' && charTyped != '=' && charTyped != ' ') {
-      EditorModificationUtil.insertStringAtCaret(editor, " ");
+
+    if (isSpaceAroundAssignment(editor, dataContext)) {
+      if (charTyped == '=' && shouldInsertBefore(caretOffset, text)) {
+        EditorModificationUtil.insertStringAtCaret(editor, " ");
+      }
+      else if (isSameDocumentAsPrevious(editor) && myLastTypedChar == '=' && charTyped != '=' && charTyped != ' ') {
+        EditorModificationUtil.insertStringAtCaret(editor, " ");
+      }
     }
     
     executeOriginalHandler(editor, charTyped, dataContext);
