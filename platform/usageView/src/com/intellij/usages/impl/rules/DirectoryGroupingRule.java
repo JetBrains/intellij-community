@@ -34,7 +34,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageInFile;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,18 +83,23 @@ public class DirectoryGroupingRule implements UsageGroupingRule, DumbAware {
 
   private class DirectoryGroup implements UsageGroup, TypeSafeDataProvider {
     private final VirtualFile myDir;
+    private Icon myIcon;
+
+    private DirectoryGroup(@NotNull VirtualFile dir) {
+      myDir = dir; 
+      update();
+    }
 
     @Override
     public void update() {
-    }
-
-    private DirectoryGroup(@NotNull VirtualFile dir) {
-      myDir = dir;
+      if (isValid()) {
+       myIcon = IconUtil.getIcon(myDir, 0, myProject);
+      }
     }
 
     @Override
     public Icon getIcon(boolean isOpen) {
-      return PlatformIcons.DIRECTORY_CLOSED_ICON;
+      return myIcon;
     }
 
     @Override

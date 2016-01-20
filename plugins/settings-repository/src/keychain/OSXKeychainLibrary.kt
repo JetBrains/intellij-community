@@ -54,7 +54,7 @@ public interface OSXKeychainLibrary : com.sun.jna.Library {
       val accountNameBytes = accountName.toByteArray()
       val passwordSize = IntArray(1);
       val passwordData = arrayOf<Pointer?>(null);
-      checkForError("find", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size(), serviceName, accountNameBytes.size(), accountNameBytes, passwordSize, passwordData))
+      checkForError("find", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, passwordSize, passwordData))
       val pointer = passwordData[0] ?: return null
 
       val result = String(pointer.getByteArray(0, passwordSize[0]))
@@ -65,10 +65,10 @@ public interface OSXKeychainLibrary : com.sun.jna.Library {
     private fun saveGenericPassword(serviceName: ByteArray, accountName: String, password: ByteArray, passwordSize: Int) {
       val accountNameBytes = accountName.toByteArray()
       val itemRef = arrayOf<Pointer?>(null)
-      checkForError("find (for save)", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size(), serviceName, accountNameBytes.size(), accountNameBytes, null, null, itemRef))
+      checkForError("find (for save)", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, null, null, itemRef))
       val pointer = itemRef[0]
       if (pointer == null) {
-        checkForError("save (new)", LIBRARY.SecKeychainAddGenericPassword(null, serviceName.size(), serviceName, accountNameBytes.size(), accountNameBytes, passwordSize, password))
+        checkForError("save (new)", LIBRARY.SecKeychainAddGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, passwordSize, password))
       }
       else {
         checkForError("save (update)", LIBRARY.SecKeychainItemModifyContent(pointer, null, passwordSize, password))
@@ -79,7 +79,7 @@ public interface OSXKeychainLibrary : com.sun.jna.Library {
     fun deleteGenericPassword(serviceName: ByteArray, accountName: String) {
       val itemRef = arrayOf<Pointer?>(null)
       val accountNameBytes = accountName.toByteArray()
-      checkForError("find (for delete)", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size(), serviceName, accountNameBytes.size(), accountNameBytes, null, null, itemRef))
+      checkForError("find (for delete)", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, null, null, itemRef))
       val pointer = itemRef[0]
       if (pointer != null) {
         checkForError("delete", LIBRARY.SecKeychainItemDelete(pointer))
@@ -96,7 +96,7 @@ public interface OSXKeychainLibrary : com.sun.jna.Library {
         }
         else {
           val buf = CharArray(LIBRARY.CFStringGetLength(translated).toInt())
-          for (i in 0..buf.size() - 1) {
+          for (i in 0..buf.size - 1) {
             buf[i] = LIBRARY.CFStringGetCharacterAtIndex(translated, i.toLong())
           }
           LIBRARY.CFRelease(translated)

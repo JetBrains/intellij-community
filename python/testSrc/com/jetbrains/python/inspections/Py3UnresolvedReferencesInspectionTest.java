@@ -121,4 +121,20 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   public void testClassLevelReferenceInMethodAnnotation() {
     doTest();
   }
+
+  // PY-17841
+  public void testTypingParameterizedTypeIndexing() {
+    myFixture.copyDirectoryToProject("typing", "");
+    doTest();
+  }
+
+  // PY-17841
+  public void testMostDerivedMetaClass() {
+    doTest();
+  }
+
+  // PY-17841
+  public void testNoMostDerivedMetaClass() {
+    doTest();
+  }
 }

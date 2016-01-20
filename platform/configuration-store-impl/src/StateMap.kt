@@ -42,12 +42,12 @@ class StateMap private constructor(private val names: Array<String>, private val
         return EMPTY
       }
 
-      val names = map.keySet().toTypedArray()
+      val names = map.keys.toTypedArray()
       if (map !is TreeMap) {
         Arrays.sort(names)
       }
 
-      val states = AtomicReferenceArray<Any?>(names.size())
+      val states = AtomicReferenceArray<Any?>(names.size)
       for (i in names.indices) {
         states.set(i, map.get(names[i]))
       }
@@ -97,7 +97,7 @@ class StateMap private constructor(private val names: Array<String>, private val
   }
 
   public fun toMutableMap(): MutableMap<String, Any> {
-    val map = THashMap<String, Any>(names.size())
+    val map = THashMap<String, Any>(names.size)
     for (i in names.indices) {
       map.put(names[i], states.get(i))
     }
@@ -116,7 +116,7 @@ class StateMap private constructor(private val names: Array<String>, private val
 
   fun getElement(key: String, newLiveStates: Map<String, Element>? = null) = stateToElement(key, get(key), newLiveStates)
 
-  fun isEmpty() = names.isEmpty()
+  fun isEmpty(): Boolean = names.isEmpty()
 
   fun hasState(key: String) = get(key) is Element
 

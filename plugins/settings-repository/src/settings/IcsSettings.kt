@@ -61,7 +61,7 @@ class MyPrettyPrinter : DefaultPrettyPrinter() {
 
 fun saveSettings(settings: IcsSettings, settingsFile: File) {
   val serialized = ObjectMapper().writer<ObjectWriter>(MyPrettyPrinter()).writeValueAsBytes(settings)
-  if (serialized.size() <= 2) {
+  if (serialized.size <= 2) {
     FileUtil.delete(settingsFile)
   }
   else {
@@ -94,8 +94,8 @@ class IcsSettings {
 @JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
 @JsonIgnoreProperties(ignoreUnknown = true)
 class ReadonlySource(var url: String? = null, var active: Boolean = true) {
-  @JsonIgnore
   val path: String?
+    @JsonIgnore
     get() {
       if (url == null) {
         return null

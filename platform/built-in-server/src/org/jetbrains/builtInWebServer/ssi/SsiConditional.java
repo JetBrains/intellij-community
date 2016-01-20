@@ -31,7 +31,7 @@ import java.util.List;
 public class SsiConditional implements SsiCommand {
   @SuppressWarnings("SpellCheckingInspection")
   @Override
-  public long process(@NotNull SsiProcessingState ssiProcessingState, @NotNull String commandName, @NotNull List<? extends String> paramNames, @NotNull String[] paramValues, @NotNull ByteBufUtf8Writer writer) {
+  public long process(@NotNull SsiProcessingState ssiProcessingState, @NotNull String commandName, @NotNull List<String> paramNames, @NotNull String[] paramValues, @NotNull ByteBufUtf8Writer writer) {
     // Assume anything using conditionals was modified by it
     long lastModified = System.currentTimeMillis();
     // Retrieve the current state information

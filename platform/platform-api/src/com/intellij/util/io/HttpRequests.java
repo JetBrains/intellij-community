@@ -32,10 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.net.URLConnection;
+import java.net.*;
 import java.nio.charset.Charset;
 import java.util.zip.GZIPInputStream;
 
@@ -248,7 +245,10 @@ public final class HttpRequests {
       }
 
       URLConnection connection;
-      if (ApplicationManager.getApplication() == null) {
+      if (!builder.myUseProxy) {
+        connection = new URL(url).openConnection(Proxy.NO_PROXY);
+      }
+      else if (ApplicationManager.getApplication() == null) {
         connection = new URL(url).openConnection();
       }
       else {

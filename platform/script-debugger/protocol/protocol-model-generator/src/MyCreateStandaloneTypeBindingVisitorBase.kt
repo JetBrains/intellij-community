@@ -1,6 +1,7 @@
 package org.jetbrains.protocolModelGenerator
 
 import org.jetbrains.jsonProtocol.ProtocolMetaModel
+import org.jetbrains.protocolReader.appendEnums
 
 internal class MyCreateStandaloneTypeBindingVisitorBase(private val generator: DomainGenerator, type: ProtocolMetaModel.StandaloneType, private val name: String) : CreateStandaloneTypeBindingVisitorBase(generator, type) {
   override fun visitObject(properties: List<ProtocolMetaModel.ObjectProperty>?): StandaloneTypeBinding {
@@ -13,7 +14,15 @@ internal class MyCreateStandaloneTypeBindingVisitorBase(private val generator: D
     }
   }
 
-  override fun visitEnum(enumConstants: List<String>) = throw RuntimeException()
+  override fun visitEnum(enumConstants: List<String>): StandaloneTypeBinding {
+    return object : StandaloneTypeBinding {
+      override fun getJavaType(): BoxableType = StandaloneType(generator.generator.naming.additionalParam.getFullName(generator.domain.domain(), name), "writeEnum")
+
+      override fun generate() = appendEnums(enumConstants, name, false, generator.fileUpdater.out.newLine().newLine())
+
+      override fun getDirection() = TypeData.Direction.OUTPUT
+    }
+  }
 
   override fun visitArray(items: ProtocolMetaModel.ArrayItemType) = generator.createTypedefTypeBinding(type, object : Target {
     override fun resolve(context: Target.ResolveContext): BoxableType {

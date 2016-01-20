@@ -46,7 +46,9 @@ open class OutMessage() {
     beginArguments()
   }
 
-  fun writeMap(name: String, value: Map<String, String>) {
+  fun writeMap(name: String, value: Map<String, String>? = null) {
+    if (value == null) return
+
     beginArguments()
     writer.name(name)
     writer.beginObject()

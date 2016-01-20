@@ -15,7 +15,12 @@ internal class TypeMap {
   private val typesToGenerate = ArrayList<StandaloneTypeBinding>()
 
   fun resolve(domainName: String, typeName: String, direction: TypeData.Direction): BoxableType? {
-    val domainGenerator = domainGeneratorMap!!.get(domainName) ?: throw RuntimeException("Failed to find domain generator: $domainName")
+    val domainGenerator = domainGeneratorMap!!.get(domainName)
+    if (domainGenerator == null) {
+      val qName = "$domainName.$typeName";
+      if (qName == "IO.StreamHandle" || qName == "Security.SecurityState") return BoxableType.ANY_STRING // ignore
+      throw RuntimeException("Failed to find domain generator: $domainName for type $typeName")
+    }
     return direction.get(getTypeData(domainName, typeName)).resolve(this, domainGenerator)
   }
 

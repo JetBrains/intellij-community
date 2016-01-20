@@ -28,13 +28,13 @@ class RejectedPromise<T> extends Promise<T> {
 
   @NotNull
   @Override
-  public Promise<T> done(@NotNull Consumer<T> done) {
+  public Promise<T> done(@NotNull Consumer<? super T> done) {
     return this;
   }
 
   @NotNull
   @Override
-  public Promise<T> processed(@NotNull AsyncPromise<T> fulfilled) {
+  public Promise<T> processed(@NotNull AsyncPromise<? super T> fulfilled) {
     fulfilled.setError(error);
     return this;
   }
@@ -49,21 +49,21 @@ class RejectedPromise<T> extends Promise<T> {
   }
 
   @Override
-  public RejectedPromise<T> processed(@NotNull Consumer<T> processed) {
+  public RejectedPromise<T> processed(@NotNull Consumer<? super T> processed) {
     processed.consume(null);
     return this;
   }
 
   @NotNull
   @Override
-  public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<T, SUB_RESULT> done) {
+  public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<? super T, ? extends SUB_RESULT> done) {
     //noinspection unchecked
     return (Promise<SUB_RESULT>)this;
   }
 
   @NotNull
   @Override
-  public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull AsyncFunction<T, SUB_RESULT> done) {
+  public <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull AsyncFunction<? super T, SUB_RESULT> done) {
     //noinspection unchecked
     return (Promise<SUB_RESULT>)this;
   }
@@ -75,7 +75,7 @@ class RejectedPromise<T> extends Promise<T> {
   }
 
   @Override
-  public void notify(@NotNull AsyncPromise<T> child) {
+  public void notify(@NotNull AsyncPromise<? super T> child) {
     child.setError(error);
   }
 }

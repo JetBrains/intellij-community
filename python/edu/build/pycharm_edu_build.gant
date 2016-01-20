@@ -116,6 +116,10 @@ target('default': "Build artifacts") {
   }
 
   bundledJDKs()
+  //EDU installation with a custom page dialog
+  ant.copy(file: "$ch/python/edu/build/desktop.ini", tofile: "$ch/build/conf/nsis/desktop.ini", overwrite: "true")
+  ant.copy(file: "$ch/python/edu/build/idea.nsi",    tofile: "$ch/build/conf/nsis/idea.nsi", overwrite: "true")
+
   ant.patternset(id: "resources.included") {
     include(name: "**/*.properties")
     include(name: "fileTemplates/**/*")
@@ -440,7 +444,7 @@ private layoutMac(Map _args, String target) {
   }
 
   Map args = new HashMap(_args)
-  args.icns = "$pythonCommunityHome/resources/PyCharmEdu.icns"
+  args.icns = "$pythonCommunityHome/edu/resources/PyCharmEdu.icns"
   args.bundleIdentifier = "com.jetbrains.pycharm"
   args.platform_prefix = "PyCharmEdu"
   args.help_id = "PE"

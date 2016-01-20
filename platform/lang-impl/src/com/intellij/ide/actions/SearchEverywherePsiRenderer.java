@@ -52,6 +52,21 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
   public SearchEverywherePsiRenderer(JList list) {
     myList = list;
     setFocusBorderEnabled(false);
+    setLayout(new BorderLayout() {
+      @Override
+      public void layoutContainer(Container target) {
+        super.layoutContainer(target);
+        final Component right = getLayoutComponent(EAST);
+        final Component left = getLayoutComponent(WEST);
+
+        //IDEA-140824
+        if (right != null && left != null && left.getBounds().x + left.getBounds().width > right.getBounds().x) {
+          final Rectangle bounds = right.getBounds();
+          final int newX = left.getBounds().x + left.getBounds().width;
+          right.setBounds(newX, bounds.y, bounds.width - (newX - bounds.x), bounds.height);
+        }
+      }
+    });
   }
 
   @Override

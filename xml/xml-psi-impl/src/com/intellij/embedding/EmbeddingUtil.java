@@ -30,7 +30,7 @@ public class EmbeddingUtil {
 
     int answer = 0;
 
-    while (--offset > 0) {
+    while (--offset >= 0) {
       final char c = text.charAt(offset);
       if (c == '\n') {
         break;

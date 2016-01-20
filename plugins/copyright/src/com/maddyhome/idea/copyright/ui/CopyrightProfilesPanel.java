@@ -23,6 +23,8 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -206,7 +208,8 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
           .withFileFilter(new Condition<VirtualFile>() {
             @Override
             public boolean value(VirtualFile file) {
-              return file.getFileType() == StdFileTypes.IDEA_MODULE || file.getFileType() == StdFileTypes.XML;
+              final FileType fileType = file.getFileType();
+              return fileType != PlainTextFileType.INSTANCE && (fileType == StdFileTypes.IDEA_MODULE || fileType == StdFileTypes.XML);
             }
           })
           .withTitle("Choose file containing copyright notice");

@@ -251,8 +251,15 @@ public class GroovyPositionManager implements PositionManager {
     String qName = getOriginalQualifiedName(refType, runtimeName);
 
     GlobalSearchScope searchScope = addModuleContent(myDebugProcess.getSearchScope());
+    GroovyShortNamesCache cache = GroovyShortNamesCache.getGroovyShortNamesCache(project);
     try {
-      final List<PsiClass> classes = GroovyShortNamesCache.getGroovyShortNamesCache(project).getClassesByFQName(qName, searchScope);
+      List<PsiClass> classes = cache.getClassesByFQName(qName, searchScope, true);
+      if (classes.isEmpty()) {
+        classes = cache.getClassesByFQName(qName, searchScope, false);
+      }
+      if (classes.isEmpty()) {
+        classes = cache.getClassesByFQName(qName, GlobalSearchScope.projectScope(project), false);
+      }
       PsiClass clazz = classes.size() == 1 ? classes.get(0) : null;
       if (clazz != null) return clazz.getContainingFile();
     }

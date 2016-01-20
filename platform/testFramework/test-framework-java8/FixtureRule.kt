@@ -48,15 +48,24 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 private var sharedModule: Module? = null
 
-/**
- * Project created on request, so, could be used as a bare (only application).
- */
-class ProjectRule() : ExternalResource() {
+open class ApplicationRule : ExternalResource() {
   companion object {
     init {
       Logger.setFactory(TestLoggerFactory::class.java)
     }
+  }
 
+  override public final fun before() {
+    IdeaTestApplication.getInstance()
+    TestRunnerUtil.replaceIdeEventQueueSafely()
+  }
+}
+
+/**
+ * Project created on request, so, could be used as a bare (only application).
+ */
+class ProjectRule() : ApplicationRule() {
+  companion object {
     private var sharedProject: ProjectEx? = null
     private val projectOpened = AtomicBoolean()
 
@@ -91,12 +100,7 @@ class ProjectRule() : ExternalResource() {
     }
   }
 
-  override final fun before() {
-    IdeaTestApplication.getInstance()
-    TestRunnerUtil.replaceIdeEventQueueSafely()
-  }
-
-  override fun after() {
+  override public fun after() {
     if (projectOpened.compareAndSet(true, false)) {
       sharedProject?.let { runInEdtAndWait { (ProjectManager.getInstance() as ProjectManagerImpl).closeProject(it, false, false, false) } }
     }
@@ -149,23 +153,22 @@ fun runInEdtAndWait(runnable: () -> Unit) {
   EdtTestUtil.runInEdtAndWait(runnable)
 }
 
+/**
+ * rules: outer, middle, inner
+ * out:
+ * starting outer rule
+ * starting middle rule
+ * starting inner rule
+ * finished inner rule
+ * finished middle rule
+ * finished outer rule
+ */
 class RuleChain(vararg val rules: TestRule) : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
     var statement = base
-    var errors: MutableList<Throwable>? = null
-    for (i in (rules.size() - 1) downTo 0) {
-      try {
-        statement = rules[i].apply(statement, description)
-      }
-      catch (e: Throwable) {
-        if (errors == null) {
-          errors = SmartList<Throwable>()
-        }
-        errors.add(e)
-      }
+    for (i in (rules.size - 1) downTo 0) {
+      statement = rules[i].apply(statement, description)
     }
-
-    CompoundRuntimeException.throwIfNotEmpty(errors)
     return statement
   }
 }
@@ -228,6 +231,19 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   finally {
     if (isModeDisabled) {
       store.isOptimiseTestLoadSpeed = true
+    }
+  }
+}
+
+class DisposeNonLightProjectsRule() : ExternalResource() {
+  override fun after() {
+    val projectManager = ProjectManager.getInstance() as ProjectManagerImpl
+    for (project in projectManager.openProjects) {
+      if (!ProjectManagerImpl.isLight(project)) {
+        runInEdtAndWait {
+          projectManager.closeProject(project, false, true, false)
+        }
+      }
     }
   }
 }

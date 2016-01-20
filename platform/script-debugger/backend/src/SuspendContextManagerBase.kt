@@ -44,7 +44,7 @@ abstract class SuspendContextManagerBase<T : SuspendContextBase<*, *, CALL_FRAME
 
   protected fun dismissContextOnDone(promise: Promise<*>): Promise<*> {
     val context = contextOrFail
-    promise.done { contextDismissed(context) }
+    (promise as Promise<Any?>).done { contextDismissed(context) }
     return promise
   }
 
@@ -72,7 +72,7 @@ abstract class SuspendContextManagerBase<T : SuspendContextBase<*, *, CALL_FRAME
 
   protected abstract fun doSuspend(): Promise<*>
 
-  override fun isContextObsolete(context: SuspendContext<CALL_FRAME>) = this.context !== context
+  override fun isContextObsolete(context: SuspendContext<*>) = this.context !== context
 
   override fun setOverlayMessage(message: String?) {
   }

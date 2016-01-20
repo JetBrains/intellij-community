@@ -53,7 +53,7 @@ miglayout-swing.jar
 minlog-1.2.jar
 nanoxml-2.2.3.jar
 nekohtml-1.9.14.jar
-netty-all-4.1.0.Beta7.jar
+netty-all-4.1.0.Beta8.jar
 objenesis-1.2.jar
 oromatcher.jar
 picocontainer.jar

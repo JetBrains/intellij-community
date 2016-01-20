@@ -467,8 +467,10 @@
         <separator/>
         <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
         <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
-        <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
         <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction"/>
+        <action id="EditCustomProperties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
+        <action id="EditCustomVmOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>
+        <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
         <separator/>
         <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
         <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction" icon="AllIcons.General.DefaultKeymap"/>

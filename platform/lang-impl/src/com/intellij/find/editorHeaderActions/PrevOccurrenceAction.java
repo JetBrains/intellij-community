@@ -30,7 +30,11 @@ import java.util.List;
 
 public final class PrevOccurrenceAction extends PrevNextOccurrenceAction {
   public PrevOccurrenceAction() {
-    super(IdeActions.ACTION_PREVIOUS_OCCURENCE);
+    this(true);
+  }
+
+  public PrevOccurrenceAction(boolean search) {
+    super(IdeActions.ACTION_PREVIOUS_OCCURENCE, search);
   }
 
   @Override
@@ -47,7 +51,11 @@ public final class PrevOccurrenceAction extends PrevNextOccurrenceAction {
   @NotNull
   @Override
   protected List<Shortcut> getSingleLineShortcuts() {
-    return ContainerUtil.append(Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_UP),
-                                new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), null));
+    if (mySearch) {
+      return ContainerUtil.append(Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_UP),
+                                  new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), null));
+    } else {
+      return Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
+    }
   }
 }

@@ -24,10 +24,7 @@ import com.intellij.util.io.socketConnection.ConnectionStatus
 import com.intellij.xdebugger.DefaultDebugProcessHandler
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.breakpoints.XBreakpoint
-import com.intellij.xdebugger.breakpoints.XBreakpointHandler
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import com.intellij.xdebugger.breakpoints.*
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
@@ -39,8 +36,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
                                                      val connection: C,
                                                      private val editorsProvider: XDebuggerEditorsProvider,
-                                                     private val smartStepIntoHandler: XSmartStepIntoHandler<*>?,
-                                                     protected val executionResult: ExecutionResult?) : XDebugProcess(session) {
+                                                     private val smartStepIntoHandler: XSmartStepIntoHandler<*>? = null,
+                                                     protected val executionResult: ExecutionResult? = null) : XDebugProcess(session) {
   protected val repeatStepInto: AtomicBoolean = AtomicBoolean()
   @Volatile protected var lastStep: StepAction? = null
   @Volatile protected var lastCallFrame: CallFrame? = null
@@ -200,7 +197,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   }
 
   override final fun startPausing() {
-    connection.vm.suspendContextManager.suspend().rejected(RejectErrorReporter(session, "Cannot pause"))
+    connection.vm!!.suspendContextManager.suspend().rejected(RejectErrorReporter(session, "Cannot pause"))
   }
 
   override final fun getCurrentStateMessage() = connection.state.message
@@ -222,7 +219,8 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   override fun isLibraryFrameFilterSupported() = true
 }
 
-class LineBreakpointHandler(breakpointTypeClass: Class<out XLineBreakpointType<*>>, private val manager: LineBreakpointManager) : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass) {
+class LineBreakpointHandler(breakpointTypeClass: Class<out XLineBreakpointType<*>>, private val manager: LineBreakpointManager)
+    : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass as Class<out XBreakpointType<XLineBreakpoint<*>, out XBreakpointProperties<*>>>) {
   override fun registerBreakpoint(breakpoint: XLineBreakpoint<*>) {
     manager.setBreakpoint(breakpoint)
   }

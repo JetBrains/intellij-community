@@ -178,7 +178,7 @@ class VariableView(name: String, private val variable: Variable, private val con
     }
 
     if (hasIndexedProperties == hasNamedProperties || additionalProperties != null) {
-      Promise.all(promises).processed(object : ObsolescentConsumer<Any?>(node) {
+      (Promise.all(promises) as Promise<Any?>).processed(object : ObsolescentConsumer<Any?>(node) {
         override fun consume(aVoid: Any?) = node.addChildren(XValueChildrenList.EMPTY, true)
       })
     }
@@ -302,7 +302,7 @@ class VariableView(name: String, private val variable: Variable, private val con
       }
 
       override fun setValue(expression: String, callback: XValueModifier.XModificationCallback) {
-        variable.valueModifier!!.setValue(variable, expression, evaluateContext)
+        (variable.valueModifier!!.setValue(variable, expression, evaluateContext) as Promise<Any?>)
           .done {
             value = null
             callback.valueModified()

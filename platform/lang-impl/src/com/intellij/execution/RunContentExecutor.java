@@ -173,7 +173,7 @@ public class RunContentExecutor implements Disposable {
     return this;
   }
 
-  private class RerunAction extends AnAction implements DumbAware {
+  private class RerunAction extends AnAction {
     public RerunAction(JComponent consolePanel) {
       super("Rerun", "Rerun",
             AllIcons.Actions.Restart);

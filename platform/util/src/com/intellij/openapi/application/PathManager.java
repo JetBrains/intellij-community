@@ -45,6 +45,7 @@ import static com.intellij.util.SystemProperties.getUserHome;
 
 public class PathManager {
   public static final String PROPERTIES_FILE = "idea.properties.file";
+  public static final String PROPERTIES_FILE_NAME = "idea.properties";
   public static final String PROPERTY_HOME_PATH = "idea.home.path";
   public static final String PROPERTY_CONFIG_PATH = "idea.config.path";
   public static final String PROPERTY_SYSTEM_PATH = "idea.system.path";
@@ -122,9 +123,9 @@ public class PathManager {
   }
 
   private static boolean isIdeaHome(final File root) {
-    return new File(root, FileUtil.toSystemDependentName("bin/idea.properties")).exists() ||
-           new File(root, FileUtil.toSystemDependentName("bin/" + getOSSpecificBinSubdir() + "/idea.properties")).exists() ||
-           new File(root, FileUtil.toSystemDependentName("community/bin/idea.properties")).exists();
+    return new File(root, FileUtil.toSystemDependentName("bin/" + PROPERTIES_FILE_NAME)).exists() ||
+           new File(root, FileUtil.toSystemDependentName("bin/" + getOSSpecificBinSubdir() + "/" + PROPERTIES_FILE_NAME)).exists() ||
+           new File(root, FileUtil.toSystemDependentName("community/bin/" + PROPERTIES_FILE_NAME)).exists();
   }
 
   @NotNull
@@ -233,6 +234,12 @@ public class PathManager {
     return platformPath(selector, "Library/Application Support", PLUGINS_FOLDER);
   }
 
+  @Nullable
+  public static String getCustomOptionsDirectory() {
+    // do not use getConfigPath() here - as it may be not yet defined
+    return PATHS_SELECTOR != null ? platformPath(PATHS_SELECTOR, "Library/Preferences", "") : null;
+  }
+
   // runtime paths
 
   @NotNull
@@ -283,7 +290,7 @@ public class PathManager {
   }
 
   @NotNull
-  public static String getPluginTempPath () {
+  public static String getPluginTempPath() {
     return getSystemPath() + File.separator + PLUGINS_FOLDER;
   }
 
@@ -333,6 +340,9 @@ public class PathManager {
       return null;
     }
 
+    if (SystemInfo.isWindows && resultPath.startsWith("/")) {
+      resultPath = resultPath.substring(1);
+    }
     resultPath = StringUtil.trimEnd(resultPath, File.separator);
     resultPath = URLUtil.unescapePercentSequences(resultPath);
 
@@ -342,11 +352,11 @@ public class PathManager {
   public static void loadProperties() {
     String[] propFiles = {
       System.getProperty(PROPERTIES_FILE),
-      getUserPropertiesPath(),
-      getUserHome() + "/idea.properties",
-      getHomePath() + "/bin/idea.properties",
-      getHomePath() + "/bin/" + getOSSpecificBinSubdir() + "/idea.properties",
-      getHomePath() + "/community/bin/idea.properties"};
+      getCustomPropertiesFile(),
+      getUserHome() + "/" + PROPERTIES_FILE_NAME,
+      getHomePath() + "/bin/" + PROPERTIES_FILE_NAME,
+      getHomePath() + "/bin/" + getOSSpecificBinSubdir() + "/" + PROPERTIES_FILE_NAME,
+      getHomePath() + "/community/bin/" + PROPERTIES_FILE_NAME};
 
     for (String path : propFiles) {
       if (path != null) {
@@ -383,14 +393,9 @@ public class PathManager {
     }
   }
 
-  private static String getUserPropertiesPath() {
-    if (PATHS_SELECTOR != null) {
-      // do not use getConfigPath() here - as it may be not yet defined
-      return platformPath(PATHS_SELECTOR, "Library/Preferences", /*"APPDATA", "XDG_CONFIG_HOME", ".config",*/ "") + "/idea.properties";
-    }
-    else {
-      return null;
-    }
+  private static String getCustomPropertiesFile() {
+    String configPath = getCustomOptionsDirectory();
+    return configPath != null ? configPath + File.separator + PROPERTIES_FILE_NAME : null;
   }
 
   @Contract("null -> null")
@@ -501,12 +506,9 @@ public class PathManager {
     return FileUtil.toCanonicalPath(new File(path).getAbsolutePath());
   }
 
-  private static String trimPathQuotes(String path){
-    if (!(path != null && !(path.length() < 3))){
-      return path;
-    }
-    if (StringUtil.startsWithChar(path, '\"') && StringUtil.endsWithChar(path, '\"')){
-      return path.substring(1, path.length() - 1);
+  private static String trimPathQuotes(String path) {
+    if (path != null && path.length() >= 3 && StringUtil.startsWithChar(path, '\"') && StringUtil.endsWithChar(path, '\"')) {
+      path = path.substring(1, path.length() - 1);
     }
     return path;
   }

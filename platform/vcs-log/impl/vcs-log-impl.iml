@@ -22,5 +22,6 @@
     <orderEntry type="module" module-name="vcs-log-graph-api" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
   </component>
 </module>

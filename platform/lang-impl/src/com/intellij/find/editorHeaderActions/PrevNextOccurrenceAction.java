@@ -25,7 +25,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class PrevNextOccurrenceAction extends DumbAwareAction implements ContextAwareShortcutProvider {
-  PrevNextOccurrenceAction(@NotNull String templateActionId) {
+  protected final boolean mySearch;
+
+  PrevNextOccurrenceAction(@NotNull String templateActionId, boolean search) {
+    mySearch = search;
     copyFrom(ActionManager.getInstance().getAction(templateActionId));
   }
 

@@ -35,7 +35,7 @@ abstract class ObjectValueBase<VALUE_LOADER : ValueManager>(type: ValueType) : V
   }
 
   override fun getProperties(names: List<String>, evaluateContext: EvaluateContext, obsolescent: Obsolescent) = properties
-    .then(object : MyObsolescentAsyncFunction<List<Variable>, List<Variable>>(obsolescent) {
+    .thenAsync(object : MyObsolescentAsyncFunction<List<Variable>, List<Variable>>(obsolescent) {
       override fun `fun`(variables: List<Variable>) = getSpecifiedProperties(variables, names, evaluateContext)
     })
 

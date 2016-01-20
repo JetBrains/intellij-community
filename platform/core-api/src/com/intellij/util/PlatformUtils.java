@@ -35,7 +35,7 @@ public class PlatformUtils {
   public static final String RUBY_PREFIX = "Ruby";
   public static final String PHP_PREFIX = "PhpStorm";
   public static final String WEB_PREFIX = "WebStorm";
-  public static final String DBE_PREFIX = "0xDBE";
+  public static final String DBE_PREFIX = "DataGrip";
 
   public static String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);

@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NonClasspathClassFinder;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -85,5 +86,16 @@ public class GradleClassFinder extends NonClasspathClassFinder {
     PsiFile containingFile = aClass.getContainingFile();
     VirtualFile file = containingFile != null ? containingFile.getVirtualFile() : null;
     return (file != null && !ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file)) ? aClass : null;
+  }
+
+  @NotNull
+  @Override
+  public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    if (scope instanceof ExternalModuleBuildGlobalSearchScope) {
+      return super.getSubPackages(psiPackage, scope);
+    }
+    else {
+      return PsiPackage.EMPTY_ARRAY;
+    }
   }
 }

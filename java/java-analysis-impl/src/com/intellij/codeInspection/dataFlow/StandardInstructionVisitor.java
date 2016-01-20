@@ -199,11 +199,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (method == null || instruction.getContracts().isEmpty()) {
       argValues = null;
     } else {
-      int paramCount = method.getParameterList().getParametersCount();
+      PsiParameterList paramList = method.getParameterList();
+      int paramCount = paramList.getParametersCount();
       if (paramCount == args.length || method.isVarArgs() && args.length >= paramCount - 1) {
         argValues = new DfaValue[paramCount];
         if (varargCall) {
-          argValues[paramCount - 1] = DfaUnknownValue.getInstance();
+          argValues[paramCount - 1] = runner.getFactory().createTypeValue(paramList.getParameters()[paramCount - 1].getType(), Nullness.NOT_NULL);
         }
       } else {
         argValues = null;

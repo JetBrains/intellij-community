@@ -35,7 +35,7 @@ final class SsiFsize implements SsiCommand {
   private static final int ONE_MEGABYTE = 1024 * 1024;
 
   @Override
-  public long process(@NotNull SsiProcessingState state, @NotNull String commandName, @NotNull List<? extends String> paramNames, @NotNull String[] paramValues, @NotNull ByteBufUtf8Writer writer) {
+  public long process(@NotNull SsiProcessingState state, @NotNull String commandName, @NotNull List<String> paramNames, @NotNull String[] paramValues, @NotNull ByteBufUtf8Writer writer) {
     long lastModified = 0;
     String configErrMsg = state.configErrorMessage;
     for (int i = 0; i < paramNames.size(); i++) {

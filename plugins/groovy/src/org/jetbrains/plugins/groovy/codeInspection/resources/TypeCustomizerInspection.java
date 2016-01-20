@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -111,15 +112,18 @@ public class TypeCustomizerInspection extends BaseInspection {
       final VirtualFile virtualFile = myFile.getVirtualFile();
       if (virtualFile == null) return;
 
-      VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(virtualFile);
-      final VirtualFile projectRoot = project.getBaseDir();
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+      final VirtualFile contentRoot = fileIndex.getContentRootForFile(virtualFile);
+      if (contentRoot == null) return;
+
+      final VirtualFile sourceRoot = fileIndex.getSourceRootForFile(virtualFile);
       if (sourceRoot == null) {
-        final String path = VfsUtilCore.getRelativePath(virtualFile, projectRoot, '/');
+        final String path = VfsUtilCore.getRelativePath(virtualFile, contentRoot, '/');
         CompilerConfiguration.getInstance(project).addResourceFilePattern(path);
       }
       else {
         final String path = VfsUtilCore.getRelativePath(virtualFile, sourceRoot, '/');
-        final String sourceRootPath = VfsUtilCore.getRelativePath(sourceRoot, projectRoot, '/');
+        final String sourceRootPath = VfsUtilCore.getRelativePath(sourceRoot, contentRoot, '/');
         CompilerConfiguration.getInstance(project).addResourceFilePattern(sourceRootPath + ':' + path);
       }
       DaemonCodeAnalyzer.getInstance(project).restart(myFile);

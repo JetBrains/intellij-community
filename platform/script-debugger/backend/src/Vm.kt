@@ -15,12 +15,30 @@
  */
 package org.jetbrains.debugger
 
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.then
-import org.jetbrains.debugger.values.ValueManager
+import org.jetbrains.concurrency.resolvedPromise
 
-abstract class EvaluateContextBase<VALUE_MANAGER : ValueManager>(val valueManager: VALUE_MANAGER) : EvaluateContext {
-  override fun withValueManager(objectGroup: String) = this
+interface AttachStateManager {
+  fun detach() = resolvedPromise()
 
-  override fun refreshOnDone(promise: Promise<*>): Promise<*> = promise.then { valueManager.clearCaches() }
+  val isAttached: Boolean
+    get() = true
+}
+
+interface Vm {
+  val debugListener: DebugEventListener
+
+  val attachStateManager: AttachStateManager
+
+  val evaluateContext: EvaluateContext?
+
+  val scriptManager: ScriptManager
+
+  val breakpointManager: BreakpointManager
+
+  val suspendContextManager: SuspendContextManager<out CallFrame>
+
+  /**
+   * Controls whether VM stops on exceptions
+   */
+  fun setBreakOnException(catchMode: ExceptionCatchMode) = resolvedPromise()
 }

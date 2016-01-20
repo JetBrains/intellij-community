@@ -132,7 +132,7 @@ internal class GitTest : GitTestCase() {
   private fun doPullToRepositoryWithoutCommits(remoteBranchName: String?) {
     createLocalAndRemoteRepositories(remoteBranchName)
     repositoryManager.pull()
-    compareFiles(repository.workTree, remoteRepository.workTree)
+    compareFiles(repository.workTreePath, remoteRepository.workTreePath)
   }
 
   @Test fun pullToRepositoryWithCommits() {
@@ -150,7 +150,7 @@ internal class GitTest : GitTestCase() {
     repositoryManager.commit()
     repositoryManager.pull()
     assertThat(repository.workTree.resolve(file.name)).hasBinaryContent(file.data)
-    compareFiles(repository.workTree, remoteRepository.workTree, PathUtilRt.getFileName(file.name))
+    compareFiles(repository.workTreePath, remoteRepository.workTreePath, PathUtilRt.getFileName(file.name))
   }
 
   // never was merged. we reset using "merge with strategy "theirs", so, we must test - what's happen if it is not first merge? - see next test

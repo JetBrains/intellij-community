@@ -24,10 +24,7 @@ import com.intellij.util.io.socketConnection.ConnectionState
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import com.intellij.util.io.socketConnection.SocketConnectionListener
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.isPending
-import org.jetbrains.concurrency.resolvedPromise
+import org.jetbrains.concurrency.*
 import org.jetbrains.debugger.DebugEventListener
 import org.jetbrains.debugger.Vm
 import java.util.concurrent.atomic.AtomicBoolean
@@ -109,7 +106,7 @@ abstract class VmConnection<T : Vm> : Disposable {
 
   open fun detachAndClose(): Promise<*> {
     if (opened.isPending) {
-      opened.setError("detached and closed")
+      opened.setError(createError("detached and closed", false))
     }
 
     val currentVm = vm

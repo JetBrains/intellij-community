@@ -43,8 +43,12 @@ class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, call
     promise
       .done(node) {
         callFrame.receiverVariable
-          .done(node) { node.addChildren(if (it == null) XValueChildrenList.EMPTY else XValueChildrenList.singleton(VariableView(it, context)), true) }
-          .rejected(node) { node.addChildren(XValueChildrenList.EMPTY, true) }
+          .done(node) {
+            node.addChildren(if (it == null) XValueChildrenList.EMPTY else XValueChildrenList.singleton(VariableView(it, context)), true)
+          }
+          .rejected(node) {
+            node.addChildren(XValueChildrenList.EMPTY, true)
+          }
       }
   }
 }

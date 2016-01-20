@@ -882,21 +882,13 @@
         <option name="FOREGROUND" value="3387CC" />
       </value>
     </option>
-    <option name="JS.ATTRIBUTE">
+    <option name="JS.GLOBAL_VARIABLE">
       <value>
-        <option name="BACKGROUND" value="423535" />
+        <option name="FONT_TYPE" value="2" />
       </value>
     </option>
-    <option name="JS.INSTANCE_MEMBER_FUNCTION">
-      <value>
-        <option name="FOREGROUND" value="979748" />
-      </value>
-    </option>
-    <option name="JS.LOCAL_VARIABLE">
-      <value>
-        <option name="FOREGROUND" value="64a2a2" />
-      </value>
-    </option>
+    <option baseAttributes="DEFAULT_INSTANCE_METHOD" name="JS.INSTANCE_MEMBER_FUNCTION" />
+    <option baseAttributes="DEFAULT_LOCAL_VARIABLE" name="JS.LOCAL_VARIABLE" />
     <option name="JS.PARAMETER">
       <value>
         <option name="FONT_TYPE" value="2" />

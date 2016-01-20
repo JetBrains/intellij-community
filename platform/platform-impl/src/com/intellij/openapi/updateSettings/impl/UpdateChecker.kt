@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,15 +67,15 @@ import java.util.*
 
 /**
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
-
+ *
  * @author mike
- * *
  * @since Oct 31, 2002
  */
 object UpdateChecker {
   private val LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker")
   val NO_PLATFORM_UPDATE = "ide.no.platform.update"
 
+  @JvmField
   val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.group"), NotificationDisplayType.STICKY_BALLOON, true)
 
   private val INSTALLATION_UID = "installation.uid"
@@ -84,7 +84,7 @@ object UpdateChecker {
   private var ourDisabledToUpdatePlugins: MutableSet<String>? = null
   private val ourAdditionalRequestOptions = hashMapOf<String, String>()
   private val ourUpdatedPlugins = hashMapOf<String, PluginDownloader>()
-  private val SHOWN_NOTIFICATION_TYPES = Collections.synchronizedSet(EnumSet.noneOf(NotificationUniqueType::class.java))
+  private val ourShownNotificationTypes = Collections.synchronizedSet(EnumSet.noneOf(NotificationUniqueType::class.java))
 
   private val UPDATE_URL by lazy { ApplicationInfoEx.getInstanceEx().updateUrls.checkingUrl }
   private val PATCHES_URL by lazy { ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl }
@@ -103,7 +103,9 @@ object UpdateChecker {
   @JvmStatic
   fun updateAndShowResult(): ActionCallback {
     val callback = ActionCallback()
-    ApplicationManager.getApplication().executeOnPooledThread { doUpdateAndShowResult(null, true, false, UpdateSettings.getInstance(), null, callback) }
+    ApplicationManager.getApplication().executeOnPooledThread {
+      doUpdateAndShowResult(null, true, false, UpdateSettings.getInstance(), null, callback)
+    }
     return callback
   }
 
@@ -121,13 +123,9 @@ object UpdateChecker {
         doUpdateAndShowResult(getProject(), fromSettings, true, settings, indicator, null)
       }
 
-      override fun isConditionalModal(): Boolean {
-        return fromSettings
-      }
+      override fun isConditionalModal(): Boolean = fromSettings
 
-      override fun shouldStartInBackground(): Boolean {
-        return !fromSettings
-      }
+      override fun shouldStartInBackground(): Boolean = !fromSettings
     })
   }
 
@@ -181,7 +179,6 @@ object UpdateChecker {
         showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e.message))
         return
       }
-
     }
 
     // show result
@@ -206,16 +203,18 @@ object UpdateChecker {
       val updateUrl = uriBuilder.build().toString()
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
 
-      updateInfo = HttpRequests.request(updateUrl).forceHttps(settings.canUseSecureConnection()).connect(HttpRequests.RequestProcessor<com.intellij.openapi.updateSettings.impl.UpdatesInfo> { request ->
-        try {
-          return@RequestProcessor UpdatesInfo(JDOMUtil.load(request.reader))
-        }
-        catch (e: JDOMException) {
-          // corrupted content, don't bother telling user
-          LOG.info(e)
-          return@RequestProcessor null
-        }
-      })
+      updateInfo = HttpRequests.request(updateUrl)
+          .forceHttps(settings.canUseSecureConnection())
+          .connect { request ->
+            try {
+              UpdatesInfo(JDOMUtil.load(request.reader))
+            }
+            catch (e: JDOMException) {
+              // corrupted content, don't bother telling user
+              LOG.info(e)
+              null
+            }
+          }
     }
     catch (e: URISyntaxException) {
       return CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e)
@@ -283,7 +282,6 @@ object UpdateChecker {
           throw e
         }
       }
-
     }
 
     return if (toUpdate.isEmpty) null else toUpdate.values
@@ -380,6 +378,7 @@ object UpdateChecker {
                                toUpdate: MutableMap<PluginId, PluginDownloader>,
                                incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
                                indicator: ProgressIndicator?) {
+    @Suppress("NAME_SHADOWING")
     var downloader = downloader
     val pluginId = downloader.pluginId
     if (PluginManagerCore.getDisabledPlugins().contains(pluginId)) return
@@ -392,7 +391,7 @@ object UpdateChecker {
       val oldDownloader = ourUpdatedPlugins[pluginId]
       if (oldDownloader == null || StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.pluginVersion) > 0) {
         descriptor = downloader.descriptor
-        if (descriptor is PluginNode && descriptor.isIncomplete()) {
+        if (descriptor is PluginNode && descriptor.isIncomplete) {
           if (downloader.prepareToInstall(indicator ?: EmptyProgressIndicator())) {
             descriptor = downloader.descriptor
           }
@@ -467,9 +466,9 @@ object UpdateChecker {
         // once we informed that new product is available (when new channel was detected), remember the fact
         if (dialog.exitCode == DialogWrapper.CANCEL_EXIT_CODE &&
             checkForUpdateResult.state == UpdateStrategy.State.LOADED &&
-            !updateSettings.knownChannelsIds.contains(channelToPropose.getId())) {
+            !updateSettings.knownChannelsIds.contains(channelToPropose.id)) {
           val newIds = ArrayList(updateSettings.knownChannelsIds)
-          newIds.add(channelToPropose.getId())
+          newIds.add(channelToPropose.id)
           updateSettings.setKnownChannelIds(newIds)
         }
       }
@@ -525,7 +524,7 @@ object UpdateChecker {
                                runnable: (() -> Unit)?,
                                notificationType: NotificationUniqueType?) {
     if (notificationType != null) {
-      if (!SHOWN_NOTIFICATION_TYPES.add(notificationType)) {
+      if (!ourShownNotificationTypes.add(notificationType)) {
         return
       }
     }
@@ -540,7 +539,7 @@ object UpdateChecker {
 
     val title = IdeBundle.message("update.notifications.title")
     NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, listener)
-        .whenExpired { SHOWN_NOTIFICATION_TYPES.remove(notificationType) }
+        .whenExpired { ourShownNotificationTypes.remove(notificationType) }
         .notify(project)
   }
 
@@ -659,17 +658,10 @@ object UpdateChecker {
     return null
   }
 
-  private fun generateUUID(): String {
-    try {
-      return UUID.randomUUID().toString()
-    }
-    catch (ignored: Exception) {
-    }
-    catch (ignored: InternalError) {
-    }
-
-    return ""
-  }
+  private fun generateUUID(): String =
+      try { UUID.randomUUID().toString() }
+      catch (ignored: Exception) { "" }
+      catch (ignored: InternalError) { "" }
 
   @JvmStatic
   @Throws(IOException::class)
@@ -696,8 +688,7 @@ object UpdateChecker {
     val fileName = "$productCode-$fromBuildNumber-$toBuildNumber-patch$bundledJdk$osSuffix.jar"
 
     val url = URL(URL(patchesUrl), fileName).toString()
-    val tempFile = HttpRequests
-        .request(url)
+    val tempFile = HttpRequests.request(url)
         .gzip(false)
         .forceHttps(forceHttps)
         .connect { request -> request.saveToFile(FileUtil.createTempFile("ij.platform.", ".patch", true), indicator) }
@@ -729,7 +720,6 @@ object UpdateChecker {
       catch (e: IOException) {
         LOG.info(e)
       }
-
     }
 
     return installed
@@ -753,9 +743,9 @@ object UpdateChecker {
           catch (e: IOException) {
             LOG.error(e)
           }
-
         }
       }
+
       return ourDisabledToUpdatePlugins!!
     }
 
@@ -768,7 +758,6 @@ object UpdateChecker {
     catch (e: IOException) {
       LOG.error(e)
     }
-
   }
 
   private var ourHasFailedPlugins = false

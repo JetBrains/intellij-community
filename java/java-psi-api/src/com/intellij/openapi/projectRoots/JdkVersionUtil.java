@@ -33,7 +33,7 @@ public class JdkVersionUtil {
     VERSION_STRINGS.put(JavaSdkVersion.JDK_1_6, new String[]{"1.6", "6.0"});
     VERSION_STRINGS.put(JavaSdkVersion.JDK_1_7, new String[]{"1.7", "7.0"});
     VERSION_STRINGS.put(JavaSdkVersion.JDK_1_8, new String[]{"1.8", "8.0"});
-    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_9, new String[]{"1.9", "9.0"});
+    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_9, new String[]{"1.9", "9.0", "9-ea"});
   }
 
   public static JavaSdkVersion getVersion(@NotNull String versionString) {

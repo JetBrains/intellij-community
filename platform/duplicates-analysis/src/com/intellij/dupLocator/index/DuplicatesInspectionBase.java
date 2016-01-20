@@ -12,7 +12,9 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.TreeBackedLighterAST;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.FileIndex;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -37,6 +39,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class DuplicatesInspectionBase extends LocalInspectionTool {
+  public boolean myFilterOutGeneratedCode;
   private static final int MIN_FRAGMENT_SIZE = 3; // todo 3 statements constant
 
   @Nullable
@@ -63,7 +66,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
           class LightDuplicatedCodeProcessor extends DuplicatedCodeProcessor<LighterASTNode> {
 
             LightDuplicatedCodeProcessor(VirtualFile file, Project project) {
-              super(file, project);
+              super(file, project, myFilterOutGeneratedCode);
             }
 
             @Override
@@ -111,7 +114,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
           class OldDuplicatedCodeProcessor extends DuplicatedCodeProcessor<PsiFragment> {
 
             OldDuplicatedCodeProcessor(VirtualFile file, Project project) {
-              super(file, project);
+              super(file, project, myFilterOutGeneratedCode);
             }
 
             @Override
@@ -215,15 +218,19 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     final TIntLongHashMap fragmentHash = new TIntLongHashMap();
     final VirtualFile virtualFile;
     final Project project;
-    final ProjectFileIndex myProjectFileIndex;
+    final FileIndex myFileIndex;
+    final boolean mySkipGeneratedCode;
+    final boolean myFileWithinGeneratedCode;
     T myNode;
     int myHash;
     int myHash2;
 
-    DuplicatedCodeProcessor(VirtualFile file, Project project) {
+    DuplicatedCodeProcessor(VirtualFile file, Project project, boolean skipGeneratedCode) {
       virtualFile = file;
       this.project = project;
-      myProjectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+      myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+      mySkipGeneratedCode = skipGeneratedCode;
+      myFileWithinGeneratedCode = skipGeneratedCode && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project);
     }
 
     void process(int hash, int hash2, T node) {
@@ -242,8 +249,16 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
         if (list.getQuick(i + 1) != myHash2) continue;
         int offset = list.getQuick(i);
 
-        if (myProjectFileIndex.isInSource(virtualFile) && !myProjectFileIndex.isInSource(file)) return true;
-        if (!myProjectFileIndex.isInSource(virtualFile) && myProjectFileIndex.isInSource(file)) return true;
+        if (myFileIndex.isInSourceContent(virtualFile)) {
+          if (!myFileIndex.isInSourceContent(file)) return true;
+          if (!myFileIndex.isInTestSourceContent(virtualFile) && myFileIndex.isInTestSourceContent(file)) return true;
+          if (mySkipGeneratedCode) {
+            if (!myFileWithinGeneratedCode && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project)) return true;
+          }
+        } else if (myFileIndex.isInSourceContent(file)) {
+          return true;
+        }
+
         final int startOffset = getStartOffset(myNode);
         final int endOffset = getEndOffset(myNode);
         if (file.equals(virtualFile) && offset >= startOffset && offset < endOffset) continue;

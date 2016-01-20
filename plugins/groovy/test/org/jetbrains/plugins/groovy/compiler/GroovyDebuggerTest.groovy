@@ -44,8 +44,10 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.DebugUtil
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
@@ -316,6 +318,32 @@ cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
       waitForBreakpoint()
       assert myClass == sourcePosition.file.virtualFile
       eval 'a', '2'
+    }
+  }
+
+  public void "test groovy source named java in lib source"() {
+    def tempDir = new TempDirTestFixtureImpl()
+    edt {
+      tempDir.setUp()
+      disposeOnTearDown({ tempDir.tearDown() } as Disposable)
+      tempDir.createFile("pkg/java.groovy", "class java {}")
+      PsiTestUtil.addLibrary(myModule, 'lib', tempDir.getFile('').path, [] as String[], [''] as String[])
+    }
+
+    def facade = JavaPsiFacade.getInstance(project)
+    assert !facade.findClass('java', GlobalSearchScope.allScope(project))
+    assert !facade.findPackage('').findClassByShortName('java', GlobalSearchScope.allScope(project))
+
+    def file = myFixture.addFileToProject("Foo.groovy", """\
+int a = 42
+int b = 3 //1
+    """)
+
+    addBreakpoint(file.virtualFile, 1)
+
+    runDebugger file, {
+      waitForBreakpoint()
+      eval 'a', '42'
     }
   }
 

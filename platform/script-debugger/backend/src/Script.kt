@@ -15,29 +15,34 @@
  */
 package org.jetbrains.debugger
 
-import org.jetbrains.concurrency.resolvedPromise
+import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.util.Url
+import org.jetbrains.debugger.sourcemap.SourceMap
 
-interface AttachStateManager {
-  fun detach() = resolvedPromise()
+interface Script : UserDataHolderEx {
+  enum class Type {
+    /** A native, internal JavaScript VM script  */
+    NATIVE,
 
-  fun isAttached() = true
-}
+    /** A script supplied by an extension  */
+    EXTENSION,
 
-interface Vm {
-  val debugListener: DebugEventListener
+    /** A normal user script  */
+    NORMAL
+  }
 
-  val attachStateManager: AttachStateManager
+  val type: Type
 
-  val evaluateContext: EvaluateContext?
+  var sourceMap: SourceMap?
 
-  val scriptManager: ScriptManager
+  val url: Url
 
-  val breakpointManager: BreakpointManager
+  val functionName: String?
+    get() = null
 
-  val suspendContextManager: SuspendContextManager<out CallFrame>
+  val line: Int
 
-  /**
-   * Controls whether VM stops on exceptions
-   */
-  fun setBreakOnException(catchMode: ExceptionCatchMode) = resolvedPromise()
+  val column: Int
+
+  val endLine: Int
 }

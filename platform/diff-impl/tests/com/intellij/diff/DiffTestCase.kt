@@ -106,7 +106,7 @@ public abstract class DiffTestCase : UsefulTestCase() {
     return Math.max(1, document.getLineCount())
   }
 
-  public fun Int.until(a: Int): IntRange = this..a - 1
+  public infix fun Int.until(a: Int): IntRange = this..a - 1
 
   //
   // AutoTests
@@ -209,7 +209,7 @@ public abstract class DiffTestCase : UsefulTestCase() {
       f(data3, ThreeSide.RIGHT)
     }
 
-    public fun invoke(side: ThreeSide): T = side.select(data1, data2, data3) as T
+    public operator fun invoke(side: ThreeSide): T = side.select(data1, data2, data3) as T
 
     override fun toString(): String {
       return "($data1, $data2, $data3)"

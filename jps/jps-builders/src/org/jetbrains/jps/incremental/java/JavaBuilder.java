@@ -82,7 +82,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<AtomicReference<String>> COMPILER_VERSION_INFO = Key.create("_java_compiler_version_info_");
 
-  private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
+  private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Collections.<String>singletonList(
     "-target"
   ));
   private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
@@ -131,6 +131,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     //add here class processors in the sequence they should be executed
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return BUILDER_NAME;
@@ -155,6 +156,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return Collections.singletonList(JAVA_EXTENSION);
   }
 
+  @Override
   public ExitCode build(@NotNull CompileContext context,
                         @NotNull ModuleChunk chunk,
                         @NotNull DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
@@ -174,6 +176,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
+        @Override
         public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor descriptor) throws IOException {
           if (JAVA_SOURCES_FILTER.accept(file) && ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {
             filesToCompile.add(file);
@@ -185,7 +188,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
         final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
         if (logger.isEnabled()) {
-          if (filesToCompile.size() > 0) {
+          if (!filesToCompile.isEmpty()) {
             logger.logCompiledFiles(filesToCompile, BUILDER_NAME, "Compiling files:");
           }
         }
@@ -214,7 +217,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         finally {
           stream.close();
         }
-        message = "Internal error: \n" + out.toString();
+        message = "Internal error: \n" + out;
       }
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
       throw new StopBuildException();
@@ -505,6 +508,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     counter.incTaskCount();
     myTaskRunner.execute(new Runnable() {
+      @Override
       public void run() {
         try {
           taskRunnable.run();
@@ -526,9 +530,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     final int listenPort = findFreePort();
     server = new ExternalJavacManager(Utils.getSystemRoot()) {
+      @Override
       protected ExternalJavacProcessHandler createProcessHandler(Process process) {
         return new ExternalJavacProcessHandler(process) {
-          protected Future<?> executeOnPooledThread(Runnable task) {
+          @Override
+          @NotNull
+          protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
             return SharedThreadPool.getInstance().executeOnPooledThread(task);
           }
         };
@@ -543,9 +550,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (ver == null) {
       return 0;
     }
-    final int quoteBegin = ver.indexOf("\"");
+    final int quoteBegin = ver.indexOf('\"');
     if (quoteBegin >= 0) {
-      final int quoteEnd = ver.indexOf("\"", quoteBegin + 1);
+      final int quoteEnd = ver.indexOf('\"', quoteBegin + 1);
       if (quoteEnd > quoteBegin) {
         ver = ver.substring(quoteBegin + 1, quoteEnd);
       }
@@ -557,16 +564,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final String prefix = "1.";
     final int parseBegin = ver.startsWith(prefix)? prefix.length() : 0;
 
-    final int parseEnd = ver.indexOf(".", parseBegin);
-    if (parseEnd > 0) {
-      ver = ver.substring(parseBegin, parseEnd);
+    int parseEnd = parseBegin;
+    while (parseEnd < ver.length()) {
+      if (!Character.isDigit(ver.charAt(parseEnd))) {
+        break;
+      }
+      parseEnd++;
     }
-    else {
-      ver = ver.substring(parseBegin);
-    }
-
     try {
-      return Integer.parseInt(ver);
+      return Integer.parseInt(ver.substring(parseBegin, parseEnd));
     }
     catch (NumberFormatException ignored) {
     }
@@ -730,7 +736,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (!profile.isObtainProcessorsFromClasspath()) {
         final String processorsPath = profile.getProcessorPath();
         options.add("-processorpath");
-        options.add(processorsPath == null? "" : FileUtil.toSystemDependentName(processorsPath.trim()));
+        options.add(FileUtil.toSystemDependentName(processorsPath.trim()));
       }
 
       final Set<String> processors = profile.getProcessors();
@@ -888,11 +894,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static class DiagnosticSink implements DiagnosticOutputConsumer {
     private final CompileContext myContext;
-    private volatile int myErrorCount = 0;
-    private volatile int myWarningCount = 0;
+    private volatile int myErrorCount;
+    private volatile int myWarningCount;
     private final Set<File> myFilesWithErrors = new HashSet<File>();
 
-    public DiagnosticSink(CompileContext context) {
+    private DiagnosticSink(CompileContext context) {
       myContext = context;
     }
 
@@ -900,6 +906,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     public void javaFileLoaded(File file) {
     }
 
+    @Override
     public void registerImports(final String className, final Collection<String> imports, final Collection<String> staticImports) {
       //submitAsyncTask(myContext, new Runnable() {
       //  public void run() {
@@ -911,6 +918,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       //});
     }
 
+    @Override
     public void outputLineAvailable(String line) {
       if (!StringUtil.isEmpty(line)) {
         if (line.startsWith(ExternalJavacManager.STDOUT_LINE_PREFIX)) {
@@ -946,6 +954,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return BuildMessage.Kind.INFO;
     }
 
+    @Override
     public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
       final CompilerMessage.Kind kind;
       switch (diagnostic.getKind()) {
@@ -1008,15 +1017,17 @@ public class JavaBuilder extends ModuleLevelBuilder {
     private final CompileContext myContext;
     private final OutputFileConsumer myDelegateOutputFileSink;
 
-    public ClassProcessingConsumer(CompileContext context, OutputFileConsumer sink) {
+    private ClassProcessingConsumer(CompileContext context, OutputFileConsumer sink) {
       myContext = context;
       myDelegateOutputFileSink = sink != null ? sink : new OutputFileConsumer() {
+        @Override
         public void save(@NotNull OutputFileObject fileObject) {
           throw new RuntimeException("Output sink for compiler was not specified");
         }
       };
     }
 
+    @Override
     public void save(@NotNull final OutputFileObject fileObject) {
       // generated files must be saved synchronously, because some compilers (e.g. eclipse)
       // may want to read them for further compilation
@@ -1035,6 +1046,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
 
       submitAsyncTask(myContext, new Runnable() {
+        @Override
         public void run() {
           try {
             for (ClassPostProcessor processor : ourClassProcessors) {
@@ -1053,13 +1065,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final Key<TasksCounter> COUNTER_KEY = Key.create("_async_task_counter_");
 
   private static final class TasksCounter {
-    private int myCounter = 0;
+    private int myCounter;
 
-    public synchronized void incTaskCount() {
+    private synchronized void incTaskCount() {
       myCounter++;
     }
 
-    public synchronized void decTaskCounter() {
+    private synchronized void decTaskCounter() {
       myCounter = Math.max(0, myCounter - 1);
       if (myCounter == 0) {
         notifyAll();
@@ -1071,7 +1083,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         try {
           wait();
         }
-        catch (InterruptedException e) {
+        catch (InterruptedException ignored) {
         }
       }
     }
