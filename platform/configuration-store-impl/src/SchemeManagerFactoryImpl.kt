@@ -61,7 +61,7 @@ sealed class SchemeManagerFactoryBase : SchemesManagerFactory(), SettingsSavingC
 
   abstract fun pathToFile(path: String, storageManager: StateStorageManager): File
 
-  public fun process(processor: (SchemeManagerImpl<Scheme, ExternalizableScheme>) -> Unit) {
+  fun process(processor: (SchemeManagerImpl<Scheme, ExternalizableScheme>) -> Unit) {
     for (manager in managers) {
       try {
         processor(manager)

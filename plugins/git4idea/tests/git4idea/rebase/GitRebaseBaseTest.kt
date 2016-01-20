@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import git4idea.test.*
 import git4idea.test.GitExecutor.cd
 import git4idea.test.GitExecutor.git
 
-public abstract class GitRebaseBaseTest : GitPlatformTest() {
+abstract class GitRebaseBaseTest : GitPlatformTest() {
 
   protected val LOCAL_CHANGES_WARNING : String = "Note that some local changes were <a>stashed</a> before rebase."
 
@@ -170,7 +170,7 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
     assertEquals("UU " + file, git(this, "status --porcelain"))
   }
 
-  public class LocalChange(val repository: GitRepository, val filePath: String, val content: String = "Some content") {
+  class LocalChange(val repository: GitRepository, val filePath: String, val content: String = "Some content") {
     fun generate() : LocalChange {
       cd(repository)
       GitExecutor.file(filePath).create(content).add()
@@ -181,7 +181,7 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
       assertNewFile(repository, filePath, content)
     }
 
-    public fun assertNewFile(repository: GitRepository, file: String, content: String) {
+    fun assertNewFile(repository: GitRepository, file: String, content: String) {
       cd(repository)
       assertEquals("Incorrect git status output", "A  " + file, git("status --porcelain"))
       assertEquals("Incorrect content of the file [$file]", content, Executor.cat(file))

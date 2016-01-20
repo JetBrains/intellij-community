@@ -304,7 +304,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       }
     }
 
-    private fun getFilesList(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) = Array(readonlyFiles.size) { readonlyFiles.get(it).second }
+    private fun getFilesList(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) = Array(readonlyFiles.size) { readonlyFiles[it].second }
   }
 
   override fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation) = selectDefaultStorages(storages, operation, scheme)

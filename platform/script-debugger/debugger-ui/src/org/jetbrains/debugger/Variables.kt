@@ -66,7 +66,7 @@ fun processScopeVariables(scope: Scope,
     }
   }
 
-  val comparator = if (memberFilter.hasNameMappings()) comparator { o1, o2 -> naturalCompare(memberFilter.rawNameToSource(o1), memberFilter.rawNameToSource(o2)) } else NATURAL_NAME_COMPARATOR
+  val comparator = if (memberFilter.hasNameMappings()) Comparator<Variable> { o1, o2 -> naturalCompare(memberFilter.rawNameToSource(o1), memberFilter.rawNameToSource(o2)) } else NATURAL_NAME_COMPARATOR
   properties.sortWith(comparator)
   functions.sortWith(comparator)
 

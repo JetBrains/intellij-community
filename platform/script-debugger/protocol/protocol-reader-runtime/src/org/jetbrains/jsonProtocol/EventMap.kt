@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ class EventMap<R : ResponseResultReader>(private val protocolReader: R) {
   fun <T : Any?> add(type: EventType<T, R>, handler: (T) -> Unit) {
     nameToType.put(type.methodName, type)
     @Suppress("UNCHECKED_CAST")
-    nameToHandler.concurrentGetOrPut(type.methodName, { ContainerUtil.createLockFreeCopyOnWriteList() }).add(handler as (Any?) -> Unit)
+    nameToHandler.getOrPut(type.methodName, { ContainerUtil.createLockFreeCopyOnWriteList() }).add(handler as (Any?) -> Unit)
   }
 
   fun <T> addMulti(vararg types: EventType<out T, R>, eventHandler: (T) -> Unit) {

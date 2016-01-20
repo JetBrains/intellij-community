@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,7 +169,7 @@ abstract class DiffTestCase : UsefulTestCase() {
     if (gotSeedException) return -1
     try {
       val seedField = RNG.javaClass.getDeclaredField("seed")
-      seedField.setAccessible(true)
+      seedField.isAccessible = true
       val seedFieldValue = seedField.get(RNG) as AtomicLong
       return seedFieldValue.get() xor 0x5DEECE66DL
     } catch (e: Exception) {
