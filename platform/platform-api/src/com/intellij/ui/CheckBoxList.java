@@ -195,6 +195,7 @@ public class CheckBoxList<T> extends JBList {
       if (shouldAdjustColors) {
         checkbox.setBackground(backgroundColor);
         checkbox.setForeground(textColor);
+        checkbox.setOpaque(true);
       }
 
       checkbox.setEnabled(isEnabled());
