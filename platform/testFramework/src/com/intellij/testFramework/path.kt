@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,24 +50,26 @@ fun Path.createSymbolicLink(target: Path): Path {
   return this
 }
 
+fun Path.delete() {
+  try {
+    Files.delete(this)
+  }
+  catch (ignored: NoSuchFileException) {
+  }
+  catch (e: Exception) {
+    FileUtil.delete(this.toFile())
+  }
+}
+
 fun Path.deleteRecursively(): Path = if (exists()) Files.walkFileTree(this, object : SimpleFileVisitor<Path>() {
   override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-    deleteFile(file)
+    file.delete()
     return FileVisitResult.CONTINUE
   }
 
   override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
-    deleteFile(dir)
+    dir.delete()
     return FileVisitResult.CONTINUE
-  }
-
-  private fun deleteFile(file: Path) {
-    try {
-      Files.delete(file)
-    }
-    catch (e: Exception) {
-      FileUtil.delete(file.toFile())
-    }
   }
 }) else this
 
