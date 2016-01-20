@@ -60,10 +60,6 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         if (((PsiClassType)exprType).resolve() == null) {
           return true;
         }
-
-        if (((PsiClassType)exprType).isRaw()) {
-          session.setErased();
-        }
       }
 
       if (exprType != null && exprType != PsiType.NULL) {

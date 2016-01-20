@@ -1085,6 +1085,11 @@ public class InferenceSession {
         return registerIncompatibleErrorMessage(var, incompatibleBoundsMessage);
       } else {
         type = eqBound;
+
+        if (!TypeConversionUtil.isAssignable(eqBound, lowerBound, false)) {
+          setErased();
+        }
+
       }
     }
     else {
@@ -1110,10 +1115,10 @@ public class InferenceSession {
       for (PsiType upperType : var.getBounds(InferenceBound.UPPER)) {
         if (isProperType(upperType) ) {
           String incompatibleBoundsMessage = null;
-          if (type != lowerBound && !TypeConversionUtil.isAssignable(substitutor.substitute(upperType), type)) {
+          if (type != lowerBound && !TypeConversionUtil.isAssignable(upperType, type)) {
             incompatibleBoundsMessage = incompatibleBoundsMessage(var, substitutor, InferenceBound.EQ, EQUALITY_CONSTRAINTS_PRESENTATION, InferenceBound.UPPER, UPPER_BOUNDS_PRESENTATION);
           }
-          else if (type == lowerBound && !TypeConversionUtil.isAssignable(substitutor.substitute(upperType), lowerBound)) {
+          else if (type == lowerBound && !TypeConversionUtil.isAssignable(upperType, lowerBound)) {
             incompatibleBoundsMessage = incompatibleBoundsMessage(var, substitutor, InferenceBound.LOWER, LOWER_BOUNDS_PRESENTATION, InferenceBound.UPPER, UPPER_BOUNDS_PRESENTATION);
           }
           if (incompatibleBoundsMessage != null) {
