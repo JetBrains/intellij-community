@@ -20,7 +20,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
@@ -44,10 +43,10 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
   private static char[] NO_SPACE_AFTER = { 
     '+', '-', '*', '/', '%', '&', '^', '|', '<', '>', '!', '=', ' ' 
   };
-
-  private Document myLastEditedDocument;
+  
   private char myLastTypedChar;
   private int myLastTypedOffset;
+  private long myLastModificationStamp;
 
   public AutoFormatTypedHandler(@Nullable TypedActionHandler originalHandler) {
     super(originalHandler);
@@ -78,7 +77,7 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     
     myLastTypedChar = charTyped;
     myLastTypedOffset = editor.getCaretModel().getOffset();
-    myLastEditedDocument = editor.getDocument();
+    myLastModificationStamp = editor.getDocument().getModificationStamp();
   }
 
   private boolean isInsertSpaceAtCaret(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
@@ -120,7 +119,8 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
   }
 
   private boolean isSameDocumentAsPrevious(Editor editor) {
-    return editor.getDocument() == myLastEditedDocument && editor.getCaretModel().getOffset() == myLastTypedOffset;
+    return editor.getDocument().getModificationStamp() == myLastModificationStamp 
+           && editor.getCaretModel().getOffset() == myLastTypedOffset;
   }
 
   private static boolean isInsertSpaceBeforeEq(int caretOffset, CharSequence text) {
