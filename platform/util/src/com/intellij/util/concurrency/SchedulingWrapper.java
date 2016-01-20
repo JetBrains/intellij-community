@@ -18,6 +18,7 @@ package com.intellij.util.concurrency;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -370,14 +371,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
                                                 long initialDelay,
                                                 long period,
                                                 @NotNull TimeUnit unit) {
-    if (period <= 0) {
-      throw new IllegalArgumentException("period must be positive but got: "+period);
-    }
-    MyScheduledFutureTask<Void> sft = new MyScheduledFutureTask<Void>(backendExecutorService, command,
-                                                                      null,
-                                                                      triggerTime(delayQueue, initialDelay, unit),
-                                                                      unit.toNanos(period));
-    return delayedExecute(sft);
+    throw new IncorrectOperationException("Not supported because it's bad for hibernation; use scheduleWithFixedDelay() instead.");
   }
 
   @NotNull
