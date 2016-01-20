@@ -106,6 +106,7 @@ export PATH=$JDK_18_x64/bin:$PATH
 $ANT "-Dout=$OUT" "-Dbuild=$BNUM" "-Denable.ui.tests=$UI_TESTS" "-Dinclude.blaze=$BLAZE"
 
 echo "## Copying android-studio distribution files"
-cp -rfv "$OUT"/artifacts/android-studio* "$DIST"/
-cp -rfv "$OUT"/updater-full.jar "$DIST"/android-studio-updater.jar
+mkdir -p "$DIST"
+cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"/
+cp -Rfv "$OUT"/updater-full.jar "$DIST"/android-studio-updater.jar
 (cd ../adt/idea/native/installer/win && zip -r - ".") > "$DIST"/android-studio-bundle-data.zip
