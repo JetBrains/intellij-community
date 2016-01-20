@@ -54,6 +54,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 public class PythonReferenceImporter implements ReferenceImporter {
   @Override
   public boolean autoImportReferenceAtCursor(@NotNull final Editor editor, @NotNull final PsiFile file) {
@@ -194,7 +196,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
                                              PsiFile existingImportFile,
                                              PyImportElement importElement,
                                              PsiElement source) {
-    PyFile sourceFile = ((PyFile)PyUtil.turnDirIntoInit(source));
+    PyFile sourceFile = as(PyUtil.turnDirIntoInit(source), PyFile.class);
     if (sourceFile instanceof PyFileImpl) {
       PyStatement importStatement = importElement.getContainingImportStatement();
       String refName = null;
