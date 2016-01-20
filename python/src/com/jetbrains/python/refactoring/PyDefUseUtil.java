@@ -80,6 +80,13 @@ public class PyDefUseUtil {
                                           return ControlFlowUtil.Operation.CONTINUE;
                                         }
                                       }
+                                      else if (access == ReadWriteInstruction.ACCESS.IMPORT_STAR) {
+                                        final PyStarImportElement starImport = PyUtil.as(element, PyStarImportElement.class);
+                                        if (starImport != null && starImport.getElementNamed(varName) != null) {
+                                          result.add(rwInstruction);
+                                          return ControlFlowUtil.Operation.CONTINUE;
+                                        }
+                                      }
                                     }
                                     return ControlFlowUtil.Operation.NEXT;
                                   }

@@ -38,11 +38,6 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
 /**
  * Ref resolution routines.
  * User: dcheryasov
@@ -117,70 +112,38 @@ public class PyResolveUtil {
         owner = outerScopeOwner;
       }
     }
-    scopeCrawlUp(processor, owner, originalOwner, name, roof, realContext);
+    scopeCrawlUp(processor, owner, originalOwner, name, roof);
   }
 
   public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @NotNull ScopeOwner scopeOwner, @Nullable String name,
                                   @Nullable PsiElement roof) {
-    scopeCrawlUp(processor, scopeOwner, scopeOwner, name, roof, null);
+    scopeCrawlUp(processor, scopeOwner, scopeOwner, name, roof);
   }
 
   public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @Nullable ScopeOwner scopeOwner,
-                                  @Nullable ScopeOwner originalScopeOwner, @Nullable String name, @Nullable PsiElement roof,
-                                  @Nullable final PsiElement anchor) {
+                                  @Nullable ScopeOwner originalScopeOwner, @Nullable String name, @Nullable PsiElement roof) {
     while (scopeOwner != null) {
       if (!(scopeOwner instanceof PyClass) || scopeOwner == originalScopeOwner) {
         final Scope scope = ControlFlowCache.getScope(scopeOwner);
-        boolean found = false;
         if (name != null) {
           final boolean includeNestedGlobals = scopeOwner instanceof PyFile;
-          final PsiElement resolved = scope.getNamedElement(name, includeNestedGlobals);
-          if (resolved != null) {
+          for (PsiNamedElement resolved : scope.getNamedElements(name, includeNestedGlobals)) {
             if (!processor.execute(resolved, ResolveState.initial())) {
-              found = true;
+              return;
             }
           }
         }
         else {
           for (PsiNamedElement element : scope.getNamedElements()) {
             if (!processor.execute(element, ResolveState.initial())) {
-              found = true;
-              break;
+              return;
             }
           }
         }
-        List<NameDefiner> definers = new ArrayList<NameDefiner>(scope.getImportedNameDefiners());
-        if (anchor != null && ScopeUtil.getScopeOwner(anchor) == scopeOwner) {
-          final Comparator<NameDefiner> nearestDefinerComparator = new Comparator<NameDefiner>() {
-            @Override
-            public int compare(NameDefiner a, NameDefiner b) {
-              final boolean aIsBefore = PyPsiUtils.isBefore(a, anchor);
-              final boolean bIsBefore = PyPsiUtils.isBefore(b, anchor);
-              final int diff = a.getTextOffset() - b.getTextOffset();
-              if (aIsBefore && bIsBefore) {
-                return -diff;
-              }
-              else if (aIsBefore) {
-                return -1;
-              }
-              else if (bIsBefore) {
-                return 1;
-              }
-              else {
-                return diff;
-              }
-            }
-          };
-          Collections.sort(definers, nearestDefinerComparator);
-        }
-        for (NameDefiner definer : definers) {
+        for (NameDefiner definer : scope.getImportedNameDefiners()) {
           if (!processor.execute(definer, ResolveState.initial())) {
-            found = true;
-            break;
+            return;
           }
-        }
-        if (found) {
-          return;
         }
       }
       if (scopeOwner == roof) {
@@ -195,14 +158,12 @@ public class PyResolveUtil {
    *
    * @param processor a visitor that says when the crawl is done and collects info.
    * @param elt       element from which we start (not checked by processor); if null, the search immediately returns null.
-   * @return first element that the processor accepted.
    *
    * @deprecated Use {@link #scopeCrawlUp} instead.
    */
   @Deprecated
-  @Nullable
-  public static PsiElement treeCrawlUp(PsiScopeProcessor processor, PsiElement elt) {
-    if (elt == null || !elt.isValid()) return null; // can't find anyway.
+  public static void treeCrawlUp(PsiScopeProcessor processor, PsiElement elt) {
+    if (elt == null || !elt.isValid()) return;
     PsiElement seeker = elt;
     PsiElement cap = PyUtil.getConcealingParent(elt);
     PyFunction capFunction = cap != null ? PsiTreeUtil.getParentOfType(cap, PyFunction.class, false) : null;
@@ -244,27 +205,18 @@ public class PyResolveUtil {
       // check what we got
       if (seeker != null) {
         if (!processor.execute(seeker, ResolveState.initial())) {
-          if (processor instanceof ResolveProcessor) {
-            return ((ResolveProcessor)processor).getResult();
-          }
-          else {
-            return seeker;
-          } // can't point to exact element, but somewhere here
+          return;
         }
       }
     }
     while (seeker != null);
-    if (processor instanceof ResolveProcessor) {
-      return ((ResolveProcessor)processor).getResult();
-    }
-    return null;
   }
 
   /**
    * @param innerFunction a method, presumably inside the class
    * @param outer an element presumably in the class context.
    * @return true if an outer element is in a class context, while the inner is a method or function inside it.
-   * @see com.jetbrains.python.psi.PyUtil#getConcealingParent(com.intellij.psi.PsiElement)
+   * @see PyUtil#getConcealingParent(PsiElement)
    */
   private static boolean refersFromMethodToClass(final PyFunction innerFunction, final PsiElement outer) {
     if (innerFunction == null) {

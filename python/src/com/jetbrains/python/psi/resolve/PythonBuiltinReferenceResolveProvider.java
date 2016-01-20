@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -46,8 +47,10 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
       if (resultElement == null && "__builtins__".equals(referencedName)) {
         resultElement = bfile; // resolve __builtins__ reference
       }
-      if (resultElement != null)
-        result.add(new ImportedResolveResult(resultElement, PyReferenceImpl.getRate(resultElement), definers));
+      if (resultElement != null) {
+        final TypeEvalContext typeEvalContext = TypeEvalContext.codeInsightFallback(element.getProject());
+        result.add(new ImportedResolveResult(resultElement, PyReferenceImpl.getRate(resultElement, typeEvalContext), definers));
+      }
     }
     return result;
   }

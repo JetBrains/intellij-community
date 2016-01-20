@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -445,14 +446,14 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                          boolean isDefinition,
                                          @NotNull String name,
                                          @Nullable PyExpression location) {
-    final ResolveProcessor processor = new ResolveProcessor(name);
+    final PyResolveProcessor processor = new PyResolveProcessor(name);
     if (!isDefinition) {
       if (!cls.processInstanceLevelDeclarations(processor, location)) {
-        return processor.getResult();
+        return Iterables.getFirst(processor.getElements(), null);
       }
     }
     cls.processClassLevelDeclarations(processor);
-    return processor.getResult();
+    return Iterables.getFirst(processor.getElements(), null);
   }
 
   private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
