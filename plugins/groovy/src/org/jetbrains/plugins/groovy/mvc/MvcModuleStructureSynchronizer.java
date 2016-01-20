@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -334,6 +334,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
   @TestOnly
   public static void forceUpdateProject(Project project) {
     MvcModuleStructureSynchronizer instance = project.getComponent(MvcModuleStructureSynchronizer.class);
+    instance.myModificationCount++;
     instance.runActions(instance.computeRawActions(instance.takeOrderSnapshot()));
   }
 

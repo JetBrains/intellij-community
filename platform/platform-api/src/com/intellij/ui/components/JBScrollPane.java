@@ -19,7 +19,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.components.JBScrollBar.Alignment;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -360,6 +359,40 @@ public class JBScrollPane extends JScrollPane {
   }
 
   /**
+   * These client properties show a component position on a scroll pane.
+   * It is set by internal layout manager of the scroll pane.
+   */
+  enum Alignment {
+    TOP, LEFT, RIGHT, BOTTOM;
+
+    static Alignment get(JComponent component) {
+      if (component != null) {
+        Object property = component.getClientProperty(Alignment.class);
+        if (property instanceof Alignment) return (Alignment)property;
+
+        Container parent = component.getParent();
+        if (parent instanceof JScrollPane) {
+          JScrollPane pane = (JScrollPane)parent;
+          if (component == pane.getColumnHeader()) {
+            return TOP;
+          }
+          if (component == pane.getHorizontalScrollBar()) {
+            return BOTTOM;
+          }
+          boolean ltr = pane.getComponentOrientation().isLeftToRight();
+          if (component == pane.getVerticalScrollBar()) {
+            return ltr ? RIGHT : LEFT;
+          }
+          if (component == pane.getRowHeader()) {
+            return ltr ? LEFT : RIGHT;
+          }
+        }
+      }
+      return null;
+    }
+  }
+
+  /**
    * ScrollPaneLayout implementation that supports
    * ScrollBar flipping and non-opaque ScrollBars.
    */
@@ -541,6 +574,13 @@ public class JBScrollPane extends JScrollPane {
         colHead.setBounds(colHeadBounds);
         colHead.putClientProperty(Alignment.class, hsbOnTop ? Alignment.BOTTOM : Alignment.TOP);
       }
+      // Calculate overlaps for translucent scroll bars
+      int overlapWidth = 0;
+      int overlapHeight = 0;
+      if (vsbNeeded && !vsbOpaque && hsbNeeded && !hsbOpaque) {
+        overlapWidth = vsbBounds.width; // shrink horizontally
+        //overlapHeight = hsbBounds.height; // shrink vertically
+      }
       // Set the bounds of the vertical scroll bar.
       vsbBounds.y = bounds.y - insets.top;
       vsbBounds.height = bounds.height + insets.top + insets.bottom;
@@ -557,7 +597,8 @@ public class JBScrollPane extends JScrollPane {
               vsbBounds.height += colHeadBounds.height;
             }
           }
-          vsb.setBounds(vsbBounds);
+          int overlapY = !hsbOnTop ? 0 : overlapHeight;
+          vsb.setBounds(vsbBounds.x, vsbBounds.y + overlapY, vsbBounds.width, vsbBounds.height - overlapHeight);
           vsb.putClientProperty(Alignment.class, vsbOnLeft ? Alignment.LEFT : Alignment.RIGHT);
           pane.setComponentZOrder(vsb, 0);
         }
@@ -583,7 +624,8 @@ public class JBScrollPane extends JScrollPane {
               hsbBounds.width += rowHeadBounds.width;
             }
           }
-          hsb.setBounds(hsbBounds);
+          int overlapX = !vsbOnLeft ? 0 : overlapWidth;
+          hsb.setBounds(hsbBounds.x + overlapX, hsbBounds.y, hsbBounds.width - overlapWidth, hsbBounds.height);
           hsb.putClientProperty(Alignment.class, hsbOnTop ? Alignment.TOP : Alignment.BOTTOM);
         }
         // Modify the bounds of the translucent scroll bar.

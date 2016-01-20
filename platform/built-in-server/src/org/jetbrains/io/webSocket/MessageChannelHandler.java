@@ -8,6 +8,7 @@ import org.jetbrains.io.ChannelBufferToString;
 import org.jetbrains.io.SimpleChannelInboundHandlerAdapter;
 import org.jetbrains.io.jsonRpc.Client;
 import org.jetbrains.io.jsonRpc.ClientManager;
+import org.jetbrains.io.jsonRpc.ClientManagerKt;
 import org.jetbrains.io.jsonRpc.MessageServer;
 
 @ChannelHandler.Sharable
@@ -22,7 +23,7 @@ final class MessageChannelHandler extends SimpleChannelInboundHandlerAdapter<Web
 
   @Override
   protected void messageReceived(ChannelHandlerContext context, WebSocketFrame message) throws Exception {
-    WebSocketClient client = (WebSocketClient)context.attr(ClientManager.CLIENT).get();
+    WebSocketClient client = (WebSocketClient)context.attr(ClientManagerKt.getCLIENT()).get();
     if (message instanceof CloseWebSocketFrame) {
       if (client != null) {
         try {
@@ -39,10 +40,10 @@ final class MessageChannelHandler extends SimpleChannelInboundHandlerAdapter<Web
     }
     else if (message instanceof TextWebSocketFrame) {
       try {
-        messageServer.messageReceived(client, ChannelBufferToString.readChars(message.content()), false);
+        messageServer.messageReceived(client, ChannelBufferToString.readChars(message.content()));
       }
       catch (Throwable e) {
-        clientManager.exceptionHandler.exceptionCaught(e);
+        clientManager.getExceptionHandler().exceptionCaught(e);
       }
     }
     else if (!(message instanceof PongWebSocketFrame)) {
@@ -52,7 +53,7 @@ final class MessageChannelHandler extends SimpleChannelInboundHandlerAdapter<Web
 
   @Override
   public void channelInactive(ChannelHandlerContext context) throws Exception {
-    Client client = context.attr(ClientManager.CLIENT).get();
+    Client client = context.attr(ClientManagerKt.getCLIENT()).get();
     // if null, so, has already been explicitly removed
     if (client != null) {
       clientManager.disconnectClient(context, client, false);
@@ -62,7 +63,7 @@ final class MessageChannelHandler extends SimpleChannelInboundHandlerAdapter<Web
   @Override
   public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
     try {
-      clientManager.exceptionHandler.exceptionCaught(cause);
+      clientManager.getExceptionHandler().exceptionCaught(cause);
     }
     finally {
       context.channel().close();

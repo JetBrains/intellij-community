@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import java.awt.Container
 import java.io.File
 import java.io.IOException
 
-public interface RepositoryService {
-  public fun checkUrl(uriString: String, messageParent: Container? = null): Boolean {
+interface RepositoryService {
+  fun checkUrl(uriString: String, messageParent: Container? = null): Boolean {
     val uri = URIish(uriString)
     val isFile: Boolean
     if (uri.scheme == URLUtil.FILE_PROTOCOL) {
@@ -41,7 +41,7 @@ public interface RepositoryService {
     return true
   }
 
-  public fun checkFileRepo(url: String, messageParent: Container): Boolean {
+  fun checkFileRepo(url: String, messageParent: Container): Boolean {
     val suffix = "/${Constants.DOT_GIT}"
     val file = File(if (url.endsWith(suffix)) url.substring(0, url.length - suffix.length) else url)
     if (file.exists()) {
@@ -75,5 +75,5 @@ public interface RepositoryService {
   }
 
   // must be protected, kotlin bug
-  public fun isValidRepository(file: File): Boolean
+  fun isValidRepository(file: File): Boolean
 }

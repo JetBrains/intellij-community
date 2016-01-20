@@ -709,7 +709,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   private void doTestCatchParameter(final PsiType rootType, final PsiType migrationType) {
     start(new RulesProvider() {
       @Override
-      public PsiType migrationType() {
+      public PsiType migrationType(PsiElement context) {
         return migrationType;
       }
 
@@ -807,7 +807,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testMethodReturnTypeWithTypeParameter() {
-    doTestReturnType("meth", myFactory.createTypeFromText("java.util.List<T>", null));
+    doTestReturnType("meth", "java.util.List<T>");
   }
 
   public void testBooleanGetterMethodName() {
@@ -826,11 +826,11 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFieldType("fooDontMigrateName", PsiType.BOOLEAN);
   }
 
-  private void doTestReturnType(final String methodName, final PsiType migrationType) {
+  private void doTestReturnType(final String methodName, final String migrationType) {
     start(new RulesProvider() {
       @Override
-      public PsiType migrationType() throws Exception {
-        return migrationType;
+      public PsiType migrationType(PsiElement context) throws Exception {
+        return myFactory.createTypeFromText(migrationType, context);
       }
 
       @Override
@@ -848,7 +848,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   private void doTestForeachParameter(final PsiType migrationType) {
     start(new RulesProvider() {
       @Override
-      public PsiType migrationType() {
+      public PsiType migrationType(PsiElement context) {
         return migrationType;
       }
 

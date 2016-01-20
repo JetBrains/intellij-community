@@ -1,0 +1,4 @@
+server1: http://localhost:9876
+server2:
+  http://localhost:8765
+server3: test

@@ -43,9 +43,11 @@ import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.printer.idea.GraphCellPainter;
 import com.intellij.vcs.log.printer.idea.PositionUtil;
 import com.intellij.vcs.log.printer.idea.SimpleGraphCellPainter;
+import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -83,16 +85,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   private final VcsLogDataHolder myLogDataHolder;
   private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
-  private final TableModelListener myColumnSizeInitializer = new TableModelListener() {
-    @Override
-    public void tableChanged(TableModelEvent e) {
-      if (initColumnSize()) {
-        getModel().removeTableModelListener(this);
-      }
-    }
-  };
   private final GraphCommitCellRender myGraphCommitCellRenderer;
-
   private boolean myColumnsSizeInitialized = false;
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
@@ -131,10 +124,12 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
     getTableHeader().setReorderingAllowed(false);
 
-    PopupHandler.installPopupHandler(this, VcsLogUiImpl.POPUP_ACTION_GROUP, VcsLogUiImpl.VCS_LOG_TABLE_PLACE);
+    PopupHandler.installPopupHandler(this, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     ScrollingUtil.installActions(this, false);
 
-    setModel(new GraphTableModel(initialDataPack, myLogDataHolder, myUI));
+    GraphTableModel model = new GraphTableModel(initialDataPack, myLogDataHolder, myUI);
+    setModel(model);
+    initColumnSize();
   }
 
   public void updateDataPack(@NotNull VisiblePack visiblePack) {
@@ -142,32 +137,24 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     getGraphTableModel().setVisiblePack(visiblePack);
     previousSelection.restore(visiblePack.getVisibleGraph(), true);
     setPaintBusy(false);
+    initColumnSize();
   }
 
-  @Override
-  public void setModel(@NotNull TableModel model) {
-    super.setModel(model);
-    if (getModel().getRowCount() > 0) {
-      initColumnSize();
-    }
-    else {
-      model.addTableModelListener(myColumnSizeInitializer);
-    }
-  }
-
-  private boolean initColumnSize() {
+  boolean initColumnSize() {
     if (!myColumnsSizeInitialized && getModel().getRowCount() > 0) {
-      myColumnsSizeInitialized = true;
-      setColumnPreferredSize();
-      setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
-
-      getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN).setHeaderRenderer(new RootHeaderRenderer());
-      return true;
+      myColumnsSizeInitialized = setColumnPreferredSize();
+      if (myColumnsSizeInitialized) {
+        setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
+        getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN).setHeaderRenderer(new RootHeaderRenderer());
+      }
+      return myColumnsSizeInitialized;
     }
     return false;
   }
 
-  private void setColumnPreferredSize() {
+  private boolean setColumnPreferredSize() {
+    boolean sizeCalculated = false;
+    Font tableFont = UIManager.getFont("Table.font");
     for (int i = 0; i < getColumnCount(); i++) {
       TableColumn column = getColumnModel().getColumn(i);
       if (i == GraphTableModel.ROOT_COLUMN) { // thin stripe, or root name, or nothing
@@ -182,16 +169,21 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         if (maxRowsToCheck < 0) { // but if the log is small, check all of them
           maxRowsToCheck = getRowCount();
         }
-        int contentWidth = calcMaxContentColumnWidth(i, maxRowsToCheck);
-        column.setMinWidth(Math.min(contentWidth, MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
+        int maxWidth = 0;
+        for (int row = 0; row < maxRowsToCheck; row++) {
+          String value = getModel().getValueAt(row, i).toString();
+          maxWidth = Math.max(getFontMetrics(tableFont).stringWidth(value), maxWidth);
+          if (!value.isEmpty()) sizeCalculated = true;
+        }
+        column.setMinWidth(Math.min(maxWidth + UIUtil.DEFAULT_HGAP, MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
         column.setWidth(column.getMinWidth());
       }
       else if (i == GraphTableModel.DATE_COLUMN) { // all dates have nearly equal sizes
-        Font tableFont = UIManager.getFont("Table.font");
         column.setMinWidth(getFontMetrics(tableFont).stringWidth("mm" + DateFormatUtil.formatDateTime(new Date())));
         column.setWidth(column.getMinWidth());
       }
     }
+    return sizeCalculated;
   }
 
   private void setRootColumnSize(TableColumn column) {
@@ -219,16 +211,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       width = Math.max(getFontMetrics(tableFont).stringWidth(file.getName() + "  "), width);
     }
     return width;
-  }
-
-  private int calcMaxContentColumnWidth(int columnIndex, int maxRowsToCheck) {
-    int maxWidth = 0;
-    for (int row = 0; row < maxRowsToCheck; row++) {
-      TableCellRenderer renderer = getCellRenderer(row, columnIndex);
-      Component comp = prepareRenderer(renderer, row, columnIndex);
-      maxWidth = Math.max(comp.getPreferredSize().width, maxWidth);
-    }
-    return maxWidth + UIUtil.DEFAULT_HGAP;
   }
 
   @Override
@@ -259,26 +241,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     }
   }
 
-  @Nullable
-  public List<Change> getSelectedChanges() {
-    TableModel model = getModel();
-    if (!(model instanceof GraphTableModel)) {
-      return null;
-    }
-    List<Change> changes = ((GraphTableModel)model).getSelectedChanges(sortSelectedRows());
-    return changes == null ? null : CommittedChangesTreeBrowser.zipChanges(changes);
-  }
-
-  @NotNull
-  private List<Integer> sortSelectedRows() {
-    List<Integer> rows = ContainerUtil.newArrayList();
-    for (int row : getSelectedRows()) {
-      rows.add(row);
-    }
-    Collections.sort(rows, Collections.reverseOrder());
-    return rows;
-  }
-
   @Override
   public void calcData(DataKey key, DataSink sink) {
     if (PlatformDataKeys.COPY_PROVIDER == key) {
@@ -288,7 +250,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    List<VcsFullCommitDetails> details = myUI.getVcsLog().getSelectedDetails();
+    List<VcsFullCommitDetails> details = VcsLogUtil.collectFirstPackOfLoadedSelectedDetails(myUI.getVcsLog());
     if (!details.isEmpty()) {
       CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(details, new Function<VcsFullCommitDetails, String>() {
         @Override
@@ -444,7 +406,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   @NotNull
-  private GraphTableModel getGraphTableModel() {
+  public GraphTableModel getGraphTableModel() {
     return (GraphTableModel)getModel();
   }
 

@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexander Lobas
  */
 public class PaletteToolWindowManager extends AbstractToolWindowManager {
-  private final PalettePanel myToolWindowPanel = new PalettePanel();
+  private PalettePanel myToolWindowPanel;
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //
@@ -66,6 +66,10 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
 
   @Override
   protected void initToolWindow() {
+    if (myToolWindowPanel == null) {
+      myToolWindowPanel = new PalettePanel();
+    }
+
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette\t", false, getAnchor(), myProject, true);
     myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowPalette);
     initGearActions();
@@ -100,7 +104,9 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
 
   @Override
   public void disposeComponent() {
-    myToolWindowPanel.dispose();
+    if (myToolWindowPanel != null) {
+      myToolWindowPanel.dispose();
+    }
   }
 
   @NotNull

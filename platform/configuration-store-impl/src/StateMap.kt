@@ -40,7 +40,7 @@ class StateMap private constructor(private val names: Array<String>, private val
 
     val EMPTY = StateMap(emptyArray(), AtomicReferenceArray(0))
 
-    public fun fromMap(map: Map<String, Any>): StateMap {
+    fun fromMap(map: Map<String, Any>): StateMap {
       if (map.isEmpty()) {
         return EMPTY
       }
@@ -52,12 +52,12 @@ class StateMap private constructor(private val names: Array<String>, private val
 
       val states = AtomicReferenceArray<Any?>(names.size)
       for (i in names.indices) {
-        states.set(i, map.get(names[i]))
+        states.set(i, map[names[i]])
       }
       return StateMap(names, states)
     }
 
-    public fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, Element>? = null): Element {
+    fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, Element>? = null): Element {
       if (state is Element) {
         return state.clone()
       }
@@ -66,7 +66,7 @@ class StateMap private constructor(private val names: Array<String>, private val
       }
     }
 
-    public fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteArray? {
+    fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteArray? {
       val newBytes = if (newState is Element) archiveState(newState) else newState as ByteArray
       if (Arrays.equals(newBytes, oldState)) {
         return null
@@ -99,7 +99,7 @@ class StateMap private constructor(private val names: Array<String>, private val
     private fun unarchiveState(state: ByteArray) = JDOMUtil.load(SnappyInputStream(ByteArrayInputStream(state)))
   }
 
-  public fun toMutableMap(): MutableMap<String, Any> {
+  fun toMutableMap(): MutableMap<String, Any> {
     val map = THashMap<String, Any>(names.size)
     for (i in names.indices) {
       map.put(names[i], states.get(i))
@@ -112,7 +112,7 @@ class StateMap private constructor(private val names: Array<String>, private val
    */
   fun keys() = names
 
-  public fun get(key: String): Any? {
+  fun get(key: String): Any? {
     val index = Arrays.binarySearch(names, key)
     return if (index < 0) null else states.get(index)
   }
@@ -123,7 +123,7 @@ class StateMap private constructor(private val names: Array<String>, private val
 
   fun hasState(key: String) = get(key) is Element
 
-  public fun hasStates(): Boolean {
+  fun hasStates(): Boolean {
     if (isEmpty()) {
       return false
     }
@@ -136,7 +136,7 @@ class StateMap private constructor(private val names: Array<String>, private val
     return false
   }
 
-  public fun compare(key: String, newStates: StateMap, diffs: MutableSet<String>) {
+  fun compare(key: String, newStates: StateMap, diffs: MutableSet<String>) {
     val oldState = get(key)
     val newState = newStates.get(key)
     if (oldState is Element) {
@@ -162,7 +162,7 @@ class StateMap private constructor(private val names: Array<String>, private val
     return if (states.compareAndSet(index, state, archiveState(state))) state else getState(key, true)
   }
 
-  public fun archive(key: String, state: Element?) {
+  fun archive(key: String, state: Element?) {
     val index = Arrays.binarySearch(names, key)
     if (index < 0) {
       return

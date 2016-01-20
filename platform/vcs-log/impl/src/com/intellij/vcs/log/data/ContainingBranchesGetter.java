@@ -46,7 +46,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
   @NotNull private final VcsLogDataHolder myDataHolder;
 
   // other fields accessed only from EDT
-  @NotNull private SLRUMap<Hash, List<String>> myCache = createCache();
+  @NotNull private SLRUMap<CommitId, List<String>> myCache = createCache();
   @NotNull private Map<VirtualFile, ContainedInBranchCondition> myConditions = ContainerUtil.newHashMap();
   @Nullable private Runnable myLoadingFinishedListener;
   private int myCurrentBranchesChecksum;
@@ -64,7 +64,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
           public void run() {
             // if cache is cleared (because of log refresh) during this task execution,
             // this will put obsolete value into the old instance we don't care anymore
-            task.cache.put(task.hash, branches);
+            task.cache.put(new CommitId(task.hash, task.root), branches);
             notifyListener();
           }
         });
@@ -126,11 +126,16 @@ public class ContainingBranchesGetter implements VcsLogListener {
   @Nullable
   public List<String> requestContainingBranches(@NotNull VirtualFile root, @NotNull Hash hash) {
     LOG.assertTrue(EventQueue.isDispatchThread());
-    List<String> refs = myCache.get(hash);
+    List<String> refs = myCache.get(new CommitId(hash, root));
     if (refs == null) {
       myTaskExecutor.queue(new Task(root, hash, myCache, myGraph, myRefs));
     }
     return refs;
+  }
+
+  public List<String> getContainingBranchesFromCache(@NotNull VirtualFile root, @NotNull Hash hash) {
+    LOG.assertTrue(EventQueue.isDispatchThread());
+    return myCache.get(new CommitId(hash, root));
   }
 
   @NotNull
@@ -146,29 +151,28 @@ public class ContainingBranchesGetter implements VcsLogListener {
     if (branchRef == null) return Conditions.alwaysFalse();
     ContainedInBranchCondition condition = myConditions.get(root);
     if (condition == null || !condition.getBranch().equals(branchName)) {
-      condition =
-        new ContainedInBranchCondition(myGraph.getContainedInBranchCondition(Collections.singleton(myDataHolder.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot()))),
-                          branchName);
+      condition = new ContainedInBranchCondition(myGraph.getContainedInBranchCondition(
+        Collections.singleton(myDataHolder.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot()))), branchName);
       myConditions.put(root, condition);
     }
     return condition;
   }
 
   @NotNull
-  private static SLRUMap<Hash, List<String>> createCache() {
-    return new SLRUMap<Hash, List<String>>(1000, 1000);
+  private static SLRUMap<CommitId, List<String>> createCache() {
+    return new SLRUMap<CommitId, List<String>>(1000, 1000);
   }
 
   private static class Task {
     private final VirtualFile root;
     private final Hash hash;
-    private final SLRUMap<Hash, List<String>> cache;
+    private final SLRUMap<CommitId, List<String>> cache;
     @Nullable private final VcsLogRefs refs;
     @Nullable private final PermanentGraph<Integer> graph;
 
     public Task(VirtualFile root,
                 Hash hash,
-                SLRUMap<Hash, List<String>> cache,
+                SLRUMap<CommitId, List<String>> cache,
                 @Nullable PermanentGraph<Integer> graph,
                 @Nullable VcsLogRefs refs) {
       this.root = root;

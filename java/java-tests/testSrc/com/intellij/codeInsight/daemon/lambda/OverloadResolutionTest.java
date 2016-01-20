@@ -21,7 +21,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 
 public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
@@ -98,21 +97,11 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testManyOverloadsWithVarargs() throws Exception {
-    PlatformTestUtil.startPerformanceTest("Overload resolution with 14 overloads", 20000, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        doTest(false);
-      }
-    }).useLegacyScaling().assertTiming();
+    PlatformTestUtil.startPerformanceTest("Overload resolution with 14 overloads", 10000, () -> doTest(false)).useLegacyScaling().assertTiming();
   }
 
   public void testConstructorOverloadsWithDiamonds() throws Exception {
-    PlatformTestUtil.startPerformanceTest("Overload resolution with chain constructor calls with diamonds", 10000, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        doTest(false);
-      }
-    }).useLegacyScaling().assertTiming();
+    PlatformTestUtil.startPerformanceTest("Overload resolution with chain constructor calls with diamonds", 5000, () -> doTest(false)).useLegacyScaling().assertTiming();
   }
 
   public void testMultipleOverloadsWithNestedGeneric() throws Exception {
@@ -192,6 +181,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testNoNeedToPreferGenericToRawSubstitution() throws Exception {
+    doTest();
+  }
+
+  public void testLongerParamsWhenVarargs() throws Exception {
     doTest();
   }
 

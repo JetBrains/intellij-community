@@ -51,6 +51,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -289,6 +290,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       panel.setBorder(JBUI.Borders.empty(4, 6, 4, 6));
       panel.add(ref.get());
+      AccessibleContextUtil.setName(panel, ref.get());
+      AccessibleContextUtil.setDescription(panel, ref.get());
       panel.add(createArrow(ref.get()), BorderLayout.EAST);
       installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
       return panel;
@@ -325,6 +328,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
           link.setPaintUnderline(false);
           link.setNormalColor(getLinkNormalColor());
           button.add(link);
+          AccessibleContextUtil.setName(button, link);
+          AccessibleContextUtil.setDescription(button, link);
           if (action instanceof WelcomePopupAction) {
             button.add(createArrow(link), BorderLayout.EAST);
           }

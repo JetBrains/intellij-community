@@ -121,7 +121,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       var timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
       for (name in names) {
         val start = if (timeLog == null) 0 else System.currentTimeMillis()
-        commitComponent(externalizationSession, components.get(name)!!, name)
+        commitComponent(externalizationSession, components[name]!!, name)
         timeLog?.let {
           val duration = System.currentTimeMillis() - start
           if (duration > 10) {
@@ -343,7 +343,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   fun getNotReloadableComponents(componentNames: Collection<String>): Collection<String> {
     var notReloadableComponents: MutableSet<String>? = null
     for (componentName in componentNames) {
-      if (isNotReloadable(components.get(componentName))) {
+      if (isNotReloadable(components[componentName])) {
         if (notReloadableComponents == null) {
           notReloadableComponents = LinkedHashSet<String>()
         }
@@ -362,7 +362,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   override final fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
     val stateSpec = StoreUtil.getStateSpecOrError(componentClass)
     @Suppress("UNCHECKED_CAST")
-    val component = components.get(stateSpec.name) as PersistentStateComponent<Any>?
+    val component = components[stateSpec.name] as PersistentStateComponent<Any>?
     if (component != null) {
       initPersistentComponent(stateSpec, component, emptySet(), true)
     }
@@ -370,7 +370,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   private fun reloadState(componentName: String, changedStorages: Set<StateStorage>): Boolean {
     @Suppress("UNCHECKED_CAST")
-    val component = components.get(componentName) as PersistentStateComponent<Any>?
+    val component = components[componentName] as PersistentStateComponent<Any>?
     if (component == null) {
       return false
     }
@@ -416,7 +416,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   /**
    * You must call it in batch mode (use runBatchUpdate)
    */
-  public fun reinitComponents(componentNames: Set<String>, changedStorages: Set<StateStorage> = emptySet(), notReloadableComponents: Collection<String> = emptySet()) {
+  fun reinitComponents(componentNames: Set<String>, changedStorages: Set<StateStorage> = emptySet(), notReloadableComponents: Collection<String> = emptySet()) {
     for (componentName in componentNames) {
       if (!notReloadableComponents.contains(componentName)) {
         reloadState(componentName, changedStorages)
@@ -480,7 +480,7 @@ internal fun sortStoragesByDeprecated(storages: Array<Storage>): Array<out Stora
     }
   }
 
-  return storages.sortedArrayWith(comparator { o1, o2 ->
+  return storages.sortedArrayWith(Comparator<Storage> { o1, o2 ->
     val w1 = if (o1.deprecated) 1 else 0
     val w2 = if (o2.deprecated) 1 else 0
     w1 - w2

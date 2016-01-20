@@ -8,7 +8,7 @@
   <problem>
     <file>CaseAndNpe.java</file>
     <line>26</line>
-    <description>Method invocation 'o.equals(o)' may produce NullPointerException</description>
+    <description>Method invocation 'equals' may produce NullPointerException</description>
   </problem>
   <problem>
     <file>CaseAndNpe.java</file>

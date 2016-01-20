@@ -9,6 +9,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.BinaryRequestHandler;
 import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.io.MessageDecoder;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionHandler, ClientListener {
+public class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionHandler, ClientListener {
   private static final Logger LOG = Logger.getInstance(RpcBinaryRequestHandler.class);
 
   private static final UUID ID = UUID.fromString("69957EEB-AFB8-4036-A9A8-00D2D022F9BD");
@@ -27,17 +28,25 @@ class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionH
     @NotNull
     @Override
     protected ClientManager compute() {
-      ClientManager result = new ClientManager(RpcBinaryRequestHandler.this, RpcBinaryRequestHandler.this);
+      ClientManager result = new ClientManager(RpcBinaryRequestHandler.this, RpcBinaryRequestHandler.this, null);
       Disposable serverDisposable = BuiltInServerManager.getInstance().getServerDisposable();
       assert serverDisposable != null;
       Disposer.register(serverDisposable, result);
 
       rpcServer = new JsonRpcServer(result);
+      JsonRpcServerKt.registerFromEp(rpcServer);
       return result;
     }
   };
 
   private JsonRpcServer rpcServer;
+
+  @NotNull
+  @TestOnly
+  public JsonRpcServer getRpcServer() {
+    clientManager.getValue();
+    return rpcServer;
+  }
 
   @NotNull
   @Override
@@ -49,7 +58,7 @@ class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionH
   @Override
   public ChannelHandler getInboundHandler(@NotNull ChannelHandlerContext context) {
     SocketClient client = new SocketClient(context.channel());
-    context.attr(ClientManager.CLIENT).set(client);
+    context.attr(ClientManagerKt.getCLIENT()).set(client);
     clientManager.getValue().addClient(client);
     connected(client, null);
     return new MyDecoder(client);
@@ -74,7 +83,6 @@ class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionH
 
   private class MyDecoder extends MessageDecoder {
     private State state = State.LENGTH;
-    private int contentLength;
 
     private final SocketClient client;
 
@@ -103,10 +111,10 @@ class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionH
             }
 
             try {
-              rpcServer.messageReceived(client, content, true);
+              rpcServer.messageReceived(client, content);
             }
             catch (Throwable e) {
-              clientManager.getValue().exceptionHandler.exceptionCaught(e);
+              clientManager.getValue().getExceptionHandler().exceptionCaught(e);
             }
             finally {
               contentLength = 0;
@@ -119,7 +127,7 @@ class RpcBinaryRequestHandler extends BinaryRequestHandler implements ExceptionH
 
     @Override
     public void channelInactive(ChannelHandlerContext context) throws Exception {
-      Client client = context.attr(ClientManager.CLIENT).get();
+      Client client = context.attr(ClientManagerKt.getCLIENT()).get();
       // if null, so, has already been explicitly removed
       if (client != null) {
         clientManager.getValue().disconnectClient(context, client, false);

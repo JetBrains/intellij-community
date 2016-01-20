@@ -1,0 +1,41 @@
+YAML file
+  YAML document
+    PsiElement(---)('---')
+    PsiElement(Eol)('\n')
+    YAML mapping
+      YAML key value
+        PsiElement(scalar key)('foo:')
+        PsiWhiteSpace(' ')
+        YAML scalar text
+          PsiElement(scalar text)('>')
+      PsiElement(Eol)('\n')
+      YAML key value
+        PsiElement(scalar key)('bar:')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('  ')
+        YAML mapping
+          YAML key value
+            PsiElement(scalar key)('abc:')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('def')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('  ')
+          YAML key value
+            PsiElement(scalar key)('ghi:')
+            PsiWhiteSpace(' ')
+            YAML scalar text
+              PsiElement(scalar text)('>')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('  ')
+          YAML key value
+            PsiElement(scalar key)('jkl:')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('mno')
+      PsiElement(Eol)('\n')
+      YAML key value
+        PsiElement(scalar key)('baz:')
+        PsiWhiteSpace(' ')
+        YAML plain scalar text
+          PsiElement(text)('qwe')

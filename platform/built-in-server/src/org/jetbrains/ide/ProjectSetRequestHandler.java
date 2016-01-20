@@ -67,6 +67,7 @@ public class ProjectSetRequestHandler extends RestService {
       @Override
       public void run() {
         new ProjectSetReader().readDescriptor(descriptor, null);
+        activateLastFocusedFrame();
       }
     });
     sendOk(request, context);

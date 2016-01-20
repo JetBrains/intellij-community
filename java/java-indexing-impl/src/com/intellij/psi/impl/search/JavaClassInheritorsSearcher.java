@@ -64,11 +64,15 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
                        PsiBundle.message("psi.search.inheritors.progress"));
     }
 
-    processInheritors(consumer, baseClass, searchScope, parameters);
-
-    if (progress != null) {
-      progress.popState();
+    try {
+      processInheritors(consumer, baseClass, searchScope, parameters);
     }
+    finally {
+      if (progress != null) {
+        progress.popState();
+      }
+    }
+
   }
 
   private static void processInheritors(@NotNull final Processor<PsiClass> consumer,

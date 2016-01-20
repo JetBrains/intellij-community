@@ -322,8 +322,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     }
   }
 
-  private boolean spansMultipleModules() {
-    final String qualifiedName = getConfiguration().getPackage();
+  protected boolean spansMultipleModules(final String qualifiedName) {
     if (qualifiedName != null) {
       final Project project = getConfiguration().getProject();
       final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(qualifiedName);
@@ -350,7 +349,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     final String workingDirectory = getConfiguration().getWorkingDirectory();
     return getScope() != TestSearchScope.SINGLE_MODULE &&
            ("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory) &&
-           spansMultipleModules();
+           spansMultipleModules(getConfiguration().getPackage());
   }
 
   protected void createTempFiles(JavaParameters javaParameters) {

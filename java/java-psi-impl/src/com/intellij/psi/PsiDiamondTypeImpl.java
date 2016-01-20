@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -535,7 +534,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass psiClass = resolveResult.getElement();
       if (psiClass != null) {
-        if (psiClass instanceof PsiTypeParameter && InferenceSession.isFreshVariable((PsiTypeParameter)psiClass)) {
+        if (psiClass instanceof PsiTypeParameter && TypeConversionUtil.isFreshVariable((PsiTypeParameter)psiClass)) {
           return false;
         }
         

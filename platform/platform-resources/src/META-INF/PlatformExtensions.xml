@@ -25,9 +25,6 @@
     <applicationService serviceInterface="com.intellij.openapi.vfs.tracker.VirtualFileTracker"
                         serviceImplementation="com.intellij.openapi.vfs.tracker.VirtualFileTrackerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.concurrency.JobScheduler"
-                        serviceImplementation="com.intellij.concurrency.JobSchedulerImpl"/>
-
     <applicationService serviceInterface="com.intellij.openapi.options.ShowSettingsUtil"
                         serviceImplementation="com.intellij.ide.actions.ShowSettingsUtilImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.help.HelpManager"
@@ -422,7 +419,7 @@
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupTaskManager"/>
     <projectConfigurable groupId="tools" instance="com.intellij.execution.startup.ProjectStartupConfigurable"
                          displayName="Startup Tasks"
-                         id="preferences.startup.tasks"/>
+                         id="preferences.startup.tasks" nonDefaultProject="true"/>
     <postStartupActivity implementation="com.intellij.execution.startup.ProjectStartupRunner"/>
   </extensions>
 </idea-plugin>

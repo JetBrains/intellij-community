@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.ServerBootstrap
+import io.netty.buffer.ByteBuf
 import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.oio.OioEventLoopGroup
@@ -58,7 +59,7 @@ fun oioClientBootstrap(): Bootstrap {
 }
 
 inline fun ChannelFuture.addListener(crossinline listener: (future: ChannelFuture) -> Unit) {
-  addListener(GenericFutureListener<io.netty.channel.ChannelFuture> { future -> listener(future) })
+  addListener(GenericFutureListener<io.netty.channel.ChannelFuture> { listener(it) })
 }
 
 // if NIO, so, it is shared and we must not shutdown it
@@ -96,3 +97,17 @@ val Channel.uriScheme: String
 
 val HttpRequest.host: String
   get() = headers().getAsString(HttpHeaderNames.HOST)
+
+inline fun <T> ByteBuf.releaseIfError(task: () -> T): T {
+  try {
+    return task()
+  }
+  catch (e: Exception) {
+    try {
+      release()
+    }
+    finally {
+      throw e
+    }
+  }
+}

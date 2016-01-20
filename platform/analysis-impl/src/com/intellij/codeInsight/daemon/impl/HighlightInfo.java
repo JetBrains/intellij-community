@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,8 +133,7 @@ public class HighlightInfo implements Segment {
     return description;
   }
 
-  @MagicConstant(intValues = {BIJECTIVE_MASK, HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK,
-    NEEDS_UPDATE_ON_TYPING_MASK})
+  @MagicConstant(intValues = {BIJECTIVE_MASK, HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK})
   private @interface FlagConstant {}
 
   private boolean isFlagSet(@FlagConstant byte mask) {
@@ -293,24 +292,9 @@ public class HighlightInfo implements Segment {
   private static boolean calcNeedUpdateOnTyping(@Nullable Boolean needsUpdateOnTyping, HighlightInfoType type) {
     if (needsUpdateOnTyping != null) return needsUpdateOnTyping.booleanValue();
 
-    if (type == HighlightInfoType.TODO) return false;
-    if (type == HighlightInfoType.LOCAL_VARIABLE) return false;
-    if (type == HighlightInfoType.INSTANCE_FIELD) return false;
-    if (type == HighlightInfoType.STATIC_FIELD) return false;
-    if (type == HighlightInfoType.STATIC_FINAL_FIELD) return false;
-    if (type == HighlightInfoType.PARAMETER) return false;
-    if (type == HighlightInfoType.METHOD_CALL) return false;
-    if (type == HighlightInfoType.METHOD_DECLARATION) return false;
-    if (type == HighlightInfoType.STATIC_METHOD) return false;
-    if (type == HighlightInfoType.ABSTRACT_METHOD) return false;
-    if (type == HighlightInfoType.INHERITED_METHOD) return false;
-    if (type == HighlightInfoType.CONSTRUCTOR_CALL) return false;
-    if (type == HighlightInfoType.CONSTRUCTOR_DECLARATION) return false;
-    if (type == HighlightInfoType.INTERFACE_NAME) return false;
-    if (type == HighlightInfoType.ABSTRACT_CLASS_NAME) return false;
-    if (type == HighlightInfoType.ENUM_NAME) return false;
-    if (type == HighlightInfoType.CLASS_NAME) return false;
-    if (type == HighlightInfoType.ANONYMOUS_CLASS_NAME) return false;
+    if (type instanceof HighlightInfoType.UpdateOnTypingSuppressible) {
+      return ((HighlightInfoType.UpdateOnTypingSuppressible)type).needsUpdateOnTyping();
+    }
     return true;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -289,7 +289,7 @@ private fun resolveConflicts(mergeResult: MergeResultEx, repository: Repository)
   assert(mergeResult.mergedCommits.size == 2)
   val conflicts = mergeResult.conflicts!!
   val mergeProvider = JGitMergeProvider(repository, conflicts, { path, index ->
-    val rawText = get(path)!!.getSequences().get(index) as RawText
+    val rawText = get(path)!!.sequences.get(index) as RawText
     // RawText.EMPTY_TEXT if content is null - deleted
     if (rawText == RawText.EMPTY_TEXT) null else rawText.content
   })
@@ -310,7 +310,7 @@ private fun resolveConflicts(mergeProvider: JGitMergeProvider<out Any>, unresolv
       break
     }
     else {
-      unresolvedFiles.removeAll(mergedFiles)
+      unresolvedFiles.removeAll { it.path in mergedFiles }
     }
   }
 

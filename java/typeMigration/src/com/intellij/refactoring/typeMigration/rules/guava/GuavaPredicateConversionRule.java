@@ -64,7 +64,7 @@ public class GuavaPredicateConversionRule extends GuavaLambdaConversionRule {
     return new TypeConversionDescriptorBase() {
       @Override
       public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
-        return (PsiExpression)expression.replace(JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::test", expression));
+        return (PsiExpression)expression.replace(JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::apply", expression));
       }
     };
   }

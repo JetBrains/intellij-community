@@ -414,11 +414,21 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return attrs;
   }
 
+  @Override
+  public String toString() {
+    return getClass().getName() + "(" + myLexer.getClass().getName() + ")";
+  }
+
   public class HighlighterIteratorImpl implements HighlighterIterator {
     private int mySegmentIndex = 0;
 
     HighlighterIteratorImpl(int startOffset) {
-      mySegmentIndex = mySegments.findSegmentIndex(startOffset);
+      try {
+        mySegmentIndex = mySegments.findSegmentIndex(startOffset);
+      }
+      catch (IllegalStateException e) {
+        throw new IllegalStateException("Wrong state of " + LexerEditorHighlighter.this, e);
+      }
     }
 
     public int currentIndex() {

@@ -31,4 +31,6 @@ abstract class ScriptBase(override val type: Script.Type,
   override var sourceMap: SourceMap? = null
 
   override fun toString() = "[url=$url, lineRange=[$line;$endLine]]"
+
+  override val isWorker: Boolean = false
 }

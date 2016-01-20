@@ -20,6 +20,8 @@ class C {
     }
   }
 
+  interface GenRT extends Gen<RuntimeException> { }
+
   void m1() {
     try (MyResource r = new MyResource()) { r.doSomething(); }
     catch (E1 | E2 | E3 ignore) { }
@@ -86,5 +88,9 @@ class C {
 
   void m5() {
     try (<error descr="Unhandled exception from auto-closeable resource: C.E2">Gen<E2> gen = new Gen.Impl()</error>) { }
+  }
+
+  void m6() {
+    try (GenRT gen = null) { }
   }
 }

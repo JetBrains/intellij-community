@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -178,9 +178,7 @@ class VariableView(name: String, private val variable: Variable, private val con
     }
 
     if (hasIndexedProperties == hasNamedProperties || additionalProperties != null) {
-      Promise.all(promises).processed(object : ObsolescentConsumer<Any?>(node) {
-        override fun consume(aVoid: Any?) = node.addChildren(XValueChildrenList.EMPTY, true)
-      })
+      Promise.all(promises).processed(node) { node.addChildren(XValueChildrenList.EMPTY, true) }
     }
   }
 
@@ -303,7 +301,7 @@ class VariableView(name: String, private val variable: Variable, private val con
 
       override fun setValue(expression: String, callback: XValueModifier.XModificationCallback) {
         variable.valueModifier!!.setValue(variable, expression, evaluateContext)
-          .done {
+          .doneRun {
             value = null
             callback.valueModified()
           }

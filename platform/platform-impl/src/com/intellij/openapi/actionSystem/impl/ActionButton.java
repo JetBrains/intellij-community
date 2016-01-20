@@ -33,13 +33,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder {
+public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
 
   private static final Icon ourEmptyIcon = EmptyIcon.ICON_18;
 
@@ -355,6 +356,112 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       }
       else if (SELECTED_PROPERTY_NAME.equals(propertyName)) {
         repaint();
+      }
+    }
+  }
+
+  // Accessibility
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if(this.accessibleContext == null) {
+      this.accessibleContext = new AccessibleActionButton();
+    }
+
+    return this.accessibleContext;
+  }
+
+
+  protected class AccessibleActionButton extends JComponent.AccessibleJComponent implements AccessibleAction {
+    public AccessibleActionButton() {
+    }
+
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.PUSH_BUTTON;
+    }
+
+    @Override
+    public String getAccessibleName() {
+      String name = accessibleName;
+      if (name == null) {
+        name = (String)ActionButton.this.getClientProperty(ACCESSIBLE_NAME_PROPERTY);
+        if (name == null) {
+          name = ActionButton.this.getToolTipText();
+          if (name == null) {
+            name = ActionButton.this.myPresentation.getText();
+            if (name == null) {
+              name = super.getAccessibleName();
+            }
+          }
+        }
+      }
+
+      return name;
+    }
+
+    @Override
+    public AccessibleIcon[] getAccessibleIcon() {
+      Icon icon = ActionButton.this.getIcon();
+      if (icon instanceof Accessible) {
+        AccessibleContext context = ((Accessible)icon).getAccessibleContext();
+        if (context != null && context instanceof AccessibleIcon) {
+          return new AccessibleIcon[]{(AccessibleIcon)context};
+        }
+      }
+
+      return null;
+    }
+
+    @Override
+    public AccessibleStateSet getAccessibleStateSet() {
+      AccessibleStateSet var1 = super.getAccessibleStateSet();
+      int state = ActionButton.this.getPopState();
+
+      // TODO: Not sure what the "POPPED" state represents
+      //if (state == POPPED) {
+      //  var1.add(AccessibleState.?);
+      //}
+
+      if (state == ActionButtonComponent.PUSHED) {
+        var1.add(AccessibleState.PRESSED);
+      }
+      if (state == ActionButtonComponent.SELECTED) {
+        var1.add(AccessibleState.CHECKED);
+      }
+
+      if (ActionButton.this.isFocusOwner()) {
+        var1.add(AccessibleState.FOCUSED);
+      }
+
+      return var1;
+    }
+
+    @Override
+    public AccessibleAction getAccessibleAction() {
+      return this;
+    }
+
+    // Implements AccessibleAction
+
+    @Override
+    public int getAccessibleActionCount() {
+      return 1;
+    }
+
+    @Override
+    public String getAccessibleActionDescription(int index) {
+      return index == 0 ? UIManager.getString("AbstractButton.clickText") : null;
+    }
+
+    @Override
+    public boolean doAccessibleAction(int index) {
+      if (index == 0) { //
+        ActionButton.this.click();
+        return true;
+      }
+      else {
+        return false;
       }
     }
   }

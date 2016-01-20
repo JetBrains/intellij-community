@@ -782,6 +782,27 @@ public class DiffUtil {
     return Math.max(document.getLineCount(), 1);
   }
 
+  @NotNull
+  public static List<String> getLines(@NotNull Document document) {
+    return getLines(document, 0, getLineCount(document));
+  }
+
+  @NotNull
+  public static List<String> getLines(@NotNull Document document, int startLine, int endLine) {
+    if (startLine < 0 || startLine > endLine || endLine > getLineCount(document)) {
+      throw new IndexOutOfBoundsException(String.format("Wrong line range: [%d, %d); lineCount: '%d'",
+                                                        startLine, endLine, document.getLineCount()));
+    }
+
+    List<String> result = new ArrayList<String>();
+    for (int i = startLine; i < endLine; i++) {
+      int start = document.getLineStartOffset(i);
+      int end = document.getLineEndOffset(i);
+      result.add(document.getText(new TextRange(start, end)));
+    }
+    return result;
+  }
+
   //
   // Updating ranges on change
   //

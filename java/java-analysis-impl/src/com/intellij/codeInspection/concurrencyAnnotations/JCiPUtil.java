@@ -16,29 +16,24 @@
 package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class JCiPUtil {
-  @NonNls
-  private static final String IMMUTABLE = "net.jcip.annotations.Immutable";
-  @NonNls
-  private static final String GUARDED_BY = "net.jcip.annotations.GuardedBy";
-
   static boolean isJCiPAnnotation(String ref) {
-    return "Immutable".equals(ref) || "GuardedBy".equals(ref) || "ThreadSafe".equals("ref");
+    return "Immutable".equals(ref) || "GuardedBy".equals(ref) || "ThreadSafe".equals(ref) || "NotThreadSafe".equals(ref);
   }
 
   private JCiPUtil() {
   }
 
-  public static boolean isImmutable(PsiClass aClass) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, IMMUTABLE);
+  public static boolean isImmutable(@NotNull PsiClass aClass) {
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, ConcurrencyAnnotationsManager.getInstance(aClass.getProject()).getImmutableAnnotations());
     if (annotation != null) {
       return true;
     }
@@ -47,8 +42,8 @@ class JCiPUtil {
   }
 
   @Nullable
-  static String findGuardForMember(PsiMember member) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(member, GUARDED_BY);
+  static String findGuardForMember(@NotNull PsiMember member) {
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(member, ConcurrencyAnnotationsManager.getInstance(member.getProject()).getGuardedByAnnotations());
     if (annotation != null) {
       return getGuardValue(annotation);
     }
@@ -63,9 +58,9 @@ class JCiPUtil {
     return visitor.getGuardString();
   }
 
-  static boolean isGuardedBy(PsiMember member, String guard) {
+  static boolean isGuardedBy(@NotNull PsiMember member, String guard) {
 
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(member, GUARDED_BY);
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(member, ConcurrencyAnnotationsManager.getInstance(member.getProject()).getGuardedByAnnotations());
     if (annotation != null) {
       final PsiAnnotationParameterList parameters = annotation.getParameterList();
       final PsiNameValuePair[] pairs = parameters.getAttributes();
@@ -87,8 +82,8 @@ class JCiPUtil {
     return isGuardedBy(member, field.getName());
   }
 
-  static boolean isGuardedByAnnotation(PsiAnnotation annotation) {
-    return GUARDED_BY.equals(annotation.getQualifiedName());
+  static boolean isGuardedByAnnotation(@NotNull PsiAnnotation annotation) {
+    return ConcurrencyAnnotationsManager.getInstance(annotation.getProject()).getGuardedByAnnotations().contains(annotation.getQualifiedName());
   }
 
   static boolean isGuardedByTag(PsiDocTag tag) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.project.impl;
 
-import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -56,7 +55,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.*;
 
 import javax.swing.*;
-import java.io.File;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -73,13 +71,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private MyProjectManagerListener myProjectManagerListener;
   private final AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
   private String myName;
-  private String myOldName;
   private final boolean myLight;
 
   /**
-   * @param projectManager
    * @param filePath System-independent path
-   * @param projectName
    */
   protected ProjectImpl(@NotNull ProjectManager projectManager,
                         @NotNull String filePath,
@@ -100,10 +95,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     myProjectManager = projectManager;
 
     myName = projectName == null ? getStateStore().getProjectName() : projectName;
-    if (!isDefault() && projectName != null && getStateStore().getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
-      myOldName = "";  // new project
-    }
-    
     // light project may be changed later during test, so we need to remember its initial state 
     myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.contains(LIGHT_PROJECT_NAME);
   }
@@ -132,7 +123,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   public void setProjectName(@NotNull String projectName) {
     if (!projectName.equals(myName)) {
-      myOldName = myName;
       myName = projectName;
       StartupManager.getInstance(this).runWhenProjectIsInitialized(new DumbAwareRunnable() {
         @Override
@@ -228,23 +218,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public VirtualFile getProjectFile() {
-    if (isDefault()) {
-      return null;
-    }
-    else {
-      return LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectFilePath());
-    }
+    return isDefault() ? null : LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectFilePath());
   }
 
   @Override
   public VirtualFile getBaseDir() {
     String path = isDefault() ? null : getStateStore().getProjectBasePath();
-    if (path == null) {
-      return null;
-    }
-    else {
-      return LocalFileSystem.getInstance().findFileByPath(path);
-    }
+    return path == null ? null : LocalFileSystem.getInstance().findFileByPath(path);
   }
 
   @Nullable
@@ -298,9 +278,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (progressIndicator != null) {
       progressIndicator.pushState();
     }
-    super.init(progressIndicator);
-    if (progressIndicator != null) {
-      progressIndicator.popState();
+    try {
+      init(progressIndicator);
+    }
+    finally {
+      if (progressIndicator != null) {
+        progressIndicator.popState();
+      }
     }
 
     long time = System.currentTimeMillis() - start;
@@ -315,21 +299,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
   }
 
-  private boolean isToSaveProjectName() {
-    if (!isDefault()) {
-      IProjectStore stateStore = getStateStore();
-      if (stateStore.getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
-        String basePath = stateStore.getProjectBasePath();
-        File baseDir = basePath == null ? null : new File(basePath);
-        if (baseDir != null && baseDir.exists()) {
-          return myOldName != null && !myOldName.equals(getName());
-        }
-      }
-    }
-
-    return false;
-  }
-
   @Override
   public void save() {
     if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) {
@@ -342,25 +311,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
 
     try {
-      if (isToSaveProjectName()) {
-        try {
-          String basePath = getStateStore().getProjectBasePath();
-          File baseDir = basePath == null ? null : new File(basePath);
-          if (baseDir != null && baseDir.exists()) {
-            File ideaDir = new File(baseDir, DIRECTORY_STORE_FOLDER);
-            if (ideaDir.exists() && ideaDir.isDirectory()) {
-              FileUtil.writeToFile(new File(ideaDir, NAME_FILE), getName());
-              myOldName = null;
-
-              RecentProjectsManager.getInstance().clearNameCache();
-            }
-          }
-        }
-        catch (Throwable e) {
-          LOG.error("Unable to store project name", e);
-        }
-      }
-
       StoreUtil.save(ServiceKt.getStateStore(this), this);
     }
     finally {

@@ -53,7 +53,7 @@ import java.util.jar.Manifest
 
 class IdeaDecompiler : ClassFileDecompilers.Light() {
   companion object {
-    val BANNER = "//\n// Source code recreated from a .class file by IntelliJ IDEA\n// (powered by Fernflower decompiler)\n//\n\n"
+    const val BANNER = "//\n// Source code recreated from a .class file by IntelliJ IDEA\n// (powered by Fernflower decompiler)\n//\n\n"
 
     private val LEGAL_NOTICE_KEY = "decompiler.legal.notice.accepted"
 

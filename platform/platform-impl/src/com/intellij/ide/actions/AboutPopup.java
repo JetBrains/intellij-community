@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -25,7 +26,10 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -35,7 +39,9 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.UI;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +61,10 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class AboutPopup {
-  public void show(@Nullable Window window) {
+  private static final String COPY_URL = "copy://";
+  private static JBPopup ourPopup;
+
+  public static void show(@Nullable Window window) {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
 
     final JPanel panel = new JPanel(new BorderLayout());
@@ -86,7 +95,7 @@ public class AboutPopup {
       location = new RelativePoint(new Point((r.width - image.getIconWidth()) / 2, (r.height - image.getIconHeight()) / 2));
     }
 
-    JBPopupFactory.getInstance().createComponentPopupBuilder(panel, panel)
+    ourPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, panel)
       .setRequestFocus(true)
       .setFocusable(true)
       .setResizable(false)
@@ -97,8 +106,16 @@ public class AboutPopup {
       .setCancelKeyEnabled(true)
       .setCancelOnClickOutside(true)
       .setCancelOnOtherWindowOpen(true)
-      .createPopup()
-      .show(location);
+      .createPopup();
+
+    Disposer.register(ourPopup, new Disposable() {
+      @Override
+      public void dispose() {
+        ourPopup = null;
+      }
+    });
+
+    ourPopup.show(location);
   }
 
   private static void copyInfoToClipboard(String text) {
@@ -118,6 +135,9 @@ public class AboutPopup {
     private StringBuilder myInfo = new StringBuilder();
     private final List<Link> myLinks = new ArrayList<Link>();
     private Link myActiveLink;
+    private boolean myShowCopy = false;
+    private float myShowCopyAlpha;
+    private Alarm myAlarm = new Alarm();
 
     public InfoSurface(Icon image) {
       ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();
@@ -174,16 +194,60 @@ public class AboutPopup {
         myLines.add(new AboutBoxLine("Powered by ").keepWithNext());
         myLines.add(new AboutBoxLine("open-source software", false, thirdParty));
       }
-      
-      myLines.add(new AboutBoxLine(""));
-      myLines.add(new AboutBoxLine(IdeBundle.message("about.box.copy.prompt", SystemInfo.isMac ? "Cmd+C" : "Ctrl+C")));
 
       addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(MouseEvent event) {
           if (myActiveLink != null) {
             event.consume();
+            if (COPY_URL.equals(myActiveLink.myUrl)) {
+              copyInfoToClipboard(myInfo.toString());
+              if (ourPopup != null) {
+                ourPopup.cancel();
+              }
+              return;
+            }
             BrowserUtil.browse(myActiveLink.myUrl);
+          }
+        }
+
+        final static double maxAlpha = 0.5;
+        final static double fadeStep = 0.05;
+        final static int animationDelay = 15;
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+          if (!myShowCopy) {
+            myShowCopy = true;
+            myAlarm.cancelAllRequests();
+            myAlarm.addRequest(new Runnable() {
+              @Override
+              public void run() {
+                if (myShowCopyAlpha < maxAlpha) {
+                  myShowCopyAlpha += fadeStep;
+                  repaint();
+                  myAlarm.addRequest(this, animationDelay);
+                }
+              }
+            }, animationDelay);
+          }
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+          if (myShowCopy) {
+            myShowCopy = false;
+            myAlarm.cancelAllRequests();
+            myAlarm.addRequest(new Runnable() {
+              @Override
+              public void run() {
+                if (myShowCopyAlpha > 0) {
+                  myShowCopyAlpha -= fadeStep;
+                  repaint();
+                  myAlarm.addRequest(this, animationDelay);
+                }
+              }
+            }, animationDelay);
           }
         }
       });
@@ -314,6 +378,7 @@ public class AboutPopup {
         x = indentX;
         y = indentY;
         ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+        boolean showCopyButton = myShowCopy || myShowCopyAlpha > 0;
         for (AboutBoxLine line : lines) {
           final String s = line.getText();
           setFont(line.isBold() ? myBoldFont : myFont);
@@ -326,6 +391,19 @@ public class AboutPopup {
             g2.setColor(Registry.is("ide.new.about") ? Gray.x33 : appInfo.getAboutForeground());
           }
           renderString(s, indentX);
+          if (showCopyButton) {
+            final FontMetrics metrics = g2.getFontMetrics(myFont);
+            String copyString = "Copy to Clipboard";
+            final int width = metrics.stringWidth(copyString);
+            g2.setFont(myFont);
+            g2.setColor(myLinkColor);
+            final int xOffset = myImage.getIconWidth() - width - 10;
+            final GraphicsConfig config = GraphicsUtil.paintWithAlpha(g2, myShowCopyAlpha);
+            g2.drawString(copyString, xOffset, yBase + y);
+            config.restore();
+            myLinks.add(new Link(new Rectangle(xOffset, yBase + y - fontAscent, width, fontHeight), COPY_URL));
+            showCopyButton = false;
+          }
           if (!line.isKeepWithNext() && !line.equals(lines.get(lines.size()-1))) {
             lineFeed(indentX, s);
           }

@@ -201,7 +201,7 @@ def process_exec_queue(interpreter):
             except _queue.Empty:
                 continue
 
-            if callable(code_fragment):
+            if hasattr(code_fragment, '__call__'):
                 # It can be a callable (i.e.: something that must run in the main
                 # thread can be put in the queue for later execution).
                 code_fragment()

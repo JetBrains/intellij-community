@@ -27,11 +27,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
@@ -533,6 +535,9 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   public static boolean canRunConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
     try {
       configuration.checkSettings(executor);
+    }
+    catch (IndexNotReadyException ignored) {
+      return Registry.is("dumb.aware.run.configurations");
     }
     catch (RuntimeConfigurationError ignored) {
       return false;
@@ -1086,7 +1091,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
                                                   long startTime = System.currentTimeMillis();
 
                                                   Icon icon;
-                                                  if (DumbService.isDumb(myProject)) {
+                                                  if (DumbService.isDumb(myProject) && !Registry.is("dumb.aware.run.configurations")) {
                                                     icon =
                                                       IconLoader.getDisabledIcon(ProgramRunnerUtil.getRawIcon(settings));
                                                     if (settings.isTemporary()) {
@@ -1095,11 +1100,18 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
                                                   }
                                                   else {
                                                     try {
+                                                      DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
                                                       settings.checkSettings();
                                                       icon = ProgramRunnerUtil.getConfigurationIcon(settings, false);
                                                     }
+                                                    catch (IndexNotReadyException e) {
+                                                      icon = ProgramRunnerUtil.getConfigurationIcon(settings, !Registry.is("dumb.aware.run.configurations"));
+                                                    }
                                                     catch (RuntimeConfigurationException ignored) {
                                                       icon = ProgramRunnerUtil.getConfigurationIcon(settings, true);
+                                                    }
+                                                    finally {
+                                                      DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
                                                     }
                                                   }
                                                   myIconCalcTime.put(uniqueID, System.currentTimeMillis() - startTime);

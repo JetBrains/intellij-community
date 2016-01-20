@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -489,9 +489,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     boolean reloadFromDelegate;
     boolean outdated;
     int fileId;
+    long length = -1L;
+
     synchronized (myInputLock) {
       fileId = getFileId(file);
-      outdated = checkFlag(fileId, MUST_RELOAD_CONTENT) || FSRecords.getLength(fileId) == -1L;
+      outdated = checkFlag(fileId, MUST_RELOAD_CONTENT) || (length = FSRecords.getLength(fileId)) == -1L;
       reloadFromDelegate = outdated || (contentStream = readContent(file)) == null;
     }
 
@@ -529,9 +531,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
     else {
       try {
-        final int length = (int)file.getLength();
         assert length >= 0 : file;
-        return FileUtil.loadBytes(contentStream, length);
+        return FileUtil.loadBytes(contentStream, (int)length);
       }
       catch (IOException e) {
         throw FSRecords.handleError(e);

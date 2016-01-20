@@ -15,7 +15,8 @@ if sys.argv:
   CURRENT_DIR_NAME = os.path.dirname(sys.argv[-1])
 
 messages = TeamcityServiceMessages(prepend_linebreak=True)
-messages.testMatrixEntered()
+if not "_jb_do_not_call_enter_matrix" in os.environ:
+  messages.testMatrixEntered()
 try:
   import pytest
   PYVERSION = [int(x) for x in pytest.__version__.split(".")]

@@ -6,7 +6,6 @@ import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
-import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -16,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.coursecreator.actions.CCCreateLesson;
 import com.jetbrains.edu.coursecreator.actions.CCCreateTask;
@@ -53,7 +51,6 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
     return CourseCreatorPythonIcons.CourseCreationProjectType;
   }
 
-
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
@@ -64,7 +61,6 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
   public static void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                                      @NotNull final String name, @NotNull final String[] authors,
                                      @NotNull final String description) {
-
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = new Course();
     course.setName(name);

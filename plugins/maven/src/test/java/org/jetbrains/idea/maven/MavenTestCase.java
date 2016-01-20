@@ -334,7 +334,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
            "  <mirror>" +
            "    <id>jb-central-proxy</id>" +
            "    <url>" + mirror + "</url>" +
-           "    <mirrorOf>external:*</mirrorOf>" +
+           "    <mirrorOf>external:*,!flex-repository</mirrorOf>" +
            "  </mirror>" +
            "</mirrors>" +
            "</settings>";

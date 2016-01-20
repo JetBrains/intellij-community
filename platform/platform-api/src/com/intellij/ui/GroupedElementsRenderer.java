@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -59,6 +60,8 @@ public abstract class GroupedElementsRenderer {
 
     myTextLabel.setText(text);
     myRendererComponent.setToolTipText(tooltip);
+    AccessibleContextUtil.setName(myRendererComponent, myTextLabel);
+    AccessibleContextUtil.setDescription(myRendererComponent, myTextLabel);
 
     myTextLabel.setIcon(icon);
     myTextLabel.setDisabledIcon(disabledIcon);

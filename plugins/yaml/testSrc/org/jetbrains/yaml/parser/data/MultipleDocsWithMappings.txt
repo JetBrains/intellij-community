@@ -1,0 +1,38 @@
+YAML file
+  YAML document
+    YAML mapping
+      YAML key value
+        PsiElement(scalar key)('spring:')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('  ')
+        YAML mapping
+          YAML key value
+            PsiElement(scalar key)('application:')
+            PsiElement(Eol)('\n')
+            PsiElement(indent)('    ')
+            YAML mapping
+              YAML key value
+                PsiElement(scalar key)('name:')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('bar')
+  PsiElement(Eol)('\n')
+  YAML document
+    PsiElement(---)('---')
+    PsiElement(Eol)('\n')
+    YAML mapping
+      YAML key value
+        PsiElement(scalar key)('spring:')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('  ')
+        YAML mapping
+          YAML key value
+            PsiElement(scalar key)('application:')
+            PsiElement(Eol)('\n')
+            PsiElement(indent)('    ')
+            YAML mapping
+              YAML key value
+                PsiElement(scalar key)('name:')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('bar')

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
-import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -94,6 +93,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static Map<String, Long> TOTAL_SETUP_COST_MILLIS = new HashMap<String, Long>();
   public static Map<String, Long> TOTAL_TEARDOWN_COST_MILLIS = new HashMap<String, Long>();
 
+  @NotNull
   protected final Disposable myTestRootDisposable = new Disposable() {
     @Override
     public void dispose() { }
@@ -311,6 +311,7 @@ public abstract class UsefulTestCase extends TestCase {
     return CodeStyleSettingsManager.getInstance().getCurrentSettings();
   }
 
+  @NotNull
   public final Disposable getTestRootDisposable() {
     return myTestRootDisposable;
   }

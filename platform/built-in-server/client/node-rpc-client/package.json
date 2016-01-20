@@ -1,17 +1,26 @@
 {
   "name": "ij-rpc-client",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "description": "IntelliJ Platform RPC client",
+  "license": "Apache-2.0",
+  "main": "./out/rpc-node.js",
+  "scripts": {
+    "compile": "rimraf out && tsconfig -i 2 && tsc",
+    "test": "mocha --harmony_default_parameters --harmony_rest_parameters"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/JetBrains/intellij-community.git"
   },
   "devDependencies": {
-    "gulp": "^3.8.11",
-    "gulp-concat": "^2.4.3",
-    "gulp-newer": "^0.5.0",
-    "gulp-sourcemaps": "^1.3.0",
-    "gulp-typescript": "^2.4.2",
-    "gulp-uglify": "^1.1.0"
+    "mocha": "^2.3.4",
+    "rimraf": "^2.5.0",
+    "should": "^8.0.2",
+    "tsconfig-glob": "^0.3.3",
+    "typescript": "^1.8.0-dev.20151231"
+  },
+  "dependencies": {
+    "bluebird": "^3.1.1",
+    "debug": "^2.2.0"
   }
 }

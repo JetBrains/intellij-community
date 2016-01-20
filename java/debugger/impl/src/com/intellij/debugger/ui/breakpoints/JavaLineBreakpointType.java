@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     List<JavaBreakpointVariant> res = new SmartList<JavaBreakpointVariant>();
     res.add(new JavaBreakpointVariant(position)); //all
 
-    if (startMethod instanceof PsiMethod) {
+    if (!(startMethod instanceof PsiLambdaExpression)) {
       res.add(new ExactJavaBreakpointVariant(position, startMethod, -1)); // base method
     }
 

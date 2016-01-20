@@ -946,4 +946,12 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testCastingCapturedWildcardToPrimitive() throws Exception {
     doTest();
   }
+
+  public void testCastingCapturedWildcardToArray() throws Exception {
+    doTest();
+  }
+
+  public void testCheckUncheckedAssignmentDuringVariablesResaolution() throws Exception {
+    doTest(true);
+  }
 }

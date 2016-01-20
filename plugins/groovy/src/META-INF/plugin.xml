@@ -594,6 +594,7 @@
 
     <fileBasedIndex implementation="org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex"/>
 
     <patterns.patternClass className="org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns" alias="groovy"/>
 

@@ -634,6 +634,31 @@ public class AllIcons {
 
     }
     public static final Icon NoNotifications13 = IconLoader.getIcon("/ide/noNotifications13.png"); // 13x13
+    
+    public static class Notification {
+      public static final Icon Close = IconLoader.getIcon("/ide/notification/close.png"); // 16x16
+      public static final Icon CloseHover = IconLoader.getIcon("/ide/notification/closeHover.png"); // 16x16
+      public static final Icon Collapse = IconLoader.getIcon("/ide/notification/collapse.png"); // 16x16
+      public static final Icon CollapseHover = IconLoader.getIcon("/ide/notification/collapseHover.png"); // 16x16
+      public static final Icon DropTriangle = IconLoader.getIcon("/ide/notification/dropTriangle.png"); // 11x8
+      public static final Icon Expand = IconLoader.getIcon("/ide/notification/expand.png"); // 16x16
+      public static final Icon ExpandHover = IconLoader.getIcon("/ide/notification/expandHover.png"); // 16x16
+      public static final Icon Gear = IconLoader.getIcon("/ide/notification/gear.png"); // 16x16
+      public static final Icon GearHover = IconLoader.getIcon("/ide/notification/gearHover.png"); // 16x16
+      
+      public static class Shadow {
+        public static final Icon Bottom_left = IconLoader.getIcon("/ide/notification/shadow/bottom-left.png"); // 14x16
+        public static final Icon Bottom_right = IconLoader.getIcon("/ide/notification/shadow/bottom-right.png"); // 14x16
+        public static final Icon Bottom = IconLoader.getIcon("/ide/notification/shadow/bottom.png"); // 4x8
+        public static final Icon Left = IconLoader.getIcon("/ide/notification/shadow/left.png"); // 6x4
+        public static final Icon Right = IconLoader.getIcon("/ide/notification/shadow/right.png"); // 6x4
+        public static final Icon Top_left = IconLoader.getIcon("/ide/notification/shadow/top-left.png"); // 14x12
+        public static final Icon Top_right = IconLoader.getIcon("/ide/notification/shadow/top-right.png"); // 14x12
+        public static final Icon Top = IconLoader.getIcon("/ide/notification/shadow/top.png"); // 4x4
+
+      }
+
+    }
     public static final Icon Notifications = IconLoader.getIcon("/ide/notifications.png"); // 16x16
     public static final Icon OutgoingChangesOn = IconLoader.getIcon("/ide/outgoingChangesOn.png"); // 16x16
     public static final Icon Pipette = IconLoader.getIcon("/ide/pipette.png"); // 16x16

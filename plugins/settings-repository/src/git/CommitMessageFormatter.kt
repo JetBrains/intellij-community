@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.merge.MergeMessageFormatter
 import java.net.InetAddress
 
-public interface CommitMessageFormatter {
-  public fun message(text: String): String = text
+interface CommitMessageFormatter {
+  fun message(text: String): String = text
 
-  public fun prependMessage(builder: StringBuilder = StringBuilder()): StringBuilder = builder
+  fun prependMessage(builder: StringBuilder = StringBuilder()): StringBuilder = builder
 
-  public fun mergeMessage(refsToMerge: List<Ref>, target: Ref): String = MergeMessageFormatter().format(refsToMerge, target)
+  fun mergeMessage(refsToMerge: List<Ref>, target: Ref): String = MergeMessageFormatter().format(refsToMerge, target)
 }
 
 class IdeaCommitMessageFormatter : CommitMessageFormatter {

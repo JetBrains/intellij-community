@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,9 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Collection;
+import java.util.Locale;
+import java.util.Map;
 
 import static com.intellij.util.BitUtil.isSet;
 import static com.intellij.util.BitUtil.notSet;
@@ -97,7 +99,9 @@ public class FileSystemUtil {
       }
     }
 
-    LOG.warn("Failed to load filesystem access layer: " + SystemInfo.OS_NAME + ", " + SystemInfo.JAVA_VERSION + ", nio2=" + forceNio2, error);
+    if (!SystemInfo.isWindows || IdeaWin32.isAvailable()) {
+      LOG.warn("Failed to load filesystem access layer: " + SystemInfo.OS_NAME + ", " + SystemInfo.JAVA_VERSION + ", nio2=" + forceNio2, error);
+    }
 
     return new FallbackMediatorImpl();
   }

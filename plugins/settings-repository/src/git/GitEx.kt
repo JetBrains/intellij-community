@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ fun wrapIfNeedAndReThrow(e: TransportException) {
     throw org.jetbrains.settingsRepository.NoRemoteRepositoryException(e)
   }
 
-  val message = e.getMessage()!!
+  val message = e.message!!
   if (e.status == TransportException.Status.NOT_AUTHORIZED || e.status == TransportException.Status.NOT_PERMITTED ||
       message.contains(JGitText.get().notAuthorized) || message.contains("Auth cancel") || message.contains("Auth fail") || message.contains(": reject HostKey:") /* JSch */) {
     throw AuthenticationException(e)
@@ -73,7 +73,7 @@ fun Repository.fetch(remoteConfig: RemoteConfig, credentialsProvider: Credential
     }
   }
   catch (e: TransportException) {
-    val message = e.getMessage()!!
+    val message = e.message!!
     if (message.startsWith("Remote does not have ")) {
       LOG.info(message)
       // "Remote does not have refs/heads/master available for fetch." - remote repository is not initialized
@@ -129,7 +129,7 @@ fun Config.getRemoteBranchFullName(): String {
   return name!!
 }
 
-public fun Repository.setUpstream(url: String?, branchName: String = Constants.MASTER): StoredConfig {
+fun Repository.setUpstream(url: String?, branchName: String = Constants.MASTER): StoredConfig {
   // our local branch named 'master' in any case
   val localBranchName = Constants.MASTER
 
@@ -155,7 +155,7 @@ public fun Repository.setUpstream(url: String?, branchName: String = Constants.M
   return config
 }
 
-public fun Repository.computeIndexDiff(): IndexDiff {
+fun Repository.computeIndexDiff(): IndexDiff {
   val workingTreeIterator = FileTreeIterator(this)
   try {
     return IndexDiff(this, Constants.HEAD, workingTreeIterator)
@@ -165,7 +165,7 @@ public fun Repository.computeIndexDiff(): IndexDiff {
   }
 }
 
-public fun cloneBare(uri: String, dir: File, credentialsStore: NotNullLazyValue<CredentialsStore>? = null, progressMonitor: ProgressMonitor = NullProgressMonitor.INSTANCE): Repository {
+fun cloneBare(uri: String, dir: File, credentialsStore: NotNullLazyValue<CredentialsStore>? = null, progressMonitor: ProgressMonitor = NullProgressMonitor.INSTANCE): Repository {
   val repository = createBareRepository(dir)
   val config = repository.setUpstream(uri)
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
@@ -196,7 +196,7 @@ public fun cloneBare(uri: String, dir: File, credentialsStore: NotNullLazyValue<
   }
 
   val commit = RevWalk(repository).use { it.parseCommit(head!!.objectId) }
-  val u = repository.updateRef(Constants.HEAD, !head!!.name.startsWith(Constants.R_HEADS))
+  val u = repository.updateRef(Constants.HEAD, !head.name.startsWith(Constants.R_HEADS))
   u.setNewObjectId(commit.id)
   u.forceUpdate()
   return repository
@@ -221,7 +221,7 @@ private fun findBranchToCheckout(result: FetchResult): Ref? {
   return null
 }
 
-public fun Repository.processChildren(path: String, filter: ((name: String) -> Boolean)? = null, processor: (name: String, inputStream: InputStream) -> Boolean) {
+fun Repository.processChildren(path: String, filter: ((name: String) -> Boolean)? = null, processor: (name: String, inputStream: InputStream) -> Boolean) {
   val lastCommitId = resolve(Constants.HEAD) ?: return
   val reader = newObjectReader()
   reader.use {
@@ -258,7 +258,7 @@ public fun Repository.processChildren(path: String, filter: ((name: String) -> B
   }
 }
 
-public fun Repository.read(path: String): InputStream? {
+fun Repository.read(path: String): InputStream? {
   val lastCommitId = resolve(Constants.HEAD)
   if (lastCommitId == null) {
     LOG.warn("Repository ${directory.name} doesn't have HEAD")
@@ -324,7 +324,7 @@ private class InputStreamWrapper(private val delegate: InputStream, private val 
 
 fun ObjectReader.getCachedBytes(dirCacheEntry: DirCacheEntry) = open(dirCacheEntry.objectId, Constants.OBJ_BLOB).cachedBytes
 
-public fun Repository.getAheadCommitsCount(): Int {
+fun Repository.getAheadCommitsCount(): Int {
   val config = config
   val shortBranchName = Repository.shortenRefName(config.getRemoteBranchFullName())
   val trackingBranch = BranchConfig(config, shortBranchName).trackingBranch ?: return -1

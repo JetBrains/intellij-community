@@ -61,7 +61,7 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
 
     @NotNull
     @Override
-    public Hash getHash(int commitIndex) {
+    public CommitId getCommitId(int commitIndex) {
       throw new UnsupportedOperationException("Illegal access to empty hash map by index " + commitIndex);
     }
 
@@ -125,7 +125,7 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
   }
 
   @Nullable
-  private CommitId doGetHash(int index) throws IOException {
+  private CommitId doGetCommitId(int index) throws IOException {
     return myPersistentEnumerator.valueOf(index);
   }
 
@@ -145,13 +145,13 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
 
   @Override
   @NotNull
-  public Hash getHash(int commitIndex) {
+  public CommitId getCommitId(int commitIndex) {
     try {
-      CommitId commitId = doGetHash(commitIndex);
+      CommitId commitId = doGetCommitId(commitIndex);
       if (commitId == null) {
         throw new RuntimeException("Unknown commit index: " + commitIndex); // TODO this shouldn't happen => need to recreate the map
       }
-      return commitId.getHash();
+      return commitId;
     }
     catch (IOException e) {
       throw new RuntimeException(e); // TODO map is corrupted => need to recreate it

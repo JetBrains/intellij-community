@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,33 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
 public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseInspection {
+
+  @NotNull
+  @Override
+  public String getID() {
+    return "PrimitiveArrayArgumentToVarargsMethod";
+  }
+
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return "PrimitiveArrayArgumentToVariableArgMethod"; // keep old suppression working
+  }
 
   @Override
   @NotNull
@@ -48,6 +64,14 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
   @Override
   public boolean shouldInspect(PsiFile file) {
     return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiExpression argument = (PsiExpression)infos[0];
+    final PsiType type = (PsiType)infos[1];
+    return new DelegatingFix(new AddTypeCastFix(type, argument));
   }
 
   @Override
@@ -84,11 +108,11 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
       if (!lastParameter.isVarArgs()) {
         return;
       }
-      final PsiType parameterType = lastParameter.getType();
+      final PsiEllipsisType parameterType = (PsiEllipsisType)lastParameter.getType();
       if (isDeepPrimitiveArrayType(parameterType, result.getSubstitutor())) {
         return;
       }
-      registerError(lastArgument);
+      registerError(lastArgument, lastArgument, parameterType.getComponentType());
     }
   }
 

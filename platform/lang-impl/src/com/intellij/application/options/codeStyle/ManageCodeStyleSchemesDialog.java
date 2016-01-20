@@ -35,7 +35,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,16 +169,19 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
             }
           }
           catch (SchemeImportException e) {
-            showStatus(myImportButton,
-                       ApplicationBundle.message("message.code.style.scheme.import.failure", selectedImporterName, e.getMessage()),
-                       MessageType.ERROR);
+            if (e.isWarning()) {
+              showStatus(myImportButton, e.getMessage(), MessageType.WARNING);
+              return;
+            }
+            final String message = ApplicationBundle.message("message.code.style.scheme.import.failure", selectedImporterName, e.getMessage());
+            showStatus(myImportButton, message, MessageType.ERROR);
           }
         }
       }
     }
   }
 
-  private static void showStatus(final Component component, final String message, MessageType messageType) {
+  private static void showStatus(final JComponent component, final String message, MessageType messageType) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),
                                     messageType.getPopupBackground(), null);
@@ -187,8 +189,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
     final Balloon balloon = balloonBuilder.createBalloon();
     final Rectangle rect = component.getBounds();
     final Point p = new Point(rect.x, rect.y + rect.height);
-    final RelativePoint point = new RelativePoint(component, p);
-    balloon.show(point, Balloon.Position.below);
+    balloon.showInCenterOf(component);
     Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
   }  
   

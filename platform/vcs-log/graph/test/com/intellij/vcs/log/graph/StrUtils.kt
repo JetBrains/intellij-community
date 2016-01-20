@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,11 +41,11 @@ fun LinearGraph.asString(sorted: Boolean = false): String {
   return s.toString();
 }
 
-fun GraphNode.asString(): String = "${getNodeIndex()}_${toChar(getType())}"
+fun GraphNode.asString(): String = "${nodeIndex}_${toChar(type)}"
 
 fun Int?.asString() = if (this == null) "n" else toString()
 
-fun GraphEdge.asString(): String = "${getUpNodeIndex().asString()}:${getDownNodeIndex().asString()}:${getTargetId().asString()}_${toChar(getType())}"
+fun GraphEdge.asString(): String = "${upNodeIndex.asString()}:${downNodeIndex.asString()}:${targetId.asString()}_${toChar(type)}"
 
 fun GraphElement.asString(): String = when (this) {
   is GraphNode -> asString()
@@ -54,20 +54,20 @@ fun GraphElement.asString(): String = when (this) {
 }
 
 fun PrintElementWithGraphElement.asString(): String {
-  val element = getGraphElement().asString()
+  val element = graphElement.asString()
 
-  val row = getRowIndex()
-  val color = getColorId()
-  val pos = getPositionInCurrentRow()
-  val sel = if (isSelected()) "Select" else "Unselect"
+  val row = rowIndex
+  val color = colorId
+  val pos = positionInCurrentRow
+  val sel = if (isSelected) "Select" else "Unselect"
   return when (this) {
     is NodePrintElement -> {
       "Node|-$row:${pos}|-$color:${sel}($element)"
     }
     is EdgePrintElement -> {
-      val t = getType()
-      val ls = getLineStyle()
-      val posO = getPositionInOtherRow()
+      val t = type
+      val ls = lineStyle
+      val posO = positionInOtherRow
       val arrow = if (hasArrow()) "_ARROW" else ""
       "Edge:$t${arrow}:${ls}|-$row:$pos:${posO}|-$color:$sel($element)"
     }
@@ -84,11 +84,11 @@ fun PrintElementGenerator.asString(size: Int): String {
   for (row in 0..size - 1) {
     if (row > 0) s.append("\n")
     val elements = getPrintElements(row).sortedBy {
-      val pos = it.getPositionInCurrentRow()
+      val pos = it.positionInCurrentRow
       if (it is NodePrintElement) {
         1024 * pos
       } else if (it is EdgePrintElement) {
-        1024 * pos + (it.getType().ordinal + 1) * 64 + it.getPositionInOtherRow()
+        1024 * pos + (it.type.ordinal + 1) * 64 + it.positionInOtherRow
       } else 0
     }
     elements.map { it.asString() }.joinTo(s, separator = "\n  ")

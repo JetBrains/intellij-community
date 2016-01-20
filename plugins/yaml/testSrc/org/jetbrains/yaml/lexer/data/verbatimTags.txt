@@ -1,0 +1,8 @@
+tag ('!<tag:yaml.org,2002:str>')
+whitespace (' ')
+scalar key ('foo :')
+Eol ('\n')
+indent ('  ')
+tag ('!<!bar>')
+whitespace (' ')
+text ('baz')

@@ -3,7 +3,7 @@
   <problem>
     <file>Test.java</file>
     <line>6</line>
-    <description>'s.equals(s)' may produce NullPointerException</description>
+    <description>'equals' may produce NullPointerException</description>
   </problem>
 </problems>
 

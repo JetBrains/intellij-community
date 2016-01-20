@@ -65,7 +65,8 @@ public class JavaProjectCodeInsightSettings implements PersistentStateComponent<
   }
 
   private static boolean nameMatches(@NotNull String name, String excluded) {
-    return name.equals(excluded) || name.startsWith(excluded + ".");
+    return name.startsWith(excluded) &&
+           (name.length() == excluded.length() || name.charAt(excluded.length()) == '.');
   }
 
   @Nullable

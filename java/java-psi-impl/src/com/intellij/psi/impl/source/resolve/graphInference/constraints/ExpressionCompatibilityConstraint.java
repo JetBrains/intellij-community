@@ -45,12 +45,12 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         final boolean assignmentCompatible = TypeConversionUtil.areTypesAssignmentCompatible(myT, myExpression);
         if (!assignmentCompatible) {
           final PsiType type = myExpression.getType();
-          session.registerIncompatibleErrorMessage((type != null ? type.getPresentableText() : myExpression.getText()) + " is not compatible with " + myT.getPresentableText());
+          session.registerIncompatibleErrorMessage((type != null ? type.getPresentableText() : myExpression.getText()) + " is not compatible with " + session.getPresentableText(myT));
         }
         return assignmentCompatible;
       }
     
-      final PsiType exprType = myExpression.getType();
+      PsiType exprType = myExpression.getType();
 
       if (exprType instanceof PsiLambdaParameterType) {
         return false;
@@ -60,13 +60,13 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         if (((PsiClassType)exprType).resolve() == null) {
           return true;
         }
-
-        if (((PsiClassType)exprType).isRaw()) {
-          session.setErased();
-        }
       }
 
       if (exprType != null && exprType != PsiType.NULL) {
+        if (exprType instanceof PsiDisjunctionType) {
+          exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
+        }
+
         constraints.add(new TypeCompatibilityConstraint(myT, exprType));
       }
       return true;
@@ -156,14 +156,14 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           callSession.initExpressionConstraints(parameters, args, expression, method, InferenceSession
             .chooseVarargsMode(candidateProperties, resolveResult));
         }
-        if (callSession.repeatInferencePhases(true)) {
+        if (callSession.repeatInferencePhases()) {
 
           if (PsiType.VOID.equals(targetType)) {
             return callSession;
           }
 
           callSession.registerReturnTypeConstraints(siteSubstitutor.substitute(returnType), targetType);
-          if (callSession.repeatInferencePhases(true)) {
+          if (callSession.repeatInferencePhases()) {
             return callSession;
           }
         }

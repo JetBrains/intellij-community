@@ -96,7 +96,7 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
     ArrayList<ProjectExternalDependency> oldDependencies = new ArrayList<ProjectExternalDependency>(myDependencies);
     myDependencies.clear();
     for (DependencyOnPluginState dependency : state.myDependencies) {
-      myDependencies.add(new DependencyOnPlugin(dependency.myId, dependency.myMinVersion, dependency.myMaxVersion));
+      myDependencies.add(new DependencyOnPlugin(dependency.myId, dependency.myMinVersion, dependency.myMaxVersion, dependency.myChannel));
     }
     if (!oldDependencies.equals(myDependencies) && !myDependencies.isEmpty()) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {

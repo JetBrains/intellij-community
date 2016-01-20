@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author cdr
@@ -143,19 +142,34 @@ public class ConcurrencyUtil {
    * Awaits for all tasks in the {@code executor} to finish for the specified {@code timeout}
    */
   public static void awaitQuiescence(@NotNull ThreadPoolExecutor executor, long timeout, @NotNull TimeUnit unit) {
-    long deadline = System.currentTimeMillis() + unit.toMillis(timeout);
     executor.setKeepAliveTime(1, TimeUnit.NANOSECONDS); // no need for zombies in tests
-    String dump;
-    while (System.currentTimeMillis() < deadline && (executor.getPoolSize() != 0 ||
-        // hack to ensure the thread is really terminated. inside ThreadPoolExecutor.processWorkerExit() there is a place where workers are empty but the worker thread isn't exited yet
-        (dump = ThreadDumper.dumpThreadsToString()).contains("at java.lang.Thread.exit(Thread.java:")
-        || dump.contains("at java.util.concurrent.ThreadPoolExecutor.processWorkerExit(ThreadPoolExecutor.java:"))) {
-      executor.setCorePoolSize(0); // interrupt idle workers
-      TimeoutUtil.sleep(1);
+    executor.setCorePoolSize(0); // interrupt idle workers
+    ReentrantLock mainLock = ReflectionUtil.getField(executor.getClass(), executor, ReentrantLock.class, "mainLock");
+    Set workers;
+    mainLock.lock();
+    try {
+      HashSet workersField = ReflectionUtil.getField(executor.getClass(), executor, HashSet.class, "workers");
+      workers = new HashSet(workersField); // to be able to iterate thread-safely outside the lock
     }
-    if (executor.getPoolSize() != 0) {
-      System.err.println("Executor " + executor + " is still active after " + unit.toSeconds(timeout) + " seconds://///\n" +
-                         ThreadDumper.dumpThreadsToString() + "\n/////");
+    finally {
+      mainLock.unlock();
+    }
+    for (Object worker : workers) {
+      Thread thread = ReflectionUtil.getField(worker.getClass(), worker, Thread.class, "thread");
+      try {
+        thread.join(unit.toMillis(timeout));
+      }
+      catch (InterruptedException e) {
+        String trace = "Thread leaked: " + thread+"; " + thread.getState()+" ("+ thread.isAlive()+")\n--- its stacktrace:\n";
+        for (final StackTraceElement stackTraceElement : thread.getStackTrace()) {
+          trace += " at "+stackTraceElement +"\n";
+        }
+        trace += "---\n";
+        System.err.println("Executor " + executor + " is still active after " + unit.toSeconds(timeout) + " seconds://///\n" +
+                           "Thread "+thread+" dump:\n" + trace+
+                           "all thread dump:\n"+ThreadDumper.dumpThreadsToString() + "\n/////");
+        break;
+      }
     }
   }
 }

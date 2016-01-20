@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -845,6 +845,25 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return lambdas;
   }
 
+  @Nullable
+  public static PsiElement getBody(PsiElement method) {
+    if (method instanceof PsiParameterListOwner) {
+      return ((PsiParameterListOwner)method).getBody();
+    }
+    else if (method instanceof PsiClassInitializer) {
+      return ((PsiClassInitializer)method).getBody();
+    }
+    return null;
+  }
+
+  @NotNull
+  public static PsiParameter[] getParameters(PsiElement method) {
+    if (method instanceof PsiParameterListOwner) {
+      return ((PsiParameterListOwner)method).getParameterList().getParameters();
+    }
+    return PsiParameter.EMPTY_ARRAY;
+  }
+
   public static boolean intersects(@NotNull TextRange range, @NotNull PsiElement elem) {
     TextRange elemRange = elem.getTextRange();
     return elemRange != null && elemRange.intersects(range);
@@ -888,12 +907,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @Nullable
-  public static PsiParameterListOwner getContainingMethod(@Nullable PsiElement elem) {
-    return PsiTreeUtil.getContextOfType(elem, PsiMethod.class, PsiLambdaExpression.class);
+  public static PsiElement getContainingMethod(@Nullable PsiElement elem) {
+    return PsiTreeUtil.getContextOfType(elem, PsiMethod.class, PsiLambdaExpression.class, PsiClassInitializer.class);
   }
 
   @Nullable
-  public static PsiParameterListOwner getContainingMethod(@Nullable SourcePosition position) {
+  public static PsiElement getContainingMethod(@Nullable SourcePosition position) {
     if (position == null) return null;
     return getContainingMethod(position.getElementAt());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,8 @@ package com.intellij.util.io;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
@@ -34,8 +32,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -44,12 +40,10 @@ public class BaseOutputReaderTest {
   private static final String[] TEST_DATA = {"first\n", "incomplete", "-continuation\n", "last\n"};
   private static final int TIMEOUT = 500;
 
-  private static ThreadPoolExecutor ourExecutor;
-
   private static class TestOutputReader extends BaseOutputReader {
     private final List<String> myLines = Collections.synchronizedList(new ArrayList<String>());
 
-    public TestOutputReader(InputStream stream, SleepingPolicy sleepingPolicy, String commandLine) {
+    private TestOutputReader(InputStream stream, SleepingPolicy sleepingPolicy, String commandLine) {
       super(stream, null, sleepingPolicy);
       start(CommandLineUtil.extractPresentableName(commandLine));
     }
@@ -62,20 +56,8 @@ public class BaseOutputReaderTest {
     @NotNull
     @Override
     protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
-      return ourExecutor.submit(runnable);
+      return AppExecutorUtil.getAppExecutorService().submit(runnable);
     }
-  }
-
-  @BeforeClass
-  public static void setUp() {
-    ourExecutor = ConcurrencyUtil.newSingleThreadExecutor(BaseOutputReaderTest.class.getName());
-  }
-
-  @AfterClass
-  public static void tearDown() throws InterruptedException {
-    ourExecutor.shutdown();
-    ourExecutor.awaitTermination(120, TimeUnit.SECONDS);
-    ourExecutor = null;
   }
 
   @Test(timeout = 30000)
@@ -108,6 +90,7 @@ public class BaseOutputReaderTest {
     assertEquals(Arrays.asList(TEST_DATA), reader.myLines);
   }
 
+  // needed for test
   @SuppressWarnings("BusyWait")
   public static void main(String[] args) throws InterruptedException {
     for (String line : TEST_DATA) {

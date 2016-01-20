@@ -454,6 +454,7 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
       }
       jar("remote-servers-git.jar") {
         moduleOptional("remote-servers-git")
+        moduleOptional("remote-servers-git-java")
       }
       fileset(dir: "$home/plugins/git4idea/lib") {
         include(name: "trilead-ssh2.jar")
@@ -658,6 +659,17 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
     layoutPlugin("settings-repository") {
       fileset(dir: "$home/plugins/settings-repository/lib", excludes: "**/*-sources.jar,**/*.xml,**/com/**,**/org/**,**/java/**,**/dev/**")
     }
+
+    pluginDir("yaml") {
+      dir("lib") {
+        jar("yaml.jar") {
+          noResources("yaml")
+          module("yaml")
+        }
+        resources("yaml")
+      }
+    }
+
   }
 }
 

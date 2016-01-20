@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,13 +75,16 @@ import java.util.*;
   name = "CompilerConfiguration",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage(file = "compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
 public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
   public static final int DEFAULT_BUILD_PROCESS_HEAP_SIZE = 700;
+
+  private static final List<String> DEFAULT_WILDCARD_PATTERNS =
+    Arrays.asList("!?*.java", "!?*.form", "!?*.class", "!?*.groovy", "!?*.scala", "!?*.flex", "!?*.kt", "!?*.clj", "!?*.aj");
 
   private BackendCompiler myDefaultJavaCompiler;
   private State myState = new State();
@@ -142,11 +146,13 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   @Override
   public Element getState() {
+    final boolean savingStateInNewFormatAllowed = Registry.is("saving.state.in.new.format.is.allowed", false);
+
     Element state = new Element("state");
     XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters() {
       @Override
       public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
-        if (myState.compilerWasSpecified && "DEFAULT_COMPILER".equals(accessor.getName())) {
+        if (!savingStateInNewFormatAllowed && myState.compilerWasSpecified && "DEFAULT_COMPILER".equals(accessor.getName())) {
           return true;
         }
         return super.accepts(accessor, bean);
@@ -162,24 +168,43 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       myExcludesConfiguration.getDelegate().writeExternal(addChild(state, JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE));
     }
 
-    final Element newChild = addChild(state, JpsJavaCompilerConfigurationSerializer.RESOURCE_EXTENSIONS);
-    for (final String pattern : getRegexpPatterns()) {
-      addChild(newChild, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, pattern);
+    Element resourceExtensions = new Element(JpsJavaCompilerConfigurationSerializer.RESOURCE_EXTENSIONS);
+    for (String pattern : getRegexpPatterns()) {
+      addChild(resourceExtensions, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, pattern);
+    }
+    if (!savingStateInNewFormatAllowed || !JDOMUtil.isEmpty(resourceExtensions)) {
+      state.addContent(resourceExtensions);
     }
 
-    if (myWildcardPatternsInitialized || !myWildcardPatterns.isEmpty()) {
+    if ((myWildcardPatternsInitialized || !myWildcardPatterns.isEmpty()) &&
+        (!savingStateInNewFormatAllowed || !DEFAULT_WILDCARD_PATTERNS.equals(myWildcardPatterns))) {
       final Element wildcardPatterns = addChild(state, JpsJavaCompilerConfigurationSerializer.WILDCARD_RESOURCE_PATTERNS);
       for (final String wildcardPattern : myWildcardPatterns) {
-        addChild(wildcardPatterns, JpsJavaCompilerConfigurationSerializer.ENTRY).setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, wildcardPattern);
+        addChild(wildcardPatterns, JpsJavaCompilerConfigurationSerializer.ENTRY)
+          .setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, wildcardPattern);
       }
     }
 
-    final Element annotationProcessingSettings = addChild(state, JpsJavaCompilerConfigurationSerializer.ANNOTATION_PROCESSING);
-    final Element defaultProfileElem = addChild(annotationProcessingSettings, "profile").setAttribute("default", "true");
-    AnnotationProcessorProfileSerializer.writeExternal(myDefaultProcessorsProfile, defaultProfileElem);
+    Element annotationProcessingSettings = new Element(JpsJavaCompilerConfigurationSerializer.ANNOTATION_PROCESSING);
+
+    Element profileElement = new Element("profile");
+    profileElement.setAttribute("default", "true");
+    AnnotationProcessorProfileSerializer.writeExternal(myDefaultProcessorsProfile, profileElement);
+    if (!savingStateInNewFormatAllowed || !JDOMUtil.isEmpty(profileElement, 2)) {
+      annotationProcessingSettings.addContent(profileElement);
+    }
+
     for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
-      final Element profileElem = addChild(annotationProcessingSettings, "profile").setAttribute("default", "false");
-      AnnotationProcessorProfileSerializer.writeExternal(profile, profileElem);
+      Element element = new Element("profile");
+      if (!savingStateInNewFormatAllowed) {
+        element.setAttribute("default", "false");
+      }
+      AnnotationProcessorProfileSerializer.writeExternal(profile, element);
+      annotationProcessingSettings.addContent(element);
+    }
+
+    if (!savingStateInNewFormatAllowed || !JDOMUtil.isEmpty(annotationProcessingSettings)) {
+      state.addContent(annotationProcessingSettings);
     }
 
     if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !myModuleBytecodeTarget.isEmpty()) {
@@ -206,6 +231,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     readExternal(state);
   }
 
+  @Override
   public int getBuildProcessHeapSize(final int javacPreferredHeapSize) {
     final int heapSize = myState.BUILD_PROCESS_HEAP_SIZE;
     if (heapSize != DEFAULT_BUILD_PROCESS_HEAP_SIZE) {
@@ -215,14 +241,17 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return Math.max(heapSize, javacPreferredHeapSize);
   }
 
+  @Override
   public void setBuildProcessHeapSize(int size) {
     myState.BUILD_PROCESS_HEAP_SIZE = size > 0? size : DEFAULT_BUILD_PROCESS_HEAP_SIZE;
   }
 
+  @Override
   public String getBuildProcessVMOptions() {
     return myState.BUILD_PROCESS_ADDITIONAL_VM_OPTIONS;
   }
 
+  @Override
   public void setBuildProcessVMOptions(String options) {
     myState.BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = options == null? "" : options.trim();
   }
@@ -287,15 +316,9 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       removeWildcardPatterns();
     }
     try {
-      addWildcardResourcePattern("!?*.java");
-      addWildcardResourcePattern("!?*.form");
-      addWildcardResourcePattern("!?*.class");
-      addWildcardResourcePattern("!?*.groovy");
-      addWildcardResourcePattern("!?*.scala");
-      addWildcardResourcePattern("!?*.flex");
-      addWildcardResourcePattern("!?*.kt");
-      addWildcardResourcePattern("!?*.clj");
-      addWildcardResourcePattern("!?*.aj");
+      for (String pattern : DEFAULT_WILDCARD_PATTERNS) {
+        addWildcardResourcePattern(pattern);
+      }
     }
     catch (MalformedPatternException e) {
       LOG.error(e);
@@ -719,8 +742,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       node = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.WILDCARD_RESOURCE_PATTERNS);
       if (node != null) {
         myWildcardPatternsInitialized = true;
-        for (final Object o : node.getChildren(JpsJavaCompilerConfigurationSerializer.ENTRY)) {
-          final Element element = (Element)o;
+        for (Element element : node.getChildren(JpsJavaCompilerConfigurationSerializer.ENTRY)) {
           String pattern = element.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME);
           if (!StringUtil.isEmpty(pattern)) {
             addWildcardResourcePattern(pattern);

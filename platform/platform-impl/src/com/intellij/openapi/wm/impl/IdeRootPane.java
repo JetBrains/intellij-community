@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -86,10 +87,15 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private boolean myFullScreen;
 
   public IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager, Application application, final IdeFrame frame) {
+    if (SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && frame instanceof IdeFrameImpl) {
+      setWindowDecorationStyle(FRAME);
+    }
     myActionManager = actionManager;
     myUISettings = uiSettings;
 
     myContentPane.add(myNorthPanel, BorderLayout.NORTH);
+
+    myContentPane.addMouseMotionListener(new MouseMotionAdapter() {}); // listen to mouse motion events for a11y
 
     myStatusBarCustomComponentFactories = application.getExtensions(StatusBarCustomComponentFactory.EP_NAME);
     myApplication = application;

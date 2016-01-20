@@ -3,6 +3,6 @@
   <problem>
     <file>Test.java</file>
     <line>72</line>
-    <description>Method invocation &lt;code&gt;foo.length()&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;</description>
+    <description>Method invocation &lt;code&gt;length&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;</description>
   </problem>
 </problems>

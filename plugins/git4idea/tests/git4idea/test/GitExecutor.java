@@ -29,7 +29,6 @@ import java.util.List;
 import static org.junit.Assert.assertFalse;
 
 /**
- *
  * @author Kirill Likhodedov
  */
 public class GitExecutor extends Executor {
@@ -124,6 +123,12 @@ public class GitExecutor extends Executor {
   public static String tac(@NotNull String file) {
     touch(file, "content" + Math.random());
     return addCommit("touched " + file);
+  }
+
+  @NotNull
+  public static String modify(@NotNull String file) throws IOException {
+    overwrite(file, "content" + Math.random());
+    return addCommit("modified " + file);
   }
 
   @NotNull

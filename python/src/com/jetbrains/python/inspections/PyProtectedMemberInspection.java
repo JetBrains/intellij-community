@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
@@ -85,8 +86,18 @@ public class PyProtectedMemberInspection extends PyInspection {
       if (!(statement instanceof PyFromImportStatement)) return;
       final PyReferenceExpression importReferenceExpression = node.getImportReferenceExpression();
       final PyReferenceExpression importSource = ((PyFromImportStatement)statement).getImportSource();
-      if (importReferenceExpression != null && importSource != null)
+      if (importReferenceExpression != null && importSource != null && !isImportFromTheSamePackage(importSource)) {
         checkReference(importReferenceExpression, importSource);
+      }
+    }
+
+    private boolean isImportFromTheSamePackage(PyReferenceExpression importSource) {
+      PsiDirectory directory = importSource.getContainingFile().getContainingDirectory();
+      if (PyUtil.isPackage(directory, true, importSource.getContainingFile()) &&
+          directory.getName().equals(importSource.getName())) {
+        return true;
+      }
+      return false;
     }
 
     @Override

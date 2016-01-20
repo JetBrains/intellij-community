@@ -22,7 +22,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
@@ -47,6 +46,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -121,27 +121,7 @@ public class AddImportAction implements QuestionAction {
             return FINAL_CHOICE;
           }
 
-          String qname = selectedValue.getQualifiedName();
-          if (qname == null) return FINAL_CHOICE;
-
-          List<String> toExclude = getAllExcludableStrings(qname);
-
-          return new BaseListPopupStep<String>(null, toExclude) {
-            @NotNull
-            @Override
-            public String getTextFor(String value) {
-              return "Exclude '" + value + "' from auto-import";
-            }
-
-            @Override
-            public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-              if (finalChoice) {
-                excludeFromImport(myProject, selectedValue);
-              }
-
-              return super.onChosen(selectedValue, finalChoice);
-            }
-          };
+          return getExcludesStep(selectedValue.getQualifiedName(), myProject);
         }
 
         @Override
@@ -180,6 +160,30 @@ public class AddImportAction implements QuestionAction {
     popup.showInBestPositionFor(myEditor);
   }
 
+  @Nullable
+  public static PopupStep getExcludesStep(String qname, final Project project) {
+    if (qname == null) return PopupStep.FINAL_CHOICE;
+
+    List<String> toExclude = getAllExcludableStrings(qname);
+
+    return new BaseListPopupStep<String>(null, toExclude) {
+      @NotNull
+      @Override
+      public String getTextFor(String value) {
+        return "Exclude '" + value + "' from auto-import";
+      }
+
+      @Override
+      public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+        if (finalChoice) {
+          excludeFromImport(project, selectedValue);
+        }
+
+        return super.onChosen(selectedValue, finalChoice);
+      }
+    };
+  }
+  
   public static void excludeFromImport(final Project project, final String prefix) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
@@ -267,17 +271,6 @@ public class AddImportAction implements QuestionAction {
       myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(pos2.line, newCol));
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!myProject.isDisposed() && myProject.isOpen()) {
-          DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-          if (daemonCodeAnalyzer != null) {
-            daemonCodeAnalyzer.updateVisibleHighlighters(myEditor);
-          }
-        }
-      }
-    });
   }
 
   protected void bindReference(PsiReference ref, PsiClass targetClass) {

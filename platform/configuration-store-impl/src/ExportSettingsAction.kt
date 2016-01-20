@@ -186,12 +186,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
   }
 
   if (onlyExisting || onlyPaths != null) {
-    val it = result.keySet().iterator()
-    while (it.hasNext()) {
-      if (isSkipFile(it.next())) {
-        it.remove()
-      }
-    }
+    result.keys.removeAll(::isSkipFile)
   }
 
   ServiceManagerImpl.processAllImplementationClasses(ApplicationManager.getApplication() as ApplicationImpl, object : PairProcessor<Class<*>, PluginDescriptor> {

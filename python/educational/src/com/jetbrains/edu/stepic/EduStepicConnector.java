@@ -279,20 +279,20 @@ public class EduStepicConnector {
       int lessonID = unit.units.get(0).lesson;
       LessonContainer lesson = getFromStepic("lessons/" + String.valueOf(lessonID), LessonContainer.class);
       Lesson realLesson = lesson.lessons.get(0);
-      lessons.add(realLesson);
+      realLesson.taskList = new ArrayList<Task>();
+      for (Integer s : realLesson.steps) {
+        createTask(realLesson, s);
+      }
+      if (!realLesson.taskList.isEmpty())
+        lessons.add(realLesson);
     }
 
-    for (Lesson lesson : lessons) {
-      lesson.taskList = new ArrayList<Task>();
-      for (Integer s : lesson.steps) {
-        createTask(lesson, s);
-      }
-    }
     return lessons;
   }
 
   private static void createTask(Lesson lesson, Integer stepicId) throws IOException {
     final Step step = getStep(stepicId);
+    if (!step.name.equals(PYCHARM_PREFIX)) return;
     final Task task = new Task();
     task.setStepicId(stepicId);
     task.setName(step.options != null ? step.options.title : PYCHARM_PREFIX);

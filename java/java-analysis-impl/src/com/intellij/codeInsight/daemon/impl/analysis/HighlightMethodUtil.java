@@ -168,10 +168,12 @@ public class HighlightMethodUtil {
                                                          @NotNull TextRange range,
                                                          @NotNull LanguageLevel languageLevel) {
     if (superReturnType == null) return null;
-    if ("clone".equals(method.getName())) {
+    final PsiClass superContainingClass = superMethod.getContainingClass();
+    if (superContainingClass != null && 
+        CommonClassNames.JAVA_LANG_OBJECT.equals(superContainingClass.getQualifiedName()) &&
+        !superMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
       final PsiClass containingClass = method.getContainingClass();
-      final PsiClass superContainingClass = superMethod.getContainingClass();
-      if (containingClass != null && superContainingClass != null && containingClass.isInterface() && !superContainingClass.isInterface()) {
+      if (containingClass != null && containingClass.isInterface() && !superContainingClass.isInterface()) {
         return null;
       }
     }
@@ -1300,11 +1302,10 @@ public class HighlightMethodUtil {
             continue;
           }
         }
-        if (currentMethod.getTypeParameters().length > 0 && JavaGenericsUtil.isRawToGeneric(currentType, otherSuperReturnType)) continue;
+        if (otherSuperMethod.getTypeParameters().length > 0 && JavaGenericsUtil.isRawToGeneric(currentType, otherSuperReturnType)) continue;
       }
-      return createIncompatibleReturnTypeMessage(currentMethod, otherSuperMethod, otherSuperReturnType,
-                                                 currentType, JavaErrorMessages.message("unrelated.overriding.methods.return.types"),
-                                                 TextRange.EMPTY_RANGE);
+      return createIncompatibleReturnTypeMessage(otherSuperMethod, currentMethod, currentType, otherSuperReturnType,  
+                                                 JavaErrorMessages.message("unrelated.overriding.methods.return.types"), TextRange.EMPTY_RANGE);
     }
     return null;
   }
@@ -1327,7 +1328,7 @@ public class HighlightMethodUtil {
       HighlightInfo highlightInfo;
       if (allAbstracts) {
         superSignatures = new ArrayList<HierarchicalMethodSignature>(superSignatures);
-        superSignatures.add(signature);
+        superSignatures.add(0, signature);
         highlightInfo = checkInterfaceInheritedMethodsReturnTypes(superSignatures, languageLevel);
       }
       else {

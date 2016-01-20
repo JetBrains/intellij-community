@@ -16,26 +16,26 @@ helpers_dir = str(os.path.split(__file__)[0])
 
 
 class _Unit2(object):
-    def fix(self, command, dir_to_run):
+    def fix(self, command, dir_to_run, bin):
         if command[0] == "unit2":
-            return [os.path.join(helpers_dir, "utrunner.py"), dir_to_run] + command[1:] + ["true"]
+            return [bin, os.path.join(helpers_dir, "utrunner.py"), dir_to_run] + command[1:] + ["true"]
         elif command == ["python", "-m", "unittest", "discover"]:
-            return [os.path.join(helpers_dir, "utrunner.py"), dir_to_run] + ["true"]
+            return [bin, os.path.join(helpers_dir, "utrunner.py"), dir_to_run, "true"]
         return None
 
 
 class _PyTest(object):
-    def fix(self, command, dir_to_run):
+    def fix(self, command, dir_to_run, bin):
         if command[0] != "py.test":
             return None
-        return [os.path.join(helpers_dir, "pytestrunner.py"), "-p", "pytest_teamcity", dir_to_run] + command[1:]
+        return [bin, os.path.join(helpers_dir, "pytestrunner.py"), "-p", "pytest_teamcity", dir_to_run] + command[1:]
 
 
 class _Nose(object):
-    def fix(self, command, dir_to_run):
+    def fix(self, command, dir_to_run, bin):
         if command[0] != "nosetests":
             return None
-        return [os.path.join(helpers_dir, "noserunner.py"), dir_to_run] + command[1:]
+        return [bin, os.path.join(helpers_dir, "noserunner.py"), dir_to_run] + command[1:]
 
 
 
@@ -48,6 +48,7 @@ class _Reporter(Reporter):
     def logaction_start(self, action):
         super(_Reporter, self).logaction_start(action)
         if action.activity == "getenv":
+            teamcity.output.write("\n")
             teamcity.testSuiteStarted(action.id, location="tox_env://" + str(action.id))
             self.current_suite = action.id
 
@@ -55,6 +56,7 @@ class _Reporter(Reporter):
         super(_Reporter, self).logaction_finish(action)
         if action.activity == "runtests":
             teamcity.testSuiteFinished(action.id)
+            teamcity.output.write("\n")
 
     def error(self, msg):
         super(_Reporter, self).error(msg)
@@ -84,9 +86,10 @@ for env, tmp_config in config.envconfigs.items():
     if not isinstance(commands, list) or not len(commands):
         continue
     for fixer in _RUNNERS:
-        dir_to_run = str(config.envconfigs[env].changedir)
+        _env = config.envconfigs[env]
+        dir_to_run = str(_env.changedir)
         for i, command in enumerate(commands):
-            fixed_command = fixer.fix(command, dir_to_run)
+            fixed_command = fixer.fix(command, dir_to_run, str(_env.envpython))
             if fixed_command:
                 commands[i] = fixed_command
     tmp_config.commands = commands

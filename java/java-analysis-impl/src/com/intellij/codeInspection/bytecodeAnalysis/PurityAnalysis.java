@@ -30,6 +30,7 @@ import java.util.*;
 /**
  * Produces equations for inference of @Contract(pure=true) annotations.
  * Scala source at https://github.com/ilya-klyuchnikov/faba
+ * Algorithm: https://github.com/ilya-klyuchnikov/faba/blob/ef1c15b4758517652e939f67099bbec0260e9e68/notes/purity.md
  */
 public class PurityAnalysis {
   static final Set<EffectQuantum> topEffect = Collections.singleton(EffectQuantum.TopEffectQuantum);
@@ -444,7 +445,11 @@ final class HardCodedPurity {
   }
 
   static Set<EffectQuantum> getHardCodedSolution(HKey key) {
-    // TODO
+    // TODO: implement the logic as in https://github.com/ilya-klyuchnikov/faba/blob/2ffab410416e0a9f8e35d5071df50bcf27b1e149/src/main/scala/asm/purity.scala#L238
+    // The problem with porting logic from Scala version "as is" is that in Scala version original keys (Key) are used.
+    // Here (in IDEA) the hashed keys (HKey) are used. In a general hashed keys may lead to collisions.
+    // So in order to port the logic, hardcoded solutions should be used with stable keys,
+    // that is - during analysis - com.intellij.codeInspection.bytecodeAnalysis.DataInterpreter.naryOperation
     return null;
   }
 }
@@ -493,7 +498,7 @@ final class PuritySolver {
       }
       else {
         propagateKeys = new HKey[]{key.mkStable(), key};
-        propagateEffects = new Set[]{effects, mkUnstableEffects(key, effects)};
+        propagateEffects = new Set[]{effects, mkUnstableEffects(key)};
       }
       for (int i = 0; i < propagateKeys.length; i++) {
         HKey pKey = propagateKeys[i];
@@ -592,17 +597,8 @@ final class PuritySolver {
     }
   }
 
-  private static Set mkUnstableEffects(HKey key, Set<HEffectQuantum> effects) {
-    // TODO
-    return PurityAnalysis.topHEffect;
-    /*
-    Set<EffectQuantum> effects1 = HardCodedPurity.getHardCodedSolution(key);
-    if (effects1 != null) {
-      return effects;
-    }
-    else {
-      return PurityAnalysis.topHEffect;
-    }
-    */
+  private static Set mkUnstableEffects(HKey key) {
+    Set<EffectQuantum> hardcodedEffects = HardCodedPurity.getHardCodedSolution(key);
+    return hardcodedEffects == null ? PurityAnalysis.topHEffect : hardcodedEffects;
   }
 }

@@ -136,7 +136,7 @@ public class ConsoleHistoryController {
   }
 
   public boolean hasHistory() {
-    return !getModel().getEntries().isEmpty();
+    return !getModel().isEmpty();
   }
 
   @NotNull
@@ -555,7 +555,7 @@ public class ConsoleHistoryController {
 
     private void saveHistory() {
       try {
-        if (getModel().getEntries().isEmpty()) return;
+        if (getModel().isEmpty()) return;
         if (myRootType.isHidden()) {
           saveHistoryOld();
           return;

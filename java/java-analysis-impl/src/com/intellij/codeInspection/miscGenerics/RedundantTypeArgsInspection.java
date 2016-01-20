@@ -21,8 +21,9 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSessionContainer;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -116,29 +117,32 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
           PsiMethod method = (PsiMethod)element;
           final PsiTypeParameter[] typeParameters = method.getTypeParameters();
           if (typeParameters.length == typeArguments.length) {
-            final PsiParameter[] parameters = method.getParameterList().getParameters();
-            PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
-            final PsiSubstitutor psiSubstitutor = resolveHelper
-              .inferTypeArguments(typeParameters, parameters, argumentList.getExpressions(), PsiSubstitutor.EMPTY, expression, DefaultParameterTypeInferencePolicy.INSTANCE);
-            for (int i = 0, length = typeParameters.length; i < length; i++) {
-              PsiTypeParameter typeParameter = typeParameters[i];
-              final PsiType inferredType = psiSubstitutor.getSubstitutionMap().get(typeParameter);
-              if (!typeArguments[i].equals(inferredType)) return;
-              if (PsiUtil.resolveClassInType(method.getReturnType()) == typeParameter && PsiPrimitiveType.getUnboxedType(inferredType) != null) return;
+            final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
+            if (typeByParent != null) {
+              final String arrayInitializer = "new " + typeByParent.getCanonicalText() + "[]{0}";
+              final PsiNewExpression newExpr =
+                (PsiNewExpression)JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(arrayInitializer, expression);
+              final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
+              LOG.assertTrue(initializer != null);
+              final PsiCallExpression copy = (PsiCallExpression)initializer.getInitializers()[0].replace(expression);
+              if (!isInferenceEquivalent(typeArguments, method, typeParameters, copy)) {
+                return;
+              }
             }
-
-            final PsiCallExpression copy = (PsiCallExpression)expression.copy(); //see IDEADEV-8174
-            try {
-              final PsiMethodCallExpression expr = (PsiMethodCallExpression)
-                JavaPsiFacade.getInstance(copy.getProject()).getElementFactory().createExpressionFromText("foo()", null);
-              copy.getTypeArgumentList().replace(expr.getTypeArgumentList());
-              if (copy.resolveMethod() != element) return;
+            else {
+              final PsiCall topLevelCall = InferenceSessionContainer.treeWalkUp(expression);
+              if (topLevelCall != null) {
+                final int offset = expression.getTextRange().getStartOffset() - topLevelCall.getTextRange().getStartOffset();
+                final PsiCall topLevelCopy = (PsiCall)topLevelCall.copy();
+                final PsiElement elementInCopy = topLevelCopy.getContainingFile().findElementAt(topLevelCopy.getTextRange().getStartOffset() + offset);
+                if (!isInferenceEquivalent(typeArguments, method, typeParameters, elementInCopy)) {
+                  return;
+                }
+              }
+              else {
+                return;
+              }
             }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-              return;
-            }
-
             final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(expression.getTypeArgumentList(),
                                                                                            InspectionsBundle.message("inspection.redundant.type.problem.descriptor"),
                                                                                            myQuickFixAction,
@@ -148,6 +152,37 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
         }
       }
 
+      private boolean isInferenceEquivalent(PsiType[] typeArguments,
+                                            PsiMethod method,
+                                            PsiTypeParameter[] typeParameters,
+                                            PsiElement elementInCopy) {
+        final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(elementInCopy, PsiCallExpression.class, false);
+        if (exprCopy != null) {
+          try {
+            final PsiMethodCallExpression expr = (PsiMethodCallExpression)
+              JavaPsiFacade.getInstance(exprCopy.getProject()).getElementFactory().createExpressionFromText("foo()", null);
+            exprCopy.getTypeArgumentList().replace(expr.getTypeArgumentList());
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+            return false;
+          }
+          final JavaResolveResult copyResult = exprCopy.resolveMethodGenerics();
+          if (method != copyResult.getElement()) return false;
+          final PsiSubstitutor psiSubstitutor = copyResult.getSubstitutor();
+          for (int i = 0, length = typeParameters.length; i < length; i++) {
+            PsiTypeParameter typeParameter = typeParameters[i];
+            final PsiType inferredType = psiSubstitutor.getSubstitutionMap().get(typeParameter);
+            if (!typeArguments[i].equals(inferredType)) {
+              return false;
+            }
+            if (PsiUtil.resolveClassInType(method.getReturnType()) == typeParameter && PsiPrimitiveType.getUnboxedType(inferredType) != null) {
+              return false;
+            }
+          }
+        }
+        return true;
+      }
     });
 
     if (problems.isEmpty()) return null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,10 +72,10 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   // for diagnostics
   static Object info(Object task) {
     if (task instanceof FutureTask) {
-      task = ReflectionUtil.getField(task.getClass(), task, Callable.class, "callable");
+      task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Callable.class, "callable"), task.getClass());
     }
     if (task instanceof Callable && task.getClass().getName().equals("java.util.concurrent.Executors$RunnableAdapter")) {
-      task = ReflectionUtil.getField(task.getClass(), task, Runnable.class, "task");
+      task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Runnable.class, "task"), task.getClass());
     }
     return task;
   }
@@ -110,6 +111,9 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
 
   @Override
   public void execute(@NotNull Runnable task) {
+    if (isShutdown()) {
+      throw new RejectedExecutionException("Already shutdown");
+    }
     long status = myStatus.addAndGet(1 + (1L << 32)); // increment inProgress and queue stamp atomically
 
     if (tryToExecute(status, task)) {
@@ -127,7 +131,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       assert inProgress > 0 : inProgress;
 
       Runnable next;
-      if (inProgress <= myMaxTasks && !isShutdown() && (next = myTaskQueue.poll()) != null) {
+      if (inProgress <= myMaxTasks && (next = myTaskQueue.poll()) != null) {
         tryToExecute(status, next);
         break;
       }
@@ -143,7 +147,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     int inProgress = (int)status;
 
     assert inProgress > 0 : inProgress;
-    if (inProgress <= myMaxTasks && !isShutdown()) {
+    if (inProgress <= myMaxTasks) {
       try {
         myBackendExecutor.execute(wrap(task));
       }

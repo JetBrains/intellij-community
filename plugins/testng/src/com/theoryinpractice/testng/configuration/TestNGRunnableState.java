@@ -23,7 +23,10 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -36,6 +39,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
 import com.intellij.util.PathUtil;
@@ -239,36 +243,39 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
       @Override
       protected void onFound() {
         super.onFound();
-
-        if (forkPerModule()) {
-          final Map<Module, List<String>> perModule = new TreeMap<Module, List<String>>(new Comparator<Module>() {
-            @Override
-            public int compare(Module o1, Module o2) {
-              return StringUtil.compare(o1.getName(), o2.getName(), true);
-            }
-          });
-
-          for (final PsiClass psiClass : myClasses.keySet()) {
-            final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
-            if (module != null) {
-              List<String> list = perModule.get(module);
-              if (list == null) {
-                list = new ArrayList<String>();
-                perModule.put(module, list);
-              }
-              list.add(psiClass.getQualifiedName());
-            }
-          }
-
-          try {
-            writeClassesPerModule(getConfiguration().getPackage(), getJavaParameters(), perModule);
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
-        }
+        writeClassesPerModule(myClasses);
       }
     };
+  }
+
+  protected void writeClassesPerModule(Map<PsiClass, Map<PsiMethod, List<String>>> classes) {
+    if (forkPerModule()) {
+      final Map<Module, List<String>> perModule = new TreeMap<Module, List<String>>(new Comparator<Module>() {
+        @Override
+        public int compare(Module o1, Module o2) {
+          return StringUtil.compare(o1.getName(), o2.getName(), true);
+        }
+      });
+
+      for (final PsiClass psiClass : classes.keySet()) {
+        final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
+        if (module != null) {
+          List<String> list = perModule.get(module);
+          if (list == null) {
+            list = new ArrayList<String>();
+            perModule.put(module, list);
+          }
+          list.add(psiClass.getQualifiedName());
+        }
+      }
+
+      try {
+        writeClassesPerModule(getConfiguration().getPackage(), getJavaParameters(), perModule);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
   }
 
   public static boolean supportSerializationProtocol(TestNGConfiguration config) {

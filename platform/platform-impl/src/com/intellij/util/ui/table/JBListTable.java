@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -214,7 +214,7 @@ public abstract class JBListTable {
     private static final int RESIZE_AMOUNT_PER_STEP = 5;
 
     private final TIntObjectHashMap<RowAnimationState> myRowAnimationStates = new TIntObjectHashMap<RowAnimationState>();
-    private final Timer myAnimationTimer = new Timer(ANIMATION_STEP_MILLIS, this);
+    private final Timer myAnimationTimer = UIUtil.createNamedTimer("JBListTableTimer",ANIMATION_STEP_MILLIS, this);
     private final JTable myTable;
 
     public RowResizeAnimator(JTable table) {
