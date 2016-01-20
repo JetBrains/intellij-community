@@ -243,7 +243,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
     }
 
     public static String threadName(@NotNull String name, @NotNull String id) {
-      int indx = id.indexOf("_");
+      int indx = id.indexOf("_", id.indexOf("_") + 1);
       if (indx != -1) {
         id = id.substring(0, indx);
       }
