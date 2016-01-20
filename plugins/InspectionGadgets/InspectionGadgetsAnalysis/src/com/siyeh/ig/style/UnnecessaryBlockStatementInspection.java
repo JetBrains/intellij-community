@@ -21,7 +21,6 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -88,37 +87,31 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement leftBrace = descriptor.getPsiElement();
       final PsiElement parent = leftBrace.getParent();
       if (!(parent instanceof PsiCodeBlock)) {
         return;
       }
       final PsiCodeBlock block = (PsiCodeBlock)parent;
-      final PsiBlockStatement blockStatement =
-        (PsiBlockStatement)block.getParent();
-      final PsiElement[] children = block.getChildren();
-      if (children.length > 2) {
+      final PsiElement firstBodyElement = block.getFirstBodyElement();
+      final PsiElement lastBodyElement = block.getLastBodyElement();
+      final PsiBlockStatement blockStatement = (PsiBlockStatement)block.getParent();
+      if (firstBodyElement != null && lastBodyElement != null) {
         final PsiElement element = blockStatement.getParent();
-        element.addRangeBefore(children[1],
-                               children[children.length - 2], blockStatement);
+        element.addRangeBefore(firstBodyElement, lastBodyElement, blockStatement);
       }
       blockStatement.delete();
     }
   }
 
-  private class UnnecessaryBlockStatementVisitor
-    extends BaseInspectionVisitor {
+  private class UnnecessaryBlockStatementVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBlockStatement(
-      PsiBlockStatement blockStatement) {
+    public void visitBlockStatement(PsiBlockStatement blockStatement) {
       super.visitBlockStatement(blockStatement);
       if (ignoreSwitchBranches) {
-        final PsiElement prevStatement =
-          PsiTreeUtil.skipSiblingsBackward(blockStatement,
-                                           PsiWhiteSpace.class);
+        final PsiElement prevStatement = PsiTreeUtil.skipSiblingsBackward(blockStatement, PsiWhiteSpace.class);
         if (prevStatement instanceof PsiSwitchLabelStatement) {
           return;
         }
@@ -134,8 +127,7 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
       }
       final PsiCodeBlock parentBlock = (PsiCodeBlock)parent;
       if (parentBlock.getStatements().length > 1 &&
-          VariableSearchUtils.containsConflictingDeclarations(
-            codeBlock, parentBlock)) {
+          VariableSearchUtils.containsConflictingDeclarations(codeBlock, parentBlock)) {
         return;
       }
       registerError(brace);
