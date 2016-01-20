@@ -34,8 +34,7 @@ import java.util.List;
 public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolveProvider {
   @NotNull
   @Override
-  public List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element,
-                                              @NotNull List<PsiElement> definers) {
+  public List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element) {
     final List<RatedResolveResult> result = new ArrayList<RatedResolveResult>();
     final PsiElement realContext = PyPsiUtils.getRealContext(element);
     final String referencedName = element.getReferencedName();
@@ -49,7 +48,7 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
       }
       if (resultElement != null) {
         final TypeEvalContext typeEvalContext = TypeEvalContext.codeInsightFallback(element.getProject());
-        result.add(new ImportedResolveResult(resultElement, PyReferenceImpl.getRate(resultElement, typeEvalContext), definers));
+        result.add(new ImportedResolveResult(resultElement, PyReferenceImpl.getRate(resultElement, typeEvalContext), null));
       }
     }
     return result;

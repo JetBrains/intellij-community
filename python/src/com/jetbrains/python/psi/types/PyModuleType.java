@@ -162,8 +162,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
               final PsiElement subModule = ResolveImportUtil.resolveChild(myModule, name, myModule, false, true);
               if (subModule != null) {
                 final ResolveResultList results = new ResolveResultList();
-                results.add(new ImportedResolveResult(subModule, RatedResolveResult.RATE_NORMAL,
-                                                      Collections.<PsiElement>singletonList(importElement)));
+                results.add(new ImportedResolveResult(subModule, RatedResolveResult.RATE_NORMAL, importElement));
                 return results;
               }
             }

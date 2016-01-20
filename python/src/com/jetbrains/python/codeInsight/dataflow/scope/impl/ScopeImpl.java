@@ -125,7 +125,7 @@ public class ScopeImpl implements Scope {
     if (isAugAssignment(name)) {
       return true;
     }
-    for (NameDefiner definer : getImportedNameDefiners()) {
+    for (PyImportedNameDefiner definer : getImportedNameDefiners()) {
       if (definer.getElementNamed(name) != null) {
         return true;
       }

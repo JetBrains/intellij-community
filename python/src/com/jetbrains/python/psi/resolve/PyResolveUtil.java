@@ -140,7 +140,7 @@ public class PyResolveUtil {
             }
           }
         }
-        for (NameDefiner definer : scope.getImportedNameDefiners()) {
+        for (PyImportedNameDefiner definer : scope.getImportedNameDefiners()) {
           if (!processor.execute(definer, ResolveState.initial())) {
             return;
           }

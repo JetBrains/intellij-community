@@ -93,7 +93,7 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
             }
             String referencedName = expr instanceof PyFile ? FileUtil.getNameWithoutExtension(((PyFile)expr).getName()) : expr.getName();
             if (referencedName != null && nameIsAcceptable(referencedName)) {
-              addImportedElement(referencedName, definer, expr);
+              addImportedElement(referencedName, expr);
             }
           }
         }
@@ -122,7 +122,7 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
     mySeenNames.add(name);
   }
 
-  protected void addImportedElement(String referencedName, NameDefiner definer, PyElement expr) {
+  protected void addImportedElement(String referencedName, PyElement expr) {
     addElement(referencedName, expr);
   }
 

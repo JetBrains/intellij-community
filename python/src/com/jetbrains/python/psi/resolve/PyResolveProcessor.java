@@ -23,10 +23,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.NameDefiner;
-import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyStarImportElement;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +36,7 @@ import java.util.Map;
 public class PyResolveProcessor implements PsiScopeProcessor {
   @NotNull private final String myName;
   private final boolean myLocalResolve;
-  @NotNull private final Map<PsiElement, PsiElement> myResults = Maps.newLinkedHashMap();
+  @NotNull private final Map<PsiElement, PyImportedNameDefiner> myResults = Maps.newLinkedHashMap();
   @Nullable private ScopeOwner myOwner;
 
   public PyResolveProcessor(@NotNull String name) {
@@ -57,11 +54,11 @@ public class PyResolveProcessor implements PsiScopeProcessor {
     if (namedElement != null && myName.equals(namedElement.getName())) {
       return tryAddResult(element, null);
     }
-    final NameDefiner nameDefiner = PyUtil.as(element, NameDefiner.class);
-    if (nameDefiner != null) {
-      final PsiElement resolved = resolveInNameDefiner(nameDefiner);
+    final PyImportedNameDefiner importedNameDefiner = PyUtil.as(element, PyImportedNameDefiner.class);
+    if (importedNameDefiner != null) {
+      final PsiElement resolved = resolveInImportedNameDefiner(importedNameDefiner);
       if (resolved != null) {
-        return tryAddResult(resolved, nameDefiner);
+        return tryAddResult(resolved, importedNameDefiner);
       }
       final PyImportElement importElement = PyUtil.as(element, PyImportElement.class);
       if (importElement != null) {
@@ -85,7 +82,7 @@ public class PyResolveProcessor implements PsiScopeProcessor {
   }
 
   @NotNull
-  public Map<PsiElement, PsiElement> getResults() {
+  public Map<PsiElement, PyImportedNameDefiner> getResults() {
     return myResults;
   }
 
@@ -94,18 +91,13 @@ public class PyResolveProcessor implements PsiScopeProcessor {
     return myResults.keySet();
   }
 
-  @NotNull
-  public Collection<PsiElement> getDefiners() {
-    return myResults.values();
-  }
-
   @Nullable
   public ScopeOwner getOwner() {
     return myOwner;
   }
 
   @Nullable
-  private PsiElement resolveInNameDefiner(@NotNull NameDefiner definer) {
+  private PsiElement resolveInImportedNameDefiner(@NotNull PyImportedNameDefiner definer) {
     if (myLocalResolve) {
       final PyImportElement importElement = PyUtil.as(definer, PyImportElement.class);
       if (importElement != null) {
@@ -118,7 +110,7 @@ public class PyResolveProcessor implements PsiScopeProcessor {
     return definer.getElementNamed(myName);
   }
 
-  private boolean tryAddResult(@Nullable PsiElement element, @Nullable PsiElement definer) {
+  private boolean tryAddResult(@Nullable PsiElement element, @Nullable PyImportedNameDefiner definer) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(definer != null ? definer : element);
     if (myOwner == null) {
       myOwner = owner;

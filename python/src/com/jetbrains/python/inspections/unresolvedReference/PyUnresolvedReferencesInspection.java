@@ -132,7 +132,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
   }
 
   public static class Visitor extends PyInspectionVisitor {
-    private Set<PsiElement> myUsedImports = Collections.synchronizedSet(new HashSet<PsiElement>());
+    private Set<PyImportedNameDefiner> myUsedImports = Collections.synchronizedSet(new HashSet<PyImportedNameDefiner>());
     private Set<PyImportedNameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<PyImportedNameDefiner>());
     private final ImmutableSet<String> myIgnoredIdentifiers;
     private volatile Boolean myIsEnabled = null;
@@ -326,7 +326,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 final ResolveResult[] resolveResults = reference.multiResolve(false);
                 for (ResolveResult resolveResult : resolveResults) {
                   if (resolveResult instanceof ImportedResolveResult) {
-                    myUsedImports.addAll(((ImportedResolveResult)resolveResult).getNameDefiners());
+                    final PyImportedNameDefiner definer = ((ImportedResolveResult)resolveResult).getDefiner();
+                    if (definer != null) {
+                      myUsedImports.add(definer);
+                    }
                   }
                 }
               }
@@ -369,7 +372,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             target = resolveResult.getElement();
           }
           if (resolveResult instanceof ImportedResolveResult) {
-            myUsedImports.addAll(((ImportedResolveResult)resolveResult).getNameDefiners());
+            final PyImportedNameDefiner definer = ((ImportedResolveResult)resolveResult).getDefiner();
+            if (definer != null) {
+              myUsedImports.add(definer);
+            }
           }
         }
       }
@@ -1007,7 +1013,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         return Collections.emptyList();
       }
       // PY-1315 Unused imports inspection shouldn't work in python REPL console
-      final NameDefiner first = myAllImports.iterator().next();
+      final PyImportedNameDefiner first = myAllImports.iterator().next();
       if (first.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(first)) {
         return Collections.emptyList();
       }
@@ -1026,13 +1032,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
       unusedImports.removeAll(unusedImportToSkip);
 
-
       Set<String> usedImportNames = new HashSet<String>();
-      for (PsiElement usedImport : myUsedImports) {
-        if (usedImport instanceof NameDefiner) {
-          for (PyElement e : ((NameDefiner)usedImport).iterateNames()) {
-            usedImportNames.add(e.getName());
-          }
+      for (PyImportedNameDefiner usedImport : myUsedImports) {
+        for (PyElement e : usedImport.iterateNames()) {
+          usedImportNames.add(e.getName());
         }
       }
 
@@ -1053,7 +1056,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
         }
         PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(unusedImport, PyImportStatementBase.class);
-        if (importStatement != null && !unusedStatements.contains(importStatement) && !myUsedImports.contains(importStatement)) {
+        if (importStatement != null && !unusedStatements.contains(importStatement) && !myUsedImports.contains(unusedImport)) {
           if (suppressableInspection.isSuppressedFor(importStatement)) {
             continue;
           }

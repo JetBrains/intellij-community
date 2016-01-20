@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -107,9 +106,7 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
     }
     if (result != null) {
       if (myImportElement != null) {
-        results.add(new ImportedResolveResult(result,
-                                              RatedResolveResult.RATE_NORMAL,
-                                              Collections.<PsiElement>singletonList(myImportElement)));
+        results.add(new ImportedResolveResult(result, RatedResolveResult.RATE_NORMAL, myImportElement));
       }
       else {
         results.poke(result, RatedResolveResult.RATE_NORMAL);

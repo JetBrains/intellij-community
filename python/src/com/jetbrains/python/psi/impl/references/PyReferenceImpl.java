@@ -166,20 +166,15 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final ResolveResultList ret = new ResolveResultList();
     for (Instruction instruction : instructions) {
       PsiElement definition = instruction.getElement();
-      NameDefiner definer = null;
+      PyImportedNameDefiner definer = null;
       // TODO: This check may slow down resolving, but it is the current solution to the comprehension scopes problem
       if (isInnerComprehension(element, definition)) continue;
-      if (definition instanceof NameDefiner && !(definition instanceof PsiNamedElement)) {
-        definer = (NameDefiner)definition;
+      if (definition instanceof PyImportedNameDefiner && !(definition instanceof PsiNamedElement)) {
+        definer = (PyImportedNameDefiner)definition;
         definition = definer.getElementNamed(name);
       }
       if (definer != null) {
-        if (definer instanceof PyImportElement || definer instanceof PyStarImportElement || definer instanceof PyImportedModule) {
-          ret.add(new ImportedResolveResult(definition, getRate(definition, context), Collections.<PsiElement>singletonList(definer)));
-        }
-        else {
-          ret.poke(definition, getRate(definition, context));
-        }
+        ret.add(new ImportedResolveResult(definition, getRate(definition, context), definer));
         // TODO this kind of resolve contract is quite stupid
         if (definition != null) {
           ret.poke(definer, RatedResolveResult.RATE_LOW);
@@ -304,9 +299,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         }
       }
 
-      for (Map.Entry<PsiElement, PsiElement> entry : processor.getResults().entrySet()) {
+      for (Map.Entry<PsiElement, PyImportedNameDefiner> entry : processor.getResults().entrySet()) {
         final PsiElement resolved = entry.getKey();
-        final PsiElement definer = entry.getValue();
+        final PyImportedNameDefiner definer = entry.getValue();
         if (resolved != null) {
           if (typeEvalContext.maySwitchToAST(resolved) && isInnerComprehension(realContext, resolved)) {
             continue;
@@ -319,11 +314,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           }
           else {
             resultList.poke(definer, getRate(definer, typeEvalContext));
-            resultList.add(new ImportedResolveResult(resolved, getRate(resolved, typeEvalContext), Collections.singletonList(definer)));
+            resultList.add(new ImportedResolveResult(resolved, getRate(resolved, typeEvalContext), definer));
           }
         }
         else if (definer != null) {
-          resultList.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW, Collections.singletonList(definer)));
+          resultList.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW, definer));
         }
       }
 
@@ -348,7 +343,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   private ResolveResultList resolveByReferenceResolveProviders() {
     final ResolveResultList results = new ResolveResultList();
     for (PyReferenceResolveProvider provider : Extensions.getExtensions(PyReferenceResolveProvider.EP_NAME)) {
-      results.addAll(provider.resolveName(myElement, Collections.<PsiElement>emptyList()));
+      results.addAll(provider.resolveName(myElement));
     }
     return results;
   }
