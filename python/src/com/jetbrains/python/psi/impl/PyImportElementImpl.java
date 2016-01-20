@@ -211,7 +211,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       }
       if (qName.getComponentCount() == 1) {
         if (resolveImportElement) {
-          return ResolveImportUtil.resolveImportElement(this, QualifiedName.fromComponents(name));
+          return resolve();
         }
         return this;
       }
