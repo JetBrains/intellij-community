@@ -225,7 +225,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
       PyTargetExpression target = (PyTargetExpression)targets[0];
       return !target.isQualified() && the_name.equals(target.getName()) ? target : null;
     }
-    return IterHelper.findName(iterateNames(), the_name);
+    return PyUtil.IterHelper.findName(iterateNames(), the_name);
   }
 
   public boolean mustResolveOutside() {

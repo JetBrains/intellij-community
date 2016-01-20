@@ -53,7 +53,7 @@ public class PyForStatementImpl extends PyPartitionedElementImpl implements PyFo
   }
 
   public PyElement getElementNamed(final String the_name) {
-    return IterHelper.findName(iterateNames(), the_name);
+    return PyUtil.IterHelper.findName(iterateNames(), the_name);
   }
 
   public boolean mustResolveOutside() {

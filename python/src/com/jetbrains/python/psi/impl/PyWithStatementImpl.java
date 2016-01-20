@@ -54,7 +54,7 @@ public class PyWithStatementImpl extends PyElementImpl implements PyWithStatemen
   }
 
   public PsiElement getElementNamed(final String the_name) {
-    PyElement named_elt = IterHelper.findName(iterateNames(), the_name);
+    PyElement named_elt = PyUtil.IterHelper.findName(iterateNames(), the_name);
     return named_elt;
   }
 

@@ -1893,4 +1893,23 @@ public class PyUtil {
              isBytes() == info.isBytes();
     }
   }
+
+  public static class IterHelper {  // TODO: rename sanely
+    private IterHelper() {}
+    @Nullable
+    public static PyElement findName(Iterable<PyElement> it, String name) {
+      PyElement ret = null;
+      for (PyElement elt : it) {
+        if (elt != null) {
+          // qualified refs don't match by last name, and we're not checking FQNs here
+          if (elt instanceof PyQualifiedExpression && ((PyQualifiedExpression)elt).isQualified()) continue;
+          if (name.equals(elt.getName())) { // plain name matches
+            ret = elt;
+            break;
+          }
+        }
+      }
+      return ret;
+    }
+  }
 }
