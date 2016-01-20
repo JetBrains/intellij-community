@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.diff.comparison
 
-public class LineComparisonUtilTest : ComparisonUtilTestBase() {
-  public fun testEqualStrings() {
+class LineComparisonUtilTest : ComparisonUtilTestBase() {
+  fun testEqualStrings() {
     lines {
       ("" - "")
       default()
@@ -48,7 +48,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testTrivialCases() {
+  fun testTrivialCases() {
     lines {
       ("x_" - "y_")
       default(mod(0, 0, 1, 1))
@@ -98,7 +98,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testSimpleCases() {
+  fun testSimpleCases() {
     lines {
       ("x_z" - "y_z")
       default(mod(0, 0, 1, 1))
@@ -142,7 +142,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testEmptyLastLine() {
+  fun testEmptyLastLine() {
     lines {
       ("x_" - "")
       default(del(0, 0, 1))
@@ -168,7 +168,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testWhitespaceOnlyChanges() {
+  fun testWhitespaceOnlyChanges() {
     lines {
       ("x " - " x")
       default(mod(0, 0, 1, 1))
@@ -213,7 +213,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testAlgorithmSpecific() {
+  fun testAlgorithmSpecific() {
     lines {
       ("x_y_z_AAAAA" - "AAAAA_x_y_z")
       default(del(0, 0, 3), ins(4, 1, 3))
@@ -240,7 +240,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testNonDeterministicCases() {
+  fun testNonDeterministicCases() {
     lines {
       ("" - "__")
       default(ins(1, 1, 2))
@@ -254,7 +254,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testBigBlockShiftRegression() {
+  fun testBigBlockShiftRegression() {
     lines {
       (" X_  X" - "  X_   X")
       default(mod(0, 0, 2, 2))
@@ -262,7 +262,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testPreferBoundedBlocks() {
+  fun testPreferBoundedBlocks() {
     lines {
       ("A_B_o_o_Y_Z_ _A_B_z_z_Y_Z" - "A_B_o_o_Y_Z_ _A_B_u_u_Y_Z_ _A_B_z_z_Y_Z")
       default(ins(7, 7, 7))
@@ -282,7 +282,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testPreferLessBlocks() {
+  fun testPreferLessBlocks() {
     lines() {
       ("X_A_X_Y_" - "X_Y_")
       default(del(0, 0, 2))
@@ -303,7 +303,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testTwoStepCanTrimRegression() {
+  fun testTwoStepCanTrimRegression() {
     lines {
       ("q__7_ 6_ 7" - "_7")
       default(del(0, 0, 1), del(3, 2, 2))
@@ -311,7 +311,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun `test trim changed blocks after second step correction`() {
+  fun `test trim changed blocks after second step correction`() {
     // ??? is there are a case with a range trimmed to zero during second step correction ?
 
     lines() {

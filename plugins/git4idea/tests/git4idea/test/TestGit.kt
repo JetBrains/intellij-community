@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import git4idea.repo.GitRepository
 /**
  * Any unknown error that could be returned by Git.
  */
-public val UNKNOWN_ERROR_TEXT: String = "unknown error"
+val UNKNOWN_ERROR_TEXT: String = "unknown error"
 
-public class TestGitImpl : GitImpl() {
+class TestGitImpl : GitImpl() {
 
   private var myShouldFail: (GitRepository) -> Boolean = { false }
 
@@ -37,7 +37,7 @@ public class TestGitImpl : GitImpl() {
       super.rebase(repository, params, *listeners)
   }
 
-  public fun setShouldFail(shouldFail: (GitRepository) -> Boolean) {
+  fun setShouldFail(shouldFail: (GitRepository) -> Boolean) {
     myShouldFail = shouldFail
   }
 }

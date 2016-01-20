@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ fun processScopeVariables(scope: Scope,
     }
   }
 
-  val comparator = if (memberFilter.hasNameMappings()) comparator { o1, o2 -> naturalCompare(memberFilter.rawNameToSource(o1), memberFilter.rawNameToSource(o2)) } else NATURAL_NAME_COMPARATOR
+  val comparator = if (memberFilter.hasNameMappings()) Comparator<Variable> { o1, o2 -> naturalCompare(memberFilter.rawNameToSource(o1), memberFilter.rawNameToSource(o2)) } else NATURAL_NAME_COMPARATOR
   Collections.sort(properties, comparator)
   Collections.sort(functions, comparator)
 

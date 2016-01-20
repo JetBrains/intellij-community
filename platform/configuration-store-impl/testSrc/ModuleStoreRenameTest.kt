@@ -131,7 +131,7 @@ internal class ModuleStoreRenameTest {
     val parentVirtualDir = storage.getVirtualFile()!!.parent
     runInEdtAndWait { runWriteAction { parentVirtualDir.rename(null, UUID.randomUUID().toString()) } }
 
-    val newFile = Paths.get(parentVirtualDir.getPath(), "${module.name}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+    val newFile = Paths.get(parentVirtualDir.path, "${module.name}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     try {
       assertThat(newFile).isRegularFile()
       assertRename(module.name, oldFile)

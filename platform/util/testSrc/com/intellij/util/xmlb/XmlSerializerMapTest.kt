@@ -11,8 +11,7 @@ internal class XmlSerializerMapTest {
   @Test fun beanValueUsingSkipDefaultsFilter() {
     @Tag("bean")
     class BeanWithMapWithBeanValue2 {
-      @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-      public var values: Map<String, BeanWithProperty> = THashMap()
+      @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false) var values: Map<String, BeanWithProperty> = THashMap()
     }
 
     val bean = BeanWithMapWithBeanValue2()
@@ -126,7 +125,7 @@ internal class XmlSerializerMapTest {
   }
 
   private class BeanWithMap {
-    public var VALUES: MutableMap<String, String> = LinkedHashMap()
+    var VALUES: MutableMap<String, String> = LinkedHashMap()
 
     init {
       VALUES.put("a", "1")
@@ -149,8 +148,7 @@ internal class XmlSerializerMapTest {
 
   private class BeanWithMapWithAnnotations {
     @Property(surroundWithTag = false)
-    @MapAnnotation(surroundWithTag = false, entryTagName = "option", keyAttributeName = "name", valueAttributeName = "value")
-    public var VALUES: MutableMap<String, String> = LinkedHashMap()
+    @MapAnnotation(surroundWithTag = false, entryTagName = "option", keyAttributeName = "name", valueAttributeName = "value") var VALUES: MutableMap<String, String> = LinkedHashMap()
 
     init {
       VALUES.put("a", "1")
@@ -171,7 +169,7 @@ internal class XmlSerializerMapTest {
   }
 
   private class BeanWithMapWithBeanValue {
-    public var VALUES: MutableMap<String, BeanWithProperty> = LinkedHashMap()
+    var VALUES: MutableMap<String, BeanWithProperty> = LinkedHashMap()
   }
 
   @Test fun withBeanValue() {

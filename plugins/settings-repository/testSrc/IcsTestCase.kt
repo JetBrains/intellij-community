@@ -35,7 +35,7 @@ fun Repository.add(path: String, data: ByteArray): Repository {
 }
 
 val Repository.workTreePath: Path
-  get() = getWorkTree().toPath()
+  get() = workTree.toPath()
 
 val SAMPLE_FILE_NAME = "file.xml"
 val SAMPLE_FILE_CONTENT = """<application>

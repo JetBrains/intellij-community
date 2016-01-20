@@ -110,10 +110,10 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
   }
 
   fun allocateRequestId(channel: Channel): Int {
-    var requestId = requestIdCounter.getAndIncrement()
+    var requestId = requestIdCounter.andIncrement
     if (requestId >= java.lang.Short.MAX_VALUE) {
       requestIdCounter.set(0)
-      requestId = requestIdCounter.getAndDecrement()
+      requestId = requestIdCounter.andDecrement
     }
     requests.put(requestId, channel)
     return requestId

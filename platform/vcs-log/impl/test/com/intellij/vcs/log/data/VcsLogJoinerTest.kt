@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ class VcsLogJoinerTest {
       val vcsNewRefs = newRefs!!.map { HashImpl.build(it) }
 
       val result = VcsLogJoiner<Hash, TimedVcsCommit>().addCommits(vcsFullLog, vcsOldRefs, vcsRecentCommits, vcsNewRefs).getFirst()!!
-      val actual = result.map { it.getId().asString() }.joinToString(separator = "\n")
+      val actual = result.map { it.id.asString() }.joinToString(separator = "\n")
       assertEquals(expected, actual)
     }
   }

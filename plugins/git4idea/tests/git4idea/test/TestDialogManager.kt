@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import javax.swing.Icon
  * Apart from dialog, the TestDialogManager is capable to handle [Messages]. For this pass a function to the method [#]
  * @see TestDialogHandler
  */
-public class TestDialogManager : DialogManager() {
+class TestDialogManager : DialogManager() {
 
   private val myHandlers = ContainerUtil.newHashMap<Class<out Any>, TestDialogHandler<DialogWrapper>>()
   private var myOnMessage: (String) -> Int = { throw IllegalStateException() }
@@ -69,7 +69,7 @@ public class TestDialogManager : DialogManager() {
     return myOnMessage.invoke(description)
   }
 
-  public fun <T : DialogWrapper> registerDialogHandler(dialogClass: Class<T>, handler: TestDialogHandler<T>) {
+  fun <T : DialogWrapper> registerDialogHandler(dialogClass: Class<T>, handler: TestDialogHandler<T>) {
     myHandlers.put(dialogClass, handler as TestDialogHandler<DialogWrapper>)
   }
 
@@ -77,12 +77,11 @@ public class TestDialogManager : DialogManager() {
     myOnMessage = handler
   }
 
-  @Deprecated("Use onMessage")
-  public fun registerMessageHandler(handler: TestMessageHandler) {
+  @Deprecated("Use onMessage") fun registerMessageHandler(handler: TestMessageHandler) {
     myOnMessage = { handler.handleMessage(it) }
   }
 
-  public fun cleanup() {
+  fun cleanup() {
     myHandlers.clear()
   }
 }

@@ -287,7 +287,7 @@ fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<Str
   return false
 }
 
-public enum class ReloadComponentStoreStatus {
+enum class ReloadComponentStoreStatus {
   RESTART_AGREED,
   RESTART_CANCELLED,
   ERROR,

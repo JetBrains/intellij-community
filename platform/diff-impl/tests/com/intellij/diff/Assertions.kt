@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,34 +20,34 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 
-public fun assertTrue(actual: Boolean, message: String = "") {
+fun assertTrue(actual: Boolean, message: String = "") {
   TestCase.assertTrue(message, actual)
 }
 
-public fun assertFalse(actual: Boolean, message: String = "") {
+fun assertFalse(actual: Boolean, message: String = "") {
   TestCase.assertFalse(message, actual)
 }
 
-public fun assertEquals(expected: Any?, actual: Any?, message: String = "") {
+fun assertEquals(expected: Any?, actual: Any?, message: String = "") {
   TestCase.assertEquals(message, expected, actual)
 }
 
-public fun assertEquals(expected: CharSequence?, actual: CharSequence?, message: String = "") {
+fun assertEquals(expected: CharSequence?, actual: CharSequence?, message: String = "") {
   if (!StringUtil.equals(expected, actual)) throw ComparisonFailure(message, expected?.toString(), actual?.toString())
 }
 
-public fun assertEmpty(collection: Collection<*>, message: String = "") {
+fun assertEmpty(collection: Collection<*>, message: String = "") {
   UsefulTestCase.assertEmpty(message, collection)
 }
 
-public fun assertOrderedEquals(expected: Collection<*>, actual: Collection<*>, message: String = "") {
+fun assertOrderedEquals(expected: Collection<*>, actual: Collection<*>, message: String = "") {
   UsefulTestCase.assertOrderedEquals(message, actual, expected)
 }
 
-public fun assertNull(actual: Any?, message: String = "") {
+fun assertNull(actual: Any?, message: String = "") {
   TestCase.assertNull(message, actual)
 }
 
-public fun assertNotNull(actual: Any?, message: String = "") {
+fun assertNotNull(actual: Any?, message: String = "") {
   TestCase.assertNotNull(message, actual)
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-public class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
+class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
   private var myUltimate: GitRepository by Delegates.notNull()
   private var myCommunity: GitRepository by Delegates.notNull()
@@ -57,7 +57,7 @@ public class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     git("commit -m gitignore")
   }
 
-  public fun `test all successful`() {
+  fun `test all successful`() {
     myUltimate.`place feature above master`()
     myCommunity.`diverge feature and master`()
     myContrib.`place feature on master`()
@@ -69,7 +69,7 @@ public class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     assertNoRebaseInProgress(myAllRepositories)
   }
 
-  public fun `test abort from critical error during rebasing 2nd root, before any commits were applied`() {
+  fun `test abort from critical error during rebasing 2nd root, before any commits were applied`() {
     val localChange = LocalChange(myUltimate, "new.txt", "Some content")
     val rebaseProcess = `fail with critical error while rebasing 2nd root`(localChange)
 
@@ -105,7 +105,7 @@ public class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     localChange.verify()
   }
 
-  public fun `test abort from critical error while rebasing 2nd root, after some commits were applied`() {
+  fun `test abort from critical error while rebasing 2nd root, after some commits were applied`() {
     val localChange = LocalChange(myUltimate, "new.txt", "Some content")
     val rebaseProcess = `fail with critical error while rebasing 2nd root after some commits are applied`(localChange)
 
@@ -129,7 +129,7 @@ public class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     localChange.verify()
   }
 
-  public fun `test conflicts in multiple repositories are resolved separately`() {
+  fun `test conflicts in multiple repositories are resolved separately`() {
     myUltimate.`prepare simple conflict`()
     myCommunity.`prepare simple conflict`()
     myContrib.`diverge feature and master`()
@@ -163,7 +163,7 @@ public class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     }
   }
 
-  public fun `test retry doesn't touch successful repositories`() {
+  fun `test retry doesn't touch successful repositories`() {
     val rebaseProcess = `fail with critical error while rebasing 2nd root`()
 
     rebaseProcess.retry(false)

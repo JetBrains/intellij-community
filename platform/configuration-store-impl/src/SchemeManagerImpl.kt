@@ -53,7 +53,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.util.*
 
-public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val fileSpec: String,
+class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val fileSpec: String,
                                                                      private val processor: SchemeProcessor<E>,
                                                                      private val provider: StreamProvider?,
                                                                      private val ioDirectory: File,
@@ -297,7 +297,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     return list
   }
 
-  public fun reload() {
+  fun reload() {
     // we must not remove non-persistent (e.g. predefined) schemes, because we cannot load it (obviously)
     removeExternalizableSchemes()
 
@@ -314,7 +314,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
           currentScheme = null
         }
 
-        processor.onSchemeDeleted(scheme as E)
+        processor.onSchemeDeleted(scheme)
       }
     }
     retainExternalInfo(schemes)
@@ -740,7 +740,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         toReplace = i
         if (replaceExisting && existing is ExternalizableScheme) {
           val oldInfo = schemeToInfo.remove(existing as ExternalizableScheme)
-          if (oldInfo != null && scheme is ExternalizableScheme && !schemeToInfo.containsKey(scheme as ExternalizableScheme)) {
+          if (oldInfo != null && scheme is ExternalizableScheme && !schemeToInfo.containsKey(scheme as E)) {
             @Suppress("UNCHECKED_CAST")
             schemeToInfo.put(scheme as E, oldInfo)
           }
@@ -898,7 +898,7 @@ private inline fun MutableList<Throwable>.catch(runnable: () -> Unit) {
 
 fun createDir(ioDir: File, requestor: Any): VirtualFile {
   ioDir.mkdirs()
-  val parentFile = ioDir.getParent()
+  val parentFile = ioDir.parent
   val parentVirtualFile = (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile)) ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
   return getFile(ioDir.name, parentVirtualFile, requestor)
 }

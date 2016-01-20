@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.Comparator
 
-public open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGenerator") {
+open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGenerator") {
 
   class TestPrintElementManager(private val myGraphElementComparator: Comparator<GraphElement>) : PrintElementManager {
 
@@ -40,13 +40,13 @@ public open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("eleme
 
     override fun getColorId(element: GraphElement): Int {
       if (element is GraphNode) {
-        return (element as GraphNode).getNodeIndex()
+        return element.nodeIndex
       }
 
       if (element is GraphEdge) {
-        val edge = element as GraphEdge
+        val edge = element
         val normalEdge = LinearGraphUtils.asNormalEdge(edge)
-        if (normalEdge != null) return normalEdge!!.first + normalEdge!!.second
+        if (normalEdge != null) return normalEdge.first + normalEdge.second
         return LinearGraphUtils.getNotNullNodeIndex(edge)
       }
 
@@ -80,35 +80,29 @@ public open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("eleme
     assertEquals(out, actual)
   }
 
-  @Test
-  public fun oneNode() {
+  @Test fun oneNode() {
     doTest("oneNode")
   }
 
-  @Test
-  public fun manyNodes() {
+  @Test fun manyNodes() {
     doTest("manyNodes")
   }
 
-  @Test
-  public fun longEdges() {
+  @Test fun longEdges() {
     doTest("longEdges")
   }
 
-  @Test
-  public fun specialElements() {
+  @Test fun specialElements() {
     doTest("specialElements")
   }
 
 //  oneUpOneDown tests were created in order to investigate some arrow behavior in upsource
-  @Test
-  public fun oneUpOneDown1() {
+  @Test fun oneUpOneDown1() {
     val testName = "oneUpOneDown1"
     runTest(loadText(testName + AbstractTestWithTwoTextFile.IN_POSTFIX), loadText(testName + AbstractTestWithTwoTextFile.OUT_POSTFIX), 7, 1, 10)
   }
 
-  @Test
-  public fun oneUpOneDown2() {
+  @Test fun oneUpOneDown2() {
     val testName = "oneUpOneDown2"
     runTest(loadText(testName + AbstractTestWithTwoTextFile.IN_POSTFIX), loadText(testName + AbstractTestWithTwoTextFile.OUT_POSTFIX), 10, 1, 10)
   }

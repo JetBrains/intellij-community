@@ -110,7 +110,7 @@ class LoadTest : IcsTestCase() {
   }
 
   fun Repository.createAndRegisterReadOnlySource(): ReadonlySource {
-    val source = ReadonlySource(getWorkTree().absolutePath)
+    val source = ReadonlySource(workTree.absolutePath)
     assertThat(cloneBare(source.url!!, File(icsManager.readOnlySourcesManager.rootDir, source.path!!)).objectDatabase.exists()).isTrue()
     icsManager.readOnlySourcesManager.setSources(listOf(source))
     return source

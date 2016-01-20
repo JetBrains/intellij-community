@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ abstract class ChangeListRemoveConfirmation() {
 
       val manager = ChangeListManager.getInstance(project)
       for (id in allIds) {
-        for (vcs in ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()) {
+        for (vcs in ProjectLevelVcsManager.getInstance(project).allActiveVcss) {
           val list = manager.getChangeList(id)
           val permission = if (list == null) ThreeState.NO else vcs.mayRemoveChangeList(list, explicitly)
           if (permission != ThreeState.UNSURE) {
@@ -55,7 +55,7 @@ abstract class ChangeListRemoveConfirmation() {
       val active = toRemove.find { it.isDefault }
       toRemove.forEach { if (it != active) manager.removeChangeList(it.name) }
 
-      if (active != null && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(active), active.getChanges().isEmpty())) {
+      if (active != null && RemoveChangeListAction.confirmActiveChangeListRemoval(project, listOf(active), active.changes.isEmpty())) {
         manager.removeChangeList(active.name)
       }
     }

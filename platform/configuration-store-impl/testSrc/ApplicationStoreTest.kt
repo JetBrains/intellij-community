@@ -122,7 +122,7 @@ internal class ApplicationStoreTest {
     val optionsPath = storageManager.expandMacros(StoragePathMacros.APP_CONFIG)
     val rootConfigPath = storageManager.expandMacros(ROOT_CONFIG)
     val map = getExportableComponentsMap(false, true, storageManager)
-    assertThat(map).isNotEmpty()
+    assertThat(map).isNotEmpty
 
     fun test(item: ExportableItem) {
       val file = item.files.first()
@@ -263,7 +263,7 @@ internal class ApplicationStoreTest {
     override fun processChildren(path: String, roamingType: RoamingType, filter: (String) -> Boolean, processor: (String, InputStream, Boolean) -> Boolean) {
     }
 
-    public val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
+    val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
 
     override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
       getMap(roamingType).put(fileSpec, String(content, 0, size, CharsetToolkit.UTF8_CHARSET))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.diff.comparison
 
-public class WordComparisonUtilTest : ComparisonUtilTestBase() {
-  public fun testSimpleCases() {
+class WordComparisonUtilTest : ComparisonUtilTestBase() {
+  fun testSimpleCases() {
     words {
       ("x z" - "y z")
       ("-  " - "-  ").default()
@@ -83,7 +83,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testPunctuation() {
+  fun testPunctuation() {
     words {
       (" x.z.x " - "x..x")
       ("-  -  -" - "    ").default()
@@ -136,7 +136,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testOldDiffBug() {
+  fun testOldDiffBug() {
     words {
       ("x'y'>" - "x'>")
       ("  -- " - "   ").default()
@@ -150,7 +150,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testWhitespaceOnlyChanges() {
+  fun testWhitespaceOnlyChanges() {
     words {
       ("x  =z" - "x=  z")
       (" --  " - "  -- ").default()
@@ -166,7 +166,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testNewlines() {
+  fun testNewlines() {
     words {
       (" x _ y _ z " - "x z")
       ("- ------  -" - "   ").default()
@@ -184,7 +184,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testFixedBugs() {
+  fun testFixedBugs() {
     words {
       (".! " - ".  y!")
       ("  -" - " --- ").default()
@@ -210,7 +210,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testInnerWhitespaces() {
+  fun testInnerWhitespaces() {
     words {
       ("<< x >>" - "<.<>.>")
       ("  ---  " - " -  - ").default()
@@ -248,11 +248,11 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testEmptyRangePositions() {
+  fun testEmptyRangePositions() {
     // TODO
   }
 
-  public fun testAlgorithmSpecific() {
+  fun testAlgorithmSpecific() {
     // prefer words over punctuation
     words {
       ("...x" - "x...")
@@ -305,7 +305,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testLegacy() {
+  fun testLegacy() {
     words {
       ("abc def, 123" - "ab def, 12")
       ("---      ---" - "--      --").default()
