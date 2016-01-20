@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl.references;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
@@ -34,7 +35,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -159,12 +159,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   @NotNull
-  private static ResolveResultList resolveToLatestDefs(@NotNull List<ReadWriteInstruction> instructions,
+  private static ResolveResultList resolveToLatestDefs(@NotNull List<Instruction> instructions,
                                                        @NotNull PsiElement element,
                                                        @NotNull String name,
                                                        @NotNull TypeEvalContext context) {
     final ResolveResultList ret = new ResolveResultList();
-    for (ReadWriteInstruction instruction : instructions) {
+    for (Instruction instruction : instructions) {
       PsiElement definition = instruction.getElement();
       NameDefiner definer = null;
       // TODO: This check may slow down resolving, but it is the current solution to the comprehension scopes problem
@@ -265,13 +265,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
     ScopeOwner resolvedOwner = processor.getOwner();
 
-    if (resolvedOwner != null && !processor.isImplicitName() && !processor.getResults().isEmpty()) {
+    if (resolvedOwner != null && !processor.getResults().isEmpty()) {
       final Collection<PsiElement> resolvedElements = processor.getElements();
       final Scope resolvedScope = ControlFlowCache.getScope(resolvedOwner);
 
       if (!resolvedScope.isGlobal(referencedName)) {
         if (resolvedOwner == referenceOwner) {
-          final List<ReadWriteInstruction> instructions = PyDefUseUtil.getLatestDefs(resolvedOwner, referencedName, realContext, false);
+          final List<Instruction> instructions = PyDefUseUtil.getLatestDefs(resolvedOwner, referencedName, realContext, false, true);
           // TODO: Use the results from the processor as a cache for resolving to latest defs
           final ResolveResultList latestDefs = resolveToLatestDefs(instructions, realContext, referencedName, typeEvalContext);
           if (!latestDefs.isEmpty()) {

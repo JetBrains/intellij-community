@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
@@ -431,11 +432,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(anchor, PyAugAssignmentStatement.class);
     final PyElement element = augAssignment != null ? augAssignment : anchor;
     try {
-      final List<ReadWriteInstruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true);
+      final List<Instruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true, false);
       if (!defs.isEmpty()) {
-        PyType type = defs.get(0).getType(context, anchor);
+        final ReadWriteInstruction firstInstruction = PyUtil.as(defs.get(0), ReadWriteInstruction.class);
+        PyType type = firstInstruction != null ? firstInstruction.getType(context, anchor) : null;
         for (int i = 1; i < defs.size(); i++) {
-          type = PyUnionType.union(type, defs.get(i).getType(context, anchor));
+          final ReadWriteInstruction instruction = PyUtil.as(defs.get(i), ReadWriteInstruction.class);
+          type = PyUnionType.union(type, instruction != null ? instruction.getType(context, anchor) : null);
         }
         return type;
       }

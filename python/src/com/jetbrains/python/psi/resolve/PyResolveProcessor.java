@@ -18,14 +18,15 @@ package com.jetbrains.python.psi.resolve;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.NameDefiner;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyStarImportElement;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,6 @@ public class PyResolveProcessor implements PsiScopeProcessor {
   private final boolean myLocalResolve;
   @NotNull private final Map<PsiElement, PsiElement> myResults = Maps.newLinkedHashMap();
   @Nullable private ScopeOwner myOwner;
-  private boolean myImplicitName = false;
 
   public PyResolveProcessor(@NotNull String name) {
     this(name, false);
@@ -65,14 +65,9 @@ public class PyResolveProcessor implements PsiScopeProcessor {
       }
       final PyImportElement importElement = PyUtil.as(element, PyImportElement.class);
       if (importElement != null) {
-        if (addResultIfImportMakesNameVisibleInInit(importElement)) {
-          myImplicitName = true;
-        }
-        else {
-          final String importName = importElement.getVisibleName();
-          if (myName.equals(importName)) {
-            return tryAddResult(null, importElement);
-          }
+        final String importName = importElement.getVisibleName();
+        if (myName.equals(importName)) {
+          return tryAddResult(null, importElement);
         }
       }
     }
@@ -109,10 +104,6 @@ public class PyResolveProcessor implements PsiScopeProcessor {
     return myOwner;
   }
 
-  public boolean isImplicitName() {
-    return myImplicitName;
-  }
-
   @Nullable
   private PsiElement resolveInNameDefiner(@NotNull NameDefiner definer) {
     if (myLocalResolve) {
@@ -137,38 +128,5 @@ public class PyResolveProcessor implements PsiScopeProcessor {
       myResults.put(element, definer != null ? definer : null);
     }
     return sameScope;
-  }
-
-  /**
-   * @see http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
-   */
-  private boolean addResultIfImportMakesNameVisibleInInit(@NotNull PyImportElement element) {
-    final QualifiedName importedQName = element.getImportedQName();
-    final PsiFile file = element.getContainingFile();
-    if (file != null) {
-      if (importedQName != null && importedQName.getComponentCount() > 1 && myName.equals(importedQName.getLastComponent()) &&
-          PyUtil.isPackage(file)) {
-        final QualifiedName packageQName = importedQName.removeLastComponent();
-        final PsiElement resolvedImport = PyUtil.turnDirIntoInit(ResolveImportUtil.resolveImportElement(element, packageQName));
-        if (resolvedImport == file) {
-          tryAddResult(element.resolve(), element);
-          myImplicitName = true;
-          return true;
-        }
-      }
-      final PyFromImportStatement fromImport = PyUtil.as(element.getContainingImportStatement(), PyFromImportStatement.class);
-      if (fromImport != null) {
-        final QualifiedName importSourceQName = fromImport.getImportSourceQName();
-        if (importSourceQName != null && importSourceQName.endsWith(myName) && PyUtil.isPackage(file)) {
-          final PsiElement resolvedImportSource = PyUtil.turnInitIntoDir(fromImport.resolveImportSource());
-          if (resolvedImportSource != null && resolvedImportSource.getParent() == file.getContainingDirectory()) {
-            tryAddResult(resolvedImportSource, fromImport);
-            myImplicitName = true;
-            return true;
-          }
-        }
-      }
-    }
-    return false;
   }
 }

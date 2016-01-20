@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -42,7 +43,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author yole
  */
-public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportStatementStub> implements PyFromImportStatement {
+public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportStatementStub> implements PyFromImportStatement{
   public PyFromImportStatementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -252,5 +253,45 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       result.add(prefix + unqualifiedName);
     }
     return result;
+  }
+
+  @NotNull
+  @Override
+  public Iterable<PyElement> iterateNames() {
+    final PyElement resolved = as(resolveImplicitSubModule(), PyElement.class);
+    return resolved != null ? ImmutableList.<PyElement>of(resolved) : Collections.<PyElement>emptyList();
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getElementNamed(String name) {
+    final QualifiedName importSourceQName = getImportSourceQName();
+    return importSourceQName != null && importSourceQName.endsWith(name) ? resolveImplicitSubModule() : null;
+  }
+
+  @Override
+  public boolean mustResolveOutside() {
+    return true;
+  }
+
+  /**
+   * The statement 'from pkg1.m1 import ...' makes 'm1' available as a local name in the package 'pkg1'.
+   *
+   * http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
+   */
+  @Nullable
+  private PsiElement resolveImplicitSubModule() {
+    final QualifiedName importSourceQName = getImportSourceQName();
+    if (importSourceQName != null) {
+      final String name = importSourceQName.getLastComponent();
+      final PsiFile file = getContainingFile();
+      if (name != null && PyUtil.isPackage(file)) {
+        final PsiElement resolvedImportSource = PyUtil.turnInitIntoDir(resolveImportSource());
+        if (resolvedImportSource != null && resolvedImportSource.getParent() == file.getContainingDirectory()) {
+          return resolvedImportSource;
+        }
+      }
+    }
+    return null;
   }
 }

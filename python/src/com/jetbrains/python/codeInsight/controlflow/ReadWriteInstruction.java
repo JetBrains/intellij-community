@@ -38,8 +38,7 @@ public class ReadWriteInstruction extends InstructionImpl {
     READ(true, false, false),
     WRITE(false, true, false),
     ASSERTTYPE(false, false, true),
-    READWRITE(true, true, false),
-    IMPORT_STAR(false, false, false);
+    READWRITE(true, true, false);
 
     private final boolean isWrite;
     private final boolean isRead;
@@ -118,10 +117,6 @@ public class ReadWriteInstruction extends InstructionImpl {
                                                 final String name,
                                                 final InstructionTypeCallback getType) {
     return new ReadWriteInstruction(builder, element, name, ACCESS.ASSERTTYPE, getType);
-  }
-
-  public static ReadWriteInstruction importStar(ControlFlowBuilder builder, PsiElement element) {
-    return new ReadWriteInstruction(builder, element, null, ACCESS.IMPORT_STAR);
   }
 
   @Nullable

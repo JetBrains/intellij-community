@@ -231,9 +231,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyStarImportElement(PyStarImportElement node) {
-    final ReadWriteInstruction instruction = ReadWriteInstruction.importStar(myBuilder, node);
-    myBuilder.addNode(instruction);
-    myBuilder.checkPending(instruction);
+    myBuilder.startNode(node);
   }
 
   private void visitPyImportStatementBase(PyImportStatementBase node) {
