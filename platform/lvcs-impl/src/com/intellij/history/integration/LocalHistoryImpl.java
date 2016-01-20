@@ -249,11 +249,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     return myGateway;
   }
 
-  private void revertToLabel(@NotNull Project project, @NotNull VirtualFile f, LabelImpl impl) {
-    if (!f.exists() || !f.isValid()) {
-      notifyUser(project, String.format("File %s is not valid or doesn't exist", f.getName()));
-      return;
-    }
+  private void revertToLabel(@NotNull Project project, @NotNull VirtualFile f, @NotNull LabelImpl impl) {
     HistoryDialogModel dirHistoryModel = f.isDirectory()
                                          ? new DirectoryHistoryDialogModel(project, myGateway, myVcs, f)
                                          : new EntireFileHistoryDialogModel(project, myGateway, myVcs, f);
@@ -264,7 +260,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
                                f.getName()));
       return;
     }
-    if (leftRev == 0) return; // we shouldn't revert because not changes found to revert;
+    if (leftRev == 0) return; // we shouldn't revert because no changes found to revert;
     try {
       dirHistoryModel.selectRevisions(-1, leftRev - 1); //-1 because we should revert all changes up to previous one, but not label-related.
       dirHistoryModel.createReverter().revert();
