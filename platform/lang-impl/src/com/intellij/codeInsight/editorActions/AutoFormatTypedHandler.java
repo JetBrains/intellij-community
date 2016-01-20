@@ -24,12 +24,15 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +74,7 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     int caretOffset = editor.getCaretModel().getOffset();
     CharSequence text = document.getImmutableCharSequence();
 
-    if (isSpaceAroundAssignment(editor, dataContext)) {
+    if (isSpaceAroundAssignment(editor, dataContext) && !isInsideStringLiteral(editor)) {
       if (charTyped == '=' && shouldInsertBefore(caretOffset, text)) {
         EditorModificationUtil.insertStringAtCaret(editor, " ");
       }
@@ -85,6 +88,21 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     myLastTypedChar = charTyped;
     myLastTypedOffset = editor.getCaretModel().getOffset();
     myLastEditedDocument = editor.getDocument();
+  }
+
+  private static boolean isInsideStringLiteral(Editor editor) {
+    if (editor.getDocument().getTextLength() == 0) return false;
+    
+    if (editor instanceof EditorEx) {
+      int caretOffset = editor.getCaretModel().getOffset();
+      HighlighterIterator lexer = ((EditorEx)editor).getHighlighter().createIterator(caretOffset);
+      IElementType token = lexer.getTokenType();
+      if ("STRING_LITERAL".equals(token.toString())) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   private void executeOriginalHandler(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
