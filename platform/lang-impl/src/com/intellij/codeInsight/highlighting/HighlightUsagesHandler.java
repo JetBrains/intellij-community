@@ -418,17 +418,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
    * @deprecated Use {@link #collectRangesToHighlight}
    */
   public static List<TextRange> getRangesToHighlight(@NotNull PsiReference ref) {
-    return collectRangesToHighlight(ref, null);
+    return collectRangesToHighlight(ref, new ArrayList<TextRange>());
   }
 
   @NotNull
-  public static List<TextRange> collectRangesToHighlight(@NotNull PsiReference ref, @Nullable List<TextRange> result) {
-    final List<TextRange> relativeRanges = ReferenceRange.getRanges(ref);
-    if (result == null) {
-      result = new ArrayList<TextRange>(relativeRanges.size());
-    }
-
-    for (TextRange relativeRange : relativeRanges) {
+  public static List<TextRange> collectRangesToHighlight(@NotNull PsiReference ref, @NotNull List<TextRange> result) {
+    for (TextRange relativeRange : ReferenceRange.getRanges(ref)) {
       PsiElement element = ref.getElement();
       TextRange range = safeCut(element.getTextRange(), relativeRange);
       // injection occurs

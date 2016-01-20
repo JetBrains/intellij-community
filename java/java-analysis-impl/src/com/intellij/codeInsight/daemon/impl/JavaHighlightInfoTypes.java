@@ -32,42 +32,42 @@ public final class JavaHighlightInfoTypes {
 
   public final static HighlightInfoType JAVA_KEYWORD = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, JavaHighlightingColors.KEYWORD);
 
-  public final static HighlightInfoType CLASS_NAME = createSymbolTypeInfo(CodeInsightColors.CLASS_NAME_ATTRIBUTES);
-  public final static HighlightInfoType LOCAL_VARIABLE = createSymbolTypeInfo(CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);
-  public final static HighlightInfoType INSTANCE_FIELD = createSymbolTypeInfo(CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES);
-  public final static HighlightInfoType INSTANCE_FINAL_FIELD = createSymbolTypeInfo(CodeInsightColors.INSTANCE_FINAL_FIELD_ATTRIBUTES);
-  public final static HighlightInfoType STATIC_FIELD = createSymbolTypeInfo(CodeInsightColors.STATIC_FIELD_ATTRIBUTES);
-  public final static HighlightInfoType STATIC_FINAL_FIELD = createSymbolTypeInfo(CodeInsightColors.STATIC_FINAL_FIELD_ATTRIBUTES);
-  public final static HighlightInfoType PARAMETER = createSymbolTypeInfo(CodeInsightColors.PARAMETER_ATTRIBUTES);
-  public final static HighlightInfoType METHOD_CALL = createSymbolTypeInfo(CodeInsightColors.METHOD_CALL_ATTRIBUTES);
-  public final static HighlightInfoType METHOD_DECLARATION = createSymbolTypeInfo(CodeInsightColors.METHOD_DECLARATION_ATTRIBUTES);
-  public final static HighlightInfoType CONSTRUCTOR_CALL = createSymbolTypeInfo(CodeInsightColors.CONSTRUCTOR_CALL_ATTRIBUTES);
-  public final static HighlightInfoType CONSTRUCTOR_DECLARATION = createSymbolTypeInfo(CodeInsightColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES);
-  public final static HighlightInfoType STATIC_METHOD = createSymbolTypeInfo(CodeInsightColors.STATIC_METHOD_ATTRIBUTES);
-  public final static HighlightInfoType ABSTRACT_METHOD = createSymbolTypeInfo(CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES);
-  public final static HighlightInfoType INHERITED_METHOD = createSymbolTypeInfo(CodeInsightColors.INHERITED_METHOD_ATTRIBUTES);
-  public final static HighlightInfoType ANONYMOUS_CLASS_NAME = createSymbolTypeInfo(CodeInsightColors.ANONYMOUS_CLASS_NAME_ATTRIBUTES);
-  public final static HighlightInfoType INTERFACE_NAME = createSymbolTypeInfo(CodeInsightColors.INTERFACE_NAME_ATTRIBUTES);
-  public final static HighlightInfoType ENUM_NAME = createSymbolTypeInfo(CodeInsightColors.ENUM_NAME_ATTRIBUTES);
+  public final static HighlightInfoType CLASS_NAME = createSymbolTypeInfo(JavaHighlightingColors.CLASS_NAME_ATTRIBUTES);
+  public final static HighlightInfoType LOCAL_VARIABLE = createSymbolTypeInfo(JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES);
+  public final static HighlightInfoType INSTANCE_FIELD = createSymbolTypeInfo(JavaHighlightingColors.INSTANCE_FIELD_ATTRIBUTES);
+  public final static HighlightInfoType INSTANCE_FINAL_FIELD = createSymbolTypeInfo(JavaHighlightingColors.INSTANCE_FINAL_FIELD_ATTRIBUTES);
+  public final static HighlightInfoType STATIC_FIELD = createSymbolTypeInfo(JavaHighlightingColors.STATIC_FIELD_ATTRIBUTES);
+  public final static HighlightInfoType STATIC_FINAL_FIELD = createSymbolTypeInfo(JavaHighlightingColors.STATIC_FINAL_FIELD_ATTRIBUTES);
+  public final static HighlightInfoType PARAMETER = createSymbolTypeInfo(JavaHighlightingColors.PARAMETER_ATTRIBUTES);
+  public final static HighlightInfoType METHOD_CALL = createSymbolTypeInfo(JavaHighlightingColors.METHOD_CALL_ATTRIBUTES);
+  public final static HighlightInfoType METHOD_DECLARATION = createSymbolTypeInfo(JavaHighlightingColors.METHOD_DECLARATION_ATTRIBUTES);
+  public final static HighlightInfoType CONSTRUCTOR_CALL = createSymbolTypeInfo(JavaHighlightingColors.CONSTRUCTOR_CALL_ATTRIBUTES);
+  public final static HighlightInfoType CONSTRUCTOR_DECLARATION = createSymbolTypeInfo(JavaHighlightingColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES);
+  public final static HighlightInfoType STATIC_METHOD = createSymbolTypeInfo(JavaHighlightingColors.STATIC_METHOD_ATTRIBUTES);
+  public final static HighlightInfoType ABSTRACT_METHOD = createSymbolTypeInfo(JavaHighlightingColors.ABSTRACT_METHOD_ATTRIBUTES);
+  public final static HighlightInfoType INHERITED_METHOD = createSymbolTypeInfo(JavaHighlightingColors.INHERITED_METHOD_ATTRIBUTES);
+  public final static HighlightInfoType ANONYMOUS_CLASS_NAME = createSymbolTypeInfo(JavaHighlightingColors.ANONYMOUS_CLASS_NAME_ATTRIBUTES);
+  public final static HighlightInfoType INTERFACE_NAME = createSymbolTypeInfo(JavaHighlightingColors.INTERFACE_NAME_ATTRIBUTES);
+  public final static HighlightInfoType ENUM_NAME = createSymbolTypeInfo(JavaHighlightingColors.ENUM_NAME_ATTRIBUTES);
   public final static HighlightInfoType TYPE_PARAMETER_NAME 
     = new HighlightInfoType.HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY, 
-                                                  CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES);
-  public final static HighlightInfoType ABSTRACT_CLASS_NAME = createSymbolTypeInfo(CodeInsightColors.ABSTRACT_CLASS_NAME_ATTRIBUTES);
+                                                  JavaHighlightingColors.TYPE_PARAMETER_NAME_ATTRIBUTES);
+  public final static HighlightInfoType ABSTRACT_CLASS_NAME = createSymbolTypeInfo(JavaHighlightingColors.ABSTRACT_CLASS_NAME_ATTRIBUTES);
   public final static HighlightInfoType ANNOTATION_NAME
     = new HighlightInfoType.HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY, 
-                                                  CodeInsightColors.ANNOTATION_NAME_ATTRIBUTES);
+                                                  JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES);
   public final static HighlightInfoType ANNOTATION_ATTRIBUTE_NAME
     = new HighlightInfoType.HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY, 
-                                                  CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES);
+                                                  JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES);
   public final static HighlightInfoType REASSIGNED_LOCAL_VARIABLE
     = new HighlightInfoType.HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY, 
-                                                  CodeInsightColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES);
+                                                  JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES);
   public final static HighlightInfoType REASSIGNED_PARAMETER
     = new HighlightInfoType.HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY, 
-                                                  CodeInsightColors.REASSIGNED_PARAMETER_ATTRIBUTES);
+                                                  JavaHighlightingColors.REASSIGNED_PARAMETER_ATTRIBUTES);
   public final static HighlightInfoType IMPLICIT_ANONYMOUS_CLASS_PARAMETER
     = new HighlightInfoType.HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY,
-                                                  CodeInsightColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES);
+                                                  JavaHighlightingColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES);
   
   private static HighlightInfoType createSymbolTypeInfo(@NotNull TextAttributesKey attributesKey) {
     return new HighlightInfoType.HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY, attributesKey, false);

@@ -396,8 +396,9 @@ public class FileUtilRt {
 
         boolean success = isDirectory ? f.mkdir() : f.createNewFile();
         if (!success) {
-          throw new IOException("Unable to create temporary file " + f + "\nDirectory '" +f.getParentFile()+
-                                "' list: " + Arrays.asList(f.getParentFile().list()));
+          List<String> list = Arrays.asList(f.getParentFile().list());
+          throw new IOException("Unable to create temporary file " + f + "\nDirectory '" + f.getParentFile() +
+                                "' list ("+list.size()+" children): " + list);
         }
 
         return normalizeFile(f);

@@ -218,54 +218,24 @@ public class InferenceIncorporationPhase {
       if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
       Map<InferenceBound, Set<PsiType>> boundsMap = myCurrentBounds.remove(inferenceVariable);
       if (boundsMap == null) continue;
-      final Collection<PsiType> eqBounds = boundsMap.get(InferenceBound.EQ);
-      final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
-      final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
-      needFurtherIncorporation |= crossVariables(inferenceVariable, upperBounds, lowerBounds, InferenceBound.LOWER);
-      needFurtherIncorporation |= crossVariables(inferenceVariable, lowerBounds, upperBounds, InferenceBound.UPPER);
-
-      if (eqBounds != null) {
-        needFurtherIncorporation |= eqCrossVariables(inferenceVariable, eqBounds);
+      final Set<PsiType> upperBounds = boundsMap.get(InferenceBound.UPPER);
+      final Set<PsiType> lowerBounds = boundsMap.get(InferenceBound.LOWER);
+      if (upperBounds != null) {
+        needFurtherIncorporation |= crossVariables(inferenceVariable, upperBounds, lowerBounds, InferenceBound.LOWER);
+      }
+      if (lowerBounds != null) {
+        needFurtherIncorporation |= crossVariables(inferenceVariable, lowerBounds, upperBounds, InferenceBound.UPPER);
       }
     }
     return !needFurtherIncorporation;
   }
 
   /**
-   * a = b imply every bound of a matches a bound of b and vice versa
-   */
-  private boolean eqCrossVariables(InferenceVariable inferenceVariable, Collection<PsiType> eqBounds) {
-    boolean needFurtherIncorporation = false;
-    for (PsiType eqBound : eqBounds) {
-      final InferenceVariable inferenceVar = mySession.getInferenceVariable(eqBound);
-      if (inferenceVar != null) {
-        for (InferenceBound inferenceBound : InferenceBound.values()) {
-          final Set<PsiType> oldVarBounds = inferenceVar.getReadOnlyBoundsSet(inferenceBound);
-          final Set<PsiType> oldVariableBounds = inferenceVariable.getReadOnlyBoundsSet(inferenceBound);
-
-          for (PsiType bound : oldVariableBounds) {
-            if (!oldVarBounds.contains(bound) && mySession.getInferenceVariable(bound) != inferenceVar) {
-              needFurtherIncorporation |= inferenceVar.addBound(bound, inferenceBound, this);
-            }
-          }
-          
-          for (PsiType bound : oldVarBounds) {
-            if (!oldVariableBounds.contains(bound) && mySession.getInferenceVariable(bound) != inferenceVariable) {
-              needFurtherIncorporation |= inferenceVariable.addBound(bound, inferenceBound, this);
-            }
-          }
-        }
-      }
-    }
-    return needFurtherIncorporation;
-  }
-
-  /**
    * a < b & S <: a & b <: T imply S <: b & a <: T 
    */
   private boolean crossVariables(InferenceVariable inferenceVariable,
-                                 List<PsiType> upperBounds,
-                                 List<PsiType> lowerBounds,
+                                 Collection<PsiType> upperBounds,
+                                 Collection<PsiType> lowerBounds,
                                  InferenceBound inferenceBound) {
 
     final InferenceBound oppositeBound = inferenceBound == InferenceBound.LOWER 
@@ -276,8 +246,10 @@ public class InferenceIncorporationPhase {
       final InferenceVariable inferenceVar = mySession.getInferenceVariable(upperBound);
       if (inferenceVar != null && inferenceVariable != inferenceVar) {
 
-        for (PsiType lowerBound : lowerBounds) {
-          result |= inferenceVar.addBound(lowerBound, inferenceBound, this);
+        if (lowerBounds != null) {
+          for (PsiType lowerBound : lowerBounds) {
+            result |= inferenceVar.addBound(lowerBound, inferenceBound, this);
+          }
         }
 
         for (PsiType varUpperBound : inferenceVar.getBounds(oppositeBound)) {

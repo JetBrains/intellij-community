@@ -41,17 +41,18 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
 
 import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.*;
+import static org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.HELPER_SUFFIX;
 import static org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.INDEX_ID;
 
 /**
- * Created by Max Medvedev on 03/03/14
+ * @author Max Medvedev
+ * @since 03.03.2014
  */
 public class GrTypeDefinitionMembersCache {
   private static final Logger LOG = Logger.getInstance(GrTypeDefinitionMembersCache.class);
@@ -64,7 +65,6 @@ public class GrTypeDefinitionMembersCache {
   };
 
   private final SimpleModificationTracker myTreeChangeTracker = new SimpleModificationTracker();
-
   private final GrTypeDefinition myDefinition;
 
   public GrTypeDefinitionMembersCache(GrTypeDefinition definition) {
@@ -249,6 +249,7 @@ public class GrTypeDefinitionMembersCache {
         LOG.assertTrue(trait != null);
 
         List<CandidateInfo> concreteTraitMethods = new TraitProcessor<PsiMethod>(trait, resolveResult.getSubstitutor()) {
+          @Override
           protected void processTrait(@NotNull PsiClass trait, @NotNull PsiSubstitutor substitutor) {
             if (trait instanceof GrTypeDefinition) {
               for (GrMethod method : ((GrTypeDefinition)trait).getCodeMethods()) {
@@ -317,24 +318,20 @@ public class GrTypeDefinitionMembersCache {
               }
             }
             else if (trait instanceof ClsClassImpl) {
-              final VirtualFile traitFile = trait.getContainingFile().getVirtualFile();
-              if (traitFile == null) return;
-              final VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + GroovyTraitFieldsFileIndex.HELPER_SUFFIX);
-              if (helperFile == null) return;
-
-              final List<Collection<TraitFieldDescriptor>> descriptors = FileBasedIndex.getInstance().getValues(
-                INDEX_ID,
-                FileBasedIndex.getFileId(helperFile),
-                trait.getResolveScope()
-              );
-              for (Collection<TraitFieldDescriptor> traitFieldDescriptors : descriptors) {
-                for (TraitFieldDescriptor descriptor : traitFieldDescriptors) {
-                  final GrLightField field = new GrLightField(trait, descriptor.name, descriptor.typeString);
-                  if (descriptor.isStatic) {
-                    field.getModifierList().addModifier(STATIC_MASK);
-                  }
-                  field.getModifierList().addModifier(descriptor.isPublic ? PUBLIC_MASK : PRIVATE_MASK);
-                  addCandidate(field, substitutor);
+              VirtualFile traitFile = trait.getContainingFile().getVirtualFile();
+              if (traitFile != null) {
+                VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + HELPER_SUFFIX);
+                if (helperFile != null) {
+                  int key = FileBasedIndex.getFileId(helperFile);
+                  FileBasedIndex.getInstance().processValues(INDEX_ID, key, helperFile, new FileBasedIndex.ValueProcessor<Collection<TraitFieldDescriptor>>() {
+                    @Override
+                    public boolean process(VirtualFile file, Collection<TraitFieldDescriptor> descriptors) {
+                      for (TraitFieldDescriptor descriptor : descriptors) {
+                        addCandidate(createTraitField(descriptor, trait), substitutor);
+                      }
+                      return true;
+                    }
+                  }, trait.getResolveScope());
                 }
               }
             }
@@ -346,6 +343,15 @@ public class GrTypeDefinitionMembersCache {
       }
 
       return result;
+    }
+
+    private GrLightField createTraitField(TraitFieldDescriptor descriptor, PsiClass trait) {
+      GrLightField field = new GrLightField(trait, descriptor.name, descriptor.typeString);
+      if ((descriptor.flags & TraitFieldDescriptor.STATIC) != 0) {
+        field.getModifierList().addModifier(STATIC_MASK);
+      }
+      field.getModifierList().addModifier((descriptor.flags & TraitFieldDescriptor.PUBLIC) != 0 ? PUBLIC_MASK : PRIVATE_MASK);
+      return field;
     }
 
     @NotNull

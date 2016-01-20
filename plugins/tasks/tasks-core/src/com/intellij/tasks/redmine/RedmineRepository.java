@@ -125,10 +125,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
         // /users/current.json. Unfortunately this endpoint may be unavailable on some old servers (see IDEA-122845)
         // and in this case we have to come back to requesting issues in this case to test anything at all.
 
-        URIBuilder uriBuilder = new URIBuilder(getRestApiUrl("users", "current.json"));
-        if (isUseApiKeyAuthentication()) {
-          uriBuilder.addParameter("key", getAPIKey());
-        }
+        URIBuilder uriBuilder = createUriBuilderWithApiKey("users", "current.json");
         myCurrentRequest.setURI(uriBuilder.build());
         HttpClient client = getHttpClient();
 
@@ -182,7 +179,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   }
 
   private URI getIssuesUrl(int offset, int limit, boolean withClosed) throws URISyntaxException {
-    URIBuilder builder = new URIBuilder(getRestApiUrl("issues.json"))
+    URIBuilder builder = createUriBuilderWithApiKey("issues.json")
       .addParameter("offset", String.valueOf(offset))
       .addParameter("limit", String.valueOf(limit))
       .addParameter("sort", "updated_on:desc")
@@ -193,9 +190,6 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     // If project was not chosen, all available issues still fetched. Such behavior may seems strange to user.
     if (myCurrentProject != null && myCurrentProject != UNSPECIFIED_PROJECT) {
       builder.addParameter("project_id", String.valueOf(myCurrentProject.getId()));
-    }
-    if (isUseApiKeyAuthentication()) {
-      builder.addParameter("key", myAPIKey);
     }
     return builder.build();
   }
@@ -221,12 +215,9 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   @NotNull
   private URI getProjectsUrl(int offset, int limit) throws URISyntaxException {
-    URIBuilder builder = new URIBuilder(getRestApiUrl("projects.json"));
+    URIBuilder builder = createUriBuilderWithApiKey("projects.json");
     builder.addParameter("offset", String.valueOf(offset));
     builder.addParameter("limit", String.valueOf(limit));
-    if (isUseApiKeyAuthentication()) {
-      builder.addParameter("key", myAPIKey);
-    }
     return builder.build();
   }
 
@@ -234,7 +225,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   @Override
   public Task findTask(@NotNull String id) throws Exception {
     ensureProjectsDiscovered();
-    HttpGet method = new HttpGet(getRestApiUrl("issues", id + ".json"));
+    HttpGet method = new HttpGet(createUriBuilderWithApiKey("issues", id + ".json").build());
     IssueWrapper wrapper = getHttpClient().execute(method, new GsonSingleObjectDeserializer<IssueWrapper>(GSON, IssueWrapper.class, true));
     if (wrapper == null) {
       return null;
@@ -260,6 +251,15 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   private boolean isUseApiKeyAuthentication() {
     return !isUseHttpAuthentication() && StringUtil.isNotEmpty(myAPIKey);
+  }
+
+  @NotNull
+  private URIBuilder createUriBuilderWithApiKey(@NotNull Object... pathParts) throws URISyntaxException {
+    final URIBuilder builder = new URIBuilder(getRestApiUrl(pathParts));
+    if (isUseApiKeyAuthentication()) {
+      builder.addParameter("key", myAPIKey);
+    }
+    return builder;
   }
 
   @Override

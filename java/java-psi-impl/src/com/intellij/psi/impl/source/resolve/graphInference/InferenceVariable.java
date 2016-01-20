@@ -35,7 +35,7 @@ public class InferenceVariable extends LightTypeParameter {
   }
 
   private boolean myThrownBound = false;
-  private final Map<InferenceBound, Set<PsiType>> myBounds = new HashMap<InferenceBound, Set<PsiType>>();
+  private final Map<InferenceBound, List<PsiType>> myBounds = new HashMap<InferenceBound, List<PsiType>>();
   private final String myName;
 
   private PsiType myInstantiation = PsiType.NULL;
@@ -71,9 +71,9 @@ public class InferenceVariable extends LightTypeParameter {
         PsiUtil.resolveClassInClassTypeOnly(classType) == this) {
       return false;
     }
-    Set<PsiType> bounds = myBounds.get(inferenceBound);
+    List<PsiType> bounds = myBounds.get(inferenceBound);
     if (bounds == null) {
-      bounds = new LinkedHashSet<PsiType>();
+      bounds = new ArrayList<PsiType>();
       myBounds.put(inferenceBound, bounds);
     }
 
@@ -81,7 +81,8 @@ public class InferenceVariable extends LightTypeParameter {
       classType = PsiType.NULL;
     }
 
-    if (bounds.add(classType)) {
+    if (incorporationPhase == null || !bounds.contains(classType)) {
+      bounds.add(classType);
       if (incorporationPhase != null) {
         incorporationPhase.addBound(this, classType, inferenceBound);
       }
@@ -91,18 +92,18 @@ public class InferenceVariable extends LightTypeParameter {
   }
 
   public List<PsiType> getBounds(InferenceBound inferenceBound) {
-    final Set<PsiType> bounds = myBounds.get(inferenceBound);
+    final List<PsiType> bounds = myBounds.get(inferenceBound);
     return bounds != null ? new ArrayList<PsiType>(bounds) : Collections.<PsiType>emptyList();
   }
 
-  public Set<PsiType> getReadOnlyBoundsSet(InferenceBound inferenceBound) {
-    final Set<PsiType> bounds = myBounds.get(inferenceBound);
-    return bounds != null ? bounds : Collections.<PsiType>emptySet();
+  public List<PsiType> getReadOnlyBounds(InferenceBound inferenceBound) {
+    final List<PsiType> bounds = myBounds.get(inferenceBound);
+    return bounds != null ? bounds : Collections.<PsiType>emptyList();
   }
 
   public Set<InferenceVariable> getDependencies(InferenceSession session) {
     final Set<InferenceVariable> dependencies = new LinkedHashSet<InferenceVariable>();
-    for (Set<PsiType> boundTypes : myBounds.values()) {
+    for (Collection<PsiType> boundTypes : myBounds.values()) {
       if (boundTypes != null) {
         for (PsiType bound : boundTypes) {
           session.collectDependencies(bound, dependencies);

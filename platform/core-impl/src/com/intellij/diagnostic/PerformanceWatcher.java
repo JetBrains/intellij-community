@@ -26,7 +26,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.AppExecutorImplUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +93,7 @@ public class PerformanceWatcher implements ApplicationComponent {
                                + "-" + ApplicationInfo.getInstance().getBuild().asString());
     myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
     myThreadMXBean = ManagementFactory.getThreadMXBean();
-    myThread = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+    myThread = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
       @Override
       public void run() {
         checkEDTResponsiveness();
@@ -104,12 +105,13 @@ public class PerformanceWatcher implements ApplicationComponent {
   public void initComponent() {
     if (!shouldWatch()) return;
 
-    AppExecutorImplUtil.setAppExecutorNewThreadListener(new Consumer<Thread>() {
+    final AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
+    service.setNewThreadListener(new Consumer<Thread>() {
       private final int ourReasonableThreadPoolSize = Registry.intValue("core.pooled.threads");
 
       @Override
       public void consume(Thread thread) {
-        if (AppExecutorImplUtil.getAppPoolSize() > ourReasonableThreadPoolSize
+        if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize
             && ApplicationInfoImpl.getShadowInstance().isEAP()) {
           File file = dumpThreads("newPooledThread/", true);
           LOG.info("Not enough pooled threads" + (file != null ? "; dumped threads into file '" + file.getPath() + "'" : ""));

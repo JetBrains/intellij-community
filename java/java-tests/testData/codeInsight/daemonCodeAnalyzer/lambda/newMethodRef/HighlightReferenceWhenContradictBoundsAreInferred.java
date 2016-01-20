@@ -29,9 +29,9 @@ class Test {
     static void meth4(I3 s) { }
 
     static {
-        meth1(Foo::<error descr="Invalid constructor reference: String cannot be converted to X">new</error>);
+        meth1(Foo::<error descr="Invalid constructor reference: String cannot be converted to Number">new</error>);
         meth2(Foo::new);
-        meth3(Foo::<error descr="Invalid constructor reference: Object cannot be converted to X">new</error>);
+        meth3(Foo::<error descr="Invalid constructor reference: Object cannot be converted to Number">new</error>);
         meth4<error descr="Ambiguous method call: both 'Test.meth4(I1)' and 'Test.meth4(I2)' match">(Foo::new)</error>;
 
         meth1(Test::<error descr="Invalid method reference: String cannot be converted to X">foo</error>);

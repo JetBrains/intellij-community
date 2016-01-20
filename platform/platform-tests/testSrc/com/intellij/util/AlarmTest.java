@@ -18,8 +18,10 @@ package com.intellij.util;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.ui.UIUtil;
 
+import java.util.concurrent.TimeUnit;
+
 public class AlarmTest extends PlatformTestCase {
-  public void testTwoAddsWithZeroDelayMustExecuteSequentially() {
+  public void testTwoAddsWithZeroDelayMustExecuteSequentially() throws Exception {
     Alarm alarm = new Alarm(getTestRootDisposable());
     int N = 100000;
     StringBuffer log = new StringBuffer(N*4);
@@ -32,7 +34,7 @@ public class AlarmTest extends PlatformTestCase {
     for (int i = 0; i < N; i++) {
       expected.append(i).append(" ");
     }
-    TimeoutUtil.sleep(100);
+    alarm.waitForAllExecuted(100, TimeUnit.SECONDS);
     UIUtil.dispatchAllInvocationEvents();
     assertEquals(0, alarm.getActiveRequestCount());
     assertEquals(expected.toString(), log.toString());

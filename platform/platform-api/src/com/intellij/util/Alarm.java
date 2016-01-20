@@ -38,11 +38,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Allows to schedule Runnable instances (requests) to be executed after a specific time interval on a specific thread.
@@ -270,6 +268,24 @@ public class Alarm implements Disposable {
         request.first.myTask = request.second;
       }
       request.first.run();
+    }
+  }
+
+  @TestOnly
+  public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    List<Request> requests;
+    synchronized (LOCK) {
+      requests = new ArrayList<Request>(myRequests);
+    }
+
+    for (Request request : requests) {
+      Future<?> future;
+      synchronized (LOCK) {
+        future = request.myFuture;
+      }
+      if (future != null) {
+        future.get(timeout, unit);
+      }
     }
   }
 
