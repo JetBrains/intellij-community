@@ -14,7 +14,7 @@ class X {
 
   }
   void foo3(String d1, String d2) {
-    if(d1 == null | <warning descr="Method invocation 'd1.compareTo(d2)' may produce 'java.lang.NullPointerException'">d1.compareTo(d2)</warning> > 0)
+    if(d1 == null | d1.<warning descr="Method invocation 'compareTo' may produce 'java.lang.NullPointerException'">compareTo</warning>(d2) > 0)
       System.out.println("impossible");
   }
 }
