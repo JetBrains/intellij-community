@@ -522,7 +522,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       .setAllVariants(allVariants)
       .setUpToArgument(upToArgument)
       .build(this);
-    new GrReferenceResolveRunner(this).resolveImpl(processor);
+    new GrReferenceResolveRunner(this, processor).resolveImpl();
     return processor.getCandidatesArray();
   }
 

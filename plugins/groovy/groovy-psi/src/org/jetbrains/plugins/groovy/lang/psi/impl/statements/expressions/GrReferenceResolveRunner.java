@@ -15,9 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -34,32 +32,22 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
 
 /**
  * @author Medvedev Max
  */
 public class GrReferenceResolveRunner {
-
   private final GrReferenceExpression place;
-  private PsiScopeProcessor processor;
+  private final GroovyResolverProcessor processor;
 
-  public GrReferenceResolveRunner(@NotNull GrReferenceExpression _place) {
-    place = _place;
+  public GrReferenceResolveRunner(GrReferenceExpression place,
+                                  GroovyResolverProcessor processor) {
+    this.place = place;
+    this.processor = processor;
   }
 
-  public boolean resolveImpl(@NotNull PsiScopeProcessor _processor) {
-    processor = _processor;
-    try {
-      boolean result = doResolve();
-      ProgressManager.checkCanceled();
-      return result;
-    }
-    finally {
-      processor = null;
-    }
-  }
-
-  private boolean doResolve() {
+  public boolean resolveImpl() {
     GrExpression qualifier = place.getQualifier();
     if (qualifier == null) {
       if (!ResolveUtil.treeWalkUp(place, processor, true)) return false;
