@@ -64,7 +64,8 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.Splash;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.AppExecutorImplUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -556,7 +557,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     disposeComponents();
 
-    AppExecutorImplUtil.shutdownAppScheduledExecutorService();
+    AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
+    service.shutdownAppScheduledExecutorService();
 
     super.dispose();
     Disposer.dispose(myLastDisposable); // dispose it last

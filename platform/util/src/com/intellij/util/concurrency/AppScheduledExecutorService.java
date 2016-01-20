@@ -30,15 +30,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  * and then executing them in the owned ThreadPoolExecutor.
  * Unlike the existing {@link ScheduledThreadPoolExecutor}, this pool is unbounded.
  */
-class AppScheduledExecutorService extends SchedulingWrapper {
+public class AppScheduledExecutorService extends SchedulingWrapper {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.ide.PooledThreadExecutor");
   private Consumer<Thread> newThreadListener;
+
   private static class Holder {
     private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService();
   }
 
   @NotNull
-  public static ScheduledExecutorService getInstance() {
+  static ScheduledExecutorService getInstance() {
     return Holder.INSTANCE;
   }
 
@@ -62,7 +63,7 @@ class AppScheduledExecutorService extends SchedulingWrapper {
     });
   }
 
-  void setNewThreadListener(@NotNull Consumer<Thread> threadListener) {
+  public void setNewThreadListener(@NotNull Consumer<Thread> threadListener) {
     if (newThreadListener != null) throw new IllegalStateException("Listener was already set: "+newThreadListener);
     newThreadListener = threadListener;
   }
@@ -91,6 +92,15 @@ class AppScheduledExecutorService extends SchedulingWrapper {
   @Override
   List<Runnable> doShutdownNow() {
     return ContainerUtil.concat(super.doShutdownNow(), ((BackendThreadPoolExecutor)backendExecutorService).doShutdownNow());
+  }
+
+  public void shutdownAppScheduledExecutorService() {
+    doShutdown();
+    shutdownGlobalQueue();
+  }
+
+  public int getBackendPoolExecutorSize() {
+    return ((ThreadPoolExecutor)backendExecutorService).getPoolSize();
   }
 
   private static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
