@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -37,6 +38,8 @@ import java.util.List;
  * @author max
  */
 public class ComplementaryFontsRegistry {
+  private static final Logger LOG = Logger.getInstance(ComplementaryFontsRegistry.class);
+  
   private static final Object lock = new String("common lock");
   private static final List<String> ourFontNames;
   private static final Map<String, Pair<String, Integer>[]> ourStyledFontMap = new HashMap<String, Pair<String, Integer>[]>();
@@ -202,7 +205,11 @@ public class ComplementaryFontsRegistry {
         return result;
       }
     }
-    return doGetFontAbleToDisplay(codePoint, size, style);
+    result = doGetFontAbleToDisplay(codePoint, size, style);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Fallback font: " + result.getFont().getFontName());
+    }
+    return result;
   }
   
   @NotNull
