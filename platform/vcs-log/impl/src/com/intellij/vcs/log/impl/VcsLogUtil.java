@@ -100,46 +100,49 @@ public class VcsLogUtil {
   private static Set<VirtualFile> collectRoots(@NotNull Collection<FilePath> files, @NotNull Set<VirtualFile> roots) {
     Set<VirtualFile> selectedRoots = new HashSet<VirtualFile>();
 
-    for (FilePath filePath : files) {
-      VirtualFile candidateAncestorRoot = null;
-
-      VirtualFile virtualFile = filePath.getVirtualFile();
-      if (virtualFile != null) {
-        if (roots.contains(virtualFile)) {
-          selectedRoots.add(virtualFile);
+    List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, new Comparator<VirtualFile>() {
+      @Override
+      public int compare(VirtualFile root1, VirtualFile root2) {
+        if (root1.equals(root2)) return 0;
+        if (VfsUtilCore.isAncestor(root1, root2, false)) {
+          // if root1 is an ancestor of root2 than root1 should be considered "smaller" than root2 and go first in the sequence
+          return -1;
         }
+        if (VfsUtilCore.isAncestor(root2, root1, false)) {
+          return 1;
+        }
+        return root1.getPath().compareTo(root2.getPath());
+      }
+    });
 
-        for (VirtualFile root : roots) {
-          if (root.equals(virtualFile)) continue;
-          if (VfsUtilCore.isAncestor(root, virtualFile, false)) {
-            if (candidateAncestorRoot == null || VfsUtilCore.isAncestor(candidateAncestorRoot, root, false)) {
-              candidateAncestorRoot = root;
-            }
+    for (FilePath filePath : files) {
+      VirtualFile virtualFile = filePath.getVirtualFile();
+      VirtualFile virtualFileParent = virtualFile != null ? virtualFile : ChangesUtil.findValidParentAccurately(filePath);
+      if (virtualFileParent == null) continue;
+
+      if (roots.contains(virtualFileParent)) {
+        // if a root itself is selected, add this root
+        selectedRoots.add(virtualFileParent);
+      }
+      else {
+        VirtualFile candidateAncestorRoot = null;
+        for (VirtualFile root : sortedRoots) {
+          if (VfsUtilCore.isAncestor(root, virtualFileParent, false)) {
+            candidateAncestorRoot = root;
           }
-          else if (VfsUtilCore.isAncestor(virtualFile, root, false)) {
+        }
+        if (candidateAncestorRoot != null) {
+          selectedRoots.add(candidateAncestorRoot);
+        }
+      }
+
+      // add all roots under selected path
+      if (virtualFile != null) {
+        for (VirtualFile root : roots) {
+          if (VfsUtilCore.isAncestor(virtualFile, root, false)) {
             selectedRoots.add(root);
           }
         }
-      }
-      else {
-        VirtualFile virtualFileParent = ChangesUtil.findValidParentAccurately(filePath);
-        if (virtualFileParent != null) {
-          for (VirtualFile root : roots) {
-            if (root.equals(virtualFileParent)) {
-              candidateAncestorRoot = virtualFileParent; // cant find anything better
-              break;
-            }
-            if (VfsUtilCore.isAncestor(root, virtualFileParent, false)) {
-              if (candidateAncestorRoot == null || VfsUtilCore.isAncestor(candidateAncestorRoot, root, false)) {
-                candidateAncestorRoot = root;
-              }
-            }
-          }
-        }
-      }
-
-      if (candidateAncestorRoot != null) {
-        selectedRoots.add(candidateAncestorRoot);
       }
     }
 
