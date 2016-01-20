@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -98,10 +97,8 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  private static Pair<Set<VirtualFile>, MultiMap<VirtualFile, FilePath>> collectRoots(@NotNull Collection<FilePath> files,
-                                                                                      @NotNull Set<VirtualFile> roots) {
+  private static Set<VirtualFile> collectRoots(@NotNull Collection<FilePath> files, @NotNull Set<VirtualFile> roots) {
     Set<VirtualFile> selectedRoots = new HashSet<VirtualFile>();
-    MultiMap<VirtualFile, FilePath> selectedFiles = new MultiMap<VirtualFile, FilePath>();
 
     for (FilePath filePath : files) {
       VirtualFile candidateAncestorRoot = null;
@@ -142,11 +139,11 @@ public class VcsLogUtil {
       }
 
       if (candidateAncestorRoot != null) {
-        selectedFiles.putValue(candidateAncestorRoot, filePath);
+        selectedRoots.add(candidateAncestorRoot);
       }
     }
 
-    return Pair.create(selectedRoots, selectedFiles);
+    return selectedRoots;
   }
 
 
@@ -168,9 +165,7 @@ public class VcsLogUtil {
 
     Collection<VirtualFile> fromStructureFilter;
     if (structureFilter != null) {
-      Pair<Set<VirtualFile>, MultiMap<VirtualFile, FilePath>> rootsAndFiles =
-        collectRoots(structureFilter.getFiles(), new HashSet<VirtualFile>(roots));
-      fromStructureFilter = ContainerUtil.union(rootsAndFiles.first, rootsAndFiles.second.keySet());
+      fromStructureFilter = collectRoots(structureFilter.getFiles(), new HashSet<VirtualFile>(roots));
     }
     else {
       fromStructureFilter = roots;
