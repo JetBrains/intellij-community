@@ -145,8 +145,9 @@ public class PyResolveProcessor implements PsiScopeProcessor {
   private boolean addResultIfImportMakesNameVisibleInInit(@NotNull PyImportElement element) {
     final QualifiedName importedQName = element.getImportedQName();
     final PsiFile file = element.getContainingFile();
-    if (file != null && PyUtil.isPackage(file)) {
-      if (importedQName != null && importedQName.getComponentCount() > 1 && myName.equals(importedQName.getLastComponent())) {
+    if (file != null) {
+      if (importedQName != null && importedQName.getComponentCount() > 1 && myName.equals(importedQName.getLastComponent()) &&
+          PyUtil.isPackage(file)) {
         final QualifiedName packageQName = importedQName.removeLastComponent();
         final PsiElement resolvedImport = PyUtil.turnDirIntoInit(ResolveImportUtil.resolveImportElement(element, packageQName));
         if (resolvedImport == file) {
@@ -158,7 +159,7 @@ public class PyResolveProcessor implements PsiScopeProcessor {
       final PyFromImportStatement fromImport = PyUtil.as(element.getContainingImportStatement(), PyFromImportStatement.class);
       if (fromImport != null) {
         final QualifiedName importSourceQName = fromImport.getImportSourceQName();
-        if (importSourceQName != null && importSourceQName.endsWith(myName)) {
+        if (importSourceQName != null && importSourceQName.endsWith(myName) && PyUtil.isPackage(file)) {
           final PsiElement resolvedImportSource = PyUtil.turnInitIntoDir(fromImport.resolveImportSource());
           if (resolvedImportSource != null && resolvedImportSource.getParent() == file.getContainingDirectory()) {
             tryAddResult(resolvedImportSource, fromImport);
