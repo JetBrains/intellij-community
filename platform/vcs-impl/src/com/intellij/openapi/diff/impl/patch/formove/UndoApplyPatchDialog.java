@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.FilePathChangesTreeList;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,14 +37,19 @@ class UndoApplyPatchDialog extends DialogWrapper {
   private final List<FilePath> myFailedFilePaths;
   private final Label myBeforeLabel;
   private final Project myProject;
+  private final boolean myShouldInformAboutBinaries;
 
-  private UndoApplyPatchDialog(@NotNull Project project, @NotNull List<FilePath> filePaths, @NotNull Label beforeLabel) {
+  private UndoApplyPatchDialog(@NotNull Project project,
+                               @NotNull List<FilePath> filePaths,
+                               @NotNull Label beforeLabel,
+                               boolean shouldInformAboutBinaries) {
     super(project, true);
     myProject = project;
     setTitle("Patch Applying Partly Failed");
     setOKButtonText("Rollback");
     myFailedFilePaths = filePaths;
     myBeforeLabel = beforeLabel;
+    myShouldInformAboutBinaries = shouldInformAboutBinaries;
     init();
   }
 
@@ -52,9 +58,16 @@ class UndoApplyPatchDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     int numFiles = myFailedFilePaths.size();
+    JPanel labelsPanel = new JPanel(new BorderLayout());
     String detailedText = numFiles == 0 ? "" : String.format("Failed to apply %s below. ", StringUtil.pluralize("file", numFiles));
     final JLabel infoLabel = new JBLabel(detailedText + "Would you like to rollback all applied?");
-    panel.add(infoLabel, BorderLayout.NORTH);
+    labelsPanel.add(infoLabel, BorderLayout.NORTH);
+    if (myShouldInformAboutBinaries) {
+      JLabel warningLabel = new JLabel("Rollback doesn't affect binaries");
+      warningLabel.setIcon(UIUtil.getBalloonWarningIcon());
+      labelsPanel.add(warningLabel, BorderLayout.CENTER);
+    }
+    panel.add(labelsPanel, BorderLayout.NORTH);
     if (numFiles > 0) {
       FilePathChangesTreeList browser = new FilePathChangesTreeList(myProject, myFailedFilePaths, false, false, null, null) {
         @Override
@@ -80,7 +93,7 @@ class UndoApplyPatchDialog extends DialogWrapper {
   }
 
   static void rollbackApplyPatch(@NotNull Project project, @NotNull List<FilePath> filePaths,
-                                 @NotNull Label historyLabel) {
-    new UndoApplyPatchDialog(project, filePaths, historyLabel).show();
+                                 @NotNull Label historyLabel, boolean shouldInformAboutBinaries) {
+    new UndoApplyPatchDialog(project, filePaths, historyLabel, shouldInformAboutBinaries).show();
   }
 }

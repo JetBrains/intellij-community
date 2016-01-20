@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
@@ -306,6 +307,12 @@ public class PatchApplier<BinaryType extends FilePatch> {
         return applier.getFailedPatches();
       }
     });
+    boolean shouldInformAboutBinaries = ContainerUtil.exists(group, new Condition<PatchApplier>() {
+      @Override
+      public boolean value(PatchApplier applier) {
+        return !applier.getBinaryPatches().isEmpty();
+      }
+    });
     UndoApplyPatchDialog.rollbackApplyPatch(project, ContainerUtil.map(allFailed, new Function<FilePatch, FilePath>() {
       @Override
       public FilePath fun(FilePatch filePatch) {
@@ -315,7 +322,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
           : filePatch.getAfterName();
         return VcsUtil.getFilePath(path);
       }
-    }), beforeLabel);
+    }), beforeLabel, shouldInformAboutBinaries);
   }
 
   protected void addSkippedItems(final TriggerAdditionOrDeletion trigger) {
