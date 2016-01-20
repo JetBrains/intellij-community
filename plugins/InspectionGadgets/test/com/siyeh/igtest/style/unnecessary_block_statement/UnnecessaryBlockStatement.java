@@ -42,4 +42,12 @@ public class UnnecessaryBlockStatement {
             int i = 0;
         }
     }
+
+    String f;
+    void field() {
+        <warning descr="Braces around this statement are unnecessary">{</warning>
+            String f;
+        }
+        System.out.println();
+    }
 }
