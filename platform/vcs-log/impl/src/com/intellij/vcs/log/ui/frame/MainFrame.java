@@ -247,7 +247,7 @@ public class MainFrame extends JPanel implements DataProvider {
       return ArrayUtil.toObjectArray(myChangesBrowser.getCurrentDisplayedChanges(), Change.class);
     }
     else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
-      List<VcsFullCommitDetails> details = myUI.getVcsLog().getSelectedDetails();
+      List<VcsFullCommitDetails> details = myLog.getSelectedDetails();
       if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
       return ContainerUtil
         .map2Array(details, CommittedChangeListForRevision.class, new Function<VcsFullCommitDetails, CommittedChangeListForRevision>() {
@@ -260,7 +260,7 @@ public class MainFrame extends JPanel implements DataProvider {
         });
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
-      List<CommitId> hashes = myUI.getVcsLog().getSelectedCommits();
+      List<CommitId> hashes = myLog.getSelectedCommits();
       if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
       return ArrayUtil.toObjectArray(ContainerUtil.map(hashes, new Function<CommitId, VcsRevisionNumber>() {
         @Override
@@ -270,8 +270,8 @@ public class MainFrame extends JPanel implements DataProvider {
       }), VcsRevisionNumber.class);
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
-      List<CommitId> commits = myUI.getVcsLog().getSelectedCommits();
-      Collection<VcsLogProvider> logProviders = myUI.getVcsLog().getLogProviders();
+      List<CommitId> commits = myLog.getSelectedCommits();
+      Collection<VcsLogProvider> logProviders = myLog.getLogProviders();
       if (logProviders.size() == 1) {
         if (!commits.isEmpty()) {
           return myLogDataHolder.getLogProvider(assertNotNull(getFirstItem(commits)).getRoot()).getSupportedVcs();
