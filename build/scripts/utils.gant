@@ -873,6 +873,14 @@ binding.setVariable("signExecutableFiles", { String binDir ->
 })
 
 binding.setVariable("bundledJDKs"){
+  bundledJDK(false)
+}
+
+binding.setVariable("bundledJDK64s"){
+  bundledJDK(true)
+}
+
+private bundledJDK(boolean win64) {
   requireProperty("artifact.linux.no.jdk", "true")
   requireProperty("artifact.mac.no.jdk", "true")
   requireProperty("jdk.win", "1.8")
@@ -882,7 +890,7 @@ binding.setVariable("bundledJDKs"){
 
   if (new File("${home}/build/jdk").exists()) {
     if (p("jdk.win") != "false") {
-      setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.win"), "x32.zip"))
+      setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.win"), (win64 ? "x64.zip": "x32.zip") ))
       extractRedistJre(winJDK, "${paths.sandbox}/jdk.win/jre")
     }
     if (p("jdk.linux") != "false") {
@@ -1187,9 +1195,12 @@ binding.setVariable("collectUsedJars", { List modules, List approvedJars, List f
   return usedJars
 })
 
+final def javaRT = "java-runtime" // that is used by build system in "buildSearchableOptions"
+
 binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List approvedJars, List forbiddenJars ->
   def modulesToBuild = []
-  def usedJars = collectUsedJars(modules, approvedJars, forbiddenJars, modulesToBuild)
+  def modulesNames = modules.contains(javaRT) ? modules : [*modules, javaRT]
+  def usedJars = collectUsedJars(modulesNames, approvedJars, forbiddenJars, modulesToBuild)
   clearBuildCaches()
   projectBuilder.cleanOutput()
   projectBuilder.buildModules(modulesToBuild)
@@ -1199,7 +1210,8 @@ binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List appro
 
 binding.setVariable("buildSearchableOptions", { String target, List licenses, Closure cp, String jvmArgs = null,
                                                 def paths = getProperty("paths") ->
-  projectBuilder.stage("Building searchable options")
+  def pathToJRT = "${projectBuilder.moduleOutput(findModule(javaRT))}"
+  projectBuilder.stage("Building searchable options JRT:" + pathToJRT)
 
   String targetFile = "${target}/searchableOptions.xml"
   ant.delete(file: targetFile)
@@ -1228,7 +1240,7 @@ binding.setVariable("buildSearchableOptions", { String target, List licenses, Cl
     arg(value: "${target}/searchableOptions.xml")
 
     classpath() {
-      pathelement(location: "${projectBuilder.moduleOutput(findModule("java-runtime"))}")
+      pathelement(location: "${pathToJRT}")
     }
   }
 
