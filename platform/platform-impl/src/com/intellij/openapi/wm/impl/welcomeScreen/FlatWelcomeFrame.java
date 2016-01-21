@@ -48,10 +48,12 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -66,7 +68,7 @@ import java.net.URL;
 /**
  * @author Konstantin Bulenkov
  */
-public class FlatWelcomeFrame extends JFrame implements IdeFrame {
+public class FlatWelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
   private final BalloonLayout myBalloonLayout;
   private final WelcomeScreen myScreen;
 
@@ -184,6 +186,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
   public static JBColor getSeparatorColor() {
     return new JBColor(Gray.xEC, new Color(72, 75, 78));
+  }
+
+  @Override
+  public AccessibleContext getCurrentAccessibleContext() {
+    return accessibleContext;
   }
 
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
