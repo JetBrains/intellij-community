@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -82,8 +83,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     }
 
     final ArrayList<ProcessingItem> items = new ArrayList<ProcessingItem>();
-
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    DumbService.getInstance(project).runReadActionInSmartMode(new Runnable() {
       public void run() {
         final CompileScope scope = context.getCompileScope();
         final CompileScope projectScope = context.getProjectCompileScope();
