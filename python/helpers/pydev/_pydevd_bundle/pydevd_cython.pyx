@@ -25,6 +25,8 @@ cdef class PyDBAdditionalThreadInfo:
     cdef public bint pydev_notify_kill;
     cdef public object pydev_smart_step_stop; # Actually, it's a frame or None
     cdef public bint pydev_django_resolve_frame;
+    cdef public object pydev_call_from_jinja2;
+    cdef public object pydev_call_inside_jinja2;
     cdef public bint is_tracing;
     cdef public tuple conditional_breakpoint_exception;
     cdef public str pydev_message;
@@ -39,6 +41,8 @@ cdef class PyDBAdditionalThreadInfo:
 #         'pydev_notify_kill',
 #         'pydev_smart_step_stop',
 #         'pydev_django_resolve_frame',
+#         'pydev_call_from_jinja2',
+#         'pydev_call_inside_jinja2',
 #         'is_tracing',
 #         'conditional_breakpoint_exception',
 #         'pydev_message',
@@ -55,6 +59,8 @@ cdef class PyDBAdditionalThreadInfo:
         self.pydev_notify_kill = False
         self.pydev_smart_step_stop = None
         self.pydev_django_resolve_frame = False
+        self.pydev_call_from_jinja2 = None
+        self.pydev_call_inside_jinja2 = None
         self.is_tracing = False
         self.conditional_breakpoint_exception = None
         self.pydev_message = ''
