@@ -269,11 +269,6 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return importSourceQName != null && importSourceQName.endsWith(name) ? resolveImplicitSubModule() : null;
   }
 
-  @Override
-  public boolean mustResolveOutside() {
-    return true;
-  }
-
   /**
    * The statement 'from pkg1.m1 import ...' makes 'm1' available as a local name in the package 'pkg1'.
    *

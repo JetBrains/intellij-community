@@ -58,10 +58,6 @@ public class PyWithStatementImpl extends PyElementImpl implements PyWithStatemen
     return named_elt;
   }
 
-  public boolean mustResolveOutside() {
-    return false;
-  }
-
   public PyWithItem[] getWithItems() {
     return childrenToPsi(WITH_ITEM, PyWithItem.EMPTY_ARRAY);
   }

@@ -228,10 +228,6 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     return PyUtil.IterHelper.findName(iterateNames(), the_name);
   }
 
-  public boolean mustResolveOutside() {
-    return true; // a = a+1 resolves 'a' outside itself.
-  }
-
   @Override
   public void subtreeChanged() {
     super.subtreeChanged();

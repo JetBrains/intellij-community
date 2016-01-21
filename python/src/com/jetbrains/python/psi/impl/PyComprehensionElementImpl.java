@@ -149,10 +149,6 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
     return PyUtil.IterHelper.findName(iterateNames(), the_name);
   }
 
-  public boolean mustResolveOutside() {
-    return false;
-  }
-
   abstract class ComprehensionElementVisitor {
     void visitIfComponent(ComprhIfComponent component) {
     }

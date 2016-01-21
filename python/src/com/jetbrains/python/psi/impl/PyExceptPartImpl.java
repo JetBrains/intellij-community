@@ -66,8 +66,4 @@ public class PyExceptPartImpl extends PyBaseElementImpl<PyExceptPartStub> implem
     // Requires switching from stubs to AST in getTarget()
     return PyUtil.IterHelper.findName(iterateNames(), the_name);
   }
-
-  public boolean mustResolveOutside() {
-    return false;
-  }
 }

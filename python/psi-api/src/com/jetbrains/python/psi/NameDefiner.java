@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * PSI element that (re)defines names in following namespace, e.g. as assignment statement does.
  *
- * NOTE: When declaring additional elements as name definers, please also adjust the token set via
- * {@link com.jetbrains.python.PythonDialectsTokenSetContributor#getNameDefinerTokens()}.
- *
  * @author dcheryasov
  */
 public interface NameDefiner extends PsiElement {
@@ -41,11 +38,4 @@ public interface NameDefiner extends PsiElement {
    */
   @Nullable
   PsiElement getElementNamed(String name);
-
-  /**
-   * @return true if names found inside its children cannot be resolved to names defined by this statement.
-   * E.g. name <tt>a</tt> is defined in statement <tt>a = a + 1</tt> but the <tt>a</tt> on the right hand side
-   * must not resolve to the <tt>a</tt> on the left hand side.
-   */
-  boolean mustResolveOutside();
 }

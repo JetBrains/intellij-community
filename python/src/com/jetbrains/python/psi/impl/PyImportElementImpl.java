@@ -226,10 +226,6 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     return qName == null ? null : ResolveImportUtil.resolveImportElement(this, qName);
   }
 
-  public boolean mustResolveOutside() {
-    return true; // formally
-  }
-
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyImportElement(this);

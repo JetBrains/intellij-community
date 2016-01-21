@@ -102,10 +102,6 @@ public class PyImportedModule extends LightElement implements NameDefiner {
     return null;
   }
 
-  public boolean mustResolveOutside() {
-    return true;
-  }
-
   public String getText() {
     return "import " + myImportedPrefix;
   }

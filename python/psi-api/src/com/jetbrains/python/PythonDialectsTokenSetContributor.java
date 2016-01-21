@@ -40,12 +40,6 @@ public interface PythonDialectsTokenSetContributor {
   TokenSet getExpressionTokens();
 
   /**
-   * Returns element types that are subclasses of {@link com.jetbrains.python.psi.NameDefiner}.
-   */
-  @NotNull
-  TokenSet getNameDefinerTokens();
-
-  /**
    * Returns element types that are language keywords.
    */
   @NotNull

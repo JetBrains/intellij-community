@@ -69,9 +69,4 @@ public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implem
   public PsiElement getElementNamed(final String the_name) {
     return PyUtil.IterHelper.findName(iterateNames(), the_name);
   }
-
-  public boolean mustResolveOutside() {
-    return false;
-  }
-
 }

@@ -1216,10 +1216,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return the_name.equals(getName()) ? this : null;
   }
 
-  public boolean mustResolveOutside() {
-    return false;
-  }
-
   public void subtreeChanged() {
     super.subtreeChanged();
     ControlFlowCache.clear(this);

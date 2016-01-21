@@ -53,10 +53,6 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
     return PyUtil.IterHelper.findName(iterateNames(), the_name);
   }
 
-  public boolean mustResolveOutside() {
-    return true;
-  }
-
   public void addGlobal(final String name) {
     final PyElementGenerator pyElementGenerator = PyElementGenerator.getInstance(getProject());
     add(pyElementGenerator.createComma().getPsi());

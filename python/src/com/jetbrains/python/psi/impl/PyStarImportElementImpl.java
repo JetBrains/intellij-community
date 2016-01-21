@@ -97,10 +97,6 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
     return null;
   }
 
-  public boolean mustResolveOutside() {
-    return true; // we don't have children, but... 
-  }
-
   @Override
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {

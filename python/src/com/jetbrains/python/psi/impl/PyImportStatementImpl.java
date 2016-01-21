@@ -124,11 +124,6 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
     return null;
   }
 
-  @Override
-  public boolean mustResolveOutside() {
-    return true;
-  }
-
   /**
    * The statement 'import pkg1.m1' makes 'm1' available as a local name in the package 'pkg1'.
    *

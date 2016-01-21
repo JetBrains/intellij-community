@@ -56,10 +56,6 @@ public class PyForStatementImpl extends PyPartitionedElementImpl implements PyFo
     return PyUtil.IterHelper.findName(iterateNames(), the_name);
   }
 
-  public boolean mustResolveOutside() {
-    return false; 
-  }
-
   @Override
   public boolean isAsync() {
     return getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD) != null;

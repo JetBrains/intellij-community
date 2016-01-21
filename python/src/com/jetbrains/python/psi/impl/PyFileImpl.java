@@ -554,11 +554,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @Override
-  public boolean mustResolveOutside() {
-    return false;
-  }
-
-  @Override
   @NotNull
   public List<PyImportElement> getImportTargets() {
     List<PyImportElement> ret = new ArrayList<PyImportElement>();

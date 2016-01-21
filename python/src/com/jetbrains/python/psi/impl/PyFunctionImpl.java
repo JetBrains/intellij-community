@@ -561,10 +561,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return the_name.equals(getName()) ? this : null;
   }
 
-  public boolean mustResolveOutside() {
-    return false;
-  }
-
   @Override
   public String toString() {
     return super.toString() + "('" + getName() + "')";
