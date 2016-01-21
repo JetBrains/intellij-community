@@ -114,7 +114,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private int myPreferredWidth;
   private final FilteringTreeStructure myFilteringStructure;
   private final PsiElement myInitialPsiElement;
-  private final Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
+  protected final Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
   private final List<JCheckBox> myAutoClicked = new ArrayList<JCheckBox>();
   private String myTestSearchFilter;
   private final ActionCallback myTreeHasBuilt = new ActionCallback();
@@ -167,7 +167,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     myTreeStructure = new SmartTreeStructure(project, myTreeModel) {
       @Override
       public void rebuildTree() {
-        if (ApplicationManager.getApplication().isUnitTestMode() || !myPopup.isDisposed()) {
+        if (!ApplicationManager.getApplication().hasUI() || !myPopup.isDisposed()) {
           super.rebuildTree();
         }
       }
@@ -899,7 +899,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
             });
           }
         };
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
+        if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isOnAir()) {
           runnable.run();
         }
         else {

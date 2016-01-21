@@ -148,7 +148,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
       }
     };
     if (!isDisposed()) {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isOnAir()) {
         getUi().cancelUpdate().doWhenProcessed(afterCancelUpdate);
       } else {
         afterCancelUpdate.run();
@@ -195,7 +195,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
         }
       }
     };
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isOnAir()) {
       queueUpdate().doWhenProcessed(selectionRunnable);
     } else {
       selectionRunnable.run();
