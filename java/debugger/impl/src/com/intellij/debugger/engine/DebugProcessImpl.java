@@ -997,7 +997,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         throw EvaluateExceptionUtil.NESTED_EVALUATION_ERROR;
       }
 
-      if (!getSuspendManager().isSuspended(invokeThread)) {
+      if (!suspendContext.suspends(invokeThread)) {
         throw EvaluateExceptionUtil.THREAD_WAS_RESUMED;
       }
 
