@@ -17,6 +17,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +28,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -50,10 +52,25 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
   public AutoFormatTypedHandler(@Nullable TypedActionHandler originalHandler) {
     super(originalHandler);
   }
-  
-  private static boolean isEnabled() {
-    return Registry.is("editor.reformat.on.typing") 
-           || myIsEnabledInTests && ApplicationManager.getApplication().isUnitTestMode();
+
+  private static boolean isEnabled(Editor editor) {
+    boolean isEnabled = myIsEnabledInTests && ApplicationManager.getApplication().isUnitTestMode() 
+                        || Registry.is("editor.reformat.on.typing");
+    
+    if (!isEnabled) {
+      return false;
+    }
+    
+    Project project = editor.getProject();
+    Language language = null;
+    if (project != null) {
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (file != null) {
+        language = file.getLanguage();
+      }
+    }
+
+    return language == JavaLanguage.INSTANCE;
   }
   
   @TestOnly
@@ -63,7 +80,7 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
   
   @Override
   public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
-    if (!isEnabled()) {
+    if (!isEnabled(editor)) {
       executeOriginalHandler(editor, charTyped, dataContext);
       return;
     }
