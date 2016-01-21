@@ -150,6 +150,11 @@ public class ConstantPool implements NewClassNameBuilder {
     String descriptor = ((PrimitiveConstant)getConstant(descriptorIndex)).getString();
 
     if (interceptor != null) {
+      String oldClassName = interceptor.getOldName(className);
+      if (oldClassName != null) {
+        className = oldClassName;
+      }
+
       String newElement = interceptor.getName(className + " " + elementName + " " + descriptor);
       if (newElement != null) {
         elementName = newElement.split(" ")[1];
