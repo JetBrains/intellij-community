@@ -97,7 +97,7 @@ public class BoundedTaskExecutorTest extends TestCase {
       return 42;
     });
     f1.cancel(false);
-    TimeoutUtil.sleep(delay+200);
+    s1.get();
     assertTrue(f1.isDone());
     assertTrue(f1.isCancelled());
     assertFalse(run.get());
