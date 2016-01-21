@@ -139,6 +139,7 @@ public class GitRebaseProcess {
         }
 
         GitRebaseStatus rebaseStatus = rebaseSingleRoot(repository, customMode, getSuccessfulRepositories(statuses));
+        repository.update(); // make the repo state info actual ASAP
         statuses.put(repository, rebaseStatus);
         if (shouldBeRefreshed(rebaseStatus)) {
           toRefresh.add(repository);
