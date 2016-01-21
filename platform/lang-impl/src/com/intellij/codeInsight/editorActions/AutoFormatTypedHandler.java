@@ -46,7 +46,6 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
   
   private char myLastTypedChar;
   private int myLastTypedOffset;
-  private long myLastModificationStamp;
 
   public AutoFormatTypedHandler(@Nullable TypedActionHandler originalHandler) {
     super(originalHandler);
@@ -77,7 +76,6 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     
     myLastTypedChar = charTyped;
     myLastTypedOffset = editor.getCaretModel().getOffset();
-    myLastModificationStamp = editor.getDocument().getModificationStamp();
   }
 
   private boolean isInsertSpaceAtCaret(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
@@ -119,8 +117,10 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
   }
 
   private boolean isSameDocumentAsPrevious(Editor editor) {
-    return editor.getDocument().getModificationStamp() == myLastModificationStamp 
-           && editor.getCaretModel().getOffset() == myLastTypedOffset;
+    int caretOffset = editor.getCaretModel().getOffset();
+    CharSequence text = editor.getDocument().getImmutableCharSequence();
+    return caretOffset == myLastTypedOffset
+           && caretOffset - 1 < text.length() && text.charAt(caretOffset - 1) == myLastTypedChar;
   }
 
   private static boolean isInsertSpaceBeforeEq(int caretOffset, CharSequence text) {
