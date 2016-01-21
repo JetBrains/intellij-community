@@ -33,9 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.VcsCommitStyleFactory;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogHighlighter;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.*;
@@ -256,14 +254,18 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    List<VcsFullCommitDetails> details = VcsLogUtil.collectFirstPackOfLoadedSelectedDetails(myUI.getVcsLog());
-    if (!details.isEmpty()) {
-      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(details, new Function<VcsFullCommitDetails, String>() {
-        @Override
-        public String fun(VcsFullCommitDetails details) {
-          return details.getSubject();
-        }
-      }, "\n")));
+    VcsLog log = VcsLogDataKeys.VCS_LOG.getData(dataContext);
+    if (log != null) {
+      List<VcsFullCommitDetails> details = VcsLogUtil.collectFirstPackOfLoadedSelectedDetails(log);
+      if (!details.isEmpty()) {
+        CopyPasteManager.getInstance()
+          .setContents(new StringSelection(StringUtil.join(details, new Function<VcsFullCommitDetails, String>() {
+            @Override
+            public String fun(VcsFullCommitDetails details) {
+              return details.getSubject();
+            }
+          }, "\n")));
+      }
     }
   }
 
