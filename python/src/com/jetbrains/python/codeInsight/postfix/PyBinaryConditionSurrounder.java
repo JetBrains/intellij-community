@@ -16,14 +16,15 @@
 package com.jetbrains.python.codeInsight.postfix;
 
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PyBinaryConditionSurrounder extends PyExpressionAsConditionSurrounder {
 
-  private String myTextToGenerate;
-  private String myTemplateDescription;
+  private final String myTextToGenerate;
+  private final String myTemplateDescription;
 
-  public PyBinaryConditionSurrounder(String textToGenerate, String templateDescription) {
+  public PyBinaryConditionSurrounder(@NotNull String textToGenerate, @NotNull String templateDescription) {
     myTextToGenerate = textToGenerate;
     myTemplateDescription = templateDescription;
   }

@@ -16,17 +16,9 @@
 package com.jetbrains.python.codeInsight.postfix;
 
 import com.intellij.codeInsight.template.postfix.templates.ParenthesizedPostfixTemplate;
-import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector;
-import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo;
-import org.jetbrains.annotations.NotNull;
 
 public class PyParenthesizedExpressionPostfixTemplate extends ParenthesizedPostfixTemplate {
   public PyParenthesizedExpressionPostfixTemplate() {
-    this(PyPostfixUtils.PY_PSI_INFO, PyPostfixUtils.selectorAllExpressionsWithCurrentOffset());
-  }
-
-  public PyParenthesizedExpressionPostfixTemplate(PostfixTemplatePsiInfo psiInfo,
-                                                  @NotNull PostfixTemplateExpressionSelector selector) {
-    super(psiInfo, selector);
+    super(PyPostfixUtils.PY_PSI_INFO, PyPostfixUtils.selectorAllExpressionsWithCurrentOffset());
   }
 }

@@ -28,13 +28,13 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class PyExpressionAsConditionSurrounder extends PyExpressionSurrounder {
 
-  abstract protected String getTextToGenerate();
+  protected abstract String getTextToGenerate();
 
   @Nullable
-  abstract protected PyExpression getCondition(PyStatement statement);
+  protected abstract PyExpression getCondition(PyStatement statement);
 
   @Nullable
-  abstract protected PyStatementListContainer getStatementListContainer(PyStatement statement);
+  protected abstract PyStatementListContainer getStatementListContainer(PyStatement statement);
 
   @Override
   public TextRange surroundExpression(@NotNull Project project, @NotNull Editor editor, @NotNull PyExpression expression)
