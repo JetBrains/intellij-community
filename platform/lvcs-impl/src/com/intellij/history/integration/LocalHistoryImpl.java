@@ -23,9 +23,6 @@ import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -193,7 +190,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   private Label label(final LabelImpl impl) {
     return new Label() {
       @Override
-      public void revert(@NotNull Project project, @NotNull VirtualFile file) {
+      public void revert(@NotNull Project project, @NotNull VirtualFile file) throws LocalHistoryException {
         revertToLabel(project, file, impl);
       }
 
@@ -249,16 +246,13 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     return myGateway;
   }
 
-  private void revertToLabel(@NotNull Project project, @NotNull VirtualFile f, @NotNull LabelImpl impl) {
+  private void revertToLabel(@NotNull Project project, @NotNull VirtualFile f, @NotNull LabelImpl impl) throws LocalHistoryException{
     HistoryDialogModel dirHistoryModel = f.isDirectory()
                                          ? new DirectoryHistoryDialogModel(project, myGateway, myVcs, f)
                                          : new EntireFileHistoryDialogModel(project, myGateway, myVcs, f);
     int leftRev = findRevisionIndexToRevert(dirHistoryModel, impl);
     if (leftRev < 0) {
-      notifyUser(project,
-                 String.format("Couldn't find label revision. Try to use local history dialog for %s and perform revert manually.",
-                               f.getName()));
-      return;
+      throw new LocalHistoryException("Couldn't find label revision");
     }
     if (leftRev == 0) return; // we shouldn't revert because no changes found to revert;
     try {
@@ -266,12 +260,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
       dirHistoryModel.createReverter().revert();
     }
     catch (IOException e) {
-      LocalHistoryLog.LOG.error(String.format("Couldn't revert %s to local history label.", f.getName()), e);
+      throw new LocalHistoryException(String.format("Couldn't revert %s to local history label.", f.getName()), e);
     }
-  }
-
-  private static void notifyUser(@NotNull Project project, @NotNull String message) {
-    new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Can't rollback some changes", message,
-                     NotificationType.ERROR).notify(project);
   }
 }

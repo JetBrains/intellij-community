@@ -17,10 +17,9 @@ package com.intellij.history.integration.revertion;
 
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryException;
 import com.intellij.history.integration.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
-
-import java.io.IOException;
 
 public class HistoryReverterToLabelTest extends IntegrationTestCase {
 
@@ -33,7 +32,7 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
     assertNotNull(myRoot.findChild("first.txt"));
   }
 
-  private void revertToLabel(Label testLabel, VirtualFile root) {
+  private void revertToLabel(Label testLabel, VirtualFile root) throws LocalHistoryException {
     testLabel.revert(myProject, root);
   }
 
@@ -44,7 +43,7 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
     assertNull(myRoot.findChild("foo.txt"));
   }
 
-  public void testPutLabelAndRevertInstantly() throws IOException {
+  public void testPutLabelAndRevertInstantly() throws Exception {
     VirtualFile f = createChildData(myRoot, "foo.txt");
     setBinaryContent(f, new byte[]{123}, -1, 4000, this);
     final Label testLabel = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
