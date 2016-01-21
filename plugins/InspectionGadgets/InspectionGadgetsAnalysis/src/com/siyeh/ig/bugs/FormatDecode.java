@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ class FormatDecode {
         if (flagBits != 0 || !StringUtil.isEmpty(width) || !StringUtil.isEmpty(precision)) throw new IllegalFormatException(specifier);
         continue;
       }
-      else if ("%".equals(spec)) {
+      else if ("%".equals(spec)) { // literal '%'
         if (isAnyBitSet(flagBits, ~LEFT_JUSTIFY) || !StringUtil.isEmpty(precision)) throw new IllegalFormatException(specifier);
         continue;
       }
@@ -122,41 +122,41 @@ class FormatDecode {
 
       final Validator allowed;
       if (dateSpec != null) {  // a t or T
-        if (isAnyBitSet(flagBits, ~LEFT_JUSTIFY) || !StringUtil.isEmpty(precision)) throw new IllegalFormatException(specifier);
+        if (isAnyBitSet(flagBits, ~(LEFT_JUSTIFY | PREVIOUS)) || !StringUtil.isEmpty(precision)) throw new IllegalFormatException(specifier);
         allowed = new DateValidator(specifier);
       }
       else {
         switch (spec.charAt(0)) {
-          case 'b':
+          case 'b': // boolean (general)
           case 'B':
-          case 'h':
+          case 'h': // Integer hex string (general
           case 'H':
-            if (isAnyBitSet(flagBits, ~LEFT_JUSTIFY)) throw new IllegalFormatException(specifier);
+            if (isAnyBitSet(flagBits, ~(LEFT_JUSTIFY | PREVIOUS))) throw new IllegalFormatException(specifier);
             allowed = ALL_VALIDATOR;
             break;
-          case 's':
+          case 's': // formatted string (general)
           case 'S':
-            if (isAnyBitSet(flagBits, ~(LEFT_JUSTIFY | ALTERNATE))) throw new IllegalFormatException(specifier);
+            if (isAnyBitSet(flagBits, ~(LEFT_JUSTIFY | ALTERNATE | PREVIOUS))) throw new IllegalFormatException(specifier);
             allowed = ALL_VALIDATOR;
             break;
-          case 'c':
+          case 'c': // unicode character
           case 'C':
-            if (isAnyBitSet(flagBits, ~LEFT_JUSTIFY) || !StringUtil.isEmpty(precision)) throw new IllegalFormatException(specifier);
+            if (isAnyBitSet(flagBits, ~(LEFT_JUSTIFY | PREVIOUS)) || !StringUtil.isEmpty(precision)) throw new IllegalFormatException(specifier);
             allowed = new CharValidator(specifier);
             break;
-          case 'd':
+          case 'd': // decimal integer
             if (isAnyBitSet(flagBits, ALTERNATE)) throw new IllegalFormatException(specifier);
             allowed = new IntValidator(specifier);
             break;
-          case 'o':
-          case 'x':
+          case 'o': // octal integer
+          case 'x': // hexadecimal integer
           case 'X':
             if (isAnyBitSet(flagBits, PLUS | LEADING_SPACE | GROUP) || !StringUtil.isEmpty(precision)) {
               throw new IllegalFormatException(specifier);
             }
             allowed = new IntValidator(specifier);
             break;
-          case 'a':
+          case 'a': // hexadecimal floating-point number
           case 'A':
             if (isAnyBitSet(flagBits, PARENTHESES | GROUP)) throw new IllegalFormatException(specifier);
             allowed = new FloatValidator(specifier);
@@ -166,12 +166,12 @@ class FormatDecode {
             if (isAnyBitSet(flagBits, GROUP)) throw new IllegalFormatException(specifier);
             allowed = new FloatValidator(specifier);
             break;
-          case 'g':
+          case 'g': // scientific notation
           case 'G':
             if (isAnyBitSet(flagBits, ALTERNATE)) throw new IllegalFormatException(specifier);
             allowed = new FloatValidator(specifier);
             break;
-          case 'f':
+          case 'f': // decimal number
             allowed = new FloatValidator(specifier);
             break;
           default:
