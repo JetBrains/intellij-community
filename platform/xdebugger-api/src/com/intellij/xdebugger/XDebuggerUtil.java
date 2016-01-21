@@ -82,6 +82,17 @@ public abstract class XDebuggerUtil {
   public abstract XSourcePosition createPosition(@Nullable VirtualFile file, int line);
 
   /**
+   * Create {@link XSourcePosition} instance by line and column number
+   *
+   * @param file   file
+   * @param line   0-based line number
+   * @param column 0-based column number
+   * @return source position
+   */
+  @Nullable
+  public abstract XSourcePosition createPosition(@Nullable VirtualFile file, int line, int column);
+
+  /**
    * Create {@link XSourcePosition} instance by line number
    * @param file file
    * @param offset offset from the beginning of file
