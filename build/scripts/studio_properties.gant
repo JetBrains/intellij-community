@@ -159,9 +159,6 @@ def getProperties(String home, String buildNumber) {
               fileset(dir: "${home}/../studio/google/cloud/tools/core-plugin/third_party/gradle-appengine-builder-model") {
                 include(name: "**/*.jar")
               }
-              fileset(dir: "${home}/../studio/google/cloud/tools/core-plugin/third_party/mockito") {
-                include(name: "**/*.jar")
-              }
               fileset(dir: "${home}/../studio/google/cloud/tools/core-plugin/third_party/org-eclipse-jgit") {
                 include(name: "**/*.jar")
               }
@@ -205,9 +202,6 @@ def getProperties(String home, String buildNumber) {
                 include(name: "**/*.jar")
               }
               fileset(dir: "${home}/../studio/google/cloud/tools/google-login-plugin/third_party/javax-servlet-api") {
-                include(name: "**/*.jar")
-              }
-              fileset(dir: "${home}/../studio/google/cloud/tools/google-login-plugin/third_party/mockito") {
                 include(name: "**/*.jar")
               }
               fileset(dir: "${home}/../studio/google/cloud/tools/google-login-plugin/third_party/repackaged") {
