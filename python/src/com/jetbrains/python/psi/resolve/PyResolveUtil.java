@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
@@ -98,21 +97,5 @@ public class PyResolveUtil {
       }
       scopeOwner = ScopeUtil.getScopeOwner(scopeOwner);
     }
-  }
-
-  /**
-   * Accepts only targets that are not the given object.
-   */
-  public static class FilterNotInstance implements Condition<PsiElement> {
-    Object instance;
-
-    public FilterNotInstance(Object instance) {
-      this.instance = instance;
-    }
-
-    public boolean value(final PsiElement target) {
-      return (instance != target);
-    }
-
   }
 }
