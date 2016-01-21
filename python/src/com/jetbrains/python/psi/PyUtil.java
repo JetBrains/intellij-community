@@ -124,24 +124,24 @@ public class PyUtil {
   /**
    * @see PyUtil#flattenedParensAndTuples
    */
-  protected static List<PyExpression> _unfoldParenExprs(PyExpression[] targets, List<PyExpression> receiver,
+  protected static List<PyExpression> unfoldParentheses(PyExpression[] targets, List<PyExpression> receiver,
                                                         boolean unfoldListLiterals, boolean unfoldStarExpressions) {
     // NOTE: this proliferation of instanceofs is not very beautiful. Maybe rewrite using a visitor.
     for (PyExpression exp : targets) {
       if (exp instanceof PyParenthesizedExpression) {
-        final PyParenthesizedExpression parex = (PyParenthesizedExpression)exp;
-        _unfoldParenExprs(new PyExpression[]{parex.getContainedExpression()}, receiver, unfoldListLiterals, unfoldStarExpressions);
+        final PyParenthesizedExpression parenExpr = (PyParenthesizedExpression)exp;
+        unfoldParentheses(new PyExpression[]{parenExpr.getContainedExpression()}, receiver, unfoldListLiterals, unfoldStarExpressions);
       }
       else if (exp instanceof PyTupleExpression) {
-        final PyTupleExpression tupex = (PyTupleExpression)exp;
-        _unfoldParenExprs(tupex.getElements(), receiver, unfoldListLiterals, unfoldStarExpressions);
+        final PyTupleExpression tupleExpr = (PyTupleExpression)exp;
+        unfoldParentheses(tupleExpr.getElements(), receiver, unfoldListLiterals, unfoldStarExpressions);
       }
       else if (exp instanceof PyListLiteralExpression && unfoldListLiterals) {
         final PyListLiteralExpression listLiteral = (PyListLiteralExpression)exp;
-        _unfoldParenExprs(listLiteral.getElements(), receiver, true, unfoldStarExpressions);
+        unfoldParentheses(listLiteral.getElements(), receiver, true, unfoldStarExpressions);
       }
       else if (exp instanceof PyStarExpression && unfoldStarExpressions) {
-        _unfoldParenExprs(new PyExpression[]{((PyStarExpression)exp).getExpression()}, receiver, unfoldListLiterals, true);
+        unfoldParentheses(new PyExpression[]{((PyStarExpression)exp).getExpression()}, receiver, unfoldListLiterals, true);
       }
       else if (exp != null) {
         receiver.add(exp);
@@ -149,8 +149,6 @@ public class PyUtil {
     }
     return receiver;
   }
-
-  // Poor man's catamorhpism :)
 
   /**
    * Flattens the representation of every element in targets, and puts all results together.
@@ -162,17 +160,17 @@ public class PyUtil {
    */
   @NotNull
   public static List<PyExpression> flattenedParensAndTuples(PyExpression... targets) {
-    return _unfoldParenExprs(targets, new ArrayList<PyExpression>(targets.length), false, false);
+    return unfoldParentheses(targets, new ArrayList<PyExpression>(targets.length), false, false);
   }
 
   @NotNull
   public static List<PyExpression> flattenedParensAndLists(PyExpression... targets) {
-    return _unfoldParenExprs(targets, new ArrayList<PyExpression>(targets.length), true, true);
+    return unfoldParentheses(targets, new ArrayList<PyExpression>(targets.length), true, true);
   }
 
   @NotNull
   public static List<PyExpression> flattenedParensAndStars(PyExpression... targets) {
-    return _unfoldParenExprs(targets, new ArrayList<PyExpression>(targets.length), false, true);
+    return unfoldParentheses(targets, new ArrayList<PyExpression>(targets.length), false, true);
   }
 
   // Poor man's filter
@@ -417,7 +415,7 @@ public class PyUtil {
   }
 
   /**
-   * Searhes for a method wrapping given element.
+   * Searches for a method wrapping given element.
    *
    * @param start element presumably inside a method
    * @param deep  if true, allow 'start' to be inside functions nested in a method; else, 'start' must be directly inside a method.
@@ -611,7 +609,7 @@ public class PyUtil {
   }
 
   /**
-   * Finds element declaration by resolving its references top the top but not further than file (to prevent unstubing)
+   * Finds element declaration by resolving its references top the top but not further than file (to prevent un-stubbing)
    *
    * @param elementToResolve element to resolve
    * @return its declaration
@@ -1657,7 +1655,7 @@ public class PyUtil {
   }
 
   /**
-   * Filters only pyclass object (new class)
+   * Filters only PyClass object (new class)
    */
   public static class ObjectPredicate extends NotNullPredicate<PyMemberInfo<PyElement>> {
     private final boolean myAllowObjects;
@@ -1702,8 +1700,8 @@ public class PyUtil {
     if (!(expectedPackage.equals(aPackage))) {
       return false;
     }
-    final String symboldName = qualifiedName.getLastComponent();
-    return expectedName.equals(symboldName);
+    final String symbolName = qualifiedName.getLastComponent();
+    return expectedName.equals(symbolName);
   }
 
   /**
