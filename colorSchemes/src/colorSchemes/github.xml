@@ -956,19 +956,21 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
-    <option name="JS.ATTRIBUTE">
+    <option name="JS.GLOBAL_VARIABLE">
       <value>
-        <option name="BACKGROUND" value="f7e9e9" />
+        <option name="FOREGROUND" value="108888" />
+        <option name="FONT_TYPE" value="2" />
       </value>
     </option>
     <option name="JS.INSTANCE_MEMBER_FUNCTION">
       <value>
-        <option name="FOREGROUND" value="7a7a2b" />
+        <option name="FOREGROUND" value="990000" />
+        <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="JS.LOCAL_VARIABLE">
       <value>
-        <option name="FOREGROUND" value="458383" />
+        <option name="FOREGROUND" value="108888" />
       </value>
     </option>
     <option name="JS.PARAMETER">

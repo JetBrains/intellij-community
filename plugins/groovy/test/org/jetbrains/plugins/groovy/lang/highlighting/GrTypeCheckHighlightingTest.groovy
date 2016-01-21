@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,5 +44,20 @@ class GrTypeCheckHighlightingTest extends GrHighlightingTestBase {
     addBigDecimal()
     addBigInteger()
     super.doTest()
+  }
+
+  void 'test box primitive types in list literals'() {
+    testHighlighting '''
+void method(List<Integer> ints) {}
+void method2(Map<String, Integer> map) {}
+
+interface X {
+    int C = 0
+    int D = 1
+}
+
+method([X.C, X.D])
+method2([a: X.C, b: X.D])
+'''
   }
 }

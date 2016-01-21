@@ -53,12 +53,12 @@ import java.io.IOException
 import java.io.InputStream
 import java.util.*
 
-public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
-                                              private val processor: SchemeProcessor<E>,
-                                              private val provider: StreamProvider?,
-                                              private val ioDirectory: File,
-                                              private val roamingType: RoamingType = RoamingType.DEFAULT,
-                                              virtualFileTrackerDisposable: Disposable? = null) : SchemesManager<T, E>(), SafeWriteRequestor where E : ExternalizableScheme, E : T {
+public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val fileSpec: String,
+                                                                     private val processor: SchemeProcessor<E>,
+                                                                     private val provider: StreamProvider?,
+                                                                     private val ioDirectory: File,
+                                                                     private val roamingType: RoamingType = RoamingType.DEFAULT,
+                                                                     virtualFileTrackerDisposable: Disposable? = null) : SchemesManager<T, E>(), SafeWriteRequestor {
   private val schemes = ArrayList<T>()
   private val readOnlyExternalizableSchemes = THashMap<String, E>()
 
@@ -127,7 +127,8 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
         var oldCurrentScheme: T? = null
         if (oldScheme != null) {
           oldCurrentScheme = currentScheme
-          removeScheme(oldScheme)
+          @Suppress("UNCHECKED_CAST")
+          removeScheme(oldScheme as T)
           processor.onSchemeDeleted(oldScheme)
         }
 
@@ -142,7 +143,8 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
 
       private fun updateCurrentScheme(oldCurrentScheme: T?, newCurrentScheme: E? = null) {
         if (oldCurrentScheme != currentScheme && currentScheme == null) {
-          setCurrent(newCurrentScheme ?: schemes.firstOrNull())
+          @Suppress("UNCHECKED_CAST")
+          setCurrent(newCurrentScheme as T? ?: schemes.firstOrNull())
         }
       }
 
@@ -189,7 +191,8 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
         }
         else if (isMy(event)) {
           val scheme = findExternalizableSchemeByFileName(event.file.name) ?: return
-          removeScheme(scheme)
+          @Suppress("UNCHECKED_CAST")
+          removeScheme(scheme as T)
           processor.onSchemeDeleted(scheme)
         }
 
@@ -217,9 +220,10 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
         val info = ExternalInfo(fileName.substring(0, fileName.length - extension.length), extension)
         info.hash = JDOMUtil.getTreeHash(element, true)
         info.schemeName = scheme.name
-        val oldInfo = schemeToInfo.put(scheme.asExternalizable(), info)
+        @Suppress("UNCHECKED_CAST")
+        val oldInfo = schemeToInfo.put(scheme as E, info)
         LOG.assertTrue(oldInfo == null)
-        val oldScheme = readOnlyExternalizableSchemes.put(scheme.name, scheme.asExternalizable())
+        val oldScheme = readOnlyExternalizableSchemes.put(scheme.name, scheme)
         if (oldScheme != null) {
           LOG.warn("Duplicated scheme ${scheme.name} - old: $oldScheme, new $scheme")
         }
@@ -281,11 +285,13 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
 
     val list = SmartList<E>()
     for (i in newSchemesOffset..schemes.size - 1) {
-      val scheme = (schemes[i] as ExternalizableScheme).asExternalizable()
+      @Suppress("UNCHECKED_CAST")
+      val scheme = schemes[i] as E
       processor.initScheme(scheme)
       list.add(scheme)
 
-      processPendingCurrentSchemeName(scheme)
+      @Suppress("UNCHECKED_CAST")
+      processPendingCurrentSchemeName(scheme as T)
     }
 
     return list
@@ -301,13 +307,14 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
   private fun removeExternalizableSchemes() {
     // todo check is bundled/read-only schemes correctly handled
     for (i in schemes.indices.reversed()) {
-      val scheme = schemes[i]
-      if (scheme is ExternalizableScheme && getState(scheme.asExternalizable()) != SchemeProcessor.State.NON_PERSISTENT) {
+      val scheme = schemes.get(i)
+      @Suppress("UNCHECKED_CAST")
+      if (scheme is ExternalizableScheme && getState(scheme as E) != SchemeProcessor.State.NON_PERSISTENT) {
         if (scheme == currentScheme) {
           currentScheme = null
         }
 
-        processor.onSchemeDeleted(scheme.asExternalizable())
+        processor.onSchemeDeleted(scheme as E)
       }
     }
     retainExternalInfo(schemes)
@@ -315,20 +322,21 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
 
   private fun findExternalizableSchemeByFileName(fileName: String): E? {
     for (scheme in schemes) {
+      @Suppress("UNCHECKED_CAST")
       if (scheme is ExternalizableScheme && fileName == "${scheme.fileName}$schemeExtension") {
-        return scheme.asExternalizable()
+        return scheme as E
       }
     }
     return null
   }
 
   private fun isOverwriteOnLoad(existingScheme: E): Boolean {
-    if (readOnlyExternalizableSchemes[existingScheme.name] === existingScheme) {
+    if (readOnlyExternalizableSchemes.get(existingScheme.name) === existingScheme) {
       // so, bundled scheme is shadowed
       return true
     }
 
-    val info = schemeToInfo[existingScheme]
+    val info = schemeToInfo.get(existingScheme)
     // scheme from file with old extension, so, we must ignore it
     return info != null && schemeExtension != info.fileExtension
   }
@@ -336,7 +344,7 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
   private fun loadScheme(fileName: CharSequence, input: InputStream, duringLoad: Boolean): E? {
     try {
       val element = JDOMUtil.load(input)
-      @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
+      @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE", "UNCHECKED_CAST")
       val scheme = processor.readScheme(element, duringLoad) ?: return null
 
       val extension = getFileExtension(fileName, false)
@@ -349,12 +357,12 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
 
         val existingScheme = findSchemeByName(scheme.name)
         if (existingScheme != null) {
-          val existingSchemeAsExternalizable = if (existingScheme is ExternalizableScheme) existingScheme.asExternalizable() else null
-          if (existingSchemeAsExternalizable != null && isOverwriteOnLoad(existingSchemeAsExternalizable)) {
+          @Suppress("UNCHECKED_CAST")
+          if (existingScheme is ExternalizableScheme && isOverwriteOnLoad(existingScheme as E)) {
             removeScheme(existingScheme)
           }
           else {
-            if (schemeExtension != extension && existingSchemeAsExternalizable != null && schemeToInfo[existingSchemeAsExternalizable]?.fileNameWithoutExtension == fileNameWithoutExtension) {
+            if (schemeExtension != extension && schemeToInfo.get(existingScheme as Scheme)?.fileNameWithoutExtension == fileNameWithoutExtension) {
               // 1.oldExt is loading after 1.newExt - we should delete 1.oldExt
               filesToDelete.add(fileName.toString())
             }
@@ -368,7 +376,7 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
         }
       }
 
-      var info: ExternalInfo? = schemeToInfo[scheme]
+      var info: ExternalInfo? = schemeToInfo.get(scheme)
       if (info == null) {
         info = ExternalInfo(fileNameWithoutExtension, extension)
         schemeToInfo.put(scheme, info)
@@ -379,11 +387,12 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
       info.hash = JDOMUtil.getTreeHash(element, true)
       info.schemeName = scheme.name
 
+      @Suppress("UNCHECKED_CAST")
       if (duringLoad) {
-        schemes.add(scheme)
+        schemes.add(scheme as T)
       }
       else {
-        addScheme(scheme)
+        addScheme(scheme as T)
       }
       return scheme
     }
@@ -394,7 +403,7 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
   }
 
   private val ExternalizableScheme.fileName: String?
-    get() = schemeToInfo[asExternalizable()]?.fileNameWithoutExtension
+    get() = schemeToInfo.get(this)?.fileNameWithoutExtension
 
   private fun canRead(name: CharSequence) = updateExtension && StringUtilRt.endsWithIgnoreCase(name, DEFAULT_EXT) || StringUtilRt.endsWithIgnoreCase(name, schemeExtension)
 
@@ -495,7 +504,7 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
   private fun getState(scheme: E) = processor.getState(scheme)
 
   private fun saveScheme(scheme: E, nameGenerator: UniqueNameGenerator) {
-    var externalInfo: ExternalInfo? = schemeToInfo[scheme]
+    var externalInfo: ExternalInfo? = schemeToInfo.get(scheme)
     val currentFileNameWithoutExtension = if (externalInfo == null) null else externalInfo.fileNameWithoutExtension
     val parent = processor.writeScheme(scheme)
     val element = if (parent == null || parent is Element) parent as Element? else (parent as Document).detachRootElement()
@@ -515,8 +524,8 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
     }
 
     // save only if scheme differs from bundled
-    val bundledScheme = readOnlyExternalizableSchemes[scheme.name]
-    if (bundledScheme != null && schemeToInfo[bundledScheme]?.hash == newHash) {
+    val bundledScheme = readOnlyExternalizableSchemes.get(scheme.name)
+    if (bundledScheme != null && schemeToInfo.get(bundledScheme)?.hash == newHash) {
       externalInfo?.scheduleDelete()
       return
     }
@@ -598,8 +607,8 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
     filesToDelete.add(fileName)
   }
 
-  private fun isRenamed(scheme: E): Boolean {
-    val info = schemeToInfo[scheme]
+  private fun isRenamed(scheme: ExternalizableScheme): Boolean {
+    val info = schemeToInfo.get(scheme)
     return info != null && scheme.name != info.schemeName
   }
 
@@ -671,11 +680,7 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
       schemes.clear()
     }
     else {
-      for (i in schemes.indices.reversed()) {
-        if (removeCondition.value(schemes[i])) {
-          schemes.removeAt(i)
-        }
-      }
+      schemes.removeAll { removeCondition.value(it) }
     }
 
     retainExternalInfo(newSchemes)
@@ -703,7 +708,7 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
 
     schemeToInfo.retainEntries(object : TObjectObjectProcedure<E, ExternalInfo> {
       override fun execute(scheme: E, info: ExternalInfo): Boolean {
-        if (readOnlyExternalizableSchemes[scheme.name] == scheme) {
+        if (readOnlyExternalizableSchemes.get(scheme.name) == scheme) {
           return true
         }
 
@@ -726,7 +731,7 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
   override fun addNewScheme(scheme: T, replaceExisting: Boolean) {
     var toReplace = -1
     for (i in schemes.indices) {
-      val existing = schemes[i]
+      val existing = schemes.get(i)
       if (existing.name == scheme.name) {
         if (!Comparing.equal<Class<out Scheme>>(existing.javaClass, scheme.javaClass)) {
           LOG.warn("'${scheme.name}' ${existing.javaClass.simpleName} replaced with ${scheme.javaClass.simpleName}")
@@ -734,9 +739,10 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
 
         toReplace = i
         if (replaceExisting && existing is ExternalizableScheme) {
-          val oldInfo = schemeToInfo.remove(existing.asExternalizable())
-          if (oldInfo != null && scheme is ExternalizableScheme && !schemeToInfo.containsKey(scheme.asExternalizable())) {
-            schemeToInfo.put(scheme.asExternalizable(), oldInfo)
+          val oldInfo = schemeToInfo.remove(existing as ExternalizableScheme)
+          if (oldInfo != null && scheme is ExternalizableScheme && !schemeToInfo.containsKey(scheme as ExternalizableScheme)) {
+            @Suppress("UNCHECKED_CAST")
+            schemeToInfo.put(scheme as E, oldInfo)
           }
         }
         break
@@ -754,9 +760,9 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
     }
 
     if (scheme is ExternalizableScheme && filesToDelete.isNotEmpty()) {
-      val info = schemeToInfo[scheme.asExternalizable()]
+      val info = schemeToInfo[scheme as ExternalizableScheme]
       if (info != null) {
-        filesToDelete.remove(info.fileName)
+        filesToDelete.remove("${info.fileName}")
       }
     }
 
@@ -826,23 +832,20 @@ public class SchemeManagerImpl<T : Scheme, E>(private val fileSpec: String,
 
   override fun removeScheme(scheme: T) {
     for (i in schemes.size - 1 downTo 0) {
-      val s = schemes[i]
+      val s = schemes.get(i)
       if (scheme.name == s.name) {
         if (currentScheme == s) {
           currentScheme = null
         }
 
         if (s is ExternalizableScheme) {
-          schemeToInfo.remove(s.asExternalizable())?.scheduleDelete()
+          schemeToInfo.remove(s as ExternalizableScheme)?.scheduleDelete()
         }
         schemes.removeAt(i)
         break
       }
     }
   }
-
-  @Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
-  private inline fun ExternalizableScheme.asExternalizable() = this as E
 
   override fun getAllSchemeNames(): Collection<String> {
     if (schemes.isEmpty()) {

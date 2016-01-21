@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -83,7 +82,8 @@ public class TestNGXmlSuiteHelper {
     try {
       OutputStream stream = new FileOutputStream(xmlFile, false);
       try {
-        stream.write(content.getBytes("UTF-8"), 0, content.length());
+        byte[] text = content.getBytes("UTF-8");
+        stream.write(text, 0, text.length);
       }
       finally {
         stream.close();

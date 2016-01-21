@@ -1,5 +1,5 @@
 <component>
-  <scheme name="FindView">
+  <scheme name="FindView" default_scheme="true">
     <colors>
     </colors>
 

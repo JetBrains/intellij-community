@@ -21,20 +21,20 @@ import org.eclipse.jgit.lib.Repository
 import org.jetbrains.jgit.dirCache.AddLoadedFile
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.settingsRepository.IcsManager
-import org.jetbrains.settingsRepository.git.createRepository as createGitRepository
 import org.junit.Rule
 import java.nio.file.FileSystem
 import java.nio.file.Path
+import org.jetbrains.settingsRepository.git.createRepository as createGitRepository
 
 fun Repository.add(path: String, data: String) = add(path, data.toByteArray())
 
 fun Repository.add(path: String, data: ByteArray): Repository {
-  workTree.writeChild(path, data)
+  workTreePath.writeChild(path, data)
   edit(AddLoadedFile(path, data))
   return this
 }
 
-val Repository.workTree: Path
+val Repository.workTreePath: Path
   get() = getWorkTree().toPath()
 
 val SAMPLE_FILE_NAME = "file.xml"

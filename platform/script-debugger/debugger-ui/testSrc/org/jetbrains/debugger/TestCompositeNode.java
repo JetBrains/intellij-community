@@ -105,7 +105,7 @@ public class TestCompositeNode implements XCompositeNode {
     assert content == null;
 
     content = new Content();
-    return result.then(new AsyncFunction<XValueChildrenList, Content>() {
+    return result.thenAsync(new AsyncFunction<XValueChildrenList, Content>() {
       private void resolveGroups(@NotNull List<XValueGroup> valueGroups, @NotNull List<TestCompositeNode> resultNodes, @NotNull List<Promise<?>> promises) {
         for (XValueGroup group : valueGroups) {
           TestCompositeNode node = new TestCompositeNode(group);

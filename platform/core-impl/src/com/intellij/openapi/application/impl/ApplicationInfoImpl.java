@@ -22,13 +22,12 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.PlatformUtils;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -111,7 +110,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myStatisticsServiceKey;
   private String myThirdPartySoftwareUrl;
   private String myJetbrainsTvUrl;
-  private String myEvalLicenseUrl = "https://www.jetbrains.com/company/useterms.html";
+  private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
   private String myKeyConversionUrl = "https://www.jetbrains.com/shop/eform/keys-exchange";
 
   private Rectangle myAboutLogoRect;
@@ -630,7 +629,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     }
 
     Thread currentThread = Thread.currentThread();
-    currentThread.setName(currentThread.getName() + " " + myMajorVersion + "." + myMinorVersion + "#" + myBuildNumber + ", eap:" + myEAP);
+    currentThread.setName(
+      currentThread.getName() + " " +
+      ApplicationNamesInfo.getInstance().getProductName() + " " +
+      myMajorVersion + "." + myMinorVersion + "#" + myBuildNumber +
+      " " + ApplicationNamesInfo.getInstance().getProductName() +
+      ", eap:" + myEAP + ", os:" + SystemInfoRt.OS_NAME + " " + SystemInfoRt.OS_VERSION +
+      ", java-version:" + SystemProperties.getJavaVendor() + " " + SystemInfo.JAVA_RUNTIME_VERSION);
 
     Element logoElement = parentNode.getChild(ELEMENT_LOGO);
     if (logoElement != null) {

@@ -87,7 +87,7 @@ public class JBPopupMenu extends JPopupMenu {
     int myScrollDirection = 0;
     Timer myTimer;
 
-    public MyLayout(JPopupMenu target) {
+    public MyLayout(final JPopupMenu target) {
       super(target, BoxLayout.PAGE_AXIS);
       myTarget = target;
       myTimer = new Timer(40, this);
@@ -100,6 +100,10 @@ public class JBPopupMenu extends JPopupMenu {
         @Override
         public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
           switchTimer(false);
+          JRootPane rootPane = SwingUtilities.getRootPane(target);
+          if (rootPane != null) {
+            rootPane.putClientProperty("apple.awt._windowFadeDelegate", null);
+          }
         }
 
         @Override

@@ -16,6 +16,9 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.openapi.options.CompoundScheme;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TemplateGroup extends CompoundScheme<TemplateImpl> {
@@ -32,5 +35,14 @@ public class TemplateGroup extends CompoundScheme<TemplateImpl> {
 
   public String getReplace() {
     return myReplace;
+  }
+
+  public boolean containsTemplate(@NotNull final String key, @Nullable final String id) {
+    return ContainerUtil.or(getElements(), new Condition<TemplateImpl>() {
+      @Override
+      public boolean value(TemplateImpl template) {
+        return key.equals(template.getKey()) || id != null && id.equals(template.getId());
+      }
+    });
   }
 }

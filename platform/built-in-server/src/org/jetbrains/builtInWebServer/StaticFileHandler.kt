@@ -31,7 +31,7 @@ private class StaticFileHandler : WebServerFileHandler() {
       sendIoFile(channel, ioFile, request)
     }
     else {
-      val file = pathInfo.file!!
+      val file = pathInfo.file
       val response = FileResponses.prepareSend(request, channel, file.timeStamp, file.path) ?: return true
 
       val keepAlive = Responses.addKeepAliveIfNeed(response, request)

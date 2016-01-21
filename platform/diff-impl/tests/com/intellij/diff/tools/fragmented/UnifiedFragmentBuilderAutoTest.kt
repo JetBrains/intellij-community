@@ -16,8 +16,6 @@
 package com.intellij.diff.tools.fragmented
 
 import com.intellij.diff.DiffTestCase
-import com.intellij.diff.assertEquals
-import com.intellij.diff.assertTrue
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
@@ -78,7 +76,7 @@ public class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
       val startLine2 = fragment.getStartLine2()
       val endLine2 = fragment.getEndLine2()
 
-      for (i in startLine1 until endLine1) {
+      for (i in startLine1.until(endLine1)) {
         val targetLine = convertor.convertInv1(i)
         assertTrue(targetLine != -1)
         assertTrue(isLineChanged(targetLine, changedLines))

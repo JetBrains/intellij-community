@@ -97,10 +97,10 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
           LOG.warn(e)
 
           if (!upstreamSet || e is NoRemoteRepositoryException) {
-            Messages.showErrorDialog(dialogParent, icsMessage("set.upstream.failed.message", e.getMessage()), icsMessage("set.upstream.failed.title"))
+            Messages.showErrorDialog(dialogParent, icsMessage("set.upstream.failed.message", e.message), icsMessage("set.upstream.failed.title"))
           }
           else {
-            Messages.showErrorDialog(dialogParent, StringUtil.notNullize(e.getMessage(), "Internal error"), icsMessage(if (e is AuthenticationException) "sync.not.authorized.title" else "sync.rejected.title"))
+            Messages.showErrorDialog(dialogParent, StringUtil.notNullize(e.message, "Internal error"), icsMessage(if (e is AuthenticationException) "sync.not.authorized.title" else "sync.rejected.title"))
           }
           return
         }

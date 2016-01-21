@@ -127,6 +127,23 @@ class A {
     assert myFixture.editor.document.text.contains('** longName\n')
   }
 
+  public void "test hippie completion with hyphenated match"() {
+    myFixture.configureByText 'a.groovy', '''
+foo = [ helloWorld: 1, "hello-world": {
+    hw<caret>
+    f
+  }
+]'''
+    performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+    assert myFixture.editor.document.text.contains(' hello-world\n')
+    performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+    assert myFixture.editor.document.text.contains(' helloWorld\n')
+
+    myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf(' f') + 2)
+    performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+    assert myFixture.editor.document.text.contains(' foo\n')
+  }
+
   void testSWforMemberWithDoc() {
     doTestForSelectWord(4, '''\
 class A {

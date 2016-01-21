@@ -51,7 +51,7 @@ internal class OutputClassScope(generator: DomainGenerator, classNamePath: NameP
     out.append(if (allowNullableString) "writeNullableString" else type.writeMethodName).append('(')
     out.quote(descriptor.name()).comma().append(valueRefName)
 
-    if (!allowNullableString && descriptor.optional && type.defaultValue != null && descriptor.name() != "depth") {
+    if (!allowNullableString && descriptor.optional && type.defaultValue != null && descriptor.name() != "depth" && type != BoxableType.MAP) {
       out.comma().append(if (descriptor.name() == "enabled") "true" else if (descriptor.name() == "maxStringLength") "100" else type.defaultValue!!)
     }
 

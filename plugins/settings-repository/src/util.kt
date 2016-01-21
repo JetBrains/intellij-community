@@ -23,7 +23,7 @@ public fun String?.nullize(): String? = StringUtil.nullize(this)
 public fun byteBufferToBytes(byteBuffer: ByteBuffer): ByteArray {
   if (byteBuffer.hasArray() && byteBuffer.arrayOffset() == 0) {
     val bytes = byteBuffer.array()
-    if (bytes.size() == byteBuffer.limit()) {
+    if (bytes.size == byteBuffer.limit()) {
       return bytes
     }
   }

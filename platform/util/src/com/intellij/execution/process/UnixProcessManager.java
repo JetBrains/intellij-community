@@ -18,11 +18,13 @@ package com.intellij.execution.process;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -58,12 +60,14 @@ public class UnixProcessManager {
 
   private UnixProcessManager() { }
 
-  public static int getProcessPid(Process process) {
+  public static int getProcessPid(@NotNull Process process) {
     try {
-      return ReflectionUtil.getField(process.getClass(), process, int.class, "pid");
+      Integer pid = ReflectionUtil.getField(process.getClass(), process, int.class, "pid");
+      return ObjectUtils.assertNotNull(pid);
     }
     catch (Exception e) {
-      throw new IllegalStateException("system is not unix", e);
+      throw new IllegalStateException("Cannot get PID from instance of " + process.getClass()
+                                      + ", OS: " + SystemInfo.OS_NAME, e);
     }
   }
 
@@ -74,7 +78,8 @@ public class UnixProcessManager {
 
   private static void checkCLib() {
     if (C_LIB == null) {
-      throw new IllegalStateException("System is not unix(couldn't load c library)");
+      throw new IllegalStateException("Couldn't load c library, OS: " + SystemInfo.OS_NAME
+                                      + ", isUnix: " + SystemInfo.isUnix);
     }
   }
 
@@ -91,12 +96,15 @@ public class UnixProcessManager {
    *
    * @param process tree root process
    */
-  public static boolean sendSignalToProcessTree(Process process, int signal) {
+  public static boolean sendSignalToProcessTree(@NotNull Process process, int signal) {
     try {
       checkCLib();
 
       final int our_pid = C_LIB.getpid();
       final int process_pid = getProcessPid(process);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Sending signal " + signal + " to process tree with root PID " + process_pid);
+      }
 
       final Ref<Integer> foundPid = new Ref<Integer>();
       final ProcessInfo processInfo = new ProcessInfo();
@@ -115,6 +123,10 @@ public class UnixProcessManager {
           processInfo.killProcTree(pid, signal, UNIX_KILLER);
         }
         result = !childrenPids.isEmpty(); //we've tried to kill at least one process
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Done sending signal " + signal + "; found: " + foundPid.get()
+                  + ", children: " + childrenPids + ", result: " + result);
       }
 
       return result;
@@ -251,6 +263,9 @@ public class UnixProcessManager {
       List<Integer> children = BY_PARENT.get(pid);
       if (children != null) {
         for (int child : children) killProcTree(child, signal, killer);
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Sending signal " + signal + " to PID " + pid);
       }
       killer.kill(pid, signal);
     }

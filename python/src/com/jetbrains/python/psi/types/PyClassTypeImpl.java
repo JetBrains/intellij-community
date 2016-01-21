@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -220,8 +222,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    if (isDefinition() && myClass.isNewStyleClass(null)) {
-      final PyClassLikeType typeType = getMetaClassType(context, inherited);
+    if (inherited && isDefinition() && myClass.isNewStyleClass(context)) {
+      final PyClassLikeType typeType = getMetaClassType(context, true);
       if (typeType != null) {
         List<? extends RatedResolveResult> typeMembers = typeType.resolveMember(name, location, direction, resolveContext);
         if (typeMembers != null && !typeMembers.isEmpty()) {
@@ -284,23 +286,63 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @Nullable
   @Override
-  public PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context, boolean inherited) {
-    final PyType ownMeta = myClass.getMetaClassType(context);
-    if (ownMeta != null) {
-      return (ownMeta instanceof PyClassLikeType) ? (PyClassLikeType)ownMeta : null;
+  public PyClassLikeType getMetaClassType(@NotNull final TypeEvalContext context, boolean inherited) {
+    if (!inherited) {
+      return PyUtil.as(myClass.getMetaClassType(context), PyClassLikeType.class);
     }
-    if (inherited) {
-      for (PyClassLikeType ancestor : myClass.getAncestorTypes(context)) {
-        if (ancestor != null) {
-          final PyClassLikeType ancestorMeta = ancestor.getMetaClassType(context, false);
-          if (ancestorMeta != null) {
-            return ancestorMeta;
+    final List<PyClassLikeType> metaClassTypes = getAllExplicitMetaClassTypes(context);
+    final PyClassLikeType mostDerivedMeta = getMostDerivedClassType(metaClassTypes, context);
+    return mostDerivedMeta != null ? mostDerivedMeta : PyBuiltinCache.getInstance(myClass).getObjectType("type");
+  }
+
+  @Nullable
+  private static PyClassLikeType getMostDerivedClassType(@NotNull List<PyClassLikeType> classTypes,
+                                                         @NotNull final TypeEvalContext context) {
+    if (classTypes.isEmpty()) {
+      return null;
+    }
+    try {
+      return Collections.max(classTypes, new Comparator<PyClassLikeType>() {
+        @Override
+        public int compare(@Nullable PyClassLikeType t1, @Nullable PyClassLikeType t2) {
+          if (t1 == t2 || t1 != null && t1.equals(t2)) {
+            return 0;
+          }
+          else if (t2 == null || t1 != null && Sets.newHashSet(t1.getAncestorTypes(context)).contains(t2)) {
+            return 1;
+          }
+          else if (t1 == null || Sets.newHashSet(t2.getAncestorTypes(context)).contains(t1)) {
+            return -1;
+          }
+          else {
+            throw new NotDerivedClassTypeException();
           }
         }
-      }
-      return PyBuiltinCache.getInstance(myClass).getObjectType("type");
+      });
     }
-    return null;
+    catch (NotDerivedClassTypeException ignored) {
+      return null;
+    }
+  }
+
+  private static final class NotDerivedClassTypeException extends RuntimeException {
+  }
+
+  private List<PyClassLikeType> getAllExplicitMetaClassTypes(@NotNull TypeEvalContext context) {
+    final List<PyClassLikeType> results = Lists.newArrayList();
+    final PyClassLikeType ownMeta = getMetaClassType(context, false);
+    if (ownMeta != null) {
+      results.add(ownMeta);
+    }
+    for (PyClassLikeType ancestor : myClass.getAncestorTypes(context)) {
+      if (ancestor != null) {
+        final PyClassLikeType ancestorMeta = ancestor.getMetaClassType(context, false);
+        if (ancestorMeta != null) {
+          results.add(ancestorMeta);
+        }
+      }
+    }
+    return results;
   }
 
   @Override

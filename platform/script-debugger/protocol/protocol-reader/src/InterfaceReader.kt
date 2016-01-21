@@ -78,12 +78,13 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
       hasUnresolved = false
       // refs can be modified - new items can be added
       for (i in 0..refs.size - 1) {
-        val ref = refs.get(i)
-        ref.type = typeToTypeHandler.get(ref.typeClass)
+        val ref: TypeRef<out Any?> = refs.get(i)
+        val typeClass: Class<out Any?> = ref.typeClass
+        (ref as TypeRef<Any?>).type = typeToTypeHandler.get(typeClass) as TypeWriter<Any?>?
         if (ref.type == null) {
-          createIfNotExists(ref.typeClass)
+          createIfNotExists(typeClass)
           hasUnresolved = true
-          ref.type = typeToTypeHandler.get(ref.typeClass) ?: throw IllegalStateException()
+          (ref as TypeRef<Any?>).type = typeToTypeHandler.get(typeClass) as TypeWriter<Any?>? ?: throw IllegalStateException()
         }
       }
     }
@@ -126,7 +127,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
     for (ref in refs) {
       if (ref.typeClass == typeClass) {
         assert(ref.type == null)
-        ref.type = typeWriter
+        (ref as TypeRef<Any?>).type = typeWriter as TypeWriter<Any?>
         break
       }
     }
@@ -138,10 +139,10 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
       @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
       return when {
         type == java.lang.Long.TYPE -> LONG_PARSER
-        type == Integer.TYPE, type == Integer::class.java -> INTEGER_PARSER
+        type == Integer.TYPE || type == Integer::class.java -> INTEGER_PARSER
         type == java.lang.Boolean.TYPE -> BOOLEAN_PARSER
         type == java.lang.Float.TYPE -> FLOAT_PARSER
-        type == Number::class.java, type == java.lang.Double.TYPE, type == java.lang.Double::class.java -> NUMBER_PARSER
+        type == Number::class.java || type == java.lang.Double.TYPE || type == java.lang.Double::class.java -> NUMBER_PARSER
         type == Void.TYPE -> VOID_PARSER
         type == String::class.java -> {
           if (method != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.io.IOException;
 
-abstract class AbstractTestWithTextFile {
+public abstract class AbstractTestWithTextFile {
   public static final String BASE_DIRECTORY = "platform/vcs-log/graph/testData/";
 
   protected final String myDirectory;

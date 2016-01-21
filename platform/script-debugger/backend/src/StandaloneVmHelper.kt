@@ -18,11 +18,12 @@ package org.jetbrains.debugger
 import io.netty.channel.Channel
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.catchError
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.io.addListener
 import org.jetbrains.io.shutdownIfOio
 import org.jetbrains.jsonProtocol.Request
+import org.jetbrains.rpc.CONNECTION_CLOSED_MESSAGE
+import org.jetbrains.rpc.LOG
 import org.jetbrains.rpc.MessageProcessor
 import org.jetbrains.concurrency.Promise as OJCPromise
 
@@ -58,30 +59,33 @@ open class StandaloneVmHelper @JvmOverloads constructor(private val vm: Vm, priv
     fun createDisconnectRequest(): Request<out Any>?
   }
 
-  override fun isAttached() = channel != null
+  override val isAttached: Boolean
+    get() = channel != null
 
   override fun detach(): Promise<*> {
     val currentChannel = channel ?: return resolvedPromise()
 
     messageProcessor.cancelWaitingRequests()
     val disconnectRequest = (vm as? VmEx)?.createDisconnectRequest()
-
     val promise = AsyncPromise<Any?>()
     if (disconnectRequest == null) {
       messageProcessor.closed()
       channel = null
-      closeChannel(currentChannel, promise)
-      return promise
     }
-
-    messageProcessor.closed()
-    channel = null
-    messageProcessor.send(disconnectRequest).processed {
-      promise.catchError {
-        messageProcessor.cancelWaitingRequests()
-        closeChannel(currentChannel, promise)
-      }
+    else {
+      messageProcessor.send(disconnectRequest)
+        .rejected {
+          if (it.message != CONNECTION_CLOSED_MESSAGE) {
+            LOG.error(it)
+          }
+        }
+      // we don't wait response because 1) no response to "disconnect" message (V8 for example) 2) closed message manager just ignore any incoming messages
+      currentChannel.flush()
+      messageProcessor.closed()
+      channel = null
+      messageProcessor.cancelWaitingRequests()
     }
+    closeChannel(currentChannel, promise)
     return promise
   }
 

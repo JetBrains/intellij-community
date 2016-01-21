@@ -30,8 +30,8 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
 
   public static final RuntimeException OBSOLETE_ERROR = Promise.createError("Obsolete");
 
-  private volatile Consumer<T> done;
-  private volatile Consumer<Throwable> rejected;
+  private volatile Consumer<? super T> done;
+  private volatile Consumer<? super Throwable> rejected;
 
   protected volatile State state = State.PENDING;
   // result object or error message
@@ -45,7 +45,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
 
   @NotNull
   @Override
-  public Promise<T> done(@NotNull Consumer<T> done) {
+  public Promise<T> done(@NotNull Consumer<? super T> done) {
     if (isObsolete(done)) {
       return this;
     }
@@ -94,9 +94,9 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
 
   @SuppressWarnings("SynchronizeOnThis")
   private static final class CompoundConsumer<T> implements Consumer<T> {
-    private List<Consumer<T>> consumers = new ArrayList<Consumer<T>>();
+    private List<Consumer<? super T>> consumers = new ArrayList<Consumer<? super T>>();
 
-    public CompoundConsumer(@NotNull Consumer<T> c1, @NotNull Consumer<T> c2) {
+    public CompoundConsumer(@NotNull Consumer<? super T> c1, @NotNull Consumer<? super T> c2) {
       synchronized (this) {
         consumers.add(c1);
         consumers.add(c2);
@@ -105,14 +105,14 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
 
     @Override
     public void consume(T t) {
-      List<Consumer<T>> list;
+      List<Consumer<? super T>> list;
       synchronized (this) {
         list = consumers;
         consumers = null;
       }
 
       if (list != null) {
-        for (Consumer<T> consumer : list) {
+        for (Consumer<? super T> consumer : list) {
           if (!isObsolete(consumer)) {
             consumer.consume(t);
           }
@@ -120,7 +120,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
       }
     }
 
-    public void add(@NotNull Consumer<T> consumer) {
+    public void add(@NotNull Consumer<? super T> consumer) {
       synchronized (this) {
         if (consumers != null) {
           consumers.add(consumer);
@@ -131,7 +131,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
 
   @Override
   @NotNull
-  public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull final Function<T, SUB_RESULT> fulfilled) {
+  public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull final Function<? super T, ? extends SUB_RESULT> fulfilled) {
     switch (state) {
       case PENDING:
         break;
@@ -168,7 +168,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   }
 
   @Override
-  public void notify(@NotNull final AsyncPromise<T> child) {
+  public void notify(@NotNull final AsyncPromise<? super T> child) {
     LOG.assertTrue(child != this);
 
     switch (state) {
@@ -203,7 +203,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
 
   @Override
   @NotNull
-  public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull final AsyncFunction<T, SUB_RESULT> fulfilled) {
+  public <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull final AsyncFunction<? super T, SUB_RESULT> fulfilled) {
     switch (state) {
       case PENDING:
         break;
@@ -249,7 +249,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
 
   @Override
   @NotNull
-  public Promise<T> processed(@NotNull final AsyncPromise<T> fulfilled) {
+  public Promise<T> processed(@NotNull final AsyncPromise<? super T> fulfilled) {
     switch (state) {
       case PENDING:
         break;
@@ -287,7 +287,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   }
 
   @NotNull
-  private static <T> Consumer<T> setHandler(@Nullable Consumer<T> oldConsumer, @NotNull Consumer<T> newConsumer) {
+  private static <T> Consumer<? super T> setHandler(@Nullable Consumer<? super T> oldConsumer, @NotNull Consumer<? super T> newConsumer) {
     if (oldConsumer == null) {
       return newConsumer;
     }
@@ -308,7 +308,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
     this.result = result;
     state = State.FULFILLED;
 
-    Consumer<T> done = this.done;
+    Consumer<? super T> done = this.done;
     clearHandlers();
     if (done != null && !isObsolete(done)) {
       done.consume(result);
@@ -331,7 +331,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
     result = error;
     state = State.REJECTED;
 
-    Consumer<Throwable> rejected = this.rejected;
+    Consumer<? super Throwable> rejected = this.rejected;
     clearHandlers();
     if (rejected != null) {
       if (!isObsolete(rejected)) {
@@ -350,7 +350,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   }
 
   @Override
-  public Promise<T> processed(@NotNull final Consumer<T> processed) {
+  public Promise<T> processed(@NotNull final Consumer<? super T> processed) {
     done(processed);
     rejected(new Consumer<Throwable>() {
       @Override

@@ -51,13 +51,16 @@ interface SuspendContext<CALL_FRAME : CallFrame> {
    */
   val breakpointsHit: List<Breakpoint>
 
+  val hasUnresolvedBreakpointsHit: Boolean
+    get() = false
+
   val valueManager: ValueManager
 }
 
 abstract class ContextDependentAsyncResultConsumer<T>(private val context: SuspendContext<*>) : Consumer<T> {
   override final fun consume(result: T) {
     val vm = (context.valueManager as VmAwareValueManager<*>).vm
-    if (vm.attachStateManager.isAttached() && !vm.suspendContextManager.isContextObsolete(context)) {
+    if (vm.attachStateManager.isAttached && !vm.suspendContextManager.isContextObsolete(context)) {
       consume(result, vm)
     }
   }
@@ -66,7 +69,7 @@ abstract class ContextDependentAsyncResultConsumer<T>(private val context: Suspe
 }
 
 
-inline fun <T> Promise<T>.done(context: SuspendContext<*>, crossinline handler: (result: T) -> Unit) = done(object : ContextDependentAsyncResultConsumer<T>(context) {
+inline fun <T> Promise<out T>.done(context: SuspendContext<*>, crossinline handler: (result: T) -> Unit) = (this as Promise<T>).done(object : ContextDependentAsyncResultConsumer<T>(context) {
   override fun consume(result: T, vm: Vm) = handler(result)
 })
 

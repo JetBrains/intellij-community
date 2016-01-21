@@ -27,18 +27,22 @@ import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ui.UIUtil;
-import org.apache.sanselan.ImageFormat;
-import org.apache.sanselan.Sanselan;
+import org.apache.sanselan.ImageWriteException;
+import org.apache.sanselan.common.BinaryConstants;
+import org.apache.sanselan.common.BinaryOutputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Area;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 
 public abstract class AppIcon {
 
@@ -275,6 +279,10 @@ public abstract class AppIcon {
       setDockIcon(img.myImg);
     }
 
+    // white 80% transparent
+    private static Color PROGRESS_BACKGROUND_COLOR = new Color(255, 255, 255, 217);
+    private static Color PROGRESS_OUTLINE_COLOR = new Color(140, 139, 140);
+
     @Override
     public boolean _setProgress(IdeFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
       assertIsDispatchThread();
@@ -286,31 +294,36 @@ public abstract class AppIcon {
       if (Math.abs(myLastValue - value) < 0.02d) return true;
 
       try {
-        int progressHeight = (int)(myAppImage.getHeight() * 0.13);
-        int xInset = (int)(myAppImage.getWidth() * 0.05);
-        int yInset = (int)(myAppImage.getHeight() * 0.15);
+        double progressHeight = (myAppImage.getHeight() * 0.13);
+        double xInset = (myAppImage.getWidth() * 0.05);
+        double yInset = (myAppImage.getHeight() * 0.15);
 
-        final int width = myAppImage.getWidth() - xInset * 2;
-        final int y = myAppImage.getHeight() - progressHeight - yInset;
-        Shape rect = new RoundRectangle2D.Double(xInset, y, width, progressHeight, progressHeight, progressHeight);
-        Shape border =
-          new RoundRectangle2D.Double(xInset - 1, y - 1, width + 2, progressHeight + 2, (progressHeight + 2), (progressHeight + 2));
-        Shape progress = new RoundRectangle2D.Double(xInset + 1, y + 1, (width - 2) * value, progressHeight - 1, (progressHeight - 2),
-                                                     (progressHeight - 1));
+        final double width = myAppImage.getWidth() - xInset * 2;
+        final double y = myAppImage.getHeight() - progressHeight - yInset;
+
+        Area borderArea = new Area( new RoundRectangle2D.Double(
+          xInset - 1, y - 1, width + 2, progressHeight + 2,
+          (progressHeight + 2), (progressHeight + 2
+          )));
+
+        Area backgroundArea = new Area(new Rectangle2D.Double(xInset, y, width, progressHeight));
+
+        backgroundArea.intersect(borderArea);
+
+        Area progressArea = new Area(new Rectangle2D.Double(xInset + 1, y + 1,(width - 2) * value, progressHeight - 1));
+
+        progressArea.intersect(borderArea);
+
         AppImage appImg = createAppImage();
 
-        final Color brighter = Color.GRAY.brighter().brighter();
-        final Color backGround = new Color(brighter.getRed(), brighter.getGreen(), brighter.getBlue(), 85);
-        appImg.myG2d.setColor(backGround);
-        appImg.myG2d.fill(rect);
+        appImg.myG2d.setColor(PROGRESS_BACKGROUND_COLOR);
+        appImg.myG2d.fill(backgroundArea);
         final Color color = isOk ? scheme.getOkColor() : scheme.getErrorColor();
-        final Paint paint = UIUtil.getGradientPaint(xInset + 1, y + 1, color.brighter(),
-                                                      xInset + 1, y + progressHeight - 1, color.darker().darker());
-        appImg.myG2d.setPaint(paint);
-        appImg.myG2d.fill(progress);
-        appImg.myG2d.setColor(Color.GRAY.darker().darker());
-        appImg.myG2d.draw(rect);
-        appImg.myG2d.draw(border);
+        appImg.myG2d.setColor(color);
+        appImg.myG2d.fill(progressArea);
+        appImg.myG2d.setColor(PROGRESS_OUTLINE_COLOR);
+        appImg.myG2d.draw(backgroundArea);
+        appImg.myG2d.draw(borderArea);
 
         setDockIcon(appImg.myImg);
 
@@ -409,7 +422,112 @@ public abstract class AppIcon {
       return true;
     }
 
-    private static final Color ERROR_COLOR = new Color(197, 54, 13);
+    private static void writeTransparentIcoImageWithSanselan(BufferedImage src, OutputStream os)
+      throws ImageWriteException, IOException {
+
+      LOG.assertTrue(BufferedImage.TYPE_INT_ARGB == src.getType() || BufferedImage.TYPE_4BYTE_ABGR == src.getType());
+
+      int bitCount = 32;
+
+      BinaryOutputStream bos = new BinaryOutputStream(os, BinaryConstants.BYTE_ORDER_INTEL);
+
+      try {
+        int scanline_size = (bitCount * src.getWidth() + 7) / 8;
+        if ((scanline_size % 4) != 0)
+          scanline_size += 4 - (scanline_size % 4); // pad scanline to 4 byte size.
+        int t_scanline_size = (src.getWidth() + 7) / 8;
+        if ((t_scanline_size % 4) != 0)
+          t_scanline_size += 4 - (t_scanline_size % 4); // pad scanline to 4 byte size.
+        int imageSize = 40 + src.getHeight() * scanline_size + src.getHeight() * t_scanline_size;
+
+        // ICONDIR
+        bos.write2Bytes(0); // reserved
+        bos.write2Bytes(1); // 1=ICO, 2=CUR
+        bos.write2Bytes(1); // count
+
+        // ICONDIRENTRY
+        int iconDirEntryWidth = src.getWidth();
+        int iconDirEntryHeight = src.getHeight();
+        if (iconDirEntryWidth > 255 || iconDirEntryHeight > 255) {
+          iconDirEntryWidth = 0;
+          iconDirEntryHeight = 0;
+        }
+        bos.write(iconDirEntryWidth);
+        bos.write(iconDirEntryHeight);
+        bos.write(0);
+        bos.write(0); // reserved
+        bos.write2Bytes(1); // color planes
+        bos.write2Bytes(bitCount);
+        bos.write4Bytes(imageSize);
+        bos.write4Bytes(22); // image offset
+
+        // BITMAPINFOHEADER
+        bos.write4Bytes(40); // size
+        bos.write4Bytes(src.getWidth());
+        bos.write4Bytes(2 * src.getHeight());
+        bos.write2Bytes(1); // planes
+        bos.write2Bytes(bitCount);
+        bos.write4Bytes(0); // compression
+        bos.write4Bytes(0); // image size
+        bos.write4Bytes(0); // x pixels per meter
+        bos.write4Bytes(0); // y pixels per meter
+        bos.write4Bytes(0); // colors used, 0 = (1 << bitCount) (ignored)
+        bos.write4Bytes(0); // colors important
+
+        int bit_cache = 0;
+        int bits_in_cache = 0;
+        int row_padding = scanline_size - (bitCount * src.getWidth() + 7) / 8;
+        for (int y = src.getHeight() - 1; y >= 0; y--) {
+          for (int x = 0; x < src.getWidth(); x++) {
+            int argb = src.getRGB(x, y);
+
+            bos.write(0xff & argb);
+            bos.write(0xff & (argb >> 8));
+            bos.write(0xff & (argb >> 16));
+            bos.write(0xff & (argb >> 24));
+          }
+
+          for (int x = 0; x < row_padding; x++)
+            bos.write(0);
+        }
+
+        int t_row_padding = t_scanline_size - (src.getWidth() + 7) / 8;
+        for (int y = src.getHeight() - 1; y >= 0; y--) {
+          for (int x = 0; x < src.getWidth(); x++) {
+            int argb = src.getRGB(x, y);
+            int alpha = 0xff & (argb >> 24);
+            bit_cache <<= 1;
+            if (alpha == 0)
+              bit_cache |= 1;
+            bits_in_cache++;
+            if (bits_in_cache >= 8) {
+              bos.write(0xff & bit_cache);
+              bit_cache = 0;
+              bits_in_cache = 0;
+            }
+          }
+
+          if (bits_in_cache > 0) {
+            bit_cache <<= (8 - bits_in_cache);
+            bos.write(0xff & bit_cache);
+            bit_cache = 0;
+            bits_in_cache = 0;
+          }
+
+          for (int x = 0; x < t_row_padding; x++)
+            bos.write(0);
+        }
+      }
+      finally {
+        try {
+          bos.close();
+        } catch (IOException ignored) { }
+      }
+    }
+
+    private static Color errorBadgeShadowColor = new Color(0,0,0,102);
+    private static Color errorBadgeMainColor = new Color(255,98,89);
+    private static Color errorBadgeTextBackgroundColor = new Color(0,0,0,39);
 
     @Override
     public void _setTextBadge(IdeFrame frame, String text) {
@@ -421,24 +539,34 @@ public abstract class AppIcon {
 
       if (text != null) {
         try {
-          int size = 55;
+          int size = 16;
           BufferedImage image = UIUtil.createImage(size, size, BufferedImage.TYPE_INT_ARGB);
           Graphics2D g = image.createGraphics();
 
-          int roundSize = 40;
+          int shadowRadius = 16;
           g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-          g.setPaint(ERROR_COLOR);
-          g.fillRoundRect(size / 2 - roundSize / 2, size / 2 - roundSize / 2, roundSize, roundSize, size, size);
+          g.setPaint(errorBadgeShadowColor);
+          g.fillRoundRect(size / 2 - shadowRadius / 2, size / 2 - shadowRadius / 2, shadowRadius, shadowRadius, size, size);
+
+          int mainRadius = 14;
+          g.setPaint(errorBadgeMainColor);
+          g.fillRoundRect(size / 2 - mainRadius / 2, size / 2 - mainRadius / 2, mainRadius, mainRadius, size, size);
+
+          Font font = g.getFont();
+          g.setFont(new Font(font.getName(), Font.BOLD, 9));
+          FontMetrics fontMetrics = g.getFontMetrics();
+
+          int textWidth = fontMetrics.stringWidth(text);
+          int textHeight = UIUtil.getHighestGlyphHeight(text, font, g);
+
+          g.setPaint(errorBadgeTextBackgroundColor);
+          g.fillOval( size / 2 - textWidth / 2, size / 2 - textHeight / 2, textWidth, textHeight);
 
           g.setColor(Color.white);
-          Font font = g.getFont();
-          g.setFont(new Font(font.getName(), font.getStyle(), 22));
-          FontMetrics fontMetrics = g.getFontMetrics();
-          int width = fontMetrics.stringWidth(text);
-          g.drawString(text, size / 2 - width / 2, size / 2 - fontMetrics.getHeight() / 2 + fontMetrics.getAscent());
+          g.drawString(text, size / 2 - textWidth / 2, size / 2 - fontMetrics.getHeight() / 2 + fontMetrics.getAscent());
 
           ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-          Sanselan.writeImage(image, bytes, ImageFormat.IMAGE_FORMAT_ICO, new HashMap());
+          writeTransparentIcoImageWithSanselan(image, bytes);
           icon = Win7TaskBar.createIcon(bytes.toByteArray());
         }
         catch (Throwable e) {
@@ -470,7 +598,7 @@ public abstract class AppIcon {
             try {
               BufferedImage image = ImageIO.read(getClass().getResource("/mac/appIconOk512.png"));
               ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-              Sanselan.writeImage(image, bytes, ImageFormat.IMAGE_FORMAT_ICO, new HashMap());
+              writeTransparentIcoImageWithSanselan(image, bytes);
               myOkIcon = Win7TaskBar.createIcon(bytes.toByteArray());
             }
             catch (Throwable e) {

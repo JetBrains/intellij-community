@@ -229,33 +229,17 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   protected void performRenameInner(PsiElement element, String newName) {
-    final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(element);
-    final RenameProcessor
-      renameProcessor = new RenameProcessor(myProject, element, newName,
-                                            elementProcessor.isToSearchInComments(element),
-                                            elementProcessor.isToSearchForTextOccurrences(element)){
-      @Nullable
-      @Override
-      protected String getRefactoringId() {
-        return "refactoring.inplace.rename";
-      }
-
-      @Override
-      public void doRun() {
-        try {
-          super.doRun();
-        }
-        finally {
-          restoreCaretOffsetAfterRename();
-        }
-      }
-    };
+    final RenameProcessor renameProcessor = createRenameProcessor(element, newName);
     for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
       if (factory.getOptionName() != null && factory.isApplicable(element)) {
         renameProcessor.addRenamerFactory(factory);
       }
     }
     renameProcessor.run();
+  }
+
+  protected RenameProcessor createRenameProcessor(PsiElement element, String newName) {
+    return new MyRenameProcessor(element, newName);
   }
 
   protected void restoreCaretOffsetAfterRename() {
@@ -298,5 +282,32 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       }
     }
     return getVariable();
+  }
+
+  protected class MyRenameProcessor extends RenameProcessor {
+    public MyRenameProcessor(PsiElement element, String newName) {
+      this(element, newName, RenamePsiElementProcessor.forElement(element));
+    }
+
+    public MyRenameProcessor(PsiElement element, String newName, RenamePsiElementProcessor elementProcessor) {
+      super(MemberInplaceRenamer.this.myProject, element, newName, elementProcessor.isToSearchInComments(element),
+            elementProcessor.isToSearchForTextOccurrences(element));
+    }
+
+    @Nullable
+    @Override
+    protected String getRefactoringId() {
+      return "refactoring.inplace.rename";
+    }
+
+    @Override
+    public void doRun() {
+      try {
+        super.doRun();
+      }
+      finally {
+        restoreCaretOffsetAfterRename();
+      }
+    }
   }
 }

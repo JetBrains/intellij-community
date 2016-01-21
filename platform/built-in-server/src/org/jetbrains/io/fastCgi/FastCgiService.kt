@@ -43,7 +43,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
 
       it.closeFuture().addListener {
         requestIdCounter.set(0)
-        if (!requests.isEmpty()) {
+        if (!requests.isEmpty) {
           val waitingClients = requests.elements().toList()
           requests.clear()
           for (channel in waitingClients) {
@@ -56,7 +56,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
 
   fun send(fastCgiRequest: FastCgiRequest, content: ByteBuf) {
     val notEmptyContent: ByteBuf?
-    if (content.isReadable()) {
+    if (content.isReadable) {
       content.retain()
       notEmptyContent = content
       notEmptyContent.touch()
@@ -82,7 +82,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
         promise = processHandler.get()
       }
 
-      promise
+      (promise as Promise<Any?>)
         .done { fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel.get()!!) }
         .rejected {
           Promise.logError(LOG, it)
@@ -156,7 +156,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
 
 private fun sendBadGateway(channel: Channel) {
   try {
-    if (channel.isActive()) {
+    if (channel.isActive) {
       Responses.sendStatus(HttpResponseStatus.BAD_GATEWAY, channel)
     }
   }
@@ -198,12 +198,12 @@ private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
     }
 
     // skip standard headers
-    if (key.isNullOrEmpty() || key!!.startsWith("http", ignoreCase = true) || key!!.startsWith("X-Accel-", ignoreCase = true)) {
+    if (key.isNullOrEmpty() || key!!.startsWith("http", ignoreCase = true) || key.startsWith("X-Accel-", ignoreCase = true)) {
       continue
     }
 
     val value = builder.toString()
-    if (key!!.equals("status", ignoreCase = true)) {
+    if (key.equals("status", ignoreCase = true)) {
       val index = value.indexOf(' ')
       if (index == -1) {
         LOG.warn("Cannot parse status: " + value)

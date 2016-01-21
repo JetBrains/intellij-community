@@ -509,6 +509,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       return null;
     }
 
+    if (file instanceof PsiCompiledFile) {
+      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
+    }
+
     if (offset < 0) {
       offset = 0;
     }

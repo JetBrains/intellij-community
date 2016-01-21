@@ -70,6 +70,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
@@ -166,6 +167,7 @@ public class DiffUtil {
     editor.putUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY, Boolean.TRUE);
 
     editor.getSettings().setLineNumbersShown(true);
+    editor.getSettings().setShowIntentionBulb(false);
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
     editor.getGutterComponentEx().setShowDefaultGutterPopup(false);
 
@@ -413,7 +415,7 @@ public class DiffUtil {
 
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 4));
-    panel.add(createTitlePanel(title), BorderLayout.CENTER);
+    panel.add(new JBLabel(title).setCopyable(true), BorderLayout.CENTER);
     if (charset != null && separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
@@ -429,11 +431,6 @@ public class DiffUtil {
       panel.add(createSeparatorPanel(separator), BorderLayout.EAST);
     }
     return panel;
-  }
-
-  @NotNull
-  private static JComponent createTitlePanel(@NotNull String title) {
-    return CopyableLabel.create(title);
   }
 
   @NotNull

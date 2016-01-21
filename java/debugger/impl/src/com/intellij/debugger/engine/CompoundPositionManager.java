@@ -171,6 +171,9 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
             return xStackFrame;
           }
         }
+        catch (VMDisconnectedException e) {
+          throw e;
+        }
         catch (Throwable e) {
           LOG.error(e);
         }

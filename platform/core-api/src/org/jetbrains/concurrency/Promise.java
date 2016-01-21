@@ -22,6 +22,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,37 +138,39 @@ public abstract class Promise<T> {
   }
 
   @NotNull
-  public abstract Promise<T> done(@NotNull Consumer<T> done);
+  public abstract Promise<T> done(@NotNull Consumer<? super T> done);
 
   @NotNull
-  public abstract Promise<T> processed(@NotNull AsyncPromise<T> fulfilled);
+  public abstract Promise<T> processed(@NotNull AsyncPromise<? super T> fulfilled);
 
   @NotNull
   public abstract Promise<T> rejected(@NotNull Consumer<Throwable> rejected);
 
-  public abstract Promise<T> processed(@NotNull Consumer<T> processed);
+  public abstract Promise<T> processed(@NotNull Consumer<? super T> processed);
 
   @NotNull
-  public abstract <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<T, SUB_RESULT> done);
+  public abstract <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<? super T, ? extends SUB_RESULT> done);
 
   @NotNull
-  public abstract <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull AsyncFunction<T, SUB_RESULT> done);
+  public abstract <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull AsyncFunction<? super T, SUB_RESULT> done);
 
   @NotNull
   public abstract State getState();
 
   @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
   public static class MessageError extends RuntimeException {
-    private final boolean log;
+    private final ThreeState log;
 
     public MessageError(@NotNull String error) {
-      this(error, false);
+      super(error);
+
+      log = ThreeState.UNSURE;
     }
 
     public MessageError(@NotNull String error, boolean log) {
       super(error);
 
-      this.log = log;
+      this.log = ThreeState.fromBoolean(log);
     }
 
     @NotNull
@@ -181,11 +184,16 @@ public abstract class Promise<T> {
    * Log error if not message error
    */
   public static void logError(@NotNull Logger logger, @NotNull Throwable e) {
-    if (!(e instanceof ProcessCanceledException) &&
-        (!(e instanceof MessageError) || ((MessageError)e).log || ApplicationManager.getApplication().isUnitTestMode())) {
+    if (e instanceof MessageError) {
+      ThreeState log = ((MessageError)e).log;
+      if (log == ThreeState.YES || (log == ThreeState.UNSURE && ApplicationManager.getApplication().isUnitTestMode())) {
+        logger.error(e);
+      }
+    }
+    else if (!(e instanceof ProcessCanceledException)) {
       logger.error(e);
     }
   }
 
-  public abstract void notify(@NotNull AsyncPromise<T> child);
+  public abstract void notify(@NotNull AsyncPromise<? super T> child);
 }

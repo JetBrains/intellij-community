@@ -273,21 +273,17 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     final Set<Pair<Object, SyncAction>> orderSnapshot = takeOrderSnapshot();
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
       @Override
-      public void computeInReadAction(@NotNull ProgressIndicator indicator) {
-        if (!isUpToDate()) {
-          scheduleRunActions();
-          return;
-        }
-
-        final Set<Trinity<Module, SyncAction, MvcFramework>> actions = computeRawActions(orderSnapshot);
+      public void computeInReadAction(@NotNull final ProgressIndicator indicator) {
+        final Set<Trinity<Module, SyncAction, MvcFramework>> actions = isUpToDate() ? computeRawActions(orderSnapshot)
+                                                                                    : Collections.<Trinity<Module,SyncAction,MvcFramework>>emptySet();
         app.invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (!isUpToDate()) {
-              scheduleRunActions();
-            }
-            else {
+            if (isUpToDate()) {
               runActions(actions);
+            }
+            else if (!indicator.isCanceled()) {
+              scheduleRunActions();
             }
           }
         }, ModalityState.NON_MODAL);

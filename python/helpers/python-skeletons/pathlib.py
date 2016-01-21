@@ -291,10 +291,11 @@ class Path(pathlib.PurePath):
         """
         pass
 
-    def mkdir(self, mode=0o777, parents=False):
+    def mkdir(self, mode=0o777, parents=False, exist_ok=False):
         """
         :type mode: int
         :type parents: bool
+        :type exist_ok: bool
         :rtype: None
         """
         pass

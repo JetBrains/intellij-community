@@ -52,7 +52,7 @@ internal class TestStateSplitter : MainConfigurationStateSplitter() {
   override fun getSubStateFileName(element: Element) = element.getAttributeValue("name")
 }
 
-@Bombed(year = 2015, month = Calendar.DECEMBER, day = 10)
+@Bombed(year = 2016, month = Calendar.DECEMBER, day = 10)
 internal class DirectoryBasedStorageTest {
   companion object {
     @ClassRule val projectRule = ProjectRule()

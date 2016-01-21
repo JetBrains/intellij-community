@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -225,14 +225,17 @@ public class VMOptions {
       }
     }
 
-    String productName = (ourTestPath != null) ? "test" : ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
-    String platformSuffix = SystemInfo.is64Bit && !SystemInfo.isMac ? "64" : "";
-    String osSuffix = SystemInfo.isWindows ? ".exe" : "";
-    String filePath = (customLocation ? PathManager.getConfigPath() : PathManager.getBinPath()) +
-                      File.separatorChar + productName + platformSuffix + osSuffix + ".vmoptions";
-
+    String filePath = (customLocation ? PathManager.getConfigPath() : PathManager.getBinPath()) + File.separatorChar + getCustomFileName();
     LOG.debug("doGetSettingsFilePath(" + customLocation + "): " + filePath);
     return filePath;
+  }
+
+  @NotNull
+  public static String getCustomFileName() {
+    String name = (ourTestPath != null) ? "test" : ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+    String platformSuffix = SystemInfo.is64Bit && !SystemInfo.isMac ? "64" : "";
+    String osSuffix = SystemInfo.isWindows ? ".exe" : "";
+    return name + platformSuffix + osSuffix + ".vmoptions";
   }
 
   private static String ourTestPath;

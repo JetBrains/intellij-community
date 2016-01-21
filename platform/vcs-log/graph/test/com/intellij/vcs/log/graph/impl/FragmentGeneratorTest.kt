@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,20 +28,20 @@ private val LinearGraph.lite: LiteLinearGraph get() = LinearGraphUtils.asLiteLin
 
 private fun LinearGraph.getMiddleNodes(upNode: Int, downNode: Int) = FragmentGenerator(lite) { false }.getMiddleNodes(upNode, downNode, false)
 
-private fun Collection<Int>.assert(s: String) = assertEquals(s, sorted().joinToString(","))
-private fun Int?.assert(i: Int?) = assertEquals(i, this)
+private infix fun Collection<Int>.assert(s: String) = assertEquals(s, sorted().joinToString(","))
+private infix fun Int?.assert(i: Int?) = assertEquals(i, this)
 
 private fun LinearGraph.redNodes(vararg redNode: Int = IntArray(0)): FragmentGenerator {
   val redNodes = redNode.toSet()
 
   return FragmentGenerator(lite) {
-    redNodes contains getNodeId(it)
+    getNodeId(it) in redNodes
   }
 }
 
 private val Int?.s: String get() = if (this == null) "n" else toString()
 
-private fun FragmentGenerator.GreenFragment.assert(s: String)
+private infix fun FragmentGenerator.GreenFragment.assert(s: String)
     = assertEquals(s, "${getUpRedNode().s}|${getDownRedNode().s}|${getMiddleGreenNodes().sorted().joinToString(",")}")
 
 /*

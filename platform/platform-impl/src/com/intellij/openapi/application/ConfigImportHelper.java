@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -384,7 +384,7 @@ public class ConfigImportHelper {
       files.add(new File(new File(new File(instHome, "idea.app"), "Contents"), "Info.plist"));
     }
     // idea.properties
-    files.add(new File(bin, "idea.properties"));
+    files.add(new File(bin, PathManager.PROPERTIES_FILE_NAME));
 
     
     // other binary scripts

@@ -54,6 +54,15 @@ class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val
   }
 
   private fun stop(destroy: Boolean) {
+    fun stopProcess(destroy: Boolean) {
+      if (destroy) {
+        handler.destroyProcess()
+      }
+      else {
+        handler.detachProcess()
+      }
+    }
+
     debugProcess.stopAsync()
       .done { stopProcess(destroy) }
       .rejected {
@@ -64,15 +73,6 @@ class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val
           stopProcess(destroy)
         }
       }
-  }
-
-  private fun stopProcess(destroy: Boolean) {
-    if (destroy) {
-      handler.destroyProcess()
-    }
-    else {
-      handler.detachProcess()
-    }
   }
 
   override fun detachIsDefault() = handler.detachIsDefault()

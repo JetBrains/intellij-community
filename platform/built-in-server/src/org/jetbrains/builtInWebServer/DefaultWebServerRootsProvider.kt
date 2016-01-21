@@ -46,7 +46,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
           effectivePath = effectivePath.substring(index + 1)
           val resolver = WebServerPathToFileManager.getInstance(project).getResolver(effectivePath)
           val moduleRootManager = ModuleRootManager.getInstance(module)
-          val result = RootProvider.values.computeOrNull { findByRelativePath(effectivePath, it.getRoots(moduleRootManager), resolver, moduleName) }
+          val result = RootProvider.values().computeOrNull { findByRelativePath(effectivePath, it.getRoots(moduleRootManager), resolver, moduleName) }
             ?: findInModuleLibraries(effectivePath, module, resolver)
           if (result != null) {
             return result
@@ -56,7 +56,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
     }
 
     val resolver = WebServerPathToFileManager.getInstance(project).getResolver(effectivePath)
-    return RootProvider.values.computeOrNull { rootProvider ->
+    return RootProvider.values().computeOrNull { rootProvider ->
       runReadAction { ModuleManager.getInstance(project).modules }
         .computeOrNull { module ->
           if (!module.isDisposed) {

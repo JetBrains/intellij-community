@@ -108,7 +108,7 @@ public class MethodCallInstruction extends Instruction {
     return map;
   }
 
-  private static boolean isVarArgCall(PsiMethod method, PsiSubstitutor substitutor, PsiExpression[] args, PsiParameter[] parameters) {
+  public static boolean isVarArgCall(PsiMethod method, PsiSubstitutor substitutor, PsiExpression[] args, PsiParameter[] parameters) {
     if (!method.isVarArgs()) {
       return false;
     }

@@ -339,15 +339,14 @@ public class Main {
         textPane.setBackground(UIUtil.getPanelBackground());
         textPane.setCaretPosition(0);
         JScrollPane scrollPane = new JScrollPane(
-          textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+          textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setBorder(null);
 
         int maxHeight = Math.min(JBUI.scale(600), Toolkit.getDefaultToolkit().getScreenSize().height - 150);
+        int maxWidth = Math.min(JBUI.scale(600), Toolkit.getDefaultToolkit().getScreenSize().width - 150);
         Dimension component = scrollPane.getPreferredSize();
-        if (component.height >= maxHeight) {
-          Object setting = UIManager.get("ScrollBar.width");
-          int width = setting instanceof Integer ? ((Integer)setting).intValue() : 20;
-          scrollPane.setPreferredSize(new Dimension(component.width + width, maxHeight));
+        if (component.height > maxHeight || component.width > maxWidth) {
+          scrollPane.setPreferredSize(new Dimension(Math.min(maxWidth, component.width), Math.min(maxHeight, component.height)));
         }
 
         int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE;

@@ -18,7 +18,7 @@ import com.intellij.util.text.VersionComparatorUtil
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
-String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_Beta2_Idea142branch150versionNoTests"
+String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_Beta4_Idea142branch150versionNoTests"
 
 target('default': 'Ensures that build/kotlinc directory contains JARs from Kotlin plugin compatible with current IDEA sources. These JARs are used by build scripts.') {
   def communityHome = guessHome(this)
@@ -26,16 +26,34 @@ target('default': 'Ensures that build/kotlinc directory contains JARs from Kotli
   // Android Studio: always extract Kotlin zip from our prebuilts
   // If at any point in time, the prebuilt is considered stale, then:
   //     0. Set currentVersion below to null instead
-  def currentVersion = "kotlin-plugin-1.0.0-beta-2430-IJ143-23.zip"
+  def currentVersion = "kotlin-plugin-1.0.0-beta-4589-IJ143-16.zip"
   //     1. comment out the following line to extract from prebuilt
   //     2. comment out the line further below that prevents downloading the plugin from the web (teamcity)
+  //        (look for the line after the comment containing "we never want to download")
   // Then run the script, and copy over the file build/kotlin-plugin-...zip to prebuilts.
   extract(communityHome, copyKotlinPrebuilt(communityHome, currentVersion))
 
   def reasonToUpdate = getReasonToUpdate(communityHome, new File(communityHome, "build/kotlinc"))
   if (reasonToUpdate == null) {
-    projectBuilder.info("Compatible Kotlin plugin already installed, no update is required")
-    return
+    if (isDefined("workIdeaHome")) {
+      def workKotlinVersionFile = new File(workIdeaHome, "plugins/Kotlin/kotlinc/build.txt")
+      if (workKotlinVersionFile.exists()) {
+        try {
+          def currentKotlinVersionFile = new File(communityHome, "build/kotlinc/build.txt")
+          if (VersionComparatorUtil.compare(currentKotlinVersionFile.text, workKotlinVersionFile.text) < 0) {
+            reasonToUpdate = "a newer version is installed in $workIdeaHome"
+          }
+        }
+        catch (IOException e) {
+          reasonToUpdate = "cannot read Kotlin version: $e"
+        }
+      }
+    }
+
+    if (reasonToUpdate == null) {
+      projectBuilder.info("Compatible Kotlin plugin already installed, no update is required")
+      return
+    }
   }
 
   // Android Studio: we never want to download from the web

@@ -17,6 +17,7 @@ package org.jetbrains.rpc
 
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.catchError
 import org.jetbrains.jsonProtocol.Request
 
 abstract class CommandSenderBase<SUCCESS_RESPONSE> {
@@ -27,31 +28,27 @@ abstract class CommandSenderBase<SUCCESS_RESPONSE> {
     doSend(message, callback)
     return callback
   }
+}
 
-  class RequestPromise<SUCCESS_RESPONSE, RESULT>(private val methodName: String?) : AsyncPromise<RESULT>(), RequestCallback<SUCCESS_RESPONSE> {
-    override fun onSuccess(response: SUCCESS_RESPONSE?, resultReader: ResultReader<SUCCESS_RESPONSE>?) {
-      try {
-        if (resultReader == null || response == null) {
-          @Suppress("UNCHECKED_CAST")
-          setResult(response as RESULT?)
+class RequestPromise<SUCCESS_RESPONSE, RESULT>(private val methodName: String?) : AsyncPromise<RESULT>(), RequestCallback<SUCCESS_RESPONSE> {
+  override fun onSuccess(response: SUCCESS_RESPONSE?, resultReader: ResultReader<SUCCESS_RESPONSE>?) {
+    catchError {
+      if (resultReader == null || response == null) {
+        @Suppress("UNCHECKED_CAST")
+        setResult(response as RESULT?)
+      }
+      else {
+        if (methodName == null) {
+          setResult(null)
         }
         else {
-          if (methodName == null) {
-            setResult(null)
-          }
-          else {
-            setResult(resultReader.readResult(methodName, response))
-          }
+          setResult(resultReader.readResult(methodName, response))
         }
       }
-      catch (e: Throwable) {
-        LOG.error(e)
-        setError(e)
-      }
     }
+  }
 
-    override fun onError(error: Throwable) {
-      setError(error)
-    }
+  override fun onError(error: Throwable) {
+    setError(error)
   }
 }

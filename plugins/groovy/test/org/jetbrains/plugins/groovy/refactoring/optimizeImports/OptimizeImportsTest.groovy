@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -361,5 +361,35 @@ import groovyx.gpars.GParsExecutorsPool
 
 GParsExecutorsPool oi
 ''')
+  }
+
+  void 'test do not remove space between package and imports'() {
+    myFixture.addClass('package some; class Import {}')
+    myFixture.addClass('package some; class ImportToBeDeleted {}')
+    myFixture.addClass('package some; class OtherImport {}')
+    myFixture.configureByText('_.groovy', '''\
+package pkg
+
+import some.OtherImport
+import some.Import
+import some.ImportToBeDeleted
+
+class MyClass {
+  def a = new Import()
+  def b = new OtherImport()
+}
+''')
+    doOptimizeImports()
+    myFixture.checkResult '''\
+package pkg
+
+import some.Import
+import some.OtherImport
+
+class MyClass {
+  def a = new Import()
+  def b = new OtherImport()
+}
+'''
   }
 }
