@@ -467,7 +467,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       throw new PyExecutionException("Timed out", path, args, output);
     }
     else if (exitCode != 0) {
-      throw new PyExecutionException("Non-zero exit code", path, args, output);
+      throw new PyExecutionException("Non-zero exit code (" + exitCode + ")", path, args, output);
     }
     return output.getStdout();
   }
@@ -536,7 +536,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       final int exitCode = result.getExitCode();
       if (exitCode != 0) {
         final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr()) ?
-                               "Permission denied" : "Non-zero exit code";
+                               "Permission denied" : "Non-zero exit code (" + exitCode + ")";
         throw new PyExecutionException(message, helperPath, args, result);
       }
       return result;
