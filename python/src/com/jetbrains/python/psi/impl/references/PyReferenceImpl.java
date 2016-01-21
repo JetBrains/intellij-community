@@ -353,7 +353,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       // a class-private name; limited by either class or this file
       PsiElement one = myElement;
       do {
-        one = PyUtil.getConcealingParent(one);
+        one = ScopeUtil.getScopeOwner(one);
       }
       while (one instanceof PyFunction);
       if (one instanceof PyClass) {
