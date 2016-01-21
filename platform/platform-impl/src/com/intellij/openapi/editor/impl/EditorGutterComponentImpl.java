@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,11 +112,11 @@ import java.util.List;
  */
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
-  private static final int START_ICON_AREA_WIDTH = 15;
-  private static final int FREE_PAINTERS_LEFT_AREA_WIDTH = 8;
-  private static final int FREE_PAINTERS_RIGHT_AREA_WIDTH = 5;
-  private static final int GAP_BETWEEN_ICONS = 3;
-  private static final int GAP_BETWEEN_AREAS = 5;
+  private static final int FREE_PAINTERS_LEFT_AREA_WIDTH = JBUI.scale(8);
+  private static final int FREE_PAINTERS_RIGHT_AREA_WIDTH = JBUI.scale(5);
+  private static final int GAP_BETWEEN_ICONS = JBUI.scale(3);
+  private static final int GAP_BETWEEN_AREAS = JBUI.scale(5);
+  private static final int GAP_BETWEEN_ANNOTATIONS = JBUI.scale(5);
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
   public static final TIntFunction ID = new TIntFunction() {
     @Override
@@ -127,7 +127,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
-  private int myIconsAreaWidth = START_ICON_AREA_WIDTH;
+  private int myIconsAreaWidth = 0;
   private int myLineNumberAreaWidth = 0;
   private int myAdditionalLineNumberAreaWidth = 0;
   private FoldRegion myActiveFoldRegion;
@@ -136,7 +136,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private TIntArrayList myTextAnnotationGutterSizes = new TIntArrayList();
   private ArrayList<TextAnnotationGutterProvider> myTextAnnotationGutters = new ArrayList<TextAnnotationGutterProvider>();
   private final Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<TextAnnotationGutterProvider, EditorGutterAction>();
-  private static final int GAP_BETWEEN_ANNOTATIONS = 5;
   private String myLastGutterToolTip = null;
   @NotNull private TIntFunction myLineNumberConvertor;
   @Nullable private TIntFunction myAdditionalLineNumberConvertor;
@@ -759,7 +758,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     });
 
-    myIconsAreaWidth = START_ICON_AREA_WIDTH;
+    myIconsAreaWidth = myEditor.getLineHeight();
 
     myLineToGutterRenderers.forEachValue(new TObjectProcedure<List<GutterMark>>() {
       @Override
@@ -1010,9 +1009,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (myActiveFoldRegion != null && myActiveFoldRegion.isExpanded() && myActiveFoldRegion.isValid()) {
       int foldStart = myEditor.offsetToVisualLine(myActiveFoldRegion.getStartOffset());
       int foldEnd = myEditor.offsetToVisualLine(getEndOffset(myActiveFoldRegion));
-      int startY = myEditor.visibleLineToY(foldStart + 1) - myEditor.getDescent();
-      int endY = myEditor.visibleLineToY(foldEnd) + myEditor.getLineHeight() -
-                 myEditor.getDescent();
+      int startY = getLineCenterY(foldStart);
+      int endY = getLineCenterY(foldEnd);
 
       if (startY <= clip.y + clip.height && endY + 1 + myEditor.getDescent() >= clip.y) {
         int lineX = anchorX + width / 2;
@@ -1035,11 +1033,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  public int getHeadCenterY(FoldRegion foldRange) {
-    int width = getFoldingAnchorWidth();
-    int foldStart = myEditor.offsetToVisualLine(foldRange.getStartOffset());
+  private int getLineCenterY(int line) {
+    return myEditor.visibleLineToY(line) + myEditor.getLineHeight() / 2;
+  }
 
-    return myEditor.visibleLineToY(foldStart) + myEditor.getLineHeight() - myEditor.getDescent() - width / 2;
+  private int getFoldAnchorY(int line, int width) {
+    return getLineCenterY(line) - width / 2;
+  }
+
+  int getHeadCenterY(FoldRegion foldRange) {
+    return getLineCenterY(myEditor.offsetToVisualLine(foldRange.getStartOffset()));
   }
 
   private void drawAnchor(int width, Rectangle clip, Graphics2D g, int anchorX, int visualLine,
@@ -1047,22 +1050,21 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     final int off = JBUI.scale(2);
     int height = width + off;
-    int y;
+    int y = getFoldAnchorY(visualLine, width);
     switch (type) {
       case COLLAPSED:
-        y = myEditor.visibleLineToY(visualLine) + myEditor.getLineHeight() - myEditor.getDescent() - width;
         if (y <= clip.y + clip.height && y + height >= clip.y) {
           drawSquareWithPlus(g, anchorX, y, width, active);
         }
         break;
       case EXPANDED_TOP:
-        y = myEditor.visibleLineToY(visualLine) + myEditor.getLineHeight() - myEditor.getDescent() - width;
         if (y <= clip.y + clip.height && y + height >= clip.y) {
           drawDirectedBox(g, anchorX, y, width, height, width - off, active);
         }
         break;
       case EXPANDED_BOTTOM:
-        y = myEditor.visibleLineToY(visualLine) + myEditor.getLineHeight() - myEditor.getDescent();
+        //noinspection SuspiciousNameCombination
+        y += width;
         if (y - height <= clip.y + clip.height && y >= clip.y) {
           drawDirectedBox(g, anchorX, y, width, -height, -width + off, active);
         }
@@ -1341,9 +1343,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @SuppressWarnings("SuspiciousNameCombination")
   private Rectangle rectangleByFoldOffset(int foldStart, int anchorWidth, int anchorX) {
-    int anchorY = myEditor.visibleLineToY(foldStart) + myEditor.getLineHeight() -
-                  myEditor.getDescent() - anchorWidth;
-    return new Rectangle(anchorX, anchorY, anchorWidth, anchorWidth);
+    return new Rectangle(anchorX, getFoldAnchorY(foldStart, anchorWidth), anchorWidth, anchorWidth);
   }
 
   @Override

@@ -165,7 +165,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
     }
   }
 
-  public fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {
+  fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {
     if (roamingType == RoamingType.DISABLED) {
       // storage roaming was changed to DISABLED, but settings repository has old state
       return

@@ -5,7 +5,7 @@ import java.util.*
 val EMPTY_CHARS: CharArray = CharArray(0)
 private val indentGranularity = 2
 
-class TextOutput(public val out: StringBuilder) {
+class TextOutput(val out: StringBuilder) {
   private var identLevel: Int = 0
   private var indents = arrayOf(EMPTY_CHARS)
   private var justNewLined: Boolean = false
@@ -35,7 +35,7 @@ class TextOutput(public val out: StringBuilder) {
     return this
   }
 
-  public fun append(value: Double): TextOutput {
+  fun append(value: Double): TextOutput {
     maybeIndent()
     out.append(value)
     return this
@@ -70,13 +70,13 @@ class TextOutput(public val out: StringBuilder) {
     return this
   }
 
-  public fun append(s: CharSequence, start: Int): TextOutput {
+  fun append(s: CharSequence, start: Int): TextOutput {
     maybeIndent()
     out.append(s, start, s.length)
     return this
   }
 
-  public fun openBlock(): TextOutput {
+  fun openBlock(): TextOutput {
     openBlock(true)
     return this
   }
@@ -113,7 +113,7 @@ class TextOutput(public val out: StringBuilder) {
 
   fun quote(s: CharSequence) = append('"').append(s).append('"')
 
-  public fun maybeIndent() {
+  fun maybeIndent() {
     if (justNewLined) {
       out.append(indents[identLevel])
       justNewLined = false

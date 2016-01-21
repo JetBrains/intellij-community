@@ -17,6 +17,6 @@
     <orderEntry type="module" module-name="indexing-impl" />
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="library" name="XmlBeans" level="project" />
+    <orderEntry type="module" module-name="RegExpSupport" exported="" />
   </component>
 </module>
-

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import kotlin.test.assertNull
  *
  * Apart from dialogs, the TestDialogManager is capable to handle [Messages]. For this pass a function to the method [#onMessage]
  */
-public class TestDialogManager : DialogManager() {
+class TestDialogManager : DialogManager() {
 
   private val DEFAULT_MESSAGE_HANDLER : (String) -> Int = { throw IllegalStateException("Message is not expected") }
 
@@ -71,7 +71,7 @@ public class TestDialogManager : DialogManager() {
     return myOnMessage.invoke(description)
   }
 
-  public fun <T : DialogWrapper> registerDialogHandler(dialogClass: Class<T>, handler: TestDialogHandler<T>) {
+  fun <T : DialogWrapper> registerDialogHandler(dialogClass: Class<T>, handler: TestDialogHandler<T>) {
     onDialog(dialogClass, { handler.handleDialog(it) })
   }
 
@@ -83,7 +83,7 @@ public class TestDialogManager : DialogManager() {
     myOnMessage = handler
   }
 
-  public fun cleanup() {
+  fun cleanup() {
     myHandlers.clear()
     myOnMessage = DEFAULT_MESSAGE_HANDLER
   }

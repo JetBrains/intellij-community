@@ -363,6 +363,8 @@
                            implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider"/>
     <referenceProviderType key="Schema references provider"
                            implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider"/>
+    <multiHostInjector implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.XsdRegExpInjector"/>
+    <lang.parserDefinition language="XsdRegExp" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.XsdRegExpParserDefinition"/>
 
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameXmlAttributeProcessor" id="xmlAttribute"/>
     <lang.importOptimizer id="XML" language="XML" implementationClass="com.intellij.refactoring.XmlImportOptimizer"/>

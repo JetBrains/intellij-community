@@ -770,25 +770,27 @@ public final class PsiUtil extends PsiUtilCore {
           }
         }
 
-        Map<PsiTypeParameter, PsiType> substitutionMap = null;
-        for (PsiTypeParameter typeParameter : typeParametersIterable(aClass)) {
-          final PsiType substituted = substitutor.substitute(typeParameter);
-          if (substituted instanceof PsiWildcardType) {
-            if (substitutionMap == null) substitutionMap = new HashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
-            final PsiCapturedWildcardType capturedWildcard = (PsiCapturedWildcardType)captureSubstitutor.substitute(typeParameter);
-            LOG.assertTrue(capturedWildcard != null);
-            final PsiType upperBound = PsiCapturedWildcardType.captureUpperBound(typeParameter, (PsiWildcardType)substituted, captureSubstitutor);
-            if (upperBound != null) {
-              capturedWildcard.setUpperBound(upperBound);
+        if (captureSubstitutor != substitutor) {
+          Map<PsiTypeParameter, PsiType> substitutionMap = null;
+          for (PsiTypeParameter typeParameter : typeParametersIterable(aClass)) {
+            final PsiType substituted = substitutor.substitute(typeParameter);
+            if (substituted instanceof PsiWildcardType) {
+              if (substitutionMap == null) substitutionMap = new HashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
+              final PsiCapturedWildcardType capturedWildcard = (PsiCapturedWildcardType)captureSubstitutor.substitute(typeParameter);
+              LOG.assertTrue(capturedWildcard != null);
+              final PsiType upperBound = PsiCapturedWildcardType.captureUpperBound(typeParameter, (PsiWildcardType)substituted, captureSubstitutor);
+              if (upperBound != null) {
+                capturedWildcard.setUpperBound(upperBound);
+              }
+              substitutionMap.put(typeParameter, capturedWildcard);
             }
-            substitutionMap.put(typeParameter, capturedWildcard);
           }
-        }
 
-        if (substitutionMap != null) {
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
-          final PsiSubstitutor newSubstitutor = factory.createSubstitutor(substitutionMap);
-          return factory.createType(aClass, newSubstitutor);
+          if (substitutionMap != null) {
+            final PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+            final PsiSubstitutor newSubstitutor = factory.createSubstitutor(substitutionMap);
+            return factory.createType(aClass, newSubstitutor);
+          }
         }
       }
     }

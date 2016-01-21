@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 public interface VcsLogDataProvider {
 
   @NotNull
-  Hash getHash(int commitIndex);
+  CommitId getCommitId(int commitIndex);
 
   int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root);
 

@@ -3,6 +3,6 @@
   <problem>
     <file>Npe.java</file>
     <line>7</line>
-    <description>'o.hashCode()' may produce NullPointerException</description>
+    <description>'hashCode' may produce NullPointerException</description>
   </problem>
 </problems>

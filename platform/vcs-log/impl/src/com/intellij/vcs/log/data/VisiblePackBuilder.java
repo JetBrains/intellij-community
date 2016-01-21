@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -255,7 +256,7 @@ class VisiblePackBuilder {
 
   @NotNull
   private static VcsLogFilterCollection replaceStructureFilter(@NotNull VcsLogFilterCollection filterCollection,
-                                                               @NotNull Set<VirtualFile> files) {
+                                                               @NotNull Set<FilePath> files) {
     return new VcsLogFilterCollectionImpl(filterCollection.getBranchFilter(), filterCollection.getUserFilter(),
                                           filterCollection.getHashFilter(), filterCollection.getDateFilter(),
                                           filterCollection.getTextFilter(), new VcsLogStructureFilterImpl(files),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -596,7 +596,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                 }
               }
             }
-            EvaluationContextImpl evaluationContext = ((JavaStackFrame)frame).getFrameDebuggerContext().createEvaluationContext();
+            EvaluationContextImpl evaluationContext = ((JavaStackFrame)frame).getFrameDebuggerContext(null).createEvaluationContext();
             if (evaluationContext != null) {
               callback.evaluated(create(inspectDescriptor, evaluationContext, myNodeManager));
             }

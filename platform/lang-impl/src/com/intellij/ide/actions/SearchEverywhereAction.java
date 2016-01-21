@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2097,7 +2097,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private GotoActionItemProvider createActionProvider() {
       GotoActionModel model = new GotoActionModel(project, myFocusComponent, myEditor, myFile) {
         @Override
-        protected MatchMode actionMatches(String pattern, @NotNull AnAction anAction) {
+        protected MatchMode actionMatches(@NotNull String pattern, @NotNull AnAction anAction) {
           String text = anAction.getTemplatePresentation().getText();
           return text != null && NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE)
                    .matches(text) ? MatchMode.NAME : MatchMode.NONE;

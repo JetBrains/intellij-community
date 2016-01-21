@@ -7,7 +7,7 @@ class Bar {
 class Foo {
 
     {
-        Foo[] f = Bar.foos.toArray(new Foo[Bar.foos.size()]);<caret>
+        Foo[] f = Bar.foos.toArray(new Foo[0]);<caret>
     }
 
 }

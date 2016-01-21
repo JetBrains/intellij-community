@@ -15,16 +15,25 @@
  */
 package com.intellij.tasks;
 
+import com.intellij.openapi.util.Couple;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class TaskManagerTestCase extends LightCodeInsightFixtureTestCase {
+  protected static final SimpleDateFormat SHORT_TIMESTAMP_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+  static {
+    SHORT_TIMESTAMP_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+  }
+  
   protected TaskManager myTaskManager;
 
   @Override
@@ -51,5 +60,16 @@ public abstract class TaskManagerTestCase extends LightCodeInsightFixtureTestCas
     for (LocalTask task : tasks) {
       myTaskManager.removeTask(task);
     }
+  }
+
+  /**
+   * @return semi-random duration for a work item in the range [1m, 4h 0m] 
+   */
+  @NotNull
+  protected Couple<Integer> generateWorkItemDuration() {
+    // semi-unique duration as timeSpend
+    // should be no longer than 8 hours in total, because it's considered as one full day
+    final int minutes = (int)(System.currentTimeMillis() % 240) + 1;
+    return Couple.of(minutes / 60, minutes % 60);
   }
 }

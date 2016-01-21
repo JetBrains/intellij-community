@@ -168,10 +168,12 @@ public class HighlightMethodUtil {
                                                          @NotNull TextRange range,
                                                          @NotNull LanguageLevel languageLevel) {
     if (superReturnType == null) return null;
-    if ("clone".equals(method.getName())) {
+    final PsiClass superContainingClass = superMethod.getContainingClass();
+    if (superContainingClass != null && 
+        CommonClassNames.JAVA_LANG_OBJECT.equals(superContainingClass.getQualifiedName()) &&
+        !superMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
       final PsiClass containingClass = method.getContainingClass();
-      final PsiClass superContainingClass = superMethod.getContainingClass();
-      if (containingClass != null && superContainingClass != null && containingClass.isInterface() && !superContainingClass.isInterface()) {
+      if (containingClass != null && containingClass.isInterface() && !superContainingClass.isInterface()) {
         return null;
       }
     }

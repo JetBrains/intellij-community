@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceResolver;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class HtmlFileImpl extends XmlFileImpl implements FileReferenceResolver {
   public HtmlFileImpl(FileViewProvider provider) {
-    super(provider, XmlElementType.HTML_FILE);
+    this(provider, XmlElementType.HTML_FILE);
+  }
+
+  public HtmlFileImpl(FileViewProvider provider, IFileElementType type) {
+    super(provider, type);
   }
 
   public String toString() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,9 @@ public final class HttpRequests {
     @NotNull
     BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException;
 
+    /**
+     * @deprecated Called automatically on open connection. Use {@link RequestBuilder#tryConnect()} to get response code.
+     **/
     boolean isSuccessful() throws IOException;
 
     @NotNull
@@ -126,7 +129,7 @@ public final class HttpRequests {
     return CharsetToolkit.UTF8_CHARSET;
   }
 
-  static <T> T process(final RequestBuilder builder, RequestProcessor<T> processor) throws IOException {
+  static <T> T process(@NotNull final RequestBuilder builder, @NotNull RequestProcessor<T> processor) throws IOException {
     class RequestImpl implements Request {
       private URLConnection myConnection;
       private InputStream myInputStream;
@@ -191,6 +194,7 @@ public final class HttpRequests {
         }
       }
 
+      @Override
       @NotNull
       public byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException {
         int contentLength = getConnection().getContentLength();
@@ -199,6 +203,7 @@ public final class HttpRequests {
         return ArrayUtil.realloc(out.getInternalBuffer(), out.size());
       }
 
+      @Override
       @NotNull
       public File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException {
         FileUtilRt.createParentDirs(file);
@@ -236,6 +241,7 @@ public final class HttpRequests {
     }
   }
 
+  @NotNull
   private static URLConnection openConnection(RequestBuilder builder) throws IOException {
     String url = builder.myUrl;
 
@@ -282,12 +288,18 @@ public final class HttpRequests {
 
       if (connection instanceof HttpURLConnection) {
         int responseCode = ((HttpURLConnection)connection).getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
+
+        if (responseCode != HttpURLConnection.HTTP_OK && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
           ((HttpURLConnection)connection).disconnect();
-          url = connection.getHeaderField("Location");
-          if (url != null) {
-            continue;
+
+          if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
+            url = connection.getHeaderField("Location");
+            if (url != null) {
+              continue;
+            }
           }
+          throw new HttpStatusException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode), responseCode,
+                                        StringUtil.notNullize(url, "Empty URL"));
         }
       }
 
@@ -295,5 +307,31 @@ public final class HttpRequests {
     }
 
     throw new IOException(IdeBundle.message("error.connection.failed.redirects"));
+  }
+
+  public static class HttpStatusException extends IOException {
+    private int myStatusCode;
+    private String myUrl;
+
+    public HttpStatusException(@NotNull String message, int statusCode, @NotNull String url) {
+      super(message);
+
+      myStatusCode = statusCode;
+      myUrl = url;
+    }
+
+    public int getStatusCode() {
+      return myStatusCode;
+    }
+
+    @NotNull
+    public String getUrl() {
+      return myUrl;
+    }
+
+    @Override
+    public String toString() {
+      return super.toString() + ". Status=" + myStatusCode + ", Url=" + myUrl;
+    }
   }
 }

@@ -186,7 +186,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
       promiseRef?.set(resolvedPromise(it))
       return it
     }
-    return breakpointManager.setBreakpoint(target, location.line, location.column, breakpoint?.conditionExpression?.expression, promiseRef = promiseRef)
+    return breakpointManager.setBreakpoint(target, location.line, location.column, location.url, breakpoint?.conditionExpression?.expression, promiseRef = promiseRef)
   }
 
   protected abstract fun createTarget(breakpoint: XLineBreakpoint<*>?, breakpointManager: BreakpointManager, location: Location, isTemporary: Boolean): BreakpointTarget

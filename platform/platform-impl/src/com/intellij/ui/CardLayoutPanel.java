@@ -21,6 +21,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.ui.JBInsets;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.JComponent;
 import java.awt.*;
 import java.util.IdentityHashMap;
@@ -34,7 +37,7 @@ import java.util.Map.Entry;
  *
  * @author Sergey.Malenkov
  */
-public abstract class CardLayoutPanel<K, UI, V extends Component> extends JComponent implements Disposable {
+public abstract class CardLayoutPanel<K, UI, V extends Component> extends JComponent implements Accessible, Disposable {
   private final IdentityHashMap<K, V> myContent = new IdentityHashMap<K, V>();
   private volatile boolean myDisposed;
   private K myKey;
@@ -197,5 +200,20 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
       dispose(key);
     }
     myContent.clear();
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleCardLayoutPanel();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleCardLayoutPanel extends AccessibleJComponent {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.PANEL;
+    }
   }
 }

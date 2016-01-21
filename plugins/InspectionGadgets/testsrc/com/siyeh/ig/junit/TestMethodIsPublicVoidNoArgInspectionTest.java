@@ -41,6 +41,10 @@ public class TestMethodIsPublicVoidNoArgInspectionTest extends LightInspectionTe
       "    java.lang.Class<? extends java.lang.Throwable> expected() default org.junit.Test.None.class;" +
       "}",
       "package junit.framework;" +
-      "public abstract class TestCase {}"};
+      "public abstract class TestCase {}",
+
+    "package mockit;" +
+    "@Retention(value=RUNTIME) @Target(value={FIELD,PARAMETER})" +
+    "public @interface Mocked {}"};
   }
 }

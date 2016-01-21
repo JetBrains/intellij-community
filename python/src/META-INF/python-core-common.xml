@@ -137,6 +137,7 @@
     <runConfigurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
+    <xdebugger.localAttachDebuggerProvider implementation="com.jetbrains.python.debugger.attach.PyLocalAttachDebuggerProvider"/>
 
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
     <configurationType implementation="com.jetbrains.python.testing.tox.PyToxConfigurationType"/>
@@ -763,13 +764,6 @@
     <action id="CleanPyc" class="com.jetbrains.python.actions.CleanPycAction" text="Clean Python Compiled Files"
             description="Delete compiled bytecode files in selected directory and its subdirectories">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewPopupMenuRefactoringGroup"/>
-    </action>
-
-    <action id="PyDebugger.AttachToProcess" class="com.jetbrains.python.debugger.attach.PyAttachToProcessAction"
-            text="Attach to Process..."
-            description="Attach debugger to a Python process">
-
-      <add-to-group group-id="ToolsMenu" anchor="first"/>
     </action>
 
     <group id="PyPackagingMenu" text="Packaging">

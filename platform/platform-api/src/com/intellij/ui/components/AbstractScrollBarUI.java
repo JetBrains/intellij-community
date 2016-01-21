@@ -44,7 +44,7 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
   private static final JBColor TRACK_FOREGROUND = new JBColor(0xE6E6E6, 0x3C3F41);
 
   private final Listener myListener = new Listener();
-  private final Timer myScrollTimer = UIUtil.createNamedTimer("ScrollBarUITimer",60, myListener);
+  private final Timer myScrollTimer = UIUtil.createNamedTimer("ScrollBarThumbScrollTimer", 60, myListener);
 
   private final Rectangle myThumbBounds = new Rectangle();
   private final Rectangle myTrackBounds = new Rectangle();
@@ -81,6 +81,10 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
 
   void repaint(int x, int y, int width, int height) {
     if (myScrollBar != null) myScrollBar.repaint(x, y, width, height);
+  }
+
+  boolean isOpaque() {
+    return myScrollBar != null && myScrollBar.isOpaque();
   }
 
   int scale(int value) {
@@ -127,8 +131,8 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
     int thickness = getThickness();
     Alignment alignment = Alignment.get(c);
     return alignment == Alignment.LEFT || alignment == Alignment.RIGHT
-           ? new Dimension(thickness, thickness * 3)
-           : new Dimension(thickness * 3, thickness);
+           ? new Dimension(thickness, thickness * 2)
+           : new Dimension(thickness * 2, thickness);
   }
 
   @Override
@@ -226,6 +230,7 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
         int value = getValue();
         int maxX = myTrackBounds.x + myTrackBounds.width - width;
         int x = (value < max - extent) ? (myTrackBounds.width - width) * (value - min) / (range - extent) : maxX;
+        if (!myScrollBar.getComponentOrientation().isLeftToRight()) x = myTrackBounds.x - x + maxX;
         myThumbBounds.setBounds(adjust(x, myTrackBounds.x, maxX), myTrackBounds.y, width, myTrackBounds.height);
       }
     }

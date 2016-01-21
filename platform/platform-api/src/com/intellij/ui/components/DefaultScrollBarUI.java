@@ -15,28 +15,27 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane.Alignment;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.AlphaComposite;
 import java.awt.Composite;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import javax.swing.JComponent;
 
 /**
  * @author Sergey.Malenkov
  */
 final class DefaultScrollBarUI extends AbstractScrollBarUI {
-  private static final JBColor THUMB_BACKGROUND = new JBColor(0x808080, 0x808080);
-  private static final JBColor THUMB_FOREGROUND = new JBColor(0x6E6E6E, 0x949494);
-
   private float myTrackValue;
   private float myThumbValue;
 
   @Override
   int getThickness() {
-    return scale(14);
+    return scale(isOpaque() ? 13 : 14);
   }
 
   @Override
@@ -66,44 +65,62 @@ final class DefaultScrollBarUI extends AbstractScrollBarUI {
 
   @Override
   void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
+    Rectangle bounds = getAnimatedBounds(x, y, width, height, c, false);
     Composite old = g.getComposite();
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .1f * myTrackValue));
     g.setColor(Gray.x80);
-    g.fillRect(x, y, width, height);
+    g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
     g.setComposite(old);
   }
 
   @Override
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
+    Rectangle bounds = getAnimatedBounds(x, y, width, height, c, Registry.is("ide.scroll.thumb.small.if.opaque"));
     Composite old = g.getComposite();
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .4f + .1f * myThumbValue));
-    if (!c.isOpaque()) {
-      Alignment alignment = Alignment.get(c);
-      if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
-        int offset = width - getMinimalThickness();
-        if (offset > 0) {
-          offset *= 1 - myThumbValue;
-          width -= offset;
-          if (alignment == Alignment.RIGHT) x += offset;
-        }
-      }
-      else {
-        int offset = height - getMinimalThickness();
-        if (offset > 0) {
-          offset *= 1 - myThumbValue;
-          height -= offset;
-          if (alignment == Alignment.BOTTOM) y += offset;
-        }
-      }
-    }
-    g.setColor(THUMB_BACKGROUND);
-    g.fillRect(x + 1, y + 1, width - 2, height - 2);
-    g.setColor(THUMB_FOREGROUND);
-    g.drawRect(x, y, width - 1, height - 1);
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .35f + .25f * myThumbValue));
+    g.setColor(Gray.x80);
+    g.fillRect(bounds.x + 1, bounds.y + 1, bounds.width - 2, bounds.height - 2);
+    g.setColor(UIUtil.isUnderDarcula() ? Gray.x94 : Gray.x6E);
+    g.drawRect(bounds.x, bounds.y, bounds.width - 1, bounds.height - 1);
     g.setComposite(old);
   }
 
-  private TwoWayAnimator myTrackAnimator = new TwoWayAnimator("ScrollBarTrack", 6, 300, 300, 1000) {
+  private Rectangle getAnimatedBounds(int x, int y, int width, int height, JComponent c, boolean small) {
+    Rectangle bounds = new Rectangle(x, y, width, height);
+    if (!c.isOpaque()) {
+      Alignment alignment = Alignment.get(c);
+      if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
+        int value = getAnimatedValue(width - getMinimalThickness());
+        if (value > 0) {
+          bounds.width -= value;
+          if (alignment == Alignment.RIGHT) bounds.x += value;
+        }
+      }
+      else {
+        int value = getAnimatedValue(height - getMinimalThickness());
+        if (value > 0) {
+          bounds.height -= value;
+          if (alignment == Alignment.BOTTOM) bounds.y += value;
+        }
+      }
+    }
+    else if (small) {
+      bounds.x += 1;
+      bounds.y += 1;
+      bounds.width -= 2;
+      bounds.height -= 2;
+    }
+    return bounds;
+  }
+
+  private int getAnimatedValue(int value) {
+    if (!Registry.is("ide.scroll.bar.expand.animation")) return value;
+    if (myTrackValue <= 0) return value;
+    if (myTrackValue >= 1) return 0;
+    return (int)(.5f + value * (1 - myTrackValue));
+  }
+
+  private TwoWayAnimator myTrackAnimator = new TwoWayAnimator("ScrollBarTrack", 6, 125, 150, 300) {
     @Override
     void onFrame(int frame, int maxFrame) {
       myTrackValue = (float)frame / maxFrame;
@@ -112,7 +129,7 @@ final class DefaultScrollBarUI extends AbstractScrollBarUI {
     }
   };
 
-  private TwoWayAnimator myThumbAnimator = new TwoWayAnimator("ScrollBarThumb", 5, 125, 300, 1000) {
+  private TwoWayAnimator myThumbAnimator = new TwoWayAnimator("ScrollBarThumb", 6, 125, 150, 300) {
     @Override
     void onFrame(int frame, int maxFrame) {
       myThumbValue = (float)frame / maxFrame;

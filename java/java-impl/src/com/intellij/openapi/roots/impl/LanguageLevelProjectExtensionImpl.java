@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +39,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   private static final String DEFAULT_ATTRIBUTE = "default";
 
   private final Project myProject;
-  private LanguageLevel myLanguageLevel = LanguageLevel.HIGHEST;
+  private LanguageLevel myLanguageLevel;
   private LanguageLevel myCurrentLevel;
 
   public LanguageLevelProjectExtensionImpl(final Project project) {
@@ -52,7 +54,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   private void readExternal(final Element element) {
     String level = element.getAttributeValue(LANGUAGE_LEVEL);
     if (level == null) {
-      myLanguageLevel = migrateFromIdea7(element);
+      myLanguageLevel = Registry.is("saving.state.in.new.format.is.allowed", false) ? null : migrateFromIdea7(element);
     }
     else {
       myLanguageLevel = LanguageLevel.valueOf(level);
@@ -83,7 +85,10 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     if (aBoolean != null) {
       element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
     }
-    writeAttributesForIdea7(element);
+
+    if (!Registry.is("saving.state.in.new.format.is.allowed", false)) {
+      writeAttributesForIdea7(element);
+    }
   }
 
   private void writeAttributesForIdea7(Element element) {
@@ -96,11 +101,17 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   @Override
   @NotNull
   public LanguageLevel getLanguageLevel() {
-    return myLanguageLevel;
+    return getLanguageLevelOrDefault();
+  }
+
+  @NotNull
+  private LanguageLevel getLanguageLevelOrDefault() {
+    return ObjectUtils.chooseNotNull(myLanguageLevel, LanguageLevel.HIGHEST);
   }
 
   @Override
   public void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
+    // we don't use here getLanguageLevelOrDefault() - if null, just set to provided value, because our default (LanguageLevel.HIGHEST) is changed every java release
     if (myLanguageLevel != languageLevel) {
       myLanguageLevel = languageLevel;
       languageLevelsChanged();

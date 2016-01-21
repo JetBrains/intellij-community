@@ -6,8 +6,8 @@
             <simpleType>
               <restriction base="string">
                 <pattern value="\*"/>
-                <pattern value="\i\l\c*:\*"/>
-                <pattern value="\\l\\c*:\*"/>
+                <pattern value="\i\c*:\*"/>
+                <pattern value="\\c*:\*"/>
               </restriction>
             </simpleType>
           </union>

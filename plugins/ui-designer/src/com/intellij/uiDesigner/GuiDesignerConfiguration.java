@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
   name = "uidesigner-configuration",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage(file = "uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
 public final class GuiDesignerConfiguration implements PersistentStateComponent<GuiDesignerConfiguration> {
@@ -49,10 +49,12 @@ public final class GuiDesignerConfiguration implements PersistentStateComponent<
 
   public boolean RESIZE_HEADERS = true;
 
+  @Override
   public GuiDesignerConfiguration getState() {
     return this;
   }
 
+  @Override
   public void loadState(GuiDesignerConfiguration object) {
     XmlSerializerUtil.copyBean(object, this);
   }

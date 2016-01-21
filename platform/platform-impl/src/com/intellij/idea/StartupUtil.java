@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -319,8 +319,6 @@ public class StartupUtil {
     }
   }
 
-  private static final String JAVA_IO_TEMP_DIR = "java.io.tmpdir";
-
   private static void loadSystemLibraries(final Logger log) {
     // load JNA and Snappy in own temp directory - to avoid collisions and work around no-exec /tmp
     File ideTempDir = new File(PathManager.getTempPath());
@@ -328,24 +326,20 @@ public class StartupUtil {
       throw new RuntimeException("Unable to create temp directory '" + ideTempDir + "'");
     }
 
-    String javaTempDir = System.getProperty(JAVA_IO_TEMP_DIR);
-    try {
-      System.setProperty(JAVA_IO_TEMP_DIR, ideTempDir.getPath());
-      if (System.getProperty("jna.nosys") == null && System.getProperty("jna.nounpack") == null) {
-        // force using bundled JNA dispatcher (if not explicitly stated)
-        System.setProperty("jna.nosys", "true");
-        System.setProperty("jna.nounpack", "false");
-      }
-      try {
-        final long t = System.currentTimeMillis();
-        log.info("JNA library loaded (" + (Native.POINTER_SIZE * 8) + "-bit) in " + (System.currentTimeMillis() - t) + " ms");
-      }
-      catch (Throwable t) {
-        logError(log, "Unable to load JNA library", t);
-      }
+    if (System.getProperty("jna.tmpdir") == null) {
+      System.setProperty("jna.tmpdir", ideTempDir.getPath());
     }
-    finally {
-      System.setProperty(JAVA_IO_TEMP_DIR, javaTempDir);
+    if (System.getProperty("jna.nosys") == null && System.getProperty("jna.nounpack") == null) {
+      // force using bundled JNA dispatcher (if not explicitly stated)
+      System.setProperty("jna.nosys", "true");
+      System.setProperty("jna.nounpack", "false");
+    }
+    try {
+      long t = System.currentTimeMillis();
+      log.info("JNA library loaded (" + (Native.POINTER_SIZE * 8) + "-bit) in " + (System.currentTimeMillis() - t) + " ms");
+    }
+    catch (Throwable t) {
+      logError(log, "Unable to load JNA library", t);
     }
 
     if (SystemInfo.isWin2kOrNewer) {

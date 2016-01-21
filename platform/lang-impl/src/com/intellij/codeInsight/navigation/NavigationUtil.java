@@ -255,8 +255,17 @@ public final class NavigationUtil {
     return getRelatedItemsPopup(items, title, false);
   }
 
+  /**
+   * Returns navigation popup that shows list of related items from {@code items} list
+   * @param items
+   * @param title
+   * @param showContainingModules Whether the popup should show additional information that aligned at the right side of the dialog.<br>
+   *                              It's usually a module name or library name of corresponding navigation item.<br>
+   *                              {@code false} by default
+   * @return
+   */
   @NotNull
-  public static JBPopup getRelatedItemsPopup(final List<? extends GotoRelatedItem> items, String title, boolean requiresModuleShowing) {
+  public static JBPopup getRelatedItemsPopup(final List<? extends GotoRelatedItem> items, String title, boolean showContainingModules) {
     Object[] elements = new Object[items.size()];
     //todo[nik] move presentation logic to GotoRelatedItem class
     final Map<PsiElement, GotoRelatedItem> itemsMap = new HashMap<PsiElement, GotoRelatedItem>();
@@ -266,7 +275,7 @@ public final class NavigationUtil {
       itemsMap.put(item.getElement(), item);
     }
 
-    return getPsiElementPopup(elements, itemsMap, title, requiresModuleShowing, new Processor<Object>() {
+    return getPsiElementPopup(elements, itemsMap, title, showContainingModules, new Processor<Object>() {
       @Override
       public boolean process(Object element) {
         if (element instanceof PsiElement) {
@@ -283,7 +292,7 @@ public final class NavigationUtil {
   }
 
   private static JBPopup getPsiElementPopup(final Object[] elements, final Map<PsiElement, GotoRelatedItem> itemsMap,
-                                           final String title, final boolean requiresModuleShowing, final Processor<Object> processor) {
+                                           final String title, final boolean showContainingModules, final Processor<Object> processor) {
 
     final Ref<Boolean> hasMnemonic = Ref.create(false);
     final DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer() {
@@ -318,7 +327,7 @@ public final class NavigationUtil {
 
       @Override
       protected DefaultListCellRenderer getRightCellRenderer(Object value) {
-        return requiresModuleShowing ? super.getRightCellRenderer(value) : null;
+        return showContainingModules ? super.getRightCellRenderer(value) : null;
       }
 
       @Override

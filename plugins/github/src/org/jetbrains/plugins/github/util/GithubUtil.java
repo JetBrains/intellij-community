@@ -24,16 +24,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.Convertor;
 import git4idea.DialogManager;
@@ -50,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubConnection;
-import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.api.GithubUserDetailed;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
@@ -59,6 +55,8 @@ import org.jetbrains.plugins.github.ui.GithubBasicLoginDialog;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
@@ -313,6 +311,13 @@ public class GithubUtil {
 
     if (StringUtil.isEmptyOrSpaces(auth.getHost())) {
       throw new GithubAuthenticationException("Target host not defined");
+    }
+
+    try {
+      new URI(auth.getHost());
+    }
+    catch (URISyntaxException e) {
+      throw new GithubAuthenticationException("Invalid host URL");
     }
 
     switch (auth.getAuthType()) {

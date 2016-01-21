@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.psi.PsiAdapter;
@@ -429,7 +430,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
           }
         }
       });
-      comboBox.setModel(new DefaultComboBoxModel(names.toArray(new String[names.size()])));
+      comboBox.setModel(new DefaultComboBoxModel(ArrayUtil.toStringArray(names)));
       comboBox.setSelectedItem(templatesManager.getDefaultTemplateBaseName());
     }
 

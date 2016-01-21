@@ -73,7 +73,7 @@ internal class ApplicationStoreTest {
     component.foo = "newValue"
     componentStore.save(SmartList())
 
-    assertThat(streamProvider.data.get(RoamingType.DEFAULT)!!.get("new.xml")).isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
+    assertThat(streamProvider.data[RoamingType.DEFAULT]!!["new.xml"]).isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
   }
 
   @Test fun `load from stream provider`() {
@@ -122,11 +122,11 @@ internal class ApplicationStoreTest {
     val optionsPath = storageManager.expandMacros(StoragePathMacros.APP_CONFIG)
     val rootConfigPath = storageManager.expandMacros(ROOT_CONFIG)
     val map = getExportableComponentsMap(false, true, storageManager)
-    assertThat(map).isNotEmpty()
+    assertThat(map).isNotEmpty
 
     fun test(item: ExportableItem) {
       val file = item.files.first()
-      assertThat(map.get(file)).containsExactly(item)
+      assertThat(map[file]).containsExactly(item)
       assertThat(file).doesNotExist()
     }
 
@@ -263,14 +263,14 @@ internal class ApplicationStoreTest {
     override fun processChildren(path: String, roamingType: RoamingType, filter: (String) -> Boolean, processor: (String, InputStream, Boolean) -> Boolean) {
     }
 
-    public val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
+    val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
 
     override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
       getMap(roamingType).put(fileSpec, String(content, 0, size, CharsetToolkit.UTF8_CHARSET))
     }
 
     private fun getMap(roamingType: RoamingType): MutableMap<String, String> {
-      var map = data.get(roamingType)
+      var map = data[roamingType]
       if (map == null) {
         map = THashMap<String, String>()
         data.put(roamingType, map)
@@ -279,12 +279,12 @@ internal class ApplicationStoreTest {
     }
 
     override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
-      val data = getMap(roamingType).get(fileSpec) ?: return null
+      val data = getMap(roamingType)[fileSpec] ?: return null
       return ByteArrayInputStream(data.toByteArray())
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {
-      data.get(roamingType)?.remove(fileSpec)
+      data[roamingType]?.remove(fileSpec)
     }
   }
 
