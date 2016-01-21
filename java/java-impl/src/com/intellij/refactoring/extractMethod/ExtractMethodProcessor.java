@@ -398,16 +398,20 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean isNullInferred(String exprText, boolean trueSet) {
+    final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(myElements[0]);
+    final int offsetInBlock = myElements[myElements.length - 1].getTextRange().getEndOffset() - codeFragment.getTextRange().getStartOffset();
+    
     final PsiCodeBlock block = myElementFactory.createCodeBlockFromText("{}", myElements[0]);
-    for (PsiElement element : myElements) {
-      block.add(element);
-    }
-    final PsiIfStatement statementFromText = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + exprText + " == null);", null);
-    block.add(statementFromText);
+    PsiIfStatement statementFromText = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + exprText + " == null);", null);
+    final PsiElement copy = codeFragment.copy();
+    final PsiElement lastElementInSelection = copy.getContainingFile().findElementAt(offsetInBlock + copy.getTextRange().getStartOffset());
+    final PsiElement parent = lastElementInSelection.getParent().getParent();
+    statementFromText = (PsiIfStatement)parent.addAfter(statementFromText, lastElementInSelection.getParent());
+    block.add(copy);
 
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
     final StandardInstructionVisitor visitor = new StandardInstructionVisitor();
-    final RunnerResult rc = dfaRunner.analyzeMethod(block, visitor);
+    final RunnerResult rc = dfaRunner.analyzeMethod(copy, visitor);
     if (rc == RunnerResult.OK) {
       final Pair<Set<Instruction>, Set<Instruction>> expressions = dfaRunner.getConstConditionalExpressions();
       final Set<Instruction> set = trueSet ? expressions.getFirst() : expressions.getSecond();
@@ -1322,6 +1326,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     for (VariableData data : myVariableDatum) {
       if (data.passAsParameter) {
         PsiParameter parm = myElementFactory.createParameter(data.name, data.type);
+        final boolean inferred = isNullInferred(data.variable.getName(), false);
         copyParamAnnotations(parm);
         if (isFinal) {
           PsiUtil.setModifierProperty(parm, PsiModifier.FINAL, true);
