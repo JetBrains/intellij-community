@@ -34,6 +34,7 @@ public class GitRebaseProblemDetector extends GitLineHandlerAdapter {
   private final static String[] REBASE_CONFLICT_INDICATORS = {
     "Merge conflict in",
     "hint: after resolving the conflicts, mark the corrected paths",
+    "You must edit all merge conflicts",
     "Failed to merge in the changes",
     "could not apply"};
   private static final String REBASE_NO_CHANGE_INDICATOR = "No changes - did you forget to use 'git add'?";
@@ -41,10 +42,12 @@ public class GitRebaseProblemDetector extends GitLineHandlerAdapter {
     "you have unstaged changes",
     "your index contains uncommitted changes"
   };
+  private static final String STOPPED_FOR_EDITING = "You can amend the commit now";
 
   private volatile boolean myMergeConflict;
   private volatile boolean myNoChangeError;
   private volatile boolean myDirtyTree;
+  private volatile boolean myStoppedForEditing;
 
   public boolean isNoChangeError() {
     return myNoChangeError;
@@ -56,6 +59,10 @@ public class GitRebaseProblemDetector extends GitLineHandlerAdapter {
 
   public boolean isDirtyTree() {
     return myDirtyTree;
+  }
+
+  public boolean hasStoppedForEditing() {
+    return myStoppedForEditing;
   }
 
   @Override
@@ -77,6 +84,10 @@ public class GitRebaseProblemDetector extends GitLineHandlerAdapter {
         myDirtyTree = true;
         return;
       }
+    }
+
+    if (StringUtil.containsIgnoreCase(line, STOPPED_FOR_EDITING)) {
+      myStoppedForEditing = true;
     }
   }
 }
