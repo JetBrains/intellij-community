@@ -1058,6 +1058,7 @@ static char __pyx_k_pydevd_bundle_pydevd_cython[] = "_pydevd_bundle.pydevd_cytho
 static char __pyx_k_send_caught_exception_stack[] = "send_caught_exception_stack";
 static char __pyx_k_pydevd_bundle_pydevd_tracing[] = "_pydevd_bundle.pydevd_tracing";
 static char __pyx_k_NORM_PATHS_AND_BASE_CONTAINER[] = "NORM_PATHS_AND_BASE_CONTAINER";
+static char __pyx_k_home_user_work_PyDev_Debugger[] = "/home/user/work/PyDev.Debugger/_pydevd_bundle/pydevd_cython.pyx";
 static char __pyx_k_remove_additional_frame_by_id[] = "remove_additional_frame_by_id";
 static char __pyx_k_pydevd_bundle_pydevd_constants[] = "_pydevd_bundle.pydevd_constants";
 static char __pyx_k_pydevd_bundle_pydevd_signature[] = "_pydevd_bundle.pydevd_signature";
@@ -1207,6 +1208,7 @@ static PyObject *__pyx_n_s_handle_exception;
 static PyObject *__pyx_n_s_has_exception_breakpoints;
 static PyObject *__pyx_n_s_has_plugin_exception_breaks;
 static PyObject *__pyx_n_s_has_plugin_line_breaks;
+static PyObject *__pyx_kp_s_home_user_work_PyDev_Debugger;
 static PyObject *__pyx_n_s_id;
 static PyObject *__pyx_n_s_ident;
 static PyObject *__pyx_n_s_ignore_exceptions_thrown_in_line;
@@ -16339,6 +16341,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_has_exception_breakpoints, __pyx_k_has_exception_breakpoints, sizeof(__pyx_k_has_exception_breakpoints), 0, 0, 1, 1},
   {&__pyx_n_s_has_plugin_exception_breaks, __pyx_k_has_plugin_exception_breaks, sizeof(__pyx_k_has_plugin_exception_breaks), 0, 0, 1, 1},
   {&__pyx_n_s_has_plugin_line_breaks, __pyx_k_has_plugin_line_breaks, sizeof(__pyx_k_has_plugin_line_breaks), 0, 0, 1, 1},
+  {&__pyx_kp_s_home_user_work_PyDev_Debugger, __pyx_k_home_user_work_PyDev_Debugger, sizeof(__pyx_k_home_user_work_PyDev_Debugger), 0, 0, 1, 0},
   {&__pyx_n_s_id, __pyx_k_id, sizeof(__pyx_k_id), 0, 0, 1, 1},
   {&__pyx_n_s_ident, __pyx_k_ident, sizeof(__pyx_k_ident), 0, 0, 1, 1},
   {&__pyx_n_s_ignore_exceptions_thrown_in_line, __pyx_k_ignore_exceptions_thrown_in_line, sizeof(__pyx_k_ignore_exceptions_thrown_in_line), 0, 0, 1, 1},
