@@ -15,7 +15,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
@@ -68,9 +67,7 @@ public class Alarm implements Disposable {
       myDisposed = true;
       cancelAllRequests();
 
-      if (myExecutorService != JobScheduler.getScheduler()) {
-        myExecutorService.shutdownNow();
-      }
+      myExecutorService.shutdownNow();
     }
   }
 
@@ -84,9 +81,9 @@ public class Alarm implements Disposable {
      */
     SWING_THREAD,
 
+    @Deprecated
     /**
-     * The action will be executed on a dedicated single shared thread, one per IDEA instance.
-     * The actions should be very fast to avoid blocking other Alarm instances that need the same thread.
+     * @deprecated Use {@link #POOLED_THREAD} instead
      */
     SHARED_THREAD,
 
@@ -97,9 +94,9 @@ public class Alarm implements Disposable {
      */
     POOLED_THREAD,
 
+    @Deprecated
     /**
-     * A dedicated new thread is created for this Alarm instance to run the requests. No time limits are placed on the request execution time.
-     * In general it's advised to avoid this option because it may lead to too many OS resources being used.
+     * @deprecated Use {@link #POOLED_THREAD} instead
      */
     OWN_THREAD
   }
@@ -124,8 +121,7 @@ public class Alarm implements Disposable {
   public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
     myThreadToUse = threadToUse;
 
-    myExecutorService = threadToUse == ThreadToUse.POOLED_THREAD ? JobScheduler.getScheduler() :
-                        // have to restrict the number of running tasks because otherwise the (implicit) contract of
+    myExecutorService = // have to restrict the number of running tasks because otherwise the (implicit) contract of
                         // "addRequests with the same delay are executed in order" will be broken
                         AppExecutorUtil.createBoundedScheduledExecutorService(1);
 
@@ -272,7 +268,7 @@ public class Alarm implements Disposable {
   }
 
   @TestOnly
-  public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     List<Request> requests;
     synchronized (LOCK) {
       requests = new ArrayList<Request>(myRequests);
