@@ -138,10 +138,10 @@ public class PyUtil {
       }
       else if (exp instanceof PyListLiteralExpression && unfoldListLiterals) {
         final PyListLiteralExpression listLiteral = (PyListLiteralExpression)exp;
-        _unfoldParenExprs(listLiteral.getElements(), receiver, unfoldListLiterals, unfoldStarExpressions);
+        _unfoldParenExprs(listLiteral.getElements(), receiver, true, unfoldStarExpressions);
       }
       else if (exp instanceof PyStarExpression && unfoldStarExpressions) {
-        _unfoldParenExprs(new PyExpression[]{((PyStarExpression)exp).getExpression()}, receiver, unfoldListLiterals, unfoldStarExpressions);
+        _unfoldParenExprs(new PyExpression[]{((PyStarExpression)exp).getExpression()}, receiver, unfoldListLiterals, true);
       }
       else if (exp != null) {
         receiver.add(exp);
@@ -613,7 +613,7 @@ public class PyUtil {
   /**
    * Finds element declaration by resolving its references top the top but not further than file (to prevent unstubing)
    *
-   * @param element element to resolve
+   * @param elementToResolve element to resolve
    * @return its declaration
    */
   @NotNull
@@ -709,9 +709,14 @@ public class PyUtil {
     // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
     final VirtualFile folder = virtualFile.getParent();
     if (folder != null) {
-      LanguageLevel level = folder.getUserData(LanguageLevel.KEY);
-      if (level == null) level = PythonLanguageLevelPusher.getFileLanguageLevel(project, virtualFile);
-      return level;
+      final LanguageLevel folderLevel = folder.getUserData(LanguageLevel.KEY);
+      if (folderLevel != null) {
+        return folderLevel;
+      }
+      final LanguageLevel fileLevel = PythonLanguageLevelPusher.getFileLanguageLevel(project, virtualFile);
+      if (fileLevel != null) {
+        return fileLevel;
+      }
     }
     else {
       // However this allows us to setup language level per file manually
@@ -725,8 +730,8 @@ public class PyUtil {
           return languageLevel;
         }
       }
-      return guessLanguageLevelWithCaching(project);
     }
+    return guessLanguageLevelWithCaching(project);
   }
 
   public static void invalidateLanguageLevelCache(@NotNull Project project) {
@@ -1712,20 +1717,6 @@ public class PyUtil {
   public static boolean isObjectClass(@NotNull PyClass cls) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(cls);
     return cls == builtinCache.getClass(PyNames.OBJECT) || cls == builtinCache.getClass(PyNames.FAKE_OLD_BASE);
-  }
-
-  /**
-   * Checks that given type is the root of type hierarchy, i.e. it's type of either {@code object} or special
-   * {@link PyNames#FAKE_OLD_BASE} class for old-style classes.
-   *
-   * @param type   Python class to check
-   * @param anchor arbitrary PSI element to find appropriate SDK
-   * @see PyBuiltinCache
-   * @see PyNames#FAKE_OLD_BASE
-   */
-  public static boolean isObjectType(@NotNull PyType type, @NotNull PsiElement anchor) {
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
-    return type == builtinCache.getObjectType() || type == builtinCache.getOldstyleClassobjType();
   }
 
   public static boolean isInScratchFile(@NotNull PsiElement element) {
