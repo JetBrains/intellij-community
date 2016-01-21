@@ -260,6 +260,8 @@ public class JBScrollPane extends JScrollPane {
 
     @Override
     public void updateUI() {
+      ScrollBarUI ui = getUI();
+      if (ui instanceof AbstractScrollBarUI) return;
       setUI(!SystemInfo.isMac && Registry.is("ide.scroll.new.layout")
             ? new DefaultScrollBarUI()
             : ButtonlessScrollBarUI.createNormal());
