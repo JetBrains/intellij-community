@@ -552,20 +552,20 @@ public class NotificationsManagerImpl extends NotificationsManager {
       expandAction.setHoveringIcon(icon(AllIcons.Ide.Notification.ExpandHover));
     }
 
-    LayoutManager layout;
-    if (actions.size() > 2 || expandAction != null) {
-      layout = new CenteredLayoutWithActions(gap, text, layoutData);
-    }
-    else {
-      layout = new BorderLayout(0, gap);
-    }
-
-    JPanel centerPanel = new NonOpaquePanel(layout);
-
+    JPanel centerPanel = new NonOpaquePanel(new CenteredLayoutWithActions(gap, text, layoutData));
     content.add(centerPanel, BorderLayout.CENTER);
 
     if (isTitle) {
-      JLabel title = new JLabel(NotificationsUtil.buildHtml(notification, style, false, foreground));
+      JLabel title = new JLabel(NotificationsUtil.buildHtml(notification, style, false, foreground)) {
+        @Override
+        protected void paintComponent(Graphics g) {
+          super.paintComponent(g);
+          if (layoutData.showActions.compute()) {
+            g.setColor(fillColor);
+            g.fillRect(getWidth() - 30, 0, 30, getHeight());
+          }
+        }
+      };
       title.setOpaque(false);
       if (UIUtil.isUnderNimbusLookAndFeel()) {
         title.setBackground(UIUtil.TRANSPARENT_COLOR);
@@ -863,7 +863,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
       if (myTitleComponent != null) {
         int titleHeight = myTitleComponent.getPreferredSize().height;
-        myTitleComponent.setBounds(left, top, width, titleHeight);
+        myTitleComponent.setBounds(left, top, width - NotificationBalloonActionProvider.getCloseOffset(), titleHeight);
         top += titleHeight + myVerticalGap;
         height -= titleHeight + myVerticalGap;
       }

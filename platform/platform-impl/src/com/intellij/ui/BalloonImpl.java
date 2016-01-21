@@ -1405,7 +1405,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     @Override
     protected void paintComponent(Graphics g) {
       super.paintComponent(g);
-      if (getWidth() > 0 && myLastMoveWasInsideBalloon) {
+      if (hasPaint()) {
         if (myHoverIcon != null && myButton.isHovered()) {
           paintIcon(g, myHoverIcon);
         }
@@ -1413,6 +1413,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           paintIcon(g, myIcon);
         }
       }
+    }
+
+    public boolean hasPaint() {
+      return getWidth() > 0 && myLastMoveWasInsideBalloon;
     }
 
     protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon) {
