@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author vlan
+ *
+ * TODO: Merge it with {@link ScopeUtil}
  */
 public class PyResolveUtil {
   private PyResolveUtil() {
