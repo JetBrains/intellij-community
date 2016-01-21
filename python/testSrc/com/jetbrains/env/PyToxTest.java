@@ -132,9 +132,8 @@ public final class PyToxTest extends PyEnvTestCase {
     private final MyTestProcessRunner myRunner;
 
     /**
-     *
      * @param minimumSuccessTestCount how many success tests should be
-     * @param interpreterExpectations  interpreter_name -] expected result
+     * @param interpreterExpectations interpreter_name -] expected result
      */
     private MyPyProcessWithConsoleTestTask(final int minimumSuccessTestCount,
                                            @NotNull final MyTestProcessRunner runner,
@@ -159,13 +158,13 @@ public final class PyToxTest extends PyEnvTestCase {
       }
 
 
-      if (! stderr.isEmpty()) {
+      if (!stderr.isEmpty()) {
         Logger.getInstance(PyToxTest.class).warn(stderr);
       }
 
 
       final Set<String> checkedInterpreters = new HashSet<>();
-      final Set<String> existingInterpreters = new HashSet<>();
+      final Set<String> skippedInterpreters = new HashSet<>();
       // Interpreter should either run tests or mentioned as NotFound
       for (final SMTestProxy interpreterSuite : runner.getTestProxy().getChildren()) {
         final String interpreterName = interpreterSuite.getName();
@@ -176,9 +175,9 @@ public final class PyToxTest extends PyEnvTestCase {
           final String testOutput = getTestOutput(interpreterSuite.getChildren().get(0));
           if (testOutput.contains("InterpreterNotFound")) {
             Logger.getInstance(PyToxTest.class).warn(String.format("Interpreter %s does not exit", interpreterName));
+            skippedInterpreters.add(interpreterName); // Interpreter does not exit
             continue;
           }
-          existingInterpreters.add(interpreterName); // At least interpreter exists
           // Some other error?
           final InterpreterExpectations expectations = myInterpreters.get(interpreterName);
           Assert
@@ -200,7 +199,8 @@ public final class PyToxTest extends PyEnvTestCase {
       }
 
       Assert.assertThat("No all interpreters from tox.ini used", checkedInterpreters, Matchers.equalTo(myInterpreters.keySet()));
-      Assert.assertFalse("No interpreter found. At least one should exist", existingInterpreters.isEmpty());
+      assert !skippedInterpreters.equals(myInterpreters.keySet()) : "All interpreters skipped (they do not exist on platform), " +
+                                                                    "we test nothing";
     }
 
     @NotNull
@@ -225,7 +225,6 @@ public final class PyToxTest extends PyEnvTestCase {
 
   private static final class MyTestProcessRunner extends PyAbstractTestProcessRunner<PyToxConfiguration> {
     /**
-     *
      * @param testPath testPath relative to community path
      */
     private MyTestProcessRunner(@NotNull final String testPath) {
@@ -240,8 +239,7 @@ public final class PyToxTest extends PyEnvTestCase {
     private final boolean myExpectedSuccess;
 
     /**
-     *
-     * @param expectedOutput expected test output
+     * @param expectedOutput  expected test output
      * @param expectedSuccess if test should be success
      */
     private InterpreterExpectations(@NotNull final String expectedOutput, final boolean expectedSuccess) {
