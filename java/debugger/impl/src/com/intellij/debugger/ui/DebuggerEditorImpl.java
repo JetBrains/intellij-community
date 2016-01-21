@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.ide.DataManager;
@@ -287,22 +290,12 @@ public abstract class DebuggerEditorImpl extends CompletionEditor {
     }
   }
 
-  @NotNull
-  private static CodeFragmentFactory findAppropriateFactory(@NotNull TextWithImports text, @Nullable PsiElement context) {
-    for (CodeFragmentFactory factory : DebuggerUtilsEx.getCodeFragmentFactories(context)) {
-      if (factory.getFileType().equals(text.getFileType())) {
-        return factory;
-      }
-    }
-    return DefaultCodeFragmentFactory.getInstance();
-  }
-
   protected void restoreFactory(TextWithImports text) {
     FileType fileType = text.getFileType();
     if (fileType == null) return;
     if (myContext == null) return;
 
-    setFactory(findAppropriateFactory(text, myContext));
+    setFactory(DebuggerUtilsEx.getCodeFragmentFactory(myContext, text.getFileType()));
   }
 
   private void setFactory(@NotNull CodeFragmentFactory factory) {
