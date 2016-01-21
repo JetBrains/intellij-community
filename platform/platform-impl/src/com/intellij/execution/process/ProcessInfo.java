@@ -17,7 +17,6 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 
 public class ProcessInfo {
@@ -27,21 +26,15 @@ public class ProcessInfo {
   @NotNull private final String myCommandLine;
   @NotNull private final String myExecutableName;
   @NotNull private final String myArgs;
-  @Nullable private final String myUser;
-  @Nullable private final String myState;
 
   public ProcessInfo(int pid,
                      @NotNull String commandLine,
                      @NotNull String executableName,
-                     @NotNull String args,
-                     @Nullable String user,
-                     @Nullable String state) {
+                     @NotNull String args) {
     myPid = pid;
     myCommandLine = commandLine;
     myExecutableName = executableName;
     myArgs = args;
-    myState = state;
-    myUser = user;
   }
 
   public int getPid() {
@@ -68,19 +61,9 @@ public class ProcessInfo {
     return myArgs;
   }
 
-  @Nullable
-  public String getUser() {
-    return myUser;
-  }
-
-  @Nullable
-  public String getState() {
-    return myState;
-  }
-
   @Override
   public String toString() {
-    return myPid + " '" + myCommandLine + "' '" + myExecutableName + "' '" + myArgs + "' '" + myUser + "' '" + myState;
+    return myPid + " '" + myCommandLine + "' '" + myExecutableName + "' '" + myArgs + "'";
   }
 
   @Override
@@ -94,8 +77,6 @@ public class ProcessInfo {
     if (!myExecutableName.equals(info.myExecutableName)) return false;
     if (!myArgs.equals(info.myArgs)) return false;
     if (!myCommandLine.equals(info.myCommandLine)) return false;
-    if (myUser != null ? !myUser.equals(info.myUser) : info.myUser != null) return false;
-    if (myState != null ? !myState.equals(info.myState) : info.myState != null) return false;
 
     return true;
   }
@@ -106,8 +87,6 @@ public class ProcessInfo {
     result = 31 * result + myExecutableName.hashCode();
     result = 31 * result + myArgs.hashCode();
     result = 31 * result + myCommandLine.hashCode();
-    result = 31 * result + (myUser != null ? myUser.hashCode() : 0);
-    result = 31 * result + (myState != null ? myState.hashCode() : 0);
     return result;
   }
 }
