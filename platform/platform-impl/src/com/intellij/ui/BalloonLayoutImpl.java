@@ -176,20 +176,53 @@ public class BalloonLayoutImpl implements BalloonLayout {
     for (int i = 0; i < columns.size(); i++) {
       final ArrayList<Balloon> eachColumn = columns.get(i);
       final Integer eachWidth = columnWidths.get(i);
+      int eachY = toolbarsOffset;
+      int columnSize = eachColumn.size();
+
+      if (columnSize > 0) {
+        BalloonImpl balloon = (BalloonImpl)eachColumn.get(0);
+        if (balloon.hasShadow()) {
+          eachY -= balloon.getShadowBorderInsets().top;
+        }
+        else {
+          eachY += 4;
+        }
+      }
       eachColumnX -= eachWidth.intValue();
-      int eachY = toolbarsOffset + 2;
-      for (Balloon eachBalloon : eachColumn) {
-        final Rectangle eachRec = new Rectangle();
-        eachRec.setSize(getSize(eachBalloon));
-        if (((BalloonImpl)eachBalloon).hasShadow()) {
-          final Insets shadow = ((BalloonImpl)eachBalloon).getShadowBorderInsets();
+
+      for (int j = 0; j < columnSize; j++) {
+        BalloonImpl eachBalloon = (BalloonImpl)eachColumn.get(j);
+        Rectangle eachRec = new Rectangle(getSize(eachBalloon));
+        Insets shadow = new Insets(0, 0, 0, 0);
+
+        boolean hasShadow = eachBalloon.hasShadow();
+        if (hasShadow) {
+          shadow = eachBalloon.getShadowBorderInsets();
           eachRec.width += shadow.left + shadow.right;
           eachRec.height += shadow.top + shadow.bottom;
         }
-        eachY += 2; //space between two notifications // TODO: change space for new notifications with shadow
-        eachRec.setLocation(eachColumnX + eachWidth.intValue() - eachRec.width, eachY);
+        eachRec.setLocation(eachColumnX + eachWidth.intValue() - eachRec.width + shadow.left, eachY);
         eachBalloon.setBounds(eachRec);
         eachY += eachRec.height;
+
+        //space between two notifications
+        if (myLayoutData.isEmpty()) {
+          eachY += 2;
+        }
+        else if (j + 1 < columnSize) {
+          BalloonImpl next = (BalloonImpl)eachColumn.get(j + 1);
+          boolean hasNextShadow = next.hasShadow();
+          if (hasShadow && !hasNextShadow) {
+            eachY -= shadow.top;
+          }
+          else if (!hasShadow && hasNextShadow) {
+            eachY -= 2 * next.getShadowBorderInsets().top;
+          }
+          else if (hasShadow) {
+            eachY -= shadow.bottom + next.getShadowBorderInsets().top;
+          }
+          eachY += 10;
+        }
       }
     }
   }
