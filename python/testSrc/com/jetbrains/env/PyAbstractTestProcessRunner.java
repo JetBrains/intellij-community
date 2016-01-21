@@ -145,7 +145,7 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
    * @return number of all tests
    */
   public int getAllTestsCount() {
-    return myProxyManager.getFailedTestsCount();
+    return myProxyManager.getAllTestsCount();
   }
 
 

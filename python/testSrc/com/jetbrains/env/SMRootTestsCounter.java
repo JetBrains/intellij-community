@@ -63,4 +63,12 @@ final class SMRootTestsCounter {
   int getPassedTestsCount() {
     return myTestProxy.collectChildren(NOT_SUIT.and(Filter.PASSED)).size();
   }
+
+
+  /**
+   * @return number of all tests
+   */
+  int getAllTestsCount() {
+    return myTestProxy.collectChildren(NOT_SUIT).size();
+  }
 }
