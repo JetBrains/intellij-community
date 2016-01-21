@@ -17,6 +17,7 @@ package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -25,6 +26,7 @@ import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyTextFilePatch;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -313,17 +315,41 @@ public class PatchApplier<BinaryType extends FilePatch> {
         return !applier.getBinaryPatches().isEmpty();
       }
     });
-    UndoApplyPatchDialog.rollbackApplyPatch(project, ContainerUtil.map(allFailed, new Function<FilePatch, FilePath>() {
-      @Override
-      public FilePath fun(FilePatch filePatch) {
-        String path =
-          filePatch.getAfterName() == null
-          ? filePatch.getBeforeName()
-          : filePatch.getAfterName();
-        return VcsUtil.getFilePath(path);
-      }
-    }), beforeLabel, shouldInformAboutBinaries);
+    final UndoApplyPatchDialog undoApplyPatchDialog =
+      new UndoApplyPatchDialog(project, ContainerUtil.map(allFailed, new Function<FilePatch, FilePath>() {
+        @Override
+        public FilePath fun(FilePatch filePatch) {
+          String path =
+            filePatch.getAfterName() == null
+            ? filePatch.getBeforeName()
+            : filePatch.getAfterName();
+          return VcsUtil.getFilePath(path);
+        }
+      }), shouldInformAboutBinaries);
+    undoApplyPatchDialog.show();
+    if (undoApplyPatchDialog.isOK()) {
+      rollbackUnderProgress(project, project.getBaseDir(), beforeLabel);
+    }
   }
+
+  private static void rollbackUnderProgress(@NotNull final Project project,
+                                            @NotNull final VirtualFile virtualFile,
+                                            @NotNull final Label labelToRevert) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          labelToRevert.revert(project, virtualFile);
+        }
+        catch (LocalHistoryException e) {
+          VcsNotifier.getInstance(project)
+            .notifyImportantWarning("Rollback Failed", String.format("Try using local history dialog for %s and perform revert manually.",
+                                                                     virtualFile.getName()));
+        }
+      }
+    }, "Rollback Applied Changes...", true, project);
+  }
+
 
   protected void addSkippedItems(final TriggerAdditionOrDeletion trigger) {
     trigger.addExisting(myVerifier.getToBeAdded());

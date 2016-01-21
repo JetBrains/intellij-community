@@ -33,7 +33,7 @@ public class LocalHistoryUtil {
     for (int i = 0; i < revs.size(); i++) {
       final RevisionItem rev = revs.get(i);
       if (isLabelRevision(rev, label)) return i;
-      //when lvcs model not constructed yet or empty then putLableChange created but without label, so we need to scan revisions themselves
+      //when lvcs model is not constructed yet or is empty then PutLabelChange is created but without label, so we need to scan revisions themselves
       if (isChangeWithId(rev.revision, label.getLabelChangeId())) return i;
     }
     return -1;
