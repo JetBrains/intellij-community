@@ -110,7 +110,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   }
 
   private void checkJvm() {
-    if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK")) {
+    if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK") && !SystemInfo.isJetbrainsJvm) {
       showNotification("unsupported.jvm.openjdk.message");
     }
     else if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
