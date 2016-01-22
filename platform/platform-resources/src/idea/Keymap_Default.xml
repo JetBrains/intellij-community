@@ -707,6 +707,12 @@
   <action id="MoveStatementUp">
     <keyboard-shortcut first-keystroke="control shift UP"/>
   </action>
+  <action id="MoveStatementLeft">
+    <keyboard-shortcut first-keystroke="control alt shift LEFT"/>
+  </action>
+  <action id="MoveStatementRight">
+    <keyboard-shortcut first-keystroke="control alt shift RIGHT"/>
+  </action>
   <action id="MoveLineDown">
     <keyboard-shortcut first-keystroke="alt shift DOWN"/>
   </action>
