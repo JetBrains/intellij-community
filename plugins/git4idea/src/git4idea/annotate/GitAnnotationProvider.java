@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.*;
@@ -31,6 +32,8 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
@@ -154,6 +157,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
       StringBuilder content = new StringBuilder();
       List<LineInfo> lines = new ArrayList<LineInfo>();
       HashMap<String, LineInfo> commits = new HashMap<String, LineInfo>();
+      final Map<VcsRevisionNumber, VcsFileRevision> historyAsMap = getRevisionMap(revisions);
       for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
         // parse header line
         String commitHash = s.spaceToken();
@@ -187,7 +191,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
               revisionNumber = new GitRevisionNumber(commitHash, committerDate);
             }
           }
-          commit = new LineInfo(committerDate, revisionNumber, author);
+          commit = new LineInfo(committerDate, revisionNumber, (GitFileRevision)historyAsMap.get(revisionNumber), author);
           commits.put(commitHash, commit);
         }
         // parse line
@@ -212,6 +216,17 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
       LOG.error("Couldn't parse annotation: " + e, new Attachment("output.txt", output));
       throw new VcsException(e);
     }
+  }
+
+  @NotNull
+  private static Map<VcsRevisionNumber, VcsFileRevision> getRevisionMap(@NotNull List<VcsFileRevision> revisions) {
+    return ContainerUtil.map2Map(revisions,
+                                 new Function<VcsFileRevision, Pair<VcsRevisionNumber, VcsFileRevision>>() {
+                                   @Override
+                                   public Pair<VcsRevisionNumber, VcsFileRevision> fun(VcsFileRevision revision) {
+                                     return Pair.create(revision.getRevisionNumber(), revision);
+                                   }
+                                 });
   }
 
   @Override
@@ -239,12 +254,12 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
     final Map<VcsRevisionNumber, VcsFileRevision> historyAsMap = session.getHistoryAsMap();
     final List<LineInfo> lines = new ArrayList<LineInfo>();
     for (int i = 0; i < size; i++) {
-      final VcsRevisionNumber revision = basicAnnotation.getRevision(i);
-      final VcsFileRevision vcsFileRevision = historyAsMap.get(revision);
+      final GitRevisionNumber revision = (GitRevisionNumber)basicAnnotation.getRevision(i);
+      final GitFileRevision vcsFileRevision = (GitFileRevision)historyAsMap.get(revision);
       if (vcsFileRevision == null) {
         return null;
       }
-      lines.add(new LineInfo(vcsFileRevision.getRevisionDate(), (GitRevisionNumber)revision, vcsFileRevision.getAuthor()));
+      lines.add(new LineInfo(vcsFileRevision.getRevisionDate(), revision, vcsFileRevision, vcsFileRevision.getAuthor()));
     }
     return new GitFileAnnotation(myProject, virtualFile, revisionNumber, annotatedContent, lines, session.getRevisionList());
   }
