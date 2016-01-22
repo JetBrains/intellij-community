@@ -20,7 +20,6 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -43,10 +42,6 @@ public class XmlMarkupBuilderNonCodeMemberContributor extends NonCodeMembersCont
                                      @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
     String nameHint = ResolveUtil.getNameHint(processor);
-
-    // todo remove this hack
-    // get name from place, because GroovyResolverProcessor returns no NameHint
-    if (nameHint == null) nameHint = place instanceof GrReferenceExpression ? ((GrReferenceExpression)place).getReferenceName() : null;
     if (nameHint == null) return;
 
     if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return;
