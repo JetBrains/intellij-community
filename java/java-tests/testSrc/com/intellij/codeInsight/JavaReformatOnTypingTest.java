@@ -105,8 +105,8 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
     doTest("class X { char x = '<caret>'; }", "=", "class X { char x = '='; }");
   }
   
-  public void test_AfterOpenedBracket() {
-    doTest("class X { char x = '<caret> }", "='", "class X { char x = '=' }");
+  public void test_AfterOpenedQuote() {
+    doTest("class X { char x = '<caret> }", "=", "class X { char x = '= }");
   }
   
   public void test_DistinguishAssignmentAndEquality() {
