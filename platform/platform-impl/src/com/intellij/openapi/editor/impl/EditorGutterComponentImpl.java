@@ -376,17 +376,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     if (getGutterRenderer(e) != null) return;
 
-    int x = getAnnotationsAreaOffset();
-    for (int i = 0; i < myTextAnnotationGutters.size(); i++) {
-      final int size = myTextAnnotationGutterSizes.get(i);
-      if (x <= e.getX() && e.getX() <= x + size + GAP_BETWEEN_ANNOTATIONS) {
-        queue.blockNextEvents(e);
-        closeAllAnnotations();
-        e.consume();
-        break;
-      }
-
-      x += size + GAP_BETWEEN_ANNOTATIONS;
+    if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
+      queue.blockNextEvents(e);
+      closeAllAnnotations();
+      e.consume();
     }
   }
 
