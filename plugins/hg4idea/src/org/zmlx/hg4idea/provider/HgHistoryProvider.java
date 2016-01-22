@@ -109,7 +109,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     };
   }
 
-  private static List<HgFileRevision> getHistory(FilePath filePath, VirtualFile vcsRoot, Project project) {
+  public static List<HgFileRevision> getHistory(@NotNull FilePath filePath, @NotNull VirtualFile vcsRoot, @NotNull Project project) {
     VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(project);
     int limit = vcsConfiguration.LIMIT_HISTORY ? vcsConfiguration.MAXIMUM_HISTORY_ROWS : -1;
 
@@ -117,8 +117,12 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     logCommand
       .setFollowCopies(!filePath.isDirectory());
     logCommand.setIncludeRemoved(true);
+    List<String> args = new ArrayList<String>();
+    args.add("--rev");
+    args.add("reverse(0::.)"); // without --follow was 0:tip by default without --rev;
+    // reverse needed because of mercurial default order problem -r revset with and without -f option
     try {
-      return logCommand.execute(new HgFile(vcsRoot, filePath), limit, false);
+      return logCommand.execute(new HgFile(vcsRoot, filePath), limit, false, args);
     }
     catch (HgCommandException e) {
       new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
