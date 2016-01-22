@@ -631,6 +631,8 @@ public abstract class MvcFramework {
     return true;
   }
 
+  public boolean isRunTargetActionSupported(Module module) { return false; }
+
   @Nullable
   public static MvcFramework getInstance(@Nullable final Module module) {
     if (module == null) {

@@ -17,16 +17,37 @@ package org.jetbrains.plugins.groovy.mvc.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.mvc.*;
 
 /**
  * @author ilyas
  */
-public class DefaultMvcRunCommandActionHandler extends MvcActionBase {
+public class DefaultMvcRunCommandActionHandler extends MvcRunCommandActionHandler {
 
   @Override
-  protected void actionPerformed(@NotNull AnActionEvent e, @NotNull Module module, @NotNull MvcFramework framework) {
+  public boolean isAvailable(@NotNull AnActionEvent e) {
+    final Pair<MvcFramework, Module> pair = MvcActionBase.guessFramework(e);
+    return pair != null && pair.first.isRunTargetActionSupported(pair.second);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    final Pair<MvcFramework, Module> pair = MvcActionBase.guessFramework(e);
+    if (pair != null) {
+      e.getPresentation().setText("Run " + pair.first.getDisplayName() + " Target");
+      e.getPresentation().setDescription("Run arbitrary " + pair.first.getDisplayName() + " target");
+    }
+  }
+
+  @Override
+  public void performAction(@NotNull AnActionEvent e) {
+    Pair<MvcFramework, Module> pair = MvcActionBase.guessFramework(e);
+    if (pair == null) return;
+
+    MvcFramework framework = pair.first;
+    Module module = pair.second;
     MvcRunTargetDialog dialog = new MvcRunTargetDialog(module, framework);
     if (!dialog.showAndGet()) {
       return;
@@ -36,5 +57,4 @@ public class DefaultMvcRunCommandActionHandler extends MvcActionBase {
     MvcCommand cmd = dialog.createCommand();
     MvcCommandExecutor.run(selectedModule, framework, cmd, null, false);
   }
-
 }
