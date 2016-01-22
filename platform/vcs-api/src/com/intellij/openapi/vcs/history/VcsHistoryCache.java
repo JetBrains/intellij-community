@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.VcsAnnotation;
@@ -41,8 +42,14 @@ public class VcsHistoryCache {
 
   public VcsHistoryCache() {
     myLock = new Object();
-    myHistoryCache = new SLRUMap<HistoryCacheBaseKey, CachedHistory>(10, 10);
-    myAnnotationCache = new SLRUMap<HistoryCacheWithRevisionKey, VcsAnnotation>(10, 5);
+    // increase cache size when preload enabled
+    boolean preloadEnabled = Registry.is("vcs.annotations.preload");
+    myHistoryCache = new SLRUMap<HistoryCacheBaseKey, CachedHistory>(
+      preloadEnabled ? 50 : 10,
+      preloadEnabled ? 50 : 10);
+    myAnnotationCache = new SLRUMap<HistoryCacheWithRevisionKey, VcsAnnotation>(
+      preloadEnabled ? 50 : 10,
+      preloadEnabled ? 50 : 5);
     //myContentCache = new SLRUMap<HistoryCacheWithRevisionKey, String>(20, 20);
   }
 
