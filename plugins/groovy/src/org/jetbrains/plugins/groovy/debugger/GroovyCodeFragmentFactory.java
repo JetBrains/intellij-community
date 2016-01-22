@@ -336,9 +336,8 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
       if (context.getLanguage().equals(GroovyLanguage.INSTANCE)) {
         return true;
       }
-      Project project = context.getProject();
-      if (JavaPsiFacade.getInstance(project)
-            .findClass("org.codehaus.groovy.control.CompilationUnit", GlobalSearchScope.allScope(project)) != null) {
+      if (JavaPsiFacade.getInstance(context.getProject())
+            .findClass("org.codehaus.groovy.control.CompilationUnit", context.getResolveScope()) != null) {
         return true;
       }
     }
