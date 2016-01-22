@@ -27,6 +27,10 @@ import java.awt.image.BufferedImage;
  */
 public class RetinaImage {
 
+  public static Image createFrom(Image image) {
+    return createFrom(image, 2, ImageLoader.ourComponent);
+  }
+
   public static Image createFrom(Image image, final int scale, Component ourComponent) {
     int w = image.getWidth(ourComponent);
     int h = image.getHeight(ourComponent);
