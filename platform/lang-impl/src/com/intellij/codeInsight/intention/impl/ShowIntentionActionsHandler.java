@@ -49,6 +49,8 @@ import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.codeInsight.intention.impl.IntentionHintComponent.*;
+
 /**
  * @author mike
  */
@@ -76,10 +78,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     ShowIntentionsPass.getActionsToShow(editor, file, intentions, -1);
     IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
     if (hintComponent != null) {
-      IntentionHintComponent.PopupUpdateResult result = hintComponent.isForEditor(editor)
+      PopupUpdateResult result = hintComponent.isForEditor(editor)
                                                         ? hintComponent.updateActions(intentions)
-                                                        : IntentionHintComponent.PopupUpdateResult.HIDE_AND_RECREATE;
-      if (result == IntentionHintComponent.PopupUpdateResult.HIDE_AND_RECREATE) {
+                                                        : PopupUpdateResult.HIDE_AND_RECREATE;
+      if (result == PopupUpdateResult.HIDE_AND_RECREATE) {
         hintComponent.hide();
       }
     }

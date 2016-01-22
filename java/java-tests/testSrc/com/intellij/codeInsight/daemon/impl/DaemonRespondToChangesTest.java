@@ -27,6 +27,7 @@ import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.codeInsight.intention.impl.IntentionHintComponentImpl;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -1153,7 +1154,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     highlightErrors();
 
-    IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
+    IntentionHintComponentImpl hintComponent = (IntentionHintComponentImpl)codeAnalyzer.getLastIntentionHint();
     assertNotNull(hintComponent);
     assertFalse(hintComponent.isDisposed());
     assertNotNull(hintComponent.getComponentHint());
@@ -1161,7 +1162,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     type("x");
     highlightErrors();
-    hintComponent = codeAnalyzer.getLastIntentionHint();
+    hintComponent = (IntentionHintComponentImpl)codeAnalyzer.getLastIntentionHint();
     assertNotNull(hintComponent);
     assertFalse(hintComponent.isDisposed());
     assertNotNull(hintComponent.getComponentHint());

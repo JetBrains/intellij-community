@@ -21,8 +21,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
-import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
+import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
@@ -69,7 +68,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private final PsiFile myFile;
   private final int myPassIdToShowIntentionsFor;
   private final IntentionsInfo myIntentionsInfo = new IntentionsInfo();
-  private volatile boolean myShowBulb;
+  private volatile boolean myShowBulb = ApplicationManager.getApplication().isOnAir();
   private volatile boolean myHasToRecreate;
 
   @NotNull
@@ -80,13 +79,14 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     final Project project = file.getProject();
 
     final List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true, new Processor<HighlightInfo>() {
-      @Override
-      public boolean process(HighlightInfo info) {
-        addAvailableActionsForGroups(info, editor, file, result, passId, offset);
-        return true;
-      }
-    });
+    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true,
+                                                       new Processor<HighlightInfo>() {
+                                                         @Override
+                                                         public boolean process(HighlightInfo info) {
+                                                           addAvailableActionsForGroups(info, editor, file, result, passId, offset);
+                                                           return true;
+                                                         }
+                                                       });
     return result;
   }
 
@@ -155,10 +155,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     private static void filter(@NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors,
                                @NotNull IntentionFilterOwner.IntentionActionsFilter actionsFilter) {
-      for (Iterator<HighlightInfo.IntentionActionDescriptor> it = descriptors.iterator(); it.hasNext();) {
-          HighlightInfo.IntentionActionDescriptor actionDescriptor = it.next();
-          if (!actionsFilter.isAvailable(actionDescriptor.getAction())) it.remove();
-        }
+      for (Iterator<HighlightInfo.IntentionActionDescriptor> it = descriptors.iterator(); it.hasNext(); ) {
+        HighlightInfo.IntentionActionDescriptor actionDescriptor = it.next();
+        if (!actionsFilter.isAvailable(actionDescriptor.getAction())) it.remove();
+      }
     }
 
     public boolean isEmpty() {
@@ -168,11 +168,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     @NonNls
     @Override
     public String toString() {
-      return
-        "Errors: " + errorFixesToShow + "; " +
-        "Inspection fixes: " + inspectionFixesToShow + "; " +
-        "Intentions: " + intentionsToShow + "; " +
-        "Gutters: " + guttersToShow;
+      return "Errors: " + errorFixesToShow + "; " +
+             "Inspection fixes: " + inspectionFixesToShow + "; " +
+             "Intentions: " + intentionsToShow + "; " +
+             "Gutters: " + guttersToShow;
     }
   }
 
@@ -191,8 +190,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    if (ApplicationManager.getApplication().hasUI() &&
-        !myEditor.getContentComponent().hasFocus()) return;
+//    if (ApplicationManager.getApplication().hasUI() &&
+//        !myEditor.getContentComponent().hasFocus()) return;
 
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if (state != null && !state.isFinished()) return;
@@ -205,14 +204,15 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (ApplicationManager.getApplication().hasUI() &&
-        !myEditor.getContentComponent().hasFocus()) return;
-
     // do not show intentions if caret is outside visible area
     LogicalPosition caretPos = myEditor.getCaretModel().getLogicalPosition();
-    Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
-    Point xy = myEditor.logicalPositionToXY(caretPos);
-    if (!visibleArea.contains(xy)) return;
+    if (!ApplicationManager.getApplication().isOnAir()) {
+      if (!ApplicationManager.getApplication().hasUI()) return;
+
+      Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
+      Point xy = myEditor.logicalPositionToXY(caretPos);
+      if (!visibleArea.contains(xy)) return;
+    }
 
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if (myShowBulb && (state == null || state.isFinished()) && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false)) {
@@ -234,16 +234,20 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (myIntentionsInfo.isEmpty()) {
       return;
     }
-    myShowBulb = !myIntentionsInfo.guttersToShow.isEmpty() ||
-      ContainerUtil.exists(ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow,myIntentionsInfo.intentionsToShow), new Condition<HighlightInfo.IntentionActionDescriptor>() {
-        @Override
-        public boolean value(HighlightInfo.IntentionActionDescriptor descriptor) {
-          return IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction());
-        }
-      });
+    myShowBulb = ApplicationManager.getApplication().isOnAir() ||
+                 !myIntentionsInfo.guttersToShow.isEmpty() ||
+                 ContainerUtil.exists(ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow,
+                                                           myIntentionsInfo.intentionsToShow),
+                                      new Condition<HighlightInfo.IntentionActionDescriptor>() {
+                                        @Override
+                                        public boolean value(HighlightInfo.IntentionActionDescriptor descriptor) {
+                                          return IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction());
+                                        }
+                                      });
   }
 
-  private static boolean appendCleanupCode(@NotNull List<HighlightInfo.IntentionActionDescriptor> actionDescriptors, @NotNull PsiFile file) {
+  private static boolean appendCleanupCode(@NotNull List<HighlightInfo.IntentionActionDescriptor> actionDescriptors,
+                                           @NotNull PsiFile file) {
     for (HighlightInfo.IntentionActionDescriptor descriptor : actionDescriptors) {
       if (descriptor.canCleanup(file)) {
         final ArrayList<IntentionAction> options = new ArrayList<IntentionAction>();
@@ -310,9 +314,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
       if (place != null) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
-        enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
-        enableDisableIntentionAction.add(new IntentionHintComponent.EditIntentionSettingsAction(action));
-        HighlightInfo.IntentionActionDescriptor descriptor = new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null);
+        enableDisableIntentionAction.add(new EnableDisableIntentionAction(action));
+        enableDisableIntentionAction.add(new EditIntentionSettingsAction(action));
+        HighlightInfo.IntentionActionDescriptor descriptor =
+          new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null);
         if (!fixes.contains(descriptor)) {
           intentions.intentionsToShow.add(descriptor);
         }
@@ -322,9 +327,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     final int line = hostDocument.getLineNumber(offset);
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(hostDocument, project, true);
     CommonProcessors.CollectProcessor<RangeHighlighterEx> processor = new CommonProcessors.CollectProcessor<RangeHighlighterEx>();
-    model.processRangeHighlightersOverlappingWith(hostDocument.getLineStartOffset(line),
-                                                  hostDocument.getLineEndOffset(line),
-                                                  processor);
+    model.processRangeHighlightersOverlappingWith(hostDocument.getLineStartOffset(line), hostDocument.getLineEndOffset(line), processor);
 
     for (RangeHighlighterEx highlighter : processor.getResults()) {
       GutterIntentionAction.addActions(project, hostEditor, hostFile, highlighter, intentions.guttersToShow);
