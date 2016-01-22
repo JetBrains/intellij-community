@@ -221,6 +221,12 @@ public class TreeModelBuilder {
     return model;
   }
 
+  @NotNull
+  public TreeModelBuilder setChangeLists(@NotNull List<? extends ChangeList> changeLists) {
+    buildModel(changeLists);
+    return this;
+  }
+
   private static class MyChangePathLengthComparator implements Comparator<Change> {
     private final static MyChangePathLengthComparator ourInstance = new MyChangePathLengthComparator();
 

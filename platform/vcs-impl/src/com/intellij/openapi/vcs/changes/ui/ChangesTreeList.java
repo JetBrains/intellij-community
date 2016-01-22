@@ -383,6 +383,10 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     toggleChanges(getSelectedChanges());
   }
 
+  /**
+   * TODO: This method does not return all "changes" recursively. And does not respect T type parameter while filling the result - just
+   * TODO: "Change" class is used ("ChangesBrowserNode.getAllChangesUnder()"). Check if this causes any issues.
+   */
   public List<T> getChanges() {
     final LinkedHashSet<T> result = new LinkedHashSet<T>();
     TreeUtil.traverseDepth((ChangesBrowserNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {

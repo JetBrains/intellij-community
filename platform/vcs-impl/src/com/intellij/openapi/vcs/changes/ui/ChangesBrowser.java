@@ -90,8 +90,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider, Disp
 
     myViewer = new ChangesTreeList<Change>(myProject, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, decorator) {
       protected DefaultTreeModel buildTreeModel(final List<Change> changes, ChangeNodeDecorator changeNodeDecorator) {
-        TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
-        return builder.buildModel(changes, changeNodeDecorator);
+        return ChangesBrowser.this.buildTreeModel(changes, changeNodeDecorator, isShowFlatten());
       }
 
       protected List<Change> getSelectedObjects(final ChangesBrowserNode<Change> node) {
@@ -123,6 +122,12 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider, Disp
     add(myBottomPanel, BorderLayout.SOUTH);
 
     myViewer.installPopupHandler(myToolBarGroup);
+  }
+
+  @NotNull
+  protected DefaultTreeModel buildTreeModel(final List<Change> changes, ChangeNodeDecorator changeNodeDecorator, boolean showFlatten) {
+    TreeModelBuilder builder = new TreeModelBuilder(myProject, showFlatten);
+    return builder.buildModel(changes, changeNodeDecorator);
   }
 
   @NotNull
