@@ -251,7 +251,7 @@ public final class IconLoader {
   }
 
   @Nullable
-  private static Icon checkIcon(final Image image, @NotNull URL url) {
+  private static ImageIcon checkIcon(final Image image, @NotNull URL url) {
     if (image == null || image.getHeight(LabelHolder.ourFakeComponent) < 1) { // image wasn't loaded or broken
       return null;
     }
@@ -261,7 +261,8 @@ public final class IconLoader {
       LOG.error("Invalid icon: " + url); // # 22481
       return EMPTY_ICON;
     }
-    return icon;
+    assert icon instanceof ImageIcon;
+    return (ImageIcon)icon;
   }
 
   public static boolean isGoodSize(@NotNull final Icon icon) {
@@ -297,7 +298,7 @@ public final class IconLoader {
       graphics.dispose();
 
       Image img = ImageUtil.filter(image, UIUtil.getGrayFilter());
-      if (UIUtil.isRetina()) img = RetinaImage.createFrom(img, 2, ImageLoader.ourComponent);
+      if (UIUtil.isRetina()) img = RetinaImage.createFrom(img);
 
       disabledIcon = new JBImageIcon(img);
       ourIcon2DisabledIcon.put(icon, disabledIcon);
@@ -374,7 +375,7 @@ public final class IconLoader {
     }
 
     @NotNull
-    private synchronized Icon getRealIcon() {
+    private synchronized ImageIcon getRealIcon() {
       if (isLoaderDisabled() && (myRealIcon == null || dark != USE_DARK_ICONS || scale != SCALE || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size())) return EMPTY_ICON;
 
       if (!isValid()) {
@@ -396,12 +397,12 @@ public final class IconLoader {
         }
       }
       Object realIcon = myRealIcon;
-      if (realIcon instanceof Icon) return (Icon)realIcon;
+      if (realIcon instanceof Icon) return (ImageIcon)realIcon;
 
-      Icon icon;
+      ImageIcon icon;
       if (realIcon instanceof Reference) {
-        icon = ((Reference<Icon>)realIcon).get();
-        if (icon != null) return icon;
+        icon = ((Reference<ImageIcon>)realIcon).get();
+        if (icon != null) return (ImageIcon)icon;
       }
 
       Image image = ImageLoader.loadFromUrl(myUrl, true, filter);
@@ -412,7 +413,7 @@ public final class IconLoader {
           realIcon = icon;
         }
         else {
-          realIcon = new SoftReference<Icon>(icon);
+          realIcon = new SoftReference<ImageIcon>(icon);
         }
         myRealIcon = realIcon;
       }
@@ -492,29 +493,13 @@ public final class IconLoader {
           Image image = getOrigImage(needRetinaImage);
 
           if (image != null) {
-            Icon realIcon = getRealIcon();
-            int width = (int)(realIcon.getIconWidth() * scale);
-            int height = (int)(realIcon.getIconHeight() * scale);
-            boolean isMacRetina = false;
+            Image iconImage = getRealIcon().getImage();
+            int width = (int)(ImageUtil.getRealWidth(iconImage) * scale);
+            int height = (int)(ImageUtil.getRealHeight(iconImage) * scale);
 
-            if (SystemInfo.isMac && UIUtil.isRetina()) {
-              if (image instanceof JBHiDPIScaledImage) {
-                Image hidpiImage = ((JBHiDPIScaledImage)image).getDelegate();
+            Image resizedImage = Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
+            if (UIUtil.isRetina()) resizedImage = RetinaImage.createFrom(resizedImage);
 
-                if (hidpiImage != null && hidpiImage.getWidth(null) == 2 * realIcon.getIconWidth()) {
-
-                  image = hidpiImage;
-                  width *= 2;
-                  height *= 2;
-                  isMacRetina = true;
-                }
-              }
-            }
-
-            BufferedImage resizedImage = Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
-            if (isMacRetina) {
-              resizedImage = new JBHiDPIScaledImage(resizedImage, resizedImage.getWidth() / 2, resizedImage.getHeight() / 2, resizedImage.getType());
-            }
             icon = getIcon(resizedImage);
             scaledIconsCache.put(effectiveScale, new SoftReference<Icon>(icon));
           }

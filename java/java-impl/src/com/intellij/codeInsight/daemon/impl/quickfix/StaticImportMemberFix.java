@@ -15,13 +15,16 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -95,6 +98,9 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
   }
 
   private ImportClassFixBase.Result doFix(Editor editor) {
+    if (!CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY) {
+      return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
+    }
     final List<T> candidates = getMembersToImport(true);
     if (candidates.isEmpty()) {
       return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
@@ -106,7 +112,10 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
     }
 
     final QuestionAction action = createQuestionAction(candidates, element.getProject(), editor);
-    if (candidates.size() == 1 && ImportClassFixBase.canAddUnambiguousImport(element.getContainingFile())) {
+    PsiFile psiFile = element.getContainingFile();
+    if (candidates.size() == 1 &&
+        (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile)) &&
+        !LaterInvocator.isInModalContext()) {
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
         @Override
         public void run() {

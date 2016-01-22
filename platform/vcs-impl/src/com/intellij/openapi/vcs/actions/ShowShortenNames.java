@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +60,7 @@ public class ShowShortenNames extends ActionGroup {
     return ShortNameType.LASTNAME;
   }
 
-  public static class SetShortNameTypeAction extends ToggleAction {
+  public static class SetShortNameTypeAction extends ToggleAction implements DumbAware {
     private final ShortNameType myType;
     private final EditorGutterComponentEx myGutter;
 

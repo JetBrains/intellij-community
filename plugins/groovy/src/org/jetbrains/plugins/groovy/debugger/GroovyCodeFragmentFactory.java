@@ -19,13 +19,13 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
@@ -248,6 +248,12 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
             value = name;
           }
           parameters.put(name, value);
+          return;
+        }
+
+        if (resolved == null && context.getLanguage().equals(JavaLanguage.INSTANCE)) {
+          String name = referenceExpression.getReferenceName();
+          parameters.put(name, name);
         }
       }
 
@@ -336,9 +342,8 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
       if (context.getLanguage().equals(GroovyLanguage.INSTANCE)) {
         return true;
       }
-      Project project = context.getProject();
-      if (JavaPsiFacade.getInstance(project)
-            .findClass("org.codehaus.groovy.control.CompilationUnit", GlobalSearchScope.allScope(project)) != null) {
+      if (JavaPsiFacade.getInstance(context.getProject())
+            .findClass("org.codehaus.groovy.control.CompilationUnit", context.getResolveScope()) != null) {
         return true;
       }
     }

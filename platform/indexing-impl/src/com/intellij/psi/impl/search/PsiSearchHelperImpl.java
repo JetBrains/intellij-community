@@ -761,6 +761,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         try {
           return wrapped.processTextOccurrence(element, offsetInElement, consumer);
         }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
         catch (Exception e) {
           LOG.error(e);
           return true;

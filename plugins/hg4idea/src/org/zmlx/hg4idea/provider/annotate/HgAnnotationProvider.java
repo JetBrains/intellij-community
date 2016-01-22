@@ -32,6 +32,7 @@ import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.util.HgUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class HgAnnotationProvider implements AnnotationProvider {
@@ -61,7 +62,13 @@ public class HgAnnotationProvider implements AnnotationProvider {
     try {
       HgLogCommand logCommand = new HgLogCommand(myProject);
       logCommand.setFollowCopies(true);
-      logResult = logCommand.execute(fileToAnnotate, -1, false);
+      List<String> args = new ArrayList<String>();
+      // for current uncommitted rename change we need to use --rev 0::. after hg  version 2.4
+      if (revision == null) {
+        args.add("--rev");
+        args.add("0::.");
+      }
+      logResult = logCommand.execute(fileToAnnotate, -1, false, args);
     }
     catch (HgCommandException e) {
       throw new VcsException("Can not annotate, " + HgVcsMessages.message("hg4idea.error.log.command.execution"), e);

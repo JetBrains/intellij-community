@@ -24,6 +24,7 @@ import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
@@ -155,10 +156,12 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
         return myHeader;
       }
     });
-    myScroller.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
-    myScroller.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    myScroller.getViewport().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    myScroller.getVerticalScrollBar().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    if (!Registry.is("ide.scroll.new.layout")) {
+      myScroller.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
+      myScroller.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+      myScroller.getViewport().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+      myScroller.getVerticalScrollBar().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    }
     add(myScroller);
 
     myTree.addComponentListener(new ComponentAdapter() {
