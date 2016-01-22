@@ -150,16 +150,11 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
                                              @NotNull VirtualFile file,
                                              @NotNull String output,
                                              @NotNull List<VcsFileRevision> revisions) throws VcsException {
-    class CommitInfo {
-      Date date;
-      String author;
-      GitRevisionNumber revision;
-    }
     try {
       StringBuilder content = new StringBuilder();
       List<LineInfo> lines = new ArrayList<LineInfo>();
-      HashMap<String, CommitInfo> commits = new HashMap<String, CommitInfo>();
-      for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
+      HashMap<String, LineInfo> commits = new HashMap<String, LineInfo>();
+      for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
         // parse header line
         String commitHash = s.spaceToken();
         if (commitHash.equals(GitRevisionNumber.NOT_COMMITTED_HASH)) {
@@ -170,25 +165,29 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
         int lineNum = Integer.parseInt(s1);
         s.nextLine();
         // parse commit information
-        CommitInfo commit = commits.get(commitHash);
+        LineInfo commit = commits.get(commitHash);
         if (commit != null || commitHash == null) {
           while (s.hasMoreData() && !s.startsWith('\t')) {
             s.nextLine();
           }
         }
         else {
-          commit = new CommitInfo();
+          GitRevisionNumber revisionNumber = null;
+          Date committerDate = null;
+          String author = null;
+
           while (s.hasMoreData() && !s.startsWith('\t')) {
             String key = s.spaceToken();
             String value = s.line();
             if (AUTHOR_KEY.equals(key)) {
-              commit.author = value;
+              author = value;
             }
             if (COMMITTER_TIME_KEY.equals(key)) {
-              commit.date = GitUtil.parseTimestamp(value);
-              commit.revision = new GitRevisionNumber(commitHash, commit.date);
+              committerDate = GitUtil.parseTimestamp(value);
+              revisionNumber = new GitRevisionNumber(commitHash, committerDate);
             }
           }
+          commit = new LineInfo(committerDate, revisionNumber, author);
           commits.put(commitHash, commit);
         }
         // parse line
@@ -205,7 +204,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
         }
 
         content.append(s.line(true));
-        lines.add(new LineInfo(commit.date, commit.revision, commit.author));
+        lines.add(commit);
       }
       return new GitFileAnnotation(myProject, file, revision, content.toString(), lines, revisions);
     }
