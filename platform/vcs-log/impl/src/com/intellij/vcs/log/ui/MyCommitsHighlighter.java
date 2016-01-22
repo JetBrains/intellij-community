@@ -36,13 +36,6 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   public MyCommitsHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUi logUi) {
     myDataHolder = logDataHolder;
     myLogUi = logUi;
-
-    myLogUi.addLogListener(new VcsLogListener() {
-      @Override
-      public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-        myShouldHighlightUser = !isSingleUser() && !isFilteredByCurrentUser(dataPack.getFilters());
-      }
-    });
   }
 
   @NotNull
@@ -59,6 +52,11 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
       }
     }
     return VcsCommitStyle.DEFAULT;
+  }
+
+  @Override
+  public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
+    myShouldHighlightUser = !isSingleUser() && !isFilteredByCurrentUser(dataPack.getFilters());
   }
 
   // returns true if only one user commits to this repository

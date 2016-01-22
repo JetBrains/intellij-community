@@ -128,10 +128,15 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     initColumnSize();
   }
 
-  public void updateDataPack(@NotNull VisiblePack visiblePack) {
+  public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {
     VcsLogGraphTable.Selection previousSelection = getSelection();
     getGraphTableModel().setVisiblePack(visiblePack);
     previousSelection.restore(visiblePack.getVisibleGraph(), true);
+
+    for (VcsLogHighlighter highlighter: myHighlighters) {
+      highlighter.update(visiblePack, permGraphChanged);
+    }
+
     setPaintBusy(false);
     initColumnSize();
   }

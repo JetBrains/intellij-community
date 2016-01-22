@@ -43,6 +43,10 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
     return VcsCommitStyle.DEFAULT;
   }
 
+  @Override
+  public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
+  }
+
   public static class Factory implements VcsLogHighlighterFactory {
     @NotNull private static final String ID = "MERGE_COMMITS";
 

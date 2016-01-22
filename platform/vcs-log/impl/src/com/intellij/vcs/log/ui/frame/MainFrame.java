@@ -146,7 +146,7 @@ public class MainFrame extends JPanel implements DataProvider {
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
     myDetailsPanel.updateDataPack(dataPack);
-    myGraphTable.updateDataPack(dataPack);
+    myGraphTable.updateDataPack(dataPack, permGraphChanged);
     myBranchesPanel.updateDataPack(dataPack, permGraphChanged);
   }
 

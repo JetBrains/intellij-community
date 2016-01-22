@@ -35,6 +35,13 @@ public interface VcsLogHighlighter {
   VcsCommitStyle getStyle(int commitIndex, boolean isSelected);
 
   /**
+   * This method is called when new data arrives to the ui.
+   * @param dataPack new visible pack.
+   * @param refreshHappened true if permanent graph was changed.
+   */
+  void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened);
+
+  /**
    * Describes how to display commit entry in the log table (for example, text or background color).
    */
   interface VcsCommitStyle {

@@ -35,17 +35,6 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   public CurrentBranchHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUi logUi) {
     myDataHolder = logDataHolder;
     myLogUi = logUi;
-
-    logUi.addLogListener(new VcsLogListener() {
-      @Override
-      public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-        VcsLogBranchFilter branchFilter = dataPack.getFilters().getBranchFilter();
-        mySingleFilteredBranch = branchFilter == null
-                                 ? null
-                                 : VcsLogUtil
-                                   .getSingleFilteredBranch(branchFilter, dataPack.getRefs());
-      }
-    });
   }
 
   @NotNull
@@ -65,6 +54,12 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
       }
     }
     return VcsCommitStyle.DEFAULT;
+  }
+
+  @Override
+  public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
+    VcsLogBranchFilter branchFilter = dataPack.getFilters().getBranchFilter();
+    mySingleFilteredBranch = branchFilter == null ? null : VcsLogUtil.getSingleFilteredBranch(branchFilter, dataPack.getRefs());
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
