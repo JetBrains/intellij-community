@@ -250,7 +250,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     }
     myShowFlatten = showFlatten;
     setChangesToDisplay(getChanges());
-    setChildIndent(showFlatten);
+    setChildIndent(showFlatten && isCurrentModelFlat());
     myTree.setCellRenderer(myShowFlatten ? myShowFlattenNodeRenderer : myNodeRenderer);
     if (!myAlwaysExpandList && !myShowFlatten && myNonFlatTreeState != null) {
       myNonFlatTreeState.applyTo(myTree, (DefaultMutableTreeNode)myTree.getModel().getRoot());
@@ -258,11 +258,16 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     select(wasSelected);
   }
 
-  private void setChildIndent(boolean showFlatten) {
+  private void setChildIndent(boolean isFlat) {
     BasicTreeUI treeUI = (BasicTreeUI)myTree.getUI();
 
-    treeUI.setLeftChildIndent(!showFlatten ? UIUtil.getTreeLeftChildIndent() : 0);
-    treeUI.setRightChildIndent(!showFlatten ? UIUtil.getTreeRightChildIndent() : 0);
+    treeUI.setLeftChildIndent(!isFlat ? UIUtil.getTreeLeftChildIndent() : 0);
+    treeUI.setRightChildIndent(!isFlat ? UIUtil.getTreeRightChildIndent() : 0);
+  }
+
+  protected boolean isCurrentModelFlat() {
+    // Only depth of the first child is checked (for simplicity)
+    return TreeUtil.getFirstLeafNodePath(myTree).getPathCount() <= 2;
   }
 
   @Override
