@@ -100,7 +100,6 @@
     <orderEntry type="module" module-name="jps-model-tests" scope="TEST" />
     <orderEntry type="module" module-name="jps-serialization-tests" scope="TEST" />
     <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="TEST" />
-    <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="java-tests" scope="TEST" />
     <orderEntry type="module" module-name="community-tests" scope="TEST" />
     <orderEntry type="module" module-name="google-cloud-tools-as" />
@@ -120,7 +119,6 @@
     <orderEntry type="module" module-name="configuration-store-tests" scope="TEST" />
     <orderEntry type="module" module-name="designer" />
     <orderEntry type="module" module-name="sdk-updates" />
-    <orderEntry type="module" module-name="designer" />
     <orderEntry type="module" module-name="analytics" />
     <orderEntry type="module" module-name="android-ndk" />
   </component>
