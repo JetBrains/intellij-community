@@ -101,8 +101,9 @@ public class SillyAssignmentInspectionBase extends BaseJavaBatchLocalInspectionT
     lExpression = PsiUtil.deparenthesizeExpression(lExpression);
     if (!(lExpression instanceof PsiReferenceExpression)) return;
     PsiReferenceExpression lRef = (PsiReferenceExpression)lExpression;
-    final PsiVariable variable = (PsiVariable)lRef.resolve();
-    if (variable == null) return;
+    final PsiElement resolved = lRef.resolve();
+    if (!(resolved instanceof PsiVariable)) return;
+    final PsiVariable variable = (PsiVariable)resolved;
 
     rExpression = deparenthesizeRExpr(rExpression, variable);
 
