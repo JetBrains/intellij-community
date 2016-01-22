@@ -46,9 +46,6 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     '+', '-', '*', '/', '%', '&', '^', '|', '<', '>', '!', '=', ' ' 
   };
   
-  private char myLastTypedChar;
-  private int myLastTypedOffset;
-
   public AutoFormatTypedHandler(@Nullable TypedActionHandler originalHandler) {
     super(originalHandler);
   }
@@ -90,12 +87,9 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     }
     
     executeOriginalHandler(editor, charTyped, dataContext);
-    
-    myLastTypedChar = charTyped;
-    myLastTypedOffset = editor.getCaretModel().getOffset();
   }
 
-  private boolean isInsertSpaceAtCaret(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
+  private static boolean isInsertSpaceAtCaret(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
     if (!isSpaceAroundAssignment(editor, dataContext)) {
       return false;
     }
@@ -104,9 +98,10 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     CharSequence text = editor.getDocument().getImmutableCharSequence();
 
     boolean insertBeforeEq = charTyped == '=' && isInsertSpaceBeforeEq(caretOffset, text);
-    boolean insertAfterEq = myLastTypedChar == '=' && isInsertSpaceBeforeNewChar(charTyped) 
-                            && isSameDocumentAsPrevious(editor);
-    
+    boolean insertAfterEq = caretOffset - 1 < text.length()
+                            && text.charAt(caretOffset - 1) == '=' 
+                            && isInsertSpaceBeforeNewChar(charTyped); 
+      
     return (insertBeforeEq || insertAfterEq) && !isInsideStringLiteral(editor);
   }
 
@@ -132,14 +127,7 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
   private void executeOriginalHandler(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
     if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
   }
-
-  private boolean isSameDocumentAsPrevious(Editor editor) {
-    int caretOffset = editor.getCaretModel().getOffset();
-    CharSequence text = editor.getDocument().getImmutableCharSequence();
-    return caretOffset == myLastTypedOffset
-           && caretOffset - 1 < text.length() && text.charAt(caretOffset - 1) == myLastTypedChar;
-  }
-
+  
   private static boolean isInsertSpaceBeforeEq(int caretOffset, CharSequence text) {
     if (caretOffset == 0) return false;
     char charBefore = text.charAt(caretOffset - 1);
