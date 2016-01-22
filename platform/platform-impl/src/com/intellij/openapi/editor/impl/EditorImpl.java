@@ -5340,7 +5340,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     assertIsDispatchThread();
     int currentHorOffset = myScrollingModel.getHorizontalScrollOffset();
     myScrollBarOrientation = type;
-    if (type == VERTICAL_SCROLLBAR_LEFT) {
+    if (Registry.is("ide.scroll.new.layout")) {
+      myScrollPane.putClientProperty(JBScrollPane.Flip.class,
+                                     type == VERTICAL_SCROLLBAR_LEFT
+                                     ? JBScrollPane.Flip.HORIZONTAL
+                                     : null);
+    }
+    else if (type == VERTICAL_SCROLLBAR_LEFT) {
       myScrollPane.setLayout(new LeftHandScrollbarLayout());
     }
     else {
