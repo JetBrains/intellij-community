@@ -499,7 +499,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     pane.getViewport().setOpaque(false);
-    pane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
+    if (!Registry.is("ide.scroll.new.layout")) {
+      pane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
+    }
     pane.setBackground(fillColor);
     pane.getViewport().setBackground(fillColor);
     pane.getVerticalScrollBar().setBackground(fillColor);

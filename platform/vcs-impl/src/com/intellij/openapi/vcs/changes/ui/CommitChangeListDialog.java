@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -1013,8 +1014,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (myAdditionalOptionsPanel != null) {
       JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(myAdditionalOptionsPanel, true);
       optionsPane.getVerticalScrollBar().setUnitIncrement(10);
-      optionsPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-      optionsPane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
+      if (!Registry.is("ide.scroll.new.layout")) {
+        optionsPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        optionsPane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
+      }
       JPanel infoPanel = JBUI.Panels.simplePanel(optionsPane).withBorder(JBUI.Borders.emptyLeft(10));
 
       mainPanel = new JPanel(new MyOptionsLayout(mySplitter, infoPanel, 150));
