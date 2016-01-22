@@ -87,8 +87,8 @@ public class PyPostfixUtils {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
         PyExpressionStatement exprStatement = PsiTreeUtil.getNonStrictParentOfType(context, PyExpressionStatement.class);
-        PyExpression statement = exprStatement != null ? PsiTreeUtil.getChildOfType(exprStatement, PyExpression.class) : null;
-        return ContainerUtil.<PsiElement>createMaybeSingletonList((statement));
+        PyExpression expression = exprStatement != null ? PsiTreeUtil.getChildOfType(exprStatement, PyExpression.class) : null;
+        return ContainerUtil.<PsiElement>createMaybeSingletonList(expression);
       }
     };
   }

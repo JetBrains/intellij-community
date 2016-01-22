@@ -41,7 +41,7 @@ public abstract class PyExpressionAsConditionSurrounder extends PyExpressionSurr
     throws IncorrectOperationException {
     TextRange currentCaretPosition = TextRange.from(editor.getCaretModel().getOffset(), 0);
     PyStatement statement = PyElementGenerator.getInstance(project).
-      createFromText(LanguageLevel.getDefault(), PyStatement.class, getTextToGenerate());
+      createFromText(LanguageLevel.forElement(expression), PyStatement.class, getTextToGenerate());
     final PyExpression condition = getCondition(statement);
     if (condition == null) {
       return currentCaretPosition;
@@ -56,6 +56,9 @@ public abstract class PyExpressionAsConditionSurrounder extends PyExpressionSurr
     }
     PyStatementList statementList = statementListContainer.getStatementList();
     PyStatement[] statements = statementList.getStatements();
+    if (statements.length == 0) {
+      return currentCaretPosition;
+    }
     final TextRange range = statements[0].getTextRange();
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     return TextRange.from(range.getStartOffset(), 0);
