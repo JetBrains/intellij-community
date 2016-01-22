@@ -64,8 +64,8 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
               return callParent instanceof PsiStatement;
             }
             return callParent instanceof PsiStatement || 
-                   callParent instanceof PsiVariable ||
-                   callParent instanceof PsiExpression;
+                   callParent instanceof PsiLocalVariable ||
+                   callParent instanceof PsiExpression && PsiTreeUtil.getParentOfType(callParent, PsiStatement.class) != null;
           }
         });
       }
