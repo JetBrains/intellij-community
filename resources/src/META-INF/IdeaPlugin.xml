@@ -1179,6 +1179,9 @@
     <quoteHandler fileType="JAVA" className="com.intellij.codeInsight.editorActions.JavaQuoteHandler"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavaTypedHandler" id="java"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavadocTypedHandler" id="javadoc"/>
+    
+    <editorTypedHandler implementationClass="com.intellij.codeInsight.editorActions.AutoFormatTypedHandler"/>
+    
     <editorSmartKeysConfigurable instance="com.intellij.application.options.JavadocOptionsProvider"
                                  id="editor.preferences.javadocOptions"
                                  key="javadoc.generate.message.title"
