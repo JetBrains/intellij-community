@@ -1698,7 +1698,7 @@
               description="Refresh IntelliJ IDEA project structure so that it matches Griffon build settings">
       </action>
 
-      <action id="Mvc.RunTarget" class="org.jetbrains.plugins.groovy.mvc.MvcRunTarget"
+      <action id="Mvc.RunTarget" class="org.jetbrains.plugins.groovy.mvc.actions.DefaultMvcRunCommandActionHandler"
               text="Run Target" description="Run arbitrary Grails/Griffon target">
         <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt G"/>
       </action>

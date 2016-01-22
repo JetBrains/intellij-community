@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.mvc;
+package org.jetbrains.plugins.groovy.mvc.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.mvc.*;
 
 /**
  * @author ilyas
  */
-public class MvcRunTarget extends MvcActionBase {
+public class DefaultMvcRunCommandActionHandler extends MvcActionBase {
 
   @Override
   protected void actionPerformed(@NotNull AnActionEvent e, @NotNull Module module, @NotNull MvcFramework framework) {
