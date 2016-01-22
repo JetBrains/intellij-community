@@ -32,12 +32,15 @@ public class MalformedFormatString {
     public void optionalSettings() {
         SomeOtherLogger logger = new SomeOtherLogger();
         logger.<warning descr="Too few arguments for format string (found: 1, expected: 2)">d</warning>("%s %s", 1); // this is invalid according to the inspector (correct)
+        logger.d(new Exception(), <warning descr="Illegal format string specifier '%0s'">"%0s"</warning>, "7");
     }
 
     public class SomeOtherLogger {
         public void d(String message, Object...args) {
             // Do some logging.
         }
+
+        public void d(Throwable t, String message, Object args) {}
     }
 
     void shouldWarn() {

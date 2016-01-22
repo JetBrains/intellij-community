@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,6 +113,16 @@ public class MalformedFormatStringInspectionBase extends BaseInspection {
 
   private class MalformedFormatStringVisitor extends BaseInspectionVisitor {
 
+    private int findFirstStringArgumentIndex(PsiExpression[] expressions) {
+      for (int i = 0, length = expressions.length; i < length; i++) {
+        final PsiExpression expression = expressions[i];
+        if (ExpressionUtils.hasStringType(expression)) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
@@ -121,26 +131,12 @@ public class MalformedFormatStringInspectionBase extends BaseInspection {
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length == 0) {
+      final int formatArgumentIndex = findFirstStringArgumentIndex(arguments);
+      if (formatArgumentIndex < 0) {
         return;
-      }
-      final PsiExpression firstArgument = arguments[0];
-      final PsiType type = firstArgument.getType();
-      if (type == null) {
-        return;
-      }
-      final int formatArgumentIndex;
-      if ("java.util.Locale".equals(type.getCanonicalText()) && arguments.length > 1) {
-        formatArgumentIndex = 1;
-      }
-      else {
-        formatArgumentIndex = 0;
       }
       final PsiExpression formatArgument = arguments[formatArgumentIndex];
-      if (!ExpressionUtils.hasStringType(formatArgument)) {
-        return;
-      }
-      if (!PsiUtil.isConstantExpression(formatArgument)) {
+      if (!ExpressionUtils.hasStringType(formatArgument) || !PsiUtil.isConstantExpression(formatArgument)) {
         return;
       }
       final PsiType formatType = formatArgument.getType();
