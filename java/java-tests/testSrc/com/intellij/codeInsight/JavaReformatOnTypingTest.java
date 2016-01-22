@@ -97,6 +97,18 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
            "class X { String s = \"xxxxx=x<caret>\"; }");
   }
   
+  public void test_InsideStringLiteral() {
+    doTest("class X { String x = \"x<caret> }", "=y", "class X { String x = \"x=y<caret> }");
+  }
+  
+  public void test_InsideCharLiteral() {
+    doTest("class X { char x = '<caret>'; }", "=", "class X { char x = '='; }");
+  }
+  
+  public void test_AfterOpenedBracket() {
+    doTest("class X { char x = '<caret> }", "='", "class X { char x = '=' }");
+  }
+  
   public void test_DistinguishAssignmentAndEquality() {
     doTest("class T { boolean b = 1 <caret> }", "==", "class T { boolean b = 1 ==<caret> }");
   }
