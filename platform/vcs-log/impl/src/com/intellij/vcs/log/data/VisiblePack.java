@@ -78,6 +78,7 @@ public class VisiblePack implements VcsLogDataPack {
     return myDataPack.isFull();
   }
 
+  @Override
   @NotNull
   public VcsLogFilterCollection getFilters() {
     return myFilters;

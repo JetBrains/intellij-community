@@ -30,18 +30,16 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   private static final JBColor CURRENT_BRANCH_BG = new JBColor(new Color(228, 250, 255), new Color(63, 71, 73));
   @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final VcsLogUi myLogUi;
-  @NotNull private final VcsLogFilterUi myFilterUi;
   @Nullable private String mySingleFilteredBranch;
 
   public CurrentBranchHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUi logUi) {
     myDataHolder = logDataHolder;
     myLogUi = logUi;
-    myFilterUi = logUi.getFilterUi();
 
     logUi.addLogListener(new VcsLogListener() {
       @Override
       public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-        VcsLogBranchFilter branchFilter = myFilterUi.getFilters().getBranchFilter();
+        VcsLogBranchFilter branchFilter = dataPack.getFilters().getBranchFilter();
         mySingleFilteredBranch = branchFilter == null
                                  ? null
                                  : VcsLogUtil
@@ -58,8 +56,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
     if (details != null && !(details instanceof LoadingDetails)) {
       VcsLogProvider provider = myDataHolder.getLogProvider(details.getRoot());
       String currentBranch = provider.getCurrentBranch(details.getRoot());
-      VcsLogBranchFilter branchFilter = myFilterUi.getFilters().getBranchFilter();
-      if (currentBranch != null && (branchFilter == null || !(currentBranch.equals(mySingleFilteredBranch)))) {
+      if (currentBranch != null && !(currentBranch.equals(mySingleFilteredBranch))) {
         Condition<CommitId> condition =
           myDataHolder.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
         if (condition.value(new CommitId(details.getId(), details.getRoot()))) {

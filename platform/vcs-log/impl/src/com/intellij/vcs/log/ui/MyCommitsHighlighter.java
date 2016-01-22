@@ -31,7 +31,7 @@ import java.util.Set;
 public class MyCommitsHighlighter implements VcsLogHighlighter {
   @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final VcsLogUi myLogUi;
-  private boolean myAreTheOnlyUsers = false;
+  private boolean myShouldHighlightUser = false;
 
   public MyCommitsHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUi logUi) {
     myDataHolder = logDataHolder;
@@ -40,7 +40,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     myLogUi.addLogListener(new VcsLogListener() {
       @Override
       public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-        myAreTheOnlyUsers = areTheOnlyUsers();
+        myShouldHighlightUser = !isSingleUser() && !isFilteredByCurrentUser(dataPack.getFilters());
       }
     });
   }
@@ -49,7 +49,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   @Override
   public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
     if (!myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
-    if (!myAreTheOnlyUsers && !isFilteredByCurrentUser()) {
+    if (myShouldHighlightUser) {
       VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
       if (details != null && !(details instanceof LoadingDetails)) {
         VcsUser currentUser = myDataHolder.getCurrentUser().get(details.getRoot());
@@ -61,7 +61,8 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     return VcsCommitStyle.DEFAULT;
   }
 
-  private boolean areTheOnlyUsers() {
+  // returns true if only one user commits to this repository
+  private boolean isSingleUser() {
     NotNullFunction<VcsUser, String> nameToString = new NotNullFunction<VcsUser, String>() {
       @NotNull
       @Override
@@ -74,8 +75,9 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     return allUserNames.size() == currentUserNames.size() && currentUserNames.containsAll(allUserNames);
   }
 
-  private boolean isFilteredByCurrentUser() {
-    VcsLogUserFilter userFilter = myLogUi.getFilterUi().getFilters().getUserFilter();
+  // returns true if filtered by "me"
+  private static boolean isFilteredByCurrentUser(@NotNull VcsLogFilterCollection filters) {
+    VcsLogUserFilter userFilter = filters.getUserFilter();
     if (userFilter == null) return false;
     Collection<String> filterByName = ((VcsLogUserFilterImpl)userFilter).getUserNamesForPresentation();
     if (Collections.singleton(VcsLogUserFilterImpl.ME).containsAll(filterByName)) return true;

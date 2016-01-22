@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.MergeCommitsHighlighter;
@@ -86,7 +85,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
           }
         }
         else {
-          VcsLogBranchFilter branchFilter = ((VisiblePack)dataPack).getFilters().getBranchFilter();
+          VcsLogBranchFilter branchFilter = dataPack.getFilters().getBranchFilter();
           if (branchFilter == null || !myTask.myComparedBranch.equals(VcsLogUtil.getSingleFilteredBranch(branchFilter, dataPack.getRefs()))) {
             stopAndUnhighlight();
           }
