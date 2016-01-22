@@ -117,6 +117,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static final int GAP_BETWEEN_ICONS = JBUI.scale(3);
   private static final int GAP_BETWEEN_AREAS = JBUI.scale(5);
   private static final int GAP_BETWEEN_ANNOTATIONS = JBUI.scale(5);
+  private static final int GAP_BEFORE_ANNOTATIONS = JBUI.scale(2); // inside the annotations area and with annotation background color
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
   public static final TIntFunction ID = new TIntFunction() {
     @Override
@@ -428,7 +429,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(logLine, myEditor)));
           g.setFont(myEditor.getColorsScheme().getFont(style));
           if (s != null) {
-            g.drawString(s, x, (j + 1) * lineHeight - myEditor.getDescent());
+            g.drawString(s, GAP_BEFORE_ANNOTATIONS + x, (j + 1) * lineHeight - myEditor.getDescent());
           }
         }
 
@@ -686,7 +687,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       for (int i = 0; i < lineCount; i++) {
         final String lineText = gutterProvider.getLineText(i, myEditor);
         if (lineText != null) {
-          gutterSize = Math.max(gutterSize, fontMetrics.stringWidth(lineText));
+          gutterSize = Math.max(gutterSize, GAP_BEFORE_ANNOTATIONS + fontMetrics.stringWidth(lineText));
         }
       }
       if (gutterSize > 0) gutterSize += GAP_BETWEEN_ANNOTATIONS;
@@ -1242,6 +1243,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public int getLineNumberAreaOffset() {
     if (getLineNumberAreaWidth() == 0 && getAnnotationsAreaWidthEx() == 0 && getLineMarkerAreaWidth() == 0) {
       return getFoldingAreaWidth() == 0 ? 0 : 1;
+    }
+    else if (getLineNumberAreaWidth() == 0 && getAnnotationsAreaWidthEx() > 0) {
+      return 0; // no gap if annotations area is the first visible
     }
     else {
       return GAP_BETWEEN_AREAS;
