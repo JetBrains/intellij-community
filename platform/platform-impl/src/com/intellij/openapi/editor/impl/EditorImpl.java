@@ -5375,9 +5375,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myVerticalScrollBar;
   }
 
-  @NotNull
-  MyScrollBar getHorizontalScrollBar() {
-    return (MyScrollBar)myScrollPane.getHorizontalScrollBar();
+  void setHorizontalScrollBarPersistentUI(ScrollBarUI ui) {
+    JScrollBar bar = myScrollPane.getHorizontalScrollBar();
+    if (bar instanceof MyScrollBar) {
+      ((MyScrollBar)bar).setPersistentUI(ui);
+    }
   }
 
   @MouseSelectionState
@@ -7116,6 +7118,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @NotNull
     @Override
     public JScrollBar createHorizontalScrollBar() {
+      if (Registry.is("ide.scroll.new.layout")) {
+        return super.createHorizontalScrollBar();
+      }
       return new MyScrollBar(Adjustable.HORIZONTAL);
     }
 
