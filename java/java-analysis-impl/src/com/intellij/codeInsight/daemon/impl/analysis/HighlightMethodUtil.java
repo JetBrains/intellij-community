@@ -807,7 +807,7 @@ public class HighlightMethodUtil {
 
     @Language("HTML")
     @NonNls String parensizedName = methodName + (parameters.length == 0 ? "(&nbsp;)&nbsp;" : "");
-    final String errorMessage = info != null ? info.getInferenceErrorMessage() : null;
+    String errorMessage = getErrorMessage(list, info);
     return JavaErrorMessages.message(
       "argument.mismatch.html.tooltip",
       Integer.valueOf(cols - parameters.length + 1), parensizedName,
@@ -816,6 +816,25 @@ public class HighlightMethodUtil {
       createMismatchedArgsHtmlTooltipArgumentsRow(expressions, parameters, substitutor, cols),
       errorMessage != null ? "<br/>reason: " + XmlStringUtil.escapeString(errorMessage).replaceAll("\n", "<br/>") : ""
     );
+  }
+
+  private static String getErrorMessage(PsiExpressionList list, @Nullable MethodCandidateInfo info) {
+    String errorMessage = info != null ? info.getInferenceErrorMessage() : null;
+    while (errorMessage == null) {
+      list = PsiTreeUtil.getParentOfType(list, PsiExpressionList.class, true);
+      if (list == null) {
+        break;
+      }
+      final PsiElement parent = list.getParent();
+      if (!(parent instanceof PsiCallExpression)) {
+        break;
+      }
+      final JavaResolveResult resolveResult = ((PsiCallExpression)parent).resolveMethodGenerics();
+      if (resolveResult instanceof MethodCandidateInfo) {
+        errorMessage = ((MethodCandidateInfo)resolveResult).getInferenceErrorMessage();
+      }
+    }
+    return errorMessage;
   }
 
   private static String esctrim(@NotNull String s) {
@@ -919,7 +938,7 @@ public class HighlightMethodUtil {
     }
 
     s+= "</table>";
-    final String errorMessage = info != null ? info.getInferenceErrorMessage() : null;
+    final String errorMessage = getErrorMessage(list, info);
     if (errorMessage != null) {
       s+= "reason: "; 
       s += XmlStringUtil.escapeString(errorMessage).replaceAll("\n", "<br/>");

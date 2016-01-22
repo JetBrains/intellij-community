@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -54,6 +55,8 @@ import java.util.*;
  * @author vlan
  */
 public class PyPackageRequirementsInspection extends PyInspection {
+  private static final Logger LOG = Logger.getInstance(PyPackageRequirementsInspection.class);
+  
   public JDOMExternalizableStringList ignoredPackages = new JDOMExternalizableStringList();
 
   @NotNull
@@ -250,6 +253,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
         packages = manager.getPackages(PySdkUtil.isRemote(sdk));
       }
       catch (ExecutionException e) {
+        LOG.error(e);
         return null;
       }
       if (packages == null) return null;

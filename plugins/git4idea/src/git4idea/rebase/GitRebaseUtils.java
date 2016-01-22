@@ -19,11 +19,13 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
@@ -38,13 +40,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * The utilities related to rebase functionality
  */
 public class GitRebaseUtils {
+  public static final String CONTINUE_PROGRESS_TITLE = "Continue Rebase Process...";
   /**
    * The logger instance
    */
@@ -61,23 +64,77 @@ public class GitRebaseUtils {
                             @NotNull final GitRebaseParams params,
                             @NotNull final ProgressIndicator indicator) {
     if (!isRebaseAllowed(project, repositories)) return;  // TODO maybe move to the outside
-    new GitRebaseProcess(project, repositories, params, indicator).rebase();
+    new GitRebaseProcess(project, GitRebaseSpec.forNewRebase(project, params, repositories, indicator), null).rebase();
+  }
+
+  public static void continueRebase(@NotNull Project project) {
+    GitRebaseSpec spec = GitUtil.getRepositoryManager(project).getOngoingRebaseSpec();
+    if (spec != null) {
+      new GitRebaseProcess(project, spec, GitRebaseResumeMode.CONTINUE).rebase();
+    }
+    else {
+      LOG.warn("Refusing to continue: no rebase spec");
+      VcsNotifier.getInstance(project).notifyError("Can't Continue Rebase", "No rebase in progress");
+    }
+  }
+
+  public static void continueRebase(@NotNull Project project, @NotNull GitRepository repository, @NotNull ProgressIndicator indicator) {
+    GitRebaseSpec spec = GitRebaseSpec.forResumeInSingleRepository(project, repository, indicator);
+    if (spec != null) {
+      new GitRebaseProcess(project, spec, GitRebaseResumeMode.CONTINUE).rebase();
+    }
+    else {
+      LOG.warn("Refusing to continue: no rebase spec");
+      VcsNotifier.getInstance(project).notifyError("Can't Continue Rebase", "No rebase in progress");
+    }
+  }
+
+  public static void skipRebase(@NotNull Project project) {
+    GitRebaseSpec spec = GitUtil.getRepositoryManager(project).getOngoingRebaseSpec();
+    if (spec != null) {
+      new GitRebaseProcess(project, spec, GitRebaseResumeMode.SKIP).rebase();
+    }
+    else {
+      LOG.warn("Refusing to skip: no rebase spec");
+      VcsNotifier.getInstance(project).notifyError("Can't Continue Rebase", "No rebase in progress");
+    }
+  }
+
+  public static void skipRebase(@NotNull Project project, @NotNull GitRepository repository, @NotNull ProgressIndicator indicator) {
+    GitRebaseSpec spec = GitRebaseSpec.forResumeInSingleRepository(project, repository, indicator);
+    if (spec != null) {
+      new GitRebaseProcess(project, spec, GitRebaseResumeMode.SKIP).rebase();
+    }
+    else {
+      LOG.warn("Refusing to skip: no rebase spec");
+      VcsNotifier.getInstance(project).notifyError("Can't Continue Rebase", "No rebase in progress");
+    }
   }
 
   /**
-   * Abort the ongoing rebase process in the {@code repositoryToAbort},
-   * and optionally rollback rebase which has already successfully completed in some other repositories.
-   *
-   * @param repositoryToAbort      Repository to perform {@code git rebase --abort}.
-   * @param repositoriesToRollback Repositories to rollback the successful rebase, together with commit hashes which were HEAD revisions
-   *                               before that successful rebase started - these are the revisions which the method will rollback to
-   *                               via {@code git reset --keep}.
+   * Automatically detects the ongoing rebase process in the project and abort it.
+   * Optionally rollbacks repositories which were already rebased during that detected multi-root rebase process.
+   * <p/>
+   * Does nothing if no information about ongoing rebase is available, or if this information has become obsolete.
    */
-  public static void abort(@NotNull final Project project,
-                           @Nullable final GitRepository repositoryToAbort,
-                           @NotNull final Map<GitRepository, String> repositoriesToRollback,
-                           @NotNull ProgressIndicator progressIndicator) {
-    new GitAbortRebaseProcess(project, repositoryToAbort, repositoriesToRollback, progressIndicator, null).abortWithConfirmation();
+  public static void abort(@NotNull Project project, @NotNull ProgressIndicator indicator) {
+    GitRebaseSpec spec = GitUtil.getRepositoryManager(project).getOngoingRebaseSpec();
+    if (spec != null) {
+      new GitAbortRebaseProcess(project, spec.getOngoingRebase(), spec.getHeadPositionsToRollback(), spec.getInitialBranchNames(),
+                                indicator, spec.getSaver()).abortWithConfirmation();
+    }
+    else {
+      LOG.warn("Refusing to abort: no rebase spec");
+      VcsNotifier.getInstance(project).notifyError("Can't Abort Rebase", "No rebase in progress");
+    }
+  }
+
+  /**
+   * Abort the ongoing rebase process in the given repository.
+   */
+  public static void abort(@NotNull final Project project, @Nullable final GitRepository repository, @NotNull ProgressIndicator indicator) {
+    new GitAbortRebaseProcess(project, repository, Collections.<GitRepository, String>emptyMap(),
+                              Collections.<GitRepository, String>emptyMap(), indicator, null).abortWithConfirmation();
   }
 
   private static boolean isRebaseAllowed(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
@@ -213,6 +270,16 @@ public class GitRebaseUtils {
   @NotNull
   private static String toPast(@NotNull String word) {
     return word.endsWith("e") ? word + "d" : word + "ed";
+  }
+
+  @NotNull
+  public static Collection<GitRepository> getRebasingRepositories(@NotNull Project project) {
+    return ContainerUtil.filter(GitUtil.getRepositories(project), new Condition<GitRepository>() {
+      @Override
+      public boolean value(@NotNull GitRepository repository) {
+        return repository.getState() == Repository.State.REBASING;
+      }
+    });
   }
 
   /**

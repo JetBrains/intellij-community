@@ -186,6 +186,7 @@ class GitBranchPopupActions {
         new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
         new RebaseAction(myProject, myRepositories, myBranchName),
+        new CheckoutWithRebaseAction(myProject, myRepositories, myBranchName),
         new MergeAction(myProject, myRepositories, myBranchName, true),
         new DeleteAction(myProject, myRepositories, myBranchName)
       };
@@ -398,7 +399,6 @@ class GitBranchPopupActions {
   }
 
   private static class RebaseAction extends DumbAwareAction {
-
     private final Project myProject;
     private final List<GitRepository> myRepositories;
     private final String myBranchName;
@@ -415,6 +415,27 @@ class GitBranchPopupActions {
       GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
       brancher.rebase(myRepositories, myBranchName);
       reportUsage("git.branch.rebase");
+    }
+  }
+
+  private static class CheckoutWithRebaseAction extends DumbAwareAction {
+    private final Project myProject;
+    private final List<GitRepository> myRepositories;
+    private final String myBranchName;
+
+    public CheckoutWithRebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
+      super("Checkout with Rebase", "Checkout the given branch, and rebase it on current branch in one step, " +
+                                    "just like `git rebase " + branchName + " HEAD would do.", null);
+      myProject = project;
+      myRepositories = repositories;
+      myBranchName = branchName;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+      brancher.rebaseOnCurrent(myRepositories, myBranchName);
+      reportUsage("git.branch.checkout.with.rebase");
     }
   }
 }

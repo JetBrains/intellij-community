@@ -34,8 +34,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
@@ -62,24 +62,17 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
   private Set<VirtualFile> myPluginRoots = Collections.emptySet();
 
-  private long myModificationCount = 0;
-
   private boolean myOutOfModuleDirectoryCreatedActionAdded;
 
   public static boolean ourGrailsTestFlag;
 
-  private final ModificationTracker myModificationTracker = new ModificationTracker() {
-    @Override
-    public long getModificationCount() {
-      return myModificationCount;
-    }
-  };
+  private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
   public MvcModuleStructureSynchronizer(Project project) {
     super(project);
   }
 
-  public ModificationTracker getFileAndRootsModificationTracker() {
+  public SimpleModificationTracker getFileAndRootsModificationTracker() {
     return myModificationTracker;
   }
 
@@ -89,7 +82,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
-        myModificationCount++;
+        myModificationTracker.incModificationCount();
         queue(SyncAction.SyncLibrariesInPluginsModule, myProject);
         queue(SyncAction.UpgradeFramework, myProject);
         queue(SyncAction.CreateAppStructureIfNeeded, myProject);
@@ -110,7 +103,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileAdapter() {
       @Override
       public void fileCreated(@NotNull final VirtualFileEvent event) {
-        myModificationCount++;
+        myModificationTracker.incModificationCount();
 
         final VirtualFile file = event.getFile();
         final String fileName = event.getFileName();
@@ -186,7 +179,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
-        myModificationCount++;
+        myModificationTracker.incModificationCount();
 
         final VirtualFile file = event.getFile();
         if (isLibDirectory(file) || isLibDirectory(event.getParent())) {
@@ -204,13 +197,13 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
       @Override
       public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-        myModificationCount++;
+        myModificationTracker.incModificationCount();
       }
 
       @Override
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
-          myModificationCount++;
+          myModificationTracker.incModificationCount();
         }
       }
     }));
@@ -334,7 +327,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
   @TestOnly
   public static void forceUpdateProject(Project project) {
     MvcModuleStructureSynchronizer instance = project.getComponent(MvcModuleStructureSynchronizer.class);
-    instance.myModificationCount++;
+    instance.getFileAndRootsModificationTracker().incModificationCount();
     instance.runActions(instance.computeRawActions(instance.takeOrderSnapshot()));
   }
 

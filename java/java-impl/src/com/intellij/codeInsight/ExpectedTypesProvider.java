@@ -337,17 +337,20 @@ public class ExpectedTypesProvider {
         type = ((PsiAnnotationMethod)parent).getReturnType();
       }
       if (type instanceof PsiArrayType) {
-        myResult.add(createInfoImpl(((PsiArrayType)type).getComponentType(), type));
+        final PsiType componentType = ((PsiArrayType)type).getComponentType();
+        myResult.add(createInfoImpl(componentType, componentType));
       }
     }
 
     @Override public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
       final PsiType type = getAnnotationMethodType(pair);
       if (type == null) return;
-      myResult.add(createInfoImpl(type, type));
       if (type instanceof PsiArrayType) {
         PsiType componentType = ((PsiArrayType)type).getComponentType();
         myResult.add(createInfoImpl(componentType, componentType));
+      }
+      else {
+        myResult.add(createInfoImpl(type, type));
       }
     }
 

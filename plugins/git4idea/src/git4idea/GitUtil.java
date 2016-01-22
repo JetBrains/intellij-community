@@ -1027,4 +1027,19 @@ public class GitUtil {
     if (repositories.isEmpty()) return "";
     return " in " + joinShortNames(repositories, limit);
   }
+
+  public static void updateRepositories(@NotNull Collection<GitRepository> repositories) {
+    for (GitRepository repository : repositories) {
+      repository.update();
+    }
+  }
+
+  public static boolean hasGitRepositories(@NotNull Project project) {
+    return !getRepositories(project).isEmpty();
+  }
+
+  @NotNull
+  public static Collection<GitRepository> getRepositories(@NotNull Project project) {
+    return getRepositoryManager(project).getRepositories();
+  }
 }

@@ -204,7 +204,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
       List<LineFragment> lineFragments = null;
       if (getHighlightPolicy().isShouldCompare()) {
-        lineFragments = DiffUtil.compare(texts[0], texts[1], getDiffConfig(), indicator);
+        lineFragments = DiffUtil.compare(myRequest, texts[0], texts[1], getDiffConfig(), indicator);
       }
 
       boolean isEqualContents = (lineFragments == null || lineFragments.isEmpty()) &&

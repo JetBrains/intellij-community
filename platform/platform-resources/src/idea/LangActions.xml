@@ -288,6 +288,8 @@
       <separator/>
       <action id="MoveStatementDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementDownAction"/>
       <action id="MoveStatementUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementUpAction"/>
+      <action id="MoveStatementLeft" class="com.intellij.codeInsight.editorActions.moveLeftRight.MoveStatementLeftAction"/>
+      <action id="MoveStatementRight" class="com.intellij.codeInsight.editorActions.moveLeftRight.MoveStatementRightAction"/>
       <action id="MoveLineDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveLineDownAction"/>
       <action id="MoveLineUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveLineUpAction"/>
       <separator/>

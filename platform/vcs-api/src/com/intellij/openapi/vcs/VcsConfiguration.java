@@ -142,9 +142,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
 
   public Map<String, ChangeBrowserSettings> CHANGE_BROWSER_SETTINGS = new HashMap<String, ChangeBrowserSettings>();
 
-  public float FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION = 0.8f;
-  public float FILE_HISTORY_DIALOG_SPLITTER_PROPORTION = 0.5f;
-
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;
   public boolean UPDATE_FILTER_BY_SCOPE = false;

@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.notification.impl.NotificationsConfigurable;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,6 +92,18 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
         }
       });
     myActions.add(myCloseButton);
+
+    layoutData.showActions = new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        for (BalloonImpl.ActionButton action : myActions) {
+          if (!action.isShowing() || !action.hasPaint()) {
+            return Boolean.FALSE;
+          }
+        }
+        return Boolean.TRUE;
+      }
+    };
   }
 
   @NotNull
@@ -111,6 +124,10 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
       Dimension size = mySettingButton.getPreferredSize();
       mySettingButton.setBounds(x - size.width - 12, y, size.width, size.height);
     }
+  }
+
+  public static int getCloseOffset() {
+    return AllIcons.Ide.Notification.Close.getIconWidth() + 6;
   }
 
   @NotNull

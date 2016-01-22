@@ -939,10 +939,15 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
     public void showHint(@NotNull LightweightHint hint) {
       final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-      Point p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, HintManager.ABOVE);
+      short constraint = HintManager.ABOVE;
+      Point p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, constraint);
+      if (p.y - hint.getComponent().getPreferredSize().height < 0) {
+        constraint = HintManager.UNDER;
+        p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, constraint);
+      }
       hintManager.showEditorHint(hint, myEditor, p,
                                  HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING,
-                                 0, false, HintManagerImpl.createHintHint(myEditor, p,  hint, HintManager.ABOVE).setContentActive(false));
+                                 0, false, HintManagerImpl.createHintHint(myEditor, p,  hint, constraint).setContentActive(false));
     }
   }
 

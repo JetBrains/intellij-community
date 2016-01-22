@@ -28,7 +28,7 @@ import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.Future;
@@ -299,7 +299,8 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     return mySettings.isShowBranchesPanel();
   }
 
-  public Component getToolbar() {
+  @NotNull
+  public JComponent getToolbar() {
     return myMainFrame.getToolbar();
   }
 

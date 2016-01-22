@@ -19,6 +19,7 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
@@ -28,10 +29,10 @@ import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
-
 /**
  * @author peter
  */
@@ -450,6 +451,24 @@ class AwsService {
   private def addGdsl(String text) {
     final PsiFile file = myFixture.addFileToProject("Enhancer.gdsl", text)
     GroovyDslFileIndex.activate(file.virtualFile)
+  }
+
+  public void "test performance of resolving methods with many siblings"() {
+    int methodCount = 50000
+    int refCount = 5000
+    myFixture.addClass("""class Foo {
+${(1..methodCount).collect({"void foo${it}() {}"}).join("\n")}
+}""")
+    String text = """
+Foo f = new Foo()
+${(1..refCount).collect({ "f.foo$it()" }).join("\n")}
+"""
+    PlatformTestUtil.startPerformanceTest('many siblings', 1000, {
+      myFixture.configureByText('a.groovy', text)
+      for (ref in SyntaxTraverser.psiTraverser(myFixture.file).filter(GrReferenceElement)) {
+        assert ref.resolve() : ref.text
+      }
+    }).cpuBound().attempts(2).assertTiming()
   }
 
 }

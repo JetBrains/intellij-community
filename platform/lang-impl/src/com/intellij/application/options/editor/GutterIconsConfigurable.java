@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Dmitry Avdeev
  */
-public class GutterIconsConfigurable implements Configurable {
+public class GutterIconsConfigurable implements Configurable, Configurable.NoScroll {
   private JPanel myPanel;
   private CheckBoxList<GutterIconDescriptor> myList;
   private List<GutterIconDescriptor> myDescriptors;

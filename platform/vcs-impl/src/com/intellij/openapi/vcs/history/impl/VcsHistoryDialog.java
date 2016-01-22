@@ -15,34 +15,37 @@
  */
 package com.intellij.openapi.vcs.history.impl;
 
-import com.intellij.diff.*;
-import com.intellij.diff.comparison.DiffTooBigException;
+import com.intellij.diff.Block;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestPanel;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.MessageDiffRequest;
+import com.intellij.diff.requests.NoDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.SortableColumnModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,134 +56,125 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
-public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
-  private final Editor myEditor;
-  private final int mySelectionStart;
-  private final int mySelectionEnd;
+import static com.intellij.util.ObjectUtils.notNull;
 
-  // todo equals???
-  private final Map<VcsFileRevision, Block> myRevisionToContentMap = new HashMap<VcsFileRevision, Block>();
-
+public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.impl.VcsHistoryDialog");
-  private final AbstractVcs myActiveVcs;
-
-  private final DiffRequestPanel myDiffPanel;
-  private final Project myProject;
 
   private static final ColumnInfo REVISION = new ColumnInfo(VcsBundle.message("column.name.revision.version")) {
+    @Override
     public Object valueOf(Object object) {
       return ((VcsFileRevision)object).getRevisionNumber();
     }
-
   };
 
   private static final ColumnInfo DATE = new ColumnInfo(VcsBundle.message("column.name.revision.list.date")) {
+    @Override
     public Object valueOf(Object object) {
       Date date = ((VcsFileRevision)object).getRevisionDate();
       if (date == null) return "";
       return DateFormatUtil.formatPrettyDateTime(date);
     }
-
   };
 
   private static final ColumnInfo MESSAGE = new ColumnInfo(VcsBundle.message("column.name.revision.list.message")) {
+    @Override
     public Object valueOf(Object object) {
       return ((VcsFileRevision)object).getCommitMessage();
     }
-
   };
 
   private static final ColumnInfo AUTHOR = new ColumnInfo(VcsBundle.message("column.name.revision.list.author")) {
+    @Override
     public Object valueOf(Object object) {
       return ((VcsFileRevision)object).getAuthor();
     }
-
   };
-
   private static final ColumnInfo[] COLUMNS = new ColumnInfo[]{REVISION, DATE, AUTHOR, MESSAGE};
 
-  private final TableView myList;
-  protected final List<VcsFileRevision> myRevisions;
-  private final Splitter mySplitter;
+  private static final float DIFF_SPLITTER_PROPORTION = 0.5f;
+  private static final float COMMENTS_SPLITTER_PROPORTION = 0.8f;
+  private static final String DIFF_SPLITTER_PROPORTION_KEY = "file.history.selection.diff.splitter.proportion";
+  private static final String COMMENTS_SPLITTER_PROPORTION_KEY = "file.history.selection.comments.splitter.proportion";
+
+  private static final Block EMPTY_BLOCK = new Block("", 0, 0);
+
+  private final Project myProject;
   private final VirtualFile myFile;
-  private final JCheckBox myChangesOnlyCheckBox = new JCheckBox(VcsBundle.message("checkbox.show.changed.revisions.only"));
+  private final Editor myEditor;
+  private final AbstractVcs myActiveVcs;
   private final CachedRevisionsContents myCachedContents;
-  private final JTextArea myComments = new JTextArea();
-  private static final int CURRENT = 0;
-  private boolean myIsInLoading = false;
+  private final int mySelectionStart;
+  private final int mySelectionEnd;
   @NonNls private final String myHelpId;
+
+  private final List<Block> myBlocks = new ArrayList<Block>();
+  private final List<VcsFileRevision> myRevisions = new ArrayList<VcsFileRevision>();
+
+  private final ListTableModel<VcsFileRevision> myListModel;
+  private final TableView<VcsFileRevision> myList;
+
+  private final Splitter mySplitter;
+  private final DiffRequestPanel myDiffPanel;
+  private final JCheckBox myChangesOnlyCheckBox = new JCheckBox(VcsBundle.message("checkbox.show.changed.revisions.only"));
+  private final JTextArea myComments = new JTextArea();
+
+  private boolean myIsDuringUpdate = false;
   private boolean myIsDisposed = false;
-  private final FileType myContentFileType;
 
   public VcsHistoryDialog(Project project,
-                          final VirtualFile file,
-                          Editor editor, final VcsHistoryProvider vcsHistoryProvider,
+                          VirtualFile file,
+                          Editor editor,
+                          VcsHistoryProvider vcsHistoryProvider,
                           VcsHistorySession session,
                           AbstractVcs vcs,
                           int selectionStart,
                           int selectionEnd,
-                          final String title, final CachedRevisionsContents cachedContents){
-    super(project, true);
+                          String title,
+                          CachedRevisionsContents cachedContents) {
+    super(project);
     myProject = project;
+    myFile = file;
     myEditor = editor;
+    myActiveVcs = vcs;
+    myCachedContents = cachedContents;
     mySelectionStart = selectionStart;
     mySelectionEnd = selectionEnd;
-    myCachedContents = cachedContents;
-    setTitle(title);
-    myActiveVcs = vcs;
-    myRevisions = new ArrayList<VcsFileRevision>();
-    myFile = file;
-    String helpId = vcsHistoryProvider.getHelpId();
-    myHelpId = helpId != null ? helpId : "reference.dialogs.vcs.selection.history";
-    final VcsDependentHistoryComponents components = vcsHistoryProvider.getUICustomization(session, getRootPane());
-    myList = new TableView(new ListTableModel(createColumns(components.getColumns())));
-    ((SortableColumnModel)myList.getModel()).setSortable(false);
+    myHelpId = notNull(vcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history");
+
+    JRootPane rootPane = ((RootPaneContainer)getFrame()).getRootPane();
+    final VcsDependentHistoryComponents components = vcsHistoryProvider.getUICustomization(session, rootPane);
+
+    ColumnInfo[] additionalColumns = notNull(components.getColumns(), ColumnInfo.EMPTY_ARRAY);
+    myListModel = new ListTableModel<VcsFileRevision>(ArrayUtil.mergeArrays(COLUMNS, additionalColumns));
+    myListModel.setSortable(false);
+    myList = new TableView<VcsFileRevision>(myListModel);
 
     myList.getEmptyText().setText(VcsBundle.message("history.empty"));
 
-    myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, getDisposable(), getWindow());
+    myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, this, getFrame());
 
+    myRevisions.add(new CurrentRevision(file, VcsRevisionNumber.LOCAL));
     myRevisions.addAll(session.getRevisionList());
-    final VcsRevisionNumber currentRevisionNumber = session.getCurrentRevisionNumber();
-    if (currentRevisionNumber != null) {
-      myRevisions.add(new CurrentRevision(file, currentRevisionNumber));
-    }
-    Collections.sort(myRevisions, new Comparator<VcsFileRevision>() {
-      public int compare(VcsFileRevision rev1, VcsFileRevision rev2){
-        return VcsHistoryUtil.compare(rev1, rev2);
-      }
-    });
-    Collections.reverse(myRevisions);
 
-    myContentFileType = file.getFileType();
+    myBlocks.addAll(Collections.<Block>nCopies(myRevisions.size(), null));
 
-    final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
-
-    mySplitter = new Splitter(true, getVcsConfiguration().FILE_HISTORY_DIALOG_SPLITTER_PROPORTION);
+    mySplitter = new JBSplitter(true, DIFF_SPLITTER_PROPORTION_KEY, DIFF_SPLITTER_PROPORTION);
 
     mySplitter.setFirstComponent(myDiffPanel.getComponent());
     mySplitter.setSecondComponent(createBottomPanel(components.getDetailsComponent()));
 
-    mySplitter.addPropertyChangeListener(new PropertyChangeListener() {
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
-          getVcsConfiguration().FILE_HISTORY_DIALOG_SPLITTER_PROPORTION
-          = ((Float)evt.getNewValue()).floatValue();
-        }
-      }
-    });
-
-
     final ListSelectionListener selectionListener = new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         final VcsFileRevision revision;
         if (myList.getSelectedRowCount() == 1 && !myList.isEmpty()) {
-          revision = (VcsFileRevision)myList.getItems().get(myList.getSelectedRow());
+          revision = myList.getItems().get(myList.getSelectedRow());
           myComments.setText(revision.getCommitMessage());
           myComments.setCaretPosition(0);
         }
@@ -196,73 +190,38 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     };
     myList.getSelectionModel().addListSelectionListener(selectionListener);
 
+    final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
     myChangesOnlyCheckBox.setSelected(configuration.SHOW_ONLY_CHANGED_IN_SELECTION_DIFF);
-    try {
-      updateRevisionsList();
-    }
-    catch (final VcsException e) {
-      // todo test it, always exception
-      canNotLoadRevisionMessage(e);
-    }
     myChangesOnlyCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         configuration.SHOW_ONLY_CHANGED_IN_SELECTION_DIFF = myChangesOnlyCheckBox.isSelected();
-        try {
-          updateRevisionsList();
-        }
-        catch (VcsException e1) {
-          canNotLoadRevisionMessage(e1);
-        }
+        updateRevisionsList();
       }
     });
 
-    init();
+    updateRevisionsList();
+    myList.getSelectionModel().setSelectionInterval(0, 0);
 
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (! VcsHistoryDialog.this.isShowing()) return;
-        myList.getSelectionModel().addSelectionInterval(0, 0);
-      }
-    });
-
-    setTitle(VcsBundle.message("dialog.title.history.for.file", file.getName()));
+    setTitle(title);
+    setComponent(mySplitter);
+    setPreferredFocusedComponent(myList);
+    setDimensionKey("VCS.FileHistoryDialog");
+    closeOnEsc();
   }
 
   private void canNotLoadRevisionMessage(final VcsException e) {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (! VcsHistoryDialog.this.isShowing()) return;
-        PopupUtil.showBalloonForComponent(VcsHistoryDialog.this.getRootPane(), canNoLoadMessage(e), MessageType.ERROR, true, myProject);
+        if (!VcsHistoryDialog.this.getFrame().isShowing()) return;
+        PopupUtil.showBalloonForComponent(VcsHistoryDialog.this.getFrame(), canNoLoadMessage(e), MessageType.ERROR, true, myProject);
       }
     });
   }
 
   private String canNoLoadMessage(VcsException e) {
     return "Can not load revision contents: " + e.getMessage();
-  }
-
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myList;
-  }
-
-  public void show() {
-    myList.getSelectionModel().setSelectionInterval(0, 0);
-    super.show();
-  }
-
-  private static ColumnInfo[] createColumns(ColumnInfo[] additionalColumns) {
-    if (additionalColumns == null) {
-      return COLUMNS;
-    }
-
-    ColumnInfo[] result = new ColumnInfo[additionalColumns.length + COLUMNS.length];
-
-    System.arraycopy(COLUMNS, 0, result, 0, COLUMNS.length);
-    System.arraycopy(additionalColumns, 0, result, COLUMNS.length, additionalColumns.length);
-
-    return result;
   }
 
   protected String getContentOf(VcsFileRevision revision) throws VcsException {
@@ -273,117 +232,150 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     myCachedContents.loadContentsFor(revisions);
   }
 
-  private void updateRevisionsList() throws VcsException {
-    if (myIsInLoading) return;
-    if (myChangesOnlyCheckBox.isSelected()) {
-      loadContentsFor(myRevisions.toArray(new VcsFileRevision[myRevisions.size()]));
-      try {
-        ((ListTableModel)myList.getModel()).setItems(filteredRevisions());
-      }
-      catch (FilesTooBigForDiffException e) {
-        myChangesOnlyCheckBox.setEnabled(false);
-        myChangesOnlyCheckBox.setSelected(false);
-        setErrorText(e.getMessage());
-        ((ListTableModel)myList.getModel()).setItems(myRevisions);
-      }
-      ((ListTableModel)myList.getModel()).fireTableDataChanged();
-      updateDiff(0, 0);
+  private void updateRevisionsList() {
+    if (myIsDuringUpdate) return;
+    try {
+      myIsDuringUpdate = true;
 
+      List<VcsFileRevision> newItems;
+      if (myChangesOnlyCheckBox.isSelected()) {
+        try {
+          loadContentsFor(myRevisions.toArray(new VcsFileRevision[myRevisions.size()]));
+          newItems = filteredRevisions();
+        }
+        catch (final VcsException e) {
+          // todo test it, always exception
+          canNotLoadRevisionMessage(e);
+          return;
+        }
+      }
+      else {
+        newItems = myRevisions;
+      }
+
+      List<VcsFileRevision> oldSelection = getSelectedRevisions();
+
+      myListModel.setItems(newItems);
+
+      myList.setSelection(oldSelection);
+      if (myList.getSelectedRowCount() == 0) {
+        int index = getNearestVisibleRevision(ContainerUtil.getFirstItem(oldSelection));
+        myList.getSelectionModel().setSelectionInterval(index, index);
+      }
     }
-    else {
-      ((ListTableModel)myList.getModel()).setItems(myRevisions);
-      ((ListTableModel)myList.getModel()).fireTableDataChanged();
+    finally {
+      myIsDuringUpdate = false;
     }
 
+    updateDiff();
   }
 
-  private List<VcsFileRevision> filteredRevisions() throws FilesTooBigForDiffException, VcsException {
-    ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
-    VcsFileRevision nextRevision = myRevisions.get(myRevisions.size() - 1);
-    result.add(nextRevision);
-    for (int i = myRevisions.size() - 2; i >= 0; i--) {
-      VcsFileRevision vcsFileRevision = myRevisions.get(i);
-      if (getContentToShow(nextRevision).equals(getContentToShow(vcsFileRevision))) continue;
-      result.add(vcsFileRevision);
-      nextRevision = vcsFileRevision;
+  @NotNull
+  private List<VcsFileRevision> getSelectedRevisions() {
+    int minIndex = myList.getSelectionModel().getMinSelectionIndex();
+    int maxIndex = myList.getSelectionModel().getMaxSelectionIndex();
+    VcsFileRevision minRevision = minIndex != -1 ? myList.getRow(minIndex) : null;
+    VcsFileRevision maxRevision = maxIndex != -1 ? myList.getRow(maxIndex) : null;
+    int startIndex = myRevisions.indexOf(minRevision);
+    int endIndex = myRevisions.indexOf(maxRevision);
+
+    return startIndex != -1 && endIndex != -1 ?
+           myRevisions.subList(startIndex, endIndex + 1) :
+           Collections.<VcsFileRevision>emptyList();
+  }
+
+  private int getNearestVisibleRevision(@Nullable VcsFileRevision anchor) {
+    int anchorIndex = myRevisions.indexOf(anchor);
+    if (anchorIndex == -1) return 0;
+
+    for (int i = anchorIndex - 1; i > 0; i--) {
+      int index = myListModel.indexOf(myRevisions.get(i));
+      if (index != -1) return index;
     }
+    return 0;
+  }
+
+  private List<VcsFileRevision> filteredRevisions() throws VcsException {
+    ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
+
+    int firstRevision;
+    for (firstRevision = myRevisions.size() - 1; firstRevision > 0; firstRevision--) {
+      if (getBlock(firstRevision) != EMPTY_BLOCK) break;
+    }
+
+    result.add(myRevisions.get(firstRevision));
+
+    for (int i = firstRevision - 1; i >= 0; i--) {
+      Block block1 = getBlock(i + 1);
+      Block block2 = getBlock(i);
+      if (orderedEquals(block1.getLines(), block2.getLines())) continue;
+      result.add(myRevisions.get(i));
+    }
+
     Collections.reverse(result);
     return result;
   }
 
-  private synchronized void updateDiff() {
-    if (myList.isEmpty()) return;
-    int[] selectedIndices = myList.getSelectedRows();
-    if (selectedIndices.length == 0) {
-      updateDiff(CURRENT, CURRENT);
+  private void updateDiff() {
+    if (myIsDisposed || myIsDuringUpdate) return;
+    List<VcsFileRevision> selected = myList.getSelectedObjects();
+    if (selected.isEmpty()) {
+      myDiffPanel.setRequest(NoDiffRequest.INSTANCE);
     }
-    else if (selectedIndices.length == 1) {
-      updateDiff(selectedIndices[0], CURRENT);
+    else if (selected.size() == 1) {
+      VcsFileRevision revision = selected.get(0);
+      int index = myRevisions.indexOf(revision);
+      myDiffPanel.setRequest(createDiffRequest(index + 1, index));
     }
     else {
-      updateDiff(selectedIndices[selectedIndices.length - 1], selectedIndices[0]);
+      VcsFileRevision revision1 = selected.get(0);
+      VcsFileRevision revision2 = selected.get(selected.size() - 1);
+      myDiffPanel.setRequest(createDiffRequest(myRevisions.indexOf(revision2) + 1, myRevisions.indexOf(revision1)));
     }
-  }
-
-  private synchronized void updateDiff(int first, int second) {
-    if (myIsDisposed || myIsInLoading) return;
-    List items = ((ListTableModel)myList.getModel()).getItems();
-    VcsFileRevision firstRev = (VcsFileRevision)items.get(first);
-    VcsFileRevision secondRev = (VcsFileRevision)items.get(second);
-
-    if (VcsHistoryUtil.compare(firstRev, secondRev) > 0) {
-      VcsFileRevision tmp = firstRev;
-      firstRev = secondRev;
-      secondRev = tmp;
-    }
-
-    if (myIsDisposed) return;
-
-    DiffRequest diffRequest = createDiffRequest(firstRev, secondRev);
-    myDiffPanel.setRequest(diffRequest);
   }
 
   @NotNull
-  private DiffRequest createDiffRequest(@NotNull VcsFileRevision firstRev, @NotNull VcsFileRevision secondRev) {
+  private DiffRequest createDiffRequest(int revIndex1, int revIndex2) {
     try {
-      DiffContent content1 = DiffContentFactory.getInstance().create(getContentToShow(firstRev), myContentFileType);
-      DiffContent content2 = DiffContentFactory.getInstance().create(getContentToShow(secondRev), myContentFileType);
+      int count = myRevisions.size();
+      if (revIndex1 == count && revIndex2 == count) return NoDiffRequest.INSTANCE;
 
-      String title1 = VcsBundle.message("diff.content.title.revision.number", firstRev.getRevisionNumber());
-      String title2 = VcsBundle.message("diff.content.title.revision.number", secondRev.getRevisionNumber());
-
+      DiffContent content1 = createDiffContent(revIndex1);
+      DiffContent content2 = createDiffContent(revIndex2);
+      String title1 = createDiffContentTitle(revIndex1);
+      String title2 = createDiffContentTitle(revIndex2);
       return new SimpleDiffRequest(null, content1, content2, title1, title2);
     }
     catch (VcsException e) {
-      canNotLoadRevisionMessage(e);
       return new MessageDiffRequest(canNoLoadMessage(e));
-    }
-    catch (FilesTooBigForDiffException e) {
-      return new MessageDiffRequest(DiffTooBigException.MESSAGE);
     }
   }
 
-  public synchronized void dispose() {
+  @Nullable
+  private String createDiffContentTitle(int index) {
+    if (index >= myRevisions.size()) return null;
+    return VcsBundle.message("diff.content.title.revision.number", myRevisions.get(index).getRevisionNumber());
+  }
+
+  @NotNull
+  private DiffContent createDiffContent(int index) throws VcsException {
+    if (index >= myRevisions.size()) return DiffContentFactory.getInstance().createEmpty();
+    if (getBlock(index) == EMPTY_BLOCK) return DiffContentFactory.getInstance().createEmpty();
+    return DiffContentFactory.getInstance().create(getBlock(index).getBlockContent(), myFile.getFileType());
+  }
+
+  @Override
+  public void dispose() {
     myIsDisposed = true;
     super.dispose();
   }
 
   private JComponent createBottomPanel(final JComponent addComp) {
-    Splitter splitter = new Splitter(true, getVcsConfiguration()
-                                           .FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION);
+    JBSplitter splitter = new JBSplitter(true, COMMENTS_SPLITTER_PROPORTION_KEY, COMMENTS_SPLITTER_PROPORTION);
     splitter.setDividerWidth(4);
 
-    splitter.addPropertyChangeListener(new PropertyChangeListener() {
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
-          getVcsConfiguration().FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION
-          = ((Float)evt.getNewValue()).floatValue();
-        }
-      }
-    });
-
     JPanel tablePanel = new JPanel(new BorderLayout());
-    tablePanel.add(createTablePanel(), BorderLayout.CENTER);
+    tablePanel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
     tablePanel.add(myChangesOnlyCheckBox, BorderLayout.NORTH);
 
     splitter.setFirstComponent(tablePanel);
@@ -392,18 +384,8 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     return splitter;
   }
 
-  private VcsConfiguration getVcsConfiguration() {
-    return myActiveVcs.getConfiguration();
-  }
-
   private JComponent createComments(final JComponent addComp) {
-    final Splitter splitter = new Splitter(false);
-    final JLabel label = new JLabel("Commit Message:") {
-      @Override
-      public Dimension getPreferredSize() {
-        return new Dimension(getWidth(), 21);
-      }
-    };
+    final JLabel label = new JLabel("Commit Message:");
 
     JPanel panel = new JPanel(new BorderLayout(4, 4));
     panel.add(label, BorderLayout.NORTH);
@@ -413,77 +395,69 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     myComments.setEditable(false);
     myComments.setLineWrap(true);
 
+    final Splitter splitter = new Splitter(false);
     splitter.setFirstComponent(panel);
     splitter.setSecondComponent(addComp);
     return splitter;
   }
 
-  private JComponent createTablePanel() {
-    return ScrollPaneFactory.createScrollPane(myList);
-  }
-
-  protected JComponent createCenterPanel() {
-    return mySplitter;
-  }
-
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(myHelpId);
-  }
-
-  @NotNull
-  protected Action[] createActions() {
-    Action okAction = getOKAction();
-    okAction.putValue(Action.NAME, VcsBundle.message("close.tab.action.name"));
-    if (myHelpId != null) {
-      return new Action[]{okAction, getHelpAction()};
-    }
-    else {
-      return new Action[]{okAction};
-    }
-  }
-
-  protected String getDimensionServiceKey() {
-    return "VCS.FileHistoryDialog";
-  }
-
+  @Override
   public Object getData(@NonNls String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
-    } else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
+    }
+    else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
       return myFile;
-    } else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
+    }
+    else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
       return myList.getSelectedObject();
-    } else if (VcsDataKeys.VCS.is(dataId)) {
+    }
+    else if (VcsDataKeys.VCS.is(dataId)) {
       return myActiveVcs.getKeyInstanceMethod();
+    }
+    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return myHelpId;
     }
     return null;
   }
 
-  protected String getContentToShow(VcsFileRevision revision) throws FilesTooBigForDiffException, VcsException {
-    final Block block = getBlock(revision);
-    if (block == null) return "";
-    return block.getBlockContent();
+  private void ensureBlocksCreated(int requiredIndex) throws VcsException {
+    for (int i = 0; i <= requiredIndex; i++) {
+      if (myBlocks.get(i) == null) {
+        myBlocks.set(i, createBlock(i));
+      }
+    }
   }
 
-  @Nullable
-  private Block getBlock(VcsFileRevision revision) throws FilesTooBigForDiffException, VcsException {
-    if (myRevisionToContentMap.containsKey(revision)) {
-      return myRevisionToContentMap.get(revision);
+  @NotNull
+  private Block createBlock(int index) throws VcsException {
+    if (index == 0) {
+      return new Block(myEditor.getDocument().getText(), mySelectionStart, mySelectionEnd + 1);
     }
 
-    final String revisionContent = getContentOf(revision);
-    if (revisionContent == null) return null;
+    Block previousBlock = myBlocks.get(index - 1);
+    if (previousBlock == EMPTY_BLOCK) return EMPTY_BLOCK;
 
-    int index = myRevisions.indexOf(revision);
-    Block blockByIndex = getBlock(index);
-    if (blockByIndex == null) return null;
+    String revisionContent = getContentOf(myRevisions.get(index));
+    if (revisionContent == null) return EMPTY_BLOCK;
 
-    myRevisionToContentMap.put(revision, new FindBlock(revisionContent, blockByIndex).getBlockInThePrevVersion());
-    return myRevisionToContentMap.get(revision);
+    Block newBlock = previousBlock.createPreviousBlock(revisionContent);
+    return newBlock.getStart() != newBlock.getEnd() ? newBlock : EMPTY_BLOCK;
   }
 
-  private Block getBlock(int index) throws FilesTooBigForDiffException, VcsException {
-    return index > 0 ? getBlock(myRevisions.get(index - 1)) : new Block(myEditor.getDocument().getText(), mySelectionStart, mySelectionEnd);
+  @NotNull
+  private Block getBlock(int index) throws VcsException {
+    if (myBlocks.get(index) == null) {
+      ensureBlocksCreated(index);
+    }
+    return myBlocks.get(index);
   }
 
+  private static boolean orderedEquals(@NotNull List data1, @NotNull List data2) {
+    if (data1.size() != data2.size()) return false;
+    for (int i = 0; i < data1.size(); i++) {
+      if (!Comparing.equal(data1.get(i), data2.get(i))) return false;
+    }
+    return true;
+  }
 }

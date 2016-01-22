@@ -36,7 +36,7 @@ import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
-import com.intellij.vcs.log.ui.tables.GraphTableModel;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +50,7 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-public class MainFrame extends JPanel implements TypeSafeDataProvider {
+public class MainFrame extends JPanel implements DataProvider {
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final VcsLogUiImpl myUI;
@@ -231,24 +231,25 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     }
   }
 
+  @Nullable
   @Override
-  public void calcData(DataKey key, DataSink sink) {
-    if (VcsLogDataKeys.VCS_LOG == key) {
-      sink.put(key, myLog);
+  public Object getData(@NonNls String dataId) {
+    if (VcsLogDataKeys.VCS_LOG.is(dataId)) {
+      return myLog;
     }
-    else if (VcsLogDataKeys.VCS_LOG_UI == key) {
-      sink.put(key, myUI);
+    else if (VcsLogDataKeys.VCS_LOG_UI.is(dataId)) {
+      return myUI;
     }
-    else if (VcsLogDataKeys.VCS_LOG_DATA_PROVIDER == key) {
-      sink.put(key, myLogDataHolder);
+    else if (VcsLogDataKeys.VCS_LOG_DATA_PROVIDER.is(dataId)) {
+      return myLogDataHolder;
     }
-    else if (VcsDataKeys.CHANGES == key || VcsDataKeys.SELECTED_CHANGES == key) {
-      sink.put(key, ArrayUtil.toObjectArray(myChangesBrowser.getCurrentDisplayedChanges(), Change.class));
+    else if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
+      return ArrayUtil.toObjectArray(myChangesBrowser.getCurrentDisplayedChanges(), Change.class);
     }
-    else if (VcsDataKeys.CHANGE_LISTS == key) {
+    else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       List<VcsFullCommitDetails> details = myUI.getVcsLog().getSelectedDetails();
-      if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return;
-      sink.put(key, ContainerUtil
+      if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      return ContainerUtil
         .map2Array(details, CommittedChangeListForRevision.class, new Function<VcsFullCommitDetails, CommittedChangeListForRevision>() {
           @Override
           public CommittedChangeListForRevision fun(@NotNull VcsFullCommitDetails details) {
@@ -256,28 +257,28 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
                                                       new Date(details.getCommitTime()), details.getChanges(),
                                                       convertToRevisionNumber(details.getId()));
           }
-        }));
+        });
     }
-    else if (VcsDataKeys.VCS_REVISION_NUMBERS == key) {
+    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
       List<CommitId> hashes = myUI.getVcsLog().getSelectedCommits();
-      if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return;
-      sink.put(key, ArrayUtil.toObjectArray(ContainerUtil.map(hashes, new Function<CommitId, VcsRevisionNumber>() {
+      if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      return ArrayUtil.toObjectArray(ContainerUtil.map(hashes, new Function<CommitId, VcsRevisionNumber>() {
         @Override
         public VcsRevisionNumber fun(CommitId commitId) {
           return convertToRevisionNumber(commitId.getHash());
         }
-      }), VcsRevisionNumber.class));
+      }), VcsRevisionNumber.class);
     }
-    else if (VcsDataKeys.VCS == key) {
+    else if (VcsDataKeys.VCS.is(dataId)) {
       List<CommitId> commits = myUI.getVcsLog().getSelectedCommits();
       Collection<VcsLogProvider> logProviders = myUI.getVcsLog().getLogProviders();
       if (logProviders.size() == 1) {
         if (!commits.isEmpty()) {
-          sink.put(key, myLogDataHolder.getLogProvider(assertNotNull(getFirstItem(commits)).getRoot()).getSupportedVcs());
+          return myLogDataHolder.getLogProvider(assertNotNull(getFirstItem(commits)).getRoot()).getSupportedVcs();
         }
-        return;
+        return null;
       }
-      if (commits.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return;
+      if (commits.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
 
       Set<VirtualFile> roots = ContainerUtil.map2Set(commits, new Function<CommitId, VirtualFile>() {
         @Override
@@ -286,9 +287,10 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         }
       });
       if (roots.size() == 1) {
-        sink.put(key, myLogDataHolder.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs());
+        return myLogDataHolder.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
       }
     }
+    return null;
   }
 
   @NotNull

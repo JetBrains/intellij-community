@@ -46,7 +46,7 @@ abstract class MyStaticMembersProcessor<T extends PsiMember> implements Processo
   protected abstract boolean isApplicable(T member, PsiElement place);
 
   @NotNull
-  public List<T> getMembersToImport() {
+  public List<T> getMembersToImport(boolean applicableOnly) {
     final List<T> list = new ArrayList<T>();
     final List<T> applicableList = new ArrayList<T>();
     for (Map.Entry<PsiClass, Collection<T>> methodEntry : mySuggestions.entrySet()) {
@@ -57,7 +57,7 @@ abstract class MyStaticMembersProcessor<T extends PsiMember> implements Processo
       registerMember(deprecatedMethod.getKey(), deprecatedMethod.getValue(), list, applicableList);
     }
 
-    List<T> result = applicableList.isEmpty() ? list : applicableList;
+    List<T> result = !applicableOnly && applicableList.isEmpty() ? list : applicableList;
     for (int i = result.size() - 1; i >= 0; i--) {
       ProgressManager.checkCanceled();
       T method = result.get(i);

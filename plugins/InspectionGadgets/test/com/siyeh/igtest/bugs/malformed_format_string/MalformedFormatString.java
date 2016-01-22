@@ -1,7 +1,8 @@
 package com.siyeh.igtest.bugs.malformed_format_string;
 
-import java.util.Locale;
 import java.sql.Timestamp;
+import java.util.Date;
+import java.util.Locale;
 
 public class MalformedFormatString {
 
@@ -90,5 +91,15 @@ public class MalformedFormatString {
         String.format("%-B", true); // left justify flag
         String.format("%,d", 34567890);
         System.out.printf("%tF %n", java.time.ZonedDateTime.now()); // java.time.temporal.TemporalAccessor, new in Java 8
+    }
+
+    void previousFlag() {
+        System.out.printf("%s %<s", "A");
+        System.out.printf(<warning descr="Illegal format string specifier '%<s'">"%<s"</warning>, "A");
+        System.out.printf("%tT %<tT", new Date());
+        System.out.printf("%b %<B", true);
+        System.out.printf("%h %<H", 15);
+        System.out.printf("%c %<C", '\u00A9');
+        System.out.printf("%o %<o", 15);
     }
 }

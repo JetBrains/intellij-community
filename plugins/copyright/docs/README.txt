@@ -217,7 +217,7 @@ $file.fileName           String   The current file's name
 $file.pathName           String   The current file's complete path and name
 $file.className          String   The current java file's classname
 $file.qualifiedClassName String   The current java file's fully qualified name
-$file.lastModified       DataInfo The date and time the file was last changed
+$file.lastModified       DateInfo The date and time the file was last changed
 $project.name            String   The current project's name
 $module.name             String   The current module's name
 $username                String   The user's name

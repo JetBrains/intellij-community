@@ -50,6 +50,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -515,8 +516,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
       pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
       pane.setPreferredSize(size);
 
-      // TODO bug: height before first expand/collapse less than the correct value
-
       expandAction = new LinkLabel<Void>(null, icon(AllIcons.Ide.Notification.Expand), new LinkListener<Void>() {
         @Override
         public void linkSelected(LinkLabel link, Void ignored) {
@@ -553,20 +552,20 @@ public class NotificationsManagerImpl extends NotificationsManager {
       expandAction.setHoveringIcon(icon(AllIcons.Ide.Notification.ExpandHover));
     }
 
-    LayoutManager layout;
-    if (actions.size() > 2 || expandAction != null) {
-      layout = new CenteredLayoutWithActions(gap, text, layoutData);
-    }
-    else {
-      layout = new BorderLayout(0, gap);
-    }
-
-    JPanel centerPanel = new NonOpaquePanel(layout);
-
+    JPanel centerPanel = new NonOpaquePanel(new CenteredLayoutWithActions(gap, text, layoutData));
     content.add(centerPanel, BorderLayout.CENTER);
 
     if (isTitle) {
-      JLabel title = new JLabel(NotificationsUtil.buildHtml(notification, style, false, foreground));
+      JLabel title = new JLabel(NotificationsUtil.buildHtml(notification, style, false, foreground)) {
+        @Override
+        protected void paintComponent(Graphics g) {
+          super.paintComponent(g);
+          if (layoutData.showActions.compute()) {
+            g.setColor(fillColor);
+            g.fillRect(getWidth() - 30, 0, 30, getHeight());
+          }
+        }
+      };
       title.setOpaque(false);
       if (UIUtil.isUnderNimbusLookAndFeel()) {
         title.setBackground(UIUtil.TRANSPARENT_COLOR);
@@ -632,7 +631,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static void createActionPanel(@NotNull Notification notification, @NotNull JPanel centerPanel) {
-    JPanel actionPanel = new NonOpaquePanel(new HorizontalLayout(ACTION_GAP));
+    JPanel actionPanel = new NonOpaquePanel(new HorizontalLayout(ACTION_GAP, SwingConstants.CENTER));
     centerPanel.add(BorderLayout.SOUTH, actionPanel);
 
     List<AnAction> actions = notification.getActions();
@@ -651,7 +650,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
             }
           }
           ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-          menu.getComponent().show(link, -10, link.getHeight() - 4); // TODO
+          menu.getComponent().show(link, -10, link.getHeight() + 2);
         }
       });
       action.setVisible(false);
@@ -806,7 +805,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     @Override
     public Dimension preferredLayoutSize(Container parent) {
-      return layoutSize(new Function<Component, Dimension>() {
+      return layoutSize(parent, new Function<Component, Dimension>() {
         @Override
         public Dimension fun(Component component) {
           return component.getPreferredSize();
@@ -816,7 +815,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     @Override
     public Dimension minimumLayoutSize(Container parent) {
-      return layoutSize(new Function<Component, Dimension>() {
+      return layoutSize(parent, new Function<Component, Dimension>() {
         @Override
         public Dimension fun(Component component) {
           return component.getMinimumSize();
@@ -824,7 +823,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       });
     }
 
-    private Dimension layoutSize(Function<Component, Dimension> size) {
+    private Dimension layoutSize(@NotNull Container parent, @NotNull Function<Component, Dimension> size) {
       Dimension titleSize = myTitleComponent == null ? new Dimension() : size.fun(myTitleComponent);
       Dimension centeredSize = myCenteredComponent == null ? new Dimension() : size.fun(myCenteredComponent);
 
@@ -848,7 +847,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
         width = 330;
       }
 
-      return new Dimension(width, height);
+      Dimension result = new Dimension(width, height);
+      JBInsets.addTo(result, parent.getInsets());
+      return result;
     }
 
     @Override
@@ -862,7 +863,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
       if (myTitleComponent != null) {
         int titleHeight = myTitleComponent.getPreferredSize().height;
-        myTitleComponent.setBounds(left, top, width, titleHeight);
+        myTitleComponent.setBounds(left, top, width - NotificationBalloonActionProvider.getCloseOffset(), titleHeight);
         top += titleHeight + myVerticalGap;
         height -= titleHeight + myVerticalGap;
       }

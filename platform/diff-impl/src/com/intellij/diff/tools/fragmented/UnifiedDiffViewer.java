@@ -266,7 +266,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         }
       });
 
-      final List<LineFragment> fragments = DiffUtil.compare(texts[0], texts[1], getDiffConfig(), indicator);
+      final List<LineFragment> fragments = DiffUtil.compare(myRequest, texts[0], texts[1], getDiffConfig(), indicator);
 
       final DocumentContent content1 = getContent1();
       final DocumentContent content2 = getContent2();

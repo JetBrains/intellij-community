@@ -570,18 +570,26 @@ public class DiffUtil {
   //
 
   @NotNull
-  public static List<LineFragment> compare(@NotNull CharSequence text1,
+  public static List<LineFragment> compare(@NotNull DiffRequest request,
+                                           @NotNull CharSequence text1,
                                            @NotNull CharSequence text2,
                                            @NotNull DiffConfig config,
                                            @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
 
+    DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
+
     List<LineFragment> fragments;
-    if (config.innerFragments) {
-      fragments = ComparisonManager.getInstance().compareLinesInner(text1, text2, config.policy, indicator);
+    if (diffComputer != null) {
+      fragments = diffComputer.compute(text1, text2, config.policy, config.innerFragments, indicator);
     }
     else {
-      fragments = ComparisonManager.getInstance().compareLines(text1, text2, config.policy, indicator);
+      if (config.innerFragments) {
+        fragments = ComparisonManager.getInstance().compareLinesInner(text1, text2, config.policy, indicator);
+      }
+      else {
+        fragments = ComparisonManager.getInstance().compareLines(text1, text2, config.policy, indicator);
+      }
     }
 
     indicator.checkCanceled();

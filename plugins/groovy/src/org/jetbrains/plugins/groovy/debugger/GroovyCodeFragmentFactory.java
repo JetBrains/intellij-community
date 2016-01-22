@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
@@ -331,9 +332,20 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
 
   @Override
   public boolean isContextAccepted(PsiElement context) {
-    return context != null && context.getLanguage().equals(GroovyLanguage.INSTANCE);
+    if (context != null) {
+      if (context.getLanguage().equals(GroovyLanguage.INSTANCE)) {
+        return true;
+      }
+      Project project = context.getProject();
+      if (JavaPsiFacade.getInstance(project)
+            .findClass("org.codehaus.groovy.control.CompilationUnit", GlobalSearchScope.allScope(project)) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
+  @NotNull
   @Override
   public LanguageFileType getFileType() {
     return GroovyFileType.GROOVY_FILE_TYPE;

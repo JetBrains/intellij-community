@@ -75,7 +75,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       public void run() {
         assert runningWriteActions == 0;
         if (application.isDisposed()) return;
-        assert !application.isWriteAccessAllowed();
+        assert !application.isWriteAccessAllowed() || application.isUnitTestMode(); // some crazy stuff happens in tests, e.g. UIUtil.dispatchInvocationEvents()
         application.addApplicationListener(new ApplicationAdapter() {
           @Override
           public void beforeWriteActionStart(Object action) {

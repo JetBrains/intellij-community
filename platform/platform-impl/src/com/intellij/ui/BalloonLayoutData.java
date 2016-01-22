@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 
 /**
  * @author Alexander Lobas
@@ -30,6 +31,7 @@ public class BalloonLayoutData {
 
   public Runnable closeAll;
   public Runnable doLayout;
+  public Computable<Boolean> showActions;
 
   public Project project;
 }

@@ -27,6 +27,8 @@ import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLocalInspectionTool {
   @NotNull
   @Override
@@ -53,12 +55,17 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
                 ((PsiCodeBlock)body).getStatements().length == 1) {
               return true;
             }
-            if (LambdaUtil.getReturnExpressions(expression).size() > 1) {
+            final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(expression);
+            if (returnExpressions.size() > 1) {
               return false;
             }
             final PsiElement callParent = ggParent.getParent();
+            if (returnExpressions.isEmpty()) {
+              return callParent instanceof PsiStatement;
+            }
             return callParent instanceof PsiStatement || 
-                   callParent instanceof PsiLocalVariable;
+                   callParent instanceof PsiLocalVariable ||
+                   callParent instanceof PsiExpression && PsiTreeUtil.getParentOfType(callParent, PsiStatement.class) != null;
           }
         });
       }

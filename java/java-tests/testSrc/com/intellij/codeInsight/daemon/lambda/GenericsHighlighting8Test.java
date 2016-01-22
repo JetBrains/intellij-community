@@ -954,4 +954,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testCheckUncheckedAssignmentDuringVariablesResaolution() throws Exception {
     doTest(true);
   }
+
+  public void testRetrieveInferenceErrorsFromContainingCallsIfCurrentDoesNotProvideAny() throws Exception {
+    doTest();
+  }
 }

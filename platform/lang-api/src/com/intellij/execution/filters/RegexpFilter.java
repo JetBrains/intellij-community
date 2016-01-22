@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ public class RegexpFilter implements Filter {
 
   @Override
   public Result applyFilter(String line, int entireLength) {
-    Matcher matcher = myPattern.matcher(line);
+    Matcher matcher = myPattern.matcher(StringUtil.newBombedCharSequence(line, 1000));
     if (!matcher.find()) {
       return null;
     }

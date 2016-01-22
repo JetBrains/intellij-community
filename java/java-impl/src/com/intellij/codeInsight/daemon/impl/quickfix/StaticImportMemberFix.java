@@ -70,11 +70,11 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
            && getQualifierExpression() == null
            && resolveRef() == null
            && file.getManager().isInProject(file)
-           && !(candidates == null ? candidates = getMembersToImport() : candidates).isEmpty()
+           && !(candidates == null ? candidates = getMembersToImport(false) : candidates).isEmpty()
       ;
   }
   
-  @NotNull protected abstract List<T> getMembersToImport();
+  @NotNull protected abstract List<T> getMembersToImport(boolean applicableOnly);
   @NotNull protected abstract QuestionAction createQuestionAction(List<T> methodsToImport, @NotNull Project project, Editor editor);
 
   @Nullable protected abstract PsiElement getElement();
@@ -87,7 +87,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        final List<T> methodsToImport = getMembersToImport();
+        final List<T> methodsToImport = getMembersToImport(false);
         if (methodsToImport.isEmpty()) return;
         createQuestionAction(methodsToImport, project, editor).execute();
       }
@@ -95,6 +95,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
   }
 
   private ImportClassFixBase.Result doFix(Editor editor) {
+    final List<T> candidates = getMembersToImport(true);
     if (candidates.isEmpty()) {
       return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
     }

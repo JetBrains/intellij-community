@@ -135,6 +135,11 @@ public interface GitBrancher {
   void rebase(@NotNull List<GitRepository> repositories, @NotNull String branchName);
 
   /**
+   * Call {@code git rebase <current branch> <branchName>} for each of the given repositories.
+   */
+  void rebaseOnCurrent(@NotNull List<GitRepository> repositories, @NotNull String branchName);
+
+  /**
    * What should be done after successful merging a branch: delete the merged branch, propose to delete or do nothing.
    */
   enum DeleteOnMergeOption {

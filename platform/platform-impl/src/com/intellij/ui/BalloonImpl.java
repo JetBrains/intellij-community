@@ -969,8 +969,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       return myComp.getPreferredSize();
     }
     if (myDefaultPrefSize == null) {
-      final EmptyBorder border = getPointlessBorder();
+      final EmptyBorder border = myShadowBorderProvider == null ? getPointlessBorder() : null;
       final MyComponent c = new MyComponent(myContent, this, border);
+      if (myShadowBorderProvider != null) {
+        c.setBorder(new EmptyBorder(getShadowBorderInsets()));
+      }
       myDefaultPrefSize = c.getPreferredSize();
     }
     return myDefaultPrefSize;
@@ -1402,7 +1405,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     @Override
     protected void paintComponent(Graphics g) {
       super.paintComponent(g);
-      if (getWidth() > 0 && myLastMoveWasInsideBalloon) {
+      if (hasPaint()) {
         if (myHoverIcon != null && myButton.isHovered()) {
           paintIcon(g, myHoverIcon);
         }
@@ -1410,6 +1413,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           paintIcon(g, myIcon);
         }
       }
+    }
+
+    public boolean hasPaint() {
+      return getWidth() > 0 && myLastMoveWasInsideBalloon;
     }
 
     protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon) {

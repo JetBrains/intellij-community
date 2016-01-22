@@ -199,7 +199,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (filter instanceof VcsLogBranchFilter) {
       myBranchFilterModel.setFilter((VcsLogBranchFilter)filter);
-      JComponent toolbar = myUi.getMainFrame().getToolbar();
+      JComponent toolbar = myUi.getToolbar();
       toolbar.revalidate();
       toolbar.repaint();
     }

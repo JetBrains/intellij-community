@@ -17,6 +17,7 @@ package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
@@ -385,7 +386,36 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     waitForExecution(queue);
 
     assertEquals(expected.toString(), actual.toString());
-
   }
 
+  public void testAddRequestsInPooledThreadDoNotExecuteConcurrently() throws InterruptedException {
+    int delay = 10;
+    MergingUpdateQueue queue = new MergingUpdateQueue("x", delay, true, null, getTestRootDisposable(), null, Alarm.ThreadToUse.POOLED_THREAD);
+    queue.setPassThrough(false);
+    CountDownLatch startedExecuting1 = new CountDownLatch(1);
+    CountDownLatch canContinue = new CountDownLatch(1);
+    queue.queue(new Update("1") {
+      @Override
+      public void run() {
+        startedExecuting1.countDown();
+        try {
+          canContinue.await();
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+    assertTrue(startedExecuting1.await(10, TimeUnit.SECONDS));
+    CountDownLatch startedExecuting2 = new CountDownLatch(1);
+    queue.queue(new Update("2") {
+      @Override
+      public void run() {
+        startedExecuting2.countDown();
+      }
+    });
+    TimeoutUtil.sleep(delay + 1000);
+    canContinue.countDown();
+    assertTrue(startedExecuting2.await(10, TimeUnit.SECONDS));
+  }
 }

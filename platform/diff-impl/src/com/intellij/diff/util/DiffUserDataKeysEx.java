@@ -15,10 +15,13 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.MergeTool;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
@@ -49,6 +52,16 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<LogicalPosition[]> EDITORS_CARET_POSITION = Key.create("Diff.EditorsCaretPosition");
 
   Key<DiffNavigationContext> NAVIGATION_CONTEXT = Key.create("Diff.NavigationContext");
+
+  interface DiffComputer {
+    @NotNull
+    List<LineFragment> compute(@NotNull CharSequence text1,
+                               @NotNull CharSequence text2,
+                               @NotNull ComparisonPolicy policy,
+                               boolean innerChanges,
+                               @NotNull ProgressIndicator indicator);
+  }
+  Key<DiffComputer> CUSTOM_DIFF_COMPUTER = Key.create("Diff.CustomDiffComputer");
 
   //
   // DiffContext

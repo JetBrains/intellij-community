@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.RetinaImage;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.ImageUtil;
@@ -498,7 +495,27 @@ public final class IconLoader {
             Icon realIcon = getRealIcon();
             int width = (int)(realIcon.getIconWidth() * scale);
             int height = (int)(realIcon.getIconHeight() * scale);
-            icon = getIcon(Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height));
+            boolean isMacRetina = false;
+
+            if (SystemInfo.isMac && UIUtil.isRetina()) {
+              if (image instanceof JBHiDPIScaledImage) {
+                Image hidpiImage = ((JBHiDPIScaledImage)image).getDelegate();
+
+                if (hidpiImage != null && hidpiImage.getWidth(null) == 2 * realIcon.getIconWidth()) {
+
+                  image = hidpiImage;
+                  width *= 2;
+                  height *= 2;
+                  isMacRetina = true;
+                }
+              }
+            }
+
+            BufferedImage resizedImage = Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
+            if (isMacRetina) {
+              resizedImage = new JBHiDPIScaledImage(resizedImage, resizedImage.getWidth() / 2, resizedImage.getHeight() / 2, resizedImage.getType());
+            }
+            icon = getIcon(resizedImage);
             scaledIconsCache.put(effectiveScale, new SoftReference<Icon>(icon));
           }
         }

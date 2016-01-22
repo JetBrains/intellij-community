@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class DataViewsConfigurableUi {
-  public static final String IDE_DEBUGGER_INLINE_KEY = "ide.debugger.inline";
   public static final String DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY = "debugger.valueTooltipAutoShow";
   public static final String DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_ON_SELECTION_KEY = "debugger.valueTooltipAutoShowOnSelection";
 
@@ -60,7 +59,7 @@ public class DataViewsConfigurableUi {
     return getValueTooltipDelay() != settings.getValueLookupDelay() ||
            sortAlphabeticallyCheckBox.isSelected() != settings.isSortValues() ||
            enableAutoExpressionsCheckBox.isSelected() != settings.isAutoExpressions() ||
-           myShowValuesInlineCheckBox.isSelected() != Registry.is(IDE_DEBUGGER_INLINE_KEY) ||
+           myShowValuesInlineCheckBox.isSelected() != settings.isShowValuesInline() ||
            myShowValueTooltipCheckBox.isSelected() != Registry.is(DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY) ||
            myShowValueTooltipOnCheckBox.isSelected() != Registry.is(DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_ON_SELECTION_KEY);
   }
@@ -69,7 +68,7 @@ public class DataViewsConfigurableUi {
     valueTooltipDelayTextField.setValue(settings.getValueLookupDelay());
     sortAlphabeticallyCheckBox.setSelected(settings.isSortValues());
     enableAutoExpressionsCheckBox.setSelected(settings.isAutoExpressions());
-    myShowValuesInlineCheckBox.setSelected(Registry.is(IDE_DEBUGGER_INLINE_KEY));
+    myShowValuesInlineCheckBox.setSelected(settings.isShowValuesInline());
     myShowValueTooltipCheckBox.setSelected(Registry.is(DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY));
     myShowValueTooltipOnCheckBox.setSelected(Registry.is(DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_ON_SELECTION_KEY));
     myTooltipLabel.setText(XDebuggerBundle.message("settings.tooltip.label", Registry.stringValue("ide.forcedShowTooltip")));
@@ -79,7 +78,7 @@ public class DataViewsConfigurableUi {
     settings.setValueLookupDelay(getValueTooltipDelay());
     settings.setSortValues(sortAlphabeticallyCheckBox.isSelected());
     settings.setAutoExpressions(enableAutoExpressionsCheckBox.isSelected());
-    Registry.get(IDE_DEBUGGER_INLINE_KEY).setValue(myShowValuesInlineCheckBox.isSelected());
+    settings.setShowValuesInline(myShowValuesInlineCheckBox.isSelected());
     Registry.get(DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY).setValue(myShowValueTooltipCheckBox.isSelected());
     Registry.get(DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_ON_SELECTION_KEY).setValue(myShowValueTooltipOnCheckBox.isSelected());
   }

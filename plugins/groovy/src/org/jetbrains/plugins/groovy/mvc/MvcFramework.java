@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,7 +186,7 @@ public abstract class MvcFramework {
 
   public abstract void updateProjectStructure(@NotNull final Module module);
 
-  public abstract void ensureRunConfigurationExists(@NotNull Module module);
+  public void ensureRunConfigurationExists(@NotNull Module module) {}
 
   @Nullable
   public VirtualFile findAppRoot(@Nullable Module module) {

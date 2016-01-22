@@ -393,14 +393,7 @@
           <option name="EFFECT_COLOR"/>
         </value>
       </option>
-
-      <option name="LOCAL_VARIABLE_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
+      
       <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="660e7a" deuteranopia="1948a6" protanopia="1948a6"/>
@@ -408,98 +401,9 @@
           <option name="EFFECT_COLOR"/>
         </value>
       </option>
-      <option name="CLASS_NAME_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-      <option name="ANONYMOUS_CLASS_NAME_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
       <option name="TYPE_PARAMETER_NAME_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="20999d" deuteranopia="1948a6" protanopia="1948a6"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-      <option name="INTERFACE_NAME_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-      <option name="ABSTRACT_CLASS_NAME_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-      <option name="ENUM_NAME_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-
-      <option name="METHOD_CALL_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-      <option name="METHOD_DECLARATION_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-      <option name="CONSTRUCTOR_CALL_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-      <option name="CONSTRUCTOR_DECLARATION_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-
-      <option name="STATIC_METHOD_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="2"/>
-        </value>
-      </option>
-
-      <option name="ABSTRACT_METHOD_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-
-      <option name="INHERITED_METHOD_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
         </value>
@@ -532,26 +436,10 @@
           <option name="FONT_TYPE" value="1"/>
         </value>
       </option>
-      <option name="INSTANCE_FIELD_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND" value="660e7a" deuteranopia="1948a6" protanopia="1948a6"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="1"/>
-        </value>
-      </option>
       <option name="DIFF_ABSENT">
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="f0f0f0"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-
-      <option name="PARAMETER_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
         </value>
       </option>
@@ -661,23 +549,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="99ccff"/>
           <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-
-      <option name="STATIC_FIELD_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND" value="660e7a" deuteranopia="1948a6" protanopia="1948a6"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="2"/>
-        </value>
-      </option>
-      <option name="STATIC_FINAL_FIELD_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND" value="660e7a" deuteranopia="1948a6" protanopia="1948a6"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="3"/>
         </value>
       </option>
 
@@ -1699,23 +1570,7 @@
           <option name="BACKGROUND" value="364135" deuteranopia="1f2433" protanopia="1f2433"/>
         </value>
       </option>
-      <option name="INSTANCE_FIELD_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
-          <option name="EFFECT_TYPE" value="1" />
-        </value>
-      </option>
-      <option name="JAVA_COMMA">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
-        </value>
-      </option>
       <option name="JAVA_KEYWORD">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
-        </value>
-      </option>
-      <option name="JAVA_SEMICOLON">
         <value>
           <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
@@ -1788,11 +1643,6 @@
           <option name="FOREGROUND" value="ffef28" />
           <option name="BACKGROUND" value="3b514d" />
           <option name="FONT_TYPE" value="1" />
-        </value>
-      </option>
-      <option name="METHOD_DECLARATION_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND" value="ffc66d" deuteranopia="d9af6c" protanopia="d9af6c"/>
         </value>
       </option>
       <option name="NOT_USED_ELEMENT_ATTRIBUTES">
@@ -2076,20 +1926,6 @@
         <value>
           <option name="EFFECT_COLOR" value="a9b7c6" />
           <option name="EFFECT_TYPE" value="0"/>
-        </value>
-      </option>
-      <option name="STATIC_FIELD_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
-          <option name="FONT_TYPE" value="2" />
-          <option name="EFFECT_TYPE" value="1" />
-        </value>
-      </option>
-      <option name="STATIC_FINAL_FIELD_ATTRIBUTES">
-        <value>
-          <option name="FOREGROUND" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
-          <option name="FONT_TYPE" value="2" />
-          <option name="EFFECT_TYPE" value="1" />
         </value>
       </option>
       <option name="STATIC_METHOD_ATTRIBUTES">

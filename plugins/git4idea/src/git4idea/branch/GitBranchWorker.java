@@ -17,7 +17,6 @@ package git4idea.branch;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
@@ -125,8 +124,13 @@ public final class GitBranchWorker {
 
   public void rebase(@NotNull List<GitRepository> repositories, @NotNull String branchName) {
     updateInfo(repositories);
-    GitRebaseUtils.rebase(myProject, repositories, new GitRebaseParams(branchName),
-                          ProgressManager.getInstance().getProgressIndicator());
+    GitRebaseUtils.rebase(myProject, repositories, new GitRebaseParams(branchName), myUiHandler.getProgressIndicator());
+  }
+
+  public void rebaseOnCurrent(@NotNull List<GitRepository> repositories, @NotNull String branchName) {
+    updateInfo(repositories);
+    GitRebaseUtils.rebase(myProject, repositories, new GitRebaseParams(branchName, null, "HEAD", false, false),
+                          myUiHandler.getProgressIndicator());
   }
 
   public void compare(@NotNull final String branchName, @NotNull final List<GitRepository> repositories,

@@ -70,10 +70,12 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
   private Set<Object> myCollapsedTreeNodeValues = new HashSet<Object>();
 
   private final Project myProject;
+  private final RemoteServersViewContribution myContribution;
 
-  public ServersToolWindowContent(@NotNull Project project) {
+  public ServersToolWindowContent(@NotNull Project project, @NotNull RemoteServersViewContribution contribution) {
     super(new BorderLayout());
     myProject = project;
+    myContribution = contribution;
 
     myTreeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
     myTree = new Tree(myTreeModel);
@@ -95,9 +97,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
 
     setupBuilder(project);
 
-    for (RemoteServersViewContributor contributor : RemoteServersViewContributor.EP_NAME.getExtensions()) {
-      contributor.setupTree(myProject, myTree, myBuilder);
-    }
+    contribution.setupTree(myProject, myTree, myBuilder);
 
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
@@ -210,7 +210,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
   }
 
   private void setupBuilder(final @NotNull Project project) {
-    ServersTreeStructure structure = new ServersTreeStructure(project);
+    ServersTreeStructure structure = new ServersTreeStructure(project, myContribution);
     myBuilder = new TreeBuilderBase(myTree, structure, myTreeModel) {
       @Override
       protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
@@ -285,13 +285,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
         if (KEY.getName().equals(dataId)) {
           return ServersToolWindowContent.this;
         }
-        for (RemoteServersViewContributor contributor : RemoteServersViewContributor.EP_NAME.getExtensions()) {
-          Object data = contributor.getData(dataId, ServersToolWindowContent.this);
-          if (data != null) {
-            return data;
-          }
-        }
-        return null;
+        return myContribution.getData(dataId, ServersToolWindowContent.this);
       }
     });
     actionToolBar.setTargetComponent(myTree);
