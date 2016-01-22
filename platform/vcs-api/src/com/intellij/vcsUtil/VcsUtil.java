@@ -597,8 +597,12 @@ public class VcsUtil {
   //}
 
   public static boolean isAspectAvailableByDefault(String id) {
+    return isAspectAvailableByDefault(id, true);
+  }
+
+  public static boolean isAspectAvailableByDefault(@Nullable String id, boolean defaultValue) {
     if (id == null) return false;
-    return PropertiesComponent.getInstance().getBoolean(ANNO_ASPECT + id, true);
+    return PropertiesComponent.getInstance().getBoolean(ANNO_ASPECT + id, defaultValue);
   }
 
   public static void setAspectAvailability(String aspectID, boolean showByDefault) {
