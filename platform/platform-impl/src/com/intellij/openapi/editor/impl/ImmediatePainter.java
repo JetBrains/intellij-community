@@ -53,7 +53,7 @@ import java.util.Set;
 /**
  * @author Pavel Fatin
  */
-class ImmediatePainter {
+public class ImmediatePainter {
   // Characters that excluded from zero-latency painting after key typing
   private static final Set<Character> KEY_CHARS_TO_SKIP =
     new HashSet<Character>(Arrays.asList('\n', '\t', '(', ')', '[', ']', '{', '}', '"', '\''));
@@ -168,7 +168,7 @@ class ImmediatePainter {
     }
   }
 
-  private static boolean isZeroLatencyTypingEnabled() {
+  public static boolean isZeroLatencyTypingEnabled() {
     // Zero-latency typing is suppressed when Idea VIM plugin is loaded, because of VIM-1007.
     // That issue will be resolved automatically when IDEA adopts typing without starting write actions.
     return !VIM_PLUGIN_LOADED && Registry.is(ZERO_LATENCY_TYPING_KEY);
