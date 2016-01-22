@@ -38,16 +38,19 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
   private final BalloonImpl myBalloon;
   private final BalloonLayoutData myLayoutData;
   private final String myDisplayGroupId;
+  private final JPanel myRepaintPanel;
   private final BalloonImpl.ActionButton mySettingButton;
   private final BalloonImpl.ActionButton myCloseButton;
   private final List<BalloonImpl.ActionButton> myActions = new ArrayList<BalloonImpl.ActionButton>();
 
   public NotificationBalloonActionProvider(@NotNull BalloonImpl balloon,
+                                           @Nullable JPanel repaintPanel,
                                            @NotNull BalloonLayoutData layoutData,
                                            @Nullable String displayGroupId) {
     myLayoutData = layoutData;
     myDisplayGroupId = displayGroupId;
     myBalloon = balloon;
+    myRepaintPanel = repaintPanel;
 
     if (myDisplayGroupId == null || !NotificationsConfigurationImpl.getInstanceImpl().isRegistered(myDisplayGroupId)) {
       mySettingButton = null;
@@ -67,8 +70,30 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
               }
             });
           }
-        });
+        }) {
+        @Override
+        public void repaint() {
+          super.repaint();
+          if (myRepaintPanel != null) {
+            myRepaintPanel.repaint();
+          }
+        }
+      };
       myActions.add(mySettingButton);
+
+      if (repaintPanel != null) {
+        layoutData.showActions = new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            for (BalloonImpl.ActionButton action : myActions) {
+              if (!action.isShowing() || !action.hasPaint()) {
+                return Boolean.FALSE;
+              }
+            }
+            return Boolean.TRUE;
+          }
+        };
+      }
     }
 
     myCloseButton = myBalloon.new ActionButton(
@@ -92,18 +117,6 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
         }
       });
     myActions.add(myCloseButton);
-
-    layoutData.showActions = new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        for (BalloonImpl.ActionButton action : myActions) {
-          if (!action.isShowing() || !action.hasPaint()) {
-            return Boolean.FALSE;
-          }
-        }
-        return Boolean.TRUE;
-      }
-    };
   }
 
   @NotNull
@@ -128,6 +141,10 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
 
   public static int getCloseOffset() {
     return AllIcons.Ide.Notification.Close.getIconWidth() + 6;
+  }
+
+  public static int getAllActionsOffset() {
+    return 50;
   }
 
   @NotNull
