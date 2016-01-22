@@ -55,7 +55,7 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
 
   @NotNull
   @Override
-  protected List<PsiMethod> getMembersToImport() {
+  protected List<PsiMethod> getMembersToImport(boolean applicableOnly) {
     final Project project = myMethodCall.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     final PsiMethodCallExpression element = myMethodCall.getElement();
@@ -64,7 +64,7 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
     if (name == null) return Collections.emptyList();
     final MyStaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(project, element);
     cache.processMethodsWithName(name, element.getResolveScope(), processor);
-    return processor.getMembersToImport();
+    return processor.getMembersToImport(applicableOnly);
   }
 
   public static boolean isExcluded(PsiMember method) {

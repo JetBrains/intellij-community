@@ -52,7 +52,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
 
   @NotNull
   @Override
-  protected List<PsiField> getMembersToImport() {
+  protected List<PsiField> getMembersToImport(boolean applicableOnly) {
     final Project project = myRef.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     final PsiJavaCodeReferenceElement element = myRef.getElement();
@@ -66,7 +66,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
       }
     };
     cache.processFieldsWithName(name, processor, element.getResolveScope(), null);
-    return processor.getMembersToImport();
+    return processor.getMembersToImport(applicableOnly);
   }
 
   @NotNull
