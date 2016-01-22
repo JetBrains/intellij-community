@@ -43,7 +43,8 @@ import java.util.concurrent.*;
 
 /**
  * Allows to schedule Runnable instances (requests) to be executed after a specific time interval on a specific thread.
- * Use "addRequest" methods to schedule the requests.
+ * Use {@link #addRequest} methods to schedule the requests.
+ * Two requests scheduled with the same delay are executed sequentially, one after the other.
  * {@link #cancelAllRequests()} and {@link #cancelRequest(Runnable)} allow to cancel already scheduled requests.
  */
 public class Alarm implements Disposable {
@@ -77,27 +78,28 @@ public class Alarm implements Disposable {
 
   public enum ThreadToUse {
     /**
-     * Run the action on Swing EventDispatchThread. This is the default. But the actions shouldn't take long to avoid UI freezes.
+     * Run request in Swing EventDispatchThread. This is the default.
+     * NB: <i>Requests shouldn't take long to avoid UI freezes.</i>
      */
     SWING_THREAD,
 
-    @Deprecated
     /**
      * @deprecated Use {@link #POOLED_THREAD} instead
      */
+    @Deprecated
     SHARED_THREAD,
 
     /**
-     * Alarm requests are run on one of application pooled threads.
+     * Run requests in one of application pooled threads.
      *
      * @see Application#executeOnPooledThread(Callable)
      */
     POOLED_THREAD,
 
-    @Deprecated
     /**
      * @deprecated Use {@link #POOLED_THREAD} instead
      */
+    @Deprecated
     OWN_THREAD
   }
 
