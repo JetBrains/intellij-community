@@ -171,7 +171,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
         s.nextLine();
         // parse commit information
         CommitInfo commit = commits.get(commitHash);
-        if (commit != null) {
+        if (commit != null || commitHash == null) {
           while (s.hasMoreData() && !s.startsWith('\t')) {
             s.nextLine();
           }
@@ -181,10 +181,10 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
           while (s.hasMoreData() && !s.startsWith('\t')) {
             String key = s.spaceToken();
             String value = s.line();
-            if (commitHash != null && AUTHOR_KEY.equals(key)) {
+            if (AUTHOR_KEY.equals(key)) {
               commit.author = value;
             }
-            if (commitHash != null && COMMITTER_TIME_KEY.equals(key)) {
+            if (COMMITTER_TIME_KEY.equals(key)) {
               commit.date = GitUtil.parseTimestamp(value);
               commit.revision = new GitRevisionNumber(commitHash, commit.date);
             }
