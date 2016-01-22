@@ -18,7 +18,6 @@ package com.intellij.vcs.log.ui;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.impl.VcsUserImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
@@ -40,15 +39,12 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
 
   @NotNull
   @Override
-  public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
+  public VcsCommitStyle getStyle(@NotNull VcsShortCommitDetails details, boolean isSelected) {
     if (!myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
     if (myShouldHighlightUser) {
-      VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
-      if (details != null && !(details instanceof LoadingDetails)) {
-        VcsUser currentUser = myDataHolder.getCurrentUser().get(details.getRoot());
-        if (currentUser != null && VcsUserImpl.isSamePerson(currentUser, details.getAuthor())) {
-          return VcsCommitStyleFactory.bold();
-        }
+      VcsUser currentUser = myDataHolder.getCurrentUser().get(details.getRoot());
+      if (currentUser != null && VcsUserImpl.isSamePerson(currentUser, details.getAuthor())) {
+        return VcsCommitStyleFactory.bold();
       }
     }
     return VcsCommitStyle.DEFAULT;

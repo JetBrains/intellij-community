@@ -18,7 +18,6 @@ package com.intellij.vcs.log.ui;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,18 +38,15 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
 
   @NotNull
   @Override
-  public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
+  public VcsCommitStyle getStyle(@NotNull VcsShortCommitDetails details, boolean isSelected) {
     if (isSelected || !myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
-    VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
-    if (details != null && !(details instanceof LoadingDetails)) {
-      VcsLogProvider provider = myDataHolder.getLogProvider(details.getRoot());
-      String currentBranch = provider.getCurrentBranch(details.getRoot());
-      if (currentBranch != null && !(currentBranch.equals(mySingleFilteredBranch))) {
-        Condition<CommitId> condition =
-          myDataHolder.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
-        if (condition.value(new CommitId(details.getId(), details.getRoot()))) {
-          return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
-        }
+    VcsLogProvider provider = myDataHolder.getLogProvider(details.getRoot());
+    String currentBranch = provider.getCurrentBranch(details.getRoot());
+    if (currentBranch != null && !(currentBranch.equals(mySingleFilteredBranch))) {
+      Condition<CommitId> condition =
+        myDataHolder.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
+      if (condition.value(new CommitId(details.getId(), details.getRoot()))) {
+        return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
       }
     }
     return VcsCommitStyle.DEFAULT;

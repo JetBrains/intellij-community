@@ -40,11 +40,11 @@ import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Set;
 
 public class DeepComparator implements VcsLogHighlighter, Disposable {
   private static final Logger LOG = Logger.getInstance(DeepComparator.class);
@@ -54,7 +54,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
   @NotNull private final VcsLogUi myUi;
 
   @Nullable private MyTask myTask;
-  @Nullable private TIntHashSet myNonPickedCommits;
+  @Nullable private Set<CommitId> myNonPickedCommits;
 
   public DeepComparator(@NotNull Project project, @NotNull GitRepositoryManager manager, @NotNull VcsLogUi ui, @NotNull Disposable parent) {
     myProject = project;
@@ -126,10 +126,11 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
 
   @NotNull
   @Override
-  public VcsLogHighlighter.VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
+  public VcsLogHighlighter.VcsCommitStyle getStyle(@NotNull VcsShortCommitDetails commitDetails, boolean isSelected) {
     if (myNonPickedCommits == null) return VcsCommitStyle.DEFAULT;
-    return VcsCommitStyleFactory
-      .foreground(!myNonPickedCommits.contains(commitIndex) ? MergeCommitsHighlighter.MERGE_COMMIT_FOREGROUND : null);
+    return VcsCommitStyleFactory.foreground(!myNonPickedCommits.contains(new CommitId(commitDetails.getId(), commitDetails.getRoot()))
+                                            ? MergeCommitsHighlighter.MERGE_COMMIT_FOREGROUND
+                                            : null);
   }
 
   @Override
@@ -194,7 +195,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
     @NotNull private final VcsLogDataProvider myProvider;
     @NotNull private final String myComparedBranch;
 
-    @NotNull private final TIntHashSet myCollectedNonPickedCommits = new TIntHashSet();
+    @NotNull private final Set<CommitId> myCollectedNonPickedCommits = ContainerUtil.newHashSet();
     @Nullable private VcsException myException;
     private boolean myCancelled;
 
@@ -216,7 +217,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
           GitRepository repo = entry.getKey();
           GitBranch currentBranch = entry.getValue();
           myCollectedNonPickedCommits
-            .addAll(getNonPickedCommitsFromGit(myProject, repo.getRoot(), myProvider, currentBranch.getName(), myComparedBranch).toArray());
+            .addAll(getNonPickedCommitsFromGit(myProject, repo.getRoot(), currentBranch.getName(), myComparedBranch));
         }
       }
       catch (VcsException e) {
@@ -245,15 +246,14 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
     }
 
     @NotNull
-    private TIntHashSet getNonPickedCommitsFromGit(@NotNull Project project,
-                                                   @NotNull final VirtualFile root,
-                                                   @NotNull final VcsLogDataProvider dataProvider,
-                                                   @NotNull String currentBranch,
-                                                   @NotNull String comparedBranch) throws VcsException {
+    private Set<CommitId> getNonPickedCommitsFromGit(@NotNull Project project,
+                                                     @NotNull final VirtualFile root,
+                                                     @NotNull String currentBranch,
+                                                     @NotNull String comparedBranch) throws VcsException {
       GitLineHandler handler = new GitLineHandler(project, root, GitCommand.CHERRY);
       handler.addParameters(currentBranch, comparedBranch); // upstream - current branch; head - compared branch
 
-      final TIntHashSet pickedCommits = new TIntHashSet();
+      final Set<CommitId> pickedCommits = ContainerUtil.newHashSet();
       handler.addLineListener(new GitLineHandlerAdapter() {
         @Override
         public void onLineAvailable(String line, Key outputType) {
@@ -267,7 +267,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
                 line = line.substring(0, firstSpace); // safety-check: take just the first word for sure
               }
               Hash hash = HashImpl.build(line);
-              pickedCommits.add(dataProvider.getCommitIndex(hash, root));
+              pickedCommits.add(new CommitId(hash, root));
             }
             catch (Exception e) {
               LOG.error("Couldn't parse line [" + line + "]");
