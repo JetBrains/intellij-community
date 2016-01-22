@@ -60,13 +60,16 @@ public class UiTestTaskTest {
     task.setClasspathFile(classpathFile.getAbsolutePath());
 
     Map<String, List<Class<?>>> batches = task.getTestGroups();
-    assertEquals(2, batches.size());
+    assertEquals(3, batches.size());
 
     assertTrue(batches.containsKey("A"));
     assertEquals("com.android.antuitest.tasks.ATest,", task.getTestSpec(batches.get("A")));
 
     assertTrue(batches.containsKey("B"));
     assertEquals("com.android.antuitest.tasks.BTest,com.android.antuitest.tasks.CTest,", task.getTestSpec(batches.get("B")));
+
+    assertTrue(batches.containsKey("DEFAULT"));
+    assertEquals("com.android.antuitest.tasks.DTest,", task.getTestSpec(batches.get("DEFAULT")));
   }
 }
 
@@ -78,3 +81,5 @@ class BTest extends GuiTestCase { }
 
 @BelongsToTestGroups(TestGroup.B)
 class CTest extends GuiTestCase { }
+
+class DTest extends GuiTestCase { }
