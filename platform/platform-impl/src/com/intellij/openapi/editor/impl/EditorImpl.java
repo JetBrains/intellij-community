@@ -5346,7 +5346,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     assertIsDispatchThread();
     int currentHorOffset = myScrollingModel.getHorizontalScrollOffset();
     myScrollBarOrientation = type;
-    if (type == VERTICAL_SCROLLBAR_LEFT) {
+    if (Registry.is("ide.scroll.new.layout")) {
+      myScrollPane.putClientProperty(JBScrollPane.Flip.class,
+                                     type == VERTICAL_SCROLLBAR_LEFT
+                                     ? JBScrollPane.Flip.HORIZONTAL
+                                     : null);
+    }
+    else if (type == VERTICAL_SCROLLBAR_LEFT) {
       myScrollPane.setLayout(new LeftHandScrollbarLayout());
     }
     else {
@@ -5381,9 +5387,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myVerticalScrollBar;
   }
 
-  @NotNull
-  MyScrollBar getHorizontalScrollBar() {
-    return (MyScrollBar)myScrollPane.getHorizontalScrollBar();
+  void setHorizontalScrollBarPersistentUI(ScrollBarUI ui) {
+    JScrollBar bar = myScrollPane.getHorizontalScrollBar();
+    if (bar instanceof MyScrollBar) {
+      ((MyScrollBar)bar).setPersistentUI(ui);
+    }
   }
 
   @MouseSelectionState
@@ -7122,6 +7130,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @NotNull
     @Override
     public JScrollBar createHorizontalScrollBar() {
+      if (Registry.is("ide.scroll.new.layout")) {
+        return super.createHorizontalScrollBar();
+      }
       return new MyScrollBar(Adjustable.HORIZONTAL);
     }
 

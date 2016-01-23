@@ -192,6 +192,7 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
         final PsiElement parent = callExpression.getParent();
         if (parent instanceof PsiStatement) {
           final PsiElement gParent = parent.getParent();
+          restoreComments(gParent, parent, body);
           for (PsiStatement statement : ((PsiCodeBlock)body).getStatements()) {
             PsiElement toInsert;
             if (statement instanceof PsiReturnStatement) {
@@ -213,6 +214,7 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
             final PsiStatement anchor = PsiTreeUtil.getParentOfType(parent, PsiStatement.class);
             if (anchor != null) {
               final PsiElement gParent = anchor.getParent();
+              restoreComments(gParent, anchor, body);
               for (int i = 0; i < statements.length - 1; i++) {
                 gParent.addBefore(statements[i], anchor);
               }
@@ -223,6 +225,12 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
             }
           }
         }
+      }
+    }
+
+    private static void restoreComments(PsiElement gParent, PsiElement parent, PsiElement body) {
+      for (PsiElement comment : PsiTreeUtil.findChildrenOfType(body, PsiComment.class)) {
+        gParent.addBefore(comment, parent);
       }
     }
 

@@ -196,7 +196,7 @@ public class MainFrame extends JPanel implements DataProvider {
 
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
-    toolbarGroup.add(refreshLogAction, new Constraints(Anchor.AFTER, "Vcs.Log.ShowLongEdges"));
+    toolbarGroup.add(refreshLogAction);
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
     mainGroup.add(myFilterUi.createActionGroup());

@@ -52,6 +52,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.HintHint;
@@ -117,7 +118,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static final int GAP_BETWEEN_ICONS = JBUI.scale(3);
   private static final int GAP_BETWEEN_AREAS = JBUI.scale(5);
   private static final int GAP_BETWEEN_ANNOTATIONS = JBUI.scale(5);
-  private static final int GAP_BEFORE_ANNOTATIONS = JBUI.scale(2); // inside the annotations area and with annotation background color
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
   public static final TIntFunction ID = new TIntFunction() {
     @Override
@@ -376,17 +376,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     if (getGutterRenderer(e) != null) return;
 
-    int x = getAnnotationsAreaOffset();
-    for (int i = 0; i < myTextAnnotationGutters.size(); i++) {
-      final int size = myTextAnnotationGutterSizes.get(i);
-      if (x <= e.getX() && e.getX() <= x + size + GAP_BETWEEN_ANNOTATIONS) {
-        queue.blockNextEvents(e);
-        closeAllAnnotations();
-        e.consume();
-        break;
-      }
-
-      x += size + GAP_BETWEEN_ANNOTATIONS;
+    if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
+      queue.blockNextEvents(e);
+      closeAllAnnotations();
+      e.consume();
     }
   }
 
@@ -428,8 +421,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           }
           g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(logLine, myEditor)));
           g.setFont(myEditor.getColorsScheme().getFont(style));
-          if (s != null) {
-            g.drawString(s, GAP_BEFORE_ANNOTATIONS + x, (j + 1) * lineHeight - myEditor.getDescent());
+          if (!StringUtil.isEmpty(s)) {
+            // we leave half of the gap before the text
+            g.drawString(s, GAP_BETWEEN_ANNOTATIONS / 2 + x, (j + 1) * lineHeight - myEditor.getDescent());
           }
         }
 
@@ -685,9 +679,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(j);
       int gutterSize = 0;
       for (int i = 0; i < lineCount; i++) {
-        final String lineText = gutterProvider.getLineText(i, myEditor);
-        if (lineText != null) {
-          gutterSize = Math.max(gutterSize, GAP_BEFORE_ANNOTATIONS + fontMetrics.stringWidth(lineText));
+        String lineText = gutterProvider.getLineText(i, myEditor);
+        if (!StringUtil.isEmpty(lineText)) {
+          gutterSize = Math.max(gutterSize, fontMetrics.stringWidth(lineText));
         }
       }
       if (gutterSize > 0) gutterSize += GAP_BETWEEN_ANNOTATIONS;

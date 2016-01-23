@@ -794,6 +794,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
     ThumbPainter.DEFAULT.setScrollBar(scrollbar);
     ThumbPainter.DEFAULT.paint(g, 0, 0, thumbBounds.width, thumbBounds.height, myThumbFadeColorShift);
+    ThumbPainter.DEFAULT.setScrollBar(null);
   }
 
   @Override

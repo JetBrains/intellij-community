@@ -329,10 +329,8 @@ public class StartupUtil {
     if (System.getProperty("jna.tmpdir") == null) {
       System.setProperty("jna.tmpdir", ideTempDir.getPath());
     }
-    if (System.getProperty("jna.nosys") == null && System.getProperty("jna.nounpack") == null) {
-      // force using bundled JNA dispatcher (if not explicitly stated)
-      System.setProperty("jna.nosys", "true");
-      System.setProperty("jna.nounpack", "false");
+    if (System.getProperty("jna.nosys") == null) {
+      System.setProperty("jna.nosys", "true");  // prefer bundled JNA dispatcher lib
     }
     try {
       long t = System.currentTimeMillis();

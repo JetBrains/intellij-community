@@ -81,7 +81,15 @@ final class DefaultScrollBarUI extends AbstractScrollBarUI {
     g.setColor(Gray.x80);
     g.fillRect(bounds.x + 1, bounds.y + 1, bounds.width - 2, bounds.height - 2);
     g.setColor(UIUtil.isUnderDarcula() ? Gray.x94 : Gray.x6E);
-    g.drawRect(bounds.x, bounds.y, bounds.width - 1, bounds.height - 1);
+    if (Registry.is("ide.scroll.thumb.border.rounded")) {
+      g.drawLine(bounds.x + 1, bounds.y, bounds.x + bounds.width - 2, bounds.y);
+      g.drawLine(bounds.x + 1, bounds.y + bounds.height - 1, bounds.x + bounds.width - 2, bounds.y + bounds.height - 1);
+      g.drawLine(bounds.x, bounds.y + 1, bounds.x, bounds.y + bounds.height - 2);
+      g.drawLine(bounds.x + bounds.width - 1, bounds.y + 1, bounds.x + bounds.width - 1, bounds.y + bounds.height - 2);
+    }
+    else {
+      g.drawRect(bounds.x, bounds.y, bounds.width - 1, bounds.height - 1);
+    }
     g.setComposite(old);
   }
 

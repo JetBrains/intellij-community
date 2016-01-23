@@ -57,8 +57,8 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       }
     });
 
-    final PermanentCommitsInfoIml<CommitId> commitIdPermanentCommitsInfo =
-      PermanentCommitsInfoIml.newInstance(graphCommits, notLoadCommits);
+    final PermanentCommitsInfoImpl<CommitId> commitIdPermanentCommitsInfo =
+      PermanentCommitsInfoImpl.newInstance(graphCommits, notLoadCommits);
 
     GraphLayoutImpl permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, new Comparator<Integer>() {
       @Override
@@ -73,7 +73,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
                                             branchesCommitId);
   }
 
-  @NotNull private final PermanentCommitsInfoIml<CommitId> myPermanentCommitsInfo;
+  @NotNull private final PermanentCommitsInfoImpl<CommitId> myPermanentCommitsInfo;
   @NotNull private final PermanentLinearGraphImpl myPermanentLinearGraph;
   @NotNull private final GraphLayoutImpl myPermanentGraphLayout;
   @NotNull private final GraphColorManager<CommitId> myGraphColorManager;
@@ -84,7 +84,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
 
   public PermanentGraphImpl(@NotNull PermanentLinearGraphImpl permanentLinearGraph,
                             @NotNull GraphLayoutImpl permanentGraphLayout,
-                            @NotNull PermanentCommitsInfoIml<CommitId> permanentCommitsInfo,
+                            @NotNull PermanentCommitsInfoImpl<CommitId> permanentCommitsInfo,
                             @NotNull GraphColorManager<CommitId> graphColorManager,
                             @NotNull Set<CommitId> branchesCommitId) {
     myPermanentGraphLayout = permanentGraphLayout;
@@ -213,7 +213,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   }
 
   @NotNull
-  public PermanentCommitsInfoIml<CommitId> getPermanentCommitsInfo() {
+  public PermanentCommitsInfoImpl<CommitId> getPermanentCommitsInfo() {
     return myPermanentCommitsInfo;
   }
 

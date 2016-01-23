@@ -499,7 +499,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     pane.getViewport().setOpaque(false);
-    pane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
+    if (!Registry.is("ide.scroll.new.layout")) {
+      pane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
+    }
     pane.setBackground(fillColor);
     pane.getViewport().setBackground(fillColor);
     pane.getVerticalScrollBar().setBackground(fillColor);
@@ -552,20 +554,34 @@ public class NotificationsManagerImpl extends NotificationsManager {
       expandAction.setHoveringIcon(icon(AllIcons.Ide.Notification.ExpandHover));
     }
 
-    JPanel centerPanel = new NonOpaquePanel(new CenteredLayoutWithActions(gap, text, layoutData));
+    final CenteredLayoutWithActions layout = new CenteredLayoutWithActions(gap, text, layoutData);
+    JPanel centerPanel = new NonOpaquePanel(layout) {
+      @Override
+      protected void paintChildren(Graphics g) {
+        super.paintChildren(g);
+
+        if (layoutData.showActions != null && layoutData.showActions.compute()) {
+          Insets insets = getInsets();
+          JLabel title = layout.getTitle();
+          int width = NotificationBalloonActionProvider.getAllActionsOffset();
+          int x = getWidth() - insets.right - width;
+          int y = insets.top;
+          int height = title.getHeight();
+
+          g.setColor(fillColor);
+          g.fillRect(x, y, width, height);
+
+          width = 15;
+          x -= width;
+          ((Graphics2D)g).setPaint(new GradientPaint(x, y, ColorUtil.withAlpha(fillColor, 0.2), x + width, y, fillColor));
+          g.fillRect(x, y, width, height);
+        }
+      }
+    };
     content.add(centerPanel, BorderLayout.CENTER);
 
     if (isTitle) {
-      JLabel title = new JLabel(NotificationsUtil.buildHtml(notification, style, false, foreground)) {
-        @Override
-        protected void paintComponent(Graphics g) {
-          super.paintComponent(g);
-          if (layoutData.showActions.compute()) {
-            g.setColor(fillColor);
-            g.fillRect(getWidth() - 30, 0, 30, getHeight());
-          }
-        }
-      };
+      JLabel title = new JLabel(NotificationsUtil.buildHtml(notification, style, false, foreground));
       title.setOpaque(false);
       if (UIUtil.isUnderNimbusLookAndFeel()) {
         title.setBackground(UIUtil.TRANSPARENT_COLOR);
@@ -624,7 +640,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
     balloon.setShadowBorderProvider(new NotificationBalloonShadowBorderProvider());
 
     if (buttons == null) {
-      balloon.setActionProvider(new NotificationBalloonActionProvider(balloon, layoutData, notification.getGroupId()));
+      balloon.setActionProvider(
+        new NotificationBalloonActionProvider(balloon, isTitle ? centerPanel : null, layoutData, notification.getGroupId()));
     }
 
     return balloon;
@@ -780,6 +797,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
       myVerticalGap = verticalGap;
       myText = text;
       myLayoutData = layoutData;
+    }
+
+    public JLabel getTitle() {
+      return (JLabel)myTitleComponent;
     }
 
     @Override
