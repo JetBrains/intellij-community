@@ -139,7 +139,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   }
 
   public static List<PsiScopeProcessor> allProcessors(PsiScopeProcessor processor) {
-    if (processor instanceof GroovyResolverProcessor) {
+    if (processor instanceof GroovyResolverProcessor && !((GroovyResolverProcessor)processor).myStopExecutingMethods) {
       List<PsiScopeProcessor> accessors = ((GroovyResolverProcessor)processor).myAccessorProcessors;
       if (!accessors.isEmpty()) {
         return ContainerUtil.concat(Collections.singletonList(processor), accessors);
@@ -231,10 +231,9 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   @Override
   public boolean shouldProcess(DeclarationKind kind) {
-    if (kind == DeclarationKind.METHOD &&
-        isPropertyResolve() &&
-        !myAcceptableKinds.contains(GroovyResolveKind.METHOD)) {
-      return false;
+    if (kind == DeclarationKind.METHOD) {
+      if (myStopExecutingMethods) return false;
+      if (isPropertyResolve() && !myAcceptableKinds.contains(GroovyResolveKind.METHOD)) return false;
     }
     for (GroovyResolveKind resolveKind : myAcceptableKinds) {
       if (resolveKind.declarationKinds.contains(kind)) return true;
