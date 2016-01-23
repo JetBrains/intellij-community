@@ -896,7 +896,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private Icon scaleIcon(Icon icon) {
     if (Registry.is("editor.scale.gutter.icons") && icon instanceof ScalableIcon) {
-      float scale = myEditor.getLineHeight() / JBUI.scale(16f);
+      float scale = myEditor.getScale();
       if (Math.abs(1f - scale) > 0.10f) {
         return ((ScalableIcon)icon).scale(scale);
       }
@@ -1049,7 +1049,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void drawAnchor(int width, Rectangle clip, Graphics2D g, int anchorX, int visualLine,
                           DisplayedFoldingAnchor.Type type, boolean active) {
 
-    final int off = JBUI.scale(2);
+    final int off = (int)(JBUI.scale(2) * myEditor.getScale());
     int height = width + off;
     int y = getFoldAnchorY(visualLine, width);
     switch (type) {
@@ -1139,7 +1139,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int getFoldingAnchorWidth() {
-    return Math.min(JBUI.scale(4), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2;
+    return (int)(Math.min(JBUI.scale(4) * myEditor.getScale(), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2);
   }
 
   public int getFoldingAreaOffset() {
