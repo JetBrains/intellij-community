@@ -71,6 +71,12 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
       return candidates.second;
     }
 
+    candidates = getCandidates(GroovyResolveKind.METHOD);
+    if (candidates.first) {
+      final List<GroovyResolveResult> results = filterMethodCandidates(candidates.second);
+      return myRef.hasMemberPointer() ? collapseReflectedMethods(results) : results;
+    }
+
     candidates = getCandidates(GroovyResolveKind.FIELD);
     if (candidates.first) {
       assert candidates.second.size() == 1;
@@ -90,12 +96,6 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
       if (candidates.first) {
         return candidates.second;
       }
-    }
-
-    candidates = getCandidates(GroovyResolveKind.METHOD);
-    if (candidates.first) {
-      final List<GroovyResolveResult> results = filterMethodCandidates(candidates.second);
-      return myRef.hasMemberPointer() ? collapseReflectedMethods(results) : results;
     }
 
     candidates = getCandidates(GroovyResolveKind.PROPERTY);

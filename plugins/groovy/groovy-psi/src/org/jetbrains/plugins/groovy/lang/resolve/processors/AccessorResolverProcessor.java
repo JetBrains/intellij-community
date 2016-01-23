@@ -57,6 +57,10 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
 
   @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+    return !checkAccessor(element, state, myPropertyName, mySearchForGetter) || addAccessor((PsiMethod)element, state);
+  }
+
+  static boolean checkAccessor(@NotNull PsiElement element, @NotNull ResolveState state, @NotNull String myPropertyName, boolean mySearchForGetter) {
     final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
     String importedName = resolveContext instanceof GrImportStatement ? ((GrImportStatement)resolveContext).getImportedName() : null;
     if (mySearchForGetter) {
@@ -64,7 +68,7 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
           (importedName != null && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, null) &&
            (isAppropriatePropertyNameForGetter((PsiMethod)element, importedName, myPropertyName) || myPropertyName.equals(importedName)) ||
            importedName == null && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, myPropertyName))) {
-        return addAccessor((PsiMethod)element, state);
+        return true;
       }
     }
     else {
@@ -72,10 +76,10 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
           (importedName != null && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element, null) &&
            (isAppropriatePropertyNameForSetter(importedName, myPropertyName) || myPropertyName.equals(importedName)) ||
            importedName == null && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element, myPropertyName))) {
-        return addAccessor((PsiMethod)element, state);
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
   /**

@@ -206,6 +206,9 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
     final String name = lReference.getReferenceName();
     if (name == null) return true;
 
+    String hintName = ResolveUtil.getNameHint(processor);
+    if (hintName != null && !name.equals(hintName)) return true;
+
     final ConcurrentMap<String, GrBindingVariable> bindings = file.getBindings();
     GrBindingVariable variable = bindings.get(name);
     if (variable == null) {

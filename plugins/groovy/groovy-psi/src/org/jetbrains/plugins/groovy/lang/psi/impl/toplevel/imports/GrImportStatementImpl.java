@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_METHOD;
 
@@ -153,9 +154,19 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     state = state.put(ClassHint.RESOLVE_CONTEXT, this);
 
     final String refName = ref.getReferenceName();
+    for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
+      if (!doProcessSingleStaticImport(each, state, importedName, lastParent, place, clazz, refName)) return false;
+    }
+    return true;
+  }
 
-    final NameHint nameHint = processor.getHint(NameHint.KEY);
-    final String hintName = nameHint == null ? null : nameHint.getName(state);
+  private static boolean doProcessSingleStaticImport(@NotNull PsiScopeProcessor processor,
+                                                     @NotNull ResolveState state,
+                                                     @NotNull String importedName,
+                                                     @Nullable PsiElement lastParent,
+                                                     @NotNull PsiElement place,
+                                                     PsiClass clazz, String refName) {
+    final String hintName = ResolveUtil.getNameHint(processor);
 
     if (hintName == null || importedName.equals(hintName)) {
       if (!clazz.processDeclarations(new GrDelegatingScopeProcessorWithHints(processor, refName, null), state, lastParent, place)) {
@@ -217,15 +228,17 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
       if (resolved instanceof PsiClass) {
         state = state.put(ClassHint.RESOLVE_CONTEXT, this);
         final PsiClass clazz = (PsiClass)resolved;
-        if (!clazz.processDeclarations(new DelegatingScopeProcessor(processor) {
-          @Override
-          public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-            if (element instanceof PsiMember && ((PsiMember)element).hasModifierProperty(PsiModifier.STATIC)) {
-              return super.execute(element, state);
+        for (final PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
+          if (!clazz.processDeclarations(new DelegatingScopeProcessor(each) {
+            @Override
+            public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+              if (element instanceof PsiMember && ((PsiMember)element).hasModifierProperty(PsiModifier.STATIC)) {
+                return super.execute(element, state);
+              }
+              return true;
             }
-            return true;
-          }
-        }, state, lastParent, place)) return false;
+          }, state, lastParent, place)) return false;
+        }
       }
     }
     else {

@@ -142,7 +142,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (scriptClass != null && scriptClass.getName() != null) {
 
       if (!(lastParent instanceof GrTypeDefinition)) {
-        if (!scriptClass.processDeclarations(processor, state, lastParent, place)) return false;
+        if (!ResolveUtil.processClassDeclarations(scriptClass, processor, state, lastParent, place)) return false;
       }
 
       if (processClasses) {

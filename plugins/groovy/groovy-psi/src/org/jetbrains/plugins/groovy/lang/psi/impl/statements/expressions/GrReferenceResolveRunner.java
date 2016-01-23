@@ -47,18 +47,18 @@ public class GrReferenceResolveRunner {
     this.processor = processor;
   }
 
-  public boolean resolveImpl() {
+  public void resolveImpl() {
     GrExpression qualifier = place.getQualifier();
     if (qualifier == null) {
-      if (!ResolveUtil.treeWalkUp(place, processor, true)) return false;
+      if (!ResolveUtil.treeWalkUp(place, processor, true)) return;
 
       if (place.getContext() instanceof GrMethodCall) {
-        if (!ClosureMissingMethodContributor.processMethodsFromClosures(place, processor)) return false;
+        if (!ClosureMissingMethodContributor.processMethodsFromClosures(place, processor)) return;
       }
 
       final GrExpression runtimeQualifier = PsiImplUtil.getRuntimeQualifier(place);
       if (runtimeQualifier != null) {
-        if (!processQualifier(runtimeQualifier)) return false;
+        processQualifier(runtimeQualifier);
       }
     }
     else {
@@ -69,16 +69,15 @@ public class GrReferenceResolveRunner {
           final ResolveState state = ResolveState.initial()
             .put(ClassHint.RESOLVE_CONTEXT, qualifier)
             .put(SpreadState.SPREAD_STATE, SpreadState.create(qtype, null));
-          if (!processQualifierType(componentType, state)) return false;
+          processQualifierType(componentType, state);
         }
       }
       else {
-        if (ResolveUtil.isClassReference(place)) return true;
-        if (!processQualifier(qualifier)) return false;
-        if (!processJavaLangClass(qualifier)) return false;
+        if (ResolveUtil.isClassReference(place)) return;
+        if (!processQualifier(qualifier)) return;
+        processJavaLangClass(qualifier);
       }
     }
-    return true;
   }
 
   private boolean processJavaLangClass(@NotNull GrExpression qualifier) {
@@ -111,7 +110,10 @@ public class GrReferenceResolveRunner {
     if (qualifierType == null || PsiType.VOID.equals(qualifierType)) {
       if (qualifier instanceof GrReferenceExpression) {
         PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
-        if (resolved != null && !resolved.processDeclarations(processor, state, null, place)) return false;
+        if (resolved instanceof PsiClass) {
+          if (!ResolveUtil.processClassDeclarations((PsiClass)resolved, processor, state, null, place)) return false;
+        }
+        else if (resolved != null && !resolved.processDeclarations(processor, state, null, place)) return false;
         if (!(resolved instanceof PsiPackage)) {
           PsiType objectQualifier = TypesUtil.getJavaLangObject(place);
           if (!processQualifierType(objectQualifier, state)) return false;
@@ -143,7 +145,7 @@ public class GrReferenceResolveRunner {
       substitutor = substitutor.put(typeParameters[0], qualifierType);
       state = state.put(PsiSubstitutor.KEY, substitutor);
     }
-    if (!javaLangClass.processDeclarations(processor, state, null, place)) return false;
+    if (!ResolveUtil.processClassDeclarations(javaLangClass, processor, state, null, place)) return false;
 
     PsiType javaLangClassType = JavaPsiFacade.getElementFactory(place.getProject()).createType(javaLangClass, substitutor);
 
@@ -173,7 +175,7 @@ public class GrReferenceResolveRunner {
       PsiClassType.ClassResolveResult qualifierResult = ((PsiClassType)qualifierType).resolveGenerics();
       PsiClass qualifierClass = qualifierResult.getElement();
       if (qualifierClass != null) {
-        if (!qualifierClass.processDeclarations(processor, state.put(PsiSubstitutor.KEY, qualifierResult.getSubstitutor()), null, place)) {
+        if (!ResolveUtil.processClassDeclarations(qualifierClass, processor, state.put(PsiSubstitutor.KEY, qualifierResult.getSubstitutor()), null, place)) {
           return false;
         }
       }
@@ -181,7 +183,7 @@ public class GrReferenceResolveRunner {
     else if (qualifierType instanceof PsiArrayType) {
       final GroovyPsiManager gmanager = GroovyPsiManager.getInstance(place.getProject());
       final GrTypeDefinition arrayClass = gmanager.getArrayClass(((PsiArrayType)qualifierType).getComponentType());
-      if (arrayClass != null && !arrayClass.processDeclarations(processor, state, null, place)) return false;
+      if (arrayClass != null && !ResolveUtil.processClassDeclarations(arrayClass, processor, state, null, place)) return false;
     }
 
     if (!(place.getParent() instanceof GrMethodCall) && InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) {

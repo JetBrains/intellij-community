@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
+import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -51,7 +53,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isStaticsOK;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorResolverProcessor.isAppropriatePropertyNameForGetter;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorResolverProcessor.isAppropriatePropertyNameForSetter;
 
-public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint {
+public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint {
 
   final @NotNull GrReferenceExpression myRef;
   private final @NotNull String myName;
@@ -78,6 +80,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       return new SubstitutorComputer(myThisType, myArgumentTypesNonErased, myTypeArguments, myRef, myRef.getParent());
     }
   };
+  private final List<PsiScopeProcessor> myAccessorProcessors;
 
   final MultiMap<GroovyResolveKind, GroovyResolveResult> myCandidates = MultiMap.create();
   final MultiMap<GroovyResolveKind, GroovyResolveResult> myInapplicableCandidates = MultiMap.create();
@@ -102,6 +105,47 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     else {
       myArgumentTypes = myArgumentTypesNonErased = null;
     }
+
+    myAccessorProcessors = calcAccessorProcessors();
+  }
+
+  private List<PsiScopeProcessor> calcAccessorProcessors() {
+    if (isPropertyResolve()) {
+      EnumSet<DeclarationKind> method = EnumSet.of(DeclarationKind.METHOD);
+      //myIsLValue ? GroovyPropertyUtils.suggestSettersName(myName) : GroovyPropertyUtils.suggestGettersName(myName)
+      if (myIsLValue) {
+        return Collections.singletonList(accessorProcessor(method, GroovyPropertyUtils.getSetterName(myName)));
+      }
+      return ContainerUtil.newArrayList(
+        accessorProcessor(method, GroovyPropertyUtils.getGetterNameNonBoolean(myName)),
+        accessorProcessor(method, GroovyPropertyUtils.getGetterNameBoolean(myName))
+      );
+    }
+    return Collections.emptyList();
+  }
+
+  private GrScopeProcessorWithHints accessorProcessor(final EnumSet<DeclarationKind> allKinds, @NotNull final String name) {
+    return new GrScopeProcessorWithHints(name, allKinds) {
+      @Override
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+        return !AccessorResolverProcessor.checkAccessor(element, state, GroovyResolverProcessor.this.myName, !myIsLValue) ||
+               GroovyResolverProcessor.this.execute(element, state);
+      }
+    };
+  }
+
+  public boolean isPropertyResolve() {
+    return myAcceptableKinds.contains(GroovyResolveKind.PROPERTY);
+  }
+
+  public static List<PsiScopeProcessor> allProcessors(PsiScopeProcessor processor) {
+    if (processor instanceof GroovyResolverProcessor) {
+      List<PsiScopeProcessor> accessors = ((GroovyResolverProcessor)processor).myAccessorProcessors;
+      if (!accessors.isEmpty()) {
+        return ContainerUtil.concat(Collections.singletonList(processor), accessors);
+      }
+    }
+    return Collections.singletonList(processor);
   }
 
   @Override
@@ -172,7 +216,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   @Nullable
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
-    if (hintKey == ElementClassHint.KEY) {
+    if (hintKey == ElementClassHint.KEY || hintKey == NameHint.KEY) {
       return (T)this;
     }
     return null;
@@ -187,10 +231,21 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   @Override
   public boolean shouldProcess(DeclarationKind kind) {
+    if (kind == DeclarationKind.METHOD &&
+        isPropertyResolve() &&
+        !myAcceptableKinds.contains(GroovyResolveKind.METHOD)) {
+      return false;
+    }
     for (GroovyResolveKind resolveKind : myAcceptableKinds) {
       if (resolveKind.declarationKinds.contains(kind)) return true;
     }
     return false;
+  }
+
+  @NotNull
+  @Override
+  public String getName(@NotNull ResolveState state) {
+    return myName;
   }
 
   @NotNull
@@ -242,25 +297,23 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       }
     }
     if (importedName == null) {
-      if (myName.equals(element.getName())) {
-        if (element instanceof PsiClass) {
-          return GroovyResolveKind.CLASS;
-        }
-        else if (element instanceof PsiPackage) {
-          return GroovyResolveKind.PACKAGE;
-        }
-        if (element instanceof PsiMethod) {
-          return GroovyResolveKind.METHOD;
-        }
-        else if (element instanceof PsiField) {
-          return GroovyResolveKind.FIELD;
-        }
-        else if (element instanceof GrBindingVariable) {
-          return GroovyResolveKind.BINDING;
-        }
-        else if (element instanceof PsiVariable) {
-          return GroovyResolveKind.VARIABLE;
-        }
+      if (element instanceof PsiClass) {
+        return GroovyResolveKind.CLASS;
+      }
+      else if (element instanceof PsiPackage) {
+        return GroovyResolveKind.PACKAGE;
+      }
+      if (element instanceof PsiMethod) {
+        return GroovyResolveKind.METHOD;
+      }
+      else if (element instanceof PsiField) {
+        return GroovyResolveKind.FIELD;
+      }
+      else if (element instanceof GrBindingVariable) {
+        return GroovyResolveKind.BINDING;
+      }
+      else if (element instanceof PsiVariable) {
+        return GroovyResolveKind.VARIABLE;
       }
     }
     else {
