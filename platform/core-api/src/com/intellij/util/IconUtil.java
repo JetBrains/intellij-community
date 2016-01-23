@@ -440,17 +440,17 @@ public class IconUtil {
   }
 
   @NotNull
-  public static Icon colorize(@NotNull final Icon source, @NotNull Color color) {
+  public static Icon colorize(@NotNull Icon source, @NotNull Color color) {
     return colorize(source, color, false);
   }
 
   @NotNull
-  public static Icon colorize(@NotNull final Icon source, @NotNull Color color, boolean keepGray) {
+  public static Icon colorize(@NotNull Icon source, @NotNull Color color, boolean keepGray) {
     return filterIcon(source, new ColorFilter(color, keepGray));
   }
 
   @NotNull
-  public static Icon desaturate(@NotNull final Icon source) {
+  public static Icon desaturate(@NotNull Icon source) {
     return filterIcon(source, new DesaturationFilter());
   }
 
