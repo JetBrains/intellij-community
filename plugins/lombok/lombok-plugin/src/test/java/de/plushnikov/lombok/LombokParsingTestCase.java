@@ -21,9 +21,12 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiType;
+import com.intellij.util.containers.SortedList;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -173,52 +176,87 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
     }
   }
 
-
   private void compareMethods(PsiClass beforeClass, PsiClass afterClass) {
     PsiMethod[] beforeMethods = beforeClass.getMethods();
     PsiMethod[] afterMethods = afterClass.getMethods();
 
-    LOG.info("Before methods for class " + beforeClass.getName() + ": " + Arrays.toString(beforeMethods));
-    LOG.info("After methods for class " + afterClass.getName() + ": " + Arrays.toString(afterMethods));
-
-    assertEquals("Method counts are different for Class: " + beforeClass.getName(), afterMethods.length, beforeMethods.length);
+    assertEquals("Methods are different for Class: " + beforeClass.getName(),
+        Arrays.toString(toList(afterMethods)), Arrays.toString(toList(beforeMethods)));
 
     for (PsiMethod afterMethod : afterMethods) {
-      boolean compared = false;
-      final PsiModifierList afterModifierList = afterMethod.getModifierList();
-      for (PsiMethod beforeMethod : beforeMethods) {
-        if (afterMethod.getName().equals(beforeMethod.getName()) &&
-            afterMethod.getParameterList().getParametersCount() == beforeMethod.getParameterList().getParametersCount()) {
-          PsiModifierList beforeModifierList = beforeMethod.getModifierList();
 
-          compareModifiers(beforeModifierList, afterModifierList);
-          compareType(beforeMethod.getReturnType(), afterMethod.getReturnType(), afterMethod);
-          compareParams(beforeMethod.getParameterList(), afterMethod.getParameterList());
-          compareThrows(beforeMethod.getThrowsList(), afterMethod.getThrowsList(), afterMethod);
+      final Collection<PsiMethod> matchedMethods = filterMethods(beforeMethods, afterMethod);
+      if (matchedMethods.isEmpty()) {
+        fail("Method names are not equal, Method: (" + afterMethod.getName() + ") not found in class : " + beforeClass.getName());
+      }
 
-          if (shouldCompareCodeBlocks()) {
-            final PsiCodeBlock beforeMethodBody = beforeMethod.getBody();
-            final PsiCodeBlock afterMethodBody = afterMethod.getBody();
-            if (null != beforeMethodBody && null != afterMethodBody) {
+      for (PsiMethod beforeMethod : matchedMethods) {
+        compareMethod(beforeClass, afterClass, afterMethod, beforeMethod);
+      }
+    }
+  }
 
-              boolean codeBlocksAreEqual = beforeMethodBody.textMatches(afterMethodBody);
-              if (!codeBlocksAreEqual) {
-                String text1 = beforeMethodBody.getText().replaceAll("\\s+", "");
-                String text2 = afterMethodBody.getText().replaceAll("\\s+", "");
-                assertEquals("Methods not equal, Method: (" + afterMethod.getName() + ") Class:" + afterClass.getName(), text2, text1);
-              }
-            } else {
-              if (null != afterMethodBody) {
-                fail("MethodCodeBlocks is null: Method: (" + beforeMethod.getName() + ") Class:" + beforeClass.getName());
-              }
-            }
-          }
+  private void compareMethod(PsiClass beforeClass, PsiClass afterClass, PsiMethod afterMethod, PsiMethod beforeMethod) {
+    final PsiModifierList afterModifierList = afterMethod.getModifierList();
+    PsiModifierList beforeModifierList = beforeMethod.getModifierList();
 
-          compared = true;
+    compareModifiers(beforeModifierList, afterModifierList);
+    compareType(beforeMethod.getReturnType(), afterMethod.getReturnType(), afterMethod);
+    compareParams(beforeMethod.getParameterList(), afterMethod.getParameterList());
+    compareThrows(beforeMethod.getThrowsList(), afterMethod.getThrowsList(), afterMethod);
+
+    if (shouldCompareCodeBlocks()) {
+      final PsiCodeBlock beforeMethodBody = beforeMethod.getBody();
+      final PsiCodeBlock afterMethodBody = afterMethod.getBody();
+      if (null != beforeMethodBody && null != afterMethodBody) {
+
+        boolean codeBlocksAreEqual = beforeMethodBody.textMatches(afterMethodBody);
+        if (!codeBlocksAreEqual) {
+          String text1 = beforeMethodBody.getText().replaceAll("\\s+", "");
+          String text2 = afterMethodBody.getText().replaceAll("\\s+", "");
+          assertEquals("Methods not equal, Method: (" + afterMethod.getName() + ") Class:" + afterClass.getName(), text2, text1);
+        }
+      } else {
+        if (null != afterMethodBody) {
+          fail("MethodCodeBlocks is null: Method: (" + beforeMethod.getName() + ") Class:" + beforeClass.getName());
         }
       }
-      assertTrue("Method names are not equal, Method: (" + afterMethod.getName() + ") not found in class : " + beforeClass.getName(), compared);
     }
+  }
+
+  private Collection<PsiMethod> filterMethods(PsiMethod[] beforeMethods, PsiMethod compareMethod) {
+    Collection<PsiMethod> result = new ArrayList<PsiMethod>();
+    for (PsiMethod psiMethod : beforeMethods) {
+      final PsiParameterList compareMethodParameterList = compareMethod.getParameterList();
+      final PsiParameterList psiMethodParameterList = psiMethod.getParameterList();
+      if (compareMethod.getName().equals(psiMethod.getName()) &&
+          compareMethodParameterList.getParametersCount() == psiMethodParameterList.getParametersCount()) {
+        final Collection<String> typesOfCompareMethod = mapToTypeString(compareMethodParameterList);
+        final Collection<String> typesOfPsiMethod = mapToTypeString(psiMethodParameterList);
+        if (typesOfCompareMethod.equals(typesOfPsiMethod)) {
+          result.add(psiMethod);
+        }
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  private Collection<String> mapToTypeString(PsiParameterList compareMethodParameterList) {
+    Collection<String> result = new ArrayList<String>();
+    final PsiParameter[] compareMethodParameterListParameters = compareMethodParameterList.getParameters();
+    for (PsiParameter compareMethodParameterListParameter : compareMethodParameterListParameters) {
+      result.add(stripJavaLang(compareMethodParameterListParameter.getType().getCanonicalText()));
+    }
+    return result;
+  }
+
+  private String[] toList(PsiMethod[] beforeMethods) {
+    SortedList<String> result = new SortedList<String>(String.CASE_INSENSITIVE_ORDER);
+    for (PsiMethod method : beforeMethods) {
+      result.add(method.getName());
+    }
+    return result.toArray(new String[result.size()]);
   }
 
   private void compareThrows(PsiReferenceList beforeThrows, PsiReferenceList afterThrows, PsiMethod psiMethod) {
@@ -238,33 +276,33 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
     }
   }
 
-  private void compareConstructors(PsiClass intellij, PsiClass theirs) {
-    PsiMethod[] intellijConstructors = intellij.getConstructors();
-    PsiMethod[] theirsConstructors = theirs.getConstructors();
+  private void compareConstructors(PsiClass beforeClass, PsiClass afterClass) {
+    PsiMethod[] beforeConstructors = beforeClass.getConstructors();
+    PsiMethod[] afterConstructors = afterClass.getConstructors();
 
-    LOG.debug("IntelliJ constructors for class " + intellij.getName() + ": " + Arrays.toString(intellijConstructors));
-    LOG.debug("Theirs constructors for class " + theirs.getName() + ": " + Arrays.toString(theirsConstructors));
+    LOG.debug("IntelliJ constructors for class " + beforeClass.getName() + ": " + Arrays.toString(beforeConstructors));
+    LOG.debug("Theirs constructors for class " + afterClass.getName() + ": " + Arrays.toString(afterConstructors));
 
-    assertEquals("Constructor counts are different for Class: " + intellij.getName(), theirsConstructors.length, intellijConstructors.length);
+    assertEquals("Constructor counts are different for Class: " + beforeClass.getName(), afterConstructors.length, beforeConstructors.length);
 
-    for (PsiMethod theirsConstructor : theirsConstructors) {
+    for (PsiMethod afterConstructor : afterConstructors) {
       boolean compared = false;
-      final PsiModifierList theirsFieldModifierList = theirsConstructor.getModifierList();
-      for (PsiMethod intellijConstructor : intellijConstructors) {
-        if (theirsConstructor.getName().equals(intellijConstructor.getName()) &&
-            theirsConstructor.getParameterList().getParametersCount() == intellijConstructor.getParameterList().getParametersCount()) {
-          PsiModifierList intellijConstructorModifierList = intellijConstructor.getModifierList();
+      final PsiModifierList theirsFieldModifierList = afterConstructor.getModifierList();
+      for (PsiMethod beforeConstructor : beforeConstructors) {
+        if (afterConstructor.getName().equals(beforeConstructor.getName()) &&
+            afterConstructor.getParameterList().getParametersCount() == beforeConstructor.getParameterList().getParametersCount()) {
+          PsiModifierList intellijConstructorModifierList = beforeConstructor.getModifierList();
 
           compareModifiers(intellijConstructorModifierList, theirsFieldModifierList);
-          compareType(intellijConstructor.getReturnType(), theirsConstructor.getReturnType(), theirsConstructor);
-          compareParams(intellijConstructor.getParameterList(), theirsConstructor.getParameterList());
+          compareType(beforeConstructor.getReturnType(), afterConstructor.getReturnType(), afterConstructor);
+          compareParams(beforeConstructor.getParameterList(), afterConstructor.getParameterList());
 
           compared = true;
           break;
         }
 
       }
-      assertTrue("Constructor names are not equal, Method: (" + theirsConstructor.getName() + ") not found in class : " + intellij.getName(), compared);
+      assertTrue("Constructor names are not equal, Method: (" + afterConstructor.getName() + ") not found in class : " + beforeClass.getName(), compared);
     }
   }
 

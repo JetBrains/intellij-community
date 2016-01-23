@@ -36,7 +36,7 @@ public class PsiClassUtil {
   @NotNull
   public static Collection<PsiMethod> collectClassMethodsIntern(@NotNull PsiClass psiClass) {
     if (psiClass instanceof PsiExtensibleClass) {
-      return ((PsiExtensibleClass) psiClass).getOwnMethods();
+      return new ArrayList<PsiMethod>(((PsiExtensibleClass) psiClass).getOwnMethods());
     } else {
       return filterPsiElements(psiClass, PsiMethod.class);
     }

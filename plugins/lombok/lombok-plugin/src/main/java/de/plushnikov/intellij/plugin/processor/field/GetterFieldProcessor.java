@@ -97,6 +97,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
       final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
       final Collection<String> methodNames = LombokUtils.toAllGetterNames(accessorsInfo, psiField.getName(), isBoolean);
       final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+      filterToleratedElements(classMethods);
 
       for (String methodName : methodNames) {
         if (PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 0)) {

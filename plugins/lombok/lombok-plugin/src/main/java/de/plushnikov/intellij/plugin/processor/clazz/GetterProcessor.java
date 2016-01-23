@@ -85,6 +85,7 @@ public class GetterProcessor extends AbstractClassProcessor {
     final Collection<PsiField> getterFields = new ArrayList<PsiField>();
 
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+    filterToleratedElements(classMethods);
 
     for (PsiField psiField : psiClass.getFields()) {
       boolean createGetter = true;

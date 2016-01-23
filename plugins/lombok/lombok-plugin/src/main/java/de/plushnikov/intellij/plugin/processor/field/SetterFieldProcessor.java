@@ -87,6 +87,7 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != psiClass) {
       final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+      filterToleratedElements(classMethods);
 
       final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
       final Collection<String> methodNames = getAllSetterNames(psiField, isBoolean);

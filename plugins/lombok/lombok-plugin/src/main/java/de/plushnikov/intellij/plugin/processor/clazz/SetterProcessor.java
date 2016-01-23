@@ -85,6 +85,7 @@ public class SetterProcessor extends AbstractClassProcessor {
   @NotNull
   protected Collection<PsiField> filterSetterFields(@NotNull PsiClass psiClass) {
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+    filterToleratedElements(classMethods);
 
     final Collection<PsiField> setterFields = new ArrayList<PsiField>();
     for (PsiField psiField : psiClass.getFields()) {
