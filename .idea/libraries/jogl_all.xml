@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="jogl-all">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/jogl-all.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/jogl-all-natives-linux-amd64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/jogl-all-natives-linux-i586.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/jogl-all-natives-macosx-universal.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/jogl-all-natives-windows-amd64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/jogl-all-natives-windows-i586.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
