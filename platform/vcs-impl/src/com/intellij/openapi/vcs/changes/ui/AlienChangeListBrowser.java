@@ -15,16 +15,17 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class AlienChangeListBrowser extends ChangesBrowser implements ChangesBrowserExtender {
   private final List<Change> myChanges;
@@ -51,14 +52,11 @@ public class AlienChangeListBrowser extends ChangesBrowser implements ChangesBro
     }
   }
 
-  public void addToolbarActions(final DialogWrapper dialogWrapper) {
-    final ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("AlienCommitChangesDialog.AdditionalActions");
-    final AnAction[] children = group.getChildren(null);
-    if (children != null) {
-      for (AnAction anAction : children) {
-        super.addToolbarAction(anAction);
-      }
-    }
+  @Override
+  protected void buildToolBar(DefaultActionGroup toolBarGroup) {
+    super.buildToolBar(toolBarGroup);
+
+    toolBarGroup.add(ActionManager.getInstance().getAction("AlienCommitChangesDialog.AdditionalActions"));
   }
 
   public void addSelectedListChangeListener(final SelectedListChangeListener listener) {

@@ -336,8 +336,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     });
 
-    myBrowserExtender.addToolbarActions(this);
-
     myBrowserExtender.addSelectedListChangeListener(new SelectedListChangeListener() {
       @Override
       public void selectedListChanged() {

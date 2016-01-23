@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -214,6 +213,30 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
 
     EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
     toolBarGroup.add(ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST));
+
+    final Icon icon = AllIcons.Actions.Refresh;
+    if (myChangesToDisplay == null) {
+      toolBarGroup.add(new AnAction("Refresh Changes") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          rebuildList();
+        }
+
+        @Override
+        public void update(AnActionEvent e) {
+          e.getPresentation().setIcon(icon);
+        }
+      });
+    }
+    RollbackDialogAction rollback = new RollbackDialogAction();
+    EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, this);
+    toolBarGroup.add(rollback);
+
+    EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(this);
+    editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
+    toolBarGroup.add(editSourceAction);
+
+    toolBarGroup.add(ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar"));
   }
 
   @Override
@@ -246,32 +269,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     private Extender(final Project project, final MultipleChangeListBrowser browser) {
       myProject = project;
       myBrowser = browser;
-    }
-
-    public void addToolbarActions(final DialogWrapper dialogWrapper) {
-      final Icon icon = AllIcons.Actions.Refresh;
-      if (myBrowser.myChangesToDisplay == null) {
-        myBrowser.addToolbarAction(new AnAction("Refresh Changes") {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            myBrowser.rebuildList();
-          }
-
-          @Override
-          public void update(AnActionEvent e) {
-            e.getPresentation().setIcon(icon);
-          }
-        });
-      }
-      RollbackDialogAction rollback = new RollbackDialogAction();
-      EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, myBrowser);
-      myBrowser.addToolbarAction(rollback);
-
-      final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myBrowser);
-      editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myBrowser);
-      myBrowser.addToolbarAction(editSourceAction);
-
-      myBrowser.addToolbarAction(ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar"));
     }
 
     public void addSelectedListChangeListener(final SelectedListChangeListener listener) {
