@@ -29,16 +29,21 @@ import org.jetbrains.annotations.NotNull;
  * @author Maxim.Mossienko
  */
 public class HtmlLexer extends BaseHtmlLexer {
-  private static IElementType ourInlineStyleElementType;
+  private static final IElementType ourInlineStyleElementType;
   private static final IElementType ourInlineScriptElementType;
 
+  public static final String INLINE_STYLE_NAME = "css-ruleset-block";
+
   static {
-    HtmlEmbeddedTokenTypesProvider[] extensions = Extensions.getExtensions(HtmlEmbeddedTokenTypesProvider.EXTENSION_POINT_NAME);
-    for (HtmlEmbeddedTokenTypesProvider extension : extensions) {
-      if ("style".equals(extension.getName())) {
-        ourInlineStyleElementType = extension.getInlineElementType();
+    EmbeddedTokenTypesProvider[] extensions = Extensions.getExtensions(EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME);
+    IElementType inlineStyleElementType = null;
+    for (EmbeddedTokenTypesProvider extension : extensions) {
+      if (INLINE_STYLE_NAME.equals(extension.getName())) {
+        inlineStyleElementType = extension.getElementType();
+        break;
       }
     }
+    ourInlineStyleElementType = inlineStyleElementType;
     // At the moment only JS.
     HtmlInlineScriptTokenTypesProvider provider = LanguageHtmlInlineScriptTokenTypesProvider.getInlineScriptProvider(ourDefaultLanguage);
     ourInlineScriptElementType = provider != null ? provider.getElementType() : null;
