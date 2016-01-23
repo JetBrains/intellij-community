@@ -29,12 +29,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class PermanentCommitsInfoIml<CommitId> implements PermanentCommitsInfo<CommitId> {
-  private static final Logger LOG = Logger.getInstance(PermanentCommitsInfoIml.class);
+public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<CommitId> {
+  private static final Logger LOG = Logger.getInstance(PermanentCommitsInfoImpl.class);
 
   @NotNull
-  public static <CommitId> PermanentCommitsInfoIml<CommitId> newInstance(@NotNull final List<? extends GraphCommit<CommitId>> graphCommits,
-                                                                         @NotNull Map<Integer, CommitId> notLoadCommits) {
+  public static <CommitId> PermanentCommitsInfoImpl<CommitId> newInstance(@NotNull final List<? extends GraphCommit<CommitId>> graphCommits,
+                                                                          @NotNull Map<Integer, CommitId> notLoadCommits) {
     TimestampGetter timestampGetter = IntTimestampGetter.newInstance(new TimestampGetter() {
       @Override
       public int size() {
@@ -61,7 +61,7 @@ public class PermanentCommitsInfoIml<CommitId> implements PermanentCommitsInfo<C
         }
       });
     }
-    return new PermanentCommitsInfoIml<CommitId>(timestampGetter, commitIdIndex, notLoadCommits);
+    return new PermanentCommitsInfoImpl<CommitId>(timestampGetter, commitIdIndex, notLoadCommits);
   }
 
   @NotNull
@@ -97,9 +97,9 @@ public class PermanentCommitsInfoIml<CommitId> implements PermanentCommitsInfo<C
 
   @NotNull private final Map<Integer, CommitId> myNotLoadCommits;
 
-  public PermanentCommitsInfoIml(@NotNull TimestampGetter timestampGetter,
-                                 @NotNull List<CommitId> commitIdIndex,
-                                 @NotNull Map<Integer, CommitId> notLoadCommits) {
+  public PermanentCommitsInfoImpl(@NotNull TimestampGetter timestampGetter,
+                                  @NotNull List<CommitId> commitIdIndex,
+                                  @NotNull Map<Integer, CommitId> notLoadCommits) {
     myTimestampGetter = timestampGetter;
     myCommitIdIndexes = commitIdIndex;
     myNotLoadCommits = notLoadCommits;
