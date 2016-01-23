@@ -23,6 +23,7 @@ import org.apache.tools.ant.taskdefs.optional.junit.JUnitTask;
 import org.apache.tools.ant.taskdefs.optional.junit.JUnitTest;
 import org.apache.tools.ant.types.*;
 import org.apache.tools.ant.types.Commandline.Argument;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -157,21 +158,28 @@ public class UiTestTask extends Task {
       Method getGuiTestClasses = testSuiteRunnerClass.getMethod("getGuiTestClasses", Class.class);
       Method getGroups = testSuiteRunnerClass.getMethod("getGroups", Class.class);
 
-      Object[] testClasses = (Object[]) getGuiTestClasses.invoke(null, classLoader.loadClass(testSuite));
-      for (Object testClass : testClasses) {
+      Class<?>[] testClasses = (Class<?>[]) getGuiTestClasses.invoke(null, classLoader.loadClass(testSuite));
+      for (Class<?> testClass : testClasses) {
         List<?> testGroups = (List<?>) getGroups.invoke(null, testClass);
-        for (Object group : testGroups) {
-          String testGroupName = group.toString();
-          if (!result.containsKey(testGroupName)) {
-            result.put(testGroupName, new ArrayList<Class<?>>());
+        if (testGroups.isEmpty()) {
+          addToTestGroup(result, "DEFAULT", testClass);
+        } else {
+          for (Object group : testGroups) {
+            addToTestGroup(result, group.toString(), testClass);
           }
-          result.get(testGroupName).add((Class<?>) testClass);
         }
       }
     } catch (Exception ex) {
       ex.printStackTrace();
     }
     return result;
+  }
+
+  private static boolean addToTestGroup(Map<String, List<Class<?>>> testGroups, @NotNull String groupName, @NotNull Class<?> testClass) {
+    if (!testGroups.containsKey(groupName)) {
+      testGroups.put(groupName, new ArrayList<Class<?>>());
+    }
+    return testGroups.get(groupName).add(testClass);
   }
 
   // Create a classloader based on the classpath contents from classpathFile.
