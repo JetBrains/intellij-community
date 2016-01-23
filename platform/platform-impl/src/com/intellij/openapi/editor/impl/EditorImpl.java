@@ -100,8 +100,6 @@ import javax.swing.border.Border;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
-import java.awt.BasicStroke;
-import java.awt.Graphics;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
@@ -1585,6 +1583,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int x = getTabbedTextWidth(lineStartOffset, column, reserved);
     return new Point(x, y);
+  }
+
+  /**
+   * Returns how much current line height bigger than the normal (16px)
+   * This method is used to scale editors elements such as gutter icons, folding elements, and others
+   */
+  public float getScale() {
+    return Registry.is("editor.scale.gutter.icons") ? getLineHeight() / JBUI.scale(16f) : 1f;
   }
 
   private int calcEndOffset(int startOffset, int visualColumn) {
