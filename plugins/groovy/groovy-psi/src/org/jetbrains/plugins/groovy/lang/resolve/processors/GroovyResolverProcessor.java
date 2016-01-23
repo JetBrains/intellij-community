@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
@@ -55,16 +54,16 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorResol
 
 public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint {
 
-  final @NotNull GrReferenceExpression myRef;
+  protected final @NotNull GrReferenceExpression myRef;
   private final @NotNull String myName;
-  final @NotNull EnumSet<GroovyResolveKind> myAcceptableKinds;
+  protected final @NotNull EnumSet<GroovyResolveKind> myAcceptableKinds;
 
   private final boolean myIsLValue;
 
-  final @Nullable PsiType myThisType;
-  final @NotNull PsiType[] myTypeArguments;
-  final @Nullable PsiType[] myArgumentTypesNonErased;
-  final @Nullable PsiType[] myArgumentTypes;
+  protected final @Nullable PsiType myThisType;
+  protected final @NotNull PsiType[] myTypeArguments;
+  private final @Nullable PsiType[] myArgumentTypesNonErased;
+  protected final @Nullable PsiType[] myArgumentTypes;
 
   private final NotNullLazyValue<SubstitutorComputer> myPropertySubstitutorComputer = new NotNullLazyValue<SubstitutorComputer>() {
     @NotNull
@@ -82,8 +81,8 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   };
   private final List<PsiScopeProcessor> myAccessorProcessors;
 
-  final MultiMap<GroovyResolveKind, GroovyResolveResult> myCandidates = MultiMap.create();
-  final MultiMap<GroovyResolveKind, GroovyResolveResult> myInapplicableCandidates = MultiMap.create();
+  protected final MultiMap<GroovyResolveKind, GroovyResolveResult> myCandidates = MultiMap.create();
+  protected final MultiMap<GroovyResolveKind, GroovyResolveResult> myInapplicableCandidates = MultiMap.create();
 
   private boolean myStopExecutingMethods = false;
 
@@ -112,7 +111,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   private List<PsiScopeProcessor> calcAccessorProcessors() {
     if (isPropertyResolve()) {
       EnumSet<DeclarationKind> method = EnumSet.of(DeclarationKind.METHOD);
-      //myIsLValue ? GroovyPropertyUtils.suggestSettersName(myName) : GroovyPropertyUtils.suggestGettersName(myName)
       if (myIsLValue) {
         return Collections.singletonList(accessorProcessor(method, GroovyPropertyUtils.getSetterName(myName)));
       }
@@ -332,12 +330,12 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   }
 
   @NotNull
-  protected Pair<Boolean, List<GroovyResolveResult>> getCandidates(@NotNull GroovyResolveKind... kinds) {
+  protected List<GroovyResolveResult> getCandidates(@NotNull GroovyResolveKind... kinds) {
     final List<GroovyResolveResult> results = ContainerUtil.newSmartList();
     for (GroovyResolveKind kind : kinds) {
       results.addAll(myCandidates.get(kind));
     }
-    return !results.isEmpty() ? Pair.create(true, results) : Pair.create(false, (List<GroovyResolveResult>)null);
+    return results;
   }
 
   @NotNull

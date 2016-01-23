@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,81 +46,80 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
 
   @NotNull
   public List<GroovyResolveResult> getCandidates() {
-    Pair<Boolean, List<GroovyResolveResult>> candidates;
+    List<GroovyResolveResult> candidates;
 
     // return package if whole ref text is valid class name
     if (myAcceptableKinds.contains(GroovyResolveKind.PACKAGE) && myIsPartOfFqn) {
       candidates = getCandidates(GroovyResolveKind.PACKAGE);
-      if (candidates.first) {
-        final GroovyResolveResult candidate = candidates.second.get(0);
+      if (!candidates.isEmpty()) {
+        final GroovyResolveResult candidate = candidates.get(0);
         final PsiElement element = candidate.getElement();
         assert element instanceof PsiPackage;
         final GrReferenceExpressionImpl topRef = getContextReferenceExpression(myRef);
         if (topRef != null) {
           final String fqn = topRef.getTextSkipWhiteSpaceAndComments();
           if (JavaPsiFacade.getInstance(myRef.getProject()).findClass(fqn, myRef.getResolveScope()) != null) {
-            return candidates.second;
+            return candidates;
           }
         }
       }
     }
 
     candidates = getCandidates(GroovyResolveKind.VARIABLE);
-    if (candidates.first) {
-      return candidates.second;
+    if (!candidates.isEmpty()) {
+      return candidates;
     }
 
     candidates = getCandidates(GroovyResolveKind.METHOD);
-    if (candidates.first) {
-      final List<GroovyResolveResult> results = filterMethodCandidates(candidates.second);
+    if (!candidates.isEmpty()) {
+      final List<GroovyResolveResult> results = filterMethodCandidates(candidates);
       return myRef.hasMemberPointer() ? collapseReflectedMethods(results) : results;
     }
 
     candidates = getCandidates(GroovyResolveKind.FIELD);
-    if (candidates.first) {
-      assert candidates.second.size() == 1;
-      final GroovyResolveResult candidate = candidates.second.get(0);
+    if (!candidates.isEmpty()) {
+      assert candidates.size() == 1;
+      final GroovyResolveResult candidate = candidates.get(0);
       final PsiElement element = candidate.getElement();
       if (element instanceof PsiField) {
         final PsiClass containingClass = ((PsiField)element).getContainingClass();
-        if (containingClass != null && PsiUtil.getContextClass(myRef) == containingClass) return candidates.second;
+        if (containingClass != null && PsiUtil.getContextClass(myRef) == containingClass) return candidates;
       }
       else if (!(element instanceof GrBindingVariable)) {
-        return candidates.second;
+        return candidates;
       }
     }
 
     if (myIsPartOfFqn) {
       candidates = getCandidates(GroovyResolveKind.PACKAGE, GroovyResolveKind.CLASS);
-      if (candidates.first) {
-        return candidates.second;
+      if (!candidates.isEmpty()) {
+        return candidates;
       }
     }
 
     candidates = getCandidates(GroovyResolveKind.PROPERTY);
-    if (candidates.first) {
-      final List<GroovyResolveResult> results = candidates.second;
-      return results.size() <= 1 ? results : ContainerUtil.newSmartList(candidates.second.get(0));
+    if (!candidates.isEmpty()) {
+      return candidates.size() <= 1 ? candidates : ContainerUtil.newSmartList(candidates.get(0));
     }
 
     candidates = getCandidates(GroovyResolveKind.FIELD);
-    if (candidates.first) {
-      return candidates.second;
+    if (!candidates.isEmpty()) {
+      return candidates;
     }
 
     candidates = getCandidates(GroovyResolveKind.PACKAGE, GroovyResolveKind.CLASS);
-    if (candidates.first) {
-      return candidates.second;
+    if (!candidates.isEmpty()) {
+      return candidates;
     }
 
     candidates = getCandidates(GroovyResolveKind.PROPERTY);
-    if (candidates.first) {
-      return candidates.second;
+    if (!candidates.isEmpty()) {
+      return candidates;
     }
 
     candidates = getCandidates(GroovyResolveKind.BINDING);
-    if (candidates.first) {
-      return candidates.second;
+    if (!candidates.isEmpty()) {
+      return candidates;
     }
 
     for (GroovyResolveKind kind : myAcceptableKinds) {
