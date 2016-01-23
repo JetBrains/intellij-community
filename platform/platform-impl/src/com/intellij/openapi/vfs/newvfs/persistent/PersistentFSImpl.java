@@ -873,27 +873,29 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     if (root != null) return root;
 
     final VirtualFileSystemEntry newRoot;
-    int rootId = FSRecords.findRootRecord(rootUrl);
+    String rootPathBeforeSplash;
+    String rootName;
 
-    VfsData.Segment segment = VfsData.getSegment(rootId, true);
-    VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
     if (fs instanceof JarFileSystem) {
       String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
       VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
       if (parentFile == null) return null;
       FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(parentFile.getName());
       if (type != FileTypes.ARCHIVE) return null;
-      newRoot = new FsRoot(rootId, segment, directoryData, fs, parentFile.getName(), parentFile.getPath() + "!");
+      rootName = parentFile.getName();
+      rootPathBeforeSplash = parentFile.getPath() + "!";
     }
     else {
-      newRoot = new FsRoot(rootId, segment, directoryData, fs, basePath, StringUtil.trimEnd(basePath, "/"));
+      rootName = basePath;
+      rootPathBeforeSplash = StringUtil.trimEnd(basePath, "/");
     }
 
+    final String finalRootPathBeforeSplash = rootPathBeforeSplash;
     FileAttributes attributes = fs.getAttributes(new StubVirtualFile() {
       @NotNull
       @Override
       public String getPath() {
-        return newRoot.getPath();
+        return finalRootPathBeforeSplash + "/";
       }
 
       @Nullable
@@ -905,6 +907,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     if (attributes == null || !attributes.isDirectory()) {
       return null;
     }
+
+    int rootId = FSRecords.findRootRecord(rootUrl);
+
+    VfsData.Segment segment = VfsData.getSegment(rootId, true);
+    VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
+    newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, rootPathBeforeSplash);
 
     boolean mark;
     synchronized (myRoots) {
