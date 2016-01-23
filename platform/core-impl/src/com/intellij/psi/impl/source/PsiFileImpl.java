@@ -691,6 +691,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       final PsiFileStub[] stubRoots = baseRoot.getStubRoots();
       if (stubRoots.length != roots.size()) {
         LOG.error("stubRoots.length = " + stubRoots.length + "; roots.size() = " + roots.size());
+        rebuildStub();
+        return stubHolder;
       }
       // set all stub trees to avoid reading file when stub tree for another psi root is accessed
       int matchingRoot = 0;
