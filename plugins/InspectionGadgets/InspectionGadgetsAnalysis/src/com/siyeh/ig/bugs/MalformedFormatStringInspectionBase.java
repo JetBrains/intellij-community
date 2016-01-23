@@ -152,7 +152,7 @@ public class MalformedFormatStringInspectionBase extends BaseInspection {
       try {
         validators = FormatDecode.decode(value, argumentCount);
       }
-      catch (Exception e) {
+      catch (FormatDecode.IllegalFormatException e) {
         registerError(formatArgument, e);
         return;
       }

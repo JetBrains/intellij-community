@@ -26,13 +26,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@SuppressWarnings({"CollectionDeclaredAsConcreteClass", "ObjectEquality", "HardCodedStringLiteral"})
 class FormatDecode {
 
-  private static final String FORMAT_SPECIFIER =
-    "%(\\d+\\$)?([-#+ 0,(\\<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])";
-
-  private static final Pattern fsPattern = Pattern.compile(FORMAT_SPECIFIER);
+  private static final Pattern fsPattern = Pattern.compile("%(\\d+\\$)?([-#+ 0,(\\<]*)?(\\d+)?(\\.\\d*)?([tT])?([a-zA-Z%])");
 
   private FormatDecode() {}
 
@@ -57,7 +53,45 @@ class FormatDecode {
       case ',': return GROUP;
       case '(': return PARENTHESES;
       case '<': return PREVIOUS;
-      default: throw new IllegalFormatException();
+      default: return -1;
+    }
+  }
+
+  private static String flagString(int flags) {
+    final StringBuilder result = new StringBuilder(8);
+    if ((flags & LEFT_JUSTIFY) != 0) {
+      result.append('-');
+    }
+    if ((flags & ALTERNATE) != 0) {
+      result.append('#');
+    }
+    if ((flags & PLUS) != 0) {
+      result.append('+');
+    }
+    if ((flags & LEADING_SPACE) != 0) {
+      result.append(' ');
+    }
+    if ((flags & ZERO_PAD) != 0) {
+      result.append('0');
+    }
+    if ((flags & GROUP) != 0) {
+      result.append(',');
+    }
+    if ((flags & PARENTHESES) != 0) {
+      result.append('(');
+    }
+    if ((flags & PREVIOUS) != 0) {
+      result.append('<');
+    }
+    return result.toString();
+  }
+
+  private static void checkFlags(int value, int allowedFlags, String specifier) {
+    final int result = value & ~allowedFlags;
+    if (result != 0) {
+      final String flags = flagString(result);
+      final String word = flags.length() == 1 ? "flag '" : "flags '";
+      throw new IllegalFormatException(word + flags + "' not allowed in '" + specifier + '\'');
     }
   }
 
@@ -81,39 +115,53 @@ class FormatDecode {
       final String width = matcher.group(3);
       final String precision = matcher.group(4);
       final String dateSpec = matcher.group(5);
-      final String spec = matcher.group(6);
+      final String conversion = matcher.group(6);
 
       int flagBits = 0;
       for (int j = 0; j < flags.length(); j++) {
-        final int bit = flag(flags.charAt(j));
-        if ((flagBits | bit) == flagBits) throw new IllegalFormatException(specifier); // duplicate flag
+        final char flag = flags.charAt(j);
+        final int bit = flag(flag);
+        if (bit == -1) {
+          throw new IllegalFormatException("unexpected character '" + flag + "' in '" + specifier + '\'');
+        }
+        if ((flagBits | bit) == flagBits) {
+          throw new IllegalFormatException("duplicate flag '" + flag + "' in '" + specifier + '\'');
+        }
         flagBits |= bit;
-      }
-      if (isAllBitsSet(flagBits, LEADING_SPACE | PLUS) || isAllBitsSet(flagBits, LEFT_JUSTIFY | ZERO_PAD)) {
-        // illegal flag combination
-        throw new IllegalFormatException(specifier);
       }
 
       // check this first because it should not affect "implicit"
-      if ("n".equals(spec)) {
+      if ("n".equals(conversion)) {
         // no flags allowed
-        if (flagBits != 0 || !StringUtil.isEmpty(width) || !StringUtil.isEmpty(precision)) throw new IllegalFormatException(specifier);
+        checkFlags(flagBits, 0, specifier);
+        if (!StringUtil.isEmpty(width)) {
+          throw new IllegalFormatException("width ('" + width + "') not allowed in '" + specifier + '\'');
+        }
+        checkNoPrecision(precision, specifier);
         continue;
       }
-      else if ("%".equals(spec)) { // literal '%'
-        if (isAnyBitSet(flagBits, ~LEFT_JUSTIFY) || !StringUtil.isEmpty(precision)) throw new IllegalFormatException(specifier);
+      else if ("%".equals(conversion)) { // literal '%'
+        checkFlags(flagBits, LEFT_JUSTIFY, specifier);
+        checkNoPrecision(precision, specifier);
         continue;
       }
 
       if (posSpec != null) {
-        if (isAnyBitSet(flagBits, PREVIOUS)) throw new IllegalFormatException(specifier);
+        if (isAllBitsSet(flagBits, PREVIOUS)) {
+          throw new IllegalFormatException("unnecessary argument position specifier '" + posSpec + "' in '" + specifier + '\'');
+        }
         final String num = posSpec.substring(0, posSpec.length() - 1);
         pos = Integer.parseInt(num) - 1;
+        if (pos < 0) {
+          throw new IllegalFormatException("illegal position specifier '" + posSpec + "' in '" + specifier + '\'');
+        }
         previousAllowed = true;
       }
-      else if (isAnyBitSet(flagBits, PREVIOUS)) {
+      else if (isAllBitsSet(flagBits, PREVIOUS)) {
         // reuse last pos
-        if (!previousAllowed) throw new IllegalFormatException(specifier);
+        if (!previousAllowed) {
+          throw new IllegalFormatException("previous flag '<' used but no previous format specifier found for '" + specifier + '\'');
+        }
       }
       else {
         previousAllowed = true;
@@ -122,60 +170,78 @@ class FormatDecode {
 
       final Validator allowed;
       if (dateSpec != null) {  // a t or T
-        if (isAnyBitSet(flagBits, ~(LEFT_JUSTIFY | PREVIOUS)) || !StringUtil.isEmpty(precision)) throw new IllegalFormatException(specifier);
+        checkFlags(flagBits, LEFT_JUSTIFY | PREVIOUS, specifier);
+        checkNoPrecision(precision, specifier);
         allowed = new DateValidator(specifier);
       }
       else {
-        switch (spec.charAt(0)) {
+        switch (conversion.charAt(0)) {
           case 'b': // boolean (general)
           case 'B':
           case 'h': // Integer hex string (general
           case 'H':
-            if (isAnyBitSet(flagBits, ~(LEFT_JUSTIFY | PREVIOUS))) throw new IllegalFormatException(specifier);
+            checkFlags(flagBits, LEFT_JUSTIFY | PREVIOUS, specifier);
             allowed = ALL_VALIDATOR;
             break;
           case 's': // formatted string (general)
           case 'S':
-            if (isAnyBitSet(flagBits, ~(LEFT_JUSTIFY | ALTERNATE | PREVIOUS))) throw new IllegalFormatException(specifier);
+            checkFlags(flagBits, LEFT_JUSTIFY | ALTERNATE | PREVIOUS, specifier);
             allowed = ALL_VALIDATOR;
             break;
           case 'c': // unicode character
           case 'C':
-            if (isAnyBitSet(flagBits, ~(LEFT_JUSTIFY | PREVIOUS)) || !StringUtil.isEmpty(precision)) throw new IllegalFormatException(specifier);
+            checkFlags(flagBits, LEFT_JUSTIFY | PREVIOUS, specifier);
+            checkNoPrecision(precision, specifier);
             allowed = new CharValidator(specifier);
             break;
           case 'd': // decimal integer
-            if (isAnyBitSet(flagBits, ALTERNATE)) throw new IllegalFormatException(specifier);
+            checkFlags(flagBits, ~ALTERNATE, specifier);
             allowed = new IntValidator(specifier);
             break;
           case 'o': // octal integer
           case 'x': // hexadecimal integer
           case 'X':
-            if (isAnyBitSet(flagBits, PLUS | LEADING_SPACE | GROUP) || !StringUtil.isEmpty(precision)) {
-              throw new IllegalFormatException(specifier);
-            }
+            checkFlags(flagBits, ~(PLUS | LEADING_SPACE | GROUP), specifier);
+            checkNoPrecision(precision, specifier);
             allowed = new IntValidator(specifier);
             break;
           case 'a': // hexadecimal floating-point number
           case 'A':
-            if (isAnyBitSet(flagBits, PARENTHESES | GROUP)) throw new IllegalFormatException(specifier);
+            checkFlags(flagBits, ~(PARENTHESES | GROUP), specifier);
             allowed = new FloatValidator(specifier);
             break;
-          case 'e':
+          case 'e': // floating point -> decimal number in computerized scientific notation
           case 'E':
-            if (isAnyBitSet(flagBits, GROUP)) throw new IllegalFormatException(specifier);
+            checkFlags(flagBits, ~GROUP, specifier);
             allowed = new FloatValidator(specifier);
             break;
           case 'g': // scientific notation
           case 'G':
-            if (isAnyBitSet(flagBits, ALTERNATE)) throw new IllegalFormatException(specifier);
+            checkFlags(flagBits, ~ALTERNATE, specifier);
             allowed = new FloatValidator(specifier);
             break;
-          case 'f': // decimal number
+          case 'f': // floating point -> decimal number
             allowed = new FloatValidator(specifier);
             break;
           default:
-            throw new IllegalFormatException(specifier);
+            throw new IllegalFormatException("unknown conversion in '" + specifier + '\'');
+        }
+      }
+      if (precision != null && precision.length() < 2) {
+        throw new IllegalFormatException("invalid precision specified in '" + specifier + '\'');
+      }
+      if (isAllBitsSet(flagBits, LEADING_SPACE | PLUS)) {
+        throw new IllegalFormatException("illegal flag combination ' ' and '+' in '" + specifier + '\'');
+      }
+      if (isAllBitsSet(flagBits, LEFT_JUSTIFY | ZERO_PAD)) {
+        throw new IllegalFormatException("illegal flag combination '-' and '0' in '" + specifier + '\'');
+      }
+      if (StringUtil.isEmpty(width)) {
+        if (isAllBitsSet(flagBits, LEFT_JUSTIFY)) {
+          throw new IllegalFormatException("left justify flag '-' used but width not specified in '" + specifier + '\'');
+        }
+        if (isAllBitsSet(flagBits, ZERO_PAD)) {
+          throw new IllegalFormatException("zero padding flag '0' used but width not specified in '" + specifier + '\'');
         }
       }
       storeValidator(allowed, pos, parameters, argumentCount);
@@ -187,8 +253,10 @@ class FormatDecode {
     return parameters.toArray(new Validator[parameters.size()]);
   }
 
-  private static boolean isAnyBitSet(int value, int mask) {
-    return (value & mask) != 0;
+  private static void checkNoPrecision(String precision, String specifier) {
+    if (!StringUtil.isEmpty(precision)) {
+      throw new IllegalFormatException("precision ('" + precision + "') not allowed in '" + specifier + '\'');
+    }
   }
 
   private static boolean isAllBitsSet(int value, int mask) {
@@ -201,9 +269,7 @@ class FormatDecode {
     }
   }
 
-  private static void storeValidator(Validator validator, int pos,
-                                     ArrayList<Validator> parameters,
-                                     int argumentCount) {
+  private static void storeValidator(Validator validator, int pos, ArrayList<Validator> parameters, int argumentCount) {
     if (pos < parameters.size()) {
       final Validator existing = parameters.get(pos);
       if (existing == null) {
