@@ -2,12 +2,20 @@ language: java
 sudo: false
 jdk:
   - oraclejdk8
-cache:
-  directories:
-  - $HOME/.m2
-  - $HOME/Tools
 
-install:
-  - mvn install
-  - ant -f build-init.xml
-  - ant -f build-test.xml -DIDEA_HOME=./idea-IC
+env:
+  - IDEA_VERSION=IC-15.0.2
+  - IDEA_VERSION=IU-15.0.2
+
+script:
+  - ./gradlew --console plain check
+
+//cache:
+//  directories:
+//  - $HOME/.m2
+//  - $HOME/Tools
+
+//install:
+//  - mvn install
+//  - ant -f build-init.xml
+//  - ant -f build-test.xml -DIDEA_HOME=./idea-IC

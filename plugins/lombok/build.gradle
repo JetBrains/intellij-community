@@ -1,0 +1,165 @@
+plugins {
+    id "org.jetbrains.intellij" version "0.0.39"
+    id "de.undercouch.download" version '2.1.0'
+}
+
+group 'de.plushnikov.intellij.plugin'
+version = "${version}"
+
+allprojects {
+    apply plugin: 'java'
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
+
+    plugins.withType(JavaPlugin) {
+        test {
+            systemProperty "NO_FS_ROOTS_ACCESS_CHECK", "true"
+        }
+    }
+
+    sourceSets {
+        main {
+            java {
+                srcDirs = [ 'src/main/java',
+                            'build/generated/src']
+            }
+            resources {
+                srcDirs = [ 'src/main/resources',
+                            'build/generated/resources']
+            }
+        }
+    }
+
+    apply plugin: 'org.jetbrains.intellij'
+    intellij {
+        def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
+        version = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
+        pluginName 'lombok-plugin'
+        plugins 'IntelliLang'
+        downloadSources Boolean.valueOf(sources)
+//        publish {
+//            pluginId ''
+//            username ''
+//            password System.properties['intellij.publish.password']
+//        }
+    }
+
+//    compileJava.dependsOn(generateLexer)
+}
+
+apply plugin: 'idea'
+idea {
+    project {
+        jdkName = javaVersion
+        languageLevel = javaVersion
+    }
+    module {
+        generatedSourceDirs += file('gen')
+    }
+}
+
+configurations {
+    lombok
+    hrisey
+    gen
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    lombok group: 'org.projectlombok', name: 'lombok', version: '1.16.6', classifier: 'sources', ext: 'jar'
+    hrisey group: 'pl.mg6.hrisey', name: 'hrisey', version: '0.3.1', classifier: 'sources', ext: 'jar'
+
+    gen 'de.jflex:jflex:1.6.0'
+    gen files('lib/grammar-kit.jar')
+    gen files('lib/light-psi-all.jar')
+}
+
+
+copy {
+    includeEmptyDirs = false
+    from({ zipTree(configurations.lombok.singleFile) }) {
+        include 'lombok/extern/**'
+        include 'lombok/experimental/**'
+        include 'lombok/Builder.java'
+        include 'lombok/AccessLevel.java'
+        include 'lombok/*ArgsConstructor.java'
+        include 'lombok/Cleanup.java'
+        include 'lombok/Data.java'
+        include 'lombok/Delegate.java'
+        include 'lombok/Getter.java'
+        include 'lombok/Setter.java'
+        include 'lombok/Equals*.java'
+        include 'lombok/NonNull.java'
+        include 'lombok/Synchronized.java'
+        include 'lombok/ToString.java'
+        include 'lombok/SneakyThrows.java'
+        include 'lombok/Value.java'
+        include 'lombok/val.java'
+        include 'lombok/Singular.java'
+        include 'lombok/core/handlers/Singulars.java'
+    }
+    into("${buildDir}/generated/src")
+}
+
+copy {
+    from({ zipTree(configurations.hrisey.singleFile)} ) {
+        include 'hrisey/Parcelable.java'
+        include 'hrisey/Preferences.java'
+    }
+    into("${buildDir}/generated/src")
+}
+
+copy {
+    includeEmptyDirs = false
+    from({ zipTree(configurations.lombok.singleFile) }) {
+        include '**/*.txt'
+    }
+    into("${buildDir}/generated/resources")
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.10'
+}
+
+import de.undercouch.gradle.tasks.download.Download
+task downloadJFlex(type: Download) {
+    src 'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/jflex-1.4/lib/JFlex.jar'
+    dest "${buildDir}/downloads/JFlex.jar"
+    onlyIfNewer true
+}
+
+task downloadSkeleton(dependsOn: downloadJFlex, type: Download) {
+    src 'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/idea-flex.skeleton'
+    dest "${buildDir}/downloads/idea-flex.skeleton"
+    onlyIfNewer true
+}
+
+task generateLexer(dependsOn: downloadSkeleton, type: JavaExec) {
+    main '-jar'
+    args """${buildDir}/downloads/JFlex.jar
+           |--nobak
+           |--charat
+           |--skel
+           |${buildDir}/downloads/idea-flex.skeleton
+           |-d
+           |${buildDir}/generated/src/de/plushnikov/intellij/plugin/language
+           |${projectDir}/src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.flex""".stripMargin().split('\n').toList()
+}
+
+task generatePsiAndParser(type: JavaExec) {
+    ext.src     = "src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.bnf"
+    ext.dstRoot = "${buildDir}/generated/src"
+
+    main = "org.intellij.grammar.Main"
+
+    args = [ dstRoot, file(src) ]
+
+    inputs  .file   file(src)
+    outputs .dir    fileTree(dir: dstRoot, include: '**/*.java')
+
+    classpath configurations.gen
+}

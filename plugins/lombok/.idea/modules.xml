@@ -2,10 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/lombok-api/lombok-api.iml" filepath="$PROJECT_DIR$/lombok-api/lombok-api.iml" />
-      <module fileurl="file://$PROJECT_DIR$/lombok-intellij-plugin.iml" filepath="$PROJECT_DIR$/lombok-intellij-plugin.iml" />
-      <module fileurl="file://$PROJECT_DIR$/lombok-plugin/lombok-plugin.iml" filepath="$PROJECT_DIR$/lombok-plugin/lombok-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/lombok-plugin.iml" filepath="$PROJECT_DIR$/lombok-plugin.iml" />
     </modules>
   </component>
 </project>
-
