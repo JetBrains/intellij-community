@@ -17,6 +17,8 @@ package git4idea.rebase
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.LineSeparator
 import git4idea.branch.GitBranchUiHandler
@@ -31,6 +33,7 @@ import git4idea.test.build
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import kotlin.properties.Delegates
+import kotlin.test.assertFailsWith
 
 class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
@@ -417,7 +420,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
       }.joinToString(LineSeparator.getSystemLineSeparator().separatorString)
     }
 
-    GitTestingRebaseProcess(myProject, GitRebaseParams(null, null, "master", true, false), myRepo).rebase()
+    rebaseInteractively()
 
     assertSuccessfulNotification("Rebase Stopped for Editing", "Once you are satisfied with your changes you may <a href='continue'>continue</a>")
     assertEquals("The repository must be in the 'SUSPENDED' state", myRepo, myGitRepositoryManager.ongoingRebaseSpec!!.ongoingRebase)
@@ -427,6 +430,38 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     assertSuccessfulNotification("Rebased feature on master")
     myRepo.`assert feature rebased on master`()
     assertNoRebaseInProgress(myRepo)
+  }
+
+  fun `test cancel in interactive rebase should show no error notification`() {
+    myRepo.`diverge feature and master`()
+
+    myDialogManager.onDialog(GitRebaseEditor::class.java) { DialogWrapper.CANCEL_EXIT_CODE }
+    assertFailsWith(ProcessCanceledException::class) { rebaseInteractively() }
+
+    assertNoNotification()
+    assertNoRebaseInProgress(myRepo)
+    myRepo.`assert feature not rebased on master`()
+  }
+
+  fun `test cancel in noop case should show no error notification`() {
+    build {
+      master {
+        0()
+        1()
+      }
+      feature(0) {}
+    }
+
+    myDialogManager.onMessage { Messages.CANCEL }
+    assertFailsWith(ProcessCanceledException::class) { rebaseInteractively() }
+
+    assertNoNotification()
+    assertNoRebaseInProgress(myRepo)
+    myRepo.`assert feature not rebased on master`()
+  }
+
+  private fun rebaseInteractively() {
+    GitTestingRebaseProcess(myProject, GitRebaseParams(null, null, "master", true, false), myRepo).rebase()
   }
 
   fun `test checkout with rebase`() {
