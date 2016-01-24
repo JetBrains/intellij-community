@@ -14,4 +14,4 @@ env:
   - IDEA_VERSION=IU-14.1.6
 
 script:
-  - gradle --console plain generateAll check
+  - gradle generateAll check
