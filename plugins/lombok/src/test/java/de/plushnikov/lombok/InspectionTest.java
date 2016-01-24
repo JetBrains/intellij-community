@@ -10,7 +10,7 @@ public class InspectionTest extends InspectionTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return "./lombok-plugin/src/test/data/inspection";
+    return "testData/inspection";
   }
 
   private void doTest() throws Exception {

@@ -47,18 +47,6 @@ public class LombokImplicitUsageProvider implements ImplicitUsageProvider {
       }
 
     }
-//    else if (element instanceof PsiMethod) {
-//  TODO    Not implemented at the moment
-//      final Collection<LombokProcessorData> applicableProcessors = processorProvider.getApplicableProcessors((PsiMethod) element);
-//
-//      for (LombokProcessorData processorData : applicableProcessors) {
-//        final LombokPsiElementUsage psiElementUsage = processorData.getProcessor().checkMethodUsage((PsiMethod) element, processorData.getPsiAnnotation());
-//        if (elementUsage == psiElementUsage || LombokPsiElementUsage.READ_WRITE == psiElementUsage) {
-//          result = true;
-//          break;
-//        }
-//      }
-//    }
     return result;
   }
 

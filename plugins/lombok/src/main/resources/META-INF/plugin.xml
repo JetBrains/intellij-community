@@ -1,209 +1,209 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <idea-plugin version="2" url="https://github.com/mplushnikov/lombok-intellij-plugin">
-  <id>Lombook Plugin</id>
-  <name>Lombok Plugin</name>
-  <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.9.8.15</version>
+    <id>Lombok Plugin</id>
+    <name>Lombok Plugin</name>
+    <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
+    <version>0.9.8.15</version>
 
-  <idea-version since-build="142.00"/>
+    <idea-version since-build="142.00"/>
 
-  <description><![CDATA[
+    <description><![CDATA[
     A plugin that adds first-class support for Project Lombok
     ]]>
-  </description>
-  <category>Tools Integration</category>
+    </description>
+    <category>Tools Integration</category>
 
-  <depends>com.intellij.modules.lang</depends>
-  <depends>com.intellij.modules.platform</depends>
-  <depends>com.intellij.modules.java</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
 
-  <application-components>
-    <component>
-      <implementation-class>de.plushnikov.intellij.plugin.LombokLoader</implementation-class>
-    </component>
-  </application-components>
+    <application-components>
+        <component>
+            <implementation-class>de.plushnikov.intellij.plugin.LombokLoader</implementation-class>
+        </component>
+    </application-components>
 
-  <extensionPoints>
-    <extensionPoint name="processor" interface="de.plushnikov.intellij.plugin.processor.Processor"/>
-  </extensionPoints>
+    <extensionPoints>
+        <extensionPoint name="processor" interface="de.plushnikov.intellij.plugin.processor.Processor"/>
+    </extensionPoints>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.settings.LombokSettings"/>
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="de.plushnikov.intellij.plugin.settings.LombokSettings"/>
 
-    <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
-    <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
-    <inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider"/>
-    <projectConfigurable instance="de.plushnikov.intellij.plugin.settings.ProjectSettingsPage"/>
+        <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
+        <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
+        <inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider"/>
+        <projectConfigurable instance="de.plushnikov.intellij.plugin.settings.ProjectSettingsPage"/>
 
-		<renameHandler implementation="de.plushnikov.intellij.plugin.extension.LombokElementRenameHandler" order="FIRST"/>
-    <treeGenerator implementation="de.plushnikov.intellij.plugin.extension.LombokLightMethodTreeGenerator"/>
+        <renameHandler implementation="de.plushnikov.intellij.plugin.extension.LombokElementRenameHandler" order="FIRST"/>
+        <treeGenerator implementation="de.plushnikov.intellij.plugin.extension.LombokLightMethodTreeGenerator"/>
 
-    <lang.structureViewExtension implementation="de.plushnikov.intellij.plugin.extension.LombokStructureViewExtension"/>
+        <lang.structureViewExtension implementation="de.plushnikov.intellij.plugin.extension.LombokStructureViewExtension"/>
 
-    <daemon.highlightInfoFilter implementation="de.plushnikov.intellij.plugin.extension.LombokHighlightErrorFilter"/>
+        <daemon.highlightInfoFilter implementation="de.plushnikov.intellij.plugin.extension.LombokHighlightErrorFilter"/>
 
-    <fileTypeFactory implementation="de.plushnikov.intellij.plugin.language.LombokConfigFileTypeFactory"/>
-    <lang.parserDefinition language="Lombok.Config" implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigParserDefinition"/>
-    <lang.syntaxHighlighterFactory key="Lombok.Config" implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigSyntaxHighlighterFactory"/>
-    <colorSettingsPage implementation="de.plushnikov.intellij.plugin.language.LombokConfigColorSettingsPage"/>
-    <completion.contributor language="Lombok.Config" implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigCompletionContributor"/>
-    <lang.commenter language="Lombok.Config" implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigCommentor"/>
+        <fileTypeFactory implementation="de.plushnikov.intellij.plugin.language.LombokConfigFileTypeFactory"/>
+        <lang.parserDefinition language="Lombok.Config" implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigParserDefinition"/>
+        <lang.syntaxHighlighterFactory key="Lombok.Config" implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigSyntaxHighlighterFactory"/>
+        <colorSettingsPage implementation="de.plushnikov.intellij.plugin.language.LombokConfigColorSettingsPage"/>
+        <completion.contributor language="Lombok.Config" implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigCompletionContributor"/>
+        <lang.commenter language="Lombok.Config" implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigCommentor"/>
 
-		<fileBasedIndex implementation="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigIndex"/>
+        <fileBasedIndex implementation="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigIndex"/>
 
-		<custom.exception.handler implementation="de.plushnikov.intellij.plugin.handler.SneakyThrowsExceptionHandler"/>
+        <custom.exception.handler implementation="de.plushnikov.intellij.plugin.handler.SneakyThrowsExceptionHandler"/>
 
-    <findUsagesHandlerFactory implementation="de.plushnikov.intellij.plugin.extension.LombokFieldFindUsagesHandlerFactory"/>
-    <renamePsiElementProcessor implementation="de.plushnikov.intellij.plugin.extension.LombokRenameFieldReferenceProcessor"/>
+        <findUsagesHandlerFactory implementation="de.plushnikov.intellij.plugin.extension.LombokFieldFindUsagesHandlerFactory"/>
+        <renamePsiElementProcessor implementation="de.plushnikov.intellij.plugin.extension.LombokRenameFieldReferenceProcessor"/>
 
-		<java.elementFinder implementation="de.plushnikov.intellij.plugin.extension.LombokElementFinder" order="last"/>
+        <java.elementFinder implementation="de.plushnikov.intellij.plugin.extension.LombokElementFinder" order="last"/>
 
-    <!--Overwrite IntelliJ Diamond inspection, to filter out val declarations-->
-    <localInspection groupPath="Java" language="JAVA" shortName="Convert2Diamond" displayName="Explicit type can be replaced with &lt;&gt;"
-                     groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
-                     implementationClass="de.plushnikov.intellij.plugin.inspection.LombokExplicitTypeCanBeDiamondInspection" order="last"/>
-  </extensions>
+        <!--Overwrite IntelliJ Diamond inspection, to filter out val declarations-->
+        <localInspection groupPath="Java" language="JAVA" shortName="Convert2Diamond" displayName="Explicit type can be replaced with &lt;&gt;"
+                         groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
+                         implementationClass="de.plushnikov.intellij.plugin.inspection.LombokExplicitTypeCanBeDiamondInspection" order="last"/>
+    </extensions>
 
-  <extensions defaultExtensionNs="Lombook Plugin">
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor"/>
+    <extensions defaultExtensionNs="Lombok Plugin">
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor"/>
 
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.LogProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.Log4jProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.Log4j2Processor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.Slf4jProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.XSlf4jProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.CommonsLogProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.LogProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.Log4jProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.Log4j2Processor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.Slf4jProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.XSlf4jProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.CommonsLogProcessor"/>
 
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.DataProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.EqualsAndHashCodeProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.GetterProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.SetterProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.WitherProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.DataProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.EqualsAndHashCodeProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.GetterProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.SetterProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.WitherProcessor"/>
 
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderPreDefinedInnerClassFieldProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderPreDefinedInnerClassMethodProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalPreDefinedInnerClassFieldProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalPreDefinedInnerClassMethodProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderClassProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalClassProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderPreDefinedInnerClassFieldProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderPreDefinedInnerClassMethodProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalPreDefinedInnerClassFieldProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalPreDefinedInnerClassMethodProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderClassProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalClassProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalProcessor"/>
 
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueExperimentalProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueExperimentalProcessor"/>
 
-    <processor implementation="de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.field.DelegateExperimentalFieldProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.field.DelegateExperimentalFieldProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor"/>
 
-    <processor implementation="de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.method.DelegateExperimentalMethodProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.method.DelegateExperimentalMethodProcessor"/>
 
-    <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderClassMethodProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderExperimentalClassMethodProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderExperimentalMethodProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderClassMethodProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderExperimentalClassMethodProcessor"/>
+        <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderExperimentalMethodProcessor"/>
 
-    <!-- hrisey -->
-    <processor implementation="pl.mg6.hrisey.intellij.plugin.processor.clazz.ParcelableMethodsProcessor"/>
-    <processor implementation="pl.mg6.hrisey.intellij.plugin.processor.clazz.ParcelableFieldsProcessor"/>
-  </extensions>
+        <!-- hrisey -->
+        <processor implementation="pl.mg6.hrisey.intellij.plugin.processor.clazz.ParcelableMethodsProcessor"/>
+        <processor implementation="pl.mg6.hrisey.intellij.plugin.processor.clazz.ParcelableFieldsProcessor"/>
+    </extensions>
 
-  <actions>
-    <group id="LombokActionGroup" text="Lombok" description="Refactor code with lombok annotations"
-           icon="/icons/lombok.png" popup="true">
+    <actions>
+        <group id="LombokActionGroup" text="Lombok" description="Refactor code with lombok annotations"
+               icon="/icons/lombok.png" popup="true">
 
-      <action id="defaultLombokData" class="de.plushnikov.intellij.plugin.action.lombok.LombokDataAction"
-              text="Default @Data" description="Action to replace getter/setter/equals/hashcode/toString methods with lombok @Data annotation">
-      </action>
-      <separator/>
-      <action id="defaultLombokGetter" class="de.plushnikov.intellij.plugin.action.lombok.LombokGetterAction"
-              text="Default @Getter" description="Action to replace all getter methods with lombok @Getter annotation">
-      </action>
-      <action id="defaultLombokSetter" class="de.plushnikov.intellij.plugin.action.lombok.LombokSetterAction"
-              text="Default @Setter" description="Action to replace all setter methods with lombok @Setter annotation">
-      </action>
-      <action id="defaultLombokEqualsAndHashcode" class="de.plushnikov.intellij.plugin.action.lombok.LombokEqualsAndHashcodeAction"
-              text="Default @EqualsAndHashcode" description="Action to replace equals and hashcode methods with lombok @EqualsAndHashcode annotation">
-      </action>
-      <action id="defaultLombokToString" class="de.plushnikov.intellij.plugin.action.lombok.LombokToStringAction"
-              text="Default @ToString" description="Action to replace toString method with lombok @ToString annotation">
-      </action>
-      <separator/>
-      <action id="defaultLombokLogger" class="de.plushnikov.intellij.plugin.action.lombok.LombokLoggerAction"
-              text="@Log (and friends)" description="Action to replace logger with lombok @Log annotation">
-      </action>
+            <action id="defaultLombokData" class="de.plushnikov.intellij.plugin.action.lombok.LombokDataAction"
+                    text="Default @Data" description="Action to replace getter/setter/equals/hashcode/toString methods with lombok @Data annotation">
+            </action>
+            <separator/>
+            <action id="defaultLombokGetter" class="de.plushnikov.intellij.plugin.action.lombok.LombokGetterAction"
+                    text="Default @Getter" description="Action to replace all getter methods with lombok @Getter annotation">
+            </action>
+            <action id="defaultLombokSetter" class="de.plushnikov.intellij.plugin.action.lombok.LombokSetterAction"
+                    text="Default @Setter" description="Action to replace all setter methods with lombok @Setter annotation">
+            </action>
+            <action id="defaultLombokEqualsAndHashcode" class="de.plushnikov.intellij.plugin.action.lombok.LombokEqualsAndHashcodeAction"
+                    text="Default @EqualsAndHashcode" description="Action to replace equals and hashcode methods with lombok @EqualsAndHashcode annotation">
+            </action>
+            <action id="defaultLombokToString" class="de.plushnikov.intellij.plugin.action.lombok.LombokToStringAction"
+                    text="Default @ToString" description="Action to replace toString method with lombok @ToString annotation">
+            </action>
+            <separator/>
+            <action id="defaultLombokLogger" class="de.plushnikov.intellij.plugin.action.lombok.LombokLoggerAction"
+                    text="@Log (and friends)" description="Action to replace logger with lombok @Log annotation">
+            </action>
 
-      <!--<separator/>-->
-      <!--<action id="generalLombokGetter" class="de.plushnikov.intellij.plugin.action.lombok.RefactorGetterAction"-->
-      <!--text="Selectable @Getter"-->
-      <!--description="Action to replace some getter methods with lombok @Getter annotation">-->
-      <!--</action>-->
-      <!--<action id="generalLombokSetter" class="de.plushnikov.intellij.plugin.action.lombok.RefactorSetterAction"-->
-      <!--text="Selectable @Setter"-->
-      <!--description="Action to replace some setter methods with lombok @Setter annotation">-->
-      <!--</action>-->
+            <!--<separator/>-->
+            <!--<action id="generalLombokGetter" class="de.plushnikov.intellij.plugin.action.lombok.RefactorGetterAction"-->
+            <!--text="Selectable @Getter"-->
+            <!--description="Action to replace some getter methods with lombok @Getter annotation">-->
+            <!--</action>-->
+            <!--<action id="generalLombokSetter" class="de.plushnikov.intellij.plugin.action.lombok.RefactorSetterAction"-->
+            <!--text="Selectable @Setter"-->
+            <!--description="Action to replace some setter methods with lombok @Setter annotation">-->
+            <!--</action>-->
 
-      <add-to-group group-id="RefactoringMenu" anchor="last"/>
-    </group>
-    <group id="DelombokActionGroup" text="Delombok" description="Refactor code removing lombok annotations"
-           icon="/icons/delombok.png" popup="true">
-      <action id="delombokAny" class="de.plushnikov.intellij.plugin.action.delombok.DelombokEverythingAction"
-              text="All lombok annotations" description="Action to replace all lombok annotations with vanilla java methods">
-      </action>
-      <separator/>
-      <action id="delombokData" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDataAction"
-              text="@Data" description="Action to replace lombok @Data annotation with vanilla java methods">
-      </action>
-      <action id="delombokValue" class="de.plushnikov.intellij.plugin.action.delombok.DelombokValueAction"
-              text="@Value" description="Action to replace lombok @Value annotation with vanilla java methods">
-      </action>
-      <action id="delombokWither" class="de.plushnikov.intellij.plugin.action.delombok.DelombokWitherAction"
-              text="@Wither" description="Action to replace lombok @Wither annotation with vanilla java methods">
-      </action>
-      <action id="delombokDelegate" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDelegateAction"
-              text="@Delegate" description="Action to replace lombok @Delegate annotation with vanilla java methods">
-      </action>
-      <action id="delombokBuilder" class="de.plushnikov.intellij.plugin.action.delombok.DelombokBuilderAction"
-              text="@Builder" description="Action to replace lombok @Builder annotation with vanilla java methods">
-      </action>
-      <separator/>
-      <action id="delombokConstructor" class="de.plushnikov.intellij.plugin.action.delombok.DelombokConstructorAction"
-              text="@Constructors"
-              description="Action to replace lombok @NoArgsConstructor, @RequiredArgsConstructor and @AllArgsConstructor annotations with vanilla java methods">
-      </action>
-      <action id="delombokGetter" class="de.plushnikov.intellij.plugin.action.delombok.DelombokGetterAction"
-              text="@Getter" description="Action to replace lombok @Getter annotation with vanilla getter methods">
-      </action>
-      <action id="delombokSetter" class="de.plushnikov.intellij.plugin.action.delombok.DelombokSetterAction"
-              text="@Setter" description="Action to replace lombok @Setter annotation with vanilla setter methods">
-      </action>
-      <action id="delombokEqualsAndHashCode" class="de.plushnikov.intellij.plugin.action.delombok.DelombokEqualsAndHashCodeAction"
-              text="@EqualsAndHashCode" description="Action to replace lombok @EqualsAndHashCode annotation with vanilla java methods">
-      </action>
-      <action id="delombokToString" class="de.plushnikov.intellij.plugin.action.delombok.DelombokToStringAction"
-              text="@ToString" description="Action to replace lombok @ToString annotation with vanilla java methods">
-      </action>
-      <separator/>
-      <action id="delombokLogger" class="de.plushnikov.intellij.plugin.action.delombok.DelombokLoggerAction"
-              text="@Log (and friends)" description="Action to replace lombok @Log (and other) annotation with vanilla log field">
-      </action>
+            <add-to-group group-id="RefactoringMenu" anchor="last"/>
+        </group>
+        <group id="DelombokActionGroup" text="Delombok" description="Refactor code removing lombok annotations"
+               icon="/icons/delombok.png" popup="true">
+            <action id="delombokAny" class="de.plushnikov.intellij.plugin.action.delombok.DelombokEverythingAction"
+                    text="All lombok annotations" description="Action to replace all lombok annotations with vanilla java methods">
+            </action>
+            <separator/>
+            <action id="delombokData" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDataAction"
+                    text="@Data" description="Action to replace lombok @Data annotation with vanilla java methods">
+            </action>
+            <action id="delombokValue" class="de.plushnikov.intellij.plugin.action.delombok.DelombokValueAction"
+                    text="@Value" description="Action to replace lombok @Value annotation with vanilla java methods">
+            </action>
+            <action id="delombokWither" class="de.plushnikov.intellij.plugin.action.delombok.DelombokWitherAction"
+                    text="@Wither" description="Action to replace lombok @Wither annotation with vanilla java methods">
+            </action>
+            <action id="delombokDelegate" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDelegateAction"
+                    text="@Delegate" description="Action to replace lombok @Delegate annotation with vanilla java methods">
+            </action>
+            <action id="delombokBuilder" class="de.plushnikov.intellij.plugin.action.delombok.DelombokBuilderAction"
+                    text="@Builder" description="Action to replace lombok @Builder annotation with vanilla java methods">
+            </action>
+            <separator/>
+            <action id="delombokConstructor" class="de.plushnikov.intellij.plugin.action.delombok.DelombokConstructorAction"
+                    text="@Constructors"
+                    description="Action to replace lombok @NoArgsConstructor, @RequiredArgsConstructor and @AllArgsConstructor annotations with vanilla java methods">
+            </action>
+            <action id="delombokGetter" class="de.plushnikov.intellij.plugin.action.delombok.DelombokGetterAction"
+                    text="@Getter" description="Action to replace lombok @Getter annotation with vanilla getter methods">
+            </action>
+            <action id="delombokSetter" class="de.plushnikov.intellij.plugin.action.delombok.DelombokSetterAction"
+                    text="@Setter" description="Action to replace lombok @Setter annotation with vanilla setter methods">
+            </action>
+            <action id="delombokEqualsAndHashCode" class="de.plushnikov.intellij.plugin.action.delombok.DelombokEqualsAndHashCodeAction"
+                    text="@EqualsAndHashCode" description="Action to replace lombok @EqualsAndHashCode annotation with vanilla java methods">
+            </action>
+            <action id="delombokToString" class="de.plushnikov.intellij.plugin.action.delombok.DelombokToStringAction"
+                    text="@ToString" description="Action to replace lombok @ToString annotation with vanilla java methods">
+            </action>
+            <separator/>
+            <action id="delombokLogger" class="de.plushnikov.intellij.plugin.action.delombok.DelombokLoggerAction"
+                    text="@Log (and friends)" description="Action to replace lombok @Log (and other) annotation with vanilla log field">
+            </action>
 
-      <add-to-group group-id="RefactoringMenu" anchor="last"/>
-    </group>
-  </actions>
+            <add-to-group group-id="RefactoringMenu" anchor="last"/>
+        </group>
+    </actions>
 
-  <!--<li>TODO: Add generate actions for Lombok equals/hashcode, toString, getter, setter, constructor and maybe logger method</li>-->
-  <!--<li>TODO: Add delombok action for @Cleanup, @Synchronized and other annotations</li>-->
+    <!--<li>TODO: Add generate actions for Lombok equals/hashcode, toString, getter, setter, constructor and maybe logger method</li>-->
+    <!--<li>TODO: Add delombok action for @Cleanup, @Synchronized and other annotations</li>-->
 
-  <!--TODO @Builder requires specifying 'builderClassName' if used on methods with a type parameter as return type.-->
-  <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
-  <change-notes><![CDATA[
+    <!--TODO @Builder requires specifying 'builderClassName' if used on methods with a type parameter as return type.-->
+    <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
+    <change-notes><![CDATA[
 		<ul>
 		<li>0.9.8
 				<ol>
@@ -468,5 +468,5 @@
 			</li>
 		</ul>
 	]]>
-  </change-notes>
+    </change-notes>
 </idea-plugin>

@@ -3,7 +3,6 @@ class BuilderWithToBuilderOnConstructor<T> {
     private @SuppressWarnings("all") @javax.annotation.Generated("lombok") String one;
     private @SuppressWarnings("all") @javax.annotation.Generated("lombok") int bar;
     @SuppressWarnings("all") @javax.annotation.Generated("lombok") BuilderWithToBuilderOnConstructorBuilder() {
-      super();
     }
     public @SuppressWarnings("all") @javax.annotation.Generated("lombok") BuilderWithToBuilderOnConstructorBuilder<T> one(final String one) {
       this.one = one;
@@ -25,7 +24,6 @@ class BuilderWithToBuilderOnConstructor<T> {
   private T foo;
   private int bar;
   public BuilderWithToBuilderOnConstructor(String one, T bar) {
-    super();
   }
   public static @SuppressWarnings("all") @javax.annotation.Generated("lombok") <T>BuilderWithToBuilderOnConstructorBuilder<T> builder() {
     return new BuilderWithToBuilderOnConstructorBuilder<T>();

@@ -5,57 +5,13 @@ plugins {
 
 group 'de.plushnikov.intellij.plugin'
 version = "${version}"
-
-allprojects {
-    apply plugin: 'java'
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
-    tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
-
-    plugins.withType(JavaPlugin) {
-        test {
-            systemProperty "NO_FS_ROOTS_ACCESS_CHECK", "true"
-        }
-    }
-
-    sourceSets {
-        main {
-            java {
-                srcDirs = [ 'src/main/java',
-                            'build/generated/src']
-            }
-            resources {
-                srcDirs = [ 'src/main/resources',
-                            'build/generated/resources']
-            }
-        }
-    }
-
-    apply plugin: 'org.jetbrains.intellij'
-    intellij {
-        def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
-        version = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
-        pluginName 'lombok-plugin'
-        plugins 'IntelliLang'
-        downloadSources Boolean.valueOf(sources)
-//        publish {
-//            pluginId ''
-//            username ''
-//            password System.properties['intellij.publish.password']
-//        }
-    }
-
-//    compileJava.dependsOn(generateLexer)
-}
+def javaVersion = JavaVersion.VERSION_1_6
 
 apply plugin: 'idea'
 idea {
     project {
         jdkName = javaVersion
         languageLevel = javaVersion
-    }
-    module {
-        generatedSourceDirs += file('gen')
     }
 }
 
@@ -102,15 +58,16 @@ copy {
         include 'lombok/Singular.java'
         include 'lombok/core/handlers/Singulars.java'
     }
-    into("${buildDir}/generated/src")
+    into("generated/src")
 }
 
 copy {
+    includeEmptyDirs = false
     from({ zipTree(configurations.hrisey.singleFile)} ) {
         include 'hrisey/Parcelable.java'
         include 'hrisey/Preferences.java'
     }
-    into("${buildDir}/generated/src")
+    into("generated/src")
 }
 
 copy {
@@ -118,11 +75,7 @@ copy {
     from({ zipTree(configurations.lombok.singleFile) }) {
         include '**/*.txt'
     }
-    into("${buildDir}/generated/resources")
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.10'
+    into("generated/resources")
 }
 
 import de.undercouch.gradle.tasks.download.Download
@@ -146,13 +99,13 @@ task generateLexer(dependsOn: downloadSkeleton, type: JavaExec) {
            |--skel
            |${buildDir}/downloads/idea-flex.skeleton
            |-d
-           |${buildDir}/generated/src/de/plushnikov/intellij/plugin/language
+           |generated/src/de/plushnikov/intellij/plugin/language
            |${projectDir}/src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.flex""".stripMargin().split('\n').toList()
 }
 
-task generatePsiAndParser(type: JavaExec) {
+task generatePsiAndParser(dependsOn: generateLexer, type: JavaExec) {
     ext.src     = "src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.bnf"
-    ext.dstRoot = "${buildDir}/generated/src"
+    ext.dstRoot = "generated/src"
 
     main = "org.intellij.grammar.Main"
 
@@ -162,4 +115,52 @@ task generatePsiAndParser(type: JavaExec) {
     outputs .dir    fileTree(dir: dstRoot, include: '**/*.java')
 
     classpath configurations.gen
+}
+
+allprojects {
+    apply plugin: 'java'
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+        options.bootClasspath = "$JDK6_HOME/jre/lib/rt.jar"
+    }
+
+    plugins.withType(JavaPlugin) {
+        test {
+            systemProperty "NO_FS_ROOTS_ACCESS_CHECK", "true"
+        }
+    }
+
+    sourceSets {
+        main {
+            java {
+                srcDirs = [ 'src/main/java',
+                            'generated/src']
+            }
+            resources {
+                srcDirs = [ 'src/main/resources',
+                            'generated/resources']
+            }
+        }
+    }
+
+    apply plugin: 'org.jetbrains.intellij'
+    intellij {
+        def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
+        version = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
+        pluginName 'lombok-plugin'
+        plugins 'coverage'
+//        updateSinceUntilBuild = false
+//        sandboxDirectory="${project.projectDir}/idea-sandbox"
+        systemProperty 'idea.is.internal', 'false'
+        downloadSources Boolean.valueOf(sources)
+//        publish {
+//            pluginId ''
+//            username ''
+//            password System.properties['intellij.publish.password']
+//        }
+    }
+
+//    compileJava.dependsOn(generateLexer, generatePsiAndParser)
 }

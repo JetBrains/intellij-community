@@ -14,8 +14,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public abstract class LombokLightCodeInsightTestCase extends LightCodeInsightFixtureTestCase {
-  private static final String LOMBOK_SRC_PATH = "./lombok-api/target/generated-sources/lombok";
-  private static final String LOMBOKPG_SRC_PATH = "./lombok-api/target/generated-sources/lombok-pg";
+  private static final String LOMBOK_SRC_PATH = "./generated/src";
 
   @Override
   protected String getTestDataPath() {
@@ -24,23 +23,14 @@ public abstract class LombokLightCodeInsightTestCase extends LightCodeInsightFix
 
   @Override
   protected String getBasePath() {
-    return "lombok-plugin/src/test/data";
+    return "testData";
   }
 
   @Override
   public void setUp() throws Exception {
     VfsRootAccess.SHOULD_PERFORM_ACCESS_CHECK = false;
     super.setUp();
-    addLombokClassesToFixture();
-  }
-
-  private void addLombokClassesToFixture() throws IOException {
-    final String absoluteTestDataPath = new File(getTestDataPath(), getBasePath()).getCanonicalPath();
-    final String absoluteLombokPath = new File(LOMBOK_SRC_PATH).getCanonicalPath();
-    final String absoluteLombokPgPath = new File(LOMBOKPG_SRC_PATH).getCanonicalPath();
-    VfsRootAccess.allowRootAccess(absoluteTestDataPath, absoluteLombokPath, absoluteLombokPgPath);
     loadFilesFrom(LOMBOK_SRC_PATH);
-    loadFilesFrom(LOMBOKPG_SRC_PATH);
   }
 
   private void loadFilesFrom(final String srcPath) {

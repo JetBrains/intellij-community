@@ -5,7 +5,6 @@ class BuilderWithToBuilderOnClass<T> {
     private @SuppressWarnings("all") @javax.annotation.Generated("lombok") T foo;
     private @SuppressWarnings("all") @javax.annotation.Generated("lombok") int bar;
     @SuppressWarnings("all") @javax.annotation.Generated("lombok") BuilderWithToBuilderOnClassBuilder() {
-      super();
     }
     public @SuppressWarnings("all") @javax.annotation.Generated("lombok") BuilderWithToBuilderOnClassBuilder<T> one(final String one) {
       this.one = one;
@@ -39,7 +38,6 @@ class BuilderWithToBuilderOnClass<T> {
     return x.foo;
   }
   @SuppressWarnings("all") @javax.annotation.Generated("lombok") BuilderWithToBuilderOnClass(final String one, final String two, final T foo, final int bar;) {
-    super();
     this.one = one;
     this.two = two;
     this.foo = foo;

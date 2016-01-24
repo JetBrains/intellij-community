@@ -8,7 +8,7 @@ public enum ConstructorEnum {
 		return this.x;
 	}
 
-	ConstructorEnum(int x) {
+	private ConstructorEnum(int x) {
 		this.x = x;
 	}
 }
