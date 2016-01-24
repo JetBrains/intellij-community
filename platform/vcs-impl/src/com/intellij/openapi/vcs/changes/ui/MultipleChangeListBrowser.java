@@ -50,7 +50,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   private final ChangeListListener myChangeListListener = new MyChangeListListener();
   private final boolean myShowingAllChangeLists;
   private final EventDispatcher<SelectedListChangeListener> myDispatcher = EventDispatcher.create(SelectedListChangeListener.class);
-  private final ChangesBrowserExtender myExtender;
   private final Runnable myRebuildListListener;
   private Collection<Change> myAllChanges;
   private Map<Change, LocalChangeList> myChangeListsMap;
@@ -72,8 +71,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     myHeaderPanel.add(myChangeListChooser, BorderLayout.EAST);
     myShowingAllChangeLists = Comparing.haveEqualElements(changeLists, ChangeListManager.getInstance(project).getChangeLists());
     ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
-
-    myExtender = new Extender(project, this);
 
     ActionManager actionManager = ActionManager.getInstance();
     final AnAction moveAction = actionManager.getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST);
@@ -126,10 +123,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
 
   public Collection<Change> getAllChanges() {
     return myAllChanges;
-  }
-
-  public ChangesBrowserExtender getExtender() {
-    return myExtender;
   }
 
   public void addSelectedListChangeListener(SelectedListChangeListener listener) {
@@ -266,16 +259,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     }
     else {
       ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(this));
-    }
-  }
-
-  private static class Extender implements ChangesBrowserExtender {
-    private final Project myProject;
-    private final MultipleChangeListBrowser myBrowser;
-
-    private Extender(final Project project, final MultipleChangeListBrowser browser) {
-      myProject = project;
-      myBrowser = browser;
     }
   }
 

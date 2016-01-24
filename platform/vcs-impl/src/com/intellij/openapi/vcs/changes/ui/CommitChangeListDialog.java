@@ -82,7 +82,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Nullable private final JPanel myAdditionalOptionsPanel;
 
   private final ChangesBrowser myBrowser;
-  private final ChangesBrowserExtender myBrowserExtender;
 
   private CommitLegendPanel myLegend;
   private final MyChangeProcessor myDiffDetails;
@@ -287,9 +286,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myIsAlien = isAlien;
     if (isAlien) {
-      AlienChangeListBrowser browser = new AlienChangeListBrowser(project, changeLists, changes, initialSelection, true, true, singleVcs);
-      myBrowser = browser;
-      myBrowserExtender = browser;
+      myBrowser = new AlienChangeListBrowser(project, changeLists, changes, initialSelection, true, true, singleVcs);
     } else {
       MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, changes, initialSelection, true, true,
                                                                         new Runnable() {
@@ -326,7 +323,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       });
       myBrowser = browser;
       myBrowser.setAlwayExpandList(false);
-      myBrowserExtender = browser.getExtender();
     }
     myBrowser.getViewer().addSelectionListener(new Runnable() {
       @Override

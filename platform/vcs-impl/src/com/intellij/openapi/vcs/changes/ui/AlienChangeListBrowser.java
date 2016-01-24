@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class AlienChangeListBrowser extends ChangesBrowser implements ChangesBrowserExtender {
+public class AlienChangeListBrowser extends ChangesBrowser {
   private final List<Change> myChanges;
   private final AbstractVcs myVcs;
 
