@@ -17,4 +17,4 @@ before_install:
  - chmod +x gradlew
 
 script:
-  - gradle generateAll check
+  - ./gradlew generateAll check

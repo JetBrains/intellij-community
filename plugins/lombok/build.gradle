@@ -118,7 +118,7 @@ task generatePsiAndParser(dependsOn: generateLexer, type: JavaExec) {
     classpath configurations.gen
 }
 
-task generateAll(dependsOn: generatePsiAndParser) {
+task generateAll(dependsOn: generatePsiAndParser, type: JavaExec) {
     println 'Generate files...!'
 }
 
