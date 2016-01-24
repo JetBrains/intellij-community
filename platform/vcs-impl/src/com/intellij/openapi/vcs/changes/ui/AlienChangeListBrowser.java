@@ -24,9 +24,9 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class AlienChangeListBrowser extends ChangesBrowser implements ChangesBrowserExtender {
   private final List<Change> myChanges;
@@ -60,8 +60,10 @@ public class AlienChangeListBrowser extends ChangesBrowser implements ChangesBro
     toolBarGroup.add(ActionManager.getInstance().getAction("AlienCommitChangesDialog.AdditionalActions"));
   }
 
-  public Collection<AbstractVcs> getAffectedVcses() {
-    return Collections.singletonList(myVcs);
+  @Override
+  @NotNull
+  public Set<AbstractVcs> getAffectedVcses() {
+    return ContainerUtil.immutableSet(myVcs);
   }
 
   @Override

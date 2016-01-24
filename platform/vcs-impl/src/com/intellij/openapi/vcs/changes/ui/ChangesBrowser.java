@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -335,6 +336,11 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider, Disp
     };
     myDiffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myViewer);
     toolBarGroup.add(myDiffAction);
+  }
+
+  @NotNull
+  public Set<AbstractVcs> getAffectedVcses() {
+    return ChangesUtil.getAffectedVcses(getCurrentDisplayedChanges(), myProject);
   }
 
   @NotNull

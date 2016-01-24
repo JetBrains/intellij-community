@@ -15,10 +15,5 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.vcs.AbstractVcs;
-
-import java.util.Collection;
-
 public interface ChangesBrowserExtender {
-  Collection<AbstractVcs> getAffectedVcses();
 }

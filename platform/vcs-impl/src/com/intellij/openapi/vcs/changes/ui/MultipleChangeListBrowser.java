@@ -188,6 +188,12 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     return filterBySelectedChangeList(myViewer.getIncludedChanges());
   }
 
+  @Override
+  @NotNull
+  public Set<AbstractVcs> getAffectedVcses() {
+    return ChangesUtil.getAffectedVcses(myAllChanges, myProject);
+  }
+
   @NotNull
   public Collection<Change> getChangesIncludedInAllLists() {
     return myViewer.getIncludedChanges();
@@ -270,11 +276,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     private Extender(final Project project, final MultipleChangeListBrowser browser) {
       myProject = project;
       myBrowser = browser;
-    }
-
-    @NotNull
-    public Collection<AbstractVcs> getAffectedVcses() {
-      return ChangesUtil.getAffectedVcses(myBrowser.myAllChanges, myProject);
     }
   }
 

@@ -1107,11 +1107,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     mySplitter.setProportion(PropertiesComponent.getInstance().getFloat(SPLITTER_PROPORTION_OPTION, SPLITTER_PROPORTION_OPTION_DEFAULT));
   }
 
-  public Collection<AbstractVcs> getAffectedVcses() {
-    if (! myShowVcsCommit) {
-      return Collections.emptySet();
-    }
-    return myBrowserExtender.getAffectedVcses();
+  @NotNull
+  public Set<AbstractVcs> getAffectedVcses() {
+    return myShowVcsCommit ? myBrowser.getAffectedVcses() : Collections.<AbstractVcs>emptySet();
   }
 
   @Override
@@ -1177,8 +1175,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public boolean vcsIsAffected(String name) {
     // tod +- performance?
     if (! ProjectLevelVcsManager.getInstance(myProject).checkVcsIsActive(name)) return false;
-    final Collection<AbstractVcs> affected = myBrowserExtender.getAffectedVcses();
-    for (AbstractVcs vcs : affected) {
+    for (AbstractVcs vcs : myBrowser.getAffectedVcses()) {
       if (Comparing.equal(vcs.getName(), name)) return true;
     }
     return false;
