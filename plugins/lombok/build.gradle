@@ -63,7 +63,7 @@ copy {
 
 copy {
     includeEmptyDirs = false
-    from({ zipTree(configurations.hrisey.singleFile)} ) {
+    from({ zipTree(configurations.hrisey.singleFile) }) {
         include 'hrisey/Parcelable.java'
         include 'hrisey/Preferences.java'
     }
@@ -79,6 +79,7 @@ copy {
 }
 
 import de.undercouch.gradle.tasks.download.Download
+
 task downloadJFlex(type: Download) {
     src 'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/jflex-1.4/lib/JFlex.jar'
     dest "${buildDir}/downloads/JFlex.jar"
@@ -104,15 +105,15 @@ task generateLexer(dependsOn: downloadSkeleton, type: JavaExec) {
 }
 
 task generatePsiAndParser(dependsOn: generateLexer, type: JavaExec) {
-    ext.src     = "src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.bnf"
+    ext.src = "src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.bnf"
     ext.dstRoot = "generated/src"
 
     main = "org.intellij.grammar.Main"
 
-    args = [ dstRoot, file(src) ]
+    args = [dstRoot, file(src)]
 
-    inputs  .file   file(src)
-    outputs .dir    fileTree(dir: dstRoot, include: '**/*.java')
+    inputs.file file(src)
+    outputs.dir fileTree(dir: dstRoot, include: '**/*.java')
 
     classpath configurations.gen
 }
@@ -127,7 +128,11 @@ allprojects {
     targetCompatibility = javaVersion
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
-        options.bootClasspath = "$JDK6_HOME/jre/lib/rt.jar"
+
+        def useBootstrap = System.getenv("USE_BOOTSTRAP")
+        if (useBootstrap) {
+            options.bootClasspath = "$JDK6_HOME/jre/lib/rt.jar"
+        }
     }
 
     plugins.withType(JavaPlugin) {
@@ -139,12 +144,12 @@ allprojects {
     sourceSets {
         main {
             java {
-                srcDirs = [ 'src/main/java',
-                            'generated/src']
+                srcDirs = ['src/main/java',
+                           'generated/src']
             }
             resources {
-                srcDirs = [ 'src/main/resources',
-                            'generated/resources']
+                srcDirs = ['src/main/resources',
+                           'generated/resources']
             }
         }
     }

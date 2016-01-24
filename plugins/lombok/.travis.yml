@@ -7,11 +7,14 @@ cache:
     - $HOME/.gradle/wrapper/
 
 jdk:
-  - oraclejdk8
+  - openjdk6
 
 env:
-  - IDEA_VERSION=IC-14.1.6
-  - IDEA_VERSION=IU-14.1.6
+  - IDEA_VERSION=IC-14.1.6 USE_BOOTSTRAP=false
+  - IDEA_VERSION=IU-14.1.6 USE_BOOTSTRAP=false
+
+before_install:
+ - chmod +x gradlew
 
 script:
   - gradle generateAll check
