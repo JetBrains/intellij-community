@@ -54,12 +54,10 @@ import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.OnOffListener;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -234,9 +232,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  public static List<CommitExecutor> collectExecutors(Project project, Collection<Change> changes) {
+  public static List<CommitExecutor> collectExecutors(@NotNull Project project, @NotNull Collection<Change> changes) {
     List<CommitExecutor> result = new ArrayList<CommitExecutor>();
-    for (AbstractVcs<?> vcs : getAffectedVcses(project, changes)) {
+    for (AbstractVcs<?> vcs : ChangesUtil.getAffectedVcses(changes, project)) {
       result.addAll(vcs.getCommitExecutors());
     }
     result.addAll(ChangeListManager.getInstance(project).getRegisteredExecutors());
@@ -540,7 +538,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void updateVcsOptionsVisibility() {
-    Collection<AbstractVcs> affectedVcses = getAffectedVcses(myProject, myBrowser.getSelectedChangeList().getChanges());
+    Collection<AbstractVcs> affectedVcses = ChangesUtil.getAffectedVcses(myBrowser.getSelectedChangeList().getChanges(), myProject);
     for (Map.Entry<AbstractVcs, JPanel> entry : myPerVcsOptionsPanels.entrySet()) {
       entry.getValue().setVisible(affectedVcses.contains(entry.getKey()));
     }
@@ -1114,14 +1112,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       return Collections.emptySet();
     }
     return myBrowserExtender.getAffectedVcses();
-  }
-
-  private static Collection<AbstractVcs> getAffectedVcses(Project project, final Collection<Change> changes) {
-    Set<AbstractVcs> result = new THashSet<AbstractVcs>();
-    for (Change change : changes) {
-      ContainerUtilRt.addIfNotNull(result, ChangesUtil.getVcsForChange(change, project));
-    }
-    return result;
   }
 
   @Override

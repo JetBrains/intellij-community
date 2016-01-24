@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
@@ -271,19 +270,9 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
       myBrowser = browser;
     }
 
+    @NotNull
     public Collection<AbstractVcs> getAffectedVcses() {
-      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-      final Set<AbstractVcs> vcses = new HashSet<AbstractVcs>(Arrays.asList(vcsManager.getAllActiveVcss()));
-      final Set<AbstractVcs> result = new HashSet<AbstractVcs>();
-      for (Change change : myBrowser.myAllChanges) {
-        if (vcses.isEmpty()) break;
-        final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myBrowser.myProject);
-        if (vcs != null) {
-          result.add(vcs);
-          vcses.remove(vcs);
-        }
-      }
-      return result;
+      return ChangesUtil.getAffectedVcses(myBrowser.myAllChanges, myProject);
     }
 
     public List<Change> getCurrentIncludedChanges() {

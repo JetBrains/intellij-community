@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -164,17 +163,9 @@ public class RollbackChangesDialog extends DialogWrapper {
     myListChangeListener.run();
   }
 
-  public static String operationNameByChanges(Project project, Collection<Change> changes) {
-    Set<AbstractVcs> affectedVcs = new HashSet<AbstractVcs>();
-    for (Change c : changes) {
-      final AbstractVcs vcs = ChangesUtil.getVcsForChange(c, project);
-      if (vcs != null) {
-        // vcs may be null if we have turned off VCS integration and are in process of refreshing
-        affectedVcs.add(vcs);
-      }
-    }
-
-    return RollbackUtil.getRollbackOperationName(affectedVcs);
+  @NotNull
+  public static String operationNameByChanges(@NotNull Project project, @NotNull Collection<Change> changes) {
+    return RollbackUtil.getRollbackOperationName(ChangesUtil.getAffectedVcses(changes, project));
   }
 
   @NotNull
