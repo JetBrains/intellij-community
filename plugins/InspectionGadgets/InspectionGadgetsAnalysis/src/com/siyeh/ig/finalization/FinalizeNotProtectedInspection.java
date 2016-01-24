@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,8 +66,7 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement methodName = descriptor.getPsiElement();
       final PsiMethod method = (PsiMethod)methodName.getParent();
       assert method != null;
@@ -78,12 +77,10 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
     }
   }
 
-  private static class FinalizeDeclaredProtectedVisitor
-    extends BaseInspectionVisitor {
+  private static class FinalizeDeclaredProtectedVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      //note: no call to super;
       final String methodName = method.getName();
       if (!HardcodedMethodConstants.FINALIZE.equals(methodName)) {
         return;
