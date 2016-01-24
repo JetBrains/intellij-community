@@ -74,7 +74,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   private final boolean myHighlightProblems;
   private boolean myShowFlatten;
 
-  private final Set<T> myIncludedChanges;
+  @NotNull private final Set<T> myIncludedChanges;
   @NotNull private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
   private boolean myAlwaysExpandList;
 
@@ -511,6 +511,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     return myIncludedChanges.contains(change);
   }
 
+  @NotNull
   public Collection<T> getIncludedChanges() {
     return myIncludedChanges;
   }

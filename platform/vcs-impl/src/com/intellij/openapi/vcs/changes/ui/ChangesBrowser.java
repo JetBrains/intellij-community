@@ -337,6 +337,11 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider, Disp
     toolBarGroup.add(myDiffAction);
   }
 
+  @NotNull
+  public List<Change> getCurrentIncludedChanges() {
+    return ContainerUtil.newArrayList(myViewer.getIncludedChanges());
+  }
+
   public List<Change> getCurrentDisplayedChanges() {
     final List<Change> list;
     if (myChangesToDisplay != null) {

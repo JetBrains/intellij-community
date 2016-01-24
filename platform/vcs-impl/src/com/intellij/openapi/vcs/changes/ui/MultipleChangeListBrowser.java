@@ -182,6 +182,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     return super.getCurrentDisplayedChanges();
   }
 
+  @Override
   @NotNull
   public List<Change> getCurrentIncludedChanges() {
     return filterBySelectedChangeList(myViewer.getIncludedChanges());
@@ -192,7 +193,8 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     return myViewer.getIncludedChanges();
   }
 
-  private List<Change> filterBySelectedChangeList(final Collection<Change> changes) {
+  @NotNull
+  private List<Change> filterBySelectedChangeList(@NotNull Collection<Change> changes) {
     List<Change> filtered = new ArrayList<Change>();
     for (Change change : changes) {
       if (Comparing.equal(getList(change), mySelectedChangeList)) {
@@ -273,10 +275,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     @NotNull
     public Collection<AbstractVcs> getAffectedVcses() {
       return ChangesUtil.getAffectedVcses(myBrowser.myAllChanges, myProject);
-    }
-
-    public List<Change> getCurrentIncludedChanges() {
-      return myBrowser.getCurrentIncludedChanges();
     }
   }
 

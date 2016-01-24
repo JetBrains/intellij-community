@@ -21,8 +21,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -63,7 +64,9 @@ public class AlienChangeListBrowser extends ChangesBrowser implements ChangesBro
     return Collections.singletonList(myVcs);
   }
 
+  @Override
+  @NotNull
   public List<Change> getCurrentIncludedChanges() {
-    return new ArrayList<Change>(myChanges);
+    return ContainerUtil.newArrayList(myChanges);
   }
 }
