@@ -320,6 +320,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           });
         }
       };
+      browser.addSelectedListChangeListener(new SelectedListChangeListener() {
+        @Override
+        public void selectedListChanged() {
+          updateOnListSelection();
+        }
+      });
       myBrowser = browser;
       myBrowser.setAlwayExpandList(false);
       myBrowserExtender = browser.getExtender();
@@ -333,13 +339,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
             changeDetails();
           }
         });
-      }
-    });
-
-    myBrowserExtender.addSelectedListChangeListener(new SelectedListChangeListener() {
-      @Override
-      public void selectedListChanged() {
-        updateOnListSelection();
       }
     });
 

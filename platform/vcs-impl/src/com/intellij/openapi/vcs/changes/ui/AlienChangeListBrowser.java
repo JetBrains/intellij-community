@@ -59,10 +59,6 @@ public class AlienChangeListBrowser extends ChangesBrowser implements ChangesBro
     toolBarGroup.add(ActionManager.getInstance().getAction("AlienCommitChangesDialog.AdditionalActions"));
   }
 
-  public void addSelectedListChangeListener(final SelectedListChangeListener listener) {
-    // does nothing - only one change list so far
-  }
-
   public Collection<AbstractVcs> getAffectedVcses() {
     return Collections.singletonList(myVcs);
   }
