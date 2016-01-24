@@ -144,8 +144,8 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
             }
             catch (GitInteractiveRebaseFile.NoopException e) {
               LOG.info("Noop situation while rebasing " + myRoot);
-              String message = "There are no commits to rebase because the current branch is directly below the base branch " +
-                               "(the 'noop' situation).\n" +
+              String message = "There are no commits to rebase because the current branch is directly below the base branch, " +
+                               "or they point to the same commit (the 'noop' situation).\n" +
                                "Do you want to continue (this will reset the current branch to the base branch)?";
               int rebase = DialogManager.showOkCancelDialog(myProject, message, "Git Rebase", CommonBundle.getOkButtonText(),
                                                             CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
