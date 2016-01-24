@@ -129,10 +129,10 @@ allprojects {
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
 
-        def useBootstrap = System.getenv("USE_BOOTSTRAP")
-        if (useBootstrap) {
-            options.bootClasspath = "$JDK6_HOME/jre/lib/rt.jar"
-        }
+//        def useBootstrap = System.getenv("USE_BOOTSTRAP")
+//        if (useBootstrap) {
+//            options.bootClasspath = "$JDK6_HOME/jre/lib/rt.jar"
+//        }
     }
 
     plugins.withType(JavaPlugin) {

@@ -10,8 +10,8 @@ jdk:
   - openjdk6
 
 env:
-  - IDEA_VERSION=IC-14.1.6 USE_BOOTSTRAP=false
-  - IDEA_VERSION=IU-14.1.6 USE_BOOTSTRAP=false
+  - IDEA_VERSION=IC-14.1.6
+  - IDEA_VERSION=IU-14.1.6
 
 before_install:
  - chmod +x gradlew
