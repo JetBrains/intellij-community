@@ -53,7 +53,8 @@ public class AutoPopupController implements Disposable {
    * <p/>
    * This doesn't affect other conditions when autopopup is not possible (e.g. power save mode).
    */
-  public static Key<Boolean> ALWAYS_AUTO_POPUP = Key.create("Always Show Completion Auto-Popup");
+  public static final Key<Boolean> ALWAYS_AUTO_POPUP = Key.create("Always Show Completion Auto-Popup");
+
   private final Project myProject;
   private final Alarm myAlarm = new Alarm();
 
