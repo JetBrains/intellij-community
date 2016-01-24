@@ -9,13 +9,3 @@ env:
 
 script:
   - ./gradlew --console plain generateAll check
-
-//cache:
-//  directories:
-//  - $HOME/.m2
-//  - $HOME/Tools
-
-//install:
-//  - mvn install
-//  - ant -f build-init.xml
-//  - ant -f build-test.xml -DIDEA_HOME=./idea-IC
