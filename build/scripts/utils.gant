@@ -883,14 +883,14 @@ binding.setVariable("bundledJDK64s"){
 private bundledJDK(boolean win64) {
   requireProperty("artifact.linux.no.jdk", "true")
   requireProperty("artifact.mac.no.jdk", "true")
-  requireProperty("jdk.win", "1.8")
+  requireProperty("jdk.win", "jdk1.8")
   requireProperty("jdk.mac", "openjdk.1.8")
   requireProperty("jdk.linux", "1.8")
   requireProperty("jdk.custom.linux", "openjdk.1.8")
 
   if (new File("${home}/build/jdk").exists()) {
     if (p("jdk.win") != "false") {
-      setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.win"), (win64 ? "x64.zip": "x32.zip") ))
+      setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), p("jdk.win"), (win64 ? "x64.zip": "x32.zip") ))
       extractRedistJre(winJDK, "${paths.sandbox}/jdk.win/jre")
     }
     if (p("jdk.linux") != "false") {
