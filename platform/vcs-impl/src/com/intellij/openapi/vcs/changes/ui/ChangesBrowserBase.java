@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -439,5 +440,11 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
 
   public void setSelectionMode(@JdkConstants.TreeSelectionMode int mode) {
     myViewer.setSelectionMode(mode);
+  }
+
+  @Contract(pure = true)
+  @NotNull
+  protected static <T> List<Change> findChanges(@NotNull Collection<T> items) {
+    return ContainerUtil.findAll(items, Change.class);
   }
 }

@@ -31,21 +31,21 @@ import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 
-/**
- * @author yole
- * @since 28.11.2006
- */
-public class MultipleChangeListBrowser extends ChangesBrowser {
+public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   private final ChangeListChooser myChangeListChooser;
   private final ChangeListListener myChangeListListener = new MyChangeListListener();
   private final boolean myShowingAllChangeLists;
@@ -58,13 +58,14 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   // todo terrible constructor
   public MultipleChangeListBrowser(Project project,
                                    List<? extends ChangeList> changeLists,
-                                   List<Change> changes,
+                                   List<Object> changes,
                                    ChangeList initialListSelection,
                                    boolean capableOfExcludingChanges,
                                    boolean highlightProblems,
                                    Runnable rebuildListListener,
                                    @Nullable Runnable inclusionListener) {
-    super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, inclusionListener, MyUseCase.LOCAL_CHANGES, null);
+    super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, inclusionListener,
+          ChangesBrowser.MyUseCase.LOCAL_CHANGES, null, Object.class);
     myRebuildListListener = rebuildListListener;
 
     myChangeListChooser = new ChangeListChooser(changeLists);
@@ -85,7 +86,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   }
 
   @Override
-  protected void setInitialSelection(List<? extends ChangeList> changeLists, List<Change> changes, ChangeList initialListSelection) {
+  protected void setInitialSelection(List<? extends ChangeList> changeLists, List<Object> changes, ChangeList initialListSelection) {
     myAllChanges = new ArrayList<Change>();
     mySelectedChangeList = initialListSelection;
 
@@ -166,27 +167,70 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   @NotNull
   @Override
   public List<Change> getCurrentDisplayedChanges() {
-    if (myChangesToDisplay == null) {
-      return sortChanges(filterBySelectedChangeList(myAllChanges));
-    }
-    return super.getCurrentDisplayedChanges();
+    return sortChanges(myChangesToDisplay != null ? findChanges(myChangesToDisplay) : filterBySelectedChangeList(myAllChanges));
   }
 
   @Override
   @NotNull
   public List<Change> getCurrentIncludedChanges() {
-    return filterBySelectedChangeList(myViewer.getIncludedChanges());
+    return filterBySelectedChangeList(findChanges(myViewer.getIncludedChanges()));
+  }
+
+  @NotNull
+  @Override
+  protected DefaultTreeModel buildTreeModel(@NotNull List<Object> objects,
+                                            @Nullable ChangeNodeDecorator changeNodeDecorator,
+                                            boolean showFlatten) {
+    TreeModelBuilder builder = new TreeModelBuilder(myProject, showFlatten);
+    return builder.buildModel(findChanges(objects), changeNodeDecorator);
+  }
+
+  @NotNull
+  @Override
+  protected List<Object> getSelectedObjects(@NotNull ChangesBrowserNode<Object> node) {
+    //noinspection unchecked
+    return (List)node.getAllChangesUnder();
+  }
+
+  @Nullable
+  @Override
+  protected Object getLeadSelectedObject(@NotNull ChangesBrowserNode node) {
+    return ObjectUtils.tryCast(node.getUserObject(), Change.class);
+  }
+
+  @NotNull
+  @Override
+  public List<Object> getCurrentDisplayedObjects() {
+    //noinspection unchecked
+    return (List)getCurrentDisplayedChanges();
+  }
+
+  @NotNull
+  @Override
+  public List<Change> getSelectedChanges() {
+    Set<Change> changes = ContainerUtil.newLinkedHashSet();
+    TreePath[] paths = myViewer.getSelectionPaths();
+
+    if (paths != null) {
+      for (TreePath path : paths) {
+        ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
+        changes.addAll(node.getAllChangesUnder());
+      }
+    }
+
+    return ContainerUtil.newArrayList(changes);
+  }
+
+  @NotNull
+  @Override
+  public List<Change> getAllChanges() {
+    return myViewer.getRoot().getAllChangesUnder();
   }
 
   @Override
   @NotNull
   public Set<AbstractVcs> getAffectedVcses() {
     return ChangesUtil.getAffectedVcses(myAllChanges, myProject);
-  }
-
-  @NotNull
-  public Collection<Change> getChangesIncludedInAllLists() {
-    return myViewer.getIncludedChanges();
   }
 
   @NotNull

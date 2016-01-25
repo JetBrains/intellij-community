@@ -453,6 +453,16 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     return path == null ? null : ContainerUtil.getFirstItem(getSelectedObjects(((ChangesBrowserNode<T>)path.getLastPathComponent())));
   }
 
+  @NotNull
+  ChangesBrowserNode<?> getRoot() {
+    return (ChangesBrowserNode<?>)myTree.getModel().getRoot();
+  }
+
+  @Nullable
+  TreePath[] getSelectionPaths() {
+    return myTree.getSelectionPaths();
+  }
+
   private void notifyInclusionListener() {
     if (myInclusionListener != null) {
       myInclusionListener.run();
