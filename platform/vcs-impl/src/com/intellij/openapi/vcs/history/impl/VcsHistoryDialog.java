@@ -34,7 +34,6 @@ import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,6 +64,23 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.impl.VcsHistoryDialog");
+
+  private static final VcsRevisionNumber LOCAL_REVISION_NUMBER = new VcsRevisionNumber() {
+    @Override
+    public String asString() {
+      return "Local Changes";
+    }
+
+    @Override
+    public int compareTo(@NotNull VcsRevisionNumber vcsRevisionNumber) {
+      return 0;
+    }
+
+    @Override
+    public String toString() {
+      return asString();
+    }
+  };
 
   private static final ColumnInfo REVISION = new ColumnInfo(VcsBundle.message("column.name.revision.version")) {
     @Override
@@ -104,11 +120,11 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
 
   private static final Block EMPTY_BLOCK = new Block("", 0, 0);
 
-  private final Project myProject;
-  private final VirtualFile myFile;
-  private final Editor myEditor;
-  private final AbstractVcs myActiveVcs;
-  private final CachedRevisionsContents myCachedContents;
+  @NotNull private final Project myProject;
+  @NotNull private final VirtualFile myFile;
+  @NotNull private final Editor myEditor;
+  @NotNull private final AbstractVcs myActiveVcs;
+  @NotNull private final CachedRevisionsContents myCachedContents;
   private final int mySelectionStart;
   private final int mySelectionEnd;
   @NonNls private final String myHelpId;
@@ -127,16 +143,16 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   private boolean myIsDuringUpdate = false;
   private boolean myIsDisposed = false;
 
-  public VcsHistoryDialog(Project project,
-                          VirtualFile file,
-                          Editor editor,
-                          VcsHistoryProvider vcsHistoryProvider,
-                          VcsHistorySession session,
-                          AbstractVcs vcs,
+  public VcsHistoryDialog(@NotNull Project project,
+                          @NotNull VirtualFile file,
+                          @NotNull Editor editor,
+                          @NotNull VcsHistoryProvider vcsHistoryProvider,
+                          @NotNull VcsHistorySession session,
+                          @NotNull AbstractVcs vcs,
                           int selectionStart,
                           int selectionEnd,
-                          String title,
-                          CachedRevisionsContents cachedContents) {
+                          @NotNull String title,
+                          @NotNull CachedRevisionsContents cachedContents) {
     super(project);
     myProject = project;
     myFile = file;
@@ -159,7 +175,7 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
 
     myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, this, getFrame());
 
-    myRevisions.add(new CurrentRevision(file, VcsRevisionNumber.LOCAL));
+    myRevisions.add(new CurrentRevision(file, LOCAL_REVISION_NUMBER));
     myRevisions.addAll(session.getRevisionList());
 
     myBlocks.addAll(Collections.<Block>nCopies(myRevisions.size(), null));
@@ -308,7 +324,7 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
     for (int i = firstRevision - 1; i >= 0; i--) {
       Block block1 = getBlock(i + 1);
       Block block2 = getBlock(i);
-      if (orderedEquals(block1.getLines(), block2.getLines())) continue;
+      if (block1.getLines().equals(block2.getLines())) continue;
       result.add(myRevisions.get(i));
     }
 
@@ -451,13 +467,5 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
       ensureBlocksCreated(index);
     }
     return myBlocks.get(index);
-  }
-
-  private static boolean orderedEquals(@NotNull List data1, @NotNull List data2) {
-    if (data1.size() != data2.size()) return false;
-    for (int i = 0; i < data1.size(); i++) {
-      if (!Comparing.equal(data1.get(i), data2.get(i))) return false;
-    }
-    return true;
   }
 }

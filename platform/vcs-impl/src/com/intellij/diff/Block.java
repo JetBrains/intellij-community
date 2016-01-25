@@ -15,7 +15,9 @@
  */
 package com.intellij.diff;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.Diff;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +28,9 @@ import java.util.List;
  * author: lesya
  */
 public class Block {
-  private final String[] mySource;
+  private static final Logger LOG = Logger.getInstance(Block.class);
+
+  @NotNull private final String[] mySource;
   private final int myStart;
   private final int myEnd;
 
@@ -35,6 +39,10 @@ public class Block {
   }
 
   public Block(@NotNull String[] source, int start, int end) {
+    if (start < 0 || end > source.length || end < start) {
+      LOG.error("Invalid block range: [" + start + ", " + end + "); length - " + source.length);
+    }
+
     mySource = source;
     myStart = start;
     myEnd = end;
@@ -77,14 +85,7 @@ public class Block {
 
   @NotNull
   public String getBlockContent() {
-    StringBuilder result = new StringBuilder();
-
-    for (int i = 0; i < myEnd - myStart; i++) {
-      if (i != 0) result.append("\n");
-      result.append(mySource[i + myStart]);
-    }
-
-    return result.toString();
+    return StringUtil.join(getLines(), "\n");
   }
 
   @NotNull
@@ -112,6 +113,7 @@ public class Block {
     return myEnd;
   }
 
+  @NotNull
   public String[] getSource() {
     return mySource;
   }
@@ -132,7 +134,7 @@ public class Block {
     return result.toString();
   }
 
-  private void appendLines(StringBuilder result, int from, int to) {
+  private void appendLines(@NotNull StringBuilder result, int from, int to) {
     for (int i = from; i < to; i++) {
       result.append(mySource[i]);
       result.append("\n");
