@@ -15,30 +15,8 @@
  */
 package com.intellij.tests;
 
-import junit.framework.JUnit4TestAdapter;
-import junit.framework.TestSuite;
 import org.junit.runner.RunWith;
-import org.junit.runners.AllTests;
 
-@RunWith(AllTests.class)
+@RunWith(BootstrapTestcaseSuite.class)
 public class BootstrapUITests {
-  static {
-    ExternalClasspathClassLoader.install();
-  }
-
-  public static TestSuite suite() throws Exception {
-    TestSuite suite = new TestSuite();
-    ClassLoader cl = Thread.currentThread().getContextClassLoader();
-    String testSpec = System.getProperty("bootstrap.testcase");
-    if (testSpec == null) {
-      throw new IllegalStateException("No tests specified via -Dbootstrap.testcase property");
-    }
-
-    for (String testName : testSpec.split(",")) {
-      Class<?> testClass = Class.forName(testName, true, cl);
-      // Simplifying assumption: all our tests are properly annotated with @RunWith
-      suite.addTest(new JUnit4TestAdapter(testClass));
-    }
-    return suite;
-  }
 }
