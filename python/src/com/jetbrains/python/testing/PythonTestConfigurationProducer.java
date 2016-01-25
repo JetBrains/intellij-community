@@ -17,7 +17,6 @@ package com.jetbrains.python.testing;
 
 import com.google.common.collect.Sets;
 import com.intellij.execution.Location;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -39,6 +38,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.run.PythonRunConfigurationProducer;
 import com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration;
 import org.jetbrains.annotations.NonNls;
@@ -258,7 +258,7 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
   }
 
   protected List<PyStatement> getTestCaseClassesFromFile(@NotNull final PyFile pyFile) {
-    return PythonUnitTestUtil.getTestCaseClassesFromFile(pyFile);
+    return PythonUnitTestUtil.getTestCaseClassesFromFile(pyFile, TypeEvalContext.userInitiated(pyFile.getProject(), pyFile));
   }
 
   @Override
