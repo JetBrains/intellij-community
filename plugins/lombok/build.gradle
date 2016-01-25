@@ -79,26 +79,22 @@ copy {
 }
 
 import de.undercouch.gradle.tasks.download.Download
-
-task downloadJFlex(type: Download) {
-    src 'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/jflex-1.4/lib/JFlex.jar'
-    dest "${buildDir}/downloads/JFlex.jar"
+task downloadJFlexAndSkeleton(type: Download) {
+    src([
+            'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/jflex-1.4/lib/JFlex.jar',
+            'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/idea-flex.skeleton'
+    ])
+    dest buildDir
     onlyIfNewer true
 }
 
-task downloadSkeleton(dependsOn: downloadJFlex, type: Download) {
-    src 'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/idea-flex.skeleton'
-    dest "${buildDir}/downloads/idea-flex.skeleton"
-    onlyIfNewer true
-}
-
-task generateLexer(dependsOn: downloadSkeleton, type: JavaExec) {
+task generateLexer(dependsOn: downloadJFlexAndSkeleton, type: JavaExec) {
     main '-jar'
-    args """${buildDir}/downloads/JFlex.jar
+    args """${buildDir}/JFlex.jar
            |--nobak
            |--charat
            |--skel
-           |${buildDir}/downloads/idea-flex.skeleton
+           |${buildDir}/idea-flex.skeleton
            |-d
            |generated/src/de/plushnikov/intellij/plugin/language
            |${projectDir}/src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.flex""".stripMargin().split('\n').toList()
@@ -118,57 +114,52 @@ task generatePsiAndParser(dependsOn: generateLexer, type: JavaExec) {
     classpath configurations.gen
 }
 
-task generateAll(dependsOn: generatePsiAndParser, type: JavaExec) {
-    println 'Generate files...!'
-}
-
-allprojects {
-    apply plugin: 'java'
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
-    tasks.withType(JavaCompile) {
-        options.encoding = 'UTF-8'
+apply plugin: 'java'
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
 
 //        def useBootstrap = System.getenv("USE_BOOTSTRAP")
 //        if (useBootstrap) {
 //            options.bootClasspath = "$JDK6_HOME/jre/lib/rt.jar"
 //        }
-    }
+}
+compileJava.dependsOn(generatePsiAndParser)
 
-    plugins.withType(JavaPlugin) {
-        test {
-            systemProperty "NO_FS_ROOTS_ACCESS_CHECK", "true"
+plugins.withType(JavaPlugin) {
+    test {
+        systemProperty "NO_FS_ROOTS_ACCESS_CHECK", "true"
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java',
+                       'generated/src']
+        }
+        resources {
+            srcDirs = ['src/main/resources',
+                       'generated/resources']
         }
     }
+}
 
-    sourceSets {
-        main {
-            java {
-                srcDirs = ['src/main/java',
-                           'generated/src']
-            }
-            resources {
-                srcDirs = ['src/main/resources',
-                           'generated/resources']
-            }
-        }
-    }
-
-    apply plugin: 'org.jetbrains.intellij'
-    intellij {
-        def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
-        version = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
-        pluginName 'lombok-plugin'
-        plugins 'coverage'
+apply plugin: 'org.jetbrains.intellij'
+intellij {
+    def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
+    version = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
+    pluginName 'lombok-plugin'
+    plugins 'coverage'
 //        updateSinceUntilBuild = false
 //        sandboxDirectory="${project.projectDir}/idea-sandbox"
-        systemProperty 'idea.is.internal', 'false'
-        downloadSources !Boolean.valueOf(System.getenv('CI'))
+    systemProperty 'idea.is.internal', 'false'
+    downloadSources !Boolean.valueOf(System.getenv('CI'))
 
 //        publish {
 //            pluginId ''
 //            username ''
 //            password System.properties['intellij.publish.password']
 //        }
-    }
 }

@@ -17,5 +17,4 @@ env:
 before_install:
  - chmod +x gradlew
 
-script:
-- ./gradlew generateAll check
+script: ./gradlew generateAll check
