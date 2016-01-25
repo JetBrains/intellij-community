@@ -1,6 +1,8 @@
 language: java
 sudo: false
 
+before_cache:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
 cache:
   directories:
     - $HOME/.gradle/caches/
@@ -17,4 +19,3 @@ env:
 before_install:
  - chmod +x gradlew
 
-script: ./gradlew generateAll check
