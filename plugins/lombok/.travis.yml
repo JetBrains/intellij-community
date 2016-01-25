@@ -13,8 +13,8 @@ jdk:
 
 env:
   - IDEA_VERSION=LATEST-EAP-SNAPSHOT
+  - IDEA_VERSION=IC-15.0.2
   - IDEA_VERSION=IC-14.1.6
-  - IDEA_VERSION=IC-13.1.6
 
 before_install:
  - chmod +x gradlew
