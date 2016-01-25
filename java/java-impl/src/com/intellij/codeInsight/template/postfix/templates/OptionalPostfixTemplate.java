@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,18 +34,24 @@ public class OptionalPostfixTemplate extends StringBasedPostfixTemplate {
   @Nullable
   @Override
   public String getTemplateString(@NotNull PsiElement element) {
-    String defaultTemplate = "Optional.ofNullable($expr$)";
-    if (!(element instanceof PsiExpression)) return defaultTemplate;
-
-    String method = ".of($expr$)";
-    PsiType type = ((PsiExpression)element).getType();
-    if (PsiType.INT.equals(type)) {
-      return "OptionalInt" + method;
-    } else if (PsiType.DOUBLE.equals(type)) {
-      return "OptionalDouble" + method;
-    } else if (PsiType.LONG.equals(type)) {
-      return "OptionalLong" + method;
+    String className = "Optional";
+    String methodName = "ofNullable";
+    
+    if (element instanceof PsiExpression) {
+      PsiType type = ((PsiExpression)element).getType();
+      if (type instanceof PsiPrimitiveType) {
+        if (PsiType.INT.equals(type)) {
+          className = "OptionalInt";
+        }
+        else if (PsiType.DOUBLE.equals(type)) {
+          className = "OptionalDouble";
+        }
+        else if (PsiType.LONG.equals(type)) {
+          className = "OptionalLong";
+        }
+        methodName = "of";
+      }
     }
-    return defaultTemplate;
+    return "java.util." + className + "." + methodName + "($expr$)";
   }
 }

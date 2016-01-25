@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
 
 public class StreamPostfixTemplate extends StringBasedPostfixTemplate {
-
   public StreamPostfixTemplate() {
     super("stream", "Arrays.stream(expr)", JavaPostfixTemplatesUtils.atLeastJava8Selector(selectorTopmost(JavaPostfixTemplatesUtils.IS_ARRAY)));
   }
@@ -31,7 +30,7 @@ public class StreamPostfixTemplate extends StringBasedPostfixTemplate {
   @Nullable
   @Override
   public String getTemplateString(@NotNull PsiElement element) {
-    return "Arrays.stream($expr$)$END$";
+    return "java.util.Arrays.stream($expr$)";
   }
 
   @Override
