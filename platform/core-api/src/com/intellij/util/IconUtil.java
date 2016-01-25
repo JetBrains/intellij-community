@@ -455,7 +455,7 @@ public class IconUtil {
   }
 
   @NotNull
-  public static Icon filterIcon(@NotNull Icon source, @NotNull Filter filter) {
+  private static Icon filterIcon(@NotNull Icon source, @NotNull Filter filter) {
     BufferedImage src = UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
     Graphics2D g = src.createGraphics();
     source.paintIcon(null, g, 0, 0);
