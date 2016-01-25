@@ -105,9 +105,7 @@ public class PyPackageManagementService extends PackageManagementService {
 
   @Override
   public List<RepoPackage> reloadAllPackages() throws IOException {
-    final PyPackageService service = PyPackageService.getInstance();
-    PyPIPackageUtil.INSTANCE.updatePyPICache(service);
-    service.LAST_TIME_CHECKED = System.currentTimeMillis();
+    PyPIPackageUtil.INSTANCE.clearPackagesCache();
     return getAllPackages();
   }
 

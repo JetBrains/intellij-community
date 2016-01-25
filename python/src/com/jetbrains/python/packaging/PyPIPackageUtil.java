@@ -17,6 +17,7 @@ package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.HttpRequests;
@@ -94,62 +95,60 @@ public class PyPIPackageUtil {
     }
   }
 
-  public static Set<String> getPackageNames(final String url) throws IOException {
-    final TreeSet<String> names = new TreeSet<String>();
-    final HTMLEditorKit.ParserCallback callback =
-        new HTMLEditorKit.ParserCallback() {
-          HTML.Tag myTag;
-          @Override
-          public void handleStartTag(HTML.Tag tag,
-                                     MutableAttributeSet set,
-                                     int i) {
-            myTag = tag;
-          }
-
-          public void handleText(char[] data, int pos) {
-            if (myTag != null && "a".equals(myTag.toString())) {
-              names.add(String.valueOf(data));
-            }
-          }
-        };
-
-    try {
-      final URL repositoryUrl = new URL(url);
-      final InputStream is = repositoryUrl.openStream();
-      final Reader reader = new InputStreamReader(is);
-      try{
-        new ParserDelegator().parse(reader, callback, true);
+  @NotNull
+  private static Pair<String, String> splitNameVersion(@NotNull final String pyPackage) {
+    int dashInd = pyPackage.lastIndexOf("-");
+    if (dashInd >= 0) {
+      final String name = pyPackage.substring(0, dashInd);
+      final String version =  pyPackage.substring(dashInd);
+      if (StringUtil.containsAlphaCharacters(version)) {
+        return Pair.create(pyPackage, null);
       }
-      catch (IOException e) {
-        LOG.warn(e);
+      return Pair.create(name, version);
+    }
+    return Pair.create(pyPackage, null);
+  }
+
+  public void fillAdditionalPackages(@NotNull final String url) {
+    final boolean simpleIndex = url.endsWith("simple/");
+    final List<String> packagesList = parsePyPIListFromWeb(url, simpleIndex);
+
+    for (String pyPackage : packagesList) {
+      if (simpleIndex) {
+        final Pair<String, String> nameVersion = splitNameVersion(pyPackage);
+        myAdditionalPackageNames.add(new RepoPackage(nameVersion.getFirst(), url, nameVersion.getSecond()));
       }
-      finally {
-        reader.close();
+      else {
+        try {
+          Pattern repositoryPattern = Pattern.compile(url + "([^/]*)/([^/]*)$");
+          final Matcher matcher = repositoryPattern.matcher(URLDecoder.decode(pyPackage, "UTF-8"));
+          if (matcher.find()) {
+            final String packageName = matcher.group(1);
+            final String packageVersion = matcher.group(2);
+            if (!packageName.contains(" "))
+              myAdditionalPackageNames.add(new RepoPackage(packageName, url, packageVersion));
+          }
+        }
+        catch (UnsupportedEncodingException e) {
+          LOG.warn(e.getMessage());
+        }
       }
     }
-    catch (MalformedURLException e) {
-      LOG.warn(e);
-    }
-
-    return names;
   }
 
   public Set<RepoPackage> getAdditionalPackageNames() {
-    if (myAdditionalPackageNames == null) {
+    if (myAdditionalPackageNames == null || myAdditionalPackageNames.isEmpty()) {
       myAdditionalPackageNames = new TreeSet<RepoPackage>();
       for (String url : PyPackageService.getInstance().additionalRepositories) {
-        try {
-          for (String pyPackage : getPackageNames(url)) {
-            if (!pyPackage.contains(" "))
-              myAdditionalPackageNames.add(new RepoPackage(pyPackage, url));
-          }
-        }
-        catch (IOException e) {
-          LOG.warn(e);
-        }
+        fillAdditionalPackages(url);
       }
     }
     return myAdditionalPackageNames;
+  }
+
+  public void clearPackagesCache() {
+    PyPackageService.getInstance().PY_PACKAGES.clear();
+    if (myAdditionalPackageNames != null) myAdditionalPackageNames.clear();
   }
 
   public void addPackageDetails(@NonNls String packageName, Hashtable details) {
@@ -213,13 +212,15 @@ public class PyPIPackageUtil {
   }
 
   public void updatePyPICache(final PyPackageService service) throws IOException {
-    myPackageNames = null;
+    service.LAST_TIME_CHECKED = System.currentTimeMillis();
+
     service.PY_PACKAGES.clear();
     if (service.PYPI_REMOVED) return;
-    parsePyPIList(getPyPIListFromWeb(), service);
+    parsePyPIList(parsePyPIListFromWeb(PYPI_LIST_URL, false), service);
   }
 
   public void parsePyPIList(final List<String> packages, final PyPackageService service) {
+    myPackageNames = null;
     for (String pyPackage : packages) {
       try {
         final Matcher matcher = PYPI_PATTERN.matcher(URLDecoder.decode(pyPackage, "UTF-8"));
@@ -236,31 +237,46 @@ public class PyPIPackageUtil {
     }
   }
 
-  @Nullable
-  public List<String> getPyPIListFromWeb() {
-    return HttpRequests.request(PYPI_LIST_URL).connect(new HttpRequests.RequestProcessor<List<String>>() {
+  @NotNull
+  public List<String> parsePyPIListFromWeb(@NotNull final String url, final boolean isSimpleIndex) {
+    return HttpRequests.request(url).connect(new HttpRequests.RequestProcessor<List<String>>() {
       @Override
       public List<String> process(@NotNull HttpRequests.Request request) throws IOException {
         final List<String> packages = new ArrayList<String>();
         Reader reader = request.getReader();
         new ParserDelegator().parse(reader, new HTMLEditorKit.ParserCallback() {
           boolean inTable = false;
+          HTML.Tag myTag;
 
           @Override
           public void handleStartTag(HTML.Tag tag, MutableAttributeSet set, int i) {
-            if ("table".equals(tag.toString())) {
-              inTable = !inTable;
-            }
+            myTag = tag;
+            if (!isSimpleIndex) {
+              if ("table".equals(tag.toString())) {
+                inTable = !inTable;
+              }
 
-            if (inTable && "a".equals(tag.toString())) {
-              packages.add(String.valueOf(set.getAttribute(HTML.Attribute.HREF)));
+              if (inTable && "a".equals(tag.toString())) {
+                packages.add(String.valueOf(set.getAttribute(HTML.Attribute.HREF)));
+              }
+            }
+          }
+
+          @Override
+          public void handleText(char[] data, int pos) {
+            if (isSimpleIndex) {
+              if (myTag != null && "a".equals(myTag.toString())) {
+                packages.add(String.valueOf(data));
+              }
             }
           }
 
           @Override
           public void handleEndTag(HTML.Tag tag, int i) {
-            if ("table".equals(tag.toString())) {
-              inTable = !inTable;
+            if (!isSimpleIndex) {
+              if ("table".equals(tag.toString())) {
+                inTable = !inTable;
+              }
             }
           }
         }, true);

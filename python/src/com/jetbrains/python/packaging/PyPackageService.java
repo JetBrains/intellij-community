@@ -56,12 +56,13 @@ public class PyPackageService implements
     sdkToUsersite.put(sdk, useUsersite);
   }
 
-  public void addRepository(final String repository) {
+  public void addRepository(String repository) {
     if (repository == null) return;
     if (repository.startsWith(PyPIPackageUtil.PYPI_HOST)) {
       PYPI_REMOVED = false;
     }
     else {
+      if (!repository.endsWith("/")) repository += "/";
       additionalRepositories.add(repository);
     }
   }
