@@ -23,6 +23,7 @@ import com.intellij.lang.html.HTMLParserDefinition;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lang.xml.XmlASTFactory;
+import com.intellij.lexer.EmbeddedTokenTypesProvider;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.XmlLexer;
@@ -687,6 +688,7 @@ public class XmlParsingTest extends ParsingTestCase {
     });
     addExplicitExtension(LanguageParserDefinitions.INSTANCE, HTMLLanguage.INSTANCE, new HTMLParserDefinition());
     addExplicitExtension(LanguageASTFactory.INSTANCE, HTMLLanguage.INSTANCE, new XmlASTFactory());
+    registerExtensionPoint(EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME, EmbeddedTokenTypesProvider.class);
     myLanguage = HTMLLanguage.INSTANCE;
     doTest("<script type=\"application/custom\">Custom Script</script>", "test.html");
   }
