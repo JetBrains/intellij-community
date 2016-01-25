@@ -207,6 +207,11 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       }
     }
     (candidate.isValidResult() ? myCandidates : myInapplicableCandidates).putValue(kind, candidate);
+
+    if (candidate.isValidResult() && kind == GroovyResolveKind.VARIABLE) {
+      myStopExecutingMethods = true;
+    }
+
     return true;
   }
 
