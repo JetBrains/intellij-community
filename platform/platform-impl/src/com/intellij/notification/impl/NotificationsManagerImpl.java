@@ -559,14 +559,15 @@ public class NotificationsManagerImpl extends NotificationsManager {
       @Override
       protected void paintChildren(Graphics g) {
         super.paintChildren(g);
+        Component title = layout.getTitle();
 
-        if (layoutData.showActions != null && layoutData.showActions.compute()) {
+        if (title != null && layoutData.showActions != null && layoutData.showActions.compute()) {
           Insets insets = getInsets();
-          JLabel title = layout.getTitle();
           int width = NotificationBalloonActionProvider.getAllActionsOffset();
           int x = getWidth() - insets.right - width;
           int y = insets.top;
-          int height = title.getHeight();
+
+          int height = title instanceof JEditorPane ? getFirstLineHeight((JEditorPane)title) : title.getHeight();
 
           g.setColor(fillColor);
           g.fillRect(x, y, width, height);
@@ -641,7 +642,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     if (buttons == null) {
       balloon.setActionProvider(
-        new NotificationBalloonActionProvider(balloon, isTitle ? centerPanel : null, layoutData, notification.getGroupId()));
+        new NotificationBalloonActionProvider(balloon, layout.getTitle(), layoutData, notification.getGroupId()));
     }
 
     return balloon;
@@ -784,6 +785,21 @@ public class NotificationsManagerImpl extends NotificationsManager {
     return null;
   }
 
+  private static int getFirstLineHeight(@NotNull JEditorPane text) {
+    try {
+      int end = text.getDocument().getLength();
+      for (int i = 0; i < end; i++) {
+        Rectangle r = text.modelToView(i);
+        if (r != null && r.height > 0) {
+          return r.height;
+        }
+      }
+    }
+    catch (BadLocationException ignored) {
+    }
+    return 16; // TODO
+  }
+
   private static class CenteredLayoutWithActions extends BorderLayout {
     private final int myVerticalGap;
     private final JEditorPane myText;
@@ -799,8 +815,15 @@ public class NotificationsManagerImpl extends NotificationsManager {
       myLayoutData = layoutData;
     }
 
-    public JLabel getTitle() {
-      return (JLabel)myTitleComponent;
+    @Nullable
+    public Component getTitle() {
+      if (myTitleComponent != null) {
+        return myTitleComponent;
+      }
+      if (myCenteredComponent instanceof JScrollPane) {
+        return ((JScrollPane)myCenteredComponent).getViewport().getView();
+      }
+      return null;
     }
 
     @Override
@@ -867,6 +890,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       if (width < titleSize.width || width < actionSize.width) {
         width = 330;
       }
+      //width = Math.max(centeredSize.width, Math.max(titleSize.width, actionSize.width));
 
       Dimension result = new Dimension(width, height);
       JBInsets.addTo(result, parent.getInsets());

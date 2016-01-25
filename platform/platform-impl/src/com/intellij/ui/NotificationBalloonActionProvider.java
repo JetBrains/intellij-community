@@ -38,13 +38,13 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
   private final BalloonImpl myBalloon;
   private final BalloonLayoutData myLayoutData;
   private final String myDisplayGroupId;
-  private final JPanel myRepaintPanel;
+  private final Component myRepaintPanel;
   private final BalloonImpl.ActionButton mySettingButton;
   private final BalloonImpl.ActionButton myCloseButton;
   private final List<BalloonImpl.ActionButton> myActions = new ArrayList<BalloonImpl.ActionButton>();
 
   public NotificationBalloonActionProvider(@NotNull BalloonImpl balloon,
-                                           @Nullable JPanel repaintPanel,
+                                           @Nullable Component repaintPanel,
                                            @NotNull BalloonLayoutData layoutData,
                                            @Nullable String displayGroupId) {
     myLayoutData = layoutData;
