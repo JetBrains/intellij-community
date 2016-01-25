@@ -1493,11 +1493,45 @@ public class InferenceSession {
    * 18.5.4 More Specific Method Inference 
    */
   public static boolean isMoreSpecific(PsiMethod m1,
-                                       PsiMethod m2,
-                                       PsiSubstitutor siteSubstitutor1, 
-                                       PsiExpression[] args,
-                                       PsiElement context,
-                                       boolean varargs) {
+                                       final PsiMethod m2,
+                                       final PsiSubstitutor siteSubstitutor1, 
+                                       final PsiExpression[] args,
+                                       final PsiElement context,
+                                       final boolean varargs) {
+    try {
+      //push site substitutor to parameter bounds
+      m1 = JavaPsiFacade.getElementFactory(m1.getProject()).createMethodFromText(m1.getText(), m1);
+      for (PsiTypeParameter parameter : m1.getTypeParameters()) {
+        final PsiClassType[] types = parameter.getExtendsListTypes();
+        if (types.length > 0) {
+          final List<PsiType> conjuncts = ContainerUtil.map(types, new Function<PsiClassType, PsiType>() {
+            @Override
+            public PsiType fun(PsiClassType type) {
+              return siteSubstitutor1.substitute(type);
+            }
+          });
+          //don't glb to avoid flattening = Object&Interface would be preserved
+          //otherwise methods with different signatures could get same erasure
+          final PsiType upperBound = PsiIntersectionType.createIntersection(false, conjuncts.toArray(new PsiType[conjuncts.size()]));
+          parameter.putUserData(UPPER_BOUND, upperBound);
+        }
+      }
+      return isMoreSpecificInternal(m1, m2, siteSubstitutor1, args, context, varargs);
+    }
+    finally {
+      for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(m1)) {
+        parameter.putUserData(UPPER_BOUND, null);
+      }
+    }
+  }
+
+  private static boolean isMoreSpecificInternal(PsiMethod m1,
+                                                PsiMethod m2,
+                                                PsiSubstitutor siteSubstitutor1,
+                                                PsiExpression[] args,
+                                                PsiElement context,
+                                                boolean varargs) {
+
     List<PsiTypeParameter> params = new ArrayList<PsiTypeParameter>();
     for (PsiTypeParameter param : PsiUtil.typeParametersIterable(m2)) {
       params.add(param);

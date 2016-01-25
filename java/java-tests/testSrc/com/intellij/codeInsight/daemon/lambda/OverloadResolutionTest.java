@@ -192,6 +192,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testCompareFormalParametersWithNotionOfSiteSubstitutorInIsMoreSpecificCheck() throws Exception {
+    doTest(true);
+  }
+
   private void doTest() {
     doTest(true);
   }
