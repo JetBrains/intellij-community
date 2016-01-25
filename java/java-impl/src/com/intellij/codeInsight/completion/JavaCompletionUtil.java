@@ -254,7 +254,40 @@ public class JavaCompletionUtil {
     return subst.get().substitute(rawType);
   }
 
-  public static Set<LookupElement> processJavaReference(PsiElement element, PsiJavaReference javaReference, ElementFilter elementFilter,
+  public static Set<LookupElement> processJavaReference(final PsiElement element, 
+                                                        final PsiJavaReference javaReference, 
+                                                        final ElementFilter elementFilter,
+                                                        final JavaCompletionProcessor.Options options,
+                                                        final PrefixMatcher matcher, 
+                                                        final CompletionParameters parameters) {
+    PsiElement elementParent = element.getContext();
+    if (elementParent instanceof PsiReferenceExpression) {
+      final PsiExpression qualifierExpression = ((PsiReferenceExpression)elementParent).getQualifierExpression();
+      if (qualifierExpression instanceof PsiReferenceExpression) {
+        final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+        if (resolve instanceof PsiParameter) {
+          final PsiElement declarationScope = ((PsiParameter)resolve).getDeclarationScope();
+          if (((PsiParameter)resolve).getType() instanceof PsiLambdaParameterType) {
+            final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)declarationScope;
+            final int parameterIndex = lambdaExpression.getParameterList().getParameterIndex((PsiParameter)resolve);
+            final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
+            final boolean overloadsFound = LambdaUtil.processParentOverloads(lambdaExpression, new Consumer<PsiType>() {
+              @Override
+              public void consume(PsiType functionalInterfaceType) {
+                PsiType qualifierType = LambdaUtil.getLambdaParameterFromType(functionalInterfaceType, parameterIndex);
+                PsiReferenceExpression fakeRef = createReference("xxx.xxx", createContextWithXxxVariable(element, qualifierType));
+                set.addAll(processJavaQualifiedReference(fakeRef.getReferenceNameElement(), fakeRef, elementFilter, options, matcher, parameters));
+              }
+            });
+            if (overloadsFound) return set;
+          }
+        }
+      }
+    } 
+    return processJavaQualifiedReference(element, javaReference, elementFilter, options, matcher, parameters);
+  }
+  
+  private static Set<LookupElement> processJavaQualifiedReference(PsiElement element, PsiJavaReference javaReference, ElementFilter elementFilter,
                                                         JavaCompletionProcessor.Options options,
                                                         final PrefixMatcher matcher, CompletionParameters parameters) {
     final Set<LookupElement> set = new LinkedHashSet<LookupElement>();

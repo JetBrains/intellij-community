@@ -228,4 +228,9 @@ class Test88 {
     selectItem(myItems.find { it.lookupString.contains('empty') })
     checkResultByFile(getTestName(false) + "_after.java")
   }
+
+  public void testLambdaInAmbiguousCall() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
+  }
 }
