@@ -104,11 +104,11 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
 
   private static final Block EMPTY_BLOCK = new Block("", 0, 0);
 
-  private final Project myProject;
-  private final VirtualFile myFile;
-  private final Editor myEditor;
-  private final AbstractVcs myActiveVcs;
-  private final CachedRevisionsContents myCachedContents;
+  @NotNull private final Project myProject;
+  @NotNull private final VirtualFile myFile;
+  @NotNull private final Editor myEditor;
+  @NotNull private final AbstractVcs myActiveVcs;
+  @NotNull private final CachedRevisionsContents myCachedContents;
   private final int mySelectionStart;
   private final int mySelectionEnd;
   @NonNls private final String myHelpId;
@@ -127,16 +127,16 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   private boolean myIsDuringUpdate = false;
   private boolean myIsDisposed = false;
 
-  public VcsHistoryDialog(Project project,
-                          VirtualFile file,
-                          Editor editor,
-                          VcsHistoryProvider vcsHistoryProvider,
-                          VcsHistorySession session,
-                          AbstractVcs vcs,
+  public VcsHistoryDialog(@NotNull Project project,
+                          @NotNull VirtualFile file,
+                          @NotNull Editor editor,
+                          @NotNull VcsHistoryProvider vcsHistoryProvider,
+                          @NotNull VcsHistorySession session,
+                          @NotNull AbstractVcs vcs,
                           int selectionStart,
                           int selectionEnd,
-                          String title,
-                          CachedRevisionsContents cachedContents) {
+                          @NotNull String title,
+                          @NotNull CachedRevisionsContents cachedContents) {
     super(project);
     myProject = project;
     myFile = file;

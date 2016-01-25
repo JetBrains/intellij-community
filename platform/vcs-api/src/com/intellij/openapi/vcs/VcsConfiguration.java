@@ -166,7 +166,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  public static VcsConfiguration getInstance(Project project) {
+  public static VcsConfiguration getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, VcsConfiguration.class);
   }
 

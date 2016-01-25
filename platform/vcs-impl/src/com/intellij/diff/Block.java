@@ -26,7 +26,7 @@ import java.util.List;
  * author: lesya
  */
 public class Block {
-  private final String[] mySource;
+  @NotNull private final String[] mySource;
   private final int myStart;
   private final int myEnd;
 
@@ -112,6 +112,7 @@ public class Block {
     return myEnd;
   }
 
+  @NotNull
   public String[] getSource() {
     return mySource;
   }
@@ -132,7 +133,7 @@ public class Block {
     return result.toString();
   }
 
-  private void appendLines(StringBuilder result, int from, int to) {
+  private void appendLines(@NotNull StringBuilder result, int from, int to) {
     for (int i = from; i < to; i++) {
       result.append(mySource[i]);
       result.append("\n");
