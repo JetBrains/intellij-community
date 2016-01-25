@@ -15,6 +15,7 @@
  */
 package com.intellij.diff;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.diff.Diff;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,8 @@ import java.util.List;
  * author: lesya
  */
 public class Block {
+  private static final Logger LOG = Logger.getInstance(Block.class);
+
   @NotNull private final String[] mySource;
   private final int myStart;
   private final int myEnd;
@@ -35,6 +38,10 @@ public class Block {
   }
 
   public Block(@NotNull String[] source, int start, int end) {
+    if (start < 0 || end > source.length || end < start) {
+      LOG.error("Invalid block range: [" + start + ", " + end + "); length - " + source.length);
+    }
+
     mySource = source;
     myStart = start;
     myEnd = end;
