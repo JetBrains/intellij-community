@@ -67,18 +67,21 @@ public class SelectTestStep extends BaseListPopupStep<String> {
     Set<String> passedSuites = ContainerUtil.newHashSet();
     Set<String> otherSuites = ContainerUtil.newHashSet();
 
-    for (Map.Entry<String, TestStateStorage.Record> item : records.entrySet()) {
-      String url = item.getKey();
-      TestStateInfo.Magnitude magnitude = getMagnitude(item.getValue().magnitude);
+    List<TestInfo> infos = getTestInfos(records.entrySet(), runner);
+
+    for (TestInfo info : infos) {
+      String url = info.url;
+      TestStateInfo.Magnitude magnitude = info.magnitude;
       if (magnitude == null) continue;
+
       switch (magnitude) {
         case COMPLETE_INDEX:
-          if (runner.isSuite(url)) {
+          if (info.isSuite) {
             passedSuites.add(url);
           }
           break;
         case PASSED_INDEX:
-          if (runner.isSuite(url)) {
+          if (info.isSuite) {
             passedSuites.add(url);
           }
           break;
@@ -92,6 +95,19 @@ public class SelectTestStep extends BaseListPopupStep<String> {
     }
     
     return new TestGroup(failedTests, passedSuites, otherSuites);
+  }
+
+  private static List<TestInfo> getTestInfos(Set<Map.Entry<String, TestStateStorage.Record>> entries, RecentTestRunner runner) {
+    List<TestInfo> list = ContainerUtil.newSmartList();
+
+    for (Map.Entry<String, TestStateStorage.Record> item : entries) {
+      String url = item.getKey();
+      TestStateStorage.Record record = item.getValue();
+      TestStateInfo.Magnitude magnitude = getMagnitude(record.magnitude);
+      list.add(new TestInfo(url, magnitude, runner.isSuite(url)));
+    }
+
+    return list;
   }
 
   private static TestStateInfo.Magnitude getMagnitude(int magnitude) {
@@ -139,4 +155,17 @@ public class SelectTestStep extends BaseListPopupStep<String> {
       this.otherTests = otherTests;
     }
   }
+
+  private static class TestInfo {
+    private final boolean isSuite;
+    public String url;
+    public TestStateInfo.Magnitude magnitude;
+
+    public TestInfo(String url, TestStateInfo.Magnitude magnitude, boolean isSuite) {
+      this.url = url;
+      this.magnitude = magnitude;
+      this.isSuite = isSuite;
+    }
+  }
+  
 }
