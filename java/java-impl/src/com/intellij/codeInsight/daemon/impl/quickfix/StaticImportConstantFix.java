@@ -58,7 +58,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
     final PsiJavaCodeReferenceElement element = myRef.getElement();
     String name = element != null ? element.getReferenceName() : null;
     if (name == null) return Collections.emptyList();
-    final MyStaticMembersProcessor<PsiField> processor = new MyStaticMembersProcessor<PsiField>(element) {
+    final StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<PsiField>(element) {
       @Override
       protected boolean isApplicable(PsiField field, PsiElement place) {
         final PsiType expectedType = getExpectedType();

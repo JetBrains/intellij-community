@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-abstract class MyStaticMembersProcessor<T extends PsiMember> implements Processor<T> {
+abstract class StaticMembersProcessor<T extends PsiMember> implements Processor<T> {
   private final MultiMap<PsiClass, T> myDeprecated = new LinkedMultiMap<PsiClass, T>();
   private final MultiMap<PsiClass, T> mySuggestions = new LinkedMultiMap<PsiClass, T>();
 
@@ -38,7 +38,7 @@ abstract class MyStaticMembersProcessor<T extends PsiMember> implements Processo
   private final PsiElement myPlace;
   private PsiType myExpectedType;
 
-  protected MyStaticMembersProcessor(PsiElement place) {
+  protected StaticMembersProcessor(PsiElement place) {
     myPlace = place;
     myExpectedType = PsiType.NULL;
   }

@@ -23,6 +23,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -67,7 +68,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return PsiUtil.isLanguageLevel5OrHigher(file)
-           && file instanceof PsiJavaFile
+           && file.getLanguage().isKindOf(JavaLanguage.INSTANCE)
            && getElement() != null
            && getElement().isValid()
            && getQualifierExpression() == null
