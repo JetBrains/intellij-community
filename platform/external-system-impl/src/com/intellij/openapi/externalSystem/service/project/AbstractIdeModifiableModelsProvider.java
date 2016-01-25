@@ -55,6 +55,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   private ModifiableModuleModel myModifiableModuleModel;
   private Map<Module, ModifiableRootModel> myModifiableRootModels = new THashMap<Module, ModifiableRootModel>();
   private Map<Module, ModifiableFacetModel> myModifiableFacetModels = new THashMap<Module, ModifiableFacetModel>();
+  private Map<Module, String> myProductionModulesForTestModules = new THashMap<Module, String>();
   private Map<Library, Library.ModifiableModel> myModifiableLibraryModels = new IdentityHashMap<Library, Library.ModifiableModel>();
   private ModifiableArtifactModel myModifiableArtifactModel;
   private AbstractIdeModifiableModelsProvider.MyPackagingElementResolvingContext myPackagingElementResolvingContext;
@@ -361,6 +362,9 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
             model.commit();
           }
         }
+        for (Map.Entry<Module, String> entry : myProductionModulesForTestModules.entrySet()) {
+          TestModuleProperties.getInstance(entry.getKey()).setProductionModuleName(entry.getValue());
+        }
 
         for (Map.Entry<Module, ModifiableFacetModel> each : myModifiableFacetModels.entrySet()) {
           if(!each.getKey().isDisposed()) {
@@ -396,5 +400,10 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     myModifiableRootModels.clear();
     myModifiableFacetModels.clear();
     myModifiableLibraryModels.clear();
+  }
+
+  @Override
+  public void setTestModuleProperties(Module testModule, String productionModuleName) {
+    myProductionModulesForTestModules.put(testModule, productionModuleName);
   }
 }

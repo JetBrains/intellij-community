@@ -33,6 +33,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Nullable private String[] myIdeModuleGroup;
   @Nullable  private String mySourceCompatibility;
   @Nullable private String myTargetCompatibility;
+  @Nullable private String myProductionModuleId;
 
   private boolean myInheritProjectCompileOutputPath = true;
 
@@ -95,6 +96,19 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   public void setModuleFileDirectoryPath(@NotNull String path) {
     myModuleFileDirectoryPath = path;
+  }
+
+  /**
+   * @return an internal id of production module corresponding to a test-only module, this information is used to populate
+   * {@link com.intellij.openapi.roots.TestModuleProperties}
+   */
+  @Nullable
+  public String getProductionModuleId() {
+    return myProductionModuleId;
+  }
+
+  public void setProductionModuleId(@Nullable String productionModuleId) {
+    myProductionModuleId = productionModuleId;
   }
 
   public boolean isInheritProjectCompileOutputPath() {
