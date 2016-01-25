@@ -89,6 +89,10 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     for (DataNode<E> node : toImport) {
       Module module = node.getUserData(MODULE_KEY);
       if (module != null) {
+        String productionModuleId = node.getData().getProductionModuleId();
+        if (productionModuleId != null) {
+          modelsProvider.setTestModuleProperties(module, productionModuleId);
+        }
         setModuleOptions(module, node);
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
         syncPaths(module, modifiableRootModel, node.getData());
@@ -123,10 +127,6 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       ModuleData data = module.getData();
       final Module created = modelsProvider.newModule(data.getModuleFilePath(), data.getModuleTypeId());
       module.putUserData(MODULE_KEY, created);
-      String productionModuleId = data.getProductionModuleId();
-      if (productionModuleId != null) {
-        modelsProvider.setTestModuleProperties(created, productionModuleId);
-      }
       Set<String> orphanFiles = project.getUserData(ORPHAN_MODULE_FILES);
       if (orphanFiles != null) {
         orphanFiles.remove(created.getModuleFilePath());
