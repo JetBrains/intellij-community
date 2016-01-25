@@ -9,12 +9,12 @@ cache:
     - $HOME/.gradle/wrapper/
 
 jdk:
-  - openjdk6
+  - oraclejdk8
 
 env:
-  - IDEA_VERSION=IC-14.1.6
-  - IDEA_VERSION=IU-14.1.6
   - IDEA_VERSION=LATEST-EAP-SNAPSHOT
+  - IDEA_VERSION=IC-14.1.6
+  - IDEA_VERSION=IC-13.1.6
 
 before_install:
  - chmod +x gradlew
