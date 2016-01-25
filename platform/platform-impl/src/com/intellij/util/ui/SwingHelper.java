@@ -687,4 +687,55 @@ public class SwingHelper {
       BrowserUtil.browse(myUrl);
     }
   }
+
+  public final static String ELLIPSIS = "...";
+  public static final String ERROR_STR = "www";
+  public static String truncateStringWithEllipsis(final String text, final int maxWidth, final FontMetrics fm) {
+    return truncateStringWithEllipsis(text, maxWidth, new WidthCalculator() {
+      @Override
+      public int stringWidth(String s) {
+        return fm.stringWidth(s);
+      }
+
+      @Override
+      public int charWidth(char c) {
+        return fm.charWidth(c);
+      }
+    });
+  }
+
+  public interface WidthCalculator {
+    int stringWidth(final String s);
+    int charWidth(final char c);
+  }
+
+  public static String truncateStringWithEllipsis(final String text, final int maxWidth, final WidthCalculator fm) {
+    final int error = fm.stringWidth(ERROR_STR);
+    final int wholeWidth = fm.stringWidth(text) + error;
+    if (wholeWidth <= maxWidth || text.isEmpty()) return text;
+    final int ellipsisWidth = fm.stringWidth(ELLIPSIS) + error; // plus some reserve
+    if (ellipsisWidth >= maxWidth) return ELLIPSIS;
+
+    final int availableWidth = maxWidth - ellipsisWidth;
+    int currentLen = (int)Math.floor(availableWidth / (((double) wholeWidth) / text.length()));
+
+    final String currentSubstring = text.substring(0, currentLen);
+    int realWidth = fm.stringWidth(currentSubstring);
+
+    if (realWidth >= availableWidth) {
+      int delta = 0;
+      for (int i = currentLen - 1; i >= 0; i--) {
+        if ((realWidth - delta) < availableWidth) return text.substring(0, i) + ELLIPSIS;
+        delta += fm.charWidth(currentSubstring.charAt(i));
+      }
+      return text.substring(0, 1) + ELLIPSIS;
+    } else {
+      int delta = 0;
+      for (int i = currentLen; i < text.length(); i++) {
+        if ((realWidth + delta) >= availableWidth) return text.substring(0, i) + ELLIPSIS;
+        delta += fm.charWidth(text.charAt(i));
+      }
+      return text.substring(0, currentLen) + ELLIPSIS;
+    }
+  }
 }
