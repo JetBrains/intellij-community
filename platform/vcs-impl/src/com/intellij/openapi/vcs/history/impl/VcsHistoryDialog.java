@@ -34,7 +34,6 @@ import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -308,7 +307,7 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
     for (int i = firstRevision - 1; i >= 0; i--) {
       Block block1 = getBlock(i + 1);
       Block block2 = getBlock(i);
-      if (orderedEquals(block1.getLines(), block2.getLines())) continue;
+      if (block1.getLines().equals(block2.getLines())) continue;
       result.add(myRevisions.get(i));
     }
 
@@ -451,13 +450,5 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
       ensureBlocksCreated(index);
     }
     return myBlocks.get(index);
-  }
-
-  private static boolean orderedEquals(@NotNull List data1, @NotNull List data2) {
-    if (data1.size() != data2.size()) return false;
-    for (int i = 0; i < data1.size(); i++) {
-      if (!Comparing.equal(data1.get(i), data2.get(i))) return false;
-    }
-    return true;
   }
 }

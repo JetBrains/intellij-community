@@ -17,6 +17,7 @@ package com.intellij.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.Diff;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,14 +85,7 @@ public class Block {
 
   @NotNull
   public String getBlockContent() {
-    StringBuilder result = new StringBuilder();
-
-    for (int i = 0; i < myEnd - myStart; i++) {
-      if (i != 0) result.append("\n");
-      result.append(mySource[i + myStart]);
-    }
-
-    return result.toString();
+    return StringUtil.join(getLines(), "\n");
   }
 
   @NotNull
