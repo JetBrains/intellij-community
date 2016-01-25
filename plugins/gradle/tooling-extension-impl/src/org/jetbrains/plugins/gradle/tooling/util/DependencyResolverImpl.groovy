@@ -177,10 +177,8 @@ class DependencyResolverImpl implements DependencyResolver {
 
     new DependencyTraverser(runtimeDependencies).each {
       Collection<ExternalDependency> dependencies = resolvedMap.get(it.id);
-      if (dependencies && !dependencies.isEmpty()) {
-        if (it.dependencies.isEmpty()) {
-          runtimeDependencies.remove(it)
-        }
+      if (dependencies && !dependencies.isEmpty() && it.dependencies.isEmpty()) {
+        runtimeDependencies.remove(it)
         ((AbstractExternalDependency)it).scope = dependencies.first().scope
       }
       else {
