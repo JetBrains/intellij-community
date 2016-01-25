@@ -46,7 +46,7 @@ public class RefactoringChangeUtil {
   }
 
   public static PsiType getTypeByExpression(PsiExpression expr) {
-    PsiType type = expr.getType();
+    PsiType type = expr != null ? expr.getType() : null;
     if (type == null) {
       if (expr instanceof PsiArrayInitializerExpression) {
         PsiExpression[] initializers = ((PsiArrayInitializerExpression)expr).getInitializers();
