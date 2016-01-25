@@ -18,7 +18,6 @@ package com.siyeh.ig.finalization;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -90,6 +89,10 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
         return;
       }
       if (method.hasModifierProperty(PsiModifier.PROTECTED)) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null || aClass.isInterface()) {
         return;
       }
       registerMethodError(method);
