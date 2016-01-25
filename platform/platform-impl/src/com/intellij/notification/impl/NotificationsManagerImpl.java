@@ -432,8 +432,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
       text.addHyperlinkListener(listener);
     }
 
-    final JLabel label = new JLabel(NotificationsUtil.buildHtml(notification, null, true, foreground));
-    String style = "width:" + Math.min(JBUI.scale(350), label.getPreferredSize().width) + "px;";
+    JLabel label = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null));
+    int maxSize = JBUI.scale(350);
+    String style = label.getPreferredSize().width > maxSize ? "width:" + maxSize + "px;" : null;
     text.setText(NotificationsUtil.buildHtml(notification, style, true, foreground));
     text.setEditable(false);
     text.setOpaque(false);
@@ -582,7 +583,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     content.add(centerPanel, BorderLayout.CENTER);
 
     if (isTitle) {
-      JLabel title = new JLabel(NotificationsUtil.buildHtml(notification, style, false, foreground));
+      JLabel title = new JLabel(NotificationsUtil.buildHtml(notification, "white-space: nowrap;", false, foreground));
       title.setOpaque(false);
       if (UIUtil.isUnderNimbusLookAndFeel()) {
         title.setBackground(UIUtil.TRANSPARENT_COLOR);
@@ -888,11 +889,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
       int width = centeredSize.width;
       if (width < titleSize.width || width < actionSize.width) {
-        width = 330;
+        width = Math.min(JBUI.scale(350), Math.max(titleSize.width, actionSize.width));
       }
-      //width = Math.max(centeredSize.width, Math.max(titleSize.width, actionSize.width));
 
-      Dimension result = new Dimension(width, height);
+      Dimension result = new Dimension(Math.max(width, JBUI.scale(100)), height);
       JBInsets.addTo(result, parent.getInsets());
       return result;
     }

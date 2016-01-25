@@ -142,6 +142,9 @@ public class NotificationTestAction extends AnAction implements DumbAware {
             continue;
           }
         }
+        if (line.startsWith("//")) {
+          continue;
+        }
         if (notification == null) {
           notification = new NotificationInfo();
           notifications.add(notification);
