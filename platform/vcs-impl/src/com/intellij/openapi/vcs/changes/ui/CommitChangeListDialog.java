@@ -81,7 +81,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private Splitter mySplitter;
   @Nullable private final JPanel myAdditionalOptionsPanel;
 
-  private final ChangesBrowser myBrowser;
+  private final ChangesBrowserBase<?> myBrowser;
 
   private CommitLegendPanel myLegend;
   private final MyChangeProcessor myDiffDetails;
@@ -1358,18 +1358,19 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     @NotNull
     @Override
     protected List<Change> getSelectedChanges() {
-      return myBrowser.getViewer().getSelectedChanges();
+      return myBrowser.getSelectedChanges();
     }
 
     @NotNull
     @Override
     protected List<Change> getAllChanges() {
-      return myBrowser.getViewer().getChanges();
+      return myBrowser.getAllChanges();
     }
 
     @Override
     protected void selectChange(@NotNull Change change) {
-      myBrowser.select(Collections.singletonList(change));
+      //noinspection unchecked
+      myBrowser.select((List)Collections.singletonList(change));
     }
 
     @Override
