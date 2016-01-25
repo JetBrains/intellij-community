@@ -23,6 +23,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -79,7 +80,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
               try {
                 return classOwner.getClasses();
               }
-              catch (IndexOutOfBoundsException e) {
+              catch (IndexNotReadyException e) {
                 return PsiClass.EMPTY_ARRAY;
               }
             }
