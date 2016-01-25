@@ -44,7 +44,6 @@ import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
@@ -118,7 +117,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
 
   @Override
   public JComponent createOptionsPanel() {
-    myDetailsComponent = new DetailsComponent(!Registry.is("ide.new.project.settings"), !Registry.is("ide.new.project.settings"));
+    myDetailsComponent = new DetailsComponent(false, false);
     myDetailsComponent.setContent(myPanel);
     myDetailsComponent.setText(getBannerSlogan());
 
