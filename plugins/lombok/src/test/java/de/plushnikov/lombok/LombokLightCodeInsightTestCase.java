@@ -28,7 +28,10 @@ public abstract class LombokLightCodeInsightTestCase extends LightCodeInsightFix
 
   @Override
   public void setUp() throws Exception {
-    VfsRootAccess.SHOULD_PERFORM_ACCESS_CHECK = false;
+    final String absoluteTestDataPath = new File(getTestDataPath(), getBasePath()).getCanonicalPath();
+    final String absoluteLombokPath = new File(LOMBOK_SRC_PATH).getCanonicalPath();
+    VfsRootAccess.allowRootAccess(absoluteTestDataPath, absoluteLombokPath);
+
     super.setUp();
     loadFilesFrom(LOMBOK_SRC_PATH);
   }
