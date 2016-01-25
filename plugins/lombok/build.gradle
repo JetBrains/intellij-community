@@ -163,7 +163,8 @@ allprojects {
 //        updateSinceUntilBuild = false
 //        sandboxDirectory="${project.projectDir}/idea-sandbox"
         systemProperty 'idea.is.internal', 'false'
-        downloadSources Boolean.valueOf(sources)
+        downloadSources !Boolean.valueOf(System.getenv('CI'))
+
 //        publish {
 //            pluginId ''
 //            username ''

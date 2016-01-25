@@ -12,9 +12,10 @@ jdk:
 env:
   - IDEA_VERSION=IC-14.1.6
   - IDEA_VERSION=IU-14.1.6
+  - IDEA_VERSION=LATEST-EAP-SNAPSHOT
 
 before_install:
  - chmod +x gradlew
 
 script:
- - ./gradlew --console plain generateAll check
+- ./gradlew generateAll check
