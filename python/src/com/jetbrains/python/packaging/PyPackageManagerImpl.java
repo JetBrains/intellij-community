@@ -89,6 +89,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   public void refresh() {
+    LOG.debug("Refreshing SDK roots and packages cache");
     final Application application = ApplicationManager.getApplication();
     application.invokeLater(new Runnable() {
       @Override
@@ -231,6 +232,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       throw new PyExecutionException(e.getMessage(), "pip", simplifiedArgs, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
     }
     finally {
+      LOG.debug("Packages cache is about to be cleared because these requirements were installed: " + requirements);
       clearCaches();
       FileUtil.delete(buildDir);
     }
@@ -256,6 +258,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       throw new PyExecutionException(e.getMessage(), "pip", args, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
     }
     finally {
+      LOG.debug("Packages cache is about to be cleared because these packages were uninstalled: " + packages);
       clearCaches();
     }
   }
@@ -275,6 +278,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
     try {
       final List<PyPackage> packages = getPackages();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Packages installed in " + mySdk.getName() + ": " + packages);
+      }
       synchronized (myCacheLock) {
         myPackagesCache = packages;
         return new ArrayList<PyPackage>(myPackagesCache);
@@ -303,7 +309,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
     catch (final ProcessNotCreatedException ex) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        Logger.getInstance(PyPackageManagerImpl.class).info("Not-env unit test mode, will return mock packages");
+        LOG.info("Not-env unit test mode, will return mock packages");
         return Lists.newArrayList(new PyPackage(PIP, PIP_VERSION, null, Collections.<PyRequirement>emptyList()),
                                   new PyPackage(SETUPTOOLS, SETUPTOOLS_VERSION, null, Collections.<PyRequirement>emptyList()));
       }
@@ -431,6 +437,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     synchronized (myCacheLock) {
       myPackagesCache = null;
       myExceptionCache = null;
+      LOG.debug("Packages cache is cleared");
     }
   }
 
@@ -588,6 +595,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         if (file != null) {
           for (VirtualFile root : roots) {
             if (VfsUtilCore.isAncestor(root, file, false)) {
+              LOG.debug("Clearing packages cache on SDK change");
               clearCaches();
               return;
             }
