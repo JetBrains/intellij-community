@@ -196,7 +196,7 @@ public class MethodCandidateInfo extends CandidateInfo{
           formalParameterType = ((PsiEllipsisType)formalParameterType).getComponentType();
         }
 
-        if (!isPotentialCompatible(expression, formalParameterType, method)) {
+        if (!isPotentialCompatible(expression, getSiteSubstitutor().substitute(formalParameterType), method)) {
           return false;
         }
       }

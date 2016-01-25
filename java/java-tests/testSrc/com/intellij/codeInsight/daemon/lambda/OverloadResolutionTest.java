@@ -188,6 +188,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testPotentiallyCompatibleShouldCheckAgainstSubstitutedWithSiteSubstitutor() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(true);
   }
