@@ -213,11 +213,13 @@ public class PyPIPackageUtil {
   }
 
   public void updatePyPICache(final PyPackageService service) throws IOException {
+    myPackageNames = null;
+    service.PY_PACKAGES.clear();
+    if (service.PYPI_REMOVED) return;
     parsePyPIList(getPyPIListFromWeb(), service);
   }
 
   public void parsePyPIList(final List<String> packages, final PyPackageService service) {
-    myPackageNames = null;
     for (String pyPackage : packages) {
       try {
         final Matcher matcher = PYPI_PATTERN.matcher(URLDecoder.decode(pyPackage, "UTF-8"));
