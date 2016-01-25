@@ -288,6 +288,13 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
   }
 
+  //@NotNull
+  //public String fetchLatestVersion(InstalledPackage pkg) throws ExecutionException {
+  //  final ArrayList<String> arguments = Lists.newArrayList("latestVersion", pkg.getName());
+  //  arguments.addAll(PyPackageService.getInstance().additionalRepositories);
+  //  return getHelperResult(PACKAGING_TOOL, arguments, false, false, null);
+  //}
+
   @NotNull
   protected List<PyPackage> getPackages() throws ExecutionException {
     final String output;

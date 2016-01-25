@@ -54,8 +54,9 @@ import java.util.regex.Pattern;
 @SuppressWarnings("UseOfObsoleteCollectionType")
 public class PyPIPackageUtil {
   public static final Logger LOG = Logger.getInstance(PyPIPackageUtil.class.getName());
-  @NonNls public static final String PYPI_URL = "https://pypi.python.org/pypi";
-  @NonNls public static final String PYPI_LIST_URL = "https://pypi.python.org/pypi?%3Aaction=index";
+  public static final String PYPI_HOST = "https://pypi.python.org";
+  @NonNls public static final String PYPI_URL = PYPI_HOST + "/pypi";
+  @NonNls public static final String PYPI_LIST_URL = PYPI_HOST + "/pypi?%3Aaction=index";
 
   public static Map<String, String> PACKAGES_TOPLEVEL = new HashMap<String, String>();
 

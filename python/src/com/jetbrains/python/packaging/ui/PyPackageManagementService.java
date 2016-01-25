@@ -43,6 +43,7 @@ import java.util.regex.Pattern;
 /**
  * @author yole
  */
+@SuppressWarnings("UseOfObsoleteCollectionType")
 public class PyPackageManagementService extends PackageManagementService {
   @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
 
@@ -61,19 +62,20 @@ public class PyPackageManagementService extends PackageManagementService {
 
   @Override
   public List<String> getAllRepositories() {
+    final PyPackageService packageService = PyPackageService.getInstance();
     List<String> result = new ArrayList<String>();
-    result.add(PyPIPackageUtil.PYPI_URL);
-    result.addAll(PyPackageService.getInstance().additionalRepositories);
+    if (!packageService.PYPI_REMOVED) result.add(PyPIPackageUtil.PYPI_URL);
+    result.addAll(packageService.additionalRepositories);
     return result;
   }
 
   @Override
-  public void addRepository(String repositoryUrl) {
+  public void addRepository(final String repositoryUrl) {
     PyPackageService.getInstance().addRepository(repositoryUrl);
   }
 
   @Override
-  public void removeRepository(String repositoryUrl) {
+  public void removeRepository(final String repositoryUrl) {
     PyPackageService.getInstance().removeRepository(repositoryUrl);
   }
 
@@ -236,9 +238,12 @@ public class PyPackageManagementService extends PackageManagementService {
     PyPIPackageUtil.INSTANCE.usePackageReleases(packageName, new AsyncCallback() {
       @Override
       public void handleResult(Object result, URL url, String method) {
+        //noinspection unchecked
         final List<String> releases = (List<String>)result;
-        PyPIPackageUtil.INSTANCE.addPackageReleases(packageName, releases);
-        consumer.consume(releases);
+        if (releases != null) {
+          PyPIPackageUtil.INSTANCE.addPackageReleases(packageName, releases);
+          consumer.consume(releases);
+        }
       }
 
       @Override
@@ -371,4 +376,29 @@ public class PyPackageManagementService extends PackageManagementService {
     }
     return null;
   }
+
+  /*@Override
+  public void updatePackage(@NotNull InstalledPackage installedPackage,
+                            @Nullable String version,
+                            @NotNull Listener listener) {
+    installPackage(new RepoPackage(installedPackage.getName(), null *//* TODO? *//*), null, true, null, listener, false);
+  }
+
+  @Override
+  public boolean shouldFetchLatestVersionsForOnlyInstalledPackages() {
+    final List<String> repositories = PyPackageService.getInstance().additionalRepositories;
+    return repositories.size() > 1  || (repositories.size() == 1 && !repositories.get(0).equals(PyPIPackageUtil.PYPI_LIST_URL));
+  }
+
+  @Override
+  public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
+    final String version;
+    try {
+      version = PyPackageManager.getInstance(mySdk).fetchLatestVersion(pkg);
+      consumer.consume(version);
+    }
+    catch (ExecutionException ignored) {
+
+    }
+  }*/
 }
