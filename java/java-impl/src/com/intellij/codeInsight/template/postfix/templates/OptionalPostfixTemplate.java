@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
@@ -26,7 +27,7 @@ import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplate
 
 public class OptionalPostfixTemplate extends StringBasedPostfixTemplate {
   public OptionalPostfixTemplate() {
-    super("opt", "Optional.ofNullable(expr)", selectorTopmost(IS_NON_VOID));
+    super("opt", "Optional.ofNullable(expr)", JavaPostfixTemplatesUtils.atLeastJava8Selector(selectorTopmost(IS_NON_VOID)));
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,18 +24,8 @@ import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplate
 
 public class StreamPostfixTemplate extends StringBasedPostfixTemplate {
 
-  private static final Condition<PsiElement> IS_ARRAY = new Condition<PsiElement>() {
-    @Override
-    public boolean value(PsiElement element) {
-      if (!(element instanceof PsiExpression)) return false;
-
-      PsiType type = ((PsiExpression)element).getType();
-      return JavaPostfixTemplatesUtils.isArray(type);
-    }
-  };
-
   public StreamPostfixTemplate() {
-    super("stream", "Arrays.stream(expr)", selectorTopmost(IS_ARRAY));
+    super("stream", "Arrays.stream(expr)", JavaPostfixTemplatesUtils.atLeastJava8Selector(selectorTopmost(JavaPostfixTemplatesUtils.IS_ARRAY)));
   }
 
   @Nullable
