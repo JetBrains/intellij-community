@@ -32,6 +32,7 @@ class InitialInferenceState {
   private final PsiSubstitutor mySiteSubstitutor;
   private final ArrayList<Pair<InferenceVariable[], PsiClassType>> myCaptures;
   private final InferenceSessionContainer myInferenceSessionContainer;
+  private final boolean myErased;
 
   InitialInferenceState(Set<InferenceVariable> inferenceVariables,
                         PsiSubstitutor topInferenceSubstitutor,
@@ -39,7 +40,9 @@ class InitialInferenceState {
                         PsiSubstitutor inferenceSubstitutor,
                         PsiSubstitutor siteSubstitutor,
                         List<Pair<InferenceVariable[], PsiClassType>> captures,
+                        boolean erased, 
                         InferenceSessionContainer inferenceSessionContainer) {
+    myErased = erased;
     myInferenceVariables = new HashSet<InferenceVariable>();
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     PsiSubstitutor subst = PsiSubstitutor.EMPTY;
@@ -92,5 +95,9 @@ class InitialInferenceState {
 
   public ArrayList<Pair<InferenceVariable[], PsiClassType>> getCaptures() {
     return myCaptures;
+  }
+
+  public boolean isErased() {
+    return myErased;
   }
 }

@@ -101,6 +101,7 @@ public class InferenceSession {
       myIncorporationPhase.addCapture(capture.first, capture.second);
     }
     myInferenceSessionContainer = initialState.getInferenceSessionContainer();
+    myErased = initialState.isErased();
   }
 
   public InferenceSession(PsiTypeParameter[] typeParams,
@@ -594,6 +595,7 @@ public class InferenceSession {
                                      myInferenceSubstitution, 
                                      mySiteSubstitutor, 
                                      myIncorporationPhase.getCaptures(),
+                                     myErased,
                                      container);
   }
 
