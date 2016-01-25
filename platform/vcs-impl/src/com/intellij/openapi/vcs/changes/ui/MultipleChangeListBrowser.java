@@ -121,10 +121,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
   }
 
-  public Collection<Change> getAllChanges() {
-    return myAllChanges;
-  }
-
   public void addSelectedListChangeListener(SelectedListChangeListener listener) {
     myDispatcher.addListener(listener);
   }
@@ -167,6 +163,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     }
   }
 
+  @NotNull
   @Override
   public List<Change> getCurrentDisplayedChanges() {
     if (myChangesToDisplay == null) {
