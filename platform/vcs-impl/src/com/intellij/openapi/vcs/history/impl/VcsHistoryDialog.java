@@ -65,6 +65,23 @@ import static com.intellij.util.ObjectUtils.notNull;
 public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.impl.VcsHistoryDialog");
 
+  private static final VcsRevisionNumber LOCAL_REVISION_NUMBER = new VcsRevisionNumber() {
+    @Override
+    public String asString() {
+      return "Local Changes";
+    }
+
+    @Override
+    public int compareTo(@NotNull VcsRevisionNumber vcsRevisionNumber) {
+      return 0;
+    }
+
+    @Override
+    public String toString() {
+      return asString();
+    }
+  };
+
   private static final ColumnInfo REVISION = new ColumnInfo(VcsBundle.message("column.name.revision.version")) {
     @Override
     public Object valueOf(Object object) {
@@ -158,7 +175,7 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
 
     myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, this, getFrame());
 
-    myRevisions.add(new CurrentRevision(file, VcsRevisionNumber.LOCAL));
+    myRevisions.add(new CurrentRevision(file, LOCAL_REVISION_NUMBER));
     myRevisions.addAll(session.getRevisionList());
 
     myBlocks.addAll(Collections.<Block>nCopies(myRevisions.size(), null));
