@@ -47,6 +47,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -954,6 +956,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   private static boolean isBinary(@NotNull PsiFile file) {
-    return file instanceof PsiBinaryFile || file.getFileType().isBinary();
+    if (file instanceof PsiBinaryFile) {
+      return true;
+    }
+    final FileType fileType = file.getFileType();
+    if (fileType.isBinary() || fileType == UnknownFileType.INSTANCE) {
+      return true;
+    }
+    return false;
   }
 }
