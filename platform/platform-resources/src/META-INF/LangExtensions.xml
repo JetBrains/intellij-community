@@ -856,7 +856,8 @@
     <refactoring.moveDirectoryWithClassesHelper
         implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper$Default" order="last"/>
 
-    <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.GeneratedSourcesHighlightingSettingProvider"/>
+    <defaultHighlightingSettingProvider id="GeneratedSourcesHighlightingSettingProvider" 
+                                        implementation="com.intellij.codeInsight.daemon.impl.analysis.GeneratedSourcesHighlightingSettingProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.GeneratedFileEditingNotificationProvider"/>
 
     <editorTabTitleProvider implementation="com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider" order="last"/>
