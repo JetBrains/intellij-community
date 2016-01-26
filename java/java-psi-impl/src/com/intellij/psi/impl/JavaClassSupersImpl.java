@@ -55,9 +55,11 @@ public class JavaClassSupersImpl extends JavaClassSupers {
       }
       if (bounds != null) {
         for (PsiType lowerBound : bounds) {
-          final PsiSubstitutor substitutor = processLowerBound(lowerBound, derivedClass, scope, derivedSubstitutor);
-          if (substitutor != null) {
-            return substitutor;
+          if (lowerBound != null) {
+            final PsiSubstitutor substitutor = processLowerBound(lowerBound, derivedClass, scope, derivedSubstitutor);
+            if (substitutor != null) {
+              return substitutor;
+            }
           }
         }
       }
