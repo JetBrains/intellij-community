@@ -209,7 +209,8 @@ public class PluginManagerCore {
 
   public static void writePluginsList(@NotNull Collection<String> ids, @NotNull Writer writer) throws IOException {
     try {
-      for (String id : ids) {
+      PriorityQueue<String> sortedIds = new PriorityQueue<String>(ids);
+      for (String id : sortedIds) {
         writer.write(id);
         writer.write(LineSeparator.getSystemLineSeparator().getSeparatorString());
       }
