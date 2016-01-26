@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -39,8 +40,11 @@ import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.event.KeyEvent;
 
 import javax.swing.*;
 import java.awt.*;
@@ -315,7 +319,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
         setVisibleOnly(myRoot);
       }
       else {
-        if ((e.getModifiers() & InputEvent.CTRL_MASK) != 0) {
+        if ((e.getModifiers() & getMask()) != 0) {
             setVisibleOnly(myRoot);
         }
         else {
@@ -324,13 +328,18 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       }
     }
 
+    @JdkConstants.InputEventMask
+    private int getMask() {
+      return SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK;
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
 
       updateIcon();
       e.getPresentation().setIcon(myIcon);
-      e.getPresentation().putClientProperty(TOOL_TIP_TEXT_KEY, "Ctrl+Click to see only \"" + e.getPresentation().getText() + "\"");
+      e.getPresentation().putClientProperty(TOOL_TIP_TEXT_KEY, KeyEvent.getKeyModifiersText(getMask()) + "+Click to see only \"" + e.getPresentation().getText() + "\"");
     }
 
     private void updateIcon() {
