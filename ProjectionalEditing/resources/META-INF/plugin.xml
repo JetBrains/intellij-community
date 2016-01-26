@@ -47,8 +47,10 @@
     <!-- Add your actions here -->
     <group id="ProjectionalEditing.Menu" text="_Projectional Editing" description="ProjectionalEditing">
       <add-to-group group-id="MainMenu" anchor="last"  />
-      <action id="ProjectionalEditing.VariationalViewer" class="VariationalViewer" text="Filter by dimension"
-              description="A toolbar for managing variational software" />
+      <action id="ProjectionalEditing.DimensionFilter" class="DimensionFilter" text="Filter by dimension"
+              description="" />
+      <action id="ProjectionalEditing.DimensionViewer" class="DimensionViewer" text="View Current Choices"
+              description="" />
     </group>
   </actions>
 
