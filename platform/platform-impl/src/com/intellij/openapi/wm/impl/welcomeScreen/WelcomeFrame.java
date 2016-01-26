@@ -179,6 +179,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
   }
 
   public static void showIfNoProjectOpened() {
+    if (ApplicationManager.getApplication().isOnAir()) return;
     ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
       @Override
       public void run() {

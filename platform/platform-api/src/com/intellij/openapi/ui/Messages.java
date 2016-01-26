@@ -180,7 +180,7 @@ public class Messages {
 
   static boolean isApplicationInUnitTestOrHeadless() {
     final Application application = ApplicationManager.getApplication();
-    return application != null && !ApplicationManager.getApplication().isOnAir() &&
+    return application != null && !application.isOnAir() &&
            (application.isUnitTestMode() || application.isHeadlessEnvironment());
   }
 

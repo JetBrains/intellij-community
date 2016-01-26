@@ -15,29 +15,20 @@
  */
 package com.intellij.openapi.progress.util;
 
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.FocusTrackback;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 
 @SuppressWarnings({"NonStaticInitializer"})
 public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable {
@@ -59,8 +50,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   private String myTitle = null;
 
   private boolean myStoppedAlready = false;
-  protected final FocusTrackback myFocusTrackback;
-  private boolean myStarted      = false;
+  private boolean myStarted = false;
   protected boolean myBackgrounded = false;
   private String myProcessId = "<unknown>";
   @Nullable private volatile Runnable myBackgroundHandler;
@@ -93,34 +83,10 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
     setModalityProgress(shouldShowBackground ? null : this);
-    myFocusTrackback = new FocusTrackback(this, WindowManager.getInstance().suggestParentWindow(project), false);
-
-    Component parent = parentComponent;
-    if (parent == null && project == null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      parent = JOptionPane.getRootFrame();
-    }
-
-    if (parent == null) {
-      myDialog = new ProgressDialog(this, shouldShowBackground, myProject, myCancelText);
-    }
-    else {
-      myDialog = new ProgressDialog(this, shouldShowBackground, parent, myCancelText);
-    }
-
-    Disposer.register(this, myDialog);
-
-    myFocusTrackback.registerFocusComponent(myDialog.getPanel());
-    addStateDelegate(new AbstractProgressIndicatorExBase() {
-      @Override
-      public void cancel() {
-        super.cancel();
-        if (myDialog != null) {
-          myDialog.cancel();
-        }
-      }
-    });
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
+    myDialog = ProgressDialogFactory.SERVICE.getInstance().createProgressDialog(this, project, cancelText, shouldShowBackground, parentComponent);
   }
+
 
   @Override
   public synchronized void start() {
@@ -143,13 +109,13 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
    * <p/>
    * Default value is {@link #DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS}
    *
-   * @param delayInMillis   new delay time in milliseconds
+   * @param delayInMillis new delay time in milliseconds
    */
   public void setDelayInMillis(int delayInMillis) {
     myDelayInMillis = delayInMillis;
   }
 
-  private synchronized boolean isStarted() {
+  public synchronized boolean isStarted() {
     return myStarted;
   }
 
@@ -158,38 +124,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     // executed in a small amount of time. Problem: UI blinks and looks ugly if we show progress dialog that disappears shortly
     // for each of them. Solution is to postpone the tasks of showing progress dialog. Hence, it will not be shown at all
     // if the task is already finished when the time comes.
-    Timer timer = UIUtil.createNamedTimer("Progress window timer",myDelayInMillis, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (isRunning()) {
-              if (myDialog != null) {
-                final DialogWrapper popup = myDialog.myPopup;
-                if (popup != null) {
-                  myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
-                    @Override
-                    public Component getComponent() {
-                      return popup.getPreferredFocusedComponent();
-                    }
-                  });
-                  if (popup.isShowing()) {
-                    myDialog.myWasShown = true;
-                  }
-                }
-              }
-              showDialog();
-            }
-            else {
-              Disposer.dispose(ProgressWindow.this);
-            }
-          }
-        }, getModalityState());
-      }
-    });
-    timer.setRepeats(false);
-    timer.start();
+    myDialog.prepareShowDialog(myDelayInMillis);
   }
 
   @Override
@@ -207,24 +142,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     enterModality();
     init.run();
 
-    IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, new Condition<AWTEvent>() {
-      @Override
-      public boolean value(final AWTEvent object) {
-        if (myShouldShowCancel &&
-            object instanceof KeyEvent &&
-            object.getID() == KeyEvent.KEY_PRESSED &&
-            ((KeyEvent)object).getKeyCode() == KeyEvent.VK_ESCAPE &&
-            ((KeyEvent)object).getModifiers() == 0) {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              cancel();
-            }
-          });
-        }
-        return isStarted() && !isRunning();
-      }
-    });
+    myDialog.startBlocking(myShouldShowCancel);
 
     exitModality();
   }
@@ -244,9 +162,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
 
     myDialog.show();
-    if (myDialog != null) {
-      myDialog.myRepaintRunnable.run();
-    }
   }
 
   @Override
@@ -278,26 +193,14 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     super.stop();
 
     if (isDialogShowing()) {
-      if (myFocusTrackback != null) {
-        myFocusTrackback.setWillBeSheduledForRestore();
-      }
+      myDialog.setWillBeSheduledForRestore();
     }
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        boolean wasShowing = isDialogShowing();
         if (myDialog != null) {
           myDialog.hide();
-        }
-
-        if (myFocusTrackback != null) {
-          if (wasShowing) {
-            myFocusTrackback.restoreFocus();
-          }
-          else {
-            myFocusTrackback.consume();
-          }
         }
 
         synchronized (ProgressWindow.this) {
@@ -312,7 +215,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   private boolean isDialogShowing() {
-    return myDialog != null && myDialog.getPanel() != null && myDialog.getPanel().isShowing();
+    return myDialog != null && myDialog.isShowing();
   }
 
   public void background() {
@@ -325,14 +228,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     if (myDialog != null) {
       myBackgrounded = true;
       myDialog.background();
-
-      if (myDialog.wasShown()) {
-        myFocusTrackback.restoreFocus();
-      }
-      else {
-        myFocusTrackback.consume();
-      }
-
       myDialog = null;
     }
   }
@@ -407,7 +302,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public boolean isPopupWasShown() {
-    return myDialog != null && myDialog.myPopup != null && myDialog.myPopup.isShowing();
+    return myDialog != null && myDialog.isPopupWasShown();
   }
 
   protected void enableCancel(boolean enable) {
