@@ -1021,10 +1021,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (canonicalName != null && canonicalName.contains("android")) {
         return reporter;
       }
-      final PluginDescriptor descriptor = reporter.getPluginDescriptor();
-      if (descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {
-        return reporter;
-      }
+      // TODO: We may want to special case Kotlin plugin here (i.e. send Kotlin plugin crashes back to JB)
+      //final PluginDescriptor descriptor = reporter.getPluginDescriptor();
+      //if (descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {
+      //  return reporter;
+      //}
     }
     //Android Studio: we always want the Android reporter
     //IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
