@@ -18,6 +18,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.AnnotateMethodFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -25,12 +26,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
-import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import org.intellij.lang.annotations.Pattern;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +83,7 @@ public class ReturnNullInspectionBase extends BaseInspection {
       final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(method.getReturnType());
       if (aClass != null && CommonClassNames.JAVA_UTIL_OPTIONAL.equals(aClass.getQualifiedName())) {
         // don't suggest to annotate Optional methods as Nullable
-        return null;
+        return new ReplaceWithEmptyOptionalFix();
       }
     }
 
@@ -97,6 +96,32 @@ public class ReturnNullInspectionBase extends BaseInspection {
         return ReturnNullInspectionBase.this.shouldAnnotateBaseMethod(method, superMethod);
       }
     });
+  }
+
+  private static class ReplaceWithEmptyOptionalFix extends InspectionGadgetsFix {
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionGadgetsBundle.message("return.of.null.optional.quickfix");
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiLiteralExpression)) {
+        return;
+      }
+      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
+      PsiReplacementUtil.replaceExpression(literalExpression, "java.util.Optional.empty()");
+    }
   }
 
   protected int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod) {
