@@ -262,7 +262,7 @@ public class SwingHelper {
     });
   }
 
-  public static <T> void updateItems(@NotNull JComboBox comboBox,
+  public static <T> void updateItems(@NotNull JComboBox<T> comboBox,
                                      @NotNull List<T> newItems,
                                      @Nullable T newSelectedItemIfSelectionCannotBePreserved) {
     if (!shouldUpdate(comboBox, newItems)) {
@@ -292,7 +292,7 @@ public class SwingHelper {
     }
   }
 
-  private static <T> boolean shouldUpdate(@NotNull JComboBox comboBox, @NotNull List<T> newItems) {
+  private static <T> boolean shouldUpdate(@NotNull JComboBox<T> comboBox, @NotNull List<T> newItems) {
     int count = comboBox.getItemCount();
     if (newItems.size() != count) {
       return true;
