@@ -798,7 +798,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
     catch (BadLocationException ignored) {
     }
-    return 16; // TODO
+    return 0;
   }
 
   private static class CenteredLayoutWithActions extends BorderLayout {
