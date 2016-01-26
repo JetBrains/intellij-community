@@ -23,7 +23,6 @@ package com.intellij.coverage;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.instrumentation.SaveHook;
@@ -121,10 +120,6 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
     }
 
     javaParameters.getVMParametersList().add(argument.toString());
-    int agentDebugPort = Registry.intValue("coverage.agent.debug.port", -1);
-    if (agentDebugPort >= 0) {
-      javaParameters.getVMParametersList().add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + agentDebugPort);
-    }
   }
 
 
