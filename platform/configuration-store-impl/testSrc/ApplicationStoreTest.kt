@@ -46,6 +46,7 @@ import kotlin.properties.Delegates
 
 internal class ApplicationStoreTest {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 

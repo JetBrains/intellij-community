@@ -48,6 +48,7 @@ internal val FILE_SPEC = "REMOTE"
  */
 internal class SchemeManagerTest {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 

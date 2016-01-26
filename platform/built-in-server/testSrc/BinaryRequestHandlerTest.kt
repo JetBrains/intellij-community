@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 // we don't handle String in efficient way - because we want to test readContent/readChars also
 internal class BinaryRequestHandlerTest {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 
