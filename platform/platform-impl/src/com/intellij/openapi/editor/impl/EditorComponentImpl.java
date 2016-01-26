@@ -19,7 +19,6 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -49,7 +48,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
@@ -68,7 +70,6 @@ import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.TextUI;
 import javax.swing.text.*;
 import javax.swing.text.AttributeSet;
-import javax.swing.text.Segment;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.*;
@@ -891,14 +892,6 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     public AccessibleEditorComponentImpl() {
       myEditor.getCaretModel().addCaretListener(this);
       myEditor.getDocument().addDocumentListener(this);
-
-      Disposer.register(myEditor.getDisposable(), new Disposable() {
-        @Override
-        public void dispose() {
-          myEditor.getCaretModel().removeCaretListener(AccessibleEditorComponentImpl.this);
-          myEditor.getDocument().removeDocumentListener(AccessibleEditorComponentImpl.this);
-        }
-      });
     }
 
     // ---- Implements CaretListener ----
