@@ -24,7 +24,7 @@ def getProperties(String home, String buildNumber) {
   def toolsBaseRoot = aosp ? "../base" : "android/tools-base"
   def lldbBinSrcRoot = "$home/../vendor/google/android-ndk/bin/lldb"
   def lldbBinTargetRoot = "bin/lldb"
-  def gradleVersion = "2.8"
+  def gradleVersion = "2.10"
   def studioCustomRepo = System.getenv().STUDIO_CUSTOM_REPO
   def studioRepo = studioCustomRepo ?: "${home}/../../prebuilts/tools/common/offline-m2"
   def blazeJvmArgs = "-Dgoogle.internal=true\n" + "-Ddisable.android.first.run=true\n" +
@@ -273,7 +273,7 @@ def getProperties(String home, String buildNumber) {
           }
         }
       }
-      ant.unzip(src: "${home}/../external/gradle/gradle-$gradleVersion-all.zip", dest: "${targetDirectory}/gradle")
+      ant.unzip(src: "${home}/../external/gradle/gradle-$gradleVersion-bin.zip", dest: "${targetDirectory}/gradle")
     }
 
     def customWinLayout(targetDirectory) {
