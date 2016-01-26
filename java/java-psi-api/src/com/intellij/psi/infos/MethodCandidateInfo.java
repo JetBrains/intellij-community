@@ -25,6 +25,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -448,6 +449,25 @@ public class MethodCandidateInfo extends CandidateInfo{
     return myInferenceError;
   }
 
+  public String getParentInferenceErrorMessage(PsiExpressionList list) {
+    String errorMessage = getInferenceErrorMessage();
+    while (errorMessage == null) {
+      list = PsiTreeUtil.getParentOfType(list, PsiExpressionList.class, true);
+      if (list == null) {
+        break;
+      }
+      final PsiElement parent = list.getParent();
+      if (!(parent instanceof PsiCallExpression)) {
+        break;
+      }
+      final JavaResolveResult resolveResult = ((PsiCallExpression)parent).resolveMethodGenerics();
+      if (resolveResult instanceof MethodCandidateInfo) {
+        errorMessage = ((MethodCandidateInfo)resolveResult).getInferenceErrorMessage();
+      }
+    }
+    return errorMessage;
+  }
+  
   public CurrentCandidateProperties createProperties() {
     return new CurrentCandidateProperties(this, getSiteSubstitutor(), isVarargs(), false);
   }
