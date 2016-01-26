@@ -38,6 +38,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -83,6 +84,10 @@ public class ActionsTree {
       public void paint(Graphics g) {
         super.paint(g);
         Rectangle visibleRect = getVisibleRect();
+        Insets insets = getInsets();
+        if (insets != null && insets.right > 0) {
+          visibleRect.width -= JBUI.scale(9);
+        }
         Rectangle clip = g.getClipBounds();
         for (int row = 0; row < getRowCount(); row++) {
           Rectangle rowBounds = getRowBounds(row);
