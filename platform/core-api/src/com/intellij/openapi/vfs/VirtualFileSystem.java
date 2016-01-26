@@ -170,6 +170,6 @@ public abstract class VirtualFileSystem {
   }
 
   public boolean isValidName(@NotNull String name) {
-    return VirtualFile.isValidName(name);
+    return name.length() > 0 && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }
 }

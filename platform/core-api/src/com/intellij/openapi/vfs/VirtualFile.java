@@ -728,6 +728,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return false;
   }
 
+  /** @deprecated use {@link VirtualFileSystem#isValidName(String)} (to be removed in IDEA 18) */
+  @SuppressWarnings("unused")
   public static boolean isValidName(@NotNull String name) {
     return name.length() > 0 && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }

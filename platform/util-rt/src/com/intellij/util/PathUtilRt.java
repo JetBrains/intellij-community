@@ -69,10 +69,6 @@ public class PathUtilRt {
     return result.toString();
   }
 
-  public static boolean isValidFileName(@NotNull String fileName) {
-    return isValidFileName(fileName, true);
-  }
-
   /**
    * Checks whether a file with the given name can be created on a current platform.
    * @see #isValidFileName(String, Platform, boolean, Charset)
