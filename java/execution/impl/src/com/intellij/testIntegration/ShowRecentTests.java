@@ -19,12 +19,12 @@ import com.intellij.execution.Location;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.Time;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -40,8 +40,13 @@ public class ShowRecentTests extends AnAction {
   }
   
   @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(e.getProject() != null);
+  }
+  
+  @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
     if (project == null) return;
 
     Map<String, TestStateStorage.Record> records = TestStateStorage.getInstance(project).getRecentTests(TEST_LIMIT, getSinceDate());

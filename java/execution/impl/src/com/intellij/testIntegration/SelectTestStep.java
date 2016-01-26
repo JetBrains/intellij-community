@@ -22,11 +22,13 @@ import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class SelectTestStep extends BaseListPopupStep<String> {
   private static Comparator<String> TEST_BY_PATH_COMPARATOR = new Comparator<String>() {
@@ -48,66 +50,15 @@ public class SelectTestStep extends BaseListPopupStep<String> {
   }
 
   private static List<String> getUrls(Map<String, TestStateStorage.Record> records, RecentTestRunner runner) {
-    TestGroup groups = toTestGroups(records, runner);
-    
-    List<String> failed = ContainerUtil.newArrayList(groups.failedTests);
-    Collections.sort(failed, TEST_BY_PATH_COMPARATOR);
-    List<String> other = ContainerUtil.newArrayList(groups.otherTests);
-    Collections.sort(other, TEST_BY_PATH_COMPARATOR);
-    List<String> passed = ContainerUtil.newArrayList(groups.passedTests);
-    Collections.sort(passed, TEST_BY_PATH_COMPARATOR);
-    
-    failed.addAll(other);
-    failed.addAll(passed);
-    return failed;
-  }
+    RecentTestsData data = new RecentTestsData(runner);
 
-  private static TestGroup toTestGroups(Map<String, TestStateStorage.Record> records, RecentTestRunner runner) {
-    Set<String> failedTests = ContainerUtil.newHashSet();
-    Set<String> passedSuites = ContainerUtil.newHashSet();
-    Set<String> otherSuites = ContainerUtil.newHashSet();
-
-    List<TestInfo> infos = getTestInfos(records.entrySet(), runner);
-
-    for (TestInfo info : infos) {
-      String url = info.url;
-      TestStateInfo.Magnitude magnitude = info.magnitude;
-      if (magnitude == null) continue;
-
-      switch (magnitude) {
-        case COMPLETE_INDEX:
-          if (info.isSuite) {
-            passedSuites.add(url);
-          }
-          break;
-        case PASSED_INDEX:
-          if (info.isSuite) {
-            passedSuites.add(url);
-          }
-          break;
-        case ERROR_INDEX:
-          failedTests.add(url);
-          break;
-        default:
-          otherSuites.add(url);
-          break;
-      }
-    }
-    
-    return new TestGroup(failedTests, passedSuites, otherSuites);
-  }
-
-  private static List<TestInfo> getTestInfos(Set<Map.Entry<String, TestStateStorage.Record>> entries, RecentTestRunner runner) {
-    List<TestInfo> list = ContainerUtil.newSmartList();
-
-    for (Map.Entry<String, TestStateStorage.Record> item : entries) {
-      String url = item.getKey();
-      TestStateStorage.Record record = item.getValue();
-      TestStateInfo.Magnitude magnitude = getMagnitude(record.magnitude);
-      list.add(new TestInfo(url, magnitude, runner.isSuite(url)));
+    for (Map.Entry<String, TestStateStorage.Record> entry : records.entrySet()) {
+      String url = entry.getKey();
+      TestStateStorage.Record record = entry.getValue();
+      data.addTest(url, getMagnitude(record.magnitude));
     }
 
-    return list;
+    return data.calculateTestList();
   }
 
   private static TestStateInfo.Magnitude getMagnitude(int magnitude) {
@@ -155,17 +106,4 @@ public class SelectTestStep extends BaseListPopupStep<String> {
       this.otherTests = otherTests;
     }
   }
-
-  private static class TestInfo {
-    private final boolean isSuite;
-    public String url;
-    public TestStateInfo.Magnitude magnitude;
-
-    public TestInfo(String url, TestStateInfo.Magnitude magnitude, boolean isSuite) {
-      this.url = url;
-      this.magnitude = magnitude;
-      this.isSuite = isSuite;
-    }
-  }
-  
 }

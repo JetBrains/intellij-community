@@ -67,6 +67,7 @@ class RecentTestsStepTest {
     map.put("java:suite://Test", passed)
     map.put("java:suite://JavaFormatterFailed", failed)
     map.put("java:test://JavaFormatterFailed.fail", failed)
+    map.put("java:test://JavaFormatterFailed.notFail", passed)
     map.put("java:test://Test.textYYY", passed)
     map.put("java:test://Test.textZZZ", passed)
     map.put("java:test://JavaFormatterSuperDuperTest.testFail", failed)
