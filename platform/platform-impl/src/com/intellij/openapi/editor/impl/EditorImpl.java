@@ -5351,6 +5351,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                      type == VERTICAL_SCROLLBAR_LEFT
                                      ? JBScrollPane.Flip.HORIZONTAL
                                      : null);
+      JScrollBar vsb = myScrollPane.getVerticalScrollBar();
+      if (vsb != null) vsb.setOpaque(true);
     }
     else if (type == VERTICAL_SCROLLBAR_LEFT) {
       myScrollPane.setLayout(new LeftHandScrollbarLayout());
