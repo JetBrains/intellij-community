@@ -3118,6 +3118,11 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  public static long parseLong(@Nullable String string, long defaultValue) {
+    return StringUtilRt.parseLong(string, defaultValue);
+  }
+
+  @Contract(pure = true)
   public static double parseDouble(final String string, final double defaultValue) {
     return StringUtilRt.parseDouble(string, defaultValue);
   }

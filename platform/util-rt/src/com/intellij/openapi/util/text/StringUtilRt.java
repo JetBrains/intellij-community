@@ -216,6 +216,19 @@ public class StringUtilRt {
   }
 
   @Contract(pure = true)
+  public static long parseLong(@Nullable String string, long defaultValue) {
+    if (string == null) {
+      return defaultValue;
+    }
+    try {
+      return Long.parseLong(string);
+    }
+    catch (Exception e) {
+      return defaultValue;
+    }
+  }
+
+  @Contract(pure = true)
   public static double parseDouble(final String string, final double defaultValue) {
     try {
       return Double.parseDouble(string);
