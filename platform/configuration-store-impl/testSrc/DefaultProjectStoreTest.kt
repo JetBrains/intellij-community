@@ -19,6 +19,7 @@ import java.nio.file.Paths
 
 internal class DefaultProjectStoreTest {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
 
     private const val TEST_COMPONENT_NAME = "Foo"
