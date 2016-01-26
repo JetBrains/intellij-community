@@ -86,6 +86,7 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
   public PsiClass createClass(@NotNull PsiDirectory dir,
                               @NotNull String name,
                               @NotNull String templateName,
+                              @NotNull Map<String, String> creationOptions,
                               boolean askForUndefinedVariables) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }

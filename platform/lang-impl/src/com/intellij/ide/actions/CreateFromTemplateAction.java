@@ -15,8 +15,10 @@
  */
 package com.intellij.ide.actions;
 
+import com.google.common.base.Splitter;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,9 +28,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,17 +59,28 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null || project == null) return;
 
-    final CreateFileFromTemplateDialog.Builder builder = CreateFileFromTemplateDialog.createDialog(project);
+    final CreateFileFromTemplateDialog.Builder builder = newBuilder(project);
     buildDialog(project, dir, builder);
 
     final Ref<String> selectedTemplateName = Ref.create(null);
+
     final T createdElement =
       builder.show(getErrorTitle(), getDefaultTemplateName(dir), new CreateFileFromTemplateDialog.FileCreator<T>() {
 
         @Override
-        public T createFile(@NotNull String name, @NotNull String templateName) {
+        public T createFile(@NotNull String name, Map<String, String> creationOptions, @NotNull String templateName) {
           selectedTemplateName.set(templateName);
-          return CreateFromTemplateAction.this.createFile(name, templateName, dir);
+          String enteredPackageName = creationOptions.get(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
+          PsiDirectory packageSubdirectory;
+          try {
+            packageSubdirectory = createPackageSubdirectory(dir, enteredPackageName);
+          }
+          catch (BadPackageNameException exception) {
+            // TODO: Can we somehow present an error to the user at this point?
+            packageSubdirectory = dir;
+          }
+
+          return CreateFromTemplateAction.this.createFile(name, templateName, creationOptions, packageSubdirectory);
         }
 
         @Override
@@ -84,13 +95,99 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     }
   }
 
-  protected void postProcess(T createdElement, String templateName, Map<String,String> customProperties) {
+  /**
+   * Using the given directory, steps up the directory tree (if needed) to find a common ancestor with the desired package name.
+   * Then it builds the subdirectories (if needed) to create a directory for that package name.
+   * Example:
+   * directory: PsiDirectory "/home/username/androidStudio/myProject/com/example/widget/ui/buttons"
+   * packageName: com.example.widget.io.net
+   * <ol>
+   * <li>com.example.widget.ui.buttons != com.example.widget.io.net && com.example.widget.ui.buttons ⊄ com.example.widget.io.net
+   * So remove ".buttons" and step up one directory</li>
+   *
+   * <li>com.example.widget.ui != com.example.widget.io.net && com.example.widget.ui ⊄ com.example.widget.io.net
+   * So remove ".ui" and step up one directory</li>
+   *
+   * <li>com.example.widget != com.example.widget.io.net BUT com.example.widget ⊂ com.example.widget.io.net
+   * So append ".io" and create and enter that directory</li>
+   *
+   * <li>com.example.widget.io != com.example.widget.io.net BUT com.example.widget.io ⊂ com.example.widget.io.net
+   * So append ".net" and create and enter that directory</li>
+   *
+   * <li>com.example.widget.io.net == com.example.widget.io.net</li>
+   * Complete
+   * </ol>
+   *
+   * Why not just start with the com and move down the hierarchy? It requires a PsiDirectory object to build the directories in IJ and
+   * on disk and then to pass back to the caller. This requires starting from the known PsiDirectory.
+   *
+   * @param directory   The directory to start in. Usually the directory of the currently open file or package the user clicked on.
+   * @param packageName The name of the package to create a matching directory for.
+   * @return A PsiDirectory representing the new directory matching the package.
+   */
+  @NotNull
+  protected PsiDirectory createPackageSubdirectory(@NotNull PsiDirectory directory, @NotNull String packageName)
+    throws BadPackageNameException {
+    PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(directory);
+    String startPackagePath = psiPackage != null ? psiPackage.getQualifiedName() : null;
+
+    // If the start directory is the same as the desired one, no work required.
+    if (startPackagePath == null || startPackagePath.equals(packageName)) {
+      return directory;
+    }
+
+
+    PsiPackage baseName = JavaDirectoryService.getInstance().getPackage(directory);
+    PsiDirectory dir = directory;
+
+    if (!packageName.startsWith(baseName.getQualifiedName())) {
+      // This means that baseName is not an ancestor of packageName (like in the example above).
+      // We need to walk up the package tree from baseName until we get to a common ancestor.
+      while (baseName.getParentPackage() != null) {
+        if (packageName.equals(baseName.getQualifiedName())) {
+          // We've stepped back in baseName and discovered packageName is an ancestor.
+          // (E.g. baseName started as com.example.widget.io and packageName is com.example.widget).
+          return dir;
+        }
+        else if (packageName.startsWith(baseName.getQualifiedName())) {
+          // We've traversed up the tree from baseName to the point where baseName is now an ancestor of packageName.
+          // (E.g. baseName started as com.example.widget.io, but is now com.example.widget and packageName is com.example.widget.ui).
+          break;
+        }
+        else {
+          // We still haven't found the common ancestor, so go up one level in the tree.
+          baseName = baseName.getParentPackage();
+          dir = dir.getParentDirectory();
+        }
+      }
+    }
+
+    if (!packageName.startsWith(baseName.getQualifiedName())) {
+      // packageName cannot be derived from baseName (e.g. packageName is broken.com.example.widget.ui, and baseName is com.example.widget).
+      // This means the package name is invalid input.
+      throw new BadPackageNameException(packageName);
+    }
+
+    // baseName is now an ancestor of packageName, so find the intervening nodes and make directories for them if needed.
+    for (String component : Splitter.on('.').split(packageName.substring(baseName.getQualifiedName().length() + 1))) {
+      PsiDirectory d = dir.findSubdirectory(component);
+      dir = d == null ? dir.createSubdirectory(component) : d;
+    }
+
+    return dir;
+  }
+
+  protected void postProcess(T createdElement, String templateName, Map<String, String> customProperties) {
   }
 
   @Nullable
-  protected abstract T createFile(String name, String templateName, PsiDirectory dir);
+  protected abstract T createFile(String name, String templateName, Map<String, String> creationOptions, PsiDirectory dir);
 
   protected abstract void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder);
+
+  protected CreateFileFromTemplateDialog.Builder newBuilder(Project project) {
+    return CreateFileFromTemplateDialog.newBuilder(project);
+  }
 
   @Nullable
   protected String getDefaultTemplateName(@NotNull PsiDirectory dir) {
@@ -140,6 +237,12 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
           }
         }
       }
+    }
+  }
+
+  public static class BadPackageNameException extends Exception {
+    public BadPackageNameException(String message) {
+      super(message);
     }
   }
 }
