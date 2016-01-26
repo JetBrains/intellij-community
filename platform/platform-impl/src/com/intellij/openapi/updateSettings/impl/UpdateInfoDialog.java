@@ -213,7 +213,14 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
       myCurrentVersion.setText(
         formatVersion(
-          appInfo.getFullVersion() + (appInfo instanceof ApplicationInfoEx && ((ApplicationInfoEx)appInfo).isEAP() ? " EAP": ""),
+          // Android Studio: We don't want to include the "EAP" suffix here, because (a) we include the channel
+          // in the version name anyway (as in 2.0 Preview 7), and (b) we don't have an EAP designation in the
+          // patch name, so you end up seeing
+          //     Current: 2.0 Preview 7 EAP
+          //     New:     2.0 Preview 8
+          // which makes it look like the new build isn't an EAP build.
+          //appInfo.getFullVersion() + (appInfo instanceof ApplicationInfoEx && ((ApplicationInfoEx)appInfo).isEAP() ? " EAP": ""),
+          appInfo.getFullVersion(),
           appInfo.getBuild().asStringWithoutProductCode()
         )
       );
