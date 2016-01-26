@@ -11,15 +11,11 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="student" />
     <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="python-community-ide-resources" />
     <orderEntry type="module" module-name="python-community" />
-    <orderEntry type="module" module-name="python-community-configure" />
-    <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="python-ide-community" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="educational-core" />
     <orderEntry type="module" module-name="educational-python" />
+    <orderEntry type="module" module-name="python-community-configure" />
+    <orderEntry type="module" module-name="python-ide-community" />
   </component>
 </module>

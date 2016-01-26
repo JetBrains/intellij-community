@@ -10,7 +10,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="python-openapi" exported="" />
-    <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="python-pydev" />
