@@ -358,7 +358,7 @@ public class InferenceSession {
         return;
       }
 
-      if (parameters != null && args != null) {
+      if (parameters != null && args != null && !MethodCandidateInfo.isOverloadCheck()) {
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<ConstraintFormula>();
         if (parameters.length > 0) {
           collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints, properties.isVarargs(), initialSubstitutor);

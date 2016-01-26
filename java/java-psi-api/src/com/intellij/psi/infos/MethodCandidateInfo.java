@@ -136,6 +136,8 @@ public class MethodCandidateInfo extends CandidateInfo{
     @ApplicabilityLevelConstant int level = computeForOverloadedCandidate(new Computable<Integer>() {
       @Override
       public Integer compute() {
+        //arg types are calculated here without additional constraints:
+        //non-pertinent to applicability arguments of arguments would be skipped 
         PsiType[] argumentTypes = getArgumentTypes();
         if (argumentTypes == null) {
           return ApplicabilityLevel.NOT_APPLICABLE;
