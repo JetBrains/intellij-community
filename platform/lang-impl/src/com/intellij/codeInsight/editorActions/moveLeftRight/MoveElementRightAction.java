@@ -17,9 +17,9 @@ package com.intellij.codeInsight.editorActions.moveLeftRight;
 
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 
-public class MoveStatementRightAction extends EditorAction {
-  public MoveStatementRightAction() {
-    super(new MoveStatementLeftRightActionHandler(false));
+public class MoveElementRightAction extends EditorAction {
+  public MoveElementRightAction() {
+    super(new MoveElementLeftRightActionHandler(false));
     setInjectedContext(true);
   }
 }

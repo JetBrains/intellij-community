@@ -18,7 +18,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 
-public abstract class AbstractMoveStatementLeftRightTest extends AbstractEditorTest {
+public abstract class AbstractMoveElementLeftRightTest extends AbstractEditorTest {
   protected void doTestFromLeftToRight(String leftMostPosition, String... rightPositions) throws Exception {
     doTest(true, leftMostPosition);
     doTest(false, leftMostPosition, rightPositions);
@@ -42,7 +42,7 @@ public abstract class AbstractMoveStatementLeftRightTest extends AbstractEditorT
   
   private void doTestSingle(boolean moveLeft, String before, String after) throws Exception {
     configureEditor(before);
-    executeAction(moveLeft ? IdeActions.MOVE_STATEMENT_LEFT : IdeActions.MOVE_STATEMENT_RIGHT);
+    executeAction(moveLeft ? IdeActions.MOVE_ELEMENT_LEFT : IdeActions.MOVE_ELEMENT_RIGHT);
     checkResultByText(after);
   }
   

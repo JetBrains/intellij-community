@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.editorActions.moveLeftRight;
 
-import com.intellij.codeInsight.editorActions.AbstractMoveStatementLeftRightTest;
+import com.intellij.codeInsight.editorActions.AbstractMoveElementLeftRightTest;
 import com.intellij.testFramework.TestFileType;
 
-public class XmlMoveLeftRightTest extends AbstractMoveStatementLeftRightTest {
+public class XmlMoveLeftRightTest extends AbstractMoveElementLeftRightTest {
   public void testMoveAttributes() throws Exception {
     doTestFromLeftToRight("<tag a1<caret>='v1' a2=\"v2\"/>",
                           "<tag a2=\"v2\" a1<caret>='v1'/>");

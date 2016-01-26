@@ -33,10 +33,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class MoveStatementLeftRightActionHandler extends EditorWriteActionHandler {
+public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler {
   private final boolean myIsLeft;
 
-  public MoveStatementLeftRightActionHandler(boolean isLeft) {
+  public MoveElementLeftRightActionHandler(boolean isLeft) {
     super(true);
     myIsLeft = isLeft;
   }
@@ -64,8 +64,8 @@ public class MoveStatementLeftRightActionHandler extends EditorWriteActionHandle
     PsiElement element = PsiTreeUtil.findCommonParent(startElement, endElement);
     outer:
     while (element != null) {
-      List<MoveStatementLeftRightHandler> handlers = MoveStatementLeftRightHandler.EXTENSION.allForLanguage(element.getLanguage());
-      for (MoveStatementLeftRightHandler handler : handlers) {
+      List<MoveElementLeftRightHandler> handlers = MoveElementLeftRightHandler.EXTENSION.allForLanguage(element.getLanguage());
+      for (MoveElementLeftRightHandler handler : handlers) {
         PsiElement[] elementList = handler.getElementListInContext(element);
         if (elementList != null) {
           PsiElement first = elementList[0];

@@ -21,14 +21,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Instances of this class implement language-specific logic of 'move statement left/right' actions
+ * Instances of this class implement language-specific logic of 'move element left/right' actions
  */
-public abstract class MoveStatementLeftRightHandler {
-  public static final LanguageExtension<MoveStatementLeftRightHandler> EXTENSION = 
-    new LanguageExtension<MoveStatementLeftRightHandler>("com.intellij.moveLeftRightHandler");
+public abstract class MoveElementLeftRightHandler {
+  public static final LanguageExtension<MoveElementLeftRightHandler> EXTENSION = 
+    new LanguageExtension<MoveElementLeftRightHandler>("com.intellij.moveLeftRightHandler");
   
   /**
-   * Returns a list of PSI elements on which 'move statement left/right' actions should operate for a given context element.
+   * Returns a list of PSI elements on which 'move element left/right' actions should operate for a given context element.
    * Should return <code>null</code> if the actions are not applicable in given context.
    */
   @Nullable

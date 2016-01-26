@@ -17,7 +17,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.testFramework.TestFileType;
 
-public class MoveStatementLeftRightTest extends AbstractMoveStatementLeftRightTest {
+public class MoveElementLeftRightTest extends AbstractMoveElementLeftRightTest {
   public void testMoveLiteralMethodParameter() throws Exception {
     doTestFromLeftToRight("class C { void m() { System.setProperty(<caret>\"a\", \"b\"); } }", 
                           "class C { void m() { System.setProperty(\"b\", <caret>\"a\"); } }");

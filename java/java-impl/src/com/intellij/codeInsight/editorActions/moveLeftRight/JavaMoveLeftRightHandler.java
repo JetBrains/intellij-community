@@ -20,7 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaMoveLeftRightHandler extends MoveStatementLeftRightHandler {
+public class JavaMoveLeftRightHandler extends MoveElementLeftRightHandler {
   @Nullable
   @Override
   public PsiElement[] getElementListInContext(@NotNull PsiElement element) {

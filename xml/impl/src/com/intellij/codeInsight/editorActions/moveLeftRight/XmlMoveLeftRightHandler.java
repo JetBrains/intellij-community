@@ -21,7 +21,7 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XmlMoveLeftRightHandler extends MoveStatementLeftRightHandler {
+public class XmlMoveLeftRightHandler extends MoveElementLeftRightHandler {
   @Nullable
   @Override
   public PsiElement[] getElementListInContext(@NotNull PsiElement element) {
