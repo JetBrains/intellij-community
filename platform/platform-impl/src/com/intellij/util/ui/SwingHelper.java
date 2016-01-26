@@ -709,7 +709,7 @@ public class SwingHelper {
     int charWidth(final char c);
   }
 
-  public static String truncateStringWithEllipsis(final String text, final int maxWidth, final WidthCalculator fm) {
+  public static String truncateStringWithEllipsis(@NotNull final String text, final int maxWidth, final WidthCalculator fm) {
     final int error = fm.stringWidth(ERROR_STR);
     final int wholeWidth = fm.stringWidth(text) + error;
     if (wholeWidth <= maxWidth || text.isEmpty()) return text;
