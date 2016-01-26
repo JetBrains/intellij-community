@@ -52,13 +52,17 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Processor;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TIntIntHashMap;
@@ -577,6 +581,31 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
       }
       else {
+        if (Registry.is("ide.scroll.new.layout")) {
+          Integer value = ReflectionUtil.getField(ButtonlessScrollBarUI.class, this, int.class, "myThumbFadeColorShift");
+          if (value != null) {
+            Rectangle bounds = new Rectangle(thumbBounds);
+            Alignment alignment = Alignment.get(c);
+            if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
+              int offset = calc(c, bounds.width);
+              if (offset > 0) {
+                bounds.width -= offset;
+                if (alignment == Alignment.RIGHT) bounds.x += offset;
+              }
+            }
+            else {
+              int offset = calc(c, bounds.height);
+              if (offset > 0) {
+                bounds.height -= offset;
+                if (alignment == Alignment.BOTTOM) bounds.y += offset;
+              }
+            }
+            float divider = isDark() ? 20 : 40; // com.intellij.util.ui.ButtonlessScrollBarUI.getAnimationColorShift
+            RegionPainter<Float> painter = isDark() ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
+            painter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value / divider);
+            return;
+          }
+        }
         int shift;
         if (Registry.is("editor.full.width.scrollbar")) {
           shift = isMirrored() ? -myMinMarkHeight + 1 : myMinMarkHeight;
@@ -589,6 +618,25 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         super.paintThumb(g, c, thumbBounds);
         g.translate(-shift, 0);
       }
+    }
+
+    private int calc(JComponent c, int value) {
+      if (Registry.is("editor.full.width.scrollbar")) return myMinMarkHeight + 1;
+      // com.intellij.ui.components.AbstractScrollBarUI.scale
+      float scale = JBUI.scale(10);
+      //noinspection EnumSwitchStatementWhichMissesCases
+      switch (UIUtil.getComponentStyle(c)) {
+        case LARGE:
+          scale *= 1.15f;
+          break;
+        case SMALL:
+          scale *= 0.857f;
+          break;
+        case MINI:
+          scale *= 0.714f;
+          break;
+      }
+      return value - (int)scale;
     }
 
     @Override

@@ -18,11 +18,13 @@ package com.intellij.ui.components;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.ui.Gray;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.RegionPainter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +38,10 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class JBScrollPane extends JScrollPane {
+  public static final RegionPainter<Float> TRACK_PAINTER = new AlphaPainter(.0f, .1f);
+  public static final RegionPainter<Float> THUMB_PAINTER = new ThumbPainter(Gray.x6E);
+  public static final RegionPainter<Float> THUMB_DARK_PAINTER = new ThumbPainter(Gray.x94);
+
   private int myViewportBorderWidth = -1;
   private boolean myHasOverlayScrollbars;
 
@@ -364,10 +370,10 @@ public class JBScrollPane extends JScrollPane {
    * These client properties show a component position on a scroll pane.
    * It is set by internal layout manager of the scroll pane.
    */
-  enum Alignment {
+  public enum Alignment {
     TOP, LEFT, RIGHT, BOTTOM;
 
-    static Alignment get(JComponent component) {
+    public static Alignment get(JComponent component) {
       if (component != null) {
         Object property = component.getClientProperty(Alignment.class);
         if (property instanceof Alignment) return (Alignment)property;
@@ -689,6 +695,61 @@ public class JBScrollPane extends JScrollPane {
 
     private static int min(int one, int two) {
       return Math.max(0, Math.min(one, two));
+    }
+  }
+
+  private static class AlphaPainter implements RegionPainter<Float> {
+    private final float myBase;
+    private final float myDelta;
+
+    private AlphaPainter(float base, float delta) {
+      myBase = base;
+      myDelta = delta;
+    }
+
+    void paint(Graphics2D g, int x, int y, int width, int height) {
+      g.fillRect(x, y, width, height);
+    }
+
+    @Override
+    public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
+      if (value != null) {
+        float alpha = myBase + myDelta * value;
+        if (alpha > 0) {
+          Composite old = g.getComposite();
+          g.setComposite(alpha < 1
+                         ? AlphaComposite.SrcOver.derive(alpha)
+                         : AlphaComposite.SrcOver);
+          g.setColor(Gray.x80);
+          paint(g, x, y, width, height);
+          g.setComposite(old);
+        }
+      }
+    }
+  }
+
+  private static class ThumbPainter extends AlphaPainter {
+    private final Color myColor;
+
+    private ThumbPainter(Color color) {
+      super(.35f, .25f);
+      myColor = color;
+    }
+
+    @Override
+    void paint(Graphics2D g, int x, int y, int width, int height) {
+      super.paint(g, x, y, width, height);
+      g.fillRect(x + 1, y + 1, width - 2, height - 2);
+      g.setColor(myColor);
+      if (Registry.is("ide.scroll.thumb.border.rounded")) {
+        g.drawLine(x + 1, y, x + width - 2, y);
+        g.drawLine(x + 1, y + height - 1, x + width - 2, y + height - 1);
+        g.drawLine(x, y + 1, x, y + height - 2);
+        g.drawLine(x + width - 1, y + 1, x + width - 1, y + height - 2);
+      }
+      else {
+        g.drawRect(x, y, width - 1, height - 1);
+      }
     }
   }
 }
