@@ -396,6 +396,8 @@ public class StartupUtil {
         }
       }
     }
+
+    log.info("JNU charset: " + System.getProperty("sun.jnu.encoding"));
   }
 
   static void runStartupWizard() {
