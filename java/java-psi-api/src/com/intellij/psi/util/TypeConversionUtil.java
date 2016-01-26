@@ -402,14 +402,6 @@ public class TypeConversionUtil {
       PsiType typeArg2 = substitutor2.substitute(typeParameter);
       if (typeArg1 == null || typeArg2 == null) return true;
       if (TypesDistinctProver.provablyDistinct(typeArg1, typeArg2, level)) return false;
-
-      final PsiClass class1 = PsiUtil.resolveClassInType(typeArg1);
-      if (class1 instanceof PsiTypeParameter) {
-        for (PsiType type : class1.getExtendsListTypes()) {
-          type = substitutor1.substitute(type);
-          if (TypesDistinctProver.provablyDistinct(type, typeArg2) && !isAssignable(type, typeArg2)) return false;
-        }
-      }
     }
 
     return true;
