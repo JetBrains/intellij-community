@@ -6369,6 +6369,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           first = false;
         }
       }
+      preferences.setUseLigatures(delegatePreferences == null ? false : delegatePreferences.useLigatures());
     }
 
     private void reinitFontsAndSettings() {
