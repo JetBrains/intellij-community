@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hint.api.impls;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -31,35 +32,30 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Maxim.Mossienko
  */
-public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList, Object, PsiExpression>,
-                                                   DumbAware {
-  private static final Set<Class> ourArgumentListAllowedParentClassesSet = new HashSet<Class>(
-    Arrays.asList(PsiMethodCallExpression.class, PsiNewExpression.class, PsiAnonymousClass.class, PsiEnumConstant.class));
+public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList, Object, PsiExpression>, DumbAware {
+  private static final Set<Class> ourArgumentListAllowedParentClassesSet = ContainerUtil.<Class>newHashSet(
+    PsiMethodCallExpression.class, PsiNewExpression.class, PsiAnonymousClass.class, PsiEnumConstant.class);
 
   private static final Set<? extends Class> ourStopSearch = Collections.singleton(PsiMethod.class);
 
   @Override
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    final List<? extends PsiElement> allElements = JavaCompletionUtil.getAllPsiElements(item);
-
-    if (allElements != null &&
-        !allElements.isEmpty() &&
-        allElements.get(0) instanceof PsiMethod) {
-      return allElements.toArray(new PsiMethod[allElements.size()]);
-    }
-    return null;
+    final List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements(item);
+    return elements != null && !elements.isEmpty() && elements.get(0) instanceof PsiMethod ? elements.toArray() : null;
   }
 
   @Override
@@ -208,9 +204,9 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         if (realResolve == null) {
           PsiCall call = getCall(o);
           if (call != null) realResolve = call.resolveMethod();
-          if (realResolve == null) realResolve = PsiUtilBase.NULL_PSI_ELEMENT;
+          if (realResolve == null) realResolve = PsiUtilCore.NULL_PSI_ELEMENT;
         }
-        if (realResolve == PsiUtilBase.NULL_PSI_ELEMENT || realResolve == method) context.setHighlightedParameter(candidate);
+        if (realResolve == PsiUtilCore.NULL_PSI_ELEMENT || realResolve == method) context.setHighlightedParameter(candidate);
       }
     }
   }
@@ -452,18 +448,20 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       final PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
       if (element != null) {
         final PsiElement resolved = element.resolve();
-        if (resolved instanceof PsiClass && !JavaDocInfoGenerator.isDocumentedAnnotationType(resolved)) {
+        if (resolved instanceof PsiClass &&
+            (!JavaDocInfoGenerator.isDocumentedAnnotationType(resolved) ||
+             AnnotationTargetUtil.findAnnotationTarget((PsiClass)resolved, PsiAnnotation.TargetType.TYPE_USE) != null)) {
           continue;
         }
 
         String referenceName = element.getReferenceName();
         if (shownAnnotations.add(referenceName) || JavaDocInfoGenerator.isRepeatableAnnotationType(resolved)) {
-          if (lastSize != buffer.length()) buffer.append(" ");
-          buffer.append("@").append(referenceName);
+          if (lastSize != buffer.length()) buffer.append(' ');
+          buffer.append('@').append(referenceName);
         }
       }
     }
-    if (lastSize != buffer.length()) buffer.append(" ");
+    if (lastSize != buffer.length()) buffer.append(' ');
   }
 
   @Override
