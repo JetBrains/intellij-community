@@ -653,6 +653,11 @@ class DependencyResolverImpl implements DependencyResolver {
             def artifacts = artifactMap.get(componentResult.moduleVersion)
             def artifact = artifacts?.find { true }
 
+            if (artifacts?.isEmpty()) {
+              dependencies.addAll(
+                transform(handledDependencyResults, componentResult.dependencies, artifactMap, componentResultsMap, scope)
+              )
+            }
             boolean first = true
             artifacts?.each {
               artifact = it
