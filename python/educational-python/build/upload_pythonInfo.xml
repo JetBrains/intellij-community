@@ -8,7 +8,7 @@
     <property name="password" value="4pawoMauoJjjlxpIl3XG"/>
 
     <ftp server="${host}" action="send" binary="false" remotedir="updates" userid="${user}" password="${password}">
-      <fileset file="${home}/community/python/edu/build/python.txt"/>
+      <fileset file="${home}/community/python/educational-python/build/python.txt"/>
     </ftp>
   </target>
 

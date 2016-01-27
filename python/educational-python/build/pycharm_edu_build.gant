@@ -25,7 +25,7 @@ requireProperty("buildNumber", requireProperty("build.number", snapshot))
 setProperty("buildName", "EDU-$buildNumber")
 setProperty("ch", "$home/community")
 setProperty("pythonCommunityHome", "$ch/python")
-setProperty("pythonEduHome", "$ch/python/edu")
+setProperty("pythonEduHome", "$ch/python/educational-python")
 
 // load ApplicationInfo.xml properties
 ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
@@ -49,7 +49,7 @@ private List<String> pycharmPlatformApiModules() {
 
 private List pycharmImplementationModules() {   //modules to put into pycharm.jar
   return [platformImplementationModules, "dom-impl", "python-community", "python-community-ide-resources",
-    "python-ide-community", "python-community-configure", "python-educational", "python-openapi", "python-psi-api", "platform-main"].flatten()
+    "python-ide-community", "python-community-configure", "educational-python", "python-openapi", "python-psi-api", "platform-main"].flatten()
 }
 
 private List modules() {
@@ -205,8 +205,8 @@ public layoutEducational(String classesPath, Set usedJars) {
   buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.win"])
 
   //EDU installation with a custom page dialog
-  ant.copy(file: "$ch/python/edu/build/desktop.ini", tofile: "${paths.sandbox}/nsiconf/desktop.ini", overwrite: "true")
-  ant.copy(file: "$ch/python/edu/build/customInstallActions.nsi", tofile: "${paths.sandbox}/nsiconf/customInstallActions.nsi", overwrite: "true")
+  ant.copy(file: "$ch/python/educational-python/build/desktop.ini", tofile: "${paths.sandbox}/nsiconf/desktop.ini", overwrite: "true")
+  ant.copy(file: "$ch/python/educational-python/build/customInstallActions.nsi", tofile: "${paths.sandbox}/nsiconf/customInstallActions.nsi", overwrite: "true")
   buildNSIS([paths.distAll, paths.distWin],
             "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
             "pycharmEDU-", false, true, system_selector)
@@ -241,7 +241,7 @@ private layoutPlugins(layouts) {
 }
 
 private String appInfoFile() {
-  return "$home/out/pycharmEDU/classes/production/python-educational/idea/PyCharmEduApplicationInfo.xml"
+  return "$home/out/pycharmEDU/classes/production/educational-python/idea/PyCharmEduApplicationInfo.xml"
 }
 
 private layoutFull(Map args, String target, Set usedJars) {
@@ -275,8 +275,8 @@ private layoutFull(Map args, String target, Set usedJars) {
         }
       }
 
-      jar("educational.jar") {
-        module("educational")
+      jar("educational-core.jar") {
+        module("educational-core")
       }
 
       jar("pycharm-pydev.jar") {
@@ -434,7 +434,7 @@ private layoutMac(Map _args, String target) {
   }
 
   Map args = new HashMap(_args)
-  args.icns = "$pythonCommunityHome/edu/resources/PyCharmEdu.icns"
+  args.icns = "$pythonCommunityHome/educational-python/resources/PyCharmEdu.icns"
   args.bundleIdentifier = "com.jetbrains.pycharm"
   args.platform_prefix = "PyCharmEdu"
   args.help_id = "PE"
