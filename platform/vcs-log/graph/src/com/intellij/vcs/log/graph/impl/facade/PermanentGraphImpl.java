@@ -46,19 +46,11 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
                                                                     @NotNull final GraphColorManager<CommitId> graphColorManager,
                                                                     @NotNull Set<CommitId> branchesCommitId) {
     PermanentLinearGraphBuilder<CommitId> permanentLinearGraphBuilder = PermanentLinearGraphBuilder.newInstance(graphCommits);
-    final Map<Integer, CommitId> notLoadedCommits = ContainerUtil.newHashMap();
-    PermanentLinearGraphImpl linearGraph = permanentLinearGraphBuilder.build(new NotNullFunction<CommitId, Integer>() {
-      @NotNull
-      @Override
-      public Integer fun(CommitId dom) {
-        int nodeId = -(notLoadedCommits.size() + 2);
-        notLoadedCommits.put(nodeId, dom);
-        return nodeId;
-      }
-    });
+    NotLoadedCommitsIdsGenerator<CommitId> idsGenerator = new NotLoadedCommitsIdsGenerator<CommitId>();
+    PermanentLinearGraphImpl linearGraph = permanentLinearGraphBuilder.build(idsGenerator);
 
     final PermanentCommitsInfoImpl<CommitId> commitIdPermanentCommitsInfo =
-      PermanentCommitsInfoImpl.newInstance(graphCommits, notLoadedCommits);
+      PermanentCommitsInfoImpl.newInstance(graphCommits, idsGenerator.getNotLoadedCommits());
 
     GraphLayoutImpl permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, new Comparator<Integer>() {
       @Override
@@ -242,4 +234,20 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     return myBranchNodeIds;
   }
 
+  private static class NotLoadedCommitsIdsGenerator<CommitId> implements NotNullFunction<CommitId, Integer> {
+    @NotNull private final Map<Integer, CommitId> myNotLoadedCommits = ContainerUtil.newHashMap();
+
+    @NotNull
+    @Override
+    public Integer fun(CommitId dom) {
+      int nodeId = -(myNotLoadedCommits.size() + 2);
+      myNotLoadedCommits.put(nodeId, dom);
+      return nodeId;
+    }
+
+    @NotNull
+    public Map<Integer, CommitId> getNotLoadedCommits() {
+      return myNotLoadedCommits;
+    }
+  }
 }
