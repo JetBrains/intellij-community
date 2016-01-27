@@ -157,82 +157,94 @@ public final class SwingCleanuper implements ApplicationComponent{
       }
     );
 
-    Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+    if (SystemInfo.isMac) {
+      Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
 
-      private final Field myNativeAXResourceField;
-      {
-        Field field = null;
-        if (SystemInfo.isMac) {
+        private Field nativeAXResource_Field = null;
+        private Field accessibleContext_Field = null;
+
+        {
           try {
-            field = ReflectionUtil.findField(AccessibleContext.class, Object.class, "nativeAXResource");
+            nativeAXResource_Field = ReflectionUtil.findField(AccessibleContext.class, Object.class, "nativeAXResource");
+            accessibleContext_Field = ReflectionUtil.findField(Component.class, AccessibleContext.class, "accessibleContext");
           }
           catch (NoSuchFieldException ignored) {
           }
         }
-        myNativeAXResourceField = field;
-      }
 
-      @Override
-      public void eventDispatched(AWTEvent event) {
-        if (!SystemInfo.isMac || !Registry.is("ide.mac.fix.accessibleLeak")) return;
+        @Override
+        public void eventDispatched(AWTEvent event) {
+          if (!Registry.is("ide.mac.fix.accessibleLeak")) return;
 
-        HierarchyEvent he = (HierarchyEvent)event;
-        if ((he.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0) {
-          if (he.getComponent() != null && !he.getComponent().isShowing()) {
-            Component c = he.getComponent();
-            if (c instanceof JTextComponent) {
-              JTextComponent textComponent = (JTextComponent)c;
+          HierarchyEvent he = (HierarchyEvent)event;
+          if ((he.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0) {
+            if (he.getComponent() != null && !he.getComponent().isShowing()) {
+              Component c = he.getComponent();
+              if (c instanceof JTextComponent) {
+                JTextComponent textComponent = (JTextComponent)c;
 
-              CaretListener[] carets = textComponent.getListeners(CaretListener.class);
-              for (CaretListener each : carets) {
-                if (isCAccessibleListener(each)) {
-                  textComponent.removeCaretListener(each);
-                }
-              }
-
-              Document document = textComponent.getDocument();
-              if (document instanceof AbstractDocument) {
-                DocumentListener[] documentListeners = ((AbstractDocument)document).getDocumentListeners();
-                for (DocumentListener each : documentListeners) {
+                CaretListener[] carets = textComponent.getListeners(CaretListener.class);
+                for (CaretListener each : carets) {
                   if (isCAccessibleListener(each)) {
-                    document.removeDocumentListener(each);
+                    textComponent.removeCaretListener(each);
+                  }
+                }
+
+                Document document = textComponent.getDocument();
+                if (document instanceof AbstractDocument) {
+                  DocumentListener[] documentListeners = ((AbstractDocument)document).getDocumentListeners();
+                  for (DocumentListener each : documentListeners) {
+                    if (isCAccessibleListener(each)) {
+                      document.removeDocumentListener(each);
+                    }
                   }
                 }
               }
-            } else if (c instanceof JProgressBar) {
-              JProgressBar bar = (JProgressBar)c;
-              ChangeListener[] changeListeners = bar.getChangeListeners();
-              for (ChangeListener each : changeListeners) {
-                if (isCAccessibleListener(each)) {
-                  bar.removeChangeListener(each);
+              else if (c instanceof JProgressBar) {
+                JProgressBar bar = (JProgressBar)c;
+                ChangeListener[] changeListeners = bar.getChangeListeners();
+                for (ChangeListener each : changeListeners) {
+                  if (isCAccessibleListener(each)) {
+                    bar.removeChangeListener(each);
+                  }
                 }
               }
-            } else if (c instanceof JSlider) {
-              JSlider slider = (JSlider)c;
-              ChangeListener[] changeListeners = slider.getChangeListeners();
-              for (ChangeListener each : changeListeners) {
-                if (isCAccessibleListener(each)) {
-                  slider.removeChangeListener(each);
+              else if (c instanceof JSlider) {
+                JSlider slider = (JSlider)c;
+                ChangeListener[] changeListeners = slider.getChangeListeners();
+                for (ChangeListener each : changeListeners) {
+                  if (isCAccessibleListener(each)) {
+                    slider.removeChangeListener(each);
+                  }
                 }
               }
-            }
 
-            AccessibleContext ac = c.getAccessibleContext();
-            if (ac != null && myNativeAXResourceField != null) {
-              try {
-                Object resource = myNativeAXResourceField.get(ac);
-                if (resource != null && isCAccessible(resource)) {
-                  Field accessible = ReflectionUtil.findField(resource.getClass(), Accessible.class, "accessible");
-                  accessible.set(resource, null);
+              if (accessibleContext_Field != null && nativeAXResource_Field != null) {
+                try {
+                  // Component's AccessibleContext is not necessarily initialized. In this case we don't want to force its creation.
+                  // So, first we check the Component.accessibleContext field. The field has a protected access and it's a common
+                  // Swing pattern to set it in the Component.getAccessibleContext() method when it's overriden by a subclass
+                  // (and we're to follow it).
+                  AccessibleContext ac = (AccessibleContext)accessibleContext_Field.get(c);
+                  if (ac != null) {
+                    // The getter may have a side effect, so call it to get the up-to-date context.
+                    ac = c.getAccessibleContext();
+                    if (ac != null) {
+                      Object resource = nativeAXResource_Field.get(ac);
+                      if (resource != null && isCAccessible(resource)) {
+                        Field accessible = ReflectionUtil.findField(resource.getClass(), Accessible.class, "accessible");
+                        accessible.set(resource, null);
+                      }
+                    }
+                  }
+                } catch (Exception ignored) {
                 }
-              }
-              catch (Exception ignored) {
               }
             }
           }
         }
-      }
-    }, AWTEvent.HIERARCHY_EVENT_MASK);
+      }, AWTEvent.HIERARCHY_EVENT_MASK);
+    }
   }
 
   private static boolean isCAccessible(Object resource) {
