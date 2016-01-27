@@ -46,8 +46,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
@@ -58,7 +60,6 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     EventDispatcher.create(SelectedListChangeListener.class);
   @Nullable private final Runnable myRebuildListListener;
   private Collection<Change> myAllChanges;
-  private Map<Change, LocalChangeList> myChangeListsMap;
   private boolean myInRebuildList;
 
   // todo terrible constructor
@@ -154,11 +155,9 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     Collection<Change> result = ContainerUtil.newArrayList();
     ChangeListManager manager = ChangeListManager.getInstance(myProject);
 
-    myChangeListsMap = ContainerUtil.newHashMap();
     for (LocalChangeList list : manager.getChangeListsCopy()) {
       for (Change change : list.getChanges()) {
         result.add(change);
-        myChangeListsMap.put(change, list);
       }
     }
 
@@ -230,17 +229,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
   @NotNull
   private List<Change> filterBySelectedChangeList(@NotNull Collection<Change> changes) {
-    return ContainerUtil.findAll(changes, new Condition<Change>() {
-      @Override
-      public boolean value(@NotNull Change change) {
-        return Comparing.equal(getList(change), mySelectedChangeList);
-      }
-    });
-  }
-
-  @Nullable
-  private ChangeList getList(@NotNull Change change) {
-    return myChangeListsMap.get(change);
+    return ContainerUtil.intersection(changes, mySelectedChangeList.getChanges());
   }
 
   @Override
