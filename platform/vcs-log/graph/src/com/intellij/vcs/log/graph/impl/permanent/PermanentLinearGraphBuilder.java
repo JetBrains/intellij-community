@@ -72,7 +72,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
   // downCommitId -> List of upNodeIndex
   private final Map<CommitId, List<Integer>> upAdjacentNodes = new HashMap<CommitId, List<Integer>>();
 
-  private NotNullFunction<CommitId, Integer> myNotLoadCommitToId;
+  private NotNullFunction<CommitId, Integer> myNotLoadedCommitToId;
 
   private PermanentLinearGraphBuilder(List<? extends GraphCommit<CommitId>> commits, Flags simpleNodes, int longEdgesCount) {
     myCommits = commits;
@@ -160,7 +160,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
       }
     });
     for (CommitId notLoadCommit : commitIds) {
-      int notLoadId = myNotLoadCommitToId.fun(notLoadCommit);
+      int notLoadId = myNotLoadedCommitToId.fun(notLoadCommit);
       for (int upNodeIndex : upAdjacentNodes.get(notLoadCommit)) {
         fixUnderdoneEdgeForNotLoadCommit(upNodeIndex, notLoadId);
       }
@@ -168,8 +168,8 @@ public class PermanentLinearGraphBuilder<CommitId> {
   }
 
   // id's must be less that -2
-  public PermanentLinearGraphImpl build(@NotNull NotNullFunction<CommitId, Integer> notLoadCommitToId) {
-    myNotLoadCommitToId = notLoadCommitToId;
+  public PermanentLinearGraphImpl build(@NotNull NotNullFunction<CommitId, Integer> notLoadedCommitToId) {
+    myNotLoadedCommitToId = notLoadedCommitToId;
     for (int nodeIndex = 0; nodeIndex < myNodesCount; nodeIndex++) {
       doStep(nodeIndex);
     }

@@ -46,19 +46,19 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
                                                                     @NotNull final GraphColorManager<CommitId> graphColorManager,
                                                                     @NotNull Set<CommitId> branchesCommitId) {
     PermanentLinearGraphBuilder<CommitId> permanentLinearGraphBuilder = PermanentLinearGraphBuilder.newInstance(graphCommits);
-    final Map<Integer, CommitId> notLoadCommits = ContainerUtil.newHashMap();
+    final Map<Integer, CommitId> notLoadedCommits = ContainerUtil.newHashMap();
     PermanentLinearGraphImpl linearGraph = permanentLinearGraphBuilder.build(new NotNullFunction<CommitId, Integer>() {
       @NotNull
       @Override
       public Integer fun(CommitId dom) {
-        int nodeId = -(notLoadCommits.size() + 2);
-        notLoadCommits.put(nodeId, dom);
+        int nodeId = -(notLoadedCommits.size() + 2);
+        notLoadedCommits.put(nodeId, dom);
         return nodeId;
       }
     });
 
     final PermanentCommitsInfoImpl<CommitId> commitIdPermanentCommitsInfo =
-      PermanentCommitsInfoImpl.newInstance(graphCommits, notLoadCommits);
+      PermanentCommitsInfoImpl.newInstance(graphCommits, notLoadedCommits);
 
     GraphLayoutImpl permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, new Comparator<Integer>() {
       @Override
