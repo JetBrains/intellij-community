@@ -15,25 +15,21 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
-import com.intellij.vcs.log.ui.VcsLogHighlighterFactory;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
 
 public class VcsLogQuickSettingsActions extends DumbAwareAction {
 
