@@ -73,6 +73,17 @@ public class UpdateStrategy {
     }
 
     UpdateChannel channelToPropose = null;
+
+    /* Android Studio: We don't want to propose "new channels".
+       When a user downloads a stable build, the default channel
+       is stable, and they'll stay in that channel "forever";
+       they'll only be offered new stable versions. (In IntelliJ
+       however even stable users seem to be offered the EAP
+       channel for the next stable version.)   If a user has chosen
+       some other channel, such as canary or beta, they'll stay
+       in that channel. (We post more stable bits to the less stable
+       channels as well.)
+
     for (UpdateChannel channel : product.getChannels()) {
       if (!myUpdateSettings.getKnownChannelsIds().contains(channel.getId()) &&
           channel.getMajorVersion() >= myMajorVersion &&
@@ -82,6 +93,7 @@ public class UpdateStrategy {
         channelToPropose = channel;
       }
     }
+    */
 
     return new CheckForUpdateResult(newBuild, updatedChannel, channelToPropose, product.getAllChannelIds());
   }
