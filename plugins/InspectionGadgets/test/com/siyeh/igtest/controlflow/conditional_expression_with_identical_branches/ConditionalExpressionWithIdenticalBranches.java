@@ -62,4 +62,14 @@ class ConditionalExpressionWithIdenticalBranches {
       Item item1 = (i == 1 ? new Item("1") : new Item("2")); // warning here
     }
   }
+
+  class A {
+    private String test(String... s) {
+      return "";
+    }
+
+    private void test2(boolean f) {
+      String a = f ? test(new String[]{"a", "b"}) : test("a");
+    }
+  }
 }
