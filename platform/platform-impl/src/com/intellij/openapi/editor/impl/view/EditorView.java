@@ -446,6 +446,10 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     }
   }
   
+  Insets getInsets() {
+    return myEditor.getContentComponent().getInsets();
+  }
+  
   private static void assertIsDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }

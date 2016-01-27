@@ -3161,6 +3161,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            + (myDocument instanceof DocumentImpl ? "\n\ndocument info: " + ((DocumentImpl)myDocument).dumpState() : "")
            + "\nfont preferences: " + myScheme.getFontPreferences()
            + "\npure painting mode: " + myPurePaintingMode
+           + "\ninsets: " + myEditorComponent.getInsets()
            + (myView == null ? "" : "\nview: " + myView.dumpState());
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,7 +171,8 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     if (shouldRespectAdditionalColumns(widthWithoutCaret)) {
       width += myEditor.getSettings().getAdditionalColumnsCount() * myView.getPlainSpaceWidth();
     }
-    return new Dimension(width, myEditor.getPreferredHeight());
+    Insets insets = myView.getInsets();
+    return new Dimension(width + insets.left + insets.right, myEditor.getPreferredHeight() + insets.top + insets.bottom);
   }
 
   private boolean shouldRespectAdditionalColumns(int widthWithoutCaret) {
