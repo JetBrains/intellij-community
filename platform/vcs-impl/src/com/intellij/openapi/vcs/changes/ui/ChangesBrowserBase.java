@@ -78,7 +78,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
 
   protected ChangesBrowserBase(final Project project,
                                List<? extends ChangeList> changeLists,
-                               final List<T> changes,
+                               @NotNull List<T> changes,
                                ChangeList initialListSelection,
                                final boolean capableOfExcludingChanges,
                                final boolean highlightProblems,
@@ -149,7 +149,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   }
 
   protected void setInitialSelection(final List<? extends ChangeList> changeLists,
-                                     final List<T> changes,
+                                     @NotNull List<T> changes,
                                      final ChangeList initialListSelection) {
     mySelectedChangeList = initialListSelection;
   }
