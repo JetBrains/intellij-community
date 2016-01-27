@@ -109,4 +109,6 @@ echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
 cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"/
 cp -Rfv "$OUT"/updater-full.jar "$DIST"/android-studio-updater.jar
+# write the version number into the windows installer dir
+echo $BNUM > ../adt/idea/native/installer/win/version
 (cd ../adt/idea/native/installer/win && zip -r - ".") > "$DIST"/android-studio-bundle-data.zip
