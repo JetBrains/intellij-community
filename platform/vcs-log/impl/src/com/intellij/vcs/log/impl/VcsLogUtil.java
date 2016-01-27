@@ -222,17 +222,20 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  public static Collection<VcsRef> getVisibleBranches(@NotNull VcsLog log, VcsLogUiImpl logUi) {
-    VcsLogFilterCollection filters = logUi.getFilterUi().getFilters();
-    Set<VirtualFile> roots = logUi.getDataPack().getLogProviders().keySet();
-    final Set<VirtualFile> visibleRoots = getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter());
-
+  public static Collection<VcsRef> getVisibleBranches(@NotNull VcsLog log, @NotNull final Set<VirtualFile> visibleRoots) {
     return ContainerUtil.filter(log.getAllReferences(), new Condition<VcsRef>() {
       @Override
       public boolean value(VcsRef ref) {
         return visibleRoots.contains(ref.getRoot());
       }
     });
+  }
+
+  @NotNull
+  public static Set<VirtualFile> getVisibleRoots(@NotNull VcsLogUiImpl logUi) {
+    VcsLogFilterCollection filters = logUi.getFilterUi().getFilters();
+    Set<VirtualFile> roots = logUi.getDataPack().getLogProviders().keySet();
+    return getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter());
   }
 
   @Nullable

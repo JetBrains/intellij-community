@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
@@ -62,14 +63,14 @@ public class GoToHashOrRefPopup {
   @Nullable private VcsRef mySelectedRef;
 
   public GoToHashOrRefPopup(@NotNull final Project project,
-                            @NotNull Collection<VcsRef> variants,
+                            @NotNull Collection<VcsRef> variants, Collection<VirtualFile> roots,
                             @NotNull Function<String, Future> onSelectedHash,
                             @NotNull Function<VcsRef, Future> onSelectedRef,
                             @NotNull VcsLogColorManager colorManager,
                             @NotNull Comparator<VcsRef> comparator) {
     myOnSelectedHash = onSelectedHash;
     myOnSelectedRef = onSelectedRef;
-    myTextField = new TextFieldWithProgress<VcsRef>(project, new VcsRefCompletionProvider(project, variants, colorManager, comparator)) {
+    myTextField = new TextFieldWithProgress<VcsRef>(project, new VcsRefCompletionProvider(project, variants, roots, colorManager, comparator)) {
       @Override
       public void onOk() {
         if (myFuture == null) {
@@ -155,15 +156,21 @@ public class GoToHashOrRefPopup {
     @NotNull private final Project myProject;
     @NotNull private final VcsLogColorManager myColorManager;
     @NotNull private final Comparator<VcsRef> myReferenceComparator;
+    @NotNull private final Map<VirtualFile, String> myCachedRootNames = ContainerUtil.newHashMap();
 
     public VcsRefCompletionProvider(@NotNull Project project,
                                     @NotNull Collection<VcsRef> variants,
+                                    @NotNull Collection<VirtualFile> roots,
                                     @NotNull VcsLogColorManager colorManager,
                                     @NotNull Comparator<VcsRef> comparator) {
       super(variants);
       myProject = project;
       myColorManager = colorManager;
       myReferenceComparator = comparator;
+      for (VirtualFile root : roots) {
+        String text = VcsImplUtil.getShortVcsRootName(myProject, root);
+        myCachedRootNames.put(root, text);
+      }
     }
 
     @Override
@@ -200,7 +207,11 @@ public class GoToHashOrRefPopup {
     @Override
     protected String getTypeText(@NotNull VcsRef item) {
       if (!myColorManager.isMultipleRoots()) return null;
-      return VcsImplUtil.getShortVcsRootName(myProject, item.getRoot());
+      String text = myCachedRootNames.get(item.getRoot());
+      if (text == null) {
+        return VcsImplUtil.getShortVcsRootName(myProject, item.getRoot());
+      }
+      return text;
     }
 
     @Override
