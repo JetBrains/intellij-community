@@ -178,6 +178,10 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  public void testPySixTest() {
+    doTest();
+  }
+
   public void testSeenMembers() {  // PY-1181
     final String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");
