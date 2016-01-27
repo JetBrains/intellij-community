@@ -72,8 +72,6 @@ public class PermanentLinearGraphBuilder<CommitId> {
   // downCommitId -> List of upNodeIndex
   private final Map<CommitId, List<Integer>> upAdjacentNodes = new HashMap<CommitId, List<Integer>>();
 
-  private NotNullFunction<CommitId, Integer> myNotLoadedCommitToId;
-
   private PermanentLinearGraphBuilder(List<? extends GraphCommit<CommitId>> commits, Flags simpleNodes, int longEdgesCount) {
     myCommits = commits;
     mySimpleNodes = simpleNodes;
@@ -151,7 +149,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
     throw new IllegalStateException("Not found underdone edge to not load commit for node: " + upNodeIndex);
   }
 
-  private void fixUnderdoneEdges() {
+  private void fixUnderdoneEdges(@NotNull NotNullFunction<CommitId, Integer> notLoadedCommitToId) {
     List<CommitId> commitIds = ContainerUtil.newArrayList(upAdjacentNodes.keySet());
     ContainerUtil.sort(commitIds, new Comparator<CommitId>() {
       @Override
@@ -160,7 +158,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
       }
     });
     for (CommitId notLoadCommit : commitIds) {
-      int notLoadId = myNotLoadedCommitToId.fun(notLoadCommit);
+      int notLoadId = notLoadedCommitToId.fun(notLoadCommit);
       for (int upNodeIndex : upAdjacentNodes.get(notLoadCommit)) {
         fixUnderdoneEdgeForNotLoadCommit(upNodeIndex, notLoadId);
       }
@@ -169,12 +167,11 @@ public class PermanentLinearGraphBuilder<CommitId> {
 
   // id's must be less that -2
   public PermanentLinearGraphImpl build(@NotNull NotNullFunction<CommitId, Integer> notLoadedCommitToId) {
-    myNotLoadedCommitToId = notLoadedCommitToId;
     for (int nodeIndex = 0; nodeIndex < myNodesCount; nodeIndex++) {
       doStep(nodeIndex);
     }
 
-    fixUnderdoneEdges();
+    fixUnderdoneEdges(notLoadedCommitToId);
 
     return new PermanentLinearGraphImpl(mySimpleNodes, myNodeToEdgeIndex, myLongEdges);
   }
