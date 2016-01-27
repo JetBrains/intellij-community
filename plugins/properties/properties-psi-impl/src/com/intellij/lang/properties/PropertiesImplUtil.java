@@ -97,11 +97,10 @@ public class PropertiesImplUtil extends PropertiesUtil {
         if (defaultPropertiesFile == null) {
           defaultPropertiesFile = propertiesFile;
         } else {
-          final int nameDiff = FileUtil.getNameWithoutExtension(defaultPropertiesFile.getName()).compareTo(FileUtil.getNameWithoutExtension(propertiesFile.getName()));
+          final int nameDiff = defaultPropertiesFile.getName().compareTo(propertiesFile.getName());
           if (nameDiff > 0) {
             defaultPropertiesFile = propertiesFile;
           } else if (nameDiff == 0) {
-            //means 2 default properties files
             return null;
           }
         }
