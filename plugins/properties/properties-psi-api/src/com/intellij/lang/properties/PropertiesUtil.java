@@ -36,6 +36,8 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.ui.plaf.beg.BegResources.j;
+
 /**
  * @author cdr
  */
