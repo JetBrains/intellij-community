@@ -98,7 +98,7 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     CharSequence text = editor.getDocument().getImmutableCharSequence();
 
     boolean insertBeforeEq = charTyped == '=' && isInsertSpaceBeforeEq(caretOffset, text);
-    boolean insertAfterEq = caretOffset - 1 < text.length()
+    boolean insertAfterEq = caretOffset > 0 && caretOffset - 1 < text.length()
                             && text.charAt(caretOffset - 1) == '=' 
                             && isInsertSpaceBeforeNewChar(charTyped); 
       
