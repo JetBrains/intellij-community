@@ -165,12 +165,6 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     return result;
   }
 
-  @NotNull
-  @Override
-  public List<Change> getCurrentDisplayedChanges() {
-    return sortChanges(filterBySelectedChangeList(myAllChanges));
-  }
-
   @Override
   @NotNull
   public List<Change> getCurrentIncludedChanges() {
