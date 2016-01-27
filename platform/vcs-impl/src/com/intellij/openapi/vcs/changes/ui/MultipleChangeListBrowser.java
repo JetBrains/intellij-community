@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.EventDispatcher;
@@ -366,15 +367,16 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
   private class MoveAction extends MoveChangesToAnotherListAction {
     @Override
-    protected boolean isEnabled(AnActionEvent e) {
+    protected boolean isEnabled(@NotNull AnActionEvent e) {
       Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (change == null) return false;
       return super.isEnabled(e);
     }
 
-    public void actionPerformed(AnActionEvent e) {
-      Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
-      askAndMove(myProject, Collections.singletonList(change), null);
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Change change = e.getRequiredData(VcsDataKeys.CURRENT_CHANGE);
+      askAndMove(myProject, Collections.singletonList(change), Collections.<VirtualFile>emptyList());
     }
   }
 }
