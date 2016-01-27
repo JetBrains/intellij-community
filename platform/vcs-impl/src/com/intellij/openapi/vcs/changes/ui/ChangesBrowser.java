@@ -75,9 +75,7 @@ public class ChangesBrowser extends ChangesBrowserBase<Change> {
   @NotNull
   @Override
   public List<Change> getCurrentDisplayedChanges() {
-    return myChangesToDisplay != null
-           ? sortChanges(ContainerUtil.newArrayList(myChangesToDisplay))
-           : super.getCurrentDisplayedChanges();
+    return myChangesToDisplay != null ? sortChanges(myChangesToDisplay) : super.getCurrentDisplayedChanges();
   }
 
   @NotNull

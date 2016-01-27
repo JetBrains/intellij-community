@@ -361,29 +361,23 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
 
   @NotNull
   public List<Change> getCurrentDisplayedChanges() {
-    final List<Change> list;
-    if (mySelectedChangeList != null) {
-      list = new ArrayList<Change>(mySelectedChangeList.getChanges());
-    }
-    else {
-      list = Collections.emptyList();
-    }
-    return sortChanges(list);
+    return mySelectedChangeList != null ? sortChanges(mySelectedChangeList.getChanges()) : Collections.<Change>emptyList();
   }
 
   @NotNull
   public abstract List<T> getCurrentDisplayedObjects();
 
-  protected List<Change> sortChanges(final List<Change> list) {
-    List<Change> sortedList;
+  @NotNull
+  protected List<Change> sortChanges(@NotNull Collection<Change> changes) {
+    List<Change> result;
     try {
-      sortedList = ContainerUtil.sorted(list, ChangesComparator.getInstance(myViewer.isShowFlatten()));
+      result = ContainerUtil.sorted(changes, ChangesComparator.getInstance(myViewer.isShowFlatten()));
     }
     catch (IllegalArgumentException e) {
-      sortedList = ContainerUtil.newArrayList(list);
-      LOG.error("Couldn't sort these changes: " + list, e);
+      result = ContainerUtil.newArrayList(changes);
+      LOG.error("Couldn't sort these changes: " + changes, e);
     }
-    return sortedList;
+    return result;
   }
 
   public ChangeList getSelectedChangeList() {
