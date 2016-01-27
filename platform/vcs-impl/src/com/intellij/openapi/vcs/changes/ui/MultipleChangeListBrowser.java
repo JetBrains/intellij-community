@@ -137,22 +137,9 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     if (myInRebuildList) return;
     try {
       myInRebuildList = true;
-      if (myChangesToDisplay == null) {
-        // changes set not fixed === local changes
-        final ChangeListManager manager = ChangeListManager.getInstance(myProject);
-        myChangeListsMap = ContainerUtil.newHashMap();
-        Collection<Change> allChanges = ContainerUtil.newArrayList();
-        for (LocalChangeList list : manager.getChangeListsCopy()) {
-          for (Change change : list.getChanges()) {
-            allChanges.add(change);
-            myChangeListsMap.put(change, list);
-          }
-        }
-        myAllChanges = allChanges;
-        // refresh selected list also
-        updateListsInChooser();
-      }
 
+      myAllChanges = getLocalChanges();
+      updateListsInChooser();
       super.rebuildList();
       if (myRebuildListListener != null) {
         myRebuildListListener.run();
@@ -163,9 +150,25 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   }
 
   @NotNull
+  private Collection<Change> getLocalChanges() {
+    Collection<Change> result = ContainerUtil.newArrayList();
+    ChangeListManager manager = ChangeListManager.getInstance(myProject);
+
+    myChangeListsMap = ContainerUtil.newHashMap();
+    for (LocalChangeList list : manager.getChangeListsCopy()) {
+      for (Change change : list.getChanges()) {
+        result.add(change);
+        myChangeListsMap.put(change, list);
+      }
+    }
+
+    return result;
+  }
+
+  @NotNull
   @Override
   public List<Change> getCurrentDisplayedChanges() {
-    return sortChanges(myChangesToDisplay != null ? findChanges(myChangesToDisplay) : filterBySelectedChangeList(myAllChanges));
+    return sortChanges(filterBySelectedChangeList(myAllChanges));
   }
 
   @Override
@@ -253,14 +256,12 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
     toolBarGroup.add(ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST));
 
-    if (myChangesToDisplay == null) {
-      toolBarGroup.add(new AnAction("Refresh Changes", null, AllIcons.Actions.Refresh) {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          rebuildList();
-        }
-      });
-    }
+    toolBarGroup.add(new AnAction("Refresh Changes", null, AllIcons.Actions.Refresh) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        rebuildList();
+      }
+    });
     RollbackDialogAction rollback = new RollbackDialogAction();
     EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, this);
     toolBarGroup.add(rollback);
