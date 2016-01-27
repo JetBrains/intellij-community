@@ -245,13 +245,8 @@ public final class SimpleTextAttributes {
 
   // take what differs from REGULAR
   public static SimpleTextAttributes merge(final SimpleTextAttributes weak, final SimpleTextAttributes strong) {
-    final int style;
-    if (strong.getStyle() != REGULAR_ATTRIBUTES.getStyle()) {
-      style = strong.getStyle();
-    }
-    else {
-      style = weak.getStyle();
-    }
+    final int style = strong.getStyle() | weak.getStyle();
+
     final Color wave;
     if (!Comparing.equal(strong.getWaveColor(), REGULAR_ATTRIBUTES.getWaveColor())) {
       wave = strong.getWaveColor();
