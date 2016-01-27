@@ -31,6 +31,28 @@ import static com.intellij.vcs.log.graph.impl.permanent.DuplicateParentFixer.fix
 
 public class PermanentLinearGraphBuilder<CommitId> {
 
+  @NotNull private final List<? extends GraphCommit<CommitId>> myCommits;
+  @NotNull private final Flags mySimpleNodes;
+
+  private final int myNodesCount;
+
+  @NotNull private final int[] myNodeToEdgeIndex;
+  @NotNull private final int[] myLongEdges;
+  // downCommitId -> List of upNodeIndex
+  @NotNull private final Map<CommitId, List<Integer>> upAdjacentNodes = new HashMap<CommitId, List<Integer>>();
+
+  private PermanentLinearGraphBuilder(@NotNull List<? extends GraphCommit<CommitId>> commits,
+                                      @NotNull Flags simpleNodes,
+                                      int longEdgesCount) {
+    myCommits = commits;
+    mySimpleNodes = simpleNodes;
+
+    myNodesCount = simpleNodes.size();
+
+    myNodeToEdgeIndex = new int[myNodesCount + 1];
+    myLongEdges = new int[2 * longEdgesCount];
+  }
+
   @NotNull
   public static <CommitId> PermanentLinearGraphBuilder<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits) {
     graphCommits = fixDuplicateParentCommits(graphCommits);
@@ -59,27 +81,6 @@ public class PermanentLinearGraphBuilder<CommitId> {
   private static <CommitId> CommitId nextCommitHashIndex(List<? extends GraphCommit<CommitId>> commits, int nodeIndex) {
     if (nodeIndex < commits.size() - 1) return commits.get(nodeIndex + 1).getId();
     return null;
-  }
-
-  @NotNull private final List<? extends GraphCommit<CommitId>> myCommits;
-  @NotNull private final Flags mySimpleNodes;
-
-  private final int myNodesCount;
-
-  @NotNull private final int[] myNodeToEdgeIndex;
-  @NotNull private final int[] myLongEdges;
-
-  // downCommitId -> List of upNodeIndex
-  @NotNull private final Map<CommitId, List<Integer>> upAdjacentNodes = new HashMap<CommitId, List<Integer>>();
-
-  private PermanentLinearGraphBuilder(@NotNull List<? extends GraphCommit<CommitId>> commits, @NotNull Flags simpleNodes, int longEdgesCount) {
-    myCommits = commits;
-    mySimpleNodes = simpleNodes;
-
-    myNodesCount = simpleNodes.size();
-
-    myNodeToEdgeIndex = new int[myNodesCount + 1];
-    myLongEdges = new int[2 * longEdgesCount];
   }
 
   private void addUnderdoneEdge(int upNodeIndex, CommitId downCommitId) {
