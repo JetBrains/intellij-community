@@ -61,18 +61,18 @@ public class PermanentLinearGraphBuilder<CommitId> {
     return null;
   }
 
-  private final List<? extends GraphCommit<CommitId>> myCommits;
-  private final Flags mySimpleNodes;
+  @NotNull private final List<? extends GraphCommit<CommitId>> myCommits;
+  @NotNull private final Flags mySimpleNodes;
 
   private final int myNodesCount;
 
-  private final int[] myNodeToEdgeIndex;
-  private final int[] myLongEdges;
+  @NotNull private final int[] myNodeToEdgeIndex;
+  @NotNull private final int[] myLongEdges;
 
   // downCommitId -> List of upNodeIndex
-  private final Map<CommitId, List<Integer>> upAdjacentNodes = new HashMap<CommitId, List<Integer>>();
+  @NotNull private final Map<CommitId, List<Integer>> upAdjacentNodes = new HashMap<CommitId, List<Integer>>();
 
-  private PermanentLinearGraphBuilder(List<? extends GraphCommit<CommitId>> commits, Flags simpleNodes, int longEdgesCount) {
+  private PermanentLinearGraphBuilder(@NotNull List<? extends GraphCommit<CommitId>> commits, @NotNull Flags simpleNodes, int longEdgesCount) {
     myCommits = commits;
     mySimpleNodes = simpleNodes;
 
@@ -166,6 +166,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
   }
 
   // id's must be less that -2
+  @NotNull
   public PermanentLinearGraphImpl build(@NotNull NotNullFunction<CommitId, Integer> notLoadedCommitToId) {
     for (int nodeIndex = 0; nodeIndex < myNodesCount; nodeIndex++) {
       doStep(nodeIndex);
@@ -176,6 +177,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
     return new PermanentLinearGraphImpl(mySimpleNodes, myNodeToEdgeIndex, myLongEdges);
   }
 
+  @NotNull
   public PermanentLinearGraphImpl build() {
     return build(new NotNullFunction<CommitId, Integer>() {
       @NotNull
