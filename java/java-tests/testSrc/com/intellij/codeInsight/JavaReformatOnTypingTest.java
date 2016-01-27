@@ -64,11 +64,6 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
   public void test_EmptyText() {
     doTest("<caret>", "x", "x<caret>");
   }
-
-  public void test_TripleAssignments() {
-    doTest("class T { a<caret> }", "===", "class T { a ===<caret> }");
-    doTest("class T { a<caret> }", "===x", "class T { a === x<caret> }");
-  }
   
   public void test_IgnoreSpacePressedAfterAssignmentOperator() {
     doTest("class T { int<caret> }", "= ", "class T { int = <caret> }");
@@ -82,10 +77,7 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
     doTest("class T { int <caret> }", "= ", "class T { int = <caret> }");
   }
   
-  public void test_DoNotInsertSpaceIfNotAssignment() {
-    doTest("1 <caret>", "!=a", "1 != a<caret>");
-    doTest("c <caret>", ">=a", "c >= a<caret>");
-    doTest("c <caret>", "<=a", "c <= a<caret>");
+  public void test_InsertSpaceForAssignments() {
     doTest("c <caret>", "+=a", "c += a<caret>");
     doTest("c <caret>", "-=a", "c -= a<caret>");
     doTest("c <caret>", "*=a", "c *= a<caret>");
@@ -94,6 +86,15 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
     doTest("c <caret>", "%=a", "c %= a<caret>");
     doTest("c <caret>", "^=a", "c ^= a<caret>");
     doTest("c <caret>", "|=a", "c |= a<caret>");
+    doTest("c <caret>", ">>=a", "c >>= a<caret>");
+    doTest("c <caret>", "<<=a", "c <<= a<caret>");
+    doTest("c <caret>", ">>>=a", "c >>>= a<caret>");
+  }
+  
+  public void test_DoNotInsertSpaceIfNotAssignment() {
+    doTest("1 <caret>", "!=a", "1 !=a<caret>");
+    doTest("c <caret>", ">=a", "c >=a<caret>");
+    doTest("c <caret>", "<=a", "c <=a<caret>");
   }
   
   public void test_IgnoreIfInsideStringLiteral() {

@@ -28,16 +28,21 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+
+import java.util.List;
 
 public class AutoFormatTypedHandler extends TypedActionHandlerBase {
   private static boolean myIsEnabledInTests = false;
@@ -45,6 +50,14 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
   private static char[] NO_SPACE_AFTER = { 
     '+', '-', '*', '/', '%', '&', '^', '|', '<', '>', '!', '=', ' ' 
   };
+
+  private static final List<IElementType> COMPLEX_ASSIGNMENTS = ContainerUtil.newArrayList(
+    JavaTokenType.PLUSEQ, JavaTokenType.MINUSEQ,
+    JavaTokenType.ASTERISKEQ, JavaTokenType.DIVEQ,
+    JavaTokenType.PERCEQ,
+    JavaTokenType.ANDEQ, JavaTokenType.XOREQ, JavaTokenType.OREQ,
+    JavaTokenType.LTLTEQ, JavaTokenType.GTGTEQ
+  );
   
   public AutoFormatTypedHandler(@Nullable TypedActionHandler originalHandler) {
     super(originalHandler);
@@ -96,32 +109,58 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     
     int caretOffset = editor.getCaretModel().getOffset();
     CharSequence text = editor.getDocument().getImmutableCharSequence();
+    
+    HighlighterIterator lexerIterator = createLexerIterator(editor, caretOffset);
+    if (lexerIterator == null || lexerIterator.getTokenType() == JavaTokenType.STRING_LITERAL) {
+      return false;
+    }
 
     boolean insertBeforeEq = charTyped == '=' && isInsertSpaceBeforeEq(caretOffset, text);
-    boolean insertAfterEq = caretOffset > 0 && caretOffset - 1 < text.length()
-                            && text.charAt(caretOffset - 1) == '=' 
-                            && isInsertSpaceBeforeNewChar(charTyped); 
-      
-    return (insertBeforeEq || insertAfterEq) && !isInsideStringLiteral(editor);
-  }
-
-  private static boolean isInsertSpaceBeforeNewChar(char charTyped) {
-    return charTyped != '=' && charTyped != ' ';
-  }
-
-  private static boolean isInsideStringLiteral(Editor editor) {
-    if (editor.getDocument().getTextLength() == 0) return false;
+    boolean insertAfterEq = caretOffset > 0 && caretOffset - 1 < text.length() && text.charAt(caretOffset - 1) == '=' 
+                            && isAssignmentOperator(lexerIterator) && isInsertSpaceAfterEq(charTyped); 
     
-    if (editor instanceof EditorEx) {
-      int caretOffset = editor.getCaretModel().getOffset();
-      HighlighterIterator lexer = ((EditorEx)editor).getHighlighter().createIterator(caretOffset);
-      IElementType token = lexer.getTokenType();
-      if ("STRING_LITERAL".equals(token.toString())) {
+    return (insertBeforeEq || insertAfterEq);
+  }
+
+  private static boolean isAssignmentOperator(HighlighterIterator iterator) {
+    IElementType type = iterator.getTokenType();
+    if (type == TokenType.WHITE_SPACE) {
+      iterator.retreat();
+      type = iterator.getTokenType();
+    }
+
+    if (COMPLEX_ASSIGNMENTS.indexOf(type) >= 0) {
+      return true;
+    }
+
+    if (type == JavaTokenType.EQ) {
+      iterator.retreat();
+      type = iterator.getTokenType();
+      if (type == JavaTokenType.GT) {
+        iterator.retreat();
+        type = iterator.getTokenType();
+        if (type == JavaTokenType.GT) {
+          return true;
+        }
+      }
+      
+      else if (type == TokenType.WHITE_SPACE || type == JavaTokenType.IDENTIFIER) {
         return true;
       }
     }
     
     return false;
+  }
+
+  private static boolean isInsertSpaceAfterEq(char charTyped) {
+    return charTyped != '=' && charTyped != ' ';
+  }
+
+  private static HighlighterIterator createLexerIterator(Editor editor, int offset) {
+    if (editor.getDocument().getTextLength() == 0) return null;
+    return editor instanceof EditorEx 
+           ? ((EditorEx)editor).getHighlighter().createIterator(offset) 
+           : null;
   }
 
   private void executeOriginalHandler(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
