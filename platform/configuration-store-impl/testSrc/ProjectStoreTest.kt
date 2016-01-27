@@ -67,6 +67,7 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
 
 internal class ProjectStoreTest {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 
