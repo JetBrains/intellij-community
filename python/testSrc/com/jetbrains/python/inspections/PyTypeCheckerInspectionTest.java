@@ -275,4 +275,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testClassNew() {
     doTest();
   }
+
+  // PY-18275
+  public void testStrFormat() {
+    doTest();
+  }
 }
