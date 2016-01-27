@@ -156,8 +156,8 @@ public class CombinePropertiesFilesAction extends AnAction {
       for (PropertiesFile propertiesFile : myPropertiesFiles) {
         final String name = propertiesFile.getVirtualFile().getName();
         if (name.startsWith(baseNameCandidate) &&
-            name.length() == baseNameCandidate.length() ||
-            PropertiesUtil.BASE_NAME_BORDER_CHAR.contains(name.charAt(baseNameCandidate.length()))) {
+            (name.length() == baseNameCandidate.length() ||
+             PropertiesUtil.BASE_NAME_BORDER_CHAR.contains(name.charAt(baseNameCandidate.length())))) {
           continue;
         }
         return new BaseNameError(name);
