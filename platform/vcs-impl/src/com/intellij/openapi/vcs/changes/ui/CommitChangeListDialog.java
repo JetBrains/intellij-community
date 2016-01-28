@@ -303,7 +303,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                                               handler.includedChangesChanged();
                                                                             }
                                                                           }
-                                                                        }) {
+                                                                        }, myShowVcsCommit) {
         @Override
         protected void afterDiffRefresh() {
           myBrowser.rebuildList();

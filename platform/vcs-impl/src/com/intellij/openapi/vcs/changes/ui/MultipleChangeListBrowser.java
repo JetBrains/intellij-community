@@ -58,6 +58,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   @NotNull private final EventDispatcher<SelectedListChangeListener> myDispatcher =
     EventDispatcher.create(SelectedListChangeListener.class);
   @Nullable private final Runnable myRebuildListListener;
+  private final boolean myShowUnversioned;
   private Collection<Change> myAllChanges;
   private boolean myInRebuildList;
 
@@ -69,10 +70,12 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
                                    boolean capableOfExcludingChanges,
                                    boolean highlightProblems,
                                    @Nullable Runnable rebuildListListener,
-                                   @Nullable Runnable inclusionListener) {
+                                   @Nullable Runnable inclusionListener,
+                                   boolean showUnversioned) {
     super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, inclusionListener,
           ChangesBrowser.MyUseCase.LOCAL_CHANGES, null, Object.class);
     myRebuildListListener = rebuildListListener;
+    myShowUnversioned = showUnversioned;
 
     myChangeListChooser = new ChangeListChooser(changeLists);
     myHeaderPanel.add(myChangeListChooser, BorderLayout.EAST);
@@ -177,12 +180,14 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(myProject);
     TreeModelBuilder builder = new TreeModelBuilder(myProject, showFlatten);
 
-    return builder
-      .setChanges(findChanges(objects), changeNodeDecorator)
+    builder.setChanges(findChanges(objects), changeNodeDecorator);
+    if (myShowUnversioned) {
       // TODO: Currently we do not support ChangesBrowserManyUnversionedFilesNode here - and so explicitly set "0" to
       // TODO: 2nd and 3rd values.
-      .setUnversioned(Trinity.create(manager.getUnversionedFiles(), 0, 0))
-      .build();
+      builder.setUnversioned(Trinity.create(manager.getUnversionedFiles(), 0, 0));
+    }
+
+    return builder.build();
   }
 
   @NotNull
@@ -191,7 +196,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     List<Object> result = ContainerUtil.newArrayList();
 
     result.addAll(node.getAllChangesUnder());
-    if (isUnderUnversioned(node)) {
+    if (myShowUnversioned && isUnderUnversioned(node)) {
       result.addAll(node.getAllFilesUnder());
     }
 
@@ -204,7 +209,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     Object result = null;
     Object userObject = node.getUserObject();
 
-    if (userObject instanceof Change || isUnderUnversioned(node) && userObject instanceof VirtualFile) {
+    if (userObject instanceof Change || myShowUnversioned && isUnderUnversioned(node) && userObject instanceof VirtualFile) {
       result = userObject;
     }
 
