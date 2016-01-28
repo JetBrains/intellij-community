@@ -29,7 +29,7 @@ import java.util.List;
 @State(
   name = "DefaultColorSchemesManager",
   defaultStateAsResource = true,
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
+  storages = @Storage(file = "other.xml", roamingType = RoamingType.DISABLED)
 )
 public class DefaultColorSchemesManager implements PersistentStateComponent<Element> {
   private final List<DefaultColorsScheme> mySchemes;

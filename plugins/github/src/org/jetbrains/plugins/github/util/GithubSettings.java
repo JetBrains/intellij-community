@@ -19,7 +19,10 @@ import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
@@ -35,8 +38,8 @@ import static org.jetbrains.plugins.github.util.GithubAuthData.AuthType;
 @SuppressWarnings("MethodMayBeStatic")
 @State(
   name = "GithubSettings",
-  storages = {@Storage(
-    file = StoragePathMacros.APP_CONFIG + "/github_settings.xml")})
+  storages = {@Storage(file = "github_settings.xml")}
+)
 public class GithubSettings implements PersistentStateComponent<GithubSettings.State> {
   private static final Logger LOG = GithubUtil.LOG;
   private static final String GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY";

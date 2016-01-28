@@ -16,7 +16,10 @@
 package org.jetbrains.plugins.gradle.settings;
 
 import com.google.common.base.Objects;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 @State(
   name = "GradleSystemRunningSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/gradle.run.settings.xml")
+    @Storage(file = "gradle.run.settings.xml")
   }
 )
 public class GradleSystemRunningSettings implements PersistentStateComponent<GradleSystemRunningSettings.MyState> {

@@ -15,7 +15,10 @@
  */
 package com.intellij.usages;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NonNls;
@@ -25,8 +28,8 @@ import java.io.File;
 @State(
   name = "UsageViewSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/usageView.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+    @Storage(file = "usageView.xml"),
+    @Storage(file = "other.xml", deprecated = true)
   }
 )
 public class UsageViewSettings implements PersistentStateComponent<UsageViewSettings> {

@@ -42,6 +42,8 @@
   <depends>JUnit</depends>
   <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
 
+  <resource-bundle>i18n.GradleBundle</resource-bundle>
+
   <extensionPoints>
     <extensionPoint name="projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"/>
     <extensionPoint name="taskManager" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension"/>

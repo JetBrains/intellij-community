@@ -62,7 +62,7 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
+public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.impl.VcsHistoryDialog");
 
   private static final VcsRevisionNumber LOCAL_REVISION_NUMBER = new VcsRevisionNumber() {
@@ -143,16 +143,16 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
   private boolean myIsDuringUpdate = false;
   private boolean myIsDisposed = false;
 
-  public VcsHistoryDialog(@NotNull Project project,
-                          @NotNull VirtualFile file,
-                          @NotNull Editor editor,
-                          @NotNull VcsHistoryProvider vcsHistoryProvider,
-                          @NotNull VcsHistorySession session,
-                          @NotNull AbstractVcs vcs,
-                          int selectionStart,
-                          int selectionEnd,
-                          @NotNull String title,
-                          @NotNull CachedRevisionsContents cachedContents) {
+  public VcsSelectionHistoryDialog(@NotNull Project project,
+                                   @NotNull VirtualFile file,
+                                   @NotNull Editor editor,
+                                   @NotNull VcsHistoryProvider vcsHistoryProvider,
+                                   @NotNull VcsHistorySession session,
+                                   @NotNull AbstractVcs vcs,
+                                   int selectionStart,
+                                   int selectionEnd,
+                                   @NotNull String title,
+                                   @NotNull CachedRevisionsContents cachedContents) {
     super(project);
     myProject = project;
     myFile = file;
@@ -230,8 +230,8 @@ public class VcsHistoryDialog extends FrameWrapper implements DataProvider {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (!VcsHistoryDialog.this.getFrame().isShowing()) return;
-        PopupUtil.showBalloonForComponent(VcsHistoryDialog.this.getFrame(), canNoLoadMessage(e), MessageType.ERROR, true, myProject);
+        if (!VcsSelectionHistoryDialog.this.getFrame().isShowing()) return;
+        PopupUtil.showBalloonForComponent(VcsSelectionHistoryDialog.this.getFrame(), canNoLoadMessage(e), MessageType.ERROR, true, myProject);
       }
     });
   }

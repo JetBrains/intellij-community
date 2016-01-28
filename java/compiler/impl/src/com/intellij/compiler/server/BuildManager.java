@@ -42,6 +42,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompilationStatusListener;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
@@ -1504,22 +1505,50 @@ public class BuildManager implements Disposable {
       });
       conn.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
         private final Set<String> myRootsToRefresh = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+
+        @Override
+        public void automakeCompilationFinished(int errors, int warnings, CompileContext compileContext) {
+          if (!compileContext.getProgressIndicator().isCanceled()) {
+            refreshSources(compileContext);
+          }
+        }
+
         @Override
         public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-          final String[] roots;
+          refreshSources(compileContext);
+        }
+
+        private void refreshSources(CompileContext compileContext) {
+          if (project.isDisposed()) {
+            return;
+          }
+          final Set<String> candidates = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
           synchronized (myRootsToRefresh) {
-            roots = ArrayUtil.toStringArray(myRootsToRefresh);
+            candidates.addAll(myRootsToRefresh);
             myRootsToRefresh.clear();
           }
-          if (roots.length != 0) {
+          if (compileContext.isAnnotationProcessorsEnabled()) {
+            // annotation processors may have re-generated code
+            final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
+            for (Module module : compileContext.getCompileScope().getAffectedModules()) {
+              if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
+                final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+                if (path != null) {
+                  candidates.add(path);
+                }
+              }
+            }
+          }
+
+          if (!candidates.isEmpty()) {
             ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
               @Override
               public void run() {
                 if (project.isDisposed()) {
                   return;
                 }
-                final List<File> rootFiles = new ArrayList<File>(roots.length);
-                for (String root : roots) {
+                final List<File> rootFiles = new ArrayList<File>(candidates.size());
+                for (String root : candidates) {
                   rootFiles.add(new File(root));
                 }
                 // this will ensure that we'll be able to obtain VirtualFile for existing roots
