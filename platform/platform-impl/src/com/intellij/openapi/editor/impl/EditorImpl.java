@@ -4566,12 +4566,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             if (caretShift != 0) {
               if (myMousePressedEvent != null) {
                 if (mySettings.isDndEnabled()) {
-                  if (myDraggedRange == null) {
-                    boolean isCopy = UIUtil.isControlKeyDown(e) || isViewer() || !getDocument().isWritable();
-                    mySavedCaretOffsetForDNDUndoHack = oldCaretOffset;
-                    getContentComponent().getTransferHandler()
-                      .exportAsDrag(getContentComponent(), e, isCopy ? TransferHandler.COPY : TransferHandler.MOVE);
-                  }
+                  boolean isCopy = UIUtil.isControlKeyDown(e) || isViewer() || !getDocument().isWritable();
+                  mySavedCaretOffsetForDNDUndoHack = oldCaretOffset;
+                  getContentComponent().getTransferHandler().exportAsDrag(getContentComponent(), e, isCopy ? TransferHandler.COPY 
+                                                                                                           : TransferHandler.MOVE);
                 }
                 else {
                   selectionModel.removeSelection();
@@ -6247,6 +6245,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class MyMouseMotionListener implements MouseMotionListener {
     @Override
     public void mouseDragged(@NotNull MouseEvent e) {
+      if (myDraggedRange != null) return; // on Mac we receive events even if drag-n-drop is in progress
       validateMousePointer(e);
       runMouseDraggedCommand(e);
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
