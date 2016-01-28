@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -173,21 +174,41 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   protected DefaultTreeModel buildTreeModel(@NotNull List<Object> objects,
                                             @Nullable ChangeNodeDecorator changeNodeDecorator,
                                             boolean showFlatten) {
+    ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(myProject);
     TreeModelBuilder builder = new TreeModelBuilder(myProject, showFlatten);
-    return builder.buildModel(findChanges(objects), changeNodeDecorator);
+
+    return builder
+      .setChanges(findChanges(objects), changeNodeDecorator)
+      // TODO: Currently we do not support ChangesBrowserManyUnversionedFilesNode here - and so explicitly set "0" to
+      // TODO: 2nd and 3rd values.
+      .setUnversioned(Trinity.create(manager.getUnversionedFiles(), 0, 0))
+      .build();
   }
 
   @NotNull
   @Override
   protected List<Object> getSelectedObjects(@NotNull ChangesBrowserNode<Object> node) {
-    //noinspection unchecked
-    return (List)node.getAllChangesUnder();
+    List<Object> result = ContainerUtil.newArrayList();
+
+    result.addAll(node.getAllChangesUnder());
+    if (isUnderUnversioned(node)) {
+      result.addAll(node.getAllFilesUnder());
+    }
+
+    return result;
   }
 
   @Nullable
   @Override
   protected Object getLeadSelectedObject(@NotNull ChangesBrowserNode node) {
-    return ObjectUtils.tryCast(node.getUserObject(), Change.class);
+    Object result = null;
+    Object userObject = node.getUserObject();
+
+    if (userObject instanceof Change || isUnderUnversioned(node) && userObject instanceof VirtualFile) {
+      result = userObject;
+    }
+
+    return result;
   }
 
   @NotNull

@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
 import java.util.*;
@@ -444,5 +445,9 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   @NotNull
   protected static <T> List<Change> findChanges(@NotNull Collection<T> items) {
     return ContainerUtil.findAll(items, Change.class);
+  }
+
+  static boolean isUnderUnversioned(@NotNull ChangesBrowserNode node) {
+    return ChangesListView.isUnderTag(new TreePath(node.getPath()), ChangesBrowserNode.UNVERSIONED_FILES_TAG);
   }
 }

@@ -62,8 +62,13 @@ public class TreeModelBuilder {
 
   @NotNull
   public DefaultTreeModel buildModel(@NotNull List<Change> changes, @Nullable final ChangeNodeDecorator changeNodeDecorator) {
+    return setChanges(changes, changeNodeDecorator).build();
+  }
+
+  @NotNull
+  public TreeModelBuilder setChanges(@NotNull List<Change> changes, @Nullable final ChangeNodeDecorator changeNodeDecorator) {
     Collections.sort(changes, MyChangePathLengthComparator.getInstance());
-    
+
     final ChangesGroupingPolicy policy = createGroupingPolicy();
     for (final Change change : changes) {
       insertChangeNode(change, policy, root, new Computable<ChangesBrowserNode>() {
@@ -74,7 +79,25 @@ public class TreeModelBuilder {
       });
     }
 
-    return build();
+    return this;
+  }
+
+  @NotNull
+  public TreeModelBuilder setUnversioned(@NotNull Trinity<List<VirtualFile>, Integer, Integer> unversioned) {
+    boolean manyUnversioned = unversioned.getSecond() > unversioned.getFirst().size();
+    if (manyUnversioned || !unversioned.getFirst().isEmpty()) {
+      resetGrouping();
+
+      if (manyUnversioned) {
+        ChangesBrowserNode node = new ChangesBrowserManyUnversionedFilesNode(myProject, unversioned.getSecond(), unversioned.getThird());
+        model.insertNodeInto(node, root, root.getChildCount());
+      }
+      else {
+        buildVirtualFiles(unversioned.getFirst(), ChangesBrowserNode.UNVERSIONED_FILES_TAG);
+      }
+    }
+
+    return this;
   }
 
   @Nullable
@@ -139,17 +162,7 @@ public class TreeModelBuilder {
       resetGrouping();
       buildVirtualFiles(modifiedWithoutEditing, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
     }
-    final boolean manyUnversioned = unversionedFiles.getSecond() > unversionedFiles.getFirst().size();
-    if (manyUnversioned || ! unversionedFiles.getFirst().isEmpty()) {
-      resetGrouping();
-
-      if (manyUnversioned) {
-        final ChangesBrowserNode baseNode = new ChangesBrowserManyUnversionedFilesNode(myProject, unversionedFiles.getSecond(), unversionedFiles.getThird());
-        model.insertNodeInto(baseNode, root, root.getChildCount());
-      } else {
-        buildVirtualFiles(unversionedFiles.getFirst(), ChangesBrowserNode.UNVERSIONED_FILES_TAG);
-      }
-    }
+    setUnversioned(unversionedFiles);
     if (switchedRoots != null && ! switchedRoots.isEmpty()) {
       resetGrouping();
       buildSwitchedRoots(switchedRoots);
