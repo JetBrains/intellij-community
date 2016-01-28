@@ -102,30 +102,31 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     getTree().setRootVisible(showProjectNode);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     getTree().setCellRenderer(new DefaultTreeCellRenderer() {
+      private SimpleColoredComponent myComponent = new SimpleColoredComponent();
       @Override
-      public Component getTreeCellRendererComponent(JTree tree, 
-                                                    Object value, 
-                                                    boolean sel, 
+      public Component getTreeCellRendererComponent(JTree tree,
+                                                    Object value,
+                                                    boolean sel,
                                                     boolean expanded,
-                                                    boolean leaf, 
-                                                    int row, 
+                                                    boolean leaf,
+                                                    int row,
                                                     boolean hasFocus) {
-        SimpleColoredComponent c = new SimpleColoredComponent();
+        myComponent.clear();
         if (value instanceof ProjectRootNode) {
-          c.append(getProjectNodeText());
-          c.setIcon(AllIcons.Nodes.Project);
+          myComponent.append(getProjectNodeText());
+          myComponent.setIcon(AllIcons.Nodes.Project);
         }
         else {
           FileNode fileNode = (FileNode)value;
           VirtualFile file = fileNode.getObject();
-          c.append(fileNode.getParent() instanceof FileNode ? file.getName() : file.getPresentableUrl());
-          Icon icon = file.isDirectory() 
+          myComponent.append(fileNode.getParent() instanceof FileNode ? file.getName() : file.getPresentableUrl());
+          Icon icon = file.isDirectory()
                       ? fileIndex.isExcluded(file) ? AllIcons.Modules.ExcludeRoot
                                                    : PlatformIcons.DIRECTORY_CLOSED_ICON : IconUtil.getIcon(file, 0, null);
-          c.setIcon(icon);
+          myComponent.setIcon(icon);
         }
-        SpeedSearchUtil.applySpeedSearchHighlighting(AbstractFileTreeTable.this, c, false, selected);
-        return c;
+        SpeedSearchUtil.applySpeedSearchHighlighting(AbstractFileTreeTable.this, myComponent, false, selected);
+        return myComponent;
       }
     });
     getTableHeader().setReorderingAllowed(false);
