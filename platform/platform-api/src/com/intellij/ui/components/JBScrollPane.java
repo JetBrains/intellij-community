@@ -40,7 +40,9 @@ import java.awt.image.*;
 
 public class JBScrollPane extends JScrollPane {
   public static final RegionPainter<Float> TRACK_PAINTER = new AlphaPainter(.0f, .1f);
-  public static final RegionPainter<Float> THUMB_PAINTER = new SubtractThumbPainter(.20f, .15f, Gray.x91);
+  public static final RegionPainter<Float> THUMB_PAINTER = SystemInfo.isWindows // others do not support custom composites
+                                                           ? new SubtractThumbPainter(.20f, .15f, Gray.x91)
+                                                           : new ThumbPainter(.35f, .25f, Gray.x6E);
   public static final RegionPainter<Float> THUMB_DARK_PAINTER = new ThumbPainter(.35f, .25f, Gray.x94);
 
   private int myViewportBorderWidth = -1;
@@ -767,9 +769,6 @@ public class JBScrollPane extends JScrollPane {
 
     @Override
     Composite newComposite(float alpha) {
-      // Some Linux systems do not have CompositeManager installed
-      // Seems Mac is also affected because of fallback
-      if (!SystemInfo.isWindows) return super.newComposite(alpha);
       return new SubtractComposite(alpha);
     }
   }
