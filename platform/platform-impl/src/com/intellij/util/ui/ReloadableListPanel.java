@@ -15,24 +15,23 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public abstract class ReloadableComboBoxPanel<T> extends ReloadablePanel<T> {
-  protected JComboBox myComboBox;
-  private JPanel myActionPanel;
+public abstract class ReloadableListPanel<T> extends ReloadablePanel<T> {
+  protected JList myList;
   private JPanel myMainPanel;
+  private JPanel myActionPanel;
 
   @SuppressWarnings("unchecked")
   public T getSelectedValue() {
-    return (T)myComboBox.getSelectedItem();
+    return (T)myList.getSelectedValue();
   }
 
-  @NotNull
-  protected JComboBox createValuesComboBox() {
-    return new ComboBox();
+  protected void createList() {
+    myList = new JBList();
   }
 
   @NotNull
@@ -42,7 +41,7 @@ public abstract class ReloadableComboBoxPanel<T> extends ReloadablePanel<T> {
   }
 
   private void createUIComponents() {
-    myComboBox = createValuesComboBox();
     myActionPanel = getActionPanel();
+    createList();
   }
 }
