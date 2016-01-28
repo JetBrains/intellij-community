@@ -15,7 +15,10 @@
  */
 package com.intellij.usages.impl;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 /**
@@ -24,9 +27,9 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 @State(
   name = "ImportFilteringUsageViewSetting",
   storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+    @Storage(file = "usageView.xml"),
+    @Storage(file = "other.xml", deprecated = true)
+  }
 )
 public class ImportFilteringUsageViewSetting implements PersistentStateComponent<ImportFilteringUsageViewSetting> {
   public static ImportFilteringUsageViewSetting getInstance() {
