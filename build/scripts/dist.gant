@@ -70,7 +70,9 @@ def loadProductProperties(String home, String buildNumber) {
     throw new BuildException("No product specific properties file found at: " + productPropertiesPath)
   }
   setProperty("productProperties", includeFile(productPropertiesPath).getProperties(home, buildNumber))
-  productProperties.ideJvmArgs = productProperties.ideJvmArgs + " -Didea.jre.check=true"
+  productProperties.ideJvmArgs = productProperties.ideJvmArgs != null ?
+                                 productProperties.ideJvmArgs + " -Didea.jre.check=true" :
+                                 "-Didea.jre.check=true"
 }
 
 target(compile: "Compile project") {
