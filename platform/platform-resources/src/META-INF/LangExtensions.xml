@@ -132,8 +132,7 @@
     <applicationService serviceInterface="com.intellij.ui.mac.MacMessagesEmulation"
                         serviceImplementation="com.intellij.ui.messages.JBMacMessages"/>
 
-    <applicationService serviceInterface="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"
-                        serviceImplementation="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"/>
+    <applicationService serviceImplementation="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"/>
 
     <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"
                         serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"/>
