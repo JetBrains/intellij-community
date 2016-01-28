@@ -328,10 +328,14 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Override
   public boolean isScript() {
-    final StubElement stub = getStub();
-    if (stub instanceof GrFileStub) {
-      return ((GrFileStub)stub).isScript();
-    }
+    // This code seems to be an optimization.
+    // We are seeing StackOverflowExceptions where the repeating frames include these lines.
+    // Remove the possible endless loop by eliminating this optimization for groovy files.
+    //
+    // final StubElement stub = getStub();
+    // if (stub instanceof GrFileStub) {
+    //   return ((GrFileStub)stub).isScript();
+    // }
 
     Boolean isScript = myScript;
     if (isScript == null) {
