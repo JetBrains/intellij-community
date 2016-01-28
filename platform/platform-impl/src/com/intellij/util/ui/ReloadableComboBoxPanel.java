@@ -22,7 +22,7 @@ import javax.swing.*;
 
 public abstract class ReloadableComboBoxPanel<T> extends ReloadablePanel<T> {
   protected JComboBox myComboBox;
-  private JPanel myActionPanel;
+  protected JPanel myActionPanel;
   private JPanel myMainPanel;
 
   @SuppressWarnings("unchecked")
