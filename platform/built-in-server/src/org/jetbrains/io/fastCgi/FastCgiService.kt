@@ -41,7 +41,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
       it.pipeline().addLast("fastCgiDecoder", FastCgiDecoder(errorOutputConsumer, this@FastCgiService))
       it.pipeline().addLast("exceptionHandler", ChannelExceptionHandler.getInstance())
 
-      it.closeFuture().addListener {
+      it.closeFuture().addChannelListener {
         requestIdCounter.set(0)
         if (!requests.isEmpty) {
           val waitingClients = requests.elements().toList()

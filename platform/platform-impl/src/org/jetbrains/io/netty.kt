@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ fun oioClientBootstrap(): Bootstrap {
   return bootstrap
 }
 
-inline fun ChannelFuture.addListener(crossinline listener: (future: ChannelFuture) -> Unit) {
+inline fun ChannelFuture.addChannelListener(crossinline listener: (future: ChannelFuture) -> Unit) {
   addListener(GenericFutureListener<io.netty.channel.ChannelFuture> { future -> listener(future) })
 }
 
