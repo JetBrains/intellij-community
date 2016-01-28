@@ -471,6 +471,30 @@ new FooT().whoAmI()
 
   public void "test evaluation in java context"() {
     def starterFile = myFixture.addFileToProject 'Gr.groovy', '''
+new Main().foo()
+'''
+    def file = myFixture.addFileToProject 'Main.java', '''
+import java.util.Arrays;
+import java.util.List;
+
+public class Main {
+  void foo() {
+     List<Integer> a = Arrays.asList(1,2,3,4,5,6,7,8,9,10);
+     int x = 5; // 7
+  }
+}
+'''
+    make()
+
+    addBreakpoint file.virtualFile, 7
+    runDebugger starterFile, {
+      waitForBreakpoint()
+      eval 'a.find {it == 4}', '4', GroovyFileType.GROOVY_FILE_TYPE
+    }
+  }
+
+  public void "test evaluation in static java context"() {
+    def starterFile = myFixture.addFileToProject 'Gr.groovy', '''
 Main.test()
 '''
     def file = myFixture.addFileToProject 'Main.java', '''

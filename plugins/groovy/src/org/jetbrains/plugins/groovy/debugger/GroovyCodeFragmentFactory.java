@@ -93,7 +93,6 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     boolean isStatic = isStaticContext(context);
     StringBuilder javaText = new StringBuilder();
 
-    javaText.append("groovy.lang.MetaClass |mc;\n");
     javaText.append("java.lang.Class |clazz;\n");
 
     if (!isStatic) {
@@ -136,12 +135,10 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
 
     if (!isStatic) {
       javaText.append("|clazz = |thiz0.getClass();\n");
-      javaText.append("|mc = |thiz0.getMetaClass();\n");
     }
     else {
       assert contextClass != null;
       javaText.append("|clazz = java.lang.Class.forName(\"").append(ClassUtil.getJVMClassName(contextClass)).append("\");\n");
-      javaText.append("|mc = groovy.lang.GroovySystem.getMetaClassRegistry().getMetaClass(|clazz);\n");
     }
 
     javaText.append("final java.lang.ClassLoader |parentLoader = |clazz.getClassLoader();\n" +
