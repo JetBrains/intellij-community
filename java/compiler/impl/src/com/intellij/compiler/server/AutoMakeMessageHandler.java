@@ -18,21 +18,21 @@ package com.intellij.compiler.server;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.ProblemsView;
 import com.intellij.notification.Notification;
-import com.intellij.openapi.compiler.CompilationStatusListener;
-import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.compiler.CompilerTopics;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -46,12 +46,14 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   private final Project myProject;
   private final WolfTheProblemSolver myWolf;
   private volatile boolean myUnprocessedFSChangesDetected = false;
+  private final AutomakeCompileContext myContext;
 
   public AutoMakeMessageHandler(Project project) {
     super(project);
     myProject = project;
     myBuildStatus = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.SUCCESS;
     myWolf = WolfTheProblemSolver.getInstance(project);
+    myContext = new AutomakeCompileContext(project);
   }
 
   public boolean unprocessedFSChangesDetected() {
@@ -69,9 +71,27 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
     }
     switch (event.getEventType()) {
       case BUILD_COMPLETED:
+        myContext.getProgressIndicator().stop();
         if (event.hasCompletionStatus()) {
-          myBuildStatus = event.getCompletionStatus();
+          final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status status = event.getCompletionStatus();
+          myBuildStatus = status;
+          if (status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED) {
+            myContext.getProgressIndicator().cancel();
+          }
         }
+        final int errors = myContext.getMessageCount(CompilerMessageCategory.ERROR);
+        final int warnings = myContext.getMessageCount(CompilerMessageCategory.WARNING);
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (myProject.isDisposed()) {
+              return;
+            }
+            final CompilationStatusListener publisher = myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
+            publisher.automakeCompilationFinished(errors, warnings, myContext);
+          }
+        });
         return;
 
       case FILES_GENERATED:
@@ -112,14 +132,29 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
         view.setProgress(message.getText());
       }
     }
-    else if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR) {
-      informWolf(myProject, message);
+    else {
+      final CompilerMessageCategory category = convertToCategory(kind);
+      if (category != null) { // only process supported kinds of messages
+        final String sourceFilePath = message.hasSourceFilePath() ? message.getSourceFilePath() : null;
+        final String url = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(sourceFilePath)) : null;
+        final long line = message.hasLine() ? message.getLine() : -1;
+        final long column = message.hasColumn() ? message.getColumn() : -1;
+        final CompilerMessage msg = myContext.createAndAddMessage(category, message.getText(), url, (int)line, (int)column, null);
+        if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR) {
+          informWolf(myProject, message);
+          ProblemsView.SERVICE.getInstance(myProject).addMessage(msg, sessionId);
+        }
+      }
+    }
+  }
 
-      final String sourceFilePath = message.hasSourceFilePath() ? message.getSourceFilePath() : null;
-      final VirtualFile vFile = sourceFilePath != null? LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(sourceFilePath)) : null;
-      final long line = message.hasLine() ? message.getLine() : -1;
-      final long column = message.hasColumn() ? message.getColumn() : -1;
-      ProblemsView.SERVICE.getInstance(myProject).addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.ERROR, message.getText(), vFile, (int)line, (int)column, null), sessionId);
+  @Nullable
+  private static CompilerMessageCategory convertToCategory(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind) {
+    switch(kind) {
+      case ERROR: return CompilerMessageCategory.ERROR;
+      case INFO: return CompilerMessageCategory.INFORMATION;
+      case WARNING: return CompilerMessageCategory.WARNING;
+      default: return null;
     }
   }
 
