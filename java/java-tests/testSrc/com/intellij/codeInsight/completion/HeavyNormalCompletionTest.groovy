@@ -3,6 +3,7 @@
  * Use is subject to license terms.
  */
 package com.intellij.codeInsight.completion
+
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
 import com.intellij.codeInsight.lookup.LookupElement
@@ -13,10 +14,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.SourceFolder
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
@@ -25,6 +23,8 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -215,6 +215,29 @@ class Foo {{ Books.Test.v<caret> }}
 class Foo {{ Books.Test.v1<caret> }}
 '''
 
+  }
+
+  public void "test different jdks in different modules"() {
+    (StatisticsManager.instance as StatisticsManagerImpl).enableStatistics(testRootDisposable)
+
+    def anotherModule = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'another', myFixture.tempDirFixture.findOrCreateDir('another'))
+    ModuleRootModificationUtil.setModuleSdk(anotherModule, IdeaTestUtil.mockJdk17)
+    ModuleRootModificationUtil.setModuleSdk(myFixture.module, IdeaTestUtil.mockJdk14)
+    ModuleRootModificationUtil.addDependency(myFixture.module, anotherModule)
+
+    myFixture.addFileToProject 'another/Decl.java', '''public class Decl {
+public static void method(Runnable r) {}
+}
+'''
+    myFixture.configureByText 'a.java', 'class Usage {{ Decl.method(new <caret>); }}'
+    myFixture.complete(CompletionType.SMART)
+    myFixture.assertPreferredCompletionItems 0, 'Runnable', 'Thread'
+    myFixture.type('\n')
+
+    myFixture.configureByText 'b.java', 'class Usage {{ Decl.method(new <caret>); }}'
+    myFixture.complete(CompletionType.SMART)
+    myFixture.assertPreferredCompletionItems 0, 'Runnable', 'Thread'
+    myFixture.type('\n')
   }
 
 }
