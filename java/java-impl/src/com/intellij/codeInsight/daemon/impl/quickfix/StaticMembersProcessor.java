@@ -159,6 +159,9 @@ abstract class StaticMembersProcessor<T extends PsiMember> implements Processor<
                               List<T> applicableList) {
     final Boolean alreadyMentioned = myPossibleClasses.get(containingClass);
     if (alreadyMentioned == Boolean.TRUE) return;
+    if (containingClass.getQualifiedName() == null) {
+      return;
+    }
     if (alreadyMentioned == null) {
       if (!members.isEmpty()) {
         list.add(members.iterator().next());
