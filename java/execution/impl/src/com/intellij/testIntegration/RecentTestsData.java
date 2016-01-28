@@ -28,12 +28,26 @@ import static com.intellij.testIntegration.TestInfo.select;
 import static com.intellij.testIntegration.TestInfo.selectNot;
 
 public class RecentTestsData {
-  private static Comparator<SuiteInfo> TEST_BY_PATH_COMPARATOR = new Comparator<SuiteInfo>() {
+  private static Comparator<TestInfo> TEST_BY_PATH_COMPARATOR = new Comparator<TestInfo>() {
     @Override
-    public int compare(SuiteInfo o1, SuiteInfo o2) {
+    public int compare(TestInfo o1, TestInfo o2) {
       String path1 = VirtualFileManager.extractPath(o1.getUrl());
       String path2 = VirtualFileManager.extractPath(o2.getUrl());
       return path1.compareTo(path2);
+    }
+  };
+  
+  private static Comparator<SuiteInfo> SUITE_BY_RECENT_COMPARATOR = new Comparator<SuiteInfo>() {
+    @Override
+    public int compare(SuiteInfo o1, SuiteInfo o2) {
+      return -o1.getMostRecentRunDate().compareTo(o2.getMostRecentRunDate());
+    }
+  };
+
+  private static Comparator<TestInfo> TEST_BY_RECENT_COMPARATOR = new Comparator<TestInfo>() {
+    @Override
+    public int compare(TestInfo o1, TestInfo o2) {
+      return -o1.getRunDate().compareTo(o2.getRunDate());
     }
   };
 
@@ -82,7 +96,11 @@ public class RecentTestsData {
 
     List<SuiteInfo> suites = ContainerUtil.newArrayList(mySuites.values());
     Collections.sort(suites, TEST_BY_PATH_COMPARATOR);
-
+    Collections.sort(myTestsWithoutSuites, TEST_BY_PATH_COMPARATOR);
+    
+    Collections.sort(suites, SUITE_BY_RECENT_COMPARATOR);
+    Collections.sort(myTestsWithoutSuites, TEST_BY_RECENT_COMPARATOR);
+    
     List<String> result = ContainerUtil.newArrayList();
 
     fillWithSuites(result, select(suites, ERROR_INDEX));
@@ -121,6 +139,7 @@ public class RecentTestsData {
     }
     else {
       result.add(suite.getUrl());
+      Collections.sort(sameMagnitudeTests, TEST_BY_RECENT_COMPARATOR);
       for (TestInfo test : sameMagnitudeTests) {
         result.add(test.getUrl());
       }
@@ -159,16 +178,13 @@ class SuiteInfo extends TestInfo {
   }
   
   public Date getMostRecentRunDate() {
-    if (tests.isEmpty()) return getRunDate();
-
-    Date mostRecent = tests.iterator().next().getRunDate();
+    Date mostRecent = getRunDate();
     for (TestInfo test : tests) {
       Date testDate = test.getRunDate();
       if (testDate.compareTo(mostRecent) > 0) {
         mostRecent = testDate;
       }
     }
-
     return mostRecent;
   }
   
