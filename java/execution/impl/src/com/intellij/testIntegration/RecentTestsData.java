@@ -46,13 +46,13 @@ public class RecentTestsData {
     myRunner = runner;
   }
 
-  public void addTest(String url, TestStateInfo.Magnitude magnitude) {
+  public void addTest(String url, TestStateInfo.Magnitude magnitude, Date runDate) {
     if (myRunner.isSuite(url)) {
-      mySuites.put(url, new SuiteInfo(url, magnitude));
+      mySuites.put(url, new SuiteInfo(url, magnitude, runDate));
       return;
     }
 
-    TestInfo testInfo = new TestInfo(url, magnitude);
+    TestInfo testInfo = new TestInfo(url, magnitude, runDate);
 
     SuiteInfo suite = getSuite(url);
     if (suite != null) {
@@ -153,9 +153,23 @@ class SuiteInfo extends TestInfo {
   private final String mySuiteName;
   private Set<TestInfo> tests = ContainerUtil.newHashSet();
 
-  public SuiteInfo(String url, TestStateInfo.Magnitude magnitude) {
-    super(url, magnitude);
+  public SuiteInfo(String url, TestStateInfo.Magnitude magnitude, Date runDate) {
+    super(url, magnitude, runDate);
     mySuiteName = VirtualFileManager.extractPath(url);
+  }
+  
+  public Date getMostRecentRunDate() {
+    if (tests.isEmpty()) return getRunDate();
+
+    Date mostRecent = tests.iterator().next().getRunDate();
+    for (TestInfo test : tests) {
+      Date testDate = test.getRunDate();
+      if (testDate.compareTo(mostRecent) > 0) {
+        mostRecent = testDate;
+      }
+    }
+
+    return mostRecent;
   }
   
   public String getSuiteName() {
@@ -176,12 +190,18 @@ class SuiteInfo extends TestInfo {
 }
 
 class TestInfo {
-  private String url;
-  private TestStateInfo.Magnitude magnitude;
+  private final Date runDate;
+  private final String url;
+  private final TestStateInfo.Magnitude magnitude;
 
-  public TestInfo(String url, TestStateInfo.Magnitude magnitude) {
+  public TestInfo(String url, TestStateInfo.Magnitude magnitude, Date runDate) {
     this.url = url;
     this.magnitude = magnitude;
+    this.runDate = runDate;
+  }
+  
+  public Date getRunDate() {
+    return runDate;
   }
 
   public String getUrl() {

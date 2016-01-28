@@ -25,21 +25,11 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class SelectTestStep extends BaseListPopupStep<String> {
-  private static Comparator<String> TEST_BY_PATH_COMPARATOR = new Comparator<String>() {
-    @Override
-    public int compare(String o1, String o2) {
-      String path1 = VirtualFileManager.extractPath(o1);
-      String path2 = VirtualFileManager.extractPath(o2);
-      return path1.compareTo(path2);
-    }
-  };
-  
   private final Map<String, TestStateStorage.Record> myRecords;
   private final RecentTestRunner myRunner;
 
@@ -55,7 +45,7 @@ public class SelectTestStep extends BaseListPopupStep<String> {
     for (Map.Entry<String, TestStateStorage.Record> entry : records.entrySet()) {
       String url = entry.getKey();
       TestStateStorage.Record record = entry.getValue();
-      data.addTest(url, getMagnitude(record.magnitude));
+      data.addTest(url, getMagnitude(record.magnitude), record.date);
     }
 
     return data.calculateTestList();
