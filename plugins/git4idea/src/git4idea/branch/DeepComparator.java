@@ -167,7 +167,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
     @NotNull
     @Override
     public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUi logUi) {
-      return ServiceManager.getService(logDataHolder.getProject(), DeepComparatorHolder.class).getInstance(logUi);
+      return getInstance(logDataHolder.getProject(), logUi);
     }
 
     @NotNull
