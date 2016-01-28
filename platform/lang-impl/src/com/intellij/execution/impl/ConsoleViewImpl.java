@@ -1415,6 +1415,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
       String s = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
       if (s == null) return;
+      s = StringUtil.convertLineSeparators(s);
       ApplicationManager.getApplication().assertIsDispatchThread();
       Editor editor = consoleView.myEditor;
       SelectionModel selectionModel = editor.getSelectionModel();
