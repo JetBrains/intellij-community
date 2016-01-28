@@ -134,7 +134,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     return checker.hasForbiddenRefs();
   }
 
-  private static PsiType getInferredType(PsiAnonymousClass aClass) {
+  private static PsiType getInferredType(PsiAnonymousClass aClass, PsiMethod method) {
     final PsiExpression expression = (PsiExpression)aClass.getParent();
     final PsiType psiType = PsiTypesUtil.getExpectedTypeByParent(expression);
     if (psiType != null) {
@@ -151,35 +151,18 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       PsiExpressionList expressionList = (PsiExpressionList)parent;
       final PsiElement callExpr = expressionList.getParent();
       if (callExpr instanceof PsiCallExpression) {
-        final JavaResolveResult result = ((PsiCallExpression)callExpr).resolveMethodGenerics();
-        if (result instanceof MethodCandidateInfo) {
-          final PsiMethod method = ((MethodCandidateInfo)result).getElement();
-          PsiExpression[] expressions = expressionList.getExpressions();
-          int i = ArrayUtilRt.find(expressions, topExpr);
-          if (i < 0) return null;
-          expressions[i] = null;
-
-          final PsiParameter[] parameters = method.getParameterList().getParameters();
-          final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(aClass.getProject())
-            .inferTypeArguments(method.getTypeParameters(), parameters, expressions,
-                                ((MethodCandidateInfo)result).getSiteSubstitutor(), callExpr.getParent(),
-                                DefaultParameterTypeInferencePolicy.INSTANCE);
-          PsiType paramType;
-          if (i < parameters.length) {
-            paramType = parameters[i].getType();
-          }
-          else if (parameters.length > 0) {
-            paramType = parameters[parameters.length - 1].getType();
-            if (!(paramType instanceof PsiEllipsisType)) {
-              return null;
-            }
-            paramType = ((PsiEllipsisType)paramType).getComponentType();
-          }
-          else {
-            return null;
-          }
-
-          return substitutor.substitute(paramType);
+        PsiExpression[] expressions = expressionList.getExpressions();
+        int i = ArrayUtilRt.find(expressions, topExpr);
+        if (i < 0) return null;
+        final PsiCallExpression copy = (PsiCallExpression)callExpr.copy();
+        final PsiExpressionList argumentList = copy.getArgumentList();
+        if (argumentList != null) {
+          final PsiExpression classArg = argumentList.getExpressions()[i];
+          PsiExpression lambda = JavaPsiFacade.getElementFactory(aClass.getProject())
+            .createExpressionFromText(ReplaceWithLambdaFix.composeLambdaText(method), expression);
+          lambda = (PsiExpression)classArg.replace(lambda);
+          ((PsiLambdaExpression)lambda).getBody().replace(method.getBody());
+          return LambdaUtil.getFunctionalInterfaceType(lambda, true);
         }
       }
     }
@@ -224,7 +207,6 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       if (anonymousClass == null) return null;
 
       ChangeContextUtil.encodeContextInfo(anonymousClass, true);
-      final PsiElement lambdaContext = anonymousClass.getParent().getParent();
       final String canonicalText = anonymousClass.getBaseClassType().getCanonicalText();
 
       final PsiMethod method;
@@ -438,7 +420,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
                                 PsiAnonymousClass aClass) {
       myMethod = method;
       myAnonymClass = aClass;
-      final PsiType inferredType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(getInferredType(aClass));
+      final PsiType inferredType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(getInferredType(aClass, method));
       final PsiClassType baseClassType = aClass.getBaseClassType();
       myInferredType = !baseClassType.equals(inferredType) ? inferredType : null;
     }
