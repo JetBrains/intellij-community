@@ -392,6 +392,7 @@ public class TemplateImpl extends Template implements SchemeElement {
 
   public void setString(String string) {
     myString = string;
+    toParseSegments = true;
   }
 
   @Override

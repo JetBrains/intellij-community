@@ -1496,6 +1496,7 @@
     <treeStructureProvider implementation="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider" order="last"/>
 
     <defaultLiveTemplatesProvider implementation="com.intellij.codeInsight.template.impl.JavaDefaultLiveTemplatesProvider"/>
+    <liveTemplateSubstitutor implementation="com.intellij.codeInsight.template.impl.JavaTemplateSubstitutor"/>
 
     <codeInsight.surroundWithRangeAdjuster implementation="com.intellij.codeInsight.generation.surroundWith.XmlSurroundWithRangeAdjuster"/>
 
