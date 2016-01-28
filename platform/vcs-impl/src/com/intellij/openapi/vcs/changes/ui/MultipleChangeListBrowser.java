@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -55,7 +54,6 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
   @NotNull private final ChangeListChooser myChangeListChooser;
   @NotNull final ChangeListListener myChangeListListener = new MyChangeListListener();
-  private final boolean myShowingAllChangeLists;
   @NotNull private final EventDispatcher<SelectedListChangeListener> myDispatcher =
     EventDispatcher.create(SelectedListChangeListener.class);
   @Nullable private final Runnable myRebuildListListener;
@@ -77,10 +75,10 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
     myChangeListChooser = new ChangeListChooser(changeLists);
     myHeaderPanel.add(myChangeListChooser, BorderLayout.EAST);
-    myShowingAllChangeLists = Comparing.haveEqualElements(changeLists, ChangeListManager.getInstance(project).getChangeLists());
     ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
 
     setupRebuildListForActions();
+    rebuildList();
   }
 
   private void setupRebuildListForActions() {
@@ -135,7 +133,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
   @Override
   public void rebuildList() {
-    if (myInRebuildList) return;
+    if (!myIsInitialized || myInRebuildList) return;
     try {
       myInRebuildList = true;
 
@@ -266,9 +264,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   private void updateListsInChooser() {
     Runnable runnable = new Runnable() {
       public void run() {
-        if (myShowingAllChangeLists) {
-          myChangeListChooser.updateLists(ChangeListManager.getInstance(myProject).getChangeListsCopy());
-        }
+        myChangeListChooser.updateLists(ChangeListManager.getInstance(myProject).getChangeListsCopy());
       }
     };
     if (SwingUtilities.isEventDispatchThread()) {
