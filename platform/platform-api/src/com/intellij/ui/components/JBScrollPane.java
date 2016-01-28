@@ -36,11 +36,12 @@ import javax.swing.plaf.ScrollPaneUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.image.*;
 
 public class JBScrollPane extends JScrollPane {
   public static final RegionPainter<Float> TRACK_PAINTER = new AlphaPainter(.0f, .1f);
-  public static final RegionPainter<Float> THUMB_PAINTER = new ThumbPainter(Gray.x6E);
-  public static final RegionPainter<Float> THUMB_DARK_PAINTER = new ThumbPainter(Gray.x94);
+  public static final RegionPainter<Float> THUMB_PAINTER = new SubtractThumbPainter(.20f, .15f, Gray.x91);
+  public static final RegionPainter<Float> THUMB_DARK_PAINTER = new ThumbPainter(.35f, .25f, Gray.x94);
 
   private int myViewportBorderWidth = -1;
   private boolean myHasOverlayScrollbars;
@@ -709,6 +710,10 @@ public class JBScrollPane extends JScrollPane {
       myDelta = delta;
     }
 
+    Composite newComposite(float alpha) {
+      return AlphaComposite.SrcOver.derive(alpha);
+    }
+
     void paint(Graphics2D g, int x, int y, int width, int height) {
       g.fillRect(x, y, width, height);
     }
@@ -720,7 +725,7 @@ public class JBScrollPane extends JScrollPane {
         if (alpha > 0) {
           Composite old = g.getComposite();
           g.setComposite(alpha < 1
-                         ? AlphaComposite.SrcOver.derive(alpha)
+                         ? newComposite(alpha)
                          : AlphaComposite.SrcOver);
           g.setColor(Gray.x80);
           paint(g, x, y, width, height);
@@ -733,8 +738,8 @@ public class JBScrollPane extends JScrollPane {
   private static class ThumbPainter extends AlphaPainter {
     private final Color myColor;
 
-    private ThumbPainter(Color color) {
-      super(.35f, .25f);
+    private ThumbPainter(float base, float delta, Color color) {
+      super(base, delta);
       myColor = color;
     }
 
@@ -752,6 +757,73 @@ public class JBScrollPane extends JScrollPane {
       else {
         g.drawRect(x, y, width - 1, height - 1);
       }
+    }
+  }
+
+  private static class SubtractThumbPainter extends ThumbPainter {
+    public SubtractThumbPainter(float base, float delta, Color color) {
+      super(base, delta, color);
+    }
+
+    @Override
+    Composite newComposite(float alpha) {
+      return new SubtractComposite(alpha);
+    }
+  }
+
+  private static class SubtractComposite implements Composite, CompositeContext {
+    private final float myAlpha;
+
+    private SubtractComposite(float alpha) {
+      myAlpha = alpha;
+    }
+
+    private int subtract(int newValue, int oldValue) {
+      float value = (oldValue & 0xFF) - (newValue & 0xFF) * myAlpha;
+      return value <= 0 ? 0 : (int)value;
+    }
+
+    @Override
+    public CompositeContext createContext(ColorModel src, ColorModel dst, RenderingHints hints) {
+      return isValid(src) && isValid(dst) ? this : AlphaComposite.SrcOver.derive(myAlpha).createContext(src, dst, hints);
+    }
+
+    private static boolean isValid(ColorModel model) {
+      if (model instanceof DirectColorModel && DataBuffer.TYPE_INT == model.getTransferType()) {
+        DirectColorModel dcm = (DirectColorModel)model;
+        if (0x00FF0000 == dcm.getRedMask() && 0x0000FF00 == dcm.getGreenMask() && 0x000000FF == dcm.getBlueMask()) {
+          return 4 != dcm.getNumComponents() || 0xFF000000 == dcm.getAlphaMask();
+        }
+      }
+      return false;
+    }
+
+    @Override
+    public void compose(Raster srcIn, Raster dstIn, WritableRaster dstOut) {
+      int width = Math.min(srcIn.getWidth(), dstIn.getWidth());
+      int height = Math.min(srcIn.getHeight(), dstIn.getHeight());
+
+      int[] srcPixels = new int[width];
+      int[] dstPixels = new int[width];
+
+      for (int y = 0; y < height; y++) {
+        srcIn.getDataElements(0, y, width, 1, srcPixels);
+        dstIn.getDataElements(0, y, width, 1, dstPixels);
+        for (int x = 0; x < width; x++) {
+          int src = srcPixels[x];
+          int dst = dstPixels[x];
+          int a = subtract(src >> 24, dst >> 24) << 24;
+          int r = subtract(src >> 16, dst >> 16) << 16;
+          int g = subtract(src >> 8, dst >> 8) << 8;
+          int b = subtract(src, dst);
+          dstPixels[x] = a | r | g | b;
+        }
+        dstOut.setDataElements(0, y, width, 1, dstPixels);
+      }
+    }
+
+    @Override
+    public void dispose() {
     }
   }
 }
