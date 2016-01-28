@@ -33,6 +33,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -56,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -126,6 +128,16 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     for (final DataNode<E> module : toCreate) {
       ModuleData data = module.getData();
       final Module created = modelsProvider.newModule(data.getModuleFilePath(), data.getModuleTypeId());
+      final String moduleName = FileUtil.getNameWithoutExtension(new File(data.getModuleFilePath()));
+      if (!created.getName().equals(moduleName)) {
+        try {
+          modelsProvider.getModifiableModuleModel().renameModule(created, moduleName);
+        }
+        catch (ModuleWithNameAlreadyExists exists) {
+          LOG.warn(exists);
+        }
+      }
+
       module.putUserData(MODULE_KEY, created);
       Set<String> orphanFiles = project.getUserData(ORPHAN_MODULE_FILES);
       if (orphanFiles != null) {
