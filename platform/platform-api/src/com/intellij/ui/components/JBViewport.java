@@ -16,6 +16,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.ui.TypingTarget;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.table.JBTable;
@@ -267,7 +268,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   }
 
   private static void updateBorder(Component view) {
-    if (view instanceof JTable) return; // tables are not supported yet
+    if (SystemInfo.isMac || view instanceof JTable) return; // tables are not supported yet
     if (view instanceof JComponent) {
       JComponent component = (JComponent)view;
       Border border = component.getBorder();
