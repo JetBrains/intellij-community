@@ -767,6 +767,9 @@ public class JBScrollPane extends JScrollPane {
 
     @Override
     Composite newComposite(float alpha) {
+      // Some Linux systems do not have CompositeManager installed
+      // Seems Mac is also affected because of fallback
+      if (!SystemInfo.isWindows) return super.newComposite(alpha);
       return new SubtractComposite(alpha);
     }
   }
