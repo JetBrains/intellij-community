@@ -36,7 +36,7 @@ public interface VcsLogHighlighter {
   /**
    * This method is called when new data arrives to the ui.
    * @param dataPack new visible pack.
-   * @param refreshHappened true if permanent graph was changed.
+   * @param refreshHappened true if permanent graph has changed.
    */
   void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened);
 
