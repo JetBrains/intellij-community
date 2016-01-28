@@ -140,28 +140,13 @@ abstract class StaticMembersProcessor<T extends PsiMember> implements Processor<
     if (file instanceof PsiJavaFile
         //do not show methods from default package
         && !((PsiJavaFile)file).getPackageName().isEmpty()) {
-      if (isEffectivelyDeprecated(member)) {
+      if (JavaCompletionUtil.isEffectivelyDeprecated((PsiDocCommentOwner)member)) {
         myDeprecated.putValue(containingClass, member);
         return processCondition();
       }
       mySuggestions.putValue(containingClass, member);
     }
     return processCondition();
-  }
-
-  private boolean isEffectivelyDeprecated(T member) {
-    if (((PsiDocCommentOwner)member).isDeprecated()) {
-      return true;
-    }
-
-    PsiClass aClass = member.getContainingClass();
-    while (aClass != null) {
-      if (aClass.isDeprecated()) {
-        return true;
-      }
-      aClass = aClass.getContainingClass();
-    }
-    return false;
   }
 
   private boolean processCondition() {
