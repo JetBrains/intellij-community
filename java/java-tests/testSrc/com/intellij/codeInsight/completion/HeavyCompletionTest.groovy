@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull
 /**
  * @author peter
  */
-public class HeavyNormalCompletionTest extends JavaCodeInsightFixtureTestCase {
+public class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getTestDataPath() {
