@@ -15,19 +15,20 @@
  */
 package com.intellij.lang.properties.refactoring;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 @State(
   name = "PropertiesRefactoringSettings",
   storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+    @Storage(file = "baseRefactoring.xml"),
+    @Storage(file = "other.xml", deprecated = true)
+  }
 )
 public class PropertiesRefactoringSettings implements PersistentStateComponent<PropertiesRefactoringSettings> {
-
-
   public boolean RENAME_SEARCH_IN_COMMENTS = false;
 
   public static PropertiesRefactoringSettings getInstance() {
