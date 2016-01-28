@@ -22,6 +22,8 @@ import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
@@ -34,7 +36,7 @@ import java.util.List;
 public abstract class PyLineMarkerNavigator<T extends PsiElement> implements GutterIconNavigationHandler<T> {
   public void navigate(final MouseEvent e, final T elt) {
     final List<NavigatablePsiElement> navElements = new ArrayList<NavigatablePsiElement>();
-    Query<T> elementQuery = search(elt);
+    final Query<T> elementQuery = search(elt, TypeEvalContext.userInitiated(elt.getProject(), elt.getContainingFile()));
     if (elementQuery == null) return;
     elementQuery.forEach(new Processor<T>() {
       public boolean process(final T psiElement) {
@@ -51,5 +53,5 @@ public abstract class PyLineMarkerNavigator<T extends PsiElement> implements Gut
   protected abstract String getTitle(T elt);
 
   @Nullable
-  protected abstract Query<T> search(T elt);
+  protected abstract Query<T> search(T elt, @NotNull TypeEvalContext context);
 }
