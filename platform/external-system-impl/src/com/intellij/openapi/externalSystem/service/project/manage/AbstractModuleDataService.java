@@ -128,16 +128,6 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     for (final DataNode<E> module : toCreate) {
       ModuleData data = module.getData();
       final Module created = modelsProvider.newModule(data.getModuleFilePath(), data.getModuleTypeId());
-      final String moduleName = FileUtil.getNameWithoutExtension(new File(data.getModuleFilePath()));
-      if (!created.getName().equals(moduleName)) {
-        try {
-          modelsProvider.getModifiableModuleModel().renameModule(created, moduleName);
-        }
-        catch (ModuleWithNameAlreadyExists exists) {
-          LOG.warn(exists);
-        }
-      }
-
       module.putUserData(MODULE_KEY, created);
       Set<String> orphanFiles = project.getUserData(ORPHAN_MODULE_FILES);
       if (orphanFiles != null) {
