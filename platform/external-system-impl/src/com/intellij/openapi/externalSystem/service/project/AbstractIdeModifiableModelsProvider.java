@@ -131,6 +131,13 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
   @Nullable
   @Override
+  public Module findIdeModule(@NotNull String ideModuleName) {
+    Module module = getModifiableModuleModel().findModuleByName(ideModuleName);
+    return module == null ? getModifiableModuleModel().getModuleToBeRenamed(ideModuleName) : module;
+  }
+
+  @Nullable
+  @Override
   public Library findIdeLibrary(@NotNull LibraryData libraryData) {
     final LibraryTable.ModifiableModel libraryTable = getModifiableProjectLibrariesModel();
     for (Library ideLibrary : libraryTable.getLibraries()) {
