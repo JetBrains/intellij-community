@@ -96,7 +96,10 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
       if (reference.getElement() instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)reference.getElement();
         PsiElement parent = referenceElement.getParent();
-        if (parent instanceof PsiTypeElement && parent.getParent() instanceof PsiInstanceOfExpression) continue;
+        if (parent instanceof PsiTypeElement && (parent.getParent() instanceof PsiInstanceOfExpression ||
+                                                 parent.getParent() instanceof PsiClassObjectAccessExpression)) {
+          continue;
+        }
         if (parent instanceof PsiNewExpression && PsiDiamondTypeUtil.hasDiamond((PsiNewExpression)parent)) {
           continue;
         }
