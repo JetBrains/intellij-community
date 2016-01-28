@@ -1134,7 +1134,8 @@ public class InferenceSession {
   }
 
   public String getPresentableText(PsiType psiType) {
-    return myRestoreNameSubstitution.substitute(psiType).getPresentableText();
+    final PsiType substituted = myRestoreNameSubstitution.substitute(psiType);
+    return substituted != null ? substituted.getPresentableText() : null;
   }
   
   private PsiType registerIncompatibleErrorMessage(InferenceVariable var, @NotNull String incompatibleBoundsMessage) {
