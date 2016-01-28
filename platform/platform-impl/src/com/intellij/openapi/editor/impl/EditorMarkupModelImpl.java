@@ -601,7 +601,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected int getThumbOffset(int value) {
-      if (Registry.is("editor.full.width.scrollbar")) return myMinMarkHeight + 3;
+      if (Registry.is("editor.full.width.scrollbar")) return myMinMarkHeight + JBUI.scale(2);
       return super.getThumbOffset(value);
     }
 
