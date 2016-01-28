@@ -171,7 +171,7 @@ public layoutEducational(String classesPath, Set usedJars) {
     projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_edu"), false).each {
       ant.pathelement(location: it)
     }
-  }, "-Didea.platform.prefix=PyCharmEdu -Didea.no.jre.check=true")
+  }, "-Didea.platform.prefix=PyCharmEdu")
 
   def appInfo = appInfoFile()
   if (!dryRun) {
@@ -181,7 +181,7 @@ public layoutEducational(String classesPath, Set usedJars) {
   Map args = [
     buildNumber: "PE-${buildNumber}",
     system_selector: system_selector,
-    ide_jvm_args: "-Didea.platform.prefix=PyCharmEdu -Didea.no.jre.check=true"]
+    ide_jvm_args: "-Didea.platform.prefix=PyCharmEdu"]
 
   LayoutInfo layoutInfo = layoutFull(args, paths.distAll, usedJars)
   generateLicensesTable("$paths.artifacts/third-party-libraries.txt", layoutInfo.usedModules);
@@ -439,7 +439,7 @@ private layoutMac(Map _args, String target) {
   args.platform_prefix = "PyCharmEdu"
   args.help_id = "PE"
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
-  args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];
+  args."idea.properties" = ["ide.mac.useNativeClipboard": "false"];
   args.executable = "pycharm"
   layoutMacApp(target, ch, args)
 }
