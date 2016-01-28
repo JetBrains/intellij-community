@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    writeBooleanOption(node, "insideTryAllowed", false);
+    writeBooleanOption(node, "ignoreFromMethodCall", false);
     writeBooleanOption(node, "anyMethodMayClose", true);
     if (!DEFAULT_IGNORED_TYPES.equals(ignoredTypes)) {
       final String ignoredTypesString = formatString(ignoredTypes);
