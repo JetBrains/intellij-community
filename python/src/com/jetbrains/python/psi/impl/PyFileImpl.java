@@ -22,7 +22,9 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,6 +36,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.IndexingDataKeys;
@@ -45,10 +48,8 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.inspections.PythonVisitorFilter;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
-import com.jetbrains.python.psi.resolve.VariantsProcessor;
+import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -80,9 +81,39 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     private final List<String> myNameDefinerNegativeCache = new ArrayList<String>();
     private long myNameDefinerOOCBModCount = -1;
     private final long myModificationStamp;
+    private final MultiMap<String, PsiNamedElement> myNamedElements = new MultiMap<String, PsiNamedElement>();
+    private final List<PyImportedNameDefiner> myImportedNameDefiners = new ArrayList<PyImportedNameDefiner>();
 
     private ExportedNameCache(long modificationStamp) {
       myModificationStamp = modificationStamp;
+
+      processDeclarations(PyPsiUtils.collectAllStubChildren(PyFileImpl.this, getStub()), new Processor<PsiElement>() {
+        @Override
+        public boolean process(PsiElement element) {
+          if (element instanceof PsiNamedElement && !(element instanceof PyKeywordArgument)) {
+            final PsiNamedElement namedElement = (PsiNamedElement)element;
+            myNamedElements.putValue(namedElement.getName(), namedElement);
+          }
+          if (element instanceof PyImportedNameDefiner) {
+            myImportedNameDefiners.add((PyImportedNameDefiner)element);
+          }
+          if (element instanceof PyFromImportStatement) {
+            final PyFromImportStatement fromImportStatement = (PyFromImportStatement)element;
+            final PyStarImportElement starImportElement = fromImportStatement.getStarImportElement();
+            if (starImportElement != null) {
+              myImportedNameDefiners.add(starImportElement);
+            }
+            else {
+              Collections.addAll(myImportedNameDefiners, fromImportStatement.getImportElements());
+            }
+          }
+          else if (element instanceof PyImportStatement) {
+            final PyImportStatement importStatement = (PyImportStatement)element;
+            Collections.addAll(myImportedNameDefiners, importStatement.getImportElements());
+          }
+          return true;
+        }
+      });
       final List<PsiElement> children = PyPsiUtils.collectAllStubChildren(PyFileImpl.this, getStub());
       final List<PyExceptPart> exceptParts = new ArrayList<PyExceptPart>();
       for (PsiElement child : children) {
@@ -101,6 +132,21 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
           }
         }
       }
+    }
+
+    private boolean processDeclarations(@NotNull List<PsiElement> elements, @NotNull Processor<PsiElement> processor) {
+      for (PsiElement child : elements) {
+        if (!processor.process(child)) {
+          return false;
+        }
+        if (child instanceof PyExceptPart) {
+          final PyExceptPart part = (PyExceptPart)child;
+          if (!processDeclarations(PyPsiUtils.collectAllStubChildren(part, part.getStub()), processor)) {
+            return false;
+          }
+        }
+      }
+      return true;
     }
 
     private void addDeclaration(PsiElement child,
@@ -150,6 +196,56 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
           localDeclarations.put(visibleName, importElement);
         }
       }
+    }
+
+    @NotNull
+    private List<RatedResolveResult> multiResolve(@NotNull String name) {
+      synchronized (myNameDefinerNegativeCache) {
+        final long modCount = myModificationTracker.getOutOfCodeBlockModificationCount();
+        if (modCount != myNameDefinerOOCBModCount) {
+          myNameDefinerNegativeCache.clear();
+          myNameDefinerOOCBModCount = modCount;
+        }
+        else {
+          if (myNameDefinerNegativeCache.contains(name)) {
+            return Collections.emptyList();
+          }
+        }
+      }
+
+      final PyResolveProcessor processor = new PyResolveProcessor(name);
+      boolean stopped = false;
+      if (myNamedElements.containsKey(name)) {
+        for (PsiNamedElement element : myNamedElements.get(name)) {
+          if (!processor.execute(element, ResolveState.initial())) {
+            stopped = true;
+            break;
+          }
+        }
+      }
+      if (!stopped) {
+        for (PyImportedNameDefiner definer : myImportedNameDefiners) {
+          if (!processor.execute(definer, ResolveState.initial())) {
+            break;
+          }
+        }
+      }
+      final Collection<PsiElement> elements = processor.getElements();
+      if (!elements.isEmpty()) {
+        final ResolveResultList resultList = new ResolveResultList();
+        final TypeEvalContext typeEvalContext = TypeEvalContext.codeInsightFallback(getProject());
+        for (PsiElement element : elements) {
+          if (element != null) {
+            resultList.poke(element, PyReferenceImpl.getRate(element, typeEvalContext));
+          }
+        }
+        return resultList;
+      }
+
+      synchronized (myNameDefinerNegativeCache) {
+        myNameDefinerNegativeCache.add(name);
+      }
+      return Collections.emptyList();
     }
 
     @Nullable
@@ -520,7 +616,27 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Override
   @Nullable
-  public PsiElement getElementNamed(String name) {
+  public PsiElement getElementNamed(final String name) {
+    return RecursionManager.doPreventingRecursion(this, false, new Computable<PsiElement>() {
+      @Override
+      public PsiElement compute() {
+        final List<RatedResolveResult> results = getExportedNameCache().multiResolve(name);
+        final List<PsiElement> elements = PyUtil.filterTopPriorityResults(results.toArray(new ResolveResult[results.size()]));
+        final PsiElement element = elements.isEmpty() ? null : elements.get(elements.size() - 1);
+        if (element != null) {
+          if (!element.isValid()) {
+            throw new PsiInvalidElementAccessException(element);
+          }
+          return element;
+        }
+        final List<String> allNames = getDunderAll();
+        if (allNames != null && allNames.contains(name)) {
+          return findExportedName(PyNames.ALL);
+        }
+        return null;
+      }
+    });
+    /*
     PsiElement exportedName = findExportedName(name);
     if (exportedName instanceof PyImportElement) {
       PsiElement importedElement = ((PyImportElement)exportedName).getElementNamed(name);
@@ -533,6 +649,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       throw new PsiInvalidElementAccessException(exportedName);
     }
     return exportedName;
+    */
   }
 
   @Override

@@ -114,8 +114,9 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return result.toArray(new PyImportElement[result.size()]);
   }
 
+  @Nullable
   public PyStarImportElement getStarImportElement() {
-    return findChildByClass(PyStarImportElement.class);
+    return getStubOrPsiChild(PyElementTypes.STAR_IMPORT_ELEMENT);
   }
 
   public int getRelativeLevel() {

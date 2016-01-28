@@ -37,6 +37,7 @@ public class PyResolveProcessor implements PsiScopeProcessor {
   @NotNull private final String myName;
   private final boolean myLocalResolve;
   @NotNull private final Map<PsiElement, PyImportedNameDefiner> myResults = Maps.newLinkedHashMap();
+  @NotNull private final Map<PsiElement, PyImportedNameDefiner> myImplicitlyImportedResults = Maps.newLinkedHashMap();
   @Nullable private ScopeOwner myOwner;
 
   public PyResolveProcessor(@NotNull String name) {
@@ -83,12 +84,12 @@ public class PyResolveProcessor implements PsiScopeProcessor {
 
   @NotNull
   public Map<PsiElement, PyImportedNameDefiner> getResults() {
-    return myResults;
+    return myResults.isEmpty() ? myImplicitlyImportedResults : myResults;
   }
 
   @NotNull
   public Collection<PsiElement> getElements() {
-    return myResults.keySet();
+    return getResults().keySet();
   }
 
   @Nullable
@@ -117,7 +118,13 @@ public class PyResolveProcessor implements PsiScopeProcessor {
     }
     final boolean sameScope = owner == myOwner;
     if (sameScope) {
-      myResults.put(element, definer != null ? definer : null);
+      // XXX: In 'from foo import foo' inside __init__.py the preferred result is explicitly imported 'foo'
+      if (definer instanceof PyFromImportStatement) {
+        myImplicitlyImportedResults.put(element, definer);
+      }
+      else {
+        myResults.put(element, definer);
+      }
     }
     return sameScope;
   }

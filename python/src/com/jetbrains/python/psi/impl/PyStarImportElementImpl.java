@@ -22,9 +22,11 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.stubs.PyStarImportElementStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NotNull;
@@ -37,10 +39,14 @@ import java.util.List;
 /**
  * @author dcheryasov
  */
-public class PyStarImportElementImpl extends PyElementImpl implements PyStarImportElement {
+public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportElementStub> implements PyStarImportElement {
 
   public PyStarImportElementImpl(ASTNode astNode) {
     super(astNode);
+  }
+
+  public PyStarImportElementImpl(final PyStarImportElementStub stub) {
+    super(stub, PyElementTypes.STAR_IMPORT_ELEMENT);
   }
 
   @NotNull
@@ -77,8 +83,9 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
     if (PyUtil.isClassPrivateName(name)) {
       return null;
     }
-    if (getParent() instanceof PyFromImportStatement) {
-      PyFromImportStatement fromImportStatement = (PyFromImportStatement)getParent();
+    final PsiElement parent = getParentByStub();
+    if (parent instanceof PyFromImportStatement) {
+      PyFromImportStatement fromImportStatement = (PyFromImportStatement)parent;
       final List<PsiElement> importedFiles = fromImportStatement.resolveImportSourceCandidates();
       for (PsiElement importedFile : new HashSet<PsiElement>(importedFiles)) { // resolver gives lots of duplicates
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);

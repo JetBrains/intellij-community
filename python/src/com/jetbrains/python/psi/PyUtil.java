@@ -650,7 +650,7 @@ public class PyUtil {
   }
 
   @NotNull
-  private static List<PsiElement> filterTopPriorityResults(@NotNull ResolveResult[] resolveResults) {
+  public static List<PsiElement> filterTopPriorityResults(@NotNull ResolveResult[] resolveResults) {
     if (resolveResults.length == 0) {
       return Collections.emptyList();
     }
