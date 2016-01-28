@@ -1,6 +1,6 @@
 <!--suppress XmlUnboundNsPrefix -->
 <idea-plugin version="2">
-  <id>com.jetbrains.python.edu.student.python</id>
+  <id>com.jetbrains.python.edu.interactivelearning.python</id>
   <name>Educational plugin for PyCharm</name>
   <version>2.0.4</version>
   <idea-version since-build="143.403"/>
@@ -17,7 +17,7 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.python</depends>
-  <depends>com.jetbrains.edu.student</depends>
+  <depends>com.jetbrains.edu.interactivelearning</depends>
   <depends>com.jetbrains.edu.core</depends>
   <depends>com.jetbrains.python.edu.core</depends>
 

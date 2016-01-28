@@ -1,6 +1,6 @@
 <!--suppress XmlUnboundNsPrefix -->
 <idea-plugin version="2">
-  <id>com.jetbrains.edu.student</id>
+  <id>com.jetbrains.edu.interactivelearning</id>
   <name>Educational plugin core</name>
   <version>2.0.4</version>
   <idea-version since-build="143.403"/>
