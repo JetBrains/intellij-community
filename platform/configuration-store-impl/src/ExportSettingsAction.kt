@@ -240,6 +240,9 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
   }
 
   val defaultName = state.name
+
+  fun trimDefaultName() = defaultName.removeSuffix("Settings")
+
   var resourceBundleName: String?
   if (pluginDescriptor is IdeaPluginDescriptor && "com.intellij" != pluginDescriptor.pluginId.idString) {
     resourceBundleName = pluginDescriptor.resourceBundleBaseName
@@ -248,7 +251,7 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
         resourceBundleName = OptionsBundle.PATH_TO_BUNDLE
       }
        else {
-        return defaultName
+        return trimDefaultName()
       }
     }
   }
@@ -268,7 +271,7 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
       return messageOrDefault(classLoader, "org.jetbrains.plugins.ruby.RBundle", defaultName)
     }
   }
-  return defaultName
+  return trimDefaultName()
 }
 
 private fun messageOrDefault(classLoader: ClassLoader, bundleName: String, defaultName: String): String {
