@@ -29,7 +29,7 @@ import java.util.Map;
  * @author max
  * @author Konstantin Bulenkov
  *
- * @see com.intellij.util.ui.ColorIcon
+ * @see ColorIcon
  */
 public class EmptyIcon implements Icon, ScalableIcon {
   private static final Map<Integer, Icon> cache = new HashMap<Integer, Icon>();
@@ -105,9 +105,12 @@ public class EmptyIcon implements Icon, ScalableIcon {
     return true;
   }
 
+  @Override
   public int hashCode() {
-    int sum = width + height;
-    return sum * (sum + 1)/2 + width;
+    int result = width;
+    result = 31 * result + height;
+    result = 31 * result + (scale != +0.0f ? Float.floatToIntBits(scale) : 0);
+    return result;
   }
 
   public EmptyIconUIResource asUIResource() {
