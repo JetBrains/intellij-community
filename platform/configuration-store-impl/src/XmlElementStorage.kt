@@ -75,7 +75,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   }
 
   fun setDefaultState(element: Element) {
-    element.setName(rootElementName)
+    element.name = rootElementName
     storageDataRef.set(loadState(element))
   }
 
@@ -213,7 +213,7 @@ fun save(states: StateMap, rootElementName: String, newLiveStates: Map<String, E
         elementAttributes.add(0, nameAttribute)
       }
       else {
-        nameAttribute.setValue(componentName)
+        nameAttribute.value = componentName
         if (elementAttributes.get(0) != nameAttribute) {
           elementAttributes.remove(nameAttribute)
           elementAttributes.add(0, nameAttribute)
@@ -231,7 +231,7 @@ fun Element.normalizeRootName(): Element {
     LOG.warn("State element must not have parent ${JDOMUtil.writeElement(this)}")
     detach()
   }
-  setName(FileStorageCoreUtil.COMPONENT)
+  name = FileStorageCoreUtil.COMPONENT
   return this
 }
 

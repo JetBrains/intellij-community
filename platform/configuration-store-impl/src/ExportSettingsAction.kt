@@ -44,6 +44,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.putValue
 import com.intellij.util.io.ZipUtil
+import gnu.trove.THashMap
 import gnu.trove.THashSet
 import java.io.IOException
 import java.io.OutputStream
@@ -188,6 +189,8 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     result.keys.removeAll(::isSkipFile)
   }
 
+  val fileToContent = THashMap<Path, String>()
+
   ServiceManagerImpl.processAllImplementationClasses(ApplicationManager.getApplication() as ApplicationImpl, PairProcessor<Class<*>, PluginDescriptor> { aClass, pluginDescriptor ->
     val stateAnnotation = StoreUtil.getStateSpec(aClass)
     if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty() || ExportableComponent::class.java.isAssignableFrom(aClass)) {
@@ -215,6 +218,13 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     val file = Paths.get(storageManager.expandMacros(storage.file))
     val isFileIncluded = !isSkipFile(file)
     if (isFileIncluded || additionalExportFile != null) {
+      if (computePresentableNames && onlyExisting && additionalExportFile == null && file.fileName.toString().endsWith(".xml")) {
+        val content = fileToContent.getOrPut(file) { file.readText() }
+        if (!content.contains("""<component name="${stateAnnotation.name}">""")) {
+          return@PairProcessor true
+        }
+      }
+
       val files = if (additionalExportFile == null) listOf(file) else if (isFileIncluded) listOf(file, additionalExportFile) else listOf(additionalExportFile)
       val item = ExportableItem(files, if (computePresentableNames) getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor) else "", storage.roamingType)
       result.putValue(file, item)

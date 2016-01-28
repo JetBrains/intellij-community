@@ -418,3 +418,7 @@ internal fun Path.delete() {
     FileUtil.delete(this.toFile())
   }
 }
+
+fun Path.readBytes() = Files.readAllBytes(this)
+
+fun Path.readText() = readBytes().toString(Charsets.UTF_8)
