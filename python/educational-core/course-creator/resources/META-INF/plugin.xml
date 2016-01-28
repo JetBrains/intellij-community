@@ -20,7 +20,7 @@
   -->
   <depends>com.intellij.modules.platform</depends>
   <depends>com.jetbrains.edu.core</depends>
-  <depends>com.jetbrains.edu.student</depends>
+  <depends>com.jetbrains.edu.interactivelearning</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.jetbrains.edu.coursecreator.CCProjectService"/>
