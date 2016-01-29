@@ -3807,7 +3807,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int getPreferredHeight() {
-    if (ourIsUnitTestMode && !myUseNewRendering && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
+    if (myUseNewRendering) return myView.getPreferredHeight();
+    if (ourIsUnitTestMode && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
       return 1;
     }
 

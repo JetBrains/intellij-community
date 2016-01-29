@@ -19,10 +19,7 @@ import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.EditorLinePainter;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.LineExtensionInfo;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
@@ -69,6 +66,8 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   private int myDocumentChangeEndOffset;
   private int myFoldingChangeStartOffset = Integer.MAX_VALUE;
   private int myFoldingChangeEndOffset = Integer.MIN_VALUE;
+  
+  private int myVirtualPageHeight;
   
   private boolean myDirty; // true if we cannot calculate preferred size now because soft wrap model was invalidated after editor 
                            // became hidden. myLineWidths contents is irrelevant in such a state. Previously calculated preferred size
@@ -172,7 +171,35 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
       width += myEditor.getSettings().getAdditionalColumnsCount() * myView.getPlainSpaceWidth();
     }
     Insets insets = myView.getInsets();
-    return new Dimension(width + insets.left + insets.right, myEditor.getPreferredHeight() + insets.top + insets.bottom);
+    return new Dimension(width + insets.left + insets.right, getPreferredHeight());
+  }
+  
+  int getPreferredHeight() {
+    int lineHeight = myView.getLineHeight();
+    if (myEditor.isOneLineMode()) return lineHeight;
+
+    // Preferred height of less than a single line height doesn't make sense:
+    // at least a single line with a blinking caret on it is to be displayed
+    int size = Math.max(myEditor.getVisibleLineCount(), 1) * lineHeight;
+
+    EditorSettings settings = myEditor.getSettings();
+    if (settings.isAdditionalPageAtBottom()) {
+      int visibleAreaHeight = myEditor.getScrollingModel().getVisibleArea().height;
+      // There is a possible case that user with 'show additional page at bottom' scrolls to that virtual page; switched to another
+      // editor (another tab); and then returns to the previously used editor (the one scrolled to virtual page). We want to preserve
+      // correct view size then because viewport position is set to the end of the original text otherwise.
+      if (visibleAreaHeight > 0 || myVirtualPageHeight <= 0) {
+        myVirtualPageHeight = Math.max(visibleAreaHeight - 2 * lineHeight, lineHeight);
+      }
+      
+      size += Math.max(myVirtualPageHeight, 0);
+    }
+    else {
+      size += settings.getAdditionalLinesCount() * lineHeight;
+    }
+      
+    Insets insets = myView.getInsets();
+    return size + insets.top + insets.bottom;
   }
 
   private boolean shouldRespectAdditionalColumns(int widthWithoutCaret) {

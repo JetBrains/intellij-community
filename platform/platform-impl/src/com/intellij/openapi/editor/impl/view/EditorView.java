@@ -240,6 +240,13 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     return mySizeManager.getPreferredSize();
   }
 
+  public int getPreferredHeight() {
+    assertIsDispatchThread();
+    assert !myEditor.isPurePaintingMode();
+    myEditor.getSoftWrapModel().prepareToMapping();
+    return mySizeManager.getPreferredHeight();
+  }
+
   public int getMaxWidthInRange(int startOffset, int endOffset) {
     assertIsDispatchThread();
     return getMaxWidthInLineRange(offsetToVisualLine(startOffset, false), offsetToVisualLine(endOffset, true));
