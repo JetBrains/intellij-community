@@ -20,11 +20,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SizedIcon;
+import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PlatformIcons;
@@ -43,11 +43,10 @@ import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.KeyEvent;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -386,16 +385,21 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       Project project = e.getRequiredData(CommonDataKeys.PROJECT);
       VcsLogDataPack dataPack = myFilterModel.getDataPack();
       VcsLogFileFilter filter = myFilterModel.getFilter();
-      Collection<VirtualFile> files = filter == null || filter.getStructureFilter() == null
-                                      ? Collections.<VirtualFile>emptySet()
-                                      : ContainerUtil
-                                        .mapNotNull(filter.getStructureFilter().getFiles(), new Function<FilePath, VirtualFile>() {
-                                          @Override
-                                          public VirtualFile fun(FilePath filePath) {
-                                            // for now, ignoring non-existing paths
-                                            return filePath.getVirtualFile();
-                                          }
-                                        });
+
+      Collection<VirtualFile> files;
+      if (filter == null || filter.getStructureFilter() == null) {
+        files = Collections.emptySet();
+      }
+      else {
+        files = ContainerUtil.mapNotNull(filter.getStructureFilter().getFiles(), new Function<FilePath, VirtualFile>() {
+          @Override
+          public VirtualFile fun(FilePath filePath) {
+            // for now, ignoring non-existing paths
+            return filePath.getVirtualFile();
+          }
+        });
+      }
+
       VcsStructureChooser chooser = new VcsStructureChooser(project, "Select Files or Folders to Filter by", files,
                                                             new ArrayList<VirtualFile>(dataPack.getLogProviders().keySet()));
       if (chooser.showAndGet()) {
