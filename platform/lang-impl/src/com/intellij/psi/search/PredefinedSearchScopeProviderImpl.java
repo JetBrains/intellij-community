@@ -267,7 +267,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     final HierarchyBrowserBase hierarchyBrowserBase = (HierarchyBrowserBase)component;
     final PsiElement[] elements = hierarchyBrowserBase.getAvailableElements();
     if (elements.length > 0) {
-      result.add(new LocalSearchScope(elements, "Hierarchy '" + name + '\''));
+      result.add(new LocalSearchScope(elements, "Hierarchy '" + name + "' (visible nodes only)"));
     }
   }
 
