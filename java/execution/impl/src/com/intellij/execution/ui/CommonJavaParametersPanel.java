@@ -19,6 +19,7 @@ import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,10 +51,20 @@ public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
     return myVMParametersComponent.getComponent().getText();
   }
 
+  public LabeledComponent<RawCommandLineEditor> getVMParametersComponent() {
+    return myVMParametersComponent;
+  }
+
   @Override
   public void setAnchor(JComponent labelAnchor) {
     super.setAnchor(labelAnchor);
     myVMParametersComponent.setAnchor(labelAnchor);
+  }
+
+  @Override
+  protected void setupAnchor() {
+    super.setupAnchor();
+    myAnchor = UIUtil.mergeComponentsWithAnchor(this, myVMParametersComponent);
   }
 
   public void applyTo(CommonJavaRunConfigurationParameters configuration) {
