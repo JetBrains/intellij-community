@@ -120,7 +120,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   @Override
   public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum, Navigatable navigatable) {
-    myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable);
+    final CompilerMessage msg = myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable);
+    if (msg != null) {
+      addToProblemsView(msg);
+    }
   }
 
   @Override
@@ -129,8 +132,12 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       LOG.info("addMessage: " + msg + " this=" + this);
     }
     if (myMessages.addMessage(msg)) {
-      myBuildSession.addMessage(msg);
+      addToProblemsView(msg);
     }
+  }
+
+  private void addToProblemsView(CompilerMessage msg) {
+    myBuildSession.addMessage(msg);
     if (myShouldUpdateProblemsView && msg.getCategory() == CompilerMessageCategory.ERROR) {
       ProblemsView.SERVICE.getInstance(myProject).addMessage(msg, mySessionId);
     }

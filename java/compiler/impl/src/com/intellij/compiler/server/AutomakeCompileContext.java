@@ -88,6 +88,7 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
     return myMessages.getMessages(category).toArray(CompilerMessage.EMPTY_ARRAY);
   }
 
+  @Nullable
   public CompilerMessage createAndAddMessage(CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum, Navigatable navigatable) {
     return myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable);
   }

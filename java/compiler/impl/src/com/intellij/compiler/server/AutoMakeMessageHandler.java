@@ -142,7 +142,9 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
         final CompilerMessage msg = myContext.createAndAddMessage(category, message.getText(), url, (int)line, (int)column, null);
         if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR) {
           informWolf(myProject, message);
-          ProblemsView.SERVICE.getInstance(myProject).addMessage(msg, sessionId);
+          if (msg != null) {
+            ProblemsView.SERVICE.getInstance(myProject).addMessage(msg, sessionId);
+          }
         }
       }
     }

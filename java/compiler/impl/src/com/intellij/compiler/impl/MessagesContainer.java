@@ -48,11 +48,13 @@ public class MessagesContainer {
     return Collections.unmodifiableCollection(collection);
   }
 
+  @Nullable
   public CompilerMessage addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum, Navigatable navigatable) {
-    final CompilerMessageImpl msg =
-      new CompilerMessageImpl(myProject, category, message, findFileByUrl(url), lineNum, columnNum, navigatable);
-    addMessage(msg);
-    return msg;
+    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findFileByUrl(url), lineNum, columnNum, navigatable);
+    if (addMessage(msg)) {
+      return msg;
+    }
+    return null;
   }
 
   public boolean addMessage(CompilerMessage msg) {
