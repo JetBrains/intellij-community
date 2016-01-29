@@ -949,7 +949,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int getTextAlignmentShift(Icon icon) {
-    return (myEditor.getLineHeight() - icon.getIconHeight()) /2;
+    int centerRelative = (myEditor.getLineHeight() - icon.getIconHeight()) / 2;
+    int baselineRelative = myEditor.getAscent() - icon.getIconHeight();
+    return Math.max(centerRelative, baselineRelative);
   }
 
   @Override
@@ -981,7 +983,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     Collection<DisplayedFoldingAnchor> anchorsToDisplay =
       myAnchorsDisplayStrategy.getAnchorsToDisplay(firstVisibleOffset, lastVisibleOffset, myActiveFoldRegion);
     for (DisplayedFoldingAnchor anchor : anchorsToDisplay) {
-      drawAnchor(width, clip, g, anchorX, anchor.visualLine, anchor.type, anchor.foldRegion == myActiveFoldRegion);
+      drawFoldingAnchor(width, clip, g, anchorX, anchor.visualLine, anchor.type, anchor.foldRegion == myActiveFoldRegion);
     }
   }
 
@@ -1029,15 +1031,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int getFoldAnchorY(int line, int width) {
-    return getLineCenterY(line) - width / 2;
+    return myEditor.visibleLineToY(line) + myEditor.getAscent() - width;
   }
 
   int getHeadCenterY(FoldRegion foldRange) {
     return getLineCenterY(myEditor.offsetToVisualLine(foldRange.getStartOffset()));
   }
 
-  private void drawAnchor(int width, Rectangle clip, Graphics2D g, int anchorX, int visualLine,
-                          DisplayedFoldingAnchor.Type type, boolean active) {
+  private void drawFoldingAnchor(int width, Rectangle clip, Graphics2D g, int anchorX, int visualLine,
+                                 DisplayedFoldingAnchor.Type type, boolean active) {
 
     final int off = (int)(JBUI.scale(2) * myEditor.getScale());
     int height = width + off;

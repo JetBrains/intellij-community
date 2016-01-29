@@ -1604,7 +1604,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * This method is used to scale editors elements such as gutter icons, folding elements, and others
    */
   public float getScale() {
-    return Registry.is("editor.scale.gutter.icons") ? getLineHeight() / JBUI.scale(16f) : 1f;
+    if (!Registry.is("editor.scale.gutter.icons")) return 1f;
+    float normLineHeight = getLineHeight() / myScheme.getLineSpacing(); // normalized, as for 1.0f line spacing
+    return normLineHeight / JBUI.scale(16f);
   }
 
   private int calcEndOffset(int startOffset, int visualColumn) {
