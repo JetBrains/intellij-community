@@ -45,7 +45,7 @@ class RecentTestRunnerImpl implements RecentTestRunner {
   private static AnAction RUN = ActionManager.getInstance().getAction("RunClass");
   private static AnAction DEBUG = ActionManager.getInstance().getAction("DebugClass");
 
-  protected AnAction myCurrentAction = DEBUG;
+  protected AnAction myCurrentAction = RUN;
   private final Project myProject;
 
   public RecentTestRunnerImpl(Project project) {
