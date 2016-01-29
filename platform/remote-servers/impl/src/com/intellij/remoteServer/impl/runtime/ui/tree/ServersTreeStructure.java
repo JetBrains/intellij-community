@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
-import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager;
 import com.intellij.remoteServer.impl.configuration.SingleRemoteServerConfigurable;
@@ -32,7 +31,7 @@ import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRun
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
 import com.intellij.remoteServer.impl.runtime.log.DeploymentLogManagerImpl;
 import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerBase;
-import com.intellij.remoteServer.impl.runtime.ui.RemoteServersViewContributor;
+import com.intellij.remoteServer.impl.runtime.ui.RemoteServersViewContribution;
 import com.intellij.remoteServer.runtime.ConnectionStatus;
 import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnection;
@@ -42,6 +41,7 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import icons.RemoteServersIcons;
 import org.jetbrains.annotations.NotNull;
@@ -60,13 +60,15 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
   private final ServersTreeRootNode myRootElement;
   private final Project myProject;
+  private final RemoteServersViewContribution myContribution;
 
   private final Map<RemoteServer, Map<String, DeploymentGroup>> myServer2DeploymentGroups
     = new HashMap<RemoteServer, Map<String, DeploymentGroup>>();
 
-  public ServersTreeStructure(@NotNull Project project) {
+  public ServersTreeStructure(@NotNull Project project, @NotNull RemoteServersViewContribution contribution) {
     super(project);
     myProject = project;
+    myContribution = contribution;
     myRootElement = new ServersTreeRootNode();
   }
 
@@ -87,7 +89,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
   }
 
   @NotNull
-  Project doGetProject() {
+  protected Project doGetProject() {
     return myProject;
   }
 
@@ -103,6 +105,10 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
   @Override
   public boolean hasSomethingToCommit() {
     return false;
+  }
+
+  protected AbstractTreeNode createDeploymentNode(ServerConnection<?> connection, RemoteServerNode serverNode, Deployment deployment) {
+    return new DeploymentNodeImpl(connection, serverNode, deployment);
   }
 
   public interface LogProvidingNode {
@@ -122,12 +128,13 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
       List<AbstractTreeNode<?>> result = new ArrayList<AbstractTreeNode<?>>();
-      for (RemoteServersViewContributor contributor : RemoteServersViewContributor.EP_NAME.getExtensions()) {
-        result.addAll(contributor.createServerNodes(doGetProject()));
-      }
-      for (RemoteServer<?> server : RemoteServersManager.getInstance().getServers()) {
-        result.add(new RemoteServerNode(server));
-      }
+      result.addAll(myContribution.createServerNodes(doGetProject()));
+      result.addAll(ContainerUtil.map(myContribution.getRemoteServers(), new Function<RemoteServer<?>, AbstractTreeNode<?>>() {
+        @Override
+        public AbstractTreeNode<?> fun(RemoteServer<?> server) {
+          return new RemoteServerNode(server);
+        }
+      }));
       return result;
     }
 
@@ -159,7 +166,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       for (Deployment deployment : connection.getDeployments()) {
         final String groupName = deployment.getGroup();
         if (groupName == null) {
-          children.add(new DeploymentNodeImpl(connection, this, deployment));
+          children.add(createDeploymentNode(connection, this, deployment));
         }
         else {
           Map<String, DeploymentGroup> groups
@@ -290,7 +297,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     private final ServerConnection<?> myConnection;
     private final RemoteServerNode myServerNode;
 
-    private DeploymentNodeImpl(@NotNull ServerConnection<?> connection, @NotNull RemoteServerNode serverNode, @NotNull Deployment value) {
+    protected DeploymentNodeImpl(@NotNull ServerConnection<?> connection, @NotNull RemoteServerNode serverNode, @NotNull Deployment value) {
       super(doGetProject(), value);
       myConnection = connection;
       myServerNode = serverNode;
@@ -396,7 +403,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Nullable
-    private DeploymentLogManagerImpl getLogManager() {
+    protected DeploymentLogManagerImpl getLogManager() {
       return (DeploymentLogManagerImpl)myConnection.getLogManager(getDeployment());
     }
 
@@ -505,7 +512,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
       for (Deployment deployment : myConnection.getDeployments()) {
         if (StringUtil.equals(getGroup().getName(), deployment.getGroup())) {
-          children.add(new DeploymentNodeImpl(myConnection, myServerNode, deployment));
+          children.add(createDeploymentNode(myConnection, myServerNode, deployment));
         }
       }
       return children;

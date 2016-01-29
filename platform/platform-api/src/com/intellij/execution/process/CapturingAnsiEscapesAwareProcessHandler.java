@@ -47,7 +47,7 @@ public class CapturingAnsiEscapesAwareProcessHandler extends CapturingProcessHan
   }
   
   
-  private static class AnsiEscapesAwareAdapter extends CapturingProcessAdapter implements AnsiEscapeDecoder.ColoredTextAcceptor {
+  protected static class AnsiEscapesAwareAdapter extends CapturingProcessAdapter implements AnsiEscapeDecoder.ColoredTextAcceptor {
     private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder() {
       @Override
       @NotNull

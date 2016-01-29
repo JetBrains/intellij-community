@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 
-class ReadOnlySourcesManager(private val settings: IcsSettings, public val rootDir: File) {
+class ReadOnlySourcesManager(private val settings: IcsSettings, val rootDir: File) {
   private var _repositories: List<Repository>? = null
 
   val repositories: List<Repository>

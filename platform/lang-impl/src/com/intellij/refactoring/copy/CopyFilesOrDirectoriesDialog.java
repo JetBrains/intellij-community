@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +44,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -255,7 +255,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
         return;
       }
 
-      if (myFileCopy && !PathUtil.isValidFileName(newName, SystemInfo.isWindows)) {
+      if (myFileCopy && !PathUtilRt.isValidFileName(newName, false)) {
         Messages.showErrorDialog(myNewNameField, "Name is not a valid file name");
         return;
       }
@@ -305,7 +305,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
     }
     if (myShowNewNameField) {
       String newName = getNewName();
-      if (newName.length() == 0 || myFileCopy && !PathUtil.isValidFileName(newName, SystemInfo.isWindows)) {
+      if (newName.length() == 0 || myFileCopy && !PathUtilRt.isValidFileName(newName, false)) {
         setOKActionEnabled(false);
         return;
       }

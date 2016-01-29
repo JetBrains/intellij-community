@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.impl.light;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
@@ -44,6 +45,11 @@ public class LightField extends LightElement implements PsiField {
   @Override
   public SearchScope getUseScope() {
     return myField.getUseScope();
+  }
+
+  @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    return PsiClassImplUtil.isFieldEquivalentTo(this, another);
   }
 
   @Override

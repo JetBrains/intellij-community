@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -207,6 +208,11 @@ public class CompilerTester {
     EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Throwable {
+        refreshVfs(getProject().getProjectFilePath());
+        for (Module module : myModules) {
+          refreshVfs(module.getModuleFilePath());
+        }
+
         PlatformTestUtil.saveProject(getProject());
         CompilerTestUtil.saveApplicationSettings();
         for (Module module : myModules) {
@@ -230,6 +236,13 @@ public class CompilerTester {
 
     callback.throwException();
     return callback.getMessages();
+  }
+
+  private static void refreshVfs(String path) {
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
+    if (vFile != null) {
+      vFile.refresh(false, false);
+    }
   }
 
   private static class ErrorReportingCallback implements CompileStatusNotification {

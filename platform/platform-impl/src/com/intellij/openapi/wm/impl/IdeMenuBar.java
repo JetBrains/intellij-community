@@ -37,8 +37,8 @@ import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ui.Animator;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.java.ayatana.ApplicationMenu;
@@ -47,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -127,17 +126,17 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   public Border getBorder() {
     //avoid moving lines
     if (myState == State.EXPANDING || myState == State.COLLAPSING) {
-      return new EmptyBorder(0,0,0,0);
+      return JBUI.Borders.empty();
     }
 
     //fix for Darcula double border
     if (myState == State.TEMPORARY_EXPANDED && UIUtil.isUnderDarcula()) {
-      return new CustomLineBorder(Gray._75, 0, 0, 1, 0);
+      return JBUI.Borders.customLine(Gray._75, 0, 0, 1, 0);
     }
 
     //save 1px for mouse handler
     if (myState == State.COLLAPSED) {
-      return new EmptyBorder(0, 0, 1, 0);
+      return JBUI.Borders.emptyBottom(1);
     }
 
     return UISettings.getInstance().SHOW_MAIN_TOOLBAR || UISettings.getInstance().SHOW_NAVIGATION_BAR ? super.getBorder() : null;

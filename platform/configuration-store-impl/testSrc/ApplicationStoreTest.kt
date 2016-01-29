@@ -38,7 +38,6 @@ import org.junit.Test
 import org.picocontainer.MutablePicoContainer
 import org.picocontainer.defaults.InstanceComponentAdapter
 import java.io.ByteArrayInputStream
-import java.io.File
 import java.io.InputStream
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -46,6 +45,7 @@ import kotlin.properties.Delegates
 
 internal class ApplicationStoreTest {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 
@@ -73,7 +73,7 @@ internal class ApplicationStoreTest {
     component.foo = "newValue"
     componentStore.save(SmartList())
 
-    assertThat(streamProvider.data.get(RoamingType.DEFAULT)!!.get("new.xml")).isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
+    assertThat(streamProvider.data[RoamingType.DEFAULT]!!["new.xml"]).isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
   }
 
   @Test fun `load from stream provider`() {
@@ -122,17 +122,17 @@ internal class ApplicationStoreTest {
     val optionsPath = storageManager.expandMacros(StoragePathMacros.APP_CONFIG)
     val rootConfigPath = storageManager.expandMacros(ROOT_CONFIG)
     val map = getExportableComponentsMap(false, true, storageManager)
-    assertThat(map).isNotEmpty()
+    assertThat(map).isNotEmpty
 
     fun test(item: ExportableItem) {
       val file = item.files.first()
-      assertThat(map.get(file)).containsExactly(item)
+      assertThat(map[file]).containsExactly(item)
       assertThat(file).doesNotExist()
     }
 
-    test(ExportableItem(listOf(File(optionsPath, "filetypes.xml"), File(rootConfigPath, "filetypes")), "File types", RoamingType.DEFAULT))
-    test(ExportableItem(listOf(File(optionsPath, "customization.xml")), "Menus and toolbars customization", RoamingType.DEFAULT))
-    test(ExportableItem(listOf(File(optionsPath, "templates.xml"), File(rootConfigPath, "templates")), "Live templates", RoamingType.DEFAULT))
+    test(ExportableItem(listOf(Paths.get(optionsPath, "filetypes.xml"), Paths.get(rootConfigPath, "filetypes")), "File types", RoamingType.DEFAULT))
+    test(ExportableItem(listOf(Paths.get(optionsPath, "customization.xml")), "Menus and toolbars customization", RoamingType.DEFAULT))
+    test(ExportableItem(listOf(Paths.get(optionsPath, "templates.xml"), Paths.get(rootConfigPath, "templates")), "Live templates", RoamingType.DEFAULT))
   }
 
   @Test fun `import settings`() {
@@ -152,12 +152,12 @@ internal class ApplicationStoreTest {
 
     val componentPath = configDir.resolve("a.xml")
     assertThat(componentPath).isRegularFile()
-    val componentFile = componentPath.toFile()
+    val componentFile = componentPath
 
     // additional export path
     val additionalPath = configDir.resolve("foo")
     additionalPath.writeChild("bar.icls", "")
-    val additionalFile = additionalPath.toFile()
+    val additionalFile = additionalPath
     val exportedData = BufferExposingByteArrayOutputStream()
     exportSettings(setOf(componentFile, additionalFile), exportedData, configPath)
 
@@ -165,7 +165,7 @@ internal class ApplicationStoreTest {
     assertThat(relativePaths).containsOnly("a.xml", "foo/", "foo/bar.icls", "IntelliJ IDEA Global Settings")
     val list = listOf(ExportableItem(listOf(componentFile, additionalFile), ""))
 
-    fun <B> File.to(that: B) = MapEntry.entry(this, that)
+    fun <B> Path.to(that: B) = MapEntry.entry(this, that)
 
     val picoContainer = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
     val componentKey = A::class.java.name
@@ -263,14 +263,14 @@ internal class ApplicationStoreTest {
     override fun processChildren(path: String, roamingType: RoamingType, filter: (String) -> Boolean, processor: (String, InputStream, Boolean) -> Boolean) {
     }
 
-    public val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
+    val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
 
     override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
       getMap(roamingType).put(fileSpec, String(content, 0, size, CharsetToolkit.UTF8_CHARSET))
     }
 
     private fun getMap(roamingType: RoamingType): MutableMap<String, String> {
-      var map = data.get(roamingType)
+      var map = data[roamingType]
       if (map == null) {
         map = THashMap<String, String>()
         data.put(roamingType, map)
@@ -279,12 +279,12 @@ internal class ApplicationStoreTest {
     }
 
     override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
-      val data = getMap(roamingType).get(fileSpec) ?: return null
+      val data = getMap(roamingType)[fileSpec] ?: return null
       return ByteArrayInputStream(data.toByteArray())
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {
-      data.get(roamingType)?.remove(fileSpec)
+      data[roamingType]?.remove(fileSpec)
     }
   }
 

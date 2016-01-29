@@ -23,13 +23,16 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BalloonLayoutImpl implements BalloonLayout {
 
@@ -37,6 +40,8 @@ public class BalloonLayoutImpl implements BalloonLayout {
   private final Insets myInsets;
 
   private final List<Balloon> myBalloons = new ArrayList<Balloon>();
+  private final Map<Balloon, BalloonLayoutData> myLayoutData = new HashMap<Balloon, BalloonLayoutData>();
+  private Integer myWidth;
 
   private final Alarm myRelayoutAlarm = new Alarm();
   private final Runnable myRelayoutRunnable = new Runnable() {
@@ -45,6 +50,21 @@ public class BalloonLayoutImpl implements BalloonLayout {
     }
   };
   private final JRootPane myParent;
+
+  private final Runnable myCloseAll = new Runnable() {
+    @Override
+    public void run() {
+      for (Balloon balloon : new ArrayList<Balloon>(myBalloons)) {
+        remove(balloon, true);
+      }
+    }
+  };
+  private final Runnable myLayoutRunnable = new Runnable() {
+    public void run() {
+      calculateSize();
+      relayout();
+    }
+  };
 
   public BalloonLayoutImpl(@NotNull JRootPane parent, @NotNull Insets insets) {
     myParent = parent;
@@ -59,17 +79,47 @@ public class BalloonLayoutImpl implements BalloonLayout {
   }
 
   @Override
-  public void add(final Balloon balloon) {
+  public void add(@NotNull Balloon balloon) {
+    add(balloon, null);
+  }
+
+  @Override
+  public void add(@NotNull final Balloon balloon, @Nullable Object layoutData) {
     myBalloons.add(balloon);
+    if (layoutData instanceof BalloonLayoutData) {
+      BalloonLayoutData balloonLayoutData = (BalloonLayoutData)layoutData;
+      balloonLayoutData.closeAll = myCloseAll;
+      balloonLayoutData.doLayout = myLayoutRunnable;
+      myLayoutData.put(balloon, balloonLayoutData);
+    }
     Disposer.register(balloon, new Disposable() {
       public void dispose() {
-        myBalloons.remove(balloon);
+        remove(balloon, false);
         queueRelayout();
       }
     });
 
+    calculateSize();
     relayout();
     balloon.show(myLayeredPane);
+  }
+
+  private void remove(@NotNull Balloon balloon, boolean hide) {
+    myBalloons.remove(balloon);
+    myLayoutData.remove(balloon);
+    if (hide) {
+      balloon.hide();
+    }
+  }
+
+  @NotNull
+  private Dimension getSize(@NotNull Balloon balloon) {
+    BalloonLayoutData layoutData = myLayoutData.get(balloon);
+    if (layoutData == null) {
+      Dimension size = balloon.getPreferredSize();
+      return myWidth == null ? size : new Dimension(myWidth, size.height);
+    }
+    return new Dimension(myWidth, layoutData.height);
   }
 
   public boolean isEmpty() {
@@ -81,6 +131,25 @@ public class BalloonLayoutImpl implements BalloonLayout {
     myRelayoutAlarm.addRequest(myRelayoutRunnable, 200);
   }
 
+  private void calculateSize() {
+    myWidth = null;
+    if (myLayoutData.isEmpty()) {
+      return;
+    }
+
+    int width = 0;
+    for (Balloon balloon : myBalloons) {
+      Dimension size = balloon.getPreferredSize();
+      width = Math.max(width, size.width);
+      BalloonLayoutData layoutData = myLayoutData.get(balloon);
+      if (layoutData != null) {
+        layoutData.height = size.height;
+      }
+    }
+
+    myWidth = width;
+  }
+
   private void relayout() {
     final Dimension size = myLayeredPane.getSize();
 
@@ -90,7 +159,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
     List<ArrayList<Balloon>> columns = createColumns(layoutRec);
     while (columns.size() > 1) {
-      myBalloons.remove(0);
+      remove(myBalloons.get(0), true);
       columns = createColumns(layoutRec);
     }
     List<Integer> columnWidths = computeWidths(columns);
@@ -100,38 +169,104 @@ public class BalloonLayoutImpl implements BalloonLayout {
     int paneOnScreen = component.isShowing() ? component.getLocationOnScreen().y : 0;
     int layerOnScreen = myLayeredPane.isShowing() ? myLayeredPane.getLocationOnScreen().y : 0;
     int toolbarsOffset = paneOnScreen - layerOnScreen;
-    
+
     JComponent layeredPane = pane != null ? pane.getMyLayeredPane() : null;
-    int eachColumnX = (layeredPane == null ? myLayeredPane.getWidth() : layeredPane.getX() + layeredPane.getWidth()) - 4; 
-    
-    for (int i = 0; i < columns.size(); i++) {
-      final ArrayList<Balloon> eachColumn = columns.get(i);
-      final Integer eachWidth = columnWidths.get(i);
-      eachColumnX -= eachWidth.intValue();
-      int eachY = toolbarsOffset + 2;
-      for (Balloon eachBalloon : eachColumn) {
-        final Rectangle eachRec = new Rectangle();
-        final Dimension eachPrefSize = eachBalloon.getPreferredSize();
-        eachRec.setSize(eachPrefSize);
-        if (((BalloonImpl)eachBalloon).hasShadow()) {
-          final int shadowSize = ((BalloonImpl)eachBalloon).getShadowBorderSize();
-          eachRec.width += 2 * shadowSize;
-          eachRec.height += 2 * shadowSize;
+    int eachColumnX = (layeredPane == null ? myLayeredPane.getWidth() : layeredPane.getX() + layeredPane.getWidth()) - 4;
+
+    if (myLayoutData.isEmpty()) {
+      for (int i = 0; i < columns.size(); i++) {
+        final ArrayList<Balloon> eachColumn = columns.get(i);
+        final Integer eachWidth = columnWidths.get(i);
+        eachColumnX -= eachWidth.intValue();
+        int eachY = toolbarsOffset + 2;
+        for (Balloon eachBalloon : eachColumn) {
+          final Rectangle eachRec = new Rectangle();
+          eachRec.setSize(getSize(eachBalloon));
+          if (((BalloonImpl)eachBalloon).hasShadow()) {
+            final Insets shadow = ((BalloonImpl)eachBalloon).getShadowBorderInsets();
+            eachRec.width += shadow.left + shadow.right;
+            eachRec.height += shadow.top + shadow.bottom;
+          }
+          eachY += 2; // space between two notifications
+          eachRec.setLocation(eachColumnX + eachWidth.intValue() - eachRec.width, eachY);
+          eachBalloon.setBounds(eachRec);
+          eachY += eachRec.height;
         }
-        eachY += 2; //space between two notifications
-        eachRec.setLocation(eachColumnX + eachWidth.intValue() - eachRec.width, eachY);
-        eachBalloon.setBounds(eachRec);
-        eachY += eachRec.height;
+      }
+    }
+    else {
+      for (int i = 0; i < columns.size(); i++) {
+        final ArrayList<Balloon> eachColumn = columns.get(i);
+        final Integer eachWidth = columnWidths.get(i);
+        int eachY = toolbarsOffset;
+        int columnSize = eachColumn.size();
+
+        if (columnSize > 0) {
+          BalloonImpl balloon = (BalloonImpl)eachColumn.get(0);
+          if (balloon.hasShadow()) {
+            eachY -= balloon.getShadowBorderInsets().top;
+          }
+          else {
+            eachY += 4;
+          }
+        }
+        eachColumnX -= eachWidth.intValue();
+
+        boolean addShadow = false;
+        for (Balloon balloon : eachColumn) {
+          if (myLayoutData.get(balloon) == null) {
+            addShadow = true;
+            break;
+          }
+        }
+
+        for (int j = 0; j < columnSize; j++) {
+          BalloonImpl eachBalloon = (BalloonImpl)eachColumn.get(j);
+          Rectangle eachRec = new Rectangle(getSize(eachBalloon));
+          eachRec.setLocation(eachColumnX + eachWidth.intValue() - eachRec.width, eachY);
+
+          boolean hasShadow = eachBalloon.hasShadow();
+          Insets shadow = hasShadow ? eachBalloon.getShadowBorderInsets() : null;
+
+          if (addShadow && hasShadow) {
+            eachRec.width += shadow.left + shadow.right;
+            eachRec.x -= shadow.left;
+          }
+
+          eachBalloon.setBounds(eachRec);
+          eachY += eachRec.height;
+
+          // space between two notifications
+          if (j + 1 < columnSize) {
+            BalloonImpl next = (BalloonImpl)eachColumn.get(j + 1);
+            boolean hasNextShadow = next.hasShadow();
+            int space = BalloonLayoutConfiguration.NotificationSpace;
+
+            if (hasShadow == hasNextShadow) {
+              if (hasShadow) {
+                eachY += space - shadow.top - shadow.bottom;
+              }
+              else {
+                eachY += space;
+              }
+            }
+            else if (hasShadow) {
+              eachY += space - shadow.top;
+            } else {
+              eachY += space - next.getShadowBorderInsets().bottom;
+            }
+          }
+        }
       }
     }
   }
 
-  private static List<Integer> computeWidths(List<ArrayList<Balloon>> columns) {
+  private List<Integer> computeWidths(List<ArrayList<Balloon>> columns) {
     List<Integer> columnWidths = new ArrayList<Integer>();
     for (ArrayList<Balloon> eachColumn : columns) {
       int maxWidth = 0;
       for (Balloon each : eachColumn) {
-        maxWidth = Math.max(each.getPreferredSize().width, maxWidth);
+        maxWidth = Math.max(getSize(each).width, maxWidth);
       }
       columnWidths.add(maxWidth);
     }
@@ -146,7 +281,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
     int eachColumnHeight = 0;
     for (Balloon each : myBalloons) {
-      final Dimension eachSize = each.getPreferredSize();
+      final Dimension eachSize = getSize(each);
       if (eachColumnHeight + eachSize.height > layoutRec.getHeight()) {
         eachColumn = new ArrayList<Balloon>();
         columns.add(eachColumn);
@@ -157,5 +292,4 @@ public class BalloonLayoutImpl implements BalloonLayout {
     }
     return columns;
   }
-
 }

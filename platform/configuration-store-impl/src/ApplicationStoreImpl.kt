@@ -84,7 +84,7 @@ class ApplicationStorageManager(private val application: Application, pathMacroM
 
   override fun getMacroSubstitutor(fileSpec: String) = if (fileSpec == "${PathMacrosImpl.EXT_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}") null else super.getMacroSubstitutor(fileSpec)
 
-  override protected val isUseXmlProlog: Boolean
+  override val isUseXmlProlog: Boolean
     get() = false
 
   override fun dataLoadedFromProvider(storage: FileBasedStorage, element: Element?) {

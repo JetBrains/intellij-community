@@ -16,6 +16,7 @@
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.dvcs.DvcsCommitAdditionalComponent;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
@@ -23,9 +24,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,7 +38,10 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.util.*;
+import com.intellij.util.Function;
+import com.intellij.util.FunctionUtil;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -576,7 +578,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   private class GitCheckinOptions extends DvcsCommitAdditionalComponent implements CheckinChangeListSpecificComponent {
     private final GitVcs myVcs;
-    private final ComboBox myAuthorField;
+    @NotNull private final EditorTextField myAuthorField;
     @Nullable private Date myAuthorDate;
 
     GitCheckinOptions(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
@@ -605,37 +607,28 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       List<String> list = new ArrayList<String>(authors);
       Collections.sort(list);
 
-      myAuthorField = new ComboBox(ArrayUtil.toObjectArray(list)) {
-        @Override
-        public void addNotify() {
-          super.addNotify();
+      myAuthorField = createTextField(project, list);
 
-          // adding in addNotify to make sure the editor is ready for further customization
-          StringComboboxEditor comboboxEditor = new StringComboboxEditor(project, FileTypes.PLAIN_TEXT, myAuthorField, true) {
-            @Override
-            protected void onEditorCreate(EditorEx editor) {
-              EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
-              if (customization != null) {
-                customization.customize(editor);
-              }
-            }
-          };
-          myAuthorField.setEditor(comboboxEditor);
-        }
-      };
-      myAuthorField.setRenderer(new ListCellRendererWrapper<String>() {
-        @Override
-        public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-          if (value != null) {
-            setText(StringUtil.trimLog(value, 100));
-          }
-        }
-      });
-      myAuthorField.setMinimumAndPreferredWidth(100);
-      myAuthorField.setEditable(true);
       authorLabel.setLabelFor(myAuthorField);
       myAuthorField.setToolTipText(GitBundle.getString("commit.author.tooltip"));
       myPanel.add(myAuthorField, c);
+    }
+
+    @NotNull
+    private EditorTextField createTextField(@NotNull Project project, @NotNull List<String> list) {
+      TextFieldWithAutoCompletionListProvider<String> completionProvider = new TextFieldWithAutoCompletion.StringsCompletionProvider(list, null);
+      return new TextFieldWithAutoCompletion<String>(project, completionProvider, true, null) {
+        @Override
+        protected EditorEx createEditor() {
+          EditorEx editor = super.createEditor();
+          editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, true);
+          EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
+          if (customization != null) {
+            customization.customize(editor);
+          }
+          return editor;
+        }
+      };
     }
 
     @Override
@@ -676,14 +669,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Override
     public void refresh() {
       super.refresh();
-      myAuthorField.setSelectedItem(null);
+      myAuthorField.setText(null);
       myAuthorDate = null;
       reset();
     }
 
     @Override
     public void saveState() {
-      String author = (String)myAuthorField.getEditor().getItem();
+      String author = myAuthorField.getText();
       if (StringUtil.isEmptyOrSpaces(author)) {
         myNextCommitAuthor = null;
       }
@@ -706,11 +699,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       if (data instanceof VcsFullCommitDetails) {
         VcsFullCommitDetails commit = (VcsFullCommitDetails)data;
         String author = String.format("%s <%s>", commit.getAuthor().getName(), commit.getAuthor().getEmail());
-        myAuthorField.setSelectedItem(author);
+        myAuthorField.setText(author);
         myAuthorDate = new Date(commit.getAuthorTime());
       }
       else {
-        myAuthorField.setSelectedItem(null);
+        myAuthorField.setText(null);
         myAuthorDate = null;
       }
     }

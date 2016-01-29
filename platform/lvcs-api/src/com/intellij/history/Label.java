@@ -16,12 +16,29 @@
 
 package com.intellij.history;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+
 public interface Label {
   Label NULL_INSTANCE = new Label() {
+
+    @Override
+    public void revert(@NotNull Project project, @NotNull VirtualFile file) {
+    }
+
     public ByteContent getByteContent(String path) {
       return null;
     }
   };
+
+  /**
+   * Revert all changes up to this Label according to the local history
+   *
+   * @param file file or directory that should be reverted
+   * @throws LocalHistoryException
+   */
+  void revert(@NotNull Project project, @NotNull VirtualFile file) throws LocalHistoryException;
 
   ByteContent getByteContent(String path);
 }

@@ -35,6 +35,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="InstanceofThis" bundle="com.siyeh.InspectionGadgetsBundle" key="instanceof.check.for.this.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.abstraction.InstanceofThisInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="InterfaceMethodClashesWithObject" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="interface.clashes.with.object.class.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.abstraction.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.abstraction.InterfaceMethodClashesWithObjectInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LocalVariableOfConcreteClass" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="local.variable.of.concrete.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
@@ -2072,7 +2076,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.performance.TailRecursionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ToArrayCallWithZeroLengthArrayArgument" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="to.array.call.with.zero.length.array.argument.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.performance.ToArrayCallWithZeroLengthArrayArgumentInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ConcatenationWithEmptyString" shortName="TrivialStringConcatenation"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="trivial.string.concatenation.display.name"

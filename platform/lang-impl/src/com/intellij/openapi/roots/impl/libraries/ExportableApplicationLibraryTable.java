@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,13 @@ package com.intellij.openapi.roots.impl.libraries;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 
 /**
  * @author yole
  */
 @State(
   name = "libraryTable",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/applicationLibraries.xml", roamingType = RoamingType.PER_OS)
+  storages = @Storage(file = "applicationLibraries.xml", roamingType = RoamingType.PER_OS)
 )
 public class ExportableApplicationLibraryTable extends ApplicationLibraryTable {
 }

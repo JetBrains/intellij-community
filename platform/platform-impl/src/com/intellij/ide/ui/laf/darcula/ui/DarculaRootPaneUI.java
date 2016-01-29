@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,28 +74,52 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(JComponent comp) {
-    return new DarculaRootPaneUI();
+    return isCustomDecoration() ? new DarculaRootPaneUI() : createDefaultWindowsRootPaneUI();
+  }
+
+  private static ComponentUI createDefaultWindowsRootPaneUI() {
+    try {
+      return (ComponentUI)Class.forName("com.sun.java.swing.plaf.windows.WindowsRootPaneUI").newInstance();
+    } catch (Exception e) {
+      return new BasicRootPaneUI();
+    }
   }
 
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
-    myRootPane = (JRootPane)c;
-    int style = myRootPane.getWindowDecorationStyle();
-    if (style != JRootPane.NONE) {
-      installClientDecorations(myRootPane);
+
+    if (isCustomDecoration()) {
+      myRootPane = (JRootPane)c;
+      int style = myRootPane.getWindowDecorationStyle();
+      if (style != JRootPane.NONE) {
+        installClientDecorations(myRootPane);
+      }
+    }
+  }
+
+  public void installMenuBar(JMenuBar menu) {
+    if (menu != null && isCustomDecoration()) {
+      getTitlePane().add(menu);
     }
   }
 
   @Override
   public void uninstallUI(JComponent c) {
     super.uninstallUI(c);
-    uninstallClientDecorations(myRootPane);
 
-    myLayoutManager = null;
-    myMouseInputListener = null;
+    if (isCustomDecoration()) {
+      uninstallClientDecorations(myRootPane);
 
-    myRootPane = null;
+      myLayoutManager = null;
+      myMouseInputListener = null;
+
+      myRootPane = null;
+    }
+  }
+
+  private static boolean isCustomDecoration() {
+    return Registry.is("ide.win.frame.decoration");
   }
 
   public void installBorder(JRootPane root) {
@@ -114,9 +138,8 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     LookAndFeel.uninstallBorder(root);
   }
 
-
   private void installWindowListeners(JRootPane root, Component parent) {
-    myWindow = UIUtil.getWindow(parent);
+    myWindow = parent == null ? null : UIUtil.getWindow(parent);
 
     if (myWindow != null) {
       if (myMouseInputListener == null) {

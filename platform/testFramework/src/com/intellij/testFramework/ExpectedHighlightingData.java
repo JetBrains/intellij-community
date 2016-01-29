@@ -292,8 +292,7 @@ public class ExpectedHighlightingData {
     HighlightInfoType type = WHATEVER;
     if (typeString != null) {
       try {
-        Field field = HighlightInfoType.class.getField(typeString);
-        type = (HighlightInfoType)field.get(null);
+        type = getTypeByName(typeString);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -349,6 +348,11 @@ public class ExpectedHighlightingData {
     }
 
     return toContinueFrom;
+  }
+
+  protected HighlightInfoType getTypeByName(String typeString) throws Exception {
+    Field field = HighlightInfoType.class.getField(typeString);
+    return  (HighlightInfoType)field.get(null);
   }
 
   private static final HighlightInfoType WHATEVER = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION,

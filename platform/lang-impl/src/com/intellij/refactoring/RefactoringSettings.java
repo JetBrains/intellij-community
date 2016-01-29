@@ -15,14 +15,17 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 @State(
   name = "BaseRefactoringSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/baseRefactoring.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+    @Storage(file = "baseRefactoring.xml"),
+    @Storage(file = "other.xml", deprecated = true)
   }
 )
 public class RefactoringSettings implements PersistentStateComponent<RefactoringSettings> {

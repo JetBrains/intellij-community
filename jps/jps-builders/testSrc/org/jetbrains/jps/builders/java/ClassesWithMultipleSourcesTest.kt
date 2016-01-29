@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import org.jetbrains.jps.builders.BuildResult
 /**
  * @author nik
  */
-public class ClassesWithMultipleSourcesTest: JpsBuildTestCase() {
-  public fun testAddFile() {
+class ClassesWithMultipleSourcesTest: JpsBuildTestCase() {
+  fun testAddFile() {
     doTest {
       createFile("src/a.p")
       modify {
@@ -35,7 +35,7 @@ public class ClassesWithMultipleSourcesTest: JpsBuildTestCase() {
     }
   }
 
-  public fun testDeleteFile() {
+  fun testDeleteFile() {
     doTest {
       createFile("src/a.p")
       createFile("src/b.p")
@@ -45,7 +45,7 @@ public class ClassesWithMultipleSourcesTest: JpsBuildTestCase() {
     }
   }
 
-  public fun testDeletePackage() {
+  fun testDeletePackage() {
     doTest {
       createFile("src/a.p")
       modify {
@@ -54,7 +54,7 @@ public class ClassesWithMultipleSourcesTest: JpsBuildTestCase() {
     }
   }
 
-  public fun testAddPackage() {
+  fun testAddPackage() {
     doTest {
       modify {
         createFile("src/a.p")
@@ -62,7 +62,7 @@ public class ClassesWithMultipleSourcesTest: JpsBuildTestCase() {
     }
   }
 
-  public fun testChangeFile() {
+  fun testChangeFile() {
     doTest {
       createFile("src/a.p")
       modify {
@@ -71,7 +71,7 @@ public class ClassesWithMultipleSourcesTest: JpsBuildTestCase() {
     }
   }
 
-  public fun testChangeTargetPackage() {
+  fun testChangeTargetPackage() {
     doTest {
       createFile("src/a.p")
       createFile("src/b.p")
@@ -97,12 +97,12 @@ public class ClassesWithMultipleSourcesTest: JpsBuildTestCase() {
   }
 
   override fun getTestDataRootPath(): String {
-    return FileUtil.toCanonicalPath(PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/incremental/multipleSources").getAbsolutePath(), '/')
+    return FileUtil.toCanonicalPath(PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/incremental/multipleSources").absolutePath, '/')
   }
 
   private fun checkLog() {
     val testName = getTestName(true)
-    checkFullLog(File(getTestDataRootPath(), "$testName.log"))
+    checkFullLog(File(testDataRootPath, "$testName.log"))
   }
 
   private class BuildTestActions {

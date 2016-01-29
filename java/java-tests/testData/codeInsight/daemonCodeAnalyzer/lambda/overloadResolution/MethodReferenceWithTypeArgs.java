@@ -6,13 +6,13 @@ import java.util.stream.Stream;
 class Test {
 
   void foo() {
-    log(get(TreeSet<String>::new));
+    log(get(<error descr="Bad return type in method reference: cannot convert java.util.TreeSet<java.lang.String> to C">TreeSet<String>::new</error>));
   }
 
-  private void <warning descr="Private method 'log(java.lang.String[])' is never used">log</warning>(String params[]) {
+  private void log(String params[]) {
     System.out.println(params);
   }
-  private void log(Object params) {
+  private void <warning descr="Private method 'log(java.lang.Object)' is never used">log</warning>(Object params) {
     System.out.println(params);
   }
 

@@ -359,6 +359,18 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testDisjunctionTypes() throws Exception {
+    doTest();
+  }
+
+  public void testPushErasedStateToArguments() throws Exception {
+    doTest();
+  }
+
+  public void testStopAtStandaloneConditional() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

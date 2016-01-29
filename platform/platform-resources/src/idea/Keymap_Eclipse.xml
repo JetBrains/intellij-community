@@ -361,5 +361,7 @@
     <action id="EditorMatchBrace">
       <keyboard-shortcut first-keystroke="shift control P" />
     </action>
+    <action id="MoveElementLeft"/>
+    <action id="MoveElementRight"/>
   </keymap>
 </component>

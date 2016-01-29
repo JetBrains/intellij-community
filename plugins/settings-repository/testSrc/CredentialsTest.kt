@@ -26,12 +26,12 @@ class CredentialsTest {
     return FileCredentialsStore(storeFile!!)
   }
 
-  public @After fun tearDown() {
+  @After fun tearDown() {
     storeFile?.delete()
     storeFile = null
   }
 
-  public @Test fun explicitSpecifiedInURL() {
+  @Test fun explicitSpecifiedInURL() {
     val credentialsStore = createFileStore()
     val username = CredentialItem.Username()
     val password = CredentialItem.Password()
@@ -44,7 +44,7 @@ class CredentialsTest {
     assertThat(storeFile?.exists()).isFalse()
   }
 
-  public @Test fun gitCredentialHelper() {
+  @Test fun gitCredentialHelper() {
     // we don't yet setup test environment for this test and use host environment
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       return

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.vcs.log.graph.utils.TimestampGetter
 import org.junit.Assert.assertEquals
 import kotlin.test.assertNull
 
-public class DummyTimestampGetter(val nodesCount: Int) : TimestampGetter {
+class DummyTimestampGetter(val nodesCount: Int) : TimestampGetter {
   override fun size(): Int {
     return nodesCount
   }
@@ -38,7 +38,7 @@ public class DummyTimestampGetter(val nodesCount: Int) : TimestampGetter {
   }
 }
 
-public fun buildLayout(graphBuilder: TestGraphBuilder.() -> Unit): GraphLayoutImpl {
+fun buildLayout(graphBuilder: TestGraphBuilder.() -> Unit): GraphLayoutImpl {
   return GraphLayoutBuilder.build(graph(graphBuilder), { nodeIndex1, nodeIndex2 -> nodeIndex1 - nodeIndex2 })
 }
 
@@ -57,7 +57,7 @@ fun runBek(graphBuilder: TestGraphBuilder.() -> Unit): BekBaseController.BekLine
   return afterBek
 }
 
-public fun runLinearBek(graphBuilder: TestGraphBuilder.() -> Unit): LinearBekGraph {
+fun runLinearBek(graphBuilder: TestGraphBuilder.() -> Unit): LinearBekGraph {
   val beforeLinearBek = graph(graphBuilder)
   val beforeLinearBekLayout = buildLayout(graphBuilder)
 
@@ -66,6 +66,6 @@ public fun runLinearBek(graphBuilder: TestGraphBuilder.() -> Unit): LinearBekGra
   return afterLinearBek
 }
 
-public fun assertEquals(expected: TestGraphBuilder.() -> Unit, actual: LinearGraph): Unit {
+fun assertEquals(expected: TestGraphBuilder.() -> Unit, actual: LinearGraph): Unit {
   assertEquals(graph(expected).asTestGraphString(), actual.asTestGraphString())
 }

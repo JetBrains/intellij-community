@@ -1098,4 +1098,16 @@ class Foo {
 }
 """)
   }
+
+  public void "test sout template in expression lambda"() {
+    myFixture.configureByText 'a.java', '''class Foo {{
+  strings.stream().forEach(o -> sout<caret>);
+}}
+'''
+    myFixture.type('\t')
+    myFixture.checkResult '''class Foo {{
+  strings.stream().forEach(o -> System.out.println(<caret>));
+}}
+'''
+  }
 }

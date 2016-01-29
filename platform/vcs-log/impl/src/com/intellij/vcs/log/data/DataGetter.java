@@ -15,14 +15,23 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.Consumer;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public interface DataGetter<T extends VcsShortCommitDetails> {
   @Nullable
   T getCommitData(int row, @NotNull GraphTableModel tableModel);
+
+  void loadCommitsData(@NotNull List<Integer> rows,
+                       @NotNull GraphTableModel tableModel,
+                       @NotNull Consumer<List<T>> consumer,
+                       @Nullable ProgressIndicator indicator);
 
   @Nullable
   T getCommitDataIfAvailable(int hash);

@@ -100,7 +100,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return suitableFactories;
   }
 
-
   public static PsiMethod findPsiMethod(PsiFile file, int offset) {
     PsiElement element = null;
 
@@ -461,22 +460,30 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public abstract EvaluatorBuilder  getEvaluatorBuilder();
 
+  public static CodeFragmentFactory getCodeFragmentFactory(@Nullable PsiElement context, @Nullable FileType fileType) {
+    DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
+    if (fileType == null) {
+      if (context == null) {
+        return defaultFactory;
+      }
+      else {
+        fileType = context.getContainingFile().getFileType();
+      }
+    }
+    for (CodeFragmentFactory factory : ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME)) {
+      if (factory != defaultFactory && factory.getFileType().equals(fileType) && factory.isContextAccepted(context)) {
+        return factory;
+      }
+    }
+    return defaultFactory;
+  }
+
   @NotNull
   public static CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
     CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
       @Override
       public CodeFragmentFactory compute() {
-        final FileType fileType = text.getFileType();
-        final List<CodeFragmentFactory> factories = getCodeFragmentFactories(context);
-        if (fileType == null) {
-          return factories.get(0);
-        }
-        for (CodeFragmentFactory factory : factories) {
-          if (factory.getFileType().equals(fileType)) {
-            return factory;
-          }
-        }
-        return DefaultCodeFragmentFactory.getInstance();
+        return getCodeFragmentFactory(context, text.getFileType());
       }
     });
     return new CodeFragmentFactoryContextWrapper(factory);
@@ -799,6 +806,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     element = element.getParent();
     if (element != null) return getNextElement(element);
     return null;
+  }
+
+  public static boolean isLambdaClassName(String typeName) {
+    return getLambdaBaseClassName(typeName) != null;
+  }
+
+  @Nullable
+  public static String getLambdaBaseClassName(String typeName) {
+    return StringUtil.substringBefore(typeName, "$$Lambda$");
   }
 
   public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {

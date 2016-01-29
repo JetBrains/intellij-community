@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -33,25 +34,34 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class JBUI {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.JBUI");
+
   private static float SCALE_FACTOR = calculateScaleFactor();
 
   private static float calculateScaleFactor() {
     if (SystemInfo.isMac) {
+      LOG.info("UI scale factor: 1.0");
       return 1.0f;
     }
 
     if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+      LOG.info("UI scale factor: 1.0");
       return 1.0f;
     }
+
+    float s = 1f;
 
     // On Linux: rely on DPI
     if (SystemInfo.isLinux) {
       final int dpi = getSystemDPI();
-      if (dpi < 120) return 1f;
-      if (dpi < 144) return 1.25f;
-      if (dpi < 168) return 1.5f;
-      if (dpi < 192) return 1.75f;
-      return 2f;
+      if (dpi < 120) s = 1f;
+      else if (dpi < 144) s = 1.25f;
+      else if (dpi < 168) s = 1.5f;
+      else if (dpi < 192) s = 1.75f;
+      else s = 2f;
+
+      LOG.info("UI scale factor: " + s);
+      return s;
     }
 
     int size = -1;
@@ -65,12 +75,14 @@ public class JBUI {
     if (size == -1) {
       size = Fonts.label().getSize();
     }
-    if (size <= 13) return 1.0f;
-    if (size <= 16) return 1.25f;
-    if (size <= 18) return 1.5f;
-    if (size < 24)  return 1.75f;
+    if (size <= 13) s = 1.0f;
+    else if (size <= 16) s = 1.25f;
+    else if (size <= 18) s = 1.5f;
+    else if (size < 24)  s = 1.75f;
+    else s = 2.0f;
 
-    return 2.0f;
+    LOG.info("UI scale factor: " + s);
+    return s;
   }
 
   private static int getSystemDPI() {
@@ -96,12 +108,14 @@ public class JBUI {
       //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
       scale = 1f;
     }
+    LOG.info("UI scale factor changed: " + scale);
+
     SCALE_FACTOR = scale;
     IconLoader.setScale(scale);
   }
 
   public static int scale(int i) {
-    return (int)(SCALE_FACTOR * i);
+    return Math.round(SCALE_FACTOR * i);
   }
 
   public static int scaleFontSize(int fontSize) {

@@ -1,7 +1,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 <xs:simpleType name="TestType">
 <xs:restriction base="xs:string">
-<xs:pattern value="<error>[0-9]+-([0-9]+|*)</error>"/>
+<xs:pattern value="[0-9]+-([0-9]+|<error descr="Dangling metacharacter">*</error><error descr="Unmatched closing ')'">)</error>"/>
 </xs:restriction>
 </xs:simpleType>
 <xs:simpleType name="TestType2">

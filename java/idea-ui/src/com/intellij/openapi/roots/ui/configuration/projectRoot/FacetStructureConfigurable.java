@@ -35,7 +35,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.FacetProje
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -276,7 +275,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
       actions.add(new MyNavigateAction());
     }
     actions.add(new MyRemoveAction());
-    if (fromPopup || !(Registry.is("ide.new.project.settings"))) {
+    if (fromPopup) {
       actions.add(Separator.getInstance());
       addCollapseExpandActions(actions);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public class NullGraphics2D extends Graphics2D {
   private RenderingHints myRenderingHints = new RenderingHints(null);
   private Color myColor = Color.black;
   private Font myFont = Font.decode(null);
+  private Stroke myStroke = new BasicStroke();
 
   private int myResult;
 
@@ -174,11 +175,6 @@ public class NullGraphics2D extends Graphics2D {
   }
 
   @Override
-  public void setStroke(Stroke s) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void setRenderingHint(RenderingHints.Key hintKey, Object hintValue) {
     myRenderingHints.put(hintKey, hintValue);
     myResult += Objects.hashCode(hintKey);
@@ -250,6 +246,17 @@ public class NullGraphics2D extends Graphics2D {
   public void setFont(Font font) {
     myFont = font;
     myResult += Objects.hashCode(font);
+  }
+
+  @Override
+  public void setStroke(Stroke s) {
+    myStroke = s;
+    myResult += Objects.hashCode(s);
+  }
+
+  @Override
+  public Stroke getStroke() {
+    return myStroke;
   }
 
   @Override
@@ -410,11 +417,6 @@ public class NullGraphics2D extends Graphics2D {
 
   @Override
   public Color getBackground() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public Stroke getStroke() {
     throw new UnsupportedOperationException();
   }
 

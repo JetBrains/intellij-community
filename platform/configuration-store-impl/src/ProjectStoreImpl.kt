@@ -45,7 +45,13 @@ import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
+
+val IProjectStore.nameFile: Path
+  get() = Paths.get(projectBasePath, Project.DIRECTORY_STORE_FOLDER, ProjectImpl.NAME_FILE)
 
 abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreImpl(), IProjectStore {
   // protected setter used in upsource
@@ -123,7 +129,6 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       storageManager.addMacro(StoragePathMacros.PROJECT_FILE, "$configDir/misc.xml")
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, "$configDir/workspace.xml")
 
-
       if (!isDir) {
         val workspace = File(workspaceFilePath)
         if (!workspace.exists()) {
@@ -144,6 +149,8 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 }
 
 private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {
+  private var lastSavedProjectName: String? = null
+
   init {
     assert(!project.isDefault)
   }
@@ -159,15 +166,12 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
   override fun getProjectName(): String {
     if (scheme == StorageScheme.DIRECTORY_BASED) {
       val baseDir = projectBasePath
-      val nameFile = File(File(projectBasePath, Project.DIRECTORY_STORE_FOLDER), ProjectImpl.NAME_FILE)
+      val nameFile = nameFile
       if (nameFile.exists()) {
         try {
-          val name = nameFile.inputStream().reader().useLines() {
-            it.firstOrNull { !it.isEmpty() }?.trim()
-          }
-
-          if (name != null) {
-            return name
+          nameFile.inputStream().reader().useLines() { it.firstOrNull { !it.isEmpty() }?.trim() }?.let {
+            lastSavedProjectName = it
+            return it
           }
         }
         catch (ignored: IOException) {
@@ -190,7 +194,39 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     }
   }
 
+  private fun saveProjectName() {
+    if (scheme != StorageScheme.DIRECTORY_BASED) {
+      return
+    }
+
+    val currentProjectName = project.name
+    if (lastSavedProjectName == currentProjectName) {
+      return
+    }
+
+    lastSavedProjectName = currentProjectName
+
+    val basePath = projectBasePath
+    if (currentProjectName == PathUtilRt.getFileName(basePath)) {
+      // name equals to base path name - just remove name
+      nameFile.delete()
+    }
+    else {
+      val baseDir = Paths.get(basePath)
+      if (baseDir.isDirectory()) {
+        nameFile.write(currentProjectName.toByteArray())
+      }
+    }
+  }
+
   override fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
+    try {
+      saveProjectName()
+    }
+    catch (e: Throwable) {
+      LOG.error("Unable to store project name", e)
+    }
+
     var errors = prevErrors
     beforeSave(readonlyFiles)
 
@@ -268,7 +304,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       }
     }
 
-    private fun getFilesList(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) = Array(readonlyFiles.size) { readonlyFiles.get(it).second }
+    private fun getFilesList(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) = Array(readonlyFiles.size) { readonlyFiles[it].second }
   }
 
   override fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation) = selectDefaultStorages(storages, operation, scheme)
@@ -352,3 +388,37 @@ private fun useOldWorkspaceContent(filePath: String, ws: File) {
     LOG.error(e)
   }
 }
+
+// remove when we can use java 8 in platform-impl
+fun Path.isFile() = Files.isRegularFile(this)
+
+val Path.systemIndependentPath: String
+  get() = toString().replace(File.separatorChar, '/')
+
+internal fun Path.exists() = Files.exists(this)
+
+internal fun Path.isDirectory() = Files.isDirectory(this)
+
+internal fun Path.inputStream() = Files.newInputStream(this)
+
+internal fun Path.createDirectories() = Files.createDirectories(this)
+
+internal fun Path.write(data: ByteArray): Path {
+  parent?.createDirectories()
+  return Files.write(this, data)
+}
+
+internal fun Path.delete() {
+  try {
+    Files.delete(this)
+  }
+  catch (ignored: NoSuchFileException) {
+  }
+  catch (e: Exception) {
+    FileUtil.delete(this.toFile())
+  }
+}
+
+fun Path.readBytes() = Files.readAllBytes(this)
+
+fun Path.readText() = readBytes().toString(Charsets.UTF_8)

@@ -24,6 +24,7 @@ import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
@@ -41,7 +42,9 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -66,7 +69,7 @@ import java.util.List;
 /**
  * @author Sergey.Malenkov
  */
-final class SettingsTreeView extends JComponent implements Disposable, OptionsEditorColleague {
+final class SettingsTreeView extends JComponent implements Accessible, Disposable, OptionsEditorColleague {
   private static final int ICON_GAP = 5;
   private static final String NODE_ICON = "settings.tree.view.icon";
   private static final Color WRONG_CONTENT = JBColor.RED;
@@ -153,10 +156,12 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
         return myHeader;
       }
     });
-    myScroller.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
-    myScroller.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    myScroller.getViewport().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    myScroller.getVerticalScrollBar().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    if (!Registry.is("ide.scroll.new.layout")) {
+      myScroller.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
+      myScroller.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+      myScroller.getViewport().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+      myScroller.getVerticalScrollBar().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    }
     add(myScroller);
 
     myTree.addComponentListener(new ComponentAdapter() {
@@ -757,7 +762,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
         Container parent = tree.getParent();
         if (parent instanceof JViewport) {
           JViewport viewport = (JViewport)parent;
-          bounds.width = viewport.getWidth() - viewport.getViewPosition().x;
+          bounds.width = viewport.getWidth() - viewport.getViewPosition().x - insets.right / 2;
         }
         bounds.width -= bounds.x;
       }
@@ -863,6 +868,21 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       for (TreePath each : toCollapse) {
         myTree.collapsePath(each);
       }
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleSettingsTreeView();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleSettingsTreeView extends AccessibleJComponent {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.PANEL;
     }
   }
 }

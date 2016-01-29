@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -76,7 +77,12 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
           PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
             @Override
             public PsiClass[] compute() {
-              return classOwner.getClasses();
+              try {
+                return classOwner.getClasses();
+              }
+              catch (IndexNotReadyException e) {
+                return PsiClass.EMPTY_ARRAY;
+              }
             }
           });
           if (classes.length == 1 && !(classes[0] instanceof SyntheticElement) &&

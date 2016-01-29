@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,8 @@ public class MockFontLayoutService extends FontLayoutService {
   }
 
   @Override
-  public int getDescent(@NotNull FontMetrics fontMetrics) {
-    return myDescent;
+  public int getAscent(@NotNull FontMetrics fontMetrics) {
+    return myLineHeight - myDescent;
   }
 
   private class MockGlyphVector extends AbstractMockGlyphVector {

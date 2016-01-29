@@ -31,8 +31,7 @@ import java.util.*;
  * @author Roman.Chernyatchik
  */
 public abstract class TextFieldWithAutoCompletionListProvider<T> implements Comparator<T> {
-  @NotNull
-  private Collection<T> myVariants;
+  @NotNull protected Collection<T> myVariants;
   @Nullable
   private String myCompletionAdvertisement;
 

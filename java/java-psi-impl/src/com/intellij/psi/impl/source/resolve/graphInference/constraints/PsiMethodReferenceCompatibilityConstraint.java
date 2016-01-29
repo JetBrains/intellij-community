@@ -49,7 +49,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (!LambdaUtil.isFunctionalType(myT)) {
-      session.registerIncompatibleErrorMessage(myT.getPresentableText() + " is not a functional interface");
+      session.registerIncompatibleErrorMessage(session.getPresentableText(myT) + " is not a functional interface");
       return false;
     }
 
@@ -57,7 +57,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(groundTargetType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(classResolveResult);
     if (interfaceMethod == null) {
-      session.registerIncompatibleErrorMessage("No valid function type can be found for " + myT.getPresentableText());
+      session.registerIncompatibleErrorMessage("No valid function type can be found for " + session.getPresentableText(myT));
       return false;
     }
 

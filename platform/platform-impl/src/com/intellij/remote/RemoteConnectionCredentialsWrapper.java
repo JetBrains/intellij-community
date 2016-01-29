@@ -66,7 +66,7 @@ public class RemoteConnectionCredentialsWrapper {
     myCredentialsTypeHolder.putUserData(WEB_DEPLOYMENT_BASED_CREDENTIALS, webDeploymentCredentials);
   }
 
-  private WebDeploymentCredentialsHolder getWebDeploymentCredentials() {
+  public WebDeploymentCredentialsHolder getWebDeploymentCredentials() {
     return myCredentialsTypeHolder.getUserData(WEB_DEPLOYMENT_BASED_CREDENTIALS);
   }
 

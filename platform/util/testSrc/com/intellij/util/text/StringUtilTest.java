@@ -32,6 +32,24 @@ import static org.junit.Assert.*;
  */
 public class StringUtilTest {
   @Test
+  public void testTrimLeadingChar() throws Exception {
+    assertEquals("", StringUtil.trimLeading("", ' '));
+    assertEquals("", StringUtil.trimLeading(" ", ' '));
+    assertEquals("", StringUtil.trimLeading("    ", ' '));
+    assertEquals("a  ", StringUtil.trimLeading("a  ", ' '));
+    assertEquals("a  ", StringUtil.trimLeading("  a  ", ' '));
+  }
+
+  @Test
+  public void testTrimTrailingChar() throws Exception {
+    assertEquals("", StringUtil.trimTrailing("", ' '));
+    assertEquals("", StringUtil.trimTrailing(" ", ' '));
+    assertEquals("", StringUtil.trimTrailing("    ", ' '));
+    assertEquals("  a", StringUtil.trimTrailing("  a", ' '));
+    assertEquals("  a", StringUtil.trimTrailing("  a  ", ' '));
+  }
+
+  @Test
   public void testToUpperCase() {
     assertEquals('/', StringUtil.toUpperCase('/'));
     assertEquals(':', StringUtil.toUpperCase(':'));

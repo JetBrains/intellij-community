@@ -20,7 +20,7 @@ class Test {
 
   public void testDontReplaceQualifierWithNull(Object bar) {
     if (bar == null) {
-      <warning descr="Method invocation 'bar.hashCode()' may produce 'java.lang.NullPointerException'">bar.hashCode()</warning>;
+      bar.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>();
     }
   }
 

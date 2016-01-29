@@ -60,7 +60,10 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -1548,12 +1551,25 @@ public class HighlightUtil extends HighlightUtilBase {
       //or if there exists some other direct superclass or direct superinterface of T, J, such that J is a subtype of I.
       final PsiClass classT = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
       if (classT != null) {
+        final PsiElement parent = expr.getParent();
+        final PsiElement resolved = parent instanceof PsiReferenceExpression ? ((PsiReferenceExpression)parent).resolve() : null;
+
         for (PsiClass superClass : classT.getSupers()) {
-          if (superClass.isInterface() && //check spec-javac relations
-              superClass.isInheritor(aClass, true)) {
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-              .range(qualifier)
-              .descriptionAndTooltip(JavaErrorMessages.message("bad.qualifier.in.super.method.reference", format(aClass), formatClass(superClass))).create();
+          if (superClass.isInheritor(aClass, true)) {
+            String cause = null;
+            if (superClass.isInterface()) {
+              cause = "redundant interface " + format(aClass) + " is extended by ";
+            }
+            else if (resolved instanceof PsiMethod &&
+                     MethodSignatureUtil.findMethodBySuperMethod(superClass, (PsiMethod)resolved, true) != resolved) {
+              cause = "method " + ((PsiMethod)resolved).getName() + " is overridden in ";
+            }
+
+            if (cause != null) {
+              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                .range(qualifier)
+                .descriptionAndTooltip(JavaErrorMessages.message("bad.qualifier.in.super.method.reference", cause + formatClass(superClass))).create();
+            }
           }
         }
 

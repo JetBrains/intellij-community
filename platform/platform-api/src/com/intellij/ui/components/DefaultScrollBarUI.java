@@ -15,12 +15,11 @@
  */
 package com.intellij.ui.components;
 
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollPane.Alignment;
+import com.intellij.util.ui.RegionPainter;
+import com.intellij.util.ui.UIUtil;
 
-import java.awt.AlphaComposite;
-import java.awt.Composite;
 import java.awt.Graphics2D;
 import javax.swing.JComponent;
 
@@ -28,15 +27,12 @@ import javax.swing.JComponent;
  * @author Sergey.Malenkov
  */
 final class DefaultScrollBarUI extends AbstractScrollBarUI {
-  private static final JBColor THUMB_BACKGROUND = new JBColor(0x808080, 0x808080);
-  private static final JBColor THUMB_FOREGROUND = new JBColor(0x6E6E6E, 0x949494);
-
   private float myTrackValue;
   private float myThumbValue;
 
   @Override
   int getThickness() {
-    return scale(14);
+    return scale(isOpaque() ? 13 : 14);
   }
 
   @Override
@@ -66,44 +62,50 @@ final class DefaultScrollBarUI extends AbstractScrollBarUI {
 
   @Override
   void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    Composite old = g.getComposite();
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .1f * myTrackValue));
-    g.setColor(Gray.x80);
-    g.fillRect(x, y, width, height);
-    g.setComposite(old);
+    paint(JBScrollPane.TRACK_PAINTER, g, x, y, width, height, c, myTrackValue, false);
   }
 
   @Override
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    Composite old = g.getComposite();
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .4f + .1f * myThumbValue));
+    RegionPainter<Float> p = UIUtil.isUnderDarcula() ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
+    paint(p, g, x, y, width, height, c, myThumbValue, Registry.is("ide.scroll.thumb.small.if.opaque"));
+  }
+
+  private void paint(RegionPainter<Float> p, Graphics2D g, int x, int y, int width, int height, JComponent c, float value, boolean small) {
     if (!c.isOpaque()) {
       Alignment alignment = Alignment.get(c);
       if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
-        int offset = width - getMinimalThickness();
+        int offset = getAnimatedValue(width - getMinimalThickness());
         if (offset > 0) {
-          offset *= 1 - myThumbValue;
           width -= offset;
           if (alignment == Alignment.RIGHT) x += offset;
         }
       }
       else {
-        int offset = height - getMinimalThickness();
+        int offset = getAnimatedValue(height - getMinimalThickness());
         if (offset > 0) {
-          offset *= 1 - myThumbValue;
           height -= offset;
           if (alignment == Alignment.BOTTOM) y += offset;
         }
       }
     }
-    g.setColor(THUMB_BACKGROUND);
-    g.fillRect(x + 1, y + 1, width - 2, height - 2);
-    g.setColor(THUMB_FOREGROUND);
-    g.drawRect(x, y, width - 1, height - 1);
-    g.setComposite(old);
+    else if (small) {
+      x += 1;
+      y += 1;
+      width -= 2;
+      height -= 2;
+    }
+    p.paint(g, x, y, width, height, value);
   }
 
-  private TwoWayAnimator myTrackAnimator = new TwoWayAnimator("ScrollBarTrack", 6, 300, 300, 1000) {
+  private int getAnimatedValue(int value) {
+    if (!Registry.is("ide.scroll.bar.expand.animation")) return value;
+    if (myTrackValue <= 0) return value;
+    if (myTrackValue >= 1) return 0;
+    return (int)(.5f + value * (1 - myTrackValue));
+  }
+
+  private TwoWayAnimator myTrackAnimator = new TwoWayAnimator("ScrollBarTrack", 6, 125, 150, 300) {
     @Override
     void onFrame(int frame, int maxFrame) {
       myTrackValue = (float)frame / maxFrame;
@@ -112,7 +114,7 @@ final class DefaultScrollBarUI extends AbstractScrollBarUI {
     }
   };
 
-  private TwoWayAnimator myThumbAnimator = new TwoWayAnimator("ScrollBarThumb", 5, 125, 300, 1000) {
+  private TwoWayAnimator myThumbAnimator = new TwoWayAnimator("ScrollBarThumb", 6, 125, 150, 300) {
     @Override
     void onFrame(int frame, int maxFrame) {
       myThumbValue = (float)frame / maxFrame;

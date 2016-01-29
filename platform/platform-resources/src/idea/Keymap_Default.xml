@@ -296,6 +296,9 @@
   <action id="RecentChangedFiles">
     <keyboard-shortcut first-keystroke="control shift E"/>
   </action>
+  <action id="ShowRecentTests">
+    <keyboard-shortcut first-keystroke="control shift SEMICOLON"/>
+  </action>
   <action id="QuickChangeScheme">
     <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
   </action>
@@ -706,6 +709,12 @@
   </action>
   <action id="MoveStatementUp">
     <keyboard-shortcut first-keystroke="control shift UP"/>
+  </action>
+  <action id="MoveElementLeft">
+    <keyboard-shortcut first-keystroke="control alt shift LEFT"/>
+  </action>
+  <action id="MoveElementRight">
+    <keyboard-shortcut first-keystroke="control alt shift RIGHT"/>
   </action>
   <action id="MoveLineDown">
     <keyboard-shortcut first-keystroke="alt shift DOWN"/>

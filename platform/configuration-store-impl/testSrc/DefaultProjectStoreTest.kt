@@ -19,9 +19,10 @@ import java.nio.file.Paths
 
 internal class DefaultProjectStoreTest {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
 
-    private const val TEST_COMPONENT_NAME = "Foo"
+    internal const val TEST_COMPONENT_NAME = "Foo"
 
     @State(name = TEST_COMPONENT_NAME, storages = arrayOf(
       Storage(file = StoragePathMacros.PROJECT_FILE),
@@ -40,7 +41,7 @@ internal class DefaultProjectStoreTest {
 
   private val tempDirManager = TemporaryDirectory()
 
-  private val requiredPlugins = listOf<ProjectExternalDependency>(DependencyOnPlugin("fake", "0", "1"))
+  private val requiredPlugins = listOf<ProjectExternalDependency>(DependencyOnPlugin("fake", "0", "1", "alpha"))
 
   private val ruleChain = RuleChain(
     tempDirManager,

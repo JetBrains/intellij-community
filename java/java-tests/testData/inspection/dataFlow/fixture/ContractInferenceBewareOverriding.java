@@ -8,7 +8,7 @@ class Doo {
 
   void foo(@Nullable String s) {
     if (isMaybeNotNull(s)) {
-      System.out.println(<warning descr="Method invocation 's.length()' may produce 'java.lang.NullPointerException'">s.length()</warning>);
+      System.out.println(s.<warning descr="Method invocation 'length' may produce 'java.lang.NullPointerException'">length</warning>());
     }
   }
 

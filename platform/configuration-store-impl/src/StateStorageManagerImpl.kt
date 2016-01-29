@@ -146,7 +146,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     val normalizedCollapsedPath = normalizeFileSpec(collapsedPath)
     val key = if (storageClass == StateStorage::class.java) normalizedCollapsedPath else storageClass.name
     storageLock.withLock {
-      var storage = storages.get(key)
+      var storage = storages[key]
       if (storage == null) {
         storage = createStateStorage(storageClass, normalizedCollapsedPath, roamingType, stateSplitter)
         storages.put(key, storage)
@@ -165,7 +165,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     storageLock.withLock {
       var result: MutableList<FileBasedStorage>? = null
       for (fileSpec in fileSpecs) {
-        val storage = storages.get(normalizeFileSpec(fileSpec))
+        val storage = storages[normalizeFileSpec(fileSpec)]
         if (storage is FileBasedStorage) {
           if (result == null) {
             result = SmartList<FileBasedStorage>()
@@ -351,7 +351,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
 
     private fun getExternalizationSession(storage: StateStorage): StateStorage.ExternalizationSession? {
-      var session = sessions.get(storage)
+      var session = sessions[storage]
       if (session == null) {
         session = storage.startExternalization()
         if (session != null) {

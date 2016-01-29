@@ -69,6 +69,15 @@ public class PyProtectedMemberInspectionTest extends PyTestCase {
     myFixture.checkHighlighting(false, false, true);
   }
 
+  //PY-14234
+  public void testImportFromTheSamePackage() {
+    String path = getTestName(true);
+    myFixture.copyDirectoryToProject(path + "/my_package", "./my_package");
+    myFixture.configureByFile("/my_package/my_public_module.py");
+    myFixture.enableInspections(PyProtectedMemberInspection.class);
+    myFixture.checkHighlighting(false, false, true);
+  }
+
   public void testModule() {
     myFixture.configureByFiles(getTestName(true) + ".py", "tmp.py");
     myFixture.enableInspections(PyProtectedMemberInspection.class);

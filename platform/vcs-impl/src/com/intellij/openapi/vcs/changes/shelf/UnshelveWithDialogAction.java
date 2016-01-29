@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -154,6 +155,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
   @NotNull
   private static JCheckBox createRemoveFilesStrategyCheckbox(@NotNull Project project) {
     final JCheckBox removeOptionCheckBox = new JCheckBox("Remove successfully applied files from the shelf");
+    removeOptionCheckBox.setMnemonic(KeyEvent.VK_R);
     final ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(project);
     removeOptionCheckBox.setSelected(shelveChangesManager.isRemoveFilesFromShelf());
     removeOptionCheckBox.addActionListener(new ActionListener() {

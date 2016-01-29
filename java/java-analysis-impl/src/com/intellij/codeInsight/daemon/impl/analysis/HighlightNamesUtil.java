@@ -22,6 +22,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.application.options.colors.ScopeAttributesUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -171,32 +172,32 @@ public class HighlightNamesUtil {
 
   private static HighlightInfoType getMethodNameHighlightType(@NotNull PsiMethod method, boolean isDeclaration, boolean isInheritedMethod) {
     if (method.isConstructor()) {
-      return isDeclaration ? HighlightInfoType.CONSTRUCTOR_DECLARATION : HighlightInfoType.CONSTRUCTOR_CALL;
+      return isDeclaration ? JavaHighlightInfoTypes.CONSTRUCTOR_DECLARATION : JavaHighlightInfoTypes.CONSTRUCTOR_CALL;
     }
-    if (isDeclaration) return HighlightInfoType.METHOD_DECLARATION;
+    if (isDeclaration) return JavaHighlightInfoTypes.METHOD_DECLARATION;
     if (method.hasModifierProperty(PsiModifier.STATIC)) {
-      return HighlightInfoType.STATIC_METHOD;
+      return JavaHighlightInfoTypes.STATIC_METHOD;
     }
-    if (isInheritedMethod) return HighlightInfoType.INHERITED_METHOD;
+    if (isInheritedMethod) return JavaHighlightInfoTypes.INHERITED_METHOD;
     if(method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      return HighlightInfoType.ABSTRACT_METHOD;
+      return JavaHighlightInfoTypes.ABSTRACT_METHOD;
     }
-    return HighlightInfoType.METHOD_CALL;
+    return JavaHighlightInfoTypes.METHOD_CALL;
   }
 
   @Nullable
   private static HighlightInfoType getVariableNameHighlightType(PsiVariable var) {
     if (var instanceof PsiLocalVariable
         || var instanceof PsiParameter && ((PsiParameter)var).getDeclarationScope() instanceof PsiForeachStatement) {
-      return HighlightInfoType.LOCAL_VARIABLE;
+      return JavaHighlightInfoTypes.LOCAL_VARIABLE;
     }
     if (var instanceof PsiField) {
       return var.hasModifierProperty(PsiModifier.STATIC) 
-             ? var.hasModifierProperty(PsiModifier.FINAL) ? HighlightInfoType.STATIC_FINAL_FIELD : HighlightInfoType.STATIC_FIELD
-             : var.hasModifierProperty(PsiModifier.FINAL) ? HighlightInfoType.INSTANCE_FINAL_FIELD : HighlightInfoType.INSTANCE_FIELD;
+             ? var.hasModifierProperty(PsiModifier.FINAL) ? JavaHighlightInfoTypes.STATIC_FINAL_FIELD : JavaHighlightInfoTypes.STATIC_FIELD
+             : var.hasModifierProperty(PsiModifier.FINAL) ? JavaHighlightInfoTypes.INSTANCE_FINAL_FIELD : JavaHighlightInfoTypes.INSTANCE_FIELD;
     }
     if (var instanceof PsiParameter) {
-      return HighlightInfoType.PARAMETER;
+      return JavaHighlightInfoTypes.PARAMETER;
     }
     return null;
   }
@@ -204,27 +205,27 @@ public class HighlightNamesUtil {
   @NotNull
   private static HighlightInfoType getClassNameHighlightType(@Nullable PsiClass aClass, @Nullable PsiElement element) {
     if (element instanceof PsiJavaCodeReferenceElement && element.getParent() instanceof PsiAnonymousClass) {
-      return HighlightInfoType.ANONYMOUS_CLASS_NAME;
+      return JavaHighlightInfoTypes.ANONYMOUS_CLASS_NAME;
     }
     if (aClass != null) {
-      if (aClass.isAnnotationType()) return HighlightInfoType.ANNOTATION_NAME;
-      if (aClass.isInterface()) return HighlightInfoType.INTERFACE_NAME;
-      if (aClass.isEnum()) return HighlightInfoType.ENUM_NAME;
-      if (aClass instanceof PsiTypeParameter) return HighlightInfoType.TYPE_PARAMETER_NAME;
+      if (aClass.isAnnotationType()) return JavaHighlightInfoTypes.ANNOTATION_NAME;
+      if (aClass.isInterface()) return JavaHighlightInfoTypes.INTERFACE_NAME;
+      if (aClass.isEnum()) return JavaHighlightInfoTypes.ENUM_NAME;
+      if (aClass instanceof PsiTypeParameter) return JavaHighlightInfoTypes.TYPE_PARAMETER_NAME;
       final PsiModifierList modList = aClass.getModifierList();
-      if (modList != null && modList.hasModifierProperty(PsiModifier.ABSTRACT)) return HighlightInfoType.ABSTRACT_CLASS_NAME;
+      if (modList != null && modList.hasModifierProperty(PsiModifier.ABSTRACT)) return JavaHighlightInfoTypes.ABSTRACT_CLASS_NAME;
     }
     // use class by default
-    return HighlightInfoType.CLASS_NAME;
+    return JavaHighlightInfoTypes.CLASS_NAME;
   }
 
   @Nullable
   static HighlightInfo highlightReassignedVariable(PsiVariable variable, PsiElement elementToHighlight) {
     if (variable instanceof PsiLocalVariable) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.REASSIGNED_LOCAL_VARIABLE).range(elementToHighlight).create();
+      return HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.REASSIGNED_LOCAL_VARIABLE).range(elementToHighlight).create();
     }
     if (variable instanceof PsiParameter) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.REASSIGNED_PARAMETER).range(elementToHighlight).create();
+      return HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.REASSIGNED_PARAMETER).range(elementToHighlight).create();
     }
     return null;
   }

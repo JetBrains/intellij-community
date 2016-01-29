@@ -26,7 +26,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
@@ -592,33 +591,25 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                    ProcessingContext context,
                                    List<Object> ret,
                                    @NotNull TypeEvalContext typeEvalContext) {
-    for (PyExpression expression : myClass.getSuperClassExpressions()) {
-      final PsiReference reference = expression.getReference();
-      PsiElement element = null;
-      if (reference != null) {
-        element = reference.resolve();
+    for (PyType type : myClass.getSuperClassTypes(typeEvalContext)) {
+      if (!(type instanceof PyClassLikeType)) {
+        continue;
       }
-      PyType type;
-      if (element instanceof PyClass) {
-        type = new PyClassTypeImpl((PyClass)element, myIsDefinition);
+
+      final PyClassLikeType classLikeType = (PyClassLikeType)type;
+      if (classLikeType.isDefinition() && !myIsDefinition) {
+        type = classLikeType.toInstance();
       }
-      else {
-        type = typeEvalContext.getType(expression);
-        if (type instanceof PyClassType && !myIsDefinition) {
-          type = ((PyClassType)type).toInstance();
+
+      Object[] ancestry = type.getCompletionVariants(name, expressionHook, context);
+      for (Object ob : ancestry) {
+        String inheritedName = ob.toString();
+        if (!namesAlready.contains(inheritedName) && !isClassPrivate(inheritedName)) {
+          ret.add(ob);
+          namesAlready.add(inheritedName);
         }
       }
-      if (type != null) {
-        Object[] ancestry = type.getCompletionVariants(name, expressionHook, context);
-        for (Object ob : ancestry) {
-          String inheritedName = ob.toString();
-          if (!namesAlready.contains(inheritedName) && !isClassPrivate(inheritedName)) {
-            ret.add(ob);
-            namesAlready.add(inheritedName);
-          }
-        }
-        ContainerUtil.addAll(ret, ancestry);
-      }
+      ContainerUtil.addAll(ret, ancestry);
     }
   }
 

@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module sys
 # from (built-in)
-# by generator 1.124
+# by generator 1.138
 """
 This module provides access to some objects used or maintained by the
 interpreter and to functions that interact strongly with the interpreter.
@@ -51,7 +51,7 @@ version_info -- version information as a named tuple
 hexversion -- version information encoded as a single integer
 copyright -- copyright notice pertaining to this interpreter
 platform -- platform identifier
-executable -- pathname of this Python interpreter
+executable -- absolute path of the executable binary of the Python interpreter
 prefix -- prefix used to find the Python library
 exec_prefix -- prefix used to find the machine-specific Python library
 float_repr_style -- string indicating the style of repr() output for floats
@@ -88,35 +88,33 @@ api_version = 1013
 
 byteorder = 'little'
 
-copyright = 'Copyright (c) 2001-2011 Python Software Foundation.\nAll Rights Reserved.\n\nCopyright (c) 2000 BeOpen.com.\nAll Rights Reserved.\n\nCopyright (c) 1995-2001 Corporation for National Research Initiatives.\nAll Rights Reserved.\n\nCopyright (c) 1991-1995 Stichting Mathematisch Centrum, Amsterdam.\nAll Rights Reserved.'
+copyright = 'Copyright (c) 2001-2015 Python Software Foundation.\nAll Rights Reserved.\n\nCopyright (c) 2000 BeOpen.com.\nAll Rights Reserved.\n\nCopyright (c) 1995-2001 Corporation for National Research Initiatives.\nAll Rights Reserved.\n\nCopyright (c) 1991-1995 Stichting Mathematisch Centrum, Amsterdam.\nAll Rights Reserved.'
 
-dont_write_bytecode = False
+dont_write_bytecode = True
 
 exc_type = None
 
-executable = '/usr/bin/python2.7'
+executable = '/Users/vlan/.virtualenvs/obraz-py2.7/bin/python'
 
-exec_prefix = '/usr'
+exec_prefix = '/Users/vlan/.virtualenvs/obraz-py2.7'
 
 float_repr_style = 'short'
 
-hexversion = 34013936
+hexversion = 34015984
 
 maxint = 9223372036854775807
 maxsize = 9223372036854775807
-maxunicode = 1114111
+maxunicode = 65535
 
-platform = 'linux2'
+platform = 'darwin'
 
-prefix = '/usr'
+prefix = '/Users/vlan/.virtualenvs/obraz-py2.7'
 
 py3kwarning = False
-pydebug = False
 
-version = '2.7.2+ (default, Jul 20 2012, 22:15:08) \n[GCC 4.6.1]'
+real_prefix = '/System/Library/Frameworks/Python.framework/Versions/2.7'
 
-__egginsert = 1
-__plen = 7
+version = '2.7.10 (default, Oct 23 2015, 18:05:06) \n[GCC 4.2.1 Compatible Apple LLVM 7.0.0 (clang-700.0.59.5)]'
 
 # functions
 
@@ -145,7 +143,6 @@ def callstats(): # real signature unknown; restored from __doc__
     """
     return ()
 
-
 def call_tracing(func, args): # real signature unknown; restored from __doc__
     """
     call_tracing(func, args) -> object
@@ -156,7 +153,6 @@ def call_tracing(func, args): # real signature unknown; restored from __doc__
     """
     return object()
 
-
 def displayhook(p_object): # real signature unknown; restored from __doc__
     """
     displayhook(object) -> None
@@ -165,11 +161,13 @@ def displayhook(p_object): # real signature unknown; restored from __doc__
     """
     pass
 
-
-def excepthook(exc_type, exc_obj, exc_tb): # reliably restored by inspect
-    """ Catch an uncaught exception and make a traceback. """
+def excepthook(exctype, value, traceback): # real signature unknown; restored from __doc__
+    """
+    excepthook(exctype, value, traceback) -> None
+    
+    Handle an exception by displaying it with a traceback on sys.stderr.
+    """
     pass
-
 
 def exc_clear(): # real signature unknown; restored from __doc__
     """
@@ -182,7 +180,6 @@ def exc_clear(): # real signature unknown; restored from __doc__
     """
     pass
 
-
 def exc_info(): # real signature unknown; restored from __doc__
     """
     exc_info() -> (type, value, traceback)
@@ -192,19 +189,17 @@ def exc_info(): # real signature unknown; restored from __doc__
     """
     pass
 
-
 def exit(status=None): # real signature unknown; restored from __doc__
     """
     exit([status])
     
     Exit the interpreter by raising SystemExit(status).
     If the status is omitted or None, it defaults to zero (i.e., success).
-    If the status is numeric, it will be used as the system exit status.
+    If the status is an integer, it will be used as the system exit status.
     If it is another kind of object, it will be printed and the system
     exit status will be one (i.e., failure).
     """
     pass
-
 
 def exitfunc(): # reliably restored by inspect
     """
@@ -215,11 +210,9 @@ def exitfunc(): # reliably restored by inspect
     """
     pass
 
-
 def getcheckinterval(): # real signature unknown; restored from __doc__
     """ getcheckinterval() -> current check interval; see setcheckinterval(). """
     pass
-
 
 def getdefaultencoding(): # real signature unknown; restored from __doc__
     """
@@ -230,7 +223,6 @@ def getdefaultencoding(): # real signature unknown; restored from __doc__
     """
     return ""
 
-
 def getdlopenflags(): # real signature unknown; restored from __doc__
     """
     getdlopenflags() -> int
@@ -239,7 +231,6 @@ def getdlopenflags(): # real signature unknown; restored from __doc__
     The flag constants are defined in the ctypes and DLFCN modules.
     """
     return 0
-
 
 def getfilesystemencoding(): # real signature unknown; restored from __doc__
     """
@@ -250,7 +241,6 @@ def getfilesystemencoding(): # real signature unknown; restored from __doc__
     """
     return ""
 
-
 def getprofile(): # real signature unknown; restored from __doc__
     """
     getprofile()
@@ -259,7 +249,6 @@ def getprofile(): # real signature unknown; restored from __doc__
     See the profiler chapter in the library manual.
     """
     pass
-
 
 def getrecursionlimit(): # real signature unknown; restored from __doc__
     """
@@ -271,7 +260,6 @@ def getrecursionlimit(): # real signature unknown; restored from __doc__
     """
     pass
 
-
 def getrefcount(p_object): # real signature unknown; restored from __doc__
     """
     getrefcount(object) -> integer
@@ -282,7 +270,6 @@ def getrefcount(p_object): # real signature unknown; restored from __doc__
     """
     return 0
 
-
 def getsizeof(p_object, default): # real signature unknown; restored from __doc__
     """
     getsizeof(object, default) -> int
@@ -290,7 +277,6 @@ def getsizeof(p_object, default): # real signature unknown; restored from __doc_
     Return the size of object in bytes.
     """
     return 0
-
 
 def gettrace(): # real signature unknown; restored from __doc__
     """
@@ -301,7 +287,6 @@ def gettrace(): # real signature unknown; restored from __doc__
     """
     pass
 
-
 def setcheckinterval(n): # real signature unknown; restored from __doc__
     """
     setcheckinterval(n)
@@ -310,7 +295,6 @@ def setcheckinterval(n): # real signature unknown; restored from __doc__
     n instructions.  This also affects how often thread switches occur.
     """
     pass
-
 
 def setdlopenflags(n): # real signature unknown; restored from __doc__
     """
@@ -327,7 +311,6 @@ def setdlopenflags(n): # real signature unknown; restored from __doc__
     """
     pass
 
-
 def setprofile(function): # real signature unknown; restored from __doc__
     """
     setprofile(function)
@@ -336,7 +319,6 @@ def setprofile(function): # real signature unknown; restored from __doc__
     and return.  See the profiler chapter in the library manual.
     """
     pass
-
 
 def setrecursionlimit(n): # real signature unknown; restored from __doc__
     """
@@ -349,7 +331,6 @@ def setrecursionlimit(n): # real signature unknown; restored from __doc__
     """
     pass
 
-
 def settrace(function): # real signature unknown; restored from __doc__
     """
     settrace(function)
@@ -359,14 +340,12 @@ def settrace(function): # real signature unknown; restored from __doc__
     """
     pass
 
-
 def _clear_type_cache(): # real signature unknown; restored from __doc__
     """
     _clear_type_cache() -> None
     Clear the internal type lookup cache.
     """
     pass
-
 
 def _current_frames(): # real signature unknown; restored from __doc__
     """
@@ -378,7 +357,6 @@ def _current_frames(): # real signature unknown; restored from __doc__
     This function should be used for specialized purposes only.
     """
     return {}
-
 
 def _getframe(depth=None): # real signature unknown; restored from __doc__
     """
@@ -394,7 +372,6 @@ def _getframe(depth=None): # real signature unknown; restored from __doc__
     """
     pass
 
-
 def __displayhook__(*args, **kwargs): # real signature unknown
     """
     displayhook(object) -> None
@@ -403,7 +380,6 @@ def __displayhook__(*args, **kwargs): # real signature unknown
     """
     pass
 
-
 def __excepthook__(*args, **kwargs): # real signature unknown
     """
     excepthook(exctype, value, traceback) -> None
@@ -411,7 +387,6 @@ def __excepthook__(*args, **kwargs): # real signature unknown
     Handle an exception by displaying it with a traceback on sys.stderr.
     """
     pass
-
 
 # no classes
 # variables with complex values
@@ -431,28 +406,22 @@ meta_path = []
 modules = {} # real value of type <type 'dict'> skipped
 
 path = [
-    '/home/user/src/idea/out/classes/production/python-helpers',
-    '/usr/local/lib/python2.7/dist-packages/distribute-0.6.27-py2.7.egg',
-    '/usr/lib/python2.7',
-    '/usr/lib/python2.7/plat-linux2',
-    '/usr/lib/python2.7/lib-tk',
-    '/usr/lib/python2.7/lib-old',
-    '/usr/lib/python2.7/lib-dynload',
-    '/home/user/.local/lib/python2.7/site-packages',
-    '/usr/local/lib/python2.7/dist-packages',
-    '/usr/local/lib/python2.7/dist-packages/setuptools-0.6c11-py2.7.egg-info',
-    '/usr/lib/python2.7/dist-packages',
-    '/usr/lib/python2.7/dist-packages/PIL',
-    '/usr/lib/python2.7/dist-packages/gst-0.10',
-    '/usr/lib/python2.7/dist-packages/gtk-2.0',
-    '/usr/lib/pymodules/python2.7',
-    '/usr/lib/python2.7/dist-packages/ubuntu-sso-client',
-    '/usr/lib/python2.7/dist-packages/ubuntuone-client',
-    '/usr/lib/python2.7/dist-packages/ubuntuone-control-panel',
-    '/usr/lib/python2.7/dist-packages/ubuntuone-couch',
-    '/usr/lib/python2.7/dist-packages/ubuntuone-installer',
-    '/usr/lib/python2.7/dist-packages/ubuntuone-storage-protocol',
-    '/usr/lib/python2.7/dist-packages/wx-2.8-gtk2-unicode',
+    '/Users/vlan/src/idea/out/classes/production/python-helpers',
+    '/Users/vlan/.virtualenvs/obraz-py2.7/lib/python27.zip',
+    '/Users/vlan/.virtualenvs/obraz-py2.7/lib/python2.7',
+    '/Users/vlan/.virtualenvs/obraz-py2.7/lib/python2.7/plat-darwin',
+    '/Users/vlan/.virtualenvs/obraz-py2.7/lib/python2.7/plat-mac',
+    '/Users/vlan/.virtualenvs/obraz-py2.7/lib/python2.7/plat-mac/lib-scriptpackages',
+    '/Users/vlan/.virtualenvs/obraz-py2.7/Extras/lib/python',
+    '/Users/vlan/.virtualenvs/obraz-py2.7/lib/python2.7/lib-tk',
+    '/Users/vlan/.virtualenvs/obraz-py2.7/lib/python2.7/lib-old',
+    '/Users/vlan/.virtualenvs/obraz-py2.7/lib/python2.7/lib-dynload',
+    '/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7',
+    '/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/plat-darwin',
+    '/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/lib-tk',
+    '/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/plat-mac',
+    '/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/plat-mac/lib-scriptpackages',
+    '/Users/vlan/.virtualenvs/obraz-py2.7/lib/python2.7/site-packages',
 ]
 
 path_hooks = [

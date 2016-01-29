@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,10 @@ private class DebugLogConfigureDialog(project: Project, categories: List<Pair<St
     }
     title = "Custom Debug Log Configuration"
     init()
+  }
+
+  override fun getDimensionServiceKey(): String? {
+    return "#com.intellij.ide.actions.DebugLogConfigureAction"
   }
 
   override fun createNorthPanel(): JComponent? {

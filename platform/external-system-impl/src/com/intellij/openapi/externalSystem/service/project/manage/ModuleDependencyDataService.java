@@ -57,8 +57,16 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
   }
 
   @Override
-  protected String getOrderEntryName(@NotNull ModuleOrderEntry orderEntry) {
-    return orderEntry.getModuleName();
+  protected String getOrderEntryName(@NotNull IdeModifiableModelsProvider modelsProvider, @NotNull ModuleOrderEntry orderEntry) {
+    String moduleName = orderEntry.getModuleName();
+    final Module orderEntryModule = orderEntry.getModule();
+    if(orderEntryModule != null) {
+      final String newName = modelsProvider.getModifiableModuleModel().getNewName(orderEntryModule);
+      if (newName != null) {
+        moduleName = newName;
+      }
+    }
+    return moduleName;
   }
 
   @Override

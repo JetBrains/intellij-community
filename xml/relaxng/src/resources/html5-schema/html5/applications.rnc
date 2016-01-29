@@ -91,8 +91,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	progress.attrs.max?
 		&	(	common.attrs.aria.implicit.progressbar
 			|	common.attrs.aria.role.progressbar
-			|	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
 			)?
 		)
 		progress.attrs.value =
@@ -371,40 +369,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		(	common.attrs
 		&	details.attrs.open?
 		&	(	common.attrs.aria.implicit.group # aria-expanded must be true if open attr present; check by assertions
-			|	common.attrs.aria.role.alertdialog
-			|	common.attrs.aria.role.banner
-			|	common.attrs.aria.role.button
-			|	common.attrs.aria.role.combobox
-			|	common.attrs.aria.role.dialog
-			|	common.attrs.aria.role.directory
 			|	common.attrs.aria.role.group
-			|	common.attrs.aria.role.heading
-			|	common.attrs.aria.role.img
-			|	common.attrs.aria.role.link
-			|	common.attrs.aria.role.list
-			|	common.attrs.aria.role.listbox
-			|	common.attrs.aria.role.listitem
-			|	common.attrs.aria.role.log
-			|	common.attrs.aria.role.marquee
-			|	common.attrs.aria.role.menu
-			|	common.attrs.aria.role.menubar
-			|	common.attrs.aria.role.note
-			|	common.attrs.aria.role.status
-			|	common.attrs.aria.role.tab
-			|	common.attrs.aria.role.tablist
-			|	common.attrs.aria.role.tabpanel
-			|	common.attrs.aria.role.toolbar
-			|	common.attrs.aria.role.tree
-			|	common.attrs.aria.role.treeitem
-			|	common.attrs.aria.landmark.application
-			|	common.attrs.aria.landmark.article
-			|	common.attrs.aria.landmark.complementary
-			|	common.attrs.aria.landmark.contentinfo
-			|	common.attrs.aria.landmark.document
-			|	common.attrs.aria.landmark.form
-			|	common.attrs.aria.landmark.main
-			|	common.attrs.aria.landmark.navigation
-			|	common.attrs.aria.landmark.search
 			)?
 		)
 		details.attrs.open =
@@ -424,8 +389,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element summary { summary.inner & summary.attrs }
 	summary.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
+		&	(	common.attrs.aria.implicit.button
 			|	common.attrs.aria.role.button
 			)?
 		)

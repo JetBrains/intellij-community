@@ -18,9 +18,12 @@ package com.intellij.configurationStore
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,6 +35,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.nio.file.Paths
 
 fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false, task: (Project) -> Unit) {
   createOrLoadProject(tempDirManager, task, directoryBased = directoryBased)
@@ -67,6 +71,7 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
 
 internal class ProjectStoreTest {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 
@@ -97,7 +102,7 @@ internal class ProjectStoreTest {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
       it.path
     }) { project ->
-      val testComponent = test(project)
+      val testComponent = test(project as ProjectEx)
 
       assertThat(project.basePath).isEqualTo(PathUtil.getParentPath((PathUtil.getParentPath(project.projectFilePath!!))))
 
@@ -114,9 +119,55 @@ internal class ProjectStoreTest {
 
   @Test fun fileBasedStorage() {
     loadAndUseProject(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
-      test(project)
+      test(project as ProjectEx)
 
       assertThat(project.basePath).isEqualTo(PathUtil.getParentPath(project.projectFilePath!!))
+    }
+  }
+
+  @Test fun saveProjectName() {
+    loadAndUseProject(tempDirManager, {
+      it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
+      it.path
+    }) { project ->
+      val store = project.stateStore as IProjectStore
+      assertThat(store.nameFile).doesNotExist()
+      val newName = "Foo"
+      val oldName = project.name
+      (project as ProjectImpl).setProjectName(newName)
+      project.saveStore()
+      assertThat(store.nameFile).hasContent(newName)
+
+      project.setProjectName(oldName)
+      project.saveStore()
+      assertThat(store.nameFile).doesNotExist()
+    }
+  }
+
+  @Test fun `saved project name must be not removed just on open`() {
+    val name = "saved project name must be not removed just on open"
+    loadAndUseProject(tempDirManager, {
+      it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
+      it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/.name", name)
+      it.path
+    }) { project ->
+      val store = project.stateStore as IProjectStore
+      assertThat(store.nameFile).hasContent(name)
+
+      project.saveStore()
+      assertThat(store.nameFile).hasContent(name)
+
+      (project as ProjectImpl).setProjectName(name)
+      project.saveStore()
+      assertThat(store.nameFile).hasContent(name)
+
+      project.setProjectName("foo")
+      project.saveStore()
+      assertThat(store.nameFile).hasContent("foo")
+
+      project.setProjectName(name)
+      project.saveStore()
+      assertThat(store.nameFile).doesNotExist()
     }
   }
 
@@ -128,8 +179,8 @@ internal class ProjectStoreTest {
     testComponent.state!!.value = "foo"
     project.saveStore()
 
-    val file = File(project.stateStore.stateStorageManager.expandMacros(StoragePathMacros.PROJECT_FILE))
-    assertThat(file).isFile()
+    val file = Paths.get(project.stateStore.stateStorageManager.expandMacros(StoragePathMacros.PROJECT_FILE))
+    assertThat(file).isRegularFile()
     // test exact string - xml prolog, line separators, indentation and so on must be exactly the same
     // todo get rid of default component states here
     assertThat(file.readText()).startsWith(iprFileContent.replace("customValue", "foo").replace("</project>", ""))

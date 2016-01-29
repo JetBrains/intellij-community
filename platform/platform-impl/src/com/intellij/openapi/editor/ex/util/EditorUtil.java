@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -568,6 +568,10 @@ public final class EditorUtil {
     return width > 0 ? width : 1;
   }
 
+  public static int getPlainSpaceWidth(@NotNull Editor editor) {
+    return getSpaceWidth(Font.PLAIN, editor);
+  }
+
   public static int getTabSize(@NotNull Editor editor) {
     return editor.getSettings().getTabSize(editor.getProject());
   }
@@ -876,7 +880,7 @@ public final class EditorUtil {
   }
 
   public static int yPositionToLogicalLine(@NotNull Editor editor, int y) {
-    int line = y / editor.getLineHeight();
+    int line = editor instanceof EditorImpl ? ((EditorImpl)editor).yToVisibleLine(y): y / editor.getLineHeight();
     return line > 0 ? editor.visualToLogicalPosition(new VisualPosition(line, 0)).line : 0;
   }
 

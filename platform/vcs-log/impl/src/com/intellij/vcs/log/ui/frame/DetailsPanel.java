@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
@@ -117,6 +118,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myScrollPane.setOpaque(false);
     myScrollPane.getViewport().setOpaque(false);
     myScrollPane.setViewportView(myMainContentPanel);
+    myScrollPane.setBorder(IdeBorderFactory.createEmptyBorder());
+    myScrollPane.setViewportBorder(IdeBorderFactory.createEmptyBorder());
     myMainContentPanel.add(myReferencesPanel, "");
     myMainContentPanel.add(myCommitDetailsPanel, "");
 
@@ -168,10 +171,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       int row = rows[0];
       GraphTableModel tableModel = (GraphTableModel)myGraphTable.getModel();
       VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(row, tableModel);
-      if (commitData == null) {
-        showMessage("No commits selected");
-        return;
-      }
       if (commitData instanceof LoadingDetails) {
         myLoadingPanel.startLoading();
         myCommitDetailsPanel.setData(null);

@@ -570,18 +570,26 @@ public class DiffUtil {
   //
 
   @NotNull
-  public static List<LineFragment> compare(@NotNull CharSequence text1,
+  public static List<LineFragment> compare(@NotNull DiffRequest request,
+                                           @NotNull CharSequence text1,
                                            @NotNull CharSequence text2,
                                            @NotNull DiffConfig config,
                                            @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
 
+    DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
+
     List<LineFragment> fragments;
-    if (config.innerFragments) {
-      fragments = ComparisonManager.getInstance().compareLinesInner(text1, text2, config.policy, indicator);
+    if (diffComputer != null) {
+      fragments = diffComputer.compute(text1, text2, config.policy, config.innerFragments, indicator);
     }
     else {
-      fragments = ComparisonManager.getInstance().compareLines(text1, text2, config.policy, indicator);
+      if (config.innerFragments) {
+        fragments = ComparisonManager.getInstance().compareLinesInner(text1, text2, config.policy, indicator);
+      }
+      else {
+        fragments = ComparisonManager.getInstance().compareLines(text1, text2, config.policy, indicator);
+      }
     }
 
     indicator.checkCanceled();
@@ -780,6 +788,27 @@ public class DiffUtil {
 
   public static int getLineCount(@NotNull Document document) {
     return Math.max(document.getLineCount(), 1);
+  }
+
+  @NotNull
+  public static List<String> getLines(@NotNull Document document) {
+    return getLines(document, 0, getLineCount(document));
+  }
+
+  @NotNull
+  public static List<String> getLines(@NotNull Document document, int startLine, int endLine) {
+    if (startLine < 0 || startLine > endLine || endLine > getLineCount(document)) {
+      throw new IndexOutOfBoundsException(String.format("Wrong line range: [%d, %d); lineCount: '%d'",
+                                                        startLine, endLine, document.getLineCount()));
+    }
+
+    List<String> result = new ArrayList<String>();
+    for (int i = startLine; i < endLine; i++) {
+      int start = document.getLineStartOffset(i);
+      int end = document.getLineEndOffset(i);
+      result.add(document.getText(new TextRange(start, end)));
+    }
+    return result;
   }
 
   //

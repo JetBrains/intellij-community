@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
         TextWithImports text = TextWithImportsImpl.fromXExpression(expression);
         NodeManagerImpl nodeManager = process.getNodeManager();
         WatchItemDescriptor descriptor = nodeManager.getWatchItemDescriptor(null, text, null);
-        EvaluationContextImpl evalContext = myStackFrame.getFrameDebuggerContext().createEvaluationContext();
+        EvaluationContextImpl evalContext = myStackFrame.getFrameDebuggerContext(getDebuggerContext()).createEvaluationContext();
         if (evalContext == null) {
           callback.errorOccurred("Context is not available");
           return;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.help.BadIDException;
 import javax.help.HelpSet;
 import java.awt.*;
+import java.lang.ref.WeakReference;
 import java.net.URL;
 
 public class HelpManagerImpl extends HelpManager {
@@ -42,14 +43,7 @@ public class HelpManagerImpl extends HelpManager {
 
   @NonNls private static final String HELP_HS = "Help.hs";
 
-  private final NullableLazyValue<IdeaHelpBroker> myBrokerValue = new NullableLazyValue<IdeaHelpBroker>() {
-    @Nullable
-    @Override
-    protected IdeaHelpBroker compute() {
-      HelpSet set = createHelpSet();
-      return set == null ? null : new IdeaHelpBroker(set);
-    }
-  };
+  private WeakReference<IdeaHelpBroker> myBrokerReference = null;
 
   public void invokeHelp(@Nullable String id) {
     UsageTrigger.trigger("ide.help." + id);
@@ -58,7 +52,14 @@ public class HelpManagerImpl extends HelpManager {
       return;
     }
 
-    IdeaHelpBroker broker = myBrokerValue.getValue();
+    IdeaHelpBroker broker = SoftReference.dereference(myBrokerReference);
+    if (broker == null) {
+      HelpSet set = createHelpSet();
+      if (set != null) {
+        broker = new IdeaHelpBroker(set);
+        myBrokerReference = new WeakReference<IdeaHelpBroker>(broker);
+      }
+    }
 
     if (broker == null) {
       ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();

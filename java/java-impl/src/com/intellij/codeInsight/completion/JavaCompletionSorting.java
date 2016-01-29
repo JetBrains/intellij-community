@@ -396,7 +396,7 @@ public class JavaCompletionSorting {
       if (object instanceof PsiDocCommentOwner) {
         final PsiDocCommentOwner member = (PsiDocCommentOwner)object;
         if (!JavaPsiFacade.getInstance(member.getProject()).getResolveHelper().isAccessible(member, myPosition, null)) return MyEnum.INACCESSIBLE;
-        if (member.isDeprecated()) return MyEnum.DEPRECATED;
+        if (JavaCompletionUtil.isEffectivelyDeprecated(member)) return MyEnum.DEPRECATED;
       }
       return MyEnum.NORMAL;
     }

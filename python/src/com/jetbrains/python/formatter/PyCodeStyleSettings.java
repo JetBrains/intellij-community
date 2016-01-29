@@ -57,6 +57,7 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean SPACE_BEFORE_LBRACKET = false;
   public boolean SPACE_AROUND_EQ_IN_NAMED_PARAMETER = false;
   public boolean SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = false;
+  public boolean SPACE_AROUND_POWER_OPERATOR = true;
   public boolean SPACE_BEFORE_BACKSLASH = true;
 
   public int BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS = 2;
@@ -78,6 +79,14 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean DICT_NEW_LINE_BEFORE_RIGHT_BRACE = false;
 
   public int BLANK_LINES_AFTER_LOCAL_IMPORTS = 0;
+  /**
+   * Code style for most languages use continuation indent both for parameters in function definition and for arguments in function calls.
+   * In Python continuation indent (assuming it's 8 spaces) for parameters is required by PEP 8, because otherwise they won't be visually 
+   * distinctive from function body. However for arguments (except several special cases) both normal and continuation indents are acceptable 
+   * (as long as they're multiple of 4), though examples in PEP 8 itself use mostly normal indent. Nonetheless, some users prefer to have 
+   * the same indentation level for arguments as for parameters.
+   */
+  public boolean USE_CONTINUATION_INDENT_FOR_ARGUMENTS = false;
 
   public PyCodeStyleSettings(CodeStyleSettings container) {
     super("Python", container);

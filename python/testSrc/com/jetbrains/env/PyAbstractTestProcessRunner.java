@@ -6,7 +6,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.actions.RerunFailedActionsTestTools;
-import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy.SMRootTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -35,21 +34,9 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
 
   private int myCurrentRerunStep;
 
-  /**
-   * Filter to exclude suites
-   */
-  public static final Filter<SMTestProxy> NOT_SUIT = new Filter<SMTestProxy>() {
-    @Override
-    public boolean shouldAccept(SMTestProxy test) {
-      return !test.isSuite();
-    }
-  };
 
-  /**
-   * Test results
-   */
-  protected SMTestProxy.SMRootTestProxy myTestProxy;
   private SMTRunnerConsoleView myExecutionConsole;
+  private SMRootTestsCounter myProxyManager;
 
 
   /**
@@ -72,7 +59,7 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
     final JComponent component = myExecutionConsole.getComponent();
     assert component != null;
     myConsole = (ConsoleViewImpl)myExecutionConsole.getConsole();
-    myTestProxy = myExecutionConsole.getResultsViewer().getTestsRootNode();
+    myProxyManager = new SMRootTestsCounter(myExecutionConsole.getResultsViewer().getTestsRootNode());
   }
 
   @Override
@@ -82,7 +69,7 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
       @Override
       public void run() {
         // Print output of tests to console (because console may be scrolled)
-        myTestProxy.getAllTests().get(0).printOn(myExecutionConsole.getPrinter());
+        myProxyManager.getProxy().getAllTests().get(0).printOn(myExecutionConsole.getPrinter());
       }
     }, ModalityState.NON_MODAL);
   }
@@ -92,7 +79,7 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
    */
   public void assertAllTestsPassed() {
     final String consoleText = getAllConsoleText();
-    Assert.assertEquals(consoleText, 0, myTestProxy.getChildren(Filter.NOT_PASSED).size());
+    Assert.assertEquals(consoleText, 0, myProxyManager.getProxy().getChildren(Filter.NOT_PASSED).size());
     Assert.assertEquals(consoleText, 0, getFailedTestsCount());
   }
 
@@ -105,7 +92,7 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
    */
   @NotNull
   public AbstractTestProxy findTestByName(@NotNull final String testName) {
-    final AbstractTestProxy test = findTestByName(testName, myTestProxy);
+    final AbstractTestProxy test = findTestByName(testName, myProxyManager.getProxy());
     assert test != null : "No test found with name" + testName;
     return test;
   }
@@ -115,7 +102,7 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
    */
   @NotNull
   public SMRootTestProxy getTestProxy() {
-    return myTestProxy;
+    return myProxyManager.getProxy();
   }
 
 
@@ -144,29 +131,21 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
    * @return number of failed tests
    */
   public int getFailedTestsCount() {
-    return myTestProxy.collectChildren(NOT_SUIT.and(Filter.FAILED_OR_INTERRUPTED)).size();
+    return myProxyManager.getFailedTestsCount();
   }
 
   /**
    * @return number of passed tests
    */
   public int getPassedTestsCount() {
-    return myTestProxy.collectChildren(NOT_SUIT.and(Filter.PASSED)).size();
-  }
-
-  /**
-   * Ensures tests finished
-   */
-  public void assertFinished() {
-    Assert.assertTrue("State is " + myTestProxy.getMagnitudeInfo().getTitle() + "\n" + getAllConsoleText(),
-                      myTestProxy.wasLaunched() && !myTestProxy.wasTerminated());
+    return myProxyManager.getPassedTestsCount();
   }
 
   /**
    * @return number of all tests
    */
   public int getAllTestsCount() {
-    return myTestProxy.collectChildren(NOT_SUIT).size();
+    return myProxyManager.getAllTestsCount();
   }
 
 

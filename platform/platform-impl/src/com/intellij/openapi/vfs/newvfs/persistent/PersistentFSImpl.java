@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -489,9 +489,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     boolean reloadFromDelegate;
     boolean outdated;
     int fileId;
+    long length = -1L;
+
     synchronized (myInputLock) {
       fileId = getFileId(file);
-      outdated = checkFlag(fileId, MUST_RELOAD_CONTENT) || FSRecords.getLength(fileId) == -1L;
+      outdated = checkFlag(fileId, MUST_RELOAD_CONTENT) || (length = FSRecords.getLength(fileId)) == -1L;
       reloadFromDelegate = outdated || (contentStream = readContent(file)) == null;
     }
 
@@ -529,9 +531,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
     else {
       try {
-        final int length = (int)file.getLength();
         assert length >= 0 : file;
-        return FileUtil.loadBytes(contentStream, length);
+        return FileUtil.loadBytes(contentStream, (int)length);
       }
       catch (IOException e) {
         throw FSRecords.handleError(e);
@@ -872,27 +873,29 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     if (root != null) return root;
 
     final VirtualFileSystemEntry newRoot;
-    int rootId = FSRecords.findRootRecord(rootUrl);
+    String rootPathBeforeSplash;
+    String rootName;
 
-    VfsData.Segment segment = VfsData.getSegment(rootId, true);
-    VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
     if (fs instanceof JarFileSystem) {
       String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
       VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
       if (parentFile == null) return null;
       FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(parentFile.getName());
       if (type != FileTypes.ARCHIVE) return null;
-      newRoot = new FsRoot(rootId, segment, directoryData, fs, parentFile.getName(), parentFile.getPath() + "!");
+      rootName = parentFile.getName();
+      rootPathBeforeSplash = parentFile.getPath() + "!";
     }
     else {
-      newRoot = new FsRoot(rootId, segment, directoryData, fs, basePath, StringUtil.trimEnd(basePath, "/"));
+      rootName = basePath;
+      rootPathBeforeSplash = StringUtil.trimEnd(basePath, "/");
     }
 
+    final String finalRootPathBeforeSplash = rootPathBeforeSplash;
     FileAttributes attributes = fs.getAttributes(new StubVirtualFile() {
       @NotNull
       @Override
       public String getPath() {
-        return newRoot.getPath();
+        return finalRootPathBeforeSplash + "/";
       }
 
       @Nullable
@@ -904,6 +907,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     if (attributes == null || !attributes.isDirectory()) {
       return null;
     }
+
+    int rootId = FSRecords.findRootRecord(rootUrl);
+
+    VfsData.Segment segment = VfsData.getSegment(rootId, true);
+    VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
+    newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, rootPathBeforeSplash);
 
     boolean mark;
     synchronized (myRoots) {

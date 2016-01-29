@@ -16,13 +16,15 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class VcsLogUtil {
+  public static final int MAX_SELECTED_COMMITS = 1000;
 
   @NotNull
   public static MultiMap<VirtualFile, VcsRef> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
@@ -94,34 +97,56 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  private static Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> collectRoots(@NotNull Collection<VirtualFile> files,
-                                                                                         @NotNull Set<VirtualFile> roots) {
+  private static Set<VirtualFile> collectRoots(@NotNull Collection<FilePath> files, @NotNull Set<VirtualFile> roots) {
     Set<VirtualFile> selectedRoots = new HashSet<VirtualFile>();
-    MultiMap<VirtualFile, VirtualFile> selectedFiles = new MultiMap<VirtualFile, VirtualFile>();
 
-    for (VirtualFile file : files) {
-      if (roots.contains(file)) {
-        selectedRoots.add(file);
+    List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, new Comparator<VirtualFile>() {
+      @Override
+      public int compare(VirtualFile root1, VirtualFile root2) {
+        if (root1.equals(root2)) return 0;
+        if (VfsUtilCore.isAncestor(root1, root2, false)) {
+          // if root1 is an ancestor of root2 than root1 should be considered "smaller" than root2 and go first in the sequence
+          return -1;
+        }
+        if (VfsUtilCore.isAncestor(root2, root1, false)) {
+          return 1;
+        }
+        return root1.getPath().compareTo(root2.getPath());
       }
-      VirtualFile candidateAncestorRoot = null;
-      for (VirtualFile root : roots) {
-        if (root.equals(file)) continue;
-        if (VfsUtilCore.isAncestor(root, file, false)) {
-          if (candidateAncestorRoot == null || VfsUtilCore.isAncestor(candidateAncestorRoot, root, false)) {
+    });
+
+    for (FilePath filePath : files) {
+      VirtualFile virtualFile = filePath.getVirtualFile();
+      VirtualFile virtualFileParent = virtualFile != null ? virtualFile : ChangesUtil.findValidParentAccurately(filePath);
+      if (virtualFileParent == null) continue;
+
+      if (roots.contains(virtualFileParent)) {
+        // if a root itself is selected, add this root
+        selectedRoots.add(virtualFileParent);
+      }
+      else {
+        VirtualFile candidateAncestorRoot = null;
+        for (VirtualFile root : sortedRoots) {
+          if (VfsUtilCore.isAncestor(root, virtualFileParent, false)) {
             candidateAncestorRoot = root;
           }
         }
-        else if (VfsUtilCore.isAncestor(file, root, false)) {
-          selectedRoots.add(root);
+        if (candidateAncestorRoot != null) {
+          selectedRoots.add(candidateAncestorRoot);
         }
       }
 
-      if (candidateAncestorRoot != null) {
-        selectedFiles.putValue(candidateAncestorRoot, file);
+      // add all roots under selected path
+      if (virtualFile != null) {
+        for (VirtualFile root : roots) {
+          if (VfsUtilCore.isAncestor(virtualFile, root, false)) {
+            selectedRoots.add(root);
+          }
+        }
       }
     }
 
-    return Pair.create(selectedRoots, selectedFiles);
+    return selectedRoots;
   }
 
 
@@ -143,9 +168,7 @@ public class VcsLogUtil {
 
     Collection<VirtualFile> fromStructureFilter;
     if (structureFilter != null) {
-      Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> rootsAndFiles =
-        collectRoots(structureFilter.getFiles(), new HashSet<VirtualFile>(roots));
-      fromStructureFilter = ContainerUtil.union(rootsAndFiles.first, rootsAndFiles.second.keySet());
+      fromStructureFilter = collectRoots(structureFilter.getFiles(), new HashSet<VirtualFile>(roots));
     }
     else {
       fromStructureFilter = roots;
@@ -159,27 +182,60 @@ public class VcsLogUtil {
   // same if root is invisible as a whole
   // so check that before calling this method
   @NotNull
-  public static Set<VirtualFile> getFilteredFilesForRoot(@NotNull VirtualFile root, VcsLogFilterCollection filterCollection) {
+  public static Set<FilePath> getFilteredFilesForRoot(@NotNull final VirtualFile root, @NotNull VcsLogFilterCollection filterCollection) {
     if (filterCollection.getStructureFilter() == null) return Collections.emptySet();
+    Collection<FilePath> files = filterCollection.getStructureFilter().getFiles();
 
-    Pair<Set<VirtualFile>, MultiMap<VirtualFile, VirtualFile>> rootsAndFiles =
-      collectRoots(filterCollection.getStructureFilter().getFiles(), Collections.singleton(root));
+    return new HashSet<FilePath>(ContainerUtil.filter(files, new Condition<FilePath>() {
+      @Override
+      public boolean value(FilePath filePath) {
+        VirtualFile virtualFileParent = ChangesUtil.findValidParentAccurately(filePath);
+        if (virtualFileParent != null) {
+          return root.equals(virtualFileParent) || VfsUtilCore.isAncestor(root, virtualFileParent, false);
+        }
+        return false;
+      }
+    }));
+  }
 
-    return new HashSet<VirtualFile>(rootsAndFiles.second.get(root));
+  // If this method stumbles on LoadingDetails instance it returns empty list
+  @NotNull
+  public static List<VcsFullCommitDetails> collectFirstPackOfLoadedSelectedDetails(@NotNull VcsLog log) {
+    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+
+    for (VcsFullCommitDetails next : log.getSelectedDetails()) {
+      if (next instanceof LoadingDetails) {
+        return Collections.emptyList();
+      }
+      else {
+        result.add(next);
+        if (result.size() >= MAX_SELECTED_COMMITS) break;
+      }
+    }
+
+    return result;
   }
 
   @NotNull
-  public static Collection<VcsRef> getVisibleBranches(@NotNull VcsLog log, VcsLogUiImpl logUi) {
-    VcsLogFilterCollection filters = logUi.getFilterUi().getFilters();
-    Set<VirtualFile> roots = logUi.getDataPack().getLogProviders().keySet();
-    final Set<VirtualFile> visibleRoots = getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter());
+  public static <T> List<T> collectFirstPack(@NotNull List<T> list, int max) {
+    return list.subList(0, Math.min(list.size(), max));
+  }
 
+  @NotNull
+  public static Collection<VcsRef> getVisibleBranches(@NotNull VcsLog log, @NotNull final Set<VirtualFile> visibleRoots) {
     return ContainerUtil.filter(log.getAllReferences(), new Condition<VcsRef>() {
       @Override
       public boolean value(VcsRef ref) {
         return visibleRoots.contains(ref.getRoot());
       }
     });
+  }
+
+  @NotNull
+  public static Set<VirtualFile> getVisibleRoots(@NotNull VcsLogUiImpl logUi) {
+    VcsLogFilterCollection filters = logUi.getFilterUi().getFilters();
+    Set<VirtualFile> roots = logUi.getDataPack().getLogProviders().keySet();
+    return getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter());
   }
 
   @Nullable

@@ -25,9 +25,6 @@
     <applicationService serviceInterface="com.intellij.openapi.vfs.tracker.VirtualFileTracker"
                         serviceImplementation="com.intellij.openapi.vfs.tracker.VirtualFileTrackerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.concurrency.JobScheduler"
-                        serviceImplementation="com.intellij.concurrency.JobSchedulerImpl"/>
-
     <applicationService serviceInterface="com.intellij.openapi.options.ShowSettingsUtil"
                         serviceImplementation="com.intellij.ide.actions.ShowSettingsUtilImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.help.HelpManager"

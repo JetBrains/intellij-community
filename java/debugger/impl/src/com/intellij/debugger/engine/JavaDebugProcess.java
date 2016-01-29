@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,8 @@ import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
-import com.sun.jdi.event.BreakpointEvent;
 import com.sun.jdi.event.Event;
+import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
@@ -123,8 +123,8 @@ public class JavaDebugProcess extends XDebugProcess {
                 if (item != null) {
                   XBreakpoint xBreakpoint = item.getFirst().getXBreakpoint();
                   Event second = item.getSecond();
-                  if (xBreakpoint != null && second instanceof BreakpointEvent &&
-                      threadProxy != null && ((BreakpointEvent)second).thread() == threadProxy.getThreadReference()) {
+                  if (xBreakpoint != null && second instanceof LocatableEvent &&
+                      threadProxy != null && ((LocatableEvent)second).thread() == threadProxy.getThreadReference()) {
                     ((XDebugSessionImpl)getSession()).breakpointReachedNoProcessing(xBreakpoint, newSuspendContext);
                     unsetPausedIfNeeded(newContext);
                     return;

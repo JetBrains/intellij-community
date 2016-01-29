@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,11 +74,11 @@ public abstract class BaseCompleteMacro extends Macro {
     final Project project = context.getProject();
     final Editor editor = context.getEditor();
 
-    final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
+    final PsiFile psiFile = editor != null ? PsiUtilBase.getPsiFileInEditor(editor, project) : null;
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        if (project.isDisposed() || editor.isDisposed() || psiFile == null || !psiFile.isValid()) return;
+        if (project.isDisposed() || editor == null || editor.isDisposed() || psiFile == null || !psiFile.isValid()) return;
 
         // it's invokeLater, so another completion could have started
         if (CompletionServiceImpl.getCompletionService().getCurrentCompletion() != null) return;
@@ -94,9 +94,6 @@ public abstract class BaseCompleteMacro extends Macro {
 
             if (lookup != null) {
               lookup.addLookupListener(new MyLookupListener(context));
-            }
-            else {
-              considerNextTab(editor);
             }
           }
         }, "", null);

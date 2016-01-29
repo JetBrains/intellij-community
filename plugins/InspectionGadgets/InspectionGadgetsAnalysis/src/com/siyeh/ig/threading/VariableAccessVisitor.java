@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -363,9 +363,14 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
       m_inSynchronizedContextCount = contextStack.pop();
       m_inInitializer = contextInitializerStack.pop();
     }
-    if (element instanceof PsiCodeBlock && element.getParent() instanceof PsiSynchronizedStatement
-        || element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+    if (element instanceof PsiCodeBlock && element.getParent() instanceof PsiSynchronizedStatement) {
       m_inSynchronizedContextCount--;
+    }
+    else if (element instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)element;
+      if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED) || methodIsAlwaysUsedSynchronized(method)) {
+        m_inSynchronizedContextCount--;
+      }
     }
     if (element.getUserData(CODE_BLOCK_CONTAINS_HOLDS_LOCK_CALL) != null) {
       m_inSynchronizedContextCount --;

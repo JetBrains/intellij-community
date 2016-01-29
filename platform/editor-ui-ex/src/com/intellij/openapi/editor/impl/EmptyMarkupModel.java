@@ -17,7 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.DisposableIterator;
+import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
@@ -139,8 +139,8 @@ public class EmptyMarkupModel implements MarkupModelEx {
 
   @NotNull
   @Override
-  public DisposableIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
-    return IntervalTreeImpl.PeekableIterator.EMPTY;
+  public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
+    return MarkupIterator.EMPTY;
   }
 
   @Override

@@ -430,6 +430,7 @@ public class Switcher extends AnAction implements DumbAware {
                                                       int index,
                                                       boolean selected,
                                                       boolean hasFocus) {
+          assert value instanceof FileInfo;
           final Component c = super.getListCellRendererComponent(list, value, index, selected, selected);
           final Color bg = UIUtil.getListBackground();
           final Color fg = UIUtil.getListForeground();
@@ -439,6 +440,13 @@ public class Switcher extends AnAction implements DumbAware {
           myPanel.removeAll();
           myPanel.add(myLabel, BorderLayout.WEST);
           myPanel.add(c, BorderLayout.CENTER);
+
+          // Note: Name=name rendered in cell, Description=path to file, as displayed in bottom panel
+          myPanel.getAccessibleContext().setAccessibleName(c.getAccessibleContext().getAccessibleName());
+          VirtualFile file = ((FileInfo)value).first;
+          String presentableUrl = ObjectUtils.notNull(file.getParent(), file).getPresentableUrl();
+          String location = FileUtil.getLocationRelativeToUserHome(presentableUrl);
+          myPanel.getAccessibleContext().setAccessibleDescription(location);
           return myPanel;
         }
 
@@ -513,7 +521,7 @@ public class Switcher extends AnAction implements DumbAware {
       files.getSelectionModel().addListSelectionListener(filesSelectionListener);
 
       files.setCellRenderer(filesRenderer);
-      files.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
+      files.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
       files.addKeyListener(this);
       ScrollingUtil.installActions(files);
       files.addMouseListener(this);
@@ -524,15 +532,9 @@ public class Switcher extends AnAction implements DumbAware {
       this.add(toolWindows, BorderLayout.WEST);
       if (filesModel.size() > 0) {
         files.setAlignmentY(1f);
-        if (files.getModel().getSize() > 20) {
-          final JScrollPane pane = ScrollPaneFactory.createScrollPane(files, true);
-          pane.setPreferredSize(new Dimension(files.getPreferredSize().width + 10, 20 * 20));
-          pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-          this.add(pane, BorderLayout.EAST);
-        }
-        else {
-          this.add(files, BorderLayout.EAST);
-        }
+        final JScrollPane pane = ScrollPaneFactory.createScrollPane(files, true);
+        pane.setPreferredSize(new Dimension(files.getPreferredSize().width, 20 * 20));
+        this.add(pane, BorderLayout.EAST);
         if (selectionIndex > -1) {
           files.setSelectedIndex(selectionIndex);
         }

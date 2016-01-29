@@ -1,0 +1,127 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.ui;
+
+import com.intellij.icons.AllIcons;
+import com.intellij.notification.Notification;
+import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
+
+/**
+ * @author Alexander Lobas
+ */
+public class BalloonLayoutConfiguration {
+  public final int iconPanelWidth;
+  public final Dimension iconOffset;
+
+  public final int topSpaceHeight;
+  public final int titleContentSpaceHeight;
+  public final int contentActionsSpaceHeight;
+  public final int titleActionsSpaceHeight;
+  public final int bottomSpaceHeight;
+
+  public final int actionGap;
+
+  public final Dimension rightActionsOffset;
+  public final int closeOffset;
+  public final int gearCloseSpace;
+  public final int allActionsOffset;
+  public final int beforeGearSpace;
+
+  public static final int MaxWidth = JBUI.scale(350);
+  public static final int MinWidth = JBUI.scale(100);
+
+  public static final int NotificationSpace = 10;
+
+  @NotNull
+  public static BalloonLayoutConfiguration create(@NotNull Notification notification, @NotNull BalloonLayoutData layoutData) {
+    boolean title = notification.isTitle();
+    boolean content = notification.isContent();
+    boolean actions = !notification.getActions().isEmpty();
+    if (title && content && actions) {
+      return treeLines();
+    }
+    if (content && NotificationsManagerImpl.calculateContentHeight(title || actions ? 1 : 2) < layoutData.fullHeight) {
+      return treeLines();
+    }
+    return twoLines();
+  }
+
+  @NotNull
+  private static BalloonLayoutConfiguration twoLines() {
+    return new BalloonLayoutConfiguration(new Dimension(10, 11), 14, 8, 8, 8, 14).setName("twoLines");
+  }
+
+  @NotNull
+  private static BalloonLayoutConfiguration treeLines() {
+    return new BalloonLayoutConfiguration(new Dimension(10, 7), 10, 6, 10, 0, 8).setName("treeLines");
+  }
+
+  private BalloonLayoutConfiguration(@NotNull Dimension iconOffset,
+                                     int topSpaceHeight,
+                                     int titleContentSpaceHeight,
+                                     int contentActionsSpaceHeight,
+                                     int titleActionsSpaceHeight,
+                                     int bottomSpaceHeight) {
+    this(32, iconOffset,
+         topSpaceHeight, titleContentSpaceHeight, contentActionsSpaceHeight, titleActionsSpaceHeight, bottomSpaceHeight,
+         16,
+         new Dimension(8, 6), 7, 5, 15);
+  }
+
+  private BalloonLayoutConfiguration(int iconPanelWidth,
+                                     @NotNull Dimension iconOffset,
+                                     int topSpaceHeight,
+                                     int titleContentSpaceHeight,
+                                     int contentActionsSpaceHeight,
+                                     int titleActionsSpaceHeight,
+                                     int bottomSpaceHeight,
+                                     int actionGap,
+                                     @NotNull Dimension rightActionsOffset,
+                                     int afterGearSpace,
+                                     int beforeCloseSpace,
+                                     int beforeGearSpace) {
+    this.iconPanelWidth = iconPanelWidth;
+    this.iconOffset = iconOffset;
+    this.topSpaceHeight = topSpaceHeight;
+    this.titleContentSpaceHeight = titleContentSpaceHeight;
+    this.contentActionsSpaceHeight = contentActionsSpaceHeight;
+    this.titleActionsSpaceHeight = titleActionsSpaceHeight;
+    this.bottomSpaceHeight = bottomSpaceHeight;
+    this.actionGap = actionGap;
+    this.rightActionsOffset = rightActionsOffset;
+
+    this.closeOffset = beforeCloseSpace + AllIcons.Ide.Notification.Close.getIconWidth() + rightActionsOffset.width;
+    this.gearCloseSpace = afterGearSpace + beforeCloseSpace;
+    this.allActionsOffset = closeOffset + afterGearSpace + AllIcons.Ide.Notification.Gear.getIconWidth();
+    this.beforeGearSpace = beforeGearSpace;
+  }
+
+  private String myName;
+
+  public BalloonLayoutConfiguration setName(String name) {
+    myName = name;
+    return this;
+  }
+
+  @Override
+  public String toString() {
+    return myName;
+  }
+}

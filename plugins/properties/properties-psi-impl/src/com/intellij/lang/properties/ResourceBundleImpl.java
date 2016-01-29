@@ -21,10 +21,8 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
@@ -55,16 +53,17 @@ public class ResourceBundleImpl extends ResourceBundle {
     });
     final String baseName = getBaseName();
     List<PropertiesFile> result = new SmartList<PropertiesFile>();
-    final String defaultNameWithoutExtension = FileUtil.getNameWithoutExtension(myDefaultPropertiesFile.getName());
     for (PsiFile file : children) {
-      if (!file.isValid() || file.getVirtualFile().getExtension() == null) continue;
+      if (!file.isValid()) continue;
+      PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
+      if (propertiesFile == null) {
+        continue;
+      }
       if (Comparing.strEqual(PropertiesUtil.getDefaultBaseName(file.getVirtualFile()), baseName)) {
-        PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
-        if (propertiesFile != null) {
-          result.add(propertiesFile);
-          if (!propertiesFile.equals(myDefaultPropertiesFile) && FileUtil.getNameWithoutExtension(propertiesFile.getName()).compareTo(defaultNameWithoutExtension) == 0) {
-            return Collections.singletonList(myDefaultPropertiesFile);
-          }
+        result.add(propertiesFile);
+        if (!propertiesFile.equals(myDefaultPropertiesFile) &&
+            propertiesFile.getName().compareTo(myDefaultPropertiesFile.getName()) == 0) {
+          return Collections.singletonList(myDefaultPropertiesFile);
         }
       }
     }

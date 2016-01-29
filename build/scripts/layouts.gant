@@ -454,6 +454,7 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
       }
       jar("remote-servers-git.jar") {
         moduleOptional("remote-servers-git")
+        moduleOptional("remote-servers-git-java")
       }
       fileset(dir: "$home/plugins/git4idea/lib") {
         include(name: "trilead-ssh2.jar")

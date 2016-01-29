@@ -152,7 +152,7 @@ public class LineStatusTracker {
 
       destroyRanges();
       try {
-        myRanges = new RangesBuilder(myDocument, myVcsDocument, myMode).getRanges();
+        myRanges = RangesBuilder.createRanges(myDocument, myVcsDocument, myMode == Mode.SMART);
         for (final Range range : myRanges) {
           createHighlighter(range);
         }
@@ -405,8 +405,14 @@ public class LineStatusTracker {
       synchronized (myLock) {
         if (!myInitialized || myReleased || myBulkUpdate || myDuringRollback || myAnathemaThrown) return;
         if (myDirtyRange != null) {
-          doUpdateRanges(myDirtyRange.line1, myDirtyRange.line2, myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
-          myDirtyRange = null;
+          try {
+            doUpdateRanges(myDirtyRange.line1, myDirtyRange.line2, myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
+            myDirtyRange = null;
+          }
+          catch (Exception e) {
+            LOG.error(e);
+            reinstallRanges();
+          }
         }
       }
     }
@@ -622,10 +628,10 @@ public class LineStatusTracker {
       return Collections.singletonList(new Range(changedLine1, changedLine2, vcsLine1, vcsLine2));
     }
 
-    List<String> lines = new DocumentWrapper(myDocument).getLines(changedLine1, changedLine2 - 1);
-    List<String> vcsLines = new DocumentWrapper(myVcsDocument).getLines(vcsLine1, vcsLine2 - 1);
+    List<String> lines = DiffUtil.getLines(myDocument, changedLine1, changedLine2);
+    List<String> vcsLines = DiffUtil.getLines(myVcsDocument, vcsLine1, vcsLine2);
 
-    return new RangesBuilder(lines, vcsLines, changedLine1, vcsLine1, myMode).getRanges();
+    return RangesBuilder.createRanges(lines, vcsLines, changedLine1, vcsLine1, myMode == Mode.SMART);
   }
 
   private static void shiftRanges(@NotNull List<Range> rangesAfterChange, int shift) {

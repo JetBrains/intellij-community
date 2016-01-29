@@ -19,5 +19,7 @@ import com.intellij.history.ByteContent;
 import com.intellij.history.core.tree.RootEntry;
 
 public interface LabelImpl {
+  long getLabelChangeId();
+
   ByteContent getByteContent(RootEntry root, String path);
 }
