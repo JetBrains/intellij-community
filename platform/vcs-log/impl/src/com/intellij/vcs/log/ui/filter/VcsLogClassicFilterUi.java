@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -232,6 +233,17 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
           Dimension preferredSize = super.getPreferredSize();
           return new Dimension(preferredSize.width, UIUtil.isUnderWindowsLookAndFeel() ? preferredSize.height : getSearchFieldSize());
         }
+
+        @Override
+        public void updateUI() {
+          super.updateUI();
+          if (UIUtil.isUnderWindowsLookAndFeel()) {
+            setBorder(BorderFactory.createLineBorder(JBColor.border()));
+          }
+          else {
+            setBorder(IdeBorderFactory.createEmptyBorder());
+          }
+        }
       };
       textFilter.setText(myFilterModel.getText());
       textFilter.getTextEditor().addActionListener(new ActionListener() {
@@ -252,7 +264,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
           }
         }
       });
-      textFilter.setBorder(IdeBorderFactory.createEmptyBorder());
       return textFilter;
     }
 
