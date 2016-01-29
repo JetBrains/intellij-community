@@ -53,6 +53,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.OnOffListener;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -90,6 +91,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final List<CheckinHandler> myHandlers = new ArrayList<CheckinHandler>();
   private final String myActionName;
   private final Project myProject;
+  @NotNull private final VcsConfiguration myVcsConfiguration;
   private final List<CommitExecutor> myExecutors;
   private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private String myLastKnownComment = "";
@@ -270,6 +272,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     super(project, true);
     myCommitContext = new CommitContext();
     myProject = project;
+    myVcsConfiguration = ObjectUtils.assertNotNull(VcsConfiguration.getInstance(myProject));
     myExecutors = executors;
     myShowVcsCommit = showVcsCommit;
     myVcs = singleVcs;
@@ -289,7 +292,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myBrowser = new AlienChangeListBrowser(project, changeLists, changes, initialSelection, true, true, singleVcs);
     } else {
       //noinspection unchecked
-      boolean showUnversioned = myShowVcsCommit && VcsConfiguration.getInstance(myProject).SHOW_UNVERSIONED_FILES_WHILE_COMMIT;
+      boolean showUnversioned = myShowVcsCommit && myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT;
       MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, (List)changes, initialSelection, true, true,
                                                                         new Runnable() {
                                                                           @Override
@@ -340,7 +343,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myCommitMessageArea = new CommitMessage(project);
 
-    if (!VcsConfiguration.getInstance(project).CLEAR_INITIAL_COMMIT_MESSAGE) {
+    if (!myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
       setComment(project, initialSelection, comment);
     }
 
@@ -488,7 +491,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       updateComment();
 
       if (StringUtil.isEmptyOrSpaces(myCommitMessageArea.getComment())) {
-        setCommitMessage(VcsConfiguration.getInstance(project).LAST_COMMIT_MESSAGE);
+        setCommitMessage(myVcsConfiguration.LAST_COMMIT_MESSAGE);
         final String messageFromVcs = getInitialMessageFromVcs();
         if (messageFromVcs != null) {
           myCommitMessageArea.setText(messageFromVcs);
@@ -761,7 +764,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void updateComment() {
-    if (VcsConfiguration.getInstance(getProject()).CLEAR_INITIAL_COMMIT_MESSAGE) return;
+    if (myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return;
     final LocalChangeList list = (LocalChangeList) myBrowser.getSelectedChangeList();
     if (list == null || (list.getName().equals(myLastSelectedListName))) {
       return;
@@ -820,21 +823,17 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Override
   public boolean isCheckSpelling() {
-    VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
-    return configuration == null || configuration.CHECK_COMMIT_MESSAGE_SPELLING;
+    return myVcsConfiguration.CHECK_COMMIT_MESSAGE_SPELLING;
   }
 
   @Override
   public void setCheckSpelling(boolean checkSpelling) {
-    VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
-    if (configuration != null) {
-      configuration.CHECK_COMMIT_MESSAGE_SPELLING = checkSpelling;
-    }
+    myVcsConfiguration.CHECK_COMMIT_MESSAGE_SPELLING = checkSpelling;
     myCommitMessageArea.setCheckSpelling(checkSpelling);
   }
 
   private boolean checkComment() {
-    if (VcsConfiguration.getInstance(myProject).FORCE_NON_EMPTY_COMMENT && (getCommitMessage().length() == 0)) {
+    if (myVcsConfiguration.FORCE_NON_EMPTY_COMMENT && (getCommitMessage().length() == 0)) {
       int requestForCheckin = Messages.showYesNoDialog(VcsBundle.message("confirmation.text.check.in.with.empty.comment"),
                                                        VcsBundle.message("confirmation.title.check.in.with.empty.comment"),
                                                        Messages.getWarningIcon());
@@ -916,7 +915,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     saveCommentIntoChangeList();
-    VcsConfiguration.getInstance(myProject).saveCommitMessage(getCommitMessage());
+    myVcsConfiguration.saveCommitMessage(getCommitMessage());
     try {
       saveState();
     }
