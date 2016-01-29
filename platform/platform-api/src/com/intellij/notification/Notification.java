@@ -80,9 +80,7 @@ public class Notification {
     myIcon = icon;
     mySubtitle = subtitle;
 
-    LOG.assertTrue(!StringUtil.isEmptyOrSpaces(myTitle) || !StringUtil.isEmptyOrSpaces(mySubtitle) ||
-                   !StringUtil.isEmptyOrSpaces(myContent),
-                   "Notification should have title: " + title + " and/or subtitle and/or content groupId: " + myGroupId);
+    LOG.assertTrue(isTitle() || isContent(), "Notification should have title: " + title + " and/or subtitle and/or content groupId: " + myGroupId);
   }
 
   public Notification(@NotNull String groupDisplayId, @NotNull String title, @NotNull String content, @NotNull NotificationType type) {
@@ -109,7 +107,7 @@ public class Notification {
     myListener = listener;
     myTimestamp = System.currentTimeMillis();
 
-    LOG.assertTrue(!StringUtil.isEmptyOrSpaces(myContent), "Notification should have content, title: " + title + ", groupId: " + myGroupId);
+    LOG.assertTrue(isContent(), "Notification should have content, title: " + title + ", groupId: " + myGroupId);
   }
 
   /**
@@ -127,6 +125,10 @@ public class Notification {
   @NotNull
   public String getGroupId() {
     return myGroupId;
+  }
+
+  public boolean isTitle() {
+    return !StringUtil.isEmptyOrSpaces(myTitle) || !StringUtil.isEmptyOrSpaces(mySubtitle);
   }
 
   @NotNull
@@ -154,6 +156,10 @@ public class Notification {
   public Notification setSubtitle(@Nullable String subtitle) {
     mySubtitle = subtitle;
     return this;
+  }
+
+  public boolean isContent() {
+    return !StringUtil.isEmptyOrSpaces(myContent);
   }
 
   @NotNull

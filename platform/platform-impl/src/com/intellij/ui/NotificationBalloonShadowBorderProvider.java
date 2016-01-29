@@ -20,12 +20,21 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 
 /**
  * @author Alexander Lobas
  */
 public class NotificationBalloonShadowBorderProvider implements BalloonImpl.ShadowBorderProvider {
   private static final Insets INSETS = new Insets(4, 6, 8, 6);
+  private final Color myFillColor;
+  private final Color myBorderColor;
+
+  public NotificationBalloonShadowBorderProvider(@NotNull Color fillColor, @NotNull Color borderColor) {
+    myFillColor = fillColor;
+    myBorderColor = borderColor;
+  }
 
   @NotNull
   @Override
@@ -91,5 +100,13 @@ public class NotificationBalloonShadowBorderProvider implements BalloonImpl.Shad
     Shadow.Top_right.paintIcon(component, g, width - topRightWidth, 0);
     Shadow.Bottom_right.paintIcon(component, g, width - bottomRightWidth, height - bottomRightHeight);
     Shadow.Bottom_left.paintIcon(component, g, 0, height - bottomLeftHeight);
+  }
+
+  @Override
+  public void paintBorder(@NotNull Rectangle bounds, @NotNull Graphics2D g) {
+    g.setColor(myFillColor);
+    g.fill(new Rectangle2D.Double(bounds.x, bounds.y, bounds.width, bounds.height));
+    g.setColor(myBorderColor);
+    g.draw(new RoundRectangle2D.Double(bounds.x + 0.5, bounds.y + 0.5, bounds.width - 1, bounds.height - 1, 3, 3));
   }
 }
