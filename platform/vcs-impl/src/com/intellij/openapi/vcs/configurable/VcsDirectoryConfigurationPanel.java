@@ -85,6 +85,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private final VcsLimitHistoryConfigurable myLimitHistory;
   private final VcsUpdateInfoScopeFilterConfigurable myScopeFilterConfig;
   private VcsCommitMessageMarginConfigurable myCommitMessageMarginConfigurable;
+  private JCheckBox myShowUnversionedFiles;
 
   private static class MapInfo {
     static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR);
@@ -387,6 +388,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
     myShowChangedRecursively.setSelected(myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
     myCommitMessageMarginConfigurable.reset();
+    myShowUnversionedFiles.setSelected(myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT);
   }
 
   @NotNull
@@ -521,6 +523,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     panel.add(createShowChangedOption(), gb.nextLine().next());
     panel.add(myScopeFilterConfig.createComponent(), gb.nextLine().next());
     panel.add(createUseCommitMessageRightMargin(), gb.nextLine().next().fillCellHorizontally());
+    panel.add(createShowUnversionedFilesOption(), gb.nextLine().next());
 
     return panel;
   }
@@ -644,6 +647,13 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     return myShowChangedRecursively;
   }
 
+  @NotNull
+  private JComponent createShowUnversionedFilesOption() {
+    myShowUnversionedFiles =
+      new JCheckBox("Show unversioned files in Commit dialog", myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT);
+    return myShowUnversionedFiles;
+  }
+
   @Override
   public void reset() {
     initializeModel();
@@ -658,6 +668,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF = myBaseRevisionTexts.isSelected();
     myVcsConfiguration.SHOW_DIRTY_RECURSIVELY = myShowChangedRecursively.isSelected();
     myCommitMessageMarginConfigurable.apply();
+    myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT = myShowUnversionedFiles.isSelected();
     initializeModel();
   }
 
@@ -671,6 +682,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       return true;
     }
     if (myCommitMessageMarginConfigurable.isModified()) {
+      return true;
+    }
+    if (myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT != myShowUnversionedFiles.isSelected()) {
       return true;
     }
     return !getModelMappings().equals(myVcsManager.getDirectoryMappings());

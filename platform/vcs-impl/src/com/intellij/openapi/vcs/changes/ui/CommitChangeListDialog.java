@@ -289,6 +289,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myBrowser = new AlienChangeListBrowser(project, changeLists, changes, initialSelection, true, true, singleVcs);
     } else {
       //noinspection unchecked
+      boolean showUnversioned = myShowVcsCommit && VcsConfiguration.getInstance(myProject).SHOW_UNVERSIONED_FILES_WHILE_COMMIT;
       MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, (List)changes, initialSelection, true, true,
                                                                         new Runnable() {
                                                                           @Override
@@ -303,7 +304,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                                               handler.includedChangesChanged();
                                                                             }
                                                                           }
-                                                                        }, myShowVcsCommit) {
+                                                                        }, showUnversioned) {
         @Override
         protected void afterDiffRefresh() {
           myBrowser.rebuildList();
