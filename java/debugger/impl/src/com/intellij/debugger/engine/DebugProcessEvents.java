@@ -186,7 +186,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                   // check if there is already one request with policy SUSPEND_ALL
                   for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
                     if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
-                      if (Registry.is("debugger.step.resumes.one.thread") && locatableEvent != null) {
+                      if (isResumeOnlyCurrentThread() && locatableEvent != null) {
                         // if step event is present - switch context
                         getSuspendManager().resume(context);
                         //((SuspendManagerImpl)getSuspendManager()).popContext(context);
@@ -202,7 +202,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
                 SuspendContextImpl suspendContext = null;
 
-                if (Registry.is("debugger.step.resumes.one.thread") && locatableEvent != null) {
+                if (isResumeOnlyCurrentThread() && locatableEvent != null) {
                   for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
                     ThreadReferenceProxyImpl threadProxy = getVirtualMachineProxy().getThreadReferenceProxy(locatableEvent.thread());
                     if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL &&

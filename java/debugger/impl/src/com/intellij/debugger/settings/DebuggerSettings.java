@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,6 +85,8 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   public String EVALUATE_FINALLY_ON_POP_FRAME = EVALUATE_FINALLY_ASK;
 
+  public boolean RESUME_ONLY_CURRENT_THREAD = false;
+
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
   private Map<String, ContentState> myContentStates = new LinkedHashMap<String, ContentState>();
@@ -162,6 +164,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       SKIP_CLASSLOADERS == secondSettings.SKIP_CLASSLOADERS &&
       SKIP_CONSTRUCTORS == secondSettings.SKIP_CONSTRUCTORS &&
       SKIP_GETTERS == secondSettings.SKIP_GETTERS &&
+      RESUME_ONLY_CURRENT_THREAD == secondSettings.RESUME_ONLY_CURRENT_THREAD &&
       COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
       HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&
       (RUN_HOTSWAP_AFTER_COMPILE != null ? RUN_HOTSWAP_AFTER_COMPILE.equals(secondSettings.RUN_HOTSWAP_AFTER_COMPILE) : secondSettings.RUN_HOTSWAP_AFTER_COMPILE == null) &&
