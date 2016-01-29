@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ public class MacKeymapUtil {
       case KeyEvent.VK_SEPARATOR:      return ",";
       case KeyEvent.VK_SUBTRACT:       return "-";
       case KeyEvent.VK_DECIMAL:        return ".";
-      case KeyEvent.VK_DIVIDE:         return "/";
+      case KeyEvent.VK_DIVIDE:         return "NumPad /";
       case KeyEvent.VK_NUMPAD0:        return "0";
       case KeyEvent.VK_NUMPAD1:        return "1";
       case KeyEvent.VK_NUMPAD2:        return "2";
