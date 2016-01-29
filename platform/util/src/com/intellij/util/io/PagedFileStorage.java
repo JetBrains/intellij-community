@@ -25,12 +25,12 @@ import com.intellij.util.containers.hash.LinkedHashMap;
 import jsr166e.extra.SequenceLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.VM;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
@@ -53,11 +53,30 @@ public class PagedFileStorage implements Forceable {
     final int upper = SystemInfo.is64Bit ? 500 : 200;
 
     BUFFER_SIZE = Math.max(1, SystemProperties.getIntProperty("idea.paged.storage.page.size", 10)) * MB;
-    final long max = VM.maxDirectMemory() - 2 * BUFFER_SIZE;
+    final long max = maxDirectMemory() - 2 * BUFFER_SIZE;
     LOWER_LIMIT = (int)Math.min(lower * MB, max);
     UPPER_LIMIT = (int)Math.min(Math.max(LOWER_LIMIT, SystemProperties.getIntProperty("idea.max.paged.storage.cache", upper) * MB), max);
 
     LOG.info("lower=" + (LOWER_LIMIT / MB) + "; upper=" + (UPPER_LIMIT / MB) + "; buffer=" + (BUFFER_SIZE / MB) + "; max=" + (max / MB));
+  }
+
+  private static long maxDirectMemory() {
+    try {
+      Class<?> aClass = Class.forName("sun.misc.VM");
+      Method maxDirectMemory = aClass.getMethod("maxDirectMemory");
+      return (Long)maxDirectMemory.invoke(null);
+    }
+    catch (Throwable ignore) { }
+
+    try {
+      Class<?> aClass = Class.forName("java.nio.Bits");
+      Field maxMemory = aClass.getDeclaredField("maxMemory");
+      maxMemory.setAccessible(true);
+      return (Long)maxMemory.get(null);
+    }
+    catch (Throwable ignore) { }
+
+    return Runtime.getRuntime().maxMemory();
   }
 
   private static final int UNKNOWN_PAGE = -1;
