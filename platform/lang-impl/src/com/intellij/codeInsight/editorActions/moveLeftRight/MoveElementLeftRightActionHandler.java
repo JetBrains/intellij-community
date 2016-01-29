@@ -31,9 +31,18 @@ import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler {
+  private static final Comparator<PsiElement> BY_OFFSET = new Comparator<PsiElement>() {
+    @Override
+    public int compare(PsiElement o1, PsiElement o2) {
+      return o1.getTextOffset() - o2.getTextOffset();
+    }
+  };
+  
   private final boolean myIsLeft;
 
   public MoveElementLeftRightActionHandler(boolean isLeft) {
@@ -67,6 +76,7 @@ public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler 
       for (MoveElementLeftRightHandler handler : handlers) {
         PsiElement[] elementList = handler.getMoveableSubElements(element);
         if (elementList.length > 1) {
+          Arrays.sort(elementList, BY_OFFSET);
           PsiElement first = elementList[0];
           PsiElement last = elementList[elementList.length - 1];
           if (rangeStart >= first.getTextRange().getStartOffset() && rangeEnd <= last.getTextRange().getEndOffset() && 
