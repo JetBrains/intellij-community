@@ -18,7 +18,6 @@ package com.intellij.codeInsight.editorActions.moveLeftRight;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Instances of this class implement language-specific logic of 'move element left/right' actions
@@ -28,9 +27,9 @@ public abstract class MoveElementLeftRightHandler {
     new LanguageExtension<MoveElementLeftRightHandler>("com.intellij.moveLeftRightHandler");
   
   /**
-   * Returns a list of PSI elements on which 'move element left/right' actions should operate for a given context element.
-   * Should return <code>null</code> if the actions are not applicable in given context.
+   * Returns a list of sub-elements (usually children) of given PSI element, which can be moved using 'move element left/right' actions.
+   * Should return an empty array if there are no such elements.
    */
-  @Nullable
-  public abstract PsiElement[] getElementListInContext(@NotNull PsiElement element);
+  @NotNull
+  public abstract PsiElement[] getMoveableSubElements(@NotNull PsiElement element);
 }

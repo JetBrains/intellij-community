@@ -62,24 +62,20 @@ public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler 
     PsiElement endElement = rangeEnd > rangeStart ? file.findElementAt(rangeEnd - 1) : startElement;
     if (endElement == null) return null;
     PsiElement element = PsiTreeUtil.findCommonParent(startElement, endElement);
-    outer:
     while (element != null) {
       List<MoveElementLeftRightHandler> handlers = MoveElementLeftRightHandler.EXTENSION.allForLanguage(element.getLanguage());
       for (MoveElementLeftRightHandler handler : handlers) {
-        PsiElement[] elementList = handler.getElementListInContext(element);
-        if (elementList != null) {
+        PsiElement[] elementList = handler.getMoveableSubElements(element);
+        if (elementList.length > 1) {
           PsiElement first = elementList[0];
           PsiElement last = elementList[elementList.length - 1];
-          if (rangeStart < first.getTextRange().getStartOffset() || rangeEnd > last.getTextRange().getEndOffset() || 
-              rangeStart < first.getTextRange().getEndOffset() && rangeEnd > last.getTextRange().getStartOffset()) {
-            PsiElement parent = PsiTreeUtil.findCommonParent(element, first);
-            element = (parent == element) ? element.getParent() : parent; // make sure we move up the tree
-            continue outer;
+          if (rangeStart >= first.getTextRange().getStartOffset() && rangeEnd <= last.getTextRange().getEndOffset() && 
+              (rangeStart >= first.getTextRange().getEndOffset() || rangeEnd <= last.getTextRange().getStartOffset())) {
+            return elementList;
           }
-          return elementList;
         }
       }
-      return null;
+      element = element.getParent();
     }
     return null;
   }
