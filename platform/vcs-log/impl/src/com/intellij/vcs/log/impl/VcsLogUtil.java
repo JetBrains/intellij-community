@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -117,17 +118,15 @@ public class VcsLogUtil {
 
     for (FilePath filePath : files) {
       VirtualFile virtualFile = filePath.getVirtualFile();
-      VirtualFile virtualFileParent = virtualFile != null ? virtualFile : ChangesUtil.findValidParentAccurately(filePath);
-      if (virtualFileParent == null) continue;
 
-      if (roots.contains(virtualFileParent)) {
+      if (virtualFile != null && roots.contains(virtualFile)) {
         // if a root itself is selected, add this root
-        selectedRoots.add(virtualFileParent);
+        selectedRoots.add(virtualFile);
       }
       else {
         VirtualFile candidateAncestorRoot = null;
         for (VirtualFile root : sortedRoots) {
-          if (VfsUtilCore.isAncestor(root, virtualFileParent, false)) {
+          if (FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(root), filePath.getIOFile(), false)) {
             candidateAncestorRoot = root;
           }
         }
@@ -189,11 +188,8 @@ public class VcsLogUtil {
     return new HashSet<FilePath>(ContainerUtil.filter(files, new Condition<FilePath>() {
       @Override
       public boolean value(FilePath filePath) {
-        VirtualFile virtualFileParent = ChangesUtil.findValidParentAccurately(filePath);
-        if (virtualFileParent != null) {
-          return root.equals(virtualFileParent) || VfsUtilCore.isAncestor(root, virtualFileParent, false);
-        }
-        return false;
+        VirtualFile virtualFile = filePath.getVirtualFile();
+        return root.equals(virtualFile) || FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(root), filePath.getIOFile(), false);
       }
     }));
   }
