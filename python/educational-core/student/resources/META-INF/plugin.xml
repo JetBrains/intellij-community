@@ -32,7 +32,7 @@
   <extensionPoints>
     <extensionPoint qualifiedName="Edu.StudyExecutor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
     <extensionPoint qualifiedName="Edu.StudyLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
-    <extensionPoint qualifiedName="Edu.studyActionProvider" interface="com.jetbrains.edu.learning.StudyActionProvider"/>
+    <extensionPoint qualifiedName="Edu.studyToolWindowConfigurator" interface="com.jetbrains.edu.learning.StudyToolWindowConfigurator"/>
   </extensionPoints>
 
   <actions>

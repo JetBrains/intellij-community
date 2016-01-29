@@ -32,7 +32,7 @@
   <extensions defaultExtensionNs="Edu">
     <StudyExecutor implementationClass="com.jetbrains.edu.learning.PyStudyExecutor" language="Python"/>
     <StudyLanguageManager implementationClass="com.jetbrains.edu.learning.PyStudyLanguageManager" language="Python"/>
-    <studyActionProvider implementation="com.jetbrains.edu.learning.PyStudyActionProvider" />
+    <studyToolWindowConfigurator implementation="com.jetbrains.edu.learning.PyStudyToolWindowConfigurator" />
   </extensions>
   <actions>
     <action id="WelcomeScreen.PythonIntro" class="com.jetbrains.edu.learning.actions.PyStudyIntroductionCourseAction"
