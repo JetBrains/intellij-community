@@ -499,6 +499,10 @@
     </intentionAction>
     <intentionAction>
       <category>XML</category>
+      <className>com.intellij.xml.util.CollapseTagIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
       <className>com.intellij.codeInsight.daemon.impl.analysis.AddSchemaPrefixIntention</className>
     </intentionAction>
 
