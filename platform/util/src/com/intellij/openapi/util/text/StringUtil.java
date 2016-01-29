@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -499,6 +499,10 @@ public class StringUtil extends StringUtilRt {
               if (!Character.isLetterOrDigit(s.charAt(j))) {
                 break;
               }
+            }
+            if (!title && j > i + 1 && !Character.isLowerCase(s.charAt(i + 1))) {
+              // filter out abbreviations like I18n, SQL and CSS
+              continue;
             }
             if (!isPreposition(s, i, j - 1, prepositions)) {
               if (buffer == null) {
