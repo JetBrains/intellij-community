@@ -214,7 +214,8 @@ public class PatchApplier<BinaryType extends FilePatch> {
         returnConfirmationBack();
         VcsFileListenerContextHelper.getInstance(myProject).clearContext();
       }
-      return refStatus.get();
+      final ApplyPatchStatus status = refStatus.get();
+      return status == null ? ApplyPatchStatus.ALREADY_APPLIED : status;
     }
 
     private void returnConfirmationBack() {
@@ -363,6 +364,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     trigger.addDeleted(myVerifier.getToBeDeleted());
   }
 
+  @NotNull
   public ApplyPatchStatus nonWriteActionPreCheck() {
     final List<FilePatch> failedPreCheck = myVerifier.nonWriteActionPreCheck();
     myFailedPatches.addAll(failedPreCheck);
@@ -376,6 +378,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
            : ((skipped.size() == myPatches.size()) ? ApplyPatchStatus.ALREADY_APPLIED : ApplyPatchStatus.PARTIAL);
   }
 
+  @Nullable
   protected ApplyPatchStatus executeWritable() {
     final ReadonlyStatusHandler.OperationStatus readOnlyFilesStatus = getReadOnlyFilesStatus(myVerifier.getWritableFiles());
     if (readOnlyFilesStatus.hasReadonlyFiles()) {
