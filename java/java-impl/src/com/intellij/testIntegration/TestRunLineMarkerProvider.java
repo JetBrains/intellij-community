@@ -86,15 +86,16 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
     TestStateStorage.Record state = TestStateStorage.getInstance(project).getState(url);
     if (state != null) {
       TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(state.magnitude);
-      switch (magnitude) {
-        case ERROR_INDEX:
-        case FAILED_INDEX:
-          return AllIcons.RunConfigurations.TestState.Red2;
-        case PASSED_INDEX:
-        case COMPLETE_INDEX:
-          return AllIcons.RunConfigurations.TestState.Green2;
-        default:
-
+      if (magnitude != null) {
+        switch (magnitude) {
+          case ERROR_INDEX:
+          case FAILED_INDEX:
+            return AllIcons.RunConfigurations.TestState.Red2;
+          case PASSED_INDEX:
+          case COMPLETE_INDEX:
+            return AllIcons.RunConfigurations.TestState.Green2;
+          default:
+        }
       }
     }
     return isClass ? AllIcons.RunConfigurations.TestState.Run_run : AllIcons.RunConfigurations.TestState.Run;
