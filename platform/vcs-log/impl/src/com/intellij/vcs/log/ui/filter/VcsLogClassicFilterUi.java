@@ -23,14 +23,17 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
@@ -39,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
@@ -222,8 +226,13 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
         protected void onFieldCleared() {
           myFilterModel.setFilter(null);
         }
+
+        @Override
+        public Dimension getPreferredSize() {
+          Dimension preferredSize = super.getPreferredSize();
+          return new Dimension(preferredSize.width, UIUtil.isUnderWindowsLookAndFeel() ? preferredSize.height : getSearchFieldSize());
+        }
       };
-      textFilter.setPreferredSize(new Dimension(textFilter.getPreferredSize().width, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height));
       textFilter.setText(myFilterModel.getText());
       textFilter.getTextEditor().addActionListener(new ActionListener() {
         @Override
@@ -250,6 +259,22 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
     }
+  }
+
+  private static int getSearchFieldSize() {
+    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+      return 26; // see MacIntellijTextFieldUI; unfortunately, can not reference it here
+    }
+    return ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height;
+  }
+
+  public static Border getToolbarBorder() {
+    if (UIUtil.isUnderWindowsLookAndFeel()) {
+      return BorderFactory.createEmptyBorder(2, 2, 2, 2);
+    }
+    int delta = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height - getSearchFieldSize();
+    assert delta <= 0;
+    return BorderFactory.createEmptyBorder(2 + delta, 2, 2, 2);
   }
 
   private static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {

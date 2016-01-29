@@ -217,11 +217,17 @@ public class MainFrame extends JPanel implements DataProvider {
     }
     mainGroup.add(toolbarGroup);
 
-    ActionToolbar toolbar = createActionsToolbar(mainGroup);
+    final ActionToolbar toolbar = createActionsToolbar(mainGroup);
     ActionToolbar settings = createActionsToolbar(new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_QUICK_SETTINGS_ACTION)));
     settings.setReservePlaceAutoPopupIcon(false);
 
-    JPanel panel = new JPanel(new BorderLayout());
+    JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        toolbar.getComponent().setBorder(VcsLogClassicFilterUi.getToolbarBorder());
+      }
+    };
     panel.add(toolbar.getComponent(), BorderLayout.CENTER);
     panel.add(settings.getComponent(), BorderLayout.LINE_END);
     return panel;
