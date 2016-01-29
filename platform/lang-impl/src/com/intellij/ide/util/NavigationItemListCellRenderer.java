@@ -41,6 +41,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -66,7 +67,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     final boolean hasRightRenderer = UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION;
     final ModuleRendererFactory factory = ModuleRendererFactory.findInstance(value);
 
-    final LeftRenderer left = new LeftRenderer(!hasRightRenderer || !factory.rendersLocationString(), myMatcher);
+    final ColoredListCellRenderer left = createColoredListCellRenderer(hasRightRenderer, factory);
     final Component leftCellRendererComponent = left.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     final Color listBg = leftCellRendererComponent.getBackground();
     add(leftCellRendererComponent, BorderLayout.WEST);
@@ -89,6 +90,11 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
       add(spacer, BorderLayout.CENTER);
     }
     return this;
+  }
+
+  @NotNull
+  public ColoredListCellRenderer createColoredListCellRenderer(boolean hasRightRenderer, ModuleRendererFactory factory) {
+    return new LeftRenderer(!hasRightRenderer || !factory.rendersLocationString(), myMatcher);
   }
 
   @Override
