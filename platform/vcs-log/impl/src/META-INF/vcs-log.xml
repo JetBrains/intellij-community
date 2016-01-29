@@ -38,8 +38,8 @@
     <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" text="Show VCS Log">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
     </action>
-    <action class="com.intellij.vcs.log.ui.actions.CollapseGraphAction" id="Vcs.Log.CollapseAll"/>
-    <action class="com.intellij.vcs.log.ui.actions.ExpandGraphAction" id="Vcs.Log.ExpandAll"/>
+    <action class="com.intellij.vcs.log.ui.actions.CollapseOrExpandGraphAction$CollapseGraphAction" id="Vcs.Log.CollapseAll"/>
+    <action class="com.intellij.vcs.log.ui.actions.CollapseOrExpandGraphAction$ExpandGraphAction" id="Vcs.Log.ExpandAll"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowLongEdgesAction" id="Vcs.Log.ShowLongEdges"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowDetailsAction" id="Vcs.Log.ShowDetailsAction"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
