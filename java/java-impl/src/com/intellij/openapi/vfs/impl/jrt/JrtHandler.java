@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.jrt;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.reference.SoftReference;
@@ -36,7 +37,6 @@ import java.util.Map;
 
 class JrtHandler extends ArchiveHandler {
   private static final URI ROOT_URI = URI.create("jrt:/");
-  private static final Map<String, Object> EMPTY_ENV = Collections.emptyMap();
 
   private static class JrtEntryInfo extends EntryInfo {
     private final String myModule;
@@ -57,9 +57,14 @@ class JrtHandler extends ArchiveHandler {
   private synchronized FileSystem getFileSystem() throws IOException {
     FileSystem fs = SoftReference.dereference(myFileSystem);
     if (fs == null) {
-      URL url = new File(getFile(), "jrt-fs.jar").toURI().toURL();
-      ClassLoader loader = new URLClassLoader(new URL[]{url}, null);
-      fs = FileSystems.newFileSystem(ROOT_URI, EMPTY_ENV, loader);
+      if (SystemInfo.isJavaVersionAtLeast("9")) {
+        fs = FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", getFile().getPath()));
+      }
+      else {
+        URL url = new File(getFile(), "jrt-fs.jar").toURI().toURL();
+        ClassLoader loader = new URLClassLoader(new URL[]{url}, null);
+        fs = FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), loader);
+      }
       myFileSystem = new SoftReference<>(fs);
     }
     return fs;
