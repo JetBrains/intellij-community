@@ -75,14 +75,14 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       VcsLogUtil.getAllVisibleRoots(getAllRoots(), filter.getRootFilter(), filter.getStructureFilter());
 
     if (files.isEmpty()) {
-      return getTextFromFiles(roots, "roots", true, visibleRoots.size() == getAllRoots().size());
+      return getTextFromRoots(roots, "roots", true, visibleRoots.size() == getAllRoots().size());
     }
     else {
       return getTextFromFilePaths(files, "folders", false, files.isEmpty());
     }
   }
 
-  private static String getTextFromFiles(@NotNull Collection<VirtualFile> files,
+  private static String getTextFromRoots(@NotNull Collection<VirtualFile> files,
                                          @NotNull String category,
                                          final boolean shorten,
                                          boolean full) {
@@ -147,7 +147,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       tooltip += "No Roots Selected";
     }
     else if (roots.size() != getAllRoots().size()) {
-      tooltip += "Roots:\n" + getTooltipTextForFiles(roots, true);
+      tooltip += "Roots:\n" + getTooltipTextForRoots(roots, true);
     }
     if (!files.isEmpty()) {
       if (!tooltip.isEmpty()) tooltip += "\n";
@@ -156,7 +156,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     return tooltip;
   }
 
-  private static String getTooltipTextForFiles(Collection<VirtualFile> files, final boolean shorten) {
+  private static String getTooltipTextForRoots(Collection<VirtualFile> files, final boolean shorten) {
     return getTooltipTextForFiles(files, shorten ? FILE_BY_NAME_COMPARATOR : FILE_BY_PATH_COMPARATOR,
                                   new NotNullFunction<VirtualFile, String>() {
                                     @NotNull
