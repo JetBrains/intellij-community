@@ -23,7 +23,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.Function;
@@ -393,9 +392,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
                                         .mapNotNull(filter.getStructureFilter().getFiles(), new Function<FilePath, VirtualFile>() {
                                           @Override
                                           public VirtualFile fun(FilePath filePath) {
-                                            VirtualFile virtualFile = filePath.getVirtualFile();
-                                            if (virtualFile != null) return virtualFile;
-                                            return ChangesUtil.findValidParentAccurately(filePath);
+                                            // for now, ignoring non-existing paths
+                                            return filePath.getVirtualFile();
                                           }
                                         });
       VcsStructureChooser chooser = new VcsStructureChooser(project, "Select Files or Folders to Filter by", files,
