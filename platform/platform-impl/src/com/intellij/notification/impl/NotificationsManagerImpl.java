@@ -385,11 +385,25 @@ public class NotificationsManagerImpl extends NotificationsManager {
   private static JPanel createButtons(@NotNull Notification notification, @NotNull JPanel content, @Nullable HyperlinkListener listener) {
     if (notification instanceof NotificationActionProvider) {
       NotificationActionProvider provider = (NotificationActionProvider)notification;
-      JPanel buttons = new JPanel(new HorizontalLayout(5));
+      JPanel buttons = new JPanel(new HorizontalLayout(5)) {
+        @Override
+        public void paint(Graphics g) {
+          super.paint(g);
+          g.setColor(Color.red);
+          drawRect(g, 0, 0, getWidth(), getHeight());
+        }
+      };
       buttons.setOpaque(false);
       content.add(BorderLayout.SOUTH, buttons);
       for (Action action : provider.getActions(listener)) {
-        JButton button = new JButton(action);
+        JButton button = new JButton(action) {
+          @Override
+          public void paint(Graphics g) {
+            super.paint(g);
+            g.setColor(Color.green);
+            drawRect(g, 0, 0, getWidth(), getHeight());
+          }
+        };
         button.setOpaque(false);
         buttons.add(HorizontalLayout.RIGHT, button);
       }
@@ -489,7 +503,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
     layoutData.maxScrollHeight = Math.min(layoutData.fullHeight, calculateContentHeight(10));
     layoutData.configuration = BalloonLayoutConfiguration.create(notification, layoutData);
 
-    if (layoutData.maxScrollHeight != layoutData.fullHeight) {
+    boolean showFullContent = notification instanceof NotificationActionProvider;
+
+    if (!showFullContent && layoutData.maxScrollHeight != layoutData.fullHeight) {
       pane.setViewport(new GradientViewport(text, JBUI.insets(10, 0), true) {
         @Nullable
         @Override
@@ -514,7 +530,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     pane.getViewport().setBackground(fillColor);
     pane.getVerticalScrollBar().setBackground(fillColor);
 
-    if (layoutData.twoLineHeight < layoutData.fullHeight) {
+    if (!showFullContent && layoutData.twoLineHeight < layoutData.fullHeight) {
       text.setPreferredSize(null);
       Dimension size = text.getPreferredSize();
       size.height = layoutData.twoLineHeight;
@@ -637,6 +653,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
     content.add(iconComponent, BorderLayout.WEST);
 
     JPanel buttons = createButtons(notification, content, listener);
+    if (buttons != null) {
+      buttons.setBorder(new EmptyBorder(0, 0, 5, 7));
+    }
 
     if (buttons == null && !actions.isEmpty()) {
       createActionPanel(notification, centerPanel, layoutData.configuration.actionGap);
@@ -934,7 +953,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
       if (width < titleSize.width || width < actionSize.width) {
         width = Math.min(BalloonLayoutConfiguration.MaxWidth,
                          Math.max(titleSize.width + myLayoutData.configuration.closeOffset, actionSize.width));
-      } else {
+      }
+      else {
         width += myLayoutData.configuration.closeOffset;
       }
 

@@ -123,6 +123,12 @@ public class Notification {
   }
 
   @NotNull
+  public Notification setIcon(@Nullable Icon icon) {
+    myIcon = icon;
+    return this;
+  }
+
+  @NotNull
   public String getGroupId() {
     return myGroupId;
   }
