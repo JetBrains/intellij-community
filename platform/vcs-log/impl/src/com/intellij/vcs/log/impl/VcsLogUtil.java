@@ -106,7 +106,7 @@ public class VcsLogUtil {
       public int compare(VirtualFile root1, VirtualFile root2) {
         if (root1.equals(root2)) return 0;
         if (VfsUtilCore.isAncestor(root1, root2, false)) {
-          // if root1 is an ancestor of root2 than root1 should be considered "smaller" than root2 and go first in the sequence
+          // if root1 is an ancestor of root2 than root1 should be considered "smaller" then root2 and go first in the sequence
           return -1;
         }
         if (VfsUtilCore.isAncestor(root2, root1, false)) {
