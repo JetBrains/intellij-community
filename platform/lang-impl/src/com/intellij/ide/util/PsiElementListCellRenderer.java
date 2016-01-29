@@ -211,7 +211,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       myRightComponentWidth += spacer.getPreferredSize().width;
     }
 
-    ListCellRenderer leftRenderer = new LeftRenderer(null, myMatcher);
+    ListCellRenderer leftRenderer = createColoredListCellRenderer();
     final Component leftCellRendererComponent = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     add(leftCellRendererComponent, LEFT);
     final Color bg = isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground();
@@ -223,6 +223,11 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       spacer.setBackground(bg);
     }
     return this;
+  }
+
+  @NotNull
+  public ColoredListCellRenderer createColoredListCellRenderer() {
+    return new LeftRenderer(null, myMatcher);
   }
 
   protected void setFocusBorderEnabled(boolean enabled) {
