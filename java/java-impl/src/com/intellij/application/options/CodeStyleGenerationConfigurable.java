@@ -33,6 +33,8 @@ import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -52,6 +54,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   private JCheckBox myCbPreferLongerNames;
   private JCheckBox myCbLineCommentAtFirstColumn;
   private JCheckBox myCbBlockCommentAtFirstColumn;
+  private JCheckBox myCbPrependWithSpace;
 
   private final MembersOrderList myMembersOrderList;
 
@@ -69,6 +72,15 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     myMembersOrderList = new MembersOrderList();
     myPanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
     myJavaVisibilityPanel = new JavaVisibilityPanel(false, true, RefactoringBundle.message("default.visibility.border.title"));
+    myCbLineCommentAtFirstColumn.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (myCbLineCommentAtFirstColumn.isSelected()) {
+          myCbPrependWithSpace.setSelected(false);
+        }
+        myCbPrependWithSpace.setEnabled(!myCbLineCommentAtFirstColumn.isSelected());
+      }
+    });
   }
 
   public JComponent createComponent() {
@@ -227,6 +239,8 @@ public class CodeStyleGenerationConfigurable implements Configurable {
 
     myCbLineCommentAtFirstColumn.setSelected(javaCommonSettings.LINE_COMMENT_AT_FIRST_COLUMN);
     myCbBlockCommentAtFirstColumn.setSelected(javaCommonSettings.BLOCK_COMMENT_AT_FIRST_COLUMN);
+    myCbPrependWithSpace.setSelected(javaCommonSettings.LINE_COMMENT_ADD_SPACE && !javaCommonSettings.LINE_COMMENT_AT_FIRST_COLUMN);
+    myCbPrependWithSpace.setEnabled(!javaCommonSettings .LINE_COMMENT_AT_FIRST_COLUMN);
 
     myCbGenerateFinalLocals.setSelected(settings.GENERATE_FINAL_LOCALS);
     myCbGenerateFinalParameters.setSelected(settings.GENERATE_FINAL_PARAMETERS);
@@ -258,6 +272,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
 
     javaCommonSettings.LINE_COMMENT_AT_FIRST_COLUMN = myCbLineCommentAtFirstColumn.isSelected();
     javaCommonSettings.BLOCK_COMMENT_AT_FIRST_COLUMN = myCbBlockCommentAtFirstColumn.isSelected();
+    javaCommonSettings.LINE_COMMENT_ADD_SPACE = myCbPrependWithSpace.isSelected();
 
     settings.GENERATE_FINAL_LOCALS = myCbGenerateFinalLocals.isSelected();
     settings.GENERATE_FINAL_PARAMETERS = myCbGenerateFinalParameters.isSelected();
@@ -305,6 +320,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
 
     isModified |= isModified(myCbLineCommentAtFirstColumn, javaCommonSettings.LINE_COMMENT_AT_FIRST_COLUMN);
     isModified |= isModified(myCbBlockCommentAtFirstColumn, javaCommonSettings.BLOCK_COMMENT_AT_FIRST_COLUMN);
+    isModified |= isModified(myCbPrependWithSpace, javaCommonSettings.LINE_COMMENT_ADD_SPACE);
 
 
     isModified |= isModified(myCbGenerateFinalLocals, settings.GENERATE_FINAL_LOCALS);

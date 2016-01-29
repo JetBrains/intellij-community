@@ -37,7 +37,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
     ExtensionPointName.create("com.intellij.langCodeStyleSettingsProvider");
 
   public enum SettingsType {
-    BLANK_LINES_SETTINGS, SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS, INDENT_SETTINGS, LANGUAGE_SPECIFIC
+    BLANK_LINES_SETTINGS, SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS, INDENT_SETTINGS, COMMENTER_SETTINGS, LANGUAGE_SPECIFIC
   }
 
   @NotNull
@@ -241,6 +241,11 @@ public abstract class LanguageCodeStyleSettingsProvider {
         case WRAPPING_AND_BRACES_SETTINGS:
           for (WrappingOrBraceOption wrappingOrBraceOption : WrappingOrBraceOption.values()) {
             myCollectedFields.add(wrappingOrBraceOption.name());
+          }
+          break;
+        case COMMENTER_SETTINGS:
+          for (CommenterOption commenterOption : CommenterOption.values()) {
+            myCollectedFields.add(commenterOption.name());
           }
           break;
         default:
