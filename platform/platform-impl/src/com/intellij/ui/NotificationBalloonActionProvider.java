@@ -21,6 +21,7 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBRectangle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,8 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
   private final BalloonImpl.ActionButton mySettingButton;
   private final BalloonImpl.ActionButton myCloseButton;
   private final List<BalloonImpl.ActionButton> myActions = new ArrayList<BalloonImpl.ActionButton>();
+
+  private static final Rectangle CloseHoverBounds = new JBRectangle(5, 5, 12, 10);
 
   public NotificationBalloonActionProvider(@NotNull BalloonImpl balloon,
                                            @Nullable Component repaintPanel,
@@ -116,7 +119,12 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
             }
           });
         }
-      });
+      }) {
+      @Override
+      protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon) {
+        icon.paintIcon(this, g, CloseHoverBounds.x, CloseHoverBounds.y);
+      }
+    };
     myActions.add(myCloseButton);
   }
 
@@ -132,7 +140,8 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     Insets borderInsets = myBalloon.getShadowBorderInsets();
     int x = bounds.x + bounds.width - borderInsets.right - closeSize.width - myLayoutData.configuration.rightActionsOffset.width;
     int y = bounds.y + borderInsets.top + myLayoutData.configuration.rightActionsOffset.height;
-    myCloseButton.setBounds(x, y, closeSize.width, closeSize.height);
+    myCloseButton.setBounds(x - CloseHoverBounds.x, y - CloseHoverBounds.y,
+                            closeSize.width + CloseHoverBounds.width, closeSize.height + CloseHoverBounds.height);
 
     if (mySettingButton != null) {
       Dimension size = mySettingButton.getPreferredSize();

@@ -594,7 +594,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
         if (title != null && layoutData.showActions != null && layoutData.showActions.compute()) {
           int width = layoutData.configuration.allActionsOffset;
-          int x = getWidth() - width - 5;
+          int x = getWidth() - width - JBUI.scale(5);
           int y = layoutData.configuration.topSpaceHeight;
 
           int height = title instanceof JEditorPane ? getFirstLineHeight((JEditorPane)title) : title.getHeight();
@@ -654,7 +654,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     JPanel buttons = createButtons(notification, content, listener);
     if (buttons != null) {
-      buttons.setBorder(new EmptyBorder(0, 0, 5, 7));
+      buttons.setBorder(new EmptyBorder(0, 0, JBUI.scale(5), JBUI.scale(7)));
     }
 
     if (buttons == null && !actions.isEmpty()) {
@@ -727,7 +727,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
             }
           }
           ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-          menu.getComponent().show(link, -10, link.getHeight() + 2);
+          menu.getComponent().show(link, JBUI.scale(-10), link.getHeight() + JBUI.scale(2));
         }
       });
       action.setVisible(false);
@@ -780,6 +780,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static class DropDownAction extends LinkLabel<Void> {
+    Icon myIcon = AllIcons.Ide.Notification.DropTriangle;
+
     public DropDownAction(String text, @Nullable LinkListener<Void> listener) {
       super(text, null, listener);
 
@@ -789,19 +791,18 @@ public class NotificationsManagerImpl extends NotificationsManager {
       setIcon(new Icon() {
         @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
-          Icon icon = AllIcons.Ide.Notification.DropTriangle;
-          int lineY = getUI().getBaseline(DropDownAction.this, getWidth(), getHeight()) - icon.getIconHeight();
-          IconUtil.colorize(icon, getTextColor()).paintIcon(c, g, x - 1, lineY);
+          int lineY = getUI().getBaseline(DropDownAction.this, getWidth(), getHeight()) - getIconHeight();
+          IconUtil.colorize(myIcon, getTextColor()).paintIcon(c, g, x - 1, lineY);
         }
 
         @Override
         public int getIconWidth() {
-          return 16;
+          return myIcon.getIconWidth();
         }
 
         @Override
         public int getIconHeight() {
-          return 16;
+          return myIcon.getIconHeight();
         }
       });
     }

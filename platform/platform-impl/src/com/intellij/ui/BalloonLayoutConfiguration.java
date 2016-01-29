@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,7 @@ public class BalloonLayoutConfiguration {
   public static final int MaxWidth = JBUI.scale(350);
   public static final int MinWidth = JBUI.scale(100);
 
-  public static final int NotificationSpace = 10;
+  public static final int NotificationSpace = JBUI.scale(10);
 
   @NotNull
   public static BalloonLayoutConfiguration create(@NotNull Notification notification, @NotNull BalloonLayoutData layoutData) {
@@ -65,12 +66,14 @@ public class BalloonLayoutConfiguration {
 
   @NotNull
   private static BalloonLayoutConfiguration twoLines() {
-    return new BalloonLayoutConfiguration(new Dimension(10, 11), 14, 8, 8, 8, 14).setName("twoLines");
+    return new BalloonLayoutConfiguration(new JBDimension(10, 11),
+                                          JBUI.scale(14), JBUI.scale(8), JBUI.scale(8), JBUI.scale(8), JBUI.scale(14));
   }
 
   @NotNull
   private static BalloonLayoutConfiguration treeLines() {
-    return new BalloonLayoutConfiguration(new Dimension(10, 7), 10, 6, 10, 0, 8).setName("treeLines");
+    return new BalloonLayoutConfiguration(new JBDimension(10, 7),
+                                          JBUI.scale(10), JBUI.scale(6), JBUI.scale(10), 0, JBUI.scale(8));
   }
 
   private BalloonLayoutConfiguration(@NotNull Dimension iconOffset,
@@ -79,10 +82,10 @@ public class BalloonLayoutConfiguration {
                                      int contentActionsSpaceHeight,
                                      int titleActionsSpaceHeight,
                                      int bottomSpaceHeight) {
-    this(32, iconOffset,
+    this(JBUI.scale(32), iconOffset,
          topSpaceHeight, titleContentSpaceHeight, contentActionsSpaceHeight, titleActionsSpaceHeight, bottomSpaceHeight,
-         16,
-         new Dimension(8, 6), 7, 5, 15);
+         JBUI.scale(16),
+         new JBDimension(8, 6), JBUI.scale(7), JBUI.scale(5), JBUI.scale(15));
   }
 
   private BalloonLayoutConfiguration(int iconPanelWidth,
@@ -111,17 +114,5 @@ public class BalloonLayoutConfiguration {
     this.gearCloseSpace = afterGearSpace + beforeCloseSpace;
     this.allActionsOffset = closeOffset + afterGearSpace + AllIcons.Ide.Notification.Gear.getIconWidth();
     this.beforeGearSpace = beforeGearSpace;
-  }
-
-  private String myName;
-
-  public BalloonLayoutConfiguration setName(String name) {
-    myName = name;
-    return this;
-  }
-
-  @Override
-  public String toString() {
-    return myName;
   }
 }

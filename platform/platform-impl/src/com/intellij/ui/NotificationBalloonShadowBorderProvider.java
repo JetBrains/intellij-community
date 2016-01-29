@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons.Ide.Notification.Shadow;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,7 +28,7 @@ import java.awt.geom.RoundRectangle2D;
  * @author Alexander Lobas
  */
 public class NotificationBalloonShadowBorderProvider implements BalloonImpl.ShadowBorderProvider {
-  private static final Insets INSETS = new Insets(4, 6, 8, 6);
+  private static final Insets INSETS = new JBInsets(4, 6, 8, 6);
   private final Color myFillColor;
   private final Color myBorderColor;
 
