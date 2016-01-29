@@ -130,7 +130,14 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
   }
 
   @NotNull
-  static List<String> getTasksToRun(Module module) {
+  static List<String> getTasksToRun(@NotNull Module module) {
+    for (GradleTestTasksProvider provider : GradleTestTasksProvider.EP_NAME.getExtensions()) {
+      final List<String> tasks = provider.getTasks(module);
+      if(!ContainerUtil.isEmpty(tasks)) {
+        return tasks;
+      }
+    }
+
     final List<String> result;
     final String externalProjectId = ExternalSystemApiUtil.getExternalProjectId(module);
     if (externalProjectId == null) return ContainerUtil.emptyList();
