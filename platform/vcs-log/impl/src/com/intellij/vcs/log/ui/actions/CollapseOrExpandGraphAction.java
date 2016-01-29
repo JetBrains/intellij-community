@@ -16,6 +16,8 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -25,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-abstract class CollapseOrExpandGraphAction extends GraphAction {
+abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   private static final String LINEAR_BRANCHES = "Linear Branches";
   private static final String LINEAR_BRANCHES_DESCRIPTION = "linear branches";
   private static final String MERGES = "Merges";
@@ -51,10 +53,22 @@ abstract class CollapseOrExpandGraphAction extends GraphAction {
   }
 
   @Override
+  public void update(@NotNull AnActionEvent e) {
+    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    if (ui != null && ui.areGraphActionsEnabled()) {
+      e.getPresentation().setEnabled(true);
+      update(e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI), e);
+    }
+    else {
+      e.getPresentation().setEnabled(false);
+    }
+  }
+
   protected void update(@NotNull VcsLogUi ui, @NotNull AnActionEvent e) {
     if (!ui.getFilterUi().getFilters().getDetailsFilters().isEmpty()) {
       e.getPresentation().setEnabled(false);
     }
+
     if (ui.getBekType() == PermanentGraph.SortType.LinearBek) {
       e.getPresentation().setIcon(getMergesIcon(myExpand));
       e.getPresentation().setText(getPrefix(myExpand) + MERGES);
