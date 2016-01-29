@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,22 +21,23 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ilyas
  */
 public class GrSourceFilterScope extends DelegatingGlobalSearchScope {
-  private final ProjectFileIndex myIndex;
+  private @Nullable final ProjectFileIndex myIndex;
 
   public GrSourceFilterScope(@NotNull final GlobalSearchScope delegate) {
     super(delegate, "groovy.sourceFilter");
-    myIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
+    myIndex = getProject() == null ? null : ProjectRootManager.getInstance(getProject()).getFileIndex();
   }
 
   @Override
   public boolean contains(@NotNull final VirtualFile file) {
-    return super.contains(file) && myIndex.isInSourceContent(file) && GroovyFileType.GROOVY_FILE_TYPE == file.getFileType();
+    return super.contains(file) && (myIndex == null || myIndex.isInSourceContent(file)) && GroovyFileType.GROOVY_FILE_TYPE == file.getFileType();
   }
     
 }
