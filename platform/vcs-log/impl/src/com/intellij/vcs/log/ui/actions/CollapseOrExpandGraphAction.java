@@ -55,30 +55,37 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+
     if (ui != null && ui.areGraphActionsEnabled()) {
       e.getPresentation().setEnabled(true);
-      update(e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI), e);
+      if (!ui.getFilterUi().getFilters().getDetailsFilters().isEmpty()) {
+        e.getPresentation().setEnabled(false);
+      }
+
+      if (ui.getBekType() == PermanentGraph.SortType.LinearBek) {
+        e.getPresentation().setText(getPrefix(myExpand) + MERGES);
+        e.getPresentation().setDescription(getPrefix(myExpand) + MERGES_DESCRIPTION);
+      }
+      else {
+        e.getPresentation().setText(getPrefix(myExpand) + LINEAR_BRANCHES);
+        e.getPresentation().setDescription(getPrefix(myExpand) + LINEAR_BRANCHES_DESCRIPTION);
+      }
     }
     else {
       e.getPresentation().setEnabled(false);
+    }
+
+    if (isIconHidden(e)) {
+      e.getPresentation().setIcon(null);
+    }
+    else {
+      e.getPresentation()
+        .setIcon(ui != null && ui.getBekType() == PermanentGraph.SortType.LinearBek ? getMergesIcon(myExpand) : getBranchesIcon(myExpand));
     }
   }
 
-  protected void update(@NotNull VcsLogUi ui, @NotNull AnActionEvent e) {
-    if (!ui.getFilterUi().getFilters().getDetailsFilters().isEmpty()) {
-      e.getPresentation().setEnabled(false);
-    }
-
-    if (ui.getBekType() == PermanentGraph.SortType.LinearBek) {
-      e.getPresentation().setIcon(getMergesIcon(myExpand));
-      e.getPresentation().setText(getPrefix(myExpand) + MERGES);
-      e.getPresentation().setDescription(getPrefix(myExpand) + MERGES_DESCRIPTION);
-    }
-    else {
-      e.getPresentation().setIcon(getBranchesIcon(myExpand));
-      e.getPresentation().setText(getPrefix(myExpand) + LINEAR_BRANCHES);
-      e.getPresentation().setDescription(getPrefix(myExpand) + LINEAR_BRANCHES_DESCRIPTION);
-    }
+  private boolean isIconHidden(@NotNull AnActionEvent e) {
+    return e.getPlace().equals(ToolWindowContentUi.POPUP_PLACE);
   }
 
   private static Icon getMergesIcon(boolean expand) {
