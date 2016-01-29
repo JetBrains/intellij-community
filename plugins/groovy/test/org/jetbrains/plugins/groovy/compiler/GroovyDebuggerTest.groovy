@@ -517,6 +517,30 @@ public class Main {
     }
   }
 
+  public void "test evaluation with java references in java context"() {
+    def starterFile = myFixture.addFileToProject 'Gr.groovy', '''
+new Main().foo()
+'''
+    def file = myFixture.addFileToProject 'Main.java', '''
+import java.util.Arrays;
+import java.util.List;
+
+public class Main {
+  void foo() {
+     List<String> a = Arrays.asList("1","22","333");
+     int x = 5; // 7
+  }
+}
+'''
+    make()
+
+    addBreakpoint file.virtualFile, 7
+    runDebugger starterFile, {
+      waitForBreakpoint()
+      eval 'a.findAll {it.length() > 2}.size()', '1', GroovyFileType.GROOVY_FILE_TYPE
+    }
+  }
+
   private def addBreakpoint(String fileName, int line) {
     VirtualFile file = null
     edt {
