@@ -35,8 +35,10 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.StudyActionProvider;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.actions.*;
@@ -116,18 +118,38 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
   }
 
   private static JPanel createToolbarPanel(@NotNull final Project project) {
+    final DefaultActionGroup group = getActionGroup(project);
+
+    final ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar("Study", group, true);
+    return JBUI.Panels.simplePanel(actionToolBar.getComponent());
+  }
+
+  private static DefaultActionGroup getActionGroup(@NotNull final Project project) {
+    StudyActionProvider[] extensions = StudyActionProvider.EP_NAME.getExtensions();
+    DefaultActionGroup actionGroup = null;
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return createDefaultActionGroup(project);
+    }
+    for (StudyActionProvider actionProvider: extensions) {
+      actionGroup = actionProvider.getActionGroup(project);
+      if (actionGroup != null) break;
+    }
+
+    return actionGroup == null ? createDefaultActionGroup(project) : actionGroup;
+  }
+
+  @NotNull
+  private static DefaultActionGroup createDefaultActionGroup(@NotNull Project project) {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(StudyCheckAction.createCheckAction(StudyTaskManager.getInstance(project).getCourse()));
     group.add(new StudyPreviousStudyTaskAction());
     group.add(new StudyNextStudyTaskAction());
     group.add(new StudyRefreshTaskFileAction());
     group.add(new StudyShowHintAction());
-
     group.add(new StudyRunAction());
     group.add(new StudyEditInputAction());
-
-    final ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar("Study", group, true);
-    return JBUI.Panels.simplePanel(actionToolBar.getComponent());
+    return group;
   }
 
   static class StudyFileEditorManagerListener implements FileEditorManagerListener {
