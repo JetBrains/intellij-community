@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ScalableIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,6 +26,8 @@ import java.util.Arrays;
 public class LayeredIcon extends AbstractSizeAdjustingIcon {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LayeredIcon");
   private final Icon[] myIcons;
+  private Icon[] myScaledIcons;
+  private float myScale = 1f;
   private final boolean[] myDisabledLayers;
   private final int[] myHShifts;
   private final int[] myVShifts;
@@ -74,6 +77,7 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
     if (!Arrays.equals(myHShifts, icon.myHShifts)) return false;
     if (!Arrays.equals(myIcons, icon.myIcons)) return false;
     if (!Arrays.equals(myVShifts, icon.myVShifts)) return false;
+    if (myScale != icon.myScale) return false;
 
     return true;
   }
@@ -166,10 +170,34 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
     for (int i = 0; i < myIcons.length; i++) {
-      Icon icon = myIcons[i];
+      Icon icon = getOrScale(i);
       if (icon == null || myDisabledLayers[i]) continue;
-      icon.paintIcon(c, g, myXShift + x + myHShifts[i], myYShift + y + myVShifts[i]);
+      int xOffset = myXShift + x + myHShifts[i];
+      int yOffset = myYShift + y + myVShifts[i];
+      icon.paintIcon(c, g, xOffset, yOffset);
     }
+  }
+
+  private Icon getOrScale(int i) {
+    if (myScale == 1f) {
+      return myIcons[i];
+    }
+    if (myScaledIcons == null) {
+      myScaledIcons = new Icon[myIcons.length];
+    }
+
+    Icon icon = myScaledIcons[i];
+    if (icon == null && myIcons[i] != null) {
+      myScaledIcons[i] = icon;
+      if (myScaledIcons[i] instanceof ScalableIcon) {
+        myScaledIcons[i] = ((ScalableIcon)myScaledIcons[i]).scale(myScale);
+      }
+    }
+    return icon;
+  }
+
+  private Icon[] getIcons() {
+    return myScaledIcons != null && myScale != 1f ? myScaledIcons : myIcons;
   }
 
   public boolean isLayerEnabled(int layer) {
@@ -184,7 +212,7 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
   public int getIconWidth() {
     if (myWidth <= 1) { //icon is not loaded yet
       adjustSize();
-      return myWidth;
+      return scale(myWidth);
     }
     return super.getIconWidth();
   }
@@ -193,9 +221,13 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
   public int getIconHeight() {
     if (myHeight <= 1) { //icon is not loaded yet
       adjustSize();
-      return myHeight;
+      return scale(myHeight);
     }
     return super.getIconHeight();
+  }
+
+  private int scale(int n) {
+    return myScale == 1f ? n : (int)(n * myScale);
   }
 
   @Override
@@ -236,5 +268,14 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
   @Override
   public String toString() {
     return "Layered icon. myIcons=" + Arrays.asList(myIcons);
+  }
+
+  @Override
+  public Icon scale(float scaleFactor) {
+    if (myScale != scaleFactor) {
+      myScale = scaleFactor;
+      adjustSize();
+    }
+    return this;
   }
 }
