@@ -111,6 +111,7 @@ public class LombokProcessorProvider {
     return null != psiClass && verifyLombokAnnotationPresent(psiClass);
   }
 
+  @NotNull
   public Collection<LombokProcessorData> getApplicableProcessors(@NotNull PsiMember psiMember) {
     Collection<LombokProcessorData> result = Collections.emptyList();
     if (verifyLombokAnnotationPresent(psiMember)) {
@@ -127,10 +128,11 @@ public class LombokProcessorProvider {
 
   private void addApplicableProcessors(@NotNull PsiMember psiMember, @NotNull Collection<LombokProcessorData> target) {
     final PsiModifierList psiModifierList = psiMember.getModifierList();
-    assert psiModifierList != null;
-    for (PsiAnnotation psiAnnotation : psiModifierList.getAnnotations()) {
-      for (Processor processor : getProcessors(psiAnnotation)) {
-        target.add(new LombokProcessorData(processor, psiAnnotation));
+    if (null != psiModifierList) {
+      for (PsiAnnotation psiAnnotation : psiModifierList.getAnnotations()) {
+        for (Processor processor : getProcessors(psiAnnotation)) {
+          target.add(new LombokProcessorData(processor, psiAnnotation));
+        }
       }
     }
   }
