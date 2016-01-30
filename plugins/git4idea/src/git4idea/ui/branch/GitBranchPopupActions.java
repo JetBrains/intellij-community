@@ -219,7 +219,7 @@ class GitBranchPopupActions {
       private final String myBranchName;
 
       CheckoutAsNewBranch(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
-        super("Checkout as new branch");
+        super("Checkout as New Branch");
         myProject = project;
         myRepositories = repositories;
         myBranchName = branchName;
