@@ -174,7 +174,7 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
       if (icon == null || myDisabledLayers[i]) continue;
       int xOffset = myXShift + x + myHShifts[i];
       int yOffset = myYShift + y + myVShifts[i];
-      icon.paintIcon(c, g, xOffset, yOffset);
+      icon.paintIcon(c, g, scale(xOffset), scale(yOffset));
     }
   }
 
@@ -188,6 +188,7 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
 
     Icon icon = myScaledIcons[i];
     if (icon == null && myIcons[i] != null) {
+      icon = myIcons[i];
       myScaledIcons[i] = icon;
       if (myScaledIcons[i] instanceof ScalableIcon) {
         myScaledIcons[i] = ((ScalableIcon)myScaledIcons[i]).scale(myScale);
@@ -214,7 +215,7 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
       adjustSize();
       return scale(myWidth);
     }
-    return super.getIconWidth();
+    return scale(super.getIconWidth());
   }
 
   @Override
@@ -223,7 +224,7 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
       adjustSize();
       return scale(myHeight);
     }
-    return super.getIconHeight();
+    return scale(super.getIconHeight());
   }
 
   private int scale(int n) {
