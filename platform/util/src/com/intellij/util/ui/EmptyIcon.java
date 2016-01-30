@@ -80,12 +80,12 @@ public class EmptyIcon implements Icon, ScalableIcon {
 
   @Override
   public int getIconWidth() {
-    return width;
+    return scale == 1f ? width : (int) (width * scale);
   }
 
   @Override
   public int getIconHeight() {
-    return height;
+    return scale == 1f ? height : (int) (height * scale);
   }
 
   @Override
@@ -120,7 +120,12 @@ public class EmptyIcon implements Icon, ScalableIcon {
   @Override
   public Icon scale(float scaleFactor) {
     if (scaleFactor != scale) {
-      EmptyIcon icon = this instanceof UIResource ? new EmptyIconUIResource(width, height) : new EmptyIcon(width, height);
+      EmptyIcon icon;
+      if (scale != 1f) {
+        icon = this;
+      } else {
+        icon = this instanceof UIResource ? new EmptyIconUIResource(width, height) : new EmptyIcon(width, height);
+      }
       icon.scale = scaleFactor;
       return icon;
     }
