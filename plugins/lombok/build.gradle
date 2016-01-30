@@ -153,13 +153,13 @@ intellij {
     pluginName 'lombok-plugin'
     plugins 'coverage'
 //        updateSinceUntilBuild = false
-    sandboxDirectory = "idea-sandbox/idea-${version}"
+    sandboxDirectory = "${project.projectDir}/idea-sandbox/idea-${version}"
     systemProperty 'idea.is.internal', 'false'
     downloadSources !Boolean.valueOf(System.getenv('CI'))
 
-//        publish {
-//            pluginId ''
-//            username ''
-//            password System.properties['intellij.publish.password']
-//        }
+    publish {
+        pluginId '6317'
+        username 'mplushnikov'
+        password System.properties['intellij.publish.password']
+    }
 }

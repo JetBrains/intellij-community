@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <idea-plugin version="2" url="https://github.com/mplushnikov/lombok-intellij-plugin">
-    <id>Lombok Plugin</id>
+    <id>de.plushnikov.lombok</id>
     <name>Lombok Plugin</name>
     <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
     <version>0.9.8.15</version>
 
     <idea-version since-build="142.00"/>
 
-    <description><![CDATA[
-    A plugin that adds first-class support for Project Lombok
-    ]]>
-    </description>
+    <description>A plugin that adds first-class support for Project Lombok</description>
     <category>Tools Integration</category>
 
     <depends>com.intellij.modules.lang</depends>
@@ -64,7 +61,7 @@
                          implementationClass="de.plushnikov.intellij.plugin.inspection.LombokExplicitTypeCanBeDiamondInspection" order="last"/>
     </extensions>
 
-    <extensions defaultExtensionNs="Lombok Plugin">
+    <extensions defaultExtensionNs="de.plushnikov.lombok">
         <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor"/>
         <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor"/>
         <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor"/>
