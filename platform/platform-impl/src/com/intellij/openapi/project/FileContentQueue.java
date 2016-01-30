@@ -83,6 +83,8 @@ public class FileContentQueue {
           try {
             indicator.checkCanceled();
             myLoadedContents.offer(loadContent(file, indicator));
+            // With loop contents of second / remaining projects will start loading only after finishing loading contents from first project.
+            // With resubmit loading of contents of second/remaining projects will also proceed
             ourLoadingContentsExecutor.submit(this);
           }
           catch (ProcessCanceledException e) {
