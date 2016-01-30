@@ -10,6 +10,8 @@
     <properties>
         <slf4j.version>1.7.14</slf4j.version>
         <log4j2.version>2.5</log4j2.version>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <prerequisites>
