@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ThrowableRunnable;
@@ -114,7 +115,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
     }
     FileUtil.rename(dotGit, myGitDir);
     TestCase.assertTrue(myGitDir.exists());
-    myRepositoryReader = new GitRepositoryReader(myGitDir);
+    myRepositoryReader = new GitRepositoryReader(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myGitDir));
   }
 
 
