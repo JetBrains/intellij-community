@@ -1,6 +1,6 @@
 <idea-plugin version="2">
   <id>com.jetbrains.edu.core</id>
-  <name>Stepic connector</name>
+  <name>Educational utils and Stepic connector plugin</name>
   <version>2.0.3</version>
   <idea-version since-build="143.403"/>
   <description><![CDATA[
