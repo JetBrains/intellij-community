@@ -1,7 +1,6 @@
 package de.plushnikov.tolerate;
 
 import lombok.Data;
-import lombok.Value;
 import lombok.experimental.Tolerate;
 
 @Data

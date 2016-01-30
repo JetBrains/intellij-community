@@ -1,6 +1,6 @@
 package de.plushnikov.sneakythrows;
 
-import java.awt.AWTException;
+import java.awt.*;
 import java.io.IOException;
 import java.util.Random;
 

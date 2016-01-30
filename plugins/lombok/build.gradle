@@ -79,6 +79,7 @@ copy {
 }
 
 import de.undercouch.gradle.tasks.download.Download
+
 task downloadJFlexAndSkeleton(type: Download) {
     src([
             'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/jflex-1.4/lib/JFlex.jar',
@@ -120,10 +121,9 @@ targetCompatibility = javaVersion
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 
-//        def useBootstrap = System.getenv("USE_BOOTSTRAP")
-//        if (useBootstrap) {
-//            options.bootClasspath = "$JDK6_HOME/jre/lib/rt.jar"
-//        }
+    if (!Boolean.valueOf(System.getenv('CI'))) {
+        options.bootClasspath = "$JDK6_HOME/jre/lib/rt.jar"
+    }
 }
 compileJava.dependsOn(generatePsiAndParser)
 
@@ -153,7 +153,7 @@ intellij {
     pluginName 'lombok-plugin'
     plugins 'coverage'
 //        updateSinceUntilBuild = false
-//        sandboxDirectory="${project.projectDir}/idea-sandbox"
+    sandboxDirectory = "idea-sandbox/idea-${version}"
     systemProperty 'idea.is.internal', 'false'
     downloadSources !Boolean.valueOf(System.getenv('CI'))
 

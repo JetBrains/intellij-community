@@ -17,6 +17,16 @@
       <profile default="true" name="Default" enabled="true">
         <processorPath useClasspath="true" />
       </profile>
+      <profile default="false" name="Annotation profile for lombok-manual-test" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
+        <module name="lombok-manual-test" />
+      </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="lombok-manual-test" target="1.7" />
+    </bytecodeTargetLevel>
   </component>
 </project>

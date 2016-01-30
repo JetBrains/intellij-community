@@ -1,7 +1,5 @@
 package de.plushnikov.val;
 
-import lombok.val;
-
 public class ValInBasicFor {
 	public void basicFor() {
 		java.util.List<String> list = java.util.Arrays.asList("Hello, World!");

@@ -1,7 +1,6 @@
 package de.plushnikov.sneakythrows;
 
 import lombok.SneakyThrows;
-import lombok.val;
 
 import java.io.UnsupportedEncodingException;
 
