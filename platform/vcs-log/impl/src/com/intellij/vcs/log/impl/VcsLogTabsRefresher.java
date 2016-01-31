@@ -34,6 +34,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.data.DataPackChangeListener;
 import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VcsLogFilterer;
 import org.jetbrains.annotations.NotNull;
@@ -69,9 +70,9 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
     myToolWindow.getContentManager().addContentManagerListener(myPostponedEventsListener);
     myToolWindowManager.addToolWindowManagerListener(myPostponedEventsListener);
 
-    myDataManager.addConsumer(new Consumer<DataPack>() {
+    myDataManager.addDataPackChangeListener(new DataPackChangeListener() {
       @Override
-      public void consume(DataPack dataPack) {
+      public void onDataPackChange(@NotNull DataPack dataPack) {
         for (Map.Entry<String, VcsLogFilterer> tabAndFilterer : myTabToFiltererMap.entrySet()) {
           refreshFilterer(tabAndFilterer.getValue(), isTabVisible(tabAndFilterer.getKey()));
         }

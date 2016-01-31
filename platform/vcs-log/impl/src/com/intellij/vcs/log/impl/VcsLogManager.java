@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
@@ -87,17 +86,17 @@ public class VcsLogManager implements Disposable {
   }
 
   private void watch(@NotNull final VcsLogUiImpl ui) {
-    final Consumer<DataPack> consumer = new Consumer<DataPack>() {
+    final DataPackChangeListener listener = new DataPackChangeListener() {
       @Override
-      public void consume(DataPack dataPack) {
+      public void onDataPackChange(@NotNull DataPack dataPack) {
         ui.getFilterer().onRefresh();
       }
     };
-    myDataManager.addConsumer(consumer);
+    myDataManager.addDataPackChangeListener(listener);
     Disposer.register(ui, new Disposable() {
       @Override
       public void dispose() {
-        myDataManager.removeConsumer(consumer);
+        myDataManager.removeDataPackChangeListener(listener);
       }
     });
   }

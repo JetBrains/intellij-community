@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUMap;
@@ -69,9 +68,9 @@ public class ContainingBranchesGetter {
         });
       }
     });
-    myDataManager.addConsumer(new Consumer<DataPack>() {
+    myDataManager.addDataPackChangeListener(new DataPackChangeListener() {
       @Override
-      public void consume(DataPack dataPack) {
+      public void onDataPackChange(@NotNull DataPack dataPack) {
         Collection<VcsRef> currentBranches = dataPack.getRefsModel().getBranches();
         int checksum = currentBranches.hashCode();
         if (myCurrentBranchesChecksum != 0 && myCurrentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh

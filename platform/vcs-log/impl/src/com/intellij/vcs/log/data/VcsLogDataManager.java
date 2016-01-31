@@ -67,7 +67,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
   @NotNull private final VcsLogHashMap myHashMap;
   @NotNull private final ContainingBranchesGetter myContainingBranchesGetter;
   @NotNull private final VcsLogRefresherImpl myRefresher;
-  @NotNull private final List<Consumer<DataPack>> myConsumers = ContainerUtil.newArrayList();
+  @NotNull private final List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public VcsLogDataManager(@NotNull Project project,
                            @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
@@ -84,7 +84,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
       new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myTopCommitsDetailsCache, new Consumer<DataPack>() {
         @Override
         public void consume(DataPack dataPack) {
-          consumeDataPack(dataPack);
+          fireDataPackChangeEvent(dataPack);
         }
       }, new Consumer<Exception>() {
         @Override
@@ -111,37 +111,30 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
     return hashMap;
   }
 
-  private Collection<Consumer<DataPack>> getConsumers() {
-    Collection<Consumer<DataPack>> consumersCopy = ContainerUtil.newArrayList();
-    synchronized (myConsumers) {
-      consumersCopy.addAll(myConsumers);
-    }
-    return consumersCopy;
-  }
-
-  private void consumeDataPack(@NotNull DataPack dataPack) {
-    for (Consumer<DataPack> consumer : getConsumers()) {
-      consumer.consume(dataPack);
-    }
-  }
-
-  public void addConsumer(@NotNull final Consumer<DataPack> consumer) {
-    synchronized (myConsumers) {
-      myConsumers.add(consumer);
-    }
-
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+  private void fireDataPackChangeEvent(@NotNull final DataPack dataPack) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        consumer.consume(myRefresher.getCurrentDataPack());
+        for (DataPackChangeListener listener : myDataPackChangeListeners) {
+          listener.onDataPackChange(dataPack);
+        }
       }
     });
   }
 
-  public void removeConsumer(@NotNull Consumer<DataPack> consumer) {
-    synchronized (myConsumers) {
-      myConsumers.remove(consumer);
-    }
+  public void addDataPackChangeListener(@NotNull final DataPackChangeListener listener) {
+    myDataPackChangeListeners.add(listener);
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        listener.onDataPackChange(myRefresher.getCurrentDataPack());
+      }
+    });
+  }
+
+  public void removeDataPackChangeListener(@NotNull DataPackChangeListener listener) {
+    myDataPackChangeListeners.remove(listener);
   }
 
   @NotNull
@@ -180,7 +173,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
         resetState();
         readCurrentUser();
         DataPack dataPack = myRefresher.readFirstBlock();
-        consumeDataPack(dataPack);
+        fireDataPackChangeEvent(dataPack);
         initSw.report();
       }
     }, "Loading History...");
