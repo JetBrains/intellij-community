@@ -30,7 +30,6 @@ import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.DataPack;
@@ -74,22 +73,24 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
       @Override
       public void onDataPackChange(@NotNull DataPack dataPack) {
         for (Map.Entry<String, VcsLogFilterer> tabAndFilterer : myTabToFiltererMap.entrySet()) {
-          refreshFilterer(tabAndFilterer.getValue(), isTabVisible(tabAndFilterer.getKey()));
+          dataPackArrived(tabAndFilterer.getValue(), isTabVisible(tabAndFilterer.getKey()));
         }
       }
     });
   }
 
-  private void refresh(@NotNull VcsLogFilterer filterer, boolean visible) {
+  private void tabActivated(@NotNull VcsLogFilterer filterer, boolean firstTime) {
     if (hasPostponedRoots()) {
       refreshPostponedRoots();
     }
     else {
-      refreshFilterer(filterer, visible);
+      if (!filterer.isValid() || firstTime) {
+        filterer.onRefresh();
+      }
     }
   }
 
-  private void refreshFilterer(@NotNull VcsLogFilterer filterer, boolean visible) {
+  private static void dataPackArrived(@NotNull VcsLogFilterer filterer, boolean visible) {
     if (visible) {
       filterer.onRefresh();
     }
@@ -118,12 +119,12 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
     return !myRootsToRefresh.isEmpty();
   }
 
-  protected boolean isTabVisible(@NotNull String tab) {
-    return isOneOfTabsVisible(Collections.singleton(tab));
-  }
-
   private boolean isOneOfTabsVisible() {
     return isOneOfTabsVisible(myTabToFiltererMap.keySet());
+  }
+
+  protected boolean isTabVisible(@NotNull String tab) {
+    return isOneOfTabsVisible(Collections.singleton(tab));
   }
 
   private boolean isOneOfTabsVisible(@NotNull Set<String> tabs) {
@@ -146,7 +147,7 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
 
   public void addTabToWatch(@NotNull String contentTabName, @NotNull VcsLogFilterer filterer) {
     myTabToFiltererMap.put(contentTabName, filterer);
-    refresh(filterer, true);
+    tabActivated(filterer, true);
   }
 
   public void removeTabFromWatch(@NotNull String contentTabName) {
@@ -172,7 +173,7 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
     private void selectionChanged(String tabName) {
       VcsLogFilterer filterer = myTabToFiltererMap.get(tabName);
       if (filterer != null) {
-        refresh(filterer, true);
+        tabActivated(filterer, false);
       }
     }
 

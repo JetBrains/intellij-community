@@ -37,4 +37,6 @@ public interface VcsLogFilterer {
   void onSortTypeChange(@NotNull PermanentGraph.SortType sortType);
 
   void moreCommitsNeeded(@NotNull Runnable onLoaded);
+
+  boolean isValid();
 }

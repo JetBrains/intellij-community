@@ -49,7 +49,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   @NotNull private List<MoreCommitsRequest> myRequestsToRun = ContainerUtil.newArrayList();
   @NotNull private List<VisiblePackChangeListener> myVisiblePackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull private volatile VisiblePack myVisiblePack = VisiblePack.EMPTY;
-  private boolean myIsInvalid = false;
+  private boolean myIsValid = true;
 
   public VcsLogFiltererImpl(@NotNull final Project project,
                             @NotNull VcsLogDataManager dataManager,
@@ -116,6 +116,11 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     myTaskController.request(new MoreCommitsRequest(onLoaded));
   }
 
+  @Override
+  public boolean isValid() {
+    return myIsValid;
+  }
+
   private class MyTask extends Task.Backgroundable {
 
     public MyTask(@Nullable Project project, @NotNull String title) {
@@ -141,7 +146,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
       // visible pack can be null (e.g. when filter is set during initialization) => we just remember filters set by user
       myTaskController.taskCompleted(visiblePack);
 
-      if (visiblePack != null && !myIsInvalid) {
+      if (visiblePack != null && myIsValid) {
         final List<MoreCommitsRequest> requestsToRun = myRequestsToRun;
         myRequestsToRun = ContainerUtil.newArrayList();
 
@@ -183,9 +188,9 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         mySortType = sortTypeRequest.sortType;
       }
 
-      if (myIsInvalid) {
+      if (!myIsValid) {
         if (refreshRequest > invalidateRequest) {
-          myIsInvalid = false;
+          myIsValid = true;
           return refresh(visiblePack, filterRequest, moreCommitsRequests);
         }
         else {
@@ -198,7 +203,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
           return refresh(visiblePack, filterRequest, moreCommitsRequests);
         }
         else {
-          myIsInvalid = true;
+          myIsValid = false;
           // invalidate
           VisiblePack frozenVisiblePack = visiblePack == null ? myVisiblePack : visiblePack;
           if (filterRequest != null) {
