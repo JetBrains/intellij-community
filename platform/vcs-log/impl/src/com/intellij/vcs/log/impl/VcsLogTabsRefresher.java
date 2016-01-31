@@ -18,7 +18,6 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,8 +73,7 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
       @Override
       public void consume(DataPack dataPack) {
         for (Map.Entry<String, VcsLogFilterer> tabAndFilterer : myTabToFiltererMap.entrySet()) {
-          boolean visible = isOneOfTabsVisible(Collections.singleton(tabAndFilterer.getKey()));
-          refreshFilterer(tabAndFilterer.getValue(), visible);
+          refreshFilterer(tabAndFilterer.getValue(), isTabVisible(tabAndFilterer.getKey()));
         }
       }
     });
@@ -117,6 +115,10 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
 
   private boolean hasPostponedRoots() {
     return !myRootsToRefresh.isEmpty();
+  }
+
+  protected boolean isTabVisible(@NotNull String tab) {
+    return isOneOfTabsVisible(Collections.singleton(tab));
   }
 
   private boolean isOneOfTabsVisible() {
