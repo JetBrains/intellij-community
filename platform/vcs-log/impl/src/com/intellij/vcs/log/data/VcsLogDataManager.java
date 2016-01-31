@@ -69,8 +69,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
   @NotNull private final VcsLogRefresherImpl myRefresher;
   @NotNull private final List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public VcsLogDataManager(@NotNull Project project,
-                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+  public VcsLogDataManager(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
     myProject = project;
     myLogProviders = logProviders;
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
@@ -125,7 +124,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
   public void addDataPackChangeListener(@NotNull final DataPackChangeListener listener) {
     myDataPackChangeListeners.add(listener);
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         listener.onDataPackChange(myRefresher.getCurrentDataPack());
