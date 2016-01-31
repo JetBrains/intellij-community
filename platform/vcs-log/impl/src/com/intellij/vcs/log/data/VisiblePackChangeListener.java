@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,8 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.graph.PermanentGraph;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
-/**
- */
-public interface VcsLogFilterer {
-
-  void addVisiblePackChangeListener(@NotNull VisiblePackChangeListener listener);
-
-  void removeVisiblePackChangeListener(@NotNull VisiblePackChangeListener listener);
-
-  void onRefresh();
-
-  void invalidate();
-
-  void onFiltersChange(@NotNull VcsLogFilterCollection filters);
-
-  void onSortTypeChange(@NotNull PermanentGraph.SortType sortType);
-
-  void moreCommitsNeeded(@NotNull Runnable onLoaded);
+public interface VisiblePackChangeListener {
+  void onVisiblePackChange(@NotNull VisiblePack visiblePack);
 }

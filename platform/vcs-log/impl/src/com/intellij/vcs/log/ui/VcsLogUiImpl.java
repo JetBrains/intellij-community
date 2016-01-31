@@ -12,16 +12,12 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.Consumer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogDataManager;
-import com.intellij.vcs.log.data.VcsLogFilterer;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.data.VisiblePack;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
@@ -49,7 +45,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull private final VcsLogFilterer myFilterer;
 
   @NotNull private final Collection<VcsLogListener> myLogListeners = ContainerUtil.newArrayList();
-  private final Consumer<VisiblePack> myVisiblePackConsumer;
+  private final VisiblePackChangeListener myVisiblePackChangeListener;
 
   @NotNull private VisiblePack myVisiblePack;
 
@@ -72,9 +68,9 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       getTable().addHighlighter(factory.createHighlighter(logDataManager, this));
     }
 
-    myVisiblePackConsumer = new Consumer<VisiblePack>() {
+    myVisiblePackChangeListener = new VisiblePackChangeListener() {
       @Override
-      public void consume(final VisiblePack visiblePack) {
+      public void onVisiblePackChange(@NotNull final VisiblePack visiblePack) {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
@@ -85,7 +81,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
         });
       }
     };
-    myFilterer.addConsumer(myVisiblePackConsumer);
+    myFilterer.addVisiblePackChangeListener(myVisiblePackChangeListener);
   }
 
   public void requestFocus() {
@@ -384,7 +380,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   @Override
   public void dispose() {
-    myFilterer.removeConsumer(myVisiblePackConsumer);
+    myFilterer.removeVisiblePackChangeListener(myVisiblePackChangeListener);
     getTable().removeAllHighlighters();
     myVisiblePack = VisiblePack.EMPTY;
   }

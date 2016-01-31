@@ -47,7 +47,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   @NotNull private PermanentGraph.SortType mySortType;
   @NotNull private CommitCountStage myCommitCount = CommitCountStage.INITIAL;
   @NotNull private List<MoreCommitsRequest> myRequestsToRun = ContainerUtil.newArrayList();
-  @NotNull private List<Consumer<VisiblePack>> myConsumers = ContainerUtil.newArrayList();
+  @NotNull private List<VisiblePackChangeListener> myVisiblePackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull private volatile VisiblePack myVisiblePack = VisiblePack.EMPTY;
   private boolean myIsInvalid = false;
 
@@ -63,8 +63,8 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
       @Override
       public void consume(@NotNull VisiblePack visiblePack) {
         myVisiblePack = visiblePack;
-        for (Consumer<VisiblePack> consumer : myConsumers) {
-          consumer.consume(visiblePack);
+        for (VisiblePackChangeListener listener : myVisiblePackChangeListeners) {
+          listener.onVisiblePackChange(visiblePack);
         }
       }
     }) {
@@ -82,13 +82,13 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   }
 
   @Override
-  public void addConsumer(@NotNull Consumer<VisiblePack> consumer) {
-    myConsumers.add(consumer);
+  public void addVisiblePackChangeListener(@NotNull VisiblePackChangeListener listener) {
+    myVisiblePackChangeListeners.add(listener);
   }
 
   @Override
-  public void removeConsumer(@NotNull Consumer<VisiblePack> consumer) {
-    myConsumers.remove(consumer);
+  public void removeVisiblePackChangeListener(@NotNull VisiblePackChangeListener listener) {
+    myVisiblePackChangeListeners.remove(listener);
   }
 
   @Override
