@@ -3,7 +3,7 @@
     <id>Lombook Plugin</id>
     <name>Lombok Plugin</name>
     <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-    <version>0.9.8.15</version>
+    <version>0.10</version>
 
     <idea-version since-build="142.00"/>
 
@@ -202,6 +202,11 @@
     <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
     <change-notes><![CDATA[
 		<ul>
+		<li>0.10
+				<ol>
+				     <li>Fixed #XXX: TODO</li>
+				</ol>
+			</li>
 		<li>0.9.8
 				<ol>
 				     <li>Fixed #151: Builder issues with Accessors</li>
