@@ -43,6 +43,7 @@ import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.run.StudyExecutor;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
 import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
+import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -393,5 +394,28 @@ public class StudyUtils {
       return true;
     }
     return false;
+  }
+
+  @Nullable
+  public static String getTaskTextFromTask(@Nullable final Task task, @Nullable final VirtualFile taskDirectory) {
+    if (task == null) {
+      return null;
+    }
+    String text = task.getText();
+    if (text != null) {
+      return text;
+    }
+    if (taskDirectory != null) {
+      VirtualFile taskTextFile = taskDirectory.findChild(EduNames.TASK_HTML);
+      if (taskTextFile != null) {
+        try {
+          return FileUtil.loadTextAndClose(taskTextFile.getInputStream());
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+      }
+    }
+    return null;
   }
 }

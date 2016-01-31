@@ -22,20 +22,18 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
-import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.StudyBundle;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyToolWindowConfigurator;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -44,12 +42,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.util.Map;
 
 public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(StudyToolWindow.class);
-  private static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
+  private static final String EMPTY_TASK_TEXT = StudyBundle.message("empty.task.text");
   private static final String TASK_INFO_ID = "taskInfo";
   private final JBCardLayout myCardLayout;
   private final JPanel myContentPanel;
@@ -75,7 +72,9 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     
     setContent(mySplitPane);
 
-    final FileEditorManagerListener listener = new StudyFileEditorManagerListener(project, this);
+    StudyToolWindowConfigurator configurator = getStudyToolWindowConfigurator(project);
+    assert configurator != null;
+    final FileEditorManagerListener listener = configurator.getFileEditorManagerListener(project, this);
     project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
   }
 
@@ -113,7 +112,7 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     }
     final Task task = taskFile.getTask();
     if (task != null) {
-      return getTaskTextFromTask(task, task.getTaskDir(project));
+      return StudyUtils.getTaskTextFromTask(task, task.getTaskDir(project));
     }
     return null;
   }
@@ -161,33 +160,10 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     return group;
   }
 
-  private void setTaskText(String text) {
+  public void setTaskText(String text) {
     myBrowserWindow.loadContent(text);
   }
 
-  @Nullable
-  private static String getTaskTextFromTask(@Nullable final Task task, @Nullable final VirtualFile taskDirectory) {
-    if (task == null) {
-      return null;
-    }
-    String text = task.getText();
-    if (text != null) {
-      return text;
-    }
-    if (taskDirectory != null) {
-      VirtualFile taskTextFile = taskDirectory.findChild(EduNames.TASK_HTML);
-      if (taskTextFile != null) {
-        try {
-          return FileUtil.loadTextAndClose(taskTextFile.getInputStream());
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
-      }
-    }
-    return null;
-  }
-  
   @Nullable
   private static StudyToolWindowConfigurator getStudyToolWindowConfigurator(@NotNull Project project) {
     StudyToolWindowConfigurator[] extensions = StudyToolWindowConfigurator.EP_NAME.getExtensions();
@@ -198,56 +174,4 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     }
     return null;
   }
-
-  static class StudyFileEditorManagerListener implements FileEditorManagerListener {
-    private Project myProject;
-    private StudyToolWindow myStudyToolWindow;
-
-    StudyFileEditorManagerListener(@NotNull final Project project, StudyToolWindow studyToolWindow) {
-      myProject = project;
-      myStudyToolWindow = studyToolWindow;
-    }
-
-    @Override
-    public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      Task task = getTask(file);
-      setTaskText(task, file.getParent());
-    }
-
-    @Override
-    public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      myStudyToolWindow.setTaskText(EMPTY_TASK_TEXT);
-    }
-
-    @Override
-    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-      VirtualFile file = event.getNewFile();
-      if (file != null) {
-        Task task = getTask(file);
-        setTaskText(task, file.getParent());
-      }
-    }
-
-    @Nullable
-    private Task getTask(@NotNull VirtualFile file) {
-      TaskFile taskFile = StudyUtils.getTaskFile(myProject, file);
-      if (taskFile != null) {
-        return taskFile.getTask();
-      }
-      else {
-        return null;
-      }
-    }
-
-    private void setTaskText(@Nullable final Task task, @Nullable final VirtualFile taskDirectory) {
-      String text =  getTaskTextFromTask(task, taskDirectory);
-      if (text == null) {
-        myStudyToolWindow.setTaskText(EMPTY_TASK_TEXT);
-        return;
-      }
-      myStudyToolWindow.setTaskText(text);
-    }
-  }
-
-  
 }
