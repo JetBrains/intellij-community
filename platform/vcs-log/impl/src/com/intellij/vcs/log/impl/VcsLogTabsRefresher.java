@@ -82,7 +82,7 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
   }
 
   private void refresh(@NotNull VcsLogFilterer filterer, boolean visible) {
-    if (!isUpToDate()) {
+    if (hasPostponedRoots()) {
       refreshPostponedRoots();
     }
     else {
@@ -115,8 +115,8 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
     myDataManager.refresh(toRefresh);
   }
 
-  private boolean isUpToDate() {
-    return myRootsToRefresh.isEmpty();
+  private boolean hasPostponedRoots() {
+    return !myRootsToRefresh.isEmpty();
   }
 
   private boolean isOneOfTabsVisible() {
