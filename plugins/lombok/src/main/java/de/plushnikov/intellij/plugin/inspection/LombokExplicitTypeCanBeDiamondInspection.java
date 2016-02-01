@@ -30,11 +30,7 @@ public class LombokExplicitTypeCanBeDiamondInspection extends ExplicitTypeCanBeD
 
       private boolean possibleValDeclaration(PsiNewExpression expression) {
         final PsiElement expressionParent = expression.getParent();
-        if (expressionParent instanceof PsiLocalVariable) {
-          PsiLocalVariable localVar = (PsiLocalVariable) expressionParent;
-          return ValProcessor.isVal(localVar.getTypeElement());
-        }
-        return false;
+        return expressionParent instanceof PsiLocalVariable && ValProcessor.isVal((PsiLocalVariable) expressionParent);
       }
     };
   }

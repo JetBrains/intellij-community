@@ -86,15 +86,19 @@ public class ValProcessor extends AbstractProcessor {
     }
   }
 
-  public static boolean isVal(@NotNull PsiTypeElement psiTypeElement) {
-    final PsiJavaCodeReferenceElement referenceElement = psiTypeElement.getInnermostComponentReferenceElement();
-    if (null != referenceElement) {
-      final PsiElement psiElement = referenceElement.resolve();
-      if (psiElement instanceof PsiClass) {
-        final PsiClass psiClass = (PsiClass) psiElement;
+  public static boolean isVal(@NotNull PsiLocalVariable psiLocalVariable) {
+    return psiLocalVariable.getInitializer() != null && isSameName(psiLocalVariable.getTypeElement().getText());
+  }
 
-        return isSameName(psiClass.getName()) && isSameName(psiClass.getQualifiedName());
-      }
+  private boolean isVal(@NotNull PsiParameter psiParameter) {
+    return psiParameter.getParent() instanceof PsiForeachStatement && isSameName(psiParameter.getTypeElement().getText());
+  }
+
+  private boolean isVal(@NotNull PsiTypeElement psiTypeElement) {
+    final PsiElement parent = psiTypeElement.getParent();
+    if (parent instanceof PsiLocalVariable && ((PsiLocalVariable) parent).getInitializer() != null ||
+        parent instanceof PsiParameter && parent.getParent() instanceof PsiForeachStatement) {
+      return isSameName(psiTypeElement.getText());
     }
     return false;
   }
@@ -108,7 +112,8 @@ public class ValProcessor extends AbstractProcessor {
     PsiType psiType = null;
 
     final PsiElement parent = typeElement.getParent();
-    if ((parent instanceof PsiLocalVariable || parent instanceof PsiParameter) && isVal(typeElement)) {
+    if ((parent instanceof PsiLocalVariable && isVal((PsiLocalVariable) parent)) ||
+        (parent instanceof PsiParameter && isVal((PsiParameter) parent))) {
 
       if (parent instanceof PsiLocalVariable) {
         psiType = processLocalVariableInitializer(((PsiLocalVariable) parent).getInitializer());

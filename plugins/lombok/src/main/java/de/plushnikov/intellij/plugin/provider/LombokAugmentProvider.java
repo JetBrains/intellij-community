@@ -13,6 +13,7 @@ import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
@@ -59,6 +60,10 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     // Expecting that we are only augmenting an PsiClass
     // Don't filter !isPhysical elements or code auto completion will not work
     if (!(element instanceof PsiExtensibleClass) || !element.isValid()) {
+      return emptyResult;
+    }
+    // Skip processing of Annotations and Interfaces
+    if (((PsiClass) element).isAnnotationType() || ((PsiClass) element).isInterface()) {
       return emptyResult;
     }
 
@@ -119,7 +124,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       for (Processor processor : lombokProcessors) {
         result.addAll((Collection<Psi>) processor.process(psiClass));
       }
-      return new Result<List<Psi>>(result, psiClass);
+      return new Result<List<Psi>>(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     }
   }
 }

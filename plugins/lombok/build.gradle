@@ -125,7 +125,7 @@ tasks.withType(JavaCompile) {
         options.bootClasspath = "$JDK6_HOME/jre/lib/rt.jar"
     }
 }
-compileJava.dependsOn(generatePsiAndParser)
+//compileJava.dependsOn(generatePsiAndParser)
 
 plugins.withType(JavaPlugin) {
     test {
