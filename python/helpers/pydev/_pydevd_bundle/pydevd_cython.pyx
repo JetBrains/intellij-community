@@ -215,6 +215,7 @@ try:
 except:
     CO_GENERATOR = 0
 
+
 try:
     from _pydevd_bundle.pydevd_signature import send_signature_call_trace
 except ImportError:

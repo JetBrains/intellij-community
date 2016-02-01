@@ -103,7 +103,6 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
         simple_trace_time = self._get_time_from_result(self.run_process(args+['--regular-trace'], writer_thread=None))
         print(writer_thread_class.BENCHMARK_NAME, time_when_debugged, regular_time, simple_trace_time)
 
-        assert 'SPEEDTIN_AUTHORIZATION_KEY' in os.environ
         if 'SPEEDTIN_AUTHORIZATION_KEY' in os.environ:
 
             SPEEDTIN_AUTHORIZATION_KEY = os.environ['SPEEDTIN_AUTHORIZATION_KEY']
@@ -122,25 +121,25 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
                 raise AssertionError('Wrong check: %s' % (writer_thread_class.CHECK))
             for project_id in project_ids:
                 api = pyspeedtin.PySpeedTinApi(authorization_key=SPEEDTIN_AUTHORIZATION_KEY, project_id=project_id)
-                
+
                 benchmark_name = writer_thread_class.BENCHMARK_NAME
-                
+
                 if writer_thread_class.CHECK == CHECK_BASELINE:
                     version = '0.0.1_baseline'
                     return # No longer commit the baseline (it's immutable right now).
                 else:
                     version=pydevd.__version__,
-                
+
                 commit_id, branch, commit_date = api.git_commit_id_branch_and_date_from_path(pydevd.__file__)
                 api.add_benchmark(benchmark_name)
                 api.add_measurement(
-                    benchmark_name,
-                    value=time_when_debugged, 
-                    version=version,
-                    released=False,
-                    branch=branch,
-                    commit_id=commit_id,
-                    commit_date=commit_date,
+                        benchmark_name,
+                        value=time_when_debugged,
+                        version=version,
+                        released=False,
+                        branch=branch,
+                        commit_id=commit_id,
+                        commit_date=commit_date,
                 )
                 api.commit()
 
@@ -164,9 +163,9 @@ if __name__ == '__main__':
 
     for check in (
             # CHECK_BASELINE, -- Checks against the version checked out at X:\PyDev.Debugger.baseline.
-            CHECK_REGULAR, 
+            CHECK_REGULAR,
             CHECK_CYTHON
-        ):
+    ):
         PerformanceWriterThread.CHECK = check
         print('Checking: %s' % (check,))
         check_debugger_performance = CheckDebuggerPerformance()

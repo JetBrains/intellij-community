@@ -12,7 +12,7 @@ from _pydevd_bundle.pydevd_frame import PyDBFrame
 # cdef class PyDBAdditionalThreadInfo:
 # ELSE
 class PyDBAdditionalThreadInfo(object):
-# ENDIF
+    # ENDIF
 
     # IFDEF CYTHON
     # cdef public int pydev_state;

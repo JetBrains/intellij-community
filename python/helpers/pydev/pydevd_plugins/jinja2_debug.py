@@ -94,7 +94,7 @@ def _is_jinja2_context_call(frame):
 
 def _is_jinja2_internal_function(frame):
     return dict_contains(frame.f_locals, 'self') and frame.f_locals['self'].__class__.__name__ in \
-        ('LoopContext', 'TemplateReference', 'Macro', 'BlockReference')
+                                                     ('LoopContext', 'TemplateReference', 'Macro', 'BlockReference')
 
 def _find_jinja2_render_frame(frame):
     while frame is not None and not _is_jinja2_render_call(frame):

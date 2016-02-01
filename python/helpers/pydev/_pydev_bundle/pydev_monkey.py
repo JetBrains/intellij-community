@@ -25,10 +25,10 @@ def _get_python_c_args(host, port, indC, args):
     return ("import sys; sys.path.append(r'%s'); import pydevd; "
             "pydevd.settrace(host='%s', port=%s, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); %s"
             ) % (
-        pydev_src_dir,
-        host,
-        port,
-        args[indC + 1])
+               pydev_src_dir,
+               host,
+               port,
+               args[indC + 1])
 
 def _get_host_port():
     import pydevd
@@ -134,7 +134,7 @@ def patch_args(args):
         # (i >= len(args) instead of i < len(args))
         # in practice it'd raise an exception here and would return original args, which is not what we want... providing
         # a proper fix for https://youtrack.jetbrains.com/issue/PY-9767 elsewhere.
-        if i >= len(args) or _is_managed_arg(args[i]):  # no need to add pydevd twice
+        if i < len(args) and _is_managed_arg(args[i]):  # no need to add pydevd twice
             return args
 
         for x in original:  # @UndefinedVariable
@@ -198,7 +198,7 @@ def str_to_args_windows(args):
                     buf += '"'
                     backslashes = 0
                     continue
-                # else fall through to switch
+                    # else fall through to switch
             else:
                 # false alarm, treat passed backslashes literally...
                 if (state == DEFAULT):
@@ -207,7 +207,7 @@ def str_to_args_windows(args):
                 while backslashes > 0:
                     backslashes -= 1
                     buf += '\\'
-                # fall through to switch
+                    # fall through to switch
         if ch in (' ', '\t'):
             if (state == DEFAULT):
                 # skip
@@ -275,8 +275,8 @@ def monkey_patch_os(funcname, create_func):
 
 def warn_multiproc():
     log_error_once(
-        "pydev debugger: New process is launching (breakpoints won't work in the new process).\n"
-        "pydev debugger: To debug that process please enable 'Attach to subprocess automatically while debugging?' option in the debugger settings.\n")
+            "pydev debugger: New process is launching (breakpoints won't work in the new process).\n"
+            "pydev debugger: To debug that process please enable 'Attach to subprocess automatically while debugging?' option in the debugger settings.\n")
 
 
 def create_warn_multiproc(original_name):
@@ -414,9 +414,30 @@ def create_CreateProcessWarnMultiproc(original_name):
 def create_fork(original_name):
     def new_fork():
         import os
+
+        # A simple fork will result in a new python process
+        is_new_python_process = True
+        frame = sys._getframe()
+
+        while frame is not None:
+            if frame.f_code.co_name == '_execute_child' and 'subprocess' in frame.f_code.co_filename:
+                # If we're actually in subprocess.Popen creating a child, it may
+                # result in something which is not a Python process, (so, we
+                # don't want to connect with it in the forked version).
+                executable = frame.f_locals.get('executable')
+                if executable is not None:
+                    is_new_python_process = False
+                    if is_python(executable):
+                        is_new_python_process = True
+                break
+
+            frame = frame.f_back
+        frame = None  # Just make sure we don't hold on to it.
+
         child_process = getattr(os, original_name)()  # fork
         if not child_process:
-            _on_forked_process()
+            if is_new_python_process:
+                _on_forked_process()
         return child_process
     return new_fork
 

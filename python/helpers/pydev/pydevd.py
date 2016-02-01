@@ -29,7 +29,7 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
     start_client, start_server, InternalGetBreakpointException, InternalSendCurrExceptionTrace, \
     InternalSendCurrExceptionTraceProceeded
 from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OLDER, get_thread_id, dict_keys, dict_pop, dict_contains, \
-    dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange,\
+    dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
     clear_cached_thread_id
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
@@ -40,11 +40,11 @@ from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogge
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
 
 
-__version_info__ = (0, 0, 4)
+__version_info__ = (0, 0, 5)
 __version_info_str__ = []
 for v in __version_info__:
     __version_info_str__.append(str(v))
-    
+
 __version__ = '.'.join(__version_info_str__)
 
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
@@ -278,7 +278,7 @@ class PyDB:
 
             if isinstance(t, PyDBDaemonThread):
                 pydev_log.error_once(
-                    'Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
+                        'Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
 
             if is_thread_alive(t):
                 if not t.isDaemon() or hasattr(t, "__pydevd_main_thread"):
@@ -389,8 +389,8 @@ class PyDB:
         set_return_control_callback(return_control)
 
         self.mpl_modules_for_patching = {"matplotlib": lambda: activate_matplotlib(do_enable_gui),
-                            "matplotlib.pyplot": activate_pyplot,
-                            "pylab": activate_pylab }
+                                         "matplotlib.pyplot": activate_pyplot,
+                                         "pylab": activate_pylab }
 
 
     def process_internal_commands(self):
@@ -448,7 +448,7 @@ class PyDB:
 
                         queue = self.get_internal_queue(thread_id)
                         cmdsToReadd = []  # some commands must be processed by the thread itself... if that's the case,
-                                            # we will re-add the commands to the queue after executing.
+                        # we will re-add the commands to the queue after executing.
                         try:
                             while True:
                                 int_cmd = queue.get(False)
@@ -473,7 +473,7 @@ class PyDB:
                         except _queue.Empty: #@UndefinedVariable
                             for int_cmd in cmdsToReadd:
                                 queue.put(int_cmd)
-                            # this is how we exit
+                                # this is how we exit
 
 
                 thread_ids = list(self._running_thread_ids.keys())
@@ -538,20 +538,20 @@ class PyDB:
         breakpoints[file] = break_dict
 
     def add_break_on_exception(
-        self,
-        exception,
-        notify_always,
-        notify_on_terminate,
-        notify_on_first_raise_only,
-        ignore_libraries=False
-        ):
+            self,
+            exception,
+            notify_always,
+            notify_on_terminate,
+            notify_on_first_raise_only,
+            ignore_libraries=False
+    ):
         try:
             eb = ExceptionBreakpoint(
-                exception,
-                notify_always,
-                notify_on_terminate,
-                notify_on_first_raise_only,
-                ignore_libraries
+                    exception,
+                    notify_always,
+                    notify_on_terminate,
+                    notify_on_first_raise_only,
+                    ignore_libraries
             )
         except ImportError:
             pydev_log.error("Error unable to add break on exception for: %s (exception could not be imported)\n" % (exception,))
@@ -1077,15 +1077,15 @@ def has_data_to_redirect():
 # settrace
 #=======================================================================================================================
 def settrace(
-    host=None,
-    stdoutToServer=False,
-    stderrToServer=False,
-    port=5678,
-    suspend=True,
-    trace_only_current_thread=False,
-    overwrite_prev_trace=False,
-    patch_multiprocessing=False,
-    ):
+        host=None,
+        stdoutToServer=False,
+        stderrToServer=False,
+        port=5678,
+        suspend=True,
+        trace_only_current_thread=False,
+        overwrite_prev_trace=False,
+        patch_multiprocessing=False,
+):
     '''Sets the tracing function with the pydev debug function and initializes needed facilities.
 
     @param host: the user may specify another host, if the debug server is not in the same machine (default is the local
@@ -1112,14 +1112,14 @@ def settrace(
     _set_trace_lock.acquire()
     try:
         _locked_settrace(
-            host,
-            stdoutToServer,
-            stderrToServer,
-            port,
-            suspend,
-            trace_only_current_thread,
-            overwrite_prev_trace,
-            patch_multiprocessing,
+                host,
+                stdoutToServer,
+                stderrToServer,
+                port,
+                suspend,
+                trace_only_current_thread,
+                overwrite_prev_trace,
+                patch_multiprocessing,
         )
     finally:
         _set_trace_lock.release()
@@ -1129,15 +1129,15 @@ def settrace(
 _set_trace_lock = _pydev_thread.allocate_lock()
 
 def _locked_settrace(
-    host,
-    stdoutToServer,
-    stderrToServer,
-    port,
-    suspend,
-    trace_only_current_thread,
-    overwrite_prev_trace,
-    patch_multiprocessing,
-    ):
+        host,
+        stdoutToServer,
+        stderrToServer,
+        port,
+        suspend,
+        trace_only_current_thread,
+        overwrite_prev_trace,
+        patch_multiprocessing,
+):
     if patch_multiprocessing:
         try:
             from _pydev_bundle import pydev_monkey
@@ -1257,7 +1257,7 @@ def stoptrace():
         if debugger:
 
             debugger.set_trace_for_frame_and_parents(
-                get_frame(), also_add_to_passed_frame=True, overwrite_prev_trace=True, dispatch_func=lambda *args:None)
+                    get_frame(), also_add_to_passed_frame=True, overwrite_prev_trace=True, dispatch_func=lambda *args:None)
             debugger.exiting()
 
             kill_all_pydev_threads()
@@ -1335,13 +1335,13 @@ def settrace_forked():
         custom_frames_container_init()
 
         settrace(
-            host,
-            port=port,
-            suspend=False,
-            trace_only_current_thread=False,
-            overwrite_prev_trace=True,
-            patch_multiprocessing=True,
-            )
+                host,
+                port=port,
+                suspend=False,
+                trace_only_current_thread=False,
+                overwrite_prev_trace=True,
+                patch_multiprocessing=True,
+        )
 
 #=======================================================================================================================
 # SetupHolder

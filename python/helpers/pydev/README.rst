@@ -20,10 +20,10 @@ Recent versions contain speedup modules using Cython, which are generated with a
 to `cythonize` the files. To update and compile the cython sources (and generate some other auto-generated files),
 `build_tools/build.py` should be run -- note that the resulting .pyx and .c files should be commited.
 
-To see performance changes, see: 
+To see performance changes, see:
 
-[https://www.speedtin.com/reports/7_pydevd_cython](https://www.speedtin.com/reports/7_pydevd_cython) (performance results with cython).
-[https://www.speedtin.com/reports/8_pydevd_pure_python](https://www.speedtin.com/reports/8_pydevd_pure_python) (performance results without cython).
+https://www.speedtin.com/reports/7_pydevd_cython (performance results with cython).
+https://www.speedtin.com/reports/8_pydevd_pure_python (performance results without cython).
 
 To generate a distribution with the precompiled binaries for the IDE, `build_binaries_windows.py` should be run (
 note that the environments must be pre-created as specified in that file).
@@ -34,9 +34,15 @@ to PyPi.
 
 Travis (Linux CI):
 
-[![Build Status](https://travis-ci.org/fabioz/PyDev.Debugger.png)](https://travis-ci.org/fabioz/PyDev.Debugger)
+.. |travis| image:: https://travis-ci.org/fabioz/PyDev.Debugger.png
+  :target: https://travis-ci.org/fabioz/PyDev.Debugger
+
+|travis|
 
 Appveyor (Windows CI):
 
-[![Build status](https://ci.appveyor.com/api/projects/status/j6vjq687brbk20ux?svg=true)](https://ci.appveyor.com/project/fabioz/pydev-debugger)
+.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/j6vjq687brbk20ux?svg=true
+  :target: https://ci.appveyor.com/project/fabioz/pydev-debugger
+
+|appveyor|
 

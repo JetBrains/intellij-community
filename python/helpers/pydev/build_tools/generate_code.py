@@ -111,33 +111,49 @@ if IS_PY3K:
     pydev_files = []
 
     for root, dirs, files in os.walk(root_dir):
-        try:
-            dirs.remove('build')
-        except:
-            pass
-        try:
-            dirs.remove('dist')
-        except:
-            pass
-        if os.path.basename(root) in (
-            'PyDev.Debugger',
-            '_pydev_bundle',
-            '_pydev_imps',
-            '_pydevd_bundle',
-            'pydevd_concurrency_analyser',
-            'pydevd_plugins',
-            '',
-            ):
-            for f in files:
-                if f.endswith('.py'):
-                    if f not in (
+        for d in [
+            '.git',
+            '.settings',
+            'build',
+            'build_tools',
+            'dist',
+            'pydevd.egg-info',
+            'pydevd_attach_to_process',
+            'pydev_sitecustomize',
+            'stubs',
+            'tests',
+            'tests_mainloop',
+            'tests_python',
+            'tests_runfiles',
+            'test_pydevd_reload',
+            'third_party',
+            '__pycache__',
+            '_pydev_runfiles',
+            'pydev_ipython',
+        ]:
+            try:
+                dirs.remove(d)
+            except:
+                pass
+
+        for f in files:
+            if f.endswith('.py'):
+                if f not in (
                         '__init__.py',
                         'runfiles.py',
-                        ):
-                        pydev_files.append("    '%s': PYDEV_FILE," % (f,))
+                        'pydev_coverage.py',
+                        'pydev_pysrc.py',
+                        'setup.py',
+                        'setup_cython.py',
+                        'interpreterInfo.py',
+                ):
+                    pydev_files.append("    '%s': PYDEV_FILE," % (f,))
 
+    contents = template % (dict(pydev_files='\n'.join(sorted(pydev_files))))
+    assert 'pydevd.py' in contents
+    assert 'pydevd_dont_trace.py' in contents
     with open(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_dont_trace_files.py'), 'w') as stream:
-        stream.write(template % (dict(pydev_files='\n'.join(sorted(pydev_files)))))
+        stream.write(contents)
 
 def remove_if_exists(f):
     try:
