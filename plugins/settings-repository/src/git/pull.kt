@@ -138,7 +138,7 @@ open internal class Pull(val manager: GitRepositoryManager, val indicator: Progr
             commitMessage: String? = null): MergeResultEx {
     indicator?.checkCanceled()
 
-    val head = repository.getRef(Constants.HEAD) ?: throw NoHeadException(JGitText.get().commitOnRepoWithoutHEADCurrentlyNotSupported)
+    val head = repository.findRef(Constants.HEAD) ?: throw NoHeadException(JGitText.get().commitOnRepoWithoutHEADCurrentlyNotSupported)
 
     // handle annotated tags
     val ref = repository.peel(unpeeledRef)

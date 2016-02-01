@@ -55,7 +55,7 @@ internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator
         val fetchRefSpecs = remoteConfig.fetchRefSpecs
         assert(fetchRefSpecs.size == 1)
 
-        val latestUpstreamCommit = repository.getRef(fetchRefSpecs[0].destination!!)
+        val latestUpstreamCommit = repository.findRef(fetchRefSpecs[0].destination!!)
         if (latestUpstreamCommit == null) {
           if (toTheirs) {
             repository.deleteAllFiles(result.deleted)

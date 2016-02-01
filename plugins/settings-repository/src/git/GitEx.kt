@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil
 import org.eclipse.jgit.api.CommitCommand
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.dircache.DirCacheCheckout
-import org.eclipse.jgit.dircache.DirCacheEntry
 import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.internal.JGitText
 import org.eclipse.jgit.lib.*
@@ -107,7 +106,7 @@ fun createRepository(dir: File): Repository {
 fun Repository.commit(message: String? = null, reflogComment: String? = null, author: PersonIdent? = null, committer: PersonIdent? = null): RevCommit {
   val commitCommand = CommitCommand(this).setAuthor(author).setCommitter(committer)
   if (message != null) {
-    commitCommand.setMessage(message)
+    commitCommand.message = message
   }
   if (reflogComment != null) {
     commitCommand.setReflogComment(reflogComment)
@@ -322,17 +321,15 @@ private class InputStreamWrapper(private val delegate: InputStream, private val 
   }
 }
 
-fun ObjectReader.getCachedBytes(dirCacheEntry: DirCacheEntry) = open(dirCacheEntry.objectId, Constants.OBJ_BLOB).cachedBytes
-
 fun Repository.getAheadCommitsCount(): Int {
   val config = config
   val shortBranchName = Repository.shortenRefName(config.getRemoteBranchFullName())
   val trackingBranch = BranchConfig(config, shortBranchName).trackingBranch ?: return -1
-  val local = getRef("${Constants.R_HEADS}$shortBranchName") ?: return -1
+  val local = exactRef("${Constants.R_HEADS}$shortBranchName") ?: return -1
   val walk = RevWalk(this)
   val localCommit = walk.parseCommit(local.objectId)
 
-  val trackingCommit = getRef(trackingBranch)?.let { walk.parseCommit(it.objectId) }
+  val trackingCommit = findRef(trackingBranch)?.let { walk.parseCommit(it.objectId) }
 
   walk.revFilter = RevFilter.MERGE_BASE
   if (trackingCommit == null) {
@@ -356,4 +353,27 @@ fun Repository.getAheadCommitsCount(): Int {
     num++
   }
   return num
+}
+
+inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
+  var closed = false
+  try {
+    return block(this)
+  }
+  catch (e: Exception) {
+    closed = true
+    try {
+      close()
+    }
+    catch (closeException: Exception) {
+      @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+      (e as java.lang.Throwable).addSuppressed(closeException)
+    }
+    throw e
+  }
+  finally {
+    if (!closed) {
+      close()
+    }
+  }
 }
