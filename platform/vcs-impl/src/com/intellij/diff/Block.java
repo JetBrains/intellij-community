@@ -67,8 +67,10 @@ public class Block {
         if (startLine2 <= myStart) start = startLine1;
         if (endLine2 > myEnd) end = endLine1;
       }
-      if (start == -1 && startLine2 > myStart) start = myStart - shift;
-      if (end == -1 && startLine2 >= myEnd) end = myEnd - shift;
+      if (startLine2 > myStart) {
+        if (start == -1) start = myStart - shift;
+        if (end == -1 && startLine2 >= myEnd) end = myEnd - shift;
+      }
 
       shift += change.inserted - change.deleted;
       change = change.link;
