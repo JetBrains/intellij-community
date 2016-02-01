@@ -192,14 +192,14 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
         bounds.width -= size;
         bounds.x += size;
       }
-      // process additional drawing on the track
       myTrackBounds.setBounds(bounds);
+      updateThumbBounds();
+      // process additional drawing on the track
       RegionPainter<Object> track = UIUtil.getClientProperty(c, JBScrollBar.TRACK);
       if (track != null && myTrackBounds.width > 0 && myTrackBounds.height > 0) {
         track.paint((Graphics2D)g, myTrackBounds.x, myTrackBounds.y, myTrackBounds.width, myTrackBounds.height, null);
       }
       // process drawing the thumb
-      updateThumbBounds();
       if (myThumbBounds.width > 0 && myThumbBounds.height > 0) {
         paintThumb((Graphics2D)g, myThumbBounds.x, myThumbBounds.y, myThumbBounds.width, myThumbBounds.height, c);
       }
