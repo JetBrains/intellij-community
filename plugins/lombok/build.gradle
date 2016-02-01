@@ -125,7 +125,7 @@ tasks.withType(JavaCompile) {
         options.bootClasspath = "$JDK6_HOME/jre/lib/rt.jar"
     }
 }
-//compileJava.dependsOn(generatePsiAndParser)
+compileJava.dependsOn(generatePsiAndParser)
 
 plugins.withType(JavaPlugin) {
     test {
@@ -152,6 +152,7 @@ intellij {
     version = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
     pluginName 'lombok-plugin'
     plugins 'coverage'
+
 //    updateSinceUntilBuild = false
 //    sameSinceUntilBuild = version == "LATEST-EAP-SNAPSHOT"
     sandboxDirectory = "${project.projectDir}/idea-sandbox/idea-${version}"
