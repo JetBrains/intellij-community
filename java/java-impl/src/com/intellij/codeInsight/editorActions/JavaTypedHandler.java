@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,10 +146,16 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         }, "Insert block statement", null);
         return Result.STOP;
       }
+   
+      if (leaf != null && PsiTreeUtil.getParentOfType(PsiTreeUtil.prevVisibleLeaf(leaf), PsiNewExpression.class, true, 
+                                                      PsiCodeBlock.class, PsiMember.class) != null) {
+        return Result.CONTINUE;
+      }
+
       if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null) {
         EditorModificationUtil.insertStringAtCaret(editor, "{");
         TypedHandler.indentOpenedBrace(project, editor);
-        return Result.STOP;
+        return Result.STOP; // use case: manually wrapping part of method's code in 'if', 'while', etc
       }
     }
 
