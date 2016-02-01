@@ -20,11 +20,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ResolveScopeProvider;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class GroovyConsoleResolveScopeProvider extends ResolveScopeProvider {
 
@@ -33,15 +30,6 @@ public class GroovyConsoleResolveScopeProvider extends ResolveScopeProvider {
   public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, Project project) {
     final GroovyConsoleStateService projectConsole = GroovyConsoleStateService.getInstance(project);
     final Module module = projectConsole.getSelectedModule(file);
-    if (module == null || module.isDisposed()) return null;
-
-    final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
-    if (!GroovyConsoleUtil.hasGroovyAll(module)) {
-      final List<VirtualFile> bundledGroovyJarRoots = GroovyBundledClassFinder.getBundledGroovyJarRoots();
-      if (!bundledGroovyJarRoots.isEmpty()) {
-        return new NonClasspathDirectoriesScope(bundledGroovyJarRoots).uniteWith(moduleScope);
-      }
-    }
-    return moduleScope;
+    return module == null || module.isDisposed() ? null : GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
   }
 }
