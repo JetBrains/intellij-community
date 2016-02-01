@@ -26,6 +26,8 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,13 +39,18 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class ErrorPaneConfigurable extends JPanel implements Configurable, Disposable, ConfigurationErrors {
   private final Alarm myAlarm;
-  private final ArrayList<ConfigurationError> myErrors = new ArrayList<ConfigurationError>();
+  private final List<ConfigurationError> myErrors = new ArrayList<ConfigurationError>();
+  private int myComputedErrorsStamp;
+  private int myShownErrorsStamp;
+  private final Object myLock = new Object();
+  private final MergingUpdateQueue myContentUpdateQueue;
   private final JTextPane myContent = new JTextPane();
   private Runnable myOnErrorsChanged;
 
@@ -56,6 +63,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myContent, true);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     add(pane);
+    myContentUpdateQueue = new MergingUpdateQueue("ErrorPaneConfigurable Content Updates", 300, false, pane, this, pane);
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     project.getMessageBus().connect(this).subscribe(ConfigurationErrors.TOPIC, this);
     myContent.addHyperlinkListener(new HyperlinkAdapter() {
@@ -76,7 +84,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
               final Element ol = element.getParentElement();
               for (int i = 0; i < ol.getElementCount(); i++) {
                 if (ol.getElement(i) == element) {
-                  error = myErrors.get(i);
+                  error = getError(i, myShownErrorsStamp);
                 }
               }
               break;
@@ -105,6 +113,12 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     refresh();
   }
 
+  private ConfigurationError getError(int i, int expectedStamp) {
+    synchronized (myLock) {
+      return expectedStamp == myComputedErrorsStamp ? myErrors.get(i) : null;
+    }
+  }
+
   public void refresh() {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
@@ -131,7 +145,14 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
         final StringBuilder html = new StringBuilder(header);
         int i = 0;
         html.append("<ol>");
-        for (ConfigurationError error : myErrors) {
+        ConfigurationError[] errors;
+        int currentStamp;
+        synchronized (myLock) {
+          errors = myErrors.toArray(new ConfigurationError[0]);
+          currentStamp = myComputedErrorsStamp;
+        }
+
+        for (ConfigurationError error : errors) {
           i++;
           if (i > 100) break;
           html.append("<li>");
@@ -152,14 +173,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
           html.append(description).append("</li>");
         }
         html.append("</ol></body></html>");
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            if (!Disposer.isDisposed(ErrorPaneConfigurable.this)) {
-              myContent.setText(html.toString());
-            }
-          }
-        });
+        myContentUpdateQueue.queue(new ShowErrorsUpdate(currentStamp, html.toString()));
         if (myOnErrorsChanged != null) {
           myOnErrorsChanged.run();
         }
@@ -211,17 +225,49 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
 
   @Override
   public void addError(@NotNull ConfigurationError error) {
-    myErrors.add(error);
+    synchronized (myLock) {
+      myErrors.add(error);
+      myComputedErrorsStamp++;
+    }
     refresh();
   }
 
   @Override
   public void removeError(@NotNull ConfigurationError error) {
-    myErrors.remove(error);
+    synchronized (myLock) {
+      myErrors.remove(error);
+      myComputedErrorsStamp++;
+    }
     refresh();
   }
 
   public int getErrorsCount() {
-    return myErrors.size();
+    synchronized (myLock) {
+      return myErrors.size();
+    }
+  }
+
+  private class ShowErrorsUpdate extends Update {
+    private final int myCurrentStamp;
+    private final String myText;
+
+    public ShowErrorsUpdate(int currentStamp, String text) {
+      super(currentStamp);
+      myCurrentStamp = currentStamp;
+      myText = text;
+    }
+
+    @Override
+    public void run() {
+      if (!Disposer.isDisposed(ErrorPaneConfigurable.this)) {
+        myContent.setText(myText);
+        myShownErrorsStamp = myCurrentStamp;
+      }
+    }
+
+    @Override
+    public boolean canEat(Update update) {
+      return update instanceof ShowErrorsUpdate && myCurrentStamp > ((ShowErrorsUpdate)update).myCurrentStamp;
+    }
   }
 }
