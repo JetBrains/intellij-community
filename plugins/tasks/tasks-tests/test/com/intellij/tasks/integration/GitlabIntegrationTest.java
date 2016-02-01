@@ -84,7 +84,7 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
     assertEquals("#1", task.getPresentableId());
     assertEquals("1", task.getNumber());
     assertEquals("ID Formatting Tests", task.getProject());
-    assertEquals("5:10", task.getId());
+    assertEquals("10", task.getId());
     assertEquals("#1: First issue with iid = 1", task.toString());
     myRepository.setShouldFormatCommitMessage(true);
     assertEquals("#1 First issue with iid = 1", myRepository.getTaskComment(task));

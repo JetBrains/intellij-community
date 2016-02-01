@@ -38,7 +38,8 @@ public class GitlabTask extends Task {
   @Override
   public String getId() {
     // Will be in form <projectId>:<issueId>
-    return myIssue.getProjectId() + ":" + myIssue.getId();
+    //return myIssue.getProjectId() + ":" + myIssue.getId();
+    return String.valueOf(myIssue.getId());
   }
 
   @NotNull
