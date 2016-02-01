@@ -30,10 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 abstract class StaticMembersProcessor<T extends PsiMember> implements Processor<T> {
-  private final MultiMap<PsiClass, T> myDeprecated = new LinkedMultiMap<PsiClass, T>();
-  private final MultiMap<PsiClass, T> mySuggestions = new LinkedMultiMap<PsiClass, T>();
+  private final MultiMap<PsiClass, T> mySuggestions = new LinkedMultiMap<>();
 
-  private final Map<PsiClass, Boolean> myPossibleClasses = new HashMap<PsiClass, Boolean>();
+  private final Map<PsiClass, Boolean> myPossibleClasses = new HashMap<>();
 
   private final PsiElement myPlace;
   private PsiType myExpectedType;
@@ -47,14 +46,10 @@ abstract class StaticMembersProcessor<T extends PsiMember> implements Processor<
 
   @NotNull
   public List<T> getMembersToImport(boolean applicableOnly) {
-    final List<T> list = new ArrayList<T>();
-    final List<T> applicableList = new ArrayList<T>();
+    final List<T> list = new ArrayList<>();
+    final List<T> applicableList = new ArrayList<>();
     for (Map.Entry<PsiClass, Collection<T>> methodEntry : mySuggestions.entrySet()) {
       registerMember(methodEntry.getKey(), methodEntry.getValue(), list, applicableList);
-    }
-
-    for (Map.Entry<PsiClass, Collection<T>> deprecatedMethod : myDeprecated.entrySet()) {
-      registerMember(deprecatedMethod.getKey(), deprecatedMethod.getValue(), list, applicableList);
     }
 
     List<T> result = !applicableOnly && applicableList.isEmpty() ? list : applicableList;
@@ -140,17 +135,13 @@ abstract class StaticMembersProcessor<T extends PsiMember> implements Processor<
     if (file instanceof PsiJavaFile
         //do not show methods from default package
         && !((PsiJavaFile)file).getPackageName().isEmpty()) {
-      if (JavaCompletionUtil.isEffectivelyDeprecated((PsiDocCommentOwner)member)) {
-        myDeprecated.putValue(containingClass, member);
-        return processCondition();
-      }
       mySuggestions.putValue(containingClass, member);
     }
     return processCondition();
   }
 
   private boolean processCondition() {
-    return mySuggestions.size() + myDeprecated.size() < 50;
+    return mySuggestions.size() < 50;
   }
 
   private void registerMember(PsiClass containingClass,
