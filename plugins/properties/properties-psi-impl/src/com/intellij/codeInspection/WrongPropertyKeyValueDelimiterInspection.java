@@ -39,7 +39,7 @@ public class WrongPropertyKeyValueDelimiterInspection extends PropertySuppressab
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     final PropertiesCodeStyleSettings codeStyleSettings = PropertiesCodeStyleSettings.getInstance(holder.getProject());
-    final char codeStyleKeyValueDelimiter = codeStyleSettings.KEY_VALUE_DELIMITER;
+    final char codeStyleKeyValueDelimiter = codeStyleSettings.getDelimiter();
     return new PsiElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
