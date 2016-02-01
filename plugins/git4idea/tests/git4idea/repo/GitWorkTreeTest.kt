@@ -59,7 +59,7 @@ class GitWorkTreeTest : GitPlatformTest() {
 
     val branches = myRepo.branches
     val expectedBranches = listOf("master", "feature", "project") // 'project' is created automatically by `git worktree add`
-    assertSameElements(branches.localBranches.map {it.name}, expectedBranches)
+    assertSameElements("", branches.localBranches.map {it.name}, expectedBranches)
     assertBranchHash(masterHead, branches, "master")
     assertBranchHash(featureHead, branches, "feature")
   }
@@ -80,7 +80,7 @@ class GitWorkTreeTest : GitPlatformTest() {
     myRepo.update()
 
     val branches = myRepo.branches
-    assertSameElements(branches.remoteBranches.map {it.nameForLocalOperations}, listOf("origin/master", "origin/feature"))
+    assertSameElements("", branches.remoteBranches.map {it.nameForLocalOperations}, listOf("origin/master", "origin/feature"))
     assertBranchHash(masterHead, branches, "origin/master")
     assertBranchHash(featureHead, branches, "origin/feature")
   }
