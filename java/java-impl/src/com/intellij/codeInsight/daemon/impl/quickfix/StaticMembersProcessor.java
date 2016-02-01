@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.LinkedMultiMap;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-abstract class StaticMembersProcessor<T extends PsiMember> implements Processor<T> {
+abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> implements Processor<T> {
   private final MultiMap<PsiClass, T> mySuggestions = new LinkedMultiMap<>();
 
   private final Map<PsiClass, Boolean> myPossibleClasses = new HashMap<>();
@@ -61,7 +61,7 @@ abstract class StaticMembersProcessor<T extends PsiMember> implements Processor<
         result.remove(i);
       }
     }
-    Collections.sort(result, new PsiProximityComparator(myPlace));
+    Collections.sort(result, CodeInsightUtil.createSortIdenticalNamedMembersComparator(myPlace));
     return result;
   }
 
