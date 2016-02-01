@@ -725,6 +725,53 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
 
+  public void testStepOverYieldFrom() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_step_over_yield.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 6);
+      }
+
+      @Override
+      public void testing() throws Exception {
+
+        waitForPause();
+
+        stepOver();
+
+        waitForPause();
+
+        eval("a").hasValue("42");
+
+        stepOver();
+
+        waitForPause();
+
+        eval("a").hasValue("42");
+
+        stepOver();
+
+        waitForPause();
+
+        eval("sum").hasValue("6");
+
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("python34");
+      }
+    });
+  }
+
+
   //TODO: fix me as I don't work properly sometimes (something connected with process termination on agent)
   //public void testResume() throws Exception {
   //  runPythonTest(new PyDebuggerTask("/debug", "Test_Resume.py") {
