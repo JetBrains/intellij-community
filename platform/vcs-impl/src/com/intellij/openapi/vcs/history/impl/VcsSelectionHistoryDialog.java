@@ -24,6 +24,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.MessageDiffRequest;
 import com.intellij.diff.requests.NoDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.util.IntPair;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -265,7 +266,8 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
         newItems = myRevisions;
       }
 
-      List<VcsFileRevision> oldSelection = getSelectedRevisions();
+      IntPair range = getSelectedRevisionsRange();
+      List<VcsFileRevision> oldSelection = myRevisions.subList(range.val1, range.val2);
 
       myListModel.setItems(newItems);
 
@@ -283,17 +285,12 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   }
 
   @NotNull
-  private List<VcsFileRevision> getSelectedRevisions() {
-    int minIndex = myList.getSelectionModel().getMinSelectionIndex();
-    int maxIndex = myList.getSelectionModel().getMaxSelectionIndex();
-    VcsFileRevision minRevision = minIndex != -1 ? myList.getRow(minIndex) : null;
-    VcsFileRevision maxRevision = maxIndex != -1 ? myList.getRow(maxIndex) : null;
-    int startIndex = myRevisions.indexOf(minRevision);
-    int endIndex = myRevisions.indexOf(maxRevision);
-
-    return startIndex != -1 && endIndex != -1 ?
-           myRevisions.subList(startIndex, endIndex + 1) :
-           Collections.<VcsFileRevision>emptyList();
+  private IntPair getSelectedRevisionsRange() {
+    List<VcsFileRevision> selection = myList.getSelectedObjects();
+    if (selection.isEmpty()) return new IntPair(0, 0);
+    int startIndex = myRevisions.indexOf(ContainerUtil.getFirstItem(selection));
+    int endIndex = myRevisions.indexOf(ContainerUtil.getLastItem(selection));
+    return new IntPair(startIndex, endIndex + 1);
   }
 
   private int getNearestVisibleRevision(@Nullable VcsFileRevision anchor) {
@@ -330,20 +327,16 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
   private void updateDiff() {
     if (myIsDisposed || myIsDuringUpdate) return;
-    List<VcsFileRevision> selected = myList.getSelectedObjects();
-    if (selected.isEmpty()) {
-      myDiffPanel.setRequest(NoDiffRequest.INSTANCE);
-    }
-    else if (selected.size() == 1) {
-      VcsFileRevision revision = selected.get(0);
-      int index = myRevisions.indexOf(revision);
-      myDiffPanel.setRequest(createDiffRequest(index + 1, index));
+
+    DiffRequest request;
+    if (myList.getSelectedRowCount() == 0) {
+      request = NoDiffRequest.INSTANCE;
     }
     else {
-      VcsFileRevision revision1 = selected.get(0);
-      VcsFileRevision revision2 = selected.get(selected.size() - 1);
-      myDiffPanel.setRequest(createDiffRequest(myRevisions.indexOf(revision2) + 1, myRevisions.indexOf(revision1)));
+      IntPair range = getSelectedRevisionsRange();
+      request = createDiffRequest(range.val2, range.val1); // leastRecent -> mostRecent
     }
+    myDiffPanel.setRequest(request);
   }
 
   @NotNull
@@ -475,25 +468,18 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     }
 
     public void actionPerformed(AnActionEvent e) {
-      int minIndex = myList.getSelectionModel().getMinSelectionIndex();
-      int maxIndex = myList.getSelectionModel().getMaxSelectionIndex();
-      if (minIndex == -1 || maxIndex == -1) return;
+      IntPair range = getSelectedRevisionsRange();
 
-      VcsFileRevision minRevision = myList.getRow(minIndex);
-      VcsFileRevision maxRevision = myList.getRow(maxIndex);
-      int startIndex = myRevisions.indexOf(minRevision);
-      int endIndex = myRevisions.indexOf(maxRevision);
-      if (startIndex == -1 || endIndex == -1) return;
+      VcsFileRevision beforeRevision = range.val2 < myRevisions.size() ? myRevisions.get(range.val2) : VcsFileRevision.NULL;
+      VcsFileRevision afterRevision = myRevisions.get(range.val1);
 
-      VcsFileRevision revision = myRevisions.get(startIndex);
-      VcsFileRevision prevRevision = endIndex + 1 < myRevisions.size() ? myRevisions.get(endIndex + 1) : VcsFileRevision.NULL;
       FilePath filePath = VcsUtil.getFilePath(myFile);
 
-      if (startIndex != endIndex) {
-        getDiffHandler().showDiffForTwo(myProject, filePath, prevRevision, revision);
+      if (range.val2 - range.val1 > 1) {
+        getDiffHandler().showDiffForTwo(myProject, filePath, beforeRevision, afterRevision);
       }
       else {
-        getDiffHandler().showDiffForOne(e, myProject, filePath, prevRevision, revision);
+        getDiffHandler().showDiffForOne(e, myProject, filePath, beforeRevision, afterRevision);
       }
     }
   }
