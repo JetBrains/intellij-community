@@ -44,7 +44,6 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -115,7 +114,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       Window window = findWindow(component);
       setModal(window instanceof JDialog && ((JDialog)window).isModal());
       myComponent = component;
-      getRootPane().setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+      getRootPane().setBorder(JBUI.Borders.empty(5));
 
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -256,7 +255,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     ComponentTreeCellRenderer(Component initialSelection) {
       myInitialSelection = initialSelection;
       setFont(JBUI.Fonts.label(11));
-      setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 3));
+      setBorder(JBUI.Borders.empty(0, 3));
     }
 
     @Override
@@ -457,12 +456,12 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       TableColumnModel columnModel = table.getColumnModel();
       TableColumn propertyColumn = columnModel.getColumn(0);
-      propertyColumn.setMinWidth(200);
-      propertyColumn.setMaxWidth(200);
+      propertyColumn.setMinWidth(JBUI.scale(200));
+      propertyColumn.setMaxWidth(JBUI.scale(200));
       propertyColumn.setResizable(false);
 
       TableColumn valueColumn = columnModel.getColumn(1);
-      valueColumn.setMinWidth(200);
+      valueColumn.setMinWidth(JBUI.scale(200));
       valueColumn.setResizable(false);
       valueColumn.setCellRenderer(new ValueCellRenderer());
 
@@ -491,9 +490,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       myComponent = component;
       setOpaque(true);
       setBackground(JBColor.WHITE);
-      setBorder(new EmptyBorder(5, 0, 5, 0));
+      setBorder(JBUI.Borders.empty(5, 0));
 
-      setFont(new JLabel().getFont().deriveFont(Font.PLAIN, 9));
+      setFont(JBUI.Fonts.label(9));
 
       update();
     }
@@ -571,12 +570,12 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
     @Override
     public Dimension getMinimumSize() {
-      return new Dimension(120, 120);
+      return JBUI.size(120);
     }
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(150, 150);
+      return JBUI.size(150);
     }
   }
 
