@@ -167,8 +167,12 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
             description = problemDescription.getDescription();
             if (description == null) {
               ProjectStructureElement place = problemDescription.getPlace().getContainingElement();
-              description = place.getTypeName() + " <a href='http://navigate/" + i + "'>" +  XmlStringUtil.convertToHtmlContent(place.getPresentableName())
-                            + "</a>: " + XmlStringUtil.convertToHtmlContent(problemDescription.getMessage(false));
+              description = XmlStringUtil.convertToHtmlContent(problemDescription.getMessage(false));
+              if (problemDescription.canShowPlace()) {
+                description = place.getTypeName() + " <a href='http://navigate/" + i + "'>"
+                              + XmlStringUtil.convertToHtmlContent(place.getPresentableName()) + "</a>: "
+                              + StringUtil.decapitalize(description);
+              }
             }
             else {
               description = XmlStringUtil.convertToHtmlContent(description);

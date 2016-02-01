@@ -68,6 +68,10 @@ public class ProjectStructureProblemDescription {
     return myMessage;
   }
 
+  public boolean canShowPlace() {
+    return myCanShowPlace;
+  }
+
   @Nullable
   public String getDescription() {
     return myDescription;
