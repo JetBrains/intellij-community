@@ -441,22 +441,14 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return new PropertyImplEscaper(this);
   }
 
-  @Nullable
-  public Character getKeyValueDelimiter() {
+  public char getKeyValueDelimiter() {
     final PsiElement delimiter = findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
     if (delimiter == null) {
-      return null;
+      return ' ';
     }
-    String separatorText = delimiter.getText();
-    if (separatorText.isEmpty()) {
-      return null;
-    }
-    separatorText = separatorText.trim();
-    if (separatorText.isEmpty()) {
-      separatorText = " ";
-    }
-    LOG.assertTrue(separatorText.length() == 1, "\"" + separatorText + "\"");
-    return separatorText.charAt(0);
+    final String text = delimiter.getText();
+    LOG.assertTrue(text.length() == 1);
+    return text.charAt(0);
   }
 
   public void replaceKeyValueDelimiterWithDefault() {

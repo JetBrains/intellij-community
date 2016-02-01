@@ -78,6 +78,10 @@ public class PropertiesFormatterTest extends FormatterTestCase {
                "key1                  = value1");
   }
 
+  public void testWhitespaceDelimiter() {
+    doTextTest("k    v", "k v");
+  }
+
   protected void doTextTest(String text) {
     doTextTest(text, text);
   }
