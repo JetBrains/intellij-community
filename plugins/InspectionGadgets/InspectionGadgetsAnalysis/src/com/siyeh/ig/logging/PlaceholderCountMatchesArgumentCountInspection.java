@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Bas Leijdekkers
+ * Copyright 2013-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import java.util.Set;
 public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspection {
 
   @NonNls
-  private static final Set<String> loggingMethodNames = ContainerUtilRt.newHashSet("trace", "debug", "info", "warn", "error");
+  private static final Set<String> loggingMethodNames = ContainerUtilRt.newHashSet("log", "trace", "debug", "info", "warn", "error", "fatal");
 
   @Nls
   @NotNull
@@ -76,7 +76,8 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
         return;
       }
       final PsiClass aClass = method.getContainingClass();
-      if (!InheritanceUtil.isInheritor(aClass, "org.slf4j.Logger")) {
+      if (!InheritanceUtil.isInheritor(aClass, "org.slf4j.Logger") &&
+          !InheritanceUtil.isInheritor(aClass, "org.apache.logging.log4j.Logger")) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -86,7 +87,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       }
       PsiExpression logStringArgument = arguments[0];
       final int argumentCount;
-      if (InheritanceUtil.isInheritor(logStringArgument.getType(), "org.slf4j.Marker")) {
+      if (!ExpressionUtils.hasStringType(logStringArgument)) {
         if (arguments.length < 2) {
           return;
         }
