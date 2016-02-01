@@ -39,13 +39,9 @@ public class Block {
   }
 
   public Block(@NotNull String[] source, int start, int end) {
-    if (start < 0 || end > source.length || end < start) {
-      LOG.error("Invalid block range: [" + start + ", " + end + "); length - " + source.length);
-    }
-
     mySource = source;
-    myStart = start;
-    myEnd = end;
+    myStart = Math.min(Math.max(0, start), source.length);
+    myEnd = Math.min(Math.max(myStart, end), source.length);
   }
 
   @NotNull
@@ -79,6 +75,10 @@ public class Block {
     }
     if (start == -1) start = myStart - shift;
     if (end == -1) end = myEnd - shift;
+
+    if (start < 0 || end > prevContent.length || end < start) {
+      LOG.error("Invalid block range: [" + start + ", " + end + "); length - " + prevContent.length);
+    }
 
     return new Block(prevContent, start, end);
   }
