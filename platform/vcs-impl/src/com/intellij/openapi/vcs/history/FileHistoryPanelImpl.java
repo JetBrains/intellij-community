@@ -297,27 +297,17 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     private final MessageRenderer myRenderer;
 
     public MessageColumnInfo(Project project) {
-      super(FileHistoryPanelImpl.COMMIT_MESSAGE_TITLE);
+      super(COMMIT_MESSAGE_TITLE);
       myRenderer = new MessageRenderer(project);
     }
 
     protected String getDataOf(VcsFileRevision object) {
       final String originalMessage = object.getCommitMessage();
-      if (originalMessage != null) {
-        String commitMessage = originalMessage.trim();
-        int index13 = commitMessage.indexOf('\r');
-        int index10 = commitMessage.indexOf('\n');
+      if (originalMessage == null) return "";
 
-        if (index10 < 0 && index13 < 0) {
-          return commitMessage;
-        }
-        else {
-          return commitMessage.substring(0, getSuitableIndex(index10, index13)) + "...";
-        }
-      }
-      else {
-        return "";
-      }
+      int index = StringUtil.indexOfAny(originalMessage, "\n\r");
+      if (index == -1) return originalMessage;
+      return originalMessage.substring(0, index) + "...";
     }
 
     @Override
@@ -328,21 +318,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public TableCellRenderer getRenderer(VcsFileRevision p0) {
       return myRenderer;
     }
-
   }
-
-  private static int getSuitableIndex(int index10, int index13) {
-    if (index10 < 0) {
-      return index13;
-    }
-    else if (index13 < 0) {
-      return index10;
-    }
-    else {
-      return Math.min(index10, index13);
-    }
-  }
-
 
   private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
 
