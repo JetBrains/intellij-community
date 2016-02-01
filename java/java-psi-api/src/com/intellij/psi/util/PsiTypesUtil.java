@@ -145,6 +145,10 @@ public class PsiTypesUtil {
                                                       @NotNull LanguageLevel languageLevel) {
     //JLS3 15.8.2
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) && isGetClass(method)) {
+      if (methodExpression instanceof PsiMethodReferenceExpression) {
+        final PsiType qualifierType = PsiMethodReferenceUtil.getQualifierType((PsiMethodReferenceExpression)methodExpression);
+        return qualifierType != null ? createJavaLangClassType(methodExpression, qualifierType, true) : null;
+      }
       PsiExpression qualifier = methodExpression.getQualifierExpression();
       PsiType qualifierType = null;
       final Project project = call.getProject();
