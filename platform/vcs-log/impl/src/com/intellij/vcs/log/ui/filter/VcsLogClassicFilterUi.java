@@ -281,11 +281,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   public static Border getToolbarBorder() {
     if (UIUtil.isUnderWindowsLookAndFeel()) {
-      return BorderFactory.createEmptyBorder(2, 2, 2, 2);
+      return BorderFactory.createEmptyBorder(3, 2, 1, 2);
     }
     int delta = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height - getSearchFieldSize();
     assert delta <= 0;
-    return BorderFactory.createEmptyBorder(2 + delta, 2, 2, 2);
+    return BorderFactory.createEmptyBorder(3 + delta, 2, 1, 2);
   }
 
   private static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {
