@@ -15,10 +15,7 @@
  */
 package com.intellij.lang.properties.formatting;
 
-import com.intellij.formatting.Alignment;
-import com.intellij.formatting.Block;
-import com.intellij.formatting.Spacing;
-import com.intellij.formatting.Wrap;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.properties.parsing.PropertyListStubElementType;
@@ -96,6 +93,9 @@ public class PropertiesRootBlock extends AbstractBlock {
   @Nullable
   @Override
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
+    if (child1 == null) {
+      return null;
+    }
     return mySettings.getCustomSettings(PropertiesCodeStyleSettings.class).SPACES_AROUND_KEY_VALUE_DELIMITER &&
            (child1 instanceof SeparatorBlock || child2 instanceof SeparatorBlock)
            ? Spacing.createSpacing(1, 1, 0, true, 0)

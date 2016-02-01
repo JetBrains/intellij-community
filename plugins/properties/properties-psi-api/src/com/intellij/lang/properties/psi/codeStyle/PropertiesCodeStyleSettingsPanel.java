@@ -44,7 +44,7 @@ public class PropertiesCodeStyleSettingsPanel extends OptionTableWithPreviewPane
   @Override
   protected void initTables() {
     addOption("ALIGN_GROUP_FIELD_DECLARATIONS", "Align properties in column");
-    showStandardOptions("SPACE_AROUND_ASSIGNMENT_OPERATORS", "ALIGN_GROUP_FIELD_DECLARATIONS");
+    showStandardOptions("ALIGN_GROUP_FIELD_DECLARATIONS");
     showCustomOption(PropertiesCodeStyleSettings.class, "SPACES_AROUND_KEY_VALUE_DELIMITER",
                      "Insert space around key-value delimiter", null);
     showCustomOption(PropertiesCodeStyleSettings.class,
