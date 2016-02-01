@@ -112,6 +112,11 @@ def getProperties(String home, String buildNumber) {
           dir("m2repository") {
             fileset(dir: "$studioRepo")
           }
+          dir("plugins") {
+            jar("profiler-plugin.jar") {
+              module("profiler-plugin")
+            }
+          }
         }
 
         dir("plugins") {
