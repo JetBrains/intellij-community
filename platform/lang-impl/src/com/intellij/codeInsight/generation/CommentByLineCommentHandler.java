@@ -222,7 +222,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       if (!block.skip) {
         if (!allLinesCommented) {
           if (!block.commentWithIndent) {
-            doDefaultCommenting(block, block.addSpace);
+            doDefaultCommenting(block);
           }
           else {
             doIndentCommenting(block);
@@ -433,7 +433,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     return CharArrayUtil.regionMatches(chars, offset, prefix) ? offset : -1;
   }
 
-  public void doDefaultCommenting(final Block block, final boolean addSpace) {
+  public void doDefaultCommenting(final Block block) {
     final Document document = block.editor.getDocument();
     DocumentUtil.executeInBulk(
       document, block.endLine - block.startLine >= Registry.intValue("comment.by.line.bulk.lines.trigger"), new Runnable() {
@@ -441,7 +441,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       public void run() {
         for (int line = block.endLine; line >= block.startLine; line--) {
           int offset = document.getLineStartOffset(line);
-          commentLine(block, line, offset, addSpace);
+          commentLine(block, line, offset);
         }
       }
     });
@@ -475,7 +475,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
               buffer.append(c);
               offset++;
             }
-            commentLine(block, line, offset, false);
+            commentLine(block, line, offset);
           }
         }
       });
@@ -597,7 +597,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     return false;
   }
 
-  private static void commentLine(Block block, int line, int offset, boolean addSpace) {
+  private static void commentLine(Block block, int line, int offset) {
     Commenter commenter = block.blockSuitableCommenter;
     Document document = block.editor.getDocument();
     if (commenter == null) commenter = findCommenter(block.editor, block.psiFile, line);
