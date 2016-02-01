@@ -38,12 +38,10 @@ import com.jetbrains.edu.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.*;
-import com.jetbrains.edu.learning.actions.StudyCheckAction;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.run.StudyExecutor;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
 import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
-import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -173,11 +171,6 @@ public class StudyUtils {
                                                @NotNull final ProcessHandler handler) {
     final Language language = currentTask.getLesson().getCourse().getLanguageById();
     return StudyExecutor.INSTANCE.forLanguage(language).getExecutor(project, handler);
-  }
-
-  public static StudyCheckAction getCheckAction(@NotNull final Course course) {
-    final Language language = course.getLanguageById();
-    return StudyExecutor.INSTANCE.forLanguage(language).getCheckAction();
   }
 
   public static void setCommandLineParameters(@NotNull final GeneralCommandLine cmd,
@@ -314,17 +307,9 @@ public class StudyUtils {
       final DocumentImpl documentImpl = (DocumentImpl)document;
       List<RangeMarker> blocks = documentImpl.getGuardedBlocks();
       for (final RangeMarker block : blocks) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                document.removeGuardedBlock(block);
-              }
-            });
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+          document.removeGuardedBlock(block);
+        }));
       }
     }
   }

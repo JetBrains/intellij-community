@@ -37,7 +37,6 @@ import com.jetbrains.edu.learning.StudyBundle;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyToolWindowConfigurator;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.actions.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,11 +89,15 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
   public void dispose() {
   }
   
+  //used in checkiO plugin.
+  @SuppressWarnings("unused")
   public void showPanelById(@NotNull final String panelId) {
     myCardLayout.swipe(myContentPanel, panelId, JBCardLayout.SwipeDirection.AUTO);
   }
-  
-  public void setButtomComponent(JComponent component) {
+
+  //used in checkiO plugin.
+  @SuppressWarnings("unused")
+  public void setBottomComponent(JComponent component) {
     mySplitPane.setSecondComponent(component);
   }
   
@@ -139,25 +142,13 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
   private static DefaultActionGroup getActionGroup(@NotNull final Project project) {
     Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course == null) {
-      return createDefaultActionGroup(project);
+      LOG.warn("Course is null");
+      return new DefaultActionGroup();
     }
     StudyToolWindowConfigurator configurator = getStudyToolWindowConfigurator(project);
     assert configurator != null;
 
     return configurator.getActionGroup(project);
-  }
-
-  @NotNull
-  private static DefaultActionGroup createDefaultActionGroup(@NotNull Project project) {
-    final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(StudyCheckAction.createCheckAction(StudyTaskManager.getInstance(project).getCourse()));
-    group.add(new StudyPreviousStudyTaskAction());
-    group.add(new StudyNextStudyTaskAction());
-    group.add(new StudyRefreshTaskFileAction());
-    group.add(new StudyShowHintAction());
-    group.add(new StudyRunAction());
-    group.add(new StudyEditInputAction());
-    return group;
   }
 
   public void setTaskText(String text) {
