@@ -45,6 +45,7 @@ import java.io.File;
 public class JUnitDevKitPatcher extends JUnitPatcher{
   private static final String SYSTEM_CL_PROPERTY = "java.system.class.loader";
 
+  @Override
   public void patchJavaParameters(@Nullable final Module module, JavaParameters javaParameters) {
     if (module != null && PsiUtil.isIdeaProject(module.getProject()) && !javaParameters.getVMParametersList().hasParameter(SYSTEM_CL_PROPERTY)) {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(module.getProject());
