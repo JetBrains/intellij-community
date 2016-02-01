@@ -97,16 +97,11 @@ fun createBareRepository(dir: File): Repository {
   return repository
 }
 
-fun createRepository(dir: File): Repository {
-  val repository = FileRepositoryBuilder().setWorkTree(dir).build()
-  repository.create()
-  return repository
-}
-
 fun Repository.commit(message: String? = null, reflogComment: String? = null, author: PersonIdent? = null, committer: PersonIdent? = null): RevCommit {
   val commitCommand = CommitCommand(this).setAuthor(author).setCommitter(committer)
   if (message != null) {
-    commitCommand.message = message
+    @Suppress("UsePropertyAccessSyntax")
+    commitCommand.setMessage(message)
   }
   if (reflogComment != null) {
     commitCommand.setReflogComment(reflogComment)
