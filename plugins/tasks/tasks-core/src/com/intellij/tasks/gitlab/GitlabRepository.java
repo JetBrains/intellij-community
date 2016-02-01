@@ -30,7 +30,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonMultipleObjectsDeserializer;
@@ -45,7 +44,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @NonNls public static final String REST_API_PATH_PREFIX = "/api/v3/";
   @NonNls private static final String TOKEN_HEADER = "PRIVATE-TOKEN";
 
-  private static final Pattern ID_PATTERN = Pattern.compile("(\\d+):(\\d+)");
+  private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
   private static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
 
   // @formatter:off
@@ -117,12 +116,9 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @Nullable
   @Override
   public Task findTask(@NotNull String id) throws Exception {
-    final Matcher matcher = ID_PATTERN.matcher(id);
-    if (!matcher.matches()) return null;
-    final int projectId = Integer.parseInt(matcher.group(1)), issueId = Integer.parseInt(matcher.group(2));
-    final GitlabIssue issue = fetchIssue(projectId, issueId);
-    if (issue == null) return null;
-    return new GitlabTask(this, issue);
+    // doesn't work now, because Gitlab's REST API doesn't provide endpoint to find task
+    // using only its global ID, it requires both task's global ID AND task's project ID
+    return null;
   }
 
   @Nullable
