@@ -1,7 +1,13 @@
 package de.plushnikov.val;
 
-import java.util.*;
 import lombok.val;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.RandomAccess;
+import java.util.Vector;
 
 public class ValWeirdTypes<Z> {
 	private List<Z> fieldList;
@@ -41,22 +47,22 @@ public class ValWeirdTypes<Z> {
 		val y = fieldList;
 	}
 
-//	public void testBounds(List<? extends Number> lower, List<? super Number> upper) {
-//		val a = lower.get(0);
-//		val b = upper.get(0);
-//		val c = lower;
-//		val d = upper;
-//		List<?> unbound = lower;
-//		val e = unbound;
-//	}
-//
-//	public void testCompound() {
-//		val a = new ArrayList<String>();
-//		val b = new Vector<String>();
-//		val c = 1 < System.currentTimeMillis();
-//		val d = c ? a : b;
-//		RandomAccess confirm = c ? a : b;
-//	}
+	public void testBounds(List<? extends Number> lower, List<? super Number> upper) {
+		val a = lower.get(0);
+		val b = upper.get(0);
+		val c = lower;
+		val d = upper;
+		List<?> unbound = lower;
+		val e = unbound;
+	}
+
+	public void testCompound() {
+		val a = new ArrayList<String>();
+		val b = new Vector<String>();
+		val c = 1 < System.currentTimeMillis();
+		val d = c ? a : b;
+		RandomAccess confirm = c ? a : b;
+	}
 
 	public void nullType() {
 		val nully = null;

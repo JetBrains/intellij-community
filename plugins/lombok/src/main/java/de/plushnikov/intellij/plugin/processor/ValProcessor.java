@@ -122,7 +122,7 @@ public class ValProcessor extends AbstractProcessor {
       }
 
       if (null == psiType) {
-        psiType = PsiType.getJavaLangObject(typeElement.getManager(), GlobalSearchScope.projectScope(typeElement.getProject()));
+        psiType = PsiType.getJavaLangObject(typeElement.getManager(), GlobalSearchScope.allScope(typeElement.getProject()));
       }
     }
     return psiType;
