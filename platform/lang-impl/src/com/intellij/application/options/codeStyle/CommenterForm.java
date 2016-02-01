@@ -24,8 +24,6 @@ import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * Reusable commenter settings form.
@@ -41,14 +39,11 @@ public class CommenterForm {
   public CommenterForm(Language language) {
     myLanguage = language;
     myCommenterPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.naming.comment.code")));
-    myLineCommentAtFirstColumnCb.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (myLineCommentAtFirstColumnCb.isSelected()) {
-          myLineCommentAddSpaceCb.setSelected(false);
-        }
-        myLineCommentAddSpaceCb.setEnabled(!myLineCommentAtFirstColumnCb.isSelected());
+    myLineCommentAtFirstColumnCb.addActionListener(e -> {
+      if (myLineCommentAtFirstColumnCb.isSelected()) {
+        myLineCommentAddSpaceCb.setSelected(false);
       }
+      myLineCommentAddSpaceCb.setEnabled(!myLineCommentAtFirstColumnCb.isSelected());
     });
   }
 
