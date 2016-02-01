@@ -13,7 +13,10 @@ from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETUR
 from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_contains, get_thread_id, STATE_RUN, dict_iter_values
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
-
+try:
+    from inspect import CO_GENERATOR
+except:
+    CO_GENERATOR = 0
 
 try:
     from _pydevd_bundle.pydevd_signature import send_signature_call_trace
@@ -299,6 +302,10 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
 
             if is_exception_event:
                 breakpoints_for_file = None
+                if stop_frame and stop_frame is not frame and step_cmd is CMD_STEP_OVER and \
+                                arg[0] in (StopIteration, GeneratorExit) and arg[2] is None:
+                    info.pydev_step_cmd = CMD_STEP_INTO
+                    info.pydev_step_stop = None
             else:
                 # If we are in single step mode and something causes us to exit the current frame, we need to make sure we break
                 # eventually.  Force the step mode to step into and the step stop frame to None.
@@ -306,9 +313,10 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                 # to make a step in or step over at that location).
                 # Note: this is especially troublesome when we're skipping code with the
                 # @DontTrace comment.
-                if stop_frame is frame and event in ('return', 'exception') and step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER):
-                    info.pydev_step_cmd = CMD_STEP_INTO
-                    info.pydev_step_stop = None
+                if stop_frame is frame and event is 'return' and step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER):
+                    if not frame.f_code.co_flags & CO_GENERATOR:
+                        info.pydev_step_cmd = CMD_STEP_INTO
+                        info.pydev_step_stop = None
 
                 breakpoints_for_file = main_debugger.breakpoints.get(filename)
 
@@ -493,6 +501,11 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
 
                 elif step_cmd == CMD_STEP_OVER:
                     stop = stop_frame is frame and event in ('line', 'return')
+
+                    if frame.f_code.co_flags & CO_GENERATOR:
+                        if event is 'return':
+                            stop = False
+
                     if plugin_manager is not None:
                         result = plugin_manager.cmd_step_over(main_debugger, frame, event, self._args, stop_info, stop)
                         if result:
