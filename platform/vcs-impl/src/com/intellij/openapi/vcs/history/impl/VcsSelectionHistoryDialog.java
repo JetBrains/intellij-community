@@ -36,9 +36,11 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -48,6 +50,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +113,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   private final Splitter mySplitter;
   private final DiffRequestPanel myDiffPanel;
   private final JCheckBox myChangesOnlyCheckBox = new JCheckBox(VcsBundle.message("checkbox.show.changed.revisions.only"));
-  private final JTextArea myComments = new JTextArea();
+  private final JEditorPane myComments;
 
   private boolean myIsDuringUpdate = false;
   private boolean myIsDisposed = false;
@@ -134,6 +137,11 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     mySelectionStart = selectionStart;
     mySelectionEnd = selectionEnd;
     myHelpId = notNull(vcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history");
+
+    myComments = new JEditorPane(UIUtil.HTML_MIME, "");
+    myComments.setPreferredSize(new Dimension(150, 100));
+    myComments.setEditable(false);
+    myComments.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
 
     JRootPane rootPane = ((RootPaneContainer)getFrame()).getRootPane();
     final VcsDependentHistoryComponents components = vcsHistoryProvider.getUICustomization(session, rootPane);
@@ -169,7 +177,8 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
         final VcsFileRevision revision;
         if (myList.getSelectedRowCount() == 1 && !myList.isEmpty()) {
           revision = myList.getItems().get(myList.getSelectedRow());
-          myComments.setText(revision.getCommitMessage());
+          String message = IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, revision.getCommitMessage());
+          myComments.setText(message);
           myComments.setCaretPosition(0);
         }
         else {
@@ -391,15 +400,9 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   }
 
   private JComponent createComments(final JComponent addComp) {
-    final JLabel label = new JLabel("Commit Message:");
-
     JPanel panel = new JPanel(new BorderLayout(4, 4));
-    panel.add(label, BorderLayout.NORTH);
+    panel.add(new JLabel("Commit Message:"), BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(myComments), BorderLayout.CENTER);
-
-    myComments.setRows(5);
-    myComments.setEditable(false);
-    myComments.setLineWrap(true);
 
     final Splitter splitter = new Splitter(false);
     splitter.setFirstComponent(panel);
