@@ -274,31 +274,22 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   private Splitter mySplitter;
 
-
-  private static class MessageRenderer extends ColoredTableCellRenderer {
-    private final IssueLinkRenderer myIssueLinkRenderer;
-
-    public MessageRenderer(Project project) {
-      myIssueLinkRenderer = new IssueLinkRenderer(project, this);
-    }
-
-    protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-      setOpaque(selected);
-      if (value instanceof String) {
-        String message = (String) value;
-        myIssueLinkRenderer.appendTextWithLinks(message);
-      }
-    }
-
-
-  }
-
   private static class MessageColumnInfo extends VcsColumnInfo<String> {
-    private final MessageRenderer myRenderer;
+    private final ColoredTableCellRenderer myRenderer;
+    private final IssueLinkRenderer myIssueLinkRenderer;
 
     public MessageColumnInfo(Project project) {
       super(COMMIT_MESSAGE_TITLE);
-      myRenderer = new MessageRenderer(project);
+      myRenderer = new ColoredTableCellRenderer() {
+        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+          setOpaque(selected);
+          if (value instanceof String) {
+            String message = (String)value;
+            myIssueLinkRenderer.appendTextWithLinks(message);
+          }
+        }
+      };
+      myIssueLinkRenderer = new IssueLinkRenderer(project, myRenderer);
     }
 
     protected String getDataOf(VcsFileRevision object) {
