@@ -46,7 +46,12 @@ public class ResourceBundleImpl extends ResourceBundle {
       return Collections.singletonList(myDefaultPropertiesFile);
     }
     PsiFile[] children =
-      ApplicationManager.getApplication().runReadAction((Computable<PsiFile[]>)() -> myDefaultPropertiesFile.getParent().getFiles());
+      ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
+        @Override
+        public PsiFile[] compute() {
+          return myDefaultPropertiesFile.getParent().getFiles();
+        }
+      });
     final String baseName = getBaseName();
     List<PropertiesFile> result = new SmartList<PropertiesFile>();
     for (PsiFile file : children) {
