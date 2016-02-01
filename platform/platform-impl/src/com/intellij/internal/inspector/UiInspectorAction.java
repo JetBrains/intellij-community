@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -234,7 +234,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         return;
       }
       if (enable) {
-        myHighlightComponent = new HighlightComponent(JBColor.GREEN);
+        myHighlightComponent = new HighlightComponent(new JBColor(JBColor.GREEN, JBColor.RED));
 
         Point pt = SwingUtilities.convertPoint(myComponent, new Point(0, 0), rootPane);
         myHighlightComponent.setBounds(pt.x, pt.y, myComponent.getWidth(), myComponent.getHeight());
@@ -281,7 +281,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
             foreground = JBColor.GRAY;
           }
           else if (component.getWidth() == 0 || component.getHeight() == 0) {
-            foreground = new Color(128, 10, 0);
+            foreground = new JBColor(new Color(128, 10, 0), JBColor.BLUE);
           }
           else if (component.getPreferredSize() != null &&
                    (component.getSize().width < component.getPreferredSize().width
