@@ -104,7 +104,7 @@ public class PsiMethodReferenceUtil {
       final PsiElement resolve = result.getElement();
       if (resolve instanceof PsiMethod) {
         containingClass = ((PsiMethod)resolve).getContainingClass();
-        methodReturnType = PsiTypesUtil.patchMethodGetClassReturnType(expression, expression, (PsiMethod)resolve, null, PsiUtil.getLanguageLevel(expression));
+        methodReturnType = PsiTypesUtil.patchMethodGetClassReturnType(expression, (PsiMethod)resolve);
         if (methodReturnType == null) {
           methodReturnType = ((PsiMethod)resolve).getReturnType();
           if (PsiType.VOID.equals(methodReturnType)) {

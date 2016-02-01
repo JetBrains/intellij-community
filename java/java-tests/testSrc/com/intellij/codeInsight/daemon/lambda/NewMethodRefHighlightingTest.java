@@ -490,7 +490,7 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testGetClassReturnTypeInMethodRefrence() throws Exception {
+  public void testGetClassReturnTypeInMethodReference() throws Exception {
     doTest();
   }
 
