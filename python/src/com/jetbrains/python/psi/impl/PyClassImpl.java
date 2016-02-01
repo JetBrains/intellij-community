@@ -1207,15 +1207,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return "PyClass: " + getName();
   }
 
-  @NotNull
-  public Iterable<PyElement> iterateNames() {
-    return Collections.<PyElement>singleton(this);
-  }
-
-  public PyElement getElementNamed(final String the_name) {
-    return the_name.equals(getName()) ? this : null;
-  }
-
   public void subtreeChanged() {
     super.subtreeChanged();
     ControlFlowCache.clear(this);

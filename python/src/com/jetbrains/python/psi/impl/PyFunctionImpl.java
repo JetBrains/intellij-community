@@ -552,15 +552,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return DocStringUtil.findDocStringExpression(stmtList);
   }
 
-  @NotNull
-  public Iterable<PyElement> iterateNames() {
-    return Collections.<PyElement>singleton(this);
-  }
-
-  public PyElement getElementNamed(final String the_name) {
-    return the_name.equals(getName()) ? this : null;
-  }
-
   @Override
   public String toString() {
     return super.toString() + "('" + getName() + "')";
