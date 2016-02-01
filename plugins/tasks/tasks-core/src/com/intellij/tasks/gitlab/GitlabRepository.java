@@ -30,6 +30,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonMultipleObjectsDeserializer;
@@ -42,8 +43,9 @@ import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObje
 public class GitlabRepository extends NewBaseRepositoryImpl {
 
   @NonNls public static final String REST_API_PATH_PREFIX = "/api/v3/";
-  private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
+  @NonNls private static final String TOKEN_HEADER = "PRIVATE-TOKEN";
 
+  private static final Pattern ID_PATTERN = Pattern.compile("(\\d+):(\\d+)");
   public static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
   public static final TypeToken<List<GitlabProject>> LIST_OF_PROJECTS_TYPE = new TypeToken<List<GitlabProject>>() {
   };
@@ -113,11 +115,12 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @Nullable
   @Override
   public Task findTask(@NotNull String id) throws Exception {
-    // doesn't work now, because Gitlab's REST API doesn't provide endpoint to find task
-    // by its global ID, only by project ID and task's local ID (iid).
-    //GitlabIssue issue = fetchIssue(Integer.parseInt(id));
-    //return issue == null ? null : new GitlabTask(this, issue);
-    return null;
+    final Matcher matcher = ID_PATTERN.matcher(id);
+    if (!matcher.matches()) return null;
+    final int projectId = Integer.parseInt(matcher.group(1)), issueId = Integer.parseInt(matcher.group(2));
+    final GitlabIssue issue = fetchIssue(projectId, issueId);
+    if (issue == null) return null;
+    return new GitlabTask(this, issue);
   }
 
   @Nullable
@@ -182,11 +185,13 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     return getRestApiUrl("issues");
   }
 
-  @SuppressWarnings("UnusedDeclaration")
+  /**
+   * @param issueId global issue's ID (<tt>id</tt> field, not <tt>iid</tt>)
+   */
   @Nullable
-  public GitlabIssue fetchIssue(int id) throws Exception {
+  public GitlabIssue fetchIssue(int projectId, int issueId) throws Exception {
     ensureProjectsDiscovered();
-    HttpGet request = new HttpGet(getRestApiUrl("issues", id));
+    final HttpGet request = new HttpGet(getRestApiUrl("projects", projectId, "issues", issueId));
     ResponseHandler<GitlabIssue> handler = new GsonSingleObjectDeserializer<GitlabIssue>(GSON, GitlabIssue.class, true);
     return getHttpClient().execute(request, handler);
   }
@@ -223,7 +228,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     return new HttpRequestInterceptor() {
       @Override
       public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
-        request.addHeader("PRIVATE-TOKEN", myPassword);
+        request.addHeader(TOKEN_HEADER, myPassword);
         //request.addHeader("Accept", "application/json");
       }
     };
