@@ -146,7 +146,7 @@ public class JdkBundle {
   }
 
   private static Pair<String, Pair<Version, Integer>> getJDKNameVersionAndUpdate(File jvm, String homeSubPath) {
-    GeneralCommandLine commandLine = new GeneralCommandLine();
+    GeneralCommandLine commandLine = new GeneralCommandLine().withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.NONE);
     commandLine.setExePath(new File(jvm,  homeSubPath + File.separator +  "jre" +
                            File.separator + "bin" + File.separator + "java").getAbsolutePath());
     commandLine.addParameter("-version");
