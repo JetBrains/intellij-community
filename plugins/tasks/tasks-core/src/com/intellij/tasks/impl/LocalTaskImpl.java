@@ -404,6 +404,7 @@ public class LocalTaskImpl extends LocalTask {
   @NotNull
   @Override
   public String getPresentableId() {
+    // Use global ID for compatibility
     return StringUtil.isEmpty(myPresentableId) ? getId() : myPresentableId;
   }
 }
