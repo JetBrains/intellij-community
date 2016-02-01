@@ -429,7 +429,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return cache;
   }
 
-  @Override
   @Nullable
   public PsiElement getElementNamed(final String name) {
     final List<RatedResolveResult> results = multiResolveExportedElements(name);
@@ -448,7 +447,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return null;
   }
 
-  @Override
   @NotNull
   public Iterable<PyElement> iterateNames() {
     final List<PyElement> result = new ArrayList<PyElement>();

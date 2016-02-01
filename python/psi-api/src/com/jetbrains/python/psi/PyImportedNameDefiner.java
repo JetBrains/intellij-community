@@ -15,10 +15,25 @@
  */
 package com.jetbrains.python.psi;
 
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Name definer that defines names imported somehow from other modules.
  *
  * @author vlan
  */
-public interface PyImportedNameDefiner extends NameDefiner, PyElement {
+public interface PyImportedNameDefiner extends PyElement {
+  /**
+   * Iterate over resolved PSI elements available via this imported name definer.
+   */
+  @NotNull
+  Iterable<PyElement> iterateNames();
+
+  /**
+   * Return the resolved PSI element available via this imported name definer.
+   */
+  @Nullable
+  PsiElement getElementNamed(String name);
 }
