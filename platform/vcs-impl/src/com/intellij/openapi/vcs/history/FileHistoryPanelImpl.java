@@ -128,8 +128,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   @NonNls private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
 
   private final Map<VcsRevisionNumber, Integer> myRevisionsOrder;
+  private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
+
   private boolean myIsStaticAndEmbedded;
+  private boolean myColumnSizesSet;
+
   private final Splitter myDetailsSplitter = new Splitter(false, 0.5f);
+  private Splitter mySplitter;
 
   private final Comparator<VcsFileRevision> myRevisionsInOrderComparator = new Comparator<VcsFileRevision>() {
     @Override
@@ -179,7 +184,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
   };
-  private boolean myColumnSizesSet;
 
   public void scheduleRefresh(final boolean canUseLastRevision) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -272,8 +276,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
  };
 
-  private Splitter mySplitter;
-
   private static class MessageColumnInfo extends VcsColumnInfo<String> {
     private final ColoredTableCellRenderer myRenderer;
     private final IssueLinkRenderer myIssueLinkRenderer;
@@ -310,8 +312,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       return myRenderer;
     }
   }
-
-  private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
 
   public FileHistoryPanelImpl(AbstractVcs vcs,
                               FilePath filePath, VcsHistorySession session,
