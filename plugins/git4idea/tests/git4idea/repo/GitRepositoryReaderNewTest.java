@@ -118,7 +118,7 @@ public class GitRepositoryReaderNewTest extends GitSingleRepoTest {
   private GitBranchState readState() {
     VirtualFile gitDir = myRepo.getGitDir();
     GitConfig config = GitConfig.read(myPlatformFacade, new File(gitDir.getPath(), "config"));
-    GitRepositoryReader reader = new GitRepositoryReader(gitDir);
+    GitRepositoryReader reader = new GitRepositoryReader(GitRepositoryFiles.getInstance(gitDir));
     Collection<GitRemote> remotes = config.parseRemotes();
     return reader.readState(remotes);
   }

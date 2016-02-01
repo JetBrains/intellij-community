@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,8 +67,7 @@ class GitRepositoryReader {
   @NotNull private final File          myRefsRemotesDir; // .git/refs/remotes/
   @NotNull private final File          myPackedRefsFile; // .git/packed-refs
 
-  GitRepositoryReader(@NotNull VirtualFile gitDir) {
-    GitRepositoryFiles gitFiles = GitRepositoryFiles.getInstance(gitDir);
+  GitRepositoryReader(@NotNull GitRepositoryFiles gitFiles) {
     myGitDir = new File(FileUtil.toSystemDependentName(gitFiles.getGitDirPath()));
     DvcsUtil.assertFileExists(myGitDir, ".git directory not found in " + myGitDir);
     myHeadFile = new File(FileUtil.toSystemDependentName(gitFiles.getHeadPath()));

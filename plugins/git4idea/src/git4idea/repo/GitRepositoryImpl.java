@@ -21,8 +21,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
@@ -43,6 +43,8 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   @NotNull private final GitVcs myVcs;
   @NotNull private final GitRepositoryReader myReader;
   @NotNull private final VirtualFile myGitDir;
+  @NotNull private final GitRepositoryFiles myRepositoryFiles;
+
   @Nullable private final GitUntrackedFilesHolder myUntrackedFilesHolder;
 
   @NotNull private volatile GitRepoInfo myInfo;
@@ -57,7 +59,8 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     myPlatformFacade = facade;
     myVcs = assertNotNull(GitVcs.getInstance(project));
     myGitDir = gitDir;
-    myReader = new GitRepositoryReader(myGitDir);
+    myRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
+    myReader = new GitRepositoryReader(myRepositoryFiles);
     myInfo = readRepoInfo();
     if (!light) {
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
@@ -194,7 +197,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   @NotNull
   private GitRepoInfo readRepoInfo() {
-    File configFile = new File(VfsUtilCore.virtualToIoFile(getGitDir()), "config");
+    File configFile = new File(FileUtil.toSystemDependentName(myRepositoryFiles.getConfigPath()));
     GitConfig config = GitConfig.read(myPlatformFacade, configFile);
     Collection<GitRemote> remotes = config.parseRemotes();
     GitBranchState state = myReader.readState(remotes);

@@ -17,6 +17,7 @@ package git4idea.repo
 
 import com.intellij.openapi.vfs.LocalFileSystem
 import git4idea.GitUtil
+import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchesCollection
 import git4idea.config.GitVersion
 import git4idea.test.GitExecutor.*
@@ -66,12 +67,7 @@ class GitWorkTreeTest : GitPlatformTest() {
   }
 
   fun `test remote branches`() {
-    cd(myTestRoot)
-    git("clone --bare $myMainRoot parent.git")
-    cd(myMainRoot)
-    val parentPath = File(myTestRoot, "parent.git").path
-    git("remote add origin $parentPath")
-    git("push origin master")
+    setUpRemote()
 
     val masterHead = last()
     git("checkout -b feature")
@@ -95,6 +91,25 @@ class GitWorkTreeTest : GitPlatformTest() {
 
     assertEquals("Incorrect current branch", "feature", myRepo.currentBranchName)
     assertEquals("Incorrect current revision", featureHead, myRepo.currentRevision)
+  }
+
+  fun `test tracked branch`() {
+    setUpRemote()
+
+    myRepo.update()
+
+    val masterBranch = myRepo.branches.findLocalBranch("master")!!
+    val trackInfo = GitBranchUtil.getTrackInfoForBranch(myRepo, masterBranch)!!
+    assertEquals("origin/master", trackInfo.remoteBranch.nameForLocalOperations)
+  }
+
+  private fun setUpRemote() {
+    cd(myTestRoot)
+    git("clone --bare $myMainRoot parent.git")
+    cd(myMainRoot)
+    val parentPath = File(myTestRoot, "parent.git").path
+    git("remote add origin $parentPath")
+    git("push origin -u master")
   }
 
   private fun assertBranchHash(expectedHash: String, branches: GitBranchesCollection, branchName: String) {

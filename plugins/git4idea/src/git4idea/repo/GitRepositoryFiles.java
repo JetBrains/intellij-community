@@ -75,9 +75,13 @@ public class GitRepositoryFiles {
   private final String myInfoDirPath;
   private final String myExcludePath;
 
-  private GitRepositoryFiles(@NotNull VirtualFile gitDir, @NotNull File headFile, @NotNull File refsDir, @NotNull File packedRefsFile) {
+  private GitRepositoryFiles(@NotNull VirtualFile gitDir,
+                             @NotNull File configFile,
+                             @NotNull File headFile,
+                             @NotNull File refsDir,
+                             @NotNull File packedRefsFile) {
     myGitDirPath = GitFileUtils.stripFileProtocolPrefix(gitDir.getPath());
-    myConfigFilePath = myGitDirPath + slash(CONFIG);
+    myConfigFilePath = FileUtil.toSystemIndependentName(configFile.getPath());
     myHeadFilePath = FileUtil.toSystemIndependentName(headFile.getPath());
     myIndexFilePath = myGitDirPath + slash(INDEX);
     myMergeHeadPath = myGitDirPath + slash(MERGE_HEAD);
@@ -100,15 +104,18 @@ public class GitRepositoryFiles {
     File headFile = new File(gitDir.getPath(), HEAD);
     File refsDir;
     File packedRefsFile;
+    File configFile;
     if (gitDirForWorktree == null) {
       refsDir = new File(gitDir.getPath(), REFS);
       packedRefsFile = new File(gitDir.getPath(), PACKED_REFS);
+      configFile = new File(gitDir.getPath(), CONFIG);
     }
     else {
       refsDir = new File(gitDirForWorktree.getPath(), REFS);
       packedRefsFile = new File(gitDirForWorktree.getPath(), PACKED_REFS);
+      configFile = new File(gitDirForWorktree.getPath(), CONFIG);
     }
-    return new GitRepositoryFiles(gitDir, headFile, refsDir, packedRefsFile);
+    return new GitRepositoryFiles(gitDir, configFile, headFile, refsDir, packedRefsFile);
   }
 
   /**
@@ -171,6 +178,11 @@ public class GitRepositoryFiles {
   @NotNull
   public String getHeadPath() {
     return myHeadFilePath;
+  }
+
+  @NotNull
+  public String getConfigPath() {
+    return myConfigFilePath;
   }
 
   /**
