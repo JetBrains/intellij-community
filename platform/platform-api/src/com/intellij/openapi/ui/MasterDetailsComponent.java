@@ -131,7 +131,10 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected MasterDetailsComponent(MasterDetailsState state) {
     myState = state;
 
-    mySplitter = isNewProjectSettings() ? new OnePixelSplitter(false, .2f) : new JBSplitter(false, .2f);
+    // Android Studio: Force OnePixelSplitter for PSD configurables.
+    // This line has been already changed in 'master' branch, but the change (5887777e29c67004c864632d4997c4e5a498e1ce) involves too many
+    // files and it may be risky to cherry-pick.
+    mySplitter = new OnePixelSplitter(false, .2f);
     mySplitter.setSplitterProportionKey("ProjectStructure.SecondLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);
 
