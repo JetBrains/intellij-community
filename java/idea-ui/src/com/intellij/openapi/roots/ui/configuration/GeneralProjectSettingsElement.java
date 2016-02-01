@@ -48,8 +48,13 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
   }
 
   @Override
-  public String getPresentableName() {
+  public String getPresentableText() {
     return "Project";
+  }
+
+  @Override
+  public String getPresentableName() {
+    return ProjectStructureConfigurable.getInstance(myContext.getProject()).getProjectConfig().getProjectName();
   }
 
   @Override

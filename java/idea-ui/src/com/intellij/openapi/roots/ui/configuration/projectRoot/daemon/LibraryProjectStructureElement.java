@@ -162,7 +162,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
   @Override
   public String getPresentableName() {
-    return "Library '" + myLibrary.getName() + "'";
+    return myLibrary.getName();
   }
 
   @Override

@@ -142,7 +142,7 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
 
   @Override
   public String getPresentableName() {
-    return "Module '" + myModule.getName() + "'";
+    return myModule.getName();
   }
 
   @Override

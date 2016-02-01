@@ -20,6 +20,9 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectConfigurationProblem;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -28,6 +31,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,16 +160,21 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
           i++;
           if (i > 100) break;
           html.append("<li>");
-          String description = error.getDescription();
-          if (description.startsWith("<html>") && description.endsWith("</html>")) {
-            description = description.substring(6, description.length() - 7);
+          String description;
+          if (error instanceof ProjectConfigurationProblem) {
+            //todo[nik] pass ProjectStructureProblemDescription directly and get rid of ConfigurationError at all
+            ProjectStructureProblemDescription problemDescription = ((ProjectConfigurationProblem)error).getProblemDescription();
+            description = problemDescription.getDescription();
+            if (description == null) {
+              ProjectStructureElement place = problemDescription.getPlace().getContainingElement();
+              description = place.getTypeName() + " <a href='http://navigate/" + i + "'>" +  place.getPresentableName() + "</a>: " + problemDescription.getMessage(false);
+            }
+            else {
+              description = XmlStringUtil.stripHtml(description);
+            }
           }
-          if (description.startsWith("Module '")) {
-            final int start = 8;
-            final int end = description.indexOf("'", 9);
-            final String moduleName = description.substring(start, end);
-            description = "Module <a href='http://module/" + StringUtil.escapeXml(moduleName) + "'>" + StringUtil.escapeXml(moduleName) + "</a> " + description.substring(
-              end + 1);
+          else {
+            description = XmlStringUtil.stripHtml(error.getDescription());
           }
           if (error.canBeFixed()) {
             description += " <a href='http://fix/" + i + "'>[Fix]</a>";
