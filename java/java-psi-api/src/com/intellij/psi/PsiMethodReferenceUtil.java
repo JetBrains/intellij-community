@@ -104,12 +104,10 @@ public class PsiMethodReferenceUtil {
       final PsiElement resolve = result.getElement();
       if (resolve instanceof PsiMethod) {
         containingClass = ((PsiMethod)resolve).getContainingClass();
-
-        PsiType returnType = PsiTypesUtil.patchMethodGetClassReturnType(expression, expression, (PsiMethod)resolve, null, PsiUtil.getLanguageLevel(expression));
-
-        if (returnType == null) {
-          returnType = ((PsiMethod)resolve).getReturnType();
-          if (PsiType.VOID.equals(returnType)) {
+        methodReturnType = PsiTypesUtil.patchMethodGetClassReturnType(expression, (PsiMethod)resolve);
+        if (methodReturnType == null) {
+          methodReturnType = ((PsiMethod)resolve).getReturnType();
+          if (PsiType.VOID.equals(methodReturnType)) {
             return false;
           }
 
@@ -120,13 +118,10 @@ public class PsiMethodReferenceUtil {
             LOG.assertTrue(subst != null);
           }
 
-          methodReturnType = subst.substitute(returnType);
+          methodReturnType = subst.substitute(methodReturnType);
           if (methodReturnType != null) {
             methodReturnType = PsiUtil.captureToplevelWildcards(methodReturnType, expression);
           }
-        }
-        else {
-          methodReturnType = returnType;
         }
       }
       else if (resolve instanceof PsiClass) {

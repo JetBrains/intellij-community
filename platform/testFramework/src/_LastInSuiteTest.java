@@ -74,6 +74,10 @@ public class _LastInSuiteTest extends TestCase {
       LeakHunter.checkProjectLeak();
       Disposer.assertIsEmpty(true);
     }
+    catch (AssertionError e) {
+      captureMemorySnapshot();
+      throw e;
+    }
     catch (Exception e) {
       captureMemorySnapshot();
       throw e;

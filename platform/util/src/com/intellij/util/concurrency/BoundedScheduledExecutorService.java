@@ -30,7 +30,8 @@ import java.util.concurrent.TimeUnit;
  */
 class BoundedScheduledExecutorService extends SchedulingWrapper {
   BoundedScheduledExecutorService(@NotNull ExecutorService backendExecutor, int maxSimultaneousTasks) {
-    super(new BoundedTaskExecutor(backendExecutor, maxSimultaneousTasks));
+    super(new BoundedTaskExecutor(backendExecutor, maxSimultaneousTasks),
+          ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).delayQueue);
     assert !(backendExecutor instanceof ScheduledExecutorService) : "backendExecutor is already ScheduledExecutorService: " + backendExecutor;
   }
 

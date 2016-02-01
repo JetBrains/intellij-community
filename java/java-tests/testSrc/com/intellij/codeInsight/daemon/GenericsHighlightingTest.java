@@ -593,4 +593,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testReturnTypeSubstitutableForSameOverrideEquivalentMethods() throws Exception {
     doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
   }
+
+  public void testCaptureConversionWithWildcardBounds() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
+  }
 }

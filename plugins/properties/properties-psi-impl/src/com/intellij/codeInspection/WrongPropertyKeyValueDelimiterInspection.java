@@ -44,8 +44,8 @@ public class WrongPropertyKeyValueDelimiterInspection extends PropertySuppressab
       @Override
       public void visitElement(PsiElement element) {
         if (element instanceof PropertyImpl) {
-          final Character delimiter = ((PropertyImpl)element).getKeyValueDelimiter();
-          if (delimiter != null && !delimiter.equals(codeStyleKeyValueDelimiter)) {
+          final char delimiter = ((PropertyImpl)element).getKeyValueDelimiter();
+          if (delimiter != codeStyleKeyValueDelimiter) {
             holder.registerProblem(element, PropertiesBundle.message("wrong.property.key.value.delimiter.inspection.display.name"), new ReplaceKeyValueDelimiterQuickFix(element));
           }
         }

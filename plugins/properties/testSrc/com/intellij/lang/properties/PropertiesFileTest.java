@@ -184,9 +184,8 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     final PropertiesCodeStyleSettings codeStyleSettings = PropertiesCodeStyleSettings.getInstance(getProject());
     codeStyleSettings.KEY_VALUE_DELIMITER_CODE = 1;
     final PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", "yyy");
-    final Character delimiter = property.getKeyValueDelimiter();
-    assertNotNull(delimiter);
-    assertEquals(':', (char)delimiter);
+    final char delimiter = property.getKeyValueDelimiter();
+    assertEquals(':', delimiter);
     assertEquals("xxx:yyy", property.getPsiElement().getText());
     codeStyleSettings.KEY_VALUE_DELIMITER_CODE = 0;
   }

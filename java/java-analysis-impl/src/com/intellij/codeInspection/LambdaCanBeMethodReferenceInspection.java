@@ -426,7 +426,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       return getClassReferenceName(nonAmbiguousContainingClass);
     }
 
-    if (containingClass.isPhysical() && qualifierExpression instanceof PsiReferenceExpression) {
+    if (containingClass.isPhysical() && qualifierExpression instanceof PsiReferenceExpression && !PsiTypesUtil.isGetClass(psiMethod)) {
       final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
       final boolean parameterWithoutFormalType = resolve instanceof PsiParameter && ((PsiParameter)resolve).getTypeElement() == null;
       if (parameterWithoutFormalType && ArrayUtil.find(parameters, resolve) > -1) {

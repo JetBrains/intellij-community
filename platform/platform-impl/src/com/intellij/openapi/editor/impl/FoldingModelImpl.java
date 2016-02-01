@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -36,6 +37,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.psi.ExternalChangeAction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +67,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   private int mySavedCaretShift;
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<FoldingGroup, FoldRegion>();
   private boolean myDocumentChangeProcessed = true;
+  private boolean myDocumentHasBeenChangedExternally;
   private final AtomicLong myExpansionCounter = new AtomicLong();
 
   public FoldingModelImpl(EditorImpl editor) {
@@ -532,6 +535,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       if (!((DocumentEx)event.getDocument()).isInBulkUpdate()) {
         updateCachedOffsets();
       }
+      if (ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) myDocumentHasBeenChangedExternally = true;
     }
     finally {
       myDocumentChangeProcessed = true;
@@ -592,5 +596,15 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   @Override
   public long getModificationCount() {
     return myExpansionCounter.get();
+  }
+
+  @Override
+  public boolean documentHasBeenChangedExternally() {
+    return myDocumentHasBeenChangedExternally;
+  }
+
+  @Override
+  public void clearExternalChangeFlag() {
+    myDocumentHasBeenChangedExternally = false;
   }
 }

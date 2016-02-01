@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.macro;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
@@ -29,9 +30,13 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class ReplaceUnderscoresToCamelCaseMacro extends MacroBase {
-  public ReplaceUnderscoresToCamelCaseMacro() {
-    super("underscoresToCamelCase", CodeInsightBundle.message("macro.undescoresToCamelCase.string"));
+public abstract class ConvertToCamelCaseMacro extends MacroBase {
+
+  private final String mySeparator;
+
+  private ConvertToCamelCaseMacro(String name, String description, String separator) {
+    super(name, description);
+    mySeparator = separator;
   }
 
   @Nullable
@@ -39,17 +44,35 @@ public class ReplaceUnderscoresToCamelCaseMacro extends MacroBase {
   protected Result calculateResult(@NotNull Expression[] params, ExpressionContext context, boolean quick) {
     final String text = getTextResult(params, context, true);
     if (text != null) {
-
-      final List<String> strings = StringUtil.split(text, "_");
-      if (strings.size() > 0) {
-        final StringBuilder buf = new StringBuilder();
-        buf.append(strings.get(0).toLowerCase());
-        for (int i = 1; i < strings.size(); i++) {
-          buf.append(StringUtil.capitalize(strings.get(i).toLowerCase()));
-        }
-        return new TextResult(buf.toString());
-      }
+      return convertString(text);
     }
     return null;
+  }
+
+  @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
+  @Nullable
+  @VisibleForTesting
+  public Result convertString(String text) {
+    final List<String> strings = StringUtil.split(text, mySeparator);
+    if (strings.size() > 0) {
+      final StringBuilder buf = new StringBuilder();
+      buf.append(strings.get(0).toLowerCase());
+      for (int i = 1; i < strings.size(); i++) {
+        buf.append(StringUtil.capitalize(strings.get(i).toLowerCase()));
+      }
+      return new TextResult(buf.toString());
+    }
+    return null;
+  }
+
+  public static class ReplaceUnderscoresToCamelCaseMacro extends ConvertToCamelCaseMacro {
+    public ReplaceUnderscoresToCamelCaseMacro() {
+      super("underscoresToCamelCase", CodeInsightBundle.message("macro.undescoresToCamelCase.string"), "_");
+    }
+  }
+  public static class ReplaceDashesToCamelCaseMacro extends ConvertToCamelCaseMacro {
+    public ReplaceDashesToCamelCaseMacro() {
+      super("dashesToCamelCase", "dashesToCamelCase(String)", "-");
+    }
   }
 }
