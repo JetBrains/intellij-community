@@ -45,12 +45,8 @@ public class ResourceBundleImpl extends ResourceBundle {
     if (ResourceBundleManager.getInstance(getProject()).isDefaultDissociated(myDefaultPropertiesFile.getVirtualFile())) {
       return Collections.singletonList(myDefaultPropertiesFile);
     }
-    PsiFile[] children = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
-      @Override
-      public PsiFile[] compute() {
-        return myDefaultPropertiesFile.getParent().getFiles();
-      }
-    });
+    PsiFile[] children =
+      ApplicationManager.getApplication().runReadAction((Computable<PsiFile[]>)() -> myDefaultPropertiesFile.getParent().getFiles());
     final String baseName = getBaseName();
     List<PropertiesFile> result = new SmartList<PropertiesFile>();
     for (PsiFile file : children) {
@@ -62,7 +58,7 @@ public class ResourceBundleImpl extends ResourceBundle {
       if (Comparing.strEqual(PropertiesUtil.getDefaultBaseName(file.getVirtualFile()), baseName)) {
         result.add(propertiesFile);
         if (!propertiesFile.equals(myDefaultPropertiesFile) &&
-            propertiesFile.getName().compareTo(myDefaultPropertiesFile.getName()) == 0) {
+            Comparing.equal(propertiesFile.getName(), myDefaultPropertiesFile.getName())) {
           return Collections.singletonList(myDefaultPropertiesFile);
         }
       }
