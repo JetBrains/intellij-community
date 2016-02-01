@@ -16,26 +16,20 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
- * PSI element that (re)defines names in following namespace, e.g. as assignment statement does.
+ * PSI element that contains named children that are visible in the current scope.
  *
  * @author dcheryasov
  */
-public interface NameDefiner extends PsiElement {
+public interface PyNamedElementContainer extends PsiElement {
   /**
-   * @return an iterator that iterates over defined names, in order of definition.
-   * Complex targets count, too: "(y, x[1]) = (1, 2)" return both "y" and "x[1]".
+   * Return named children visible in the current scope.
    */
   @NotNull
-  Iterable<PyElement> iterateNames();
-
-  /**
-   * @param name an unqualified name.
-   * @return an element which is defined under that name in this instance, or null. 
-   */
-  @Nullable
-  PsiElement getElementNamed(String name);
+  List<PsiNamedElement> getNamedElements();
 }
