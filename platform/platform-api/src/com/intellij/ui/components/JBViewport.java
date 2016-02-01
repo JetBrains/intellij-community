@@ -252,7 +252,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   }
 
   private static void updateBorder(Component view) {
-    if (SystemInfo.isMac || view instanceof JTable) return; // tables are not supported yet
+    if (view instanceof JTable) return; // tables are not supported yet
     if (view instanceof JComponent) {
       JComponent component = (JComponent)view;
       Border border = component.getBorder();
@@ -352,7 +352,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
               if (va == Alignment.LEFT) {
                 insets.left += vsb.getWidth();
               }
-              else if (va == Alignment.RIGHT) {
+              else if (va == Alignment.RIGHT && !SystemInfo.isMac) {
                 insets.right += vsb.getWidth();
               }
             }
@@ -363,7 +363,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
               if (ha == Alignment.TOP) {
                 insets.top += hsb.getHeight();
               }
-              else if (ha == Alignment.BOTTOM) {
+              else if (ha == Alignment.BOTTOM && !SystemInfo.isMac) {
                 insets.bottom += hsb.getHeight();
               }
             }
