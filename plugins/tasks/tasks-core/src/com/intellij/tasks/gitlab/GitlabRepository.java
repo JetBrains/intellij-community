@@ -46,12 +46,14 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @NonNls private static final String TOKEN_HEADER = "PRIVATE-TOKEN";
 
   private static final Pattern ID_PATTERN = Pattern.compile("(\\d+):(\\d+)");
-  public static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
-  public static final TypeToken<List<GitlabProject>> LIST_OF_PROJECTS_TYPE = new TypeToken<List<GitlabProject>>() {
-  };
-  public static final TypeToken<List<GitlabIssue>> LIST_OF_ISSUES_TYPE = new TypeToken<List<GitlabIssue>>() {
-  };
-  public static final GitlabProject UNSPECIFIED_PROJECT = new GitlabProject() {
+  private static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
+
+  // @formatter:off
+  private static final TypeToken<List<GitlabProject>> LIST_OF_PROJECTS_TYPE = new TypeToken<List<GitlabProject>>() {};
+  private static final TypeToken<List<GitlabIssue>> LIST_OF_ISSUES_TYPE = new TypeToken<List<GitlabIssue>>() {};
+  // @formatter:on
+
+  static final GitlabProject UNSPECIFIED_PROJECT = new GitlabProject() {
     @Override
     public String getName() {
       return "-- all issues created by you --";
@@ -90,7 +92,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
-    GitlabRepository repository = (GitlabRepository)o;
+    final GitlabRepository repository = (GitlabRepository)o;
     if (!Comparing.equal(myCurrentProject, repository.myCurrentProject)) return false;
     return true;
   }
@@ -158,7 +160,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public GitlabProject fetchProject(int id) throws Exception {
-    HttpGet request = new HttpGet(getRestApiUrl("project", id));
+    final HttpGet request = new HttpGet(getRestApiUrl("project", id));
     return getHttpClient().execute(request, new GsonSingleObjectDeserializer<GitlabProject>(GSON, GitlabProject.class));
   }
 
@@ -192,7 +194,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   public GitlabIssue fetchIssue(int projectId, int issueId) throws Exception {
     ensureProjectsDiscovered();
     final HttpGet request = new HttpGet(getRestApiUrl("projects", projectId, "issues", issueId));
-    ResponseHandler<GitlabIssue> handler = new GsonSingleObjectDeserializer<GitlabIssue>(GSON, GitlabIssue.class, true);
+    final ResponseHandler<GitlabIssue> handler = new GsonSingleObjectDeserializer<GitlabIssue>(GSON, GitlabIssue.class, true);
     return getHttpClient().execute(request, handler);
   }
 
