@@ -144,30 +144,40 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   };
 
-  private final DualViewColumnInfo REVISION =
-    new VcsColumnInfo<VcsRevisionNumber>(VcsBundle.message("column.name.revision.version")) {
-      protected VcsRevisionNumber getDataOf(VcsFileRevision object) {
-        return object.getRevisionNumber();
-      }
+  private static class RevisionColumnInfo extends VcsColumnInfo<VcsRevisionNumber> {
+    private final Comparator<VcsFileRevision> myComparator;
 
-      @Override
-      public Comparator<VcsFileRevision> getComparator() {
-        return myRevisionsInOrderComparator;
-      }
+    public RevisionColumnInfo(Comparator<VcsFileRevision> comparator) {
+      super(VcsBundle.message("column.name.revision.version"));
+      myComparator = comparator;
+    }
 
-      public String valueOf(VcsFileRevision object) {
-        final VcsRevisionNumber revisionNumber = object.getRevisionNumber();
-        return revisionNumber instanceof ShortVcsRevisionNumber ? ((ShortVcsRevisionNumber)revisionNumber).toShortString() : revisionNumber.asString();
-      }
+    @Override
+    protected VcsRevisionNumber getDataOf(VcsFileRevision object) {
+      return object.getRevisionNumber();
+    }
 
-      @Override
-      public String getPreferredStringValue() {
-        return "123.4567";
-      }
+    @Override
+    public Comparator<VcsFileRevision> getComparator() {
+      return myComparator;
+    }
 
-    };
+    public String valueOf(VcsFileRevision object) {
+      final VcsRevisionNumber revisionNumber = object.getRevisionNumber();
+      return revisionNumber instanceof ShortVcsRevisionNumber ? ((ShortVcsRevisionNumber)revisionNumber).toShortString() : revisionNumber.asString();
+    }
 
-  private final DualViewColumnInfo DATE = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.date")) {
+    @Override
+    public String getPreferredStringValue() {
+      return "123.4567";
+    }
+  }
+
+  private static class DateColumnInfo extends VcsColumnInfo<String> {
+    public DateColumnInfo() {
+      super(VcsBundle.message("column.name.revision.date"));
+    }
+
     protected String getDataOf(VcsFileRevision object) {
       Date date = object.getRevisionDate();
       if (date == null) return "";
@@ -182,8 +192,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public String getPreferredStringValue() {
       return DateFormatUtil.formatPrettyDateTime(Clock.getTime());
     }
-
-  };
+  }
 
   public void scheduleRefresh(final boolean canUseLastRevision) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -224,9 +233,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   }
 
-  private static final TableCellRenderer AUTHOR_RENDERER = new AuthorCellRenderer();
 
-  private final DualViewColumnInfo AUTHOR = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.list.author")) {
+  private static class AuthorColumnInfo extends VcsColumnInfo<String> {
+    private final TableCellRenderer AUTHOR_RENDERER = new AuthorCellRenderer();
+
+    public AuthorColumnInfo() {
+      super(VcsBundle.message("column.name.revision.list.author"));
+    }
+
     protected String getDataOf(VcsFileRevision object) {
       VcsFileRevision rev = object;
       if (object instanceof TreeNodeOnVcsRevision) {
@@ -273,8 +287,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public String getPreferredStringValue() {
       return "author_author";
     }
-
- };
+  }
 
   private static class MessageColumnInfo extends VcsColumnInfo<String> {
     private final ColoredTableCellRenderer myRenderer;
@@ -504,13 +517,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myListener = components.getRevisionListener();
 
     ArrayList<DualViewColumnInfo> columns = new ArrayList<DualViewColumnInfo>();
-    if (provider.isDateOmittable()) {
-      columns.addAll(Arrays.asList(REVISION, AUTHOR));
-    }
-    else {
-      columns.addAll(Arrays.asList(REVISION, DATE, AUTHOR));
-    }
-
+    columns.add(new RevisionColumnInfo(myRevisionsInOrderComparator));
+    if (!provider.isDateOmittable()) columns.add(new DateColumnInfo());
+    columns.add(new AuthorColumnInfo());
     columns.addAll(wrapAdditionalColumns(components.getColumns()));
     columns.add(new MessageColumnInfo(project));
     return columns.toArray(new DualViewColumnInfo[columns.size()]);
