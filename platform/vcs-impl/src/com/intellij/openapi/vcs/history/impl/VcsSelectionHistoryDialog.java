@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
+import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBSplitter;
@@ -45,7 +46,6 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.vcsUtil.VcsUtil;
@@ -61,7 +61,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -85,37 +84,6 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       return asString();
     }
   };
-
-  private static final ColumnInfo REVISION = new ColumnInfo(VcsBundle.message("column.name.revision.version")) {
-    @Override
-    public Object valueOf(Object object) {
-      return ((VcsFileRevision)object).getRevisionNumber();
-    }
-  };
-
-  private static final ColumnInfo DATE = new ColumnInfo(VcsBundle.message("column.name.revision.list.date")) {
-    @Override
-    public Object valueOf(Object object) {
-      Date date = ((VcsFileRevision)object).getRevisionDate();
-      if (date == null) return "";
-      return DateFormatUtil.formatPrettyDateTime(date);
-    }
-  };
-
-  private static final ColumnInfo MESSAGE = new ColumnInfo(VcsBundle.message("column.name.revision.list.message")) {
-    @Override
-    public Object valueOf(Object object) {
-      return ((VcsFileRevision)object).getCommitMessage();
-    }
-  };
-
-  private static final ColumnInfo AUTHOR = new ColumnInfo(VcsBundle.message("column.name.revision.list.author")) {
-    @Override
-    public Object valueOf(Object object) {
-      return ((VcsFileRevision)object).getAuthor();
-    }
-  };
-  private static final ColumnInfo[] COLUMNS = new ColumnInfo[]{REVISION, DATE, AUTHOR, MESSAGE};
 
   private static final float DIFF_SPLITTER_PROPORTION = 0.5f;
   private static final float COMMENTS_SPLITTER_PROPORTION = 0.8f;
@@ -170,10 +138,16 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     JRootPane rootPane = ((RootPaneContainer)getFrame()).getRootPane();
     final VcsDependentHistoryComponents components = vcsHistoryProvider.getUICustomization(session, rootPane);
 
+    ColumnInfo[] defaultColumns = new ColumnInfo[]{
+      new FileHistoryPanelImpl.RevisionColumnInfo(null),
+      new FileHistoryPanelImpl.DateColumnInfo(),
+      new FileHistoryPanelImpl.AuthorColumnInfo(),
+      new FileHistoryPanelImpl.MessageColumnInfo(project)};
     ColumnInfo[] additionalColumns = notNull(components.getColumns(), ColumnInfo.EMPTY_ARRAY);
-    myListModel = new ListTableModel<VcsFileRevision>(ArrayUtil.mergeArrays(COLUMNS, additionalColumns));
+    myListModel = new ListTableModel<VcsFileRevision>(ArrayUtil.mergeArrays(defaultColumns, additionalColumns));
     myListModel.setSortable(false);
     myList = new TableView<VcsFileRevision>(myListModel);
+    new TableLinkMouseListener().installOn(myList);
 
     myList.getEmptyText().setText(VcsBundle.message("history.empty"));
 

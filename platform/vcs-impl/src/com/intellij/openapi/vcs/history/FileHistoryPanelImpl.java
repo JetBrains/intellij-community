@@ -144,7 +144,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   };
 
-  private static class RevisionColumnInfo extends VcsColumnInfo<VcsRevisionNumber> {
+  public static class RevisionColumnInfo extends VcsColumnInfo<VcsRevisionNumber> {
     private final Comparator<VcsFileRevision> myComparator;
 
     public RevisionColumnInfo(Comparator<VcsFileRevision> comparator) {
@@ -173,7 +173,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   }
 
-  private static class DateColumnInfo extends VcsColumnInfo<String> {
+  public static class DateColumnInfo extends VcsColumnInfo<String> {
     public DateColumnInfo() {
       super(VcsBundle.message("column.name.revision.date"));
     }
@@ -234,7 +234,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   }
 
 
-  private static class AuthorColumnInfo extends VcsColumnInfo<String> {
+  public static class AuthorColumnInfo extends VcsColumnInfo<String> {
     private final TableCellRenderer AUTHOR_RENDERER = new AuthorCellRenderer();
 
     public AuthorColumnInfo() {
@@ -289,7 +289,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   }
 
-  private static class MessageColumnInfo extends VcsColumnInfo<String> {
+  public static class MessageColumnInfo extends VcsColumnInfo<String> {
     private final ColoredTableCellRenderer myRenderer;
     private final IssueLinkRenderer myIssueLinkRenderer;
 
