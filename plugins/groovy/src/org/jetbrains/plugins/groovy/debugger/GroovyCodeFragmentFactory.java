@@ -19,7 +19,6 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -248,9 +247,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
           return;
         }
 
-        if (context.getLanguage().equals(JavaLanguage.INSTANCE) &&
-            referenceExpression.getQualifier() == null // pass all qualified java references as is for now
-          ) {
+        if (resolved instanceof PsiLocalVariable) {
           String name = referenceExpression.getReferenceName();
           parameters.put(name, name);
         }
