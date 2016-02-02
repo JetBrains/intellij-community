@@ -26,6 +26,8 @@ import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
 import java.io.CharArrayReader
 import java.io.Reader
+import java.nio.file.Files
+import java.nio.file.Path
 
 private val cachedSaxBuilder = ThreadLocal<SoftReference<SAXBuilder>>()
 
@@ -43,6 +45,8 @@ private fun getSaxBuilder(): SAXBuilder {
 }
 
 fun loadElement(chars: CharSequence) = loadDocument(CharSequenceReader(chars)).detachRootElement()
+
+fun loadElement(path: Path) = loadDocument(Files.newInputStream(path).bufferedReader()).detachRootElement()
 
 private fun loadDocument(reader: Reader): Document {
   if (Registry.`is`("jdom.ignoring.whitespace", false) || (ApplicationManager.getApplication()?.isUnitTestMode ?: false)) {
