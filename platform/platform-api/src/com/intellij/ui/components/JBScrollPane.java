@@ -39,10 +39,14 @@ import java.awt.event.MouseEvent;
 import java.awt.image.*;
 
 public class JBScrollPane extends JScrollPane {
-  public static final RegionPainter<Float> TRACK_PAINTER = new AlphaPainter(.0f, .1f);
-  public static final RegionPainter<Float> THUMB_PAINTER = new ProtectedPainter(new SubtractThumbPainter(.20f, .15f, Gray.x91),
-                                                                                new ThumbPainter(.35f, .25f, Gray.x6E));
-  public static final RegionPainter<Float> THUMB_DARK_PAINTER = new ThumbPainter(.35f, .25f, Gray.x94);
+  @Deprecated
+  public static final RegionPainter<Float> TRACK_PAINTER = new AlphaPainter(.0f, .1f, Gray.x80);
+
+  @Deprecated
+  public static final RegionPainter<Float> THUMB_PAINTER = new ProtectedPainter(new SubtractThumbPainter(.20f, .15f, Gray.x80, Gray.x91),
+                                                                                new ThumbPainter(.35f, .25f, Gray.x80, Gray.x6E));
+  @Deprecated
+  public static final RegionPainter<Float> THUMB_DARK_PAINTER = new ThumbPainter(.35f, .25f, Gray.x80, Gray.x94);
 
   private int myViewportBorderWidth = -1;
   private boolean myHasOverlayScrollbars;
@@ -733,10 +737,12 @@ public class JBScrollPane extends JScrollPane {
   private static class AlphaPainter implements RegionPainter<Float> {
     private final float myBase;
     private final float myDelta;
+    private final Color myFillColor;
 
-    private AlphaPainter(float base, float delta) {
+    private AlphaPainter(float base, float delta, Color fill) {
       myBase = base;
       myDelta = delta;
+      myFillColor = fill;
     }
 
     Composite newComposite(float alpha) {
@@ -744,6 +750,7 @@ public class JBScrollPane extends JScrollPane {
     }
 
     void paint(Graphics2D g, int x, int y, int width, int height) {
+      g.setColor(myFillColor);
       g.fillRect(x, y, width, height);
     }
 
@@ -756,7 +763,6 @@ public class JBScrollPane extends JScrollPane {
           g.setComposite(alpha < 1
                          ? newComposite(alpha)
                          : AlphaComposite.SrcOver);
-          g.setColor(Gray.x80);
           paint(g, x, y, width, height);
           g.setComposite(old);
         }
@@ -765,17 +771,17 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private static class ThumbPainter extends AlphaPainter {
-    private final Color myColor;
+    private final Color myDrawColor;
 
-    private ThumbPainter(float base, float delta, Color color) {
-      super(base, delta);
-      myColor = color;
+    private ThumbPainter(float base, float delta, Color fill, Color draw) {
+      super(base, delta, fill);
+      myDrawColor = draw;
     }
 
     @Override
     void paint(Graphics2D g, int x, int y, int width, int height) {
       super.paint(g, x + 1, y + 1, width - 2, height - 2);
-      g.setColor(myColor);
+      g.setColor(myDrawColor);
       if (Registry.is("ide.scroll.thumb.border.rounded")) {
         g.drawLine(x + 1, y, x + width - 2, y);
         g.drawLine(x + 1, y + height - 1, x + width - 2, y + height - 1);
@@ -789,8 +795,8 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private static class SubtractThumbPainter extends ThumbPainter {
-    public SubtractThumbPainter(float base, float delta, Color color) {
-      super(base, delta, color);
+    public SubtractThumbPainter(float base, float delta, Color fill, Color draw) {
+      super(base, delta, fill, draw);
     }
 
     @Override
