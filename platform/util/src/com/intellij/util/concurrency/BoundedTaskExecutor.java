@@ -15,6 +15,7 @@
  */
 package com.intellij.util.concurrency;
 
+import com.intellij.Patches;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
@@ -113,7 +114,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     if (isShutdown()) {
       throw new RejectedExecutionException("Already shutdown");
     }
-    long status = myStatus.addAndGet(1 + (1L << 32)); // increment inProgress and queue stamp atomically
+    long status = incrementCounterAndTimestamp(); // increment inProgress and queue stamp atomically
 
     if (tryToExecute(status, task)) {
       return;
@@ -122,6 +123,20 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       throw new RejectedExecutionException();
     }
     pollAndExecute(status);
+  }
+
+  static {
+    assert Patches.USE_REFLECTION_TO_ACCESS_JDK8;
+  }
+  // todo replace with myStatus.getAndUpdate()
+  private long incrementCounterAndTimestamp() {
+    long status;
+    long newStatus;
+    do {
+      status = myStatus.get();
+      newStatus = status + 1 + (1L << 32) & 0x7fffffffffffffffL;
+    } while (!myStatus.compareAndSet(status, newStatus));
+    return newStatus;
   }
 
   private void pollAndExecute(long status) {
@@ -239,8 +254,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   public String toString() {
     return "BoundedExecutor(" + myMaxTasks + ") " + (isShutdown() ? "SHUTDOWN " : "") +
            "inProgress: " + (int)myStatus.get() +
-           "; " + myTaskQueue.size() +
-           " tasks in queue: [" + ContainerUtil.map(myTaskQueue, new Function<Runnable, Object>() {
+           "; " + myTaskQueue.size() + " tasks in queue: [" + ContainerUtil.map(myTaskQueue, new Function<Runnable, Object>() {
       @Override
       public Object fun(Runnable runnable) {
         return info(runnable);
