@@ -91,9 +91,6 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       autoPopupMemberLookup(project, editor);
     }
 
-
-    final FileType originalFileType = getOriginalFileType(file);
-
     int offsetBefore = editor.getCaretModel().getOffset();
 
     //important to calculate before inserting charTyped
@@ -115,7 +112,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     if (c == ';') {
       if (handleSemicolon(editor, fileType)) return Result.STOP;
     }
-    if (originalFileType == StdFileTypes.JAVA && c == '{') {
+    if (fileType == StdFileTypes.JAVA && c == '{') {
       int offset = editor.getCaretModel().getOffset();
       if (offset == 0) {
         return Result.CONTINUE;
