@@ -78,6 +78,9 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
 
   public void _commit(final boolean finishChosen) throws CommitStepException {
     if (finishChosen && !myCommitted) {
+      if (!mySupportForFrameworksPanel.validate()) {
+        throw new CommitStepException(null);
+      }
       if (!mySupportForFrameworksPanel.downloadLibraries(mySupportForFrameworksPanel.getMainPanel())) {
         throw new CommitStepException(null);
       }

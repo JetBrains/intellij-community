@@ -86,6 +86,7 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
 
   protected void doOKAction() {
     if (myAddSupportPanel.hasSelectedFrameworks()) {
+      if (!myAddSupportPanel.validate()) return;
       if (!myAddSupportPanel.downloadLibraries(myAddSupportPanel.getMainPanel())) return;
 
       DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {

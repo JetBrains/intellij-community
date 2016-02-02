@@ -44,6 +44,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
@@ -427,6 +428,27 @@ public class AddSupportForFrameworksPanel implements Disposable {
       if (answer != Messages.YES) {
         return false;
       }
+    }
+    return true;
+  }
+
+  public boolean validate() {
+    applyLibraryOptionsForSelected();
+    List<String> frameworksWithoutRequiredLibraries = new ArrayList<String>();
+    for (FrameworkSupportNode node : getSelectedNodes()) {
+      if (node.getConfigurable().isOnlyLibraryAdded()) {
+        LibraryCompositionSettings librarySettings = getLibraryCompositionSettings(node);
+        if (librarySettings != null && !librarySettings.isLibraryConfigured()) {
+          frameworksWithoutRequiredLibraries.add(node.getTitle());
+        }
+      }
+    }
+
+    if (!frameworksWithoutRequiredLibraries.isEmpty()) {
+      String frameworksText = StringUtil.join(frameworksWithoutRequiredLibraries, ", ");
+      Messages.showErrorDialog(myMainPanel, ProjectBundle.message("error.message.required.library.is.not.configured", frameworksText, frameworksWithoutRequiredLibraries.size()),
+                               ProjectBundle.message("error.title.required.library.is.not.configured"));
+      return false;
     }
     return true;
   }
