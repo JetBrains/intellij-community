@@ -17,12 +17,15 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane.Alignment;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -33,6 +36,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import static com.intellij.ui.components.JBScrollPane.BRIGHTNESS_FROM_VIEW;
 import static java.awt.Adjustable.VERTICAL;
 
 /**
@@ -40,9 +44,6 @@ import static java.awt.Adjustable.VERTICAL;
  */
 abstract class AbstractScrollBarUI extends ScrollBarUI {
   static final Key<RegionPainter<Object>> LEADING_AREA = Key.create("PLAIN_SCROLL_BAR_UI_LEADING_AREA");//TODO:support
-
-  private static final JBColor TRACK_BACKGROUND = new JBColor(0xF5F5F5, 0x3c3f41);
-  private static final JBColor TRACK_FOREGROUND = new JBColor(0xE6E6E6, 0x3C3F41);
 
   private final Listener myListener = new Listener();
   private final Timer myScrollTimer = UIUtil.createNamedTimer("ScrollBarThumbScrollTimer", 60, myListener);
@@ -105,8 +106,8 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
   @Override
   public void installUI(JComponent c) {
     myScrollBar = (JScrollBar)c;
-    myScrollBar.setBackground(TRACK_BACKGROUND);
-    myScrollBar.setForeground(TRACK_FOREGROUND);
+    myScrollBar.setBackground(new JBColor(new ColorProducer(c, 0xF5F5F5, 0x3C3F41)));
+    myScrollBar.setForeground(new JBColor(new ColorProducer(c, 0xE6E6E6, 0x3C3F41)));
     myScrollBar.setFocusable(false);
     myScrollBar.addMouseListener(myListener);
     myScrollBar.addMouseMotionListener(myListener);
@@ -124,6 +125,8 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
     myScrollBar.getModel().removeChangeListener(myListener);
     myScrollBar.removeMouseMotionListener(myListener);
     myScrollBar.removeMouseListener(myListener);
+    myScrollBar.setForeground(null);
+    myScrollBar.setBackground(null);
     myScrollBar = null;
   }
 
@@ -515,6 +518,51 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
       if (oldValue != newValue) {
         myScrollBar.setValue(newValue);
       }
+    }
+  }
+
+  static boolean isDark(JComponent c) {
+    if (c instanceof JScrollBar) {
+      Container parent = c.getParent();
+      if (parent instanceof JScrollPane) {
+        JScrollPane pane = (JScrollPane)parent;
+        Object property = c.getClientProperty(BRIGHTNESS_FROM_VIEW);
+        if (property == null) {
+          property = pane.getClientProperty(BRIGHTNESS_FROM_VIEW);
+        }
+        if (property instanceof Boolean && (Boolean)property) {
+          JViewport viewport = pane.getViewport();
+          if (viewport != null) {
+            Component view = viewport.getView();
+            if (view != null) {
+              Color color = view.getBackground();
+              if (color != null) {
+                return ColorUtil.isDark(color);
+              }
+            }
+          }
+        }
+      }
+    }
+    return UIUtil.isUnderDarcula();
+  }
+
+  private final class ColorProducer implements NotNullProducer<Color> {
+    private final JComponent myComponent;
+    private final Color myBrightColor;
+    private final Color myDarkColor;
+
+    @SuppressWarnings("UseJBColor")
+    private ColorProducer(JComponent component, int bright, int dark) {
+      myComponent = component;
+      myBrightColor = new Color(bright);
+      myDarkColor = new Color(dark);
+    }
+
+    @NotNull
+    @Override
+    public Color produce() {
+      return isDark(myComponent) ? myDarkColor : myBrightColor;
     }
   }
 }

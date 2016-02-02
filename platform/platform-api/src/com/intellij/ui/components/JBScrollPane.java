@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
@@ -25,6 +26,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.RegionPainter;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +41,16 @@ import java.awt.event.MouseEvent;
 import java.awt.image.*;
 
 public class JBScrollPane extends JScrollPane {
+  /**
+   * This key is used to specify which colors should use the scroll bars on the pane.
+   * If a client property is set to {@code true} the bar's brightness
+   * will be modified according to the view's background.
+   *
+   * @see UIUtil#putClientProperty
+   * @see UIUtil#isUnderDarcula
+   */
+  public static final Key<Boolean> BRIGHTNESS_FROM_VIEW = Key.create("JB_SCROLL_PANE_BRIGHTNESS_FROM_VIEW");
+
   @Deprecated
   public static final RegionPainter<Float> TRACK_PAINTER = new AlphaPainter(.0f, .1f, Gray.x80);
 
