@@ -452,11 +452,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
       text.addHyperlinkListener(listener);
     }
 
-    int prefSize = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null)).getPreferredSize().width;
+    String fontStyle = NotificationsUtil.getFontStyle();
+    int prefSize = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null, fontStyle)).getPreferredSize().width;
     int maxSize = BalloonLayoutConfiguration.MaxWidth;
     String style = prefSize > maxSize ? "width:" + maxSize + "px;" : null;
 
-    text.setText(NotificationsUtil.buildHtml(notification, style, true, foreground));
+    text.setText(NotificationsUtil.buildHtml(notification, style, true, foreground, fontStyle));
     text.setEditable(false);
     text.setOpaque(false);
 
@@ -612,7 +613,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
     content.add(centerPanel, BorderLayout.CENTER);
 
     if (notification.isTitle()) {
-      JLabel title = new JLabel(NotificationsUtil.buildHtml(notification, "white-space: nowrap;", false, foreground)) {
+      String titleValue = NotificationsUtil
+        .buildHtml(notification, StringUtil.defaultIfEmpty(fontStyle, "") + "white-space: nowrap;", false, foreground, null);
+      JLabel title = new JLabel(titleValue) {
         @Override
         public void paint(Graphics g) {
           super.paint(g);
@@ -757,7 +760,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
   public static int calculateContentHeight(int lines) {
     JEditorPane text = new JEditorPane();
     text.setEditorKit(UIUtil.getHTMLEditorKit());
-    text.setText(NotificationsUtil.buildHtml(null, null, "Content" + StringUtil.repeat("<br>\nContent", lines - 1), null));
+    text
+      .setText(NotificationsUtil.buildHtml(null, null, "Content" + StringUtil.repeat("<br>\nContent", lines - 1), null, null, null,
+                                             NotificationsUtil.getFontStyle()));
     text.setEditable(false);
     text.setOpaque(false);
     text.setBorder(null);
