@@ -42,7 +42,7 @@ import java.io.File;
  * @author anna
  * @since Mar 4, 2005
  */
-public class JUnitDevKitPatcher extends JUnitPatcher{
+public class JUnitDevKitPatcher extends JUnitPatcher {
   private static final String SYSTEM_CL_PROPERTY = "java.system.class.loader";
 
   @Override
@@ -60,12 +60,13 @@ public class JUnitDevKitPatcher extends JUnitPatcher{
         javaParameters.getVMParametersList().addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
       }
     }
+
     Sdk jdk = javaParameters.getJdk();
     jdk = IdeaJdk.findIdeaJdk(jdk);
     if (jdk == null) return;
 
     String libPath = jdk.getHomePath() + File.separator + "lib";
-    
+
     final ParametersList vm = javaParameters.getVMParametersList();
     vm.add("-Xbootclasspath/a:" + libPath + File.separator + "boot.jar");
     if (!vm.hasProperty("idea.load.plugins.id") && module != null && PluginModuleType.isOfType(module)) {
