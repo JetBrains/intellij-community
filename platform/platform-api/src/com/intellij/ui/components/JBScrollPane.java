@@ -719,7 +719,7 @@ public class JBScrollPane extends JScrollPane {
           myPainter.paint(g, x, y, width, height, value);
           return;
         }
-        catch (Exception exception) {
+        catch (Throwable exception) {
           // do not try to use myPainter again on other systems
           if (!SystemInfo.isWindows) myPainter = null;
         }
