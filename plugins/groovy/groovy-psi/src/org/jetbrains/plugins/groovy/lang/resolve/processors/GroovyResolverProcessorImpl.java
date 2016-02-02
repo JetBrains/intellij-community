@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -136,12 +135,9 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
 
   private static GrReferenceExpressionImpl getContextReferenceExpression(GrReferenceExpression ref) {
     final PsiElement firstNonReferenceExprParent = PsiTreeUtil.skipParentsOfType(ref, GrReferenceExpressionImpl.class);
-    return (GrReferenceExpressionImpl)PsiTreeUtil.findFirstParent(ref, new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement parent) {
-        return parent.getParent() == firstNonReferenceExprParent && parent instanceof GrReferenceExpressionImpl;
-      }
-    });
+    return (GrReferenceExpressionImpl)PsiTreeUtil.findFirstParent(
+      ref, parent -> parent.getParent() == firstNonReferenceExprParent && parent instanceof GrReferenceExpressionImpl
+    );
   }
 
   private List<GroovyResolveResult> filterCorrectParameterCount(Collection<GroovyResolveResult> candidates) {
