@@ -136,6 +136,14 @@ def getProperties(String home, String buildNumber) {
             }
           }
 
+          dir("games") {
+            dir("lib") {
+              jar("games.jar") {
+                module("games")
+              }
+            }
+          }
+
           dir("google-cloud-tools") {
             dir("lib") {
               jar("google-cloud-tools.jar") {
