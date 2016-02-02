@@ -223,7 +223,7 @@ public class MainFrame extends JPanel implements DataProvider {
 
     Wrapper textFilter = new Wrapper(myFilterUi.createTextFilter());
     textFilter.setVerticalSizeReferent(toolbar.getComponent());
-    textFilter.setBorder(JBUI.Borders.emptyLeft(5));
+    textFilter.setBorder(BorderFactory.createEmptyBorder(1, 5, 0, 0));
 
     ActionToolbar settings =
       createActionsToolbar(new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_QUICK_SETTINGS_ACTION)));
