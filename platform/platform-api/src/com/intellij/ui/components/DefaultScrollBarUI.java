@@ -62,7 +62,8 @@ final class DefaultScrollBarUI extends AbstractScrollBarUI {
 
   @Override
   void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    paint(JBScrollPane.TRACK_PAINTER, g, x, y, width, height, c, myTrackValue, false);
+    RegionPainter<Float> p = UIUtil.isUnderDarcula() ? JBScrollPane.TRACK_DARK_PAINTER : JBScrollPane.TRACK_PAINTER;
+    paint(p, g, x, y, width, height, c, myTrackValue, false);
   }
 
   @Override

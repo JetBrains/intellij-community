@@ -43,6 +43,9 @@ public class JBScrollPane extends JScrollPane {
   public static final RegionPainter<Float> TRACK_PAINTER = new AlphaPainter(.0f, .1f, Gray.x80);
 
   @Deprecated
+  public static final RegionPainter<Float> TRACK_DARK_PAINTER = new AlphaPainter(.0f, .1f, Gray.x80);
+
+  @Deprecated
   public static final RegionPainter<Float> THUMB_PAINTER = new ProtectedPainter(new SubtractThumbPainter(.20f, .15f, Gray.x80, Gray.x91),
                                                                                 new ThumbPainter(.35f, .25f, Gray.x80, Gray.x6E));
   @Deprecated
