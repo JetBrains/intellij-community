@@ -77,7 +77,8 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     myRebuildListListener = rebuildListListener;
     myShowUnversioned = showUnversioned;
 
-    myChangeListChooser = new ChangeListChooser(changeLists);
+    myChangeListChooser = new ChangeListChooser();
+    myChangeListChooser.updateLists(changeLists);
     myHeaderPanel.add(myChangeListChooser, BorderLayout.EAST);
     ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
 
@@ -315,7 +316,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     private final static int MAX_LEN = 35;
     @NotNull private final ComboBox myChooser;
 
-    public ChangeListChooser(@NotNull List<? extends ChangeList> lists) {
+    public ChangeListChooser() {
       super(new BorderLayout(4, 2));
       myChooser = new ComboBox();
       //noinspection unchecked
@@ -340,7 +341,6 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
         }
       });
 
-      updateLists(lists);
       myChooser.setEditable(false);
       add(myChooser, BorderLayout.CENTER);
 
