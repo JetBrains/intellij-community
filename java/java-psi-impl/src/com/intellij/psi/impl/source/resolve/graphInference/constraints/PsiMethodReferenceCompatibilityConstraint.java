@@ -136,7 +136,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
 
     for (PsiType paramType : signature.getParameterTypes()) {
       if (!session.isProperType(paramType)) {
-        //session.registerIncompatibleErrorMessage("Parameter type in not yet inferred: " + type.getPresentableText());
+        //session.registerIncompatibleErrorMessage("Parameter type in not yet inferred: " + session.getPresentableText(paramType));
         return false;
       }
     }
