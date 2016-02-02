@@ -40,9 +40,8 @@ import java.awt.image.*;
 
 public class JBScrollPane extends JScrollPane {
   public static final RegionPainter<Float> TRACK_PAINTER = new AlphaPainter(.0f, .1f);
-  public static final RegionPainter<Float> THUMB_PAINTER = SystemInfo.isWindows // others do not support custom composites
-                                                           ? new SubtractThumbPainter(.20f, .15f, Gray.x91)
-                                                           : new ThumbPainter(.35f, .25f, Gray.x6E);
+  public static final RegionPainter<Float> THUMB_PAINTER = new ProtectedPainter(new SubtractThumbPainter(.20f, .15f, Gray.x91),
+                                                                                new ThumbPainter(.35f, .25f, Gray.x6E));
   public static final RegionPainter<Float> THUMB_DARK_PAINTER = new ThumbPainter(.35f, .25f, Gray.x94);
 
   private int myViewportBorderWidth = -1;
@@ -703,6 +702,34 @@ public class JBScrollPane extends JScrollPane {
     }
   }
 
+  private static class ProtectedPainter implements RegionPainter<Float> {
+    private RegionPainter<Float> myPainter;
+    private RegionPainter<Float> myFallback;
+
+    public ProtectedPainter(RegionPainter<Float> painter, RegionPainter<Float> fallback) {
+      myPainter = painter;
+      myFallback = fallback;
+    }
+
+    @Override
+    public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
+      RegionPainter<Float> painter = myFallback;
+      if (myPainter != null) {
+        try {
+          myPainter.paint(g, x, y, width, height, value);
+          return;
+        }
+        catch (Exception exception) {
+          // do not try to use myPainter again on other systems
+          if (!SystemInfo.isWindows) myPainter = null;
+        }
+      }
+      if (painter != null) {
+        painter.paint(g, x, y, width, height, value);
+      }
+    }
+  }
+
   private static class AlphaPainter implements RegionPainter<Float> {
     private final float myBase;
     private final float myDelta;
@@ -747,8 +774,7 @@ public class JBScrollPane extends JScrollPane {
 
     @Override
     void paint(Graphics2D g, int x, int y, int width, int height) {
-      super.paint(g, x, y, width, height);
-      g.fillRect(x + 1, y + 1, width - 2, height - 2);
+      super.paint(g, x + 1, y + 1, width - 2, height - 2);
       g.setColor(myColor);
       if (Registry.is("ide.scroll.thumb.border.rounded")) {
         g.drawLine(x + 1, y, x + width - 2, y);
