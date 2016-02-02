@@ -145,26 +145,17 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       }
     }
 
-    final EmptyAction emptyAction = new EmptyAction();
     for (KeymapGroup keymapGroup : keymapGroupMap.values()) {
-      if (condition != null && !condition.value(emptyAction) && keymapGroup instanceof Group) {
-        final Group group = (Group)keymapGroup;
-        if (group.getSize() <= 1 && !condition.value(new EmptyAction(group.getName(), null, null))) {
-          continue;
-        }
+      if (isGroupFiltered(condition, keymapGroup)) {
+        result.addGroup(keymapGroup);
       }
-      result.addGroup(keymapGroup);
     }
 
     for (ActionsProvider extension : ActionsProvider.EP_NAME.getExtensions()) {
       KeymapGroup keymapGroup = extension.createGroup(condition, project);
-      if (condition != null && !condition.value(emptyAction) && keymapGroup instanceof Group) {
-        final Group group = (Group)keymapGroup;
-        if (group.getSize() <= 1 && !condition.value(new EmptyAction(group.getName(), null, null))) {
-          continue;
-        }
+      if (isGroupFiltered(condition, keymapGroup)) {
+        result.addGroup(keymapGroup);
       }
-      result.addGroup(keymapGroup);
     }
 
     return result;
@@ -185,6 +176,17 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     manager.unregisterAction(action.getId());
     manager.registerAction(action.getId(), action);
     return action;
+  }
+
+  private static boolean isGroupFiltered(Condition<AnAction> condition, KeymapGroup keymapGroup) {
+    final EmptyAction emptyAction = new EmptyAction();
+    if (condition != null && !condition.value(emptyAction) && keymapGroup instanceof Group) {
+      final Group group = (Group)keymapGroup;
+      if (group.getSize() <= 1 && !condition.value(new EmptyAction(group.getName(), null, null))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static void createActions(Project project, Collection<DataNode<TaskData>> taskNodes) {
