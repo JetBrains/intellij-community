@@ -142,9 +142,10 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         }, "Insert block statement", null);
         return Result.STOP;
       }
-   
-      if (leaf != null && PsiTreeUtil.getParentOfType(PsiTreeUtil.prevVisibleLeaf(leaf), PsiNewExpression.class, true, 
-                                                      PsiCodeBlock.class, PsiMember.class) != null) {
+
+      PsiElement prevLeaf = leaf == null ? null : PsiTreeUtil.prevVisibleLeaf(leaf);
+      if (PsiUtil.isJavaToken(prevLeaf, JavaTokenType.ARROW) || 
+          PsiTreeUtil.getParentOfType(prevLeaf, PsiNewExpression.class, true, PsiCodeBlock.class, PsiMember.class) != null) {
         return Result.CONTINUE;
       }
 
