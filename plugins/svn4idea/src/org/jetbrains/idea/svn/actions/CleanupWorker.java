@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +58,7 @@ public class CleanupWorker {
     final List<Pair<VcsException, VirtualFile>> exceptions = new LinkedList<Pair<VcsException, VirtualFile>>();
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
 
-    final Task.Backgroundable task = new Task.Backgroundable(myProject, SvnBundle.message(myTitleKey), true, BackgroundFromStartOption.getInstance()) {
+    final Task.Backgroundable task = new Task.Backgroundable(myProject, SvnBundle.message(myTitleKey), true) {
       public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         VirtualFile currentRoot;

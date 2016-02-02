@@ -31,13 +31,9 @@ import java.net.URL;
  */
 @State(
   name = "CodeStyleSchemesUIConfiguration",
-  storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+  storages = {@Storage(file = "other.xml", roamingType = RoamingType.DISABLED)}
 )
 public class CodeStyleSchemesUIConfiguration implements PersistentStateComponent<CodeStyleSchemesUIConfiguration> {
-
   public String RECENT_IMPORT_FILE_LOCATION = "";
 
   @Nullable

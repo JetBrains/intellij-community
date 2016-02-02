@@ -19,12 +19,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.popup.KeepingPopupOpenAction;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SizedIcon;
+import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PlatformIcons;
@@ -39,12 +39,14 @@ import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -73,14 +75,14 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       VcsLogUtil.getAllVisibleRoots(getAllRoots(), filter.getRootFilter(), filter.getStructureFilter());
 
     if (files.isEmpty()) {
-      return getTextFromFiles(roots, "roots", true, visibleRoots.size() == getAllRoots().size());
+      return getTextFromRoots(roots, "roots", true, visibleRoots.size() == getAllRoots().size());
     }
     else {
       return getTextFromFilePaths(files, "folders", false, files.isEmpty());
     }
   }
 
-  private static String getTextFromFiles(@NotNull Collection<VirtualFile> files,
+  private static String getTextFromRoots(@NotNull Collection<VirtualFile> files,
                                          @NotNull String category,
                                          final boolean shorten,
                                          boolean full) {
@@ -145,7 +147,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       tooltip += "No Roots Selected";
     }
     else if (roots.size() != getAllRoots().size()) {
-      tooltip += "Roots:\n" + getTooltipTextForFiles(roots, true);
+      tooltip += "Roots:\n" + getTooltipTextForRoots(roots, true);
     }
     if (!files.isEmpty()) {
       if (!tooltip.isEmpty()) tooltip += "\n";
@@ -154,7 +156,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     return tooltip;
   }
 
-  private static String getTooltipTextForFiles(Collection<VirtualFile> files, final boolean shorten) {
+  private static String getTooltipTextForRoots(Collection<VirtualFile> files, final boolean shorten) {
     return getTooltipTextForFiles(files, shorten ? FILE_BY_NAME_COMPARATOR : FILE_BY_PATH_COMPARATOR,
                                   new NotNullFunction<VirtualFile, String>() {
                                     @NotNull
@@ -315,7 +317,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
         setVisibleOnly(myRoot);
       }
       else {
-        if ((e.getModifiers() & InputEvent.CTRL_MASK) != 0) {
+        if ((e.getModifiers() & getMask()) != 0) {
             setVisibleOnly(myRoot);
         }
         else {
@@ -324,13 +326,18 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       }
     }
 
+    @JdkConstants.InputEventMask
+    private int getMask() {
+      return SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK;
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
 
       updateIcon();
       e.getPresentation().setIcon(myIcon);
-      e.getPresentation().putClientProperty(TOOL_TIP_TEXT_KEY, "Ctrl+Click to see only \"" + e.getPresentation().getText() + "\"");
+      e.getPresentation().putClientProperty(TOOL_TIP_TEXT_KEY, KeyEvent.getKeyModifiersText(getMask()) + "+Click to see only \"" + e.getPresentation().getText() + "\"");
     }
 
     private void updateIcon() {
@@ -378,17 +385,21 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       Project project = e.getRequiredData(CommonDataKeys.PROJECT);
       VcsLogDataPack dataPack = myFilterModel.getDataPack();
       VcsLogFileFilter filter = myFilterModel.getFilter();
-      Collection<VirtualFile> files = filter == null || filter.getStructureFilter() == null
-                                      ? Collections.<VirtualFile>emptySet()
-                                      : ContainerUtil
-                                        .mapNotNull(filter.getStructureFilter().getFiles(), new Function<FilePath, VirtualFile>() {
-                                          @Override
-                                          public VirtualFile fun(FilePath filePath) {
-                                            VirtualFile virtualFile = filePath.getVirtualFile();
-                                            if (virtualFile != null) return virtualFile;
-                                            return ChangesUtil.findValidParentAccurately(filePath);
-                                          }
-                                        });
+
+      Collection<VirtualFile> files;
+      if (filter == null || filter.getStructureFilter() == null) {
+        files = Collections.emptySet();
+      }
+      else {
+        files = ContainerUtil.mapNotNull(filter.getStructureFilter().getFiles(), new Function<FilePath, VirtualFile>() {
+          @Override
+          public VirtualFile fun(FilePath filePath) {
+            // for now, ignoring non-existing paths
+            return filePath.getVirtualFile();
+          }
+        });
+      }
+
       VcsStructureChooser chooser = new VcsStructureChooser(project, "Select Files or Folders to Filter by", files,
                                                             new ArrayList<VirtualFile>(dataPack.getLogProviders().keySet()));
       if (chooser.showAndGet()) {

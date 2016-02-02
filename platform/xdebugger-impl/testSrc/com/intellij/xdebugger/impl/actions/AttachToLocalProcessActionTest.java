@@ -250,11 +250,11 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
   }
 
   public void testHistory() throws Exception {
-    ProcessInfo info1 = new ProcessInfo(1, "command line 1", "exec1", "args1", null, null);
-    ProcessInfo info2 = new ProcessInfo(1, "command line 2", "exec1", "args1", null, null);
-    ProcessInfo info3 = new ProcessInfo(1, "command line 3", "exec1", "args1", null, null);
-    ProcessInfo info4 = new ProcessInfo(1, "command line 4", "exec1", "args1", null, null);
-    ProcessInfo info5 = new ProcessInfo(1, "command line 5", "exec1", "args1", null, null);
+    ProcessInfo info1 = new ProcessInfo(1, "command line 1", "exec1", "args1");
+    ProcessInfo info2 = new ProcessInfo(1, "command line 2", "exec1", "args1");
+    ProcessInfo info3 = new ProcessInfo(1, "command line 3", "exec1", "args1");
+    ProcessInfo info4 = new ProcessInfo(1, "command line 4", "exec1", "args1");
+    ProcessInfo info5 = new ProcessInfo(1, "command line 5", "exec1", "args1");
 
     List<XLocalAttachDebugger> debuggers = createDebuggers("gdb");
     AttachItem item1 = new AttachItem(XLocalAttachGroup.DEFAULT, true, info1, debuggers);
@@ -297,8 +297,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
     TestAttachGroup group1 = new TestAttachGroup("group1", 1);
     TestAttachGroup group2 = new TestAttachGroup("group2", 2);
 
-    ProcessInfo info1 = new ProcessInfo(1, "same command line", "exec1", "args1", null, null);
-    ProcessInfo info2 = new ProcessInfo(2, "same command line", "exec2", "args2", null, null);
+    ProcessInfo info1 = new ProcessInfo(1, "same command line", "exec1", "args1");
+    ProcessInfo info2 = new ProcessInfo(2, "same command line", "exec2", "args2");
     
     AttachItem item1 = new AttachItem(group1, true, info1, createDebuggers("gdb1"));
     AttachItem item2 = new AttachItem(group2, true, info2, createDebuggers("gdb2"));
@@ -320,8 +320,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
 
     List<AttachItem> originalItems = collectAttachItems(getProject(),
                                                         new ProcessInfo[]{
-                                                          new ProcessInfo(1, "command line 1", "exec1", "args1", null, null),
-                                                          new ProcessInfo(2, "command line 2", "exec2", "args2", null, null)},
+                                                          new ProcessInfo(1, "command line 1", "exec1", "args1"),
+                                                          new ProcessInfo(2, "command line 2", "exec2", "args2")},
                                                         new TestDebuggerProvider(1, group1, debuggers1),
                                                         new TestDebuggerProvider(2, group2, debuggers2));
     
@@ -340,8 +340,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 "    gdb2\n" +
                 "    lldb2\n",
                 new ProcessInfo[]{
-                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
-                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                  new ProcessInfo(10, "command line 1", "exec10", "args10"),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20")
                 },
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers2));
@@ -364,8 +364,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 "    gdb2\n" +
                 "    lldb2\n",
                 new ProcessInfo[]{
-                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
-                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                  new ProcessInfo(10, "command line 1", "exec10", "args10"),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20")
                 },
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers2));
@@ -388,8 +388,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 "    gdb2\n" +
                 "    lldb2\n",
                 new ProcessInfo[]{
-                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
-                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                  new ProcessInfo(10, "command line 1", "exec10", "args10"),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20")
                 },
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers2));
@@ -413,8 +413,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 "    gdb2\n" +
                 "    lldb2\n",
                 new ProcessInfo[]{
-                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
-                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                  new ProcessInfo(10, "command line 1", "exec10", "args10"),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20")
                 },
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers2));
@@ -433,8 +433,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 "    gdb2\n" +
                 "    lldb2\n",
                 new ProcessInfo[]{
-                  new ProcessInfo(10, "command line 10", "exec10", "args10", null, null),
-                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                  new ProcessInfo(10, "command line 10", "exec10", "args10"),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20")
                 },
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers2));
@@ -447,8 +447,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 "    gdb2\n" +
                 "    lldb2\n",
                 new ProcessInfo[]{
-                  new ProcessInfo(10, "command line 10", "exec10", "args10", null, null),
-                  new ProcessInfo(20, "command line 20", "exec20", "args20", null, null)
+                  new ProcessInfo(10, "command line 10", "exec10", "args10"),
+                  new ProcessInfo(20, "command line 20", "exec20", "args20")
                 },
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers2));
@@ -469,8 +469,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 "    gdb2\n" +
                 "    lldb2\n",
                 new ProcessInfo[]{
-                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
-                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                  new ProcessInfo(10, "command line 1", "exec10", "args10"),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20")
                 },
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers2));
@@ -488,8 +488,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 "    gdb2\n" +
                 "    lldb2\n",
                 new ProcessInfo[]{
-                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
-                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                  new ProcessInfo(10, "command line 1", "exec10", "args10"),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20")
                 },
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group1, debuggers2));
@@ -505,8 +505,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 "    gdb2\n" +
                 "    lldb2\n",
                 new ProcessInfo[]{
-                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
-                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                  new ProcessInfo(10, "command line 1", "exec10", "args10"),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20")
                 },
                 new TestDebuggerProvider(10, group2, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers2));
@@ -520,8 +520,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 "    gdb2\n" +
                 "    lldb2\n",
                 new ProcessInfo[]{
-                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
-                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                  new ProcessInfo(10, "command line 1", "exec10", "args10"),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20")
                 },
                 new TestDebuggerProvider(10, new TestAttachGroup(group1.getGroupName(), group1.getOrder()), debuggers1),
                 new TestDebuggerProvider(20, new TestAttachGroup(group2.getGroupName(), group2.getOrder()), debuggers2));
@@ -540,8 +540,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 "    gdb1\n" +
                 "    lldb1\n",
                 new ProcessInfo[]{
-                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
-                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                  new ProcessInfo(10, "command line 1", "exec10", "args10"),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20")
                 },
                 new TestDebuggerProvider(10, group1, debuggers1),
                 new TestDebuggerProvider(20, group2, debuggers1));
@@ -563,8 +563,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 "    gdb2\n" +
                 "    lldb2\n",
                 new ProcessInfo[]{
-                  new ProcessInfo(10, "command line 1", "exec10", "args10", null, null),
-                  new ProcessInfo(20, "command line 2", "exec20", "args20", null, null)
+                  new ProcessInfo(10, "command line 1", "exec10", "args10"),
+                  new ProcessInfo(20, "command line 2", "exec20", "args20")
                 },
                 new TestDebuggerProvider(10, group1, createDebuggers("gdb1", "lldb1")),
                 new TestDebuggerProvider(20, group2, createDebuggers("gdb2", "lldb2")));
@@ -572,8 +572,8 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
 
   private void assertItems(String expected, @NotNull XLocalAttachDebuggerProvider... providers) {
     ProcessInfo[] infos = {
-      new ProcessInfo(1, "command line 1", "exec1", "args1", null, null),
-      new ProcessInfo(2, "command line 2", "exec2", "args2", null, null),
+      new ProcessInfo(1, "command line 1", "exec1", "args1"),
+      new ProcessInfo(2, "command line 2", "exec2", "args2"),
     };
     assertItems(expected, infos, providers);
   }

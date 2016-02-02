@@ -18,11 +18,32 @@ package com.intellij.util;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.ui.UIUtil;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class AlarmTest extends PlatformTestCase {
   public void testTwoAddsWithZeroDelayMustExecuteSequentially() throws Exception {
     Alarm alarm = new Alarm(getTestRootDisposable());
+    assertRequestsExecuteSequentially(alarm);
+  }
+
+  public void testAlarmRequestsShouldExecuteSequentiallyEvenInPooledThread() throws Exception {
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
+    assertRequestsExecuteSequentially(alarm);
+  }
+
+  public void testAlarmRequestsShouldExecuteSequentiallyEveryWhere() throws Exception {
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, getTestRootDisposable());
+    assertRequestsExecuteSequentially(alarm);
+  }
+
+  public void testAlarmRequestsShouldExecuteSequentiallyAbsolutelyEveryWhere() throws Exception {
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, getTestRootDisposable());
+    assertRequestsExecuteSequentially(alarm);
+  }
+
+  private static void assertRequestsExecuteSequentially(Alarm alarm) throws InterruptedException, ExecutionException, TimeoutException {
     int N = 100000;
     StringBuffer log = new StringBuffer(N*4);
     StringBuilder expected = new StringBuilder(N * 4);

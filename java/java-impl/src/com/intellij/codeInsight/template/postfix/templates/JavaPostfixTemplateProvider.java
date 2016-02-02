@@ -63,7 +63,10 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
                                          new ThrowExceptionPostfixTemplate(),
                                          new TryStatementPostfixTemplate(),
                                          new TryWithResourcesPostfixTemplate(),
-                                         new WhileStatementPostfixTemplate());
+                                         new WhileStatementPostfixTemplate(),
+                                         new StreamPostfixTemplate(),
+                                         new OptionalPostfixTemplate(),
+                                         new LambdaPostfixTemplate());
   }
 
   @NotNull

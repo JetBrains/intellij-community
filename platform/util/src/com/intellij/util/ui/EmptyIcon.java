@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.ScalableIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,9 +29,9 @@ import java.util.Map;
  * @author max
  * @author Konstantin Bulenkov
  *
- * @see com.intellij.util.ui.ColorIcon
+ * @see ColorIcon
  */
-public class EmptyIcon implements Icon {
+public class EmptyIcon implements Icon, ScalableIcon {
   private static final Map<Integer, Icon> cache = new HashMap<Integer, Icon>();
 
   public static final Icon ICON_16 = create(16);
@@ -40,6 +41,7 @@ public class EmptyIcon implements Icon {
 
   private final int width;
   private final int height;
+  private float scale = 1f;
 
   public static Icon create(int size) {
     Icon icon = cache.get(size);
@@ -78,12 +80,12 @@ public class EmptyIcon implements Icon {
 
   @Override
   public int getIconWidth() {
-    return width;
+    return scale == 1f ? width : (int) (width * scale);
   }
 
   @Override
   public int getIconHeight() {
-    return height;
+    return scale == 1f ? height : (int) (height * scale);
   }
 
   @Override
@@ -98,22 +100,45 @@ public class EmptyIcon implements Icon {
 
     if (height != icon.height) return false;
     if (width != icon.width) return false;
+    if (scale != icon.scale) return false;
 
     return true;
   }
 
+  @Override
   public int hashCode() {
-    int sum = width + height;
-    return sum * (sum + 1)/2 + width;
+    int result = width;
+    result = 31 * result + height;
+    result = 31 * result + (scale != +0.0f ? Float.floatToIntBits(scale) : 0);
+    return result;
   }
 
   public EmptyIconUIResource asUIResource() {
     return new EmptyIconUIResource(this);
   }
 
+  @Override
+  public Icon scale(float scaleFactor) {
+    if (scaleFactor != scale) {
+      EmptyIcon icon;
+      if (scale != 1f) {
+        icon = this;
+      } else {
+        icon = this instanceof UIResource ? new EmptyIconUIResource(width, height) : new EmptyIcon(width, height);
+      }
+      icon.scale = scaleFactor;
+      return icon;
+    }
+    return this;
+  }
+
   public static class EmptyIconUIResource extends EmptyIcon implements UIResource {
     public EmptyIconUIResource(EmptyIcon icon) {
       super(icon.width, icon.height);
+    }
+
+    private EmptyIconUIResource(int width, int height) {
+      super(width, height);
     }
   }
 }

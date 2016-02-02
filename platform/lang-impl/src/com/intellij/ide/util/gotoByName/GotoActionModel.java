@@ -337,7 +337,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     AnAction[] actions = group.getChildren(null);
     includeGroup(result, group, actions, containingGroupName);
     for (AnAction action : actions) {
-      if (action == null) continue;
+      if (action == null || action instanceof Separator) continue;
       if (action instanceof ActionGroup) {
         ActionGroup actionGroup = (ActionGroup)action;
         String groupName = actionGroup.getTemplatePresentation().getText();

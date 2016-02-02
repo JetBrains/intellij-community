@@ -98,16 +98,6 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     }
   }
 
-  public Character findFirstKeyValueDelimiter() {
-    for (IProperty property : myProperties) {
-      final Character separator = ((PropertyImpl)property).getKeyValueDelimiter();
-      if (separator != null) {
-        return separator;
-      }
-    }
-    return null;
-  }
-
   @Override
   public IProperty findPropertyByKey(@NotNull String key) {
     ensurePropertiesLoaded();

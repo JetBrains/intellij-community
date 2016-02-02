@@ -52,6 +52,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.HintHint;
@@ -375,17 +376,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     if (getGutterRenderer(e) != null) return;
 
-    int x = getAnnotationsAreaOffset();
-    for (int i = 0; i < myTextAnnotationGutters.size(); i++) {
-      final int size = myTextAnnotationGutterSizes.get(i);
-      if (x <= e.getX() && e.getX() <= x + size + GAP_BETWEEN_ANNOTATIONS) {
-        queue.blockNextEvents(e);
-        closeAllAnnotations();
-        e.consume();
-        break;
-      }
-
-      x += size + GAP_BETWEEN_ANNOTATIONS;
+    if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
+      queue.blockNextEvents(e);
+      closeAllAnnotations();
+      e.consume();
     }
   }
 
@@ -405,8 +399,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(i);
 
         int lineHeight = myEditor.getLineHeight();
-        int startLineNumber = clip.y / lineHeight;
-        int endLineNumber = (clip.y + clip.height) / lineHeight + 1;
+        int startLineNumber = myEditor.yToVisibleLine(clip.y);
+        int endLineNumber = myEditor.yToVisibleLine(clip.y + clip.height) + 1;
         int lastLine = myEditor.logicalToVisualPosition(
           new LogicalPosition(endLineNumber(), 0))
           .line;
@@ -423,12 +417,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           final Color bg = gutterProvider.getBgColor(logLine, myEditor);
           if (bg != null) {
             g.setColor(bg);
-            g.fillRect(x, j * lineHeight, annotationSize, lineHeight);
+            g.fillRect(x, myEditor.visibleLineToY(j), annotationSize, lineHeight);
           }
           g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(logLine, myEditor)));
           g.setFont(myEditor.getColorsScheme().getFont(style));
-          if (s != null) {
-            g.drawString(s, x, (j + 1) * lineHeight - myEditor.getDescent());
+          if (!StringUtil.isEmpty(s)) {
+            // we leave half of the gap before the text
+            g.drawString(s, GAP_BETWEEN_ANNOTATIONS / 2 + x, myEditor.visibleLineToY(j) + myEditor.getAscent());
           }
         }
 
@@ -498,9 +493,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (!isLineNumbersShown()) {
       return;
     }
-    int lineHeight = myEditor.getLineHeight();
-    int startLineNumber = clip.y / lineHeight;
-    int endLineNumber = (clip.y + clip.height) / lineHeight + 1;
+    int startLineNumber = myEditor.yToVisibleLine(clip.y);
+    int endLineNumber = myEditor.yToVisibleLine(clip.y + clip.height) + 1;
     int lastLine = myEditor.logicalToVisualPosition(
       new LogicalPosition(endLineNumber(), 0))
       .line;
@@ -523,7 +517,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         int logLine = convertor.execute(logicalPosition.line);
         if (logLine >= 0) {
           String s = String.valueOf(logLine + 1);
-          int startY = (i + 1) * lineHeight;
+          int startY = myEditor.visibleLineToY(i);
           if (myEditor.isInDistractionFreeMode()) {
             Color fgColor = myTextFgColors.get(i);
             g.setColor(fgColor != null ? fgColor : color != null ? color : JBColor.blue);
@@ -535,7 +529,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
           g.drawString(s,
                        textOffset,
-                       startY - myEditor.getDescent());
+                       startY + myEditor.getAscent());
         }
       }
     }
@@ -566,10 +560,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void processRangeHighlighters(int startOffset, int endOffset, @NotNull RangeHighlighterProcessor processor) {
     Document document = myEditor.getDocument();
-    final MarkupModelEx docMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myEditor.getProject(), true);
     // we limit highlighters to process to between line starting at startOffset and line ending at endOffset
-    DisposableIterator<RangeHighlighterEx> docHighlighters = docMarkup.overlappingIterator(startOffset, endOffset);
-    DisposableIterator<RangeHighlighterEx> editorHighlighters = myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset);
+    MarkupIterator<RangeHighlighterEx>docHighlighters = myEditor.getFilteredDocumentMarkupModel().overlappingIterator(startOffset, endOffset);
+    MarkupIterator<RangeHighlighterEx> editorHighlighters = myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset);
 
     try {
       RangeHighlighterEx lastDocHighlighter = null;
@@ -619,9 +612,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         int endLineIndex = lowerHighlighter.getDocument().getLineNumber(endOffset);
         if (!isValidLine(document, endLineIndex)) continue;
 
-        if (lowerHighlighter.getEditorFilter().avaliableIn(myEditor)) {
-          processor.process(lowerHighlighter);
-        }
+        processor.process(lowerHighlighter);
       }
     }
     finally {
@@ -684,8 +675,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(j);
       int gutterSize = 0;
       for (int i = 0; i < lineCount; i++) {
-        final String lineText = gutterProvider.getLineText(i, myEditor);
-        if (lineText != null) {
+        String lineText = gutterProvider.getLineText(i, myEditor);
+        if (!StringUtil.isEmpty(lineText)) {
           gutterSize = Math.max(gutterSize, fontMetrics.stringWidth(lineText));
         }
       }
@@ -895,7 +886,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private Icon scaleIcon(Icon icon) {
     if (Registry.is("editor.scale.gutter.icons") && icon instanceof ScalableIcon) {
-      float scale = myEditor.getLineHeight() / JBUI.scale(16f);
+      float scale = myEditor.getScale();
       if (Math.abs(1f - scale) > 0.10f) {
         return ((ScalableIcon)icon).scale(scale);
       }
@@ -958,7 +949,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int getTextAlignmentShift(Icon icon) {
-    return (myEditor.getLineHeight() - icon.getIconHeight()) /2;
+    int centerRelative = (myEditor.getLineHeight() - icon.getIconHeight()) / 2;
+    int baselineRelative = myEditor.getAscent() - icon.getIconHeight();
+    return Math.max(centerRelative, baselineRelative);
   }
 
   @Override
@@ -990,7 +983,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     Collection<DisplayedFoldingAnchor> anchorsToDisplay =
       myAnchorsDisplayStrategy.getAnchorsToDisplay(firstVisibleOffset, lastVisibleOffset, myActiveFoldRegion);
     for (DisplayedFoldingAnchor anchor : anchorsToDisplay) {
-      drawAnchor(width, clip, g, anchorX, anchor.visualLine, anchor.type, anchor.foldRegion == myActiveFoldRegion);
+      drawFoldingAnchor(width, clip, g, anchorX, anchor.visualLine, anchor.type, anchor.foldRegion == myActiveFoldRegion);
     }
   }
 
@@ -1038,17 +1031,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int getFoldAnchorY(int line, int width) {
-    return getLineCenterY(line) - width / 2;
+    return myEditor.visibleLineToY(line) + myEditor.getAscent() - width;
   }
 
   int getHeadCenterY(FoldRegion foldRange) {
     return getLineCenterY(myEditor.offsetToVisualLine(foldRange.getStartOffset()));
   }
 
-  private void drawAnchor(int width, Rectangle clip, Graphics2D g, int anchorX, int visualLine,
-                          DisplayedFoldingAnchor.Type type, boolean active) {
+  private void drawFoldingAnchor(int width, Rectangle clip, Graphics2D g, int anchorX, int visualLine,
+                                 DisplayedFoldingAnchor.Type type, boolean active) {
 
-    final int off = JBUI.scale(2);
+    final int off = (int)(JBUI.scale(2) * myEditor.getScale());
     int height = width + off;
     int y = getFoldAnchorY(visualLine, width);
     switch (type) {
@@ -1138,7 +1131,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int getFoldingAnchorWidth() {
-    return Math.min(JBUI.scale(4), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2;
+    return (int)(Math.min(JBUI.scale(4) * myEditor.getScale(), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2);
   }
 
   public int getFoldingAreaOffset() {
@@ -1242,6 +1235,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public int getLineNumberAreaOffset() {
     if (getLineNumberAreaWidth() == 0 && getAnnotationsAreaWidthEx() == 0 && getLineMarkerAreaWidth() == 0) {
       return getFoldingAreaWidth() == 0 ? 0 : 1;
+    }
+    else if (getLineNumberAreaWidth() == 0 && getAnnotationsAreaWidthEx() > 0) {
+      return 0; // no gap if annotations area is the first visible
     }
     else {
       return GAP_BETWEEN_AREAS;

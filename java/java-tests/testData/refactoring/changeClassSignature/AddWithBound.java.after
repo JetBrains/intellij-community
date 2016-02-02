@@ -1,0 +1,10 @@
+import java.util.List;
+
+public class Main {
+
+  class B<T extends java.util.Collection> {}
+
+  public void someMethod() {
+    B<List> b = new B<List>();
+  }
+}

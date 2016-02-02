@@ -49,4 +49,11 @@ class EventMap<R : ResponseResultReader>(private val protocolReader: R) {
       handler(eventData)
     }
   }
+
+  fun <T : Any?> handleEvent(type: EventType<T, R>, event: T) {
+    val handlers = nameToHandler.get(type.methodName) ?: return
+    for (handler in handlers) {
+      handler(event)
+    }
+  }
 }

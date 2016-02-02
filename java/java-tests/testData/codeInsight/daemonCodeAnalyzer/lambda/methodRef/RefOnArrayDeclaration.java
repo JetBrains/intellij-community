@@ -39,7 +39,7 @@ class OnArrayTest {
 
         ArrayReturnType<String[]> a1 = String[]::new;
         ArrayReturnType<String[][]> a2 = String[][]::new;
-        <error descr="Incompatible types. Found: '<method reference>', required: 'OnArrayTest.ArrayReturnType<java.lang.String[]>'">ArrayReturnType<String[]> a3 = int[]::new;</error>
+        ArrayReturnType<String[]> a3 = <error descr="Bad return type in method reference: cannot convert int[] to java.lang.String[]">int[]::new</error>;
         
         ObjectArrayReturnType a4 = Foo<?>[]::new;
         ObjectArrayReturnType a5 = <error descr="Generic array creation">Foo<? extends String>[]</error>::new;

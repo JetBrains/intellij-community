@@ -78,7 +78,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     return new JavaLineBreakpointProperties();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public JavaLineBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
     return new JavaLineBreakpointProperties();
@@ -165,32 +165,9 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     return DebuggerUtilsEx.getContainingMethod(position);
   }
 
-  public class JavaBreakpointVariant extends XLineBreakpointVariant {
-    protected final XSourcePosition mySourcePosition;
-
+  public class JavaBreakpointVariant extends XLineBreakpointAllVariant {
     public JavaBreakpointVariant(XSourcePosition position) {
-      mySourcePosition = position;
-    }
-
-    @Override
-    public String getText() {
-      return "All";
-    }
-
-    @Override
-    public Icon getIcon() {
-      return null;
-    }
-
-    @Override
-    public TextRange getHighlightRange() {
-      return null;
-    }
-
-    @Override
-    public JavaLineBreakpointProperties createProperties() {
-      return createBreakpointProperties(mySourcePosition.getFile(),
-                                        mySourcePosition.getLine());
+      super(position);
     }
   }
 
@@ -219,9 +196,11 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       return myElement.getTextRange();
     }
 
+    @NotNull
     @Override
     public JavaLineBreakpointProperties createProperties() {
       JavaLineBreakpointProperties properties = super.createProperties();
+      assert properties != null;
       properties.setLambdaOrdinal(myLambdaOrdinal);
       return properties;
     }

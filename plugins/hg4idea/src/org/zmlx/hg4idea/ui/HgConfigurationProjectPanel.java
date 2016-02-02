@@ -15,7 +15,6 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -25,7 +24,6 @@ import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
-import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgVersion;
 
 import javax.swing.*;
@@ -103,16 +101,6 @@ public class HgConfigurationProjectPanel {
 
   public JPanel getPanel() {
     return myMainPanel;
-  }
-
-  public void validate() throws ConfigurationException {
-    String hgExecutable;
-    hgExecutable = getCurrentPath();
-    if (!HgUtil.isExecutableValid(hgExecutable)) {
-      throw new ConfigurationException(
-        HgVcsMessages.message("hg4idea.configuration.executable.error", hgExecutable)
-      );
-    }
   }
 
   private void createUIComponents() {

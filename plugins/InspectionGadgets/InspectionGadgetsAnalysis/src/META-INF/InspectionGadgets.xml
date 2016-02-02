@@ -35,6 +35,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="InstanceofThis" bundle="com.siyeh.InspectionGadgetsBundle" key="instanceof.check.for.this.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.abstraction.InstanceofThisInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="InterfaceMethodClashesWithObject" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="interface.clashes.with.object.class.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.abstraction.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.abstraction.InterfaceMethodClashesWithObjectInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LocalVariableOfConcreteClass" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="local.variable.of.concrete.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"

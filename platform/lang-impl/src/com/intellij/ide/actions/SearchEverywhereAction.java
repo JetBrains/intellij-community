@@ -1101,7 +1101,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
       @Override
       public AccessibleContext getAccessibleContext() {
-        return myAccessible != null ? myAccessible.getAccessibleContext() : super.getAccessibleContext();
+        return accessibleContext = (myAccessible != null ? myAccessible.getAccessibleContext() : super.getAccessibleContext());
       }
     }
 

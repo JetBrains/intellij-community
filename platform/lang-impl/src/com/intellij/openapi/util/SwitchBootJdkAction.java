@@ -68,7 +68,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    if (!(SystemInfo.isMac || (SystemInfo.isLinux && PlatformUtils.isIntelliJ()))) {
+    if (!(SystemInfo.isMac || SystemInfo.isLinux)) {
       presentation.setEnabledAndVisible(false);
       return;
     }

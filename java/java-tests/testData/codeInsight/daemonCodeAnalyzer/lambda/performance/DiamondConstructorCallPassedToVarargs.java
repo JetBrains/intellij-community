@@ -44,61 +44,9 @@ class GeometricGraph<T extends Comparable<T>> implements Graph<GeometricGraph.Po
   }
 }
 
-abstract class IndexedGraph<T> implements Graph<T> {
-  final double[][] distance;
-  public IndexedGraph(double[][] distance) {
-    this.distance = distance;
-  }
-  @Override public T startVertex() {
-    return getVertex(0);
-  }
-  @Override public double distance(T from, T to) {
-    return distance[getIndex(from)][getIndex(to)];
-  }
-  @Override public Iterator<T> iterator() {
-    return IntStream.range(0, getVertexCount()).mapToObj(this::getVertex).iterator();
-  }
-  private int getVertexCount() {
-    return distance.length;
-  }
-  protected abstract T getVertex(int index);
-  protected abstract int getIndex(T vertex);
-}
-
-class CharacterGraph extends IndexedGraph<Character> {
-  private final char base;
-  public CharacterGraph(double[][] distance, char base) {
-    super(distance);
-    this.base = base;
-  }
-  @Override protected Character getVertex(int index) {
-    return (char)(base + index);
-  }
-  @Override protected int getIndex(Character vertex) {
-    return vertex - base;
-  }
-}
-
 interface Crash<T> {
   double INF = Double.POSITIVE_INFINITY;
   void run(Graph<T> graph);
-
-  // From video, solution: 0->1->3->2->0 costing 21
-  CharacterGraph VIDEO = new CharacterGraph(new double[][] {
-    {0, 1, 15, 6},
-    {2, 0, 7, 3},
-    {9, 6, 0, 12},
-    {10, 4, 8, 0},
-  }, '0');
-
-  // From comments, solution: A->C->E->D->B->A costing 21
-  CharacterGraph COMMENT = new CharacterGraph(new double[][] {
-    {0, 3, 3, 1, INF},
-    {3, 0, 8, 5, INF},
-    {3, 8, 0, 1, 6},
-    {1, 5, 1, 0, 4},
-    {INF, INF, 6, 4, 0},
-  }, 'A');
 
   // From http://lcm.csa.iisc.ernet.in/dsa/node186.html, solution a->c->d->e->f->b->a 48.39
   GeometricGraph<Character> CARTESIAN = new GeometricGraph<>(

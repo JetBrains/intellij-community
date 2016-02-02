@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,13 @@ import com.intellij.codeInsight.lookup.RealLookupElementPresentation;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -168,13 +170,17 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
 
     myNameComponent.clear();
-    myNameComponent.setIcon(augmentIcon(presentation.getIcon(), myEmptyIcon));
     myNameComponent.setBackground(background);
     allowedWidth -= setItemTextLabel(item, new JBColor(isSelected ? SELECTED_FOREGROUND_COLOR : presentation.getItemTextForeground(), presentation.getItemTextForeground()), isSelected, presentation, allowedWidth);
 
-    Font customFont = myLookup.getCustomFont(item, false);
-    myTailComponent.setFont(customFont != null ? customFont : myNormalFont);
-    myTypeLabel.setFont(customFont != null ? customFont : myNormalFont);
+    Font font = myLookup.getCustomFont(item, false);
+    if (font == null) {
+      font = myNormalFont;
+    }
+    myTailComponent.setFont(font);
+    myTypeLabel.setFont(font);
+    myNameComponent.setIcon(augmentIcon(myLookup.getEditor(), presentation.getIcon(), myEmptyIcon));
+
 
     myTypeLabel.clear();
     if (allowedWidth > 0) {
@@ -411,7 +417,11 @@ public class LookupCellRenderer implements ListCellRenderer {
     return used;
   }
 
-  public static Icon augmentIcon(@Nullable Icon icon, @NotNull Icon standard) {
+  public static Icon augmentIcon(@Nullable Editor editor, @Nullable Icon icon, @NotNull Icon standard) {
+    if (Registry.is("editor.scale.completion.icons")) {
+      standard = EditorUtil.scaleIconAccordingEditorFont(standard, editor);
+      icon = EditorUtil.scaleIconAccordingEditorFont(icon, editor);
+    }
     if (icon == null) {
       return standard;
     }

@@ -58,7 +58,7 @@ fun oioClientBootstrap(): Bootstrap {
   return bootstrap
 }
 
-inline fun ChannelFuture.addListener(crossinline listener: (future: ChannelFuture) -> Unit) {
+inline fun ChannelFuture.addChannelListener(crossinline listener: (future: ChannelFuture) -> Unit) {
   addListener(GenericFutureListener<io.netty.channel.ChannelFuture> { listener(it) })
 }
 

@@ -78,7 +78,7 @@ public class GitTestUtil {
     }
   }
 
-  private static void initRepo(@NotNull String repoRoot, boolean makeInitialCommit) {
+  public static void initRepo(@NotNull String repoRoot, boolean makeInitialCommit) {
     cd(repoRoot);
     git("init");
     setupUsername();
@@ -168,9 +168,9 @@ public class GitTestUtil {
                                         @NotNull String title,
                                         @NotNull String content,
                                         @NotNull Notification actual) {
-    assertEquals("Incorrect type of notification: " + tos(actual), type, actual.getType());
-    assertEquals(title, actual.getTitle());
-    assertEquals(cleanupForAssertion(content), cleanupForAssertion(actual.getContent()));
+    assertEquals("Incorrect notification type: " + tos(actual), type, actual.getType());
+    assertEquals("Incorrect notification title: " + tos(actual), title, actual.getTitle());
+    assertEquals("Incorrect notification content: " + tos(actual), cleanupForAssertion(content), cleanupForAssertion(actual.getContent()));
   }
 
   @NotNull

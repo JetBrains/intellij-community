@@ -19,9 +19,10 @@ import java.nio.file.Paths
 
 internal class DefaultProjectStoreTest {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
 
-    private const val TEST_COMPONENT_NAME = "Foo"
+    internal const val TEST_COMPONENT_NAME = "Foo"
 
     @State(name = TEST_COMPONENT_NAME, storages = arrayOf(
       Storage(file = StoragePathMacros.PROJECT_FILE),

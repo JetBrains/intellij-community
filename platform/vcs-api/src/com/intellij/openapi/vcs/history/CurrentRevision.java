@@ -16,26 +16,26 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Date;
 
-
 public class CurrentRevision implements VcsFileRevision {
+  private static final Logger LOG = Logger.getInstance(CurrentRevision.class);
+
   private final VirtualFile myFile;
   public static final String CURRENT = VcsBundle.message("vcs.revision.name.current");
   private final VcsRevisionNumber myRevisionNumber;
-  
+
   public CurrentRevision(VirtualFile file, VcsRevisionNumber revision) {
     myFile = file;
     myRevisionNumber = revision;
@@ -68,15 +68,9 @@ public class CurrentRevision implements VcsFileRevision {
       }
     }
     catch (final IOException e) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override public void run() {
-          Messages.showMessageDialog(e.getLocalizedMessage(), VcsBundle.message("message.text.could.not.load.file.content"),
-                                     Messages.getErrorIcon());
-        }
-      });
+      LOG.warn(e);
       return null;
     }
-
   }
 
   public String getAuthor() {

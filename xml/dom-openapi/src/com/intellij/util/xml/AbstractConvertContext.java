@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -59,11 +58,6 @@ public abstract class AbstractConvertContext extends ConvertContext {
       return xmlElement == null ? null : ModuleUtilCore.findModuleForPsiElement(xmlElement);
     }
     return fileElement.isValid() ? fileElement.getRootElement().getModule() : null;
-  }
-
-  @Override
-  public PsiManager getPsiManager() {
-    return getFile().getManager();
   }
 
   @Override

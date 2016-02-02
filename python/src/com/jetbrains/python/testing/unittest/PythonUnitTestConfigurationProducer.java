@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.testing.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,8 +61,10 @@ public class PythonUnitTestConfigurationProducer extends PythonTestConfiguration
   }
 
   @Override
-  protected boolean isTestClass(@NotNull PyClass pyClass, @Nullable final AbstractPythonTestRunConfiguration configuration) {
-    final boolean isTestClass = super.isTestClass(pyClass, configuration);
+  protected boolean isTestClass(@NotNull PyClass pyClass,
+                                @Nullable final AbstractPythonTestRunConfiguration configuration,
+                                TypeEvalContext context) {
+    final boolean isTestClass = super.isTestClass(pyClass, configuration, context);
     return isTestClass || (configuration instanceof PythonUnitTestRunConfiguration &&
                            !((PythonUnitTestRunConfiguration)configuration).isPureUnittest());
   }

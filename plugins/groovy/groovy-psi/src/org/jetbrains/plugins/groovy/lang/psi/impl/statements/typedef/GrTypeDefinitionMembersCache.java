@@ -319,21 +319,14 @@ public class GrTypeDefinitionMembersCache {
             }
             else if (trait instanceof ClsClassImpl) {
               VirtualFile traitFile = trait.getContainingFile().getVirtualFile();
-              if (traitFile != null) {
-                VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + HELPER_SUFFIX);
-                if (helperFile != null) {
-                  int key = FileBasedIndex.getFileId(helperFile);
-                  FileBasedIndex.getInstance().processValues(INDEX_ID, key, helperFile, new FileBasedIndex.ValueProcessor<Collection<TraitFieldDescriptor>>() {
-                    @Override
-                    public boolean process(VirtualFile file, Collection<TraitFieldDescriptor> descriptors) {
-                      for (TraitFieldDescriptor descriptor : descriptors) {
-                        addCandidate(createTraitField(descriptor, trait), substitutor);
-                      }
-                      return true;
-                    }
-                  }, trait.getResolveScope());
-                }
-              }
+              if (traitFile == null) return;
+              VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + HELPER_SUFFIX);
+              if (helperFile == null) return;
+              int key = FileBasedIndex.getFileId(helperFile);
+              final List<Collection<TraitFieldDescriptor>> values = FileBasedIndex.getInstance().getValues(
+                INDEX_ID, key, trait.getResolveScope()
+              );
+              values.forEach(c -> c.forEach(descriptor -> addCandidate(createTraitField(descriptor, trait), substitutor)));
             }
           }
         }.getResult();

@@ -36,6 +36,22 @@ public class Diff {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.diff.Diff");
 
   @Nullable
+  public static <T> Change buildChangesSomehow(@NotNull T[] objects1, @NotNull T[] objects2) {
+    try {
+      return buildChanges(objects1, objects2);
+    }
+    catch (FilesTooBigForDiffException e) {
+      final int startShift = getStartShift(objects1, objects2);
+      final int endCut = getEndCut(objects1, objects2, startShift);
+
+      int trimmedLength1 = objects1.length - startShift - endCut;
+      int trimmedLength2 = objects2.length - startShift - endCut;
+
+      return new Change(startShift, startShift, trimmedLength1, trimmedLength2, null);
+    }
+  }
+
+  @Nullable
   public static Change buildChanges(@NotNull CharSequence before, @NotNull CharSequence after) throws FilesTooBigForDiffException {
     final String[] strings1 = LineTokenizer.tokenize(before, false);
     final String[] strings2 = LineTokenizer.tokenize(after, false);

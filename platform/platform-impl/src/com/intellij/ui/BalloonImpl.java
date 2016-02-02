@@ -753,6 +753,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     Insets getInsets();
 
     void paintShadow(@NotNull JComponent component, @NotNull Graphics g);
+
+    void paintBorder(@NotNull Rectangle bounds, @NotNull Graphics2D g);
   }
 
   @Override
@@ -1024,6 +1026,12 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     void paintComponent(BalloonImpl balloon, final Rectangle bounds, final Graphics2D g, Point pointTarget) {
       final GraphicsConfig cfg = new GraphicsConfig(g);
       cfg.setAntialiasing(true);
+
+      if (balloon.myShadowBorderProvider != null) {
+        balloon.myShadowBorderProvider.paintBorder(bounds, g);
+        cfg.restore();
+        return;
+      }
 
       Shape shape;
       if (balloon.myShowPointer) {
@@ -1405,7 +1413,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     @Override
     protected void paintComponent(Graphics g) {
       super.paintComponent(g);
-      if (getWidth() > 0 && myLastMoveWasInsideBalloon) {
+      if (hasPaint()) {
         if (myHoverIcon != null && myButton.isHovered()) {
           paintIcon(g, myHoverIcon);
         }
@@ -1413,6 +1421,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           paintIcon(g, myIcon);
         }
       }
+    }
+
+    public boolean hasPaint() {
+      return getWidth() > 0 && myLastMoveWasInsideBalloon;
     }
 
     protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon) {
@@ -1557,14 +1569,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       final Graphics2D g2d = (Graphics2D)g;
 
       Point pointTarget = SwingUtilities.convertPoint(myLayeredPane, myBalloon.myTargetPoint, this);
-
       Rectangle shapeBounds = myContent.getBounds();
-      if (myShadowBorderProvider != null) {
-        shapeBounds.width++;
-        shapeBounds.height++;
-      }
+      int shadowSize = myBalloon.getShadowBorderSize();
 
-      final int shadowSize = myBalloon.getShadowBorderSize();
       if (shadowSize > 0 && myShadow == null && myShadowBorderProvider == null) {
         initComponentImage(pointTarget, shapeBounds);
         myShadow = ShadowBorderPainter.createShadow(myImage, 0, 0, false, shadowSize / 2);

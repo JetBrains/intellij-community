@@ -55,16 +55,16 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
 
   @NotNull
   @Override
-  protected List<PsiMethod> getMembersToImport() {
+  protected List<PsiMethod> getMembersToImport(boolean applicableOnly) {
     final Project project = myMethodCall.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     final PsiMethodCallExpression element = myMethodCall.getElement();
     PsiReferenceExpression reference = element == null ? null : element.getMethodExpression();
     String name = reference == null ? null : reference.getReferenceName();
     if (name == null) return Collections.emptyList();
-    final MyStaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(project, element);
+    final StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element);
     cache.processMethodsWithName(name, element.getResolveScope(), processor);
-    return processor.getMembersToImport();
+    return processor.getMembersToImport(applicableOnly);
   }
 
   public static boolean isExcluded(PsiMember method) {
@@ -97,9 +97,9 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
     return methodCallExpression != null ? methodCallExpression.resolveMethod() : null;
   }
 
-  private static class MyStaticMethodProcessor extends MyStaticMembersProcessor<PsiMethod> {
+  private static class MyStaticMethodProcessor extends StaticMembersProcessor<PsiMethod> {
 
-    private MyStaticMethodProcessor(Project project, PsiMethodCallExpression place) {
+    private MyStaticMethodProcessor(PsiMethodCallExpression place) {
       super(place);
     }
 

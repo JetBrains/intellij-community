@@ -216,8 +216,12 @@ abstract class GitPlatformTest : PlatformTestCase() {
     hookFile.setExecutable(true, false)
   }
 
+  protected fun assertSuccessfulNotification(title: String, message: String) {
+    GitTestUtil.assertNotification(NotificationType.INFORMATION, title, message, myVcsNotifier.lastNotification)
+  }
+
   protected fun assertSuccessfulNotification(message: String) {
-      GitTestUtil.assertNotification(NotificationType.INFORMATION, "Rebase Successful", message, myVcsNotifier.lastNotification)
+    assertSuccessfulNotification("Rebase Successful", message)
   }
 
   protected fun assertWarningNotification(title: String, message: String) {
@@ -226,7 +230,15 @@ abstract class GitPlatformTest : PlatformTestCase() {
 
   protected fun assertErrorNotification(title: String, message: String) : Notification {
     val notification = myVcsNotifier.lastNotification
+    assertNotNull("No notification was shown", notification)
     GitTestUtil.assertNotification(NotificationType.ERROR, title, message, notification)
     return notification
+  }
+
+  protected fun assertNoNotification() {
+    val notification = myVcsNotifier.lastNotification
+    if (notification != null) {
+      fail("No notification is expected here, but this one was shown: ${notification.title}/${notification.content}");
+    }
   }
 }

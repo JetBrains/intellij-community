@@ -28,6 +28,7 @@ import kotlin.properties.Delegates
 
 internal class ModuleStoreRenameTest {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
 
     private val Module.storage: FileBasedStorage

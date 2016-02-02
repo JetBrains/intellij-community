@@ -807,7 +807,7 @@ public class HighlightMethodUtil {
 
     @Language("HTML")
     @NonNls String parensizedName = methodName + (parameters.length == 0 ? "(&nbsp;)&nbsp;" : "");
-    final String errorMessage = info != null ? info.getInferenceErrorMessage() : null;
+    String errorMessage = info != null ? info.getParentInferenceErrorMessage(list) : null;
     return JavaErrorMessages.message(
       "argument.mismatch.html.tooltip",
       Integer.valueOf(cols - parameters.length + 1), parensizedName,
@@ -919,7 +919,7 @@ public class HighlightMethodUtil {
     }
 
     s+= "</table>";
-    final String errorMessage = info != null ? info.getInferenceErrorMessage() : null;
+    final String errorMessage = info != null ? info.getParentInferenceErrorMessage(list) : null;
     if (errorMessage != null) {
       s+= "reason: "; 
       s += XmlStringUtil.escapeString(errorMessage).replaceAll("\n", "<br/>");

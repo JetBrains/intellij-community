@@ -57,7 +57,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     myPlatformFacade = facade;
     myVcs = assertNotNull(GitVcs.getInstance(project));
     myGitDir = gitDir;
-    myReader = new GitRepositoryReader(VfsUtilCore.virtualToIoFile(myGitDir));
+    myReader = new GitRepositoryReader(myGitDir);
     myInfo = readRepoInfo();
     if (!light) {
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);

@@ -22,63 +22,72 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static java.util.Collections.singletonList;
+import static com.intellij.openapi.util.text.StringUtil.nullize;
+import static java.util.Arrays.asList;
 
 public class GitRebaseParams {
 
-  public enum Mode {
-    STANDARD,
-    CONTINUE,
-    SKIP,
-    ABORT;
+  @Nullable private final String myBranch;
+  @Nullable private final String myNewBase;
+  @NotNull private final String myUpstream;
+  private final boolean myInteractive;
+  private final boolean myPreserveMerges;
 
-    @NotNull
-    @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
-    String asArgument() {
-      if (this == STANDARD) return "";
-      return "--" + this.name().toLowerCase();
-    }
+  public GitRebaseParams(@NotNull String upstream) {
+    this(null, null, upstream, false, false);
   }
-
-  @Nullable private final String myBase;
-  @NotNull private final Mode myMode;
-
-  @NotNull
-  public static GitRebaseParams abort() {
-    return new GitRebaseParams(null, Mode.ABORT);
-  }
-
-  public GitRebaseParams(@NotNull String base) {
-    this(base, Mode.STANDARD);
-  }
-
-  private GitRebaseParams(@Nullable String base, @NotNull Mode mode) {
-    myBase = base;
-    myMode = mode;
+  public GitRebaseParams(@Nullable String branch,
+                         @Nullable String newBase,
+                         @NotNull String upstream,
+                         boolean interactive,
+                         boolean preserveMerges) {
+    myBranch = nullize(branch, true);
+    myNewBase = nullize(newBase, true);
+    myUpstream = upstream;
+    myInteractive = interactive;
+    myPreserveMerges = preserveMerges;
   }
 
   @NotNull
-  public GitRebaseParams withMode(@NotNull Mode mode) {
-    return mode == myMode ? this : new GitRebaseParams(myBase, mode);
-  }
-
-  @NotNull
-  public String getBase() {
-    return StringUtil.notNullize(myBase);
-  }
-
-  @NotNull
-  public Mode getMode() {
-    return myMode;
-  }
-
-  @NotNull
-  public List<String> getCommandLineArguments() {
-    if (myMode != Mode.STANDARD) {
-      return singletonList(myMode.asArgument());
-    }
+  public List<String> asCommandLineArguments() {
     List<String> args = ContainerUtil.newArrayList();
-    args.add(myBase);
+    if (myInteractive) {
+      args.add("--interactive");
+    }
+    if (myPreserveMerges) {
+      args.add("--preserve-merges");
+    }
+    if (myNewBase != null) {
+      args.addAll(asList("--onto", myNewBase));
+    }
+    args.add(myUpstream);
+    if (myBranch != null) {
+      args.add(myBranch);
+    }
     return args;
+  }
+
+  @Nullable
+  public String getNewBase() {
+    return myNewBase;
+  }
+
+  @NotNull
+  public String getUpstream() {
+    return myUpstream;
+  }
+
+  @Override
+  public String toString() {
+    return StringUtil.join(asCommandLineArguments(), " ");
+  }
+
+  public boolean isInteractive() {
+    return myInteractive;
+  }
+
+  @Nullable
+  public String getBranch() {
+    return myBranch;
   }
 }

@@ -98,6 +98,12 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     }
   }
 
+  public void installMenuBar(JMenuBar menu) {
+    if (menu != null && isCustomDecoration()) {
+      getTitlePane().add(menu);
+    }
+  }
+
   @Override
   public void uninstallUI(JComponent c) {
     super.uninstallUI(c);
@@ -131,7 +137,6 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
   private static void uninstallBorder(JRootPane root) {
     LookAndFeel.uninstallBorder(root);
   }
-
 
   private void installWindowListeners(JRootPane root, Component parent) {
     myWindow = parent == null ? null : UIUtil.getWindow(parent);

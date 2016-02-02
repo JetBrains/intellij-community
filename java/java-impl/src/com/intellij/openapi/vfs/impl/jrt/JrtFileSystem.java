@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,9 @@ import static com.intellij.util.containers.ContainerUtil.newTroveMap;
 public class JrtFileSystem extends ArchiveFileSystem {
   public static final String PROTOCOL = StandardFileSystems.JRT_PROTOCOL;
   public static final String SEPARATOR = JarFileSystem.JAR_SEPARATOR;
+
+  private static final boolean SUPPORTED =
+    SystemInfo.isJavaVersionAtLeast("9") || SystemInfo.isJavaVersionAtLeast("1.8") && !SystemInfo.isJavaVersionAtLeast("1.9");
 
   private final Map<String, ArchiveHandler> myHandlers = newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
   private final AtomicBoolean mySubscribed = new AtomicBoolean(false);
@@ -113,12 +116,9 @@ public class JrtFileSystem extends ArchiveFileSystem {
     if (handler == null) {
       handler = isSupported() ? new JrtHandler(homePath) : new JrtHandlerStub(homePath);
       myHandlers.put(homePath, handler);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(homePath + "/lib/modules");
-          if (dir != null) dir.getChildren();
-        }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(homePath + "/lib/modules");
+        if (dir != null) dir.getChildren();
       }, ModalityState.defaultModalityState());
     }
     return handler;
@@ -179,7 +179,7 @@ public class JrtFileSystem extends ArchiveFileSystem {
   }
 
   public static boolean isSupported() {
-    return SystemInfo.isJavaVersionAtLeast("1.8") && !SystemInfo.isJavaVersionAtLeast("1.9");
+    return SUPPORTED;
   }
 
   public static boolean isModularJdk(@NotNull String homePath) {

@@ -63,7 +63,7 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
     }
     @Override
     public AccessibleContext getAccessibleContext() {
-      return myAccessible.getAccessibleContext();
+      return accessibleContext = myAccessible.getAccessibleContext();
     }
   }
 

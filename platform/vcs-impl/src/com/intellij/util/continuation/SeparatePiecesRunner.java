@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.CalledInAwt;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,7 +111,7 @@ public class SeparatePiecesRunner extends GeneralRunner {
                        @NotNull String title,
                        boolean canBeCancelled,
                        TaskDescriptor taskDescriptor) {
-      super(project, title, canBeCancelled, BackgroundFromStartOption.getInstance());
+      super(project, title, canBeCancelled);
       myTaskDescriptor = taskDescriptor;
       mySuspended = false;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -29,10 +30,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.DocumentRunnable;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -41,19 +39,14 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Grayer;
@@ -63,15 +56,15 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import javax.accessibility.*;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.TextUI;
 import javax.swing.text.*;
-import javax.swing.text.AttributeSet;
+import javax.swing.text.Segment;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
 import java.awt.event.*;
 import java.awt.im.InputMethodRequests;
 import java.util.ArrayList;
@@ -136,6 +129,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     if (CommonDataKeys.EDITOR.is(dataId)) {
       // for 'big' editors return null to allow injected editors (see com.intellij.openapi.fileEditor.impl.text.TextEditorComponent.getData())
       return myEditor.getVirtualFile() == null ? myEditor : null;
+    }
+    if (CommonDataKeys.CARET.is(dataId)) {
+      return myEditor.getCaretModel().getCurrentCaret();
     }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myEditor.getDeleteProvider();
@@ -890,8 +886,18 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
                  CaretListener, DocumentListener {
 
     public AccessibleEditorComponentImpl() {
+      if (myEditor.isDisposed()) return;
+
       myEditor.getCaretModel().addCaretListener(this);
       myEditor.getDocument().addDocumentListener(this);
+
+      Disposer.register(myEditor.getDisposable(), new Disposable() {
+        @Override
+        public void dispose() {
+          myEditor.getCaretModel().removeCaretListener(AccessibleEditorComponentImpl.this);
+          myEditor.getDocument().removeDocumentListener(AccessibleEditorComponentImpl.this);
+        }
+      });
     }
 
     // ---- Implements CaretListener ----

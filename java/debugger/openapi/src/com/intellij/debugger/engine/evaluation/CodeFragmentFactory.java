@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class CodeFragmentFactory {
   public static final ExtensionPointName<CodeFragmentFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.debugger.codeFragmentFactory");
@@ -31,6 +32,7 @@ public abstract class CodeFragmentFactory {
 
   public abstract boolean isContextAccepted(PsiElement contextElement);
 
+  @NotNull
   public abstract LanguageFileType getFileType();
 
   /**

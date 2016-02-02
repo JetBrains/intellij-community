@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,7 +156,8 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   }
 
   public boolean isAvailable() {
-    return VcsUtil.isAspectAvailableByDefault(getID());
+    if (myAspect == null) return false;
+    return VcsUtil.isAspectAvailableByDefault(getID(), myAspect.isShowByDefault());
   }
 
   @Nullable

@@ -25,7 +25,7 @@ import java.awt.*;
 /**
  * @author Sergey.Malenkov
  */
-public class GradientViewport extends JViewport {
+public class GradientViewport extends JBViewport {
   private final Insets myInsets;
   private final boolean myAlways;
 

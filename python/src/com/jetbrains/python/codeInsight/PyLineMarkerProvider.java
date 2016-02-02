@@ -108,9 +108,8 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     }
 
     @Nullable
-    protected Query<PsiElement> search(final PsiElement elt) {
+    protected Query<PsiElement> search(final PsiElement elt, @NotNull final TypeEvalContext context) {
       if (!(elt.getParent() instanceof PyFunction)) return null;
-      final TypeEvalContext context = TypeEvalContext.codeAnalysis(elt.getProject(), null);
       return PySuperMethodsSearch.search((PyFunction)elt.getParent(), context);
     }
   };
@@ -121,12 +120,12 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     }
 
     @Nullable
-    protected Query<PsiElement> search(final PsiElement elt) {
+    protected Query<PsiElement> search(final PsiElement elt, @NotNull final TypeEvalContext context) {
       List<PsiElement> result = new ArrayList<PsiElement>();
       PyClass containingClass = PsiTreeUtil.getParentOfType(elt, PyClass.class);
       if (containingClass != null && elt instanceof PyTargetExpression) {
-        for (PyClass ancestor : containingClass.getAncestorClasses(null)) {
-          final PyTargetExpression attribute = ancestor.findClassAttribute(((PyTargetExpression)elt).getReferencedName(), false, null);
+        for (PyClass ancestor : containingClass.getAncestorClasses(context)) {
+          final PyTargetExpression attribute = ancestor.findClassAttribute(((PyTargetExpression)elt).getReferencedName(), false, context);
           if (attribute != null) {
             result.add(attribute);
           }
@@ -141,7 +140,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
       return "Choose Subclass of " + elt.getName();
     }
 
-    protected Query<PyClass> search(final PyClass elt) {
+    protected Query<PyClass> search(final PyClass elt, @NotNull TypeEvalContext context) {
       return PyClassInheritorsSearch.search(elt, true);
     }
   };
@@ -151,7 +150,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
       return "Choose Overriding Method of " + elt.getName();
     }
 
-    protected Query<PyFunction> search(final PyFunction elt) {
+    protected Query<PyFunction> search(final PyFunction elt, @NotNull TypeEvalContext context) {
       return PyOverridingMethodsSearch.search(elt, true);
     }
   };

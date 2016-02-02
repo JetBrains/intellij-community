@@ -56,7 +56,7 @@ public class PropertiesElementFactory {
                                        @Nullable Project project,
                                        boolean escape) {
     if (delimiter == null) {
-      delimiter = project == null ? PropertiesCodeStyleSettings.DEFAULT_KEY_VALUE_DELIMITER : PropertiesCodeStyleSettings.getInstance(project).KEY_VALUE_DELIMITER;
+      delimiter = project == null ? '=' : PropertiesCodeStyleSettings.getInstance(project).getDelimiter();
     }
     return (escape ? escape(name) : name) + String.valueOf(delimiter) + (escape ? escapeValue(value) : value);
   }

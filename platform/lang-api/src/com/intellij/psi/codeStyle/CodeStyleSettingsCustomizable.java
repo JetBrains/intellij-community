@@ -203,6 +203,9 @@ public interface CodeStyleSettingsCustomizable {
     INDENT_BREAK_FROM_CASE
   }
   
+  enum CommenterOption {
+    LINE_COMMENT_ADD_SPACE
+  }
   
 
   String SPACES_AROUND_OPERATORS = ApplicationBundle.message("group.spaces.around.operators");

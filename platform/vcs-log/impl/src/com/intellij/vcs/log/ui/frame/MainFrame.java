@@ -17,7 +17,10 @@ import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -36,7 +39,7 @@ import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
-import com.intellij.vcs.log.ui.tables.GraphTableModel;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +53,7 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-public class MainFrame extends JPanel implements TypeSafeDataProvider {
+public class MainFrame extends JPanel implements DataProvider {
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final VcsLogUiImpl myUI;
@@ -86,6 +89,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable, vcsLogUI.getColorManager(), initialDataPack);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
+    myChangesBrowser.getViewer().setScrollPaneBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     myChangesBrowser.getEditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), getGraphTable());
     setDefaultEmptyText(myChangesBrowser);
@@ -100,7 +104,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     // layout
     myToolbar = createActionsToolbar();
 
-    myDetailsSplitter = new Splitter(true, 0.7f);
+    myDetailsSplitter = new OnePixelSplitter(true, 0.7f);
     myDetailsSplitter.setFirstComponent(setupScrolledGraph());
     setupDetailsSplitter(uiProperties.isShowDetails());
 
@@ -111,7 +115,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(myDetailsSplitter, BorderLayout.CENTER);
 
-    final Splitter changesBrowserSplitter = new Splitter(false, 0.7f);
+    final Splitter changesBrowserSplitter = new OnePixelSplitter(false, 0.7f);
     changesBrowserSplitter.setFirstComponent(toolbarsAndTable);
     changesBrowserSplitter.setSecondComponent(myChangesLoadingPane);
 
@@ -171,7 +175,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   }
 
   private JScrollPane setupScrolledGraph() {
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myGraphTable);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myGraphTable, SideBorder.TOP);
     myGraphTable.viewportSet(scrollPane.getViewport());
     return scrollPane;
   }
@@ -196,7 +200,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
-    toolbarGroup.add(refreshLogAction, new Constraints(Anchor.AFTER, "Vcs.Log.ShowLongEdges"));
+    toolbarGroup.add(refreshLogAction);
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
     mainGroup.add(myFilterUi.createActionGroup());
@@ -212,9 +216,28 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       }
     }
     mainGroup.add(toolbarGroup);
+
+    final ActionToolbar toolbar = createActionsToolbar(mainGroup);
+    ActionToolbar settings = createActionsToolbar(new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_QUICK_SETTINGS_ACTION)));
+    settings.setReservePlaceAutoPopupIcon(false);
+
+    JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        toolbar.getComponent().setBorder(VcsLogClassicFilterUi.getToolbarBorder());
+      }
+    };
+    panel.add(toolbar.getComponent(), BorderLayout.CENTER);
+    panel.add(settings.getComponent(), BorderLayout.LINE_END);
+    return panel;
+  }
+
+  @NotNull
+  private ActionToolbar createActionsToolbar(@NotNull DefaultActionGroup mainGroup) {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, mainGroup, true);
     toolbar.setTargetComponent(this);
-    return toolbar.getComponent();
+    return toolbar;
   }
 
   public JComponent getMainComponent() {
@@ -231,24 +254,25 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     }
   }
 
+  @Nullable
   @Override
-  public void calcData(DataKey key, DataSink sink) {
-    if (VcsLogDataKeys.VCS_LOG == key) {
-      sink.put(key, myLog);
+  public Object getData(@NonNls String dataId) {
+    if (VcsLogDataKeys.VCS_LOG.is(dataId)) {
+      return myLog;
     }
-    else if (VcsLogDataKeys.VCS_LOG_UI == key) {
-      sink.put(key, myUI);
+    else if (VcsLogDataKeys.VCS_LOG_UI.is(dataId)) {
+      return myUI;
     }
-    else if (VcsLogDataKeys.VCS_LOG_DATA_PROVIDER == key) {
-      sink.put(key, myLogDataHolder);
+    else if (VcsLogDataKeys.VCS_LOG_DATA_PROVIDER.is(dataId)) {
+      return myLogDataHolder;
     }
-    else if (VcsDataKeys.CHANGES == key || VcsDataKeys.SELECTED_CHANGES == key) {
-      sink.put(key, ArrayUtil.toObjectArray(myChangesBrowser.getCurrentDisplayedChanges(), Change.class));
+    else if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
+      return ArrayUtil.toObjectArray(myChangesBrowser.getCurrentDisplayedChanges(), Change.class);
     }
-    else if (VcsDataKeys.CHANGE_LISTS == key) {
-      List<VcsFullCommitDetails> details = myUI.getVcsLog().getSelectedDetails();
-      if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return;
-      sink.put(key, ContainerUtil
+    else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
+      List<VcsFullCommitDetails> details = myLog.getSelectedDetails();
+      if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      return ContainerUtil
         .map2Array(details, CommittedChangeListForRevision.class, new Function<VcsFullCommitDetails, CommittedChangeListForRevision>() {
           @Override
           public CommittedChangeListForRevision fun(@NotNull VcsFullCommitDetails details) {
@@ -256,28 +280,28 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
                                                       new Date(details.getCommitTime()), details.getChanges(),
                                                       convertToRevisionNumber(details.getId()));
           }
-        }));
+        });
     }
-    else if (VcsDataKeys.VCS_REVISION_NUMBERS == key) {
-      List<CommitId> hashes = myUI.getVcsLog().getSelectedCommits();
-      if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return;
-      sink.put(key, ArrayUtil.toObjectArray(ContainerUtil.map(hashes, new Function<CommitId, VcsRevisionNumber>() {
+    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
+      List<CommitId> hashes = myLog.getSelectedCommits();
+      if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      return ArrayUtil.toObjectArray(ContainerUtil.map(hashes, new Function<CommitId, VcsRevisionNumber>() {
         @Override
         public VcsRevisionNumber fun(CommitId commitId) {
           return convertToRevisionNumber(commitId.getHash());
         }
-      }), VcsRevisionNumber.class));
+      }), VcsRevisionNumber.class);
     }
-    else if (VcsDataKeys.VCS == key) {
-      List<CommitId> commits = myUI.getVcsLog().getSelectedCommits();
-      Collection<VcsLogProvider> logProviders = myUI.getVcsLog().getLogProviders();
+    else if (VcsDataKeys.VCS.is(dataId)) {
+      List<CommitId> commits = myLog.getSelectedCommits();
+      Collection<VcsLogProvider> logProviders = myLog.getLogProviders();
       if (logProviders.size() == 1) {
         if (!commits.isEmpty()) {
-          sink.put(key, myLogDataHolder.getLogProvider(assertNotNull(getFirstItem(commits)).getRoot()).getSupportedVcs());
+          return myLogDataHolder.getLogProvider(assertNotNull(getFirstItem(commits)).getRoot()).getSupportedVcs();
         }
-        return;
+        return null;
       }
-      if (commits.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return;
+      if (commits.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
 
       Set<VirtualFile> roots = ContainerUtil.map2Set(commits, new Function<CommitId, VirtualFile>() {
         @Override
@@ -286,9 +310,10 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         }
       });
       if (roots.size() == 1) {
-        sink.put(key, myLogDataHolder.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs());
+        return myLogDataHolder.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
       }
     }
+    return null;
   }
 
   @NotNull

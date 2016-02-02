@@ -38,6 +38,7 @@ public class PyPackageService implements
   public List<String> additionalRepositories = new ArrayList<String>();
   public Map<String, String> PY_PACKAGES = ContainerUtil.newConcurrentMap();
   public String virtualEnvBasePath;
+  public Boolean PYPI_REMOVED = false;
   
   public long LAST_TIME_CHECKED = 0;
 
@@ -56,12 +57,22 @@ public class PyPackageService implements
   }
 
   public void addRepository(String repository) {
-    additionalRepositories.add(repository);
+    if (repository == null) return;
+    if (repository.startsWith(PyPIPackageUtil.PYPI_HOST)) {
+      PYPI_REMOVED = false;
+    }
+    else {
+      if (!repository.endsWith("/")) repository += "/";
+      additionalRepositories.add(repository);
+    }
   }
 
-  public void removeRepository(String repository) {
+  public void removeRepository(final String repository) {
     if (additionalRepositories.contains(repository))
       additionalRepositories.remove(repository);
+    else if (repository.startsWith(PyPIPackageUtil.PYPI_HOST)) {
+      PYPI_REMOVED = true;
+    }
   }
 
   public boolean useUserSite(String sdk) {

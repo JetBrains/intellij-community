@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,13 @@ import com.intellij.lang.html.HTMLParserDefinition;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lang.xml.XmlASTFactory;
+import com.intellij.lexer.EmbeddedTokenTypesProvider;
 import com.intellij.lexer.FilterLexer;
-import com.intellij.lexer.HtmlEmbeddedTokenTypesProvider;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.XmlLexer;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
@@ -223,12 +222,11 @@ public class XmlParsingTest extends ParsingTestCase {
     System.out.println("Plain lexing took " + (System.currentTimeMillis() - time) + "ms lexems count:" + count);
   }
 
-  private void transformAllChildren(final ASTNode file) {
+  private static void transformAllChildren(final ASTNode file) {
     for (ASTNode child = file.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       transformAllChildren(child);
     }
   }
-
 
   public void _testPerformance1() throws Exception {
     final String text = loadFile("pallada.xml");
@@ -423,7 +421,9 @@ public class XmlParsingTest extends ParsingTestCase {
     checkResult("testManualEmptyAttributeParsing.txt", DebugUtil.treeToString(element, false));
   }
 
-  private CompositeElement parseManually(final String value, final IElementType xmlElementDecl, XmlEntityDecl.EntityContextType parseType) {
+  private static CompositeElement parseManually(final String value,
+                                                final IElementType xmlElementDecl,
+                                                XmlEntityDecl.EntityContextType parseType) {
     return (CompositeElement)new DtdParsing(value, xmlElementDecl, parseType, null).parse();
   }
 
@@ -688,8 +688,7 @@ public class XmlParsingTest extends ParsingTestCase {
     });
     addExplicitExtension(LanguageParserDefinitions.INSTANCE, HTMLLanguage.INSTANCE, new HTMLParserDefinition());
     addExplicitExtension(LanguageASTFactory.INSTANCE, HTMLLanguage.INSTANCE, new XmlASTFactory());
-    registerExtensionPoint(new ExtensionPointName<HtmlEmbeddedTokenTypesProvider>("com.intellij.html.embeddedTokenTypesProvider"),
-                           HtmlEmbeddedTokenTypesProvider.class);
+    registerExtensionPoint(EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME, EmbeddedTokenTypesProvider.class);
     myLanguage = HTMLLanguage.INSTANCE;
     doTest("<script type=\"application/custom\">Custom Script</script>", "test.html");
   }

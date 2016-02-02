@@ -221,7 +221,12 @@ public abstract class DiffRequestProcessor implements Disposable {
     DiffViewer viewer = frameTool.createComponent(myContext, myActiveRequest);
 
     for (DiffExtension extension : DiffExtension.EP_NAME.getExtensions()) {
-      extension.onViewerCreated(viewer, myContext, myActiveRequest);
+      try {
+        extension.onViewerCreated(viewer, myContext, myActiveRequest);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
 
     DiffViewerWrapper wrapper = myActiveRequest.getUserData(DiffViewerWrapper.KEY);

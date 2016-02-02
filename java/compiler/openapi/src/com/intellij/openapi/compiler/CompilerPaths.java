@@ -112,6 +112,9 @@ public class CompilerPaths {
   @Nullable
   public static VirtualFile getModuleOutputDirectory(final Module module, boolean forTestClasses) {
     final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
+    if (compilerModuleExtension == null) {
+      return null;
+    }
     VirtualFile outPath;
     if (forTestClasses) {
       final VirtualFile path = compilerModuleExtension.getCompilerOutputPathForTests();
@@ -144,6 +147,9 @@ public class CompilerPaths {
     final String outPathUrl;
     final Application application = ApplicationManager.getApplication();
     final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+    if (extension == null) {
+      return null;
+    }
     if (forTestClasses) {
       if (application.isDispatchThread()) {
         final String url = extension.getCompilerOutputUrlForTests();

@@ -112,7 +112,7 @@ class MacDistributionBuilder {
       }
     }
 
-    sshExec("./signapp_ce.sh ${sitFileName} ${fullBuildNumber} ${macHostProperties.userName} ${macHostProperties.password} \"${macHostProperties.codesignString}\" ${customJDKTarPath}")
+    sshExec("./signapp_ce.sh ${sitFileName} ${fullBuildNumber} ${macHostProperties.userName} ${macHostProperties.password} \"${macHostProperties.codesignString}\" \"${customJDKTarPath}\"")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
         include(name: "${sitFileName}.sit")

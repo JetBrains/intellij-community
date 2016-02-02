@@ -26,6 +26,8 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -36,24 +38,25 @@ import java.util.Set;
 public class PyTestUtil {
   private static final Set<String> PYTHON_TEST_QUALIFIED_CLASSES = ImmutableSet.of("unittest.TestCase", "unittest.case.TestCase");
 
-  public static List<PyStatement> getPyTestCasesFromFile(PsiFileSystemItem file) {
+  static List<PyStatement> getPyTestCasesFromFile(PsiFileSystemItem file, @NotNull final TypeEvalContext context) {
     List<PyStatement> result = Lists.newArrayList();
     if (file instanceof PyFile) {
-      result = getResult((PyFile)file);
+      result = getResult((PyFile)file, context);
     }
     else if (file instanceof PsiDirectory) {
       for (PsiFile f : ((PsiDirectory)file).getFiles()) {
-        if (f instanceof PyFile)
-          result.addAll(getResult((PyFile)f));
+        if (f instanceof PyFile) {
+          result.addAll(getResult((PyFile)f, context));
+        }
       }
     }
     return result;
   }
 
-  private static List<PyStatement> getResult(PyFile file) {
+  private static List<PyStatement> getResult(PyFile file, @NotNull final TypeEvalContext context) {
     List<PyStatement> result = Lists.newArrayList();
     for (PyClass cls : file.getTopLevelClasses()) {
-      if (isPyTestClass(cls)) {
+      if (isPyTestClass(cls, context)) {
         result.add(cls);
       }
     }
@@ -73,8 +76,9 @@ public class PyTestUtil {
     return false;
   }
 
-  public static boolean isPyTestClass(PyClass pyClass) {
-    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback(pyClass.getProject()))) {
+  public static boolean isPyTestClass(final PyClass pyClass, @Nullable final TypeEvalContext context) {
+    final TypeEvalContext contextToUse = (context != null ? context : TypeEvalContext.codeInsightFallback(pyClass.getProject()));
+    for (PyClassLikeType type : pyClass.getAncestorTypes(contextToUse)) {
       if (type != null && PYTHON_TEST_QUALIFIED_CLASSES.contains(type.getClassQName())) {
         return true;
       }

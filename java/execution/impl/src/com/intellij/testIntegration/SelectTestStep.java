@@ -22,22 +22,14 @@ import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class SelectTestStep extends BaseListPopupStep<String> {
-  private static Comparator<String> TEST_BY_PATH_COMPARATOR = new Comparator<String>() {
-    @Override
-    public int compare(String o1, String o2) {
-      String path1 = VirtualFileManager.extractPath(o1);
-      String path2 = VirtualFileManager.extractPath(o2);
-      return path1.compareTo(path2);
-    }
-  };
-  
   private final Map<String, TestStateStorage.Record> myRecords;
   private final RecentTestRunner myRunner;
 
@@ -48,50 +40,15 @@ public class SelectTestStep extends BaseListPopupStep<String> {
   }
 
   private static List<String> getUrls(Map<String, TestStateStorage.Record> records, RecentTestRunner runner) {
-    TestGroup groups = toTestGroups(records, runner);
-    
-    List<String> failed = ContainerUtil.newArrayList(groups.failedTests);
-    Collections.sort(failed, TEST_BY_PATH_COMPARATOR);
-    List<String> other = ContainerUtil.newArrayList(groups.otherTests);
-    Collections.sort(other, TEST_BY_PATH_COMPARATOR);
-    List<String> passed = ContainerUtil.newArrayList(groups.passedTests);
-    Collections.sort(passed, TEST_BY_PATH_COMPARATOR);
-    
-    failed.addAll(other);
-    failed.addAll(passed);
-    return failed;
-  }
+    RecentTestsData data = new RecentTestsData(runner);
 
-  private static TestGroup toTestGroups(Map<String, TestStateStorage.Record> records, RecentTestRunner runner) {
-    Set<String> failedTests = ContainerUtil.newHashSet();
-    Set<String> passedSuites = ContainerUtil.newHashSet();
-    Set<String> otherSuites = ContainerUtil.newHashSet();
-
-    for (Map.Entry<String, TestStateStorage.Record> item : records.entrySet()) {
-      String url = item.getKey();
-      TestStateInfo.Magnitude magnitude = getMagnitude(item.getValue().magnitude);
-      if (magnitude == null) continue;
-      switch (magnitude) {
-        case COMPLETE_INDEX:
-          if (runner.isSuite(url)) {
-            passedSuites.add(url);
-          }
-          break;
-        case PASSED_INDEX:
-          if (runner.isSuite(url)) {
-            passedSuites.add(url);
-          }
-          break;
-        case ERROR_INDEX:
-          failedTests.add(url);
-          break;
-        default:
-          otherSuites.add(url);
-          break;
-      }
+    for (Map.Entry<String, TestStateStorage.Record> entry : records.entrySet()) {
+      String url = entry.getKey();
+      TestStateStorage.Record record = entry.getValue();
+      data.addTest(url, getMagnitude(record.magnitude), record.date);
     }
-    
-    return new TestGroup(failedTests, passedSuites, otherSuites);
+
+    return data.calculateTestList();
   }
 
   private static TestStateInfo.Magnitude getMagnitude(int magnitude) {

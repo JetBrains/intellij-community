@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,9 @@ public class MoveFilesOrDirectoriesUtil {
             }
 
             Collection<PsiElement> toCheck = ContainerUtil.newArrayList((PsiElement)targetDirectory);
-            toCheck.addAll(CommonRefactoringUtil.mapFilesToParents(Arrays.asList(newElements)));
+            for (PsiElement e : newElements) {
+              toCheck.add(e instanceof PsiFileSystemItem && e.getParent() != null ? e.getParent() : e);
+            }
             if (!CommonRefactoringUtil.checkReadOnlyStatus(project, toCheck, false)) {
               return;
             }

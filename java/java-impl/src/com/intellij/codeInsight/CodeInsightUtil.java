@@ -21,14 +21,11 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -276,33 +273,15 @@ public class CodeInsightUtil {
     psiType = psiType.getDeepComponentType();
     if (!(psiType instanceof PsiClassType)) return;
 
-    final Condition<String> shortNameCondition = new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return matcher.prefixMatches(s);
-      }
-    };
-
-    final PsiClassType baseType = (PsiClassType)psiType;
-    final PsiClassType.ClassResolveResult baseResult =
-      ApplicationManager.getApplication().runReadAction(new Computable<PsiClassType.ClassResolveResult>() {
-        @Override
-        public PsiClassType.ClassResolveResult compute() {
-          return JavaCompletionUtil.originalize(baseType).resolveGenerics();
-        }
-      });
-    final PsiClass baseClass = baseResult.getElement();
-    final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
+    PsiClassType baseType = JavaCompletionUtil.originalize((PsiClassType)psiType);
+    PsiClassType.ClassResolveResult baseResult = baseType.resolveGenerics();
+    PsiClass baseClass = baseResult.getElement();
+    PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
     if(baseClass == null) return;
 
-    final GlobalSearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
-      @Override
-      public GlobalSearchScope compute() {
-        return context.getResolveScope();
-      }
-    });
+    GlobalSearchScope scope = context.getResolveScope();
 
-    final Processor<PsiClass> inheritorsProcessor =
+    Processor<PsiClass> inheritorsProcessor =
       createInheritorsProcessor(context, baseType, arrayDim, getRawSubtypes, consumer, baseClass, baseSubstitutor);
 
     addContextTypeArguments(context, baseType, inheritorsProcessor);
@@ -310,118 +289,98 @@ public class CodeInsightUtil {
     if (baseClass.hasModifierProperty(PsiModifier.FINAL)) return;
 
     if (matcher.getPrefix().length() > 2) {
-      AllClassesGetter.processJavaClasses(matcher, context.getProject(), scope, new Processor<PsiClass>() {
-        @Override
-        public boolean process(PsiClass psiClass) {
-          if (psiClass.isInheritor(baseClass, true)) {
-            return inheritorsProcessor.process(psiClass);
-          }
-          return true;
+      AllClassesGetter.processJavaClasses(matcher, context.getProject(), scope, psiClass -> {
+        if (psiClass.isInheritor(baseClass, true)) {
+          return inheritorsProcessor.process(psiClass);
         }
+        return true;
       });
     } else {
-      final Query<PsiClass> baseQuery = ClassInheritorsSearch.search(
-        new ClassInheritorsSearch.SearchParameters(baseClass, scope, true, false, false, shortNameCondition));
-      final Query<PsiClass> query = new FilteredQuery<PsiClass>(baseQuery, new Condition<PsiClass>() {
-        @Override
-        public boolean value(final PsiClass psiClass) {
-          return !(psiClass instanceof PsiTypeParameter);
-        }
-      });
+      Query<PsiClass> baseQuery = ClassInheritorsSearch.search(
+        new ClassInheritorsSearch.SearchParameters(baseClass, scope, true, false, false, matcher::prefixMatches));
+      Query<PsiClass> query = new FilteredQuery<>(baseQuery, psiClass -> !(psiClass instanceof PsiTypeParameter));
       query.forEach(inheritorsProcessor);
     }
-
   }
 
-  private static void addContextTypeArguments(final PsiElement context,
-                                              final PsiClassType baseType,
-                                              final Processor<PsiClass> inheritorsProcessor) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        Set<String> usedNames = ContainerUtil.newHashSet();
-        PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
-        PsiElement each = context;
-        while (true) {
-          PsiTypeParameterListOwner typed = PsiTreeUtil.getParentOfType(each, PsiTypeParameterListOwner.class);
-          if (typed == null) break;
-          for (PsiTypeParameter parameter : typed.getTypeParameters()) {
-            if (baseType.isAssignableFrom(factory.createType(parameter)) && usedNames.add(parameter.getName())) {
-              inheritorsProcessor.process(CompletionUtil.getOriginalOrSelf(parameter));
-            }
-          }
-
-          each = typed;
+  private static void addContextTypeArguments(PsiElement context, PsiClassType baseType, Processor<PsiClass> inheritorsProcessor) {
+    Set<String> usedNames = ContainerUtil.newHashSet();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
+    PsiElement each = context;
+    while (true) {
+      PsiTypeParameterListOwner typed = PsiTreeUtil.getParentOfType(each, PsiTypeParameterListOwner.class);
+      if (typed == null) break;
+      for (PsiTypeParameter parameter : typed.getTypeParameters()) {
+        if (baseType.isAssignableFrom(factory.createType(parameter)) && usedNames.add(parameter.getName())) {
+          inheritorsProcessor.process(CompletionUtil.getOriginalOrSelf(parameter));
         }
       }
-    });
+
+      each = typed;
+    }
   }
 
-  public static Processor<PsiClass> createInheritorsProcessor(final PsiElement context, final PsiClassType baseType,
-                                                               final int arrayDim,
-                                                               final boolean getRawSubtypes,
-                                                               final Consumer<PsiType> result, @NotNull final PsiClass baseClass, final PsiSubstitutor baseSubstitutor) {
-    final PsiManager manager = context.getManager();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-    final PsiResolveHelper resolveHelper = facade.getResolveHelper();
+  public static Processor<PsiClass> createInheritorsProcessor(PsiElement context,
+                                                              PsiClassType baseType,
+                                                              int arrayDim,
+                                                              boolean getRawSubtypes,
+                                                              Consumer<PsiType> result,
+                                                              @NotNull PsiClass baseClass,
+                                                              PsiSubstitutor baseSubstitutor) {
+    PsiManager manager = context.getManager();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    PsiResolveHelper resolveHelper = facade.getResolveHelper();
 
-    return new Processor<PsiClass>() {
-      @Override
-      public boolean process(final PsiClass inheritor) {
-        ProgressManager.checkCanceled();
+    return inheritor -> {
+      ProgressManager.checkCanceled();
 
-        return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            if (!context.isValid() || !inheritor.isValid() || !facade.getResolveHelper().isAccessible(inheritor, context, null))
-              return true;
+      if (!facade.getResolveHelper().isAccessible(inheritor, context, null)) {
+        return true;
+      }
 
-            if (inheritor.getQualifiedName() == null &&
-                !manager.areElementsEquivalent(inheritor.getContainingFile(), context.getContainingFile().getOriginalFile())) {
-              return true;
-            }
+      if (inheritor.getQualifiedName() == null &&
+          !manager.areElementsEquivalent(inheritor.getContainingFile(), context.getContainingFile().getOriginalFile())) {
+        return true;
+      }
 
-            if (JavaCompletionUtil.isInExcludedPackage(inheritor, false)) return true;
+      if (JavaCompletionUtil.isInExcludedPackage(inheritor, false)) return true;
 
-            PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
-            if (superSubstitutor == null) return true;
-            if (getRawSubtypes) {
-              result.consume(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
-              return true;
-            }
+      PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
+      if (superSubstitutor == null) return true;
+      if (getRawSubtypes) {
+        result.consume(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
+        return true;
+      }
 
-            PsiSubstitutor inheritorSubstitutor = PsiSubstitutor.EMPTY;
-            for (PsiTypeParameter inheritorParameter : PsiUtil.typeParametersIterable(inheritor)) {
-              for (PsiTypeParameter baseParameter : PsiUtil.typeParametersIterable(baseClass)) {
-                final PsiType substituted = superSubstitutor.substitute(baseParameter);
-                PsiType arg = baseSubstitutor.substitute(baseParameter);
-                if (arg instanceof PsiWildcardType) {
-                  PsiType bound = ((PsiWildcardType)arg).getBound();
-                  arg = bound != null ? bound : ((PsiWildcardType)arg).getExtendsBound();
-                }
-                PsiType substitution = resolveHelper.getSubstitutionForTypeParameter(inheritorParameter,
-                                                                                     substituted,
-                                                                                     arg,
-                                                                                     true,
-                                                                                     PsiUtil.getLanguageLevel(context));
-                if (PsiType.NULL.equals(substitution) || substitution instanceof PsiWildcardType) continue;
-                if (substitution == null) {
-                  result.consume(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
-                  return true;
-                }
-                inheritorSubstitutor = inheritorSubstitutor.put(inheritorParameter, substitution);
-                break;
-              }
-            }
-
-            PsiType toAdd = createType(inheritor, inheritorSubstitutor, arrayDim);
-            if (baseType.isAssignableFrom(toAdd)) {
-              result.consume(toAdd);
-            }
+      PsiSubstitutor inheritorSubstitutor = PsiSubstitutor.EMPTY;
+      for (PsiTypeParameter inheritorParameter : PsiUtil.typeParametersIterable(inheritor)) {
+        for (PsiTypeParameter baseParameter : PsiUtil.typeParametersIterable(baseClass)) {
+          final PsiType substituted = superSubstitutor.substitute(baseParameter);
+          PsiType arg = baseSubstitutor.substitute(baseParameter);
+          if (arg instanceof PsiWildcardType) {
+            PsiType bound = ((PsiWildcardType)arg).getBound();
+            arg = bound != null ? bound : ((PsiWildcardType)arg).getExtendsBound();
+          }
+          PsiType substitution = resolveHelper.getSubstitutionForTypeParameter(inheritorParameter,
+                                                                               substituted,
+                                                                               arg,
+                                                                               true,
+                                                                               PsiUtil.getLanguageLevel(context));
+          if (PsiType.NULL.equals(substitution) || substitution instanceof PsiWildcardType) continue;
+          if (substitution == null) {
+            result.consume(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
             return true;
           }
-        }).booleanValue();
+          inheritorSubstitutor = inheritorSubstitutor.put(inheritorParameter, substitution);
+          break;
+        }
       }
+
+      PsiType toAdd = createType(inheritor, inheritorSubstitutor, arrayDim);
+      if (baseType.isAssignableFrom(toAdd)) {
+        result.consume(toAdd);
+      }
+      return true;
     };
   }
 

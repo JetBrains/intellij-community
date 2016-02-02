@@ -543,7 +543,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
         }
         
         for (PsiType psiType : resolveResult.getSubstitutor().getSubstitutionMap().values()) {
-          final Boolean accepted = psiType.accept(this);
+          final Boolean accepted = psiType != null ? psiType.accept(this) : null;
           if (accepted != null && !accepted.booleanValue()) {
             return false;
           }

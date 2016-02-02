@@ -44,6 +44,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.PackageWrapper;
@@ -523,7 +524,7 @@ public class CreateTestDialog extends DialogWrapper {
           result.setResult(roots.get(0));
         }
         else {
-          PsiDirectory defaultDir = chooseDefaultDirectory(packageName);
+          PsiDirectory defaultDir = chooseDefaultDirectory(targetPackage.getDirectories(), roots);
           result.setResult(MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir));
         }
       }
@@ -539,7 +540,7 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   @Nullable
-  private PsiDirectory chooseDefaultDirectory(String packageName) {
+  private PsiDirectory chooseDefaultDirectory(PsiDirectory[] directories, List<VirtualFile> roots) {
     List<PsiDirectory> dirs = new ArrayList<PsiDirectory>();
     for (VirtualFile file : ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE)) {
       final PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(file);
@@ -555,7 +556,18 @@ public class CreateTestDialog extends DialogWrapper {
       }
       return dirs.get(0);
     }
-    return PackageUtil.findPossiblePackageDirectoryInModule(myTargetModule, packageName);
+    for (PsiDirectory dir : directories) {
+      final VirtualFile file = dir.getVirtualFile();
+      for (VirtualFile root : roots) {
+        if (VfsUtilCore.isAncestor(root, file, false)) {
+          final PsiDirectory rootDir = PsiManager.getInstance(myProject).findDirectory(root);
+          if (rootDir != null) {
+            return rootDir;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   private String getPackageName() {

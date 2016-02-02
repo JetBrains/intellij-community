@@ -15,63 +15,48 @@
  */
 package com.intellij.lang.properties.psi.codeStyle;
 
-import com.intellij.application.options.CodeStyleAbstractPanel;
+import com.intellij.application.options.codeStyle.OptionTableWithPreviewPanel;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author Dmitry Batkovich
  */
-public class PropertiesCodeStyleSettingsPanel extends CodeStyleAbstractPanel {
-  private final static String WHITESPACE_ELEMENT = "Whitespace symbol";
-
-  private ComboBox myDelimiterCombo;
-  private JPanel myPanel;
-
+public class PropertiesCodeStyleSettingsPanel extends OptionTableWithPreviewPanel {
   public PropertiesCodeStyleSettingsPanel(CodeStyleSettings settings) {
     super(settings);
-    final DefaultComboBoxModel model = new DefaultComboBoxModel();
-    model.addElement(':');
-    model.addElement('=');
-    model.addElement(WHITESPACE_ELEMENT);
-    myDelimiterCombo.setModel(model);
-    selectChar(settings.getCustomSettings(PropertiesCodeStyleSettings.class));
-  }
-
-  private void selectChar(PropertiesCodeStyleSettings settings) {
-    myDelimiterCombo.setSelectedItem(settings.KEY_VALUE_DELIMITER == ' ' ? WHITESPACE_ELEMENT : settings.KEY_VALUE_DELIMITER);
-  }
-
-  private char getSelectedChar() {
-    final Object item = myDelimiterCombo.getModel().getSelectedItem();
-    if (item instanceof Character) {
-      return (Character)item;
-    }
-    assert item == WHITESPACE_ELEMENT;
-    return ' ';
-  }
-
-  private void createUIComponents() {
+    init();
   }
 
   @Override
-  protected int getRightMargin() {
-    return 0;
+  public LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
+    return LanguageCodeStyleSettingsProvider.SettingsType.BLANK_LINES_SETTINGS;
+  }
+
+  @Override
+  protected void initTables() {
+    addOption("ALIGN_GROUP_FIELD_DECLARATIONS", "Align properties in column");
+    showStandardOptions("ALIGN_GROUP_FIELD_DECLARATIONS");
+    showCustomOption(PropertiesCodeStyleSettings.class, "SPACES_AROUND_KEY_VALUE_DELIMITER",
+                     "Insert space around key-value delimiter", null);
+    showCustomOption(PropertiesCodeStyleSettings.class,
+                     "KEY_VALUE_DELIMITER_CODE",
+                     "Key-value delimiter", null,
+                     new String[]{"=", ":", "whitespace symbol"}, new int[]{0, 1, 2});
   }
 
   @Nullable
   @Override
   protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
-    return null;
+    return EditorHighlighterFactory.getInstance().createEditorHighlighter(new LightVirtualFile("p.properties"), scheme, null);
   }
 
   @NotNull
@@ -83,29 +68,9 @@ public class PropertiesCodeStyleSettingsPanel extends CodeStyleAbstractPanel {
   @Nullable
   @Override
   protected String getPreviewText() {
-    return null;
-  }
-
-  @Override
-  public void apply(CodeStyleSettings settings) throws ConfigurationException {
-    final PropertiesCodeStyleSettings propertiesCodeStyleSettings = settings.getCustomSettings(PropertiesCodeStyleSettings.class);
-    propertiesCodeStyleSettings.KEY_VALUE_DELIMITER = getSelectedChar();
-  }
-
-  @Override
-  public boolean isModified(CodeStyleSettings settings) {
-    final PropertiesCodeStyleSettings propertiesCodeStyleSettings = settings.getCustomSettings(PropertiesCodeStyleSettings.class);
-    return propertiesCodeStyleSettings.KEY_VALUE_DELIMITER != getSelectedChar();
-  }
-
-  @Nullable
-  @Override
-  public JComponent getPanel() {
-    return myPanel;
-  }
-
-  @Override
-  protected void resetImpl(CodeStyleSettings settings) {
-    selectChar(settings.getCustomSettings(PropertiesCodeStyleSettings.class));
+    return "key1=value\n" +
+           "some_key=some_value\n" +
+           "#commentaries\n" +
+           "last.key=some text here";
   }
 }

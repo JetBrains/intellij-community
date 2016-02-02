@@ -145,7 +145,8 @@ public class StartupUtil {
    * Checks if the program can run under the JDK it was started with.
    */
   private static boolean checkJdkVersion() {
-    if (!"true".equals(System.getProperty("idea.no.jre.check"))) {
+    String jreCheck = System.getProperty("idea.jre.check");
+    if (jreCheck != null && "true".equals(jreCheck)) {
       try {
         // try to find a class from tools.jar
         Class.forName("com.sun.jdi.Field", false, StartupUtil.class.getClassLoader());
@@ -169,8 +170,8 @@ public class StartupUtil {
         return false;
       }
     }
-
-    if (!"true".equals(System.getProperty("idea.no.64bit.check"))) {
+    jreCheck = System.getProperty("idea.64bit.check");
+    if (jreCheck != null && "true".equals(jreCheck)) {
       if (PlatformUtils.isCidr() && !SystemInfo.is64Bit) {
           String message = "32-bit JVM is not supported. Please install 64-bit version.";
           Main.showMessage("Unsupported JVM", message, true);
@@ -329,10 +330,8 @@ public class StartupUtil {
     if (System.getProperty("jna.tmpdir") == null) {
       System.setProperty("jna.tmpdir", ideTempDir.getPath());
     }
-    if (System.getProperty("jna.nosys") == null && System.getProperty("jna.nounpack") == null) {
-      // force using bundled JNA dispatcher (if not explicitly stated)
-      System.setProperty("jna.nosys", "true");
-      System.setProperty("jna.nounpack", "false");
+    if (System.getProperty("jna.nosys") == null) {
+      System.setProperty("jna.nosys", "true");  // prefer bundled JNA dispatcher lib
     }
     try {
       long t = System.currentTimeMillis();
@@ -398,6 +397,8 @@ public class StartupUtil {
         }
       }
     }
+
+    log.info("JNU charset: " + System.getProperty("sun.jnu.encoding"));
   }
 
   static void runStartupWizard() {

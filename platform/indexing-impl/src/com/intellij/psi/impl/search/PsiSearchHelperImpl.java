@@ -758,7 +758,20 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       public boolean execute(@NotNull PsiElement element, int offsetInElement) {
         if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
 
-        return wrapped.processTextOccurrence(element, offsetInElement, consumer);
+        try {
+          return wrapped.processTextOccurrence(element, offsetInElement, consumer);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          return true;
+        }
+        catch (Error e) {
+          LOG.error(e);
+          return true;
+        }
       }
 
       @Override

@@ -65,4 +65,6 @@ public interface IdeModifiableModelsProvider extends IdeModelsProvider {
   void commit();
 
   void dispose();
+
+  void setTestModuleProperties(Module testModule, String productionModuleName);
 }
