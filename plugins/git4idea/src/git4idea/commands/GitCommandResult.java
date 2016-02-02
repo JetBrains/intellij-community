@@ -23,7 +23,6 @@ import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -79,7 +78,16 @@ public class GitCommandResult {
 
   @NotNull
   public List<String> getOutput() {
-    return new ArrayList<String>(myOutput);
+    return Collections.unmodifiableList(myOutput);
+  }
+
+  public int getExitCode() {
+    return myExitCode;
+  }
+
+  @NotNull
+  public List<String> getErrorOutput() {
+    return Collections.unmodifiableList(myErrorOutput);
   }
 
   @Override

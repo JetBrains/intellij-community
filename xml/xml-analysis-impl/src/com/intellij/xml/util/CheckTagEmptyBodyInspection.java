@@ -16,21 +16,14 @@
 
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
@@ -98,43 +91,10 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
     return "CheckTagEmptyBody";
   }
 
-  public static class Fix implements LocalQuickFix {
+  public static class Fix extends CollapseTagIntention {
     @Override
-    @NotNull
-    public String getName() {
-      return XmlBundle.message("xml.inspections.replace.tag.empty.body.with.empty.end");
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
-
-    @Override
-    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-      final PsiElement tag = descriptor.getPsiElement();
-      if (!FileModificationService.getInstance().prepareFileForWrite(tag.getContainingFile())) {
-        return;
-      }
-
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-      final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
-      if (child == null) return;
-      final int offset = child.getTextRange().getStartOffset();
-      VirtualFile file = tag.getContainingFile().getVirtualFile();
-      final Document document = FileDocumentManager.getInstance().getDocument(file);
-
-      new WriteCommandAction(project) {
-        @Override
-        protected void run(@NotNull final Result result) throws Throwable {
-          assert document != null;
-          document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
-          PsiDocumentManager.getInstance(project).commitDocument(document);
-          CodeStyleManager.getInstance(project).reformat(tag);
-        }
-      }.execute();
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return true;
     }
   }
 }

@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * @author Dmitry Avdeev
  */
-public class ChameleonAction extends AnAction {
+public class ChameleonAction extends ActionGroup {
 
   private final Map<ProjectType, AnAction> myActions = new HashMap<ProjectType, AnAction>();
 
@@ -52,6 +52,13 @@ public class ChameleonAction extends AnAction {
     AnAction action = getAction(e);
     assert action != null;
     action.actionPerformed(e);
+  }
+
+  @NotNull
+  @Override
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    AnAction action = getAction(e);
+    return action instanceof ActionGroup ? ((ActionGroup)action).getChildren(e) : EMPTY_ARRAY;
   }
 
   @Override

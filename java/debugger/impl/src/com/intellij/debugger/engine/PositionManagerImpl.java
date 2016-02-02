@@ -437,11 +437,11 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
             PsiTreeUtil.treeWalkUp(psiClass, null, new PairProcessor<PsiElement, PsiElement>() {
               @Override
               public boolean process(PsiElement element, PsiElement element2) {
-                sb.append(element);
+                sb.append('\n').append(element);
                 return true;
               }
             });
-            LOG.error("Local or anonymous class " + psiClass + " has no non-local parent, parents:" + sb);
+            LOG.info("Local or anonymous class " + psiClass + " has no non-local parent, parents:" + sb);
           }
         }
         else {

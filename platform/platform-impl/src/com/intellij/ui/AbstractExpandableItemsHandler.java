@@ -334,6 +334,9 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     Window owner = SwingUtilities.getWindowAncestor(myComponent);
     Window popup = SwingUtilities.getWindowAncestor(myTipComponent);
     Window focus = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+    if (focus == owner.getOwner()) {
+      focus = null; // do not check intersection with parent
+    }
     boolean focused = SystemInfo.isWindows || owner.isFocused();
     for (Window other : owner.getOwnedWindows()) {
       if (!focused && !SystemInfo.isWindows) {

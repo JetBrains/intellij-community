@@ -15,8 +15,11 @@
  */
 package com.intellij.remoteServer.impl.runtime.ui;
 
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
+import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
+import com.intellij.remoteServer.runtime.ServerConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -28,5 +31,30 @@ public abstract class RemoteServersViewContribution extends RemoteServersViewCon
   @Override
   public boolean canContribute(@NotNull Project project) {
     return !getRemoteServers().isEmpty();
+  }
+
+  public ServersTreeStructure createTreeStructure(@NotNull final Project project) {
+    return new ServersTreeStructure(project, this);
+  }
+
+  public TreeNodeSelector createLogNodeSelector(final ServerConnection<?> connection,
+                                                final String deploymentName,
+                                                final String logName) {
+    return new TreeNodeSelector<ServersTreeStructure.DeploymentLogNode>() {
+      @Override
+      public boolean visit(@NotNull ServersTreeStructure.DeploymentLogNode node) {
+        AbstractTreeNode parent = node.getParent();
+        return parent instanceof ServersTreeStructure.DeploymentNodeImpl
+               &&
+               ServersToolWindowContent.isDeploymentNodeMatch((ServersTreeStructure.DeploymentNodeImpl)parent, connection, deploymentName)
+               &&
+               node.getValue().getPresentableName().equals(logName);
+      }
+
+      @Override
+      public Class<ServersTreeStructure.DeploymentLogNode> getNodeClass() {
+        return ServersTreeStructure.DeploymentLogNode.class;
+      }
+    };
   }
 }

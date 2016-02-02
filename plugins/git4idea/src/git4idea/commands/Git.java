@@ -104,6 +104,12 @@ public interface Git {
   GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName);
 
   @NotNull
+  GitCommandResult renameBranch(@NotNull GitRepository repository,
+                                @NotNull String currentName,
+                                @NotNull String newName,
+                                @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
   GitCommandResult reset(@NotNull GitRepository repository, @NotNull GitResetMode mode, @NotNull String target,
                          @NotNull GitLineHandlerListener... listeners);
 

@@ -32,23 +32,6 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
     }
   };
 
-  VcsRevisionNumber LOCAL = new VcsRevisionNumber() {
-    @Override
-    public String asString() {
-      return "Local Changes";
-    }
-
-    @Override
-    public int compareTo(@NotNull VcsRevisionNumber vcsRevisionNumber) {
-      return 0;
-    }
-
-    @Override
-    public String toString() {
-      return asString();
-    }
-  };
-
   class Int implements VcsRevisionNumber, LongRevisionNumber {
     private final int myValue;
 

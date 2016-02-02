@@ -53,7 +53,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     myWatchRequest = LocalFileSystem.getInstance().addRootToWatch(gitDir.getPath(), true);
 
     myRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
-    DvcsUtil.visitVcsDirVfs(gitDir, GitRepositoryFiles.getSubDirRelativePaths());
+    visitSubDirsInVfs(gitDir);
     myHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsHeadsPath());
     myRemotesDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsRemotesPath());
     myTagsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsTagsPath());
@@ -128,4 +128,10 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     }
   }
 
+  private void visitSubDirsInVfs(@NotNull VirtualFile gitDir) {
+    gitDir.getChildren();
+    for (String path : myRepositoryFiles.getDirsToWatch()) {
+      DvcsUtil.ensureAllChildrenInVfs(LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
+    }
+  }
 }

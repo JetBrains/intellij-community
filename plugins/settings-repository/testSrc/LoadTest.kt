@@ -32,6 +32,7 @@ import java.io.File
 
 class LoadTest : IcsTestCase() {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 

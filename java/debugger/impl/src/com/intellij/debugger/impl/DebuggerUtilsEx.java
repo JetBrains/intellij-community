@@ -463,7 +463,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static CodeFragmentFactory getCodeFragmentFactory(@Nullable PsiElement context, @Nullable FileType fileType) {
     DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
     if (fileType == null) {
-      return defaultFactory;
+      if (context == null) {
+        return defaultFactory;
+      }
+      else {
+        fileType = context.getContainingFile().getFileType();
+      }
     }
     for (CodeFragmentFactory factory : ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME)) {
       if (factory != defaultFactory && factory.getFileType().equals(fileType) && factory.isContextAccepted(context)) {
@@ -801,6 +806,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     element = element.getParent();
     if (element != null) return getNextElement(element);
     return null;
+  }
+
+  public static boolean isLambdaClassName(String typeName) {
+    return getLambdaBaseClassName(typeName) != null;
+  }
+
+  @Nullable
+  public static String getLambdaBaseClassName(String typeName) {
+    return StringUtil.substringBefore(typeName, "$$Lambda$");
   }
 
   public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {

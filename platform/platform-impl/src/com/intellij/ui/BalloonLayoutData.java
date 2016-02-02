@@ -34,4 +34,6 @@ public class BalloonLayoutData {
   public Computable<Boolean> showActions;
 
   public Project project;
+
+  public BalloonLayoutConfiguration configuration;
 }

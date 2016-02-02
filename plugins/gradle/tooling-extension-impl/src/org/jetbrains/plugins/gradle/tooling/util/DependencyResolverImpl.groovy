@@ -177,10 +177,8 @@ class DependencyResolverImpl implements DependencyResolver {
 
     new DependencyTraverser(runtimeDependencies).each {
       Collection<ExternalDependency> dependencies = resolvedMap.get(it.id);
-      if (dependencies && !dependencies.isEmpty()) {
-        if (it.dependencies.isEmpty()) {
-          runtimeDependencies.remove(it)
-        }
+      if (dependencies && !dependencies.isEmpty() && it.dependencies.isEmpty()) {
+        runtimeDependencies.remove(it)
         ((AbstractExternalDependency)it).scope = dependencies.first().scope
       }
       else {
@@ -655,6 +653,11 @@ class DependencyResolverImpl implements DependencyResolver {
             def artifacts = artifactMap.get(componentResult.moduleVersion)
             def artifact = artifacts?.find { true }
 
+            if (artifacts?.isEmpty()) {
+              dependencies.addAll(
+                transform(handledDependencyResults, componentResult.dependencies, artifactMap, componentResultsMap, scope)
+              )
+            }
             boolean first = true
             artifacts?.each {
               artifact = it

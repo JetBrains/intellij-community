@@ -210,7 +210,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
   }
 
   private void setupBuilder(final @NotNull Project project) {
-    ServersTreeStructure structure = new ServersTreeStructure(project, myContribution);
+    ServersTreeStructure structure = myContribution.createTreeStructure(project);
     myBuilder = new TreeBuilderBase(myTree, structure, myTreeModel) {
       @Override
       protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
@@ -338,15 +338,8 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
     myBuilder.getUi().queueUpdate(connection).doWhenDone(new Runnable() {
       @Override
       public void run() {
-        myBuilder.select(ServersTreeStructure.DeploymentLogNode.class, new TreeVisitor<ServersTreeStructure.DeploymentLogNode>() {
-          @Override
-          public boolean visit(@NotNull ServersTreeStructure.DeploymentLogNode node) {
-            AbstractTreeNode parent = node.getParent();
-            return parent instanceof ServersTreeStructure.DeploymentNodeImpl
-                   && isDeploymentNodeMatch((ServersTreeStructure.DeploymentNodeImpl)parent, connection, deploymentName)
-                   && node.getValue().getPresentableName().equals(logName);
-          }
-        }, null, false);
+        TreeNodeSelector nodeSelector = myContribution.createLogNodeSelector(connection, deploymentName, logName);
+        myBuilder.select(nodeSelector.getNodeClass(), nodeSelector, null, false);
       }
     });
   }
@@ -356,8 +349,8 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
     return node.getServer().equals(connection.getServer());
   }
 
-  private static boolean isDeploymentNodeMatch(@NotNull ServersTreeStructure.DeploymentNodeImpl node,
-                                               @NotNull final ServerConnection<?> connection, @NotNull final String deploymentName) {
+  public static boolean isDeploymentNodeMatch(@NotNull ServersTreeStructure.DeploymentNodeImpl node,
+                                              @NotNull final ServerConnection<?> connection, @NotNull final String deploymentName) {
     ServersTreeStructure.RemoteServerNode serverNode = node.getServerNode();
     return isServerNodeMatch(serverNode, connection)
            && node.getDeployment().getName().equals(deploymentName);

@@ -665,4 +665,10 @@ public class PyFormatterTest extends PyTestCase {
     getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_ARGUMENTS = true;
     doTest();
   }
+
+  // PY-18265
+  public void testNoSpaceAroundPowerOperator() {
+    getPythonCodeStyleSettings().SPACE_AROUND_POWER_OPERATOR = false;
+    doTest();
+  }
 }

@@ -743,7 +743,7 @@
     
     <extensionPoint name="moveLeftRightHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" 
-            implements="com.intellij.codeInsight.editorActions.moveLeftRight.MoveStatementLeftRightHandler"/>
+            implements="com.intellij.codeInsight.editorActions.moveLeftRight.MoveElementLeftRightHandler"/>
     </extensionPoint>
 
     <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider"/>

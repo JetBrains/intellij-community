@@ -70,6 +70,9 @@ def loadProductProperties(String home, String buildNumber) {
     throw new BuildException("No product specific properties file found at: " + productPropertiesPath)
   }
   setProperty("productProperties", includeFile(productPropertiesPath).getProperties(home, buildNumber))
+  productProperties.ideJvmArgs = productProperties.ideJvmArgs != null ?
+                                 productProperties.ideJvmArgs + " -Didea.jre.check=true" :
+                                 "-Didea.jre.check=true"
 }
 
 target(compile: "Compile project") {
@@ -265,6 +268,7 @@ private layoutMac(Map _args, String home, Paths paths) {
       </dict>
 """
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
+  args."idea.properties" = ["idea.jre.check": true];
   args.urlSchemes = ["idea"]
   args.mac_no_yjp = true
   args.executable = prefix

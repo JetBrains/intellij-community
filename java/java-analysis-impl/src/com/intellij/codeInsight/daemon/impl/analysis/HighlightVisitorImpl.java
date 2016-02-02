@@ -325,8 +325,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
             final PsiCallExpression callExpression = parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression ? 
                                                      (PsiCallExpression)parent.getParent() : null;
             final JavaResolveResult containingCallResolveResult = callExpression != null ? callExpression.resolveMethodGenerics() : null;
-            final String errorMessage = containingCallResolveResult instanceof MethodCandidateInfo ?
-                                        ((MethodCandidateInfo)containingCallResolveResult).getInferenceErrorMessage() : null;
+            final String errorMessage;
+            if (containingCallResolveResult instanceof MethodCandidateInfo) {
+              errorMessage = ((MethodCandidateInfo)containingCallResolveResult).getParentInferenceErrorMessage((PsiExpressionList)parent);
+            }
+            else {
+              errorMessage = null;
+            }
             if (errorMessage != null) {
               HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                 .range(expression).descriptionAndTooltip(errorMessage).create();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,6 +134,10 @@ class ValueElementReader {
     if (Enum.class.isAssignableFrom(type)) {
       //noinspection unchecked
       return (T)(toEnum((Class<Enum>)type, value));
+    }
+    if (Boolean.class.equals(type)) {
+      //noinspection unchecked
+      return (T)Boolean.valueOf(value);
     }
     throw new IllegalArgumentException("unsupported " + type);
   }

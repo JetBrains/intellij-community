@@ -32,7 +32,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.navigation.History;
@@ -152,8 +151,8 @@ public class SdkEditor implements Configurable, Place.Navigator {
     myHomeComponent.getTextField().setEditable(false);
 
     myHomeFieldLabel = new JLabel(getHomeFieldLabelValue());
-    final int leftInset = Registry.is("ide.new.project.settings") ? 10 : 0;
-    final int rightInset = Registry.is("ide.new.project.settings") ? 10 : 0;
+    final int leftInset = 10;
+    final int rightInset = 10;
     myMainPanel.add(myHomeFieldLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(2, leftInset, 2, 2), 0, 0));
     myMainPanel.add(myHomeComponent, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 2, rightInset), 0, 0));
 

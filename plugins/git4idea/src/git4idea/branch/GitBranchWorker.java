@@ -133,6 +133,11 @@ public final class GitBranchWorker {
                           myUiHandler.getProgressIndicator());
   }
 
+  public void renameBranch(@NotNull String currentName, @NotNull String newName, @NotNull List<GitRepository> repositories) {
+    updateInfo(repositories);
+    new GitRenameBranchOperation(myProject, myFacade, myGit, myUiHandler, currentName, newName, repositories).execute();
+  }
+
   public void compare(@NotNull final String branchName, @NotNull final List<GitRepository> repositories,
                       @NotNull final GitRepository selectedRepository) {
     final GitCommitCompareInfo myCompareInfo = loadCommitsToCompare(repositories, branchName);

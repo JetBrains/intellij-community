@@ -90,7 +90,9 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
       public int compare(final CommonProblemDescriptor o1, final CommonProblemDescriptor o2) {
         final ProblemDescriptorBase d1 = (ProblemDescriptorBase)o1;
         final ProblemDescriptorBase d2 = (ProblemDescriptorBase)o2;
-        return d2.getTextRange().getStartOffset() - d1.getTextRange().getStartOffset();
+        final int offset2 = d2.getTextRange().getStartOffset();
+        final int offset1 = d1.getTextRange().getStartOffset();
+        return offset2 < offset1 ? -1 : offset1 == offset2 ? 0 : 1;
       }
     });
     

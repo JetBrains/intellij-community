@@ -24,6 +24,7 @@ import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
 import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -86,29 +87,60 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
   }
 
   @NotNull
-  private static Map<TypeParameterInfo, PsiTypeCodeFragment> createTypeParameters(@NotNull JavaCodeFragmentFactory factory,
-                                                                                  @NotNull List<PsiTypeParameter> classTypeParameters,
-                                                                                  @NotNull List<PsiTypeElement> typeElements) {
-    final LinkedHashMap<TypeParameterInfo, PsiTypeCodeFragment> result = new LinkedHashMap<TypeParameterInfo, PsiTypeCodeFragment>();
+  private static List<TypeParameterInfoView> createTypeParameters(@NotNull JavaCodeFragmentFactory factory,
+                                                                  @NotNull List<PsiTypeParameter> classTypeParameters,
+                                                                  @NotNull List<PsiTypeElement> typeElements) {
     final TypeParameterNameSuggester suggester = new TypeParameterNameSuggester(classTypeParameters);
 
+    List<TypeParameterInfoView> result = new ArrayList<TypeParameterInfoView>();
     int listIndex = 0;
     for (PsiTypeElement typeElement : typeElements) {
       if (listIndex < classTypeParameters.size()) {
         final PsiTypeParameter typeParameter = classTypeParameters.get(listIndex);
 
         if (isAssignable(typeParameter, typeElement.getType())) {
-          result.put(new TypeParameterInfo(listIndex++), null);
+          result.add(new TypeParameterInfoView(new TypeParameterInfo.Existing(listIndex++), null, null));
           continue;
         }
       }
 
-      final PsiType type = typeElement.getType();
-      final String suggestedName = type instanceof PsiClassType ? suggester.suggest((PsiClassType)type) : suggester.suggestUnusedName("T");
-      result.put(new TypeParameterInfo(suggestedName, type),
-                 factory.createTypeCodeFragment(suggestedName, typeElement, true));
+      final PsiType defaultType = typeElement.getType();
+      final String suggestedName;
+      PsiClassType boundType = null;
+      if (defaultType instanceof PsiClassType) {
+        suggestedName = suggester.suggest((PsiClassType)defaultType);
+        final PsiClass resolved = ((PsiClassType)defaultType).resolve();
+        if (resolved != null) {
+          final PsiReferenceList extendsList = resolved.getExtendsList();
+          if (extendsList != null) {
+            final PsiClassType[] types = extendsList.getReferencedTypes();
+            if (types.length == 1) {
+              boundType = types[0];
+            }
+          }
+        }
+      }
+      else {
+        suggestedName = suggester.suggestUnusedName("T");
+      }
+      final PsiTypeCodeFragment boundFragment = createBoundCodeFragment(boundType, typeElement, factory);
+      result.add(new TypeParameterInfoView(new TypeParameterInfo.New(suggestedName, defaultType, null),
+                                           boundFragment,
+                                           boundType == null ? factory.createTypeCodeFragment(suggestedName, typeElement, true)
+                                                             : createBoundCodeFragment(boundType, typeElement, factory)));
     }
     return result;
+  }
+
+  private static PsiTypeCodeFragment createBoundCodeFragment(@Nullable PsiClassType boundType,
+                                                             @NotNull PsiElement context,
+                                                             @NotNull JavaCodeFragmentFactory factory) {
+    final PsiTypeCodeFragment boundFragment =
+      factory.createTypeCodeFragment(boundType == null ? "" : boundType.getClassName(), context, true);
+    if (boundType != null) {
+      boundFragment.addImportsFromString(boundType.getCanonicalText());
+    }
+    return boundFragment;
   }
 
   private static boolean isAssignable(@NotNull PsiTypeParameter typeParameter, @NotNull PsiType type) {
@@ -155,6 +187,30 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
     @NotNull
     public String suggest(@NotNull PsiClassType type) {
       return suggestUnusedName(type.getClassName().substring(0, 1).toUpperCase());
+    }
+  }
+
+  public static class TypeParameterInfoView {
+    private final TypeParameterInfo myInfo;
+    private final PsiTypeCodeFragment myBoundValueFragment;
+    private final PsiTypeCodeFragment myDefaultValueFragment;
+
+    public TypeParameterInfoView(TypeParameterInfo info, PsiTypeCodeFragment boundValueFragment, PsiTypeCodeFragment defaultValueFragment) {
+      myInfo = info;
+      myBoundValueFragment = boundValueFragment;
+      myDefaultValueFragment = defaultValueFragment;
+    }
+
+    public TypeParameterInfo getInfo() {
+      return myInfo;
+    }
+
+    public PsiTypeCodeFragment getBoundValueFragment() {
+      return myBoundValueFragment;
+    }
+
+    public PsiTypeCodeFragment getDefaultValueFragment() {
+      return myDefaultValueFragment;
     }
   }
 }

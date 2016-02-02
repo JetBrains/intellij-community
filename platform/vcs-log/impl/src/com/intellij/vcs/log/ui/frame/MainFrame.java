@@ -17,7 +17,10 @@ import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -86,6 +89,7 @@ public class MainFrame extends JPanel implements DataProvider {
     myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable, vcsLogUI.getColorManager(), initialDataPack);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
+    myChangesBrowser.getViewer().setScrollPaneBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     myChangesBrowser.getEditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), getGraphTable());
     setDefaultEmptyText(myChangesBrowser);
@@ -100,7 +104,7 @@ public class MainFrame extends JPanel implements DataProvider {
     // layout
     myToolbar = createActionsToolbar();
 
-    myDetailsSplitter = new Splitter(true, 0.7f);
+    myDetailsSplitter = new OnePixelSplitter(true, 0.7f);
     myDetailsSplitter.setFirstComponent(setupScrolledGraph());
     setupDetailsSplitter(uiProperties.isShowDetails());
 
@@ -111,7 +115,7 @@ public class MainFrame extends JPanel implements DataProvider {
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(myDetailsSplitter, BorderLayout.CENTER);
 
-    final Splitter changesBrowserSplitter = new Splitter(false, 0.7f);
+    final Splitter changesBrowserSplitter = new OnePixelSplitter(false, 0.7f);
     changesBrowserSplitter.setFirstComponent(toolbarsAndTable);
     changesBrowserSplitter.setSecondComponent(myChangesLoadingPane);
 
@@ -171,7 +175,7 @@ public class MainFrame extends JPanel implements DataProvider {
   }
 
   private JScrollPane setupScrolledGraph() {
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myGraphTable);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myGraphTable, SideBorder.TOP);
     myGraphTable.viewportSet(scrollPane.getViewport());
     return scrollPane;
   }
@@ -212,9 +216,28 @@ public class MainFrame extends JPanel implements DataProvider {
       }
     }
     mainGroup.add(toolbarGroup);
+
+    final ActionToolbar toolbar = createActionsToolbar(mainGroup);
+    ActionToolbar settings = createActionsToolbar(new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_QUICK_SETTINGS_ACTION)));
+    settings.setReservePlaceAutoPopupIcon(false);
+
+    JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        toolbar.getComponent().setBorder(VcsLogClassicFilterUi.getToolbarBorder());
+      }
+    };
+    panel.add(toolbar.getComponent(), BorderLayout.CENTER);
+    panel.add(settings.getComponent(), BorderLayout.LINE_END);
+    return panel;
+  }
+
+  @NotNull
+  private ActionToolbar createActionsToolbar(@NotNull DefaultActionGroup mainGroup) {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, mainGroup, true);
     toolbar.setTargetComponent(this);
-    return toolbar.getComponent();
+    return toolbar;
   }
 
   public JComponent getMainComponent() {
@@ -247,7 +270,7 @@ public class MainFrame extends JPanel implements DataProvider {
       return ArrayUtil.toObjectArray(myChangesBrowser.getCurrentDisplayedChanges(), Change.class);
     }
     else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
-      List<VcsFullCommitDetails> details = myUI.getVcsLog().getSelectedDetails();
+      List<VcsFullCommitDetails> details = myLog.getSelectedDetails();
       if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
       return ContainerUtil
         .map2Array(details, CommittedChangeListForRevision.class, new Function<VcsFullCommitDetails, CommittedChangeListForRevision>() {
@@ -260,7 +283,7 @@ public class MainFrame extends JPanel implements DataProvider {
         });
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
-      List<CommitId> hashes = myUI.getVcsLog().getSelectedCommits();
+      List<CommitId> hashes = myLog.getSelectedCommits();
       if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
       return ArrayUtil.toObjectArray(ContainerUtil.map(hashes, new Function<CommitId, VcsRevisionNumber>() {
         @Override
@@ -270,8 +293,8 @@ public class MainFrame extends JPanel implements DataProvider {
       }), VcsRevisionNumber.class);
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
-      List<CommitId> commits = myUI.getVcsLog().getSelectedCommits();
-      Collection<VcsLogProvider> logProviders = myUI.getVcsLog().getLogProviders();
+      List<CommitId> commits = myLog.getSelectedCommits();
+      Collection<VcsLogProvider> logProviders = myLog.getLogProviders();
       if (logProviders.size() == 1) {
         if (!commits.isEmpty()) {
           return myLogDataHolder.getLogProvider(assertNotNull(getFirstItem(commits)).getRoot()).getSupportedVcs();

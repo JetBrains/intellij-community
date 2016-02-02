@@ -32,6 +32,8 @@ import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -64,14 +66,26 @@ public class FileContentQueue {
   );
 
   public void queue(@NotNull Collection<VirtualFile> files, @NotNull final ProgressIndicator indicator) {
-    myContentsToLoad.set(files.size());
-    for(final VirtualFile file:files) {
-      ourLoadingContentsExecutor.submit(new Runnable() {
+    int numberOfFiles = files.size();
+    if (numberOfFiles == 0) return;
+    myContentsToLoad.set(numberOfFiles);
+
+    // ABQ is more memory efficient for significant number of files (e.g. 500K)
+    final BlockingQueue<VirtualFile> filesQueue = new ArrayBlockingQueue<VirtualFile>(numberOfFiles, false, files);
+    int maxFilesToBeLoadedInTheSameTime = ourAllowParallelFileReading ? CacheUpdateRunner.indexingThreadCount() : 1;
+
+    for(int i = 0 ; i < maxFilesToBeLoadedInTheSameTime; ++i) {
+      Runnable task = new Runnable() {
         @Override
         public void run() {
+          VirtualFile file = filesQueue.poll();
+          if (file == null) return;
           try {
             indicator.checkCanceled();
             myLoadedContents.offer(loadContent(file, indicator));
+            // With loop contents of second / remaining projects will start loading only after finishing loading contents from first project.
+            // With resubmit loading of contents of second/remaining projects will also proceed
+            ourLoadingContentsExecutor.submit(this);
           }
           catch (ProcessCanceledException e) {
             // Do nothing, exit the thread.
@@ -83,7 +97,8 @@ public class FileContentQueue {
             myContentsToLoad.addAndGet(-1);
           }
         }
-      });
+      };
+      ourLoadingContentsExecutor.submit(task);
     }
   }
 

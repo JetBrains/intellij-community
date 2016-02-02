@@ -24,7 +24,7 @@ public class DeployAction extends ServersTreeAction<DeploymentNode> {
   protected void updatePresentation(@NotNull Presentation presentation, @Nullable DeploymentNode node) {
     if (node != null && node.isDeployed()) {
       presentation.setText("Redeploy");
-      presentation.setDescription("Redeploy '" + node.getDeploymentName() + "'");
+      presentation.setDescription("Redeploy the selected item");
     }
     else {
       presentation.setText(getTemplatePresentation().getText());

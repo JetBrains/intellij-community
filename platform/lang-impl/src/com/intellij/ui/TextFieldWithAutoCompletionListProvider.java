@@ -31,8 +31,7 @@ import java.util.*;
  * @author Roman.Chernyatchik
  */
 public abstract class TextFieldWithAutoCompletionListProvider<T> implements Comparator<T> {
-  @NotNull
-  private Collection<T> myVariants;
+  @NotNull protected Collection<T> myVariants;
   @Nullable
   private String myCompletionAdvertisement;
 
@@ -135,8 +134,10 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> implements Comp
 
   public static String getCompletionPrefix(CompletionParameters parameters) {
     String text = parameters.getOriginalFile().getText();
-    int i = text.lastIndexOf(' ', parameters.getOffset() - 1) + 1;
-    return text.substring(i, parameters.getOffset());
+    int offset = parameters.getOffset();
+    int i = text.lastIndexOf(' ', offset - 1) + 1;
+    int j = text.lastIndexOf('\n', offset - 1) + 1;
+    return text.substring(Math.max(i, j), offset);
   }
 
   @Nullable

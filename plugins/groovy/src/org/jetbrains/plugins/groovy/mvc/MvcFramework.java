@@ -417,7 +417,14 @@ public abstract class MvcFramework {
   public static void addJavaHome(@NotNull JavaParameters params, @NotNull Module module) {
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
-      String path = StringUtil.trimEnd(sdk.getHomePath(), File.separator);
+      addJavaHome(sdk, params);
+    }
+  }
+
+  public static void addJavaHome(Sdk sdk, @NotNull JavaParameters params) {
+    String homePath = sdk.getHomePath();
+    if (homePath != null) {
+      String path = StringUtil.trimEnd(homePath, File.separator);
       if (StringUtil.isNotEmpty(path)) {
         params.addEnv("JAVA_HOME", FileUtil.toSystemDependentName(path));
       }
@@ -630,6 +637,8 @@ public abstract class MvcFramework {
   public boolean isUpgradeActionSupported(Module module) {
     return true;
   }
+
+  public boolean isRunTargetActionSupported(Module module) { return false; }
 
   @Nullable
   public static MvcFramework getInstance(@Nullable final Module module) {

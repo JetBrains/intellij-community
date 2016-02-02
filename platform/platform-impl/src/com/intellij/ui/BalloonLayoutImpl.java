@@ -173,55 +173,89 @@ public class BalloonLayoutImpl implements BalloonLayout {
     JComponent layeredPane = pane != null ? pane.getMyLayeredPane() : null;
     int eachColumnX = (layeredPane == null ? myLayeredPane.getWidth() : layeredPane.getX() + layeredPane.getWidth()) - 4;
 
-    for (int i = 0; i < columns.size(); i++) {
-      final ArrayList<Balloon> eachColumn = columns.get(i);
-      final Integer eachWidth = columnWidths.get(i);
-      int eachY = toolbarsOffset;
-      int columnSize = eachColumn.size();
-
-      if (columnSize > 0) {
-        BalloonImpl balloon = (BalloonImpl)eachColumn.get(0);
-        if (balloon.hasShadow()) {
-          eachY -= balloon.getShadowBorderInsets().top;
-        }
-        else {
-          eachY += 4;
+    if (myLayoutData.isEmpty()) {
+      for (int i = 0; i < columns.size(); i++) {
+        final ArrayList<Balloon> eachColumn = columns.get(i);
+        final Integer eachWidth = columnWidths.get(i);
+        eachColumnX -= eachWidth.intValue();
+        int eachY = toolbarsOffset + 2;
+        for (Balloon eachBalloon : eachColumn) {
+          final Rectangle eachRec = new Rectangle();
+          eachRec.setSize(getSize(eachBalloon));
+          if (((BalloonImpl)eachBalloon).hasShadow()) {
+            final Insets shadow = ((BalloonImpl)eachBalloon).getShadowBorderInsets();
+            eachRec.width += shadow.left + shadow.right;
+            eachRec.height += shadow.top + shadow.bottom;
+          }
+          eachY += 2; // space between two notifications
+          eachRec.setLocation(eachColumnX + eachWidth.intValue() - eachRec.width, eachY);
+          eachBalloon.setBounds(eachRec);
+          eachY += eachRec.height;
         }
       }
-      eachColumnX -= eachWidth.intValue();
+    }
+    else {
+      for (int i = 0; i < columns.size(); i++) {
+        final ArrayList<Balloon> eachColumn = columns.get(i);
+        final Integer eachWidth = columnWidths.get(i);
+        int eachY = toolbarsOffset;
+        int columnSize = eachColumn.size();
 
-      for (int j = 0; j < columnSize; j++) {
-        BalloonImpl eachBalloon = (BalloonImpl)eachColumn.get(j);
-        Rectangle eachRec = new Rectangle(getSize(eachBalloon));
-        Insets shadow = new Insets(0, 0, 0, 0);
-
-        boolean hasShadow = eachBalloon.hasShadow();
-        if (hasShadow) {
-          shadow = eachBalloon.getShadowBorderInsets();
-          eachRec.width += shadow.left + shadow.right;
-          eachRec.height += shadow.top + shadow.bottom;
+        if (columnSize > 0) {
+          BalloonImpl balloon = (BalloonImpl)eachColumn.get(0);
+          if (balloon.hasShadow()) {
+            eachY -= balloon.getShadowBorderInsets().top;
+          }
+          else {
+            eachY += 4;
+          }
         }
-        eachRec.setLocation(eachColumnX + eachWidth.intValue() - eachRec.width + shadow.left, eachY);
-        eachBalloon.setBounds(eachRec);
-        eachY += eachRec.height;
+        eachColumnX -= eachWidth.intValue();
 
-        //space between two notifications
-        if (myLayoutData.isEmpty()) {
-          eachY += 2;
+        boolean addShadow = false;
+        for (Balloon balloon : eachColumn) {
+          if (myLayoutData.get(balloon) == null) {
+            addShadow = true;
+            break;
+          }
         }
-        else if (j + 1 < columnSize) {
-          BalloonImpl next = (BalloonImpl)eachColumn.get(j + 1);
-          boolean hasNextShadow = next.hasShadow();
-          if (hasShadow && !hasNextShadow) {
-            eachY -= shadow.top;
+
+        for (int j = 0; j < columnSize; j++) {
+          BalloonImpl eachBalloon = (BalloonImpl)eachColumn.get(j);
+          Rectangle eachRec = new Rectangle(getSize(eachBalloon));
+          eachRec.setLocation(eachColumnX + eachWidth.intValue() - eachRec.width, eachY);
+
+          boolean hasShadow = eachBalloon.hasShadow();
+          Insets shadow = hasShadow ? eachBalloon.getShadowBorderInsets() : null;
+
+          if (addShadow && hasShadow) {
+            eachRec.width += shadow.left + shadow.right;
+            eachRec.x -= shadow.left;
           }
-          else if (!hasShadow && hasNextShadow) {
-            eachY -= 2 * next.getShadowBorderInsets().top;
+
+          eachBalloon.setBounds(eachRec);
+          eachY += eachRec.height;
+
+          // space between two notifications
+          if (j + 1 < columnSize) {
+            BalloonImpl next = (BalloonImpl)eachColumn.get(j + 1);
+            boolean hasNextShadow = next.hasShadow();
+            int space = BalloonLayoutConfiguration.NotificationSpace;
+
+            if (hasShadow == hasNextShadow) {
+              if (hasShadow) {
+                eachY += space - shadow.top - shadow.bottom;
+              }
+              else {
+                eachY += space;
+              }
+            }
+            else if (hasShadow) {
+              eachY += space - shadow.top;
+            } else {
+              eachY += space - next.getShadowBorderInsets().bottom;
+            }
           }
-          else if (hasShadow) {
-            eachY -= shadow.bottom + next.getShadowBorderInsets().top;
-          }
-          eachY += 10;
         }
       }
     }

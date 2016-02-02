@@ -31,10 +31,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.Collection;
 import java.util.Set;
@@ -94,11 +92,6 @@ public class CacheUpdateRunner {
     }
   }
 
-  private static final BoundedTaskExecutor ourCacheUpdateExecutor = new BoundedTaskExecutor(
-    PooledThreadExecutor.INSTANCE,
-    indexingThreadCount()
-  );
-
   private static boolean processSomeFilesWhileUserIsInactive(@NotNull FileContentQueue queue,
                                                              @NotNull Consumer<VirtualFile> progressUpdater,
                                                              final boolean processInReadAction,
@@ -138,7 +131,7 @@ public class CacheUpdateRunner {
           AtomicBoolean ref = new AtomicBoolean();
           finishedRefs[i] = ref;
           Runnable process = new MyRunnable(innerIndicator, queue, ref, progressUpdater, processInReadAction, project, fileProcessor);
-          futures[i] = ourCacheUpdateExecutor.submit(process);
+          futures[i] = application.executeOnPooledThread(process);
         }
         isFinished.set(waitForAll(finishedRefs, futures));
       }

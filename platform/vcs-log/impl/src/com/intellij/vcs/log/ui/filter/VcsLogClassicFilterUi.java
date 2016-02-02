@@ -15,10 +15,7 @@
  */
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,14 +23,18 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
@@ -220,19 +222,27 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     @Override
     public JComponent createCustomComponent(Presentation presentation) {
-      JPanel panel = new JPanel();
-      JLabel filterCaption = new JLabel("Filter:");
-      filterCaption.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
-      panel.add(filterCaption);
-      panel.add(createSearchField());
-      return panel;
-    }
-
-    private Component createSearchField() {
       final SearchTextFieldWithStoredHistory textFilter = new SearchTextFieldWithStoredHistory(VCS_LOG_TEXT_FILTER_HISTORY) {
         @Override
         protected void onFieldCleared() {
           myFilterModel.setFilter(null);
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+          Dimension preferredSize = super.getPreferredSize();
+          return new Dimension(preferredSize.width, UIUtil.isUnderWindowsLookAndFeel() ? preferredSize.height : getSearchFieldSize());
+        }
+
+        @Override
+        public void updateUI() {
+          super.updateUI();
+          if (UIUtil.isUnderWindowsLookAndFeel()) {
+            setBorder(BorderFactory.createLineBorder(JBColor.border()));
+          }
+          else {
+            setBorder(IdeBorderFactory.createEmptyBorder());
+          }
         }
       };
       textFilter.setText(myFilterModel.getText());
@@ -260,6 +270,22 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
     }
+  }
+
+  private static int getSearchFieldSize() {
+    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+      return 26; // see MacIntellijTextFieldUI; unfortunately, can not reference it here
+    }
+    return ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height;
+  }
+
+  public static Border getToolbarBorder() {
+    if (UIUtil.isUnderWindowsLookAndFeel()) {
+      return BorderFactory.createEmptyBorder(3, 2, 1, 2);
+    }
+    int delta = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height - getSearchFieldSize();
+    assert delta <= 0;
+    return BorderFactory.createEmptyBorder(3 + delta, 2, 1, 2);
   }
 
   private static class FilterActionComponent extends DumbAwareAction implements CustomComponentAction {

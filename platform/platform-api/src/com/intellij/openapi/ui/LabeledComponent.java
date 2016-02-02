@@ -181,7 +181,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
     }
 
     public static TextWithMnemonic fromTextWithMnemonic(String textWithMnemonic) {
-      int mnemonicIndex = textWithMnemonic.indexOf('&');
+      int mnemonicIndex = UIUtil.getDisplayMnemonicIndex(textWithMnemonic);
       if (mnemonicIndex == -1) {
         return new TextWithMnemonic(textWithMnemonic, -1);
       }

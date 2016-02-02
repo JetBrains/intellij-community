@@ -47,29 +47,45 @@ class CollectConversion {
     if (component == null) return;
 
     JavaPsiFacade facade = JavaPsiFacade.getInstance(ref.getProject());
+    PsiElementFactory factory = facade.getElementFactory();
     GlobalSearchScope scope = ref.getResolveScope();
     PsiClass list = facade.findClass(JAVA_UTIL_LIST, scope);
     PsiClass set = facade.findClass(JAVA_UTIL_SET, scope);
-    if (facade.findClass(JAVA_UTIL_STREAM_COLLECTORS, scope) == null || list == null || set == null) return;
+    PsiClass collection = facade.findClass(JAVA_UTIL_COLLECTION, scope);
+    if (facade.findClass(JAVA_UTIL_STREAM_COLLECTORS, scope) == null || list == null || set == null || collection == null) return;
 
-    boolean hasList = false;
-    boolean hasSet = false;
+    PsiType listType = null;
+    PsiType setType = null;
+    boolean hasIterable = false;
     for (ExpectedTypeInfo info : expectedTypes) {
       PsiType type = info.getDefaultType();
       PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(type);
       PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(type, true);
       if (expectedClass == null || expectedComponent == null || !TypeConversionUtil.isAssignable(expectedComponent, component)) continue;
+      hasIterable = true;
 
-      if (!hasList && InheritanceUtil.isInheritorOrSelf(list, expectedClass, true)) {
-        hasList = true;
-        consumer.consume(new MyLookupElement("toList", type));
+      if (InheritanceUtil.isInheritorOrSelf(list, expectedClass, true)) {
+        listType = type;
       }
-
-      if (!hasSet && InheritanceUtil.isInheritorOrSelf(set, expectedClass, true)) {
-        hasSet = true;
-        consumer.consume(new MyLookupElement("toSet", type));
+      if (InheritanceUtil.isInheritorOrSelf(set, expectedClass, true)) {
+        setType = type;
       }
+    }
 
+    if (expectedTypes.isEmpty()) {
+      listType = factory.createType(list, component);
+      setType = factory.createType(set, component);
+    }
+
+    if (listType != null) {
+      consumer.consume(new MyLookupElement("toList", listType));
+    }
+    if (setType != null) {
+      consumer.consume(new MyLookupElement("toSet", setType));
+    }
+
+    if (expectedTypes.isEmpty() || hasIterable) {
+      consumer.consume(new MyLookupElement("toCollection", factory.createType(collection, component)));
     }
   }
 
@@ -116,7 +132,13 @@ class CollectConversion {
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (args.length != 1 || !(args[0] instanceof PsiMethodCallExpression)) return;
 
-      JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(args[0]);
+      PsiMethodCallExpression innerCall = (PsiMethodCallExpression)args[0];
+      PsiMethod collectorMethod = innerCall.resolveMethod();
+      if (collectorMethod != null && collectorMethod.getParameterList().getParametersCount() > 0) {
+        context.getEditor().getCaretModel().moveToOffset(innerCall.getArgumentList().getFirstChild().getTextRange().getEndOffset());
+      }
+
+      JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(innerCall);
     }
 
     @NotNull

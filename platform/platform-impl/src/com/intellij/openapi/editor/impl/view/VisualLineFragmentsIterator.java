@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,11 +138,12 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
 
     myCurrentFoldRegionIndex = nextFoldingIndex;
     myCurrentEndLogicalLine = startLogicalLine;
+    myCurrentX = myView.getInsets().left;
     if (mySegmentStartOffset == 0) {
-      myCurrentX = myView.getPrefixTextWidthInPixels();
+      myCurrentX += myView.getPrefixTextWidthInPixels();
     }
     else if (currentOrPrevWrap != null && mySegmentStartOffset == currentOrPrevWrap.getStart()) {
-      myCurrentX = currentOrPrevWrap.getIndentInPixels();
+      myCurrentX += currentOrPrevWrap.getIndentInPixels();
       myCurrentVisualColumn = currentOrPrevWrap.getIndentInColumns();
     }
     myNextWrapOffset = followingWrap == null ? Integer.MAX_VALUE : followingWrap.getStart();

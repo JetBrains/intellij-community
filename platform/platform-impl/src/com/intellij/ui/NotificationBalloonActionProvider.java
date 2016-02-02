@@ -21,6 +21,7 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBRectangle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,16 +40,21 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
   private final BalloonImpl myBalloon;
   private final BalloonLayoutData myLayoutData;
   private final String myDisplayGroupId;
+  private final Component myRepaintPanel;
   private final BalloonImpl.ActionButton mySettingButton;
   private final BalloonImpl.ActionButton myCloseButton;
   private final List<BalloonImpl.ActionButton> myActions = new ArrayList<BalloonImpl.ActionButton>();
 
+  private static final Rectangle CloseHoverBounds = new JBRectangle(5, 5, 12, 10);
+
   public NotificationBalloonActionProvider(@NotNull BalloonImpl balloon,
+                                           @Nullable Component repaintPanel,
                                            @NotNull BalloonLayoutData layoutData,
                                            @Nullable String displayGroupId) {
     myLayoutData = layoutData;
     myDisplayGroupId = displayGroupId;
     myBalloon = balloon;
+    myRepaintPanel = repaintPanel;
 
     if (myDisplayGroupId == null || !NotificationsConfigurationImpl.getInstanceImpl().isRegistered(myDisplayGroupId)) {
       mySettingButton = null;
@@ -67,8 +74,30 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
               }
             });
           }
-        });
+        }) {
+        @Override
+        public void repaint() {
+          super.repaint();
+          if (myRepaintPanel != null) {
+            myRepaintPanel.repaint();
+          }
+        }
+      };
       myActions.add(mySettingButton);
+
+      if (repaintPanel != null) {
+        layoutData.showActions = new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            for (BalloonImpl.ActionButton action : myActions) {
+              if (!action.isShowing() || !action.hasPaint()) {
+                return Boolean.FALSE;
+              }
+            }
+            return Boolean.TRUE;
+          }
+        };
+      }
     }
 
     myCloseButton = myBalloon.new ActionButton(
@@ -90,20 +119,13 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
             }
           });
         }
-      });
-    myActions.add(myCloseButton);
-
-    layoutData.showActions = new Computable<Boolean>() {
+      }) {
       @Override
-      public Boolean compute() {
-        for (BalloonImpl.ActionButton action : myActions) {
-          if (!action.isShowing() || !action.hasPaint()) {
-            return Boolean.FALSE;
-          }
-        }
-        return Boolean.TRUE;
+      protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon) {
+        icon.paintIcon(this, g, CloseHoverBounds.x, CloseHoverBounds.y);
       }
     };
+    myActions.add(myCloseButton);
   }
 
   @NotNull
@@ -116,29 +138,27 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
   public void layout(@NotNull Rectangle bounds) {
     Dimension closeSize = myCloseButton.getPreferredSize();
     Insets borderInsets = myBalloon.getShadowBorderInsets();
-    int x = bounds.x + bounds.width - closeSize.width - 4 - borderInsets.right;
-    int y = bounds.y + 2 + borderInsets.top;
-    myCloseButton.setBounds(x, y, closeSize.width, closeSize.height);
+    int x = bounds.x + bounds.width - borderInsets.right - closeSize.width - myLayoutData.configuration.rightActionsOffset.width;
+    int y = bounds.y + borderInsets.top + myLayoutData.configuration.rightActionsOffset.height;
+    myCloseButton.setBounds(x - CloseHoverBounds.x, y - CloseHoverBounds.y,
+                            closeSize.width + CloseHoverBounds.width, closeSize.height + CloseHoverBounds.height);
 
     if (mySettingButton != null) {
       Dimension size = mySettingButton.getPreferredSize();
-      mySettingButton.setBounds(x - size.width - 12, y, size.width, size.height);
+      mySettingButton.setBounds(x - size.width - myLayoutData.configuration.gearCloseSpace, y, size.width, size.height);
     }
   }
 
-  public static int getCloseOffset() {
-    return AllIcons.Ide.Notification.Close.getIconWidth() + 6;
-  }
+  private static final boolean showDebugBorder = false;
 
   @NotNull
   public static Icon icon(@NotNull final Icon icon) {
-    //noinspection ConstantConditionalExpression
-    return true ? icon : new Icon() {
+    return !showDebugBorder ? icon : new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
         icon.paintIcon(c, g, x, y);
         g.setColor(Color.black);
-        g.drawRect(x, y, getIconWidth(), getIconHeight());
+        drawRect(g, x, y, getIconWidth(), getIconHeight());
       }
 
       @Override
@@ -151,5 +171,11 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
         return icon.getIconHeight();
       }
     };
+  }
+
+  public static void drawRect(Graphics g, int x, int y, int w, int h) {
+    if (showDebugBorder) {
+      ((Graphics2D)g).draw(new Rectangle2D.Double(x + 0.5, y + 0.5, w - 1, h - 1));
+    }
   }
 }

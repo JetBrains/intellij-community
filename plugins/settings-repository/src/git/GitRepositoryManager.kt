@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,7 +166,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
 
     val refSpecs = SmartList(RemoteConfig(repository.config, Constants.DEFAULT_REMOTE_NAME).pushRefSpecs)
     if (refSpecs.isEmpty()) {
-      val head = repository.getRef(Constants.HEAD)
+      val head = repository.findRef(Constants.HEAD)
       if (head != null && head.isSymbolic) {
         refSpecs.add(RefSpec(head.leaf.name))
       }

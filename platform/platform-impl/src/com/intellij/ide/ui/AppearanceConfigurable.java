@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -533,6 +534,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, UIUtil.getLcdContrastValue());
     private static final SwingUtilities2.AATextInfo GREYSCALE_HINT = new SwingUtilities2.AATextInfo(
       RenderingHints.VALUE_TEXT_ANTIALIAS_ON, UIUtil.getLcdContrastValue());
+
     private final boolean useEditorAASettings;
 
     public AAListCellRenderer(boolean useEditorAASettings) {
@@ -553,11 +555,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       }
 
       if (useEditorAASettings) {
-        setFont(new Font(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName(),
-                         Font.PLAIN, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize()));
+        EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+        setFont(new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize()));
       }
 
-      setText(value.toString());
+      setText(String.valueOf(value));
     }
   }
 }

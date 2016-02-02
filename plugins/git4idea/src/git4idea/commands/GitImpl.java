@@ -363,6 +363,18 @@ public class GitImpl implements Git {
     return run(h);
   }
 
+  @NotNull
+  @Override
+  public GitCommandResult renameBranch(@NotNull GitRepository repository,
+                                       @NotNull String currentName,
+                                       @NotNull String newName,
+                                       @NotNull GitLineHandlerListener... listeners) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.setStdoutSuppressed(false);
+    h.addParameters("-m", currentName, newName);
+    return run(h);
+  }
+
   @Override
   @NotNull
   public GitCommandResult reset(@NotNull GitRepository repository, @NotNull GitResetMode mode, @NotNull String target,
@@ -616,11 +628,23 @@ public class GitImpl implements Git {
                                          boolean commitListAware) {
     GitInteractiveRebaseEditorHandler editor = configureEditor(project, root, handler, commitListAware);
     try {
-      return run(handler);
+      GitCommandResult result = run(handler);
+      return editor.wasEditorCancelled() ? toCancelledResult(result) : result;
     }
     finally {
       editor.close();
     }
+  }
+
+  @NotNull
+  private static GitCommandResult toCancelledResult(@NotNull GitCommandResult result) {
+    int exitCode = result.getExitCode() == 0 ? 1 : result.getExitCode();
+    return new GitCommandResult(false, exitCode, result.getErrorOutput(), result.getOutput(), result.getException()) {
+      @Override
+      public boolean cancelled() {
+        return true;
+      }
+    };
   }
 
   @VisibleForTesting

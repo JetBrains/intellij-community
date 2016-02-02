@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
-
 
 @State(
   name = "CodeStyleSettingsManager",
-    storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+  storages = {
+    @Storage(file = "code.style.schemes"),
+    @Storage(file = "other.xml", deprecated = true)
+  }
 )
-public class AppCodeStyleSettingsManager extends CodeStyleSettingsManager{
+public class AppCodeStyleSettingsManager extends CodeStyleSettingsManager {
 }

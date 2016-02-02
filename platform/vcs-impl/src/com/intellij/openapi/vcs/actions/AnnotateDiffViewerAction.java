@@ -170,7 +170,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
                                                            @NotNull final T viewer,
                                                            @NotNull final Side side) {
     final Project project = viewer.getProject();
-    assert project != null;
+    if (project == null) return;
     final ContentDiffRequest request = viewer.getRequest();
 
     AnnotationData data = getDataFromCache(request, side);
@@ -180,7 +180,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     }
 
     final FileAnnotationLoader loader = createAnnotationsLoader(project, request, side);
-    assert loader != null;
+    if (loader == null) return;
 
     final DiffContextEx diffContext = ObjectUtils.tryCast(viewer.getContext(), DiffContextEx.class);
 

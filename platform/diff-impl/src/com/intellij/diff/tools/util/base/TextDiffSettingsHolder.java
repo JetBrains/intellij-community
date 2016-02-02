@@ -17,7 +17,6 @@ package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -58,6 +57,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
     public boolean SHOW_LINE_NUMBERS = true;
     public boolean SHOW_INDENT_LINES = false;
     public boolean USE_SOFT_WRAPS = false;
+    public HighlightingLevel HIGHLIGHTING_LEVEL = HighlightingLevel.INSPECTIONS;
 
     // Fragments settings
     public boolean EXPAND_BY_DEFAULT = true;
@@ -138,6 +138,15 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
     public void setUseSoftWraps(boolean state) {
       PLACE_SETTINGS.USE_SOFT_WRAPS = state;
+    }
+
+    @NotNull
+    public HighlightingLevel getHighlightingLevel() {
+      return PLACE_SETTINGS.HIGHLIGHTING_LEVEL;
+    }
+
+    public void setHighlightingLevel(@NotNull HighlightingLevel state) {
+      PLACE_SETTINGS.HIGHLIGHTING_LEVEL = state;
     }
 
     public int getContextRange() {

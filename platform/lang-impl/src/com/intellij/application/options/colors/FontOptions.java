@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.OptionsConstants;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -30,6 +31,8 @@ import com.intellij.ui.FontComboBox;
 import com.intellij.ui.FontInfoRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
@@ -37,11 +40,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 public class FontOptions extends JPanel implements OptionsPanel{
   private static final FontInfoRenderer RENDERER = new FontInfoRenderer() {
@@ -59,6 +65,8 @@ public class FontOptions extends JPanel implements OptionsPanel{
   @NotNull private final JTextField myLineSpacingField    = new JTextField(4);
   private final FontComboBox myPrimaryCombo = new FontComboBox();
   private final JCheckBox myUseSecondaryFontCheckbox = new JCheckBox(ApplicationBundle.message("secondary.font"));
+  private final JCheckBox myEnableLigaturesCheckbox = new JCheckBox(ApplicationBundle.message("use.ligatures"));
+  private final JLabel myLigaturesInfoLinkLabel;
   private final FontComboBox mySecondaryCombo = new FontComboBox();
 
   @NotNull private final JBCheckBox myOnlyMonospacedCheckBox =
@@ -93,6 +101,18 @@ public class FontOptions extends JPanel implements OptionsPanel{
                    SwingConstants.LEFT), "newline, sx 5");
     add(myUseSecondaryFontCheckbox, "newline, ax right");
     add(mySecondaryCombo, "sgx b");
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+    myEnableLigaturesCheckbox.setBorder(null);
+    panel.add(myEnableLigaturesCheckbox);
+    myLigaturesInfoLinkLabel = new LinkLabel<Void>(ApplicationBundle.message("ligatures.more.info"), null, new LinkListener<Void>() {
+      @Override
+      public void linkSelected(LinkLabel aSource, Void aLinkData) {
+        BrowserUtil.browse("https://confluence.jetbrains.com/display/IDEADEV/Support+for+Ligatures+in+Editor");
+      }
+    });
+    myLigaturesInfoLinkLabel.setBorder(new EmptyBorder(0, 5, 0, 0));
+    panel.add(myLigaturesInfoLinkLabel);
+    add(panel, "newline, sx 2");
 
     myOnlyMonospacedCheckBox.setBorder(null);
     myUseSecondaryFontCheckbox.setBorder(null);
@@ -194,6 +214,12 @@ public class FontOptions extends JPanel implements OptionsPanel{
         }
       }
     });
+    myEnableLigaturesCheckbox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        getFontPreferences().setUseLigatures(myEnableLigaturesCheckbox.isSelected());
+      }
+    });
   }
 
   private int getFontSizeFromField() {
@@ -278,6 +304,10 @@ public class FontOptions extends JPanel implements OptionsPanel{
     myLineSpacingField.setEnabled(!readOnly);
     myEditorFontSizeField.setEnabled(!readOnly);
     myUseSecondaryFontCheckbox.setEnabled(!readOnly);
+
+    myEnableLigaturesCheckbox.setEnabled(!readOnly);
+    myLigaturesInfoLinkLabel.setEnabled(!readOnly);
+    myEnableLigaturesCheckbox.setSelected(fontPreferences.useLigatures());
 
     myIsInSchemeChange = false;
   }

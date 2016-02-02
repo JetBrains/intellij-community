@@ -16,6 +16,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.util.ui.JBInsets;
@@ -142,26 +143,31 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
       Rectangle bounds = new Rectangle(c.getSize());
       JBInsets.removeFrom(bounds, c.getInsets());
       if (c.isOpaque() && c.getParent() instanceof JScrollPane) {
-        g.setColor(c.getForeground());
-        switch (alignment) {
-          case TOP:
-            bounds.height--;
-            g.drawLine(bounds.x, bounds.y + bounds.height, bounds.x + bounds.width, bounds.y + bounds.height);
-            break;
-          case LEFT:
-            bounds.width--;
-            g.drawLine(bounds.x + bounds.width, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height);
-            break;
-          case RIGHT:
-            g.drawLine(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height);
-            bounds.width--;
-            bounds.x++;
-            break;
-          case BOTTOM:
-            g.drawLine(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y);
-            bounds.height--;
-            bounds.y++;
-            break;
+        if (Registry.is("ide.scroll.track.border.paint")) {
+          Color foreground = c.getForeground();
+          if (foreground != null && !foreground.equals(c.getBackground())) {
+            g.setColor(foreground);
+            switch (alignment) {
+              case TOP:
+                bounds.height--;
+                g.drawLine(bounds.x, bounds.y + bounds.height, bounds.x + bounds.width, bounds.y + bounds.height);
+                break;
+              case LEFT:
+                bounds.width--;
+                g.drawLine(bounds.x + bounds.width, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height);
+                break;
+              case RIGHT:
+                g.drawLine(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height);
+                bounds.width--;
+                bounds.x++;
+                break;
+              case BOTTOM:
+                g.drawLine(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y);
+                bounds.height--;
+                bounds.y++;
+                break;
+            }
+          }
         }
       }
       else if (isTrackVisible) {
@@ -186,14 +192,14 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
         bounds.width -= size;
         bounds.x += size;
       }
-      // process additional drawing on the track
       myTrackBounds.setBounds(bounds);
+      updateThumbBounds();
+      // process additional drawing on the track
       RegionPainter<Object> track = UIUtil.getClientProperty(c, JBScrollBar.TRACK);
       if (track != null && myTrackBounds.width > 0 && myTrackBounds.height > 0) {
         track.paint((Graphics2D)g, myTrackBounds.x, myTrackBounds.y, myTrackBounds.width, myTrackBounds.height, null);
       }
       // process drawing the thumb
-      updateThumbBounds();
       if (myThumbBounds.width > 0 && myThumbBounds.height > 0) {
         paintThumb((Graphics2D)g, myThumbBounds.x, myThumbBounds.y, myThumbBounds.width, myThumbBounds.height, c);
       }

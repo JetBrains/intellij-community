@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   @NonNls private static final String CONSOLE_LINE_SPACING           = "CONSOLE_LINE_SPACING";
   @NonNls private static final String EDITOR_FONT_SIZE               = "EDITOR_FONT_SIZE";
   @NonNls private static final String CONSOLE_FONT_SIZE              = "CONSOLE_FONT_SIZE";
+  @NonNls private static final String EDITOR_LIGATURES               = "EDITOR_LIGATURES";
+  @NonNls private static final String CONSOLE_LIGATURES              = "CONSOLE_LIGATURES";
   @NonNls private static final String EDITOR_QUICK_JAVADOC_FONT_SIZE = "EDITOR_QUICK_DOC_FONT_SIZE";
 
   protected AbstractColorsScheme(EditorColorsScheme parentScheme) {
@@ -430,6 +432,14 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       FontSize value = myValueReader.read(FontSize.class, childNode);
       if (value != null) myQuickDocFontSize = value;
     }
+    else if (EDITOR_LIGATURES.equals(name)) {
+      Boolean value = myValueReader.read(Boolean.class, childNode);
+      if (value != null) myFontPreferences.setUseLigatures(value);
+    }
+    else if (CONSOLE_LIGATURES.equals(name)) {
+      Boolean value = myValueReader.read(Boolean.class, childNode);
+      if (value != null) myConsoleFontPreferences.setUseLigatures(value);
+    }
   }
 
   private int readFontSize(Element element, boolean isDefault) {
@@ -484,7 +494,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     else {
       writeFontPreferences(EDITOR_FONT, parentNode, myFontPreferences);
     }
-
+    writeLigaturesPreferences(parentNode, myFontPreferences, EDITOR_LIGATURES);
+    
     if (!myFontPreferences.equals(myConsoleFontPreferences)) {
       if (myConsoleFontPreferences.getEffectiveFontFamilies().size() <= 1) {
         element = new Element(OPTION_ELEMENT);
@@ -502,6 +513,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       else {
         writeFontPreferences(CONSOLE_FONT, parentNode, myConsoleFontPreferences);
       }
+      writeLigaturesPreferences(parentNode, myConsoleFontPreferences, CONSOLE_LIGATURES);
     }
 
     if (getConsoleLineSpacing() != getLineSpacing()) {
@@ -536,6 +548,15 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
     if (attrElements.getChildren().size() > 0) {
       parentNode.addContent(attrElements);
+    }
+  }
+
+  private static void writeLigaturesPreferences(Element parentNode, FontPreferences preferences, String optionName) {
+    if (preferences.useLigatures()) {
+      Element element = new Element(OPTION_ELEMENT);
+      element.setAttribute(NAME_ATTR, optionName);
+      element.setAttribute(VALUE_ELEMENT, String.valueOf(true));
+      parentNode.addContent(element);
     }
   }
 

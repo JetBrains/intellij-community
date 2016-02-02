@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ZipperUpdater;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -48,7 +47,7 @@ public class ZipAndQueue {
         myQueue.run(myInvokedOnQueue);
       }
     };
-    myInvokedOnQueue = new Task.Backgroundable(project, title, false, BackgroundFromStartOption.getInstance()) {
+    myInvokedOnQueue = new Task.Backgroundable(project, title, false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         runnable.run();

@@ -883,32 +883,29 @@ binding.setVariable("bundledJDK64s"){
 private bundledJDK(boolean win64) {
   requireProperty("artifact.linux.no.jdk", "true")
   requireProperty("artifact.mac.no.jdk", "true")
-  requireProperty("jdk.win", "1.8")
-  requireProperty("jdk.mac", "1.8")
+  requireProperty("jdk.win", "jdk1.8")
+  requireProperty("jdk.mac", "openjdk.1.8")
   requireProperty("jdk.linux", "1.8")
-  requireProperty("jdk.custom.linux", "1.8")
+  requireProperty("jdk.custom.linux", "openjdk.1.8")
 
   if (new File("${home}/build/jdk").exists()) {
     if (p("jdk.win") != "false") {
-      setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.win"), (win64 ? "x64.zip": "x32.zip") ))
+      setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), p("jdk.win"), (win64 ? "x64.zip": "x32.zip") ))
       extractRedistJre(winJDK, "${paths.sandbox}/jdk.win/jre")
     }
     if (p("jdk.linux") != "false") {
       setProperty("linuxJDK", getPathToBundledJDK(new File("${home}/build/jdk/linux"), "jdk" + p("jdk.linux"), ".tar"))
       extractRedistJre(linuxJDK, "${paths.sandbox}/jdk.linux/jre")
     }
-    def customJdkDir = new File("${home}/build/jdk/custom")
+    def customJdkDir = new File("${home}/build/jdk/mac/custom")
     if (p("jdk.mac") != "false" && (customJdkDir.exists() && customJdkDir.isDirectory())) {
-      setProperty("macCustomJDK", getPathToBundledJDK(customJdkDir, "openjdk.1.8", ".tar.gz"))
+      setProperty("macCustomJDK", getPathToBundledJDK(customJdkDir, p("jdk.mac"), ".tar.gz"))
     }
-    customJdkDir = new File("${home}/build/jdk/custom/linux")
+    customJdkDir = new File("${home}/build/jdk/linux/custom")
     if (p("jdk.custom.linux") != "false" && (customJdkDir.exists() && customJdkDir.isDirectory())) {
-      setProperty("linuxCustomJDK", getPathToBundledJDK(customJdkDir, "openjdk.1.8", ".tar.gz"))
+      setProperty("linuxCustomJDK", getPathToBundledJDK(customJdkDir, p("jdk.custom.linux"), ".tar.gz"))
       extractRedistJre(linuxCustomJDK, "${paths.sandbox}/jdk.custom.linux")
     }
-/*    if (p("jdk.bundled.mac") != "false") {
-      setProperty("macJDK", getPathToBundledJDK(new File("${home}/build/jdk/mac"), "jdk" + p("jdk.bundled.mac"), ".tar"))
-    } */
   }
 }
 

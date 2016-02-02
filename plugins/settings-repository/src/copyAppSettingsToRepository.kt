@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,36 +15,33 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.configurationStore.ROOT_CONFIG
-import com.intellij.configurationStore.StateStorageManagerImpl
-import com.intellij.configurationStore.removeMacroIfStartsWith
+import com.intellij.configurationStore.*
 import com.intellij.ide.actions.ExportableItem
 import com.intellij.ide.actions.getExportableComponentsMap
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
 fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager.getApplication()!!.stateStore.stateStorageManager as StateStorageManagerImpl) {
   val streamProvider = storageManager.streamProvider!! as IcsManager.IcsStreamProvider
 
   val fileToComponents = getExportableComponentsMap(true, false, storageManager)
   for (file in fileToComponents.keys) {
-    val absolutePath = FileUtilRt.toSystemIndependentName(file.absolutePath)
+    val absolutePath = file.toAbsolutePath().systemIndependentPath
     var fileSpec = removeMacroIfStartsWith(storageManager.collapseMacros(absolutePath), ROOT_CONFIG)
     if (fileSpec == absolutePath) {
       // we have not experienced such problem yet, but we are just aware
-      val canonicalPath = FileUtilRt.toSystemIndependentName(file.canonicalPath)
+      val canonicalPath = file.toRealPath().systemIndependentPath
       if (canonicalPath != absolutePath) {
         fileSpec = removeMacroIfStartsWith(storageManager.collapseMacros(canonicalPath), ROOT_CONFIG)
       }
     }
 
     val roamingType = getRoamingType(fileToComponents.get(file)!!)
-    if (file.isFile) {
-      val fileBytes = FileUtil.loadFileBytes(file)
+    if (file.isFile()) {
+      val fileBytes = Files.readAllBytes(file)
       streamProvider.doSave(fileSpec, fileBytes, fileBytes.size, roamingType)
     }
     else {
@@ -53,17 +50,20 @@ fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager
   }
 }
 
-private fun saveDirectory(parent: File, parentFileSpec: String, roamingType: RoamingType, streamProvider: IcsManager.IcsStreamProvider) {
-  parent.listFiles()?.let {
-    for (file in it) {
-      val childFileSpec = "$parentFileSpec/${file.name}"
-      if (file.isFile) {
-        val fileBytes = FileUtil.loadFileBytes(file)
-        streamProvider.doSave(childFileSpec, fileBytes, fileBytes.size, roamingType)
-      }
-      else {
-        saveDirectory(file, childFileSpec, roamingType, streamProvider)
-      }
+private fun saveDirectory(parent: Path, parentFileSpec: String, roamingType: RoamingType, streamProvider: IcsManager.IcsStreamProvider) {
+  if (!Files.isDirectory(parent)) {
+    return
+  }
+
+
+  for (file in Files.newDirectoryStream(parent)) {
+    val childFileSpec = "$parentFileSpec/${file.fileName}"
+    if (file.isFile()) {
+      val fileBytes = Files.readAllBytes(file)
+      streamProvider.doSave(childFileSpec, fileBytes, fileBytes.size, roamingType)
+    }
+    else {
+      saveDirectory(file, childFileSpec, roamingType, streamProvider)
     }
   }
 }

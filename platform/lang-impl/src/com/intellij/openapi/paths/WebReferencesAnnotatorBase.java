@@ -192,6 +192,10 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
       LOG.info(e);
       return MyFetchResult.UNKNOWN_HOST;
     }
+    catch (HttpRequests.HttpStatusException e) {
+      LOG.info(e);
+      return MyFetchResult.NONEXISTENCE;
+    }
     catch (IOException e) {
       LOG.info(e);
     }

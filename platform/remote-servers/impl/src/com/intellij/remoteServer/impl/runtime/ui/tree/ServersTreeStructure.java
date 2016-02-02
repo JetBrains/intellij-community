@@ -89,7 +89,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
   }
 
   @NotNull
-  Project doGetProject() {
+  protected Project doGetProject() {
     return myProject;
   }
 
@@ -105,6 +105,10 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
   @Override
   public boolean hasSomethingToCommit() {
     return false;
+  }
+
+  protected AbstractTreeNode createDeploymentNode(ServerConnection<?> connection, RemoteServerNode serverNode, Deployment deployment) {
+    return new DeploymentNodeImpl(connection, serverNode, deployment);
   }
 
   public interface LogProvidingNode {
@@ -162,7 +166,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       for (Deployment deployment : connection.getDeployments()) {
         final String groupName = deployment.getGroup();
         if (groupName == null) {
-          children.add(new DeploymentNodeImpl(connection, this, deployment));
+          children.add(createDeploymentNode(connection, this, deployment));
         }
         else {
           Map<String, DeploymentGroup> groups
@@ -293,7 +297,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     private final ServerConnection<?> myConnection;
     private final RemoteServerNode myServerNode;
 
-    private DeploymentNodeImpl(@NotNull ServerConnection<?> connection, @NotNull RemoteServerNode serverNode, @NotNull Deployment value) {
+    protected DeploymentNodeImpl(@NotNull ServerConnection<?> connection, @NotNull RemoteServerNode serverNode, @NotNull Deployment value) {
       super(doGetProject(), value);
       myConnection = connection;
       myServerNode = serverNode;
@@ -399,7 +403,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Nullable
-    private DeploymentLogManagerImpl getLogManager() {
+    protected DeploymentLogManagerImpl getLogManager() {
       return (DeploymentLogManagerImpl)myConnection.getLogManager(getDeployment());
     }
 
@@ -508,7 +512,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
       for (Deployment deployment : myConnection.getDeployments()) {
         if (StringUtil.equals(getGroup().getName(), deployment.getGroup())) {
-          children.add(new DeploymentNodeImpl(myConnection, myServerNode, deployment));
+          children.add(createDeploymentNode(myConnection, myServerNode, deployment));
         }
       }
       return children;

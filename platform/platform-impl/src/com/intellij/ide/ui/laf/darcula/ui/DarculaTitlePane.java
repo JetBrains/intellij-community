@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,14 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.wm.impl.IdeMenuBar;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import sun.awt.SunToolkit;
 import sun.swing.SwingUtilities2;
 
@@ -42,6 +47,7 @@ public class DarculaTitlePane extends JComponent {
 
   private PropertyChangeListener myPropertyChangeListener;
   private JMenuBar myMenuBar;
+  private JMenuBar myIdeMenu;
   private Action myCloseAction;
   private Action myIconifyAction;
   private Action myRestoreAction;
@@ -77,6 +83,7 @@ public class DarculaTitlePane extends JComponent {
     installDefaults();
 
     setLayout(createLayout());
+    setBorder(JBUI.Borders.empty(3, 0));
   }
 
   private void uninstall() {
@@ -148,6 +155,10 @@ public class DarculaTitlePane extends JComponent {
     if (decorationStyle == JRootPane.FRAME) {
       createActions();
       myMenuBar = createMenuBar();
+      if (myRootPane instanceof IdeRootPane) {
+        myIdeMenu = new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance());
+        add(myIdeMenu);
+      }
       add(myMenuBar);
       createButtons();
       add(myIconifyButton);
@@ -454,12 +465,12 @@ public class DarculaTitlePane extends JComponent {
     Color darkShadow;
 
     if (isSelected) {
-      background = Gray._73;//myActiveBackground;
+      background = UIUtil.getPanelBackground();//myActiveBackground;
       foreground = myActiveForeground;
       darkShadow = Gray._73;//myActiveShadow;
     }
     else {
-      background = Gray._43; //myInactiveBackground;
+      background = UIUtil.getPanelBackground(); //myInactiveBackground;
       foreground = myInactiveForeground;
       darkShadow = myInactiveShadow;
     }
@@ -507,9 +518,19 @@ public class DarculaTitlePane extends JComponent {
         xOffset -= SwingUtilities2.stringWidth(rootPane, fm, theTitle);
       }
       int titleLength = SwingUtilities2.stringWidth(rootPane, fm, theTitle);
-      SwingUtilities2.drawString(rootPane, g, theTitle, xOffset, yOffset);
+      //SwingUtilities2.drawString(rootPane, g, theTitle, xOffset, yOffset);
       xOffset += leftToRight ? titleLength + 5 : -5;
     }
+
+
+    int w = width;
+    int h = height;
+    h--;
+    g.setColor(UIManager.getColor("MenuBar.darcula.borderColor"));
+    g.drawLine(0, h, w, h);
+    h--;
+    g.setColor(UIManager.getColor("MenuBar.darcula.borderShadowColor"));
+    g.drawLine(0, h, w, h);
   }
 
   private class CloseAction extends AbstractAction {
@@ -598,7 +619,7 @@ public class DarculaTitlePane extends JComponent {
     public Dimension preferredLayoutSize(Container c) {
       int height = computeHeight();
       //noinspection SuspiciousNameCombination
-      return new Dimension(height, height);
+      return new Dimension(-1, height);
     }
 
     public Dimension minimumLayoutSize(Container c) {
@@ -614,17 +635,13 @@ public class DarculaTitlePane extends JComponent {
         iconHeight = IMAGE_HEIGHT;
       }
 
-      return Math.max(fontHeight, iconHeight);
+      return Math.max(Math.max(fontHeight, iconHeight), 36);
     }
 
     public void layoutContainer(Container c) {
-      boolean leftToRight = (myWindow == null) ?
-                            getRootPane().getComponentOrientation().isLeftToRight() :
-                            myWindow.getComponentOrientation().isLeftToRight();
-
       int w = getWidth();
+      int h = getHeight();
       int x;
-      int y = 3;
       int spacing;
       int buttonHeight;
       int buttonWidth;
@@ -638,44 +655,41 @@ public class DarculaTitlePane extends JComponent {
         buttonWidth = IMAGE_WIDTH;
       }
 
-
-      x = leftToRight ? w : 0;
-
       spacing = 5;
-      x = leftToRight ? spacing : w - buttonWidth - spacing;
+      x = spacing;
       if (myMenuBar != null) {
-        myMenuBar.setBounds(x, y, buttonWidth, buttonHeight);
+        myMenuBar.setBounds(x, (h - buttonHeight) / 2, buttonWidth, buttonHeight);
       }
 
-      x = leftToRight ? w : 0;
+      if (myIdeMenu != null) {
+        final Dimension size = myIdeMenu.getPreferredSize();
+
+        x += spacing + (myMenuBar != null ? buttonWidth : 0);
+
+        myIdeMenu.setBounds(x, (h - size.height) / 2, size.width, size.height);
+      }
+
+      x = w;
       spacing = 4;
-      x += leftToRight ? -spacing - buttonWidth : spacing;
+      x += -spacing - buttonWidth;
       if (myCloseButton != null) {
-        myCloseButton.setBounds(x, y, buttonWidth, buttonHeight);
+        myCloseButton.setBounds(x, (h - buttonHeight) / 2, buttonWidth, buttonHeight);
       }
-
-      if (!leftToRight) x += buttonWidth;
 
       if (getWindowDecorationStyle() == JRootPane.FRAME) {
         if (Toolkit.getDefaultToolkit().isFrameStateSupported(
           Frame.MAXIMIZED_BOTH)) {
           if (myToggleButton.getParent() != null) {
             spacing = 10;
-            x += leftToRight ? -spacing - buttonWidth : spacing;
-            myToggleButton.setBounds(x, y, buttonWidth, buttonHeight);
-            if (!leftToRight) {
-              x += buttonWidth;
-            }
+            x += -spacing - buttonWidth;
+            myToggleButton.setBounds(x, (h - buttonHeight) / 2, buttonWidth, buttonHeight);
           }
         }
 
         if (myIconifyButton != null && myIconifyButton.getParent() != null) {
           spacing = 2;
-          x += leftToRight ? -spacing - buttonWidth : spacing;
-          myIconifyButton.setBounds(x, y, buttonWidth, buttonHeight);
-          if (!leftToRight) {
-            x += buttonWidth;
-          }
+          x += -spacing - buttonWidth;
+          myIconifyButton.setBounds(x, (h - buttonHeight) / 2, buttonWidth, buttonHeight);
         }
       }
     }
@@ -726,7 +740,7 @@ public class DarculaTitlePane extends JComponent {
     } else if (icons.size() == 1) {
       mySystemIcon = icons.get(0);
     } else {
-      mySystemIcon = SunToolkit.getScaledIconImage(icons, IMAGE_WIDTH, IMAGE_HEIGHT);
+      mySystemIcon = SunToolkit.getScaledIconImage(icons, 32, 32);
     }
   }
 

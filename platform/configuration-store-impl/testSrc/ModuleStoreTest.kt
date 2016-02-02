@@ -26,7 +26,8 @@ import java.nio.file.Paths
 @RunsInActiveStoreMode
 class ModuleStoreTest {
   companion object {
-     @ClassRule val projectRule = ProjectRule()
+    @JvmField
+    @ClassRule val projectRule = ProjectRule()
 
     val MODULE_DIR = "\$MODULE_DIR$"
 

@@ -15,7 +15,9 @@
  */
 package com.intellij.diff;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.Diff;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,23 +28,25 @@ import java.util.List;
  * author: lesya
  */
 public class Block {
-  private final String[] mySource;
+  private static final Logger LOG = Logger.getInstance(Block.class);
+
+  @NotNull private final String[] mySource;
   private final int myStart;
   private final int myEnd;
 
   public Block(@NotNull String source, int start, int end) {
-    this(LineTokenizer.tokenize(source.toCharArray(), false), start, end);
+    this(LineTokenizer.tokenize(source, false, false), start, end);
   }
 
   public Block(@NotNull String[] source, int start, int end) {
     mySource = source;
-    myStart = start;
-    myEnd = end;
+    myStart = Math.min(Math.max(0, start), source.length);
+    myEnd = Math.min(Math.max(myStart, end), source.length);
   }
 
   @NotNull
   public Block createPreviousBlock(@NotNull String prevContent) {
-    return createPreviousBlock(LineTokenizer.tokenize(prevContent.toCharArray(), false));
+    return createPreviousBlock(LineTokenizer.tokenize(prevContent, false, false));
   }
 
   @NotNull
@@ -63,8 +67,10 @@ public class Block {
         if (startLine2 <= myStart) start = startLine1;
         if (endLine2 > myEnd) end = endLine1;
       }
-      if (start == -1 && startLine2 > myStart) start = myStart - shift;
-      if (end == -1 && startLine2 >= myEnd) end = myEnd - shift;
+      if (startLine2 > myStart) {
+        if (start == -1) start = myStart - shift;
+        if (end == -1 && startLine2 >= myEnd) end = myEnd - shift;
+      }
 
       shift += change.inserted - change.deleted;
       change = change.link;
@@ -72,19 +78,16 @@ public class Block {
     if (start == -1) start = myStart - shift;
     if (end == -1) end = myEnd - shift;
 
+    if (start < 0 || end > prevContent.length || end < start) {
+      LOG.error("Invalid block range: [" + start + ", " + end + "); length - " + prevContent.length);
+    }
+
     return new Block(prevContent, start, end);
   }
 
   @NotNull
   public String getBlockContent() {
-    StringBuilder result = new StringBuilder();
-
-    for (int i = 0; i < myEnd - myStart; i++) {
-      if (i != 0) result.append("\n");
-      result.append(mySource[i + myStart]);
-    }
-
-    return result.toString();
+    return StringUtil.join(getLines(), "\n");
   }
 
   @NotNull
@@ -112,6 +115,7 @@ public class Block {
     return myEnd;
   }
 
+  @NotNull
   public String[] getSource() {
     return mySource;
   }
@@ -132,7 +136,7 @@ public class Block {
     return result.toString();
   }
 
-  private void appendLines(StringBuilder result, int from, int to) {
+  private void appendLines(@NotNull StringBuilder result, int from, int to) {
     for (int i = from; i < to; i++) {
       result.append(mySource[i]);
       result.append("\n");
