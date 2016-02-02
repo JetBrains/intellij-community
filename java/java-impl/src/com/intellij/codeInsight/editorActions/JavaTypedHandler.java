@@ -30,7 +30,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -192,12 +191,6 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       }
     }
     return Result.CONTINUE;
-  }
-
-  @Nullable
-  private static FileType getOriginalFileType(final PsiFile file) {
-    final VirtualFile virtualFile = file.getVirtualFile();
-    return virtualFile != null ? virtualFile.getFileType() : null;
   }
 
   private static boolean handleSemicolon(Editor editor, FileType fileType) {
