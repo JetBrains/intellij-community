@@ -21,10 +21,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -109,7 +106,6 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       if (!keymapGroupMap.containsKey(systemId)) {
         final Icon projectIcon = ExternalSystemUiUtil.getUiAware(systemId).getProjectIcon();
         KeymapGroup group = KeymapGroupFactory.getInstance().createGroup(systemId.getReadableName(), projectIcon);
-        result.addGroup(group);
         keymapGroupMap.put(systemId, group);
       }
     }
@@ -118,6 +114,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       Collection<String> tasks = each.getValue();
       final ProjectSystemId systemId = each.getKey();
       final KeymapGroup systemGroup = keymapGroupMap.get(systemId);
+      if (systemGroup == null) continue;
       for (String actionId : tasks) {
         systemGroup.addActionId(actionId);
       }
@@ -148,11 +145,26 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       }
     }
 
-    for (ActionsProvider extension : ActionsProvider.EP_NAME.getExtensions()) {
-      KeymapGroup group = extension.createGroup(condition, project);
-      if (group != null) {
-        result.addGroup(group);
+    final EmptyAction emptyAction = new EmptyAction();
+    for (KeymapGroup keymapGroup : keymapGroupMap.values()) {
+      if (condition != null && !condition.value(emptyAction) && keymapGroup instanceof Group) {
+        final Group group = (Group)keymapGroup;
+        if (group.getSize() <= 1 && !condition.value(new EmptyAction(group.getName(), null, null))) {
+          continue;
+        }
       }
+      result.addGroup(keymapGroup);
+    }
+
+    for (ActionsProvider extension : ActionsProvider.EP_NAME.getExtensions()) {
+      KeymapGroup keymapGroup = extension.createGroup(condition, project);
+      if (condition != null && !condition.value(emptyAction) && keymapGroup instanceof Group) {
+        final Group group = (Group)keymapGroup;
+        if (group.getSize() <= 1 && !condition.value(new EmptyAction(group.getName(), null, null))) {
+          continue;
+        }
+      }
+      result.addGroup(keymapGroup);
     }
 
     return result;
@@ -276,6 +288,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
 
       Presentation template = getTemplatePresentation();
       template.setText(myTaskData.getName() + " (" + group + ")", false);
+      template.setDescription(myTaskData.getOwner().getReadableName() + " task action");
       template.setIcon(ExternalSystemIcons.Task);
     }
 
