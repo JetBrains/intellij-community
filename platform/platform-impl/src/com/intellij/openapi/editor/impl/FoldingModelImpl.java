@@ -87,6 +87,18 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     return (List<FoldRegion>)myGroups.get(group);
   }
 
+  @Override
+  public void clearDocumentRangesModificationStatus() {
+    assertIsDispatchThreadForEditor();
+    myFoldTree.clearDocumentRangesModificationStatus();
+  }
+
+  @Override
+  public boolean hasDocumentRegionChangedFor(@NotNull FoldRegion region) {
+    assertReadAccess();
+    return region instanceof FoldRegionImpl && ((FoldRegionImpl)region).hasDocumentRegionChanged();
+  }
+
   @NotNull
   public FoldRegion getFirstRegion(@NotNull FoldingGroup group, FoldRegion child) {
     final List<FoldRegion> regions = getGroupedRegions(group);

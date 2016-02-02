@@ -201,6 +201,14 @@ class FoldingModelWindow implements FoldingModelEx{
   }
 
   @Override
+  public void clearDocumentRangesModificationStatus() {}
+
+  @Override
+  public boolean hasDocumentRegionChangedFor(@NotNull FoldRegion region) {
+    return false;
+  }
+
+  @Override
   public void clearFoldRegions() {
     myDelegate.clearFoldRegions();
   }

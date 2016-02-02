@@ -64,4 +64,8 @@ public interface FoldingModelEx extends FoldingModel {
   
   @NotNull
   List<FoldRegion> getGroupedRegions(FoldingGroup group);
+  
+  void clearDocumentRangesModificationStatus();
+  
+  boolean hasDocumentRegionChangedFor(@NotNull FoldRegion region);
 }

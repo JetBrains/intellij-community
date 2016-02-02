@@ -1217,6 +1217,33 @@ class Foo {
     myFixture.doHighlighting()
     assertTopLevelFoldRegionsState "[FoldRegion +(24:83), placeholder='{...}']"
   }
+  
+  public void "test placeholder update on refactoring"() {
+    configure """\
+class Foo {
+  void method() {}
+  
+  Foo foo = new Foo() {
+    void method() {
+      System.out.println();
+    }
+  };
+}
+"""
+    assertTopLevelFoldRegionsState "[FoldRegion +(46:84), placeholder='method() → { ', FoldRegion +(105:115), placeholder=' }']"
+    
+    // emulate rename refactoring ('method' to 'otherMethod')
+    def document = myFixture.editor.document
+    WriteCommandAction.runWriteCommandAction myFixture.project, {
+      int pos;
+      while ((pos = document.getText().indexOf("method")) >= 0) {
+        document.replaceString(pos, pos + "method".length(), "otherMethod")
+      }
+    }    
+
+    myFixture.doHighlighting()
+    assertTopLevelFoldRegionsState "[FoldRegion +(51:94), placeholder='otherMethod() → { ', FoldRegion +(115:125), placeholder=' }']"
+  }
 
   private void assertTopLevelFoldRegionsState(String expectedState) {
     assertEquals(expectedState, myFixture.editor.foldingModel.toString())
