@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ public final class GroovyResolverProcessorBuilder {
 
     if (!ResolveUtil.canBeClass(ref)) result.remove(GroovyResolveKind.CLASS);
     if (!ResolveUtil.canBePackage(ref)) result.remove(GroovyResolveKind.PACKAGE);
-    if (ref.isQualified()) result.removeAll(EnumSet.of(GroovyResolveKind.BINDING));
+    if (ref.isQualified()) result.remove(GroovyResolveKind.BINDING);
     if (!(ref.getParent() instanceof GrMethodCall)) result.remove(GroovyResolveKind.METHOD);
 
     return result;

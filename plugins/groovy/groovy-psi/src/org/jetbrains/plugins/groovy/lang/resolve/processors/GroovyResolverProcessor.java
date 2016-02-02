@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,7 @@ import java.util.List;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isApplicable;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isAccessible;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isStaticsOK;
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorResolverProcessor.isAppropriatePropertyNameForGetter;
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorResolverProcessor.isAppropriatePropertyNameForSetter;
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorResolverProcessor.*;
 
 public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint {
 
@@ -110,23 +109,22 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   private List<PsiScopeProcessor> calcAccessorProcessors() {
     if (isPropertyResolve()) {
-      EnumSet<DeclarationKind> method = EnumSet.of(DeclarationKind.METHOD);
       if (myIsLValue) {
-        return Collections.singletonList(accessorProcessor(method, GroovyPropertyUtils.getSetterName(myName)));
+        return Collections.singletonList(accessorProcessor(GroovyPropertyUtils.getSetterName(myName)));
       }
       return ContainerUtil.newArrayList(
-        accessorProcessor(method, GroovyPropertyUtils.getGetterNameNonBoolean(myName)),
-        accessorProcessor(method, GroovyPropertyUtils.getGetterNameBoolean(myName))
+        accessorProcessor(GroovyPropertyUtils.getGetterNameNonBoolean(myName)),
+        accessorProcessor(GroovyPropertyUtils.getGetterNameBoolean(myName))
       );
     }
     return Collections.emptyList();
   }
 
-  private GrScopeProcessorWithHints accessorProcessor(final EnumSet<DeclarationKind> allKinds, @NotNull final String name) {
-    return new GrScopeProcessorWithHints(name, allKinds) {
+  private GrScopeProcessorWithHints accessorProcessor(@NotNull final String name) {
+    return new GrScopeProcessorWithHints(name, GroovyResolveKind.METHOD.declarationKinds) {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        return !AccessorResolverProcessor.checkAccessor(element, state, GroovyResolverProcessor.this.myName, !myIsLValue) ||
+        return !checkAccessor(element, state, GroovyResolverProcessor.this.myName, !myIsLValue) ||
                GroovyResolverProcessor.this.execute(element, state);
       }
     };
