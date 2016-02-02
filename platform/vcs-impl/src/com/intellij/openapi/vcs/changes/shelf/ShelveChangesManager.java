@@ -22,7 +22,9 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -74,6 +76,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class ShelveChangesManager extends AbstractProjectComponent implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager");
@@ -84,6 +88,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   @NotNull private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   @NotNull private final SchemesManager<ShelvedChangeList, ShelvedChangeList> mySchemeManager;
+  private ScheduledFuture<?> myCleaningFuture;
   private boolean myRemoveFilesFromShelf;
 
   public static ShelveChangesManager getInstance(Project project) {
@@ -119,6 +124,20 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
           return child;
         }
       });
+
+    myCleaningFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
+      @Override
+      public void run() {
+        cleanSystemUnshelvedOlderOneDay();
+      }
+    }, 1, 1, TimeUnit.DAYS);
+    Disposer.register(project, new Disposable() {
+      @Override
+      public void dispose() {
+        stopCleanScheduler();
+      }
+    });
+
     File shelfDirectory = mySchemeManager.getRootDirectory();
     myFileProcessor = new CompoundShelfFileProcessor(shelfDirectory);
     // do not try to ignore when new project created,
@@ -128,12 +147,20 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }
   }
 
+  private void stopCleanScheduler() {
+    if(myCleaningFuture!=null){
+      myCleaningFuture.cancel(false);
+      myCleaningFuture = null;
+    }
+  }
+
   @Override
   public void projectOpened() {
     try {
       mySchemeManager.loadSchemes();
       //workaround for ignoring not valid patches, because readScheme doesn't support nullable value as it should be
       filterNonValidShelvedChangeLists();
+      cleanSystemUnshelvedOlderOneDay();
     }
     catch (Exception e) {
       LOG.error("Couldn't read shelf information", e);
@@ -255,6 +282,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     JDOMExternalizerUtil.writeField(element, REMOVE_FILES_FROM_SHELF_STRATEGY, Boolean.toString(isRemoveFilesFromShelf()));
   }
 
+  @NotNull
   public List<ShelvedChangeList> getShelvedChangeLists() {
     return getRecycled(false);
   }
@@ -264,12 +292,20 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     return ContainerUtil.newUnmodifiableList(ContainerUtil.filter(mySchemeManager.getAllSchemes(), new Condition<ShelvedChangeList>() {
       @Override
       public boolean value(ShelvedChangeList list) {
-        return recycled ? list.isRecycled() : !list.isRecycled();
+        return recycled == list.isRecycled();
       }
     }));
   }
 
   public ShelvedChangeList shelveChanges(final Collection<Change> changes, final String commitMessage, final boolean rollback)
+    throws IOException, VcsException {
+    return shelveChanges(changes, commitMessage, rollback, false);
+  }
+
+  public ShelvedChangeList shelveChanges(final Collection<Change> changes,
+                                         final String commitMessage,
+                                         final boolean rollback,
+                                         boolean markToBeDeleted)
     throws IOException, VcsException {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null) {
@@ -311,6 +347,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
                                    patchPath, commitContext);
 
       changeList = new ShelvedChangeList(patchPath.toString(), commitMessage.replace('\n', ' '), binaryFiles);
+      changeList.markToDelete(markToBeDeleted);
       changeList.setName(schemePatchDir.getName());
       ProgressManager.checkCanceled();
       mySchemeManager.addNewScheme(changeList, false);
@@ -608,6 +645,23 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     return myRemoveFilesFromShelf;
   }
 
+  private void cleanSystemUnshelvedOlderOneDay() {
+    Calendar cal = Calendar.getInstance();
+    cal.add(Calendar.DAY_OF_MONTH, -1);
+    cleanUnshelved(true, cal.getTimeInMillis());
+  }
+
+  public void cleanUnshelved(final boolean onlyMarkedToDelete, long timeBefore) {
+    final Date limitDate = new Date(timeBefore);
+    final List<ShelvedChangeList> toDelete = ContainerUtil.filter(mySchemeManager.getAllSchemes(), new Condition<ShelvedChangeList>() {
+      @Override
+      public boolean value(ShelvedChangeList list) {
+        return (list.isRecycled()) && list.DATE.before(limitDate) && (!onlyMarkedToDelete || list.isMarkedToDelete());
+      }
+    });
+    clearShelveLists(toDelete);
+  }
+
   private class BinaryPatchApplier implements CustomBinaryPatchApplier<ShelvedBinaryFilePatch> {
     private final List<FilePatch> myAppliedPatches;
 
@@ -718,6 +772,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }
     final ShelvedChangeList listCopy = new ShelvedChangeList(newPath.getAbsolutePath(), changeList.DESCRIPTION,
                                                              new ArrayList<ShelvedBinaryFile>(changeList.getBinaryFiles()));
+    listCopy.markToDelete(changeList.isMarkedToDelete());
     listCopy.setName(newPatchDir.getName());
     listCopy.DATE = changeList.DATE == null ? null : new Date(changeList.DATE.getTime());
 
@@ -739,12 +794,18 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     notifyStateChanged();
   }
 
+  @NotNull
   public List<ShelvedChangeList> getRecycledShelvedChangeLists() {
     return getRecycled(true);
   }
 
   public void clearRecycled() {
-    for (ShelvedChangeList list : getRecycledShelvedChangeLists()) {
+    clearShelveLists(getRecycledShelvedChangeLists());
+  }
+
+  private void clearShelveLists(@NotNull List<ShelvedChangeList> shelveLists) {
+    if (shelveLists.isEmpty()) return;
+    for (ShelvedChangeList list : shelveLists) {
       deleteListImpl(list);
       mySchemeManager.removeScheme(list);
     }

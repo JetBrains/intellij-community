@@ -152,6 +152,8 @@
       <separator/>
       <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction"
               description="Show/Hide Already Unshelved"/>
+      <action id="ShelvedChanges.CleanMarkedToDelete" class="com.intellij.openapi.vcs.changes.shelf.CleanUnshelvedAction"
+              description="Delete Unshelved Marked To Delete or By Date" text="Clean Already Unshelved..." icon="AllIcons.Actions.GC" />
       <action id="ShelvedChanges.DeleteDeleted" class="com.intellij.openapi.vcs.changes.shelf.DeleteAlreadyUnshelvedAction"/>
     </group>
 
@@ -159,6 +161,7 @@
       <reference ref="ShelvedChanges.Diff"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <reference ref="ShelvedChanges.ShowHideDeleted" />
+      <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
     </group>
 
     <group id="ShelvedChangesToolbarGear" popup="true" icon="AllIcons.General.SecondaryGroup">
@@ -298,6 +301,7 @@
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <separator/>
       <reference ref="ShelvedChanges.ShowHideDeleted"/>
+      <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
       <reference ref="ShelvedChanges.DeleteDeleted"/>
       <separator/>
 
