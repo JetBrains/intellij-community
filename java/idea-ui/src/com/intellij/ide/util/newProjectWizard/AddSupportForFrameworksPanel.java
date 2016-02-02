@@ -422,9 +422,9 @@ public class AddSupportForFrameworksPanel implements Disposable {
     }
   }
 
-  public boolean checkCanContinue() {
+  public boolean checkCanContinue(@NotNull JComponent parentComponent) {
     if (!downloadLibraries()) {
-      int answer = Messages.showYesNoDialog(getMainPanel(),
+      int answer = Messages.showYesNoDialog(parentComponent,
                                             ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
                                             CommonBundle.getWarningTitle(), Messages.getWarningIcon());
       if (answer != Messages.YES) {
