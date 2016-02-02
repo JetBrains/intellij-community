@@ -41,6 +41,7 @@ import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -227,11 +228,12 @@ public class MainFrame extends JPanel implements DataProvider {
     ActionToolbar settings =
       createActionsToolbar(new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_QUICK_SETTINGS_ACTION)));
     settings.setReservePlaceAutoPopupIcon(false);
+    settings.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(textFilter, BorderLayout.LINE_START);
-    panel.add(toolbar.getComponent(), BorderLayout.CENTER);
-    panel.add(settings.getComponent(), BorderLayout.LINE_END);
+    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[right]"));
+    panel.add(textFilter);
+    panel.add(toolbar.getComponent());
+    panel.add(settings.getComponent());
     return panel;
   }
 
