@@ -67,13 +67,13 @@ public class BalloonLayoutConfiguration {
   @NotNull
   private static BalloonLayoutConfiguration twoLines() {
     return new BalloonLayoutConfiguration(new JBDimension(10, 11),
-                                          JBUI.scale(14), JBUI.scale(8), JBUI.scale(8), JBUI.scale(8), JBUI.scale(14));
+                                          JBUI.scale(11), JBUI.scale(5), JBUI.scale(5), JBUI.scale(5), JBUI.scale(14));
   }
 
   @NotNull
   private static BalloonLayoutConfiguration treeLines() {
     return new BalloonLayoutConfiguration(new JBDimension(10, 7),
-                                          JBUI.scale(10), JBUI.scale(6), JBUI.scale(10), 0, JBUI.scale(8));
+                                          JBUI.scale(7), JBUI.scale(3), JBUI.scale(7), 0, JBUI.scale(8));
   }
 
   private BalloonLayoutConfiguration(@NotNull Dimension iconOffset,

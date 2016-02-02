@@ -155,14 +155,14 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix(), new RemoveAllUnusedLibrariesFix());
     final String name = StringUtil.escapeXml(myLibrary.getName());
     String libraryName = "<a href='http://library/" + name + "'>" + name + "</a>";
-    return new ProjectStructureProblemDescription("Library " + libraryName + " is not used", null, createPlace(),
+    return new ProjectStructureProblemDescription(XmlStringUtil.wrapInHtml("Library " + libraryName + " is not used"), null, createPlace(),
                                                   ProjectStructureProblemType.unused("unused-library"), ProjectStructureProblemDescription.ProblemLevel.PROJECT,
                                                   fixes, false);
   }
 
   @Override
   public String getPresentableName() {
-    return "Library '" + myLibrary.getName() + "'";
+    return myLibrary.getName();
   }
 
   @Override

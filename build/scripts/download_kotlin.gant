@@ -243,7 +243,7 @@ private boolean downloadAndExtract(TeamCityBuildLocator buildLocator, String com
     ant.patternset(includes: "Kotlin/lib/jps/**")
     ant.globmapper(from: "Kotlin/lib/jps/*", to: "*")
   }
-  def reasonToUpdate = getReasonToUpdate(communityHome, kotlincDir, classVersionOfCompiledClasses)
+  def reasonToUpdate = getReasonToUpdate(communityHome, new File(kotlincDir), classVersionOfCompiledClasses)
   if (reasonToUpdate != null) {
     projectBuilder.warning("Cannot use the downloaded Kotlin plugin: $reasonToUpdate")
   }

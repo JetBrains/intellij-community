@@ -788,7 +788,7 @@ class Foo {
     final Template template = manager.createTemplate("result", "user", '$A$ $B$ c');
     template.addVariable('A', new EmptyNode(), true)
 
-    def macroCallNode = new MacroCallNode(new SnakeCaseMacro())
+    def macroCallNode = new MacroCallNode(new SplitWordsMacro.SnakeCaseMacro())
     macroCallNode.addParameter(new VariableNode('A', null))
     template.addVariable('B', macroCallNode, false)
 

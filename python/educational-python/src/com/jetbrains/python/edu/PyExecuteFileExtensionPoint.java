@@ -17,6 +17,7 @@ package com.jetbrains.python.edu;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 public interface PyExecuteFileExtensionPoint {
@@ -26,4 +27,5 @@ public interface PyExecuteFileExtensionPoint {
   @Nullable
   AnAction getRunAction();
 
+  boolean accept(Project project);
 }

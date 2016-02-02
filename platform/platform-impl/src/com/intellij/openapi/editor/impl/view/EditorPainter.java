@@ -801,9 +801,9 @@ class EditorPainter implements TextDrawingCallback {
     EditorSettings settings = myEditor.getSettings();
     Color caretColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
     if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
-    g.setColor(caretColor);
     int minX = getMinX();
     for (EditorImpl.CaretRectangle location : locations) {
+      g.setColor(caretColor);
       int x = location.myPoint.x;
       int y = location.myPoint.y;
       Caret caret = location.myCaret;

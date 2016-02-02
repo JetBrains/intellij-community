@@ -335,7 +335,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       appendCleanupCode(intentions.errorFixesToShow, hostFile);
     }
     
-    EditorNotificationActions.getDescriptorsForEditor(hostEditor, intentions.notificationActionsToShow);
+    EditorNotificationActions.collectDescriptorsForEditor(hostEditor, intentions.notificationActionsToShow);
   }
 }
 

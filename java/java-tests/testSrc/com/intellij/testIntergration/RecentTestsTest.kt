@@ -15,6 +15,7 @@
  */
 package com.intellij.testIntergration
 
+import com.intellij.execution.Location
 import com.intellij.execution.TestStateStorage
 import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
@@ -135,6 +136,24 @@ class RecentTestsStepTest {
     
     assertThat(step.values).isEqualTo(expected)
   }
+  
+  @Test
+  fun `do not show urls without location`() {
+    val storage = TestStorage()
+    
+    storage.addSuite("ASTest", true)
+    storage.addSuite("BSTest", false)
+    storage.addTest("BSTest.fff", false)
+    storage.addTest("BSTest.ppp", true)
+
+    storage.addTest("<default package>", false)
+    storage.addSuite("<default package>", false)
+
+    val step = SelectTestStep(storage.getMap(), runner)
+    val values = step.values.map { VirtualFileManager.extractPath(it) }
+    
+    assertThat(values).isEqualTo(listOf("BSTest", "BSTest.fff", "ASTest"))
+  }
 
   private fun createRunner(): RecentTestRunner {
     val runner = mock(RecentTestRunner::class.java)
@@ -142,6 +161,10 @@ class RecentTestsStepTest {
       val url = it.arguments[0] as String
       val protocol = VirtualFileManager.extractProtocol(url)
       JavaTestLocator.SUITE_PROTOCOL.startsWith(protocol.toString())
+    }
+    `when`(runner.getLocation(Matchers.anyString())).thenAnswer { 
+      val url = it.arguments[0] as String
+      if (url.contains("<")) null else mock(Location::class.java)
     }
     return runner
   }

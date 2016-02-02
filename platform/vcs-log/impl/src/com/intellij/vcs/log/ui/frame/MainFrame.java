@@ -22,10 +22,12 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
@@ -39,6 +41,7 @@ import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,7 +140,7 @@ public class MainFrame extends JPanel implements DataProvider {
    * Informs components that the actual DataPack has been updated (e.g. due to a log refresh). <br/>
    * Components may want to update their fields and/or rebuild.
    *
-   * @param dataPack new data pack.
+   * @param dataPack         new data pack.
    * @param permGraphChanged true if permanent graph itself was changed.
    */
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
@@ -216,20 +219,21 @@ public class MainFrame extends JPanel implements DataProvider {
       }
     }
     mainGroup.add(toolbarGroup);
+    ActionToolbar toolbar = createActionsToolbar(mainGroup);
 
-    final ActionToolbar toolbar = createActionsToolbar(mainGroup);
-    ActionToolbar settings = createActionsToolbar(new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_QUICK_SETTINGS_ACTION)));
+    Wrapper textFilter = new Wrapper(myFilterUi.createTextFilter());
+    textFilter.setVerticalSizeReferent(toolbar.getComponent());
+    textFilter.setBorder(BorderFactory.createEmptyBorder(1, 5, 0, 0));
+
+    ActionToolbar settings =
+      createActionsToolbar(new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_QUICK_SETTINGS_ACTION)));
     settings.setReservePlaceAutoPopupIcon(false);
+    settings.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
-    JPanel panel = new JPanel(new BorderLayout()) {
-      @Override
-      public void updateUI() {
-        super.updateUI();
-        toolbar.getComponent().setBorder(VcsLogClassicFilterUi.getToolbarBorder());
-      }
-    };
-    panel.add(toolbar.getComponent(), BorderLayout.CENTER);
-    panel.add(settings.getComponent(), BorderLayout.LINE_END);
+    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[right]"));
+    panel.add(textFilter);
+    panel.add(toolbar.getComponent());
+    panel.add(settings.getComponent());
     return panel;
   }
 

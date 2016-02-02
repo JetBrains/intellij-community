@@ -15,16 +15,20 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.ScalableIcon;
+
 import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author peter
  */
-public class SizedIcon implements Icon {
+public class SizedIcon implements Icon, ScalableIcon {
   private final int myWidth;
   private final int myHeight;
   private final Icon myDelegate;
+  private Icon myScaledDelegate;
+  private float myScale = 1f;
 
   public SizedIcon(Icon delegate, int width, int height) {
     myDelegate = delegate;
@@ -33,8 +37,10 @@ public class SizedIcon implements Icon {
   }
 
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    int dx = myWidth - myDelegate.getIconWidth();
-    int dy = myHeight - myDelegate.getIconHeight();
+    x = scale(x);
+    y = scale(y);
+    int dx = scale(myWidth) - scale(myDelegate.getIconWidth());
+    int dy = scale(myHeight) - scale(myDelegate.getIconHeight());
     if (dx > 0 || dy > 0) {
       myDelegate.paintIcon(c, g, x + dx/2, y + dy/2);
     }
@@ -43,11 +49,33 @@ public class SizedIcon implements Icon {
     }
   }
 
+  private int scale(int n) {
+    return myScale == 1f ? n : (int) (n * myScale);
+  }
+
   public int getIconWidth() {
+    if (myDelegate instanceof ScalableIcon) {
+      return myDelegate.getIconWidth();
+    }
+
     return myWidth;
   }
 
   public int getIconHeight() {
+    if (myDelegate instanceof ScalableIcon) {
+      return myDelegate.getIconHeight();
+    }
+
     return myHeight;
+  }
+
+  @Override
+  public Icon scale(float scaleFactor) {
+    if (scaleFactor == 1f) {
+      myScaledDelegate = null;
+    } else if (myDelegate instanceof ScalableIcon) {
+      myScaledDelegate = ((ScalableIcon)myDelegate).scale(scaleFactor);
+    }
+    return this;
   }
 }

@@ -13,10 +13,21 @@
       ]]>
   </change-notes>
 
-  <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
-       on how to target different products -->
-
   <depends>com.intellij.modules.lang</depends>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Edu.executeFile" interface="com.jetbrains.python.edu.PyExecuteFileExtensionPoint"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyExecuteFileLineMarkerProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Edu">
+    <executeFile implementation="com.jetbrains.python.edu.PyEduAddParametersAction" order="last"/>
+    <executeFile implementation="com.jetbrains.python.edu.PyDebugCurrentFile"/>
+
+  </extensions>
 
   <project-components>
 

@@ -226,6 +226,7 @@
         implementation="org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.MapGetterSetterInvocator"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.TypeCheckedAnnotationChecker"/>
     <mvc.runCommandHandler implementation="org.jetbrains.plugins.groovy.mvc.actions.DefaultMvcRunCommandActionHandler" order="last"/>
+    <methodComparator implementation="org.jetbrains.plugins.groovy.lang.resolve.GrDefaultMethodComparator" order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
@@ -576,7 +577,6 @@
 
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder"/>
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.gant.GantClassFinder"/>
-    <java.elementFinder implementation="org.jetbrains.plugins.groovy.console.GroovyBundledClassFinder"/>
     <java.shortNamesCache implementation="org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache"/>
 
     <projectService

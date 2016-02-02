@@ -28,13 +28,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class CapitalizeAndUnderscoreMacro extends MacroBase {
-  public CapitalizeAndUnderscoreMacro() {
-    super("capitalizeAndUnderscore", CodeInsightBundle.message("macro.capitalizeAndUnderscore.string"));
-  }
+public abstract class SplitWordsMacro extends MacroBase {
+  private final char mySeparator;
 
-  protected CapitalizeAndUnderscoreMacro(String name, String description) {
+  private SplitWordsMacro(String name, String description, char separator) {
     super(name, description);
+    mySeparator = separator;
   }
 
   @Override
@@ -49,25 +48,61 @@ public class CapitalizeAndUnderscoreMacro extends MacroBase {
   @VisibleForTesting
   public String convertString(String text) {
     final String[] words = NameUtil.nameToWords(text);
-    boolean insertUnderscore = false;
+    boolean insertSeparator = false;
     final StringBuilder buf = new StringBuilder();
     for (String word : words) {
       if (!Character.isLetterOrDigit(word.charAt(0))) {
-        buf.append("_");
-        insertUnderscore = false;
+        buf.append(mySeparator);
+        insertSeparator = false;
         continue;
       }
-      if (insertUnderscore) {
-        buf.append("_");
+      if (insertSeparator) {
+        buf.append(mySeparator);
       } else {
-        insertUnderscore = true;
+        insertSeparator = true;
       }
       buf.append(convertCase(word));
     }
     return buf.toString();
   }
 
-  protected String convertCase(String word) {
-    return StringUtil.toUpperCase(word);
+  @NotNull protected abstract String convertCase(@NotNull String word);
+
+  public static class CapitalizeAndUnderscoreMacro extends SplitWordsMacro {
+
+    public CapitalizeAndUnderscoreMacro() {
+      super("capitalizeAndUnderscore", CodeInsightBundle.message("macro.capitalizeAndUnderscore.string"), '_');
+    }
+
+    @NotNull
+    protected String convertCase(@NotNull String word) {
+      return StringUtil.toUpperCase(word);
+    }
+  }
+
+  public static class SnakeCaseMacro extends SplitWordsMacro {
+    public SnakeCaseMacro() {
+      super("snakeCase", "snakeCase(String)", '_');
+    }
+
+    @NotNull
+    @Override
+    protected String convertCase(@NotNull String word) {
+      //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
+      return word.toLowerCase();
+    }
+  }
+
+  public static class LowercaseAndDash extends SplitWordsMacro {
+    public LowercaseAndDash() {
+      super("lowercaseAndDash", "lowercaseAndDash(String)", '-');
+    }
+
+    @NotNull
+    @Override
+    protected String convertCase(@NotNull String word) {
+      //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
+      return word.toLowerCase();
+    }
   }
 }

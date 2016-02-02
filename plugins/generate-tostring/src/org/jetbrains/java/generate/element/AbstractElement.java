@@ -357,7 +357,15 @@ public abstract class AbstractElement implements Element {
                 ", isDate=" + isDate +
                 ", isCalendar=" + isCalendar +
                 ", isBoolean=" + isBoolean +
+                ", isLong=" + isLong +
+                ", isFloat=" + isFloat +
+                ", isDouble=" + isDouble +
+                ", isVoid=" + isVoid +
+                ", isChar=" + isChar +
+                ", isByte=" + isByte +
+                ", isShort=" + isShort +
                 ", typeName='" + typeName + "'" +
+                ", type='" + type + "'" +
                 ", typeQualifiedName='" + typeQualifiedName + "'" +
                 ", isModifierStatic=" + isModifierStatic +
                 ", isModifierPublic=" + isModifierPublic +

@@ -47,6 +47,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -737,5 +739,39 @@ public class SwingHelper {
       }
       return text.substring(0, currentLen) + ELLIPSIS;
     }
+  }
+
+  public static JEditorPane createHtmlLabel(@NotNull final String innerHtml, @Nullable String disabledHtml,
+                                            @Nullable final Consumer<String> hyperlinkListener) {
+    disabledHtml = disabledHtml == null ? innerHtml : disabledHtml;
+    final Font font = UIUtil.getLabelFont();
+    String html = String.format(
+      "<html><head>%s</head><body>%s</body></html>",
+      UIUtil.getCssFontDeclaration(font, UIUtil.getInactiveTextColor(), null, null),
+      innerHtml
+    );
+    String disabled = String.format(
+      "<html><head>%s</head><body>%s</body></html>",
+      UIUtil.getCssFontDeclaration(font, UIUtil.getInactiveTextColor(), null, null),
+      disabledHtml
+    );
+
+    final JEditorPane pane = new SwingHelper.HtmlViewerBuilder()
+      .setCarryTextOver(false)
+      .setFont(UIUtil.getLabelFont())
+      .setDisabledHtml(disabled)
+      .create();
+    pane.setText(html);
+    pane.addHyperlinkListener(
+      new HyperlinkListener() {
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            if (hyperlinkListener != null) hyperlinkListener.consume(e.getURL() == null ? "" : e.getURL().toString());
+            else BrowserUtil.browse(e.getURL());
+          }
+        }
+      }
+    );
+    return pane;
   }
 }

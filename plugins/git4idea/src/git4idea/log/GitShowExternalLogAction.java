@@ -34,7 +34,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -241,7 +240,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
     private GitVersion myVersion;
 
     private ShowLogInDialogTask(@NotNull Project project, @NotNull List<VirtualFile> roots, @NotNull GitVcs vcs) {
-      super(project, "Loading Git Log...", true, BackgroundFromStartOption.getInstance());
+      super(project, "Loading Git Log...", true);
       myProject = project;
       myRoots = roots;
       myVcs = vcs;

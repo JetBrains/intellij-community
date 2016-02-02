@@ -15,14 +15,14 @@
  */
 package com.intellij.codeInsight.template
 
-import com.intellij.codeInsight.template.macro.CapitalizeAndUnderscoreMacro
-import com.intellij.codeInsight.template.macro.SnakeCaseMacro
+import com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro
+import com.intellij.codeInsight.template.macro.SplitWordsMacro
 import junit.framework.TestCase
 
 /**
  * @author peter
  */
-class CapitalizeAndUnderscoreTest extends TestCase {
+class NamingConventionMacrosTest extends TestCase {
 
   public void "test capitalize and underscore"() {
     assert "FOO_BAR" == cau("fooBar")
@@ -40,12 +40,21 @@ class CapitalizeAndUnderscoreTest extends TestCase {
     assert "a_b_c_d_e_f_g" == snakeCase("a-b.c/d|e*f+g")
     assert "a_b" == snakeCase("a--b")
   }
+
+  public void "test lowercase and dash"() {
+    assert "foo-bar" == new SplitWordsMacro.LowercaseAndDash().convertString("FOO_BAR")
+  }
+
+  public void "test dashes to camel case"() {
+    assert "fooBar" == new ConvertToCamelCaseMacro.ReplaceDashesToCamelCaseMacro().convertString("foo-bar")?.toString()
+    assert "fooBar" == new ConvertToCamelCaseMacro.ReplaceDashesToCamelCaseMacro().convertString("FOO-BAR")?.toString()
+  }
   
   private static def snakeCase(String s) {
-    return new SnakeCaseMacro().convertString(s)
+    return new SplitWordsMacro.SnakeCaseMacro().convertString(s)
   }
   private static def cau(String s) {
-    return new CapitalizeAndUnderscoreMacro().convertString(s)
+    return new SplitWordsMacro.CapitalizeAndUnderscoreMacro().convertString(s)
   }
   
 }

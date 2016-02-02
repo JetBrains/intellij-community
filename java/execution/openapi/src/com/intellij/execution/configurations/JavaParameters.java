@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,11 +48,11 @@ public class JavaParameters extends SimpleJavaParameters {
       throw new CantRunException(ExecutionBundle.message("no.jdk.specified..error.message"));
     }
 
-    final String jdkHome = jdk.getHomeDirectory().getPresentableUrl();
-    if (jdkHome.isEmpty()) {
+    final VirtualFile jdkHome = jdk.getHomeDirectory();
+    if (jdkHome == null) {
       throw new CantRunException(ExecutionBundle.message("home.directory.not.specified.for.jdk.error.message"));
     }
-    return jdkHome;
+    return jdkHome.getPresentableUrl();
   }
 
   public static final int JDK_ONLY = 0x1;
@@ -119,9 +119,8 @@ public class JavaParameters extends SimpleJavaParameters {
     configureByModule(module, classPathType, getValidJdkToRunModule(module, (classPathType & TESTS_ONLY) == 0));
   }
 
-  /**
-   * @deprecated use {@link #getValidJdkToRunModule(Module, boolean)} instead
-   */
+  /** @deprecated use {@link #getValidJdkToRunModule(Module, boolean)} instead */
+  @SuppressWarnings("unused")
   public static Sdk getModuleJdk(final Module module) throws CantRunException {
     return getValidJdkToRunModule(module, false);
   }

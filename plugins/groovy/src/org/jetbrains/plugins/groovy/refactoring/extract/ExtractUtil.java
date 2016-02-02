@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -252,7 +252,7 @@ public class ExtractUtil {
       }
     }
     for (String varName : names.keySet()) {
-      if (ResolveUtil.resolveProperty(statements[0], varName) == null) {
+      if (ResolveUtil.resolveProperty(statements[statements.length - 1], varName) == null) {
         result.add(names.get(varName));
       }
     }

@@ -207,7 +207,7 @@ public class PluginDownloader {
 
   @Nullable
   public static IdeaPluginDescriptorImpl loadDescriptionFromJar(final File file) throws IOException {
-    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptorFromJar(file);
+    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptor(file, PluginManagerCore.PLUGIN_XML);
     if (descriptor == null) {
       if (file.getName().endsWith(".zip")) {
         final File outputDir = FileUtil.createTempDirectory("plugin", "");

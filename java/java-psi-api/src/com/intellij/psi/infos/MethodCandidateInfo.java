@@ -125,6 +125,11 @@ public class MethodCandidateInfo extends CandidateInfo{
     final PsiMethod method = getElement();
     
     if (isToInferApplicability()) {
+      if (!isOverloadCheck()) {
+        //ensure applicability check is performed
+        getSubstitutor(false);
+      }
+
       //already performed checks, so if inference failed, error message should be saved  
       if (myInferenceError != null || !isPotentiallyCompatible()) {
         return ApplicabilityLevel.NOT_APPLICABLE;

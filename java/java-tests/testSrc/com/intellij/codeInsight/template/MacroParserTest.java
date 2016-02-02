@@ -19,7 +19,7 @@ public class MacroParserTest extends LightIdeaTestCase {
     Expression e = MacroParser.parse("  variableOfType(  \"java.util.Collection\"  )   ");
     assertTrue(e instanceof MacroCallNode);
     MacroCallNode n = (MacroCallNode) e;
-    assertTrue(n.getMacro() instanceof VariableOfTypeMacro);
+    assertTrue(n.getMacro(new TemplateContextType[0]) instanceof VariableOfTypeMacro);
     Expression[] parameters = n.getParameters();
     assertEquals(1, parameters.length);
     assertTrue(parameters [0] instanceof ConstantNode);
@@ -46,7 +46,7 @@ public class MacroParserTest extends LightIdeaTestCase {
     Expression e = MacroParser.parse("variableOfType(\"A\", \"B\")");
     assertTrue(e instanceof MacroCallNode);
     MacroCallNode n = (MacroCallNode) e;
-    assertTrue(n.getMacro() instanceof VariableOfTypeMacro);
+    assertTrue(n.getMacro(new TemplateContextType[0]) instanceof VariableOfTypeMacro);
     Expression[] parameters = n.getParameters();
     assertEquals(2, parameters.length);
     assertTrue(parameters [0] instanceof ConstantNode);

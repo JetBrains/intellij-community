@@ -129,7 +129,7 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
         return Comparing.compare(p1.getKey(), p2.getKey(), String.CASE_INSENSITIVE_ORDER);
       }
     });
-    final char delimiter = PropertiesCodeStyleSettings.getInstance(file.getProject()).KEY_VALUE_DELIMITER;
+    final char delimiter = PropertiesCodeStyleSettings.getInstance(file.getProject()).getDelimiter();
     final StringBuilder rawText = new StringBuilder();
     for (int i = 0; i < properties.size(); i++) {
       IProperty property = properties.get(i);

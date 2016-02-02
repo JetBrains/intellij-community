@@ -1084,7 +1084,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     try {
-      final int off = JBUI.scale(2);
+      int off = getSquareInnerOffset(width);
       int[] xPoints = {anchorX, anchorX + width, anchorX + width, anchorX + width / 2, anchorX};
       int[] yPoints = {y, y, y + baseHeight, y + height, y + baseHeight};
 
@@ -1109,8 +1109,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                   int width,
                                   boolean active) {
     drawSquareWithMinus(g, anchorX, y, width, active);
-    final int off = JBUI.scale(2);
+    int off = getSquareInnerOffset(width);
     UIUtil.drawLine(g, anchorX + width / 2, y + off, anchorX + width / 2, y + width - off);
+  }
+
+  /**
+   * Returns the gap between the sign and the square itself
+   */
+  private static int getSquareInnerOffset(int width) {
+    return Math.max(width / 5, JBUI.scale(2));
   }
 
   @SuppressWarnings("SuspiciousNameCombination")
@@ -1124,14 +1131,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     g.setColor(getOutlineColor(active));
     g.drawRect(anchorX, y, width, width);
-    final int off = JBUI.scale(2);
+    int off = getSquareInnerOffset(width);
     // Draw plus
     if (!active) g.setColor(getOutlineColor(true));
     UIUtil.drawLine(g, anchorX + off, y + width / 2, anchorX + width - off, y + width / 2);
   }
 
   private int getFoldingAnchorWidth() {
-    return (int)(Math.min(JBUI.scale(4) * myEditor.getScale(), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2);
+    // have to be odd number to be perfectly symmetric (as long as we have plus sign inside)
+    return roundToOdd(Math.min(JBUI.scale(4) * myEditor.getScale(), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2);
+  }
+
+  private static int roundToOdd(float f) {
+    int res = (int)f;
+    return res % 2 == 0 ? res : res + 1;
   }
 
   public int getFoldingAreaOffset() {

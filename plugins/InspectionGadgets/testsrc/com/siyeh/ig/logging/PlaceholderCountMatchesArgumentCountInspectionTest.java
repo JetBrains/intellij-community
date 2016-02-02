@@ -13,7 +13,32 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
   protected String[] getEnvironmentClasses() {
     return new String[]{
       "package org.slf4j; public interface Logger { void info(String format, Object... arguments); }",
-      "package org.slf4j; public class LoggerFactory { public static Logger getLogger(Class clazz) { return null; }}"};
+      "package org.slf4j; public class LoggerFactory { public static Logger getLogger(Class clazz) { return null; }}",
+
+      "package org.apache.logging.log4j;" +
+      "public interface Logger {" +
+      "  void info(String message, Object... params);" +
+      "  void fatal(String message, Object... params);" +
+      "}",
+
+      "package org.apache.logging.log4j;" +
+      "public class LogManager {" +
+      "  public static Logger getLogger() {" +
+      "    return null;" +
+      "  }" +
+      "}"
+    };
+  }
+
+  public void testLog4j2() {
+    doTest("import org.apache.logging.log4j.*;\n" +
+           "class Logging {\n" +
+           "  private static final Logger LOG = LogManager.getLogger();\n" +
+           "  void m(int i) {\n" +
+           "    LOG.info(/*Fewer arguments provided (1) than placeholders specified (3)*/\"hello? {}{}{}\"/**/, i);\n" +
+           "    LOG.fatal(/*More arguments provided (1) than placeholders specified (0)*/\"you got me \"/**/,  i);\n" +
+           "  }\n" +
+           "}");
   }
 
   public void testOneExceptionArgument() {

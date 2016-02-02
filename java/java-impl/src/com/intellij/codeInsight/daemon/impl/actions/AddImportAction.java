@@ -95,7 +95,7 @@ public class AddImportAction implements QuestionAction {
   }
 
   private void chooseClassAndImport() {
-    CodeInsightUtil.sortIdenticalShortNameClasses(myTargetClasses, myReference);
+    CodeInsightUtil.sortIdenticalShortNamedMembers(myTargetClasses, myReference);
 
     final BaseListPopupStep<PsiClass> step =
       new BaseListPopupStep<PsiClass>(QuickFixBundle.message("class.to.import.chooser.title"), myTargetClasses) {
