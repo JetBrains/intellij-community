@@ -520,7 +520,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
   public void onWizardFinished() throws CommitStepException {
     if (isFrameworksMode()) {
-      boolean ok = myFrameworksPanel.checkCanContinue(getComponent());
+      boolean ok = myFrameworksPanel.downloadLibraries(myWizard.getContentPanel());
       if (!ok) {
         throw new CommitStepException(null);
       }

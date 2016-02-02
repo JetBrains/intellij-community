@@ -299,24 +299,6 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return optionsComponent != null ? optionsComponent.getLibraryCompositionSettings() : null;
   }
 
-  public boolean downloadLibraries() {
-    final Ref<Boolean> result = Ref.create(true);
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        applyLibraryOptionsForSelected();
-        List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
-        for (LibraryCompositionSettings compositionSettings : list) {
-          if (!compositionSettings.downloadFiles(myMainPanel)) {
-            result.set(false);
-            return;
-          }
-        }
-      }
-    });
-    return result.get();
-  }
-
   private Collection<FrameworkSupportNodeBase> createNodes(List<FrameworkSupportInModuleProvider> providers,
                                                            Set<String> associated,
                                                            final Set<String> preselected) {
@@ -422,8 +404,23 @@ public class AddSupportForFrameworksPanel implements Disposable {
     }
   }
 
-  public boolean checkCanContinue(@NotNull JComponent parentComponent) {
-    if (!downloadLibraries()) {
+  public boolean downloadLibraries(@NotNull final JComponent parentComponent) {
+    final Ref<Boolean> result = Ref.create(true);
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        applyLibraryOptionsForSelected();
+        List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
+        for (LibraryCompositionSettings compositionSettings : list) {
+          if (!compositionSettings.downloadFiles(parentComponent)) {
+            result.set(false);
+            return;
+          }
+        }
+      }
+    });
+
+    if (!result.get()) {
       int answer = Messages.showYesNoDialog(parentComponent,
                                             ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
                                             CommonBundle.getWarningTitle(), Messages.getWarningIcon());
