@@ -17,7 +17,7 @@ public class StudyBundle {
 
   private static Reference<ResourceBundle> ourBundle;
   @NonNls
-  private static final String BUNDLE = "bundle.StudyBundle";
+  private static final String BUNDLE = "com.jetbrains.edu.learning.StudyBundle";
 
   private StudyBundle() {
   }
