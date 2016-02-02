@@ -33,7 +33,7 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
 
   @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!file.getManager().isInProject(file)) return false;
+    if (!checkFile(file)) return false;
 
     useElementToTheLeft = false;
     final PsiElement elementToTheRight = getElementToTheRight(editor, file);
@@ -48,6 +48,10 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
     }
 
     return false;
+  }
+
+  protected boolean checkFile(@NotNull PsiFile file) {
+    return file.getManager().isInProject(file);
   }
 
   /**
