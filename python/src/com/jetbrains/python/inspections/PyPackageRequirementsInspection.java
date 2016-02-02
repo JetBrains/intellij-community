@@ -211,6 +211,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
   @Nullable
   private static Set<PyRequirement> getTransitiveRequirements(@NotNull Sdk sdk, @NotNull Collection<PyRequirement> requirements,
                                                               @NotNull Set<PyPackage> visited) {
+    if (requirements.isEmpty()) {
+      return Collections.emptySet();
+    }
     final Set<PyRequirement> results = new HashSet<PyRequirement>(requirements);
     final List<PyPackage> packages;
     try {
