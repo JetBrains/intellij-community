@@ -389,23 +389,13 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   }
 
   /**
-   * TODO: This method does not return all "changes" recursively. And does not respect T type parameter while filling the result - just
-   * TODO: "Change" class is used ("ChangesBrowserNode.getAllChangesUnder()"). Check if this causes any issues.
+   * TODO: This method does not respect T type parameter while filling the result - just "Change" class is used
+   * TODO: ("ChangesBrowserNode.getAllChangesUnder()").
    */
+  @NotNull
   public List<T> getChanges() {
-    final LinkedHashSet<T> result = new LinkedHashSet<T>();
-    TreeUtil.traverseDepth((ChangesBrowserNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        ChangesBrowserNode changeNode = (ChangesBrowserNode)node;
-        if (changeNode.isLeaf()) {
-          //noinspection unchecked
-          result.addAll(changeNode.getAllChangesUnder());
-        }
-        return true;
-      }
-    });
-    return new ArrayList<T>(result);
+    //noinspection unchecked
+    return ((ChangesBrowserNode)getRoot()).getAllChangesUnder();
   }
 
   @NotNull
