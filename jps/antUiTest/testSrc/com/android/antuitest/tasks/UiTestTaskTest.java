@@ -16,15 +16,14 @@
 package com.android.antuitest.tasks;
 
 import com.android.tools.idea.tests.gui.framework.BelongsToTestGroups;
-import com.android.tools.idea.tests.gui.framework.GuiTestCase;
-import com.android.tools.idea.tests.gui.framework.GuiTests;
 import com.android.tools.idea.tests.gui.framework.TestGroup;
 import com.intellij.openapi.util.io.FileUtil;
 import org.apache.tools.ant.Project;
-import org.apache.tools.ant.types.FileSet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runner.Runner;
 
 import java.io.File;
 import java.util.List;
@@ -32,7 +31,6 @@ import java.util.Map;
 
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.fail;
 
 /**
  * Tests sharding logic in {@link UiTestTask}.
@@ -73,13 +71,19 @@ public class UiTestTaskTest {
   }
 }
 
+abstract class GuiTestRunner extends Runner {}
+
 @BelongsToTestGroups(TestGroup.A)
-class ATest extends GuiTestCase { }
+@RunWith(GuiTestRunner.class)
+class ATest {}
 
 @BelongsToTestGroups(TestGroup.B)
-class BTest extends GuiTestCase { }
+@RunWith(GuiTestRunner.class)
+class BTest {}
 
 @BelongsToTestGroups(TestGroup.B)
-class CTest extends GuiTestCase { }
+@RunWith(GuiTestRunner.class)
+class CTest {}
 
-class DTest extends GuiTestCase { }
+@RunWith(GuiTestRunner.class)
+class DTest {}
