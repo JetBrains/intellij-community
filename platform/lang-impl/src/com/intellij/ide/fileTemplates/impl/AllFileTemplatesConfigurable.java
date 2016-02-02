@@ -535,7 +535,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     String errorString = null;
     for (FileTemplate template : templates) {
       final String currName = template.getName();
-      final String currExt = template.getExtension();
       if (currName.length() == 0) {
         itemWithError = template;
         errorString = IdeBundle.message("error.please.specify.template.name");
@@ -544,12 +543,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       if (allNames.contains(currName)) {
         itemWithError = template;
         errorString = "Template with name \'" + currName + "\' already exists. Please specify a different template name";
-        break;
-      }
-      if (currExt.length() == 0) {
-        itemWithError = template;
-        errorString = IdeBundle.message("error.please.specify.template.extension");
-        errorInName = false;
         break;
       }
       allNames.add(currName);
