@@ -22,14 +22,11 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
 
 public abstract class VisibleHighlightingPassFactory extends AbstractProjectComponent {
   public VisibleHighlightingPassFactory(Project project) {
@@ -38,15 +35,7 @@ public abstract class VisibleHighlightingPassFactory extends AbstractProjectComp
 
   @NotNull
   public static ProperTextRange calculateVisibleRange(@NotNull Editor editor) {
-    Rectangle rect = editor.getScrollingModel().getVisibleArea();
-    LogicalPosition startPosition = editor.xyToLogicalPosition(new Point(rect.x, rect.y));
-
-    int visibleStart = editor.logicalPositionToOffset(startPosition);
-    LogicalPosition endPosition = editor.xyToLogicalPosition(new Point(rect.x + rect.width, rect.y + rect.height));
-
-    int visibleEnd = editor.logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
-
-    return new ProperTextRange(visibleStart, Math.max(visibleEnd, visibleStart));
+    return VisibleRangeCalculator.SERVICE.getInstance().getVisibleTextRange(editor);
   }
 
   @Nullable
