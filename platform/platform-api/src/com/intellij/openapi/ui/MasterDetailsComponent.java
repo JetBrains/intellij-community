@@ -131,10 +131,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected MasterDetailsComponent(MasterDetailsState state) {
     myState = state;
 
-    // Android Studio: Force OnePixelSplitter for PSD configurables.
-    // This line has been already changed in 'master' branch, but the change (5887777e29c67004c864632d4997c4e5a498e1ce) involves too many
-    // files and it may be risky to cherry-pick.
-    mySplitter = new OnePixelSplitter(false, .2f);
+    mySplitter = isNewProjectSettings() ? new OnePixelSplitter(false, .2f) : new JBSplitter(false, .2f);
     mySplitter.setSplitterProportionKey("ProjectStructure.SecondLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);
 
@@ -143,17 +140,10 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   private boolean isNewProjectSettings() {
-    if (!Registry.is("ide.new.project.settings")) {
-      return false;
-    }
-    try {
-      // assume that only project structure dialog uses the following base class for details:
-      String name = "com.intellij.openapi.roots.ui.configuration.projectRoot.BaseStructureConfigurable";
-      return Class.forName(name).isAssignableFrom(getClass());
-    }
-    catch (ClassNotFoundException ignored) {
-      return false;
-    }
+    // Android Studio: Force PSD to be considered "New PSD".
+    // This method was already removed in 'master' branch, but the change (5887777e29c67004c864632d4997c4e5a498e1ce) involves too many
+    // files and it may be risky to cherry-pick.
+    return true;
   }
 
   protected void reInitWholePanelIfNeeded() {
