@@ -33,6 +33,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
@@ -47,7 +48,8 @@ import com.intellij.ui.components.JBSlidingPanel;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
-import com.intellij.util.NotNullFunction;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -65,11 +67,14 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class FlatWelcomeFrame extends JFrame implements IdeFrame {
+  private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
   private final BalloonLayout myBalloonLayout;
   private final FlatWelcomeScreen myScreen;
 
@@ -664,27 +669,57 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     private JPanel actions;
   }
 
-  public static Pair<JPanel, JBList> createActionGroupPanel(ActionGroup action, final JComponent parent, final Runnable backAction) {
+  public static Pair<JPanel, JBList> createActionGroupPanel(final ActionGroup action, final JComponent parent, final Runnable backAction) {
     JPanel actionsListPanel = new JPanel(new BorderLayout());
     actionsListPanel.setBackground(getProjectsBackground());
-    final JBList list = new JBList(action.getChildren(null));
+    final List<AnAction> groups = flattenActionGroups(action);
+    final JBList list = new JBList(groups);
+
     list.setBackground(getProjectsBackground());
-    list.installCellRenderer(new NotNullFunction<AnAction, JComponent>() {
-      final JLabel label = new JLabel();
+    list.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptorAdapter<AnAction>() {
+       @Nullable
+       @Override
+       public String getTextFor(AnAction value) {
+         return getActionText(value);
+       }
 
-      {
-        label.setBorder(JBUI.Borders.empty(3, 7));
-      }
+       @Nullable
+       @Override
+       public String getCaptionAboveOf(AnAction value) {
+         return getParentGroupName(value);
+       }
 
-      @NotNull
-      @Override
-      public JComponent fun(AnAction action) {
-        label.setText(action.getTemplatePresentation().getText());
-        Icon icon = action.getTemplatePresentation().getIcon();
-        label.setIcon(icon);
-        return label;
-      }
-    });
+       @Override
+       public boolean hasSeparatorAboveOf(AnAction value) {
+         int index = groups.indexOf(value);
+         if (index < 1) return false;
+         AnAction upper = groups.get(index - 1);
+         if (getParentGroupName(upper) == null && getParentGroupName(value) != null) return true;
+
+         return !Comparing.equal(getParentGroupName(upper), getParentGroupName(value));
+       }
+     })
+
+     {
+       @Override
+       protected JComponent createItemComponent() {
+         myTextLabel = new ErrorLabel();
+         myTextLabel.setOpaque(true);
+         myTextLabel.setBorder(JBUI.Borders.empty(3, 7));
+
+         return myTextLabel;
+       }
+
+       @Override
+       protected void customizeComponent(JList list, Object value, boolean isSelected) {
+         if (myTextLabel != null) {
+           myTextLabel.setText(getActionText(((AnAction)value)));
+           myTextLabel.setIcon(((AnAction)value).getTemplatePresentation().getIcon());
+         }
+       }
+     }
+    );
+
     JScrollPane pane = ScrollPaneFactory.createScrollPane(list, true);
     pane.setBackground(getProjectsBackground());
     actionsListPanel.add(pane, BorderLayout.CENTER);
@@ -745,5 +780,36 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       }.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, main);
     }
     return Pair.create(main, list);
+  }
+
+  private static List<AnAction> flattenActionGroups(@NotNull final ActionGroup action) {
+    final ArrayList<AnAction> groups = ContainerUtil.newArrayList();
+    String groupName;
+    for (AnAction anAction : action.getChildren(null)) {
+      if (anAction instanceof ActionGroup) {
+        groupName = getActionText(anAction);
+        for (AnAction childAction : ((ActionGroup)anAction).getChildren(null)) {
+          if (groupName != null) {
+            setParentGroupName(groupName, childAction);
+          }
+          groups.add(childAction);
+        }
+      } else {
+        groups.add(anAction);
+      }
+    }
+    return groups;
+  }
+
+  private static String getActionText(@NotNull final AnAction value) {
+    return value.getTemplatePresentation().getText();
+  }
+
+  private static String getParentGroupName(@NotNull final AnAction value) {
+    return (String)value.getTemplatePresentation().getClientProperty(ACTION_GROUP_KEY);
+  }
+
+  private static void setParentGroupName(@NotNull final String groupName, @NotNull final AnAction childAction) {
+    childAction.getTemplatePresentation().putClientProperty(ACTION_GROUP_KEY, groupName);
   }
 }
