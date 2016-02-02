@@ -201,15 +201,6 @@ class FoldingModelWindow implements FoldingModelEx{
   }
 
   @Override
-  public boolean documentHasBeenChangedExternally() {
-    return false;
-  }
-
-  @Override
-  public void clearExternalChangeFlag() {
-  }
-
-  @Override
   public void clearFoldRegions() {
     myDelegate.clearFoldRegions();
   }

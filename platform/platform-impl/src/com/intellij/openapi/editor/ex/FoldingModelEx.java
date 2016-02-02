@@ -64,8 +64,4 @@ public interface FoldingModelEx extends FoldingModel {
   
   @NotNull
   List<FoldRegion> getGroupedRegions(FoldingGroup group);
-  
-  boolean documentHasBeenChangedExternally();
-  
-  void clearExternalChangeFlag();
 }

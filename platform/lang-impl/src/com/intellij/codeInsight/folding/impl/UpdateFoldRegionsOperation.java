@@ -93,8 +93,6 @@ class UpdateFoldRegionsOperation implements Runnable {
     List<FoldRegion> newRegions = addNewRegions(info, foldingModel, elementsToFold, rangeToExpandStatusMap, shouldExpand, groupExpand);
 
     applyExpandStatus(newRegions, shouldExpand, groupExpand);
-    
-    foldingModel.clearExternalChangeFlag();
   }
 
   private static void applyExpandStatus(@NotNull List<FoldRegion> newRegions,
@@ -250,10 +248,7 @@ class UpdateFoldRegionsOperation implements Runnable {
   }
 
   private boolean regionCanBeRemovedWhenCollapsed(FoldRegion region) {
-    return Boolean.TRUE.equals(region.getUserData(CAN_BE_REMOVED_WHEN_COLLAPSED)) || 
-           ((FoldingModelEx)myEditor.getFoldingModel()).documentHasBeenChangedExternally() || 
-           !region.isValid() || 
-           isRegionInCaretLine(region);
+    return Boolean.TRUE.equals(region.getUserData(CAN_BE_REMOVED_WHEN_COLLAPSED)) || !region.isValid() || isRegionInCaretLine(region);
   }
 
   private boolean isRegionInCaretLine(FoldRegion region) {
