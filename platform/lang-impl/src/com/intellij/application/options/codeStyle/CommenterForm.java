@@ -17,18 +17,18 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * Reusable commenter settings form.
  */
-public class CommenterForm {
+public class CommenterForm implements CodeStyleSettingsCustomizable {
   private JPanel myCommenterPanel;
   private JBCheckBox myLineCommentAtFirstColumnCb;
   private JBCheckBox myLineCommentAddSpaceCb;
@@ -45,6 +45,7 @@ public class CommenterForm {
       }
       myLineCommentAddSpaceCb.setEnabled(!myLineCommentAtFirstColumnCb.isSelected());
     });
+    customizeSettings();
   }
 
   public void reset(@NotNull CodeStyleSettings settings) {
@@ -72,5 +73,73 @@ public class CommenterForm {
 
   public JPanel getCommenterPanel() {
     return myCommenterPanel;
+  }
+
+  @Override
+  public void showAllStandardOptions() {
+    setAllOptionsVisible(true);
+  }
+
+  @Override
+  public void showStandardOptions(String... optionNames) {
+    for (String optionName : optionNames) {
+      if (CommenterOption.LINE_COMMENT_ADD_SPACE.name().equals(optionName)) {
+        myLineCommentAddSpaceCb.setVisible(true);
+      }
+      else if (WrappingOrBraceOption.LINE_COMMENT_AT_FIRST_COLUMN.name().equals(optionName)) {
+        myLineCommentAtFirstColumnCb.setVisible(true);
+      }
+      else if (WrappingOrBraceOption.BLOCK_COMMENT_AT_FIRST_COLUMN.name().equals(optionName)) {
+        myBlockCommentAtFirstJBCheckBox.setVisible(true);
+      }
+    }
+  }
+  
+  private void setAllOptionsVisible(boolean isVisible) {
+    myLineCommentAtFirstColumnCb.setVisible(isVisible);
+    myLineCommentAddSpaceCb.setVisible(isVisible);
+    myBlockCommentAtFirstJBCheckBox.setVisible(isVisible);
+  }
+
+  @Override
+  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+                               String fieldName,
+                               String title,
+                               @Nullable String groupName,
+                               Object... options) {
+    // ignore, no custom options possible
+  }
+
+  @Override
+  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+                               String fieldName,
+                               String title,
+                               @Nullable String groupName,
+                               @Nullable OptionAnchor anchor,
+                               @Nullable String anchorFieldName,
+                               Object... options) {
+    // ignore, no custom options possible
+  }
+
+  @Override
+  public void renameStandardOption(String fieldName, String newTitle) {
+    // ignore for now
+  }
+
+  @Override
+  public void moveStandardOption(String fieldName, String newGroup) {
+    // ignore, unsupported
+  }
+  
+  private void customizeSettings() {
+    setAllOptionsVisible(false);
+    LanguageCodeStyleSettingsProvider settingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(myLanguage);
+    if (settingsProvider != null) {
+      // TODO<rv> Only commenter settings should be used, move from WRAPPING_AND_BRACES
+      settingsProvider.customizeSettings(this, LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS);
+      settingsProvider.customizeSettings(this, LanguageCodeStyleSettingsProvider.SettingsType.COMMENTER_SETTINGS);
+    }
+    myCommenterPanel.setVisible(
+      myLineCommentAtFirstColumnCb.isVisible() || myLineCommentAddSpaceCb.isVisible() || myBlockCommentAtFirstJBCheckBox.isVisible());
   }
 }
