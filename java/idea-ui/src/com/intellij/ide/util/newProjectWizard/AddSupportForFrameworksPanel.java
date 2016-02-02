@@ -16,6 +16,7 @@
 
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.CommonBundle;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
@@ -34,10 +35,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -417,6 +420,18 @@ public class AddSupportForFrameworksPanel implements Disposable {
         addChildFrameworks(node.getChildren(), result);
       }
     }
+  }
+
+  public boolean checkCanContinue() {
+    if (!downloadLibraries()) {
+      int answer = Messages.showYesNoDialog(getMainPanel(),
+                                            ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
+                                            CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+      if (answer != Messages.YES) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public void addSupport(final @NotNull Module module, final @NotNull ModifiableRootModel rootModel) {

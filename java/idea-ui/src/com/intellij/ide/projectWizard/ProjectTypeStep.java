@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.projectWizard;
 
-import com.intellij.CommonBundle;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
@@ -37,12 +36,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -523,14 +520,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
   public void onWizardFinished() throws CommitStepException {
     if (isFrameworksMode()) {
-      boolean ok = myFrameworksPanel.downloadLibraries();
+      boolean ok = myFrameworksPanel.checkCanContinue();
       if (!ok) {
-        int answer = Messages.showYesNoDialog(getComponent(),
-                                              ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                              CommonBundle.getWarningTitle(), Messages.getWarningIcon());
-        if (answer != Messages.YES) {
-          throw new CommitStepException(null);
-        }
+        throw new CommitStepException(null);
       }
     }
   }
