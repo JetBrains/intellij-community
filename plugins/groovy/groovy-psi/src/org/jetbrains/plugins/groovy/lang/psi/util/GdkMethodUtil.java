@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
 
 import java.util.List;
 import java.util.Set;
@@ -90,7 +91,10 @@ public class GdkMethodUtil {
   }
 
   public static boolean categoryIteration(GrClosableBlock place, final PsiScopeProcessor processor, ResolveState state) {
-    if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return true;
+    if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY)) &&
+        !(processor instanceof GroovyResolverProcessor && ((GroovyResolverProcessor)processor).isPropertyResolve())) {
+      return true;
+    }
 
     final GrMethodCall call = checkMethodCall(place, USE);
     if (call == null) return true;
@@ -160,17 +164,20 @@ public class GdkMethodUtil {
                                                final PsiScopeProcessor processor,
                                                @NotNull final ResolveState state,
                                                @NotNull final PsiClass categoryClass) {
-    final PsiScopeProcessor delegate = new GrDelegatingScopeProcessorWithHints(processor, null, ClassHint.RESOLVE_KINDS_METHOD) {
-      @Override
-      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState delegateState) {
-        if (element instanceof PsiMethod && isCategoryMethod((PsiMethod)element, null, null, null)) {
-          PsiMethod method = (PsiMethod)element;
-          return processor.execute(GrGdkMethodImpl.createGdkMethod(method, false, generateOriginInfo(method)), delegateState);
+    for (final PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
+      final PsiScopeProcessor delegate = new GrDelegatingScopeProcessorWithHints(each, null, ClassHint.RESOLVE_KINDS_METHOD) {
+        @Override
+        public boolean execute(@NotNull PsiElement element, @NotNull ResolveState delegateState) {
+          if (element instanceof PsiMethod && isCategoryMethod((PsiMethod)element, null, null, null)) {
+            PsiMethod method = (PsiMethod)element;
+            return each.execute(GrGdkMethodImpl.createGdkMethod(method, false, generateOriginInfo(method)), delegateState);
+          }
+          return true;
         }
-        return true;
-      }
-    };
-    return categoryClass.processDeclarations(delegate, state, null, place);
+      };
+      if (!categoryClass.processDeclarations(delegate, state, null, place)) return false;
+    }
+    return true;
   }
 
   @Nullable
@@ -241,8 +248,11 @@ public class GdkMethodUtil {
         final GrReferenceExpression qualifier = result.second;
         final PsiClass mixin = result.third;
 
-        final DelegatingScopeProcessor delegate = new MixinMemberContributor.MixinProcessor(processor, subjectType, qualifier);
-        mixin.processDeclarations(delegate, state, null, place);
+        for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
+          if (!mixin.processDeclarations(new MixinMemberContributor.MixinProcessor(each, subjectType, qualifier), state, null, place)) {
+            return false;
+          }
+        }
       }
       else {
         Trinity<PsiClassType, GrReferenceExpression, List<GrMethod>> closureResult = getClosureMixins(statement);

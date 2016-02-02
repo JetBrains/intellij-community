@@ -248,7 +248,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
           return;
         }
 
-        if (resolved == null && context.getLanguage().equals(JavaLanguage.INSTANCE) &&
+        if (context.getLanguage().equals(JavaLanguage.INSTANCE) &&
             referenceExpression.getQualifier() == null // pass all qualified java references as is for now
           ) {
           String name = referenceExpression.getReferenceName();
