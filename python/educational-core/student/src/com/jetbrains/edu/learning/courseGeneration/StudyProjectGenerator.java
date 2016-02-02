@@ -8,8 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -65,21 +63,7 @@ public class StudyProjectGenerator {
   }
 
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {
-    final Course course;
-    try {
-      course =
-        ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.WithResult<Course, Exception>(project, "Creating Course", false) {
-          @Override
-          protected Course compute(@NotNull ProgressIndicator indicator) throws Exception {
-            return getCourse();
-          }
-        });
-    }
-    catch (Exception e) {
-      LOG.error("Failed to obtain course " + e.getMessage());
-      return;
-    }
-
+    final Course course = getCourse();
     if (course == null) return;
     StudyTaskManager.getInstance(project).setCourse(course);
     ApplicationManager.getApplication().invokeLater(
