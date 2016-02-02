@@ -33,23 +33,14 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   private static final String MERGES = "Merges";
   private static final String MERGES_DESCRIPTION = "merges";
 
-  private final boolean myExpand;
-
-  public CollapseOrExpandGraphAction(boolean isExpand) {
-    super(getPrefix(isExpand) + LINEAR_BRANCHES, getPrefix(isExpand) + LINEAR_BRANCHES_DESCRIPTION, getBranchesIcon(isExpand));
-    myExpand = isExpand;
+  public CollapseOrExpandGraphAction() {
+    super();
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUi ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    VcsLogUiImpl vcsLogUi = (VcsLogUiImpl)ui;
-    if (myExpand) {
-      vcsLogUi.expandAll();
-    }
-    else {
-      vcsLogUi.collapseAll();
-    }
+    actionPerformedImpl((VcsLogUiImpl)ui);
   }
 
   @Override
@@ -63,53 +54,90 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
       }
 
       if (ui.getBekType() == PermanentGraph.SortType.LinearBek) {
-        e.getPresentation().setText(getPrefix(myExpand) + MERGES);
-        e.getPresentation().setDescription(getPrefix(myExpand) + MERGES_DESCRIPTION);
+        e.getPresentation().setText(getPrefix() + MERGES);
+        e.getPresentation().setDescription(getPrefix() + MERGES_DESCRIPTION);
       }
       else {
-        e.getPresentation().setText(getPrefix(myExpand) + LINEAR_BRANCHES);
-        e.getPresentation().setDescription(getPrefix(myExpand) + LINEAR_BRANCHES_DESCRIPTION);
+        e.getPresentation().setText(getPrefix() + LINEAR_BRANCHES);
+        e.getPresentation().setDescription(getPrefix() + LINEAR_BRANCHES_DESCRIPTION);
       }
     }
     else {
       e.getPresentation().setEnabled(false);
     }
 
+    e.getPresentation().setText(getPrefix() + LINEAR_BRANCHES);
+    e.getPresentation().setDescription(getPrefix() + LINEAR_BRANCHES_DESCRIPTION);
     if (isIconHidden(e)) {
       e.getPresentation().setIcon(null);
     }
     else {
-      e.getPresentation()
-        .setIcon(ui != null && ui.getBekType() == PermanentGraph.SortType.LinearBek ? getMergesIcon(myExpand) : getBranchesIcon(myExpand));
+      e.getPresentation().setIcon(ui != null && ui.getBekType() == PermanentGraph.SortType.LinearBek ? getMergesIcon() : getBranchesIcon());
     }
   }
 
-  private boolean isIconHidden(@NotNull AnActionEvent e) {
+  protected abstract void actionPerformedImpl(@NotNull VcsLogUiImpl vcsLogUi);
+
+  @NotNull
+  protected abstract Icon getMergesIcon();
+
+  @NotNull
+  protected abstract Icon getBranchesIcon();
+
+  @NotNull
+  protected abstract String getPrefix();
+
+  private static boolean isIconHidden(@NotNull AnActionEvent e) {
     return e.getPlace().equals(ToolWindowContentUi.POPUP_PLACE);
   }
 
-  private static Icon getMergesIcon(boolean expand) {
-    return expand ? VcsLogIcons.ExpandMerges : VcsLogIcons.CollapseMerges;
-  }
-
-  private static Icon getBranchesIcon(boolean expand) {
-    return expand ? VcsLogIcons.ExpandBranches : VcsLogIcons.CollapseBranches;
-  }
-
-  @NotNull
-  private static String getPrefix(boolean expand) {
-    return expand ? "Expand " : "Collapse ";
-  }
-
   public static class CollapseGraphAction extends CollapseOrExpandGraphAction {
-    public CollapseGraphAction() {
-      super(false);
+    @Override
+    protected void actionPerformedImpl(@NotNull VcsLogUiImpl vcsLogUi) {
+      vcsLogUi.collapseAll();
+    }
+
+    @NotNull
+    @Override
+    protected Icon getMergesIcon() {
+      return VcsLogIcons.CollapseMerges;
+    }
+
+    @NotNull
+    @Override
+    protected Icon getBranchesIcon() {
+      return VcsLogIcons.CollapseMerges;
+    }
+
+    @NotNull
+    @Override
+    protected String getPrefix() {
+      return "Collapse ";
     }
   }
 
   public static class ExpandGraphAction extends CollapseOrExpandGraphAction {
-    public ExpandGraphAction() {
-      super(true);
+    @Override
+    protected void actionPerformedImpl(@NotNull VcsLogUiImpl vcsLogUi) {
+      vcsLogUi.expandAll();
+    }
+
+    @NotNull
+    @Override
+    protected Icon getMergesIcon() {
+      return VcsLogIcons.ExpandMerges;
+    }
+
+    @NotNull
+    @Override
+    protected Icon getBranchesIcon() {
+      return VcsLogIcons.ExpandMerges;
+    }
+
+    @NotNull
+    @Override
+    protected String getPrefix() {
+      return "Expand ";
     }
   }
 }
