@@ -996,6 +996,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
         int x = width - size.width - myLayoutData.configuration.rightActionsOffset.width;
 
         if (myLayoutData.showMinSize) {
+          if (myText.getWidth() < 0 || myText.getHeight() < 0) {
+            myCenteredComponent.doLayout();
+            ((JScrollPane)myCenteredComponent).getViewport().doLayout();
+          }
           Point location = getCollapsedTextEndLocation(myText, myLayoutData);
           if (location != null) {
             int y = SwingUtilities.convertPoint(myText, location.x, location.y, parent).y;
