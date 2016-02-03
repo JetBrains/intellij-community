@@ -251,12 +251,24 @@ public class ScreenUtil {
     }
     Rectangle bounds = rectangles[0];
     int minimum = distance(bounds, x, y);
+    if (bounds.width == 0 || bounds.height == 0) {
+      //Screen is invalid, give maximum score
+      minimum = Integer.MAX_VALUE;
+    }
     for (int i = 1; i < rectangles.length; i++) {
+      if (rectangles[i].width == 0 || rectangles[i].height == 0) {
+        //Screen is invalid
+        continue;
+      }
       int distance = distance(rectangles[i], x, y);
       if (minimum > distance) {
         minimum = distance;
         bounds = rectangles[i];
       }
+    }
+    if (bounds.width == 0 || bounds.height == 0) {
+      //All screens were invalid, return sensible default
+      return new Rectangle(x, y, 0, 0);
     }
     return bounds;
   }
