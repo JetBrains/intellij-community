@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -67,7 +68,7 @@ import java.util.List;
  * @author max
  */
 public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataProvider {
-  private final Tree myTree;
+  private final MyTree myTree;
   private final JScrollPane myTreeScrollPane;
   protected final Project myProject;
   private final boolean myShowCheckboxes;
@@ -79,8 +80,8 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   @NotNull private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
   private boolean myAlwaysExpandList;
 
-  @NotNull private final TreeCellRenderer myNodeRenderer;
-  @NotNull private final TreeCellRenderer myShowFlattenNodeRenderer;
+  @NotNull private final MyTreeCellRenderer myNodeRenderer;
+  @NotNull private final MyTreeCellRenderer myShowFlattenNodeRenderer;
 
   @NonNls private static final String ROOT = "root";
 
@@ -190,6 +191,15 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
         myDoubleClickHandler.run();
         return true;
+      }
+    }.installOn(myTree);
+
+    new TreeLinkMouseListener(myNodeRenderer.myTextRenderer) {
+      @Override
+      protected int getRendererRelativeX(@NotNull MouseEvent e, @NotNull JTree tree, @NotNull TreePath path) {
+        int x = super.getRendererRelativeX(e, tree, path);
+
+        return !myShowCheckboxes ? x : x - myTree.myCheckboxWidth;
       }
     }.installOn(myTree);
 

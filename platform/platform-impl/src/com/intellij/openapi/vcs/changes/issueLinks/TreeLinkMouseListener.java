@@ -54,9 +54,7 @@ public class TreeLinkMouseListener extends LinkMouseListenerBase {
     HaveTooltip haveTooltip = null;
     final TreePath path = tree.getPathForLocation(e.getX(), e.getY());
     if (path != null) {
-      final Rectangle rectangle = tree.getPathBounds(path);
-      assert rectangle != null;
-      int dx = e.getX() - rectangle.x;
+      int dx = getRendererRelativeX(e, tree, path);
       final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
       if (myLastHitNode == null || myLastHitNode.get() != treeNode) {
         if (doCacheLastNode()) {
@@ -71,6 +69,12 @@ public class TreeLinkMouseListener extends LinkMouseListenerBase {
     }
     showTooltip(tree, e, haveTooltip);
     return tag;
+  }
+
+  protected int getRendererRelativeX(@NotNull MouseEvent e, @NotNull JTree tree, @NotNull TreePath path) {
+    final Rectangle rectangle = tree.getPathBounds(path);
+    assert rectangle != null;
+    return e.getX() - rectangle.x;
   }
 
   protected boolean doCacheLastNode() {
