@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.learning.actions.StudyCheckAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,12 +43,4 @@ public interface StudyExecutor {
                                 @NotNull final Task currentTask);
 
   void showNoSdkNotification(@NotNull final Project project);
-
-  /**
-   * If this method returns null, StudyCheckAction will be used to check tasks
-   * @return language-specific check action or null
-   * @see StudyCheckAction
-   */
-  @Nullable
-  StudyCheckAction getCheckAction();
 }
