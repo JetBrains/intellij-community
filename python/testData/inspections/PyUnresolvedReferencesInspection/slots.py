@@ -15,3 +15,10 @@ def test_slots_with_dict():
         __slots__ = ['__local', '__name__', '__dict__']
     a = C()
     a.foo = 1 #pass
+
+def test_attr_listed_in_slots():
+    class C(object):
+        __slots__ = ['foo']
+
+    c = C()
+    c.foo
