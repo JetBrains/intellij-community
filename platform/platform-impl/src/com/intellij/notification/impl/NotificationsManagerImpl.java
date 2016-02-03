@@ -874,7 +874,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     private final JEditorPane myText;
     private final BalloonLayoutData myLayoutData;
     private Component myTitleComponent;
-    private Component myCenteredComponent;
+    private JScrollPane myCenteredComponent;
     private JPanel myActionPanel;
     private Component myExpandAction;
 
@@ -888,8 +888,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
       if (myTitleComponent != null) {
         return myTitleComponent;
       }
-      if (myCenteredComponent instanceof JScrollPane) {
-        return ((JScrollPane)myCenteredComponent).getViewport().getView();
+      if (myCenteredComponent != null) {
+        return myCenteredComponent.getViewport().getView();
       }
       return null;
     }
@@ -900,7 +900,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
         myTitleComponent = comp;
       }
       else if (BorderLayout.CENTER.equals(constraints)) {
-        myCenteredComponent = comp;
+        myCenteredComponent = (JScrollPane)comp;
       }
       else if (BorderLayout.SOUTH.equals(constraints)) {
         myActionPanel = (JPanel)comp;
@@ -989,6 +989,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
       if (myCenteredComponent != null) {
         myCenteredComponent.setBounds(0, top, width, centeredSize.height);
+        myCenteredComponent.revalidate();
       }
 
       if (myExpandAction != null) {
@@ -996,10 +997,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
         int x = width - size.width - myLayoutData.configuration.rightActionsOffset.width;
 
         if (myLayoutData.showMinSize) {
-          if (myText.getWidth() < 0 || myText.getHeight() < 0) {
-            myCenteredComponent.doLayout();
-            ((JScrollPane)myCenteredComponent).getViewport().doLayout();
-          }
           Point location = getCollapsedTextEndLocation(myText, myLayoutData);
           if (location != null) {
             int y = SwingUtilities.convertPoint(myText, location.x, location.y, parent).y;
