@@ -1015,19 +1015,24 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     catch (Throwable t) {
       return null;
     }
-    for (ErrorReportSubmitter reporter : reporters) {
-      /** Android Studio: Always use the android error reporter */
-      String canonicalName = reporter.getClass().getCanonicalName();
-      if (canonicalName != null && canonicalName.contains("android")) {
-        return reporter;
+
+    // Android Studio: special case Kotlin plugin (org.jetbrains.kotlin) errors alone
+    if (pluginId != null && StringUtil.containsIgnoreCase(pluginId.getIdString(), "kotlin")) {
+      ErrorReportSubmitter kotlinReporter = getErrorReporter(reporters, "kotlin");
+      if (kotlinReporter != null) {
+        return kotlinReporter;
       }
-      // TODO: We may want to special case Kotlin plugin here (i.e. send Kotlin plugin crashes back to JB)
-      //final PluginDescriptor descriptor = reporter.getPluginDescriptor();
-      //if (descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {
-      //  return reporter;
-      //}
     }
-    //Android Studio: we always want the Android reporter
+
+    // Android Studio: Always use the android error reporter
+    return getErrorReporter(reporters, "android");
+
+    //for (ErrorReportSubmitter reporter : reporters) {
+    //  final PluginDescriptor descriptor = reporter.getPluginDescriptor();
+    //  if (descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {
+    //    return reporter;
+    //  }
+    //}
     //IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     //if (plugin == null) {
     //  return getCorePluginSubmitter(reporters);
@@ -1035,6 +1040,18 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     //if (PluginManagerMain.isDevelopedByJetBrains(plugin)) {
     //  return getCorePluginSubmitter(reporters);
     //}
+    //return null;
+  }
+
+  @Nullable
+  private static ErrorReportSubmitter getErrorReporter(@NotNull ErrorReportSubmitter[] reporters, @NotNull String id) {
+    for (ErrorReportSubmitter reporter : reporters) {
+      PluginDescriptor descriptor = reporter.getPluginDescriptor();
+      if (StringUtil.containsIgnoreCase(descriptor.getPluginId().getIdString(), id)) {
+        return reporter;
+      }
+    }
+
     return null;
   }
 
