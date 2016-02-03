@@ -73,6 +73,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   private final boolean myShowCheckboxes;
   private final boolean myHighlightProblems;
   private boolean myShowFlatten;
+  private boolean myIsModelFlat;
 
   @NotNull private final Set<T> myIncludedChanges;
   @NotNull private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
@@ -291,7 +292,8 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       state = TreeState.createOn(myTree, (DefaultMutableTreeNode)myTree.getModel().getRoot());
     }
     myTree.setModel(model);
-    setChildIndent(myShowFlatten && isCurrentModelFlat());
+    myIsModelFlat = isCurrentModelFlat();
+    setChildIndent(myShowFlatten && myIsModelFlat);
     if (!myAlwaysExpandList) {
       //noinspection ConstantConditions
       state.applyTo(myTree, (DefaultMutableTreeNode)myTree.getModel().getRoot());
@@ -531,13 +533,13 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     final ExpandAllAction expandAllAction = new ExpandAllAction(myTree) {
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setVisible(!myShowFlatten);
+        e.getPresentation().setEnabledAndVisible(!myShowFlatten || !myIsModelFlat);
       }
     };
     final CollapseAllAction collapseAllAction = new CollapseAllAction(myTree) {
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setVisible(!myShowFlatten);
+        e.getPresentation().setEnabledAndVisible(!myShowFlatten || !myIsModelFlat);
       }
     };
     final AnAction[] actions = new AnAction[]{directoriesAction, expandAllAction, collapseAllAction};
