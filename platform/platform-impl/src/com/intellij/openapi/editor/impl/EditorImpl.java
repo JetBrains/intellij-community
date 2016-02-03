@@ -408,7 +408,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
         int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
         TextAttributes attributes = highlighter.getTextAttributes();
-        if (myUseNewRendering && start != end && attributes != null && attributes.getFontType() != Font.PLAIN) {
+        if (myUseNewRendering && start != end && (fontStyleChanged || attributes != null && attributes.getFontType() != Font.PLAIN)) {
           myView.invalidateRange(start, end);
         }
         repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));

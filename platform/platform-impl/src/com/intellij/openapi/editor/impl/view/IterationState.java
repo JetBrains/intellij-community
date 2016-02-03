@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,7 +131,7 @@ public class IterationState {
   private final boolean myReverseIteration;
 
   public IterationState(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection, boolean useOnlyFullLineHighlighters,
-                        boolean useFoldRegions, boolean iterateBackwards) {
+                        boolean useOnlyFontAffectingHighlighters, boolean useFoldRegions, boolean iterateBackwards) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myDocument = editor.getDocument();
     myStartOffset = start;
@@ -184,10 +184,10 @@ public class IterationState {
     myCaretRowEndsWithSoftWrap = editor.getSoftWrapModel().getSoftWrap(myCaretRowEnd) != null;
 
     MarkupModelEx editorMarkup = editor.getMarkupModel();
-    myView = new HighlighterSweep(editorMarkup, start, myEnd, useOnlyFullLineHighlighters);
+    myView = new HighlighterSweep(editorMarkup, start, myEnd, useOnlyFullLineHighlighters, useOnlyFontAffectingHighlighters);
 
     MarkupModelEx docMarkup = editor.getFilteredDocumentMarkupModel();
-    myDoc = new HighlighterSweep(docMarkup, start, myEnd, useOnlyFullLineHighlighters);
+    myDoc = new HighlighterSweep(docMarkup, start, myEnd, useOnlyFullLineHighlighters, useOnlyFontAffectingHighlighters);
 
     myEndOffset = myStartOffset;
 
@@ -199,16 +199,20 @@ public class IterationState {
     int i;
     private final RangeHighlighterEx[] highlighters;
 
-    private HighlighterSweep(@NotNull MarkupModelEx markupModel, int start, int end, final boolean onlyFullLine) {
+    private HighlighterSweep(@NotNull MarkupModelEx markupModel, int start, int end, 
+                             final boolean onlyFullLine, final boolean onlyFontAffecting) {
       // we have to get all highlighters in advance and sort them by affected offsets
       // since these can be different from the real offsets the highlighters are sorted by in the tree.  (See LINES_IN_RANGE perverts)
       final List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
-      markupModel.processRangeHighlightersOverlappingWith(myReverseIteration ? end : start, 
-                                                          myReverseIteration ? start : end,
+      markupModel.processRangeHighlightersOverlappingWith(myReverseIteration ? end : start, myReverseIteration ? start : end,
                                                           new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list) {
                                                             @Override
                                                             protected boolean accept(RangeHighlighterEx ex) {
-                                                              return !onlyFullLine || ex.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE;
+                                                              return (!onlyFullLine || 
+                                                                      ex.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) && 
+                                                                     (!onlyFontAffecting ||
+                                                                      ex.getTextAttributes() != null && 
+                                                                      ex.getTextAttributes().getFontType() != Font.PLAIN);
                                                             }
                                                           });
       highlighters = list.isEmpty() ? RangeHighlighterEx.EMPTY_ARRAY : list.toArray(new RangeHighlighterEx[list.size()]);

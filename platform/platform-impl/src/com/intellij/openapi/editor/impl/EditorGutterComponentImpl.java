@@ -308,7 +308,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int startX = myEditor.isInDistractionFreeMode() ? 0 : getWhitespaceSeparatorOffset() + (isFoldingOutlineShown() ? 1 : 0);
     if (myEditor.myUseNewRendering) {
       com.intellij.openapi.editor.impl.view.IterationState state =
-        new com.intellij.openapi.editor.impl.view.IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, false, true, true, false);
+        new com.intellij.openapi.editor.impl.view.IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, 
+                                                                 false, true, false, true, false);
       while (!state.atEnd()) {
         drawEditorBackgroundForRange(g, state.getStartOffset(), state.getEndOffset(), state.getMergedAttributes(),
                                      defaultBackgroundColor, defaultForegroundColor, startX);

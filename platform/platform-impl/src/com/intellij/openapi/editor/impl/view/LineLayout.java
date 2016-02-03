@@ -523,7 +523,7 @@ abstract class LineLayout {
       int lineStartOffset = view.getEditor().getDocument().getLineStartOffset(line);
       int start = lineStartOffset + startOffset;
       int end = lineStartOffset + endOffset;
-      IterationState it = new IterationState(view.getEditor(), start, end, false, false, false, false);
+      IterationState it = new IterationState(view.getEditor(), start, end, false, false, true, false, false);
       FontPreferences fontPreferences = view.getEditor().getColorsScheme().getFontPreferences();
       char[] chars = CharArrayUtil.fromSequence(view.getEditor().getDocument().getImmutableCharSequence(), start, end);
       while (!it.atEnd()) {
