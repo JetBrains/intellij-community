@@ -38,7 +38,7 @@ public class IdeaWin32 {
     IdeaWin32 instance = null;
     if (SystemInfo.isWin2kOrNewer && SystemProperties.getBooleanProperty("idea.use.native.fs.for.win", true)) {
       try {
-        UrlClassLoader.loadPlatformLibrary("IdeaWin32");
+        UrlClassLoader.loadPlatformLibrary(SystemInfo.is64Bit ? "IdeaWin64" : "IdeaWin32");
         instance = new IdeaWin32();
         LOG.info("Native filesystem for Windows is operational");
       }
