@@ -290,6 +290,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
         case NAME_COLUMN:
           ((TypeParameterInfo.New)myTypeParameterInfos.get(rowIndex)).setNewName((String)aValue);
           break;
+        case BOUND_VALUE_COLUMN:
         case DEFAULT_VALUE_COLUMN:
           break;
         default:
