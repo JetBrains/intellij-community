@@ -21,15 +21,12 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -46,30 +43,14 @@ import java.util.*;
  * @author Sergey Evdokimov
  */
 public class MvcTargetDialogCompletionUtils {
-  
-  private static final Key<CachedValue<Set<String>>> ALL_TARGET_KEY = Key.create("MvcTargetDialogCompletionUtils");
 
   private static final String[] SYSTEM_PROPERTIES = {
-    "grails.home",
-
     // System properties from ivy
     "ivy.default.ivy.user.dir", "ivy.default.conf.dir",
     "ivy.local.default.root", "ivy.local.default.ivy.pattern", "ivy.local.default.artifact.pattern",
     "ivy.shared.default.root", "ivy.shared.default.ivy.pattern", "ivy.shared.default.artifact.pattern",
-    "ivy.ivyrep.default.ivy.root", "ivy.ivyrep.default.ivy.pattern", "ivy.ivyrep.default.artifact.root", "ivy.ivyrep.default.artifact.pattern",
-
-
-    // System properties from grails.util.BuildSettings
-    "grails.servlet.version", "base.dir", "grails.work.dir", "grails.project.work.dir", "grails.project.war.exploded.dir",
-    "grails.project.plugins.dir", "grails.global.plugins.dir", "grails.project.resource.dir", "grails.project.source.dir",
-    "grails.project.web.xml", "grails.project.class.dir", "grails.project.plugin.class.dir", "grails.project.plugin.build.class.dir",
-    "grails.project.plugin.provided.class.dir", "grails.project.test.class.dir", "grails.project.test.reports.dir",
-    "grails.project.docs.output.dir", "grails.project.test.source.dir", "grails.project.target.dir", "grails.project.war.file",
-    "grails.project.war.file", "grails.project.war.osgi.headers", "grails.build.listeners", "grails.project.compile.verbose",
-    "grails.testing.functional.baseUrl", "grails.compile.artefacts.closures.convert",
-
-    "grails.project.source.level",
-    "grails.project.target.level"
+    "ivy.ivyrep.default.ivy.root", "ivy.ivyrep.default.ivy.pattern", "ivy.ivyrep.default.artifact.root",
+    "ivy.ivyrep.default.artifact.pattern"
   };
 
   private static final NotNullLazyValue<List<LookupElement>> SYSTEM_PROPERTIES_VARIANTS = new NotNullLazyValue<List<LookupElement>>() {
@@ -95,38 +76,42 @@ public class MvcTargetDialogCompletionUtils {
     if (prefix.startsWith("-D")) {
       return getSystemPropertiesVariants();
     }
-
-    List<LookupElement> res = new ArrayList<LookupElement>();
-
     if (text.substring(0, offset).matches("\\s*(grails\\s*)?(?:(:?-D\\S+|dev|prod|test)\\s+)*\\S*")) {
+      List<LookupElement> res = new ArrayList<LookupElement>();
       // Complete command name because command name is not typed.
       for (String completionVariant : getAllTargetNames(module)) {
         res.add(TailTypeDecorator.withTail(LookupElementBuilder.create(completionVariant), TailType.SPACE));
       }
+      return res;
     }
     else {
       // Command name already typed. Try to complete classes and packages names.
-
       GlobalSearchScope scope = GlobalSearchScope.moduleScope(module);
-      JavaPsiFacade facade = JavaPsiFacade.getInstance(module.getProject());
-      
-      // Complete class names if prefix is a package name with dot at end.
-      if (prefix.endsWith(".") && prefix.length() > 1) {
-        PsiPackage p = facade.findPackage(prefix.substring(0, prefix.length() - 1));
-        if (p != null) {
-          for (PsiClass aClass : p.getClasses(scope)) {
-            String qualifiedName = aClass.getQualifiedName();
-            if (qualifiedName != null) {
-              res.add(LookupElementBuilder.create(aClass, qualifiedName));
-            }
+      return completeClassesAndPackages(prefix, scope);
+    }
+  }
+
+  public static List<LookupElement> completeClassesAndPackages(@NotNull String prefix, @NotNull GlobalSearchScope scope) {
+    if (scope.getProject() == null) return Collections.emptyList();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(scope.getProject());
+    final List<LookupElement> res = new ArrayList<>();
+
+    // Complete class names if prefix is a package name with dot at end.
+    if (prefix.endsWith(".") && prefix.length() > 1) {
+      PsiPackage p = facade.findPackage(prefix.substring(0, prefix.length() - 1));
+      if (p != null) {
+        for (PsiClass aClass : p.getClasses(scope)) {
+          String qualifiedName = aClass.getQualifiedName();
+          if (qualifiedName != null) {
+            res.add(LookupElementBuilder.create(aClass, qualifiedName));
           }
         }
       }
+    }
 
-      PsiPackage defaultPackage = facade.findPackage("");
-      if (defaultPackage != null) {
-        collectClassesAndPackageNames(res, defaultPackage, scope);
-      }
+    PsiPackage defaultPackage = facade.findPackage("");
+    if (defaultPackage != null) {
+      collectClassesAndPackageNames(res, defaultPackage, scope);
     }
 
     return res;
@@ -199,22 +184,13 @@ public class MvcTargetDialogCompletionUtils {
   }
 
   public static Set<String> getAllTargetNames(@NotNull final Module module) {
-    CachedValue<Set<String>> cachedTargets = module.getUserData(ALL_TARGET_KEY);
-    if (cachedTargets == null) {
-      cachedTargets = CachedValuesManager.getManager(module.getProject()).createCachedValue(new CachedValueProvider<Set<String>>() {
-          @Override
-          public Result<Set<String>> compute() {
-            return Result.create(getAllTargetNamesInternal(module), PsiModificationTracker.MODIFICATION_COUNT);
-          }
-        }, false);
-
-      cachedTargets = ((UserDataHolderEx)module).putUserDataIfAbsent(ALL_TARGET_KEY, cachedTargets);
-    }
-
-    return cachedTargets.getValue();
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(
+      module,
+      () -> CachedValueProvider.Result.create(getAllTargetNamesInternal(module), PsiModificationTracker.MODIFICATION_COUNT)
+    );
   }
 
-  private static class MyTailTypeEQ extends TailType.TailTypeEQ {
+  public static class MyTailTypeEQ extends TailType.TailTypeEQ {
     public static final MyTailTypeEQ INSTANCE = new MyTailTypeEQ();
 
     @Override
