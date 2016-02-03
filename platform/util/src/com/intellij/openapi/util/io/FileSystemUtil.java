@@ -34,6 +34,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -48,7 +49,8 @@ import static com.intellij.util.BitUtil.notSet;
  */
 public class FileSystemUtil {
   static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
-  static final String COARSE_TIMESTAMP = "idea.io.coarse.ts";
+  static final String FORCE_USE_FALLBACK_KEY = "idea.io.use.fallback";
+  static final String COARSE_TIMESTAMP_KEY = "idea.io.coarse.ts";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileSystemUtil");
 
@@ -69,10 +71,11 @@ public class FileSystemUtil {
   private static Mediator ourMediator = getMediator();
 
   private static Mediator getMediator() {
-    Throwable error = null;
     boolean forceNio2 = SystemProperties.getBooleanProperty(FORCE_USE_NIO2_KEY, false);
+    boolean forceFallback = SystemProperties.getBooleanProperty(FORCE_USE_FALLBACK_KEY, false);
+    Throwable error = null;
 
-    if (!forceNio2) {
+    if (!forceNio2 && !forceFallback) {
       if (SystemInfo.isWindows && IdeaWin32.isAvailable()) {
         try {
           return check(new IdeaWin32MediatorImpl());
@@ -91,7 +94,7 @@ public class FileSystemUtil {
       }
     }
 
-    if (SystemInfo.isJavaVersionAtLeast("1.7") && !"1.7.0-ea".equals(SystemInfo.JAVA_VERSION)) {
+    if (!forceFallback && SystemInfo.isJavaVersionAtLeast("1.7") && !"1.7.0-ea".equals(SystemInfo.JAVA_VERSION)) {
       try {
         return check(new Nio2MediatorImpl());
       }
@@ -101,7 +104,8 @@ public class FileSystemUtil {
     }
 
     if (!SystemInfo.isWindows || IdeaWin32.isAvailable()) {
-      LOG.warn("Failed to load filesystem access layer: " + SystemInfo.OS_NAME + ", " + SystemInfo.JAVA_VERSION + ", nio2=" + forceNio2, error);
+      LOG.warn("Failed to load filesystem access layer: " + SystemInfo.OS_NAME + ", " + SystemInfo.JAVA_VERSION + ", " +
+               "nio2=" + forceNio2 + " fallback=" + forceFallback, error);
     }
 
     return new FallbackMediatorImpl();
@@ -400,7 +404,7 @@ public class FileSystemUtil {
     private final int[] myOffsets;
     private final int myUid;
     private final int myGid;
-    private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP, false);
+    private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP_KEY, false);
 
     private JnaUnixMediatorImpl() throws Exception {
       if (SystemInfo.isLinux) {
@@ -520,11 +524,10 @@ public class FileSystemUtil {
       Object fileSystem;
       Method getBooleanAttributes;
       try {
-        final Class<?> fsClass = Class.forName("java.io.FileSystem");
-        final Method getFileSystem = fsClass.getMethod("getFileSystem");
-        getFileSystem.setAccessible(true);
-        fileSystem = getFileSystem.invoke(null);
-        getBooleanAttributes = fsClass.getDeclaredMethod("getBooleanAttributes", File.class);
+        Field fs = File.class.getDeclaredField("fs");
+        fs.setAccessible(true);
+        fileSystem = fs.get(null);
+        getBooleanAttributes = fileSystem.getClass().getMethod("getBooleanAttributes", File.class);
         getBooleanAttributes.setAccessible(true);
       }
       catch (Throwable t) {
@@ -542,8 +545,8 @@ public class FileSystemUtil {
         final int flags = (Integer)myGetBooleanAttributes.invoke(myFileSystem, file);
         if (flags != 0) {
           final boolean isDirectory = isSet(flags, BA_DIRECTORY);
-          final boolean isSpecial = notSet(flags, BA_REGULAR | BA_DIRECTORY);
-          final boolean isHidden = isSet(flags, BA_HIDDEN);
+          final boolean isSpecial = notSet(flags, BA_REGULAR) && notSet(flags, BA_DIRECTORY);
+          final boolean isHidden = isSet(flags, BA_HIDDEN) && !isWindowsRoot(path);
           return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), file.canWrite());
         }
       }
@@ -551,12 +554,16 @@ public class FileSystemUtil {
         if (file.exists()) {
           final boolean isDirectory = file.isDirectory();
           final boolean isSpecial = !isDirectory && !file.isFile();
-          final boolean isHidden = file.isHidden();
+          final boolean isHidden = file.isHidden() && !isWindowsRoot(path);
           return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), file.canWrite());
         }
       }
 
       return null;
+    }
+
+    private static boolean isWindowsRoot(String p) {
+      return SystemInfo.isWindows && p.length() >= 2 && p.length() <= 3 && Character.isLetter(p.charAt(0)) && p.charAt(1) == ':';
     }
 
     @Override

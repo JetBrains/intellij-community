@@ -15,26 +15,29 @@
  */
 package com.intellij.openapi.util.io;
 
-import com.intellij.openapi.util.SystemInfo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
 
-public class FileAttributesNio2ReadingTest extends FileAttributesReadingTest {
+public class FileAttributesFallbackReadingTest extends FileAttributesReadingTest {
   @BeforeClass
   public static void setUpClass() {
-    assumeTrue(SystemInfo.isJavaVersionAtLeast("1.7"));
-
-    System.setProperty(FileSystemUtil.FORCE_USE_NIO2_KEY, "true");
+    System.setProperty(FileSystemUtil.FORCE_USE_FALLBACK_KEY, "true");
     FileSystemUtil.resetMediator();
-    assertEquals("Nio2", FileSystemUtil.getMediatorName());
+    assertEquals("Fallback", FileSystemUtil.getMediatorName());
   }
 
   @AfterClass
   public static void tearDownClass() {
-    System.clearProperty(FileSystemUtil.FORCE_USE_NIO2_KEY);
+    System.clearProperty(FileSystemUtil.FORCE_USE_FALLBACK_KEY);
     FileSystemUtil.resetMediator();
   }
+
+  @Override public void linkToFile() { }
+  @Override public void doubleLink() { }
+  @Override public void linkToDirectory() { }
+  @Override public void missingLink() { }
+  @Override public void selfLink() { }
+  @Override public void junction() { }
 }
