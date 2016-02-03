@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.JdomKt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -41,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.nio.file.Paths;
 import java.util.StringTokenizer;
 
 /**
@@ -150,14 +150,9 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
   private PsiTestData loadData(String dataName) throws Exception {
     PsiTestData data = createData();
-    Element documentElement = JDOMUtil.load(new File(myDataRoot + "/" + "data.xml"));
-
-    final List nodes = documentElement.getChildren("data");
-
-    for (Object node1 : nodes) {
-      Element node = (Element)node1;
+    Element documentElement = JdomKt.loadElement(Paths.get(myDataRoot, "data.xml"));
+    for (Element node : documentElement.getChildren("data")) {
       String value = node.getAttributeValue("name");
-
       if (value.equals(dataName)) {
         DefaultJDOMExternalizer.readExternal(data, node);
         data.loadText(myDataRoot);
