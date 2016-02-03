@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class SelectTestStep extends BaseListPopupStep<String> {
   private final Map<String, TestStateStorage.Record> myRecords;
@@ -83,17 +82,5 @@ public class SelectTestStep extends BaseListPopupStep<String> {
     Location location = myRunner.getLocation(url);
     myRunner.run(location);
     return null;
-  }
-  
-  private static class TestGroup {
-    public Set<String> failedTests;
-    public Set<String> passedTests;
-    public Set<String> otherTests;
-
-    public TestGroup(Set<String> failedTests, Set<String> passedTests, Set<String> otherTests) {
-      this.failedTests = failedTests;
-      this.passedTests = passedTests;
-      this.otherTests = otherTests;
-    }
   }
 }
