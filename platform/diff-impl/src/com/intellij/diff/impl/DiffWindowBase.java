@@ -60,11 +60,15 @@ public abstract class DiffWindowBase {
           return myProcessor.getPreferredFocusedComponent();
         }
       })
+      .setOnShowCallback(new Runnable() {
+        @Override
+        public void run() {
+          myProcessor.updateRequest();
+        }
+      })
       .build();
     myWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
     Disposer.register(myWrapper, myProcessor);
-
-    myProcessor.updateRequest();
   }
 
   public void show() {
