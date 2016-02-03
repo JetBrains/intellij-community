@@ -36,7 +36,7 @@ public class ResourceBundleUtilTest {
     { "with escaped escape symbol - \\\\", "with escaped escape symbol - \\" },
     
     // Special symbols.
-    { "special symbols - \\# and \\! and \\= and \\:", "special symbols - # and ! and = and :" },
+    {"special symbols - # and ! and = and :", "special symbols - # and ! and = and :"},
     
     // White spaces.
     { "trailing white space ", "trailing white space " },
@@ -55,7 +55,7 @@ public class ResourceBundleUtilTest {
     { "wei\\u00DF", "wei\\u00DF" },
 
     // All together.
-    { "\\\t text with \\\nspecial symbols\\:\\\n\\#", "\t text with \nspecial symbols:\n#" }
+    {"\\\t text with \\\nspecial symbols:\\\n#", "\t text with \nspecial symbols:\n#"}
   };
   
   @Test
