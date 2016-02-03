@@ -390,20 +390,25 @@ private fun useOldWorkspaceContent(filePath: String, ws: File) {
 }
 
 // remove when we can use java 8 in platform-impl
-private fun Path.exists() = Files.exists(this)
+fun Path.isFile() = Files.isRegularFile(this)
 
-private fun Path.isDirectory() = Files.isDirectory(this)
+val Path.systemIndependentPath: String
+  get() = toString().replace(File.separatorChar, '/')
 
-private fun Path.inputStream() = Files.newInputStream(this)
+internal fun Path.exists() = Files.exists(this)
 
-fun Path.createDirectories() = Files.createDirectories(this)
+internal fun Path.isDirectory() = Files.isDirectory(this)
 
-private fun Path.write(data: ByteArray): Path {
+internal fun Path.inputStream() = Files.newInputStream(this)
+
+internal fun Path.createDirectories() = Files.createDirectories(this)
+
+internal fun Path.write(data: ByteArray): Path {
   parent?.createDirectories()
   return Files.write(this, data)
 }
 
-private fun Path.delete() {
+internal fun Path.delete() {
   try {
     Files.delete(this)
   }
@@ -413,3 +418,7 @@ private fun Path.delete() {
     FileUtil.delete(this.toFile())
   }
 }
+
+fun Path.readBytes() = Files.readAllBytes(this)
+
+fun Path.readText() = readBytes().toString(Charsets.UTF_8)

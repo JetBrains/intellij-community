@@ -18,29 +18,26 @@ package com.intellij.codeInsight.editorActions.moveLeftRight;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class JavaMoveLeftRightHandler extends MoveStatementLeftRightHandler {
-  @Nullable
+public class JavaMoveLeftRightHandler extends MoveElementLeftRightHandler {
+  @NotNull
   @Override
-  public PsiElement[] getElementListInContext(@NotNull PsiElement element) {
-    while (element != null) {
-      if (element instanceof PsiParameterList) {
-        return ((PsiParameterList)element).getParameters();
-      }
-      else if (element instanceof PsiExpressionList) {
-        PsiExpression[] expressions = ((PsiExpressionList)element).getExpressions();
-        if (expressions.length > 1) return expressions;
-      }
-      else if (element instanceof PsiArrayInitializerExpression) {
-        PsiExpression[] expressions = ((PsiArrayInitializerExpression)element).getInitializers();
-        if (expressions.length > 1) return expressions;
-      }
-      else if (element instanceof PsiClass && ((PsiClass)element).isEnum()) {
-        return PsiTreeUtil.getChildrenOfType(element, PsiEnumConstant.class);
-      }
-      element = element.getParent();
+  public PsiElement[] getMoveableSubElements(@NotNull PsiElement element) {
+    if (element instanceof PsiParameterList) {
+      return ((PsiParameterList)element).getParameters();
     }
-    return null;
+    else if (element instanceof PsiExpressionList) {
+      return  ((PsiExpressionList)element).getExpressions();
+    }
+    else if (element instanceof PsiArrayInitializerExpression) {
+      return  ((PsiArrayInitializerExpression)element).getInitializers();
+    }
+    else if (element instanceof PsiClass && ((PsiClass)element).isEnum()) {
+      PsiEnumConstant[] enumConstants = PsiTreeUtil.getChildrenOfType(element, PsiEnumConstant.class);
+      if (enumConstants != null) {
+        return enumConstants;
+      }
+    }
+    return PsiElement.EMPTY_ARRAY;
   }
 }

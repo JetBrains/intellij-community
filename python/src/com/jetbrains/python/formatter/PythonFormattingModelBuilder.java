@@ -131,8 +131,9 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
 
       .around(AUG_ASSIGN_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS)
       .aroundInside(ADDITIVE_OPERATIONS, BINARY_EXPRESSION).spaceIf(commonSettings.SPACE_AROUND_ADDITIVE_OPERATORS)
-      .aroundInside(MULTIPLICATIVE_OR_EXP, STAR_PARAMETERS).none()
-      .around(MULTIPLICATIVE_OR_EXP).spaceIf(commonSettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS)
+      .aroundInside(STAR_OPERATORS, STAR_PARAMETERS).none()
+      .around(MULTIPLICATIVE_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS)
+      .around(EXP).spaceIf(pySettings.SPACE_AROUND_POWER_OPERATOR)
       .around(SHIFT_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_SHIFT_OPERATORS)
       .around(BITWISE_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_BITWISE_OPERATORS)
       .around(EQUALITY_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_EQUALITY_OPERATORS)

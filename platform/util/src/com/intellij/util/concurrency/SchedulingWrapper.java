@@ -17,7 +17,6 @@ package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,46 +36,16 @@ import java.util.concurrent.atomic.AtomicLong;
 class SchedulingWrapper implements ScheduledExecutorService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.concurrency.SchedulingWrapper");
   private final AtomicBoolean shutdown = new AtomicBoolean();
-  private static final MyScheduledFutureTask<Object> TOMB = new MyScheduledFutureTask<Object>();
-  private static final Thread scheduledToPooledTransferer;
   @NotNull final ExecutorService backendExecutorService;
+  final AppDelayQueue delayQueue;
 
-  SchedulingWrapper(@NotNull final ExecutorService backendExecutorService) {
+  SchedulingWrapper(@NotNull final ExecutorService backendExecutorService, @NotNull AppDelayQueue delayQueue) {
+    this.delayQueue = delayQueue;
     if (backendExecutorService instanceof ScheduledExecutorService) {
       throw new IllegalArgumentException("backendExecutorService: "+backendExecutorService+" is already ScheduledExecutorService");
     }
     this.backendExecutorService = backendExecutorService;
   }
-
-  static {
-    /** this thread takes the ready-to-execute scheduled tasks off the queue and passes them for immediate execution to {@link #backendExecutorService} */
-    scheduledToPooledTransferer = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        while (true) {
-          try {
-            final MyScheduledFutureTask task = delayQueue.take();
-            if (task == TOMB) {
-              break;
-            }
-            if (LOG.isTraceEnabled()) {
-              LOG.trace("Took "+BoundedTaskExecutor.info(task));
-            }
-            task.myBackendExecutorService.execute(task);
-          }
-          catch (InterruptedException e) {
-            throw new RuntimeException(e);
-          }
-        }
-        LOG.debug("scheduledToPooledTransferer Stopped");
-      }
-    }, "Periodic tasks thread");
-    scheduledToPooledTransferer.start();
-  }
-
-  private static class MyDelayQueue extends DelayQueue<MyScheduledFutureTask> {
-  }
-  private static final MyDelayQueue delayQueue = new MyDelayQueue();
 
   @NotNull
   @Override
@@ -98,12 +67,13 @@ class SchedulingWrapper implements ScheduledExecutorService {
     }
   }
 
+  @NotNull
   List<Runnable> doShutdownNow() {
     doShutdown(); // shutdown me first to avoid further delayQueue offers
     List<MyScheduledFutureTask> result = ContainerUtil.filter(delayQueue, new Condition<MyScheduledFutureTask>() {
       @Override
       public boolean value(MyScheduledFutureTask task) {
-        if (task.myBackendExecutorService == backendExecutorService) {
+        if (task.getBackendExecutorService() == backendExecutorService) {
           task.cancel(false);
           return true;
         }
@@ -114,21 +84,8 @@ class SchedulingWrapper implements ScheduledExecutorService {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Shutdown. Drained tasks: "+result);
     }
+    //noinspection unchecked
     return (List)result;
-  }
-
-  static void shutdownGlobalQueue() {
-    if (!scheduledToPooledTransferer.isAlive()) {
-      throw new IllegalStateException("Already shutdown");
-    }
-
-    delayQueue.offer(TOMB);
-    try {
-      scheduledToPooledTransferer.join();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Override
@@ -146,12 +103,11 @@ class SchedulingWrapper implements ScheduledExecutorService {
     return isTerminated();
   }
 
-  private static class MyScheduledFutureTask<V> extends FutureTask<V> implements RunnableScheduledFuture<V> {
+  class MyScheduledFutureTask<V> extends FutureTask<V> implements RunnableScheduledFuture<V> {
     /**
      * Sequence number to break ties FIFO
      */
     private final long sequenceNumber;
-    private final ExecutorService myBackendExecutorService;
 
     /**
      * The time the task is enabled to execute in nanoTime units
@@ -166,20 +122,11 @@ class SchedulingWrapper implements ScheduledExecutorService {
      */
     private final long period;
 
-    // fake ctr for TOMB
-    private MyScheduledFutureTask() {
-      super(EmptyRunnable.getInstance(), null);
-      myBackendExecutorService = null;
-      period = 0;
-      sequenceNumber = 0;
-    }
-
     /**
      * Creates a one-shot action with given nanoTime-based trigger time.
      */
-    private MyScheduledFutureTask(@NotNull ExecutorService backendExecutorService, @NotNull Runnable r, V result, long ns) {
+    private MyScheduledFutureTask(@NotNull Runnable r, V result, long ns) {
       super(r, result);
-      myBackendExecutorService = backendExecutorService;
       time = ns;
       period = 0;
       sequenceNumber = sequencer.getAndIncrement();
@@ -188,9 +135,8 @@ class SchedulingWrapper implements ScheduledExecutorService {
     /**
      * Creates a periodic action with given nano time and period.
      */
-    private MyScheduledFutureTask(@NotNull ExecutorService backendExecutorService, @NotNull Runnable r, V result, long ns, long period) {
+    private MyScheduledFutureTask(@NotNull Runnable r, V result, long ns, long period) {
       super(r, result);
-      myBackendExecutorService = backendExecutorService;
       time = ns;
       this.period = period;
       sequenceNumber = sequencer.getAndIncrement();
@@ -199,9 +145,8 @@ class SchedulingWrapper implements ScheduledExecutorService {
     /**
      * Creates a one-shot action with given nanoTime-based trigger time.
      */
-    private MyScheduledFutureTask(@NotNull ExecutorService backendExecutorService, @NotNull Callable<V> callable, long ns) {
+    private MyScheduledFutureTask(@NotNull Callable<V> callable, long ns) {
       super(callable);
-      myBackendExecutorService = backendExecutorService;
       time = ns;
       period = 0;
       sequenceNumber = sequencer.getAndIncrement();
@@ -275,7 +220,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
         LOG.trace("Executing " + BoundedTaskExecutor.info(this));
       }
       boolean periodic = isPeriodic();
-      if (myBackendExecutorService.isShutdown()) {
+      if (backendExecutorService.isShutdown()) {
         cancel(false);
       }
       else if (!periodic) {
@@ -291,6 +236,11 @@ class SchedulingWrapper implements ScheduledExecutorService {
     public String toString() {
       return "Delay: " + getDelay(TimeUnit.MILLISECONDS) + "ms; " + BoundedTaskExecutor.info(this);
     }
+
+    @NotNull
+    ExecutorService getBackendExecutorService() {
+      return backendExecutorService;
+    }
   }
 
   /**
@@ -302,7 +252,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
   /**
    * Returns the trigger time of a delayed action.
    */
-  private static long triggerTime(@NotNull MyDelayQueue queue, long delay, TimeUnit unit) {
+  private static long triggerTime(@NotNull AppDelayQueue queue, long delay, TimeUnit unit) {
     return triggerTime(queue, unit.toNanos(delay < 0 ? 0 : delay));
   }
 
@@ -313,7 +263,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
   /**
    * Returns the trigger time of a delayed action.
    */
-  private static long triggerTime(@NotNull MyDelayQueue queue, long delay) {
+  private static long triggerTime(@NotNull AppDelayQueue queue, long delay) {
     return now() + (delay < Long.MAX_VALUE >> 1 ? delay : overflowFree(queue, delay));
   }
 
@@ -324,7 +274,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
    * not yet been, while some other task is added with a delay of
    * Long.MAX_VALUE.
    */
-  private static long overflowFree(@NotNull MyDelayQueue queue, long delay) {
+  private static long overflowFree(@NotNull AppDelayQueue queue, long delay) {
     Delayed head = queue.peek();
     if (head != null) {
       long headDelay = head.getDelay(TimeUnit.NANOSECONDS);
@@ -340,7 +290,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
   public ScheduledFuture<?> schedule(@NotNull Runnable command,
                                      long delay,
                                      @NotNull TimeUnit unit) {
-    MyScheduledFutureTask<?> t = new MyScheduledFutureTask<Void>(backendExecutorService, command, null, triggerTime(delayQueue, delay, unit));
+    MyScheduledFutureTask<?> t = new MyScheduledFutureTask<Void>(command, null, triggerTime(delayQueue, delay, unit));
     return delayedExecute(t);
   }
 
@@ -361,7 +311,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
   public <V> ScheduledFuture<V> schedule(@NotNull Callable<V> callable,
                                          long delay,
                                          @NotNull TimeUnit unit) {
-    MyScheduledFutureTask<V> t = new MyScheduledFutureTask<V>(backendExecutorService, callable, triggerTime(delayQueue, delay, unit));
+    MyScheduledFutureTask<V> t = new MyScheduledFutureTask<V>(callable, triggerTime(delayQueue, delay, unit));
     return delayedExecute(t);
   }
 
@@ -383,7 +333,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
     if (delay <= 0) {
       throw new IllegalArgumentException("delay must be positive but got: "+delay);
     }
-    MyScheduledFutureTask<Void> sft = new MyScheduledFutureTask<Void>(backendExecutorService, command,
+    MyScheduledFutureTask<Void> sft = new MyScheduledFutureTask<Void>(command,
                                                                       null,
                                                                       triggerTime(delayQueue, initialDelay, unit),
                                                                       unit.toNanos(-delay));

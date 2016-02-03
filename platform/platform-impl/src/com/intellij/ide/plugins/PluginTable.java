@@ -16,7 +16,6 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
@@ -48,8 +47,7 @@ public class PluginTable extends JBTable {
       final ColumnInfo columnInfo = model.getColumnInfos()[i];
       column.setCellEditor(columnInfo.getEditor(null));
       if (columnInfo.getColumnClass() == Boolean.class) {
-        int gap = !SystemInfo.isMac && Registry.is("ide.scroll.new.layout") ? 14 : 4;
-        TableUtil.setupCheckboxColumn(column, gap);
+        TableUtil.setupCheckboxColumn(column);
       }
     }
 
@@ -83,6 +81,7 @@ public class PluginTable extends JBTable {
       }
     });
     if (model.getColumnCount() > 1) {
+      setColumnWidth(1, new JCheckBox().getPreferredSize().width + 4);
       if (SystemInfo.isMac && model.getColumnCount() == 3) {
         setColumnWidth(2, 8);
       }

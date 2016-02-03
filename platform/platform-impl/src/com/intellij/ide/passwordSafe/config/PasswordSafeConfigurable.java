@@ -64,7 +64,7 @@ public class PasswordSafeConfigurable implements SearchableConfigurable, Configu
    * {@inheritDoc}
    */
   public boolean isModified() {
-    return myPanel.isModified(mySettings);  //To change body of implemented methods use File | Settings | File Templates.
+    return myPanel != null && myPanel.isModified(mySettings);
   }
 
   /**

@@ -808,6 +808,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
+  public static boolean isLambdaClassName(String typeName) {
+    return getLambdaBaseClassName(typeName) != null;
+  }
+
+  @Nullable
+  public static String getLambdaBaseClassName(String typeName) {
+    return StringUtil.substringBefore(typeName, "$$Lambda$");
+  }
+
   public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile file = position.getFile();

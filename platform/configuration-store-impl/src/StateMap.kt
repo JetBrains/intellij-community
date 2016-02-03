@@ -15,8 +15,10 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.ArrayUtil
@@ -27,17 +29,90 @@ import org.iq80.snappy.SnappyOutputStream
 import org.jdom.Element
 import org.jdom.output.Format
 import java.io.ByteArrayInputStream
+import java.io.DataOutputStream
 import java.io.OutputStreamWriter
 import java.util.*
 import java.util.concurrent.atomic.AtomicReferenceArray
 
+private val XML_FORMAT = Format.getRawFormat().setTextMode(Format.TextMode.TRIM).setOmitEncoding(true).setOmitDeclaration(true)
+
+// must be mot modified during app life
+private val isUseNewSaving by lazy { ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("configuration.saving.v3", false) }
+
+private fun archiveState(state: Element): BufferExposingByteArrayOutputStream {
+  if (isUseNewSaving) {
+    return archiveStateBinary(state)
+  }
+  else {
+    return archiveStateXml(state)
+  }
+}
+
+fun archiveStateBinary(state: Element): BufferExposingByteArrayOutputStream {
+  val byteOut = BufferExposingByteArrayOutputStream()
+  DataOutputStream(SnappyOutputStream(byteOut)).use {
+    writeElement(state, it)
+  }
+  return byteOut
+}
+
+fun archiveStateXml(state: Element): BufferExposingByteArrayOutputStream {
+  val byteOut = BufferExposingByteArrayOutputStream()
+  OutputStreamWriter(SnappyOutputStream(byteOut), CharsetToolkit.UTF8_CHARSET).use {
+    val xmlOutputter = JDOMUtil.MyXMLOutputter()
+    xmlOutputter.format = XML_FORMAT
+    xmlOutputter.output(state, it)
+  }
+  return byteOut
+}
+
+private fun unarchiveState(state: ByteArray) = JDOMUtil.load(SnappyInputStream(ByteArrayInputStream(state)))
+
+fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteArray? {
+  val newBytes: ByteArray
+  if (newState is Element) {
+    val byteOut = archiveState(newState)
+    if (arrayEquals(byteOut.internalBuffer, oldState, byteOut.size())) {
+      return null
+    }
+
+    newBytes = ArrayUtil.realloc(byteOut.internalBuffer, byteOut.size())
+  }
+  else {
+    newBytes = newState as ByteArray
+    if (Arrays.equals(newBytes, oldState)) {
+      return null
+    }
+  }
+
+  if (SystemProperties.getBooleanProperty("idea.log.changed.components", false)) {
+    fun stateToString(state: Any) = JDOMUtil.writeParent(state as? Element ?: unarchiveState(state as ByteArray), "\n")
+
+    val before = stateToString(oldState)
+    val after = stateToString(newState)
+    if (before == after) {
+      LOG.info("Serialization error: serialized are different, but unserialized are equal")
+    }
+    else {
+      LOG.info("$key ${StringUtil.repeat("=", 80 - key.length)}\nBefore:\n$before\nAfter:\n$after")
+    }
+  }
+  return newBytes
+}
+
+fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, Element>? = null): Element {
+  if (state is Element) {
+    return state.clone()
+  }
+  else {
+    return newLiveStates?.get(key) ?: unarchiveState(state as ByteArray)
+  }
+}
+
 class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any?>) {
-  override fun toString(): String =
-    if (this == EMPTY) "EMPTY" else states.toString();
+  override fun toString() = if (this == EMPTY) "EMPTY" else states.toString()
 
   companion object {
-    private val XML_FORMAT = Format.getRawFormat().setTextMode(Format.TextMode.TRIM).setOmitEncoding(true).setOmitDeclaration(true)
-
     val EMPTY = StateMap(emptyArray(), AtomicReferenceArray(0))
 
     fun fromMap(map: Map<String, Any>): StateMap {
@@ -56,47 +131,6 @@ class StateMap private constructor(private val names: Array<String>, private val
       }
       return StateMap(names, states)
     }
-
-    fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, Element>? = null): Element {
-      if (state is Element) {
-        return state.clone()
-      }
-      else {
-        return newLiveStates?.get(key) ?: unarchiveState(state as ByteArray)
-      }
-    }
-
-    fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteArray? {
-      val newBytes = if (newState is Element) archiveState(newState) else newState as ByteArray
-      if (Arrays.equals(newBytes, oldState)) {
-        return null
-      }
-      else if (SystemProperties.getBooleanProperty("idea.log.changed.components", false)) {
-        fun stateToString(state: Any) = JDOMUtil.writeParent(state as? Element ?: unarchiveState(state as ByteArray), "\n")
-
-        val before = stateToString(oldState)
-        val after = stateToString(newState)
-        if (before == after) {
-          LOG.info("Serialization error: serialized are different, but unserialized are equal")
-        }
-        else {
-          LOG.info("$key ${StringUtil.repeat("=", 80 - key.length)}\nBefore:\n$before\nAfter:\n$after")
-        }
-      }
-      return newBytes
-    }
-
-    private fun archiveState(state: Element): ByteArray {
-      val byteOut = BufferExposingByteArrayOutputStream()
-      OutputStreamWriter(SnappyOutputStream(byteOut), CharsetToolkit.UTF8_CHARSET).use {
-        val xmlOutputter = JDOMUtil.MyXMLOutputter()
-        xmlOutputter.format = XML_FORMAT
-        xmlOutputter.output(state, it)
-      }
-      return ArrayUtil.realloc(byteOut.internalBuffer, byteOut.size())
-    }
-
-    private fun unarchiveState(state: ByteArray) = JDOMUtil.load(SnappyInputStream(ByteArrayInputStream(state)))
   }
 
   fun toMutableMap(): MutableMap<String, Any> {
@@ -195,10 +229,7 @@ fun setStateAndCloneIfNeed(key: String, newState: Element?, oldStates: StateMap,
     }
   }
   else if (oldState != null) {
-    newBytes = StateMap.getNewByteIfDiffers(key, newState, oldState as ByteArray)
-    if (newBytes == null) {
-      return null
-    }
+    newBytes = getNewByteIfDiffers(key, newState, oldState as ByteArray) ?: return null
   }
 
   val newStates = oldStates.toMutableMap()
@@ -224,9 +255,28 @@ internal fun updateState(states: MutableMap<String, Any>, key: String, newState:
     }
   }
   else if (oldState != null) {
-    newBytes = StateMap.getNewByteIfDiffers(key, newState, oldState as ByteArray) ?: return false
+    newBytes = getNewByteIfDiffers(key, newState, oldState as ByteArray) ?: return false
   }
 
   states.put(key, newBytes ?: newState)
+  return true
+}
+
+fun arrayEquals(a: ByteArray, a2: ByteArray, aSize: Int = a.size): Boolean {
+  if (a == a2) {
+    return true
+  }
+
+  val length = aSize
+  if (a2.size != length) {
+    return false
+  }
+
+  for (i in 0..length - 1) {
+    if (a[i] != a2[i]) {
+      return false
+    }
+  }
+
   return true
 }

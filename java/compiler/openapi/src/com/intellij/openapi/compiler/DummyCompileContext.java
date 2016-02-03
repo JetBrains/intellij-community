@@ -94,10 +94,6 @@ public class DummyCompileContext implements CompileContext {
     return false;
   }
 
-  public VirtualFile[] getSourceRoots(Module module) {
-    return VirtualFile.EMPTY_ARRAY;
-  }
-
   public VirtualFile getModuleOutputDirectory(final Module module) {
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
@@ -119,6 +115,11 @@ public class DummyCompileContext implements CompileContext {
 
   public boolean isMake() {
     return false; // stub implementation
+  }
+
+  @Override
+  public boolean isAutomake() {
+    return false;
   }
 
   public boolean isRebuild() {

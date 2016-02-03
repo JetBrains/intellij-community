@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import java.util.Locale;
  *
  * @since 12.0
  */
-@SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor"})
 public class SystemInfoRt {
   public static final String OS_NAME = System.getProperty("os.name");
   public static final String OS_VERSION = System.getProperty("os.version").toLowerCase(Locale.US);
@@ -37,6 +36,6 @@ public class SystemInfoRt {
   public static final boolean isSolaris = _OS_NAME.startsWith("sunos");
   public static final boolean isUnix = !isWindows && !isOS2;
 
-  public static final boolean isFileSystemCaseSensitive = isUnix && !isMac ||
-                                                          "true".equalsIgnoreCase(System.getProperty("idea.case.sensitive.fs"));
+  public static final boolean isFileSystemCaseSensitive =
+    isUnix && !isMac || "true".equalsIgnoreCase(System.getProperty("idea.case.sensitive.fs"));
 }

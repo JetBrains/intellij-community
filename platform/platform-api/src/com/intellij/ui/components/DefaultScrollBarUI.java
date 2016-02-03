@@ -16,14 +16,10 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.Gray;
 import com.intellij.ui.components.JBScrollPane.Alignment;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.RegionPainter;
 
-import java.awt.AlphaComposite;
-import java.awt.Composite;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import javax.swing.JComponent;
 
 /**
@@ -65,60 +61,41 @@ final class DefaultScrollBarUI extends AbstractScrollBarUI {
 
   @Override
   void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    Rectangle bounds = getAnimatedBounds(x, y, width, height, c, false);
-    Composite old = g.getComposite();
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .1f * myTrackValue));
-    g.setColor(Gray.x80);
-    g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-    g.setComposite(old);
+    RegionPainter<Float> p = isDark(c) ? JBScrollPane.TRACK_DARK_PAINTER : JBScrollPane.TRACK_PAINTER;
+    paint(p, g, x, y, width, height, c, myTrackValue, false);
   }
 
   @Override
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    Rectangle bounds = getAnimatedBounds(x, y, width, height, c, Registry.is("ide.scroll.thumb.small.if.opaque"));
-    Composite old = g.getComposite();
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .35f + .25f * myThumbValue));
-    g.setColor(Gray.x80);
-    g.fillRect(bounds.x + 1, bounds.y + 1, bounds.width - 2, bounds.height - 2);
-    g.setColor(UIUtil.isUnderDarcula() ? Gray.x94 : Gray.x6E);
-    if (Registry.is("ide.scroll.thumb.border.rounded")) {
-      g.drawLine(bounds.x + 1, bounds.y, bounds.x + bounds.width - 2, bounds.y);
-      g.drawLine(bounds.x + 1, bounds.y + bounds.height - 1, bounds.x + bounds.width - 2, bounds.y + bounds.height - 1);
-      g.drawLine(bounds.x, bounds.y + 1, bounds.x, bounds.y + bounds.height - 2);
-      g.drawLine(bounds.x + bounds.width - 1, bounds.y + 1, bounds.x + bounds.width - 1, bounds.y + bounds.height - 2);
-    }
-    else {
-      g.drawRect(bounds.x, bounds.y, bounds.width - 1, bounds.height - 1);
-    }
-    g.setComposite(old);
+    RegionPainter<Float> p = isDark(c) ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
+    paint(p, g, x, y, width, height, c, myThumbValue, Registry.is("ide.scroll.thumb.small.if.opaque"));
   }
 
-  private Rectangle getAnimatedBounds(int x, int y, int width, int height, JComponent c, boolean small) {
-    Rectangle bounds = new Rectangle(x, y, width, height);
+  private void paint(RegionPainter<Float> p, Graphics2D g, int x, int y, int width, int height, JComponent c, float value, boolean small) {
     if (!c.isOpaque()) {
       Alignment alignment = Alignment.get(c);
       if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
-        int value = getAnimatedValue(width - getMinimalThickness());
-        if (value > 0) {
-          bounds.width -= value;
-          if (alignment == Alignment.RIGHT) bounds.x += value;
+        int offset = getAnimatedValue(width - getMinimalThickness());
+        if (offset > 0) {
+          width -= offset;
+          if (alignment == Alignment.RIGHT) x += offset;
         }
       }
       else {
-        int value = getAnimatedValue(height - getMinimalThickness());
-        if (value > 0) {
-          bounds.height -= value;
-          if (alignment == Alignment.BOTTOM) bounds.y += value;
+        int offset = getAnimatedValue(height - getMinimalThickness());
+        if (offset > 0) {
+          height -= offset;
+          if (alignment == Alignment.BOTTOM) y += offset;
         }
       }
     }
     else if (small) {
-      bounds.x += 1;
-      bounds.y += 1;
-      bounds.width -= 2;
-      bounds.height -= 2;
+      x += 1;
+      y += 1;
+      width -= 2;
+      height -= 2;
     }
-    return bounds;
+    p.paint(g, x, y, width, height, value);
   }
 
   private int getAnimatedValue(int value) {

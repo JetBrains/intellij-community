@@ -52,6 +52,7 @@ import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -252,7 +253,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
         myProjectJdkConfigurable.apply();
 
         if (myProjectName != null) {
-          ((ProjectEx)myProject).setProjectName(myProjectName.getText().trim());
+          ((ProjectEx)myProject).setProjectName(getProjectName());
           if (myDetailsComponent != null) myDetailsComponent.setText(getBannerSlogan());
         }
       }
@@ -305,11 +306,14 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     if (!Comparing.strEqual(FileUtil.toSystemIndependentName(VfsUtilCore.urlToPath(compilerOutput)),
                             FileUtil.toSystemIndependentName(myProjectCompilerOutput.getText()))) return true;
     if (myProjectJdkConfigurable.isModified()) return true;
-    if (myProjectName != null) {
-      if (!myProjectName.getText().trim().equals(myProject.getName())) return true;
-    }
+    if (!getProjectName().equals(myProject.getName())) return true;
 
     return false;
+  }
+
+  @NotNull
+  public String getProjectName() {
+    return myProjectName != null ? myProjectName.getText().trim() : myProject.getName();
   }
 
   @Nullable

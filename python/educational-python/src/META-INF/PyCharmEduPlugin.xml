@@ -1,0 +1,28 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- Components and extensions declared in this file work ONLY in Pycharm Educational Edition -->
+
+  <application-components>
+    <component>
+      <implementation-class>com.jetbrains.python.edu.PyCharmEduInitialConfigurator$First</implementation-class>
+      <headless-implementation-class/>
+    </component>
+  </application-components>
+
+  <xi:include href="/META-INF/IdeTipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/pycharm-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/python-core-ide.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  
+  <application-components>
+    <component>
+      <implementation-class>com.jetbrains.python.edu.PyCharmEduInitialConfigurator</implementation-class>
+      <headless-implementation-class/>
+    </component>
+  </application-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+      <programRunner implementation="com.jetbrains.python.edu.debugger.PyEduDebugRunner"/>
+      <executor implementation="com.jetbrains.python.edu.debugger.PyEduDebugExecutor" order="first,after run"/>
+      <consoleInputFilterProvider implementation="com.jetbrains.python.edu.debugger.PyEduConsoleInputFilterProvider"/>
+  </extensions>
+
+</idea-plugin>

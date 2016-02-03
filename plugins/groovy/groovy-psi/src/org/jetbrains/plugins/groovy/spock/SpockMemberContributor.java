@@ -23,8 +23,10 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -65,7 +67,12 @@ public class SpockMemberContributor extends NonCodeMembersContributor {
     }
 
     if (ResolveUtil.shouldProcessMethods(classHint)) {
-      if ("get_".equals(ResolveUtil.getNameHint(processor))) {
+      String nameHint = ResolveUtil.getNameHint(processor);
+      if (nameHint == null) {
+        nameHint = place instanceof GrReferenceExpression ? ((GrReferenceExpression)place).getReferenceName() : null;
+        if (nameHint != null) nameHint = GroovyPropertyUtils.getGetterNameNonBoolean(nameHint);
+      }
+      if ("get_".equals(nameHint)) {
         GrLightMethodBuilder m = new GrLightMethodBuilder(aClass.getManager(), "get_");
         m.setReturnType(null);
         if (!processor.execute(m, state)) return;

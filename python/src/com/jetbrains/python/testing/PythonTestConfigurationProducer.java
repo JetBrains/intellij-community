@@ -133,7 +133,7 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
       return setupConfigurationFromFunction(pyFunction, configuration);
     }
     final PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
-    if (pyClass != null && isTestClass(pyClass, configuration)) {
+    if (pyClass != null && isTestClass(pyClass, configuration, TypeEvalContext.userInitiated(pyClass.getProject(), element.getContainingFile()))) {
       return setupConfigurationFromClass(pyClass, configuration);
     }
     if (element == null) return false;
@@ -226,8 +226,8 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
   }
 
   protected boolean isTestClass(@NotNull final PyClass pyClass,
-                                @Nullable final AbstractPythonTestRunConfiguration configuration) {
-    return PythonUnitTestUtil.isTestCaseClass(pyClass);
+                                @Nullable final AbstractPythonTestRunConfiguration configuration, @Nullable final TypeEvalContext context) {
+    return PythonUnitTestUtil.isTestCaseClass(pyClass, context);
   }
 
   protected boolean isTestFunction(@NotNull final PyFunction pyFunction,

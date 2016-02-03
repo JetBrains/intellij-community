@@ -34,6 +34,7 @@ public class RedundantCast18Test extends InspectionTestCase {
   public void testExpectedSupertype() throws Exception { doTest(); }
   public void testForeachValue() throws Exception { doTest(); }
   public void testConditional() throws Exception { doTest(); }
+  public void testInferApplicabilityError() throws Exception { doTest(); }
 
   @Override
   protected Sdk getTestProjectSdk() {

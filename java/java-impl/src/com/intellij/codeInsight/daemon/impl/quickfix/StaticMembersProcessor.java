@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.LinkedMultiMap;
@@ -29,11 +29,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-abstract class StaticMembersProcessor<T extends PsiMember> implements Processor<T> {
-  private final MultiMap<PsiClass, T> myDeprecated = new LinkedMultiMap<PsiClass, T>();
-  private final MultiMap<PsiClass, T> mySuggestions = new LinkedMultiMap<PsiClass, T>();
+abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> implements Processor<T> {
+  private final MultiMap<PsiClass, T> mySuggestions = new LinkedMultiMap<>();
 
-  private final Map<PsiClass, Boolean> myPossibleClasses = new HashMap<PsiClass, Boolean>();
+  private final Map<PsiClass, Boolean> myPossibleClasses = new HashMap<>();
 
   private final PsiElement myPlace;
   private PsiType myExpectedType;
@@ -47,14 +46,10 @@ abstract class StaticMembersProcessor<T extends PsiMember> implements Processor<
 
   @NotNull
   public List<T> getMembersToImport(boolean applicableOnly) {
-    final List<T> list = new ArrayList<T>();
-    final List<T> applicableList = new ArrayList<T>();
+    final List<T> list = new ArrayList<>();
+    final List<T> applicableList = new ArrayList<>();
     for (Map.Entry<PsiClass, Collection<T>> methodEntry : mySuggestions.entrySet()) {
       registerMember(methodEntry.getKey(), methodEntry.getValue(), list, applicableList);
-    }
-
-    for (Map.Entry<PsiClass, Collection<T>> deprecatedMethod : myDeprecated.entrySet()) {
-      registerMember(deprecatedMethod.getKey(), deprecatedMethod.getValue(), list, applicableList);
     }
 
     List<T> result = !applicableOnly && applicableList.isEmpty() ? list : applicableList;
@@ -66,7 +61,7 @@ abstract class StaticMembersProcessor<T extends PsiMember> implements Processor<
         result.remove(i);
       }
     }
-    Collections.sort(result, new PsiProximityComparator(myPlace));
+    Collections.sort(result, CodeInsightUtil.createSortIdenticalNamedMembersComparator(myPlace));
     return result;
   }
 
@@ -140,32 +135,13 @@ abstract class StaticMembersProcessor<T extends PsiMember> implements Processor<
     if (file instanceof PsiJavaFile
         //do not show methods from default package
         && !((PsiJavaFile)file).getPackageName().isEmpty()) {
-      if (isEffectivelyDeprecated(member)) {
-        myDeprecated.putValue(containingClass, member);
-        return processCondition();
-      }
       mySuggestions.putValue(containingClass, member);
     }
     return processCondition();
   }
 
-  private boolean isEffectivelyDeprecated(T member) {
-    if (((PsiDocCommentOwner)member).isDeprecated()) {
-      return true;
-    }
-
-    PsiClass aClass = member.getContainingClass();
-    while (aClass != null) {
-      if (aClass.isDeprecated()) {
-        return true;
-      }
-      aClass = aClass.getContainingClass();
-    }
-    return false;
-  }
-
   private boolean processCondition() {
-    return mySuggestions.size() + myDeprecated.size() < 50;
+    return mySuggestions.size() < 50;
   }
 
   private void registerMember(PsiClass containingClass,
@@ -174,6 +150,9 @@ abstract class StaticMembersProcessor<T extends PsiMember> implements Processor<
                               List<T> applicableList) {
     final Boolean alreadyMentioned = myPossibleClasses.get(containingClass);
     if (alreadyMentioned == Boolean.TRUE) return;
+    if (containingClass.getQualifiedName() == null) {
+      return;
+    }
     if (alreadyMentioned == null) {
       if (!members.isEmpty()) {
         list.add(members.iterator().next());

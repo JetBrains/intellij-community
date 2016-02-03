@@ -647,7 +647,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         ourTestTime = DEFAULT_TEST_TIME;
         try {
           try {
+            myAssertionsInTestDetected = true;
             setUp();
+            myAssertionsInTestDetected = false;
           }
           catch (Throwable e) {
             try {

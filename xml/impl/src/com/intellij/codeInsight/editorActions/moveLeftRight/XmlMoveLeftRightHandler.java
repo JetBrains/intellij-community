@@ -16,22 +16,16 @@
 package com.intellij.codeInsight.editorActions.moveLeftRight;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class XmlMoveLeftRightHandler extends MoveStatementLeftRightHandler {
-  @Nullable
+public class XmlMoveLeftRightHandler extends MoveElementLeftRightHandler {
+  @NotNull
   @Override
-  public PsiElement[] getElementListInContext(@NotNull PsiElement element) {
-    while (element != null) {
-      if (element instanceof XmlTag) {
-        XmlAttribute[] attributes = ((XmlTag)element).getAttributes();
-        return attributes.length > 1 ? attributes : null;
-      }
-      element = element.getParent();
+  public PsiElement[] getMoveableSubElements(@NotNull PsiElement element) {
+    if (element instanceof XmlTag) {
+      return ((XmlTag)element).getAttributes();
     }
-    return null;
+    return PsiElement.EMPTY_ARRAY;
   }
 }

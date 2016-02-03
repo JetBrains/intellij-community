@@ -31,6 +31,28 @@ import static com.intellij.vcs.log.graph.impl.permanent.DuplicateParentFixer.fix
 
 public class PermanentLinearGraphBuilder<CommitId> {
 
+  @NotNull private final List<? extends GraphCommit<CommitId>> myCommits;
+  @NotNull private final Flags mySimpleNodes;
+
+  private final int myNodesCount;
+
+  @NotNull private final int[] myNodeToEdgeIndex;
+  @NotNull private final int[] myLongEdges;
+  // downCommitId -> List of upNodeIndex
+  @NotNull private final Map<CommitId, List<Integer>> upAdjacentNodes = new HashMap<CommitId, List<Integer>>();
+
+  private PermanentLinearGraphBuilder(@NotNull List<? extends GraphCommit<CommitId>> commits,
+                                      @NotNull Flags simpleNodes,
+                                      int longEdgesCount) {
+    myCommits = commits;
+    mySimpleNodes = simpleNodes;
+
+    myNodesCount = simpleNodes.size();
+
+    myNodeToEdgeIndex = new int[myNodesCount + 1];
+    myLongEdges = new int[2 * longEdgesCount];
+  }
+
   @NotNull
   public static <CommitId> PermanentLinearGraphBuilder<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits) {
     graphCommits = fixDuplicateParentCommits(graphCommits);
@@ -59,29 +81,6 @@ public class PermanentLinearGraphBuilder<CommitId> {
   private static <CommitId> CommitId nextCommitHashIndex(List<? extends GraphCommit<CommitId>> commits, int nodeIndex) {
     if (nodeIndex < commits.size() - 1) return commits.get(nodeIndex + 1).getId();
     return null;
-  }
-
-  private final List<? extends GraphCommit<CommitId>> myCommits;
-  private final Flags mySimpleNodes;
-
-  private final int myNodesCount;
-
-  private final int[] myNodeToEdgeIndex;
-  private final int[] myLongEdges;
-
-  // downCommitId -> List of upNodeIndex
-  private final Map<CommitId, List<Integer>> upAdjacentNodes = new HashMap<CommitId, List<Integer>>();
-
-  private NotNullFunction<CommitId, Integer> myNotLoadCommitToId;
-
-  private PermanentLinearGraphBuilder(List<? extends GraphCommit<CommitId>> commits, Flags simpleNodes, int longEdgesCount) {
-    myCommits = commits;
-    mySimpleNodes = simpleNodes;
-
-    myNodesCount = simpleNodes.size();
-
-    myNodeToEdgeIndex = new int[myNodesCount + 1];
-    myLongEdges = new int[2 * longEdgesCount];
   }
 
   private void addUnderdoneEdge(int upNodeIndex, CommitId downCommitId) {
@@ -151,7 +150,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
     throw new IllegalStateException("Not found underdone edge to not load commit for node: " + upNodeIndex);
   }
 
-  private void fixUnderdoneEdges() {
+  private void fixUnderdoneEdges(@NotNull NotNullFunction<CommitId, Integer> notLoadedCommitToId) {
     List<CommitId> commitIds = ContainerUtil.newArrayList(upAdjacentNodes.keySet());
     ContainerUtil.sort(commitIds, new Comparator<CommitId>() {
       @Override
@@ -160,7 +159,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
       }
     });
     for (CommitId notLoadCommit : commitIds) {
-      int notLoadId = myNotLoadCommitToId.fun(notLoadCommit);
+      int notLoadId = notLoadedCommitToId.fun(notLoadCommit);
       for (int upNodeIndex : upAdjacentNodes.get(notLoadCommit)) {
         fixUnderdoneEdgeForNotLoadCommit(upNodeIndex, notLoadId);
       }
@@ -168,17 +167,18 @@ public class PermanentLinearGraphBuilder<CommitId> {
   }
 
   // id's must be less that -2
-  public PermanentLinearGraphImpl build(@NotNull NotNullFunction<CommitId, Integer> notLoadCommitToId) {
-    myNotLoadCommitToId = notLoadCommitToId;
+  @NotNull
+  public PermanentLinearGraphImpl build(@NotNull NotNullFunction<CommitId, Integer> notLoadedCommitToId) {
     for (int nodeIndex = 0; nodeIndex < myNodesCount; nodeIndex++) {
       doStep(nodeIndex);
     }
 
-    fixUnderdoneEdges();
+    fixUnderdoneEdges(notLoadedCommitToId);
 
     return new PermanentLinearGraphImpl(mySimpleNodes, myNodeToEdgeIndex, myLongEdges);
   }
 
+  @NotNull
   public PermanentLinearGraphImpl build() {
     return build(new NotNullFunction<CommitId, Integer>() {
       @NotNull

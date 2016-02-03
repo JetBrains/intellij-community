@@ -194,13 +194,16 @@ public class PatchApplier<BinaryType extends FilePatch> {
     @CalledInAwt
     @NotNull
     private ApplyPatchStatus getApplyPatchStatus(@NotNull final TriggerAdditionOrDeletion trigger) {
-      final Ref<ApplyPatchStatus> refStatus = Ref.create(ApplyPatchStatus.SUCCESS);
+      final Ref<ApplyPatchStatus> refStatus = Ref.create(null);
       try {
         setConfirmationToDefault();
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
           @Override
           public void run() {
-            refStatus.set(createFiles());
+            //consider pre-check status only if not successful, otherwise we could not detect already applied status
+            if (createFiles() != ApplyPatchStatus.SUCCESS) {
+              refStatus.set(createFiles());
+            }
             addSkippedItems(trigger);
             trigger.prepare();
             refStatus.set(ApplyPatchStatus.and(refStatus.get(), executeWritable()));
@@ -211,7 +214,8 @@ public class PatchApplier<BinaryType extends FilePatch> {
         returnConfirmationBack();
         VcsFileListenerContextHelper.getInstance(myProject).clearContext();
       }
-      return refStatus.get();
+      final ApplyPatchStatus status = refStatus.get();
+      return status == null ? ApplyPatchStatus.ALREADY_APPLIED : status;
     }
 
     private void returnConfirmationBack() {
@@ -272,6 +276,10 @@ public class PatchApplier<BinaryType extends FilePatch> {
             applier.addSkippedItems(trigger);
           }
           trigger.prepare();
+          if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
+            // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
+            refStatus.set(null);
+          }
           for (PatchApplier applier : group) {
             refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
             if (refStatus.get() == ApplyPatchStatus.ABORT) break;
@@ -356,6 +364,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     trigger.addDeleted(myVerifier.getToBeDeleted());
   }
 
+  @NotNull
   public ApplyPatchStatus nonWriteActionPreCheck() {
     final List<FilePatch> failedPreCheck = myVerifier.nonWriteActionPreCheck();
     myFailedPatches.addAll(failedPreCheck);
@@ -369,6 +378,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
            : ((skipped.size() == myPatches.size()) ? ApplyPatchStatus.ALREADY_APPLIED : ApplyPatchStatus.PARTIAL);
   }
 
+  @Nullable
   protected ApplyPatchStatus executeWritable() {
     final ReadonlyStatusHandler.OperationStatus readOnlyFilesStatus = getReadOnlyFilesStatus(myVerifier.getWritableFiles());
     if (readOnlyFilesStatus.hasReadonlyFiles()) {
@@ -376,7 +386,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
       return ApplyPatchStatus.ABORT;
     }
     myFailedPatches.addAll(myVerifier.filterBadFileTypePatches());
-    ApplyPatchStatus result = myFailedPatches.isEmpty() ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE;
+    ApplyPatchStatus result = myFailedPatches.isEmpty() ? null : ApplyPatchStatus.FAILURE;
     final List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches = myVerifier.getTextPatches();
     try {
       markInternalOperation(textPatches, true);

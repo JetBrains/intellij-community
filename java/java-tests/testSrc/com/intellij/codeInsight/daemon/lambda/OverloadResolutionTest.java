@@ -196,6 +196,14 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest(true);
   }
 
+  public void testDonotIncludeAdditionalConstraintsDuringApplicabilityChecksInsideOverloadResolution() throws Exception {
+    doTest(true);
+  }
+
+  public void testPreserveErrorsFromOuterVariables() throws Exception {
+    doTest(true);
+  }
+
   private void doTest() {
     doTest(true);
   }

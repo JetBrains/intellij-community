@@ -34,7 +34,7 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
 
   @NotNull
   public static <CommitId> PermanentCommitsInfoImpl<CommitId> newInstance(@NotNull final List<? extends GraphCommit<CommitId>> graphCommits,
-                                                                          @NotNull Map<Integer, CommitId> notLoadCommits) {
+                                                                          @NotNull Map<Integer, CommitId> notLoadedCommits) {
     TimestampGetter timestampGetter = IntTimestampGetter.newInstance(new TimestampGetter() {
       @Override
       public int size() {
@@ -61,7 +61,7 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
         }
       });
     }
-    return new PermanentCommitsInfoImpl<CommitId>(timestampGetter, commitIdIndex, notLoadCommits);
+    return new PermanentCommitsInfoImpl<CommitId>(timestampGetter, commitIdIndex, notLoadedCommits);
   }
 
   @NotNull

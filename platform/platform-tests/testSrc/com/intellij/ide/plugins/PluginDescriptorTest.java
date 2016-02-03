@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class PluginDescriptorTest {
   public void testDescriptorLoading() {
     File file = new File(getTestDataPath(), "asp.jar");
     assertTrue(file + " not exist", file.exists());
-    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptorFromJar(file);
+    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptor(file, PluginManagerCore.PLUGIN_XML);
     assertNotNull(descriptor);
   }
 
@@ -44,7 +44,7 @@ public class PluginDescriptorTest {
   public void testInvalidFileDescriptor() {
     File file = new File(getTestDataPath(), "malformed");
     assertTrue(file + " not exist", file.exists());
-    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptorFromDir(file, PluginManagerCore.PLUGIN_XML);
+    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptor(file, PluginManagerCore.PLUGIN_XML);
     assertNull(descriptor);
   }
 }

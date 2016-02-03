@@ -304,8 +304,8 @@ public interface IdeActions {
 
   String ACTION_MOVE_STATEMENT_UP_ACTION = "MoveStatementUp";
   String ACTION_MOVE_STATEMENT_DOWN_ACTION = "MoveStatementDown";
-  String MOVE_STATEMENT_LEFT = "MoveStatementLeft";
-  String MOVE_STATEMENT_RIGHT = "MoveStatementRight";
+  String MOVE_ELEMENT_LEFT = "MoveElementLeft";
+  String MOVE_ELEMENT_RIGHT = "MoveElementRight";
   
   String ACTION_MOVE_LINE_UP_ACTION = "MoveLineUp";
 

@@ -216,6 +216,10 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return panel;
   }
 
+  public JPanel getContentComponent() {
+    return myContentPanel;
+  }
+
   private static void add(final GroupLayout.Group hGroup,
                           final GroupLayout.Group vGroup,
                           @Nullable final Collection<Component> collection,

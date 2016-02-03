@@ -132,8 +132,7 @@
     <applicationService serviceInterface="com.intellij.ui.mac.MacMessagesEmulation"
                         serviceImplementation="com.intellij.ui.messages.JBMacMessages"/>
 
-    <applicationService serviceInterface="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"
-                        serviceImplementation="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"/>
+    <applicationService serviceImplementation="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"/>
 
     <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"
                         serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"/>
@@ -471,9 +470,11 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.LineNumberMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FileNameMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FileNameWithoutExtensionMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ReplaceUnderscoresToCamelCaseMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CapitalizeAndUnderscoreMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SnakeCaseMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro$ReplaceUnderscoresToCamelCaseMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro$ReplaceDashesToCamelCaseMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$CapitalizeAndUnderscoreMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$SnakeCaseMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$LowercaseAndDash"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteSmartMacro"/>
@@ -856,7 +857,8 @@
     <refactoring.moveDirectoryWithClassesHelper
         implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper$Default" order="last"/>
 
-    <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.GeneratedSourcesHighlightingSettingProvider"/>
+    <defaultHighlightingSettingProvider id="GeneratedSourcesHighlightingSettingProvider" 
+                                        implementation="com.intellij.codeInsight.daemon.impl.analysis.GeneratedSourcesHighlightingSettingProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.GeneratedFileEditingNotificationProvider"/>
 
     <editorTabTitleProvider implementation="com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider" order="last"/>

@@ -44,7 +44,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   AppScheduledExecutorService() {
-    super(new BackendThreadPoolExecutor());
+    super(new BackendThreadPoolExecutor(), new AppDelayQueue());
     ((BackendThreadPoolExecutor)backendExecutorService).doSetThreadFactory(new ThreadFactory() {
       private final AtomicInteger counter = new AtomicInteger();
       @NotNull
@@ -89,14 +89,15 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     ((BackendThreadPoolExecutor)backendExecutorService).doShutdown();
   }
 
+  @NotNull
   @Override
   List<Runnable> doShutdownNow() {
     return ContainerUtil.concat(super.doShutdownNow(), ((BackendThreadPoolExecutor)backendExecutorService).doShutdownNow());
   }
 
   public void shutdownAppScheduledExecutorService() {
+    delayQueue.shutdown(); // shutdown delay queue first to avoid rejected execution exceptions in Alarm
     doShutdown();
-    shutdownGlobalQueue();
   }
 
   public int getBackendPoolExecutorSize() {

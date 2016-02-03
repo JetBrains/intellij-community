@@ -33,14 +33,17 @@ import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -559,6 +562,16 @@ public final class EditorUtil {
     return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, colorsScheme.getFontPreferences());
   }
 
+  public static Icon scaleIconAccordingEditorFont(Icon icon, Editor editor) {
+    if (Registry.is("editor.scale.gutter.icons") && editor instanceof EditorImpl && icon instanceof ScalableIcon) {
+      float scale = ((EditorImpl)editor).getScale();
+      if (Math.abs(1f - scale) > 0.1f) {
+        return ((ScalableIcon)icon).scale(scale);
+      }
+    }
+    return icon;
+  }
+
   public static int charWidth(char c, @JdkConstants.FontStyle int fontType, @NotNull Editor editor) {
     return fontForChar(c, fontType, editor).charWidth(c);
   }
@@ -880,7 +893,7 @@ public final class EditorUtil {
   }
 
   public static int yPositionToLogicalLine(@NotNull Editor editor, int y) {
-    int line = y / editor.getLineHeight();
+    int line = editor instanceof EditorImpl ? ((EditorImpl)editor).yToVisibleLine(y): y / editor.getLineHeight();
     return line > 0 ? editor.visualToLogicalPosition(new VisualPosition(line, 0)).line : 0;
   }
 

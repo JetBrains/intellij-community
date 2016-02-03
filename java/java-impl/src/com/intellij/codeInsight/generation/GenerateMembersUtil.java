@@ -686,8 +686,17 @@ public class GenerateMembersUtil {
     }
     result = (PsiMethod)CodeStyleManager.getInstance(project).reformat(result);
 
-    PsiModifierListOwner annotationTarget = isGetter ? result : result.getParameterList().getParameters()[0];
-    NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, annotationTarget);
+    PsiModifierListOwner annotationTarget;
+    if (isGetter) {
+      annotationTarget = result;
+    }
+    else {
+      final PsiParameter[] parameters = result.getParameterList().getParameters();
+      annotationTarget = parameters.length == 1 ? parameters[0] : null;
+    }
+    if (annotationTarget != null) {
+      NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, annotationTarget);
+    }
 
     return generatePrototype(field, result);
   }

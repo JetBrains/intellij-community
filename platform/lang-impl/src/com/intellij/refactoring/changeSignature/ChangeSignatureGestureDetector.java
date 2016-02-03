@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,8 +264,8 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     private final @NonNls String [] COMMANDS = {
       EditorBundle.message("paste.command.name"), 
       EditorBundle.message("typing.in.editor.command.name"),
-      ActionsBundle.message("action.MoveStatementLeft.text"),
-      ActionsBundle.message("action.MoveStatementRight.text"),
+      ActionsBundle.message("action.MoveElementLeft.text"),
+      ActionsBundle.message("action.MoveElementRight.text"),
       "Cut",
       LanguageChangeSignatureDetector.MOVE_PARAMETER
     };

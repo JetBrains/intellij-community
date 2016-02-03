@@ -73,6 +73,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   private static final List<EditorWindowImpl> allEditors = new WeakList<EditorWindowImpl>();
   private boolean myDisposed;
   private final MarkupModelWindow myMarkupModelDelegate;
+  private final MarkupModelWindow myDocumentMarkupModelDelegate;
   private final FoldingModelWindow myFoldingModelWindow;
   private final SoftWrapModelWindow mySoftWrapModel;
 
@@ -110,6 +111,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     myCaretModelDelegate = new CaretModelWindow(myDelegate.getCaretModel(), this);
     mySelectionModelDelegate = new SelectionModelWindow(myDelegate, myDocumentWindow,this);
     myMarkupModelDelegate = new MarkupModelWindow(myDelegate.getMarkupModel(), myDocumentWindow);
+    myDocumentMarkupModelDelegate = new MarkupModelWindow(myDelegate.getFilteredDocumentMarkupModel(), myDocumentWindow);
     myFoldingModelWindow = new FoldingModelWindow(delegate.getFoldingModel(), documentWindow, this);
     mySoftWrapModel = new SoftWrapModelWindow(this);
   }
@@ -252,6 +254,12 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   @NotNull
   public MarkupModelEx getMarkupModel() {
     return myMarkupModelDelegate;
+  }
+
+  @NotNull
+  @Override
+  public MarkupModelEx getFilteredDocumentMarkupModel() {
+    return myDocumentMarkupModelDelegate;
   }
 
   @Override

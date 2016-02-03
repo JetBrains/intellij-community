@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class JumpToObjectAction extends DebuggerAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.JumpToObjectAction");
@@ -102,9 +101,8 @@ public class JumpToObjectAction extends DebuggerAction{
       }
       if(type instanceof ClassType) {
         final ClassType clsType = (ClassType)type;
-        final List<Location> locations = clsType.allLineLocations();
-        if(locations.size() > 0) {
-          final Location location = locations.get(0);
+        final Location location = ContainerUtil.getFirstItem(clsType.allLineLocations());
+        if (location != null) {
           return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
             @Override
             public SourcePosition compute() {

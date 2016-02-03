@@ -15,6 +15,7 @@
  */
 package com.intellij.testIntergration
 
+import com.intellij.execution.Location
 import com.intellij.execution.TestStateStorage
 import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
@@ -28,11 +29,60 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import java.util.*
 
+fun passed(date: Date) = TestStateStorage.Record(TestStateInfo.Magnitude.PASSED_INDEX.value, date)
+fun failed(date: Date) = TestStateStorage.Record(TestStateInfo.Magnitude.FAILED_INDEX.value, date)
+
 class RecentTestsStepTest {
   val runner = createRunner()
 
-  val passed = TestStateStorage.Record(TestStateInfo.Magnitude.PASSED_INDEX.value, Date())
-  val failed = TestStateStorage.Record(TestStateInfo.Magnitude.FAILED_INDEX.value, Date()) 
+  val passed = passed(Date(0))
+  val failed = failed(Date(0))
+  
+  class TestStorage {
+    private val map: MutableMap<String, TestStateStorage.Record> = hashMapOf()
+    
+    fun addSuite(name: String, pass: Boolean, date: Date = Date(0)) {
+      val record = if (pass) passed(date) else failed(date)
+      map.put("java:suite://$name", record)
+    }
+
+    fun addTest(name: String, pass: Boolean, date: Date = Date(0)) {
+      val record = if (pass) passed(date) else failed(date)
+      map.put("java:test://$name", record)
+    }
+    
+    fun getMap() = map
+  }
+  
+  @Test
+  fun `show sorted by date`() {
+    val storage = TestStorage()
+    
+    storage.addSuite("ASTest", true, Date(1000))
+    storage.addSuite("JSTest", true, Date(1200))
+    
+    val step = SelectTestStep(storage.getMap(), runner)
+    val values = step.values.map { VirtualFileManager.extractPath(it) }
+    
+    assertThat(values).isEqualTo(listOf("JSTest", "ASTest"))
+  }
+  
+  @Test
+  fun `show tests sorted by date`() {
+    val storage = TestStorage()
+    
+    storage.addSuite("ASTest", false, Date(0))
+    storage.addTest("ASTest.xxxx", true, Date(99999))
+
+    storage.addTest("ASTest.aaaa", false, Date(10000))
+    storage.addTest("ASTest.cccc", false, Date(20000))
+    storage.addTest("ASTest.bbbb", false, Date(30000))
+    
+    val step = SelectTestStep(storage.getMap(), runner)
+    val values = step.values.map { VirtualFileManager.extractPath(it) }
+
+    assertThat(values).isEqualTo(listOf("ASTest", "ASTest.bbbb", "ASTest.cccc", "ASTest.aaaa"))
+  }
   
   @Test
   fun `when suite passed - show only suite`() {
@@ -67,6 +117,7 @@ class RecentTestsStepTest {
     map.put("java:suite://Test", passed)
     map.put("java:suite://JavaFormatterFailed", failed)
     map.put("java:test://JavaFormatterFailed.fail", failed)
+    map.put("java:test://JavaFormatterFailed.notFail", passed)
     map.put("java:test://Test.textYYY", passed)
     map.put("java:test://Test.textZZZ", passed)
     map.put("java:test://JavaFormatterSuperDuperTest.testFail", failed)
@@ -85,6 +136,24 @@ class RecentTestsStepTest {
     
     assertThat(step.values).isEqualTo(expected)
   }
+  
+  @Test
+  fun `do not show urls without location`() {
+    val storage = TestStorage()
+    
+    storage.addSuite("ASTest", true)
+    storage.addSuite("BSTest", false)
+    storage.addTest("BSTest.fff", false)
+    storage.addTest("BSTest.ppp", true)
+
+    storage.addTest("<default package>", false)
+    storage.addSuite("<default package>", false)
+
+    val step = SelectTestStep(storage.getMap(), runner)
+    val values = step.values.map { VirtualFileManager.extractPath(it) }
+    
+    assertThat(values).isEqualTo(listOf("BSTest", "BSTest.fff", "ASTest"))
+  }
 
   private fun createRunner(): RecentTestRunner {
     val runner = mock(RecentTestRunner::class.java)
@@ -92,6 +161,10 @@ class RecentTestsStepTest {
       val url = it.arguments[0] as String
       val protocol = VirtualFileManager.extractProtocol(url)
       JavaTestLocator.SUITE_PROTOCOL.startsWith(protocol.toString())
+    }
+    `when`(runner.getLocation(Matchers.anyString())).thenAnswer { 
+      val url = it.arguments[0] as String
+      if (url.contains("<")) null else mock(Location::class.java)
     }
     return runner
   }

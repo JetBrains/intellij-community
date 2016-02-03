@@ -913,4 +913,19 @@ public class JavaCompletionUtil {
     }
     return generics;
   }
+
+  public static boolean isEffectivelyDeprecated(PsiDocCommentOwner member) {
+    if (member.isDeprecated()) {
+      return true;
+    }
+
+    PsiClass aClass = member.getContainingClass();
+    while (aClass != null) {
+      if (aClass.isDeprecated()) {
+        return true;
+      }
+      aClass = aClass.getContainingClass();
+    }
+    return false;
+  }
 }

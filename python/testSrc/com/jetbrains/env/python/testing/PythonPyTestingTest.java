@@ -7,6 +7,9 @@ import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer;
+import com.jetbrains.python.testing.pytest.PyTestConfigurationProducer;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -18,6 +21,12 @@ import java.util.List;
  */
 @EnvTestTagsRequired(tags = "pytest")
 public class PythonPyTestingTest extends PyEnvTestCase {
+
+  public void testConfigurationProducer() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask(PyTestConfigurationProducer.class, PythonTestConfigurationsModel.PY_TEST_NAME));
+  }
+
   public void testPytestRunner() {
 
     runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>(SdkCreationType.EMPTY_SDK) {

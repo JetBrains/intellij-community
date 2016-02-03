@@ -122,7 +122,7 @@ public class PythonUnitTestUtil {
       return false;
     }
     if (function.getContainingClass() != null) {
-      if (isTestCaseClass(function.getContainingClass())) return true;
+      if (isTestCaseClass(function.getContainingClass(), null)) return true;
     }
     if (checkAssert) {
       boolean hasAssert = hasAssertOrYield(function.getStatementList());
@@ -148,8 +148,8 @@ public class PythonUnitTestUtil {
     return false;
   }
 
-  public static boolean isTestCaseClass(@NotNull PyClass cls) {
-    return isTestCaseClassWithContext(cls, PYTHON_TEST_QUALIFIED_CLASSES, null);
+  public static boolean isTestCaseClass(@NotNull PyClass cls, @Nullable final TypeEvalContext context) {
+    return isTestCaseClassWithContext(cls, PYTHON_TEST_QUALIFIED_CLASSES, context);
   }
 
   public static boolean isTestCaseClassWithContext(@NotNull PyClass cls,

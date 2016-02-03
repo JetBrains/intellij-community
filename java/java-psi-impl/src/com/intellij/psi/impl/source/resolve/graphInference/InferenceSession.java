@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -358,7 +359,7 @@ public class InferenceSession {
         return;
       }
 
-      if (parameters != null && args != null) {
+      if (parameters != null && args != null && !MethodCandidateInfo.isOverloadCheck()) {
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<ConstraintFormula>();
         if (parameters.length > 0) {
           collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints, properties.isVarargs(), initialSubstitutor);
@@ -608,7 +609,7 @@ public class InferenceSession {
     for (PsiTypeParameter parameter : typeParameters) {
       String name = parameter.getName();
       if (myContext != null) {
-        name += Math.abs(myContext.getText().hashCode());
+        name += Math.abs(myContext.hashCode());
       }
       InferenceVariable variable = new InferenceVariable(context, parameter, name);
       result.add(variable);
@@ -1133,13 +1134,12 @@ public class InferenceSession {
   }
 
   public String getPresentableText(PsiType psiType) {
-    return myRestoreNameSubstitution.substitute(psiType).getPresentableText();
+    final PsiType substituted = myRestoreNameSubstitution.substitute(psiType);
+    return substituted != null ? substituted.getPresentableText() : null;
   }
   
   private PsiType registerIncompatibleErrorMessage(InferenceVariable var, @NotNull String incompatibleBoundsMessage) {
-    if (var.getCallContext() == myContext) {
-      registerIncompatibleErrorMessage(incompatibleBoundsMessage);
-    }
+    registerIncompatibleErrorMessage(incompatibleBoundsMessage);
     return PsiType.NULL;
   }
 
@@ -1500,7 +1500,17 @@ public class InferenceSession {
                                        final boolean varargs) {
     try {
       //push site substitutor to parameter bounds
-      m1 = JavaPsiFacade.getElementFactory(m1.getProject()).createMethodFromText(m1.getText(), m1);
+      final String text;
+      if (m1 instanceof ClsMethodImpl) {
+        final StringBuilder builder = new StringBuilder();
+        ((ClsMethodImpl)m1).appendMirrorText(0, builder);
+        text = builder.toString();
+      }
+      else {
+        text = m1.getText();
+      }
+
+      m1 = JavaPsiFacade.getElementFactory(m1.getProject()).createMethodFromText(text, m1);
       for (PsiTypeParameter parameter : m1.getTypeParameters()) {
         final PsiClassType[] types = parameter.getExtendsListTypes();
         if (types.length > 0) {

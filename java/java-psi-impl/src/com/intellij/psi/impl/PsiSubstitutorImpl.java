@@ -110,6 +110,9 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     if (substituted instanceof PsiWildcardType && !((PsiWildcardType)substituted).isSuper()) {
       final PsiWildcardType wildcardType = (PsiWildcardType)substituted;
       final PsiType glb = PsiCapturedWildcardType.captureUpperBound(typeParameter, wildcardType, this);
+      if (glb instanceof PsiWildcardType) {
+        return glb;
+      }
       if (glb != null ) {
         return glb instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)glb).getWildcard()
                                                       : PsiWildcardType.createExtends(typeParameter.getManager(), glb);

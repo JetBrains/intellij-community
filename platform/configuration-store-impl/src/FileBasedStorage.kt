@@ -32,6 +32,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.util.loadElement
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -121,7 +122,7 @@ open class FileBasedStorage(file: File,
       else {
         val charBuffer = CharsetToolkit.UTF8_CHARSET.decode(ByteBuffer.wrap(file.contentsToByteArray()))
         lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-        return JDOMUtil.loadDocument(charBuffer).detachRootElement()
+        return loadElement(charBuffer)
       }
     }
     catch (e: JDOMException) {

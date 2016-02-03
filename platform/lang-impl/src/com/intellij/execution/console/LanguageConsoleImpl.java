@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -119,7 +120,9 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, getProject());
     myConsoleEditor.addFocusListener(myFocusListener);
     myCurrentEditor = myConsoleEditor;
-    myHistoryViewer = (EditorEx)editorFactory.createViewer(((EditorFactoryImpl)editorFactory).createDocument(true), getProject());
+    Document historyDocument = ((EditorFactoryImpl)editorFactory).createDocument(true);
+    UndoUtil.disableUndoFor(historyDocument);
+    myHistoryViewer = (EditorEx)editorFactory.createViewer(historyDocument, getProject());
 
     myBusConnection = getProject().getMessageBus().connect();
     // action shortcuts are not yet registered

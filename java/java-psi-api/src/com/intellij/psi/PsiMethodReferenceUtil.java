@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,6 +76,85 @@ public class PsiMethodReferenceUtil {
       qualifierType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(containingClass);
     }
     return qualifierType;
+  }
+
+  public static boolean isReturnTypeCompatible(PsiMethodReferenceExpression expression,
+                                               JavaResolveResult result,
+                                               PsiType functionalInterfaceType) {
+    return isReturnTypeCompatible(expression, result, functionalInterfaceType, null);
+  }
+
+  private static boolean isReturnTypeCompatible(PsiMethodReferenceExpression expression,
+                                                JavaResolveResult result,
+                                                PsiType functionalInterfaceType,
+                                                Ref<String> errorMessage) {
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+    if (interfaceMethod != null) {
+      final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+
+      if (PsiType.VOID.equals(interfaceReturnType) || interfaceReturnType == null) {
+        return true;
+      }
+
+      PsiSubstitutor subst = result.getSubstitutor();
+
+      PsiType methodReturnType = null;
+      PsiClass containingClass = null;
+      final PsiElement resolve = result.getElement();
+      if (resolve instanceof PsiMethod) {
+        containingClass = ((PsiMethod)resolve).getContainingClass();
+        methodReturnType = PsiTypesUtil.patchMethodGetClassReturnType(expression, (PsiMethod)resolve);
+        if (methodReturnType == null) {
+          methodReturnType = ((PsiMethod)resolve).getReturnType();
+          if (PsiType.VOID.equals(methodReturnType)) {
+            return false;
+          }
+
+          PsiClass qContainingClass = getQualifierResolveResult(expression).getContainingClass();
+          if (qContainingClass != null && containingClass != null &&
+              isReceiverType(getFirstParameterType(functionalInterfaceType, expression), qContainingClass, subst)) {
+            subst = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, subst);
+            LOG.assertTrue(subst != null);
+          }
+
+          methodReturnType = subst.substitute(methodReturnType);
+          if (methodReturnType != null) {
+            methodReturnType = PsiUtil.captureToplevelWildcards(methodReturnType, expression);
+          }
+        }
+      }
+      else if (resolve instanceof PsiClass) {
+        if (resolve == JavaPsiFacade.getElementFactory(expression.getProject()).getArrayClass(PsiUtil.getLanguageLevel(resolve))) {
+          final PsiTypeParameter[] typeParameters = ((PsiClass)resolve).getTypeParameters();
+          if (typeParameters.length == 1) {
+            final PsiType arrayComponentType = subst.substitute(typeParameters[0]);
+            if (arrayComponentType == null) {
+              return false;
+            }
+            methodReturnType = arrayComponentType.createArrayType();
+          }
+        }
+        containingClass = (PsiClass)resolve;
+      }
+
+      if (methodReturnType == null) {
+        if (containingClass == null) {
+          return false;
+        }
+        methodReturnType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(containingClass, subst);
+      }
+
+      if (TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType)) {
+        return true;
+      }
+     
+      if (errorMessage != null) {
+        errorMessage.set("Bad return type in method reference: " +
+                         "cannot convert " + methodReturnType.getCanonicalText() + " to " + interfaceReturnType.getCanonicalText());
+      }
+    }
+    return false;
   }
 
   public static class QualifierResolveResult {
@@ -284,35 +364,9 @@ public class PsiMethodReferenceUtil {
   }
 
   public static String checkReturnType(PsiMethodReferenceExpression expression, JavaResolveResult result, PsiType functionalInterfaceType) {
-    final PsiElement resolve = result.getElement();
-    if (resolve instanceof PsiMethod) {
-      final PsiClass containingClass = ((PsiMethod)resolve).getContainingClass();
-      LOG.assertTrue(containingClass != null);
-      PsiSubstitutor subst = result.getSubstitutor();
-      PsiClass qContainingClass = getQualifierResolveResult(expression).getContainingClass();
-      if (qContainingClass != null && isReceiverType(getFirstParameterType(functionalInterfaceType, expression), qContainingClass,  subst)) {
-        subst = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, subst);
-        LOG.assertTrue(subst != null);
-      }
-
-
-      final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
-
-      PsiType returnType = PsiTypesUtil.patchMethodGetClassReturnType(expression, expression,
-                                                                      (PsiMethod)resolve, null,
-                                                                      PsiUtil.getLanguageLevel(expression));
-      if (returnType == null) {
-        returnType = ((PsiMethod)resolve).getReturnType();
-      }
-      PsiType methodReturnType = subst.substitute(returnType);
-      if (interfaceReturnType != null && !PsiType.VOID.equals(interfaceReturnType)) {
-        if (methodReturnType == null) {
-          methodReturnType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(containingClass, subst);
-        }
-        if (!TypeConversionUtil.isAssignable(interfaceReturnType, PsiUtil.captureToplevelWildcards(methodReturnType, expression))) {
-          return "Bad return type in method reference: cannot convert " + methodReturnType.getCanonicalText() + " to " + interfaceReturnType.getCanonicalText();
-        }
-      }
+    final Ref<String> errorMessage = Ref.create();
+    if (!isReturnTypeCompatible(expression, result, functionalInterfaceType, errorMessage)) {
+      return errorMessage.get();
     }
     return null;
   }

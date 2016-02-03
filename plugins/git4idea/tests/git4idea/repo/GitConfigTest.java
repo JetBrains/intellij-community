@@ -22,8 +22,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitStandardRemoteBranch;
@@ -64,7 +65,9 @@ public class GitConfigTest extends GitPlatformTest {
 
     File gitDir = new File(myProjectPath, ".git");
     GitConfig config = GitConfig.read(myPlatformFacade, new File(gitDir, "config"));
-    GitBranchState state = new GitRepositoryReader(gitDir).readState(config.parseRemotes());
+    VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(gitDir);
+    GitRepositoryReader reader = new GitRepositoryReader(GitRepositoryFiles.getInstance(dir));
+    GitBranchState state = reader.readState(config.parseRemotes());
     Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
     assertTrue("Couldn't find correct a#branch tracking information among: [" + trackInfos + "]",
                ContainerUtil.exists(trackInfos, new Condition<GitBranchTrackInfo>() {

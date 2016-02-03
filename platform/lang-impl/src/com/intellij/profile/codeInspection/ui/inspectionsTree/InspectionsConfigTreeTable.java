@@ -29,7 +29,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
@@ -37,7 +36,6 @@ import com.intellij.profile.codeInspection.ui.ToolDescriptors;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer;
 import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.TableUtil;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
@@ -74,7 +72,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
   private final static int IS_ENABLED_COLUMN = 2;
 
   public static int getAdditionalPadding() {
-    return SystemInfo.isMac || Registry.is("ide.scroll.new.layout") ? 10 : 0;
+    return SystemInfo.isMac ? 10 : 0;
   }
 
   public static InspectionsConfigTreeTable create(final InspectionsConfigTreeTableSettings settings, Disposable parentDisposable) {
@@ -106,7 +104,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     severitiesColumn.setMaxWidth(20);
 
     final TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
-    TableUtil.setupCheckboxColumn(isEnabledColumn, getAdditionalPadding());
+    isEnabledColumn.setMaxWidth(20 + getAdditionalPadding());
     isEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer());
     isEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
 

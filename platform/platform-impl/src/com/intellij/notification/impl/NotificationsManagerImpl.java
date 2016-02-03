@@ -50,7 +50,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +66,7 @@ import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.ui.NotificationBalloonActionProvider.drawRect;
 import static com.intellij.ui.NotificationBalloonActionProvider.icon;
 
 /**
@@ -385,11 +385,25 @@ public class NotificationsManagerImpl extends NotificationsManager {
   private static JPanel createButtons(@NotNull Notification notification, @NotNull JPanel content, @Nullable HyperlinkListener listener) {
     if (notification instanceof NotificationActionProvider) {
       NotificationActionProvider provider = (NotificationActionProvider)notification;
-      JPanel buttons = new JPanel(new HorizontalLayout(5));
+      JPanel buttons = new JPanel(new HorizontalLayout(5)) {
+        @Override
+        public void paint(Graphics g) {
+          super.paint(g);
+          g.setColor(Color.red);
+          drawRect(g, 0, 0, getWidth(), getHeight());
+        }
+      };
       buttons.setOpaque(false);
       content.add(BorderLayout.SOUTH, buttons);
       for (Action action : provider.getActions(listener)) {
-        JButton button = new JButton(action);
+        JButton button = new JButton(action) {
+          @Override
+          public void paint(Graphics g) {
+            super.paint(g);
+            g.setColor(Color.green);
+            drawRect(g, 0, 0, getWidth(), getHeight());
+          }
+        };
         button.setOpaque(false);
         buttons.add(HorizontalLayout.RIGHT, button);
       }
@@ -407,7 +421,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
     final BalloonLayoutData layoutData = new BalloonLayoutData();
     layoutDataRef.set(layoutData);
 
-    boolean isTitle = !StringUtil.isEmpty(notification.getTitle()) || !StringUtil.isEmpty(notification.getSubtitle());
     final Color foreground = new JBColor(Gray._0, Gray._191);
     final JBColor fillColor = new JBColor(Gray._242, new Color(78, 80, 82));
 
@@ -423,6 +436,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
           }
         }
       }
+
+      @Override
+      public void paint(Graphics g) {
+        super.paint(g);
+        g.setColor(Color.magenta);
+        drawRect(g, 0, 0, getWidth(), getHeight());
+      }
     };
     text.setEditorKit(UIUtil.getHTMLEditorKit());
     text.setForeground(foreground);
@@ -432,10 +452,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
       text.addHyperlinkListener(listener);
     }
 
-    JLabel label = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null));
-    int maxSize = JBUI.scale(350);
-    String style = label.getPreferredSize().width > maxSize ? "width:" + maxSize + "px;" : null;
-    text.setText(NotificationsUtil.buildHtml(notification, style, true, foreground));
+    String fontStyle = NotificationsUtil.getFontStyle();
+    int prefSize = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null, fontStyle)).getPreferredSize().width;
+    int maxSize = BalloonLayoutConfiguration.MaxWidth;
+    String style = prefSize > maxSize ? "width:" + maxSize + "px;" : null;
+
+    text.setText(NotificationsUtil.buildHtml(notification, style, true, foreground, fontStyle));
     text.setEditable(false);
     text.setOpaque(false);
 
@@ -445,8 +467,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     text.setBorder(null);
 
-    int gap = (int)(label.getIconTextGap() * 1.5);
-    final JPanel content = new NonOpaquePanel(new BorderLayout(gap, gap));
+    final JPanel content = new NonOpaquePanel(new BorderLayout());
 
     if (text.getCaret() != null) {
       text.setCaretPosition(0);
@@ -471,7 +492,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     LinkLabel<Void> expandAction = null;
 
     int lines = 3;
-    if (isTitle) {
+    if (notification.isTitle()) {
       lines--;
     }
     if (!actions.isEmpty()) {
@@ -481,8 +502,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
     layoutData.fullHeight = text.getPreferredSize().height;
     layoutData.twoLineHeight = calculateContentHeight(lines);
     layoutData.maxScrollHeight = Math.min(layoutData.fullHeight, calculateContentHeight(10));
+    layoutData.configuration = BalloonLayoutConfiguration.create(notification, layoutData);
 
-    if (layoutData.maxScrollHeight != layoutData.fullHeight) {
+    boolean showFullContent = notification instanceof NotificationActionProvider;
+
+    if (!showFullContent && layoutData.maxScrollHeight != layoutData.fullHeight) {
       pane.setViewport(new GradientViewport(text, JBUI.insets(10, 0), true) {
         @Nullable
         @Override
@@ -507,7 +531,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     pane.getViewport().setBackground(fillColor);
     pane.getVerticalScrollBar().setBackground(fillColor);
 
-    if (layoutData.twoLineHeight < layoutData.fullHeight) {
+    if (!showFullContent && layoutData.twoLineHeight < layoutData.fullHeight) {
       text.setPreferredSize(null);
       Dimension size = text.getPreferredSize();
       size.height = layoutData.twoLineHeight;
@@ -555,25 +579,31 @@ public class NotificationsManagerImpl extends NotificationsManager {
       expandAction.setHoveringIcon(icon(AllIcons.Ide.Notification.ExpandHover));
     }
 
-    final CenteredLayoutWithActions layout = new CenteredLayoutWithActions(gap, text, layoutData);
+    final CenteredLayoutWithActions layout = new CenteredLayoutWithActions(text, layoutData);
     JPanel centerPanel = new NonOpaquePanel(layout) {
+      @Override
+      public void paint(Graphics g) {
+        super.paint(g);
+        g.setColor(Color.red);
+        drawRect(g, 0, 0, getWidth(), getHeight());
+      }
+
       @Override
       protected void paintChildren(Graphics g) {
         super.paintChildren(g);
         Component title = layout.getTitle();
 
         if (title != null && layoutData.showActions != null && layoutData.showActions.compute()) {
-          Insets insets = getInsets();
-          int width = NotificationBalloonActionProvider.getAllActionsOffset();
-          int x = getWidth() - insets.right - width;
-          int y = insets.top;
+          int width = layoutData.configuration.allActionsOffset;
+          int x = getWidth() - width - JBUI.scale(5);
+          int y = layoutData.configuration.topSpaceHeight;
 
           int height = title instanceof JEditorPane ? getFirstLineHeight((JEditorPane)title) : title.getHeight();
 
           g.setColor(fillColor);
           g.fillRect(x, y, width, height);
 
-          width = 15;
+          width = layoutData.configuration.beforeGearSpace;
           x -= width;
           ((Graphics2D)g).setPaint(new GradientPaint(x, y, ColorUtil.withAlpha(fillColor, 0.2), x + width, y, fillColor));
           g.fillRect(x, y, width, height);
@@ -582,8 +612,17 @@ public class NotificationsManagerImpl extends NotificationsManager {
     };
     content.add(centerPanel, BorderLayout.CENTER);
 
-    if (isTitle) {
-      JLabel title = new JLabel(NotificationsUtil.buildHtml(notification, "white-space: nowrap;", false, foreground));
+    if (notification.isTitle()) {
+      String titleValue = NotificationsUtil
+        .buildHtml(notification, StringUtil.defaultIfEmpty(fontStyle, "") + "white-space: nowrap;", false, foreground, null);
+      JLabel title = new JLabel(titleValue) {
+        @Override
+        public void paint(Graphics g) {
+          super.paint(g);
+          g.setColor(Color.blue);
+          drawRect(g, 0, 0, getWidth(), getHeight());
+        }
+      };
       title.setOpaque(false);
       if (UIUtil.isUnderNimbusLookAndFeel()) {
         title.setBackground(UIUtil.TRANSPARENT_COLOR);
@@ -596,20 +635,33 @@ public class NotificationsManagerImpl extends NotificationsManager {
       centerPanel.add(expandAction, BorderLayout.EAST);
     }
 
-    if (!StringUtil.isEmptyOrSpaces(notification.getContent())) {
+    if (notification.isContent()) {
       centerPanel.add(pane, BorderLayout.CENTER);
     }
 
-    final NonOpaquePanel iconPanel = new NonOpaquePanel(new BorderLayout());
-    iconPanel.add(new JLabel(NotificationsUtil.getIcon(notification)), BorderLayout.NORTH);
-    content.add(iconPanel, BorderLayout.WEST);
+    final Icon icon = icon(NotificationsUtil.getIcon(notification));
+    JComponent iconComponent = new JComponent() {
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        icon.paintIcon(this, g, layoutData.configuration.iconOffset.width, layoutData.configuration.iconOffset.height);
+        g.setColor(Color.black);
+        drawRect(g, 0, 0, getWidth(), getHeight());
+      }
+    };
+    iconComponent.setOpaque(false);
+    iconComponent.setPreferredSize(
+      new Dimension(layoutData.configuration.iconPanelWidth, 2 * layoutData.configuration.iconOffset.height + icon.getIconHeight()));
 
-    content.setBorder(new EmptyBorder(2, 4, 2, 4));
+    content.add(iconComponent, BorderLayout.WEST);
 
     JPanel buttons = createButtons(notification, content, listener);
+    if (buttons != null) {
+      buttons.setBorder(new EmptyBorder(0, 0, JBUI.scale(5), JBUI.scale(7)));
+    }
 
     if (buttons == null && !actions.isEmpty()) {
-      createActionPanel(notification, centerPanel);
+      createActionPanel(notification, centerPanel, layoutData.configuration.actionGap);
     }
 
     text.setSize(text.getPreferredSize());
@@ -623,6 +675,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
       pane.setPreferredSize(new Dimension(maxWidth, paneSize.height + UIUtil.getScrollBarWidth()));
     }
 
+    JBColor borderColor = new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205));
+
     final BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(content);
     builder.setFillColor(fillColor)
       .setCloseButtonEnabled(buttons == null)
@@ -632,14 +686,14 @@ public class NotificationsManagerImpl extends NotificationsManager {
       .setHideOnAction(hideOnClickOutside)
       .setHideOnKeyOutside(hideOnClickOutside)
       .setHideOnFrameResize(false)
-      .setBorderColor(new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205)))
+      .setBorderColor(borderColor)
       .setBorderInsets(new Insets(0, 0, 0, 0));
 
     final BalloonImpl balloon = (BalloonImpl)builder.createBalloon();
     balloon.setAnimationEnabled(false);
     notification.setBalloon(balloon);
 
-    balloon.setShadowBorderProvider(new NotificationBalloonShadowBorderProvider());
+    balloon.setShadowBorderProvider(new NotificationBalloonShadowBorderProvider(fillColor, borderColor));
 
     if (buttons == null) {
       balloon.setActionProvider(
@@ -649,8 +703,15 @@ public class NotificationsManagerImpl extends NotificationsManager {
     return balloon;
   }
 
-  private static void createActionPanel(@NotNull Notification notification, @NotNull JPanel centerPanel) {
-    JPanel actionPanel = new NonOpaquePanel(new HorizontalLayout(ACTION_GAP, SwingConstants.CENTER));
+  private static void createActionPanel(@NotNull Notification notification, @NotNull JPanel centerPanel, int gap) {
+    JPanel actionPanel = new NonOpaquePanel(new HorizontalLayout(gap, SwingConstants.CENTER)) {
+      @Override
+      public void paint(Graphics g) {
+        super.paint(g);
+        g.setColor(Color.yellow);
+        drawRect(g, 0, 0, getWidth(), getHeight());
+      }
+    };
     centerPanel.add(BorderLayout.SOUTH, actionPanel);
 
     List<AnAction> actions = notification.getActions();
@@ -669,7 +730,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
             }
           }
           ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-          menu.getComponent().show(link, -10, link.getHeight() + 2);
+          menu.getComponent().show(link, JBUI.scale(-10), link.getHeight() + JBUI.scale(2));
         }
       });
       action.setVisible(false);
@@ -685,14 +746,23 @@ public class NotificationsManagerImpl extends NotificationsManager {
           public void linkSelected(LinkLabel aSource, AnAction action) {
             Notification.fire(action);
           }
-        }, action));
+        }, action) {
+          @Override
+          public void paint(Graphics g) {
+            super.paint(g);
+            g.setColor(Color.green);
+            drawRect(g, 0, 0, getWidth(), getHeight());
+          }
+        });
     }
   }
 
-  private static int calculateContentHeight(int lines) {
+  public static int calculateContentHeight(int lines) {
     JEditorPane text = new JEditorPane();
     text.setEditorKit(UIUtil.getHTMLEditorKit());
-    text.setText(NotificationsUtil.buildHtml(null, null, "Content" + StringUtil.repeat("<br>\nContent", lines - 1), null));
+    text
+      .setText(NotificationsUtil.buildHtml(null, null, "Content" + StringUtil.repeat("<br>\nContent", lines - 1), null, null, null,
+                                             NotificationsUtil.getFontStyle()));
     text.setEditable(false);
     text.setOpaque(false);
     text.setBorder(null);
@@ -715,6 +785,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static class DropDownAction extends LinkLabel<Void> {
+    Icon myIcon = AllIcons.Ide.Notification.DropTriangle;
+
     public DropDownAction(String text, @Nullable LinkListener<Void> listener) {
       super(text, null, listener);
 
@@ -724,19 +796,18 @@ public class NotificationsManagerImpl extends NotificationsManager {
       setIcon(new Icon() {
         @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
-          Icon icon = AllIcons.Ide.Notification.DropTriangle;
-          int lineY = getUI().getBaseline(DropDownAction.this, getWidth(), getHeight()) - icon.getIconHeight();
-          IconUtil.colorize(icon, getTextColor()).paintIcon(c, g, x - 1, lineY);
+          int lineY = getUI().getBaseline(DropDownAction.this, getWidth(), getHeight()) - getIconHeight();
+          IconUtil.colorize(myIcon, getTextColor()).paintIcon(c, g, x - 1, lineY);
         }
 
         @Override
         public int getIconWidth() {
-          return 16;
+          return myIcon.getIconWidth();
         }
 
         @Override
         public int getIconHeight() {
-          return 16;
+          return myIcon.getIconHeight();
         }
       });
     }
@@ -763,8 +834,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
       doNotify(notification, null, myProject);
     }
   }
-
-  private static final int ACTION_GAP = 16;
 
   @Nullable
   private static Point getCollapsedTextEndLocation(@NotNull JEditorPane text, @NotNull BalloonLayoutData layoutData) {
@@ -798,11 +867,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
     catch (BadLocationException ignored) {
     }
-    return 16; // TODO
+    return 0;
   }
 
   private static class CenteredLayoutWithActions extends BorderLayout {
-    private final int myVerticalGap;
     private final JEditorPane myText;
     private final BalloonLayoutData myLayoutData;
     private Component myTitleComponent;
@@ -810,8 +878,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     private JPanel myActionPanel;
     private Component myExpandAction;
 
-    public CenteredLayoutWithActions(int verticalGap, JEditorPane text, BalloonLayoutData layoutData) {
-      myVerticalGap = verticalGap;
+    public CenteredLayoutWithActions(JEditorPane text, BalloonLayoutData layoutData) {
       myText = text;
       myLayoutData = layoutData;
     }
@@ -850,7 +917,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     @Override
     public Dimension preferredLayoutSize(Container parent) {
-      return layoutSize(parent, new Function<Component, Dimension>() {
+      return layoutSize(new Function<Component, Dimension>() {
         @Override
         public Dimension fun(Component component) {
           return component.getPreferredSize();
@@ -860,7 +927,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     @Override
     public Dimension minimumLayoutSize(Container parent) {
-      return layoutSize(parent, new Function<Component, Dimension>() {
+      return layoutSize(new Function<Component, Dimension>() {
         @Override
         public Dimension fun(Component component) {
           return component.getMinimumSize();
@@ -868,80 +935,82 @@ public class NotificationsManagerImpl extends NotificationsManager {
       });
     }
 
-    private Dimension layoutSize(@NotNull Container parent, @NotNull Function<Component, Dimension> size) {
+    private Dimension layoutSize(@NotNull Function<Component, Dimension> size) {
       Dimension titleSize = myTitleComponent == null ? new Dimension() : size.fun(myTitleComponent);
       Dimension centeredSize = myCenteredComponent == null ? new Dimension() : size.fun(myCenteredComponent);
-
-      int height = titleSize.height;
-      if (height > 0 && centeredSize.height > 0) {
-        height += myVerticalGap;
-      }
-      height += centeredSize.height;
-
       Dimension actionSize = myActionPanel == null ? new Dimension() : size.fun(myActionPanel);
       int expandHeight = myExpandAction == null || myLayoutData.showMinSize ? 0 : size.fun(myExpandAction).height;
-      int bottomHeight = Math.max(actionSize.height, expandHeight);
 
-      if (height > 0 && bottomHeight > 0) {
-        height += myVerticalGap;
+      int height = myLayoutData.configuration.topSpaceHeight +
+                   titleSize.height + centeredSize.height + Math.max(actionSize.height, expandHeight) +
+                   myLayoutData.configuration.bottomSpaceHeight;
+
+      if (titleSize.height > 0 && centeredSize.height > 0) {
+        height += myLayoutData.configuration.titleContentSpaceHeight;
       }
-      height += bottomHeight;
+      if (centeredSize.height > 0 && actionSize.height > 0) {
+        height += myLayoutData.configuration.contentActionsSpaceHeight;
+      }
+      if (titleSize.height > 0 && actionSize.height > 0) {
+        height += myLayoutData.configuration.titleActionsSpaceHeight;
+      }
 
       int width = centeredSize.width;
       if (width < titleSize.width || width < actionSize.width) {
-        width = Math.min(JBUI.scale(350), Math.max(titleSize.width, actionSize.width));
+        width = Math.min(BalloonLayoutConfiguration.MaxWidth,
+                         Math.max(titleSize.width + myLayoutData.configuration.closeOffset, actionSize.width));
+      }
+      else {
+        width += myLayoutData.configuration.closeOffset;
       }
 
-      Dimension result = new Dimension(Math.max(width, JBUI.scale(100)), height);
-      JBInsets.addTo(result, parent.getInsets());
-      return result;
+      return new Dimension(Math.max(width, BalloonLayoutConfiguration.MinWidth), height);
     }
 
     @Override
     public void layoutContainer(Container parent) {
-      Insets insets = parent.getInsets();
-      int top = insets.top;
-      int height = parent.getHeight() - insets.bottom - top;
-      int left = insets.left;
-      int width = parent.getWidth() - insets.right - left;
+      int top = myLayoutData.configuration.topSpaceHeight;
+      int width = parent.getWidth();
       Dimension centeredSize = myCenteredComponent == null ? new Dimension() : myCenteredComponent.getPreferredSize();
+      boolean isActions = myActionPanel != null || (myExpandAction != null && !myLayoutData.showMinSize);
 
       if (myTitleComponent != null) {
         int titleHeight = myTitleComponent.getPreferredSize().height;
-        myTitleComponent.setBounds(left, top, width - NotificationBalloonActionProvider.getCloseOffset(), titleHeight);
-        top += titleHeight + myVerticalGap;
-        height -= titleHeight + myVerticalGap;
+        myTitleComponent.setBounds(0, top, width - myLayoutData.configuration.closeOffset, titleHeight);
+        top += titleHeight;
+
+        if (myCenteredComponent != null) {
+          top += myLayoutData.configuration.titleContentSpaceHeight;
+        }
+        else if (isActions) {
+          top += myLayoutData.configuration.titleActionsSpaceHeight;
+        }
       }
 
       if (myCenteredComponent != null) {
-        myCenteredComponent.setBounds(left, top, width, centeredSize.height);
-      }
-
-      int bottomY = top + centeredSize.height;
-      int bottomHeight = height - centeredSize.height;
-      if (centeredSize.height > 0) {
-        bottomY += myVerticalGap;
-        bottomHeight -= myVerticalGap;
+        myCenteredComponent.setBounds(0, top, width, centeredSize.height);
       }
 
       if (myExpandAction != null) {
         Dimension size = myExpandAction.getPreferredSize();
+        int x = width - size.width - myLayoutData.configuration.rightActionsOffset.width;
 
         if (myLayoutData.showMinSize) {
           Point location = getCollapsedTextEndLocation(myText, myLayoutData);
           if (location != null) {
             int y = SwingUtilities.convertPoint(myText, location.x, location.y, parent).y;
-            myExpandAction.setBounds(width - size.width, y, size.width, size.height);
+            myExpandAction.setBounds(x, y, size.width, size.height);
           }
         }
         else {
-          myExpandAction.setBounds(width - size.width, bottomY, size.width, size.height);
+          int y = parent.getHeight() - size.height - myLayoutData.configuration.bottomSpaceHeight;
+          myExpandAction.setBounds(x, y, size.width, size.height);
         }
       }
 
       if (myActionPanel != null) {
-        int expandWidth = myExpandAction == null || myLayoutData.showMinSize ? 0 : myExpandAction.getPreferredSize().width + ACTION_GAP;
-        width -= expandWidth;
+        int expandWidth = myExpandAction == null || myLayoutData.showMinSize ? 0 : myExpandAction.getPreferredSize().width;
+        width -= myLayoutData.configuration.actionGap + expandWidth;
 
         int components = myActionPanel.getComponentCount();
         if (components > 2) {
@@ -971,7 +1040,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
           }
         }
 
-        myActionPanel.setBounds(left, bottomY, width, bottomHeight);
+        Dimension size = myActionPanel.getPreferredSize();
+        int y = parent.getHeight() - size.height - myLayoutData.configuration.bottomSpaceHeight;
+        myActionPanel.setBounds(0, y, width, size.height);
       }
     }
   }

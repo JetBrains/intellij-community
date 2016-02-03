@@ -162,7 +162,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     final PsiClass closureClass = GroovyPsiManager.getInstance(getProject()).findClassWithCache(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, getResolveScope());
     if (closureClass == null) return true;
 
-    return closureClass.processDeclarations(processor, state.put(ClassHint.RESOLVE_CONTEXT, this), lastParent, place);
+    return ResolveUtil.processClassDeclarations(closureClass, processor, state.put(ClassHint.RESOLVE_CONTEXT, this), lastParent, place);
   }
 
   private boolean processParameters(@NotNull PsiScopeProcessor processor,

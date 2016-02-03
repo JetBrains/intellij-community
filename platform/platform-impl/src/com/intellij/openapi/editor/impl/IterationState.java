@@ -180,7 +180,7 @@ public final class IterationState {
     MarkupModelEx editorMarkup = editor.getMarkupModel();
     myView = new HighlighterSweep(editorMarkup, start, myEnd, useOnlyFullLineHighlighters);
 
-    final MarkupModelEx docMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), true);
+    MarkupModelEx docMarkup = editor.getFilteredDocumentMarkupModel();
     myDoc = new HighlighterSweep(docMarkup, start, myEnd, useOnlyFullLineHighlighters);
 
     myEndOffset = myStartOffset;
@@ -251,7 +251,7 @@ public final class IterationState {
     if (!highlighter.isValid() || highlighter.isAfterEndOfLine() || highlighter.getTextAttributes() == null) return true;
     final FoldRegion region = myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaStartOffset());
     if (region != null && region == myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaEndOffset())) return true;
-    return !highlighter.getEditorFilter().avaliableIn(myEditor);
+    return false;
   }
 
   public void advance() {

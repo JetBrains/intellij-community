@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -187,7 +186,7 @@ public class IterationState {
     MarkupModelEx editorMarkup = editor.getMarkupModel();
     myView = new HighlighterSweep(editorMarkup, start, myEnd, useOnlyFullLineHighlighters);
 
-    final MarkupModelEx docMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), true);
+    MarkupModelEx docMarkup = editor.getFilteredDocumentMarkupModel();
     myDoc = new HighlighterSweep(docMarkup, start, myEnd, useOnlyFullLineHighlighters);
 
     myEndOffset = myStartOffset;
@@ -265,7 +264,7 @@ public class IterationState {
     final FoldRegion region = myFoldingModel == null ? null :
                               myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaStartOffset());
     if (region != null && region == myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaEndOffset())) return true;
-    return !highlighter.getEditorFilter().avaliableIn(myEditor);
+    return false;
   }
 
   public void advance() {

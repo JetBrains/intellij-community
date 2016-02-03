@@ -29,6 +29,7 @@ JNI_createJavaVM pCreateJavaVM = NULL;
 JavaVM* jvm = NULL;
 JNIEnv* env = NULL;
 volatile bool terminating = false;
+bool nativesplash = false;
 
 HANDLE hFileMapping;
 HANDLE hEvent;
@@ -541,11 +542,12 @@ jobjectArray PrepareCommandLine()
   int numArgs;
   LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &numArgs);
   jclass stringClass = env->FindClass("java/lang/String");
-  jobjectArray args = env->NewObjectArray(numArgs - 1, stringClass, NULL);
-  for (int i = 1; i < numArgs; i++)
+  jobjectArray args = env->NewObjectArray(numArgs - (nativesplash ? 2 : 1), stringClass, NULL);
+  for (int i = 1, k = 0; i < numArgs; i++)
   {
     const wchar_t* arg = argv[i];
-    env->SetObjectArrayElement(args, i - 1, env->NewString((const jchar *)arg, wcslen(argv[i])));
+    if (_wcsicmp(arg, _T("/nativesplash")) == 0) continue;
+    env->SetObjectArrayElement(args, k++, env->NewString((const jchar *)arg, wcslen(argv[i])));
   }
   return args;
 }
@@ -850,7 +852,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
   if (!CheckSingleInstance()) return 1;
 
-  if (wcsstr(lpCmdLine, _T("nosplash")) == NULL) StartSplashProcess();
+  if (nativesplash = wcsstr(lpCmdLine, _T("/nativesplash")) != NULL) StartSplashProcess();
 
   if (!LocateJVM()) return 1;
   if (!LoadVMOptions()) return 1;

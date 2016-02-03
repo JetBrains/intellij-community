@@ -36,7 +36,6 @@ import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -165,12 +164,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return "ANY";
     }
   };
-
-  @NotNull
-  @Deprecated
-  public IComponentStore getStateStore() {
-    return ServiceKt.getStateStore(this);
-  }
 
   public ApplicationImpl(boolean isInternal,
                          boolean isUnitTestMode,

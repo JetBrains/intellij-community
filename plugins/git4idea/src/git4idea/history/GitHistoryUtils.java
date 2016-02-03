@@ -875,30 +875,6 @@ public class GitHistoryUtils {
     });
   }
 
-  private static void takeLine(final Project project, String line,
-                               StringBuilder sb,
-                               GitLogParser parser,
-                               SymbolicRefsI refs,
-                               VirtualFile root,
-                               VcsException[] exc, GitLineHandler h, AsynchConsumer<GitHeavyCommit> gitCommitConsumer) {
-    final String text = sb.toString();
-    sb.setLength(0);
-    sb.append(line);
-    if (text.length() == 0) return;
-    GitLogRecord record = parser.parseOneRecord(text);
-
-    final GitHeavyCommit gitCommit;
-    try {
-      gitCommit = createCommit(project, refs, root, record);
-    }
-    catch (VcsException e) {
-      exc[0] = e;
-      h.cancel();
-      return;
-    }
-    gitCommitConsumer.consume(gitCommit);
-  }
-
   @NotNull
   private static GitHeavyCommit createCommit(@NotNull Project project, @Nullable SymbolicRefsI refs, @NotNull VirtualFile root,
                                         @NotNull GitLogRecord record) throws VcsException {

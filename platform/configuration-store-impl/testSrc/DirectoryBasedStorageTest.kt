@@ -55,6 +55,7 @@ internal class TestStateSplitter : MainConfigurationStateSplitter() {
 @Bombed(user = "vladimir.krivosheev", year = 2016, month = Calendar.DECEMBER, day = 10)
 internal class DirectoryBasedStorageTest {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 

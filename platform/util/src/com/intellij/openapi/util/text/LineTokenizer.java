@@ -36,7 +36,7 @@ public class LineTokenizer {
   }
 
   @NotNull
-  private static String[] tokenize(CharSequence chars, final boolean includeSeparators, final boolean skipLastEmptyLine) {
+  public static String[] tokenize(CharSequence chars, final boolean includeSeparators, final boolean skipLastEmptyLine) {
     final List<String> strings = tokenizeIntoList(chars, includeSeparators, skipLastEmptyLine);
     return strings.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : ArrayUtil.toStringArray(strings);
   }

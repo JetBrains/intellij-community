@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeClassSignature;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.ChangeClassSignatureFromUsageFix;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -42,6 +43,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import static com.sun.corba.se.spi.extension.RequestPartitioningPolicy.DEFAULT_VALUE;
+
 /**
  * @author dsl
  * @author Konstantin Bulenkov
@@ -49,10 +52,12 @@ import java.util.List;
 public class ChangeClassSignatureDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance(ChangeClassSignatureDialog.class);
   private static final int NAME_COLUMN = 0;
-  private static final int VALUE_COLUMN = 1;
+  private static final int BOUND_VALUE_COLUMN = 1;
+  private static final int DEFAULT_VALUE_COLUMN = 2;
 
   private final List<TypeParameterInfo> myTypeParameterInfos;
-  private final List<PsiTypeCodeFragment> myTypeCodeFragments;
+  private final List<PsiTypeCodeFragment> myBoundValueTypeCodeFragments;
+  private final List<PsiTypeCodeFragment> myDefaultValueTypeCodeFragments;
   private final PsiClass myClass;
   private final PsiTypeParameter[] myOriginalParameters;
   private final Project myProject;
@@ -65,38 +70,22 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     this(
       aClass,
       initTypeParameterInfos(aClass.getTypeParameters().length),
-      initTypeCodeFragment(aClass.getTypeParameters().length),
       hideDefaultValueColumn
     );
   }
 
   @NotNull
-  private static List<TypeParameterInfo> initTypeParameterInfos(int length) {
-    final List<TypeParameterInfo> result = new ArrayList<TypeParameterInfo>();
+  private static List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> initTypeParameterInfos(int length) {
+    final List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> result =
+      new ArrayList<ChangeClassSignatureFromUsageFix.TypeParameterInfoView>();
     for (int i = 0; i < length; i++) {
-      result.add(new TypeParameterInfo(i));
-    }
-    return result;
-  }
-
-  @NotNull
-  private static List<PsiTypeCodeFragment> initTypeCodeFragment(int length) {
-    final List<PsiTypeCodeFragment> result = new ArrayList<PsiTypeCodeFragment>();
-    for (int i = 0; i < length; i++) {
-      result.add(null);
+      result.add(new ChangeClassSignatureFromUsageFix.TypeParameterInfoView(new TypeParameterInfo.Existing(i), null, null));
     }
     return result;
   }
 
   public ChangeClassSignatureDialog(@NotNull PsiClass aClass,
-                                    @NotNull Map<TypeParameterInfo, PsiTypeCodeFragment> parameters,
-                                    boolean hideDefaultValueColumn) {
-    this(aClass, parameters.keySet(), parameters.values(), hideDefaultValueColumn);
-  }
-
-  public ChangeClassSignatureDialog(@NotNull PsiClass aClass,
-                                    @NotNull Collection<TypeParameterInfo> typeParameterInfos,
-                                    @NotNull Collection<PsiTypeCodeFragment> typeCodeFragments,
+                                    @NotNull List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> parameters,
                                     boolean hideDefaultValueColumn) {
     super(aClass.getProject(), true);
     myHideDefaultValueColumn = hideDefaultValueColumn;
@@ -104,8 +93,18 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     myClass = aClass;
     myProject = myClass.getProject();
     myOriginalParameters = myClass.getTypeParameters();
-    myTypeParameterInfos = new ArrayList<TypeParameterInfo>(typeParameterInfos);
-    myTypeCodeFragments = new ArrayList<PsiTypeCodeFragment>(typeCodeFragments);
+
+
+    myTypeParameterInfos = new ArrayList<TypeParameterInfo>(parameters.size());
+    myBoundValueTypeCodeFragments = new ArrayList<PsiTypeCodeFragment>(parameters.size());
+    myDefaultValueTypeCodeFragments = new ArrayList<PsiTypeCodeFragment>(parameters.size());
+    for (ChangeClassSignatureFromUsageFix.TypeParameterInfoView p : parameters) {
+      myTypeParameterInfos.add(p.getInfo());
+      myBoundValueTypeCodeFragments.add(p.getBoundValueFragment());
+      myDefaultValueTypeCodeFragments.add(p.getDefaultValueFragment());
+      ;
+    }
+
     myTableModel = new MyTableModel();
     init();
   }
@@ -133,10 +132,13 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     myTable = new JBTable(myTableModel);
     myTable.setStriped(true);
     TableColumn nameColumn = myTable.getColumnModel().getColumn(NAME_COLUMN);
-    TableColumn valueColumn = myTable.getColumnModel().getColumn(VALUE_COLUMN);
+    TableColumn boundColumn = myTable.getColumnModel().getColumn(BOUND_VALUE_COLUMN);
+    TableColumn valueColumn = myTable.getColumnModel().getColumn(DEFAULT_VALUE_COLUMN);
     Project project = myClass.getProject();
     nameColumn.setCellRenderer(new MyCellRenderer());
     nameColumn.setCellEditor(new StringTableCellEditor(project));
+    boundColumn.setCellRenderer(new MyCodeFragmentTableCellRenderer());
+    boundColumn.setCellEditor(new JavaCodeFragmentTableCellEditor(project));
     valueColumn.setCellRenderer(new MyCodeFragmentTableCellRenderer());
     valueColumn.setCellEditor(new JavaCodeFragmentTableCellEditor(project));
 
@@ -148,7 +150,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     myTable.setFocusCycleRoot(true);
 
     if (myHideDefaultValueColumn) {
-      final TableColumn defaultValue = myTable.getColumnModel().getColumn(VALUE_COLUMN);
+      final TableColumn defaultValue = myTable.getColumnModel().getColumn(DEFAULT_VALUE_COLUMN);
       myTable.removeColumn(defaultValue);
       myTable.getModel().addTableModelListener(new TableModelListener() {
         @Override
@@ -193,43 +195,54 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
     final Map<String, TypeParameterInfo> infos = new HashMap<String, TypeParameterInfo>();
     for (final TypeParameterInfo info : myTypeParameterInfos) {
-      if (!info.isForExistingParameter() &&
-          !PsiNameHelper.getInstance(myClass.getProject()).isIdentifier(info.getNewName())) {
-        return RefactoringBundle.message("error.wrong.name.input", info.getNewName());
+      if (info instanceof TypeParameterInfo.New &&
+          !PsiNameHelper.getInstance(myClass.getProject()).isIdentifier(info.getName(parameters))) {
+        return RefactoringBundle.message("error.wrong.name.input", info.getName(parameters));
       }
-      final String newName = info.isForExistingParameter() ? parameters[info.getOldParameterIndex()].getName() : info.getNewName();
+      final String newName = info.getName(parameters);
       TypeParameterInfo existing = infos.get(newName);
       if (existing != null) {
         return myClass.getName() + " already contains type parameter " + newName;
       }
       infos.put(newName, info);
     }
-    LOG.assertTrue(myTypeCodeFragments.size() == myTypeParameterInfos.size());
-    for (int i = 0; i < myTypeCodeFragments.size(); i++) {
-      final PsiTypeCodeFragment codeFragment = myTypeCodeFragments.get(i);
+    LOG.assertTrue(myDefaultValueTypeCodeFragments.size() == myTypeParameterInfos.size());
+    LOG.assertTrue(myBoundValueTypeCodeFragments.size() == myTypeParameterInfos.size());
+    for (int i = 0; i < myDefaultValueTypeCodeFragments.size(); i++) {
       TypeParameterInfo info = myTypeParameterInfos.get(i);
-      if (info.getOldParameterIndex() >= 0) continue;
-      PsiType type;
-      try {
-        type = codeFragment.getType();
-        if (type instanceof PsiPrimitiveType) {
-          return "Type parameter can't be primitive";
-        }
-      }
-      catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        return RefactoringBundle.message("changeClassSignature.bad.default.value", codeFragment.getText(), info.getNewName());
-      }
-      catch (PsiTypeCodeFragment.NoTypeException e) {
-        return RefactoringBundle.message("changeSignature.no.type.for.parameter", info.getNewName());
-      }
-      info.setDefaultValue(type);
+      if (info instanceof TypeParameterInfo.Existing) continue;
+      String message = updateInfo(myDefaultValueTypeCodeFragments.get(i), (TypeParameterInfo.New)info, InfoUpdater.DEFAULT_VALUE);
+      if (message != null) return message;
+      message = updateInfo(myBoundValueTypeCodeFragments.get(i), (TypeParameterInfo.New)info, InfoUpdater.BOUND_VALUE);
+      if (message != null) return message;
     }
+    return null;
+  }
+
+  private static String updateInfo(PsiTypeCodeFragment source, TypeParameterInfo.New info, InfoUpdater updater) {
+    PsiType valueType;
+    try {
+      valueType = source.getType();
+      if (valueType instanceof PsiPrimitiveType) {
+        return "Type parameter can't be primitive";
+      }
+    }
+    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
+      return RefactoringBundle
+        .message("changeClassSignature.bad.value", updater.getValueName(), source.getText(), info.getName(null));
+    }
+    catch (PsiTypeCodeFragment.NoTypeException e) {
+      return updater == InfoUpdater.DEFAULT_VALUE
+             ? RefactoringBundle.message("changeSignature.no.type.for.parameter", info.getName(null))
+             : null;
+    }
+    updater.updateInfo(info, valueType);
     return null;
   }
 
   private class MyTableModel extends AbstractTableModel implements EditableModel {
     public int getColumnCount() {
-      return 2;
+      return 3;
     }
 
     public int getRowCount() {
@@ -244,29 +257,27 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case NAME_COLUMN:
-          TypeParameterInfo info = myTypeParameterInfos.get(rowIndex);
-          if (info.isForExistingParameter()) {
-            return myOriginalParameters[info.getOldParameterIndex()].getName();
-          }
-          else {
-            return info.getNewName();
-          }
-        case VALUE_COLUMN:
-          return myTypeCodeFragments.get(rowIndex);
+          return myTypeParameterInfos.get(rowIndex).getName(myOriginalParameters);
+        case BOUND_VALUE_COLUMN:
+          return myBoundValueTypeCodeFragments.get(rowIndex);
+        case DEFAULT_VALUE_COLUMN:
+          return myDefaultValueTypeCodeFragments.get(rowIndex);
       }
       LOG.assertTrue(false);
       return null;
     }
 
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return !myTypeParameterInfos.get(rowIndex).isForExistingParameter();
+      return myTypeParameterInfos.get(rowIndex) instanceof TypeParameterInfo.New;
     }
 
     public String getColumnName(int column) {
       switch (column) {
         case NAME_COLUMN:
           return RefactoringBundle.message("column.name.name");
-        case VALUE_COLUMN:
+        case BOUND_VALUE_COLUMN:
+          return RefactoringBundle.message("changeSignature.bound.value.column");
+        case DEFAULT_VALUE_COLUMN:
           return RefactoringBundle.message("changeSignature.default.value.column");
         default:
           LOG.assertTrue(false);
@@ -277,9 +288,9 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case NAME_COLUMN:
-          myTypeParameterInfos.get(rowIndex).setNewName((String)aValue);
+          ((TypeParameterInfo.New)myTypeParameterInfos.get(rowIndex)).setNewName((String)aValue);
           break;
-        case VALUE_COLUMN:
+        case DEFAULT_VALUE_COLUMN:
           break;
         default:
           LOG.assertTrue(false);
@@ -288,21 +299,24 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
     public void addRow() {
       TableUtil.stopEditing(myTable);
-      myTypeParameterInfos.add(new TypeParameterInfo("", null));
-      myTypeCodeFragments.add(createValueCodeFragment());
-      final int row = myTypeCodeFragments.size() - 1;
+      myTypeParameterInfos.add(new TypeParameterInfo.New("", null, null));
+      myBoundValueTypeCodeFragments.add(createValueCodeFragment());
+      myDefaultValueTypeCodeFragments.add(createValueCodeFragment());
+      final int row = myDefaultValueTypeCodeFragments.size() - 1;
       fireTableRowsInserted(row, row);
     }
 
     public void removeRow(int index) {
       myTypeParameterInfos.remove(index);
-      myTypeCodeFragments.remove(index);
+      myBoundValueTypeCodeFragments.remove(index);
+      myDefaultValueTypeCodeFragments.remove(index);
       fireTableDataChanged();
     }
 
     public void exchangeRows(int index1, int index2) {
       ContainerUtil.swapElements(myTypeParameterInfos, index1, index2);
-      ContainerUtil.swapElements(myTypeCodeFragments, index1, index2);
+      ContainerUtil.swapElements(myBoundValueTypeCodeFragments, index1, index2);
+      ContainerUtil.swapElements(myDefaultValueTypeCodeFragments, index1, index2);
       fireTableDataChanged();
       //fireTableRowsUpdated(Math.min(index1, index2), Math.max(index1, index2));
     }
@@ -341,5 +355,35 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
       return component;
     }
+  }
+
+  private interface InfoUpdater {
+    void updateInfo(TypeParameterInfo.New info, PsiType type);
+
+    String getValueName();
+
+    InfoUpdater DEFAULT_VALUE = new InfoUpdater() {
+      @Override
+      public void updateInfo(TypeParameterInfo.New info, PsiType type) {
+        info.setDefaultValue(type);
+      }
+
+      @Override
+      public String getValueName() {
+        return "default";
+      }
+    };
+
+    InfoUpdater BOUND_VALUE = new InfoUpdater() {
+      @Override
+      public void updateInfo(TypeParameterInfo.New info, PsiType type) {
+        info.setBoundValue(type);
+      }
+
+      @Override
+      public String getValueName() {
+        return "bound";
+      }
+    };
   }
 }

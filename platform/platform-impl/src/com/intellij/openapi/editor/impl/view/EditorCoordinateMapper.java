@@ -45,11 +45,11 @@ class EditorCoordinateMapper {
   }
 
   int visualLineToY(int line) {
-    return line * myView.getLineHeight();
+    return myView.getInsets().top + Math.max(0, line) * myView.getLineHeight();
   }
 
   int yToVisualLine(int y) {
-    return y / myView.getLineHeight();
+    return Math.max(0, y - myView.getInsets().top) / myView.getLineHeight();
   }
 
   @NotNull
@@ -231,33 +231,34 @@ class EditorCoordinateMapper {
   }
 
   private float getStartX(int line) {
-    return line == 0 ? myView.getPrefixTextWidthInPixels() : 0;
+    return myView.getInsets().left + (line == 0 ? myView.getPrefixTextWidthInPixels() : 0);
   }
 
   @NotNull
   VisualPosition xyToVisualPosition(@NotNull Point p) {
-    int visualLine = yToVisualLine(Math.max(p.y, 0));
+    int visualLine = yToVisualLine(p.y);
     int lastColumn = 0;
     float x = getStartX(visualLine);
+    int px = p.x;
     if (visualLine < myView.getEditor().getVisibleLineCount()) {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
       for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false)) {
-        if (p.x <= fragment.getStartX()) {
+        if (px <= fragment.getStartX()) {
           if (fragment.getStartVisualColumn() == 0) {
             return new VisualPosition(visualLine, 0);
           }
           int markerWidth = myView.getEditor().getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
           float indent = fragment.getStartX() - markerWidth;
-          if (p.x <= indent) {
+          if (px <= indent) {
             break;
           }
-          boolean after = p.x >= indent + markerWidth / 2;
+          boolean after = px >= indent + markerWidth / 2;
           return new VisualPosition(visualLine, fragment.getStartVisualColumn() - (after ? 0 : 1), !after);
         }
         float nextX = fragment.getEndX();
-        if (p.x <= nextX) {
-          int[] column = fragment.xToVisualColumn(p.x);
+        if (px <= nextX) {
+          int[] column = fragment.xToVisualColumn(px);
           return new VisualPosition(visualLine, column[0], column[1] > 0);
         }
         x = nextX;
@@ -266,16 +267,16 @@ class EditorCoordinateMapper {
       }
       if (myView.getEditor().getSoftWrapModel().getSoftWrap(maxOffset) != null) {
         int markerWidth = myView.getEditor().getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
-        if (p.x <= x + markerWidth) {
-          boolean after = p.x >= x + markerWidth / 2;
+        if (px <= x + markerWidth) {
+          boolean after = px >= x + markerWidth / 2;
           return new VisualPosition(visualLine, lastColumn + (after ? 1 : 0), !after);
         }
-        p.x -= markerWidth;
+        px -= markerWidth;
         lastColumn++;
       }
     }
     int plainSpaceWidth = myView.getPlainSpaceWidth();
-    int remainingShift = (int)(p.x - x);
+    int remainingShift = (int)(px - x);
     int additionalColumns = remainingShift <= 0 ? 0 : (remainingShift + plainSpaceWidth / 2) / plainSpaceWidth;
     return new VisualPosition(visualLine, lastColumn + additionalColumns, 
                               remainingShift > 0 && additionalColumns == (remainingShift - 1) / plainSpaceWidth);

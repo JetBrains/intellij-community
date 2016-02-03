@@ -25,6 +25,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -124,6 +125,11 @@ public class MethodCandidateInfo extends CandidateInfo{
     final PsiMethod method = getElement();
     
     if (isToInferApplicability()) {
+      if (!isOverloadCheck()) {
+        //ensure applicability check is performed
+        getSubstitutor(false);
+      }
+
       //already performed checks, so if inference failed, error message should be saved  
       if (myInferenceError != null || !isPotentiallyCompatible()) {
         return ApplicabilityLevel.NOT_APPLICABLE;
@@ -135,6 +141,8 @@ public class MethodCandidateInfo extends CandidateInfo{
     @ApplicabilityLevelConstant int level = computeForOverloadedCandidate(new Computable<Integer>() {
       @Override
       public Integer compute() {
+        //arg types are calculated here without additional constraints:
+        //non-pertinent to applicability arguments of arguments would be skipped 
         PsiType[] argumentTypes = getArgumentTypes();
         if (argumentTypes == null) {
           return ApplicabilityLevel.NOT_APPLICABLE;
@@ -448,6 +456,25 @@ public class MethodCandidateInfo extends CandidateInfo{
     return myInferenceError;
   }
 
+  public String getParentInferenceErrorMessage(PsiExpressionList list) {
+    String errorMessage = getInferenceErrorMessage();
+    while (errorMessage == null) {
+      list = PsiTreeUtil.getParentOfType(list, PsiExpressionList.class, true);
+      if (list == null) {
+        break;
+      }
+      final PsiElement parent = list.getParent();
+      if (!(parent instanceof PsiCallExpression)) {
+        break;
+      }
+      final JavaResolveResult resolveResult = ((PsiCallExpression)parent).resolveMethodGenerics();
+      if (resolveResult instanceof MethodCandidateInfo) {
+        errorMessage = ((MethodCandidateInfo)resolveResult).getInferenceErrorMessage();
+      }
+    }
+    return errorMessage;
+  }
+  
   public CurrentCandidateProperties createProperties() {
     return new CurrentCandidateProperties(this, getSiteSubstitutor(), isVarargs(), false);
   }

@@ -27,7 +27,9 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
@@ -38,7 +40,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.packaging.artifacts.Artifact;
@@ -74,8 +75,6 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   private JComponent myToolbarComponent;
   @NonNls public static final String CATEGORY = "category";
   private JComponent myToFocus;
-  private boolean myWasUiDisposed;
-  private ConfigurationErrorsComponent myErrorsComponent;
 
   public static class UIState {
     public float proportion;
@@ -357,7 +356,6 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Resetting Project Structure");
 
     try {
-      myWasUiDisposed = false;
 
       myContext.reset();
 
@@ -405,8 +403,6 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     propertiesComponent.setValue("project.structure.proportion", String.valueOf(myUiState.proportion));
     propertiesComponent.setValue("project.structure.side.proportion", String.valueOf(myUiState.sideProportion));
 
-    myWasUiDisposed = true;
-
     myUiState.proportion = mySplitter.getProportion();
     saveSideProportion();
     myContext.getDaemonAnalyzer().stop();
@@ -417,10 +413,6 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myName2Config.clear();
 
     myModuleConfigurator.getFacetsConfigurator().clearMaps();
-
-    if (myErrorsComponent != null) {
-      Disposer.dispose(myErrorsComponent);
-    }
 
     myUiInitialized = false;
   }

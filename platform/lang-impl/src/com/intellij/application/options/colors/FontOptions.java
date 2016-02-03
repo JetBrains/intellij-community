@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.OptionsConstants;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -30,6 +31,8 @@ import com.intellij.ui.FontComboBox;
 import com.intellij.ui.FontInfoRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
@@ -40,8 +43,10 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 public class FontOptions extends JPanel implements OptionsPanel{
   private static final FontInfoRenderer RENDERER = new FontInfoRenderer() {
@@ -50,6 +55,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
       return UISettings.getShadowInstance().EDITOR_AA_TYPE;
     }
   };
+  private static final String HELP_URL = "https://confluence.jetbrains.com/display/IDEADEV/Support+for+Ligatures+in+Editor";
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
@@ -59,6 +65,8 @@ public class FontOptions extends JPanel implements OptionsPanel{
   @NotNull private final JTextField myLineSpacingField    = new JTextField(4);
   private final FontComboBox myPrimaryCombo = new FontComboBox();
   private final JCheckBox myUseSecondaryFontCheckbox = new JCheckBox(ApplicationBundle.message("secondary.font"));
+  private final JCheckBox myEnableLigaturesCheckbox = new JCheckBox(ApplicationBundle.message("use.ligatures"));
+  private final JLabel myLigaturesInfoLinkLabel;
   private final FontComboBox mySecondaryCombo = new FontComboBox();
 
   @NotNull private final JBCheckBox myOnlyMonospacedCheckBox =
@@ -93,19 +101,23 @@ public class FontOptions extends JPanel implements OptionsPanel{
                    SwingConstants.LEFT), "newline, sx 5");
     add(myUseSecondaryFontCheckbox, "newline, ax right");
     add(mySecondaryCombo, "sgx b");
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+    myEnableLigaturesCheckbox.setBorder(null);
+    panel.add(myEnableLigaturesCheckbox);
+    myLigaturesInfoLinkLabel = new LinkLabel<>(ApplicationBundle.message("ligatures.more.info"), null, (LinkListener<Void>)(aSource, aLinkData) -> BrowserUtil.browse(HELP_URL));
+    myLigaturesInfoLinkLabel.setBorder(JBUI.Borders.emptyLeft(5));
+    panel.add(myLigaturesInfoLinkLabel);
+    add(panel, "newline, sx 2");
 
     myOnlyMonospacedCheckBox.setBorder(null);
     myUseSecondaryFontCheckbox.setBorder(null);
     mySecondaryCombo.setEnabled(false);
 
     myOnlyMonospacedCheckBox.setSelected(EditorColorsManager.getInstance().isUseOnlyMonospacedFonts());
-    myOnlyMonospacedCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        EditorColorsManager.getInstance().setUseOnlyMonospacedFonts(myOnlyMonospacedCheckBox.isSelected());
-        myPrimaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
-        mySecondaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
-      }
+    myOnlyMonospacedCheckBox.addActionListener(e -> {
+      EditorColorsManager.getInstance().setUseOnlyMonospacedFonts(myOnlyMonospacedCheckBox.isSelected());
+      myPrimaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
+      mySecondaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
     });
     myPrimaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
     myPrimaryCombo.setRenderer(RENDERER);
@@ -113,30 +125,19 @@ public class FontOptions extends JPanel implements OptionsPanel{
     mySecondaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
     mySecondaryCombo.setRenderer(RENDERER);
 
-    myUseSecondaryFontCheckbox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        mySecondaryCombo.setEnabled(myUseSecondaryFontCheckbox.isSelected());
-        syncFontFamilies();
-      }
+    myUseSecondaryFontCheckbox.addActionListener(e -> {
+      mySecondaryCombo.setEnabled(myUseSecondaryFontCheckbox.isSelected());
+      syncFontFamilies();
     });
-    ItemListener itemListener = new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          syncFontFamilies();
-        }
+    ItemListener itemListener = e -> {
+      if (e.getStateChange() == ItemEvent.SELECTED) {
+        syncFontFamilies();
       }
     };
     myPrimaryCombo.addItemListener(itemListener);
     mySecondaryCombo.addItemListener(itemListener);
 
-    ActionListener actionListener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        syncFontFamilies();
-      }
-    };
+    ActionListener actionListener = e -> syncFontFamilies();
     myPrimaryCombo.addActionListener(actionListener);
     mySecondaryCombo.addActionListener(actionListener);
 
@@ -194,6 +195,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
         }
       }
     });
+    myEnableLigaturesCheckbox.addActionListener(e -> getFontPreferences().setUseLigatures(myEnableLigaturesCheckbox.isSelected()));
   }
 
   private int getFontSizeFromField() {
@@ -279,6 +281,10 @@ public class FontOptions extends JPanel implements OptionsPanel{
     myEditorFontSizeField.setEnabled(!readOnly);
     myUseSecondaryFontCheckbox.setEnabled(!readOnly);
 
+    myEnableLigaturesCheckbox.setEnabled(!readOnly);
+    myLigaturesInfoLinkLabel.setEnabled(!readOnly);
+    myEnableLigaturesCheckbox.setSelected(fontPreferences.useLigatures());
+
     myIsInSchemeChange = false;
   }
 
@@ -338,6 +344,6 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
   @Override
   public Set<String> processListOptions() {
-    return new HashSet<String>();
+    return new HashSet<>();
   }
 }
