@@ -21,6 +21,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.ui.WindowWrapperBuilder;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
@@ -53,16 +54,17 @@ public abstract class DiffWindowBase {
       .setProject(myProject)
       .setParent(myHints.getParent())
       .setDimensionServiceKey(dialogGroupKey)
-      .setOnShowCallback(new Runnable() {
+      .setPreferredFocusedComponent(new Computable<JComponent>() {
         @Override
-        public void run() {
-          myProcessor.updateRequest();
-          myProcessor.requestFocus(); // TODO: not needed for modal dialogs. Make a flag in WindowWrapperBuilder ?
+        public JComponent compute() {
+          return myProcessor.getPreferredFocusedComponent();
         }
       })
       .build();
     myWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
     Disposer.register(myWrapper, myProcessor);
+
+    myProcessor.updateRequest();
   }
 
   public void show() {

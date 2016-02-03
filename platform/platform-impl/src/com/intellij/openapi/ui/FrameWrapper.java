@@ -142,7 +142,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     final WindowAdapter focusListener = new WindowAdapter() {
       public void windowOpened(WindowEvent e) {
         IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
-        JComponent toFocus = myPreferedFocus;
+        JComponent toFocus = getPreferredFocusedComponent();
         if (toFocus == null) {
           toFocus = fm.getFocusTargetFor(myComponent);
         }
@@ -288,6 +288,10 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   public void setPreferredFocusedComponent(JComponent preferedFocus) {
     myPreferedFocus = preferedFocus;
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myPreferedFocus;
   }
 
   public void closeOnEsc() {
