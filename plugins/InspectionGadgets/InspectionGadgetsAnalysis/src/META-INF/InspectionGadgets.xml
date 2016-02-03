@@ -54,6 +54,10 @@
                      key="method.return.concrete.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.abstraction.MethodReturnOfConcreteClassInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="OptionalUsedAsFieldOrParameterType" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="optional.used.as.field.or.parameter.type.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.abstraction.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.abstraction.OptionalUsedAsFieldOrParameterTypeInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="OverlyStrongTypeCast" bundle="com.siyeh.InspectionGadgetsBundle" key="overly.strong.type.cast.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.abstraction.OverlyStrongTypeCastInspection"/>
@@ -2536,11 +2540,11 @@
                      level="WARNING" implementationClass="com.siyeh.ig.threading.AwaitNotInLoopInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AtomicFieldUpdaterIssues" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="atomic.field.updater.issues.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.threading.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.threading.AtomicFieldUpdaterIssuesInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AtomicFieldUpdaterNotStaticFinal" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="atomic.field.updater.not.static.final.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.threading.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.threading.AtomicFieldUpdaterNotStaticFinalInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AwaitWithoutCorrespondingSignal" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="await.without.corresponding.signal.display.name" groupBundle="messages.InspectionsBundle"
