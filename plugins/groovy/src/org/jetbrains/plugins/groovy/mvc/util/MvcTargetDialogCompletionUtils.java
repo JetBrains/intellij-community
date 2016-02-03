@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -33,9 +34,10 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.mvc.MvcFramework;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.mvc.MvcFramework;
 
 import java.io.File;
 import java.util.*;
@@ -64,25 +66,29 @@ public class MvcTargetDialogCompletionUtils {
     "grails.project.plugin.provided.class.dir", "grails.project.test.class.dir", "grails.project.test.reports.dir",
     "grails.project.docs.output.dir", "grails.project.test.source.dir", "grails.project.target.dir", "grails.project.war.file",
     "grails.project.war.file", "grails.project.war.osgi.headers", "grails.build.listeners", "grails.project.compile.verbose",
-    "grails.testing.functional.baseUrl", "grails.compile.artefacts.closures.convert"
+    "grails.testing.functional.baseUrl", "grails.compile.artefacts.closures.convert",
+
+    "grails.project.source.level",
+    "grails.project.target.level"
   };
 
-  private static List<LookupElement> SYSTEM_PROPERTIES_VARIANTS;
+  private static final NotNullLazyValue<List<LookupElement>> SYSTEM_PROPERTIES_VARIANTS = new NotNullLazyValue<List<LookupElement>>() {
+    @NotNull
+    @Override
+    protected List<LookupElement> compute() {
+      List<LookupElement> result = ContainerUtil.newArrayList();
+      for (String property : SYSTEM_PROPERTIES) {
+        result.add(TailTypeDecorator.withTail(LookupElementBuilder.create("-D" + property), MyTailTypeEQ.INSTANCE));
+      }
+      return Collections.unmodifiableList(result);
+    }
+  };
   
   private MvcTargetDialogCompletionUtils() {
   }
 
   public static List<LookupElement> getSystemPropertiesVariants() {
-    if (SYSTEM_PROPERTIES_VARIANTS == null) {
-      LookupElement[] res = new LookupElement[SYSTEM_PROPERTIES.length];
-      for (int i = 0; i < res.length; i++) {
-        res[i] = TailTypeDecorator.withTail(LookupElementBuilder.create("-D" + SYSTEM_PROPERTIES[i]), MyTailTypeEQ.INSTANCE);
-      }
-
-      SYSTEM_PROPERTIES_VARIANTS = Arrays.asList(res);
-    }
-
-    return SYSTEM_PROPERTIES_VARIANTS;
+    return SYSTEM_PROPERTIES_VARIANTS.getValue();
   }
   
   public static Collection<LookupElement> collectVariants(@NotNull Module module, @NotNull String text, int offset, @NotNull String prefix) {
