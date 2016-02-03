@@ -403,4 +403,15 @@ public class StudyUtils {
     }
     return null;
   }
+  
+  @Nullable
+  public static StudyToolWindowConfigurator getConfigurator(@NotNull final Project project) {
+    StudyToolWindowConfigurator[] extensions = StudyToolWindowConfigurator.EP_NAME.getExtensions();
+    for (StudyToolWindowConfigurator extension: extensions) {
+      if (extension.accept(project)) {
+        return extension;
+      }
+    }
+    return null;
+  }
 }

@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBCardLayout;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Map;
 
 public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
@@ -99,6 +101,25 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
   public void setBottomComponent(JComponent component) {
     mySplitPane.setSecondComponent(component);
   }
+
+  //used in checkiO plugin.
+  @SuppressWarnings("unused")
+  public JComponent getBottomComponent() {
+    return mySplitPane.getSecondComponent();
+  }
+
+  //used in checkiO plugin.
+  @SuppressWarnings("unused")
+  public void setTopComponentPrefferedSize(@NotNull final Dimension dimension) {
+    myContentPanel.setPreferredSize(dimension);
+  }
+
+  //used in checkiO plugin.
+  @SuppressWarnings("unused")
+  public JPanel getContentPanel() {
+    return myContentPanel;
+  }
+  
   
   private static String getTaskText(@NotNull final Project project) {
     VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
@@ -122,7 +143,7 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
   private JPanel createTaskInfoPanel(String taskText) {
     myBrowserWindow = new StudyBrowserWindow(true, false);
     myBrowserWindow.addBackAndOpenButtons();
-    myBrowserWindow.loadContent(taskText);
+    myBrowserWindow.loadContent(taskText, StudyUtils.getConfigurator(ProjectUtil.guessCurrentProject(this)));
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
     panel.add(myBrowserWindow.getPanel());
@@ -149,7 +170,10 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
   }
 
   public void setTaskText(String text) {
-    myBrowserWindow.loadContent(text);
+    StudyToolWindowConfigurator configurator = StudyUtils.getConfigurator(ProjectUtil.guessCurrentProject(this));
+    if (configurator != null) {
+      myBrowserWindow.loadContent(text, configurator);
+    }
   }
 
   @Nullable

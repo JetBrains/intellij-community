@@ -34,11 +34,13 @@ public class PyStudyToolWindowConfigurator implements StudyToolWindowConfigurato
     return group;
   }
 
+  @NotNull
   @Override
   public HashMap<String, JPanel> getAdditionalPanels(Project project) { 
     return new HashMap<>();
   }
 
+  @NotNull
   @Override
   public FileEditorManagerListener getFileEditorManagerListener(@NotNull Project project,
                                                                 @NotNull StudyToolWindow studyToolWindow) {
@@ -86,6 +88,12 @@ public class PyStudyToolWindowConfigurator implements StudyToolWindowConfigurato
         studyToolWindow.setTaskText(text);
       }
     };
+  }
+
+  @NotNull
+  @Override
+  public String getDefaultHighlightingMode() {
+    return "python";
   }
 
   @Override
