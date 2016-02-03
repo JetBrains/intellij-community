@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -183,9 +182,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
     builder.setChanges(findChanges(objects), changeNodeDecorator);
     if (myShowUnversioned) {
-      // TODO: Currently we do not support ChangesBrowserManyUnversionedFilesNode here - and so explicitly set "0" to
-      // TODO: 2nd and 3rd values.
-      builder.setUnversioned(Trinity.create(manager.getUnversionedFiles(), 0, 0));
+      builder.setUnversioned(ChangesViewManager.getUnversionedFilesInfo(manager));
     }
 
     return builder.build();

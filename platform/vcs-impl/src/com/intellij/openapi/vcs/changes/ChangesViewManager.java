@@ -327,10 +327,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     if (!ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return;
 
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-    Couple<Integer> unv = changeListManager.getUnversionedFilesSize();
-    Trinity<List<VirtualFile>, Integer, Integer> unversionedPair = Trinity
-      .create(unv.getFirst() > UNVERSIONED_MAX_SIZE ? Collections.<VirtualFile>emptyList() : changeListManager.getUnversionedFiles(),
-              unv.getFirst(), unv.getSecond());
+    Trinity<List<VirtualFile>, Integer, Integer> unversionedPair = getUnversionedFilesInfo(changeListManager);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("refresh view, unversioned collections size: " + unversionedPair.getFirst().size() + " unv size passed: " +
@@ -345,6 +342,15 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
                        changeListManager.getLogicallyLockedFolders());
 
     changeDetails();
+  }
+
+  @NotNull
+  public static Trinity<List<VirtualFile>, Integer, Integer> getUnversionedFilesInfo(@NotNull ChangeListManagerImpl manager) {
+    Couple<Integer> size = manager.getUnversionedFilesSize();
+    boolean manyUnversioned = size.getFirst() > UNVERSIONED_MAX_SIZE;
+
+    return Trinity
+      .create(manyUnversioned ? Collections.<VirtualFile>emptyList() : manager.getUnversionedFiles(), size.getFirst(), size.getSecond());
   }
 
   @NotNull
