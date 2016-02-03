@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,16 +122,16 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
     final PsiClass containingClass = getContainingClass();
     final String qName = containingClass != null ? containingClass.getQualifiedName() : null;
     if ("java.lang.Float".equals(qName)) {
-      @NonNls final String name = getName();
-      if ("POSITIVE_INFINITY".equals(name)) return new Float(Float.POSITIVE_INFINITY);
-      if ("NEGATIVE_INFINITY".equals(name)) return new Float(Float.NEGATIVE_INFINITY);
-      if ("NaN".equals(name)) return new Float(Float.NaN);
+      String name = getName();
+      if ("POSITIVE_INFINITY".equals(name)) return Float.POSITIVE_INFINITY;
+      if ("NEGATIVE_INFINITY".equals(name)) return Float.NEGATIVE_INFINITY;
+      if ("NaN".equals(name)) return Float.NaN;
     }
     else if ("java.lang.Double".equals(qName)) {
-      @NonNls final String name = getName();
-      if ("POSITIVE_INFINITY".equals(name)) return new Double(Double.POSITIVE_INFINITY);
-      if ("NEGATIVE_INFINITY".equals(name)) return new Double(Double.NEGATIVE_INFINITY);
-      if ("NaN".equals(name)) return new Double(Double.NaN);
+      String name = getName();
+      if ("POSITIVE_INFINITY".equals(name)) return Double.POSITIVE_INFINITY;
+      if ("NEGATIVE_INFINITY".equals(name)) return Double.NEGATIVE_INFINITY;
+      if ("NaN".equals(name)) return Double.NaN;
     }
 
     return PsiConstantEvaluationHelperImpl.computeCastTo(initializer, getType(), visitedVars);

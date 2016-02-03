@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,8 @@ import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.util.cls.ClsFormatException;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * @author max
@@ -83,10 +81,7 @@ public class ClsBuilderTest extends LightIdeaTestCase {
 
       assertEquals(expected, actual);
     }
-    catch (ClsFormatException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IOException e) {
+    catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
