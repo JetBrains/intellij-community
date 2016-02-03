@@ -1,15 +1,15 @@
 package com.siyeh.igtest.bugs;
 
-public class AssignmentToNullInspection
+public class AssignmentToNull
 {
     private Object m_foo = null;
 
     public static void main(String[] args)
     {
-        new AssignmentToNullInspection(new Object()).bar();
+        new AssignmentToNull(new Object()).bar();
     }
 
-    public AssignmentToNullInspection(Object foo)
+    public AssignmentToNull(Object foo)
     {
         m_foo = foo;
     }
@@ -18,8 +18,8 @@ public class AssignmentToNullInspection
     {
         Object foo = new Object();
         System.out.println("foo = " + foo);
-        foo = null;
-        m_foo = null;
+        <warning descr="Assignment of variable 'foo' to 'null'">foo</warning> = null;
+        <warning descr="Assignment of variable 'm_foo' to 'null'">m_foo</warning> = null;
         System.out.println("foo = " + foo);
         System.out.println("m_foo = " + m_foo);
     }
