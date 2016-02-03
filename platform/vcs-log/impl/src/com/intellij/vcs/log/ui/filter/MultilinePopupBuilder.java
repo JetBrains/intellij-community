@@ -63,7 +63,7 @@ class MultilinePopupBuilder {
                                                  Collection<String> values,
                                                  boolean supportsNegativeValues,
                                                  @NotNull String initialValue) {
-    EditorTextField textField = new LanguageTextField(FileTypes.PLAIN_TEXT.getLanguage(), project, initialValue) {
+    EditorTextField textField = new LanguageTextField(FileTypes.PLAIN_TEXT.getLanguage(), project, "") {
       @Override
       protected EditorEx createEditor() {
         EditorEx editor = super.createEditor();
@@ -74,7 +74,7 @@ class MultilinePopupBuilder {
         return editor;
       }
     };
-    new MyCompletionProvider(values, supportsNegativeValues).apply(textField);
+    new MyCompletionProvider(values, supportsNegativeValues).apply(textField, initialValue);
     textField.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2), textField.getBorder()));
     textField.setOneLineMode(false);
     return textField;
