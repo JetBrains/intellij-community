@@ -1250,7 +1250,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private void updateLegend() {
     if (myDisposed) return;
-    myChangesInfoCalculator.update(myBrowser.getCurrentDisplayedChanges(), getIncludedChanges());
+    myChangesInfoCalculator.update(myBrowser.getCurrentDisplayedChanges(), getIncludedChanges(), myBrowser.getUnversionedFilesCount(),
+                                   myBrowser.getIncludedUnversionedFiles().size());
     myLegend.update();
   }
 

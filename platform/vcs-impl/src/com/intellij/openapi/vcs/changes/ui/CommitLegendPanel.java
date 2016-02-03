@@ -44,6 +44,8 @@ public class CommitLegendPanel {
     appendText(myInfoCalculator.getNew(), myInfoCalculator.getIncludedNew(), FileStatus.ADDED, "commit.legend.new");
     appendText(myInfoCalculator.getModified(), myInfoCalculator.getIncludedModified(), FileStatus.MODIFIED, "commit.legend.modified");
     appendText(myInfoCalculator.getDeleted(), myInfoCalculator.getIncludedDeleted(), FileStatus.DELETED, "commit.legend.deleted");
+    appendText(myInfoCalculator.getUnversioned(), myInfoCalculator.getIncludedUnversioned(), FileStatus.UNKNOWN,
+               "commit.legend.unversioned");
   }
 
   private void appendText(int total, int included, @NotNull FileStatus fileStatus, @NotNull String labelKey) {
@@ -69,8 +71,10 @@ public class CommitLegendPanel {
     int getNew();
     int getModified();
     int getDeleted();
+    int getUnversioned();
     int getIncludedNew();
     int getIncludedModified();
     int getIncludedDeleted();
+    int getIncludedUnversioned();
   }
 }

@@ -25,15 +25,28 @@ import java.util.List;
 public class ChangeInfoCalculator implements CommitLegendPanel.InfoCalculator {
   @NotNull private List<Change> myDisplayedChanges;
   @NotNull private List<Change> myIncludedChanges;
+  private int myUnversionedFilesCount;
+  private int myIncludedUnversionedFilesCount;
 
   public ChangeInfoCalculator() {
     myDisplayedChanges = Collections.emptyList();
     myIncludedChanges = Collections.emptyList();
+    myUnversionedFilesCount = 0;
+    myIncludedUnversionedFilesCount = 0;
   }
 
   public void update(@NotNull List<Change> displayedChanges, @NotNull List<Change> includedChanges) {
+    update(displayedChanges, includedChanges, 0, 0);
+  }
+
+  public void update(@NotNull List<Change> displayedChanges,
+                     @NotNull List<Change> includedChanges,
+                     int unversionedFilesCount,
+                     int includedUnversionedFilesCount) {
     myDisplayedChanges = displayedChanges;
     myIncludedChanges = includedChanges;
+    myUnversionedFilesCount = unversionedFilesCount;
+    myIncludedUnversionedFilesCount = includedUnversionedFilesCount;
   }
 
   public int getNew() {
@@ -48,6 +61,11 @@ public class ChangeInfoCalculator implements CommitLegendPanel.InfoCalculator {
     return countMatchingItems(myDisplayedChanges, DELETED_FILTER);
   }
 
+  @Override
+  public int getUnversioned() {
+    return myUnversionedFilesCount;
+  }
+
   public int getIncludedNew() {
     return countMatchingItems(myIncludedChanges, NEW_FILTER);
   }
@@ -58,6 +76,11 @@ public class ChangeInfoCalculator implements CommitLegendPanel.InfoCalculator {
 
   public int getIncludedDeleted() {
     return countMatchingItems(myIncludedChanges, DELETED_FILTER);
+  }
+
+  @Override
+  public int getIncludedUnversioned() {
+    return myIncludedUnversionedFilesCount;
   }
 
   private static final Processor<Change> MODIFIED_FILTER = new Processor<Change>() {

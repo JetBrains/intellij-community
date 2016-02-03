@@ -373,6 +373,15 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   public abstract List<T> getCurrentDisplayedObjects();
 
   @NotNull
+  public List<VirtualFile> getIncludedUnversionedFiles() {
+    return Collections.emptyList();
+  }
+
+  public int getUnversionedFilesCount() {
+    return 0;
+  }
+
+  @NotNull
   protected List<Change> sortChanges(@NotNull Collection<Change> changes) {
     List<Change> result;
     try {

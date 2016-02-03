@@ -34,6 +34,10 @@ public class ChangesBrowserManyUnversionedFilesNode extends ChangesBrowserNode {
     myShower = new MyUnversionedShower(myProject);
   }
 
+  public int getUnversionedSize() {
+    return myUnversionedSize;
+  }
+
   public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
     return false;
   }

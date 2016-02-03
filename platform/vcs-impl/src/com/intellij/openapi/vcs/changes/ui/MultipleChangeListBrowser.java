@@ -45,10 +45,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
@@ -219,6 +217,44 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   public List<Object> getCurrentDisplayedObjects() {
     //noinspection unchecked
     return (List)getCurrentDisplayedChanges();
+  }
+
+  @NotNull
+  @Override
+  public List<VirtualFile> getIncludedUnversionedFiles() {
+    return myShowUnversioned
+           ? ContainerUtil.findAll(myViewer.getIncludedChanges(), VirtualFile.class)
+           : Collections.<VirtualFile>emptyList();
+  }
+
+  @Override
+  public int getUnversionedFilesCount() {
+    int result = 0;
+
+    if (myShowUnversioned) {
+      ChangesBrowserNode<?> node = findUnversionedFilesNode();
+
+      if (node != null) {
+        result = node instanceof ChangesBrowserManyUnversionedFilesNode
+                 ? ((ChangesBrowserManyUnversionedFilesNode)node).getUnversionedSize()
+                 : node.getAllFilesUnder().size();
+      }
+    }
+
+    return result;
+  }
+
+  @Nullable
+  private ChangesBrowserNode<?> findUnversionedFilesNode() {
+    //noinspection unchecked
+    Enumeration<ChangesBrowserNode> nodes = myViewer.getRoot().breadthFirstEnumeration();
+
+    return ContainerUtil.find(ContainerUtil.iterate(nodes), new Condition<ChangesBrowserNode>() {
+      @Override
+      public boolean value(@NotNull ChangesBrowserNode node) {
+        return node.getUserObject() == ChangesBrowserNode.UNVERSIONED_FILES_TAG;
+      }
+    });
   }
 
   @NotNull

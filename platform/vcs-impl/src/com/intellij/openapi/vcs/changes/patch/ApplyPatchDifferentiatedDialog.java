@@ -804,6 +804,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       return myTotal.getDeleted();
     }
 
+    @Override
+    public int getUnversioned() {
+      return 0;
+    }
+
     public int getIncludedNew() {
       return myIncluded.getAdded();
     }
@@ -814,6 +819,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
     public int getIncludedDeleted() {
       return myIncluded.getDeleted();
+    }
+
+    @Override
+    public int getIncludedUnversioned() {
+      return 0;
     }
   }
 
