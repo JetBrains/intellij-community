@@ -60,10 +60,6 @@ public class RecentTestsData {
   }
 
   public void addTest(String url, TestStateInfo.Magnitude magnitude, Date runDate) {
-    if (myRunner.getLocation(url) == null) {
-      return;
-    }
-    
     if (myRunner.isSuite(url)) {
       mySuites.put(url, new SuiteInfo(url, magnitude, runDate));
       return;
