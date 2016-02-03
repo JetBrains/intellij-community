@@ -44,6 +44,8 @@ public class PyStudyToolWindowConfigurator implements StudyToolWindowConfigurato
                                                                 @NotNull StudyToolWindow studyToolWindow) {
     return new FileEditorManagerListener() {
 
+      private static final String EMPTY_TASK_TEXT = "Please, open any task Ыto see task description";
+
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         Task task = getTask(file);
@@ -52,7 +54,7 @@ public class PyStudyToolWindowConfigurator implements StudyToolWindowConfigurato
 
       @Override
       public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        studyToolWindow.setTaskText(StudyBundle.message("empty.task.text"));
+        studyToolWindow.setTaskText(EMPTY_TASK_TEXT);
       }
 
       @Override
@@ -78,7 +80,7 @@ public class PyStudyToolWindowConfigurator implements StudyToolWindowConfigurato
       private void setTaskText(@Nullable final Task task, @Nullable final VirtualFile taskDirectory) {
         String text = StudyUtils.getTaskTextFromTask(task, taskDirectory);
         if (text == null) {
-          studyToolWindow.setTaskText(StudyBundle.message("empty.task.text"));
+          studyToolWindow.setTaskText(EMPTY_TASK_TEXT);
           return;
         }
         studyToolWindow.setTaskText(text);

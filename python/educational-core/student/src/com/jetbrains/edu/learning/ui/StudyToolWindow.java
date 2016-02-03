@@ -33,7 +33,6 @@ import com.intellij.util.ui.JBUI;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyBundle;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyToolWindowConfigurator;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -45,7 +44,7 @@ import java.util.Map;
 
 public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(StudyToolWindow.class);
-  private static final String EMPTY_TASK_TEXT = StudyBundle.message("empty.task.text");
+  private static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
   private static final String TASK_INFO_ID = "taskInfo";
   private final JBCardLayout myCardLayout;
   private final JPanel myContentPanel;
@@ -121,9 +120,7 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
   }
   
   private JPanel createTaskInfoPanel(String taskText) {
-    myBrowserWindow = new StudyBrowserWindow();
-    myBrowserWindow.setShowProgress(false);
-    myBrowserWindow.openLinkInNewWindow(true);
+    myBrowserWindow = new StudyBrowserWindow(true, false);
     myBrowserWindow.addBackAndOpenButtons();
     myBrowserWindow.loadContent(taskText);
     JPanel panel = new JPanel();

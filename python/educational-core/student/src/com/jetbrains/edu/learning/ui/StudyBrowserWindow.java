@@ -6,7 +6,6 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.jetbrains.edu.learning.StudyBundle;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
@@ -37,10 +36,12 @@ class StudyBrowserWindow extends JFrame {
 
   private WebEngine myEngine;
   private ProgressBar myProgressBar;
-  private boolean refInNewBrowser;
-  private boolean showProgress = true;
+  private boolean myLinkInNewBrowser = true;
+  private boolean myShowProgress = false;
 
-  public StudyBrowserWindow() {
+  public StudyBrowserWindow(final boolean linkInNewWindow, final boolean showProgress) {
+    myLinkInNewBrowser = linkInNewWindow;
+    myShowProgress = showProgress;
     setSize(new Dimension(900, 800));
     setLayout(new BorderLayout());
     setPanel(new JFXPanel());
@@ -93,7 +94,7 @@ class StudyBrowserWindow extends JFrame {
       myEngine = myWebComponent.getEngine();
 
 
-      if (showProgress) {
+      if (myShowProgress) {
         myProgressBar = makeProgressBarWithListener();
         myWebComponent.setVisible(false);
         myPane.getChildren().addAll(myWebComponent, myProgressBar);
@@ -101,7 +102,7 @@ class StudyBrowserWindow extends JFrame {
       else {
         myPane.getChildren().add(myWebComponent);
       }
-      if (refInNewBrowser) {
+      if (myLinkInNewBrowser) {
         initHyperlinkListener();
       }
       Scene scene = new Scene(myPane);
@@ -130,7 +131,7 @@ class StudyBrowserWindow extends JFrame {
   }
 
   private void updateLookWithProgressBarIfNeeded() {
-    if (showProgress) {
+    if (myShowProgress) {
       myProgressBar.setVisible(true);
       myWebComponent.setVisible(false);
     }
@@ -165,10 +166,8 @@ class StudyBrowserWindow extends JFrame {
 
         ApplicationManager.getApplication().invokeLater(() -> {
           final String href = ((Element)ev.getTarget()).getAttribute("href");
-          final StudyBrowserWindow checkIOBrowserWindow = new StudyBrowserWindow();
+          final StudyBrowserWindow checkIOBrowserWindow = new StudyBrowserWindow(false, true);
           checkIOBrowserWindow.addBackAndOpenButtons();
-          checkIOBrowserWindow.openLinkInNewWindow(false);
-          checkIOBrowserWindow.setShowProgress(true);
           checkIOBrowserWindow.load(href);
           checkIOBrowserWindow.setVisible(true);
         });
@@ -182,11 +181,11 @@ class StudyBrowserWindow extends JFrame {
       final JPanel panel = new JPanel();
       panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
 
-      final JButton backButton = makeGoButton(StudyBundle.message("browser.action.back"), AllIcons.Actions.Back, -1);
-      final JButton forwardButton = makeGoButton(StudyBundle.message("browser.action.forward"), AllIcons.Actions.Forward, 1);
+      final JButton backButton = makeGoButton("Click to go back", AllIcons.Actions.Back, -1);
+      final JButton forwardButton = makeGoButton("Click to go forward", AllIcons.Actions.Forward, 1);
       final JButton openInBrowser = new JButton(AllIcons.Actions.Browser_externalJavaDoc);
       openInBrowser.addActionListener(e -> BrowserUtil.browse(myEngine.getLocation()));
-      openInBrowser.setToolTipText(StudyBundle.message("browser.action.open.link"));
+      openInBrowser.setToolTipText("Click to open link in browser");
       addButtonsAvailabilityListeners(backButton, forwardButton);
 
       panel.setMaximumSize(new Dimension(40, getPanel().getHeight()));
