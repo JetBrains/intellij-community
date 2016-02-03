@@ -233,7 +233,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     }
     catch (PsiTypeCodeFragment.NoTypeException e) {
       return updater == InfoUpdater.DEFAULT_VALUE
-             ? RefactoringBundle.message("changeSignature.no.type.for.parameter", info.getName(null))
+             ? RefactoringBundle.message("changeSignature.no.type.for.parameter", "default value", info.getName(null))
              : null;
     }
     updater.updateInfo(info, valueType);
@@ -290,6 +290,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
         case NAME_COLUMN:
           ((TypeParameterInfo.New)myTypeParameterInfos.get(rowIndex)).setNewName((String)aValue);
           break;
+        case BOUND_VALUE_COLUMN:
         case DEFAULT_VALUE_COLUMN:
           break;
         default:

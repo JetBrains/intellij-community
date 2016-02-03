@@ -31,6 +31,7 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
+import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,7 +101,7 @@ class VisiblePackBuilder {
     else {
       visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, matchingHeads, getMatchedCommitIndex(matchingCommits));
     }
-    return Pair.create(new VisiblePack(dataPack, visibleGraph, canRequestMore), commitCount);
+    return Pair.create(new VisiblePack(dataPack, visibleGraph, canRequestMore, filters), commitCount);
   }
 
   private static <T> boolean matchesNothing(@Nullable Collection<T> matchingSet) {
@@ -118,7 +119,7 @@ class VisiblePackBuilder {
       }
     });
     VisibleGraph<Integer> visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, null, indices);
-    return new VisiblePack(dataPack, visibleGraph, false);
+    return new VisiblePack(dataPack, visibleGraph, false, new VcsLogFilterCollectionImpl(null, null, new VcsLogHashFilterImpl(hashes), null, null, null, null));
   }
 
   @Nullable

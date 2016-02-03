@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import static org.junit.Assume.assumeTrue;
 
 public class FileAttributesNio2ReadingTest extends FileAttributesReadingTest {
   @BeforeClass
-  public static void setUpClass() throws Exception {
+  public static void setUpClass() {
     assumeTrue(SystemInfo.isJavaVersionAtLeast("1.7"));
 
     System.setProperty(FileSystemUtil.FORCE_USE_NIO2_KEY, "true");
@@ -33,7 +33,7 @@ public class FileAttributesNio2ReadingTest extends FileAttributesReadingTest {
   }
 
   @AfterClass
-  public static void tearDownClass() throws Exception {
+  public static void tearDownClass() {
     System.clearProperty(FileSystemUtil.FORCE_USE_NIO2_KEY);
     FileSystemUtil.resetMediator();
   }

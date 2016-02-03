@@ -25,10 +25,9 @@ import java.util.*;
 
 import static com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.*;
 import static com.intellij.testIntegration.TestInfo.select;
-import static com.intellij.testIntegration.TestInfo.selectNot;
 
 public class RecentTestsData {
-  private static Comparator<TestInfo> TEST_BY_PATH_COMPARATOR = new Comparator<TestInfo>() {
+  private static Comparator<TestInfo> BY_PATH_COMPARATOR = new Comparator<TestInfo>() {
     @Override
     public int compare(TestInfo o1, TestInfo o2) {
       String path1 = VirtualFileManager.extractPath(o1.getUrl());
@@ -61,10 +60,6 @@ public class RecentTestsData {
   }
 
   public void addTest(String url, TestStateInfo.Magnitude magnitude, Date runDate) {
-    if (myRunner.getLocation(url) == null) {
-      return;
-    }
-    
     if (myRunner.isSuite(url)) {
       mySuites.put(url, new SuiteInfo(url, magnitude, runDate));
       return;
@@ -97,26 +92,38 @@ public class RecentTestsData {
 
   public List<String> calculateTestList() {
     distributeUnmatchedTests();
-
-    List<SuiteInfo> suites = ContainerUtil.newArrayList(mySuites.values());
-    Collections.sort(suites, TEST_BY_PATH_COMPARATOR);
-    Collections.sort(myTestsWithoutSuites, TEST_BY_PATH_COMPARATOR);
-    
-    Collections.sort(suites, SUITE_BY_RECENT_COMPARATOR);
-    Collections.sort(myTestsWithoutSuites, TEST_BY_RECENT_COMPARATOR);
-    
     List<String> result = ContainerUtil.newArrayList();
-
-    fillWithSuites(result, select(suites, ERROR_INDEX));
-    fillWithTests(result, select(myTestsWithoutSuites, ERROR_INDEX));
-
-    fillWithSuites(result, selectNot(suites, ERROR_INDEX, COMPLETE_INDEX, PASSED_INDEX));
-    fillWithTests(result, selectNot(myTestsWithoutSuites, COMPLETE_INDEX, PASSED_INDEX));
-
-    fillWithSuites(result, select(suites, COMPLETE_INDEX, PASSED_INDEX));
-    fillWithTests(result, select(myTestsWithoutSuites, COMPLETE_INDEX, PASSED_INDEX));
-    
+    fillWithTests(result, ERROR_INDEX, FAILED_INDEX);
+    fillWithTests(result, COMPLETE_INDEX, PASSED_INDEX, IGNORED_INDEX);
     return result;
+  }
+  
+  private void fillWithTests(List<String> result, TestStateInfo.Magnitude... magnitudes) {
+    List<SuiteInfo> suites = ContainerUtil.newArrayList(mySuites.values());
+    
+    List<SuiteInfo> failedSuites = select(suites, magnitudes);
+    List<TestInfo> failedTests = select(myTestsWithoutSuites, magnitudes);
+
+    sortByPath(failedSuites);
+    sortByPath(failedTests);
+
+    sortSuitesByRecent(failedSuites);
+    sortTestsByRecent(failedTests);
+
+    fillWithSuites(result, failedSuites);
+    fillWithTests(result, failedTests);
+  }
+
+  private static void sortSuitesByRecent(List<SuiteInfo> suites) {
+    Collections.sort(suites, SUITE_BY_RECENT_COMPARATOR);
+  }
+
+  private static void sortTestsByRecent(List<TestInfo> tests) {
+    Collections.sort(tests, TEST_BY_RECENT_COMPARATOR);
+  }
+
+  private static void sortByPath(List<? extends TestInfo> list) {
+    Collections.sort(list, BY_PATH_COMPARATOR);
   }
 
   private static void fillWithTests(List<String> result, List<TestInfo> tests) {
@@ -138,7 +145,7 @@ public class RecentTestsData {
     Set<TestInfo> allTests = suite.getTests();
 
     List<TestInfo> sameMagnitudeTests = suite.getTests(suiteMagnitude);
-    if (sameMagnitudeTests.size() == allTests.size()) {
+    if (sameMagnitudeTests.size() == allTests.size() || suite.getMagnitude() == IGNORED_INDEX) {
       result.add(suite.getUrl());
     }
     else {

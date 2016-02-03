@@ -25,7 +25,6 @@ import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
-import com.siyeh.ig.style.UnnecessarilyQualifiedStaticallyImportedElementInspection;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,93 +37,101 @@ public class RootTypeConversionRule extends TypeConversionRule {
                                                      final PsiMember member,
                                                      final PsiExpression context,
                                                      final TypeMigrationLabeler labeler) {
-    if (to instanceof PsiClassType && from instanceof PsiClassType) {
+    if (member != null && to instanceof PsiClassType && from instanceof PsiClassType) {
       final PsiClass targetClass = ((PsiClassType)to).resolve();
-      if (targetClass != null && member instanceof PsiMethod && member.isPhysical()) {
-        PsiMethod method = (PsiMethod)member;
-        PsiMethod replacer = targetClass.findMethodBySignature(method, true);
-        if (replacer == null) {
-          for (PsiMethod superMethod : method.findDeepestSuperMethods()) {
-            replacer = targetClass.findMethodBySignature(superMethod, true);
-            if (replacer != null) {
-              method = superMethod;
-              break;
+      if (targetClass != null && member.isPhysical()) {
+        if (member instanceof PsiMethod) {
+          PsiMethod method = (PsiMethod)member;
+          PsiMethod replacer = targetClass.findMethodBySignature(method, true);
+          if (replacer == null) {
+            for (PsiMethod superMethod : method.findDeepestSuperMethods()) {
+              replacer = targetClass.findMethodBySignature(superMethod, true);
+              if (replacer != null) {
+                method = superMethod;
+                break;
+              }
+            }
+          }
+          if (replacer != null) {
+            final boolean isStaticMethodConversion = replacer.hasModifierProperty(PsiModifier.STATIC);
+            boolean isValid = isStaticMethodConversion ?
+                              TypeConversionUtil.areTypesConvertible(method.getReturnType(), from) &&
+                              TypeConversionUtil.areTypesConvertible(replacer.getReturnType(), to) :
+                              TypeConversionUtil.areTypesConvertible(method.getReturnType(), replacer.getReturnType());
+            if (isValid) {
+              final PsiElement parent = context.getParent();
+              if (context instanceof PsiMethodReferenceExpression) {
+                final PsiType functionalInterfaceType = ((PsiMethodReferenceExpression)context).getFunctionalInterfaceType();
+                if (Comparing.equal(functionalInterfaceType, to) && method.isEquivalentTo(LambdaUtil.getFunctionalInterfaceMethod(from))) {
+                  return new TypeConversionDescriptorBase() {
+                    @Override
+                    public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
+                      final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)expression;
+                      final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
+                      if (qualifierExpression != null) {
+                        return (PsiExpression)expression.replace(qualifierExpression);
+                      }
+                      else {
+                        return expression;
+                      }
+                    }
+                  };
+                }
+              }
+              if (context instanceof PsiReferenceExpression && parent instanceof PsiMethodCallExpression) {
+                final JavaResolveResult resolveResult = ((PsiReferenceExpression)context).advancedResolve(false);
+                final PsiSubstitutor aSubst;
+                final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)parent).getMethodExpression();
+                final PsiExpression qualifier = methodExpression.getQualifierExpression();
+                final PsiClass substitutionClass = method.getContainingClass();
+                if (qualifier != null) {
+                  final PsiType evaluatedQualifierType = labeler.getTypeEvaluator().evaluateType(qualifier);
+                  if (evaluatedQualifierType instanceof PsiClassType) {
+                    aSubst = ((PsiClassType)evaluatedQualifierType).resolveGenerics().getSubstitutor();
+                  }
+                  else {
+                    aSubst = PsiSubstitutor.EMPTY;
+                  }
+                }
+                else {
+                  aSubst = TypeConversionUtil.getClassSubstitutor(member.getContainingClass(), substitutionClass, PsiSubstitutor.EMPTY);
+                }
+
+                final PsiParameter[] originalParams = ((PsiMethod)member).getParameterList().getParameters();
+                final PsiParameter[] migrationParams = replacer.getParameterList().getParameters();
+                final PsiExpression[] actualParams = ((PsiMethodCallExpression)parent).getArgumentList().getExpressions();
+
+                assert originalParams.length == migrationParams.length;
+                final PsiSubstitutor methodTypeParamsSubstitutor =
+                  labeler.getTypeEvaluator()
+                    .createMethodSubstitution(originalParams, actualParams, method, context, aSubst != null ? aSubst : PsiSubstitutor.EMPTY,
+                                              true);
+                for (int i = 0; i < originalParams.length; i++) {
+                  final PsiType originalType = resolveResult.getSubstitutor().substitute(originalParams[i].getType());
+
+                  PsiType type = migrationParams[i].getType();
+                  if (InheritanceUtil.isInheritorOrSelf(targetClass, substitutionClass, true)) {
+                    final PsiSubstitutor superClassSubstitutor =
+                      TypeConversionUtil.getClassSubstitutor(substitutionClass, targetClass, PsiSubstitutor.EMPTY);
+                    assert (superClassSubstitutor != null);
+                    type = superClassSubstitutor.substitute(type);
+                  }
+
+                  final PsiType migrationType = methodTypeParamsSubstitutor.substitute(type);
+                  if (!originalType.equals(migrationType) &&
+                      !TypeConversionUtil.areTypesAssignmentCompatible(migrationType, actualParams[i])) {
+                    labeler.migrateExpressionType(actualParams[i], migrationType, context, false, true);
+                  }
+                }
+              }
+              return isStaticMethodConversion ? new MyStaticMethodConversionDescriptor(targetClass) : new TypeConversionDescriptorBase();
             }
           }
         }
-        if (replacer != null) {
-          final boolean isStaticMethodConversion = replacer.hasModifierProperty(PsiModifier.STATIC);
-          boolean isValid = isStaticMethodConversion ?
-                            TypeConversionUtil.areTypesConvertible(method.getReturnType(), from) &&
-                            TypeConversionUtil.areTypesConvertible(replacer.getReturnType(), to) :
-                            TypeConversionUtil.areTypesConvertible(method.getReturnType(), replacer.getReturnType());
-          if (isValid) {
-            final PsiElement parent = context.getParent();
-            if (context instanceof PsiMethodReferenceExpression) {
-              final PsiType functionalInterfaceType = ((PsiMethodReferenceExpression)context).getFunctionalInterfaceType();
-              if (Comparing.equal(functionalInterfaceType, to) && method.isEquivalentTo(LambdaUtil.getFunctionalInterfaceMethod(from))) {
-                return new TypeConversionDescriptorBase() {
-                  @Override
-                  public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
-                    final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)expression;
-                    final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
-                    if (qualifierExpression != null) {
-                      return (PsiExpression)expression.replace(qualifierExpression);
-                    }
-                    else {
-                      return expression;
-                    }
-                  }
-                };
-              }
-            }
-            if (context instanceof PsiReferenceExpression && parent instanceof PsiMethodCallExpression) {
-              final JavaResolveResult resolveResult = ((PsiReferenceExpression)context).advancedResolve(false);
-              final PsiSubstitutor aSubst;
-              final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)parent).getMethodExpression();
-              final PsiExpression qualifier = methodExpression.getQualifierExpression();
-              final PsiClass substitutionClass = method.getContainingClass();
-              if (qualifier != null) {
-                final PsiType evaluatedQualifierType = labeler.getTypeEvaluator().evaluateType(qualifier);
-                if (evaluatedQualifierType instanceof PsiClassType) {
-                  aSubst = ((PsiClassType)evaluatedQualifierType).resolveGenerics().getSubstitutor();
-                }
-                else {
-                  aSubst = PsiSubstitutor.EMPTY;
-                }
-              }
-              else {
-                aSubst = TypeConversionUtil.getClassSubstitutor(member.getContainingClass(), substitutionClass, PsiSubstitutor.EMPTY);
-              }
-
-              final PsiParameter[] originalParams = ((PsiMethod)member).getParameterList().getParameters();
-              final PsiParameter[] migrationParams = replacer.getParameterList().getParameters();
-              final PsiExpression[] actualParams = ((PsiMethodCallExpression)parent).getArgumentList().getExpressions();
-
-              assert originalParams.length == migrationParams.length;
-              final PsiSubstitutor methodTypeParamsSubstitutor =
-                labeler.getTypeEvaluator()
-                  .createMethodSubstitution(originalParams, actualParams, method, context, aSubst != null ? aSubst : PsiSubstitutor.EMPTY,
-                                            true);
-              for (int i = 0; i < originalParams.length; i++) {
-                final PsiType originalType = resolveResult.getSubstitutor().substitute(originalParams[i].getType());
-
-                PsiType type = migrationParams[i].getType();
-                if (InheritanceUtil.isInheritorOrSelf(targetClass, substitutionClass, true)) {
-                  final PsiSubstitutor superClassSubstitutor =
-                    TypeConversionUtil.getClassSubstitutor(substitutionClass, targetClass, PsiSubstitutor.EMPTY);
-                  assert (superClassSubstitutor != null);
-                  type = superClassSubstitutor.substitute(type);
-                }
-
-                final PsiType migrationType = methodTypeParamsSubstitutor.substitute(type);
-                if (!originalType.equals(migrationType) &&
-                    !TypeConversionUtil.areTypesAssignmentCompatible(migrationType, actualParams[i])) {
-                  labeler.migrateExpressionType(actualParams[i], migrationType, context, false, true);
-                }
-              }
-            }
-            return isStaticMethodConversion ? new MyStaticMethodConversionDescriptor(targetClass) : new TypeConversionDescriptorBase();
+        else if (member instanceof PsiField) {
+          final PsiClass fieldContainingClass = member.getContainingClass();
+          if (InheritanceUtil.isInheritorOrSelf(targetClass, fieldContainingClass, true)) {
+            return new TypeConversionDescriptorBase();
           }
         }
       }

@@ -308,7 +308,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int startX = myEditor.isInDistractionFreeMode() ? 0 : getWhitespaceSeparatorOffset() + (isFoldingOutlineShown() ? 1 : 0);
     if (myEditor.myUseNewRendering) {
       com.intellij.openapi.editor.impl.view.IterationState state =
-        new com.intellij.openapi.editor.impl.view.IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, false, true, true, false);
+        new com.intellij.openapi.editor.impl.view.IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, 
+                                                                 false, true, false, true, false);
       while (!state.atEnd()) {
         drawEditorBackgroundForRange(g, state.getStartOffset(), state.getEndOffset(), state.getMergedAttributes(),
                                      defaultBackgroundColor, defaultForegroundColor, startX);
@@ -1139,12 +1140,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private int getFoldingAnchorWidth() {
     // have to be odd number to be perfectly symmetric (as long as we have plus sign inside)
-    return roundToOdd(Math.min(JBUI.scale(4) * myEditor.getScale(), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2);
+    return floorToOdd(Math.min(JBUI.scale(4) * myEditor.getScale(), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2);
   }
 
-  private static int roundToOdd(float f) {
+  private static int floorToOdd(float f) {
     int res = (int)f;
-    return res % 2 == 0 ? res : res + 1;
+    return res % 2 == 0 && res > 0 ? res : res - 1;
   }
 
   public int getFoldingAreaOffset() {

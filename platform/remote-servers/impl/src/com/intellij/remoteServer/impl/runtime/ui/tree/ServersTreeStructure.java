@@ -61,14 +61,18 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
   private final ServersTreeRootNode myRootElement;
   private final Project myProject;
   private final RemoteServersViewContribution myContribution;
+  private final ServersTreeNodeSelector myNodeSelector;
 
   private final Map<RemoteServer, Map<String, DeploymentGroup>> myServer2DeploymentGroups
     = new HashMap<RemoteServer, Map<String, DeploymentGroup>>();
 
-  public ServersTreeStructure(@NotNull Project project, @NotNull RemoteServersViewContribution contribution) {
+  public ServersTreeStructure(@NotNull Project project,
+                              @NotNull RemoteServersViewContribution contribution,
+                              @NotNull ServersTreeNodeSelector nodeSelector) {
     super(project);
     myProject = project;
     myContribution = contribution;
+    myNodeSelector = nodeSelector;
     myRootElement = new ServersTreeRootNode();
   }
 
@@ -96,6 +100,10 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
   @Override
   public Object getRootElement() {
     return myRootElement;
+  }
+
+  protected ServersTreeNodeSelector getNodeSelector() {
+    return myNodeSelector;
   }
 
   @Override

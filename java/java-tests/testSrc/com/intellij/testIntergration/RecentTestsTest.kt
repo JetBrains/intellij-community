@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testIntegration.RecentTestRunner
 import com.intellij.testIntegration.SelectTestStep
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Ignore
 import org.junit.Test
 import org.mockito.Matchers
 import org.mockito.Mockito.`when`
@@ -42,13 +43,23 @@ class RecentTestsStepTest {
     private val map: MutableMap<String, TestStateStorage.Record> = hashMapOf()
     
     fun addSuite(name: String, pass: Boolean, date: Date = Date(0)) {
-      val record = if (pass) passed(date) else failed(date)
+      val magnitude = if (pass) TestStateInfo.Magnitude.PASSED_INDEX else TestStateInfo.Magnitude.FAILED_INDEX
+      addSuite(name, magnitude, date)
+    }
+    
+    fun addSuite(name: String, magnitude: TestStateInfo.Magnitude, date: Date = Date(0)) {
+      val record = TestStateStorage.Record(magnitude.value, date)
       map.put("java:suite://$name", record)
+    }
+    
+    fun addTest(name: String, magnitude: TestStateInfo.Magnitude, date: Date = Date(0)) {
+      val record = TestStateStorage.Record(magnitude.value, date)
+      map.put("java:test://$name", record)
     }
 
     fun addTest(name: String, pass: Boolean, date: Date = Date(0)) {
-      val record = if (pass) passed(date) else failed(date)
-      map.put("java:test://$name", record)
+      val magnitude = if (pass) TestStateInfo.Magnitude.PASSED_INDEX else TestStateInfo.Magnitude.FAILED_INDEX
+      addTest(name, magnitude, date)
     }
     
     fun getMap() = map
@@ -82,6 +93,19 @@ class RecentTestsStepTest {
     val values = step.values.map { VirtualFileManager.extractPath(it) }
 
     assertThat(values).isEqualTo(listOf("ASTest", "ASTest.bbbb", "ASTest.cccc", "ASTest.aaaa"))
+  }
+  
+  @Test
+  fun `show ignored`() {
+    val storage = TestStorage()
+    storage.addSuite("ASTest", TestStateInfo.Magnitude.IGNORED_INDEX)
+    storage.addTest("ASTest.ignored", TestStateInfo.Magnitude.IGNORED_INDEX)
+    storage.addTest("ASTest.passed", pass = true)
+    
+    val step = SelectTestStep(storage.getMap(), runner)
+    val values = step.values.map { VirtualFileManager.extractPath(it) }
+
+    assertThat(values).isEqualTo(listOf("ASTest"))
   }
   
   @Test
@@ -137,6 +161,7 @@ class RecentTestsStepTest {
     assertThat(step.values).isEqualTo(expected)
   }
   
+  @Ignore
   @Test
   fun `do not show urls without location`() {
     val storage = TestStorage()

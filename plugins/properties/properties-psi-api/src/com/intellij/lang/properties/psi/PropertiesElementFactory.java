@@ -16,6 +16,7 @@
 
 package com.intellij.lang.properties.psi;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
@@ -43,10 +44,21 @@ public class PropertiesElementFactory {
   };
 
   @NotNull
-  public static IProperty createProperty(@NotNull Project project, @NonNls @NotNull String name, @NonNls @NotNull String value) {
-    String text = getPropertyText(name, value, null, project, true);
+  public static IProperty createProperty(@NotNull Project project,
+                                         @NonNls @NotNull String name,
+                                         @NonNls @NotNull String value,
+                                         @Nullable Character delimiter) {
+    String text = getPropertyText(name, value, delimiter, project, true);
     final PropertiesFile dummyFile = createPropertiesFile(project, text);
     return dummyFile.getProperties().get(0);
+  }
+
+  @Deprecated
+  @NotNull
+  public static IProperty createProperty(@NotNull Project project,
+                                         @NonNls @NotNull String name,
+                                         @NonNls @NotNull String value) {
+    return createProperty(project, name, value, null);
   }
 
   @NotNull
@@ -58,7 +70,7 @@ public class PropertiesElementFactory {
     if (delimiter == null) {
       delimiter = project == null ? '=' : PropertiesCodeStyleSettings.getInstance(project).getDelimiter();
     }
-    return (escape ? escape(name) : name) + String.valueOf(delimiter) + (escape ? escapeValue(value) : value);
+    return (escape ? escape(name) : name) + String.valueOf(delimiter) + (escape ? escapeValue(value, delimiter) : value);
   }
 
   @NotNull
@@ -95,7 +107,12 @@ public class PropertiesElementFactory {
     return StringUtil.escapeChars(name, '=', ':', ' ', '\t');
   }
 
+  @Deprecated
   public static String escapeValue(String value) {
-    return PropertiesResourceBundleUtil.fromValueEditorToPropertyValue(value);
+    return escapeValue(value, '=');
+  }
+
+  public static String escapeValue(String value, char delimiter) {
+    return PropertiesResourceBundleUtil.fromValueEditorToPropertyValue(value, delimiter);
   }
 }

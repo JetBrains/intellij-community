@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.util;
 
 import org.jdom.Attribute;
-import org.jdom.Document;
 import org.jdom.Element;
 
 import java.text.MessageFormat;
@@ -27,8 +26,8 @@ public class JDOMCompare {
   private JDOMCompare() {
   }
 
-  public static String diffDocuments(Document documentExpected, Document documentActual){
-    return diffElements(documentExpected.getRootElement(), documentActual.getRootElement(), "", 0 );
+  public static String diffElements(Element elementExpected, Element elementActual){
+    return diffElements(elementExpected, elementActual, "", 0 );
   }
 
   public static String diffElements(Element elementExpected, Element elementActual, String pathPrefix, int order) {

@@ -938,6 +938,8 @@ public class InferenceSession {
     List<ConstraintFormula> newConstraints = new ArrayList<ConstraintFormula>();
     for (int i = myConstraintIdx; i < myConstraints.size(); i++) {
       ConstraintFormula constraint = myConstraints.get(i);
+      //register expression in map to mark as "in progress" 
+      constraint.apply(PsiSubstitutor.EMPTY, true);
       if (!constraint.reduce(this, newConstraints)) {
         return false;
       }
@@ -1499,18 +1501,6 @@ public class InferenceSession {
                                        final PsiElement context,
                                        final boolean varargs) {
     try {
-      //push site substitutor to parameter bounds
-      final String text;
-      if (m1 instanceof ClsMethodImpl) {
-        final StringBuilder builder = new StringBuilder();
-        ((ClsMethodImpl)m1).appendMirrorText(0, builder);
-        text = builder.toString();
-      }
-      else {
-        text = m1.getText();
-      }
-
-      m1 = JavaPsiFacade.getElementFactory(m1.getProject()).createMethodFromText(text, m1);
       for (PsiTypeParameter parameter : m1.getTypeParameters()) {
         final PsiClassType[] types = parameter.getExtendsListTypes();
         if (types.length > 0) {
@@ -1523,14 +1513,14 @@ public class InferenceSession {
           //don't glb to avoid flattening = Object&Interface would be preserved
           //otherwise methods with different signatures could get same erasure
           final PsiType upperBound = PsiIntersectionType.createIntersection(false, conjuncts.toArray(new PsiType[conjuncts.size()]));
-          parameter.putUserData(UPPER_BOUND, upperBound);
+          LambdaUtil.getFunctionalTypeMap().put(parameter, upperBound);
         }
       }
       return isMoreSpecificInternal(m1, m2, siteSubstitutor1, args, context, varargs);
     }
     finally {
-      for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(m1)) {
-        parameter.putUserData(UPPER_BOUND, null);
+      for (PsiTypeParameter parameter : m1.getTypeParameters()) {
+        LambdaUtil.getFunctionalTypeMap().remove(parameter);
       }
     }
   }

@@ -190,13 +190,13 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @NotNull
   @Override
   public IProperty addProperty(String key, String value) {
-    return (IProperty)addProperty(PropertiesElementFactory.createProperty(getProject(), key, value));
+    return (IProperty)addProperty(PropertiesElementFactory.createProperty(getProject(), key, value, null));
   }
 
   @NotNull
   @Override
   public IProperty addPropertyAfter(String key, String value, @Nullable IProperty anchor) {
-    return (IProperty)addPropertyAfter(PropertiesElementFactory.createProperty(getProject(), key, value), anchor);
+    return (IProperty)addPropertyAfter(PropertiesElementFactory.createProperty(getProject(), key, value, null), anchor);
   }
 
   private void insertLineBreakBefore(final ASTNode anchorBefore) {

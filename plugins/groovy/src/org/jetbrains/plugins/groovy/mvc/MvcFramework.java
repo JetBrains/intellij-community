@@ -672,4 +672,8 @@ public abstract class MvcFramework {
     }
     return null;
   }
+
+  public boolean showActionGroup() {
+    return true;
+  }
 }

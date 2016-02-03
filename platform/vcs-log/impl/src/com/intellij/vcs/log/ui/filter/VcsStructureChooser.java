@@ -169,7 +169,7 @@ public class VcsStructureChooser extends DialogWrapper {
     myTree.setBorder(BORDER);
     myTree.setShowsRootHandles(true);
     myTree.setRootVisible(false);
-    myTree.getExpandableItemsHandler().setEnabled(false);
+    myTree.setExpandableItemsEnabled(false);
     final MyCheckboxTreeCellRenderer cellRenderer =
       new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject, myTree, myRoots);
     final FileSystemTreeImpl fileSystemTree =

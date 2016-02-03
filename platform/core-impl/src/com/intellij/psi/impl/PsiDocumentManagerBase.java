@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -530,18 +530,22 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       List<Map.Entry<Object, Runnable>> entries = new ArrayList<Map.Entry<Object, Runnable>>(new LinkedHashMap<Object, Runnable>(actionsWhenAllDocumentsAreCommitted).entrySet());
       weAreInsideAfterCommitHandler();
 
-      for (Map.Entry<Object, Runnable> entry : entries) {
-        Runnable action = entry.getValue();
-        Object key = entry.getKey();
-        try {
-          myDocumentCommitProcessor.log("Running after commit runnable: ", null, false, key, action);
-          action.run();
-        }
-        catch (Throwable e) {
-          LOG.error("During running "+action, e);
+      try {
+        for (Map.Entry<Object, Runnable> entry : entries) {
+          Runnable action = entry.getValue();
+          Object key = entry.getKey();
+          try {
+            myDocumentCommitProcessor.log("Running after commit runnable: ", null, false, key, action);
+            action.run();
+          }
+          catch (Throwable e) {
+            LOG.error("During running "+action, e);
+          }
         }
       }
-      actionsWhenAllDocumentsAreCommitted.clear();
+      finally {
+        actionsWhenAllDocumentsAreCommitted.clear();
+      }
     }
   }
 
