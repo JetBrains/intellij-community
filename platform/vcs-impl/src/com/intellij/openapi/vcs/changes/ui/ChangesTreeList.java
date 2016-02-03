@@ -202,6 +202,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
         return !myShowCheckboxes ? x : x - myTree.myCheckboxWidth;
       }
     }.installOn(myTree);
+    SmartExpander.installOn(myTree);
 
     setShowFlatten(PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY));
 
