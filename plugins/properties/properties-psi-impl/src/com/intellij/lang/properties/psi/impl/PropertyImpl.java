@@ -56,7 +56,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), name, "xxx");
+    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), name, "xxx", null);
     ASTNode keyNode = getKeyNode();
     ASTNode newKeyNode = property.getKeyNode();
     LOG.assertTrue(newKeyNode != null);
@@ -71,7 +71,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
 
   public void setValue(@NotNull String value) throws IncorrectOperationException {
     ASTNode node = getValueNode();
-    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", value);
+    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", value, getKeyValueDelimiter());
     ASTNode valueNode = property.getValueNode();
     if (node == null) {
       if (valueNode != null) {
@@ -452,7 +452,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
   }
 
   public void replaceKeyValueDelimiterWithDefault() {
-    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "yyy", "xxx");
+    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "yyy", "xxx", null);
     final ASTNode oldDelimiter = getNode().findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
     LOG.assertTrue(oldDelimiter != null);
     final ASTNode newDelimiter = property.getNode().findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);

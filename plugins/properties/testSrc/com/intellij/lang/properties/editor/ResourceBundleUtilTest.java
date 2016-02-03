@@ -64,7 +64,7 @@ public class ResourceBundleUtilTest {
       assertEquals(
         "Expected property value differs from the one converted from value editor text",
         entry[0],
-        PropertiesResourceBundleUtil.fromValueEditorToPropertyValue(entry[1])
+        PropertiesResourceBundleUtil.fromValueEditorToPropertyValue(entry[1], '=')
       );
       assertEquals(
         "Expected value editor text differs from the one converted from property value",
