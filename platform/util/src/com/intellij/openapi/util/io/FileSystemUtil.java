@@ -102,9 +102,8 @@ public class FileSystemUtil {
       }
     }
 
-    if (!SystemInfo.isWindows || IdeaWin32.isAvailable()) {
-      LOG.warn("Failed to load filesystem access layer: " + SystemInfo.OS_NAME + ", " + SystemInfo.JAVA_VERSION + ", " +
-               "nio2=" + forceNio2 + " fallback=" + forceFallback, error);
+    if (!forceFallback) {
+      LOG.warn("Failed to load filesystem access layer: " + SystemInfo.OS_NAME + ", " + SystemInfo.JAVA_VERSION + ", " + "nio2=" + forceNio2, error);
     }
 
     return new FallbackMediatorImpl();
