@@ -15,6 +15,7 @@
  */
 package com.intellij.notification.impl.ui;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
@@ -85,12 +86,12 @@ public class NotificationsUtil {
 
   @NotNull
   public static String buildHtml(@Nullable String title,
-                                  @Nullable String subtitle,
-                                  @Nullable String content,
-                                  @Nullable String style,
-                                  @Nullable String titleColor,
-                                  @Nullable String contentColor,
-                                  @Nullable String contentStyle) {
+                                 @Nullable String subtitle,
+                                 @Nullable String content,
+                                 @Nullable String style,
+                                 @Nullable String titleColor,
+                                 @Nullable String contentColor,
+                                 @Nullable String contentStyle) {
     if (StringUtil.isEmpty(title) && !StringUtil.isEmpty(subtitle)) {
       title = subtitle;
       subtitle = null;
@@ -121,8 +122,18 @@ public class NotificationsUtil {
 
   @Nullable
   public static String getFontStyle() {
-    Pair<String, Integer> systemFontData = UIUtil.getSystemFontData();
-    return systemFontData == null ? null : "font-family:" + systemFontData.first + ";";
+    String fontName = null;
+    UISettings uiSettings = UISettings.getInstance();
+    if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
+      fontName = uiSettings.FONT_FACE;
+    }
+    else {
+      Pair<String, Integer> systemFontData = UIUtil.getSystemFontData();
+      if (systemFontData != null) {
+        fontName = systemFontData.first;
+      }
+    }
+    return StringUtil.isEmpty(fontName) ? null : "font-family:" + fontName + ";";
   }
 
   @Nullable
@@ -151,10 +162,13 @@ public class NotificationsUtil {
   @NotNull
   public static MessageType getMessageType(@NotNull Notification notification) {
     switch (notification.getType()) {
-      case WARNING: return MessageType.WARNING;
-      case ERROR: return MessageType.ERROR;
+      case WARNING:
+        return MessageType.WARNING;
+      case ERROR:
+        return MessageType.ERROR;
       case INFORMATION:
-      default: return MessageType.INFO;
+      default:
+        return MessageType.INFO;
     }
   }
 
