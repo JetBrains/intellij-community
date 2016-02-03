@@ -22,7 +22,6 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,7 +39,7 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUi ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    actionPerformedImpl((VcsLogUiImpl)ui);
+    executeAction((VcsLogUiImpl)ui);
   }
 
   @Override
@@ -76,7 +75,7 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     }
   }
 
-  protected abstract void actionPerformedImpl(@NotNull VcsLogUiImpl vcsLogUi);
+  protected abstract void executeAction(@NotNull VcsLogUiImpl vcsLogUi);
 
   @NotNull
   protected abstract Icon getMergesIcon();

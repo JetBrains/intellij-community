@@ -23,7 +23,7 @@ import javax.swing.*;
 
 public class CollapseGraphAction extends CollapseOrExpandGraphAction {
   @Override
-  protected void actionPerformedImpl(@NotNull VcsLogUiImpl vcsLogUi) {
+  protected void executeAction(@NotNull VcsLogUiImpl vcsLogUi) {
     vcsLogUi.collapseAll();
   }
 
