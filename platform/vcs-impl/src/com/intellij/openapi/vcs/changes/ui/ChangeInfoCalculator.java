@@ -17,25 +17,21 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-/**
-* @author irengrig
-*         Date: 1/14/11
-*         Time: 6:36 PM
-*/
 public class ChangeInfoCalculator implements CommitLegendPanel.InfoCalculator {
-  private List<Change> myDisplayedChanges;
-  private List<Change> myIncludedChanges;
+  @NotNull private List<Change> myDisplayedChanges;
+  @NotNull private List<Change> myIncludedChanges;
 
   public ChangeInfoCalculator() {
     myDisplayedChanges = Collections.emptyList();
     myIncludedChanges = Collections.emptyList();
   }
 
-  public void update(final List<Change> displayedChanges, final List<Change> includedChanges) {
+  public void update(@NotNull List<Change> displayedChanges, @NotNull List<Change> includedChanges) {
     myDisplayedChanges = displayedChanges;
     myIncludedChanges = includedChanges;
   }
@@ -65,23 +61,24 @@ public class ChangeInfoCalculator implements CommitLegendPanel.InfoCalculator {
   }
 
   private static final Processor<Change> MODIFIED_FILTER = new Processor<Change>() {
-    public boolean process(final Change item) {
+    public boolean process(@NotNull Change item) {
       return item.getType() == Change.Type.MODIFICATION || item.getType() == Change.Type.MOVED;
     }
   };
   private static final Processor<Change> NEW_FILTER = new Processor<Change>() {
-    public boolean process(final Change item) {
+    public boolean process(@NotNull Change item) {
       return item.getType() == Change.Type.NEW;
     }
   };
   private static final Processor<Change> DELETED_FILTER = new Processor<Change>() {
-    public boolean process(final Change item) {
+    public boolean process(@NotNull Change item) {
       return item.getType() == Change.Type.DELETED;
     }
   };
 
-  private static <T> int countMatchingItems(List<T> items, Processor<T> filter) {
+  private static <T> int countMatchingItems(@NotNull List<T> items, @NotNull Processor<T> filter) {
     int count = 0;
+
     for (T item : items) {
       if (filter.process(item)) count++;
     }
