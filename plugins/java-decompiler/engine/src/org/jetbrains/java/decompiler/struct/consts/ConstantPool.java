@@ -208,7 +208,8 @@ public class ConstantPool implements NewClassNameBuilder {
       String newClassName = buildNewClassname(ln.classname);
       String newElement = interceptor.getName(ln.classname + ' ' + ln.elementname + ' ' + ln.descriptor);
       String newDescriptor = buildNewDescriptor(ln.type == CodeConstants.CONSTANT_Fieldref, ln.descriptor);
-
+      //TODO: Fix newElement being null caused by ln.classname being a leaf class instead of the class that declared the field/method.
+      //See the comments of IDEA-137253 for more information.
       if (newClassName != null || newElement != null || newDescriptor != null) {
         String className = newClassName == null ? ln.classname : newClassName;
         String elementName = newElement == null ? ln.elementname : newElement.split(" ")[1];
