@@ -122,6 +122,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   private TemplateState initTemplateState(@NotNull Editor editor) {
     clearTemplateState(editor);
+    PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
     TemplateState state = new TemplateState(myProject, editor);
     Disposer.register(this, state);
     editor.putUserData(TEMPLATE_STATE_KEY, state);
