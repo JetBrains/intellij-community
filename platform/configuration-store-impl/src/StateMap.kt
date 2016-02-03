@@ -193,7 +193,7 @@ class StateMap private constructor(private val names: Array<String>, private val
     if (!archive) {
       return state
     }
-    return if (states.compareAndSet(index, state, archiveState(state))) state else getState(key, true)
+    return if (states.compareAndSet(index, state, archiveState(state).toByteArray())) state else getState(key, true)
   }
 
   fun archive(key: String, state: Element?) {
@@ -204,7 +204,7 @@ class StateMap private constructor(private val names: Array<String>, private val
 
     val currentState = states.get(index)
     LOG.assertTrue(currentState is Element)
-    states.set(index, if (state == null) null else archiveState(state))
+    states.set(index, if (state == null) null else archiveState(state).toByteArray())
   }
 }
 
