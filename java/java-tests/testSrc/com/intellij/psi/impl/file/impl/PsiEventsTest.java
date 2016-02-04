@@ -180,7 +180,7 @@ public class PsiEventsTest extends PsiTestCase {
     PlatformTestUtil.tryGcSoftlyReachableObjects();
 
 
-    if (true || ((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1) != null) {
+    if (((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1) != null) {
       Processor<PsiDirectory> isReallyLeak = new Processor<PsiDirectory>() {
         @Override
         public boolean process(PsiDirectory directory) {
