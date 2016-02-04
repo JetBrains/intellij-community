@@ -21,6 +21,7 @@ Support for IntelliJ 10.5.4 by plugin version 0.8.7
 
 With this plugin your IntelliJ can recognize all of generated getters, setters and some other things from lombok project, so that you get code completion and are able to work without errors stating the methods don't exists.
 
+
 Features / Supports
 --------
 - [@Getter and @Setter](http://projectlombok.org/features/GetterSetter.html)
@@ -76,7 +77,14 @@ Developed By
 - [**@siosio** siosio](https://github.com/siosio)
 - [**@Siriah** Iris Hupkens](https://github.com/Siriah)
 
+Supporters
+--------
+[<img src="https://www.yourkit.com/images/yklogo.png" />](https://www.yourkit.com/)
+
+YourKit supports open source projects with its full-featured Java Profiler.
+YourKit, LLC is the creator of [YourKit Java Profiler](https://www.yourkit.com/java/profiler/index.jsp) and [YourKit .NET Profiler](https://www.yourkit.com/.net/profiler/index.jsp), innovative and intelligent tools for profiling Java and .NET applications.
+
 
 License
 -------
-Copyright (c) 2011-2015 Michail Plushnikov. See the [LICENSE](./LICENSE) file for license rights and limitations (BSD).
+Copyright (c) 2011-2016 Michail Plushnikov. See the [LICENSE](./LICENSE) file for license rights and limitations (BSD).
