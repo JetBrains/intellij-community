@@ -21,7 +21,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public interface ExpandableItemsHandler<T> {
+  // This is flag is set on list when <b>expanded</b> item is being rendered.
   Key<Boolean> EXPANDED_RENDERER = Key.create("ExpandedRenderer") ;
+  // This flag is set on component by CellRenderer which wants to use
+  // component's bounds as expanded item's geometry.
   Key<Boolean> USE_RENDERER_BOUNDS = Key.create("UseRendererBounds") ;
 
   void setEnabled(boolean enabled);
