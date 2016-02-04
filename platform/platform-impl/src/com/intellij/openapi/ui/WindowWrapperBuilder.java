@@ -241,6 +241,7 @@ public class WindowWrapperBuilder {
     @Nullable private final Project myProject;
     @NotNull private final JComponent myComponent;
     @NotNull private final Mode myMode;
+    @Nullable private final Runnable myOnShowCallback;
 
     @NotNull private final MyFrameWrapper myFrame;
 
@@ -254,7 +255,7 @@ public class WindowWrapperBuilder {
       myFrame = new MyFrameWrapper(builder.myProject, builder.myDimensionServiceKey);
       myFrame.setParameters(builder.myPreferredFocusedComponent);
 
-      installOnShowCallback(myFrame.getFrame(), builder.myOnShowCallback);
+      myOnShowCallback = builder.myOnShowCallback;
 
       myFrame.setComponent(builder.myComponent);
       myFrame.setTitle(builder.myTitle);
@@ -265,6 +266,7 @@ public class WindowWrapperBuilder {
     @Override
     public void show() {
       myFrame.show();
+      if (myOnShowCallback != null) myOnShowCallback.run();
     }
 
     @Nullable
