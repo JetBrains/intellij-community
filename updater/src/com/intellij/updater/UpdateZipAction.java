@@ -77,13 +77,13 @@ public class UpdateZipAction extends BaseUpdateAction {
 
     processZipFile(olderFile, new Processor() {
       public void process(ZipEntry entry, InputStream in) throws IOException {
-        oldCheckSums.put(entry.getName(), Digester.digestStream(in));
+        oldCheckSums.put(entry.getName(), myPatch.getDigester().digestStream(in));
       }
     });
 
     processZipFile(newerFile, new Processor() {
       public void process(ZipEntry entry, InputStream in) throws IOException {
-        newCheckSums.put(entry.getName(), Digester.digestStream(in));
+        newCheckSums.put(entry.getName(), myPatch.getDigester().digestStream(in));
       }
     });
 
