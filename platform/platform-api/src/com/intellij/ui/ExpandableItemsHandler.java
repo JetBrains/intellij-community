@@ -21,6 +21,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public interface ExpandableItemsHandler<T> {
+  /**
+   * This key is used to disable showing a popup for expandable item.
+   * It can be set to a renderer component to disable a popup for specific item.
+   *
+   * @see com.intellij.util.ui.UIUtil#putClientProperty
+   */
+  Key<Boolean> RENDERER_DISABLED = Key.create("EXPANDABLE_ITEM_RENDERER_DISABLED");
   // This is flag is set on list when <b>expanded</b> item is being rendered.
   Key<Boolean> EXPANDED_RENDERER = Key.create("ExpandedRenderer") ;
   // This flag is set on component by CellRenderer which wants to use

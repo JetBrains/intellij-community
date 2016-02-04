@@ -51,8 +51,6 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }
   };
 
-  public static final String DISABLE_EXPANDABLE_HANDLER = "DisableExpandableHandler";
-
   private boolean myEnabled = Registry.is("ide.expansion.hints.enabled");
   private final MovablePopup myPopup;
   private KeyType myKey;
@@ -380,7 +378,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     JComponent renderer = ObjectUtils.tryCast(rendererAndBounds.first, JComponent.class);
     if (renderer == null) return null;
-    if (renderer.getClientProperty(DISABLE_EXPANDABLE_HANDLER) != null) return null;
+    if (UIUtil.isClientPropertyTrue(renderer, RENDERER_DISABLED)) return null;
 
     if (UIUtil.isClientPropertyTrue(rendererAndBounds.getFirst(), USE_RENDERER_BOUNDS)) {
       rendererAndBounds.getSecond().translate(renderer.getX(), renderer.getY());
