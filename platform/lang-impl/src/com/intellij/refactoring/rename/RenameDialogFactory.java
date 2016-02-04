@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface RenameDialogFactory {
 
@@ -12,7 +13,7 @@ public interface RenameDialogFactory {
   RenameDialogViewModel createRenameDialog(Project project,
                                            @NotNull PsiElement substituted,
                                            @NotNull PsiElement nameSuggestionContext,
-                                           @NotNull Editor editor,
+                                           @Nullable Editor editor,
                                            @NotNull RenamePsiElementProcessor processor);
 
   class SERVICE {
