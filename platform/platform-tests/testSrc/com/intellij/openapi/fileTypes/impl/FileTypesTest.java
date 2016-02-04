@@ -616,7 +616,7 @@ public class FileTypesTest extends PlatformTestCase {
     }
   }
 
-  public void testStressPlainTextFileWithEverIncreasingLength() throws IOException, InterruptedException {
+  public void _testStressPlainTextFileWithEverIncreasingLength() throws IOException, InterruptedException {
     FrequentEventDetector.disableUntil(myTestRootDisposable);
 
     String stillText = StringUtil.repeatSymbol(' ', (int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD);
@@ -682,7 +682,7 @@ public class FileTypesTest extends PlatformTestCase {
     if (exception.get() != null) throw new RuntimeException(exception.get());
   }
 
-  public void testStressPlainTextFileWithEverIncreasingLength2() throws IOException, InterruptedException {
+  public void _testStressPlainTextFileWithEverIncreasingLength2() throws IOException, InterruptedException {
     FrequentEventDetector.disableUntil(myTestRootDisposable);
 
     File f = createTempFile("xx.asdkjfhlkasjdhf", StringUtil.repeatSymbol(' ', (int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD - 100));
