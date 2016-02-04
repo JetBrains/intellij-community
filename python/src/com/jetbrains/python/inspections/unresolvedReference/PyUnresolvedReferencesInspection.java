@@ -548,9 +548,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               }
               addCreateMemberFromUsageFixes(type, reference, refText, actions);
               if (type instanceof PyClassType) {
+                final PyClassType classType = (PyClassType)type;
                 if (reference instanceof PyOperatorReference) {
                   String className = type.getName();
-                  final PyClassType classType = (PyClassType)type;
                   if (classType.isDefinition()) {
                     final PyClassLikeType metaClassType = classType.getMetaClassType(myTypeEvalContext, true);
                     if (metaClassType != null) {
@@ -562,6 +562,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                                                  ((PyOperatorReference)reference).getReadableOperatorName());
                 }
                 else {
+                  final List<String> slots = classType.getPyClass().getOwnSlots();
+
+                  if (slots != null && slots.contains(refName)) {
+                    return;
+                  }
+
                   description = PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", refText, type.getName());
                 }
                 markedQualified = true;

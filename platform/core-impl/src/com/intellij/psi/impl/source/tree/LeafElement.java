@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,7 +125,7 @@ public abstract class LeafElement extends TreeElement {
     return leafTextMatches(text, buffer, start);
   }
 
-  public static int leafTextMatches(@NotNull CharSequence text, @NotNull CharSequence buffer, int start) {
+  static int leafTextMatches(@NotNull CharSequence text, @NotNull CharSequence buffer, int start) {
     assert start >= 0 : start;
     final int length = text.length();
     if(buffer.length() - start < length) {

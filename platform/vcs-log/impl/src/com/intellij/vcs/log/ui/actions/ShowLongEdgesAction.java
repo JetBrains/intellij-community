@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShowLongEdgesAction extends ToggleAction implements DumbAware {
   public ShowLongEdgesAction() {
-    super("Show long edges", "Show long branch edges even if commits are invisible in the current view.", VcsLogIcons.ShowHideLongEdges);
+    super("Show Long Edges", "Show long branch edges even if commits are invisible in the current view.", VcsLogIcons.ShowHideLongEdges);
   }
 
   @Override

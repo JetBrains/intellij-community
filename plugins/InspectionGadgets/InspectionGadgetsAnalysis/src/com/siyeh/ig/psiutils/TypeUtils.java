@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -83,6 +84,18 @@ public class TypeUtils {
     return typeEquals(CommonClassNames.JAVA_LANG_STRING, targetType);
   }
 
+  public static boolean isOptional(@Nullable PsiType type) {
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (aClass == null) {
+      return false;
+    }
+    final String qualifiedName = aClass.getQualifiedName();
+    return CommonClassNames.JAVA_UTIL_OPTIONAL.equals(qualifiedName)
+           || "java.util.OptionalDouble".equals(qualifiedName)
+           || "java.util.OptionalInt".equals(qualifiedName)
+           || "java.util.OptionalLong".equals(qualifiedName);
+  }
+
   public static boolean isExpressionTypeAssignableWith(@NotNull PsiExpression expression, @NotNull Iterable<String> rhsTypeTexts) {
     final PsiType type = expression.getType();
     if (type == null) {
@@ -107,7 +120,7 @@ public class TypeUtils {
     if (expression == null) {
       return null;
     }
-    PsiType type = expression instanceof PsiFunctionalExpression ? ((PsiFunctionalExpression)expression).getFunctionalInterfaceType() 
+    PsiType type = expression instanceof PsiFunctionalExpression ? ((PsiFunctionalExpression)expression).getFunctionalInterfaceType()
                                                                  : expression.getType();
     if (type == null) {
       return null;

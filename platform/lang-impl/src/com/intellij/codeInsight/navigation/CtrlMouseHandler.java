@@ -392,6 +392,9 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     private static TextRange getReferenceRange(@NotNull PsiElement elementAtPointer) {
       int textOffset = elementAtPointer.getTextOffset();
       final TextRange range = elementAtPointer.getTextRange();
+      if (range == null) {
+        throw new AssertionError("Null range for " + elementAtPointer + " of " + elementAtPointer.getClass());
+      }
       if (textOffset < range.getStartOffset() || textOffset < 0) {
         LOG.error("Invalid text offset " + textOffset + " of element " + elementAtPointer + " of " + elementAtPointer.getClass());
         textOffset = range.getStartOffset();

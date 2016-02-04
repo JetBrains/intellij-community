@@ -69,7 +69,7 @@ public class TestModulePropertiesImpl extends TestModuleProperties implements Pe
 
   @Override
   public void loadState(TestModulePropertiesState state) {
-
+    setProductionModuleName(state.moduleName);
   }
 
   public static class TestModulePropertiesState {

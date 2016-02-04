@@ -146,7 +146,7 @@ public class MainFrame extends JPanel implements DataProvider {
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
     myDetailsPanel.updateDataPack(dataPack);
-    myGraphTable.updateDataPack(dataPack);
+    myGraphTable.updateDataPack(dataPack, permGraphChanged);
     myBranchesPanel.updateDataPack(dataPack, permGraphChanged);
   }
 
@@ -223,7 +223,7 @@ public class MainFrame extends JPanel implements DataProvider {
 
     Wrapper textFilter = new Wrapper(myFilterUi.createTextFilter());
     textFilter.setVerticalSizeReferent(toolbar.getComponent());
-    textFilter.setBorder(BorderFactory.createEmptyBorder(1, 5, 0, 0));
+    textFilter.setBorder(JBUI.Borders.emptyLeft(5));
 
     ActionToolbar settings =
       createActionsToolbar(new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_QUICK_SETTINGS_ACTION)));

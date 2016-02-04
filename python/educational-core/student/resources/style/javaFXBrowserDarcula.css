@@ -1,0 +1,26 @@
+::-webkit-scrollbar-corner {
+background-color: #3c3f41;
+}
+
+body {
+    background-color: #3c3f41;
+    font-size: 12pt;
+    font-family: Serif;
+    font-weight: normal;
+    margin-left: 0;
+    margin-right: 0;
+    color: #dddddd
+}
+
+p img {
+    background-color: #bbbbbb;
+}
+
+textarea {
+background-color: #3c3f41;
+color: #dddddd
+}
+
+tr {
+    text-align: left
+}

@@ -37,7 +37,10 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.jetbrains.edu.EduDocumentListener;
 import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.StudyStatus;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -66,17 +69,11 @@ public class StudyCheckAction extends DumbAwareAction {
 
   boolean checkInProgress = false;
 
-  protected StudyCheckAction() {
+  public StudyCheckAction() {
     super("Check Task (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Check current task", InteractiveLearningIcons.Resolve);
   }
 
-
-  public static StudyCheckAction createCheckAction(final Course course) {
-    StudyCheckAction checkAction = StudyUtils.getCheckAction(course);
-    return checkAction != null ? checkAction : new StudyCheckAction();
-  }
-
-  protected static void flushWindows(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
+  private static void flushWindows(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
       TaskFile taskFile = entry.getValue();
@@ -113,57 +110,50 @@ public class StudyCheckAction extends DumbAwareAction {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-          @Override
-          public void run() {
-            final StudyEditor selectedEditor = StudyUtils.getSelectedStudyEditor(project);
-            if (selectedEditor == null) return;
-            final StudyState studyState = new StudyState(selectedEditor);
-            if (!studyState.isValid()) {
-              LOG.error("StudyCheckAction was invoked outside study editor");
-              return;
-            }
-            final IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
-            final StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
-            if (statusBar != null) {
-              final List<Pair<TaskInfo, ProgressIndicator>> processes = statusBar.getBackgroundProcesses();
-              if (!processes.isEmpty()) return;
-            }
-
-            final Task task = studyState.getTask();
-            final VirtualFile taskDir = studyState.getTaskDir();
-            flushWindows(task, taskDir);
-            final StudyRunAction runAction = (StudyRunAction)ActionManager.getInstance().getAction(StudyRunAction.ACTION_ID);
-            if (runAction == null) {
-              return;
-            }
-            runAction.run(project);
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                IdeFocusManager.getInstance(project).requestFocus(studyState.getEditor().getComponent(), true);
-              }
-            });
-
-            final StudyTestRunner testRunner = StudyUtils.getTestRunner(task, taskDir);
-            Process testProcess = null;
-            String commandLine = "";
-            try {
-              final VirtualFile executablePath = getTaskVirtualFile(studyState, task, taskDir);
-              if (executablePath != null) {
-                commandLine = executablePath.getPath();
-                testProcess = testRunner.createCheckProcess(project, commandLine);
-              }
-            }
-            catch (ExecutionException e) {
-              LOG.error(e);
-            }
-            if (testProcess == null) {
-              return;
-            }
-            checkInProgress = true;
-            ProgressManager.getInstance().run(getCheckTask(studyState, testRunner, testProcess, commandLine, project, selectedEditor));
+        CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+          final StudyEditor selectedEditor = StudyUtils.getSelectedStudyEditor(project);
+          if (selectedEditor == null) return;
+          final StudyState studyState = new StudyState(selectedEditor);
+          if (!studyState.isValid()) {
+            LOG.error("StudyCheckAction was invoked outside study editor");
+            return;
           }
+          final IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
+          final StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
+          if (statusBar != null) {
+            final List<Pair<TaskInfo, ProgressIndicator>> processes = statusBar.getBackgroundProcesses();
+            if (!processes.isEmpty()) return;
+          }
+
+          final Task task = studyState.getTask();
+          final VirtualFile taskDir = studyState.getTaskDir();
+          flushWindows(task, taskDir);
+          final StudyRunAction runAction = (StudyRunAction)ActionManager.getInstance().getAction(StudyRunAction.ACTION_ID);
+          if (runAction == null) {
+            return;
+          }
+          runAction.run(project);
+          ApplicationManager.getApplication().invokeLater(
+            () -> IdeFocusManager.getInstance(project).requestFocus(studyState.getEditor().getComponent(), true));
+
+          final StudyTestRunner testRunner = StudyUtils.getTestRunner(task, taskDir);
+          Process testProcess = null;
+          String commandLine = "";
+          try {
+            final VirtualFile executablePath = getTaskVirtualFile(studyState, task, taskDir);
+            if (executablePath != null) {
+              commandLine = executablePath.getPath();
+              testProcess = testRunner.createCheckProcess(project, commandLine);
+            }
+          }
+          catch (ExecutionException e) {
+            LOG.error(e);
+          }
+          if (testProcess == null) {
+            return;
+          }
+          checkInProgress = true;
+          ProgressManager.getInstance().run(getCheckTask(studyState, testRunner, testProcess, commandLine, project, selectedEditor));
         });
       }
 
@@ -221,12 +211,8 @@ public class StudyCheckAction extends DumbAwareAction {
         final CapturingProcessHandler handler = new CapturingProcessHandler(testProcess, null, commandLine);
         final ProcessOutput output = handler.runProcessWithProgressIndicator(indicator);
         if (indicator.isCanceled()) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              showTestResultPopUp("Tests check cancelled.", MessageType.WARNING.getPopupBackground(), project);
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(
+            () -> showTestResultPopUp("Tests check cancelled.", MessageType.WARNING.getPopupBackground(), project));
           return;
         }
         final StudyTestRunner.TestsOutput testsOutput = testRunner.getTestsOutput(output);
@@ -241,42 +227,27 @@ public class StudyCheckAction extends DumbAwareAction {
         if (testsOutput.isSuccess()) {
           taskManager.setStatus(task, StudyStatus.Solved);
           EduStepicConnector.postAttempt(task, true, login, password);
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              showTestResultPopUp(testsOutput.getMessage(), MessageType.INFO.getPopupBackground(), project);
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(
+            () -> showTestResultPopUp(testsOutput.getMessage(), MessageType.INFO.getPopupBackground(), project));
         }
         else {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (taskDir == null) return;
-              EduStepicConnector.postAttempt(task, false, login, password);
-              taskManager.setStatus(task, StudyStatus.Failed);
-              for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
-                final String name = entry.getKey();
-                final TaskFile taskFile = entry.getValue();
-                if (taskFile.getAnswerPlaceholders().size() < 2) {
-                  taskManager.setStatus(taskFile, StudyStatus.Failed);
-                  continue;
-                }
-                CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                      @Override
-                      public void run() {
-                        runSmartTestProcess(taskDir, testRunner, name, taskFile, project);
-                      }
-                    });
-                  }
-                });
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (taskDir == null) return;
+            EduStepicConnector.postAttempt(task, false, login, password);
+            taskManager.setStatus(task, StudyStatus.Failed);
+            for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
+              final String name = entry.getKey();
+              final TaskFile taskFile = entry.getValue();
+              if (taskFile.getAnswerPlaceholders().size() < 2) {
+                taskManager.setStatus(taskFile, StudyStatus.Failed);
+                continue;
               }
-              showTestResultPopUp(testsOutput.getMessage(), MessageType.ERROR.getPopupBackground(), project);
-              navigateToFailedPlaceholder(studyState, task, taskDir, project);
+              CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+                runSmartTestProcess(taskDir, testRunner, name, taskFile, project);
+              }));
             }
+            showTestResultPopUp(testsOutput.getMessage(), MessageType.ERROR.getPopupBackground(), project);
+            navigateToFailedPlaceholder(studyState, task, taskDir, project);
           });
         }
       }
@@ -316,12 +287,8 @@ public class StudyCheckAction extends DumbAwareAction {
       FileEditorManager.getInstance(project).openFile(fileToNavigate, true);
     }
     final Editor editorToNavigate = editor;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        IdeFocusManager.getInstance(project).requestFocus(editorToNavigate.getContentComponent(), true);
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(
+      () -> IdeFocusManager.getInstance(project).requestFocus(editorToNavigate.getContentComponent(), true));
 
     StudyNavigator.navigateToFirstFailedAnswerPlaceholder(editor, taskFileToNavigate);
   }
@@ -375,11 +342,8 @@ public class StudyCheckAction extends DumbAwareAction {
           final String text = answerPlaceholder.getPossibleAnswer();
           document.replaceString(start, end, text);
         }
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            documentManager.saveDocument(document);
-          }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          documentManager.saveDocument(document);
         });
       }
     }

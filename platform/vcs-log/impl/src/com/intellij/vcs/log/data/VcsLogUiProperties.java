@@ -44,7 +44,6 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
     public boolean LONG_EDGES_VISIBLE = false;
     public int BEK_SORT_TYPE = 0;
     public boolean SHOW_ROOT_NAMES = false;
-    public boolean HIGHLIGHT_MY_COMMITS = true;
     public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<UserGroup>();
     public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<UserGroup>();
     public Map<String, Boolean> HIGHLIGHTERS = ContainerUtil.newTreeMap();
@@ -144,14 +143,6 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
 
   public void enableHighlighter(@NotNull String id, boolean value) {
     myState.HIGHLIGHTERS.put(id, value);
-  }
-
-  public boolean isHighlightMyCommits() {
-    return myState.HIGHLIGHT_MY_COMMITS;
-  }
-
-  public void setHighlightMyCommits(boolean isHighlightMyCommits) {
-    myState.HIGHLIGHT_MY_COMMITS = isHighlightMyCommits;
   }
 
   public static class UserGroup {

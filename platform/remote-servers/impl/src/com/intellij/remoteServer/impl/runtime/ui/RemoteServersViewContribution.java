@@ -18,6 +18,7 @@ package com.intellij.remoteServer.impl.runtime.ui;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
+import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +34,8 @@ public abstract class RemoteServersViewContribution extends RemoteServersViewCon
     return !getRemoteServers().isEmpty();
   }
 
-  public ServersTreeStructure createTreeStructure(@NotNull final Project project) {
-    return new ServersTreeStructure(project, this);
+  public ServersTreeStructure createTreeStructure(@NotNull Project project, @NotNull ServersTreeNodeSelector nodeSelector) {
+    return new ServersTreeStructure(project, this, nodeSelector);
   }
 
   public TreeNodeSelector createLogNodeSelector(final ServerConnection<?> connection,
