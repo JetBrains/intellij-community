@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,25 +19,19 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManagerFactory;
+import org.jetbrains.annotations.NotNull;
 
 public class ToolManager extends BaseToolManager<Tool> {
-  public ToolManager(ActionManagerEx actionManagerEx,
-                     SchemesManagerFactory factory) {
-    super(actionManagerEx, factory);
-  }
-
-  @Override
-  protected String getSchemesPath() {
-    return "tools";
+  public ToolManager(@NotNull ActionManagerEx actionManagerEx, @NotNull SchemesManagerFactory factory) {
+    super(actionManagerEx, factory, "tools");
   }
 
   @Override
   protected SchemeProcessor<ToolsGroup<Tool>> createProcessor() {
     return new ToolsProcessor<Tool>() {
-
       @Override
       protected ToolsGroup<Tool> createToolsGroup(String groupName) {
-        return new ToolsGroup<Tool>(groupName);
+        return new ToolsGroup<>(groupName);
       }
 
       @Override
