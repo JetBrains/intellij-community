@@ -46,7 +46,7 @@ public class PyStudyToolWindowConfigurator implements StudyToolWindowConfigurato
                                                                 @NotNull StudyToolWindow studyToolWindow) {
     return new FileEditorManagerListener() {
 
-      private static final String EMPTY_TASK_TEXT = "Please, open any task Ыto see task description";
+      private static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
 
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {

@@ -64,7 +64,10 @@ public class StudyProjectGenerator {
 
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {
     final Course course = getCourse();
-    if (course == null) return;
+    if (course == null) {
+      LOG.warn("Course is null");
+      return;
+    }
     StudyTaskManager.getInstance(project).setCourse(course);
     ApplicationManager.getApplication().invokeLater(
       new Runnable() {

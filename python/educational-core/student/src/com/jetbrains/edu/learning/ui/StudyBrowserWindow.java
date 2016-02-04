@@ -52,7 +52,7 @@ class StudyBrowserWindow extends JFrame {
     setLayout(new BorderLayout());
     setPanel(new JFXPanel());
     setTitle("Study Browser");
-    LafManager.getInstance().addLafManagerListener(new CheckIOLafManagerListener());
+    LafManager.getInstance().addLafManagerListener(new StudyLafManagerListener());
     initComponents();
   }
 
@@ -209,10 +209,10 @@ class StudyBrowserWindow extends JFrame {
             
             final String href = getLink((Element)ev.getTarget());
             if (href == null) return;
-            final StudyBrowserWindow checkIOBrowserWindow = new StudyBrowserWindow(false, true);
-            checkIOBrowserWindow.addBackAndOpenButtons();
-            checkIOBrowserWindow.load(href);
-            checkIOBrowserWindow.setVisible(true);
+            final StudyBrowserWindow studyBrowserWindow = new StudyBrowserWindow(false, true);
+            studyBrowserWindow.addBackAndOpenButtons();
+            studyBrowserWindow.load(href);
+            studyBrowserWindow.setVisible(true);
           });
 
         }
@@ -311,7 +311,7 @@ class StudyBrowserWindow extends JFrame {
     myPanel = panel;
   }
 
-  private class CheckIOLafManagerListener implements LafManagerListener {
+  private class StudyLafManagerListener implements LafManagerListener {
     @Override
     public void lookAndFeelChanged(LafManager manager) {
       updateLaf(manager.getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo);
