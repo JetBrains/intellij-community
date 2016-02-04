@@ -18,6 +18,7 @@ package com.intellij.ide.actions
 import com.intellij.AbstractBundle
 import com.intellij.CommonBundle
 import com.intellij.configurationStore.ROOT_CONFIG
+import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.configurationStore.path
 import com.intellij.configurationStore.sortByDeprecated
 import com.intellij.ide.IdeBundle
@@ -36,6 +37,7 @@ import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.OptionsBundle
+import com.intellij.openapi.options.SchemesManagerFactory
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtilRt
@@ -205,10 +207,12 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     var additionalExportPath = stateAnnotation.additionalExportFile
     if (additionalExportPath.isNotEmpty()) {
       // backward compatibility - path can contain macro
-      if (additionalExportPath[0] != '$') {
-        additionalExportPath = "$ROOT_CONFIG/$additionalExportPath"
+      if (additionalExportPath[0] == '$') {
+        additionalExportFile = Paths.get(storageManager.expandMacros(additionalExportPath))
       }
-      additionalExportFile = Paths.get(storageManager.expandMacros(additionalExportPath))
+      else {
+        additionalExportFile = Paths.get(storageManager.expandMacros(ROOT_CONFIG), additionalExportPath)
+      }
       if (isSkipFile(additionalExportFile)) {
         additionalExportFile = null
       }
@@ -233,6 +237,16 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     }
     true
   })
+
+  // must be in the end - because most of SchemeManager clients specify additionalExportFile in the State spec
+  (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
+    if (it.roamingType != RoamingType.DISABLED && it.presentableName != null && it.fileSpec.getOrNull(0) != '$') {
+      val file = Paths.get(storageManager.expandMacros(ROOT_CONFIG), it.fileSpec)
+      if (!result.containsKey(file) && !isSkipFile(file)) {
+        result.putValue(file, ExportableItem(listOf(file), it.presentableName, it.roamingType))
+      }
+    }
+  }
   return result
 }
 

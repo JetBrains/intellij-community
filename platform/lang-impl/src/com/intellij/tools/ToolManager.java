@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ToolManager extends BaseToolManager<Tool> {
   public ToolManager(@NotNull ActionManagerEx actionManagerEx, @NotNull SchemesManagerFactory factory) {
-    super(actionManagerEx, factory, "tools");
+    super(actionManagerEx, factory, "tools", ToolsBundle.message("tools.settings"));
   }
 
   @Override

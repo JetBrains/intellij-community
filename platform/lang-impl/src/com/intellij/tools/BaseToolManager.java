@@ -16,7 +16,6 @@
 package com.intellij.tools;
 
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
@@ -27,20 +26,19 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public abstract class BaseToolManager<T extends Tool> implements ExportableComponent {
+public abstract class BaseToolManager<T extends Tool> {
   @NotNull private final ActionManagerEx myActionManager;
   private final SchemesManager<ToolsGroup<T>, ToolsGroup<T>> mySchemesManager;
 
-  public BaseToolManager(@NotNull ActionManagerEx actionManagerEx, @NotNull SchemesManagerFactory factory, @NotNull String schemePath) {
+  public BaseToolManager(@NotNull ActionManagerEx actionManagerEx, @NotNull SchemesManagerFactory factory, @NotNull String schemePath, @NotNull String presentableName) {
     myActionManager = actionManagerEx;
 
     //noinspection AbstractMethodCallInConstructor
-    mySchemesManager = factory.create(schemePath, createProcessor());
+    mySchemesManager = factory.create(schemePath, createProcessor(), presentableName);
     mySchemesManager.loadSchemes();
     registerActions();
   }
@@ -50,18 +48,6 @@ public abstract class BaseToolManager<T extends Tool> implements ExportableCompo
   @Nullable
   public static String convertString(String s) {
     return StringUtil.nullize(s, true);
-  }
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{mySchemesManager.getRootDirectory()};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return ToolsBundle.message("tools.settings");
   }
 
   public List<T> getTools() {
