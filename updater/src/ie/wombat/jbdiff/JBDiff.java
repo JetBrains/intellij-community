@@ -32,6 +32,7 @@ import com.intellij.updater.Utils.OpenByteArrayOutputStream;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Stack;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -51,105 +52,117 @@ public class JBDiff {
 
   private static final String VERSION = "jbdiff-0.1.1";
 
-  private static final int min(int x, int y) {
+  private static int min(int x, int y) {
     return x < y ? x : y;
   }
 
-  private final static void split(int[] I, int[] V, int start, int len, int h) {
-
-    int i, j, k, x, tmp, jj, kk;
-
-    if (len < 16) {
-      for (k = start; k < start + len; k += j) {
-        j = 1;
-        x = V[I[k] + h];
-        for (i = 1; k + i < start + len; i++) {
-          if (V[I[k + i] + h] < x) {
-            x = V[I[k + i] + h];
-            j = 0;
-          }
-
-          if (V[I[k + i] + h] == x) {
-            tmp = I[k + j];
-            I[k + j] = I[k + i];
-            I[k + i] = tmp;
-            j++;
-          }
+  private static void selectSplit(int[] I, int[] V, int start, int len, int h) {
+    int j;
+    for (int k = start; k < start + len; k += j) {
+      j = 1;
+      int x = V[I[k] + h];
+      for (int i = 1; k + i < start + len; i++) {
+        if (V[I[k + i] + h] < x) {
+          x = V[I[k + i] + h];
+          j = 0;
         }
 
-        for (i = 0; i < j; i++) {
-          V[I[k + i]] = k + j - 1;
-        }
-        if (j == 1) {
-          I[k] = -1;
+        if (V[I[k + i] + h] == x) {
+          int tmp = I[k + j];
+          I[k + j] = I[k + i];
+          I[k + i] = tmp;
+          j++;
         }
       }
 
-      return;
-    }
-
-    x = V[I[start + len / 2] + h];
-    jj = 0;
-    kk = 0;
-    for (i = start; i < start + len; i++) {
-      if (V[I[i] + h] < x) {
-        jj++;
+      for (int i = 0; i < j; i++) {
+        V[I[k + i]] = k + j - 1;
       }
-      if (V[I[i] + h] == x) {
-        kk++;
+      if (j == 1) {
+        I[k] = -1;
       }
     }
+  }
 
-    jj += start;
-    kk += jj;
+  private static void split(int[] I, int[] V, int initstart, int initlen, int h) {
+    Stack<Integer> startStack = new Stack<Integer>();
+    Stack<Integer> lenStack = new Stack<Integer>();
+    startStack.push(initstart);
+    lenStack.push(initlen);
+    while (!startStack.isEmpty()) {
+      int start = startStack.pop();
+      int len = lenStack.pop();
 
-    i = start;
-    j = 0;
-    k = 0;
-    while (i < jj) {
-      if (V[I[i] + h] < x) {
-        i++;
+      if (len < 16) {
+        selectSplit(I, V, start, len, h);
+        continue;
       }
-      else if (V[I[i] + h] == x) {
-        tmp = I[i];
-        I[i] = I[jj + j];
-        I[jj + j] = tmp;
-        j++;
+
+      int pivot = V[I[start + len / 2] + h];
+      int endLessThanIndex = 0;
+      int endLessOrEqualIndex = 0;
+      for (int i = start; i < start + len; i++) {
+        if (V[I[i] + h] < pivot) {
+          endLessThanIndex++;
+        }
+        if (V[I[i] + h] == pivot) {
+          endLessOrEqualIndex++;
+        }
       }
-      else {
-        tmp = I[i];
-        I[i] = I[kk + k];
-        I[kk + k] = tmp;
-        k++;
+
+      endLessThanIndex += start;
+      endLessOrEqualIndex += endLessThanIndex;
+
+      int i = start;
+      int currentEqualIndex = 0;
+      int currentGreaterIndex = 0;
+      while (i < endLessThanIndex) {
+        if (V[I[i] + h] < pivot) {
+          i++;
+        }
+        else if (V[I[i] + h] == pivot) {
+          int tmp = I[i];
+          I[i] = I[endLessThanIndex + currentEqualIndex];
+          I[endLessThanIndex + currentEqualIndex] = tmp;
+          currentEqualIndex++;
+        }
+        else {
+          int tmp = I[i];
+          I[i] = I[endLessOrEqualIndex + currentGreaterIndex];
+          I[endLessOrEqualIndex + currentGreaterIndex] = tmp;
+          currentGreaterIndex++;
+        }
       }
-    }
 
-    while (jj + j < kk) {
-      if (V[I[jj + j] + h] == x) {
-        j++;
+      while (endLessThanIndex + currentEqualIndex < endLessOrEqualIndex) {
+        if (V[I[endLessThanIndex + currentEqualIndex] + h] == pivot) {
+          currentEqualIndex++;
+        }
+        else {
+          int tmp = I[endLessThanIndex + currentEqualIndex];
+          I[endLessThanIndex + currentEqualIndex] = I[endLessOrEqualIndex + currentGreaterIndex];
+          I[endLessOrEqualIndex + currentGreaterIndex] = tmp;
+          currentGreaterIndex++;
+        }
       }
-      else {
-        tmp = I[jj + j];
-        I[jj + j] = I[kk + k];
-        I[kk + k] = tmp;
-        k++;
+
+      for (i = endLessThanIndex; i < endLessOrEqualIndex; i++) {
+        V[I[i]] = endLessOrEqualIndex - 1;
       }
-    }
 
-    if (jj > start) {
-      split(I, V, start, jj - start, h);
-    }
+      if (endLessThanIndex == endLessOrEqualIndex - 1) {
+        I[endLessThanIndex] = -1;
+      }
 
-    for (i = 0; i < kk - jj; i++) {
-      V[I[jj + i]] = kk - 1;
-    }
+      if (endLessThanIndex > start) {
+        startStack.push(start);
+        lenStack.push(endLessThanIndex - start);
+      }
 
-    if (jj == kk - 1) {
-      I[jj] = -1;
-    }
-
-    if (start + len > kk) {
-      split(I, V, kk, start + len - kk, h);
+      if (start + len > endLessOrEqualIndex) {
+        startStack.push(endLessOrEqualIndex);
+        lenStack.push(start + len - endLessOrEqualIndex);
+      }
     }
   }
 
