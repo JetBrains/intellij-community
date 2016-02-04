@@ -385,6 +385,6 @@ public class PatchCreationTest extends PatchTestCase {
   }
 
   private static long linkHash(String target) throws IOException {
-    return Digester.digestStream(new ByteArrayInputStream(target.getBytes(StandardCharsets.UTF_8))) | Digester.SYM_LINK;
+    return new Digester(null).digestStream(new ByteArrayInputStream(target.getBytes(StandardCharsets.UTF_8))) | Digester.SYM_LINK;
   }
 }
