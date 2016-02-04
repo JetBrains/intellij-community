@@ -30,7 +30,7 @@ public class EquivalenceChecker {
   private EquivalenceChecker() {}
 
   private static final Decision EXACTLY_MATCHES = new Decision(true);
-  private static final Decision EXACTLY_UN_MATCHES = new Decision(false);
+  public static final Decision EXACTLY_UN_MATCHES = new Decision(false);
 
   public static class Decision {
     private final PsiElement myLeftDiff;
@@ -540,7 +540,11 @@ public class EquivalenceChecker {
     @NotNull PsiReturnStatement statement2) {
     final PsiExpression returnValue1 = statement1.getReturnValue();
     final PsiExpression returnValue2 = statement2.getReturnValue();
-    return expressionsAreEquivalentDecision(returnValue1, returnValue2);
+    final Decision decision = expressionsAreEquivalentDecision(returnValue1, returnValue2);
+    if (decision.isExactUnMatches()) {
+      return new Decision(returnValue1, returnValue2);
+    }
+    return decision;
   }
 
   private static Decision throwstatementsAreEquivalentDecision(
