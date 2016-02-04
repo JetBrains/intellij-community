@@ -21,49 +21,39 @@ import com.intellij.codeInsight.template.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Predicate;
 
 public class MacroCallNode extends Expression {
-  private final List<Macro> myMacros;
+  private final Macro myMacro;
   private final ArrayList<Expression> myParameters = new ArrayList<>();
 
   public MacroCallNode(@NotNull Macro macro) {
-    this(Collections.singletonList(macro));
-  }
-
-  public MacroCallNode(List<Macro> macros) {
-    myMacros = macros;
-    assert macros.size() > 0;
+    myMacro = macro;
   }
 
   public void addParameter(Expression node) {
     myParameters.add(node);
   }
 
-  public Macro getMacro(TemplateContextType[] context) {
-    Predicate<Macro> isAcceptableInContext = macro -> Arrays.stream(context).anyMatch(macro::isAcceptableInContext);
-    return myMacros.stream().filter(isAcceptableInContext).findFirst().orElse(myMacros.get(0));
+  public Macro getMacro() {
+    return myMacro;
   }
 
   @Override
   public Result calculateResult(ExpressionContext context) {
     Expression[] parameters = myParameters.toArray(new Expression[myParameters.size()]);
-    return getMacro(context.getCompatibleContexts()).calculateResult(parameters, context);
+    return getMacro().calculateResult(parameters, context);
   }
 
   @Override
   public Result calculateQuickResult(ExpressionContext context) {
     Expression[] parameters = myParameters.toArray(new Expression[myParameters.size()]);
-    return getMacro(context.getCompatibleContexts()).calculateQuickResult(parameters, context);
+    return getMacro().calculateQuickResult(parameters, context);
   }
 
   @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     Expression[] parameters = myParameters.toArray(new Expression[myParameters.size()]);
-    return getMacro(context.getCompatibleContexts()).calculateLookupItems(parameters, context);
+    return getMacro().calculateLookupItems(parameters, context);
   }
 
   public Expression[] getParameters() {

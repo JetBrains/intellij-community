@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ExpressionContext {
@@ -37,11 +36,5 @@ public interface ExpressionContext {
   <T> T getProperty(Key<T> key);
   @Nullable
   PsiElement getPsiElementAtStartOffset();
-
-  /**
-   * @return all template context types matching the template invocation place
-   */
-  @NotNull
-  TemplateContextType[] getCompatibleContexts();
 }
 
