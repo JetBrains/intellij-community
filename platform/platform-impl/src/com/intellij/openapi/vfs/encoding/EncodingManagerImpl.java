@@ -64,7 +64,7 @@ import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
 import java.util.Collection;
 
-@State(name = "Encoding", storages = @Storage(file = "encoding.xml"))
+@State(name = "Encoding", storages = @Storage("encoding.xml"))
 public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<EncodingManagerImpl.State>, Disposable {
   private static final Equality<Reference<Document>> REFERENCE_EQUALITY = new Equality<Reference<Document>>() {
     @Override

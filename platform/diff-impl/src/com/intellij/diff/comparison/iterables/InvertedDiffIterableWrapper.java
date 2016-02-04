@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
-@SuppressWarnings("ConstantConditions")
 class InvertedDiffIterableWrapper extends DiffIterableBase {
   @NotNull private final DiffIterable myIterable;
 

@@ -4,10 +4,10 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.testFramework.refreshVfs
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.testFramework.systemIndependentPath
-import com.intellij.testFramework.writeChild
+import com.intellij.util.refreshVfs
+import com.intellij.util.systemIndependentPath
+import com.intellij.util.writeChild
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 

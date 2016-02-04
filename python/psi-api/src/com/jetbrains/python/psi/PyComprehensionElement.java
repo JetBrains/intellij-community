@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public interface PyComprehensionElement extends PyExpression, NameDefiner {
+public interface PyComprehensionElement extends PyExpression, PyNamedElementContainer {
   PyExpression getResultExpression();
   List<ComprehensionComponent> getComponents();
   List<ComprhForComponent> getForComponents();

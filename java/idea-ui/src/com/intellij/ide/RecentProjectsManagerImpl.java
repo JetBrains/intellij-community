@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +26,8 @@ import org.jetbrains.annotations.NotNull;
 @State(
   name = "RecentProjectsManager",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/recentProjects.xml", roamingType = RoamingType.DISABLED),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+    @Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED),
+    @Storage(value = "other.xml", deprecated = true)
   }
 )
 public class RecentProjectsManagerImpl extends RecentProjectsManagerBase {

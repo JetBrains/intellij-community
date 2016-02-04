@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @State(
   name = "TestModuleProperties",
-  storages = @Storage(file = StoragePathMacros.MODULE_FILE)
+  storages = @Storage(StoragePathMacros.MODULE_FILE)
 )
 public class TestModulePropertiesImpl extends TestModuleProperties implements PersistentStateComponent<TestModulePropertiesImpl.TestModulePropertiesState> {
   private final ModulePointerManager myModulePointerManager;
@@ -69,7 +69,7 @@ public class TestModulePropertiesImpl extends TestModuleProperties implements Pe
 
   @Override
   public void loadState(TestModulePropertiesState state) {
-
+    setProductionModuleName(state.moduleName);
   }
 
   public static class TestModulePropertiesState {

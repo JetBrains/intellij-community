@@ -24,7 +24,7 @@ import os
 import sys
 from _pydev_imps import _pydev_time as time
 from timeit import default_timer as clock
-import pyglet
+import pyglet  # @UnresolvedImport
 from pydev_ipython.inputhook import stdin_ready
 
 

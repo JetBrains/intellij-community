@@ -857,6 +857,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     );
   }
 
+  /**
+   * To be called when editor was not disposed while it should
+   */
+  public void throwEditorNotDisposedError(@NonNls @NotNull final String msg) {
+    myTraceableDisposable.throwObjectNotDisposedError(msg);
+  }
+
+  /**
+   * In case of "editor not disposed error" use {@link #throwEditorNotDisposedError(String)}
+   */
   public void throwDisposalError(@NonNls @NotNull String msg) {
     myTraceableDisposable.throwDisposalError(msg);
   }
@@ -4675,12 +4685,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private long mySleepTime = 500;
     private boolean myIsBlinkCaret = true;
     @Nullable private EditorImpl myEditor;
-    @NotNull private final MyRepaintRunnable myRepaintRunnable;
+    @NotNull private final MyRepaintRunnable myRepaintRunnable = new MyRepaintRunnable();
     private ScheduledFuture<?> mySchedulerHandle;
-
-    private RepaintCursorCommand() {
-      myRepaintRunnable = new MyRepaintRunnable();
-    }
 
     private class MyRepaintRunnable implements Runnable {
       @Override

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="${css_oldcodemirror}">
+  <link rel="stylesheet" href="${css_codemirror}">
+  <script src="${codemirror}"></script>
+  <script src="${colorize}"></script>
+  <script src="${runmode}"></script>
+  <script src="${highlight_mode}"></script>
+  <script src="${javascript}"></script>
+  <script src="${python}"></script>
+</head>
+<body>
+${code}
+<script>
+  var nodeList = document.body.getElementsByTagName("code");
+  CodeMirror.colorize(nodeList, "text/x-java")
+  CodeMirror.colorize();
+</script>
+</body>
+</html>

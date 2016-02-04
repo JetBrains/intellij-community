@@ -84,7 +84,7 @@ public class MacroParser {
     }
 
     advance(lexer);
-    MacroCallNode macroCallNode = new MacroCallNode(macros);
+    MacroCallNode macroCallNode = new MacroCallNode(macros.get(0));
     if (lexer.getTokenType() == null) {
       return macroCallNode;
     }

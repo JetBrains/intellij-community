@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import java.util.*;
  * Differs from {@link VcsLogSettings} in the fact, that these settings have no representation in the UI settings,
  * and have insignificant effect to the logic of the log, they are just gracefully remember what user prefers to see in the UI.
  */
-@State(name = "Vcs.Log.UiProperties", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "Vcs.Log.UiProperties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProperties.State> {
 
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;

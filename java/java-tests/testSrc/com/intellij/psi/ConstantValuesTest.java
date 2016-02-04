@@ -23,10 +23,14 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
   private PsiClass myClass;
 
   @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/psi/constantValues";
+  }
+
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
-    String path = JavaTestUtil.getJavaTestDataPath() + "/psi/constantValues/ClassWithConstants.java";
-    myClass = ((PsiJavaFile)myFixture.configureByFile(path)).getClasses()[0];
+    myClass = ((PsiJavaFile)myFixture.configureByFile("ClassWithConstants.java")).getClasses()[0];
   }
 
   public void testInt1() {

@@ -16,13 +16,16 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author yole
@@ -45,16 +48,13 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
   }
 
   @NotNull
-  public Iterable<PyElement> iterateNames() {
-    return Arrays.<PyElement>asList(getGlobals());
+  public List<PsiNamedElement> getNamedElements() {
+    return Arrays.<PsiNamedElement>asList(getGlobals());
   }
 
-  public PyElement getElementNamed(final String the_name) {
-    return IterHelper.findName(iterateNames(), the_name);
-  }
-
-  public boolean mustResolveOutside() {
-    return true;
+  @Nullable
+  public PsiNamedElement getNamedElement(@NotNull final String the_name) {
+    return PyUtil.IterHelper.findName(getNamedElements(), the_name);
   }
 
   public void addGlobal(final String name) {

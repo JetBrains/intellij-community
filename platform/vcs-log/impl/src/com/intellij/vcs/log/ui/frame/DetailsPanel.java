@@ -205,7 +205,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     else {
       Color color = VcsLogGraphTable.getRootBackgroundColor(data.getRoot(), myColorManager);
       myMainContentPanel.setBorder(new CompoundBorder(new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_COLORED_WIDTH, 0, 0, color),
-                                                      new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, 0, 0,
+                                                      new MatteBorder(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
+                                                                      VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, 0, 0,
                                                                       new JBColor(new NotNullProducer<Color>() {
                                                                         @NotNull
                                                                         @Override

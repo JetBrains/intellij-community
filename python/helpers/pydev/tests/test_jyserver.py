@@ -35,12 +35,12 @@ class Test(unittest.TestCase):
     def tearDown(self):
         unittest.TestCase.tearDown(self)
     
-    def testIt(self):
+    def test_it(self):
         if not IS_JYTHON:
             return
         dbg('ok')
         
-    def testMessage(self):
+    def test_message(self):
         if not IS_JYTHON:
             return
         t = jycompletionserver.T(0)
@@ -51,7 +51,7 @@ class Test(unittest.TestCase):
         l.append(('Def1', 'description1', 'args1'))
         l.append(('Def2', 'description2', 'args2'))
         
-        msg = t.processor.formatCompletionMessage('test_jyserver.py', l)
+        msg = t.processor.format_completion_message('test_jyserver.py', l)
         
         self.assertEquals('@@COMPLETIONS(test_jyserver.py,(Def,description,args),(Def1,description1,args1),(Def2,description2,args2))END@@', msg)
         
@@ -59,7 +59,7 @@ class Test(unittest.TestCase):
         l.append(('Def', 'desc,,r,,i()ption', ''))
         l.append(('Def(1', 'descriptio(n1', ''))
         l.append(('De,f)2', 'de,s,c,ription2', ''))
-        msg = t.processor.formatCompletionMessage(None, l)
+        msg = t.processor.format_completion_message(None, l)
         expected = '@@COMPLETIONS(None,(Def,desc%2C%2Cr%2C%2Ci%28%29ption, ),(Def%281,descriptio%28n1, ),(De%2Cf%292,de%2Cs%2Cc%2Cription2, ))END@@'
         
         self.assertEquals(expected, msg)
@@ -69,11 +69,11 @@ class Test(unittest.TestCase):
 
 
 
-    def testCompletionSocketsAndMessages(self):
+    def test_completion_sockets_and_messages(self):
         if not IS_JYTHON:
             return
-        dbg('testCompletionSocketsAndMessages')
-        t, socket = self.createConnections()
+        dbg('test_completion_sockets_and_messages')
+        t, socket = self.create_connections()
         self.socket = socket
         dbg('connections created')
         
@@ -84,7 +84,7 @@ class Test(unittest.TestCase):
             toWrite = '@@IMPORTS:%sEND@@' % msg
             dbg('writing' + str(toWrite))
             socket.send(toWrite)  #math completions
-            completions = self.readMsg()
+            completions = self.read_msg()
             dbg(urllib.unquote_plus(completions))
             
             start = '@@COMPLETIONS('
@@ -97,7 +97,7 @@ class Test(unittest.TestCase):
             toWrite = '@@IMPORTS:%sEND@@' % msg
             dbg('writing' + str(toWrite))
             socket.send(toWrite)  #math completions
-            completions = self.readMsg()
+            completions = self.read_msg()
             dbg(urllib.unquote_plus(completions))
             
             start = '@@COMPLETIONS('
@@ -109,7 +109,7 @@ class Test(unittest.TestCase):
         
         finally:
             try:
-                self.sendKillMsg(socket)
+                self.send_kill_msg(socket)
                 
         
                 while not t.ended:
@@ -123,7 +123,7 @@ class Test(unittest.TestCase):
 
 
 
-    def createConnections(self, p1=50001):
+    def create_connections(self, p1=50001):
         '''
         Creates the connections needed for testing.
         '''
@@ -141,7 +141,7 @@ class Test(unittest.TestCase):
         return t, sock
         
 
-    def readMsg(self):
+    def read_msg(self):
         msg = '@@PROCESSING_END@@'
         while msg.startswith('@@PROCESSING'):
             msg = self.socket.recv(1024)
@@ -153,7 +153,7 @@ class Test(unittest.TestCase):
         
         return msg
         
-    def sendKillMsg(self, socket):
+    def send_kill_msg(self, socket):
         socket.send(jycompletionserver.MSG_KILL_SERVER)
         
     

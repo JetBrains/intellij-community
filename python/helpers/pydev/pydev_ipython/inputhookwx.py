@@ -1,5 +1,4 @@
 # encoding: utf-8
-
 """
 Enable wxPython to be used interacive by setting PyOS_InputHook.
 
@@ -37,15 +36,15 @@ def inputhook_wx1():
     relies on having PyOS_InputHook called regularly.
     """
     try:
-        app = wx.GetApp()
+        app = wx.GetApp()  # @UndefinedVariable
         if app is not None:
-            assert wx.Thread_IsMain()
+            assert wx.Thread_IsMain()  # @UndefinedVariable
 
             # Make a temporary event loop and process system events until
             # there are no more waiting, then allow idle events (which
             # will also deal with pending or posted wx events.)
-            evtloop = wx.EventLoop()
-            ea = wx.EventLoopActivator(evtloop)
+            evtloop = wx.EventLoop()  # @UndefinedVariable
+            ea = wx.EventLoopActivator(evtloop)  # @UndefinedVariable
             while evtloop.Pending():
                 evtloop.Dispatch()
             app.ProcessIdle()
@@ -54,11 +53,11 @@ def inputhook_wx1():
         pass
     return 0
 
-class EventLoopTimer(wx.Timer):
+class EventLoopTimer(wx.Timer):  # @UndefinedVariable
 
     def __init__(self, func):
         self.func = func
-        wx.Timer.__init__(self)
+        wx.Timer.__init__(self)  # @UndefinedVariable
 
     def Notify(self):
         self.func()
@@ -66,7 +65,7 @@ class EventLoopTimer(wx.Timer):
 class EventLoopRunner(object):
 
     def Run(self, time):
-        self.evtloop = wx.EventLoop()
+        self.evtloop = wx.EventLoop()  # @UndefinedVariable
         self.timer = EventLoopTimer(self.check_stdin)
         self.timer.Start(time)
         self.evtloop.Run()
@@ -91,9 +90,9 @@ def inputhook_wx2():
     often.
     """
     try:
-        app = wx.GetApp()
+        app = wx.GetApp()  # @UndefinedVariable
         if app is not None:
-            assert wx.Thread_IsMain()
+            assert wx.Thread_IsMain()  # @UndefinedVariable
             elr = EventLoopRunner()
             # As this time is made shorter, keyboard response improves, but idle
             # CPU load goes up.  10 ms seems like a good compromise.
@@ -113,9 +112,9 @@ def inputhook_wx3():
     # We need to protect against a user pressing Control-C when IPython is
     # idle and this is running. We trap KeyboardInterrupt and pass.
     try:
-        app = wx.GetApp()
+        app = wx.GetApp()  # @UndefinedVariable
         if app is not None:
-            assert wx.Thread_IsMain()
+            assert wx.Thread_IsMain()  # @UndefinedVariable
 
             # The import of wx on Linux sets the handler for signal.SIGINT
             # to 0.  This is a bug in wx or gtk.  We fix by just setting it
@@ -123,8 +122,8 @@ def inputhook_wx3():
             if not callable(signal.getsignal(signal.SIGINT)):
                 signal.signal(signal.SIGINT, signal.default_int_handler)
 
-            evtloop = wx.EventLoop()
-            ea = wx.EventLoopActivator(evtloop)
+            evtloop = wx.EventLoop()  # @UndefinedVariable
+            ea = wx.EventLoopActivator(evtloop)  # @UndefinedVariable
             t = clock()
             while not stdin_ready():
                 while evtloop.Pending():

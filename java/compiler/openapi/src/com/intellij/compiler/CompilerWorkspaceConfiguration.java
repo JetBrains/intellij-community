@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
-@State(
-  name = "CompilerWorkspaceConfiguration",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.WORKSPACE_FILE
-    )}
-)
+@State(name = "CompilerWorkspaceConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class CompilerWorkspaceConfiguration implements PersistentStateComponent<CompilerWorkspaceConfiguration> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerWorkspaceConfiguration");
   

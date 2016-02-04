@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,7 @@ import static org.jetbrains.plugins.github.util.GithubAuthData.AuthType;
  * @author oleg
  */
 @SuppressWarnings("MethodMayBeStatic")
-@State(
-  name = "GithubSettings",
-  storages = {@Storage(file = "github_settings.xml")}
-)
+@State(name = "GithubSettings", storages = @Storage("github_settings.xml"))
 public class GithubSettings implements PersistentStateComponent<GithubSettings.State> {
   private static final Logger LOG = GithubUtil.LOG;
   private static final String GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY";

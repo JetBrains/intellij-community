@@ -616,14 +616,10 @@ public class FileTypesTest extends PlatformTestCase {
     }
   }
 
-  public void testStressPlainTextFileWithEverIncreasingLength() throws IOException, InterruptedException {
+  public void _testStressPlainTextFileWithEverIncreasingLength() throws IOException, InterruptedException {
     FrequentEventDetector.disableUntil(myTestRootDisposable);
 
-    String stillText = StringUtil.repeatSymbol(' ', (int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD);
-    byte[] stillTextBytes = stillText.getBytes(CharsetToolkit.UTF8_CHARSET);
-    String notText = StringUtil.repeatSymbol(' ', (int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD+1);
-    byte[] notTextBytes = notText.getBytes(CharsetToolkit.UTF8_CHARSET);
-    File f = createTempFile("xx.lkjlkjlkjlj", stillText);
+    File f = createTempFile("xx.lkjlkjlkjlj", "a");
     VirtualFile virtualFile = getVirtualFile(f);
     assertEquals(PlainTextFileType.INSTANCE, virtualFile.getFileType());
     //PsiFile psiFile = getPsiManager().findFile(virtualFile);
@@ -651,7 +647,9 @@ public class FileTypesTest extends PlatformTestCase {
               new WriteCommandAction.Simple(getProject()) {
                 @Override
                 protected void run() throws Throwable {
-                  virtualFile.setBinaryContent(isText ? notTextBytes : stillTextBytes);
+                  byte[] bytes = new byte[(int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD + (isText ? 1 : 0)];
+                  Arrays.fill(bytes, (byte)' ');
+                  virtualFile.setBinaryContent(bytes);
                 }
               }.execute().throwException();
 
@@ -682,7 +680,7 @@ public class FileTypesTest extends PlatformTestCase {
     if (exception.get() != null) throw new RuntimeException(exception.get());
   }
 
-  public void testStressPlainTextFileWithEverIncreasingLength2() throws IOException, InterruptedException {
+  public void _testStressPlainTextFileWithEverIncreasingLength2() throws IOException, InterruptedException {
     FrequentEventDetector.disableUntil(myTestRootDisposable);
 
     File f = createTempFile("xx.asdkjfhlkasjdhf", StringUtil.repeatSymbol(' ', (int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD - 100));

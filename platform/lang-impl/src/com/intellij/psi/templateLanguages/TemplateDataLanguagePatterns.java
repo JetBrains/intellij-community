@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
@@ -35,7 +38,7 @@ import java.util.List;
  */
 @State(
     name = "TemplateDataLanguagePatterns",
-    storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/templateLanguages.xml") )
+    storages = @Storage("templateLanguages.xml") )
 public class TemplateDataLanguagePatterns implements PersistentStateComponent<Element> {
   private FileTypeAssocTable<Language> myAssocTable = new FileTypeAssocTable<Language>();
   @NonNls private static final String SEPARATOR = ";";

@@ -37,7 +37,7 @@ import java.util.Map;
 /**
  * Represents a class declaration in source.
  */
-public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
+public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
                                  ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer, PyWithAncestors {
   ArrayFactory<PyClass> ARRAY_FACTORY = new ArrayFactory<PyClass>() {
     @NotNull

@@ -26,7 +26,9 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsSavingComponent;
+import com.intellij.openapi.components.State;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -71,7 +73,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@State(name = "MavenProjectsManager", storages = {@Storage(file = StoragePathMacros.PROJECT_FILE)})
+@State(name = "MavenProjectsManager")
 public class MavenProjectsManager extends MavenSimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponent {
   private static final int IMPORT_DELAY = 1000;

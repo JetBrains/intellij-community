@@ -40,11 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@State(name = "CCProjectService",
-       storages = {
-         @Storage(file = "$PROJECT_CONFIG_DIR$/course_service.xml")
-       }
-)
+@State(name = "CCProjectService", storages = @Storage("course_service.xml"))
 public class CCProjectService implements PersistentStateComponent<CCProjectService> {
   private Course myCourse;
 

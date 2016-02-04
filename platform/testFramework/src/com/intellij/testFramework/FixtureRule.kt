@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.systemIndependentPath
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description

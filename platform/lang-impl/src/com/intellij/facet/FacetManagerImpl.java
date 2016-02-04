@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import java.util.*;
  */
 @State(
   name = FacetManagerImpl.COMPONENT_NAME,
-  storages = @Storage(file = StoragePathMacros.MODULE_FILE)
+  storages = @Storage(StoragePathMacros.MODULE_FILE)
 )
 public class FacetManagerImpl extends FacetManager implements ModuleComponent, PersistentStateComponent<FacetManagerState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.FacetManagerImpl");

@@ -52,8 +52,8 @@ import java.util.List;
 @State(
   name = "XPathView.XPathViewPlugin",
   storages = {
-    @Storage(file = "xpath.xml"),
-    @Storage(file = "other.xml", deprecated = true)
+    @Storage("xpath.xml"),
+    @Storage(value = "other.xml", deprecated = true)
   }
 )
 public class XPathAppComponent implements ApplicationComponent, PersistentStateComponent<Config>, DefaultLiveTemplatesProvider {

@@ -33,8 +33,8 @@ import os
 import sys
 from _pydev_imps import _pydev_time as time
 import signal
-import OpenGL.GLUT as glut
-import OpenGL.platform as platform
+import OpenGL.GLUT as glut  # @UnresolvedImport
+import OpenGL.platform as platform  # @UnresolvedImport
 from timeit import default_timer as clock
 from pydev_ipython.inputhook import stdin_ready
 

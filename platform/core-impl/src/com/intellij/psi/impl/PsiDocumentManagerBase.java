@@ -63,7 +63,7 @@ import java.util.concurrent.ConcurrentMap;
 public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, ProjectComponent {
   static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
-  private static final Key<PsiFile> HARD_REF_TO_PSI = Key.create("HARD_REFERENCE_TO_PSI");
+  private final Key<PsiFile> HARD_REF_TO_PSI = Key.create("HARD_REFERENCE_TO_PSI"); // has to be different for each project to avoid mixups
   private static final Key<List<Runnable>> ACTION_AFTER_COMMIT = Key.create("ACTION_AFTER_COMMIT");
 
   protected final Project myProject;
@@ -120,7 +120,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return psiFile;
   }
 
-  public static void cachePsi(@NotNull Document document, @Nullable PsiFile file) {
+  public void cachePsi(@NotNull Document document, @Nullable PsiFile file) {
     document.putUserData(HARD_REF_TO_PSI, file);
   }
 
@@ -287,9 +287,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   // public for Upsource
   public boolean finishCommit(@NotNull final Document document,
-                       @NotNull final List<Processor<Document>> finishProcessors,
-                       final boolean synchronously,
-                       @NotNull final Object reason) {
+                              @NotNull final List<Processor<Document>> finishProcessors,
+                              final boolean synchronously,
+                              @NotNull final Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
     final boolean[] ok = {true};
     ApplicationManager.getApplication().runWriteAction(new CommitToPsiFileAction(document, myProject) {
@@ -539,7 +539,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
             action.run();
           }
           catch (Throwable e) {
-            LOG.error("During running "+action, e);
+            LOG.error("During running " + action, e);
           }
         }
       }

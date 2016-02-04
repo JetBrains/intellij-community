@@ -17,8 +17,10 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
@@ -29,6 +31,7 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import com.intellij.util.PathUtil
+import com.intellij.util.readText
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
@@ -84,7 +87,7 @@ internal class ProjectStoreTest {
   private val iprFileContent =
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"AATestComponent\">\n    <option name=\"value\" value=\"customValue\" />\n  </component>\n</project>"
 
-  @State(name = "AATestComponent", storages = arrayOf(Storage(file = StoragePathMacros.PROJECT_FILE)))
+  @State(name = "AATestComponent")
   private class TestComponent : PersistentStateComponent<TestState> {
     private var state: TestState? = null
 
@@ -107,7 +110,7 @@ internal class ProjectStoreTest {
       assertThat(project.basePath).isEqualTo(PathUtil.getParentPath((PathUtil.getParentPath(project.projectFilePath!!))))
 
       // test reload on external change
-      val file = File(project.stateStore.stateStorageManager.expandMacros(StoragePathMacros.PROJECT_FILE))
+      val file = File(project.stateStore.stateStorageManager.expandMacros(PROJECT_FILE))
       file.writeText(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
       project.baseDir.refresh(false, true)
@@ -179,7 +182,7 @@ internal class ProjectStoreTest {
     testComponent.state!!.value = "foo"
     project.saveStore()
 
-    val file = Paths.get(project.stateStore.stateStorageManager.expandMacros(StoragePathMacros.PROJECT_FILE))
+    val file = Paths.get(project.stateStore.stateStorageManager.expandMacros(PROJECT_FILE))
     assertThat(file).isRegularFile()
     // test exact string - xml prolog, line separators, indentation and so on must be exactly the same
     // todo get rid of default component states here

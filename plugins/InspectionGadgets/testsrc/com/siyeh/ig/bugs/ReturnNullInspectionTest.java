@@ -45,7 +45,10 @@ public class ReturnNullInspectionTest extends LightInspectionTestCase {
   protected String[] getEnvironmentClasses() {
     return new String[] {
       "package java.util;" +
-      "public final class Optional<T> {}"
+      "public final class Optional<T> {}",
+
+      "package java.util;" +
+      "public final class OptionalInt {}"
     };
   }
 }

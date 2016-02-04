@@ -29,14 +29,12 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.learning.actions.StudyCheckAction;
 import com.jetbrains.edu.learning.courseFormat.UserTest;
 import com.jetbrains.edu.learning.run.StudyExecutor;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -102,11 +100,5 @@ public class PyStudyExecutor implements StudyExecutor {
     balloonBuilder.setHideOnLinkClick(true);
     final Balloon balloon = balloonBuilder.createBalloon();
     StudyUtils.showCheckPopUp(project, balloon);
-  }
-
-  @Nullable
-  @Override
-  public StudyCheckAction getCheckAction() {
-    return null;
   }
 }

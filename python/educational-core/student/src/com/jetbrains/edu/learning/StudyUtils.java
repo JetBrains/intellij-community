@@ -38,7 +38,6 @@ import com.jetbrains.edu.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.*;
-import com.jetbrains.edu.learning.actions.StudyCheckAction;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.run.StudyExecutor;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
@@ -172,11 +171,6 @@ public class StudyUtils {
                                                @NotNull final ProcessHandler handler) {
     final Language language = currentTask.getLesson().getCourse().getLanguageById();
     return StudyExecutor.INSTANCE.forLanguage(language).getExecutor(project, handler);
-  }
-
-  public static StudyCheckAction getCheckAction(@NotNull final Course course) {
-    final Language language = course.getLanguageById();
-    return StudyExecutor.INSTANCE.forLanguage(language).getCheckAction();
   }
 
   public static void setCommandLineParameters(@NotNull final GeneralCommandLine cmd,
@@ -313,17 +307,9 @@ public class StudyUtils {
       final DocumentImpl documentImpl = (DocumentImpl)document;
       List<RangeMarker> blocks = documentImpl.getGuardedBlocks();
       for (final RangeMarker block : blocks) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                document.removeGuardedBlock(block);
-              }
-            });
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+          document.removeGuardedBlock(block);
+        }));
       }
     }
   }
@@ -393,5 +379,39 @@ public class StudyUtils {
       return true;
     }
     return false;
+  }
+
+  @Nullable
+  public static String getTaskTextFromTask(@Nullable final Task task, @Nullable final VirtualFile taskDirectory) {
+    if (task == null) {
+      return null;
+    }
+    String text = task.getText();
+    if (text != null) {
+      return text;
+    }
+    if (taskDirectory != null) {
+      VirtualFile taskTextFile = taskDirectory.findChild(EduNames.TASK_HTML);
+      if (taskTextFile != null) {
+        try {
+          return FileUtil.loadTextAndClose(taskTextFile.getInputStream());
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+      }
+    }
+    return null;
+  }
+  
+  @Nullable
+  public static StudyToolWindowConfigurator getConfigurator(@NotNull final Project project) {
+    StudyToolWindowConfigurator[] extensions = StudyToolWindowConfigurator.EP_NAME.getExtensions();
+    for (StudyToolWindowConfigurator extension: extensions) {
+      if (extension.accept(project)) {
+        return extension;
+      }
+    }
+    return null;
   }
 }

@@ -143,19 +143,19 @@ class InputHookManager(object):
         """
         import wx
         from distutils.version import LooseVersion as V
-        wx_version = V(wx.__version__).version
+        wx_version = V(wx.__version__).version  # @UndefinedVariable
 
         if wx_version < [2, 8]:
-            raise ValueError("requires wxPython >= 2.8, but you have %s" % wx.__version__)
+            raise ValueError("requires wxPython >= 2.8, but you have %s" % wx.__version__)  # @UndefinedVariable
 
         from pydev_ipython.inputhookwx import inputhook_wx
         self.set_inputhook(inputhook_wx)
         self._current_gui = GUI_WX
 
         if app is None:
-            app = wx.GetApp()
+            app = wx.GetApp()  # @UndefinedVariable
         if app is None:
-            app = wx.App(redirect=False, clearSigInt=False)
+            app = wx.App(redirect=False, clearSigInt=False)  # @UndefinedVariable
         app._in_event_loop = True
         self._apps[GUI_WX] = app
         return app
@@ -258,7 +258,7 @@ class InputHookManager(object):
                 import Tkinter as _TK
             except:
                 # Python 3
-                import tkinter as _TK
+                import tkinter as _TK  # @UnresolvedImport
             app = _TK.Tk()
             app.withdraw()
             self._apps[GUI_TK] = app
@@ -300,7 +300,7 @@ class InputHookManager(object):
         glut.GLUT_DOUBLE | glut.GLUT_RGBA | glut.GLUT_DEPTH
         """
 
-        import OpenGL.GLUT as glut
+        import OpenGL.GLUT as glut  # @UnresolvedImport
         from pydev_ipython.inputhookglut import glut_display_mode, \
                                               glut_close, glut_display, \
                                               glut_idle, inputhook_glut
@@ -334,7 +334,7 @@ class InputHookManager(object):
         dummy one and set the timer to a dummy timer that will be triggered
         very far in the future.
         """
-        import OpenGL.GLUT as glut
+        import OpenGL.GLUT as glut  # @UnresolvedImport
         from glut_support import glutMainLoopEvent  # @UnresolvedImport
 
         glut.glutHideWindow()  # This is an event to be processed below

@@ -24,7 +24,9 @@ package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -54,13 +56,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
 
-@State(
-  name = "Encoding",
-  storages = {
-    @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = "encodings.xml", scheme = StorageScheme.DIRECTORY_BASED)
-  }
-)
+@State(name = "Encoding", storages = @Storage("encodings.xml"))
 public class EncodingProjectManagerImpl extends EncodingProjectManager implements PersistentStateComponent<Element> {
   @NonNls private static final String PROJECT_URL = "PROJECT";
   private final Project myProject;

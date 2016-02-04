@@ -99,19 +99,11 @@ public class TemplateState implements Disposable {
   @Nullable private PairProcessor<String, String> myProcessor;
   private boolean mySelectionCalculated = false;
   private boolean myStarted;
-  private final TemplateContextType[] myCompatibleContexts;
 
   TemplateState(@NotNull Project project, @NotNull final Editor editor) {
     myProject = project;
     myEditor = editor;
     myDocument = myEditor.getDocument();
-
-    PsiFile file = getPsiFile();
-    if (file != null) {
-      myCompatibleContexts = TemplateManagerImpl.getApplicableContextTypes(file, editor.getCaretModel().getOffset()).toArray(new TemplateContextType[0]);
-    } else {
-      myCompatibleContexts = new TemplateContextType[0];
-    }
   }
 
   private void initListeners() {
@@ -935,12 +927,6 @@ public class TemplateState implements Disposable {
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         return file == null ? null : file.findElementAt(offset);
       }
-
-      @NotNull
-      @Override
-      public TemplateContextType[] getCompatibleContexts() {
-        return myCompatibleContexts;
-      }
     };
   }
 
@@ -1085,7 +1071,7 @@ public class TemplateState implements Disposable {
           Expression e = myTemplate.getExpressionAt(j);
           @NonNls String marker = "a";
           if (e instanceof MacroCallNode) {
-            marker = ((MacroCallNode)e).getMacro(myCompatibleContexts).getDefaultValue();
+            marker = ((MacroCallNode)e).getMacro().getDefaultValue();
           }
           replaceString(marker, mySegments.getSegmentStart(i), mySegments.getSegmentEnd(i), i);
           indices.add(i);

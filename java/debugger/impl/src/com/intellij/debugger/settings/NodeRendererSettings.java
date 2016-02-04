@@ -28,7 +28,10 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -57,9 +60,7 @@ import java.util.List;
 @State(
   name="NodeRendererSettings",
   storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/debugger.renderers.xml"
-    )}
+    @Storage("debugger.renderers.xml")}
 )
 public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String REFERENCE_RENDERER = "Reference renderer";

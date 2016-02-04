@@ -16,7 +16,7 @@
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.writeChild
+import com.intellij.util.writeChild
 import org.eclipse.jgit.lib.Repository
 import org.jetbrains.jgit.dirCache.AddLoadedFile
 import org.jetbrains.jgit.dirCache.edit

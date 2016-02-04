@@ -46,6 +46,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 
@@ -277,8 +278,9 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     }
   }
 
-  File getExportFile() {
-    return new File(myPathPanel.getText());
+  @NotNull
+  Path getExportFile() {
+    return Paths.get(myPathPanel.getText());
   }
 
   @Override

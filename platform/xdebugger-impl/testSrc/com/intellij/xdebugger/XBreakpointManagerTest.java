@@ -15,8 +15,8 @@
  */
 package com.intellij.xdebugger;
 
-import com.intellij.openapi.util.JdomKt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.JdomKt;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;

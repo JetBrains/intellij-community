@@ -256,7 +256,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor {
     myCurrentDocument = PsiDocumentManager.getInstance(getProject()).getDocument(codeFragment);
 
     if (myCurrentDocument != null) {
-      PsiDocumentManagerBase.cachePsi(myCurrentDocument, codeFragment);
+      ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject())).cachePsi(myCurrentDocument, codeFragment);
       for (DocumentListener documentListener : myDocumentListeners) {
         myCurrentDocument.addDocumentListener(documentListener);
       }

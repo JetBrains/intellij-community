@@ -64,7 +64,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
                                                      viewRect, iconRect, textRect, b.getIconTextGap());
 
     //background
-    if (c.isOpaque()) {
+    if (c.isOpaque() || c.getParent() instanceof CellRendererPane) {
       g.setColor(b.getBackground());
       g.fillRect(0, 0, size.width, size.height);
     }
