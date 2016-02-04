@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -202,13 +205,7 @@ public class FindInProjectUtil {
       pattern = PatternUtil.convertToRegex(filter.trim());
     }
     else {
-      pattern = StringUtil.join(strings, new Function<String, String>() {
-        @NotNull
-        @Override
-        public String fun(@NotNull String s) {
-          return "(" + PatternUtil.convertToRegex(s.trim()) + ")";
-        }
-      }, "|");
+      pattern = StringUtil.join(strings, s -> "(" + PatternUtil.convertToRegex(s.trim()) + ")", "|");
     }
     return Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
   }
@@ -228,7 +225,7 @@ public class FindInProjectUtil {
                                 @NotNull final Project project,
                                 @NotNull final Processor<UsageInfo> consumer,
                                 @NotNull FindUsagesProcessPresentation processPresentation) {
-    findUsages(findModel, project, consumer, processPresentation, Collections.<VirtualFile>emptySet());
+    findUsages(findModel, project, consumer, processPresentation, Collections.emptySet());
   }
 
   public static void findUsages(@NotNull FindModel findModel,
@@ -244,12 +241,7 @@ public class FindInProjectUtil {
                                  @NotNull final FindModel findModel,
                                  @NotNull final Processor<UsageInfo> consumer) {
     if (findModel.getStringToFind().isEmpty()) {
-      if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-              @Override
-              public Boolean compute() {
-                return consumer.process(new UsageInfo(psiFile));
-              }
-            })) {
+      if (!ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> consumer.process(new UsageInfo(psiFile)))) {
         throw new ProcessCanceledException();
       }
       return 1;
@@ -257,12 +249,8 @@ public class FindInProjectUtil {
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return 0;
     if (virtualFile.getFileType().isBinary()) return 0; // do not decompile .class files
-    final Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
-      @Override
-      public Document compute() {
-        return virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null;
-      }
-    });
+    final Document document = ApplicationManager.getApplication().runReadAction(
+      (Computable<Document>)() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
     if (document == null) return 0;
     final int[] offset = {0};
     int count = 0;
@@ -271,13 +259,9 @@ public class FindInProjectUtil {
     TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator);
     do {
       tooManyUsagesStatus.pauseProcessingIfTooManyUsages(); // wait for user out of read action
-      found = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
-        @Override
-        @NotNull
-        public Integer compute() {
-          if (!psiFile.isValid()) return 0;
-          return addToUsages(document, consumer, findModel, psiFile, offset, USAGES_PER_READ_ACTION);
-        }
+      found = ApplicationManager.getApplication().runReadAction((Computable<Integer>)() -> {
+        if (!psiFile.isValid()) return 0;
+        return addToUsages(document, consumer, findModel, psiFile, offset, USAGES_PER_READ_ACTION);
       });
       count += found;
     }
@@ -389,13 +373,7 @@ public class FindInProjectUtil {
     processPresentation.setShowNotFoundMessage(true);
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
     processPresentation.setProgressIndicatorFactory(
-      new Factory<ProgressIndicator>() {
-        @NotNull
-        @Override
-        public ProgressIndicator create() {
-          return new FindProgressIndicator(project, presentation.getScopeText());
-        }
-      }
+      () -> new FindProgressIndicator(project, presentation.getScopeText())
     );
     return processPresentation;
   }
@@ -410,14 +388,15 @@ public class FindInProjectUtil {
       if (grandChildren.length != 1) return Collections.emptyList(); // a | b, more than one branch, can not predict in current way
 
       for(PsiElement grandGrandChild:grandChildren[0].getChildren()) {
-        if (result == null) result = new ArrayList<PsiElement>();
+        if (result == null) result = new ArrayList<>();
         result.add(grandGrandChild);
       }
     }
     return result != null ? result : Collections.<PsiElement>emptyList();
   }
 
-  public static @NotNull String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, @NotNull Project project) {
+  @NotNull
+  public static String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, @NotNull Project project) {
     if (!Registry.is("idea.regexp.search.uses.indices")) return "";
 
     final AccessToken accessToken = ReadAction.start();
@@ -549,16 +528,14 @@ public class FindInProjectUtil {
   }
 
   private static void addSourceDirectoriesFromLibraries(@NotNull Project project,
-                                                        @NotNull VirtualFile file,
+                                                        @NotNull VirtualFile directory,
                                                         @NotNull Collection<VirtualFile> outSourceRoots) {
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
-    // if we already are in the sources, search just in this directory only
-    if (index.isInLibrarySource(file)) return;
-    VirtualFile classRoot = index.getClassRootForFile(file);
+    VirtualFile classRoot = index.getClassRootForFile(directory);
     if (classRoot == null) return;
-    String relativePath = VfsUtilCore.getRelativePath(file, classRoot);
+    String relativePath = VfsUtilCore.getRelativePath(directory, classRoot);
     if (relativePath == null) return;
-    for (OrderEntry orderEntry : index.getOrderEntriesForFile(file)) {
+    for (OrderEntry orderEntry : index.getOrderEntriesForFile(directory)) {
       for (VirtualFile sourceRoot : orderEntry.getFiles(OrderRootType.SOURCES)) {
         VirtualFile sourceFile = sourceRoot.findFileByRelativePath(relativePath);
         if (sourceFile != null) {
@@ -586,7 +563,7 @@ public class FindInProjectUtil {
   private static GlobalSearchScope forDirectory(@NotNull Project project,
                                                 boolean withSubdirectories,
                                                 @NotNull VirtualFile directory) {
-    Set<VirtualFile> result = new LinkedHashSet<VirtualFile>();
+    Set<VirtualFile> result = new LinkedHashSet<>();
     result.add(directory);
     addSourceDirectoriesFromLibraries(project, directory, result);
     VirtualFile[] array = result.toArray(new VirtualFile[result.size()]);
