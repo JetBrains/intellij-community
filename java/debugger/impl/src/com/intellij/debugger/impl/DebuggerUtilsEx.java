@@ -836,7 +836,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
     while(true);
 
-    final List<PsiLambdaExpression> lambdas = new ArrayList<PsiLambdaExpression>(3);
+    final List<PsiLambdaExpression> lambdas = new SmartList<>();
     final PsiElementVisitor lambdaCollector = new JavaRecursiveElementVisitor() {
       @Override
       public void visitLambdaExpression(PsiLambdaExpression expression) {
@@ -847,16 +847,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
     };
     element.accept(lambdaCollector);
-    // add initial lambda if we're inside already
-    PsiElement method = getContainingMethod(element);
-    if (method instanceof PsiLambdaExpression) {
-      lambdas.add((PsiLambdaExpression)method);
-    }
     for (PsiElement sibling = getNextElement(element); sibling != null; sibling = getNextElement(sibling)) {
       if (!intersects(lineRange, sibling)) {
         break;
       }
       sibling.accept(lambdaCollector);
+    }
+    // add initial lambda if we're inside already
+    PsiElement method = getContainingMethod(element);
+    if (method instanceof PsiLambdaExpression && !lambdas.contains(method)) {
+      lambdas.add((PsiLambdaExpression)method);
     }
     return lambdas;
   }
