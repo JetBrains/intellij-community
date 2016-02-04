@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import sun.awt.SunToolkit;
@@ -518,8 +519,10 @@ public class DarculaTitlePane extends JComponent {
         xOffset -= SwingUtilities2.stringWidth(rootPane, fm, theTitle);
       }
       int titleLength = SwingUtilities2.stringWidth(rootPane, fm, theTitle);
-      //SwingUtilities2.drawString(rootPane, g, theTitle, xOffset, yOffset);
-      xOffset += leftToRight ? titleLength + 5 : -5;
+      if (myIdeMenu == null) {
+        SwingUtilities2.drawString(rootPane, g, theTitle, xOffset, yOffset);
+        xOffset += leftToRight ? titleLength + 5 : -5;
+      }
     }
 
 
@@ -740,7 +743,8 @@ public class DarculaTitlePane extends JComponent {
     } else if (icons.size() == 1) {
       mySystemIcon = icons.get(0);
     } else {
-      mySystemIcon = SunToolkit.getScaledIconImage(icons, 32, 32);
+      final JBDimension size = JBUI.size(myIdeMenu == null ? 24 : 32);
+      mySystemIcon = SunToolkit.getScaledIconImage(icons, size.width, size.height);
     }
   }
 
