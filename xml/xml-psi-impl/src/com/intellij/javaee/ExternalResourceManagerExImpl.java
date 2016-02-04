@@ -54,8 +54,8 @@ import java.util.*;
 @State(
   name = "ExternalResourceManagerImpl",
   storages = {
-    @Storage(file = "javaeeExternalResources.xml"),
-    @Storage(file = "other.xml", deprecated = true)
+    @Storage("javaeeExternalResources.xml"),
+    @Storage(value = "other.xml", deprecated = true)
   }
 )
 public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx implements PersistentStateComponent<Element> {

@@ -1,6 +1,9 @@
 package com.jetbrains.edu.learning;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -26,15 +29,7 @@ import java.util.Map;
  * about study in context of current project
  */
 
-@State(
-  name = "StudySettings",
-  storages = {
-    @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(
-      file = StoragePathMacros.PROJECT_CONFIG_DIR + "/study_project.xml",
-      scheme = StorageScheme.DIRECTORY_BASED
-    )}
-)
+@State(name = "StudySettings", storages = @Storage("study_project.xml"))
 public class StudyTaskManager implements PersistentStateComponent<Element>, DumbAware {
   private Course myCourse;
   private OldCourse myOldCourse;

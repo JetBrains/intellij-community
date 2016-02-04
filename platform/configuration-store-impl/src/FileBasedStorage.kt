@@ -231,7 +231,7 @@ fun Parent.toBufferExposingByteArray(lineSeparator: String = "\n"): BufferExposi
   return out
 }
 
-fun isProjectOrModuleFile(fileSpec: String): Boolean = StoragePathMacros.PROJECT_FILE == fileSpec || fileSpec.startsWith(StoragePathMacros.PROJECT_CONFIG_DIR) || fileSpec == StoragePathMacros.MODULE_FILE
+fun isProjectOrModuleFile(fileSpec: String): Boolean = PROJECT_FILE == fileSpec || fileSpec.startsWith(PROJECT_CONFIG_DIR) || fileSpec == StoragePathMacros.MODULE_FILE
 
 fun detectLineSeparators(chars: CharSequence, defaultSeparator: LineSeparator?): LineSeparator {
   for (c in chars) {

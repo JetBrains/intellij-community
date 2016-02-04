@@ -15,7 +15,10 @@
  */
 package com.intellij.ide.fileTemplates.impl;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -30,10 +33,7 @@ import java.util.Locale;
  */
 @State(
   name = "ExportableFileTemplateSettings",
-  storages = {
-    @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/" + ExportableFileTemplateSettings.EXPORTABLE_SETTINGS_FILE, scheme = StorageScheme.DIRECTORY_BASED),
-  },
+  storages = @Storage(ExportableFileTemplateSettings.EXPORTABLE_SETTINGS_FILE),
   additionalExportFile = FileTemplatesLoader.TEMPLATES_DIR
 )
 public class ExportableFileTemplateSettings implements PersistentStateComponent<Element> {

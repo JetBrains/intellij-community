@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,13 @@ package com.intellij.codeInsight.generation;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import org.jetbrains.java.generate.exception.TemplateResourceException;
 import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
 
 import java.io.IOException;
 
-@State(
-  name = "SetterTemplates",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/setterTemplates.xml"
-    )}
-)
+@State(name = "SetterTemplates", storages = @Storage("setterTemplates.xml"))
 public class SetterTemplatesManager extends TemplatesManager {
   private static final String DEFAULT = "defaultSetter.vm";
   private static final String BUILDER = "builderSetter.vm";

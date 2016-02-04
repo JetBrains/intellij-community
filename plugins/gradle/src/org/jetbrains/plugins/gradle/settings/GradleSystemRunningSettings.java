@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  * @since 14/8/2014
  */
-@State(
-  name = "GradleSystemRunningSettings",
-  storages = {
-    @Storage(file = "gradle.run.settings.xml")
-  }
-)
+@State(name = "GradleSystemRunningSettings", storages = @Storage("gradle.run.settings.xml"))
 public class GradleSystemRunningSettings implements PersistentStateComponent<GradleSystemRunningSettings.MyState> {
 
   @Nullable private PreferredTestRunner myPreferredTestRunner = PreferredTestRunner.PLATFORM_TEST_RUNNER;

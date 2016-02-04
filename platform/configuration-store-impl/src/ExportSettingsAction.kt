@@ -197,8 +197,8 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
       return@PairProcessor true
     }
 
-    val storage = sortStoragesByDeprecated(stateAnnotation.storages).firstOrNull() ?: return@PairProcessor true
-    if (!(storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && storage.scheme == StorageScheme.DEFAULT && !storage.file.isNullOrEmpty())) {
+    val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return@PairProcessor true
+    if (!(storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && !storage.path.isNullOrEmpty())) {
       return@PairProcessor true
     }
 
@@ -215,7 +215,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
       }
     }
 
-    val file = Paths.get(storageManager.expandMacros(storage.file))
+    val file = Paths.get(storageManager.expandMacros(storage.path))
     val isFileIncluded = !isSkipFile(file)
     if (isFileIncluded || additionalExportFile != null) {
       if (computePresentableNames && onlyExisting && additionalExportFile == null && file.fileName.toString().endsWith(".xml")) {

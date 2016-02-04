@@ -46,13 +46,19 @@ import com.intellij.util.xmlb.JDOMXIncluder
 import gnu.trove.THashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
-import java.io.File
 import java.io.IOException
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import com.intellij.openapi.util.Pair as JBPair
 
 internal val LOG = Logger.getInstance(ComponentStoreImpl::class.java)
+
+internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
+  val w1 = if (o1.deprecated) 1 else 0
+  val w2 = if (o2.deprecated) 1 else 0
+  w1 - w2
+}
 
 abstract class ComponentStoreImpl : IComponentStore {
   private val components = Collections.synchronizedMap(THashMap<String, Any>())
@@ -67,9 +73,6 @@ abstract class ComponentStoreImpl : IComponentStore {
   abstract val storageManager: StateStorageManager
 
   override final fun getStateStorageManager() = storageManager
-
-  // return null if not applicable
-  protected open fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation): Array<Storage>? = null
 
   override final fun initComponent(component: Any, service: Boolean) {
     if (component is SettingsSavingComponent) {
@@ -163,13 +166,13 @@ abstract class ComponentStoreImpl : IComponentStore {
       return
     }
 
-    val file: File
+    val absolutePath: String
     val state = StoreUtil.getStateSpec(component.javaClass)
     if (state != null) {
-      file = File(storageManager.expandMacros(findNonDeprecated(state.storages).file))
+      absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(state.storages).path)).toAbsolutePath().toString()
     }
     else if (component is ExportableApplicationComponent && component is NamedJDOMExternalizable) {
-      file = PathManager.getOptionsFile(component)
+      absolutePath = PathManager.getOptionsFile(component).absolutePath
     }
     else {
       throw AssertionError("${component.javaClass} doesn't have @State annotation and doesn't implement ExportableApplicationComponent")
@@ -177,11 +180,11 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     runWriteAction {
       try {
-        VfsRootAccess.allowRootAccess(file.absolutePath)
+        VfsRootAccess.allowRootAccess(absolutePath)
         CompoundRuntimeException.throwIfNotEmpty(doSave(sessions))
       }
       finally {
-        VfsRootAccess.disallowRootAccess(file.absolutePath)
+        VfsRootAccess.disallowRootAccess(absolutePath)
       }
     }
   }
@@ -327,13 +330,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
       throw AssertionError("No storage specified")
     }
-
-    val defaultStorages = selectDefaultStorages(storages, operation)
-    if (defaultStorages != null) {
-      return defaultStorages
-    }
-
-    return sortStoragesByDeprecated(storages)
+    return storages.sortByDeprecated()
   }
 
   override final fun isReloadPossible(componentNames: MutableSet<String>) = !componentNames.any { isNotReloadable(it) }
@@ -461,28 +458,24 @@ enum class StateLoadPolicy {
   LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD
 }
 
-internal fun sortStoragesByDeprecated(storages: Array<Storage>): Array<out Storage> {
-  if (storages.isEmpty()) {
-    return storages
+internal fun Array<Storage>.sortByDeprecated(): Array<out Storage> {
+  if (isEmpty()) {
+    return this
   }
 
-  if (!storages[0].deprecated) {
+  if (!this[0].deprecated) {
     var othersAreDeprecated = true
-    for (i in 1..storages.size - 1) {
-      if (!storages[i].deprecated) {
+    for (i in 1..size - 1) {
+      if (!this[i].deprecated) {
         othersAreDeprecated = false
         break
       }
     }
 
     if (othersAreDeprecated) {
-      return storages
+      return this
     }
   }
 
-  return storages.sortedArrayWith(Comparator<Storage> { o1, o2 ->
-    val w1 = if (o1.deprecated) 1 else 0
-    val w2 = if (o2.deprecated) 1 else 0
-    w1 - w2
-  })
+  return sortedArrayWith(deprecatedComparator)
 }

@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
+import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.lang.CompoundRuntimeException
 import java.io.File
 import java.io.IOException
@@ -50,8 +51,16 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 
+const val PROJECT_FILE = "\$PROJECT_FILE$"
+const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
+
 val IProjectStore.nameFile: Path
   get() = Paths.get(projectBasePath, Project.DIRECTORY_STORE_FOLDER, ProjectImpl.NAME_FILE)
+
+internal val PROJECT_FILE_STORAGE_ANNOTATION = ProjectFileStorageAnnotation()
+internal val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = object : ProjectFileStorageAnnotation() {
+  override fun deprecated() = true
+}
 
 abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreImpl(), IProjectStore {
   // protected setter used in upsource
@@ -73,7 +82,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     loadPolicy = if (value) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
   }
 
-  override fun getProjectFilePath() = storageManager.expandMacro(StoragePathMacros.PROJECT_FILE)
+  override fun getProjectFilePath() = storageManager.expandMacro(PROJECT_FILE)
 
   override final fun getWorkspaceFilePath() = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
 
@@ -86,7 +95,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 
     val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy()
     if (element != null) {
-      (storageManager.getOrCreateStorage(StoragePathMacros.PROJECT_FILE) as XmlElementStorage).setDefaultState(element)
+      (storageManager.getOrCreateStorage(PROJECT_FILE) as XmlElementStorage).setDefaultState(element)
     }
   }
 
@@ -102,7 +111,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     if (FileUtilRt.extensionEquals(filePath, ProjectFileType.DEFAULT_EXTENSION)) {
       scheme = StorageScheme.DEFAULT
 
-      storageManager.addMacro(StoragePathMacros.PROJECT_FILE, filePath)
+      storageManager.addMacro(PROJECT_FILE, filePath)
 
       val workspacePath = composeWsPath(filePath)
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath)
@@ -125,8 +134,8 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       // if useOldWorkspaceContentIfExists false, so, file path is expected to be correct (we must avoid file io operations)
       val isDir = !useOldWorkspaceContentIfExists || file.isDirectory
       val configDir = "${(if (isDir) filePath else PathUtilRt.getParentPath(filePath))}/${Project.DIRECTORY_STORE_FOLDER}"
-      storageManager.addMacro(StoragePathMacros.PROJECT_CONFIG_DIR, configDir)
-      storageManager.addMacro(StoragePathMacros.PROJECT_FILE, "$configDir/misc.xml")
+      storageManager.addMacro(PROJECT_CONFIG_DIR, configDir)
+      storageManager.addMacro(PROJECT_FILE, "$configDir/misc.xml")
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, "$configDir/workspace.xml")
 
       if (!isDir) {
@@ -164,7 +173,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
   }
 
   override fun getProjectName(): String {
-    if (scheme == StorageScheme.DIRECTORY_BASED) {
+    if (isDirectoryBased) {
       val baseDir = projectBasePath
       val nameFile = nameFile
       if (nameFile.exists()) {
@@ -194,8 +203,11 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     }
   }
 
+  private val isDirectoryBased: Boolean
+    get() = scheme == StorageScheme.DIRECTORY_BASED
+
   private fun saveProjectName() {
-    if (scheme != StorageScheme.DIRECTORY_BASED) {
+    if (!isDirectoryBased) {
       return
     }
 
@@ -279,77 +291,67 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
   }
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
-    // if we create project from default, component state written not to own storage file, but to project file,
-    // we don't have time to fix it properly, so, ancient hack restored.
-    val result = super.getStorageSpecs(component, stateSpec, operation)
-    // don't add fake storage if project file storage already listed, otherwise data will be deleted on write (because of "deprecated")
-    for (storage in result) {
-      if (storage.file == StoragePathMacros.PROJECT_FILE) {
-        return result
-      }
-    }
-    return Array(result.size + 1) { if (it == result.size) DEFAULT_STORAGE_ANNOTATION else result[it] }
-  }
-
-  companion object {
-    private val DEFAULT_STORAGE_ANNOTATION = DefaultStorageAnnotation()
-
-    private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles: Array<VirtualFile>) {
-      val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
-      if (notifications.isEmpty()) {
-        Notifications.Bus.notify(UnableToSaveProjectNotification(project, readOnlyFiles), project)
-      }
-      else {
-        notifications[0].myFiles = readOnlyFiles
-      }
+    val storages = stateSpec.storages
+    if (storages.isEmpty()) {
+      return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
     }
 
-    private fun getFilesList(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) = Array(readonlyFiles.size) { readonlyFiles[it].second }
-  }
-
-  override fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation) = selectDefaultStorages(storages, operation, scheme)
-}
-
-internal fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation, scheme: StorageScheme): Array<Storage> {
-  if (operation === StateStorageOperation.READ) {
-    val result = SmartList<Storage>()
-    for (i in storages.indices.reversed()) {
-      val storage = storages[i]
-      if (storage.scheme == scheme) {
-        result.add(storage)
-      }
-    }
-
-    for (storage in storages) {
-      if (storage.scheme == StorageScheme.DEFAULT && !result.contains(storage)) {
-        result.add(storage)
-      }
-    }
-
-    return result.toTypedArray()
-  }
-  else if (operation == StateStorageOperation.WRITE) {
-    val result = SmartList<Storage>()
-    for (storage in storages) {
-      if (storage.scheme == scheme) {
-        result.add(storage)
-      }
-    }
-
-    if (result.isEmpty()) {
+    if (isDirectoryBased) {
+      var result: MutableList<Storage>? = null
       for (storage in storages) {
-        if (storage.scheme == StorageScheme.DEFAULT) {
+        @Suppress("DEPRECATION")
+        if (storage.scheme == scheme || storage.path != PROJECT_FILE) {
+          if (result == null) {
+            result = SmartList()
+          }
           result.add(storage)
         }
       }
-    }
 
-    return result.toTypedArray()
-  }
-  else {
-    return emptyArray()
+      if (result.isNullOrEmpty()) {
+        return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
+      }
+      else {
+        result!!.sortWith(deprecatedComparator)
+        // if we create project from default, component state written not to own storage file, but to project file,
+        // we don't have time to fix it properly, so, ancient hack restored
+        result.add(DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION)
+        return result.toTypedArray()
+      }
+    }
+    else {
+      var result: MutableList<Storage>? = null
+      for (storage in storages) {
+        @Suppress("DEPRECATION")
+        if (storage.path == PROJECT_FILE || storage.path == StoragePathMacros.WORKSPACE_FILE) {
+          if (result == null) {
+            result = SmartList()
+          }
+          result.add(storage)
+        }
+      }
+      if (result.isNullOrEmpty()) {
+        return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
+      }
+      else {
+        result!!.sortWith(deprecatedComparator)
+        return result.toTypedArray()
+      }
+    }
   }
 }
+
+private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles: Array<VirtualFile>) {
+  val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
+  if (notifications.isEmpty()) {
+    Notifications.Bus.notify(UnableToSaveProjectNotification(project, readOnlyFiles), project)
+  }
+  else {
+    notifications[0].myFiles = readOnlyFiles
+  }
+}
+
+private fun getFilesList(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) = Array(readonlyFiles.size) { readonlyFiles[it].second }
 
 private class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
   override fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {

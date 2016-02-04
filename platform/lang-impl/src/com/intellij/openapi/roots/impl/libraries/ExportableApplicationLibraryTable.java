@@ -24,7 +24,7 @@ import com.intellij.openapi.components.Storage;
  */
 @State(
   name = "libraryTable",
-  storages = @Storage(file = "applicationLibraries.xml", roamingType = RoamingType.PER_OS)
+  storages = @Storage(value = "applicationLibraries.xml", roamingType = RoamingType.PER_OS)
 )
 public class ExportableApplicationLibraryTable extends ApplicationLibraryTable {
 }

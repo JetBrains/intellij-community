@@ -119,7 +119,7 @@ internal class ApplicationStoreTest {
     testAppConfig.refreshVfs()
 
     val storageManager = ApplicationManager.getApplication().stateStore.stateStorageManager
-    val optionsPath = storageManager.expandMacros(StoragePathMacros.APP_CONFIG)
+    val optionsPath = storageManager.expandMacros(APP_CONFIG)
     val rootConfigPath = storageManager.expandMacros(ROOT_CONFIG)
     val map = getExportableComponentsMap(false, true, storageManager)
     assertThat(map).isNotEmpty
@@ -201,7 +201,7 @@ internal class ApplicationStoreTest {
 </application>""")
   }
 
-  @State(name = "A", storages = arrayOf(Storage(file = "a.xml")), additionalExportFile = "foo")
+  @State(name = "A", storages = arrayOf(Storage("a.xml")), additionalExportFile = "foo")
   private open class A : PersistentStateComponent<A.State> {
     data class State(@Attribute var foo: String = "", @Attribute var bar: String = "")
 
@@ -237,7 +237,7 @@ internal class ApplicationStoreTest {
   }
 
   @Test fun `do not check if only format changed for non-roamable storage`() {
-    @State(name = "A", storages = arrayOf(Storage(file = "b.xml", roamingType = RoamingType.DISABLED)))
+    @State(name = "A", storages = arrayOf(Storage(value = "b.xml", roamingType = RoamingType.DISABLED)))
     class AWorkspace : A()
 
     val oldContent = "<application><component name=\"A\" foo=\"old\" deprecated=\"old\"/></application>"
@@ -296,7 +296,7 @@ internal class ApplicationStoreTest {
     }
 
     override fun setPath(path: String) {
-      storageManager.addMacro(StoragePathMacros.APP_CONFIG, path)
+      storageManager.addMacro(APP_CONFIG, path)
       // yes, in tests APP_CONFIG equals to ROOT_CONFIG (as ICS does)
       storageManager.addMacro(ROOT_CONFIG, path)
     }
@@ -307,7 +307,7 @@ internal class ApplicationStoreTest {
     var foo = "defaultValue"
   }
 
-  @State(name = "A", storages = arrayOf(Storage(file = "new.xml"), Storage(file = StoragePathMacros.APP_CONFIG + "/old.xml", deprecated = true)))
+  @State(name = "A", storages = arrayOf(Storage("new.xml"), Storage(value = "old.xml", deprecated = true)))
   class SeveralStoragesConfigured : Foo(), PersistentStateComponent<SeveralStoragesConfigured> {
     override fun getState(): SeveralStoragesConfigured? {
       return this
@@ -318,7 +318,7 @@ internal class ApplicationStoreTest {
     }
   }
 
-  @State(name = "A", storages = arrayOf(Storage(file = "old.xml", deprecated = true), Storage(file = "${StoragePathMacros.APP_CONFIG}/new.xml")))
+  @State(name = "A", storages = arrayOf(Storage(value = "old.xml", deprecated = true), Storage("new.xml")))
   class ActualStorageLast : Foo(), PersistentStateComponent<ActualStorageLast> {
     override fun getState() = this
 

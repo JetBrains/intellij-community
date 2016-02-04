@@ -24,10 +24,7 @@ internal class DefaultProjectStoreTest {
 
     internal const val TEST_COMPONENT_NAME = "Foo"
 
-    @State(name = TEST_COMPONENT_NAME, storages = arrayOf(
-      Storage(file = StoragePathMacros.PROJECT_FILE),
-      Storage(file = "${StoragePathMacros.PROJECT_CONFIG_DIR}/testSchemes", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = TestStateSplitter::class))
-    )
+    @State(name = TEST_COMPONENT_NAME, storages = arrayOf(Storage(value = "testSchemes", stateSplitter = TestStateSplitter::class)))
     private class TestComponent: PersistentStateComponent<Element> {
       private var element = Element("state")
 
@@ -47,7 +44,7 @@ internal class DefaultProjectStoreTest {
     tempDirManager,
     WrapRule {
       val app = ApplicationManagerEx.getApplicationEx()
-      val path = Paths.get(app.stateStore.stateStorageManager.expandMacros(StoragePathMacros.APP_CONFIG))
+      val path = Paths.get(app.stateStore.stateStorageManager.expandMacros(APP_CONFIG))
       // dream about using in memory fs per test as ICS partially does and avoid such hacks
       path.refreshVfs()
 

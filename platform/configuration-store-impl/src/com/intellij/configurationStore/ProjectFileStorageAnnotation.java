@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.annotation.Annotation;
 
 @SuppressWarnings("ClassExplicitlyAnnotation")
-public final class DefaultStorageAnnotation implements Storage {
+public class ProjectFileStorageAnnotation implements Storage {
   @Override
   public String id() {
     return "___Default___";
@@ -14,7 +14,12 @@ public final class DefaultStorageAnnotation implements Storage {
 
   @Override
   public String file() {
-    return StoragePathMacros.PROJECT_FILE;
+    return value();
+  }
+
+  @Override
+  public String value() {
+    return ProjectStoreImplKt.PROJECT_FILE;
   }
 
   @Override
@@ -24,7 +29,7 @@ public final class DefaultStorageAnnotation implements Storage {
 
   @Override
   public boolean deprecated() {
-    return true;
+    return false;
   }
 
   @Override

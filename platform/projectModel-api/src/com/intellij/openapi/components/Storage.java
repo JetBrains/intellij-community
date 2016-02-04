@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,14 @@ import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Storage {
-  @NonNls String id() default "default";
+  String id() default "default";
 
-  @NonNls String file() default "";
+  @Deprecated
+  String file() default "";
 
+  @NonNls String value() default "";
+
+  @Deprecated
   StorageScheme scheme() default StorageScheme.DEFAULT;
 
   /**
@@ -35,7 +39,7 @@ public @interface Storage {
   boolean deprecated() default false;
 
   /**
-   * You must not store components with different roaming types in one file ({@link #file()}).
+   * You must not store components with different roaming types in one file ({@link #value()}).
    */
   RoamingType roamingType() default RoamingType.DEFAULT;
 

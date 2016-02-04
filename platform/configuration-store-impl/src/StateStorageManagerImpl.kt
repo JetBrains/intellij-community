@@ -130,7 +130,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
   }
 
-  override final fun getStateStorage(storageSpec: Storage) = getOrCreateStorage(storageSpec.file, storageSpec.roamingType,
+  override final fun getStateStorage(storageSpec: Storage) = getOrCreateStorage(storageSpec.path, storageSpec.roamingType,
           JavaAnnotationHelperForKotlin.getStorageClass(storageSpec), JavaAnnotationHelperForKotlin.getStateSplitterClass(storageSpec))
 
   protected open fun normalizeFileSpec(fileSpec: String): String {
@@ -142,7 +142,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   fun getOrCreateStorage(collapsedPath: String,
                          roamingType: RoamingType = RoamingType.DEFAULT,
                          storageClass: Class<out StateStorage> = StateStorage::class.java,
-                         @Suppress("DEPRECATION") @SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java): StateStorage {
+                         @Suppress("DEPRECATION") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java): StateStorage {
     val normalizedCollapsedPath = normalizeFileSpec(collapsedPath)
     val key = if (storageClass == StateStorage::class.java) normalizedCollapsedPath else storageClass.name
     storageLock.withLock {
@@ -399,3 +399,7 @@ private fun String.startsWithMacro(macro: String): Boolean {
 }
 
 fun removeMacroIfStartsWith(path: String, macro: String) = if (path.startsWithMacro(macro)) path.substring(macro.length + 1) else path
+
+@Suppress("DEPRECATION")
+val Storage.path: String
+  get() = if (value.isNullOrEmpty()) file else value

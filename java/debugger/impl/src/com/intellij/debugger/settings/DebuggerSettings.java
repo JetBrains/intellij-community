@@ -40,8 +40,8 @@ import java.util.Map;
   name = "DebuggerSettings",
   defaultStateAsResource = true,
   storages = {
-    @Storage(file = "debugger.xml"),
-    @Storage(file = "other.xml", deprecated = true)
+    @Storage("debugger.xml"),
+    @Storage(value = "other.xml", deprecated = true)
   }
 )
 public class DebuggerSettings implements Cloneable, PersistentStateComponent<Element> {

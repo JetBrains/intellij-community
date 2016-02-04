@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 @State(
   name = "NewModuleRootManager",
   storages = {
-    @Storage(file = StoragePathMacros.MODULE_FILE),
+    @Storage(StoragePathMacros.MODULE_FILE),
     @Storage(id = ClasspathStorage.SPECIAL_STORAGE, storageClass = ClasspathStorage.class)
   }
 )
