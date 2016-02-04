@@ -33,7 +33,7 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   private static final String MERGES_DESCRIPTION = "merges";
 
   public CollapseOrExpandGraphAction() {
-    super();
+    super("Collapse or Expand " + LINEAR_BRANCHES, "Collapse or Expand " + LINEAR_BRANCHES_DESCRIPTION, null);
   }
 
   @Override
