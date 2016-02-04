@@ -23,10 +23,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.util.Arrays;
@@ -36,15 +33,57 @@ import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
-public class FileAttributesReadingTest {
+public abstract class FileAttributesReadingTest {
+
+  public static class MainTest extends FileAttributesReadingTest {
+    @BeforeClass
+    public static void checkMediator() {
+      FileSystemUtil.resetMediator();
+      assertEquals(SystemInfo.isWindows ? "IdeaWin32" : "JnaUnix", FileSystemUtil.getMediatorName());
+    }
+  }
+
+  public static class Nio2Test extends FileAttributesReadingTest {
+    @BeforeClass
+    public static void setUpClass() {
+      assumeTrue(SystemInfo.isJavaVersionAtLeast("1.7"));
+
+      System.setProperty(FileSystemUtil.FORCE_USE_NIO2_KEY, "true");
+      FileSystemUtil.resetMediator();
+      assertEquals("Nio2", FileSystemUtil.getMediatorName());
+    }
+
+    @AfterClass
+    public static void tearDownClass() {
+      System.clearProperty(FileSystemUtil.FORCE_USE_NIO2_KEY);
+      FileSystemUtil.resetMediator();
+    }
+  }
+
+  public static class FallbackTest extends FileAttributesReadingTest {
+    @BeforeClass
+    public static void setUpClass() {
+      System.setProperty(FileSystemUtil.FORCE_USE_FALLBACK_KEY, "true");
+      FileSystemUtil.resetMediator();
+      assertEquals("Fallback", FileSystemUtil.getMediatorName());
+    }
+
+    @AfterClass
+    public static void tearDownClass() {
+      System.clearProperty(FileSystemUtil.FORCE_USE_FALLBACK_KEY);
+      FileSystemUtil.resetMediator();
+    }
+
+    @Override public void linkToFile() { }
+    @Override public void doubleLink() { }
+    @Override public void linkToDirectory() { }
+    @Override public void missingLink() { }
+    @Override public void selfLink() { }
+    @Override public void junction() { }
+  }
+
   private final byte[] myTestData = new byte[]{'t', 'e', 's', 't'};
   private File myTempDirectory;
-
-  @BeforeClass
-  public static void checkMediator() {
-    final String expectedName = SystemInfo.isWindows ? "IdeaWin32" : "JnaUnix";
-    assertEquals(expectedName, FileSystemUtil.getMediatorName());
-  }
 
   @Before
   public void setUp() throws Exception {
