@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
@@ -39,7 +40,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
@@ -76,8 +76,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     private final List<String> myNameDefinerNegativeCache = new ArrayList<String>();
     private long myNameDefinerOOCBModCount = -1;
     private final long myModificationStamp;
-    private final MultiMap<String, PsiNamedElement> myNamedElements = new MultiMap<String, PsiNamedElement>();
-    private final List<PyImportedNameDefiner> myImportedNameDefiners = new ArrayList<PyImportedNameDefiner>();
+    private final Map<String, List<PsiNamedElement>> myNamedElements = Maps.newHashMap();
+    private final List<PyImportedNameDefiner> myImportedNameDefiners = Lists.newArrayList();
 
     private ExportedNameCache(long modificationStamp) {
       myModificationStamp = modificationStamp;
@@ -87,7 +87,12 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         public boolean process(PsiElement element) {
           if (element instanceof PsiNamedElement && !(element instanceof PyKeywordArgument)) {
             final PsiNamedElement namedElement = (PsiNamedElement)element;
-            myNamedElements.putValue(namedElement.getName(), namedElement);
+            final String name = namedElement.getName();
+            if (!myNamedElements.containsKey(name)) {
+              myNamedElements.put(name, Lists.<PsiNamedElement>newArrayList());
+            }
+            final List<PsiNamedElement> elements = myNamedElements.get(name);
+            elements.add(namedElement);
           }
           if (element instanceof PyImportedNameDefiner) {
             myImportedNameDefiners.add((PyImportedNameDefiner)element);
@@ -109,6 +114,10 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
           return true;
         }
       });
+      for (List<PsiNamedElement> elements : myNamedElements.values()) {
+        Collections.reverse(elements);
+      }
+      Collections.reverse(myImportedNameDefiners);
     }
 
     private boolean processDeclarations(@NotNull List<PsiElement> elements, @NotNull Processor<PsiElement> processor) {
@@ -381,7 +390,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   @Nullable
   public PsiElement findExportedName(final String name) {
-    final List<RatedResolveResult> results = multiResolveExportedElements(name);
+    final List<RatedResolveResult> results = multiResolveName(name);
     final List<PsiElement> elements = Lists.newArrayList();
     for (RatedResolveResult result : results) {
       final PsiElement element = result.getElement();
@@ -404,14 +413,22 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @NotNull
-  private List<RatedResolveResult> multiResolveExportedElements(@NotNull final String name) {
+  @Override
+  public List<RatedResolveResult> multiResolveName(@NotNull final String name) {
     final List<RatedResolveResult> results = RecursionManager.doPreventingRecursion(this, false, new Computable<List<RatedResolveResult>>() {
       @Override
       public List<RatedResolveResult> compute() {
         return getExportedNameCache().multiResolve(name);
       }
     });
-    return results != null ? results : Collections.<RatedResolveResult>emptyList();
+    if (results != null && !results.isEmpty()) {
+      return results;
+    }
+    final List<String> allNames = getDunderAll();
+    if (allNames != null && allNames.contains(name)) {
+      return ResolveResultList.to(findExportedName(PyNames.ALL));
+    }
+    return Collections.emptyList();
   }
 
   private ExportedNameCache getExportedNameCache() {
@@ -431,7 +448,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Nullable
   public PsiElement getElementNamed(final String name) {
-    final List<RatedResolveResult> results = multiResolveExportedElements(name);
+    final List<RatedResolveResult> results = multiResolveName(name);
     final List<PsiElement> elements = PyUtil.filterTopPriorityResults(results.toArray(new ResolveResult[results.size()]));
     final PsiElement element = elements.isEmpty() ? null : elements.get(elements.size() - 1);
     if (element != null) {
@@ -439,10 +456,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         throw new PsiInvalidElementAccessException(element);
       }
       return element;
-    }
-    final List<String> allNames = getDunderAll();
-    if (allNames != null && allNames.contains(name)) {
-      return findExportedName(PyNames.ALL);
     }
     return null;
   }

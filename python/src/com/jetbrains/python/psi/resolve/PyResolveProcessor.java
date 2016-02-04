@@ -24,10 +24,13 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ResolveResultList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -57,9 +60,16 @@ public class PyResolveProcessor implements PsiScopeProcessor {
     }
     final PyImportedNameDefiner importedNameDefiner = PyUtil.as(element, PyImportedNameDefiner.class);
     if (importedNameDefiner != null) {
-      final PsiElement resolved = resolveInImportedNameDefiner(importedNameDefiner);
-      if (resolved != null) {
-        return tryAddResult(resolved, importedNameDefiner);
+      final List<RatedResolveResult> results = resolveInImportedNameDefiner(importedNameDefiner);
+      if (!results.isEmpty()) {
+        boolean cont = true;
+        for (RatedResolveResult result : results) {
+          final PsiElement resolved = result.getElement();
+          if (resolved != null) {
+            cont = tryAddResult(resolved, importedNameDefiner) && cont;
+          }
+        }
+        return cont;
       }
       final PyImportElement importElement = PyUtil.as(element, PyImportElement.class);
       if (importElement != null) {
@@ -97,18 +107,18 @@ public class PyResolveProcessor implements PsiScopeProcessor {
     return myOwner;
   }
 
-  @Nullable
-  private PsiElement resolveInImportedNameDefiner(@NotNull PyImportedNameDefiner definer) {
+  @NotNull
+  private List<RatedResolveResult> resolveInImportedNameDefiner(@NotNull PyImportedNameDefiner definer) {
     if (myLocalResolve) {
       final PyImportElement importElement = PyUtil.as(definer, PyImportElement.class);
       if (importElement != null) {
-        return importElement.getElementNamed(myName, false);
+        return ResolveResultList.to(importElement.getElementNamed(myName, false));
       }
       else if (definer instanceof PyStarImportElement) {
-        return null;
+        return Collections.emptyList();
       }
     }
-    return definer.getElementNamed(myName);
+    return definer.multiResolveName(myName);
   }
 
   private boolean tryAddResult(@Nullable PsiElement element, @Nullable PyImportedNameDefiner definer) {

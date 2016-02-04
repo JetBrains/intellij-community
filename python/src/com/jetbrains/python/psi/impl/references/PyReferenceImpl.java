@@ -165,18 +165,21 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
                                                        @NotNull TypeEvalContext context) {
     final ResolveResultList ret = new ResolveResultList();
     for (Instruction instruction : instructions) {
-      PsiElement definition = instruction.getElement();
-      PyImportedNameDefiner definer = null;
+      final PsiElement definition = instruction.getElement();
       // TODO: This check may slow down resolving, but it is the current solution to the comprehension scopes problem
       if (isInnerComprehension(element, definition)) continue;
       if (definition instanceof PyImportedNameDefiner && !(definition instanceof PsiNamedElement)) {
-        definer = (PyImportedNameDefiner)definition;
-        definition = definer.getElementNamed(name);
-      }
-      if (definer != null) {
-        ret.add(new ImportedResolveResult(definition, getRate(definition, context), definer));
-        // TODO this kind of resolve contract is quite stupid
-        if (definition != null) {
+        final PyImportedNameDefiner definer = (PyImportedNameDefiner)definition;
+        final List<RatedResolveResult> resolvedResults = definer.multiResolveName(name);
+        for (RatedResolveResult result : resolvedResults) {
+          final PsiElement resolved = result.getElement();
+          ret.add(new ImportedResolveResult(resolved, getRate(resolved, context), definer));
+        }
+        if (resolvedResults.isEmpty()) {
+          ret.add(new ImportedResolveResult(null, RatedResolveResult.RATE_NORMAL, definer));
+        }
+        else {
+          // TODO this kind of resolve contract is quite stupid
           ret.poke(definer, RatedResolveResult.RATE_LOW);
         }
       }

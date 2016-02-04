@@ -84,7 +84,7 @@ public class PyDefUseUtil {
                                       }
                                     }
                                     else if (acceptImplicitImports && implicit != null) {
-                                      if (implicit.getElementNamed(varName) != null) {
+                                      if (!implicit.multiResolveName(varName).isEmpty()) {
                                         result.add(instruction);
                                         return ControlFlowUtil.Operation.CONTINUE;
                                       }

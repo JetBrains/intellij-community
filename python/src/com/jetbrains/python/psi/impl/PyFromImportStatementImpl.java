@@ -29,6 +29,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 import org.jetbrains.annotations.NotNull;
@@ -263,11 +264,17 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return resolved != null ? ImmutableList.<PyElement>of(resolved) : Collections.<PyElement>emptyList();
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public PsiElement getElementNamed(String name) {
+  public List<RatedResolveResult> multiResolveName(@NotNull String name) {
     final QualifiedName importSourceQName = getImportSourceQName();
-    return importSourceQName != null && importSourceQName.endsWith(name) ? resolveImplicitSubModule() : null;
+    if (importSourceQName != null && importSourceQName.endsWith(name)) {
+      final PsiElement element = resolveImplicitSubModule();
+      if (element != null) {
+        return ResolveResultList.to(element);
+      }
+    }
+    return Collections.emptyList();
   }
 
   /**

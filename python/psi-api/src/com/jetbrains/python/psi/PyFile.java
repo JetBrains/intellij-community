@@ -18,6 +18,7 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,8 +66,15 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   Iterable<PyElement> iterateNames();
 
   /**
-   * Return the resolved exported PSI element with the top priority among resolve targets.
+   * Return the resolved exported elements.
    */
+  @NotNull
+  List<RatedResolveResult> multiResolveName(@NotNull String name);
+
+  /**
+   * @deprecated Use {@link #multiResolveName(String)} instead.
+   */
+  @Deprecated
   @Nullable
   PsiElement getElementNamed(String name);
 

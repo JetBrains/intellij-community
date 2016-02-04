@@ -26,6 +26,7 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyImportStatementStub;
 import org.jetbrains.annotations.NotNull;
@@ -110,18 +111,18 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
     return resolved != null ? ImmutableList.<PyElement>of(resolved) : Collections.<PyElement>emptyList();
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public PsiElement getElementNamed(String name) {
+  public List<RatedResolveResult> multiResolveName(@NotNull String name) {
     final PyImportElement[] elements = getImportElements();
     if (elements.length == 1) {
       final PyImportElement element = elements[0];
       final QualifiedName importedQName = element.getImportedQName();
       if (importedQName != null && importedQName.getComponentCount() > 1 && name.equals(importedQName.getLastComponent())) {
-        return resolveImplicitSubModule();
+        return ResolveResultList.to(resolveImplicitSubModule());
       }
     }
-    return null;
+    return Collections.emptyList();
   }
 
   /**

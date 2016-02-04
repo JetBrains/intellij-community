@@ -1004,6 +1004,7 @@ public class PyTypeTest extends PyTestCase {
            "    expr = foo\n");
   }
 
+  // PY-18217
   public void testConditionImportOuterScope() {
     doMultiFileTest("Union[str, int]",
                     "if something:\n" +
@@ -1015,8 +1016,9 @@ public class PyTypeTest extends PyTestCase {
                     "    expr = foo\n");
   }
 
+  // PY-18402
   public void testConditionInImportedModule() {
-    doMultiFileTest("Union[str, int]",
+    doMultiFileTest("Union[int, str]",
                     "from m1 import foo\n" +
                     "\n" +
                     "def f():\n" +

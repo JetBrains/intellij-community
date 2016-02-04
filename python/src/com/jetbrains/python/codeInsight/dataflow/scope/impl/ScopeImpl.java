@@ -126,7 +126,7 @@ public class ScopeImpl implements Scope {
       return true;
     }
     for (PyImportedNameDefiner definer : getImportedNameDefiners()) {
-      if (definer.getElementNamed(name) != null) {
+      if (!definer.multiResolveName(name).isEmpty()) {
         return true;
       }
     }

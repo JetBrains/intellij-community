@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
@@ -78,10 +79,10 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
     });
   }
 
-  @Nullable
-  public PsiElement getElementNamed(final String name) {
+  @NotNull
+  public List<RatedResolveResult> multiResolveName(@NotNull final String name) {
     if (PyUtil.isClassPrivateName(name)) {
-      return null;
+      return Collections.emptyList();
     }
     final PsiElement parent = getParentByStub();
     if (parent instanceof PyFromImportStatement) {
@@ -94,14 +95,17 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
           final PyModuleType moduleType = new PyModuleType(sourceFile);
           final List<? extends RatedResolveResult> results = moduleType.resolveMember(name, null, AccessDirection.READ,
                                                                                       PyResolveContext.defaultContext());
-          final PsiElement result = results != null && !results.isEmpty() ? results.get(0).getElement() : null;
-          if (result != null && PyUtil.isStarImportableFrom(name, sourceFile) ) {
-            return result;
+          if (results != null && !results.isEmpty() && PyUtil.isStarImportableFrom(name, sourceFile)) {
+            final List<RatedResolveResult> res = Lists.newArrayList();
+            for (RatedResolveResult result : results) {
+              res.add(result);
+            }
+            return res;
           }
         }
       }
     }
-    return null;
+    return Collections.emptyList();
   }
 
   @Override

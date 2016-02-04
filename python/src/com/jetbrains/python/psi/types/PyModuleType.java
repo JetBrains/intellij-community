@@ -86,9 +86,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     if (overridingMember != null) {
       return ResolveResultList.to(overridingMember);
     }
-    final PsiElement attribute = myModule.getElementNamed(name);
-    if (attribute != null) {
-      return ResolveResultList.to(attribute);
+    final List<RatedResolveResult> attributes = myModule.multiResolveName(name);
+    if (!attributes.isEmpty()) {
+      return attributes;
     }
     if (PyUtil.isPackage(myModule)) {
       final List<PyImportElement> importElements = new ArrayList<PyImportElement>();
