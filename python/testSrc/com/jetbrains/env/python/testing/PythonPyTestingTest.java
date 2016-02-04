@@ -70,14 +70,14 @@ public class PythonPyTestingTest extends PyEnvTestCase {
           /**
            * We can't rerun one subtest (yield), so we rerun whole "test_even"
            */
-          assertEquals(7, runner.getAllTestsCount());
-          assertEquals(3, runner.getPassedTestsCount());
-          assertEquals(4, runner.getFailedTestsCount());
+          assertEquals(stderr, 7, runner.getAllTestsCount());
+          assertEquals(stderr, 3, runner.getPassedTestsCount());
+          assertEquals(stderr, 4, runner.getFailedTestsCount());
           return;
         }
-        assertEquals(9, runner.getAllTestsCount());
-        assertEquals(5, runner.getPassedTestsCount());
-        assertEquals(4, runner.getFailedTestsCount());
+        assertEquals(stderr, 9, runner.getAllTestsCount());
+        assertEquals(stderr, 5, runner.getPassedTestsCount());
+        assertEquals(stderr, 4, runner.getFailedTestsCount());
         Assert
           .assertThat("No test stdout", MockPrinter.fillPrinter(runner.findTestByName("testOne")).getStdOut(),
                       Matchers.startsWith("I am test1"));

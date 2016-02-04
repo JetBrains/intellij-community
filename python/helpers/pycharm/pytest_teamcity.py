@@ -12,7 +12,14 @@ adjust_sys_path(False)
 # Directory where test script exist
 CURRENT_DIR_NAME = ""
 if sys.argv:
-  CURRENT_DIR_NAME = os.path.dirname(sys.argv[-1])
+  last_arg = sys.argv[-1]
+
+  if os.path.isfile(last_arg):
+    CURRENT_DIR_NAME = os.path.dirname(last_arg)
+  else:
+    CURRENT_DIR_NAME = last_arg
+    if not str(last_arg).endswith(os.sep):
+      CURRENT_DIR_NAME = last_arg + os.sep
 
 messages = TeamcityServiceMessages(prepend_linebreak=True)
 if not "_jb_do_not_call_enter_matrix" in os.environ:
@@ -90,6 +97,8 @@ if PYVERSION > [1, 4, 0]:
       messages.testFinished(name, duration=int(report.duration * 1000))
 
   def pytest_sessionfinish(session, exitstatus):
+    if not messages.number_of_tests and not current_suite and not current_file_suite:
+      messages.testError("ERROR", "No tests found")
     if current_suite:
       messages.testSuiteFinished(current_suite)
     if current_file_suite:
