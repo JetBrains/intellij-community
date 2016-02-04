@@ -319,6 +319,8 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     }
     else {
       var result: MutableList<Storage>? = null
+      // FlexIdeProjectLevelCompilerOptionsHolder, FlexProjectLevelCompilerOptionsHolderImpl and CustomBeanRegistry
+      var hasOnlyDeprecatedStorages = true
       for (storage in storages) {
         @Suppress("DEPRECATION")
         if (storage.path == PROJECT_FILE || storage.path == StoragePathMacros.WORKSPACE_FILE) {
@@ -326,12 +328,18 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
             result = SmartList()
           }
           result.add(storage)
+          if (!storage.deprecated) {
+            hasOnlyDeprecatedStorages = false
+          }
         }
       }
       if (result.isNullOrEmpty()) {
         return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
       }
       else {
+        if (hasOnlyDeprecatedStorages) {
+          result!!.add(PROJECT_FILE_STORAGE_ANNOTATION)
+        }
         result!!.sortWith(deprecatedComparator)
         return result.toTypedArray()
       }
