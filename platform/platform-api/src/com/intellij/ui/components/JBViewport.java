@@ -153,8 +153,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   @Nullable
   @Override
   public Magnificator getMagnificator() {
-    JComponent view = (JComponent)getView();
-    return view != null ? UIUtil.getClientProperty(view, Magnificator.CLIENT_PROPERTY_KEY) : null;
+    return UIUtil.getClientProperty(getView(), Magnificator.CLIENT_PROPERTY_KEY);
   }
 
   @Override
@@ -188,8 +187,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
    */
   private static Alignment getAlignment(JScrollBar bar) {
     if (bar != null && bar.isVisible() && !bar.isOpaque()) {
-      Object property = bar.getClientProperty(Alignment.class);
-      if (property instanceof Alignment) return (Alignment)property;
+      return UIUtil.getClientProperty(bar, Alignment.class);
     }
     return null;
   }

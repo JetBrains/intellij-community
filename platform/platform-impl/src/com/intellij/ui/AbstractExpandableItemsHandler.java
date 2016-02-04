@@ -382,7 +382,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (renderer == null) return null;
     if (renderer.getClientProperty(DISABLE_EXPANDABLE_HANDLER) != null) return null;
 
-    if (UIUtil.getClientProperty((JComponent)rendererAndBounds.getFirst(), USE_RENDERER_BOUNDS) == Boolean.TRUE) {
+    if (UIUtil.isClientPropertyTrue(rendererAndBounds.getFirst(), USE_RENDERER_BOUNDS)) {
       rendererAndBounds.getSecond().translate(renderer.getX(), renderer.getY());
       rendererAndBounds.getSecond().setSize(renderer.getSize());
     }
