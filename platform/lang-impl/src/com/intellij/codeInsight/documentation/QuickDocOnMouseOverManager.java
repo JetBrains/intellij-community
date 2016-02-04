@@ -304,6 +304,8 @@ public class QuickDocOnMouseOverManager {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
+          if (editor.isDisposed()) return;
+            
           PsiElement targetElement = targetElementRef.get();
           if (targetElement == null) {
             closeQuickDocIfPossible();
