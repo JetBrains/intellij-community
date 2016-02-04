@@ -983,6 +983,48 @@ public class PyTypeTest extends PyTestCase {
            "expr = y.foo\n");
   }
 
+  public void testConditionInnerScope() {
+    doTest("Union[str, int]",
+           "if something:\n" +
+           "    foo = 'foo'\n" +
+           "else:\n" +
+           "    foo = 0\n" +
+           "\n" +
+           "expr = foo\n");
+  }
+
+  public void testConditionOuterScope() {
+    doTest("Union[str, int]",
+           "if something:\n" +
+           "    foo = 'foo'\n" +
+           "else:\n" +
+           "    foo = 0\n" +
+           "\n" +
+           "def f():\n" +
+           "    expr = foo\n");
+  }
+
+  // PY-18217
+  public void testConditionImportOuterScope() {
+    doMultiFileTest("Union[str, int]",
+                    "if something:\n" +
+                    "    from m1 import foo\n" +
+                    "else:\n" +
+                    "    from m2 import foo\n" +
+                    "\n" +
+                    "def f():\n" +
+                    "    expr = foo\n");
+  }
+
+  // PY-18402
+  public void testConditionInImportedModule() {
+    doMultiFileTest("Union[int, str]",
+                    "from m1 import foo\n" +
+                    "\n" +
+                    "def f():\n" +
+                    "    expr = foo\n");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

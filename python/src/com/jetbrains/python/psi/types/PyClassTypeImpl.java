@@ -15,16 +15,14 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
@@ -444,14 +442,14 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                          boolean isDefinition,
                                          @NotNull String name,
                                          @Nullable PyExpression location) {
-    final ResolveProcessor processor = new ResolveProcessor(name);
+    final PyResolveProcessor processor = new PyResolveProcessor(name);
     if (!isDefinition) {
       if (!cls.processInstanceLevelDeclarations(processor, location)) {
-        return processor.getResult();
+        return Iterables.getFirst(processor.getElements(), null);
       }
     }
     cls.processClassLevelDeclarations(processor);
-    return processor.getResult();
+    return Iterables.getFirst(processor.getElements(), null);
   }
 
   private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
@@ -545,7 +543,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     boolean withinOurClass = containingClass == getPyClass() || isInSuperCall(expressionHook);
 
     final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(
-      expressionHook, new PyResolveUtil.FilterNotInstance(myClass), null
+      expressionHook, new FilterNotInstance(myClass), null
     );
     if (suppressParentheses) {
       processor.suppressParentheses();
@@ -711,5 +709,21 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       myProcessor.process(t);
       return true;
     }
+  }
+
+  /**
+   * Accepts only targets that are not the given object.
+   */
+  public static class FilterNotInstance implements Condition<PsiElement> {
+    Object instance;
+
+    public FilterNotInstance(Object instance) {
+      this.instance = instance;
+    }
+
+    public boolean value(final PsiElement target) {
+      return (instance != target);
+    }
+
   }
 }

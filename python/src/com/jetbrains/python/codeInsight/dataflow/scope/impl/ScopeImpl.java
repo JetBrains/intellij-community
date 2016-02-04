@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.codeInsight.dataflow.scope.impl;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.dataflow.DFALimitExceededException;
 import com.intellij.codeInsight.dataflow.map.DFAMap;
@@ -30,7 +32,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -44,7 +45,7 @@ public class ScopeImpl implements Scope {
   private volatile Set<String> myNonlocals;
   private volatile List<Scope> myNestedScopes;
   private final ScopeOwner myFlowOwner;
-  private volatile Map<String, PsiNamedElement> myNamedElements;
+  private volatile Map<String, Collection<PsiNamedElement>> myNamedElements;
   private volatile List<PyImportedNameDefiner> myImportedNameDefiners;  // Declarations which declare unknown set of imported names
   private volatile Set<String> myAugAssignments;
   private List<PyTargetExpression> myTargetExpressions;
@@ -118,14 +119,14 @@ public class ScopeImpl implements Scope {
     if (isNonlocal(name)) {
       return false;
     }
-    if (getNamedElement(name, true) != null) {
+    if (!getNamedElements(name, true).isEmpty()) {
       return true;
     }
     if (isAugAssignment(name)) {
       return true;
     }
-    for (NameDefiner definer : getImportedNameDefiners()) {
-      if (definer.getElementNamed(name) != null) {
+    for (PyImportedNameDefiner definer : getImportedNameDefiners()) {
+      if (!definer.multiResolveName(name).isEmpty()) {
         return true;
       }
     }
@@ -141,25 +142,24 @@ public class ScopeImpl implements Scope {
     return myImportedNameDefiners;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public PsiNamedElement getNamedElement(String name, boolean includeNestedGlobals) {
+  public Collection<PsiNamedElement> getNamedElements(String name, boolean includeNestedGlobals) {
     if (myNamedElements == null) {
       collectDeclarations();
     }
-    final PsiNamedElement element = myNamedElements.get(name);
-    if (element != null) {
-      return element;
+    if (myNamedElements.containsKey(name)) {
+      return myNamedElements.get(name);
     }
     if (includeNestedGlobals && isGlobal(name)) {
       for (Scope scope : myNestedScopes) {
-        final PsiNamedElement global = scope.getNamedElement(name, true);
-        if (global != null) {
-          return global;
+        final Collection<PsiNamedElement> globals = scope.getNamedElements(name, true);
+        if (!globals.isEmpty()) {
+          return globals;
         }
       }
     }
-    return null;
+    return Collections.emptyList();
   }
 
   @NotNull
@@ -168,7 +168,11 @@ public class ScopeImpl implements Scope {
     if (myNamedElements == null) {
       collectDeclarations();
     }
-    return myNamedElements.values();
+    final List<PsiNamedElement> results = Lists.newArrayList();
+    for (Collection<PsiNamedElement> elements : myNamedElements.values()) {
+      results.addAll(elements);
+    }
+    return results;
   }
 
   @NotNull
@@ -181,7 +185,7 @@ public class ScopeImpl implements Scope {
   }
 
   private void collectDeclarations() {
-    final Map<String, PsiNamedElement> namedElements = new HashMap<String, PsiNamedElement>();
+    final Map<String, Collection<PsiNamedElement>> namedElements = new HashMap<String, Collection<PsiNamedElement>>();
     final List<PyImportedNameDefiner> importedNameDefiners = new ArrayList<PyImportedNameDefiner>();
     final List<Scope> nestedScopes = new ArrayList<Scope>();
     final Set<String> globals = new HashSet<String>();
@@ -211,7 +215,6 @@ public class ScopeImpl implements Scope {
         for (PyTargetExpression expression : node.getGlobals()) {
           final String name = expression.getReferencedName();
           globals.add(name);
-          namedElements.put(name, expression);
         }
         super.visitPyGlobalStatement(node);
       }
@@ -238,7 +241,11 @@ public class ScopeImpl implements Scope {
       @Override
       public void visitPyElement(PyElement node) {
         if (node instanceof PsiNamedElement && !(node instanceof PyKeywordArgument)) {
-          namedElements.put(node.getName(), (PsiNamedElement)node);
+          final String name = node.getName();
+          if (!namedElements.containsKey(name)) {
+            namedElements.put(name, Sets.<PsiNamedElement>newLinkedHashSet());
+          }
+          namedElements.get(name).add((PsiNamedElement)node);
         }
         if (node instanceof PyImportedNameDefiner) {
           importedNameDefiners.add((PyImportedNameDefiner)node);
@@ -252,8 +259,6 @@ public class ScopeImpl implements Scope {
         }
       }
     });
-
-    Collections.reverse(importedNameDefiners);
 
     myNamedElements = namedElements;
     myImportedNameDefiners = importedNameDefiners;

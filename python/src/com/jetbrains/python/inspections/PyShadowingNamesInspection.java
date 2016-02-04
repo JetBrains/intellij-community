@@ -28,8 +28,8 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,20 +98,22 @@ public class PyShadowingNamesInspection extends PyInspection {
         if (owner != null) {
           final ScopeOwner nextOwner = ScopeUtil.getScopeOwner(owner);
           if (nextOwner != null) {
-            final ResolveProcessor processor = new ResolveProcessor(name);
-            PyResolveUtil.scopeCrawlUp(processor, nextOwner, null, name, null, null);
-            final PsiElement resolved = processor.getResult();
-            if (resolved != null) {
-              final PyComprehensionElement comprehension = PsiTreeUtil.getParentOfType(resolved, PyComprehensionElement.class);
-              if (comprehension != null && PyUtil.isOwnScopeComprehension(comprehension)) {
+            final PyResolveProcessor processor = new PyResolveProcessor(name);
+            PyResolveUtil.scopeCrawlUp(processor, nextOwner, null, name, null);
+            for (PsiElement resolved : processor.getElements()) {
+              if (resolved != null) {
+                final PyComprehensionElement comprehension = PsiTreeUtil.getParentOfType(resolved, PyComprehensionElement.class);
+                if (comprehension != null && PyUtil.isOwnScopeComprehension(comprehension)) {
+                  return;
+                }
+                final Scope scope = ControlFlowCache.getScope(owner);
+                if (scope.isGlobal(name) || scope.isNonlocal(name)) {
+                  return;
+                }
+                registerProblem(problemElement, String.format("Shadows name '%s' from outer scope", name),
+                                ProblemHighlightType.WEAK_WARNING, null, new PyRenameElementQuickFix());
                 return;
               }
-              final Scope scope = ControlFlowCache.getScope(owner);
-              if (scope.isGlobal(name) || scope.isNonlocal(name)) {
-                return;
-              }
-              registerProblem(problemElement, String.format("Shadows name '%s' from outer scope", name),
-                              ProblemHighlightType.WEAK_WARNING, null, new PyRenameElementQuickFix());
             }
           }
         }

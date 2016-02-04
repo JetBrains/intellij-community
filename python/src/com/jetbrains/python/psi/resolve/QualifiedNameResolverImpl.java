@@ -72,6 +72,9 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     myQualifiedName = QualifiedName.fromDottedString(qNameString);
   }
 
+  /**
+   * @param qName the empty name means that all found roots will be traversed.
+   */
   public QualifiedNameResolverImpl(@NotNull QualifiedName qName) {
     myQualifiedName = qName;
   }
@@ -253,8 +256,10 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
       addRelativeImportResultsFromSkeletons(footholdFile);
     }
 
-    mySourceResults.addAll(myLibResults);
-    myLibResults.clear();
+    if (mySourceResults.isEmpty() || myQualifiedName.getComponentCount() == 0) {
+      mySourceResults.addAll(myLibResults);
+      myLibResults.clear();
+    }
 
     if (!myWithoutForeign) {
       for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
@@ -263,8 +268,10 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
           myForeignResults.add(foreign);
         }
       }
-      mySourceResults.addAll(myForeignResults);
-      myForeignResults.clear();
+      if (mySourceResults.isEmpty() || myQualifiedName.getComponentCount() == 0) {
+        mySourceResults.addAll(myForeignResults);
+        myForeignResults.clear();
+      }
     }
 
     final ArrayList<PsiElement> results = Lists.newArrayList(mySourceResults);

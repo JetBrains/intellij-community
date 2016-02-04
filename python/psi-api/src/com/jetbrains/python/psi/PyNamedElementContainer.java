@@ -15,19 +15,21 @@
  */
 package com.jetbrains.python.psi;
 
-import com.intellij.psi.StubBasedPsiElement;
-import com.jetbrains.python.psi.stubs.PyExceptPartStub;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
+ * PSI element that contains named children that are visible in the current scope.
+ *
  * @author dcheryasov
  */
-public interface PyExceptPart extends PyElement, StubBasedPsiElement<PyExceptPartStub>, PyNamedElementContainer, PyStatementPart {
-  PyExceptPart[] EMPTY_ARRAY = new PyExceptPart[0];
-
-  @Nullable
-  PyExpression getExceptClass();
-
-  @Nullable
-  PyExpression getTarget();
+public interface PyNamedElementContainer extends PsiElement {
+  /**
+   * Return named children visible in the current scope.
+   */
+  @NotNull
+  List<PsiNamedElement> getNamedElements();
 }

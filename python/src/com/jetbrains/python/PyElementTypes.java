@@ -47,7 +47,7 @@ public interface PyElementTypes {
   
   PyStubElementType<PyAnnotationStub, PyAnnotation> ANNOTATION = new PyAnnotationElementType();
 
-  PyElementType STAR_IMPORT_ELEMENT = new PyElementType("STAR_IMPORT_ELEMENT", PyStarImportElementImpl.class);
+  PyStubElementType<PyStarImportElementStub, PyStarImportElement> STAR_IMPORT_ELEMENT = new PyStarImportElementElementType();
   PyStubElementType<PyExceptPartStub, PyExceptPart> EXCEPT_PART = new PyExceptPartElementType();
   PyElementType PRINT_TARGET = new PyElementType("PRINT_TARGET", PyPrintTargetImpl.class);
   PyElementType DECORATOR = new PyElementType("DECORATOR", PyDecoratorImpl.class);

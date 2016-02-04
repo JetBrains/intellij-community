@@ -50,19 +50,6 @@ public class PythonTokenSetContributor extends PythonDialectsTokenSetContributor
 
   @NotNull
   @Override
-  public TokenSet getNameDefinerTokens() {
-    // FROM_IMPORT_STATEMENT is not exactly a NameDefiner but needed anyway in mypackage/__init__.py, 'from mypackage.foo import bar' makes
-    // 'foo' name visible
-    return TokenSet.create(STAR_IMPORT_ELEMENT, IMPORT_ELEMENT, CLASS_DECLARATION,
-                           GLOBAL_STATEMENT, GENERATOR_EXPRESSION, DICT_COMP_EXPRESSION,
-                           LIST_COMP_EXPRESSION, SET_COMP_EXPRESSION, WITH_STATEMENT,
-                           FUNCTION_DECLARATION, ASSIGNMENT_STATEMENT, EXCEPT_PART,
-                           FOR_STATEMENT,
-                           FROM_IMPORT_STATEMENT);
-  }
-
-  @NotNull
-  @Override
   public TokenSet getKeywordTokens() {
     return TokenSet.create(
       AND_KEYWORD, AS_KEYWORD, ASSERT_KEYWORD, BREAK_KEYWORD, CLASS_KEYWORD,
