@@ -774,7 +774,6 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
                                                              new ArrayList<ShelvedBinaryFile>(changeList.getBinaryFiles()));
     listCopy.markToDelete(changeList.isMarkedToDelete());
     listCopy.setName(newPatchDir.getName());
-    listCopy.DATE = changeList.DATE == null ? null : new Date(changeList.DATE.getTime());
 
     writePatchesToFile(myProject, changeList.PATH, remainingPatches, commitContext);
 
@@ -790,6 +789,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     ShelvedChangeList list = mySchemeManager.findSchemeByName(changeList.getName());
     if (list != null) {
       list.setRecycled(false);
+      list.updateDate();
     }
     notifyStateChanged();
   }
@@ -855,6 +855,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
     if (!listCopy.getBinaryFiles().isEmpty() || !listCopy.getChanges(myProject).isEmpty()) {
       listCopy.setRecycled(true);
+      listCopy.updateDate();
       notifyStateChanged();
     }
   }

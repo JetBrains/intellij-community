@@ -181,4 +181,11 @@ public class ShelvedChangeList implements JDOMExternalizable, ExternalizableSche
   public boolean isMarkedToDelete() {
     return myToDelete;
   }
+
+  /**
+   * Update Date while recycle or restore shelvedChangelist
+   */
+  public void updateDate() {
+    DATE = new Date(System.currentTimeMillis());
+  }
 }
