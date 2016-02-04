@@ -231,7 +231,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                                }, "<br/>"));
     }
 
-    VcsConfirmationDialog dialog = new VcsConfirmationDialog(myProject, new VcsShowConfirmationOption() {
+    VcsConfirmationDialog dialog = new VcsConfirmationDialog(myProject, "Remove Empty Changelist", "Remove", "Cancel", new VcsShowConfirmationOption() {
       @Override
       public Value getValue() {
         return config.REMOVE_EMPTY_INACTIVE_CHANGELISTS;

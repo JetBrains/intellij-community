@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
@@ -30,18 +29,27 @@ import java.awt.event.ActionEvent;
 /**
  * @author Dmitry Avdeev
  */
-public class VcsConfirmationDialog extends OptionsDialog {
-
+class VcsConfirmationDialog extends OptionsDialog {
+  @NotNull private final String myOkText;
+  @NotNull private final String myCancelText;
   private final VcsShowConfirmationOption myOption;
   private final String myMessage;
   private final String myDoNotShowMessage;
 
-  protected VcsConfirmationDialog(Project project, VcsShowConfirmationOption option, String message, @NotNull String doNotShowMessage) {
+  VcsConfirmationDialog(@NotNull Project project,
+                        @NotNull String title,
+                        @NotNull String okText,
+                        @NotNull String cancelText,
+                        @NotNull VcsShowConfirmationOption option,
+                        @NotNull String message,
+                        @NotNull String doNotShowMessage) {
     super(project);
+    myOkText = okText;
+    myCancelText = cancelText;
     myOption = option;
     myMessage = message;
     myDoNotShowMessage = doNotShowMessage;
-    setTitle("Confirmation");
+    setTitle(title);
     init();
   }
 
@@ -77,16 +85,18 @@ public class VcsConfirmationDialog extends OptionsDialog {
   @NotNull
   @Override
   protected Action[] createActions() {
-    final AbstractAction okAction = new AbstractAction(CommonBundle.getYesButtonText()) {
+    final AbstractAction okAction = new AbstractAction(myOkText) {
       {
         putValue(DEFAULT_ACTION, Boolean.TRUE);
       }
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         doOKAction();
       }
     };
-    final AbstractAction cancelAction = new AbstractAction(CommonBundle.getNoButtonText()) {
+    final AbstractAction cancelAction = new AbstractAction(myCancelText) {
+      @Override
       public void actionPerformed(ActionEvent e) {
         doCancelAction();
       }
