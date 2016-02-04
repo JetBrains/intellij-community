@@ -55,7 +55,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   @NotNull private final EventDispatcher<SelectedListChangeListener> myDispatcher =
     EventDispatcher.create(SelectedListChangeListener.class);
   @Nullable private final Runnable myRebuildListListener;
-  private final boolean myShowUnversioned;
+  private boolean myShowUnversioned;
   private Collection<Change> myAllChanges;
   private boolean myInRebuildList;
 
@@ -95,6 +95,10 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
         }
       }
     }, this);
+  }
+
+  public void setShowUnversioned(boolean showUnversioned) {
+    myShowUnversioned = showUnversioned;
   }
 
   @Override
