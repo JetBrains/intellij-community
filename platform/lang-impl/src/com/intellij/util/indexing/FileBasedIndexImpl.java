@@ -82,6 +82,7 @@ import gnu.trove.*;
 import jsr166e.extra.SequenceLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.lang.ref.SoftReference;
@@ -1087,6 +1088,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   public void filesUpdateEnumerationFinished() {
     myContentlessIndicesUpdateQueue.ensureUpToDate();
     myContentlessIndicesUpdateQueue.signalUpdateEnd();
+  }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    myTransactionMap = SmartFMap.emptyMap();
   }
 
   public static final class ProjectIndexableFilesFilter extends IdFilter {
