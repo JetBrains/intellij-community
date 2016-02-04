@@ -180,7 +180,7 @@ public class PsiEventsTest extends PsiTestCase {
     PlatformTestUtil.tryGcSoftlyReachableObjects();
 
 
-    if (((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1) != null) {
+    if (true || ((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1) != null) {
       Processor<PsiDirectory> isReallyLeak = new Processor<PsiDirectory>() {
         @Override
         public boolean process(PsiDirectory directory) {
@@ -190,9 +190,9 @@ public class PsiEventsTest extends PsiTestCase {
       LeakHunter.checkLeak(LeakHunter.allRoots(), PsiDirectory.class, isReallyLeak);
 
       String dumpPath = FileUtil.createTempFile(
-        new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))), "testRenameFileWithoutDir", ".hprof",
+        new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))), "testRenameFileWithoutDir", ".hprof.zip",
                  false, false).getPath();
-      MemoryDumpHelper.captureMemoryDump(dumpPath);
+      MemoryDumpHelper.captureMemoryDumpZipped(dumpPath);
       System.out.println(dumpPath);
 
       assertNull(((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1));

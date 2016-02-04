@@ -278,11 +278,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         leakers.append("\n");
       }
 
-      String dumpPath = PathManager.getHomePath() + "/leakedProjects.hprof";
-      System.out.println("##teamcity[publishArtifacts 'leakedProjects.hprof']");
+      String dumpPath = PathManager.getHomePath() + "/leakedProjects.hprof.zip";
+      System.out.println("##teamcity[publishArtifacts 'leakedProjects.hprof.zip']");
       try {
         FileUtil.delete(new File(dumpPath));
-        MemoryDumpHelper.captureMemoryDump(dumpPath);
+        MemoryDumpHelper.captureMemoryDumpZipped(dumpPath);
       }
       catch (Exception ex) {
         ex.printStackTrace();
