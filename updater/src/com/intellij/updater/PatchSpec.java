@@ -29,13 +29,16 @@ public class PatchSpec {
   private boolean myIsBinary;
   private boolean myIsStrict;
   private String myHashAlgorithm = "crc";
+  private long myLargeFileCutoff = Long.MAX_VALUE;
   private List<String> myIgnoredFiles = Collections.emptyList();
   private List<String> myCriticalFiles = Collections.emptyList();
   private List<String> myOptionalFiles = Collections.emptyList();
-  private boolean myIsNormalized;
   private Map<String, String> myWarnings = Collections.emptyMap();
   private List<String> myDeleteFiles = Collections.emptyList();
   private String myRoot = "";
+
+  private static final long DEFAULT_LARGE_FILE_CUTOFF = 50000000L;
+
 
   public String getOldVersionDescription() {
     return myOldVersionDescription;
@@ -100,6 +103,21 @@ public class PatchSpec {
     return this;
   }
 
+  public PatchSpec setSupportLargeFiles(boolean supportLargeFiles) {
+    if (supportLargeFiles) {
+      myLargeFileCutoff = DEFAULT_LARGE_FILE_CUTOFF;
+    }
+    else {
+      myLargeFileCutoff = Long.MAX_VALUE;
+    }
+    return this;
+  }
+
+  PatchSpec setLargeFileCutoff(long cutoff) {
+    myLargeFileCutoff = cutoff;
+    return this;
+  }
+
   public List<String> getIgnoredFiles() {
     return myIgnoredFiles;
   }
@@ -145,15 +163,6 @@ public class PatchSpec {
     return myHashAlgorithm;
   }
 
-  public boolean isNormalized() {
-    return myIsNormalized;
-  }
-
-  public PatchSpec setNormalized(boolean normalized) {
-    myIsNormalized = normalized;
-    return this;
-  }
-
   public PatchSpec setWarnings(Map<String, String> warnings) {
     myWarnings = warnings;
     return this;
@@ -179,5 +188,9 @@ public class PatchSpec {
 
   public String getRoot() {
     return myRoot;
+  }
+
+  public long getLargeFileCutoff() {
+    return myLargeFileCutoff;
   }
 }

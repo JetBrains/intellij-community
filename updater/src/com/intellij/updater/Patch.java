@@ -10,7 +10,7 @@ public class Patch {
   private boolean myIsBinary;
   private String myHashAlgorithm;
   private boolean myIsStrict;
-  private boolean myIsNormalized;
+  private long myLargeFileCutoff;
   private String myOldBuild;
   private String myNewBuild;
   private String myRoot;
@@ -28,7 +28,6 @@ public class Patch {
   public Patch(PatchSpec spec, UpdaterUI ui) throws IOException, OperationCancelledException {
     myIsBinary = spec.isBinary();
     myIsStrict = spec.isStrict();
-    myIsNormalized = spec.isNormalized();
     myOldBuild = spec.getOldVersionDescription();
     myNewBuild = spec.getNewVersionDescription();
     myWarnings = spec.getWarnings();
@@ -36,7 +35,7 @@ public class Patch {
     myRoot = spec.getRoot();
     myHashAlgorithm = spec.getHashAlgorithm();
     myDigester = new Digester(myHashAlgorithm);
-
+    myLargeFileCutoff = spec.getLargeFileCutoff();
     calculateActions(spec, ui);
   }
 
@@ -52,8 +51,8 @@ public class Patch {
     File olderDir = new File(spec.getOldFolder());
     File newerDir = new File(spec.getNewFolder());
     DiffCalculator.Result diff;
-    diff = DiffCalculator.calculate(digestFiles(olderDir, spec.getIgnoredFiles(), isNormalized(), ui),
-                                    digestFiles(newerDir, spec.getIgnoredFiles(), false, ui),
+    diff = DiffCalculator.calculate(digestFiles(olderDir, spec.getIgnoredFiles(), ui),
+                                    digestFiles(newerDir, spec.getIgnoredFiles(), ui),
                                     spec.getCriticalFiles(), true);
 
     List<PatchAction> tempActions = new ArrayList<PatchAction>();
@@ -111,7 +110,6 @@ public class Patch {
       dataOut.writeUTF(myRoot);
       dataOut.writeBoolean(myIsBinary);
       dataOut.writeBoolean(myIsStrict);
-      dataOut.writeBoolean(myIsNormalized);
       writeString(dataOut, myHashAlgorithm);
       writeMap(dataOut, myWarnings);
       writeList(dataOut, myDeleteFiles);
@@ -184,7 +182,6 @@ public class Patch {
     myRoot = in.readUTF();
     myIsBinary = in.readBoolean();
     myIsStrict = in.readBoolean();
-    myIsNormalized = in.readBoolean();
     myHashAlgorithm = readString(in);
     if (!Digester.isValidAlgorithm(myHashAlgorithm)) {
       throw new IOException("Failed to find hash algorithm!");
@@ -391,16 +388,16 @@ public class Patch {
     }
   }
 
-  public long digestFile(File toFile, boolean normalize) throws IOException {
+  public long digestFile(File toFile) throws IOException {
     if (!myIsBinary && Utils.isZipFile(toFile.getName())) {
       return myDigester.digestZipFile(toFile);
     }
     else {
-      return myDigester.digestRegularFile(toFile, normalize);
+      return myDigester.digestRegularFile(toFile);
     }
   }
 
-  public Map<String, Long> digestFiles(File dir, List<String> ignoredFiles, boolean normalize, UpdaterUI ui)
+  public Map<String, Long> digestFiles(File dir, List<String> ignoredFiles, UpdaterUI ui)
     throws IOException, OperationCancelledException {
     Map<String, Long> result = new LinkedHashMap<String, Long>();
 
@@ -409,7 +406,7 @@ public class Patch {
       if (ignoredFiles.contains(each)) continue;
       ui.setStatus(each);
       ui.checkCancelled();
-      result.put(each, digestFile(new File(dir, each), normalize));
+      result.put(each, digestFile(new File(dir, each)));
     }
     return result;
   }
@@ -426,10 +423,6 @@ public class Patch {
     return myIsStrict;
   }
 
-  public boolean isNormalized() {
-    return myIsNormalized;
-  }
-
   public boolean validateDeletion(String path) {
     for (String delete : myDeleteFiles) {
       if (path.matches(delete)) {
@@ -441,6 +434,10 @@ public class Patch {
 
   public Digester getDigester() {
     return myDigester;
+  }
+
+  public long getLargeFileCutoff() {
+    return myLargeFileCutoff;
   }
 
   public interface ActionsProcessor {

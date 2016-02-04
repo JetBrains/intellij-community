@@ -1,14 +1,12 @@
 package com.intellij.updater;
 
-import ie.wombat.jbdiff.JBDiff;
-import ie.wombat.jbdiff.JBPatch;
-
 import java.io.*;
 import java.util.zip.ZipOutputStream;
 
 public abstract class BaseUpdateAction extends PatchAction {
   private final String mySource;
   protected final boolean myIsMove;
+
 
   public BaseUpdateAction(Patch patch, String path, String source, long checksum, boolean move) {
     super(patch, path, checksum);
@@ -79,41 +77,33 @@ public abstract class BaseUpdateAction extends PatchAction {
   }
 
   protected void writeDiff(File olderFile, File newerFile, OutputStream patchOutput) throws IOException {
-    BufferedInputStream olderFileIn = new BufferedInputStream(Utils.newFileInputStream(olderFile, myPatch.isNormalized()));
-    BufferedInputStream newerFileIn = new BufferedInputStream(new FileInputStream(newerFile));
-    try {
-      writeDiff(olderFileIn, newerFileIn, patchOutput);
-    }
-    finally {
-      olderFileIn.close();
-      newerFileIn.close();
-    }
+    Runner.logger.info("writing diff");
+    DiffAlgorithm algorithm = DiffAlgorithm.determineDiffAlgorithm(olderFile, isCritical(), myPatch.getLargeFileCutoff());
+    patchOutput.write(algorithm.getId());
+    algorithm.writeDiff(olderFile, newerFile, patchOutput);
   }
 
   protected void writeDiff(InputStream olderFileIn, InputStream newerFileIn, OutputStream patchOutput)
     throws IOException {
     Runner.logger.info("writing diff");
-    ByteArrayOutputStream diffOutput = new ByteArrayOutputStream();
-    byte[] newerFileBuffer = JBDiff.bsdiff(olderFileIn, newerFileIn, diffOutput);
-    diffOutput.close();
+    DiffAlgorithm algorithm = DiffAlgorithm.determineDiffAlgorithm(null, isCritical(), myPatch.getLargeFileCutoff());
+    patchOutput.write(algorithm.getId());
+    algorithm.writeDiff(olderFileIn, newerFileIn, patchOutput);
+  }
 
-    if (!isCritical() && diffOutput.size() < newerFileBuffer.length) {
-      patchOutput.write(1);
-      Utils.copyBytesToStream(diffOutput, patchOutput);
-    }
-    else {
-      patchOutput.write(0);
-      Utils.copyBytesToStream(newerFileBuffer, patchOutput);
-    }
+  private static DiffAlgorithm readDiffAlgorithm(InputStream patchInput) throws IOException {
+    int type = patchInput.read();
+    return DiffAlgorithm.getAlgorithmForId(type);
   }
 
   protected void applyDiff(InputStream patchInput, InputStream oldFileIn, OutputStream toFileOut) throws IOException {
-    if (patchInput.read() == 1) {
-      JBPatch.bspatch(oldFileIn, toFileOut, patchInput);
-    }
-    else {
-      Utils.copyStream(patchInput, toFileOut);
-    }
+    DiffAlgorithm algorithm = readDiffAlgorithm(patchInput);
+    algorithm.applyDiff(patchInput, oldFileIn, toFileOut);
+  }
+
+  protected void applyDiff(InputStream patchInput, File oldFileIn, OutputStream toFileOut) throws IOException {
+    DiffAlgorithm algorithm = readDiffAlgorithm(patchInput);
+    algorithm.applyDiff(patchInput, oldFileIn, toFileOut);
   }
 
   @Override
