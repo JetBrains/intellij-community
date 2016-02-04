@@ -15,12 +15,16 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.ROOT_CONFIG
+import com.intellij.configurationStore.StateStorageManagerImpl
+import com.intellij.configurationStore.removeMacroIfStartsWith
 import com.intellij.ide.actions.ExportableItem
 import com.intellij.ide.actions.getExportableComponentsMap
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
+import com.intellij.util.isFile
+import com.intellij.util.systemIndependentPath
 import java.nio.file.Files
 import java.nio.file.Path
 

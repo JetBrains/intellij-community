@@ -23,8 +23,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.testFramework.*
-import com.intellij.util.SmartList
+import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.*
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import gnu.trove.THashMap

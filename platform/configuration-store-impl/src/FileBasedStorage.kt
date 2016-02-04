@@ -32,12 +32,12 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
-import com.intellij.openapi.util.loadElement
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
+import com.intellij.util.loadElement
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jdom.Parent

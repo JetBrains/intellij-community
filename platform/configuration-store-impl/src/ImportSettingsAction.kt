@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.actions
 
-import com.intellij.configurationStore.systemIndependentPath
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.startup.StartupActionScriptManager
@@ -31,6 +30,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.getParentPath
+import com.intellij.util.systemIndependentPath
 import gnu.trove.THashSet
 import java.io.File
 import java.io.IOException

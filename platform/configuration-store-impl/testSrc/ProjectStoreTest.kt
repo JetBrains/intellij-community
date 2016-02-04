@@ -31,6 +31,7 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import com.intellij.util.PathUtil
+import com.intellij.util.readText
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule

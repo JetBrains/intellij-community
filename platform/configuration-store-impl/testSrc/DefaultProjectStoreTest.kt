@@ -10,6 +10,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.*
+import com.intellij.util.deleteRecursively
+import com.intellij.util.refreshVfs
+import com.intellij.util.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.ClassRule

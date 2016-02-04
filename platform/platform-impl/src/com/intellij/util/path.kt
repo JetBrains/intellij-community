@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testFramework
+package com.intellij.util
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
 import java.io.IOException
 import java.io.OutputStream
@@ -40,6 +39,8 @@ fun Path.outputStream(): OutputStream {
   parent?.createDirectories()
   return Files.newOutputStream(this)
 }
+
+fun Path.inputStream() = Files.newInputStream(this)
 
 /**
  * Opposite to Java, parent directories will be created
@@ -84,8 +85,6 @@ val Path.parentSystemIndependentPath: String
 fun Path.readBytes() = Files.readAllBytes(this)
 
 fun Path.readText() = readBytes().toString(Charsets.UTF_8)
-
-fun VirtualFile.writeChild(relativePath: String, data: String) = VfsTestUtil.createFile(this, relativePath, data)
 
 fun Path.writeChild(relativePath: String, data: ByteArray) = resolve(relativePath).write(data)
 

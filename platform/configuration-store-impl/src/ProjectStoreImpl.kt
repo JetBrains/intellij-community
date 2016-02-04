@@ -40,13 +40,11 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PathUtilRt
-import com.intellij.util.SmartList
+import com.intellij.util.*
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.lang.CompoundRuntimeException
 import java.io.File
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
@@ -390,37 +388,3 @@ private fun useOldWorkspaceContent(filePath: String, ws: File) {
     LOG.error(e)
   }
 }
-
-// remove when we can use java 8 in platform-impl
-fun Path.isFile() = Files.isRegularFile(this)
-
-val Path.systemIndependentPath: String
-  get() = toString().replace(File.separatorChar, '/')
-
-internal fun Path.exists() = Files.exists(this)
-
-internal fun Path.isDirectory() = Files.isDirectory(this)
-
-internal fun Path.inputStream() = Files.newInputStream(this)
-
-internal fun Path.createDirectories() = Files.createDirectories(this)
-
-internal fun Path.write(data: ByteArray): Path {
-  parent?.createDirectories()
-  return Files.write(this, data)
-}
-
-internal fun Path.delete() {
-  try {
-    Files.delete(this)
-  }
-  catch (ignored: NoSuchFileException) {
-  }
-  catch (e: Exception) {
-    FileUtil.delete(this.toFile())
-  }
-}
-
-fun Path.readBytes() = Files.readAllBytes(this)
-
-fun Path.readText() = readBytes().toString(Charsets.UTF_8)
