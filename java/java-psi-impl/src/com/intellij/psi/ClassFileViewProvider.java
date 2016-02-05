@@ -57,13 +57,13 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
       return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
 
-    // skip inner, anonymous, and missing classes
+    // skip inner, anonymous, missing and corrupted classes
     try {
       if (!isInnerClass(file, file.contentsToByteArray(false))) {
         return new ClsFileImpl(this);
       }
     }
-    catch (IOException e) {
+    catch (Exception e) {
       Logger.getInstance(ClassFileViewProvider.class).debug(file.getPath(), e);
     }
 
