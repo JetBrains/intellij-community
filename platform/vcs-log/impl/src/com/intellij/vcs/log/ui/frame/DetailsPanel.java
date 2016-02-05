@@ -200,7 +200,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   private void updateDetailsBorder(@Nullable VcsFullCommitDetails data) {
     if (data == null || !myColorManager.isMultipleRoots()) {
-      myMainContentPanel.setBorder(BorderFactory.createEmptyBorder());
+      myMainContentPanel.setBorder(BorderFactory.createEmptyBorder(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
+                                                                   VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2, 0, 0));
     }
     else {
       Color color = VcsLogGraphTable.getRootBackgroundColor(data.getRoot(), myColorManager);
@@ -460,7 +461,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     @NotNull private List<VcsRef> myReferences;
 
     ReferencesPanel(@NotNull VcsLogColorManager colorManager) {
-      super(new FlowLayout(FlowLayout.LEADING, 5, 2));
+      super(new FlowLayout(FlowLayout.LEADING, 4, 2));
       myReferencePainter = new VcsRefPainter(colorManager, false);
       myReferences = Collections.emptyList();
       setOpaque(false);
