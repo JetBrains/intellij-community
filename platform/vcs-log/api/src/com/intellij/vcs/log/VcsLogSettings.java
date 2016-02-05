@@ -17,6 +17,8 @@ package com.intellij.vcs.log;
 
 
 /**
+ * TODO remove in IDEA 17
+ *
  * <p>Vcs Log user settings, which may have a UI representation, or be implicitly selected based on user actions.</p>
  * <p>Most of the settings are workspace-specific, i. e. they are stored in {@link com.intellij.openapi.components.StoragePathMacros#WORKSPACE_FILE workspace.xml}.</p>
  *

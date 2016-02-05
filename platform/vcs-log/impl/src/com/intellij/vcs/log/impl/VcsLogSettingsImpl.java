@@ -23,6 +23,8 @@ import com.intellij.vcs.log.VcsLogSettings;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * TODO remove in IDEA 17
+ *
  * @author Kirill Likhodedov
  */
 @State(name = "Vcs.Log.Settings", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})

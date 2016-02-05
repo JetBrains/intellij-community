@@ -21,7 +21,9 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.vcs.log.VcsLogSettings;
 import org.jetbrains.annotations.NotNull;
 
+// TODO remove in IDEA 17
 @State(name = "Vcs.Log.UiProperties", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
+@Deprecated
 public class VcsLogUiPropertiesDeprecated extends VcsLogUiPropertiesImpl {
   private final VcsLogSettings mySettings;
   private State myState = new State();
