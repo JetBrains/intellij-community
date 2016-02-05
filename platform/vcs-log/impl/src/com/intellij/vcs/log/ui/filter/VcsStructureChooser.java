@@ -73,13 +73,12 @@ public class VcsStructureChooser extends DialogWrapper {
   private static final String VCS_STRUCTURE_CHOOSER_KEY = "git4idea.history.wholeTree.VcsStructureChooser";
 
   @NotNull private final Project myProject;
-  @NotNull private final List<VirtualFile> myInitialRoots;
+  @NotNull private final List<VirtualFile> myRoots;
   @NotNull private final Map<VirtualFile, String> myModulesSet = ContainerUtil.newHashMap();
   @NotNull private final Set<VirtualFile> mySelectedFiles = ContainerUtil.newHashSet();
 
   @NotNull private final SelectionManager mySelectionManager;
 
-  private Set<VirtualFile> myRoots;
   private JLabel mySelectedLabel;
   private DefaultMutableTreeNode myRoot;
   private Tree myTree;
@@ -87,11 +86,11 @@ public class VcsStructureChooser extends DialogWrapper {
   public VcsStructureChooser(@NotNull Project project,
                              String title,
                              Collection<VirtualFile> initialSelection,
-                             @NotNull List<VirtualFile> initialRoots) {
+                             @NotNull List<VirtualFile> roots) {
     super(project, true);
     setTitle(title);
     myProject = project;
-    myInitialRoots = initialRoots;
+    myRoots = roots;
     mySelectionManager = new SelectionManager(MAX_FOLDERS, 500, MyNodeConverter.getInstance());
 
     init();
@@ -111,9 +110,7 @@ public class VcsStructureChooser extends DialogWrapper {
     });
 
     final TreeSet<VirtualFile> checkSet = new TreeSet<VirtualFile>(FilePathComparator.getInstance());
-    myRoots = new HashSet<VirtualFile>();
-    myRoots.addAll(myInitialRoots);
-    checkSet.addAll(myInitialRoots);
+    checkSet.addAll(myRoots);
     for (Module module : modules) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile file : files) {
