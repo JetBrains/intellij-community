@@ -27,6 +27,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.TestModuleProperties;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -115,7 +117,8 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
       propertiesComponent.setValue(CREATE_TEST_IN_THE_SAME_ROOT, true);
     }
 
-    final CreateTestDialog d = createTestDialog(project, srcModule, srcClass, srcPackage);
+    final Module targetModule = selectTargetModule(project, srcModule, testFolders);
+    final CreateTestDialog d = createTestDialog(project, targetModule, srcClass, srcPackage);
     if (!d.showAndGet()) {
       return;
     }
@@ -133,6 +136,21 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
         });
       }
     }, CodeInsightBundle.message("intention.create.test"), this);
+  }
+
+  private static Module selectTargetModule(Project project, Module srcModule, HashSet<VirtualFile> testFolders) {
+    Module targetModule = null;
+    for (VirtualFile testFolder : testFolders) {
+      Module targetModuleCandidate = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(testFolder);
+      if (targetModuleCandidate == srcModule) {
+        targetModule = srcModule;
+        break;
+      }
+      else if (targetModule == null || TestModuleProperties.getInstance(targetModule).getProductionModule() != srcModule) {
+        targetModule = targetModuleCandidate;
+      }
+    }
+    return targetModule == null ? srcModule : targetModule;
   }
 
   protected CreateTestDialog createTestDialog(Project project, Module srcModule, PsiClass srcClass, PsiPackage srcPackage) {
