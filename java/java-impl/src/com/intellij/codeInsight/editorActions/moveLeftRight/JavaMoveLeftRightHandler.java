@@ -29,6 +29,9 @@ public class JavaMoveLeftRightHandler extends MoveElementLeftRightHandler {
     else if (element instanceof PsiExpressionList) {
       return  ((PsiExpressionList)element).getExpressions();
     }
+    else if (element instanceof PsiAnnotationParameterList) {
+      return  ((PsiAnnotationParameterList)element).getAttributes();
+    }
     else if (element instanceof PsiArrayInitializerExpression) {
       return  ((PsiArrayInitializerExpression)element).getInitializers();
     }
