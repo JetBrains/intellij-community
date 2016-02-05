@@ -23,13 +23,18 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Batkovich
  */
 public class Java8CollectionsApiInspectionTest extends LightQuickFixParameterizedTestCase {
+  private Java8CollectionsApiInspection myInspection;
 
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new Java8CollectionsApiInspection(),
-    };
+    return new LocalInspectionTool[]{myInspection};
+  }
+
+  public void setUp() throws Exception {
+    myInspection = new Java8CollectionsApiInspection();
+    myInspection.myReportContainsCondition = true;
+    super.setUp();
   }
 
   public void test() throws Exception {

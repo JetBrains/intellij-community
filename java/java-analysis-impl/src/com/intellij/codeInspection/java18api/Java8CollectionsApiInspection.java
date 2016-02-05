@@ -18,18 +18,33 @@ package com.intellij.codeInspection.java18api;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Dmitry Batkovich
  */
 public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(Java8CollectionsApiInspection.class);
+
+  public boolean myReportContainsCondition;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Report when \'containsKey\' is used in condition (may change semantics)", this,
+                                          "myReportContainsCondition");
+  }
 
   @NotNull
   @Override
@@ -85,7 +100,53 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
   }
 
   @Nullable
-  private static ConditionInfo extractConditionInfo(PsiExpression condition) {
+  private ConditionInfo extractConditionInfo(PsiExpression condition) {
+    final ConditionInfo info = extractConditionInfoIfGet(condition);
+    if (info != null) {
+      return info;
+    }
+    return !myReportContainsCondition ? null : extractConditionInfoIfContains(condition);
+  }
+
+  @Nullable
+  private static ConditionInfo extractConditionInfoIfGet(PsiExpression condition) {
+    if (condition instanceof PsiBinaryExpression &&
+        (((PsiBinaryExpression)condition).getOperationSign().getTokenType().equals(JavaTokenType.EQEQ) ||
+         ((PsiBinaryExpression)condition).getOperationSign().getTokenType().equals(JavaTokenType.NE))) {
+      final List<PsiExpression> operands =
+        ContainerUtil.list(((PsiBinaryExpression)condition).getLOperand(), ((PsiBinaryExpression)condition).getROperand());
+
+      PsiExpression getQualifier = null;
+      PsiExpression keyExpression = null;
+      boolean isNullFound = false;
+      for (PsiExpression operand : operands) {
+        if (operand == null) return null;
+        if (operand instanceof PsiMethodCallExpression) {
+          final PsiMethodCallExpression maybeGetCall = (PsiMethodCallExpression)operand;
+          if (!isJavaUtilMapMethodWithName(maybeGetCall, "get")) {
+            return null;
+          }
+          final PsiExpression[] arguments = maybeGetCall.getArgumentList().getExpressions();
+          if (arguments.length != 1) return null;
+          getQualifier = maybeGetCall.getMethodExpression().getQualifierExpression();
+          keyExpression = arguments[0];
+        }
+        else if (operand instanceof PsiLiteralExpression && PsiKeyword.NULL.equals(operand.getText())) {
+          isNullFound = true;
+        }
+      }
+      if (getQualifier == null && keyExpression == null && isNullFound) {
+        return null;
+      }
+
+      return new ConditionInfo(getQualifier, keyExpression,
+                               ((PsiBinaryExpression)condition).getOperationSign().getTokenType().equals(JavaTokenType.EQEQ));
+    }
+    return null;
+  }
+
+  @Nullable
+  private static ConditionInfo extractConditionInfoIfContains(PsiExpression condition) {
     boolean inverted = false;
     final PsiMethodCallExpression conditionMethodCall;
     if (condition instanceof PsiPrefixExpression) {
