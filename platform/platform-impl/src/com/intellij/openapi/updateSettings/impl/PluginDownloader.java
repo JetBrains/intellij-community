@@ -140,9 +140,7 @@ public class PluginDownloader {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return false;
       }
-      if (!descriptor.isBundled()) {
-        myOldFile = descriptor.getPath();
-      }
+      myOldFile = descriptor.isBundled() ? null : descriptor.getPath();
     }
 
     // download plugin
