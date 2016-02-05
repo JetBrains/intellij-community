@@ -169,23 +169,7 @@ class StudyBrowserWindow extends JFrame {
       template = template.replace("${css_codemirror}", getClass().getResource("/code-mirror/codemirror.css").toExternalForm());
     }
     template = template.replace("${default-mode}", configurator.getDefaultHighlightingMode());
-    template = template.replace("${code}", "<h2>Nullable types</h2>\n" +
-                                           "<p>Read about <a href=\"http://kotlinlang.org/docs/reference/null-safety.html\">null safety and safe calls</a> in Kotlin and rewrite the following Java code using only one <code>if</code> expression:</p><pre><code data-lang=\"text/x-java\">public void sendMessageToClient(\n" +
-                                           "    @Nullable Client client,\n" +
-                                           "    @Nullable String message,\n" +
-                                           "    @NotNull Mailer mailer\n" +
-                                           ") {\n" +
-                                           "    if (client == null || message == null) return;\n" +
-                                           "\n" +
-                                           "    PersonalInfo personalInfo = client.getPersonalInfo();\n" +
-                                           "    if (personalInfo == null) return;\n" +
-                                           "\n" +
-                                           "    String email = personalInfo.getEmail();\n" +
-                                           "    if (email == null) return;\n" +
-                                           "\n" +
-                                           "    mailer.sendMessage(email, message);\n" +
-                                           "}\n" +
-                                           "</code></pre>");
+    template = template.replace("${code}", content);
     
     return template;
   }
