@@ -574,6 +574,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Override
   protected void doOKAction() {
+    if (!myIsAlien && !addUnversionedFiles()) return;
     if (!saveDialogState()) return;
     saveComments(true);
     final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
@@ -604,6 +605,32 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     } else {
       callCommit.run();
     }
+  }
+
+  private boolean addUnversionedFiles() {
+    boolean isSuccessful = true;
+    final List<VirtualFile> files = myBrowser.getIncludedUnversionedFiles();
+
+    if (!files.isEmpty()) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+
+      ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(myProject);
+      LocalChangeList targetChangeList = (LocalChangeList)myBrowser.getSelectedChangeList();
+      List<VcsException> exceptions =
+        manager.addUnversionedFiles(targetChangeList, files, ChangeListManagerImpl.getDefaultUnversionedFileCondition(),
+                                    new Consumer<List<Change>>() {
+                                      @SuppressWarnings("unchecked")
+                                      @Override
+                                      public void consume(@NotNull List<Change> changes) {
+                                        myBrowser.rebuildList();
+                                        myBrowser.getViewer().excludeChanges((List)files);
+                                        myBrowser.getViewer().includeChanges((List)changes);
+                                      }
+                                    });
+      isSuccessful = exceptions.isEmpty();
+    }
+
+    return isSuccessful;
   }
 
   @NotNull
