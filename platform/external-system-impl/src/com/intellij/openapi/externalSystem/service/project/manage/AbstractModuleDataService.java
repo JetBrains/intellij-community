@@ -102,20 +102,11 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       }
     }
 
-    final boolean isOneToOneMapping = projectData != null && ExternalSystemApiUtil.isOneToOneMapping(project, projectData);
     for (DataNode<E> node : toImport) {
       Module module = node.getUserData(MODULE_KEY);
       if (module != null) {
         final String[] groupPath;
-        if (isOneToOneMapping || projectData == null) {
-          groupPath = node.getData().getIdeModuleGroup();
-        }
-        else {
-          final String externalProjectGroup = projectData.getInternalName() + " modules";
-          groupPath = node.getData().getIdeModuleGroup() == null
-                      ? new String[]{externalProjectGroup}
-                      : ArrayUtil.prepend(externalProjectGroup, node.getData().getIdeModuleGroup());
-        }
+        groupPath = node.getData().getIdeModuleGroup();
         final ModifiableModuleModel modifiableModel = modelsProvider.getModifiableModuleModel();
         modifiableModel.setModuleGroupPath(module, groupPath);
       }
