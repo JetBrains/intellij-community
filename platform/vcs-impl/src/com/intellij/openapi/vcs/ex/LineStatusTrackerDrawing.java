@@ -75,9 +75,6 @@ import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 import static com.intellij.diff.util.DiffUtil.getDiffType;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
-/**
- * @author irengrig
- */
 public class LineStatusTrackerDrawing {
   private LineStatusTrackerDrawing() {
   }
@@ -551,7 +548,7 @@ public class LineStatusTrackerDrawing {
     }
 
     public int getEditorTextOffset() {
-      return 3;
+      return myEditorComponent.getInsets().left;
     }
   }
 }
