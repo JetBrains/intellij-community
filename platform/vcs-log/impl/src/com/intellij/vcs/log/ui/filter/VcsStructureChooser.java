@@ -79,7 +79,6 @@ public class VcsStructureChooser extends DialogWrapper {
 
   @NotNull private final SelectionManager mySelectionManager;
 
-  private JLabel mySelectedLabel;
   private Tree myTree;
 
   public VcsStructureChooser(@NotNull Project project,
@@ -237,9 +236,9 @@ public class VcsStructureChooser extends DialogWrapper {
 
     JBPanel panel = new JBPanel(new BorderLayout());
     panel.add(new JBScrollPane(fileSystemTree.getTree()), BorderLayout.CENTER);
-    mySelectedLabel = new JLabel("");
-    mySelectedLabel.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
-    panel.add(mySelectedLabel, BorderLayout.SOUTH);
+    final JLabel selectedLabel = new JLabel("");
+    selectedLabel.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
+    panel.add(selectedLabel, BorderLayout.SOUTH);
 
     mySelectionManager.setSelectionChangeListener(new PlusMinus<VirtualFile>() {
       @Override
@@ -251,12 +250,12 @@ public class VcsStructureChooser extends DialogWrapper {
       private void recalculateErrorText() {
         checkEmpty();
         if (mySelectionManager.canAddSelection()) {
-          mySelectedLabel.setText("");
+          selectedLabel.setText("");
         }
         else {
-          mySelectedLabel.setText(CAN_NOT_ADD_TEXT);
+          selectedLabel.setText(CAN_NOT_ADD_TEXT);
         }
-        mySelectedLabel.revalidate();
+        selectedLabel.revalidate();
       }
 
       @Override
