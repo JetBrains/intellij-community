@@ -15,17 +15,17 @@
  */
 package org.jetbrains.git4idea.util;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 
 /**
@@ -130,32 +130,17 @@ public class ScriptGenerator {
    * @return the path to generated script
    * @throws IOException if there is a problem with creating script
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NotNull
   public File generate() throws IOException {
-    File scriptPath = FileUtil.createTempFile(myPrefix, SCRIPT_EXT);
-    scriptPath.deleteOnExit();
-    PrintWriter out = new PrintWriter(new FileWriter(scriptPath));
+    String title = SystemInfo.isWindows ? "@echo off" : "#!/bin/sh";
+    String parametersPassthrough = SystemInfo.isWindows ? " %*" : " \"$@\"";
+    String content = title + "\n" + commandLine() + parametersPassthrough + "\n";
     try {
-      if (SystemInfo.isWindows) {
-        out.println("@echo off");
-      }
-      else {
-        out.println("#!/bin/sh");
-      }
-      String line = commandLine();
-      if (SystemInfo.isWindows) {
-        line += " %*";
-      }
-      else {
-        line += " \"$@\"";
-      }
-      out.println(line);
+      return ExecUtil.createTempExecutableScript(myPrefix, SCRIPT_EXT, content);
     }
-    finally {
-      out.close();
+    catch (ExecutionException e) {
+      throw new IOException("The script providing interactive execution of Git commands couldn't be made executable", e);
     }
-    FileUtil.setExecutableAttribute(scriptPath.getPath(), true);
-    return scriptPath;
   }
 
   /**
