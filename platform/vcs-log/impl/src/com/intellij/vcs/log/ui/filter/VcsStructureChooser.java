@@ -80,7 +80,6 @@ public class VcsStructureChooser extends DialogWrapper {
   @NotNull private final SelectionManager mySelectionManager;
 
   private JLabel mySelectedLabel;
-  private DefaultMutableTreeNode myRoot;
   private Tree myTree;
 
   public VcsStructureChooser(@NotNull Project project,
@@ -154,8 +153,6 @@ public class VcsStructureChooser extends DialogWrapper {
     myTree.setRootVisible(false);
     myTree.setExpandableItemsEnabled(false);
 
-    myRoot = (DefaultMutableTreeNode)myTree.getModel().getRoot();
-
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor();
     ArrayList<VirtualFile> list = new ArrayList<VirtualFile>(myRoots);
     descriptor.setRoots(list);
@@ -201,7 +198,7 @@ public class VcsStructureChooser extends DialogWrapper {
         int row = myTree.getRowForLocation(e.getX(), e.getY());
         if (row < 0) return false;
         final Object o = myTree.getPathForRow(row).getLastPathComponent();
-        if (myRoot == o || getFile(o) == null) return false;
+        if (getTreeRoot() == o || getFile(o) == null) return false;
 
         Rectangle rowBounds = myTree.getRowBounds(row);
         cellRenderer.setBounds(rowBounds);
@@ -227,7 +224,7 @@ public class VcsStructureChooser extends DialogWrapper {
           for (TreePath path : paths) {
             if (path == null) continue;
             final Object o = path.getLastPathComponent();
-            if (myRoot == o || getFile(o) == null) return;
+            if (getTreeRoot() == o || getFile(o) == null) return;
             mySelectionManager.toggleSelection((DefaultMutableTreeNode)o);
           }
 
@@ -270,6 +267,10 @@ public class VcsStructureChooser extends DialogWrapper {
     });
     panel.setPreferredSize(JBUI.size(400, 300));
     return panel;
+  }
+
+  private DefaultMutableTreeNode getTreeRoot() {
+    return (DefaultMutableTreeNode)myTree.getModel().getRoot();
   }
 
   @Nullable
