@@ -175,14 +175,18 @@ public class VcsStructureChooser extends DialogWrapper {
       });
     final AbstractTreeUi ui = fileSystemTree.getTreeBuilder().getUi();
 
-    final Comparator<VirtualFile> comparator = new VirtualFileComparator();
     ui.setNodeDescriptorComparator(new Comparator<NodeDescriptor>() {
       @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
         if (o1 instanceof FileNodeDescriptor && o2 instanceof FileNodeDescriptor) {
-          final VirtualFile f1 = ((FileNodeDescriptor)o1).getElement().getFile();
-          final VirtualFile f2 = ((FileNodeDescriptor)o2).getElement().getFile();
-          return comparator.compare(f1, f2);
+          VirtualFile f1 = ((FileNodeDescriptor)o1).getElement().getFile();
+          VirtualFile f2 = ((FileNodeDescriptor)o2).getElement().getFile();
+
+          boolean isDir1 = f1.isDirectory();
+          boolean isDir2 = f2.isDirectory();
+          if (isDir1 != isDir2) return isDir1 ? -1 : 1;
+
+          return f1.getPath().compareToIgnoreCase(f2.getPath());
         }
         return o1.getIndex() - o2.getIndex();
       }
@@ -413,17 +417,6 @@ public class VcsStructureChooser extends DialogWrapper {
     @Override
     protected void putParentPathImpl(Object value, String parentPath, FilePath self) {
       append(self.getPath(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-    }
-  }
-
-  private static class VirtualFileComparator implements Comparator<VirtualFile> {
-    @Override
-    public int compare(VirtualFile o1, VirtualFile o2) {
-      boolean isDir1 = o1.isDirectory();
-      boolean isDir2 = o2.isDirectory();
-      if (isDir1 != isDir2) return isDir1 ? -1 : 1;
-
-      return o1.getPath().compareToIgnoreCase(o2.getPath());
     }
   }
 }
