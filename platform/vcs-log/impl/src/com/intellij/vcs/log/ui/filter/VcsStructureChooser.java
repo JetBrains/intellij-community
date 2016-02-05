@@ -153,8 +153,7 @@ public class VcsStructureChooser extends DialogWrapper {
     myTree.setExpandableItemsEnabled(false);
 
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor();
-    ArrayList<VirtualFile> list = new ArrayList<VirtualFile>(myRoots);
-    descriptor.setRoots(list);
+    descriptor.setRoots(new ArrayList<VirtualFile>(myRoots));
     final MyCheckboxTreeCellRenderer cellRenderer =
       new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject, myTree, myRoots);
     FileSystemTreeImpl fileSystemTree =
