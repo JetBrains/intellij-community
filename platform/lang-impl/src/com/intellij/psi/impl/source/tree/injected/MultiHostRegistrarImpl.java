@@ -331,7 +331,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     }
 
     psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
-    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(psiFile.getProject())).cachePsi(documentWindow, psiFile);
+    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(psiFile.getProject())).associatePsi(documentWindow, psiFile);
 
     keepTreeFromChameleoningBack(psiFile);
 

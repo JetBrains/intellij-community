@@ -120,7 +120,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return psiFile;
   }
 
-  public void cachePsi(@NotNull Document document, @Nullable PsiFile file) {
+  @Deprecated
+  // todo remove when Database Navigator plugin doesn't need that anymore
+  // todo to be removed in idea 17
+  public static void cachePsi(@NotNull Document document, @Nullable PsiFile file) {
+    LOG.warn("Unsupported method");
+  }
+
+  public void associatePsi(@NotNull Document document, @Nullable PsiFile file) {
     document.putUserData(HARD_REF_TO_PSI, file);
   }
 
@@ -169,7 +176,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (document != null) {
       if (!file.getViewProvider().isPhysical() && document.getUserData(HARD_REF_TO_PSI) == null) {
         PsiUtilCore.ensureValid(file);
-        cachePsi(document, file);
+        associatePsi(document, file);
       }
       return document;
     }
@@ -189,7 +196,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
       if (!viewProvider.isPhysical()) {
         PsiUtilCore.ensureValid(file);
-        cachePsi(document, file);
+        associatePsi(document, file);
         file.putUserData(HARD_REF_TO_DOCUMENT, document);
       }
     }

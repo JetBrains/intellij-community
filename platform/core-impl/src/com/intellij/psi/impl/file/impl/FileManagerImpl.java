@@ -256,7 +256,7 @@ public class FileManagerImpl implements FileManager {
 
         Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
         if (document != null) {
-          ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myManager.getProject())).cachePsi(document, null);
+          ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myManager.getProject())).associatePsi(document, null);
         }
         virtualFile.putUserData(myPsiHardRefKey, null);
       }
