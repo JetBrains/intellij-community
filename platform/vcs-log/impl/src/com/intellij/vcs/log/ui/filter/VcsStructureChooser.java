@@ -100,7 +100,7 @@ public class VcsStructureChooser extends DialogWrapper {
     checkEmpty();
   }
 
-  private void calculateRoots() {
+  private void calculateModules() {
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     // assertion for read access inside
     final Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
@@ -144,7 +144,7 @@ public class VcsStructureChooser extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor();
-    calculateRoots();
+    calculateModules();
     final ArrayList<VirtualFile> list = new ArrayList<VirtualFile>(myRoots);
     final Comparator<VirtualFile> comparator = new Comparator<VirtualFile>() {
       @Override
