@@ -938,8 +938,6 @@ public class InferenceSession {
     List<ConstraintFormula> newConstraints = new ArrayList<ConstraintFormula>();
     for (int i = myConstraintIdx; i < myConstraints.size(); i++) {
       ConstraintFormula constraint = myConstraints.get(i);
-      //register expression in map to mark as "in progress" 
-      constraint.apply(PsiSubstitutor.EMPTY, true);
       if (!constraint.reduce(this, newConstraints)) {
         return false;
       }
