@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remote;
+package com.intellij.remote.ext;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.extensions.ExtensionPointName;
 
-/**
- */
-public class DockerMachineNotStartedException extends DockerMachineCommandException {
-  @NotNull private final String myMachineName;
+public abstract class CredentialsLanguageContribution<T> {
 
-  public DockerMachineNotStartedException(@NotNull String machineName, int exitCode, @Nullable String stderr) {
-    super(exitCode, stderr);
-    this.myMachineName = machineName;
-  }
+  public static final ExtensionPointName<CredentialsLanguageContribution> EP_NAME
+    = ExtensionPointName.create("com.intellij.remote.credentialsLanguageContribution");
 
-  @NotNull
-  public String getMachineName() {
-    return myMachineName;
-  }
+  public abstract CredentialsTypeEx getType();
+
+  public abstract Class<T> getLanguageContributionClass();
+
+  public abstract T getLanguageContribution();
 }

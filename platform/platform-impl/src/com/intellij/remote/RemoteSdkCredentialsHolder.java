@@ -1,5 +1,6 @@
 package com.intellij.remote;
 
+import com.intellij.remote.ext.CredentialsManager;
 import com.intellij.util.PathMappingSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -156,13 +157,13 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
 
   public static boolean isRemoteSdk(@Nullable String path) {
     if (path != null) {
-      return path.startsWith(SSH_PREFIX) || path.startsWith(RemoteConnectionCredentialsWrapper.VAGRANT_PREFIX) ||
-             path.startsWith(RemoteConnectionCredentialsWrapper.SFTP_DEPLOYMENT_PREFIX) ||
-             path.startsWith(RemoteConnectionCredentialsWrapper.DOCKER_PREFIX);
+      for (CredentialsType type : CredentialsManager.getInstance().getAllTypes()) {
+        if (type.hasPrefix(path)) {
+          return true;
+        }
+      }
     }
-    else {
-      return false;
-    }
+    return false;
   }
 
 
