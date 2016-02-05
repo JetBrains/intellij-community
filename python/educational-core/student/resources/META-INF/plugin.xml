@@ -86,8 +86,6 @@
     <toolWindow id="Course Progress" anchor="left" factoryClass="com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory" conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>
     <fileEditorProvider implementation="com.jetbrains.edu.learning.editor.StudyFileEditorProvider"/>
     <treeStructureProvider implementation="com.jetbrains.edu.learning.projectView.StudyTreeStructureProvider"/>
-    <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
-        serviceImplementation="com.jetbrains.edu.learning.StudyInstructionPainter" overrides="true"/>
     <highlightErrorFilter implementation="com.jetbrains.edu.learning.editor.StudyHighlightErrorFilter"/>
     <projectService serviceInterface="com.jetbrains.edu.learning.StudyTaskManager"
                     serviceImplementation="com.jetbrains.edu.learning.StudyTaskManager"/>
