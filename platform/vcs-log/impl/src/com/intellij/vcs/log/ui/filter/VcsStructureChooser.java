@@ -148,17 +148,20 @@ public class VcsStructureChooser extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor();
-    final ArrayList<VirtualFile> list = new ArrayList<VirtualFile>(myRoots);
-    descriptor.setRoots(list);
     myTree = new Tree();
     myTree.setBorder(BORDER);
     myTree.setShowsRootHandles(true);
     myTree.setRootVisible(false);
     myTree.setExpandableItemsEnabled(false);
+
+    myRoot = (DefaultMutableTreeNode)myTree.getModel().getRoot();
+
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor();
+    ArrayList<VirtualFile> list = new ArrayList<VirtualFile>(myRoots);
+    descriptor.setRoots(list);
     final MyCheckboxTreeCellRenderer cellRenderer =
       new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject, myTree, myRoots);
-    final FileSystemTreeImpl fileSystemTree =
+    FileSystemTreeImpl fileSystemTree =
       new FileSystemTreeImpl(myProject, descriptor, myTree, cellRenderer, null, new Convertor<TreePath, String>() {
         @Override
         public String convert(TreePath o) {
@@ -173,8 +176,8 @@ public class VcsStructureChooser extends DialogWrapper {
           return o.toString();
         }
       });
-    final AbstractTreeUi ui = fileSystemTree.getTreeBuilder().getUi();
 
+    AbstractTreeUi ui = fileSystemTree.getTreeBuilder().getUi();
     ui.setNodeDescriptorComparator(new Comparator<NodeDescriptor>() {
       @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
@@ -191,7 +194,6 @@ public class VcsStructureChooser extends DialogWrapper {
         return o1.getIndex() - o2.getIndex();
       }
     });
-    myRoot = (DefaultMutableTreeNode)myTree.getModel().getRoot();
 
     new ClickListener() {
       @Override
