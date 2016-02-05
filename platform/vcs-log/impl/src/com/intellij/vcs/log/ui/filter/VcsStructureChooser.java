@@ -74,7 +74,7 @@ public class VcsStructureChooser extends DialogWrapper {
 
   @NotNull private final Project myProject;
   @NotNull private final List<VirtualFile> myRoots;
-  @NotNull private final Map<VirtualFile, String> myModulesSet = ContainerUtil.newHashMap();
+  @NotNull private final Map<VirtualFile, String> myModulesSet;
   @NotNull private final Set<VirtualFile> mySelectedFiles = ContainerUtil.newHashSet();
 
   @NotNull private final SelectionManager mySelectionManager;
@@ -92,6 +92,7 @@ public class VcsStructureChooser extends DialogWrapper {
     myProject = project;
     myRoots = roots;
     mySelectionManager = new SelectionManager(MAX_FOLDERS, 500, MyNodeConverter.getInstance());
+    myModulesSet = calculateModules(roots);
 
     init();
 
@@ -100,7 +101,10 @@ public class VcsStructureChooser extends DialogWrapper {
     checkEmpty();
   }
 
-  private void calculateModules() {
+  @NotNull
+  private Map<VirtualFile, String> calculateModules(@NotNull List<VirtualFile> roots) {
+    Map<VirtualFile, String> result = ContainerUtil.newHashMap();
+
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     // assertion for read access inside
     final Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
@@ -110,16 +114,17 @@ public class VcsStructureChooser extends DialogWrapper {
     });
 
     final TreeSet<VirtualFile> checkSet = new TreeSet<VirtualFile>(FilePathComparator.getInstance());
-    checkSet.addAll(myRoots);
+    checkSet.addAll(roots);
     for (Module module : modules) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile file : files) {
         final VirtualFile floor = checkSet.floor(file);
         if (floor != null) {
-          myModulesSet.put(file, module.getName());
+          result.put(file, module.getName());
         }
       }
     }
+    return result;
   }
 
   @NotNull
@@ -144,7 +149,6 @@ public class VcsStructureChooser extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor();
-    calculateModules();
     final ArrayList<VirtualFile> list = new ArrayList<VirtualFile>(myRoots);
     final Comparator<VirtualFile> comparator = new Comparator<VirtualFile>() {
       @Override
