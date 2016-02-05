@@ -109,7 +109,10 @@ public class ProcessListUtil {
     File proc = new File("/proc");
 
     File[] processes = proc.listFiles();
-    if (processes == null) return null;
+    if (processes == null) {
+      LOG.error("Cannot read /proc, not mounted?");                                                                                                                                                                                                   
+      return null;
+    }
 
     List<ProcessInfo> result = new ArrayList<ProcessInfo>();
 
