@@ -16,7 +16,10 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsLogHashMap;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,11 +121,10 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     long taskNumber = myCurrentTaskIndex++;
 
     for (Integer id : commits.keySet()) {
-      VirtualFile root = myHashMap.getCommitId(id).getRoot();
       T details = getFromCache(id);
       if (details == null || details instanceof LoadingDetails) {
         toLoad.add(id);
-        cacheCommit(id, root, taskNumber);
+        cacheCommit(id, taskNumber);
       }
       else {
         result.add(details);
@@ -208,26 +210,24 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     Set<Integer> toLoad = ContainerUtil.newHashSet();
 
     for (Integer id : commits.keySet()) {
-      VirtualFile root = myHashMap.getCommitId(id).getRoot();
-
-      cacheCommit(id, root, taskNumber);
+      cacheCommit(id, taskNumber);
       toLoad.add(id);
     }
 
     myLoader.queue(new TaskDescriptor(toLoad));
   }
 
-  private void cacheCommit(final int commitId, VirtualFile root, long taskNumber) {
+  private void cacheCommit(final int commitId, long taskNumber) {
     // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
     // even if it will be loaded within a previous query
     if (!myCache.isKeyCached(commitId)) {
-      myCache.put(commitId, (T)new LoadingDetails(new Computable<Hash>() {
+      myCache.put(commitId, (T)new LoadingDetails(new Computable<CommitId>() {
 
         @Override
-        public Hash compute() {
-          return myHashMap.getCommitId(commitId).getHash();
+        public CommitId compute() {
+          return myHashMap.getCommitId(commitId);
         }
-      }, taskNumber, root));
+      }, taskNumber));
     }
   }
 
