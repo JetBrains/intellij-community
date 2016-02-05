@@ -1108,6 +1108,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     final FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
     final FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
+    if (providers.length == 0) return null;
     final FileEditor[] editors = new FileEditor[providers.length];
     for (int i = 0; i < providers.length; i++) {
       final FileEditorProvider provider = providers[i];
@@ -1123,11 +1124,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     final EditorHistoryManager editorHistoryManager = EditorHistoryManager.getInstance(myProject);
     for (int i = 0; i < editors.length; i++) {
       final FileEditor editor = editors[i];
-      if (editor instanceof TextEditor) {
-        // hack!!!
-        // This code prevents "jumping" on next repaint.
-        //((EditorEx)((TextEditor)editor).getEditor()).stopOptimizedScrolling();
-      }
 
       final FileEditorProvider provider = providers[i];
 
