@@ -615,4 +615,10 @@ class Foo {
     myFixture.type('\n')
     myFixture.checkResult "/** {@link #foo(int)}<caret> */ interface Foo { void foo(int a); }}"
   }
+
+  public void "test wrap null into code tag"() {
+    myFixture.configureByText 'a.java', "/** nul<caret> */"
+    myFixture.completeBasic()
+    myFixture.checkResult "/** {@code null}<caret> */"
+  }
 }

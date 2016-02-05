@@ -182,6 +182,15 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
       suggestLinkWrappingVariants(parameters, result, position);
 
+      if (!result.getPrefixMatcher().getPrefix().isEmpty()) {
+        for (String keyword : ContainerUtil.ar("null", "true", "false")) {
+          String tagText = "{@code " + keyword + "}";
+          result.addElement(LookupElementBuilder.create(keyword).withPresentableText(tagText).withInsertHandler(
+            (context, item) -> context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), tagText))
+          );
+        }
+      }
+
       return;
     }
 
