@@ -295,12 +295,14 @@ public class QuickDocOnMouseOverManager {
     @Override
     public void run() {
       Ref<PsiElement> targetElementRef = new Ref<>();
-      ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(new Runnable() {
+      ProgressIndicatorUtils.runInReadActionWithWriteActionPriorityWithRetries(new Runnable() {
         @Override
         public void run() {
-          targetElementRef.set(docManager.findTargetElement(editor, offset, originalElement.getContainingFile(), originalElement));
+          if (originalElement.isValid()) {
+            targetElementRef.set(docManager.findTargetElement(editor, offset, originalElement.getContainingFile(), originalElement));
+          }
         }
-      });
+      }, 5000, 100);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {

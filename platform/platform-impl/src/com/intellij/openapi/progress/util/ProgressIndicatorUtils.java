@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * Methods in this class are used to equip long background processes which take read actions with a special listener
@@ -67,8 +68,29 @@ public class ProgressIndicatorUtils {
   }
 
   /**
+   * Repeatedly tries to run given task in read action without blocking write actions (for this to work effectively the action should invoke 
+   * {@link ProgressManager#checkCanceled()} or {@link ProgressIndicator#checkCanceled()} often enough).
+   * 
+   * @param action task to run
+   * @param timeout timeout in milliseconds 
+   * @param pauseBetweenRetries pause between retries in milliseconds 
+   * @return <code>true</code> if the action succeeded to run without interruptions, <code>false</code> otherwise 
+   * @throws InterruptedException if execution was interrupted while waiting for the next attempt
+   */
+  public static boolean runInReadActionWithWriteActionPriorityWithRetries(@NotNull final Runnable action, 
+                                                                          long timeout, long pauseBetweenRetries) {
+    boolean result;
+    long deadline = System.currentTimeMillis() + timeout;
+    while (!(result = runInReadActionWithWriteActionPriority(action)) && System.currentTimeMillis() < deadline) {
+      LockSupport.parkNanos(pauseBetweenRetries * 1000);
+    }
+    return result;
+  }
+
+  /**
    * This method attempts to run provided action synchronously in a read action, so that, if possible, it wouldn't impact any pending, 
-   * executing or future write actions. 
+   * executing or future write actions (for this to work effectively the action should invoke {@link ProgressManager#checkCanceled()} or 
+   * {@link ProgressIndicator#checkCanceled()} often enough). 
    * It returns <code>true</code> if action was executed successfully. It returns <code>false</code> if the action was not
    * executed successfully, i.e. if:
    * <ul>
