@@ -1746,6 +1746,10 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="lambda.parameter.naming.convention.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.LambdaParameterNamingConventionInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="LambdaUnfriendlyMethodOverload"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="lambda.unfriendly.method.overload.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
+                     level="WARNING" implementationClass="com.siyeh.ig.naming.LambdaUnfriendlyMethodOverloadInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LocalVariableNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="local.variable.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
