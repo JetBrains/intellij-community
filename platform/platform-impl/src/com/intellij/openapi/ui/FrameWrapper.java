@@ -343,7 +343,19 @@ public class FrameWrapper implements Disposable, DataProvider {
       myParent = parent;
       setGlassPane(new IdeGlassPaneImpl(getRootPane()));
 
-      if (SystemInfo.isMac) {
+      boolean setMenuOnFrame = SystemInfo.isMac;
+
+      if (SystemInfo.isLinux && "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"))) {
+        try {
+          Class.forName("com.jarego.jayatana.Agent");
+          setMenuOnFrame = true;
+        }
+        catch (ClassNotFoundException e) {
+          // ignore
+        }
+      }
+
+      if (setMenuOnFrame) {
         setJMenuBar(new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()));
       }
 
