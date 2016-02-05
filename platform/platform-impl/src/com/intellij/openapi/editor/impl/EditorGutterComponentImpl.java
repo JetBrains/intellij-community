@@ -1057,9 +1057,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void drawFoldingAnchor(int width, Rectangle clip, Graphics2D g, int anchorX, int visualLine,
                                  DisplayedFoldingAnchor.Type type, boolean active) {
-
-    final int off = (int)(JBUI.scale(2) * myEditor.getScale());
+    int off = (int)((float)width / 4);
     int height = width + off;
+    int baseHeight = height - width / 2;
     int y = getFoldAnchorY(visualLine, width);
     switch (type) {
       case COLLAPSED:
@@ -1069,14 +1069,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         break;
       case EXPANDED_TOP:
         if (y <= clip.y + clip.height && y + height >= clip.y) {
-          drawDirectedBox(g, anchorX, y, width, height, width - off, active);
+          drawDirectedBox(g, anchorX, y, width, height, baseHeight, active);
         }
         break;
       case EXPANDED_BOTTOM:
         //noinspection SuspiciousNameCombination
         y += width;
         if (y - height <= clip.y + clip.height && y >= clip.y) {
-          drawDirectedBox(g, anchorX, y, width, -height, -width + off, active);
+          drawDirectedBox(g, anchorX, y, width, -height, -baseHeight, active);
         }
         break;
     }
