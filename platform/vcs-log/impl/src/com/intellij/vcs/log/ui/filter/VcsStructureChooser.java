@@ -173,8 +173,7 @@ public class VcsStructureChooser extends DialogWrapper {
         }
       });
 
-    AbstractTreeUi ui = fileSystemTree.getTreeBuilder().getUi();
-    ui.setNodeDescriptorComparator(new Comparator<NodeDescriptor>() {
+    fileSystemTree.getTreeBuilder().getUi().setNodeDescriptorComparator(new Comparator<NodeDescriptor>() {
       @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
         if (o1 instanceof FileNodeDescriptor && o2 instanceof FileNodeDescriptor) {
