@@ -170,6 +170,9 @@ public class RunInspectionAction extends GotoActionBase {
         final boolean hasFixAll = toolWrapper.getTool() instanceof CleanupLocalInspectionTool;
         actions.add(new AbstractAction(hasFixAll ? AnalysisScopeBundle.message("action.analyze.verb")
                                                  : CommonBundle.getOkButtonText()) {
+          {
+            putValue(DEFAULT_ACTION, Boolean.TRUE);
+          }
           @Override
           public void actionPerformed(ActionEvent e) {
             RunInspectionIntention.rerunInspection(toolWrapper, managerEx, getScope(), element);
