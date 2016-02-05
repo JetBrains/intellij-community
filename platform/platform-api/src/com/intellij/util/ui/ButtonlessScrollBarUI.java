@@ -720,6 +720,19 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
             if (alignment == Alignment.BOTTOM) bounds.y += offset;
           }
         }
+        if (SystemInfo.isMac) {
+          bounds.x += 1;
+          bounds.y += 1;
+          bounds.width -= 2;
+          bounds.height -= 2;
+        }
+      }
+      else if (SystemInfo.isMac) {
+        boolean vertical = scrollbar == null || Adjustable.VERTICAL == scrollbar.getOrientation();
+        bounds.x += vertical ? 3 : 2;
+        bounds.y += vertical ? 2 : 3;
+        bounds.width -= vertical ? 5 : 4;
+        bounds.height -= vertical ? 4 : 5;
       }
       else if (Registry.is("ide.scroll.thumb.small.if.opaque")) {
         bounds.x += 1;
@@ -727,9 +740,27 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         bounds.width -= 2;
         bounds.height -= 2;
       }
-      float value = (float)myThumbFadeColorShift / getAnimationColorShift();
-      RegionPainter<Float> painter = isDark() ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
-      painter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
+      if (SystemInfo.isMac) {
+        int arc = Math.min(bounds.width, bounds.height);
+
+        boolean dark = isDark();
+        int c = dark ? 128 : 0;
+        int a = dark ? 40 : 100;
+
+        //noinspection UseJBColor
+        g.setColor(new Color(c, c, c, a));
+
+        Graphics2D g2d = (Graphics2D)g;
+        Object old = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, arc, arc);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
+      }
+      else {
+        float value = (float)myThumbFadeColorShift / getAnimationColorShift();
+        RegionPainter<Float> painter = isDark() ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
+        painter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
+      }
     }
     else {
       RegionPainter<Integer> painter = UIUtil.getClientProperty(scrollbar, MAXI_THUMB);

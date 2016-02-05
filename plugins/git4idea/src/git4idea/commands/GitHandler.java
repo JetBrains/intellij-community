@@ -42,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IdeaWideProxySelector;
+import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsApplicationSettings;
@@ -433,6 +434,7 @@ public abstract class GitHandler {
           setupSshAuthenticator();
         }
       }
+      setUpLocale();
       myCommandLine.getEnvironment().clear();
       myCommandLine.getEnvironment().putAll(myEnv);
       // start process
@@ -449,6 +451,10 @@ public abstract class GitHandler {
       cleanupEnv();
       myListeners.getMulticaster().startFailed(t);
     }
+  }
+
+  private void setUpLocale() {
+    myEnv.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
   }
 
   private void setupHttpAuthenticator() throws IOException {
