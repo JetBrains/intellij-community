@@ -67,18 +67,13 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     final Editor editor = context.getEditor();
     final char c = context.getCompletionChar();
     if (c == '#') {
-      context.setLaterRunnable(new Runnable() {
-        @Override
-        public void run() {
-          new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor);
-        }
-      });
+      context.setLaterRunnable(() -> new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor));
     } else if (c == '.' && PsiTreeUtil.getParentOfType(position, PsiParameterList.class) == null) {
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
     }
 
     if (PsiTreeUtil.getParentOfType(position, PsiDocComment.class, false) != null && shouldInsertFqnInJavadoc(item, file, project)) {
-      AllClassesGetter.INSERT_FQN.handleInsert(context, item);
+      context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), getJavadocQualifiedName(psiClass));
       return;
     }
 
@@ -125,6 +120,11 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     if (fillTypeArgs && context.getCompletionChar() != '(') {
       JavaCompletionUtil.promptTypeArgs(context, context.getOffset(refEnd));
     }
+  }
+
+  private static String getJavadocQualifiedName(PsiClass psiClass) {
+    PsiClass containingClass = psiClass.getContainingClass();
+    return containingClass != null ? getJavadocQualifiedName(containingClass) + "#" + psiClass.getName() : psiClass.getQualifiedName();
   }
 
   private static boolean shouldInsertFqnInJavadoc(@NotNull JavaPsiClassReferenceElement item,
