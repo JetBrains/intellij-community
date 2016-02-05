@@ -120,7 +120,6 @@ public class VcsStructureChooser extends DialogWrapper {
         final VirtualFile floor = checkSet.floor(file);
         if (floor != null) {
           myModulesSet.put(file, module.getName());
-          myRoots.add(file);
         }
       }
     }
