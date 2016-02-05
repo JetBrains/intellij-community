@@ -150,20 +150,6 @@ public class VcsStructureChooser extends DialogWrapper {
   protected JComponent createCenterPanel() {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor();
     final ArrayList<VirtualFile> list = new ArrayList<VirtualFile>(myRoots);
-    final Comparator<VirtualFile> comparator = new Comparator<VirtualFile>() {
-      @Override
-      public int compare(VirtualFile o1, VirtualFile o2) {
-        final boolean isDir1 = o1.isDirectory();
-        final boolean isDir2 = o2.isDirectory();
-        if (isDir1 != isDir2) return isDir1 ? -1 : 1;
-
-        final String module1 = myModulesSet.get(o1);
-        final String path1 = module1 != null ? module1 : o1.getPath();
-        final String module2 = myModulesSet.get(o2);
-        final String path2 = module2 != null ? module2 : o2.getPath();
-        return path1.compareToIgnoreCase(path2);
-      }
-    };
     descriptor.setRoots(list);
     myTree = new Tree();
     myTree.setBorder(BORDER);
@@ -188,6 +174,8 @@ public class VcsStructureChooser extends DialogWrapper {
         }
       });
     final AbstractTreeUi ui = fileSystemTree.getTreeBuilder().getUi();
+
+    final Comparator<VirtualFile> comparator = new VirtualFileComparator();
     ui.setNodeDescriptorComparator(new Comparator<NodeDescriptor>() {
       @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
@@ -425,6 +413,17 @@ public class VcsStructureChooser extends DialogWrapper {
     @Override
     protected void putParentPathImpl(Object value, String parentPath, FilePath self) {
       append(self.getPath(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
+  }
+
+  private static class VirtualFileComparator implements Comparator<VirtualFile> {
+    @Override
+    public int compare(VirtualFile o1, VirtualFile o2) {
+      boolean isDir1 = o1.isDirectory();
+      boolean isDir2 = o2.isDirectory();
+      if (isDir1 != isDir2) return isDir1 ? -1 : 1;
+
+      return o1.getPath().compareToIgnoreCase(o2.getPath());
     }
   }
 }
