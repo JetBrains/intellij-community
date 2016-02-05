@@ -9,19 +9,14 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsLogHashMap;
-import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,9 +104,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   @Override
-  public void loadCommitsData(@NotNull List<Integer> hashes,
-                              @NotNull Consumer<List<T>> consumer,
-                              @Nullable ProgressIndicator indicator) {
+  public void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<List<T>> consumer, @Nullable ProgressIndicator indicator) {
     assert EventQueue.isDispatchThread();
     loadCommitsData(getCommitsMap(hashes), consumer, indicator);
   }
@@ -120,7 +113,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
                                @NotNull final Consumer<List<T>> consumer,
                                @Nullable ProgressIndicator indicator) {
     final List<T> result = ContainerUtil.newArrayList();
-    final MultiMap<VirtualFile, Integer> toLoad = MultiMap.create();
+    final Set<Integer> toLoad = ContainerUtil.newHashSet();
 
     long taskNumber = myCurrentTaskIndex++;
 
@@ -128,7 +121,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
       VirtualFile root = myHashMap.getCommitId(id).getRoot();
       T details = getFromCache(id);
       if (details == null || details instanceof LoadingDetails) {
-        toLoad.putValue(root, id);
+        toLoad.add(id);
         cacheCommit(id, root, taskNumber);
       }
       else {
@@ -212,13 +205,13 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   private void runLoadCommitsData(@NotNull Iterable<Integer> hashes) {
     long taskNumber = myCurrentTaskIndex++;
     Map<Integer, Integer> commits = getCommitsMap(hashes);
-    MultiMap<VirtualFile, Integer> toLoad = MultiMap.create();
+    Set<Integer> toLoad = ContainerUtil.newHashSet();
 
     for (Integer id : commits.keySet()) {
       VirtualFile root = myHashMap.getCommitId(id).getRoot();
 
       cacheCommit(id, root, taskNumber);
-      toLoad.putValue(root, id);
+      toLoad.add(id);
     }
 
     myLoader.queue(new TaskDescriptor(toLoad));
@@ -242,31 +235,32 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   private static Map<Integer, Integer> getCommitsMap(@NotNull Iterable<Integer> hashes) {
     Map<Integer, Integer> commits = ContainerUtil.newHashMap();
     int row = 0;
-    for (Integer commitId: hashes) {
+    for (Integer commitId : hashes) {
       commits.put(commitId, row);
       row++;
     }
     return commits;
   }
 
-  private Set<T> preLoadCommitData(@NotNull MultiMap<VirtualFile, Integer> commits) throws VcsException {
+  private Set<T> preLoadCommitData(@NotNull Set<Integer> commits) throws VcsException {
     Set<T> result = ContainerUtil.newHashSet();
-    for (Map.Entry<VirtualFile, Collection<Integer>> entry : commits.entrySet()) {
-      List<String> hashStrings = ContainerUtil.map(entry.getValue(), new Function<Integer, String>() {
-        @Override
-        public String fun(Integer commitId) {
-          return myHashMap.getCommitId(commitId).getHash().asString();
-        }
-      });
+    MultiMap<VirtualFile, String> rootsAndHashes = MultiMap.create();
+    for (Integer commit : commits) {
+      CommitId commitId = myHashMap.getCommitId(commit);
+      rootsAndHashes.putValue(commitId.getRoot(), commitId.getHash().asString());
+    }
+
+    for (Map.Entry<VirtualFile, Collection<String>> entry : rootsAndHashes.entrySet()) {
       VcsLogProvider logProvider = myLogProviders.get(entry.getKey());
       if (logProvider != null) {
-        List<? extends T> details = readDetails(logProvider, entry.getKey(), hashStrings);
+        List<? extends T> details = readDetails(logProvider, entry.getKey(), ContainerUtil.newArrayList(entry.getValue()));
         result.addAll(details);
         saveInCache(details);
       } else {
         LOG.error("No log provider for root " + entry.getKey().getPath() + ". All known log providers " + myLogProviders);
       }
     }
+
     return result;
   }
 
@@ -299,9 +293,9 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   private static class TaskDescriptor {
-    @NotNull private final MultiMap<VirtualFile, Integer> myCommits;
+    @NotNull private final Set<Integer> myCommits;
 
-    private TaskDescriptor(@NotNull MultiMap<VirtualFile, Integer> commits) {
+    private TaskDescriptor(@NotNull Set<Integer> commits) {
       myCommits = commits;
     }
   }
