@@ -21,15 +21,21 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.*;
 
 /**
+ * A helper class for adjusting a scaled icon width/height values.
+ *
  * @author tav
  */
 abstract class AbstractSizeAdjustingIcon implements Icon, ScalableIcon {
   protected int myWidth;
   protected int myHeight;
-  private float scale;
+
+  /**
+   * Sticks to the global JBUI.scale(1f) lazily.
+   */
+  private float globalScale;
 
   protected AbstractSizeAdjustingIcon() {
-    scale = JBUI.scale(1f);
+    globalScale = JBUI.scale(1f);
   }
 
   @Override
@@ -45,14 +51,23 @@ abstract class AbstractSizeAdjustingIcon implements Icon, ScalableIcon {
   }
 
   private void checkRescale() {
-    if (scale != JBUI.scale(1f)) {
-      scale = JBUI.scale(1f);
+    if (globalScale != JBUI.scale(1f)) {
+      globalScale = JBUI.scale(1f);
       adjustSize();
     }
   }
 
   /**
-   * Called to let the icon adjust its size when re-scale is detected.
+   * Called to let the icon adjust its size when re-globalScale is detected.
    */
   protected abstract void adjustSize();
+
+  /**
+   * Scales the icon relative to the {@link #globalScale}.
+   *
+   * @param scaleFactor the scale factor
+   * @return the icon effectively scaled by @{code scaleFactor*globalScale}
+   */
+  @Override
+  abstract public Icon scale(float scaleFactor);
 }
