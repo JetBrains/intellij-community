@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public class XmlMoveLeftRightHandler extends MoveElementLeftRightHandler {
   @NotNull
   @Override
-  public PsiElement[] getMoveableSubElements(@NotNull PsiElement element) {
+  public PsiElement[] getMovableSubElements(@NotNull PsiElement element) {
     if (element instanceof XmlTag) {
       return ((XmlTag)element).getAttributes();
     }

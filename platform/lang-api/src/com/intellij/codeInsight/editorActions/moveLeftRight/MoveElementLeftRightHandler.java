@@ -31,5 +31,5 @@ public abstract class MoveElementLeftRightHandler {
    * Should return an empty array if there are no such elements.
    */
   @NotNull
-  public abstract PsiElement[] getMoveableSubElements(@NotNull PsiElement element);
+  public abstract PsiElement[] getMovableSubElements(@NotNull PsiElement element);
 }
