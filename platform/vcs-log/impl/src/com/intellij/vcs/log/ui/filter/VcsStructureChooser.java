@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
@@ -82,8 +81,8 @@ public class VcsStructureChooser extends DialogWrapper {
   private Tree myTree;
 
   public VcsStructureChooser(@NotNull Project project,
-                             String title,
-                             Collection<VirtualFile> initialSelection,
+                             @NotNull String title,
+                             @NotNull Collection<VirtualFile> initialSelection,
                              @NotNull List<VirtualFile> roots) {
     super(project, true);
     setTitle(title);
@@ -135,11 +134,13 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   @Override
+  @NotNull
   protected String getDimensionServiceKey() {
     return VCS_STRUCTURE_CHOOSER_KEY;
   }
 
   @Override
+  @NotNull
   public JComponent getPreferredFocusedComponent() {
     return myTree;
   }
@@ -266,12 +267,13 @@ public class VcsStructureChooser extends DialogWrapper {
     return panel;
   }
 
+  @NotNull
   private DefaultMutableTreeNode getTreeRoot() {
     return (DefaultMutableTreeNode)myTree.getModel().getRoot();
   }
 
   @Nullable
-  private static VirtualFile getFile(Object node) {
+  private static VirtualFile getFile(@NotNull Object node) {
     if (!(((DefaultMutableTreeNode)node).getUserObject() instanceof FileNodeDescriptor)) return null;
     FileNodeDescriptor descriptor = (FileNodeDescriptor)((DefaultMutableTreeNode)node).getUserObject();
     if (descriptor.getElement().getFile() == null) return null;
@@ -279,20 +281,20 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   private static class MyCheckboxTreeCellRenderer extends JPanel implements TreeCellRenderer {
-    private final WithModulesListCellRenderer myTextRenderer;
-    public final JCheckBox myCheckbox;
-    private final SelectionManager mySelectionManager;
-    private final Map<VirtualFile, String> myModulesSet;
-    private final Collection<VirtualFile> myRoots;
-    private final ColoredTreeCellRenderer myColoredRenderer;
-    private final JLabel myEmpty;
-    private final JList myFictive;
+    @NotNull private final WithModulesListCellRenderer myTextRenderer;
+    @NotNull public final JCheckBox myCheckbox;
+    @NotNull private final SelectionManager mySelectionManager;
+    @NotNull private final Map<VirtualFile, String> myModulesSet;
+    @NotNull private final Collection<VirtualFile> myRoots;
+    @NotNull private final ColoredTreeCellRenderer myColoredRenderer;
+    @NotNull private final JLabel myEmpty;
+    @NotNull private final JList myFictive;
 
-    private MyCheckboxTreeCellRenderer(SelectionManager selectionManager,
-                                       Map<VirtualFile, String> modulesSet,
-                                       Project project,
-                                       JTree tree,
-                                       Collection<VirtualFile> roots) {
+    private MyCheckboxTreeCellRenderer(@NotNull SelectionManager selectionManager,
+                                       @NotNull Map<VirtualFile, String> modulesSet,
+                                       @NotNull Project project,
+                                       @NotNull JTree tree,
+                                       @NotNull Collection<VirtualFile> roots) {
       super(new BorderLayout());
       mySelectionManager = selectionManager;
       myModulesSet = modulesSet;
@@ -300,7 +302,7 @@ public class VcsStructureChooser extends DialogWrapper {
       setBackground(tree.getBackground());
       myColoredRenderer = new ColoredTreeCellRenderer() {
         @Override
-        public void customizeCellRenderer(JTree tree,
+        public void customizeCellRenderer(@NotNull JTree tree,
                                           Object value,
                                           boolean selected,
                                           boolean expanded,
@@ -367,8 +369,9 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   private static class MyNodeConverter implements Convertor<DefaultMutableTreeNode, VirtualFile> {
-    private final static MyNodeConverter ourInstance = new MyNodeConverter();
+    @NotNull private final static MyNodeConverter ourInstance = new MyNodeConverter();
 
+    @NotNull
     public static MyNodeConverter getInstance() {
       return ourInstance;
     }
@@ -380,15 +383,15 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   private static class WithModulesListCellRenderer extends VirtualFileListCellRenderer {
-    private final Map<VirtualFile, String> myModules;
+    @NotNull private final Map<VirtualFile, String> myModules;
 
-    private WithModulesListCellRenderer(Project project, Map<VirtualFile, String> modules) {
+    private WithModulesListCellRenderer(@NotNull Project project, @NotNull Map<VirtualFile, String> modules) {
       super(project, true);
       myModules = modules;
     }
 
     @Override
-    protected String getName(FilePath path) {
+    protected String getName(@NotNull FilePath path) {
       String module = myModules.get(path.getVirtualFile());
       if (module != null) {
         return module;
@@ -397,7 +400,7 @@ public class VcsStructureChooser extends DialogWrapper {
     }
 
     @Override
-    protected void renderIcon(FilePath path) {
+    protected void renderIcon(@NotNull FilePath path) {
       String module = myModules.get(path.getVirtualFile());
       if (module != null) {
         setIcon(PlatformIcons.CONTENT_ROOT_ICON_CLOSED);
@@ -413,7 +416,7 @@ public class VcsStructureChooser extends DialogWrapper {
     }
 
     @Override
-    protected void putParentPathImpl(Object value, String parentPath, FilePath self) {
+    protected void putParentPathImpl(@NotNull Object value, @NotNull String parentPath, @NotNull FilePath self) {
       append(self.getPath(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
   }
