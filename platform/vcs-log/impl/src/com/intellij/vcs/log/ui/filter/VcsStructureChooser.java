@@ -346,12 +346,10 @@ public class VcsStructureChooser extends DialogWrapper {
       VirtualFile file = getFile(value);
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
       if (file == null) {
-        if (value != null) {
-          Object uo = node.getUserObject();
-          if (uo instanceof String) {
-            myColoredRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-            return myColoredRenderer;
-          }
+        Object uo = node.getUserObject();
+        if (uo instanceof String) {
+          myColoredRenderer.getTreeCellRendererComponent(tree, node, selected, expanded, leaf, row, hasFocus);
+          return myColoredRenderer;
         }
         return myEmpty;
       }
