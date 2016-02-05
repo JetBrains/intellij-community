@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Methods in this class are used to equip long background processes which take read actions with a special listener
@@ -75,14 +75,19 @@ public class ProgressIndicatorUtils {
    * @param timeout timeout in milliseconds 
    * @param pauseBetweenRetries pause between retries in milliseconds 
    * @return <code>true</code> if the action succeeded to run without interruptions, <code>false</code> otherwise 
-   * @throws InterruptedException if execution was interrupted while waiting for the next attempt
    */
   public static boolean runInReadActionWithWriteActionPriorityWithRetries(@NotNull final Runnable action, 
                                                                           long timeout, long pauseBetweenRetries) {
     boolean result;
     long deadline = System.currentTimeMillis() + timeout;
     while (!(result = runInReadActionWithWriteActionPriority(action)) && System.currentTimeMillis() < deadline) {
-      LockSupport.parkNanos(pauseBetweenRetries * 1000);
+      try {
+        TimeUnit.MILLISECONDS.sleep(pauseBetweenRetries);
+      }
+      catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return false;
+      }
     }
     return result;
   }
