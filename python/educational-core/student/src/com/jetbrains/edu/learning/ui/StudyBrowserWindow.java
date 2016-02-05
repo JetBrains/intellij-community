@@ -82,6 +82,7 @@ class StudyBrowserWindow extends JFrame {
       myPane.getStylesheets().add(scrollBarStyleUrl.toExternalForm());
       myPane.setStyle("-fx-background-color: #3c3f41");
       myPanel.getScene().getStylesheets().add(engineStyleUrl.toExternalForm());
+      myEngine.reload();
     });
   }
 
@@ -154,15 +155,37 @@ class StudyBrowserWindow extends JFrame {
     }   
     
     template = template.replace("${highlight_mode}", getClass().getResource("/code-mirror/clike.js").toExternalForm());
+    template = template.replace("${codemirror}", getClass().getResource("/code-mirror/codemirror.js").toExternalForm());
     template = template.replace("${python}", getClass().getResource("/code-mirror/python.js").toExternalForm());    
     template = template.replace("${runmode}", getClass().getResource("/code-mirror/runmode.js").toExternalForm());
     template = template.replace("${colorize}", getClass().getResource("/code-mirror/colorize.js").toExternalForm());
-    template = template.replace("${codemirror}", getClass().getResource("/code-mirror/codemirror.js").toExternalForm());
     template = template.replace("${javascript}", getClass().getResource("/code-mirror/javascript.js").toExternalForm());
-    template = template.replace("${css_codemirror}", getClass().getResource("/code-mirror/codemirror.css").toExternalForm());
-    template = template.replace("${css_oldcodemirror}", getClass().getResource("/code-mirror/codemirror-old.css").toExternalForm());
+    if (LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo) {
+      template = template.replace("${css_oldcodemirror}", getClass().getResource("/code-mirror/codemirror-old-darcula.css").toExternalForm());
+      template = template.replace("${css_codemirror}", getClass().getResource("/code-mirror/codemirror-darcula.css").toExternalForm());
+    }
+    else {
+      template = template.replace("${css_oldcodemirror}", getClass().getResource("/code-mirror/codemirror-old.css").toExternalForm());
+      template = template.replace("${css_codemirror}", getClass().getResource("/code-mirror/codemirror.css").toExternalForm());
+    }
     template = template.replace("${default-mode}", configurator.getDefaultHighlightingMode());
-    template = template.replace("${code}", content);
+    template = template.replace("${code}", "<h2>Nullable types</h2>\n" +
+                                           "<p>Read about <a href=\"http://kotlinlang.org/docs/reference/null-safety.html\">null safety and safe calls</a> in Kotlin and rewrite the following Java code using only one <code>if</code> expression:</p><pre><code data-lang=\"text/x-java\">public void sendMessageToClient(\n" +
+                                           "    @Nullable Client client,\n" +
+                                           "    @Nullable String message,\n" +
+                                           "    @NotNull Mailer mailer\n" +
+                                           ") {\n" +
+                                           "    if (client == null || message == null) return;\n" +
+                                           "\n" +
+                                           "    PersonalInfo personalInfo = client.getPersonalInfo();\n" +
+                                           "    if (personalInfo == null) return;\n" +
+                                           "\n" +
+                                           "    String email = personalInfo.getEmail();\n" +
+                                           "    if (email == null) return;\n" +
+                                           "\n" +
+                                           "    mailer.sendMessage(email, message);\n" +
+                                           "}\n" +
+                                           "</code></pre>");
     
     return template;
   }
