@@ -1156,12 +1156,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private int getFoldingAnchorWidth() {
     // have to be odd number to be perfectly symmetric (as long as we have plus sign inside)
-    return floorToOdd(Math.min(JBUI.scale(4) * myEditor.getScale(), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2);
+    return roundToEven(Math.min(JBUI.scale(4) * myEditor.getScale(), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2);
   }
 
-  private static int floorToOdd(float f) {
-    int res = (int)f;
-    return res % 2 == 0 && res > 0 ? res : res - 1;
+  private static int roundToEven(float f) {
+    int lower = (int)Math.floor(f);
+    int upper = (int)Math.ceil(f);
+    if (lower % 2 == 0) return lower;
+    if (upper % 2 == 0) return upper;
+    return lower > 0 ? lower - 1 : 0; // lower == upper == f
   }
 
   public int getFoldingAreaOffset() {
