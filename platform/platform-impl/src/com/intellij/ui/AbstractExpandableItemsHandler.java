@@ -270,7 +270,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       return;
     }
     myUpdateAlarm.cancelAllRequests();
-    if (selected == null) {
+    if (selected == null || !isHandleSelectionEnabled(selected, processIfUnfocused)) {
       hideHint();
       return;
     }
@@ -285,13 +285,17 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }, 10);
   }
 
+  private boolean isHandleSelectionEnabled(@NotNull KeyType selected, boolean processIfUnfocused) {
+    return myEnabled &&
+           myComponent.isEnabled() &&
+           myComponent.isShowing() &&
+           myComponent.getVisibleRect().intersects(getVisibleRect(selected)) &&
+           (processIfUnfocused || myComponent.isFocusOwner()) &&
+           !isPopup();
+  }
+
   private void doHandleSelectionChange(@NotNull KeyType selected, boolean processIfUnfocused) {
-    if (!myEnabled
-        || !myComponent.isEnabled()
-        || !myComponent.isShowing()
-        || !myComponent.getVisibleRect().intersects(getVisibleRect(selected))
-        || !myComponent.isFocusOwner() && !processIfUnfocused
-        || isPopup()) {
+    if (!isHandleSelectionEnabled(selected, processIfUnfocused)) {
       hideHint();
       return;
     }
