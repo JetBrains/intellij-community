@@ -105,18 +105,18 @@ public class VcsStructureChooser extends DialogWrapper {
 
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     // assertion for read access inside
-    final Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
+    Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
       public Module[] compute() {
         return moduleManager.getModules();
       }
     });
 
-    final TreeSet<VirtualFile> checkSet = new TreeSet<VirtualFile>(FilePathComparator.getInstance());
+    TreeSet<VirtualFile> checkSet = new TreeSet<VirtualFile>(FilePathComparator.getInstance());
     checkSet.addAll(roots);
     for (Module module : modules) {
-      final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
+      VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile file : files) {
-        final VirtualFile floor = checkSet.floor(file);
+        VirtualFile floor = checkSet.floor(file);
         if (floor != null) {
           result.put(file, module.getName());
         }
@@ -160,11 +160,11 @@ public class VcsStructureChooser extends DialogWrapper {
       new FileSystemTreeImpl(myProject, descriptor, myTree, cellRenderer, null, new Convertor<TreePath, String>() {
         @Override
         public String convert(TreePath o) {
-          final DefaultMutableTreeNode lastPathComponent = ((DefaultMutableTreeNode)o.getLastPathComponent());
-          final Object uo = lastPathComponent.getUserObject();
+          DefaultMutableTreeNode lastPathComponent = ((DefaultMutableTreeNode)o.getLastPathComponent());
+          Object uo = lastPathComponent.getUserObject();
           if (uo instanceof FileNodeDescriptor) {
-            final VirtualFile file = ((FileNodeDescriptor)uo).getElement().getFile();
-            final String module = myModulesSet.get(file);
+            VirtualFile file = ((FileNodeDescriptor)uo).getElement().getFile();
+            String module = myModulesSet.get(file);
             if (module != null) return module;
             return file == null ? "" : file.getName();
           }
@@ -194,7 +194,7 @@ public class VcsStructureChooser extends DialogWrapper {
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         int row = myTree.getRowForLocation(e.getX(), e.getY());
         if (row < 0) return false;
-        final Object o = myTree.getPathForRow(row).getLastPathComponent();
+        Object o = myTree.getPathForRow(row).getLastPathComponent();
         if (getTreeRoot() == o || getFile(o) == null) return false;
 
         Rectangle rowBounds = myTree.getRowBounds(row);
@@ -220,7 +220,7 @@ public class VcsStructureChooser extends DialogWrapper {
           if (paths == null) return;
           for (TreePath path : paths) {
             if (path == null) continue;
-            final Object o = path.getLastPathComponent();
+            Object o = path.getLastPathComponent();
             if (getTreeRoot() == o || getFile(o) == null) return;
             mySelectionManager.toggleSelection((DefaultMutableTreeNode)o);
           }
@@ -271,9 +271,9 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   @Nullable
-  private static VirtualFile getFile(final Object node) {
+  private static VirtualFile getFile(Object node) {
     if (!(((DefaultMutableTreeNode)node).getUserObject() instanceof FileNodeDescriptor)) return null;
-    final FileNodeDescriptor descriptor = (FileNodeDescriptor)((DefaultMutableTreeNode)node).getUserObject();
+    FileNodeDescriptor descriptor = (FileNodeDescriptor)((DefaultMutableTreeNode)node).getUserObject();
     if (descriptor.getElement().getFile() == null) return null;
     return descriptor.getElement().getFile();
   }
@@ -288,11 +288,11 @@ public class VcsStructureChooser extends DialogWrapper {
     private final JLabel myEmpty;
     private final JList myFictive;
 
-    private MyCheckboxTreeCellRenderer(final SelectionManager selectionManager,
+    private MyCheckboxTreeCellRenderer(SelectionManager selectionManager,
                                        Map<VirtualFile, String> modulesSet,
-                                       final Project project,
-                                       final JTree tree,
-                                       final Collection<VirtualFile> roots) {
+                                       Project project,
+                                       JTree tree,
+                                       Collection<VirtualFile> roots) {
       super(new BorderLayout());
       mySelectionManager = selectionManager;
       myModulesSet = modulesSet;
@@ -343,11 +343,11 @@ public class VcsStructureChooser extends DialogWrapper {
                                                   int row,
                                                   boolean hasFocus) {
       invalidate();
-      final VirtualFile file = getFile(value);
-      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
+      VirtualFile file = getFile(value);
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
       if (file == null) {
         if (value instanceof DefaultMutableTreeNode) {
-          final Object uo = node.getUserObject();
+          Object uo = node.getUserObject();
           if (uo instanceof String) {
             myColoredRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
             return myColoredRenderer;
@@ -356,7 +356,7 @@ public class VcsStructureChooser extends DialogWrapper {
         return myEmpty;
       }
       myCheckbox.setVisible(true);
-      final TreeNodeState state = mySelectionManager.getState(node);
+      TreeNodeState state = mySelectionManager.getState(node);
       myCheckbox.setEnabled(TreeNodeState.CLEAR.equals(state) || TreeNodeState.SELECTED.equals(state));
       myCheckbox.setSelected(!TreeNodeState.CLEAR.equals(state));
       myCheckbox.setOpaque(false);
@@ -384,14 +384,14 @@ public class VcsStructureChooser extends DialogWrapper {
   private static class WithModulesListCellRenderer extends VirtualFileListCellRenderer {
     private final Map<VirtualFile, String> myModules;
 
-    private WithModulesListCellRenderer(Project project, final Map<VirtualFile, String> modules) {
+    private WithModulesListCellRenderer(Project project, Map<VirtualFile, String> modules) {
       super(project, true);
       myModules = modules;
     }
 
     @Override
     protected String getName(FilePath path) {
-      final String module = myModules.get(path.getVirtualFile());
+      String module = myModules.get(path.getVirtualFile());
       if (module != null) {
         return module;
       }
@@ -400,7 +400,7 @@ public class VcsStructureChooser extends DialogWrapper {
 
     @Override
     protected void renderIcon(FilePath path) {
-      final String module = myModules.get(path.getVirtualFile());
+      String module = myModules.get(path.getVirtualFile());
       if (module != null) {
         setIcon(PlatformIcons.CONTENT_ROOT_ICON_CLOSED);
       }
