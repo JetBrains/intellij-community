@@ -22,11 +22,11 @@ interface Stream<T> {
   <V> V <warning descr="Lambda unfriendly overload of method 'map()'">map</warning>(IntFunction<V> intMapper);
 }
 class X {
-  void a(IntPredicate p) {}
-  void a (Function<String, String> f) {}
+  void <warning descr="Lambda unfriendly overload of method 'a()'">a</warning>(IntPredicate p) {}
+  void <warning descr="Lambda unfriendly overload of method 'a()'">a</warning> (Function<String, String> f) {}
 
   void b() {
-    a(z -> true);
+    <error descr="Ambiguous method call: both 'X.a(IntPredicate)' and 'X.a(Function<String, String>)' match">a</error>(z -> true);
   }
 }
 interface Function<T, R> {
