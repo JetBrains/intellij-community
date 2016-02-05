@@ -59,11 +59,11 @@ import static com.intellij.diff.util.DiffUtil.getDiffType;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 public abstract class LineStatusMarkerPopup {
-  @NotNull public final LineStatusTracker myTracker;
+  @NotNull public final LineStatusTrackerBase myTracker;
   @NotNull public final Editor myEditor;
   @NotNull public final Range myRange;
 
-  public LineStatusMarkerPopup(@NotNull LineStatusTracker tracker, @NotNull Editor editor, @NotNull Range range) {
+  public LineStatusMarkerPopup(@NotNull LineStatusTrackerBase tracker, @NotNull Editor editor, @NotNull Range range) {
     myTracker = tracker;
     myEditor = editor;
     myRange = range;
