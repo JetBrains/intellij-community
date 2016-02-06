@@ -385,11 +385,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
 
     public Info(@NotNull PsiElement elementAtPointer) {
-      this(elementAtPointer, Collections.singletonList(getReferenceRange(elementAtPointer)));
+      this(elementAtPointer, getReferenceRanges(elementAtPointer));
     }
 
     @NotNull
-    private static TextRange getReferenceRange(@NotNull PsiElement elementAtPointer) {
+    private static List<TextRange> getReferenceRanges(@NotNull PsiElement elementAtPointer) {
+      if (!elementAtPointer.isPhysical()) return Collections.emptyList();
       int textOffset = elementAtPointer.getTextOffset();
       final TextRange range = elementAtPointer.getTextRange();
       if (range == null) {
@@ -399,8 +400,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         LOG.error("Invalid text offset " + textOffset + " of element " + elementAtPointer + " of " + elementAtPointer.getClass());
         textOffset = range.getStartOffset();
       }
-      
-      return new TextRange(textOffset, range.getEndOffset());
+      return Collections.singletonList(new TextRange(textOffset, range.getEndOffset()));
     }
 
     boolean isSimilarTo(@NotNull Info that) {
