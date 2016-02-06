@@ -164,6 +164,7 @@ public class VcsStructureChooser extends DialogWrapper {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, true) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        if (myRoots.contains(file)) return false;
         boolean fileVisible = super.isFileVisible(file, showHiddenFiles);
         if (fileVisible && file.isDirectory()) {
           return fileVisibility.value(file);
