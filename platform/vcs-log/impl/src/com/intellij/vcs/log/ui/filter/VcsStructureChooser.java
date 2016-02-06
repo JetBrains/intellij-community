@@ -19,7 +19,6 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.module.Module;
@@ -28,7 +27,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileListCellRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -153,8 +154,27 @@ public class VcsStructureChooser extends DialogWrapper {
     myTree.setRootVisible(false);
     myTree.setExpandableItemsEnabled(false);
 
-    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor();
-    descriptor.setRoots(new ArrayList<VirtualFile>(myRoots));
+    final Condition<VirtualFile> fileVisibility = new Condition<VirtualFile>() {
+      @Override
+      public boolean value(VirtualFile virtualFile) {
+        ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+        return !changeListManager.isIgnoredFile(virtualFile) && !changeListManager.isUnversioned(virtualFile);
+      }
+    };
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, true) {
+      @Override
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        boolean fileVisible = super.isFileVisible(file, showHiddenFiles);
+        if (fileVisible && file.isDirectory()) {
+          return fileVisibility.value(file);
+        }
+        else {
+          return fileVisible;
+        }
+      }
+    };
+    descriptor.withRoots(new ArrayList<VirtualFile>(myRoots)).withShowHiddenFiles(true).withHideIgnored(true)
+      .withFileFilter(fileVisibility);
     final MyCheckboxTreeCellRenderer cellRenderer =
       new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject, myTree, myRoots);
     FileSystemTreeImpl fileSystemTree =
