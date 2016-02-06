@@ -16,16 +16,16 @@
 package com.intellij.util.io;
 
 import com.intellij.execution.CommandLineUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,16 +61,26 @@ public class BaseOutputReaderTest {
   }
 
   @Test(timeout = 30000)
-  public void testBlocking() throws Exception {
+  public void testBlockingRead() throws Exception {
     doTest(BaseDataReader.SleepingPolicy.BLOCKING);
   }
 
   @Test(timeout = 30000)
-  public void testNonBlocking() throws Exception {
+  public void testNonBlockingRead() throws Exception {
     doTest(BaseDataReader.SleepingPolicy.SIMPLE);
   }
 
-  private void doTest(BaseDataReader.SleepingPolicy policy) throws IOException, URISyntaxException, InterruptedException {
+  @Test(timeout = 30000)
+  public void testBlockingStop() throws Exception {
+    doTestStop(BaseDataReader.SleepingPolicy.BLOCKING);
+  }
+
+  @Test(timeout = 30000)
+  public void testNonBlockingStop() throws Exception {
+    doTestStop(BaseDataReader.SleepingPolicy.SIMPLE);
+  }
+
+  private Pair<Process, TestOutputReader> launchTest(BaseDataReader.SleepingPolicy policy, String... args) throws Exception {
     String java = System.getProperty("java.home") + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java");
 
     String className = BaseOutputReaderTest.class.getName();
@@ -80,8 +90,17 @@ public class BaseOutputReaderTest {
     for (int i = 0; i < StringUtil.countChars(className, '.') + 1; i++) dir = dir.getParentFile();
 
     String[] cmd = {java, "-cp", dir.getPath(), className};
+    cmd = ArrayUtil.mergeArrays(cmd, args);
     Process process = new ProcessBuilder(cmd).redirectErrorStream(true).start();
     TestOutputReader reader = new TestOutputReader(process.getInputStream(), policy, StringUtil.join(cmd, " "));
+    
+    return Pair.create(process, reader);
+  }
+  
+  private void doTest(BaseDataReader.SleepingPolicy policy) throws Exception {
+    Pair<Process, TestOutputReader> processAndReader = launchTest(policy);
+    Process process = processAndReader.first;
+    TestOutputReader reader = processAndReader.second;
     process.waitFor();
     reader.stop();
     reader.waitFor();
@@ -90,12 +109,33 @@ public class BaseOutputReaderTest {
     assertEquals(Arrays.asList(TEST_DATA), reader.myLines);
   }
 
+  private void doTestStop(BaseDataReader.SleepingPolicy policy) throws Exception {
+    Pair<Process, TestOutputReader> processAndReader = launchTest(policy, "sleep");
+    Process process = processAndReader.first;
+    TestOutputReader reader = processAndReader.second;
+
+    try {
+      reader.stop();
+      reader.waitFor();
+    }
+    finally {
+      process.destroy();
+      process.waitFor();  
+    }
+  }
+
   // needed for test
   @SuppressWarnings("BusyWait")
   public static void main(String[] args) throws InterruptedException {
-    for (String line : TEST_DATA) {
-      System.out.print(line);
-      Thread.sleep(TIMEOUT);
+    if (Arrays.asList(args).contains("sleep")) {
+      //noinspection InfiniteLoopStatement,StatementWithEmptyBody
+      Thread.sleep(60000);
+    }
+    else {
+      for (String line : TEST_DATA) {
+        System.out.print(line);
+        Thread.sleep(TIMEOUT);
+      }
     }
   }
 }
