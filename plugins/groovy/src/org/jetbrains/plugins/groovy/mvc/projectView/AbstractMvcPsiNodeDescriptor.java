@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.mvc.projectView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode;
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.module.Module;
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Krasilschikov
  */
-public abstract class AbstractMvcPsiNodeDescriptor extends AbstractPsiBasedNode<PsiElement> {
+public abstract class AbstractMvcPsiNodeDescriptor extends BasePsiNode<PsiElement> {
   public static final int FOLDER = 100;
   public static final int FILE = 110;
   public static final int CLASS = 5;
@@ -72,12 +72,6 @@ public abstract class AbstractMvcPsiNodeDescriptor extends AbstractPsiBasedNode<
 
   protected boolean containsImpl(@NotNull final VirtualFile file) {
     return super.contains(file);
-  }
-
-  @Override
-  @Nullable
-  protected PsiElement extractPsiFromValue() {
-    return getValue();
   }
 
   @Nullable
