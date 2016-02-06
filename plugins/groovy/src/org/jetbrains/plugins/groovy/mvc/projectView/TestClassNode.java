@@ -61,7 +61,7 @@ public class TestClassNode extends ClassNode {
   }
 
   @Override
-  protected String getTestPresentationImpl(@NotNull final NodeId nodeId, @NotNull final PsiElement psiElement) {
+  protected String getTestPresentationImpl(@NotNull final PsiElement psiElement) {
     return "Test class: " + ((GrTypeDefinition)psiElement).getName();
   }                                                                                                                                                
 

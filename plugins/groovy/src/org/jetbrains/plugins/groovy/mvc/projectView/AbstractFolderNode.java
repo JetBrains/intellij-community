@@ -54,13 +54,13 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
                                @NotNull String presentableText,
                                @Nullable final String locationMark,
                                final ViewSettings viewSettings, int weight) {
-    super(module, viewSettings, new NodeId(directory), weight);
+    super(module, viewSettings, directory, weight);
     myLocationMark = locationMark;
     myPresentableText = presentableText;
   }
 
   @Override
-  protected String getTestPresentationImpl(@NotNull final NodeId nodeId, @NotNull final PsiElement psiElement) {
+  protected String getTestPresentationImpl(@NotNull final PsiElement psiElement) {
     final VirtualFile virtualFile = getVirtualFile();
     assert virtualFile != null;
 
@@ -183,8 +183,7 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
   }
 
   protected AbstractTreeNode createClassNode(final GrTypeDefinition typeDefinition) {
-    final NodeId nodeId = getValue();
-    assert nodeId != null;
+    assert getValue() != null;
 
     return new ClassNode(getModule(), typeDefinition, getSettings());
   }

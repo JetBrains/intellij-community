@@ -33,11 +33,11 @@ public class MethodNode extends AbstractMvcPsiNodeDescriptor {
   public MethodNode(@NotNull final Module module,
                     @NotNull final GrMethod method,
                     @Nullable final ViewSettings viewSettings) {
-    super(module, viewSettings, new NodeId(method), METHOD);
+    super(module, viewSettings, method, METHOD);
   }
 
   @Override
-  protected String getTestPresentationImpl(@NotNull final NodeId nodeId, @NotNull final PsiElement psiElement) {
+  protected String getTestPresentationImpl(@NotNull final PsiElement psiElement) {
     return "GrMethod: " + ((GrMethod)psiElement).getName();
   }
 

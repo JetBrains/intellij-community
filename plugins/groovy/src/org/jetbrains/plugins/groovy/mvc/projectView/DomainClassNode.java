@@ -35,7 +35,7 @@ public class DomainClassNode extends ClassNode {
   }
 
   @Override
-  protected String getTestPresentationImpl(@NotNull final NodeId nodeId, @NotNull final PsiElement psiElement) {
+  protected String getTestPresentationImpl(@NotNull final PsiElement psiElement) {
     return "Domain class: " + ((GrTypeDefinition)psiElement).getName();
   }
 

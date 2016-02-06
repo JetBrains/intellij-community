@@ -36,11 +36,11 @@ public class ClassNode extends AbstractMvcPsiNodeDescriptor {
   public ClassNode(@NotNull final Module module,
                    @NotNull final GrTypeDefinition rClass,
                    @Nullable final ViewSettings viewSettings) {
-    super(module, viewSettings, new NodeId(rClass), CLASS);
+    super(module, viewSettings, rClass, CLASS);
   }
 
   @Override
-  protected String getTestPresentationImpl(@NotNull final NodeId nodeId, @NotNull final PsiElement psiElement) {
+  protected String getTestPresentationImpl(@NotNull final PsiElement psiElement) {
     return "GrTypeDefinition: " + ((GrTypeDefinition)psiElement).getName();
   }
 

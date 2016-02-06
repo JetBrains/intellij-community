@@ -34,12 +34,11 @@ public class FileNode extends AbstractMvcPsiNodeDescriptor {
   public FileNode(@NotNull final Module module,
                   @NotNull final PsiFile file,
                   final ViewSettings viewSettings) {
-    super(module, viewSettings, new NodeId(file), FILE);
+    super(module, viewSettings, file, FILE);
   }
 
   @Override
-  protected String getTestPresentationImpl(@NotNull final NodeId nodeId,
-                                           @NotNull final PsiElement psiElement) {
+  protected String getTestPresentationImpl(@NotNull final PsiElement psiElement) {
     return "File: " + ((PsiFile)psiElement).getName();
   }
 

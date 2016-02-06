@@ -47,7 +47,7 @@ public class TestMethodNode extends MethodNode {
   }
 
   @Override
-  protected String getTestPresentationImpl(@NotNull final NodeId nodeId, @NotNull final PsiElement psiElement) {
+  protected String getTestPresentationImpl(@NotNull final PsiElement psiElement) {
     return "Test method: " + ((GrField)psiElement).getName();
   }
 
