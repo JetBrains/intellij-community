@@ -45,17 +45,13 @@ import java.util.List;
  * @author Dmitry Krasilschikov
  */
 public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
-  @Nullable private final String myLocationMark;
-
   private final String myPresentableText;
 
   protected AbstractFolderNode(@NotNull final Module module,
                                @NotNull final PsiDirectory directory,
                                @NotNull String presentableText,
-                               @Nullable final String locationMark,
                                final ViewSettings viewSettings, int weight) {
     super(module, viewSettings, directory, weight);
-    myLocationMark = locationMark;
     myPresentableText = presentableText;
   }
 
@@ -119,7 +115,7 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
 
     String presentableText = textBuilder == null ? directory.getName() : textBuilder.toString();
 
-    return new AbstractFolderNode(getModule(), realDirectory, presentableText, myLocationMark, getSettings(), FOLDER) {
+    return new AbstractFolderNode(getModule(), realDirectory, presentableText, getSettings(), FOLDER) {
       @Override
       protected void processNotDirectoryFile(List<AbstractTreeNode> nodes, PsiFile file) {
         AbstractFolderNode.this.processNotDirectoryFile(nodes, file);
