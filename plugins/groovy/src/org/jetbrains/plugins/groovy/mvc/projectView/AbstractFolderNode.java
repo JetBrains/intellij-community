@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
                                @NotNull String presentableText,
                                @Nullable final String locationMark,
                                final ViewSettings viewSettings, int weight) {
-    super(module, viewSettings, new NodeId(directory, locationMark), weight);
+    super(module, viewSettings, new NodeId(directory), weight);
     myLocationMark = locationMark;
     myPresentableText = presentableText;
   }
@@ -179,14 +179,14 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
         return;
       }
     }
-    nodes.add(new FileNode(getModule(), file, myLocationMark, getSettings()));
+    nodes.add(new FileNode(getModule(), file, getSettings()));
   }
 
   protected AbstractTreeNode createClassNode(final GrTypeDefinition typeDefinition) {
     final NodeId nodeId = getValue();
     assert nodeId != null;
 
-    return new ClassNode(getModule(), typeDefinition, nodeId.getLocationRootMark(), getSettings());
+    return new ClassNode(getModule(), typeDefinition, getSettings());
   }
 
 }
