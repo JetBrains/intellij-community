@@ -84,7 +84,7 @@ public class BaseDelombokHandler {
 
     List<? super PsiElement> psiElements = lombokProcessor.process(psiClass);
 
-    ProjectSettings.setEnabledInProject(project, false);
+    ProjectSettings.setLombokEnabledInProject(project, false);
     try {
       for (Object psiElement : psiElements) {
         final PsiElement element = rebuildPsiElement(project, (PsiElement) psiElement);
@@ -93,7 +93,7 @@ public class BaseDelombokHandler {
         }
       }
     } finally {
-      ProjectSettings.setEnabledInProject(project, true);
+      ProjectSettings.setLombokEnabledInProject(project, true);
     }
 
     return psiAnnotations;

@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -12,6 +13,7 @@ import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
+import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.AllArgsConstructor;
@@ -40,6 +42,11 @@ public class BuilderProcessor extends AbstractClassProcessor {
 
   protected BuilderProcessor(@NotNull Class<? extends Annotation> builderClass) {
     super(builderClass, PsiMethod.class);
+  }
+
+  @Override
+  public boolean isEnabled(@NotNull Project project) {
+    return ProjectSettings.isEnabled(project, ProjectSettings.IS_BUILDER_ENABLED);
   }
 
   @Override

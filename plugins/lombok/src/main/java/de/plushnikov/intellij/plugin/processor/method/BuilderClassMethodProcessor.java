@@ -1,11 +1,13 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
+import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +31,11 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
 
   protected BuilderClassMethodProcessor(@NotNull Class<? extends Annotation> builderClass) {
     super(builderClass, PsiClass.class);
+  }
+
+  @Override
+  public boolean isEnabled(@NotNull Project project) {
+    return ProjectSettings.isEnabled(project, ProjectSettings.IS_BUILDER_ENABLED);
   }
 
   @Override

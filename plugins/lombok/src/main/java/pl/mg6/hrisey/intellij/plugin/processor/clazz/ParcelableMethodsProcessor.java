@@ -1,5 +1,6 @@
 package pl.mg6.hrisey.intellij.plugin.processor.clazz;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -12,6 +13,7 @@ import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import hrisey.Parcelable;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +24,11 @@ public class ParcelableMethodsProcessor extends AbstractClassProcessor {
 
   public ParcelableMethodsProcessor() {
     super(Parcelable.class, PsiMethod.class);
+  }
+
+  @Override
+  public boolean isEnabled(@NotNull Project project) {
+    return ProjectSettings.isEnabled(project, ProjectSettings.IS_THIRD_PARTY_ENABLED);
   }
 
   @Override

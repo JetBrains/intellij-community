@@ -1,11 +1,13 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
+import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
@@ -23,6 +25,11 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
   protected DelegateMethodProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass) {
     super(supportedAnnotationClass, PsiMethod.class);
     handler = new DelegateHandler();
+  }
+
+  @Override
+  public boolean isEnabled(@NotNull Project project) {
+    return ProjectSettings.isEnabled(project, ProjectSettings.IS_DELEGATE_ENABLED);
   }
 
   @Override

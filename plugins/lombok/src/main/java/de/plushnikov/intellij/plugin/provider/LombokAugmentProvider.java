@@ -42,7 +42,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
 
   @Nullable
   protected PsiType inferType(PsiTypeElement typeElement) {
-    if (null == typeElement || DumbService.isDumb(typeElement.getProject())) {
+    if (null == typeElement || DumbService.isDumb(typeElement.getProject()) || !valProcessor.isEnabled(typeElement.getProject())) {
       return null;
     }
     return valProcessor.inferType(typeElement);
@@ -68,7 +68,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
 
     // skip processing if plugin is disabled
-    if (!ProjectSettings.loadAndGetEnabledInProject(project)) {
+    if (!ProjectSettings.isLombokEnabledInProject(project)) {
       return emptyResult;
     }
 

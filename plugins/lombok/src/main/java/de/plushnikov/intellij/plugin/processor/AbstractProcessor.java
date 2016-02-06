@@ -82,7 +82,7 @@ public abstract class AbstractProcessor implements Processor {
 
   @Override
   public boolean isEnabled(@NotNull Project project) {
-    return true;//TODO make it configurable
+    return true;
   }
 
   @Override

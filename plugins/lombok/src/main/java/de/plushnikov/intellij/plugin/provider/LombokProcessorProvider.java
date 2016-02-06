@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.provider;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -12,6 +13,7 @@ import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -34,21 +36,35 @@ public class LombokProcessorProvider {
 
   private LombokProcessorProvider() {
     lombokProcessors = new HashMap<String, Collection<Processor>>();
-
     lombokTypeProcessors = new HashMap<Class, Collection<Processor>>();
-
     registeredAnnotationNames = new HashSet<String>();
 
+    initProcessors(null);
+  }
+
+  public void initProcessors(@Nullable Project project) {
+    lombokProcessors.clear();
+    lombokTypeProcessors.clear();
+    registeredAnnotationNames.clear();
+
     for (Processor processor : getLombokProcessors()) {
-      Class<? extends Annotation> annotationClass = processor.getSupportedAnnotationClass();
+      if (null == project || processor.isEnabled(project)) {
 
-      putProcessor(lombokProcessors, annotationClass.getName(), processor);
-      putProcessor(lombokProcessors, annotationClass.getSimpleName(), processor);
+        Class<? extends Annotation> annotationClass = processor.getSupportedAnnotationClass();
 
-      putProcessor(lombokTypeProcessors, processor.getSupportedClass(), processor);
+        putProcessor(lombokProcessors, annotationClass.getName(), processor);
+        putProcessor(lombokProcessors, annotationClass.getSimpleName(), processor);
+
+        putProcessor(lombokTypeProcessors, processor.getSupportedClass(), processor);
+      }
     }
 
     registeredAnnotationNames.addAll(lombokProcessors.keySet());
+  }
+
+  @NotNull
+  private Processor[] getLombokProcessors() {
+    return LombokProcessorExtensionPoint.EP_NAME.getExtensions();
   }
 
   private <K, V> void putProcessor(final Map<K, Collection<V>> map, final K key, final V value) {
@@ -61,12 +77,7 @@ public class LombokProcessorProvider {
   }
 
   @NotNull
-  public Processor[] getLombokProcessors() {
-    return LombokProcessorExtensionPoint.EP_NAME.getExtensions();
-  }
-
-  @NotNull
-  public Collection<Processor> getLombokProcessors(Class supportedClass) {
+  public Collection<Processor> getLombokProcessors(@NotNull Class supportedClass) {
     final Collection<Processor> result = lombokTypeProcessors.get(supportedClass);
     return result == null ? Collections.<Processor>emptySet() : result;
   }

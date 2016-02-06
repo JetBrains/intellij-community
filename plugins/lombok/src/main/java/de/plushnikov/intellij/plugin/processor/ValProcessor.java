@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiArrayInitializerExpression;
 import com.intellij.psi.PsiClass;
@@ -24,6 +25,7 @@ import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
+import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +49,11 @@ public class ValProcessor extends AbstractProcessor {
 
   public ValProcessor() {
     super(val.class, PsiElement.class);
+  }
+
+  @Override
+  public boolean isEnabled(@NotNull Project project) {
+    return ProjectSettings.isEnabled(project, ProjectSettings.IS_VAL_ENABLED);
   }
 
   @NotNull
@@ -104,7 +111,7 @@ public class ValProcessor extends AbstractProcessor {
   }
 
   protected static boolean isSameName(String className) {
-    return LOMBOK_VAL_FQN.equals(className) || LOMBOK_VAL_SHORT_NAME.equals(className);
+    return LOMBOK_VAL_SHORT_NAME.equals(className) || LOMBOK_VAL_FQN.equals(className);
   }
 
   @Nullable
@@ -128,19 +135,19 @@ public class ValProcessor extends AbstractProcessor {
     return psiType;
   }
 
-  protected PsiType processLocalVariableInitializer(PsiExpression initializer) {
+  protected PsiType processLocalVariableInitializer(PsiExpression psiExpression) {
     PsiType result = null;
-    if (null != initializer && !(initializer instanceof PsiArrayInitializerExpression)) {
-      if (!recursionBreaker.get().contains(initializer)) {
-        recursionBreaker.get().add(initializer);
+    if (null != psiExpression && !(psiExpression instanceof PsiArrayInitializerExpression)) {
+      if (!recursionBreaker.get().contains(psiExpression)) {
+        recursionBreaker.get().add(psiExpression);
         try {
-          result = initializer.getType();
+          result = psiExpression.getType();
         } finally {
-          recursionBreaker.get().remove(initializer);
+          recursionBreaker.get().remove(psiExpression);
         }
 
-        if (initializer instanceof PsiNewExpression) {
-          final PsiJavaCodeReferenceElement reference = ((PsiNewExpression) initializer).getClassOrAnonymousClassReference();
+        if (psiExpression instanceof PsiNewExpression) {
+          final PsiJavaCodeReferenceElement reference = ((PsiNewExpression) psiExpression).getClassOrAnonymousClassReference();
           if (reference != null) {
             final PsiReferenceParameterList parameterList = reference.getParameterList();
             if (parameterList != null) {
