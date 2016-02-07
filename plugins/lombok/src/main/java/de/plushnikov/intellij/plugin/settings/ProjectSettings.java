@@ -31,7 +31,7 @@ public class ProjectSettings {
 
   public static void setEnabled(@NotNull Project project, final String propertyName, boolean value) {
     PropertiesComponent properties = PropertiesComponent.getInstance(project);
-    properties.setValue(propertyName, value, true);
+    properties.setValue(propertyName, String.valueOf(value), String.valueOf(true));
   }
 
 }

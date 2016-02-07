@@ -21,6 +21,7 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
+import com.intellij.psi.impl.light.LightTypeParameterListBuilder;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.icon.LombokIcons;
@@ -33,15 +34,15 @@ import org.jetbrains.annotations.Nullable;
  * @author Plushnikov Michail
  */
 public class LombokLightMethodBuilder extends LightMethodBuilder {
-  private final LombokLightReferenceListBuilder myThrowsList;
   private ASTNode myASTNode;
   private PsiCodeBlock myBodyCodeBlock;
 
   public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
         new LombokLightParameterListBuilder(manager, JavaLanguage.INSTANCE),
-        new LombokLightModifierList(manager, JavaLanguage.INSTANCE));
-    myThrowsList = new LombokLightReferenceListBuilder(manager, JavaLanguage.INSTANCE, PsiReferenceList.Role.THROWS_LIST);
+        new LombokLightModifierList(manager, JavaLanguage.INSTANCE),
+        new LombokLightReferenceListBuilder(manager, JavaLanguage.INSTANCE, PsiReferenceList.Role.THROWS_LIST),
+        new LightTypeParameterListBuilder(manager, JavaLanguage.INSTANCE));
     setBaseIcon(LombokIcons.METHOD_ICON);
   }
 
@@ -76,22 +77,6 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
     return this;
   }
 
-  public LightMethodBuilder addException(PsiClassType type) {
-    myThrowsList.addReference(type);
-    return this;
-  }
-
-  public LightMethodBuilder addException(String fqName) {
-    myThrowsList.addReference(fqName);
-    return this;
-  }
-
-  @Override
-  @NotNull
-  public PsiReferenceList getThrowsList() {
-    return myThrowsList;
-  }
-
   public LombokLightMethodBuilder withException(@NotNull PsiClassType type) {
     addException(type);
     return this;
@@ -119,6 +104,12 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
 
   public LombokLightMethodBuilder withBody(@NotNull PsiCodeBlock codeBlock) {
     myBodyCodeBlock = codeBlock;
+    return this;
+  }
+
+  // add Parameter as is, without wrapping with LightTypeParameter
+  public LightMethodBuilder addTypeParameter(PsiTypeParameter parameter) {
+    ((LightTypeParameterListBuilder) getTypeParameterList()).addParameter(parameter);
     return this;
   }
 

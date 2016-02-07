@@ -125,9 +125,16 @@ public class PsiClassUtil {
    */
   @NotNull
   public static PsiType getTypeWithGenerics(@NotNull PsiClass psiClass) {
+    return getTypeWithGenerics(psiClass, psiClass.getTypeParameters());
+  }
+
+  /**
+   * Creates a PsiType for a PsiClass enriched with generic substitution information if available
+   */
+  @NotNull
+  public static PsiType getTypeWithGenerics(@NotNull PsiClass psiClass, @NotNull PsiTypeParameter... classTypeParameters) {
     PsiType result;
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
-    final PsiTypeParameter[] classTypeParameters = psiClass.getTypeParameters();
     if (classTypeParameters.length > 0) {
       Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
       for (PsiTypeParameter typeParameter : classTypeParameters) {

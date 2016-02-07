@@ -290,9 +290,20 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
         .withNavigationElement(psiAnnotation)
         .withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
 
+    //Static method need type parameter
+    for (PsiTypeParameter typeParameter : psiClass.getTypeParameters()) {
+      method.withTypeParameter(typeParameter);
+    }
+
+//    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+//    final PsiTypeParameter typeParameter = psiClass.getTypeParameters()[0];
+//    final PsiClassType methodParameterType = factory.createType(typeParameter, PsiSubstitutor.EMPTY);
+//    method.addParameter(new LightParameter("myParam1", methodParameterType, psiClass, psiClass.getLanguage()));
+
     if (!useJavaDefaults) {
       for (PsiField param : params) {
-        method.withParameter(param.getName(), param.getType());
+        final PsiType methodParameterType = param.getType();
+        method.withParameter(param.getName(), methodParameterType);
       }
     }
 
