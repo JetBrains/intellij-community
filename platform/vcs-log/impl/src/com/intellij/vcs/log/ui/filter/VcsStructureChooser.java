@@ -154,28 +154,16 @@ public class VcsStructureChooser extends DialogWrapper {
     myTree.setRootVisible(false);
     myTree.setExpandableItemsEnabled(false);
 
-    final Condition<VirtualFile> fileVisibility = new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile virtualFile) {
-        ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-        return !changeListManager.isIgnoredFile(virtualFile) && !changeListManager.isUnversioned(virtualFile);
-      }
-    };
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, true) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        if (!super.isFileVisible(file, showHiddenFiles)) return false;
         if (myRoots.contains(file)) return false;
-        boolean fileVisible = super.isFileVisible(file, showHiddenFiles);
-        if (fileVisible && file.isDirectory()) {
-          return fileVisibility.value(file);
-        }
-        else {
-          return fileVisible;
-        }
+        ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+        return !changeListManager.isIgnoredFile(file) && !changeListManager.isUnversioned(file);
       }
     };
-    descriptor.withRoots(new ArrayList<VirtualFile>(myRoots)).withShowHiddenFiles(true).withHideIgnored(true)
-      .withFileFilter(fileVisibility);
+    descriptor.withRoots(new ArrayList<VirtualFile>(myRoots)).withShowHiddenFiles(true).withHideIgnored(true);
     final MyCheckboxTreeCellRenderer cellRenderer =
       new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject, myTree, myRoots);
     FileSystemTreeImpl fileSystemTree =
