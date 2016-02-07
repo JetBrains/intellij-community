@@ -567,7 +567,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
     private void performAction(@NotNull MouseEvent e, @NotNull final GraphAction.Type actionType) {
       int row = PositionUtil.getRowIndex(e.getPoint(), getRowHeight());
-      if (row > getRowCount() - 1) {
+      if (row < 0 || row > getRowCount() - 1) {
         return;
       }
       Point point = calcPoint4Graph(e.getPoint());
