@@ -104,7 +104,6 @@ public class VcsLogUtil {
     List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, new Comparator<VirtualFile>() {
       @Override
       public int compare(VirtualFile root1, VirtualFile root2) {
-        if (root1.equals(root2)) return 0;
         return root1.getPath().compareTo(root2.getPath());
       }
     });
