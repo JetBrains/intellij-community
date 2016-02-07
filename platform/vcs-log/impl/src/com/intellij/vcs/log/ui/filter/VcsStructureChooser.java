@@ -354,6 +354,7 @@ public class VcsStructureChooser extends DialogWrapper {
                                                   int row,
                                                   boolean hasFocus) {
       invalidate();
+      if (value == null) return myEmpty;
       VirtualFile file = getFile(value);
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
       if (file == null) {
