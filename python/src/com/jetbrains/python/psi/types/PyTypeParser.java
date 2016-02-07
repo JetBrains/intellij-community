@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
@@ -438,42 +439,48 @@ public class PyTypeParser {
       final Token<PyElementType> firstToken = tokens.get(0);
       final String firstText = firstToken.getText().toString();
       final TextRange firstRange = firstToken.getRange();
-      final PsiElement resolved = file.getElementNamed(firstText);
-      if (resolved == null) {
+      final List<RatedResolveResult> resolveResults = file.multiResolveName(firstText);
+      if (resolveResults.isEmpty()) {
         return getImplicitlyResolvedType(tokens, context, types, fullRanges, firstRange);
       }
-      PyType type = null;
-      // Local or imported name
-      if (resolved instanceof PyTargetExpression) {
-        type = PyTypingTypeProvider.getTypeFromTargetExpression((PyTargetExpression)resolved, context);
-      }
-      if (type == null && resolved instanceof PyTypedElement) {
-        type = context.getType((PyTypedElement)resolved);
-      }
-      if (type != null) {
-        tokens.remove(0);
-        if (!allowResolveToType(type)) {
-          return null;
+      final List<PyType> members = Lists.newArrayList();
+      for (RatedResolveResult result : resolveResults) {
+        final PsiElement resolved = result.getElement();
+        PyType type = null;
+        if (resolved instanceof PyTargetExpression) {
+          type = PyTypingTypeProvider.getTypeFromTargetExpression((PyTargetExpression)resolved, context);
         }
-        if (type instanceof PyClassLikeType) {
-          type = ((PyClassLikeType)type).toInstance();
+        if (type == null && resolved instanceof PyTypedElement) {
+          type = context.getType((PyTypedElement)resolved);
         }
-        types.put(firstRange, type);
-        fullRanges.put(type, firstRange);
-        for (PyFromImportStatement fromImportStatement : file.getFromImports()) {
-          for (PyImportElement importElement : fromImportStatement.getImportElements()) {
+        if (type != null) {
+          if (!allowResolveToType(type)) {
+            continue;
+          }
+          if (type instanceof PyClassLikeType) {
+            type = ((PyClassLikeType)type).toInstance();
+          }
+          types.put(firstRange, type);
+          fullRanges.put(type, firstRange);
+          for (PyFromImportStatement fromImportStatement : file.getFromImports()) {
+            for (PyImportElement importElement : fromImportStatement.getImportElements()) {
+              if (firstText.equals(importElement.getVisibleName())) {
+                imports.put(type, importElement);
+              }
+            }
+          }
+          for (PyImportElement importElement : file.getImportTargets()) {
             if (firstText.equals(importElement.getVisibleName())) {
               imports.put(type, importElement);
             }
           }
         }
-        for (PyImportElement importElement : file.getImportTargets()) {
-          if (firstText.equals(importElement.getVisibleName())) {
-            imports.put(type, importElement);
-          }
-        }
+        members.add(type);
       }
-      return type;
+      if (!members.isEmpty()) {
+        tokens.remove(0);
+      }
+      return PyUnionType.union(members);
     }
 
     @Nullable
