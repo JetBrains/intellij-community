@@ -101,8 +101,8 @@ public class QuickDocUtil {
                                                                    @Nullable ProgressIndicator progressIndicator) {
     boolean result;
     long deadline = System.currentTimeMillis() + timeout;
-    ProgressIndicator progressWrapper = progressIndicator == null ? null : new SensitiveProgressWrapper(progressIndicator);
-    while (!(result = runInReadActionWithWriteActionPriority(action, progressWrapper)) &&
+    while (!(result = runInReadActionWithWriteActionPriority(action, progressIndicator == null ? null : 
+                                                                     new SensitiveProgressWrapper(progressIndicator))) &&
            (progressIndicator == null || !progressIndicator.isCanceled()) && 
             System.currentTimeMillis() < deadline) {
       try {
