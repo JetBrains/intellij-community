@@ -21,10 +21,20 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
+/**
+ * See http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html
+ */
 public @interface Storage {
   @Deprecated
+  /**
+   * Please use {@link #value()}.
+   */
   String file() default "";
 
+  /**
+   * Relative to component container configuration root file path.
+   * Consider to use shorthand form - {code}@Storage("yourName.xml"){code} (when you need to specify only file path).
+   */
   @NonNls String value() default "";
 
   /**

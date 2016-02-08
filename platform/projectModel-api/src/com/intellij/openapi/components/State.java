@@ -21,6 +21,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
+/**
+ * See http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html
+ */
 public @interface State {
   String name();
 
