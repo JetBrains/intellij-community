@@ -19,16 +19,11 @@ import static org.mockito.Mockito.when;
  * @author Alexander Koshevoy
  */
 public class PythonSdkTypeTest extends PlatformLiteFixture {
-  @Mock
-  private Sdk sdk;
-  @Mock
-  private PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData;
-  @Mock
-  private SdkAdditionalData sdkAdditionalData;
-  @Mock
-  private VagrantBasedCredentialsHolder vagrantBasedCredentialsHolder;
-  @Mock
-  private CredentialsLanguageContribution credentialsLanguageContribution;
+  @Mock private Sdk sdk;
+  @Mock private PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData;
+  @Mock private SdkAdditionalData sdkAdditionalData;
+  @Mock private VagrantBasedCredentialsHolder vagrantBasedCredentialsHolder;
+  @Mock private CredentialsLanguageContribution credentialsLanguageContribution;
 
   @Override
   public void setUp() throws Exception {
