@@ -29,9 +29,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -48,7 +50,8 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
   protected int myFirstErrorOffset = Integer.MAX_VALUE;
 
   private final List<Fixer<? extends SmartEnterProcessorWithFixers>> myFixers = new ArrayList<Fixer<? extends SmartEnterProcessorWithFixers>>();
-  private final List<FixEnterProcessor> myEnterProcessors = new ArrayList<FixEnterProcessor>();
+  protected final List<FixEnterProcessor> myEnterProcessors = new ArrayList<FixEnterProcessor>();
+  private final List<FixEnterProcessor> myAfterEnterProcessors = new ArrayList<FixEnterProcessor>();
 
   protected static void plainEnter(@NotNull final Editor editor) {
     getEnterHandler().execute(editor, ((EditorEx)editor).getDataContext());
@@ -70,12 +73,25 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
 
   @Override
   public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.complete.statement");
+    return invokeProcessor(project, editor, psiFile, false);
+  }
+
+  @Override
+  public boolean processAfterCompletion(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return invokeProcessor(psiFile.getProject(), editor, psiFile, true);
+  }
+
+  protected boolean invokeProcessor(@NotNull final Project project,
+                                    @NotNull final Editor editor,
+                                    @NotNull final PsiFile psiFile,
+                                    boolean afterCompletion) {
     final Document document = editor.getDocument();
-    final String textForRollback = document.getText();
+    final CharSequence textForRollback = document.getImmutableCharSequence();
     try {
       editor.putUserData(SMART_ENTER_TIMESTAMP, editor.getDocument().getModificationStamp());
       myFirstErrorOffset = Integer.MAX_VALUE;
-      process(project, editor, psiFile, 0);
+      process(project, editor, psiFile, 0, afterCompletion);
     }
     catch (TooManyAttemptsException e) {
       document.replaceString(0, document.getTextLength(), textForRollback);
@@ -86,9 +102,13 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
     return true;
   }
 
-  protected void process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file, final int attempt)
-    throws TooManyAttemptsException {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.complete.statement");
+  protected void process(
+    @NotNull final Project project,
+    @NotNull final Editor editor,
+    @NotNull final PsiFile file,
+    final int attempt,
+    boolean afterCompletion) throws TooManyAttemptsException {
+
     if (attempt > MAX_ATTEMPTS) throw new TooManyAttemptsException();
 
     try {
@@ -116,13 +136,13 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
           }
           if (isUncommited(project) || !psiElement.isValid()) {
             moveCaretInsideBracesIfAny(editor, file);
-            process(project, editor, file, attempt + 1);
+            process(project, editor, file, attempt + 1, afterCompletion);
             return;
           }
         }
       }
 
-      doEnter(atCaret, file, editor);
+      doEnter(atCaret, file, editor, afterCompletion);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -143,37 +163,41 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
     }
   }
 
-  protected void doEnter(@NotNull PsiElement atCaret, @NotNull PsiFile file, @NotNull Editor editor) throws IncorrectOperationException {
+  protected void doEnter(@NotNull PsiElement atCaret, @NotNull PsiFile psiFile, @NotNull Editor editor, boolean afterCompletion)
+    throws IncorrectOperationException {
     if (myFirstErrorOffset != Integer.MAX_VALUE) {
       editor.getCaretModel().moveToOffset(myFirstErrorOffset);
       reformat(atCaret);
       return;
     }
 
-    reformat(atCaret);
+    if (!PsiTreeUtil.hasErrorElements(atCaret)) {
+      reformat(atCaret);
+    }
     commit(editor);
 
     for (FixEnterProcessor enterProcessor : myEnterProcessors) {
-      if (enterProcessor.doEnter(atCaret, file, editor, isModified(editor))) {
+      if (enterProcessor.doEnter(atCaret, psiFile, editor, isModified(editor))) {
         return;
       }
     }
 
-    if (!isModified(editor)) {
+    if (!isModified(editor) && !afterCompletion) {
       plainEnter(editor);
     }
     else {
-      if (myFirstErrorOffset == Integer.MAX_VALUE) {
-        editor.getCaretModel().moveToOffset(atCaret.getTextRange().getEndOffset());
-      }
-      else {
-        editor.getCaretModel().moveToOffset(myFirstErrorOffset);
-      }
+      editor.getCaretModel().moveToOffset(myFirstErrorOffset == Integer.MAX_VALUE
+                                          ? atCaret.getTextRange().getEndOffset()
+                                          : myFirstErrorOffset);
     }
   }
 
   protected void addEnterProcessors(FixEnterProcessor... processors) {
     ContainerUtil.addAllNotNull(myEnterProcessors, processors);
+  }
+
+  protected void addAfterEnterProcessors(FixEnterProcessor... processors) {
+    ContainerUtil.addAllNotNull(myAfterEnterProcessors, processors);
   }
 
   protected void addFixers(Fixer<? extends SmartEnterProcessorWithFixers>... fixers) {
@@ -204,5 +228,11 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
   @Override
   public void commit(@NotNull Editor editor) { // pull up
     super.commit(editor);
+  }
+
+  public void registerUnresolvedError(int offset) {
+    if (myFirstErrorOffset > offset) {
+      myFirstErrorOffset = offset;
+    }
   }
 }
