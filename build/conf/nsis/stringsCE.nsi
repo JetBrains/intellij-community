@@ -2,6 +2,7 @@
 !define MUI_PRODUCT  "IntelliJ IDEA Community Edition"
 !define PRODUCT_FULL_NAME "IntelliJ IDEA Community Edition"
 !define PRODUCT_EXE_FILE "idea.exe"
+!define PRODUCT_EXE_FILE_64 "idea64.exe"
 !define PRODUCT_ICON_FILE "idea_CEinst.ico"
 !define PRODUCT_UNINST_ICON_FILE "idea_CEuninst.ico"
 !define PRODUCT_LOGO_FILE "logoCE.bmp"
