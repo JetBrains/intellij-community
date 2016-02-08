@@ -114,7 +114,6 @@ public abstract class SplitWordsMacro extends MacroBase {
     @NotNull
     @Override
     protected String convertCase(@NotNull String word) {
-      //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
       return word;
     }
   }
