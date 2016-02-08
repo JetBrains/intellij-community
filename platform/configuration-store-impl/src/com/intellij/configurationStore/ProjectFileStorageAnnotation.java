@@ -1,15 +1,17 @@
 package com.intellij.configurationStore;
 
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateSplitterEx;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 
 @SuppressWarnings("ClassExplicitlyAnnotation")
 public class ProjectFileStorageAnnotation implements Storage {
+  @Override
+  public String id() {
+    return "___Default___";
+  }
+
   @Override
   public String file() {
     return value();
@@ -18,6 +20,11 @@ public class ProjectFileStorageAnnotation implements Storage {
   @Override
   public String value() {
     return ProjectStoreImplKt.PROJECT_FILE;
+  }
+
+  @Override
+  public StorageScheme scheme() {
+    return StorageScheme.DEFAULT;
   }
 
   @Override
