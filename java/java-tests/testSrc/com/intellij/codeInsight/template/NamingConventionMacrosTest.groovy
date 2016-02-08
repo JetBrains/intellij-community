@@ -39,17 +39,28 @@ class NamingConventionMacrosTest extends TestCase {
     assert "_foo_bar_" == snakeCase("-FOO-BAR-")
     assert "a_b_c_d_e_f_g" == snakeCase("a-b.c/d|e*f+g")
     assert "a_b" == snakeCase("a--b")
+    assert "foo_bar" == snakeCase("FOO BAR")
   }
 
   public void "test lowercase and dash"() {
     assert "foo-bar" == new SplitWordsMacro.LowercaseAndDash().convertString("FOO_BAR")
   }
 
-  public void "test dashes to camel case"() {
-    assert "fooBar" == new ConvertToCamelCaseMacro.ReplaceDashesToCamelCaseMacro().convertString("foo-bar")?.toString()
-    assert "fooBar" == new ConvertToCamelCaseMacro.ReplaceDashesToCamelCaseMacro().convertString("FOO-BAR")?.toString()
+  public void "test to camel case"() {
+    assert "fooBar" == new ConvertToCamelCaseMacro().convertString("foo-bar")?.toString()
+    assert "fooBar" == new ConvertToCamelCaseMacro().convertString("FOO-BAR")?.toString()
+    assert "fooBar" == new ConvertToCamelCaseMacro().convertString("foo bar")?.toString()
   }
-  
+
+  public void "test space separated"() {
+    assert "foo Bar" == new SplitWordsMacro.SpaceSeparated().convertString("fooBar")
+    assert "foo bar" == new SplitWordsMacro.SpaceSeparated().convertString("foo-bar")
+  }
+
+  public void "test underscoresToCamelCase"() {
+    assert "fooBar-goo" == new ConvertToCamelCaseMacro.ReplaceUnderscoresToCamelCaseMacro().convertString("foo_bar-goo")?.toString()
+  }
+
   private static def snakeCase(String s) {
     return new SplitWordsMacro.SnakeCaseMacro().convertString(s)
   }
