@@ -34,7 +34,7 @@ import java.util.List;
  * @author Dmitry Batkovich
  */
 public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionTool {
-  private final static Logger LOG = Logger.getInstance(Java8CollectionsApiInspection.class);
+  private static final Logger LOG = Logger.getInstance(Java8CollectionsApiInspection.class);
 
   public boolean myReportContainsCondition;
 
@@ -91,9 +91,10 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
         else {
           maybePutStatement = branch;
         }
-        LOG.assertTrue(maybePutStatement != null);
-        analyzeCorrespondenceOfPutAndGet(maybePutStatement, maybeGetBranch, conditionInfo.getQualifier(), conditionInfo.getContainsKey(),
-                                         holder, statement);
+        if (maybePutStatement != null) {
+          analyzeCorrespondenceOfPutAndGet(maybePutStatement, maybeGetBranch, conditionInfo.getQualifier(), conditionInfo.getContainsKey(),
+                                           holder, statement);
+        }
       }
     };
   }
@@ -183,7 +184,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
   private static void analyzeCorrespondenceOfPutAndGet(@NotNull PsiElement adjustedElseBranch,
                                                        @Nullable PsiElement adjustedThenBranch,
                                                        @Nullable PsiExpression containsQualifier,
-                                                       @NotNull PsiExpression containsKey,
+                                                       @Nullable PsiExpression containsKey,
                                                        @NotNull ProblemsHolder holder,
                                                        @NotNull PsiElement context) {
     final PsiElement maybePutMethodCall;
