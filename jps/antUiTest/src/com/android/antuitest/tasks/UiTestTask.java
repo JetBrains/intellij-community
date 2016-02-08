@@ -173,6 +173,9 @@ public class UiTestTask extends Task {
   }
 
   private static boolean addToTestGroup(Map<String, List<Class<?>>> testGroups, @NotNull String groupName, @NotNull Class<?> testClass) {
+    if ("INDIVIDUAL".equals(groupName)) {
+      return addToTestGroup(testGroups, testClass.getSimpleName(), testClass);
+    }
     if (!testGroups.containsKey(groupName)) {
       testGroups.put(groupName, new ArrayList<Class<?>>());
     }

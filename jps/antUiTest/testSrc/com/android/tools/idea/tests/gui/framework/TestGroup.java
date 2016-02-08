@@ -18,5 +18,6 @@ package com.android.tools.idea.tests.gui.framework;
 public enum TestGroup {
   A,
   B,
-  C
+  C,
+  INDIVIDUAL,
 }
