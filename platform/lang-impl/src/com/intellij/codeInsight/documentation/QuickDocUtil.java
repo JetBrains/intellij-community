@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.documentation;
 
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -100,7 +101,8 @@ public class QuickDocUtil {
                                                                    @Nullable ProgressIndicator progressIndicator) {
     boolean result;
     long deadline = System.currentTimeMillis() + timeout;
-    while (!(result = runInReadActionWithWriteActionPriority(action, progressIndicator)) &&
+    ProgressIndicator progressWrapper = progressIndicator == null ? null : new SensitiveProgressWrapper(progressIndicator);
+    while (!(result = runInReadActionWithWriteActionPriority(action, progressWrapper)) &&
            (progressIndicator == null || !progressIndicator.isCanceled()) && 
             System.currentTimeMillis() < deadline) {
       try {
