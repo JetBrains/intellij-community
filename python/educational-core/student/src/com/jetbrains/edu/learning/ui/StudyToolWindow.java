@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBCardLayout;
@@ -44,24 +43,25 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
 
-public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
+public abstract class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(StudyToolWindow.class);
   private static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
   private static final String TASK_INFO_ID = "taskInfo";
   private final JBCardLayout myCardLayout;
   private final JPanel myContentPanel;
   private final OnePixelSplitter mySplitPane;
-  private StudyBrowserWindow myBrowserWindow;
 
-  public StudyToolWindow(final Project project) {
+  public StudyToolWindow() {
     super(true, true);
     myCardLayout = new JBCardLayout();
     myContentPanel = new JPanel(myCardLayout);
     mySplitPane = new OnePixelSplitter(myVertical=true);
-    
+  }
+
+  public void init(Project project) {
     String taskText = getTaskText(project);
     if (taskText == null) return;
-    
+
     JPanel toolbarPanel = createToolbarPanel(project);
     setToolbar(toolbarPanel);
 
@@ -69,7 +69,7 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     mySplitPane.setFirstComponent(myContentPanel);
     addAdditionalPanels(project);
     myCardLayout.show(myContentPanel, TASK_INFO_ID);
-    
+
     setContent(mySplitPane);
 
     StudyToolWindowConfigurator configurator = getStudyToolWindowConfigurator(project);
@@ -140,15 +140,7 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     return null;
   }
   
-  private JPanel createTaskInfoPanel(String taskText) {
-    myBrowserWindow = new StudyBrowserWindow(true, false);
-    myBrowserWindow.addBackAndOpenButtons();
-    myBrowserWindow.loadContent(taskText, StudyUtils.getConfigurator(ProjectUtil.guessCurrentProject(this)));
-    JPanel panel = new JPanel();
-    panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-    panel.add(myBrowserWindow.getPanel());
-    return panel;
-  }
+  public abstract JComponent createTaskInfoPanel(String taskText);
 
   private static JPanel createToolbarPanel(@NotNull final Project project) {
     final DefaultActionGroup group = getActionGroup(project);
@@ -169,12 +161,7 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     return configurator.getActionGroup(project);
   }
 
-  public void setTaskText(String text) {
-    StudyToolWindowConfigurator configurator = StudyUtils.getConfigurator(ProjectUtil.guessCurrentProject(this));
-    if (configurator != null) {
-      myBrowserWindow.loadContent(text, configurator);
-    }
-  }
+  public abstract void setTaskText(String text) ;
 
   @Nullable
   private static StudyToolWindowConfigurator getStudyToolWindowConfigurator(@NotNull Project project) {

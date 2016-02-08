@@ -131,7 +131,7 @@ class StudyBrowserWindow extends JFrame {
         myEngine.loadContent(withCodeHighlighting);        
       });
   }
-  
+
   @Nullable
   private String createHtmlWithCodeHighlighting(@NotNull final String content, @NotNull StudyToolWindowConfigurator configurator) {
     String template = null;
@@ -162,7 +162,7 @@ class StudyBrowserWindow extends JFrame {
     template = template.replace("${font_size}", String.valueOf(fontSize- 2));
     template = template.replace("${highlight_mode}", getClass().getResource("/code-mirror/clike.js").toExternalForm());
     template = template.replace("${codemirror}", getClass().getResource("/code-mirror/codemirror.js").toExternalForm());
-    template = template.replace("${python}", getClass().getResource("/code-mirror/python.js").toExternalForm());    
+    template = template.replace("${python}", getClass().getResource("/code-mirror/python.js").toExternalForm());
     template = template.replace("${runmode}", getClass().getResource("/code-mirror/runmode.js").toExternalForm());
     template = template.replace("${colorize}", getClass().getResource("/code-mirror/colorize.js").toExternalForm());
     template = template.replace("${javascript}", getClass().getResource("/code-mirror/javascript.js").toExternalForm());
@@ -176,7 +176,7 @@ class StudyBrowserWindow extends JFrame {
     }
     template = template.replace("${default-mode}", configurator.getDefaultHighlightingMode());
     template = template.replace("${code}", content);
-    
+
     return template;
   }
 
@@ -219,7 +219,6 @@ class StudyBrowserWindow extends JFrame {
           ev.preventDefault();
 
           ApplicationManager.getApplication().invokeLater(() -> {
-            
             final String href = getLink((Element)ev.getTarget());
             if (href == null) return;
             final StudyBrowserWindow studyBrowserWindow = new StudyBrowserWindow(false, true);
@@ -230,13 +229,13 @@ class StudyBrowserWindow extends JFrame {
 
         }
       }
-      
+
       @Nullable
       private String getLink(@NotNull Element element) {
         final String href = element.getAttribute("href");
         return href == null ? getLinkFromNodeWithCodeTag(element) : href;
       }
-      
+
       @Nullable
       private String getLinkFromNodeWithCodeTag(@NotNull Element element) {
         Node parentNode = element.getParentNode();
