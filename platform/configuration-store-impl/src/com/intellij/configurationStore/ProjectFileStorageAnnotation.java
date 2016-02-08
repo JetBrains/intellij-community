@@ -8,11 +8,6 @@ import java.lang.annotation.Annotation;
 @SuppressWarnings("ClassExplicitlyAnnotation")
 public class ProjectFileStorageAnnotation implements Storage {
   @Override
-  public String id() {
-    return "___Default___";
-  }
-
-  @Override
   public String file() {
     return value();
   }
