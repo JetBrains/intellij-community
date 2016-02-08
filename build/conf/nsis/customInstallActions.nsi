@@ -13,8 +13,7 @@ Function searchJava64
   call OMReadRegStr
   SetRegView 32
   StrCpy $3 "$3\bin\java.exe"
-  IfFileExists $3 0 no_java_64
-    goto done
+  IfFileExists $3 done no_java_64
 no_java_64:
   StrCpy $3 ""
 done:
@@ -27,12 +26,10 @@ Function ConfirmDesktopShortcut
   ${If} $R0 == ${PRODUCT_EXE_FILE}
     call searchJava64
     ${If} $3 != ""
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
       !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" "${PRODUCT_EXE_FILE_64}"
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "State" "0"
     ${EndIf}
-  ${Else}
-    ;there is no java 64 or product launcher for 64 java
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "Label"
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" ""
   ${EndIf}
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
   StrCpy $R0 ${INSTALL_OPTION_ELEMENTS}
