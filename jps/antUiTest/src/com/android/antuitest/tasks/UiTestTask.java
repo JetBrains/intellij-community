@@ -43,8 +43,6 @@ import java.util.*;
  */
 public class UiTestTask extends Task {
 
-  private static final int TEST_SHARD_TIMEOUT_MS = 3600000; // 60min.
-
   private String classpathFile;
   private String testSuite;
   private Path classpath;
@@ -103,7 +101,6 @@ public class UiTestTask extends Task {
 
         task.setFork(true);
         task.setForkMode(new JUnitTask.ForkMode("once"));
-        task.setTimeout(TEST_SHARD_TIMEOUT_MS);
 
         task.setLogFailedTests(true);
         task.setShowOutput(true);
