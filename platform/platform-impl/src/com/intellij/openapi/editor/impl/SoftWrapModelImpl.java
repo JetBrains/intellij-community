@@ -19,6 +19,7 @@ import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.FontPreferences;
@@ -318,7 +319,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
     if (!isSoftWrappingEnabled()) {
       return Collections.emptyList();
     }
-    return myStorage.getSoftWraps();
+    List<SoftWrapImpl> softWraps = myStorage.getSoftWraps();
+    if (!softWraps.isEmpty() && softWraps.get(softWraps.size() - 1).getStart() >= myEditor.getDocument().getTextLength()) {
+      LOG.error("Unexpected soft wrap location", new Attachment("editorState.txt", myEditor.dumpState()));
+    }
+    return softWraps;
   }
 
   @Override
@@ -455,6 +460,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
     }
 
     if (myDirty) {
+      myStorage.removeAll();
       myApplianceManager.reset();
       myDeferredFoldRegions.clear();
       myDirty = false;

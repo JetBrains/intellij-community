@@ -27,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 class VisualLinesIterator {
-  private static final Logger LOG = Logger.getInstance(VisualLinesIterator.class);
-  
   private final EditorView myView;
   private final EditorImpl myEditor;
   private final Document myDocument;
@@ -47,10 +45,6 @@ class VisualLinesIterator {
     FoldRegion[] regions = myEditor.getFoldingModel().fetchTopLevel();
     myFoldRegions = regions == null ? FoldRegion.EMPTY_ARRAY : regions;
     mySoftWraps = softWrapModel.getRegisteredSoftWraps();
-    if (!mySoftWraps.isEmpty() && mySoftWraps.get(mySoftWraps.size() - 1).getStart() >= myDocument.getTextLength()) {
-      LOG.error("Unexpected soft wrap location", new Attachment("editorState.txt", myEditor.dumpState()));
-    }
-    
     myLocation = new Location(startVisualLine);
   }
 
