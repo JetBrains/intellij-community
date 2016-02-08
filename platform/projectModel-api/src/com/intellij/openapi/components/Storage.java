@@ -53,4 +53,10 @@ public @interface Storage {
   Class<? extends StateStorage> storageClass() default StateStorage.class;
 
   Class<? extends StateSplitter> stateSplitter() default StateSplitterEx.class;
+
+  @Deprecated
+  StorageScheme scheme() default StorageScheme.DEFAULT;
+
+  @Deprecated
+  String id() default "default";
 }
