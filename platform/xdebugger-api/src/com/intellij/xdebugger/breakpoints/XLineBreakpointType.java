@@ -146,9 +146,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     public abstract TextRange getHighlightRange();
 
     @Nullable
-    public P createProperties() {
-      return null;
-    }
+    public abstract P createProperties();
   }
 
   public class XLineBreakpointAllVariant extends XLineBreakpointVariant {
@@ -183,10 +181,10 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     }
   }
 
-  public class ExactBreakpointVariant extends XLineBreakpointAllVariant {
+  public class XLinePsiElementBreakpointVariant extends XLineBreakpointAllVariant {
     private final PsiElement myElement;
 
-    public ExactBreakpointVariant(@NotNull XSourcePosition position, PsiElement element) {
+    public XLinePsiElementBreakpointVariant(@NotNull XSourcePosition position, PsiElement element) {
       super(position);
 
       myElement = element;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,9 @@
  */
 package com.intellij.remote;
 
-import org.jetbrains.annotations.NotNull;
+public interface ExceptionFix {
 
-/**
-* @author traff
-*/
-public interface RemoteSdkConnectionAcceptor {
-  void ssh(@NotNull RemoteCredentialsHolder cred);
-  void vagrant(@NotNull VagrantBasedCredentialsHolder cred);
-  void deployment(@NotNull WebDeploymentCredentialsHolder cred);
-  void docker(@NotNull DockerCredentialsHolder credentials);
+  void apply();
+
+  String getNotificationMessage(String message);
 }

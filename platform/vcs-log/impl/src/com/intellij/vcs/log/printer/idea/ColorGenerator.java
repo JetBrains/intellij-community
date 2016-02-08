@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remote;
+package com.intellij.vcs.log.printer.idea;
+
+import java.awt.*;
 
 /**
- * @author Alexander Koshevoy
+ * @author erokhins
  */
-public class DockerMachineException extends RuntimeException {
-  public DockerMachineException(String message) {
-    super(message);
-  }
-
-  public DockerMachineException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public DockerMachineException(Throwable cause) {
-    super(cause);
-  }
+public interface ColorGenerator {
+  Color getColor(int colorId);
 }

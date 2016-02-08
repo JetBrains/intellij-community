@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.printer.idea;
+package com.intellij.remote.ext;
 
-import com.intellij.vcs.log.graph.PrintElement;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.util.Collection;
+// TODO: (next) rename to wrapper?
+public interface RemoteCredentialsHandler {
 
-/**
- * @author erokhins
- */
-public interface GraphCellPainter {
+  String getId();
 
-  void draw(@NotNull Graphics2D g2, @NotNull Collection<? extends PrintElement> printElements);
+  void save(@NotNull Element rootElement);
 
-  @Nullable
-  PrintElement mouseOver(@NotNull Collection<? extends PrintElement> printElements, int x, int y);
+  String getPresentableDetails(String interpreterPath);
 
+  void load(@Nullable Element rootElement);
 }
-

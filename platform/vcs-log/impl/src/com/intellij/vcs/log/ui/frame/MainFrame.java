@@ -35,12 +35,12 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
-import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
+import com.intellij.vcs.log.util.BekUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -208,8 +208,8 @@ public class MainFrame extends JPanel implements DataProvider {
     DefaultActionGroup mainGroup = new DefaultActionGroup();
     mainGroup.add(myFilterUi.createActionGroup());
     mainGroup.addSeparator();
-    if (BekSorter.isBekEnabled()) {
-      if (BekSorter.isLinearBekEnabled()) {
+    if (BekUtil.isBekEnabled()) {
+      if (BekUtil.isLinearBekEnabled()) {
         mainGroup.add(new IntelliSortChooserPopupAction());
         // can not register both of the actions in xml file, choosing to register an action for the "outer world"
         // I can of course if linear bek is enabled replace the action on start but why bother

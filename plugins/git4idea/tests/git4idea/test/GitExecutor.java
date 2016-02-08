@@ -54,6 +54,11 @@ public class GitExecutor extends Executor {
 
   public static String git(String command, boolean ignoreNonZeroExitCode) {
     printVersionTheFirstTime();
+    return doCallGit(command, ignoreNonZeroExitCode);
+  }
+
+  @NotNull
+  private static String doCallGit(String command, boolean ignoreNonZeroExitCode) {
     List<String> split = splitCommandInParameters(command);
     split.add(0, PathHolder.GIT_EXECUTABLE);
     File workingDir = ourCurrentDir();
@@ -152,7 +157,7 @@ public class GitExecutor extends Executor {
   private static void printVersionTheFirstTime() {
     if (!myVersionPrinted) {
       myVersionPrinted = true;
-      git("version");
+      doCallGit("version", false);
     }
   }
 

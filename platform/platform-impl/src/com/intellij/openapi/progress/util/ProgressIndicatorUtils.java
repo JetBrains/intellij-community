@@ -28,10 +28,10 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Methods in this class are used to equip long background processes which take read actions with a special listener
@@ -68,28 +68,19 @@ public class ProgressIndicatorUtils {
   }
 
   /**
-   * Repeatedly tries to run given task in read action without blocking write actions (for this to work effectively the action should invoke 
-   * {@link ProgressManager#checkCanceled()} or {@link ProgressIndicator#checkCanceled()} often enough).
-   * 
-   * @param action task to run
-   * @param timeout timeout in milliseconds 
-   * @param pauseBetweenRetries pause between retries in milliseconds 
-   * @return <code>true</code> if the action succeeded to run without interruptions, <code>false</code> otherwise 
+   * Same as {@link #runInReadActionWithWriteActionPriority(Runnable)}, optionally allowing to pass a {@link ProgressIndicatorUtils}
+   * instance, which can be used to cancel action externally.
    */
-  public static boolean runInReadActionWithWriteActionPriorityWithRetries(@NotNull final Runnable action, 
-                                                                          long timeout, long pauseBetweenRetries) {
-    boolean result;
-    long deadline = System.currentTimeMillis() + timeout;
-    while (!(result = runInReadActionWithWriteActionPriority(action)) && System.currentTimeMillis() < deadline) {
-      try {
-        TimeUnit.MILLISECONDS.sleep(pauseBetweenRetries);
+  public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, 
+                                                               @Nullable ProgressIndicator progressIndicator) {
+    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
+    runWithWriteActionPriority(new Runnable() {
+      @Override
+      public void run() {
+        result.set(ApplicationManagerEx.getApplicationEx().tryRunReadAction(action));
       }
-      catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return false;
-      }
-    }
-    return result;
+    }, progressIndicator == null ? new ProgressIndicatorBase() : progressIndicator);
+    return result.get();
   }
 
   /**
@@ -108,18 +99,7 @@ public class ProgressIndicatorUtils {
    * 100% CPU usage.
    */
   public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action) {
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
-    runWithWriteActionPriority(new Runnable() {
-      @Override
-      public void run() {
-        result.set(ApplicationManagerEx.getApplicationEx().tryRunReadAction(action));
-      }
-    });
-    return result.get();
-  }
-
-  public static boolean runWithWriteActionPriority(@NotNull final Runnable action) {
-    return runWithWriteActionPriority(action, new ProgressIndicatorBase());
+    return runInReadActionWithWriteActionPriority(action, null);
   }
 
   public static boolean runWithWriteActionPriority(@NotNull final Runnable action,

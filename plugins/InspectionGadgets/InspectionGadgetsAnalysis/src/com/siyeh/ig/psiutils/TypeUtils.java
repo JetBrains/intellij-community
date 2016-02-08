@@ -93,7 +93,8 @@ public class TypeUtils {
     return CommonClassNames.JAVA_UTIL_OPTIONAL.equals(qualifiedName)
            || "java.util.OptionalDouble".equals(qualifiedName)
            || "java.util.OptionalInt".equals(qualifiedName)
-           || "java.util.OptionalLong".equals(qualifiedName);
+           || "java.util.OptionalLong".equals(qualifiedName)
+           || "com.google.common.base.Optional".equals(qualifiedName);
   }
 
   public static boolean isExpressionTypeAssignableWith(@NotNull PsiExpression expression, @NotNull Iterable<String> rhsTypeTexts) {

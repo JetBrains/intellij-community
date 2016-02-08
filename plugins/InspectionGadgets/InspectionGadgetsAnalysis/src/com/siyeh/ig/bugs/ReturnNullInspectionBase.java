@@ -110,7 +110,8 @@ public class ReturnNullInspectionBase extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("return.of.null.optional.quickfix", myTypeText);
+      return InspectionGadgetsBundle.message("return.of.null.optional.quickfix", myTypeText,
+                                             "com.google.common.base.Optional".equals(myTypeText) ? "absent" : "empty");
     }
 
     @Nls
@@ -127,7 +128,12 @@ public class ReturnNullInspectionBase extends BaseInspection {
         return;
       }
       final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
-      PsiReplacementUtil.replaceExpression(literalExpression, myTypeText + ".empty()");
+      if ("com.google.common.base.Optional".equals(myTypeText)) {
+        PsiReplacementUtil.replaceExpression(literalExpression, myTypeText + ".absent()");
+      }
+      else {
+        PsiReplacementUtil.replaceExpression(literalExpression, myTypeText + ".empty()");
+      }
     }
   }
 

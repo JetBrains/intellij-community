@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remote;
+package com.intellij.vcs.log.util;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.registry.Registry;
 
-/**
- */
-public class DockerMachineNotStartedException extends DockerMachineCommandException {
-  @NotNull private final String myMachineName;
-
-  public DockerMachineNotStartedException(@NotNull String machineName, int exitCode, @Nullable String stderr) {
-    super(exitCode, stderr);
-    this.myMachineName = machineName;
+public class BekUtil {
+  public static boolean isBekEnabled() { // todo drop later
+    if (Registry.is("vcs.log.bek.sort.disabled")) {
+      return false;
+    }
+    boolean isInternal = Boolean.valueOf(System.getProperty("idea.is.internal"));
+    boolean isBekEnabled = Registry.is("vcs.log.bek.sort");
+    return isBekEnabled || isInternal;
   }
 
-  @NotNull
-  public String getMachineName() {
-    return myMachineName;
+  public static boolean isLinearBekEnabled() {
+    return isBekEnabled() && Registry.is("vcs.log.linear.bek.sort");
   }
 }

@@ -258,5 +258,9 @@
     <extensionPoint name="jbProtocolCommand" interface="com.intellij.openapi.application.JBProtocolCommand"/>
 
     <extensionPoint name="vfs.local.pluggableFileWatcher" interface="com.intellij.openapi.vfs.local.PluggableFileWatcher" />
+
+    <extensionPoint name="remote.credentialsType" interface="com.intellij.remote.ext.CredentialsTypeEx"/>
+    <extensionPoint name="remote.credentialsLanguageContribution"
+                    interface="com.intellij.remote.ext.CredentialsLanguageContribution"/>
   </extensionPoints>
 </idea-plugin>
