@@ -42,11 +42,7 @@ loop:
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
   goto loop
 skip_association:
-  StrCpy $R0 2
-  call winVersion
-  ${If} $0 == "1"
-  IntOp $R0 $R0 - 1
-  ${EndIf}
+  IntOp $R0 ${INSTALL_OPTION_ELEMENTS} - 1
 done:
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
   !insertmacro INSTALLOPTIONS_DISPLAY "Desktop.ini"
