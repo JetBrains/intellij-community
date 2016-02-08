@@ -1,6 +1,10 @@
-class LambdaUnfriendlyMethodOverload {
+class LambdaUnfriendlyMethodOverload extends Super {
 
-
+  @Override
+  void a(Runnable r) {}
+}
+class Super {
+  void a(Runnable r) {}
 }
 interface Application {
   <T> T <warning descr="Lambda unfriendly overload of method 'runWriteAction()'">runWriteAction</warning>(@<error descr="Cannot resolve symbol 'NotNull'">NotNull</error> Computable<T> computation);
