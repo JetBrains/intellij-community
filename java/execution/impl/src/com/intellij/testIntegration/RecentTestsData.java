@@ -18,6 +18,7 @@ package com.intellij.testIntegration;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,20 +141,35 @@ public class RecentTestsData {
 
   private static List<String> suiteToTestList(SuiteInfo suite) {
     List<String> result = ContainerUtil.newArrayList();
+    
+    if (suite.canTrustSuiteMagnitude() && suite.isPassed()) {
+      result.add(suite.getUrl());
+      return result;
+    }
 
-    TestStateInfo.Magnitude suiteMagnitude = suite.getMagnitude();
-    Set<TestInfo> allTests = suite.getTests();
-
-    List<TestInfo> sameMagnitudeTests = suite.getTests(suiteMagnitude);
-    if (sameMagnitudeTests.size() == allTests.size() || suite.getMagnitude() == IGNORED_INDEX) {
+    List<TestInfo> failedTests = suite.getFailedTests();
+    sortTestsByRecent(failedTests);
+    
+    if (failedTests.size() == suite.getTotalTestsCount()) {
+      result.add(suite.getUrl());  
+    }
+    else if (failedTests.size() < 3) {
+      result.addAll(ContainerUtil.map(failedTests, new Function<TestInfo, String>() {
+        @Override
+        public String fun(TestInfo testInfo) {
+          return testInfo.getUrl();
+        }
+      }));
       result.add(suite.getUrl());
     }
     else {
       result.add(suite.getUrl());
-      Collections.sort(sameMagnitudeTests, TEST_BY_RECENT_COMPARATOR);
-      for (TestInfo test : sameMagnitudeTests) {
-        result.add(test.getUrl());
-      }
+      result.addAll(ContainerUtil.map(failedTests, new Function<TestInfo, String>() {
+        @Override
+        public String fun(TestInfo testInfo) {
+          return testInfo.getUrl();
+        }
+      }));
     }
 
     return result;
@@ -199,6 +215,30 @@ class SuiteInfo extends TestInfo {
     return mostRecent;
   }
   
+  public boolean canTrustSuiteMagnitude() {
+    Date suiteRunDate = getRunDate();
+    for (TestInfo test : tests) {
+      if (test.getRunDate().getTime() > suiteRunDate.getTime()) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
+  public boolean isPassed() {
+    return getMagnitude() == IGNORED_INDEX || getMagnitude() == PASSED_INDEX || getMagnitude() == COMPLETE_INDEX;
+  }
+  
+  public List<TestInfo> getFailedTests() {
+    List<TestInfo> failed = ContainerUtil.newSmartList();
+    for (TestInfo test : tests) {
+      if (test.getMagnitude() == FAILED_INDEX || test.getMagnitude() == ERROR_INDEX) {
+        failed.add(test);
+      }
+    }
+    return failed;
+  } 
+  
   public String getSuiteName() {
     return mySuiteName;
   }
@@ -206,13 +246,9 @@ class SuiteInfo extends TestInfo {
   public void addTest(TestInfo info) {
     tests.add(info);
   }
-
-  public Set<TestInfo> getTests() {
-    return tests;
-  }
-
-  public List<TestInfo> getTests(TestStateInfo.Magnitude magnitude) {
-    return select(tests, magnitude);
+  
+  public int getTotalTestsCount() {
+    return tests.size();
   }
 }
 

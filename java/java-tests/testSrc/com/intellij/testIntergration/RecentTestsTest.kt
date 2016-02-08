@@ -151,14 +151,69 @@ class RecentTestsStepTest {
     val step = SelectTestStep(map, runner)
     
     val expected = listOf(
-        "java:suite://JavaFormatterFailed",
         "java:test://JavaFormatterFailed.fail",
-        "java:suite://JavaFormatterSuperDuperTest",
+        "java:suite://JavaFormatterFailed",
         "java:test://JavaFormatterSuperDuperTest.testFail",
+        "java:suite://JavaFormatterSuperDuperTest",
         "java:suite://Test"
     )
     
     assertThat(step.values).isEqualTo(expected)
+  }
+
+  @Test
+  fun `if failed more than 2 tests show suite first`() {
+    val storage = TestStorage()
+    storage.addSuite("ASTest", false)
+    storage.addTest("ASTest.failed1", false, Date(3000))
+    storage.addTest("ASTest.failed2", false, Date(2000))
+    storage.addTest("ASTest.failed3", false, Date(1000))
+    storage.addTest("ASTest.passed1", true)
+
+    val step = SelectTestStep(storage.getMap(), runner)
+    val values = step.values.map { VirtualFileManager.extractPath(it) }
+
+    assertThat(values).isEqualTo(listOf(
+        "ASTest",
+        "ASTest.failed1",
+        "ASTest.failed2",
+        "ASTest.failed3"
+    ))
+  }
+
+  @Test
+  fun `if failed less than 3 tests, show tests first`() {
+    val storage = TestStorage()
+
+    storage.addSuite("ASTest", false)
+    storage.addTest("ASTest.failed1", false, Date(3000))
+    storage.addTest("ASTest.failed2", false, Date(2000))
+    storage.addTest("ASTest.passed1", true)
+
+    val step = SelectTestStep(storage.getMap(), runner)
+    val values = step.values.map { VirtualFileManager.extractPath(it) }
+
+    assertThat(values).isEqualTo(listOf(
+        "ASTest.failed1",
+        "ASTest.failed2",
+        "ASTest"
+    ))
+  }
+
+  @Test
+  fun `if all failed show only suite`() {
+    val storage = TestStorage()
+
+    storage.addSuite("ASTest", false)
+    storage.addTest("ASTest.failed1", false)
+    storage.addTest("ASTest.failed2", false)
+    storage.addTest("ASTest.failed3", false)
+    storage.addTest("ASTest.failed4", false)
+
+    val step = SelectTestStep(storage.getMap(), runner)
+    val values = step.values.map { VirtualFileManager.extractPath(it) }
+
+    assertThat(values).isEqualTo(listOf("ASTest"))
   }
   
   @Ignore
