@@ -53,16 +53,19 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.accessibility.Accessible;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
@@ -144,6 +147,22 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     myList.setFocusable(false);
     myList.setFixedCellWidth(50);
+    if (ScreenReader.isActive()) {
+      myList.getAccessibleContext().setAccessibleName("Code Completion");
+
+      // The list will eventually be hosted in a top level JDialog, sibling of the IDE frame
+      // containing the editor component. This can be confusing for certain screen readers, as they
+      // may think a new top-level window has gotten the focus when events are fired from the list
+      // as the selection changes. To prevent this, we override the default parent of the list
+      // to be the editor component. When events are fired by the list, screen readers will treat
+      // those as events coming from a child component of the text editor, as opposed to consider
+      // a new top level frame just got the focus. This is important to prevent screen readers
+      // from announcing the title of the top level frame when the list is shown (or hidden),
+      // as they usually do when a new top-level frame receives the focus.
+      if (myEditor.getContentComponent() instanceof Accessible) {
+        myList.getAccessibleContext().setAccessibleParent((Accessible)myEditor.getContentComponent());
+      }
+    }
 
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
@@ -1012,6 +1031,20 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
       try {
         super.hide();
+        if (ScreenReader.isActive()) {
+          // Dispatch a "focus gained" event so that screen readers that think the code completion
+          // list has the focus get notified that the editor component is the "new" focus owner.
+          // In particular, this is useful with the nvda screen reader, as it seems to ignore
+          // caret events coming from the text editor unless it thinks the editor has the focus.
+          //
+          // Note: Using "requestFocus" here would not work for our purpose, as it would *not* result
+          // in firing a FocusEvent since the editor component never lost the focus from a Swing
+          // point of view. The only purpose here is to ensure a "FocusGained" event is sent to
+          // screen readers via the accessibility bridge, hopefully without any visible side
+          // effect on the IDE.
+          FocusEvent event = new FocusEvent(myList, FocusEvent.FOCUS_GAINED, false, null);
+          IdeEventQueue.getInstance().dispatchEvent(event);
+        }
 
         Disposer.dispose(this);
 
