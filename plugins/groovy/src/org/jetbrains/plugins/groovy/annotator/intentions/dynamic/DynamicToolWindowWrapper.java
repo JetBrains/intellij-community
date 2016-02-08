@@ -487,7 +487,7 @@ public class DynamicToolWindowWrapper {
     int row = tree.getRowForPath(path);
     myTreeTable.getSelectionModel().setSelectionInterval(row, row);
     myTreeTable.scrollRectToVisible(myTreeTable.getCellRect(row, 0, true));
-    IdeFocusManager.getInstance(myProject).requestFocus(myTreeTable, true);
+    IdeFocusManager.getInstance(myProject).requestFocus(myTreeTable);
   }
 
   public void removeFromParent(DefaultMutableTreeNode parent, DefaultMutableTreeNode child) {

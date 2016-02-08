@@ -206,7 +206,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       @Override
       public void run() {
         if (requestFocus && virtualSelectTarget == null && getUi().isReady()) {
-          focusRequestor.requestFocus(getTree(), true);
+          focusRequestor.requestFocus(getTree());
         }
 
         result.setDone();

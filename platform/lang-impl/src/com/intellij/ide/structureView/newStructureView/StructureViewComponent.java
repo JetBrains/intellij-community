@@ -486,7 +486,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
               @Override
               public void run() {
                 if (requestFocus) {
-                  IdeFocusManager.getInstance(myProject).requestFocus(myAbstractTreeBuilder.getTree(), false);
+                  IdeFocusManager.getInstance(myProject).requestFocus(myAbstractTreeBuilder.getTree());
                 }
               }
             });

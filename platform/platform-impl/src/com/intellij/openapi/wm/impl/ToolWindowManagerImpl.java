@@ -665,6 +665,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
     else {
       final FocusRequestor requestor = getFocusManager().getFurtherRequestor();
+      final Throwable creationTrace = new Throwable();
       getFocusManager().doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
         @Override
         public void run() {
@@ -675,7 +676,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
               runnable.run();
               return ActionCallback.DONE;
             }
-          }.setExpirable(runnable), forced);
+          }.setExpirable(runnable));
         }
       });
     }
@@ -726,7 +727,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
               }
               return ActionCallback.DONE;
             }
-          }, false);
+          });
         }
       }
     });
@@ -2485,7 +2486,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       public ActionCallback run() {
         return processDefaultFocusRequest(forced);
       }
-    }, forced);
+    });
   }
 
   private void focusToolWinowByDefault(@Nullable String idToIngore) {
@@ -2544,7 +2545,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
           if (DialogWrapper.findInstance(toFocus) != null) {
             return ActionCallback.DONE; //IDEA-80929
           }
-          return IdeFocusManager.findInstanceByComponent(toFocus).requestFocus(toFocus, forced);
+          return IdeFocusManager.findInstanceByComponent(toFocus).requestFocus(toFocus);
         }
       }
     }
@@ -2557,12 +2558,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    */
   @NotNull
   public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
-    return IdeFocusManager.getInstance(myProject).requestFocus(c, forced);
+    return IdeFocusManager.getInstance(myProject).requestFocus(c);
   }
 
   @NotNull
   public ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced) {
-    return IdeFocusManager.getInstance(myProject).requestFocus(command, forced);
+    return IdeFocusManager.getInstance(myProject).requestFocus(command);
   }
 
   public void doWhenFocusSettlesDown(@NotNull Runnable runnable) {

@@ -126,7 +126,7 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
     setTitle(stepTitle != null ? myTitle + ": " + stepTitle : myTitle);
     final JComponent toFocus = step.getPreferredFocusedComponent();
     if (toFocus != null) {
-      IdeFocusManager.findInstanceByComponent(getWindow()).requestFocus(toFocus, true);
+      IdeFocusManager.findInstanceByComponent(getWindow()).requestFocus(toFocus);
     }
   }
 

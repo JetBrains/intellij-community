@@ -190,7 +190,7 @@ public abstract class XDebuggerEditorBase {
   public void requestFocusInEditor() {
     JComponent preferredFocusedComponent = getPreferredFocusedComponent();
     if (preferredFocusedComponent != null) {
-      IdeFocusManager.getInstance(myProject).requestFocus(preferredFocusedComponent, true);
+      IdeFocusManager.getInstance(myProject).requestFocus(preferredFocusedComponent);
     }
   }
 

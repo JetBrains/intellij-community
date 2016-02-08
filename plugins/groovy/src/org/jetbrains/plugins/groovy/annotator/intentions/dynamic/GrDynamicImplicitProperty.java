@@ -148,7 +148,7 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
         treeTable.getTree().setSelectionPath(path);
         treeTable.getTree().fireTreeExpanded(path);
 
-        ToolWindowManager.getInstance(myProject).getFocusManager().requestFocus(treeTable, true);
+        ToolWindowManager.getInstance(myProject).getFocusManager().requestFocus(treeTable);
         treeTable.revalidate();
         treeTable.repaint();
 

@@ -560,7 +560,7 @@ public class DiffUtil {
 
   public static void requestFocus(@Nullable Project project, @Nullable Component component) {
     if (component == null) return;
-    IdeFocusManager.getInstance(project).requestFocus(component, true);
+    IdeFocusManager.getInstance(project).requestFocus(component);
   }
 
   //

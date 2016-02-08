@@ -216,7 +216,7 @@ public class FocusTrackback {
       final IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
       cleanParentWindow();
       final Project finalProject = project;
-      focusManager.requestFocus(new MyFocusCommand(), myForcedRestore).doWhenProcessed(new Runnable() {
+      focusManager.requestFocus(new MyFocusCommand()).doWhenProcessed(new Runnable() {
         public void run() {
           dispose();
         }

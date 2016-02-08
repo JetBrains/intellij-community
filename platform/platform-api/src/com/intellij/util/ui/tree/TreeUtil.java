@@ -846,7 +846,7 @@ public final class TreeUtil {
     tree.expandPath(treePath);
     if (requestFocus) {
       ActionCallback result = new ActionCallback(2);
-      IdeFocusManager.getInstance(project).requestFocus(tree, true).notifyWhenDone(result);
+      IdeFocusManager.getInstance(project).requestFocus(tree).notifyWhenDone(result);
       selectPath(tree, treePath, center).notifyWhenDone(result);
       return result;
     }

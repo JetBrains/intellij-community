@@ -387,7 +387,7 @@ public class ToolEditorDialog extends DialogWrapper {
         }
         ;
       }
-      IdeFocusManager.findInstance().requestFocus(myTextField, true);
+      IdeFocusManager.findInstance().requestFocus(myTextField);
     }
   }
 

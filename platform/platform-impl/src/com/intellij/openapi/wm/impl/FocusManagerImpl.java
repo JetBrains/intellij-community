@@ -86,7 +86,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private final EdtAlarm myForcedFocusRequestsAlarm;
 
   private final SimpleTimer myTimer = SimpleTimer.newInstance("FocusManager timer");
-  
+
   private final EdtAlarm myIdleAlarm;
   private final Set<Runnable> myIdleRequests = new LinkedHashSet<Runnable>();
 
@@ -194,17 +194,54 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   @NotNull
+  public ActionCallback requestFocus(@NotNull Component c, @NotNull Throwable creationTrace) {
+    return requestFocus(new FocusCommand.ByComponent(c, creationTrace));
+  }
+
+  @Override
+  @NotNull
+  public ActionCallback requestFocus(@NotNull final Component c) {
+    return requestFocus(new FocusCommand.ByComponent(c, new Exception()));
+  }
+
+  @Override
+  @NotNull
+  public ActionCallback requestFocus(@NotNull final FocusCommand command) {
+    assertDispatchThread();
+
+    if (isInternalMode) {
+      recordCommand(command, command.getAllocation());
+    }
+    final ActionCallback result = new ActionCallback();
+
+    myActivityMonitor.addActivity(FOCUS, ModalityState.any());
+    _requestFocus(command, result);
+
+    result.doWhenProcessed(new Runnable() {
+      @Override
+      public void run() {
+        restartIdleAlarm();
+      }
+    });
+
+    return result;
+  }
+
+  @Override
+  @Deprecated
+  @NotNull
   public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
     return requestFocus(new FocusCommand.ByComponent(c, new Exception()), forced);
   }
 
   @Override
+  @Deprecated
   @NotNull
   public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
     assertDispatchThread();
 
     if (isInternalMode) {
-      recordCommand(command, new Throwable(), forced);
+      recordCommand(command, new Throwable());
     }
     final ActionCallback result = new ActionCallback();
 
@@ -224,12 +261,12 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         @Override
         public void run() {
           resetUnforcedCommand(command);
-          _requestFocus(command, forced, result);
+          _requestFocus(command, result);
         }
       });
     }
     else {
-      _requestFocus(command, forced, result);
+      _requestFocus(command, result);
     }
 
     result.doWhenProcessed(new Runnable() {
@@ -247,95 +284,84 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     return myRequests;
   }
 
-  public void recordFocusRequest(Component c, boolean forced) {
-    myRequests.add(new FocusRequestInfo(c, new Throwable(), forced));
+  public void recordFocusRequest(Component c, @NotNull Throwable causeTrace) {
+    myRequests.add(new FocusRequestInfo(c, causeTrace));
     if (myRequests.size() > 200) {
       myRequests.removeFirst();
     }
   }
 
-  private void recordCommand(@NotNull FocusCommand command, @NotNull Throwable trace, boolean forced) {
+  private void recordCommand(@NotNull FocusCommand command, @NotNull Throwable trace) {
     if (FocusTracesAction.isActive()) {
-      recordFocusRequest(command.getDominationComponent(), forced);
+      recordFocusRequest(command.getDominationComponent(), trace);
     }
   }
 
-  private void _requestFocus(@NotNull final FocusCommand command, final boolean forced, @NotNull final ActionCallback result) {
+  private void _requestFocus(@NotNull final FocusCommand command, @NotNull final ActionCallback result) {
     result.doWhenProcessed(new Runnable() {
       @Override
       public void run() {
         maybeRemoveFocusActivity();
       }
     });
-    
-    if (checkForRejectOrByPass(command, forced, result)) return;
+
+    if (checkForRejectOrByPass(command, result)) return;
 
     setCommand(command);
     command.setCallback(result);
 
-    if (forced) {
-      myForcedFocusRequestsAlarm.cancelAllRequests();
-      setLastEffectiveForcedRequest(command);
+    myForcedFocusRequestsAlarm.cancelAllRequests();
+    setLastEffectiveForcedRequest(command);
+
+    if (checkForRejectOrByPass(command, result)) return;
+
+    if (myRequestFocusCmd == command) {
+      final TimedOutCallback focusTimeout =
+        new TimedOutCallback(Registry.intValue("actionSystem.commandProcessingTimeout"),
+                             "Focus command timed out, cmd=" + command, command.getAllocation(), true) {
+          @Override
+          protected void onTimeout() {
+            forceFinishFocusSettleDown(command, result);
+          }
+        };
+
+      if (command.invalidatesRequestors()) {
+        myCmdTimestamp++;
+      }
+      revalidateFurtherRequestors();
+      if (command.invalidatesRequestors()) {
+        myForcedCmdTimestamp++;
+      }
+      revalidateFurtherRequestors();
+
+      command.run().doWhenDone(new Runnable() {
+        @Override
+        public void run() {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              resetCommand(command, false);
+              result.setDone();
+            }
+          });
+        }
+      }).doWhenRejected(new Runnable() {
+        @Override
+        public void run() {
+          result.setRejected();
+          resetCommand(command, true);
+        }
+      }).doWhenProcessed(new Runnable() {
+        @Override
+        public void run() {
+          myForcedFocusRequestsAlarm.addRequest(new SetLastEffectiveRunnable(), 250);
+        }
+      }).notify(focusTimeout);
+    }
+    else {
+      rejectCommand(command, result);
     }
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (checkForRejectOrByPass(command, forced, result)) return;
-
-        if (myRequestFocusCmd == command) {
-          final TimedOutCallback focusTimeout =
-            new TimedOutCallback(Registry.intValue("actionSystem.commandProcessingTimeout"),
-                                        "Focus command timed out, cmd=" + command, command.getAllocation(), true) {
-              @Override
-              protected void onTimeout() {
-                forceFinishFocusSettleDown(command, result);
-              }
-            };
-
-          if (command.invalidatesRequestors()) {
-            myCmdTimestamp++;
-          }
-          revalidateFurtherRequestors();
-          if (forced) {
-            if (command.invalidatesRequestors()) {
-              myForcedCmdTimestamp++;
-            }
-            revalidateFurtherRequestors();
-          }
-
-          command.setForced(forced);
-          command.run().doWhenDone(new Runnable() {
-            @Override
-            public void run() {
-              UIUtil.invokeLaterIfNeeded(new Runnable() {
-                @Override
-                public void run() {
-                  resetCommand(command, false);
-                  result.setDone();
-                }
-              });
-            }
-          }).doWhenRejected(new Runnable() {
-            @Override
-            public void run() {
-              result.setRejected();
-              resetCommand(command, true);
-            }
-          }).doWhenProcessed(new Runnable() {
-            @Override
-            public void run() {
-              if (forced) {
-                myForcedFocusRequestsAlarm.addRequest(new SetLastEffectiveRunnable(), 250);
-              }
-            }
-          }).notify(focusTimeout);
-        }
-        else {
-          rejectCommand(command, result);
-        }
-      }
-    });
   }
 
   private void maybeRemoveFocusActivity() {
@@ -344,25 +370,13 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
   }
 
-  private boolean checkForRejectOrByPass(@NotNull FocusCommand cmd, final boolean forced, @NotNull ActionCallback result) {
+  private boolean checkForRejectOrByPass(@NotNull FocusCommand cmd, @NotNull ActionCallback result) {
     if (cmd.isExpired()) {
       rejectCommand(cmd, result);
       return true;
     }
 
     final FocusCommand lastRequest = getLastEffectiveForcedRequest();
-
-    if (!forced && !isUnforcedRequestAllowed()) {
-      if (cmd.equals(lastRequest)) {
-        resetCommand(cmd, false);
-        result.setDone();
-      }
-      else {
-        rejectCommand(cmd, result);
-      }
-      return true;
-    }
-
 
     if (lastRequest != null && lastRequest.dominatesOver(cmd)) {
       rejectCommand(cmd, result);
@@ -640,12 +654,12 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private boolean processFocusRevalidation() {
     ExpirableRunnable revalidator = myFocusRevalidator;
     myFocusRevalidator = null;
-    
+
     if (revalidator != null && !revalidator.isExpired()) {
       revalidator.run();
       return true;
     }
-    
+
     return false;
   }
 
@@ -661,7 +675,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         break;
       }
     }
-    
+
     maybeRemoveFocusActivity();
   }
 
@@ -795,14 +809,14 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
     myTypeAheadRequestors.add(done);
     done.notify(new TimedOutCallback(Registry.intValue("actionSystem.commandProcessingTimeout"),
-                                            "Typeahead request blocked",
-                                            new Exception() {
-                                              @Override
-                                              public String getMessage() {
-                                                return "Time: " + (System.currentTimeMillis() - currentTime);
-                                              }
-                                            },
-                                            true).doWhenProcessed(new Runnable() {
+                                     "Typeahead request blocked",
+                                     new Exception() {
+                                       @Override
+                                       public String getMessage() {
+                                         return "Time: " + (System.currentTimeMillis() - currentTime);
+                                       }
+                                     },
+                                     true).doWhenProcessed(new Runnable() {
       @Override
       public void run() {
         if (myTypeAheadRequestors.remove(done)) {
@@ -868,7 +882,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private static boolean isModalContextPopup(@NotNull JRootPane rootPane) {
     final JBPopup popup = (JBPopup)rootPane.getClientProperty(JBPopup.KEY);
     return popup != null && popup.isModalContext();
-  } 
+  }
 
   @NotNull
   @Override
@@ -906,7 +920,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
     }
   }
-  
+
   @Override
   public void revalidateFocus(@NotNull final ExpirableRunnable runnable) {
     SwingUtilities.invokeLater(new Runnable() {
@@ -940,7 +954,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       if (permOwner != null) {
         result = permOwner;
       }
-      
+
       if (UIUtil.isMeaninglessFocusOwner(result)) {
         result = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
       }
@@ -1012,6 +1026,39 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
     @NotNull
     @Override
+    public ActionCallback requestFocus(@NotNull Component c) {
+      final ActionCallback result = isExpired() ? ActionCallback.REJECTED : myManager.requestFocus(c);
+      result.doWhenProcessed(new Runnable() {
+        @Override
+        public void run() {
+          Disposer.dispose(FurtherRequestor.this);
+        }
+      });
+      return result;
+    }
+
+    @NotNull
+    @Override
+    public ActionCallback requestFocus(@NotNull FocusCommand command) {
+      return isExpired() ? ActionCallback.REJECTED : myManager.requestFocus(command);
+    }
+
+    @NotNull
+    @Override
+    public ActionCallback requestFocus(@NotNull Component c, @NotNull Throwable creationTrace) {
+      final ActionCallback result = isExpired() ? ActionCallback.REJECTED : myManager.requestFocus(c, creationTrace);
+      result.doWhenProcessed(new Runnable() {
+        @Override
+        public void run() {
+          Disposer.dispose(FurtherRequestor.this);
+        }
+      });
+      return result;
+    }
+
+    @NotNull
+    @Override
+    @Deprecated
     public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
       final ActionCallback result = isExpired() ? ActionCallback.REJECTED : myManager.requestFocus(c, forced);
       result.doWhenProcessed(new Runnable() {
@@ -1029,6 +1076,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
     @NotNull
     @Override
+    @Deprecated
     public ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced) {
       return isExpired() ? ActionCallback.REJECTED : myManager.requestFocus(command, forced);
     }
@@ -1042,7 +1090,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   class EdtAlarm {
     private final Set<EdtRunnable> myRequests = new HashSet<EdtRunnable>();
-    
+
     public void cancelAllRequests() {
       for (EdtRunnable each : myRequests) {
         each.expire();
@@ -1078,7 +1126,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       myCallbackOnActivation = null;
 
       if (cmd != null) {
-        requestFocus(cmd, true).notify(callback);
+        requestFocus(cmd).notify(callback);
       } else {
         focusLastFocusedComponent(ideFrame);
       }
@@ -1086,12 +1134,12 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
     @Override
     public void delayedApplicationDeactivated(IdeFrame ideFrame) {
-        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        Component parent = UIUtil.findUltimateParent(owner);
+      final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      Component parent = UIUtil.findUltimateParent(owner);
 
-        if (parent == ideFrame) {
-          myLastFocusedAtDeactivation.put(ideFrame, owner);
-        }
+      if (parent == ideFrame) {
+        myLastFocusedAtDeactivation.put(ideFrame, owner);
+      }
     }
 
     private void focusLastFocusedComponent(IdeFrame ideFrame) {
@@ -1108,7 +1156,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           if (policy != null) {
             policy.setNoDefaultComponent(true, FocusManagerImpl.this);
           }
-          requestFocus(c, false).doWhenProcessed(new Runnable() {
+          requestFocus(c).doWhenProcessed(new Runnable() {
             @Override
             public void run() {
               if (policy != null) {
@@ -1176,16 +1224,16 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           } else if (each instanceof JWindow) {
             toFocus = getFocusTargetFor(((JWindow)each).getRootPane());
             break;
-          }          
+          }
         }
       }
-    } 
-    
-    if (toFocus != null) {
-      return requestFocus(new FocusCommand.ByComponent(toFocus, new Exception()).setToInvalidateRequestors(false), forced);
     }
-    
-    
+
+    if (toFocus != null) {
+      return requestFocus(new FocusCommand.ByComponent(toFocus, new Exception()).setToInvalidateRequestors(false));
+    }
+
+
     return ActionCallback.DONE;
   }
 

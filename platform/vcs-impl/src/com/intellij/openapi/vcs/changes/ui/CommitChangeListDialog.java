@@ -315,7 +315,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              IdeFocusManager.findInstance().requestFocus(myBrowser.getViewer().getPreferredFocusedComponent(), true);
+              IdeFocusManager.findInstance().requestFocus(myBrowser.getViewer().getPreferredFocusedComponent());
             }
           });
         }

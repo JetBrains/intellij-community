@@ -215,7 +215,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       public void actionPerformed(AnActionEvent e) {
         if (getEditor1() != null && getEditor2() != null) {
           Editor focus = getEditor1().getContentComponent().hasFocus() ? getEditor2() : getEditor1();
-          IdeFocusManager.getGlobalInstance().requestFocus(focus.getContentComponent(), true);
+          IdeFocusManager.getGlobalInstance().requestFocus(focus.getContentComponent());
           focus.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
         }
       }
@@ -701,7 +701,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       if (isEditor1Focused || isEditor2Focused) {
         Editor e = isEditor2Focused ? getEditor2() : getEditor1();
         if (e != null) {
-          fm.requestFocus(e.getContentComponent(), true);
+          fm.requestFocus(e.getContentComponent());
         }
       }
 

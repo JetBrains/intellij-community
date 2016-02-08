@@ -71,7 +71,7 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
     if (!primary && !isPrimaryConsoleEnabled()) {
       PythonConsoleView console = getPydevConsoleView();
 
-      IdeFocusManager.findInstance().requestFocus(console.getConsoleEditor().getContentComponent(), true);
+      IdeFocusManager.findInstance().requestFocus(console.getConsoleEditor().getContentComponent());
     }
   }
 }

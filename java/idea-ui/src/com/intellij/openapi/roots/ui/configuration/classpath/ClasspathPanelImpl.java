@@ -649,7 +649,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         TableUtil.scrollSelectionToVisible(myEntryTable);
       }
     }
-    IdeFocusManager.getInstance(myState.getProject()).requestFocus(myEntryTable, true);
+    IdeFocusManager.getInstance(myState.getProject()).requestFocus(myEntryTable);
   }
 
   private int moveRow(final int row, final int increment) {

@@ -108,7 +108,7 @@ public class CopiesPanel {
     final Runnable focus = new Runnable() {
       @Override
       public void run() {
-        IdeFocusManager.getInstance(myProject).requestFocus(myRefreshLabel, true);
+        IdeFocusManager.getInstance(myProject).requestFocus(myRefreshLabel);
       }
     };
     final Runnable refreshView = new Runnable() {

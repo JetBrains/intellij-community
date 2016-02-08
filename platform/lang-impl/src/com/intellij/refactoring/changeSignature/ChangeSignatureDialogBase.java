@@ -560,7 +560,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
         if (root != null) {
           Component c = root.getFocusTraversalPolicy().getComponentAfter(root, mySignatureArea);
           if (c != null) {
-            IdeFocusManager.findInstance().requestFocus(c, true);
+            IdeFocusManager.findInstance().requestFocus(c);
           }
         }
       }

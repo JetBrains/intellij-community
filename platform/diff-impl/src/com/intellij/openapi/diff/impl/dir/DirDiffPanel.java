@@ -447,7 +447,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     focusManager.doWhenFocusSettlesDown(new Runnable() {
       @Override
       public void run() {
-        focusManager.requestFocus(myTable, true);
+        focusManager.requestFocus(myTable);
       }
     });
   }

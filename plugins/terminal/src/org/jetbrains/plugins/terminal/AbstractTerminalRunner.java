@@ -166,7 +166,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(defaultExecutor.getId());
     window.activate(new Runnable() {
       public void run() {
-        IdeFocusManager.getInstance(myProject).requestFocus(toFocus, true);
+        IdeFocusManager.getInstance(myProject).requestFocus(toFocus);
       }
     });
   }

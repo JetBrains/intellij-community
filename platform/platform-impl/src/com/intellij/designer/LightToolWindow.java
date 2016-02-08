@@ -140,7 +140,7 @@ public class LightToolWindow extends JPanel {
 
     addMouseListener(new MouseAdapter() {
       public void mouseReleased(final MouseEvent e) {
-        IdeFocusManager.getInstance(myProject).requestFocus(myFocusedComponent, true);
+        IdeFocusManager.getInstance(myProject).requestFocus(myFocusedComponent);
       }
     });
 

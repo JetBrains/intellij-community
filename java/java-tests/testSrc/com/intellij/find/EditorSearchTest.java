@@ -40,7 +40,7 @@ public class EditorSearchTest extends LightPlatformCodeInsightFixtureTestCase {
     assertEquals(key, getSearchTextComponent().getSelectedText());
     assertEquals(3, getSearchTextComponent().getCaretPosition());
     assertTrue(getEditorSearchComponent().hasMatches());
-    IdeFocusManager.findInstance().requestFocus(myFixture.getEditor().getContentComponent(), false);
+    IdeFocusManager.findInstance().requestFocus(myFixture.getEditor().getContentComponent());
     IdeEventQueue.getInstance().flushQueue();
 
     myFixture.performEditorAction("Find");

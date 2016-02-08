@@ -133,7 +133,7 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
 
     addMouseListener(new MouseAdapter() {
       public void mouseReleased(final MouseEvent e) {
-        IdeFocusManager.getInstance(project).requestFocus(myPropertyTable, true);
+        IdeFocusManager.getInstance(project).requestFocus(myPropertyTable);
       }
     });
   }

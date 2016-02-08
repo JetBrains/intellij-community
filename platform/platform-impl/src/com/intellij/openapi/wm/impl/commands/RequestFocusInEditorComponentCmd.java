@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
@@ -49,14 +50,14 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.commands.RequestFocusInEditorComponentCmd");
 
+  private final Throwable myCreationTrace;
+
   public RequestFocusInEditorComponentCmd(@NotNull final EditorsSplitters splitters, IdeFocusManager
                                           focusManager, final Runnable finishCallBack, boolean forced){
     super(finishCallBack);
 
-    boolean shouldLogFocuses = Registry.is("ide.log.focuses");
-    if (shouldLogFocuses) {
-      LOG.info(new Exception());
-    }
+    myCreationTrace = new Throwable();
+
     myComponent = null;
     final EditorWindow window = splitters.getCurrentWindow();
     if (window != null) {
@@ -104,7 +105,7 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
 
       if(myComponent != null){
         final boolean forced = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == null;
-        myFocusManager.requestFocus(myComponent, myForced || forced).notifyWhenDone(myDoneCallback).doWhenDone(new Runnable() {
+        myFocusManager.requestFocus(myComponent, myCreationTrace).notifyWhenDone(myDoneCallback).doWhenDone(new Runnable() {
           public void run() {
             if (SystemInfo.isLinux && Registry.is("suppress.focus.stealing")) return;
             // if owner is active window or it has active child window which isn't floating decorator then

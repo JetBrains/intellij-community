@@ -47,7 +47,7 @@ import java.util.List;
 public class FocusTracesDialog extends DialogWrapper {
   private final JBTable myRequestsTable;
   private final List<FocusRequestInfo> myRequests;
-  private static final String[] COLUMNS = {"Time", "Forced", "Component"};
+  private static final String[] COLUMNS = {"Time", "Component"};
   private final ConsoleView consoleView;
 
   public FocusTracesDialog(Project project, ArrayList<FocusRequestInfo> requests) {
@@ -57,7 +57,7 @@ public class FocusTracesDialog extends DialogWrapper {
     final String[][] data = new String[requests.size()][];
     for (int i = 0; i < data.length; i++) {
       final FocusRequestInfo r = requests.get(i);
-      data[i] = new String[]{r.getDate(), String.valueOf(r.isForced()), String.valueOf(r.getComponent())};
+      data[i] = new String[]{r.getDate(), String.valueOf(r.getComponent())};
     }
     setModal(false);
     myRequestsTable = new JBTable(new DefaultTableModel(data, COLUMNS) {

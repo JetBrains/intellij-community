@@ -35,12 +35,32 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
 
   @Override
   @NotNull
+  public ActionCallback requestFocus(@NotNull final Component c) {
+    return ActionCallback.DONE;
+  }
+
+  @Override
+  @NotNull
+  public ActionCallback requestFocus(@NotNull final FocusCommand command) {
+    return ActionCallback.DONE;
+  }
+
+  @NotNull
+  @Override
+  public ActionCallback requestFocus(@NotNull Component c, @NotNull Throwable creationTrace) {
+    return ActionCallback.DONE;
+  }
+
+  @Override
+  @NotNull
+  @Deprecated
   public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
     return ActionCallback.DONE;
   }
 
   @Override
   @NotNull
+  @Deprecated
   public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
     return ActionCallback.DONE;
   }

@@ -209,7 +209,7 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpointBase<?,?,?>> i
           compToFocus = myActionsPanel.getDefaultFocusComponent();
         }
         if (compToFocus != null) {
-          IdeFocusManager.findInstance().requestFocus(compToFocus, false);
+          IdeFocusManager.findInstance().requestFocus(compToFocus);
         }
       }
     });

@@ -214,7 +214,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
       myFrame.setState(JFrame.NORMAL);
       IdeFocusManager focusManager = IdeFocusManager.findInstance();
       JComponent target = focusManager.getFocusTargetFor(myFrame.getRootPane());
-      focusManager.requestFocus(target != null ? target : myFrame, true);
+      focusManager.requestFocus(target != null ? target : myFrame);
     }
   }
 

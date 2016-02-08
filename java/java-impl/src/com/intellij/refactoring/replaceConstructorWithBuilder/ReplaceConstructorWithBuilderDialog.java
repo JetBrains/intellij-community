@@ -169,7 +169,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
       public void actionPerformed(final ActionEvent e) {
         setEnabled(myCreateBuilderClassRadioButton.isSelected());
         IdeFocusManager.getInstance(myProject).requestFocus(
-          myCreateBuilderClassRadioButton.isSelected() ? myNewClassName : myExistentClassTF.getChildComponent(), true);
+          myCreateBuilderClassRadioButton.isSelected() ? myNewClassName : myExistentClassTF.getChildComponent());
         validateButtons();
       }
     };

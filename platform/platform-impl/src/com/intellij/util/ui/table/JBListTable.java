@@ -164,7 +164,7 @@ public abstract class JBListTable {
         @Override
         public void focusGained(FocusEvent e) {
           IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(p);
-          focusManager.requestFocus(getComponentToFocus(), true);
+          focusManager.requestFocus(getComponentToFocus());
         }
 
         private Component getComponentToFocus() {

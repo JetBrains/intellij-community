@@ -359,7 +359,7 @@ public class EditorSearchSession implements SearchSession,
 
   @Override
   public void close() {
-    IdeFocusManager.getInstance(getProject()).requestFocus(myEditor.getContentComponent(), false);
+    IdeFocusManager.getInstance(getProject()).requestFocus(myEditor.getContentComponent());
 
     myLivePreviewController.dispose();
     myEditor.setHeaderComponent(null);

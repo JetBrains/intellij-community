@@ -291,7 +291,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         if (!myList.isEmpty()) {
           myModel.setSelectedIndex(myList.size() - 1);
           if (requestFocus) {
-            IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
+            IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this);
           }
         }
       }
@@ -412,7 +412,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
         if (e.isPopupTrigger()) {
           myModel.setSelectedIndex(index);
-          IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
+          IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this);
           rightClick(index);
           e.consume();
         }
@@ -424,7 +424,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
           }
           else if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
             myModel.setSelectedIndex(index);
-            IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
+            IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this);
             doubleClick(index);
             e.consume();
           }

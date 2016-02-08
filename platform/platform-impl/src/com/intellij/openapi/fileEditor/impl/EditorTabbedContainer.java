@@ -359,7 +359,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
   public void requestFocus(boolean forced) {
     if (myTabs != null) {
-      IdeFocusManager.getInstance(myProject).requestFocus(myTabs.getComponent(), forced);
+      IdeFocusManager.getInstance(myProject).requestFocus(myTabs.getComponent());
     }
   }
 

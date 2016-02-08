@@ -92,12 +92,12 @@ public class CheckRegExpForm {
         super.addNotify();
         disposable = Disposer.newDisposable();
 
-        IdeFocusManager.getGlobalInstance().requestFocus(mySampleText, true);
+        IdeFocusManager.getGlobalInstance().requestFocus(mySampleText);
 
         new AnAction(){
           @Override
           public void actionPerformed(AnActionEvent e) {
-            IdeFocusManager.findInstance().requestFocus(myRegExp.getFocusTarget(), true);
+            IdeFocusManager.findInstance().requestFocus(myRegExp.getFocusTarget());
           }
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), mySampleText);
 

@@ -113,7 +113,7 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
               final Object value = list.getSelectedValue();
               if (value != null) {
                 configureEditor(getEditor(), value);
-                IdeFocusManager.getGlobalInstance().requestFocus(ComboBox.this, true);
+                IdeFocusManager.getGlobalInstance().requestFocus(ComboBox.this);
                 assert myJBPopup != null;
                 ComboBox.this.getUI().setPopupVisible(ComboBox.this, false);
                 myJBPopup.cancel();

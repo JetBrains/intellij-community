@@ -193,7 +193,7 @@ public class StatisticsPanel implements DataProvider {
       public void run() {
         // Select tab if focus was requested
         if (requestFocus) {
-          IdeFocusManager.getInstance(myProject).requestFocus(myStatisticsTableView, true);
+          IdeFocusManager.getInstance(myProject).requestFocus(myStatisticsTableView);
         }
 
         // Select proxy in table

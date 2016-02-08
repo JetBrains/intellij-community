@@ -999,7 +999,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
             if (toFocus != null) {
               if (isShowing() && isActive()) {
-                getFocusManager().requestFocus(toFocus, true);
+                getFocusManager().requestFocus(toFocus);
                 notifyFocused(wrapper);
               }
             } else {

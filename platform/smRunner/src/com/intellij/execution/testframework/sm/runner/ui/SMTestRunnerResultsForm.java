@@ -727,7 +727,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
             // Request focus if necessary
             if (requestFocus) {
               //myTreeView.requestFocusInWindow();
-              IdeFocusManager.getInstance(myProject).requestFocus(myTreeView, true);
+              IdeFocusManager.getInstance(myProject).requestFocus(myTreeView);
             }
           }
         });

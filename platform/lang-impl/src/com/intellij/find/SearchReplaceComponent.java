@@ -332,7 +332,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
                                                        close();
                                                      }
                                                      else {
-                                                       IdeFocusManager.getInstance(myProject).requestFocus(myTargetComponent, true);
+                                                       IdeFocusManager.getInstance(myProject).requestFocus(myTargetComponent);
                                                        addTextToRecent(mySearchTextComponent);
                                                      }
                                                    }

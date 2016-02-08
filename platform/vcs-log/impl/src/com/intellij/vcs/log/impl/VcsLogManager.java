@@ -112,7 +112,7 @@ public class VcsLogManager implements Disposable {
     // todo fix selection
     final VcsLogGraphTable graphTable = myUi.getTable();
     if (graphTable.getRowCount() > 0) {
-      IdeFocusManager.getInstance(myProject).requestFocus(graphTable, true).doWhenProcessed(new Runnable() {
+      IdeFocusManager.getInstance(myProject).requestFocus(graphTable).doWhenProcessed(new Runnable() {
         @Override
         public void run() {
           graphTable.setRowSelectionInterval(0, 0);

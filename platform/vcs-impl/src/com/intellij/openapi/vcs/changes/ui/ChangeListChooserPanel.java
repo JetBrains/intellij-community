@@ -106,7 +106,7 @@ public class ChangeListChooserPanel extends JPanel {
       @Override
       public void focusGained(FocusEvent e) {
         if (myRbNew.isSelected()) {
-          IdeFocusManager.getInstance(myProject).requestFocus(myNewListPanel.getPreferredFocusedComponent(), true);
+          IdeFocusManager.getInstance(myProject).requestFocus(myNewListPanel.getPreferredFocusedComponent());
         }
       }
     });

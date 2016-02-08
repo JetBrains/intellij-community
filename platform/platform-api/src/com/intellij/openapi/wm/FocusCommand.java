@@ -38,7 +38,7 @@ import java.util.Arrays;
  */
 public abstract class FocusCommand extends ActiveRunnable implements Expirable {
   protected Component myDominationComponent;
-  private Throwable myAllocation;
+  protected Throwable myAllocation;
   private ActionCallback myCallback;
   private boolean myInvalidatesPendingFurtherRequestors = true;
   private Expirable myExpirable;
@@ -57,6 +57,10 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
   }
 
   private boolean myForced;
+
+  protected FocusCommand(Throwable allocation) {
+    myAllocation = allocation;
+  }
 
   protected FocusCommand() {
     saveAllocation();
@@ -161,7 +165,6 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
 
   public static class ByComponent extends FocusCommand {
     private Component myToFocus;
-    private Throwable myAllocation;
 
     public ByComponent(@Nullable Component toFocus, @NotNull Throwable allocation) {
       this(toFocus, toFocus, allocation);

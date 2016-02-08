@@ -34,12 +34,35 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
   }
 
   @NotNull
+  @Override
+  public ActionCallback requestFocus(@NotNull Component c) {
+    c.requestFocus();
+    return ActionCallback.DONE;
+  }
+
+  @NotNull
+  @Override
+  public ActionCallback requestFocus(@NotNull FocusCommand command) {
+    return command.run();
+  }
+
+
+  @NotNull
+  @Override
+  public ActionCallback requestFocus(@NotNull Component c, @NotNull Throwable creationTrace) {
+    return requestFocus(c);
+  }
+
+  @NotNull
+  @Override
   public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
     c.requestFocus();
     return ActionCallback.DONE;
   }
 
   @NotNull
+  @Override
+  @Deprecated
   public ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced) {
     return command.run();
   }

@@ -331,7 +331,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       public void stateChanged(ChangeEvent e) {
         final JComponent c = getPreferredFocusedComponent();
         if (c != null) {
-          IdeFocusManager.findInstanceByComponent(myContentPane).requestFocus(c, true);
+          IdeFocusManager.findInstanceByComponent(myContentPane).requestFocus(c);
         }
       }
     });
