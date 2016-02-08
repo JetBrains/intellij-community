@@ -247,21 +247,19 @@ def getProperties(String home, String buildNumber) {
           }
 
           if (enableBlaze) {
-            dir("blaze") {
-              dir("lib") {
-                jar("blaze.jar") {
-                  module("blaze")
-                }
-                fileset(dir: "$home/../vendor/google3/blaze/lib") { include(name: "*.jar") }
-                fileset(dir: "$home/../vendor/google3/blaze/lib/google3_deps") { include(name: "google3_deps_repackaged.jar") }
-              }
-            }
-
             dir("aswb") {
               dir("lib") {
                 jar("aswb.jar") {
                   module("aswb")
                 }
+                jar("blaze-api.jar") {
+                  module("blaze-api")
+                }
+                jar("blaze-impl.jar") {
+                  module("blaze-impl")
+                }
+                fileset(dir: "$home/../vendor/google3/blaze/blaze-impl/lib") { include(name: "*.jar") }
+                fileset(dir: "$home/../vendor/google3/blaze/blaze-impl/lib/google3_deps") { include(name: "google3_deps_repackaged.jar") }
               }
             }
           }
