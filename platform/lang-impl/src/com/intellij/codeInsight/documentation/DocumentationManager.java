@@ -41,7 +41,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.preview.PreviewManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -1172,14 +1171,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
 
       final Ref<String> result = new Ref<String>();
-      ProgressIndicatorUtils.runInReadActionWithWriteActionPriorityWithRetries(new Runnable() {
+      QuickDocUtil.runInReadActionWithWriteActionPriorityWithRetries(new Runnable() {
           @Override
           public void run() {
             final SmartPsiElementPointer originalElement = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
             String doc = provider.generateDoc(myElement, originalElement != null ? originalElement.getElement() : null);
             result.set(doc);
           }
-        }, DOC_GENERATION_TIMEOUT_MILLISECONDS, DOC_GENERATION_PAUSE_MILLISECONDS);
+        }, DOC_GENERATION_TIMEOUT_MILLISECONDS, DOC_GENERATION_PAUSE_MILLISECONDS, null);
       return result.get();
     }
 
