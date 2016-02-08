@@ -215,7 +215,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         if (myTargetEditor.isShowing()) {
           //repaint and force move focus to target editor component
           GitPushTargetPanel.this.repaint();
-          IdeFocusManager.getInstance(myProject).requestFocus(myTargetEditor);
+          IdeFocusManager.getInstance(myProject).requestFocus(myTargetEditor, true);
         }
       }
     };

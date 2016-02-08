@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-import static com.sun.tools.doclint.Entity.not;
-
 /**
  * Basic interface for requesting sending focus commands to <code>IdeFocusManager</code>
  */
@@ -31,27 +29,8 @@ public interface FocusRequestor extends Disposable {
   /**
    * Requests focus on a component
    * @param c - component to request focus to
-   * @return action callback that either notifies when the focus was obtained or focus request was dropped
-   */
-  @NotNull
-  ActionCallback requestFocus(@NotNull Component c);
-
-  /**
-   * Runs a request focus command, actual focus request is defined by the user in the command itself
-   * @return action callback that either notifies when the focus was obtained or focus request was dropped
-   */
-  @NotNull
-  ActionCallback requestFocus(@NotNull FocusCommand command);
-
-  @NotNull
-  ActionCallback requestFocus(@NotNull Component c, @NotNull Throwable creationTrace);
-
-  /**
-   * Requests focus on a component
-   * @param c - component to request focus to
    * @param forced - if true - focus request is explicit, must be fulfilled, if false - can be dropped
    * @return action callback that either notifies when the focus was obtained or focus request was dropped
-   * @Deprecated
    */
   @NotNull
   ActionCallback requestFocus(@NotNull Component c, boolean forced);
@@ -60,7 +39,6 @@ public interface FocusRequestor extends Disposable {
    * Runs a request focus command, actual focus request is defined by the user in the command itself
    * @param forced - if true - focus request is explicit, must be fulfilled, if false - can be dropped
    * @return action callback that either notifies when the focus was obtained or focus request was dropped
-   * * @Deprecated
    */
   @NotNull
   ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced);

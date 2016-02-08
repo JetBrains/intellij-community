@@ -250,7 +250,7 @@ public class DebuggerUIUtil {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        IdeFocusManager.findInstance().requestFocus(mainPanel);
+        IdeFocusManager.findInstance().requestFocus(mainPanel, true);
       }
     });
   }

@@ -137,7 +137,7 @@ public class IntersectingLocalChangesPanel {
     ContentsUtil.addContent(contentManager, content, true);
     toolWindow.activate(new Runnable() {
       public void run() {
-        IdeFocusManager.getInstance(project).requestFocus(component.getPrefferedFocusComponent());
+        IdeFocusManager.getInstance(project).requestFocus(component.getPrefferedFocusComponent(), true);
       }
     });
 

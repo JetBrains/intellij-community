@@ -120,11 +120,11 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
         toggleRadioEnablement();
         final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
         if (useExistingClass()) {
-          focusManager.requestFocus(existingClassField);
+          focusManager.requestFocus(existingClassField, true);
         } else if (myCreateInnerClassRadioButton.isSelected()) {
-          focusManager.requestFocus(myInnerClassNameTextField);
+          focusManager.requestFocus(myInnerClassNameTextField, true);
         } else {
-          focusManager.requestFocus(classNameField);
+          focusManager.requestFocus(classNameField, true);
         }
       }
     };

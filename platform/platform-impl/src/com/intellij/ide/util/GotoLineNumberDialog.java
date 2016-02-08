@@ -54,7 +54,7 @@ public class GotoLineNumberDialog extends DialogWrapper {
     myEditor.getCaretModel().moveToLogicalPosition(position);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     myEditor.getSelectionModel().removeSelection();
-    IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent());
+    IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true);
     super.doOKAction();
   }
 

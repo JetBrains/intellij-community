@@ -1835,7 +1835,7 @@ public abstract class DialogWrapper {
       ValidationInfo info = doValidate();
       if (info != null) {
         if (info.component != null && info.component.isVisible()) {
-          IdeFocusManager.getInstance(null).requestFocus(info.component);
+          IdeFocusManager.getInstance(null).requestFocus(info.component, true);
         }
         DialogEarthquakeShaker.shake((JDialog)getPeer().getWindow());
         startTrackingValidation();

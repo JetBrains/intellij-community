@@ -717,7 +717,7 @@ public class Switcher extends AnAction implements DumbAware {
               if (selectedList.getModel().getSize() == 0) {
                 focusTarget = selectedList == files ? toolWindows : files;
               }
-              focusManager.requestFocus(focusTarget);
+              focusManager.requestFocus(focusTarget, true);
             }
           }, 300);
           if (jList.getModel().getSize() == 1) {
@@ -803,7 +803,7 @@ public class Switcher extends AnAction implements DumbAware {
           files.setSelectedIndex(index);
           files.ensureIndexIsVisible(index);
           toolWindows.getSelectionModel().clearSelection();
-          IdeFocusManager.findInstanceByComponent(files).requestFocus(files);
+          IdeFocusManager.findInstanceByComponent(files).requestFocus(files, true);
         }
       }
     }
@@ -820,7 +820,7 @@ public class Switcher extends AnAction implements DumbAware {
         if (toolWindows.getModel().getSize() > 0) {
           toolWindows.setSelectedIndex(Math.min(files.getSelectedIndex(), toolWindows.getModel().getSize() - 1));
           files.getSelectionModel().clearSelection();
-          IdeFocusManager.findInstanceByComponent(toolWindows).requestFocus(toolWindows);
+          IdeFocusManager.findInstanceByComponent(toolWindows).requestFocus(toolWindows, true);
         }
       }
     }
@@ -839,7 +839,7 @@ public class Switcher extends AnAction implements DumbAware {
       list.setSelectedIndex(index);
       list.ensureIndexIsVisible(index);
       if (selected != list) {
-        IdeFocusManager.findInstanceByComponent(list).requestFocus(list);
+        IdeFocusManager.findInstanceByComponent(list).requestFocus(list, true);
       }
     }
 
@@ -1081,7 +1081,7 @@ public class Switcher extends AnAction implements DumbAware {
       protected void selectElement(final Object element, String selectedText) {
         if (element instanceof FileInfo) {
           if (!toolWindows.isSelectionEmpty()) toolWindows.clearSelection();
-          IdeFocusManager.findInstanceByComponent(files).requestFocus(files).doWhenDone(new Runnable() {
+          IdeFocusManager.findInstanceByComponent(files).requestFocus(files, true).doWhenDone(new Runnable() {
             @Override
             public void run() {
               files.setSelectedValue(element, true);
@@ -1090,7 +1090,7 @@ public class Switcher extends AnAction implements DumbAware {
         }
         else {
           if (!files.isSelectionEmpty()) files.clearSelection();
-          IdeFocusManager.findInstanceByComponent(toolWindows).requestFocus(toolWindows).doWhenDone(new Runnable() {
+          IdeFocusManager.findInstanceByComponent(toolWindows).requestFocus(toolWindows, true).doWhenDone(new Runnable() {
             @Override
             public void run() {
               toolWindows.setSelectedValue(element, true);

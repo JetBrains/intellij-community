@@ -145,7 +145,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor {
         public void actionPerformed(AnActionEvent e) {
           setFactory(fragmentFactory);
           setText(getText());
-          IdeFocusManager.getInstance(getProject()).requestFocus(DebuggerEditorImpl.this);
+          IdeFocusManager.getInstance(getProject()).requestFocus(DebuggerEditorImpl.this, true);
         }
       });
     }

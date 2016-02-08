@@ -149,7 +149,7 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
         Editor e = ((TextEditor)editor).getEditor();
         unfoldCurrentLine(e);
         if (focusEditor) {
-          IdeFocusManager.getInstance(myProject).requestFocus(e.getContentComponent());
+          IdeFocusManager.getInstance(myProject).requestFocus(e.getContentComponent(), true);
         }
       }
     }

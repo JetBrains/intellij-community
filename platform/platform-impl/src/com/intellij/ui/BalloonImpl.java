@@ -479,7 +479,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         public void run() {
           IdeEventQueue.getInstance().disableInputMethods(BalloonImpl.this);
           originalFocusOwner.set(myFocusManager.getFocusOwner());
-          myFocusManager.requestFocus(glassPane.getProxyComponent()).notify(proxyFocusRequest.get());
+          myFocusManager.requestFocus(glassPane.getProxyComponent(), true).notify(proxyFocusRequest.get());
           focusRequestor.set(myFocusManager.getFurtherRequestor());
         }
       });
@@ -559,7 +559,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       proxyFocusRequest.get().doWhenDone(new Runnable() {
         @Override
         public void run() {
-          myFocusManager.requestFocus(originalFocusOwner.get());
+          myFocusManager.requestFocus(originalFocusOwner.get(), true);
         }
       });
     }

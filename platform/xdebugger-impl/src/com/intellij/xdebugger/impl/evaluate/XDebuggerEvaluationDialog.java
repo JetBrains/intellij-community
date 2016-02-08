@@ -123,7 +123,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        IdeFocusManager.getInstance(mySession.getProject()).requestFocus(myTreePanel.getTree());
+        IdeFocusManager.getInstance(mySession.getProject()).requestFocus(myTreePanel.getTree(), true);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)), getRootPane(),
                                 myDisposable);

@@ -444,7 +444,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         // this replaces focus request in JTable.processKeyBinding
         final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(this);
         focusManager.setTypeaheadEnabled(false);
-        focusManager.requestFocus(editorComp).doWhenProcessed(new Runnable() {
+        focusManager.requestFocus(editorComp, true).doWhenProcessed(new Runnable() {
           @Override
           public void run() {
             focusManager.setTypeaheadEnabled(true);

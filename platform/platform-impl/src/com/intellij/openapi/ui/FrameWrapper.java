@@ -148,7 +148,7 @@ public class FrameWrapper implements Disposable, DataProvider {
         }
 
         if (toFocus != null) {
-          fm.requestFocus(toFocus).notify(myFocusedCallback);
+          fm.requestFocus(toFocus, true).notify(myFocusedCallback);
         } else {
           myFocusedCallback.setRejected();
         }

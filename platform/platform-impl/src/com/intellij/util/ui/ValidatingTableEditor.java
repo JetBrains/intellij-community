@@ -285,7 +285,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
     if (getTableModel().getColumnInfos()[1].isCellEditable(items.get(row))) {
       myTable.editCellAt(row, 1);
-      IdeFocusManager.findInstanceByComponent(myContentPane).requestFocus(myTable.getEditorComponent());
+      IdeFocusManager.findInstanceByComponent(myContentPane).requestFocus(myTable.getEditorComponent(), true);
     }
     updateMessage(-1, null);
   }

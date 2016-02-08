@@ -501,7 +501,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     myAutoScrollToSourceHandler.install(newPane.myTree);
 
-    IdeFocusManager.getInstance(myProject).requestFocus(newPane.getComponentToFocus());
+    IdeFocusManager.getInstance(myProject).requestFocus(newPane.getComponentToFocus(), false);
 
     newPane.restoreExpandedPaths();
     if (selectedPsiElement != null) {

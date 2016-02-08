@@ -134,7 +134,7 @@ public class StudyCheckAction extends DumbAwareAction {
           }
           runAction.run(project);
           ApplicationManager.getApplication().invokeLater(
-            () -> IdeFocusManager.getInstance(project).requestFocus(studyState.getEditor().getComponent()));
+            () -> IdeFocusManager.getInstance(project).requestFocus(studyState.getEditor().getComponent(), true));
 
           final StudyTestRunner testRunner = StudyUtils.getTestRunner(task, taskDir);
           Process testProcess = null;
@@ -288,7 +288,7 @@ public class StudyCheckAction extends DumbAwareAction {
     }
     final Editor editorToNavigate = editor;
     ApplicationManager.getApplication().invokeLater(
-      () -> IdeFocusManager.getInstance(project).requestFocus(editorToNavigate.getContentComponent()));
+      () -> IdeFocusManager.getInstance(project).requestFocus(editorToNavigate.getContentComponent(), true));
 
     StudyNavigator.navigateToFirstFailedAnswerPlaceholder(editor, taskFileToNavigate);
   }

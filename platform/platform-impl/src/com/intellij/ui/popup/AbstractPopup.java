@@ -989,7 +989,7 @@ public class AbstractPopup implements JBPopup {
 
                     return ActionCallback.DONE;
                   }
-                }).notify(result).doWhenProcessed(new Runnable() {
+                }, true).notify(result).doWhenProcessed(new Runnable() {
                   @Override
                   public void run() {
                     removeActivity();
@@ -1003,7 +1003,7 @@ public class AbstractPopup implements JBPopup {
 
           return result;
         }
-      }).doWhenRejected(new Runnable() {
+      }, true).doWhenRejected(new Runnable() {
         @Override
         public void run() {
           afterShow.run();
@@ -1025,7 +1025,7 @@ public class AbstractPopup implements JBPopup {
               @Override
               public void run() {
                 if (isFocused()) {
-                  IdeFocusManager.getInstance(myProject).requestFocus(prevOwner);
+                  IdeFocusManager.getInstance(myProject).requestFocus(prevOwner, false);
                 }
               }
             }, Registry.intValue("actionSystem.xWindow.remove.focus.from.nonFocusable.popups.delay"));
@@ -1204,7 +1204,7 @@ public class AbstractPopup implements JBPopup {
         _requestFocus();
         return ActionCallback.DONE;
       }
-    });
+    }, true);
 
     return true;
   }

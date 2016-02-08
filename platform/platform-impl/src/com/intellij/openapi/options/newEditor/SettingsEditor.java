@@ -277,7 +277,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
           public void run() {
             JComponent component = myEditor.getPreferredFocusedComponent();
             if (component != null) {
-              IdeFocusManager.findInstanceByComponent(component).requestFocus(component);
+              IdeFocusManager.findInstanceByComponent(component).requestFocus(component, true);
             }
           }
         });

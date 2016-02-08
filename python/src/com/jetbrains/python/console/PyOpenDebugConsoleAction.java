@@ -60,7 +60,7 @@ public class PyOpenDebugConsoleAction extends AnAction implements DumbAware {
         @Override
         public void consume(PythonDebugLanguageConsoleView view) {
           view.enableConsole(false);
-          IdeFocusManager.getInstance(project).requestFocus(view.getPydevConsoleView().getComponent());
+          IdeFocusManager.getInstance(project).requestFocus(view.getPydevConsoleView().getComponent(), true);
         }
       });
     }

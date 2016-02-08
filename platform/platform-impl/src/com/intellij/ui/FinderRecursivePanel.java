@@ -227,7 +227,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   }
 
   private void handleGotoPrevious() {
-    IdeFocusManager.getInstance(myProject).requestFocus(myList);
+    IdeFocusManager.getInstance(myProject).requestFocus(myList, true);
   }
 
   private void handleGotoNext() {
@@ -237,7 +237,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
         updateRightComponent(true);
       }
     }
-    IdeFocusManager.getInstance(myProject).requestFocus(myList);
+    IdeFocusManager.getInstance(myProject).requestFocus(myList, true);
   }
 
   private void installListActions(JBList list) {
@@ -459,7 +459,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
       }
     }
 
-    IdeFocusManager.getInstance(myProject).requestFocus(panel.myList);
+    IdeFocusManager.getInstance(myProject).requestFocus(panel.myList, true);
 
     myUpdateSelectedPathModeActive.set(false);
   }

@@ -530,7 +530,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     boolean enabledFocus = getFocusManager().isFocusTransferEnabled();
     if (focused || requestFocus) {
       if (enabledFocus) {
-        return getFocusManager().requestFocus(myFocusProxy).doWhenProcessed(new Runnable() {
+        return getFocusManager().requestFocus(myFocusProxy, true).doWhenProcessed(new Runnable() {
           @Override
           public void run() {
             selection.run().notify(result);
@@ -646,7 +646,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       public ActionCallback run() {
         return doRequestFocus(toSelect);
       }
-    });
+    }, forced);
   }
 
   private IdeFocusManager getFocusManager() {

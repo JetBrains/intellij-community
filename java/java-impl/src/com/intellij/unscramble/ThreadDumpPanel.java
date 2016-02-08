@@ -383,7 +383,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     public void setSelected(AnActionEvent e, boolean state) {
       myFilterPanel.setVisible(state);
       if (state) {
-        IdeFocusManager.getInstance(getEventProject(e)).requestFocus(myFilterField);
+        IdeFocusManager.getInstance(getEventProject(e)).requestFocus(myFilterField, true);
         myFilterField.selectText();
       }
       updateThreadList();

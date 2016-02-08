@@ -808,7 +808,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myBalloon.show(showPoint);
     initSearchActions(myBalloon, myPopupField);
     IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
-    focusManager.requestFocus(editor);
+    focusManager.requestFocus(editor, true);
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
   }
 

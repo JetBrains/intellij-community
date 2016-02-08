@@ -97,7 +97,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (myImportFrom.isSelected()) {
-          IdeFocusManager.getInstance(context.getProject()).requestFocus(myList);
+          IdeFocusManager.getInstance(context.getProject()).requestFocus(myList, false);
         }
         updateSteps();
       }

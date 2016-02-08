@@ -452,7 +452,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       @Override
       public void run() {
         final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(component);
-        focusManager.requestFocus(component);
+        focusManager.requestFocus(component, false);
       }
     });
   }

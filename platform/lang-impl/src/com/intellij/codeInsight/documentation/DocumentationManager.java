@@ -144,7 +144,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   @Override
   protected void restorePopupBehavior() {
     if (myPreviouslyFocused != null) {
-      IdeFocusManager.getInstance(myProject).requestFocus(myPreviouslyFocused);
+      IdeFocusManager.getInstance(myProject).requestFocus(myPreviouslyFocused, true);
     }
     super.restorePopupBehavior();
     updateComponent();
@@ -230,7 +230,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     Component toFocus = myPreviouslyFocused;
     hint.cancel();
     if (toFocus != null) {
-      IdeFocusManager.getInstance(myProject).requestFocus(toFocus);
+      IdeFocusManager.getInstance(myProject).requestFocus(toFocus, true);
     }
   }
 
@@ -422,7 +422,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           // focus toolwindow on the second actionPerformed
           boolean focus = requestFocus || CommandProcessor.getInstance().getCurrentCommand() != null;
           if (preferredFocusableComponent != null && focus) {
-            IdeFocusManager.getInstance(myProject).requestFocus(preferredFocusableComponent);
+            IdeFocusManager.getInstance(myProject).requestFocus(preferredFocusableComponent, true);
           }
         }
         if (!sameElement || !component.isUpToDate()) {

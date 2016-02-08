@@ -241,13 +241,13 @@ class WrapReturnValueDialog extends RefactoringDialog {
     UIUtil.setEnabled(myCreateInnerPanel, myCreateInnerClassButton.isSelected(), true);
     final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
     if (useExistingClassButton.isSelected()) {
-      focusManager.requestFocus(existingClassField);
+      focusManager.requestFocus(existingClassField, true);
     }
     else if (myCreateInnerClassButton.isSelected()) {
-      focusManager.requestFocus(myInnerClassNameTextField);
+      focusManager.requestFocus(myInnerClassNameTextField, true);
     }
     else {
-      focusManager.requestFocus(classNameField);
+      focusManager.requestFocus(classNameField, true);
     }
     validateButtons();
   }
