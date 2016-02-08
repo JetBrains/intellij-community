@@ -18,7 +18,6 @@ package com.intellij.codeInspection.java18api;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -183,7 +182,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
 
   private static void analyzeCorrespondenceOfPutAndGet(@NotNull PsiElement adjustedElseBranch,
                                                        @Nullable PsiElement adjustedThenBranch,
-                                                       @NotNull PsiExpression containsQualifier,
+                                                       @Nullable PsiExpression containsQualifier,
                                                        @NotNull PsiExpression containsKey,
                                                        @NotNull ProblemsHolder holder,
                                                        @NotNull PsiElement context) {
