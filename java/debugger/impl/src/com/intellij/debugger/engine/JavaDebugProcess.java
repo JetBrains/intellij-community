@@ -127,11 +127,13 @@ public class JavaDebugProcess extends XDebugProcess {
                       threadProxy != null && ((LocatableEvent)second).thread() == threadProxy.getThreadReference()) {
                     ((XDebugSessionImpl)getSession()).breakpointReachedNoProcessing(xBreakpoint, newSuspendContext);
                     unsetPausedIfNeeded(newContext);
+                    DebuggerUtilsEx.checkSource(newContext);
                     return;
                   }
                 }
                 getSession().positionReached(newSuspendContext);
                 unsetPausedIfNeeded(newContext);
+                DebuggerUtilsEx.checkSource(newContext);
               }
             });
           }

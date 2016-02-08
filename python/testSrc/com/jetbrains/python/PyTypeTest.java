@@ -1025,6 +1025,21 @@ public class PyTypeTest extends PyTestCase {
                     "    expr = foo\n");
   }
 
+  // PY-18427
+  public void testConditionalTypeInDocstring() {
+    doTest("Union[str, int]",
+           "if something:\n" +
+           "    Type = int\n" +
+           "else:\n" +
+           "    Type = str\n" +
+           "\n" +
+           "def f(expr):\n" +
+           "    '''\n" +
+           "    :type expr: Type\n" +
+           "    '''\n" +
+           "    pass\n");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

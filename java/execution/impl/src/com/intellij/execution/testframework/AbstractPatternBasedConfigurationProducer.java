@@ -218,7 +218,7 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
     for (PsiElement psiClass : processor.getCollection()) {
       classes.add(getQName(psiClass));
     }
-    return true;
+    return classes.size() > 1;
   }
 
   private static PsiElement[] collectLocationElements(LinkedHashSet<String> classes, DataContext dataContext) {

@@ -52,7 +52,7 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
-    setTitle(generators.length == 0 ? "Create Project" : "Select Project Type");
+    setTitle(generators.length == 0 ? "Create Project" : "New Project");
     final DefaultActionGroup root = createRootStep();
 
     final Pair<JPanel, JBList> panel = FlatWelcomeFrame.createActionGroupPanel(root, getRootPane(), null);

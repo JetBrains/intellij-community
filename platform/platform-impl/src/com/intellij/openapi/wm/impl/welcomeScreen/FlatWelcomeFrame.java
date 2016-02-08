@@ -75,6 +75,7 @@ import java.util.List;
  */
 public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
+  private static final String WELCOME_TITLE = "Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName();
   private final BalloonLayout myBalloonLayout;
   private final FlatWelcomeScreen myScreen;
 
@@ -100,7 +101,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     glassPane.setVisible(false);
     //setUndecorated(true);
     setContentPane(myScreen.getWelcomePanel());
-    setTitle("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName());
+    setTitle(WELCOME_TITLE);
     AppUIUtil.updateWindowIcon(this);
     final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : 777;
     setSize(JBUI.size(width, 460));
@@ -359,6 +360,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         final Runnable onDone = new Runnable() {
           @Override
           public void run() {
+            setTitle("New Project");
             final JBList list = panel.second;
             ScrollingUtil.ensureSelectionExists(list);
             final ListSelectionListener[] listeners =
@@ -389,6 +391,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         @Override
         public void run() {
           mySlidingPanel.getRootPane().setDefaultButton(null);
+          setTitle(WELCOME_TITLE);
         }
       });
     }

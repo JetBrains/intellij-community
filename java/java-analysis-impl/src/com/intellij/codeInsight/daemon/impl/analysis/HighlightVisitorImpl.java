@@ -93,7 +93,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     private static final boolean CHECK_ELEMENT_LEVEL = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
   }
 
-  private HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
+  protected HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
     myResolveHelper = resolveHelper;
   }
 
@@ -1605,5 +1605,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Nullable
   private HighlightInfo checkFeature(@NotNull PsiElement element, @NotNull Feature feature) {
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
+  }
+  
+  protected void prepareToRunAsInspection(final HighlightInfoHolder holder) {
+    myHolder = holder;
+
+    final PsiFile file = holder.getContextFile();
+    myFile = file;
+    myLanguageLevel = PsiUtil.getLanguageLevel(file);
+    myJavaSdkVersion = ObjectUtils.notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), 
+                                           JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
+
   }
 }

@@ -94,20 +94,23 @@ class JrtHandler extends ArchiveHandler {
 
       private void process(Path entry, BasicFileAttributes attrs) throws IOException {
         int pathLength = entry.getNameCount();
-        if (pathLength > 2) {
-          Path relativePath = entry.subpath(2, pathLength);
-          EntryInfo parent = map.get(pathLength > 3 ? relativePath.getParent().toString() : StringUtilRt.EMPTY_STRING);
-          if (parent == null) throw new IOException("Out of order: " + entry);
-          String path = relativePath.toString(), shortName = entry.getFileName().toString();
-          long length = attrs.size();
-          long modified = attrs.lastModifiedTime().toMillis();
-          if (attrs.isDirectory()) {
-            map.put(path, new EntryInfo(shortName, true, length, modified, parent));
-          }
-          else {
-            String module = myInterner.intern(entry.getName(1).toString());
-            map.put(path, new JrtEntryInfo(shortName, module, length, modified, parent));
-          }
+        if (pathLength <= 2) return;
+
+        Path relativePath = entry.subpath(2, pathLength);
+        String path = relativePath.toString(), shortName = entry.getFileName().toString();
+        if (map.containsKey(path) || "module-info.class".equals(shortName)) return;
+
+        EntryInfo parent = map.get(pathLength > 3 ? relativePath.getParent().toString() : StringUtilRt.EMPTY_STRING);
+        if (parent == null) throw new IOException("Out of order: " + entry);
+
+        long length = attrs.size();
+        long modified = attrs.lastModifiedTime().toMillis();
+        if (attrs.isDirectory()) {
+          map.put(path, new EntryInfo(shortName, true, length, modified, parent));
+        }
+        else {
+          String module = myInterner.intern(entry.getName(1).toString());
+          map.put(path, new JrtEntryInfo(shortName, module, length, modified, parent));
         }
       }
     });

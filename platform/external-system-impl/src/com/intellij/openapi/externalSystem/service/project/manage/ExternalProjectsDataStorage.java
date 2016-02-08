@@ -35,6 +35,7 @@ import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -67,6 +68,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   @NotNull
   private final Project myProject;
+  private final Alarm myAlarm;
   @NotNull
   private final Map<Pair<ProjectSystemId, File>, InternalExternalProjectInfo> myExternalRootProjects =
     ContainerUtil.newConcurrentMap(ExternalSystemUtil.HASHING_STRATEGY);
@@ -80,6 +82,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   public ExternalProjectsDataStorage(@NotNull Project project) {
     myProject = project;
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
   }
 
   public synchronized void load() {
@@ -118,12 +121,8 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   public synchronized void save() {
     if (!changed.compareAndSet(true, false)) return;
 
-    try {
-      doSave(myProject, myExternalRootProjects.values());
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-    }
+    myAlarm.cancelAllRequests();
+    myAlarm.addRequest(new MySaveTask(myProject, myExternalRootProjects.values()), 0);
   }
 
   synchronized void update(@NotNull ExternalProjectInfo externalProjectInfo) {
@@ -488,6 +487,32 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
     public ModuleState(Collection<String> values) {
       set.addAll(values);
+    }
+  }
+
+  private static class MySaveTask implements Runnable {
+    private Project myProject;
+    private Collection<InternalExternalProjectInfo> myExternalProjects;
+
+    public MySaveTask(Project project, Collection<InternalExternalProjectInfo> externalProjects) {
+      myProject = project;
+      myExternalProjects = ContainerUtil.map(externalProjects, new Function<InternalExternalProjectInfo, InternalExternalProjectInfo>() {
+        @Override
+        public InternalExternalProjectInfo fun(
+          InternalExternalProjectInfo info) {
+          return (InternalExternalProjectInfo)info.copy();
+        }
+      });
+    }
+
+    @Override
+    public void run() {
+      try {
+        doSave(myProject, myExternalProjects);
+      }
+      catch (IOException e) {
+        LOG.debug(e);
+      }
     }
   }
 }

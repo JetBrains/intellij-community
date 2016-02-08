@@ -27,7 +27,8 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
@@ -70,6 +71,8 @@ public class QuickDocOnMouseOverManager {
 
   private           boolean             myEnabled;
   private           boolean             myApplicationActive;
+  
+  private MyShowQuickDocRequest myCurrentRequest; // accessed only in EDT
 
   public QuickDocOnMouseOverManager(@NotNull Application application) {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, application);
@@ -238,8 +241,9 @@ public class QuickDocOnMouseOverManager {
     myActiveElements.put(editor, elementUnderMouse);
 
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(new MyShowQuickDocRequest(documentationManager, editor, mouseOffset, elementUnderMouse), 
-                       EditorSettingsExternalizable.getInstance().getQuickDocOnMouseOverElementDelayMillis());
+    if (myCurrentRequest != null) myCurrentRequest.cancel();
+    myCurrentRequest = new MyShowQuickDocRequest(documentationManager, editor, mouseOffset, elementUnderMouse);
+    myAlarm.addRequest(myCurrentRequest, EditorSettingsExternalizable.getInstance().getQuickDocOnMouseOverElementDelayMillis());
   }
 
   private void closeQuickDocIfPossible() {
@@ -281,6 +285,8 @@ public class QuickDocOnMouseOverManager {
     @NotNull private final Editor editor;
     private final int offset;
     @NotNull private final PsiElement originalElement;
+    @NotNull private final ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
+    private final HintManager myHintManager = HintManager.getInstance();
 
     private MyShowQuickDocRequest(@NotNull DocumentationManager docManager, @NotNull Editor editor, int offset, 
                                   @NotNull PsiElement originalElement) {
@@ -290,22 +296,28 @@ public class QuickDocOnMouseOverManager {
       this.originalElement = originalElement;
     }
     
-    private final HintManager myHintManager = HintManager.getInstance();
+    private void cancel() {
+      myProgressIndicator.cancel();
+    }
     
     @Override
     public void run() {
       Ref<PsiElement> targetElementRef = new Ref<>();
-      ProgressIndicatorUtils.runInReadActionWithWriteActionPriorityWithRetries(new Runnable() {
+      
+      QuickDocUtil.runInReadActionWithWriteActionPriorityWithRetries(new Runnable() {
         @Override
         public void run() {
           if (originalElement.isValid()) {
             targetElementRef.set(docManager.findTargetElement(editor, offset, originalElement.getContainingFile(), originalElement));
           }
         }
-      }, 5000, 100);
+      }, 5000, 100, myProgressIndicator);
+      
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
+          myCurrentRequest = null;
+          
           if (editor.isDisposed()) return;
             
           PsiElement targetElement = targetElementRef.get();
