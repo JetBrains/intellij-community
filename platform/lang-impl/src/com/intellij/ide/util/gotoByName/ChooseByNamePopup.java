@@ -342,11 +342,12 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return newPopup;
   }
 
-  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(" +
-                                                                                "(?:\\w:)?" + // absolute path start on Windows
-                                                                                "[^:]+" +
-                                                                                ")" + // main part before line/column
-                                                                                "(?::|@|,|)\\[?(\\d+)?(?:(?:\\D)(\\d+)?)?\\]?");
+  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
+                                                                                "(?::|@|,| on line | at line |)?" + // separator
+                                                                                "[(\\[]?" + // possible opening paren/brace
+                                                                                "(\\d+)?(?:(?:\\D)(\\d+)?)?" + // line + column
+                                                                                "[)\\]]?" // possible closing paren/brace
+  );
   public static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
 
@@ -358,11 +359,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   public static String getTransformedPattern(String pattern, ChooseByNameModel model) {
     Pattern regex = null;
-    if (pattern.indexOf(':') != -1 ||
-        pattern.indexOf(',') != -1 ||
-        pattern.indexOf(';') != -1 ||
-        //pattern.indexOf('#') != -1 ||
-        pattern.indexOf('@') != -1) { // quick test if reg exp should be used
+    if (StringUtil.containsAnyChar(pattern, ":,;@[(") || pattern.contains(" line ")) { // quick test if reg exp should be used
       regex = patternToDetectLinesAndColumns;
     }
 
