@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
@@ -96,7 +97,7 @@ public class MainFrame extends JPanel implements DataProvider {
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     myChangesBrowser.getEditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), getGraphTable());
     setDefaultEmptyText(myChangesBrowser);
-    myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), project);
+    myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), project, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
 
     final CommitSelectionListener selectionChangeListener = new CommitSelectionListener(myChangesBrowser);
@@ -360,7 +361,7 @@ public class MainFrame extends JPanel implements DataProvider {
       int rows = getGraphTable().getSelectedRowCount();
       if (rows < 1) {
         myChangesLoadingPane.stopLoading();
-        myChangesBrowser.getViewer().setEmptyText("");
+        myChangesBrowser.getViewer().setEmptyText("No commits selected");
         myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
       }
       else {
