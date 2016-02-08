@@ -222,7 +222,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
       }
     }
 
-    if (application.isUnitTestMode()) return true;
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
     return visibleArea.width > 0 && visibleArea.height > 0;
   }
