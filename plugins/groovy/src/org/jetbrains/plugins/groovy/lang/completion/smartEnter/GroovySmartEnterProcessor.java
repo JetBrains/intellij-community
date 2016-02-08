@@ -192,12 +192,6 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
     }
   }
 
-  public void registerUnresolvedError(int offset) {
-    if (myFirstErrorOffset > offset) {
-      myFirstErrorOffset = offset;
-    }
-  }
-
   private static PsiElement[] getChildren(PsiElement element) {
     PsiElement psiChild = element.getFirstChild();
     if (psiChild == null) return new PsiElement[0];
