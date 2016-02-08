@@ -19,7 +19,6 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
@@ -102,7 +101,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
 
   private static PsiJavaFileStub index(VirtualFile file, byte[] content) {
     try {
-      PsiJavaFileStub root = new PsiJavaFileStubImpl(StringUtilRt.EMPTY_STRING, true);
+      PsiJavaFileStub root = new PsiJavaFileStubImpl("", true);
       new ClassReader(content).accept(new GrTraitMethodVisitor(file, root), EMPTY_ATTRIBUTES, ClassReader.SKIP_CODE);
       return root;
     }

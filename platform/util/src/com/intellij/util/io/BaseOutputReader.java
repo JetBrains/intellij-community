@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,11 +147,8 @@ public abstract class BaseOutputReader extends BaseDataReader {
     super.stop();
     if (mySleepingPolicy == SleepingPolicy.BLOCKING) {
       // we can't count on super.stop() since it only sets 'isRunning = false', and blocked Reader.read won't wake up.
-      try {
-        close();
-      }
-      catch (IOException ignore) {
-      }
+      try { close(); }
+      catch (IOException ignore) { }
     }
   }
 
