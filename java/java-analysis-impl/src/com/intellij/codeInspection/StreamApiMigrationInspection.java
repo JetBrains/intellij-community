@@ -132,10 +132,15 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                                              new ReplaceWithCollectCallFix("Replace with " + (addAll ? "addAll" : "collect")));
                     }
                     else if (REPLACE_TRIVIAL_FOREACH || !isTrivial(body, statement.getIterationParameter())) {
+                      final List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+                      fixes.add(new ReplaceWithForeachCallFix("forEach"));
+                      if (extractIfStatement(body) != null) {
+                        //for .stream() 
+                        fixes.add(new ReplaceWithForeachCallFix("forEachOrdered"));
+                      }
                       holder.registerProblem(iteratedValue, "Can be replaced with foreach call",
-                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, 
-                                             new ReplaceWithForeachCallFix("forEach"),
-                                             new ReplaceWithForeachCallFix("forEachOrdered"));
+                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                             fixes.toArray(new LocalQuickFix[fixes.size()]));
                     }
                   }
                 }
