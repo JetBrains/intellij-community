@@ -637,6 +637,36 @@ public class PyResolveTest extends PyResolveTestCase {
     assertTrue(target instanceof  PyKeywordArgument);
     assertEquals("kwd", ((PyKeywordArgument)target).getKeyword());
   }
+  
+  public void testFormatStringWithPackedDictAsArgument() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof  PyStringLiteralExpression);
+    assertEquals("\"fst\"", target.getText());    
+  }
+
+  public void testFormatStringWithPackedListAsArgument() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof  PyNumericLiteralExpression);
+    assertEquals("1", target.getText());
+  }
+
+  public void testFormatStringWithPackedTupleAsArgument() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof  PyStringLiteralExpression);
+    assertEquals("\"snd\"", target.getText());
+  }
+  
+  public void testFormatStringWithBinExprAsArg() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof  PyStringLiteralExpression);
+    assertEquals("\"snd\"", target.getText());
+  }
+  
+  public void testFormatStringWithRefAsArgument() {
+    PsiElement target = resolve();
+    assertEquals(null, target);
+  }
+  
 
   //PY-2478
   public void testPercentPositionalArgs() {
@@ -654,22 +684,36 @@ public class PyResolveTest extends PyResolveTestCase {
   // PY-18254
   public void testFunctionTypeComment() {
     assertResolvesTo(PyClass.class, "MyClass");
-  }
-
-  public void testGlobalNotDefinedAtTopLevel() {
-    assertResolvesTo(PyTargetExpression.class, "foo");
+  }  
+  
+  public void testPercentStringKeyWordArgWithParentheses() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PyStringLiteralExpression);
+    assertEquals("snd", ((PyStringLiteralExpression)target).getStringValue());    
   }
 
   //PY-2478
   public void testPercentStringBinaryStatementArg() {
     PsiElement target = resolve();
     assertTrue(target instanceof PyStringLiteralExpression);
-    assertTrue(((PyStringLiteralExpression)target).getStringValue().equals("1"));
+    assertEquals("1", ((PyStringLiteralExpression)target).getStringValue());
   }
 
+  //PY-2478
   public void testPercentStringArgWithRedundantParentheses() {
     PsiElement target = resolve();
     assertTrue(target instanceof PyStringLiteralExpression);
-    assertTrue(((PyStringLiteralExpression)target).getStringValue().equals("1"));
+    assertEquals("1", ((PyStringLiteralExpression)target).getStringValue());
   }
+  
+  public void testPercentStringWithRefAsArgument() {
+    PsiElement target = resolve();
+    assertEquals(null, target);    
+  }
+  
+
+  public void testGlobalNotDefinedAtTopLevel() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
 }
