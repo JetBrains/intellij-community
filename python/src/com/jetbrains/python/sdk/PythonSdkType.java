@@ -882,7 +882,7 @@ public class PythonSdkType extends SdkType {
 
           @Override
           protected void processLanguageContribution(PyCredentialsContribution languageContribution, Object credentials) {
-            result.set(languageContribution.isValid(credentials));
+            result.set(!languageContribution.isValid(credentials));
           }
         }.collectCases(
           PyCredentialsContribution.class,
