@@ -368,11 +368,11 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     if (myCachedErrorFixes.contains(action)) {
       return 20;
     }
-    if (myCachedNotifications.contains(action)) {
-      return 15;
-    }
     if (myCachedInspectionFixes.contains(action)) {
       return 10;
+    }
+    if (myCachedNotifications.contains(action)) {
+      return 7;
     }
     if (myCachedGutters.contains(action)) {
       return 5;
