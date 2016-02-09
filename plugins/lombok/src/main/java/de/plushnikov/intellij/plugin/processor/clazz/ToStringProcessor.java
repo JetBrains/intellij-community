@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.clazz;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
@@ -102,17 +103,25 @@ public class ToStringProcessor extends AbstractClassProcessor {
   @NotNull
   public PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> psiFields, @NotNull PsiAnnotation psiAnnotation) {
     final PsiManager psiManager = psiClass.getManager();
-    LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiManager, METHOD_NAME)
+
+    return new LombokLightMethodBuilder(psiManager, METHOD_NAME)
         .withMethodReturnType(PsiType.getJavaLangString(psiManager, GlobalSearchScope.allScope(psiClass.getProject())))
         .withContainingClass(psiClass)
         .withNavigationElement(psiAnnotation)
-        .withModifier(PsiModifier.PUBLIC);
+        .withModifier(PsiModifier.PUBLIC)
+        .withBody(createCodeBlock(psiClass, psiFields, psiAnnotation));
+  }
 
-    final String paramString = createParamString(psiClass, psiFields, psiAnnotation);
-    final String blockText = String.format("return \"%s(%s)\";", psiClass.getQualifiedName(), paramString);
-    method.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
-
-    return method;
+  @NotNull
+  private PsiCodeBlock createCodeBlock(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> psiFields, @NotNull PsiAnnotation psiAnnotation) {
+    final String blockText;
+    if (shouldGenerateFullBodyBlock()) {
+      final String paramString = createParamString(psiClass, psiFields, psiAnnotation);
+      blockText = String.format("return \"%s(%s)\";", psiClass.getQualifiedName(), paramString);
+    } else {
+      blockText = "return \"\";";
+    }
+    return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
   }
 
   private String createParamString(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> psiFields, @NotNull PsiAnnotation psiAnnotation) {

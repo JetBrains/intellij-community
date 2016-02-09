@@ -5,7 +5,9 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
@@ -101,5 +103,20 @@ public class PsiTypeUtil {
   public static String getQualifiedName(@NotNull PsiType psiType) {
     final PsiClass psiFieldClass = PsiUtil.resolveClassInType(psiType);
     return psiFieldClass != null ? psiFieldClass.getQualifiedName() : null;
+  }
+
+  @NotNull
+  public static String getReturnValueOfType(@Nullable PsiType type) {
+    if (type instanceof PsiPrimitiveType) {
+      if (PsiType.BOOLEAN.equals(type)) {
+        return PsiKeyword.FALSE;
+      } else {
+        return "0";
+      }
+    } else if (PsiType.VOID.equals(type)) {
+      return "";
+    } else {
+      return PsiKeyword.NULL;
+    }
   }
 }

@@ -86,6 +86,11 @@ public abstract class AbstractProcessor implements Processor {
   }
 
   @Override
+  public boolean shouldGenerateFullBodyBlock() {
+    return true;
+  }
+
+  @Override
   public boolean canProduce(@NotNull Class<? extends PsiElement> type) {
     return type.isAssignableFrom(supportedClass);
   }

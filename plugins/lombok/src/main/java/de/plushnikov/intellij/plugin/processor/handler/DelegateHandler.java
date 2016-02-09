@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMember;
@@ -26,6 +27,7 @@ import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
+import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +41,12 @@ import java.util.List;
  * Handler for Delegate annotation processing, for fields and for methods
  */
 public class DelegateHandler {
+
+  private final boolean shouldGenerateFullBodyBlock;
+
+  public DelegateHandler(boolean shouldGenerateFullBodyBlock) {
+    this.shouldGenerateFullBodyBlock = shouldGenerateFullBodyBlock;
+  }
 
   public boolean validate(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull PsiType psiType, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder) {
     boolean result = true;
@@ -190,7 +198,7 @@ public class DelegateHandler {
         .withModifier(PsiModifier.PUBLIC)
         .withMethodReturnType(returnType)
         .withContainingClass(psiClass)
-            //Have to go to original method, or some refactoring action will not work (like extract parameter oder change signature)
+        //Have to go to original method, or some refactoring action will not work (like extract parameter oder change signature)
         .withNavigationElement(psiMethod);
 
     for (PsiTypeParameter typeParameter : psiMethod.getTypeParameters()) {
@@ -204,30 +212,45 @@ public class DelegateHandler {
 
     final PsiParameterList parameterList = psiMethod.getParameterList();
 
-    final StringBuilder paramString = new StringBuilder();
-    int parameterIndex = 0;
-    for (PsiParameter psiParameter : parameterList.getParameters()) {
+    final PsiParameter[] psiParameters = parameterList.getParameters();
+    for (int parameterIndex = 0; parameterIndex < psiParameters.length; parameterIndex++) {
+      final PsiParameter psiParameter = psiParameters[parameterIndex];
       final PsiType psiParameterType = psiSubstitutor.substitute(psiParameter.getType());
       final String generatedParameterName = StringUtils.defaultIfEmpty(psiParameter.getName(), "p" + parameterIndex);
       methodBuilder.withParameter(generatedParameterName, psiParameterType);
-      parameterIndex++;
-
-      paramString.append(generatedParameterName).append(',');
     }
 
-    if (paramString.length() > 0) {
-      paramString.deleteCharAt(paramString.length() - 1);
-    }
-    final boolean isMethodCall = psiElement instanceof PsiMethod;
-    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(
-        String.format("%sthis.%s%s.%s(%s);",
-            PsiType.VOID.equals(returnType) ? "" : "return ",
-            psiElement.getName(),
-            isMethodCall ? "()" : "",
-            psiMethod.getName(),
-            paramString.toString()),
-        psiClass));
+    methodBuilder.withBody(createCodeBlock(psiClass, psiElement, psiMethod, returnType, psiParameters));
 
     return methodBuilder;
+  }
+
+  @NotNull
+  private <T extends PsiModifierListOwner & PsiNamedElement> PsiCodeBlock createCodeBlock(@NotNull PsiClass psiClass, @NotNull T psiElement, @NotNull PsiMethod psiMethod, @NotNull PsiType returnType, @NotNull PsiParameter[] psiParameters) {
+    final String blockText;
+    if (shouldGenerateFullBodyBlock) {
+      final StringBuilder paramString = new StringBuilder();
+
+      for (int parameterIndex = 0; parameterIndex < psiParameters.length; parameterIndex++) {
+        final PsiParameter psiParameter = psiParameters[parameterIndex];
+        final String generatedParameterName = StringUtils.defaultIfEmpty(psiParameter.getName(), "p" + parameterIndex);
+        paramString.append(generatedParameterName).append(',');
+      }
+
+      if (paramString.length() > 0) {
+        paramString.deleteCharAt(paramString.length() - 1);
+      }
+
+      final boolean isMethodCall = psiElement instanceof PsiMethod;
+      blockText = String.format("%sthis.%s%s.%s(%s);",
+          PsiType.VOID.equals(returnType) ? "" : "return ",
+          psiElement.getName(),
+          isMethodCall ? "()" : "",
+          psiMethod.getName(),
+          paramString.toString());
+    } else {
+      blockText = "return " + PsiTypeUtil.getReturnValueOfType(returnType) + ";";
+    }
+    return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
   }
 }

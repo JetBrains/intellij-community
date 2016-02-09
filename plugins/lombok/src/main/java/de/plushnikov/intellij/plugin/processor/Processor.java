@@ -33,6 +33,8 @@ public interface Processor {
 
   boolean isEnabled(@NotNull Project project);
 
+  boolean shouldGenerateFullBodyBlock();
+
   boolean canProduce(@NotNull Class<? extends PsiElement> type);
 
   @NotNull
