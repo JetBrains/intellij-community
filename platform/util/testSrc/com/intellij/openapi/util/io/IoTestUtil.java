@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,13 +42,18 @@ public class IoTestUtil {
   @NotNull
   public static File getTempDirectory() {
     File dir = new File(FileUtil.getTempDirectory());
-    if (SystemInfo.isWindows && dir.getPath().contains("~")) {
+    dir = expandWindowsPath(dir);
+    return dir;
+  }
+
+  private static File expandWindowsPath(File file) {
+    if (SystemInfo.isWindows && file.getPath().indexOf('~') > 0) {
       try {
-        dir = dir.getCanonicalFile();
+        return file.getCanonicalFile();
       }
       catch (IOException ignored) { }
     }
-    return dir;
+    return file;
   }
 
   @NotNull
@@ -255,7 +260,7 @@ public class IoTestUtil {
 
   @NotNull
   public static File createTestJar() throws IOException {
-    File jarFile = FileUtil.createTempFile("test.", ".jar");
+    File jarFile = expandWindowsPath(FileUtil.createTempFile("test.", ".jar"));
     return createTestJar(jarFile);
   }
 
