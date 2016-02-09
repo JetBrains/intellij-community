@@ -55,6 +55,8 @@ interface SuspendContext<CALL_FRAME : CallFrame> {
     get() = false
 
   val valueManager: ValueManager
+
+  val workerId: String?
 }
 
 abstract class ContextDependentAsyncResultConsumer<T>(private val context: SuspendContext<*>) : Consumer<T> {

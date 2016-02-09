@@ -86,7 +86,10 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     assertThat(Stream.of(dir.getChildren()).map(VirtualFile::getName).collect(Collectors.toList())).containsOnly("pkg1");
     assertThat(myRoot.findFileByRelativePath("test/pkg2/Class2.class")).isNull();
 
-    Files.copy(myTestData.resolve("image2"), myTempDir.getRoot().toPath().resolve("lib/modules"), StandardCopyOption.REPLACE_EXISTING);
+    Path modules = myTempDir.getRoot().toPath().resolve("lib/modules");
+    Files.move(modules, myTempDir.getRoot().toPath().resolve("lib/modules.bak"));
+    Files.copy(myTestData.resolve("image2"), modules, StandardCopyOption.REPLACE_EXISTING);
+
     VirtualFile local = LocalFileSystem.getInstance().findFileByIoFile(myTempDir.getRoot());
     assertThat(local).isNotNull();
     local.refresh(false, true);

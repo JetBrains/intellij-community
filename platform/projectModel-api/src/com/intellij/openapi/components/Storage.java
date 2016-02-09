@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.components;
 
 import org.jetbrains.annotations.NonNls;
@@ -22,16 +21,21 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
+/**
+ * See http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html
+ */
 public @interface Storage {
-  String id() default "default";
-
   @Deprecated
+  /**
+   * Please use {@link #value()}.
+   */
   String file() default "";
 
+  /**
+   * Relative to component container configuration root file path.
+   * Consider to use shorthand form - {code}@Storage("yourName.xml"){code} (when you need to specify only file path).
+   */
   @NonNls String value() default "";
-
-  @Deprecated
-  StorageScheme scheme() default StorageScheme.DEFAULT;
 
   /**
    * If deprecated: Data will be removed on write. And ignored on read if (and only if) new storage exists.
@@ -49,4 +53,10 @@ public @interface Storage {
   Class<? extends StateStorage> storageClass() default StateStorage.class;
 
   Class<? extends StateSplitter> stateSplitter() default StateSplitterEx.class;
+
+  @Deprecated
+  StorageScheme scheme() default StorageScheme.DEFAULT;
+
+  @Deprecated
+  String id() default "default";
 }

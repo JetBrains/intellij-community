@@ -25,9 +25,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -39,8 +37,6 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
-import com.intellij.lang.java.JavaLanguage;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -52,7 +48,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -69,7 +64,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueNode;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.sun.jdi.*;
@@ -986,74 +980,5 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
     }
     return -1;
-  }
-
-  public static void checkSource(DebuggerContextImpl debuggerContext) {
-    if (!Registry.is("debugger.check.source")) {
-      return;
-    }
-    SuspendContextImpl suspendContext = debuggerContext.getSuspendContext();
-    if (suspendContext == null) {
-      return;
-    }
-    suspendContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
-      @Override
-      public Priority getPriority() {
-        return Priority.LOW;
-      }
-
-      @Override
-      public void contextAction() throws Exception {
-        try {
-          StackFrameProxyImpl frameProxy = debuggerContext.getFrameProxy();
-          if (frameProxy == null) {
-            return;
-          }
-          Location location = frameProxy.location();
-          Method method = location.method();
-          if (method.isConstructor() || method.isBridge()) {
-            return; // skip constructors for now as they may have initializers outside of the method body
-          }
-          List<Location> locations = method.allLineLocations();
-          if (ContainerUtil.isEmpty(locations)) {
-            return;
-          }
-          SourcePosition position = debuggerContext.getSourcePosition();
-          if (position != null) {
-            ApplicationManager.getApplication().runReadAction(() -> {
-              Project project = suspendContext.getDebugProcess().getProject();
-              PsiFile psiFile = position.getFile();
-              if (!psiFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) { // only for java for now
-                return;
-              }
-              Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-              if (document == null) {
-                return;
-              }
-              boolean res = false;
-              PsiElement psiMethod = getContainingMethod(position);
-              if (psiMethod != null) {
-                TextRange range = psiMethod.getTextRange();
-                int startLine = document.getLineNumber(range.getStartOffset()) + 1;
-                int endLine = document.getLineNumber(range.getEndOffset()) + 1;
-                res = locations.stream()
-                  .mapToInt(loc -> bytecodeToSourceLine(psiFile, loc.lineNumber()))
-                  .filter(line -> line >= 0)
-                  .allMatch(line -> startLine <= line && line <= endLine);
-              }
-              if (!res) {
-                XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Source code does not match the bytecode", NotificationType.WARNING)
-                  .notify(project);
-              }
-            });
-          }
-        }
-        catch (EvaluateException e) {
-          LOG.info(e);
-        }
-        catch (AbsentInformationException ignore) {
-        }
-      }
-    });
   }
 }

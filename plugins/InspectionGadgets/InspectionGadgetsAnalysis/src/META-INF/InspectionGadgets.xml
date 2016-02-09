@@ -2411,6 +2411,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="NestedMethodCall" bundle="com.siyeh.InspectionGadgetsBundle" key="nested.method.call.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.style.NestedMethodCallInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="OptionalContainsCollection" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="optional.contains.collection.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.style.OptionalContainsCollectionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantFieldInitialization" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="redundant.field.initialization.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING" cleanupTool="true"

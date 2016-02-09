@@ -298,7 +298,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       var result: MutableList<Storage>? = null
       for (storage in storages) {
         @Suppress("DEPRECATION")
-        if (storage.scheme == scheme || storage.path != PROJECT_FILE) {
+        if (storage.path != PROJECT_FILE) {
           if (result == null) {
             result = SmartList()
           }

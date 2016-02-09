@@ -105,4 +105,16 @@ public abstract class SplitWordsMacro extends MacroBase {
       return word.toLowerCase();
     }
   }
+
+  public static class SpaceSeparated extends SplitWordsMacro {
+    public SpaceSeparated() {
+      super("spaceSeparated", "spaceSeparated(String)", ' ');
+    }
+
+    @NotNull
+    @Override
+    protected String convertCase(@NotNull String word) {
+      return word;
+    }
+  }
 }

@@ -16,6 +16,7 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -75,7 +76,7 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
       }
       final String name = method.getName();
       for (PsiMethod sameNameMethod : containingClass.findMethodsByName(name, true)) {
-        if (method.equals(sameNameMethod)) {
+        if (method.equals(sameNameMethod) || PsiSuperMethodUtil.isSuperMethod(method, sameNameMethod)) {
           continue;
         }
         final PsiParameterList otherParameterList = sameNameMethod.getParameterList();

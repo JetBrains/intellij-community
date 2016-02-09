@@ -39,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.List;
 
 /**
@@ -146,13 +148,19 @@ public class CommandLineProcessor {
       }
 
       if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
-        JetBrainsProtocolHandler.processJetBrainsLauncherParameters(command);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            JBProtocolCommand.handleCurrentCommand();
-          }
-        }, ModalityState.any());
+        try {
+          final String url = URLDecoder.decode(command, "UTF-8");
+          JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              JBProtocolCommand.handleCurrentCommand();
+            }
+          }, ModalityState.any());
+        }
+        catch (UnsupportedEncodingException e) {
+          LOG.error(e);
+        }
 
         return null;
       }

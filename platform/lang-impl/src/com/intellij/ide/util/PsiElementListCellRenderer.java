@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,7 +55,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   private static final String LEFT = BorderLayout.WEST;
 
   private Matcher myMatcher;
-  private boolean myFocusBorderEnabled = true;
+  private boolean myFocusBorderEnabled = Registry.is("psi.element.list.cell.renderer.focus.border.enabled");
   protected int myRightComponentWidth;
 
   protected PsiElementListCellRenderer() {

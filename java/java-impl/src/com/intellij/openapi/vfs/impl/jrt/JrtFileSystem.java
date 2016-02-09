@@ -111,7 +111,7 @@ public class JrtFileSystem extends ArchiveFileSystem {
   protected ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
     checkSubscription();
 
-    String homePath = extractLocalPath(extractRootPath(entryFile.getPath()));
+    String homePath = FileUtil.toSystemIndependentName(extractLocalPath(extractRootPath(entryFile.getPath())));
     ArchiveHandler handler = myHandlers.get(homePath);
     if (handler == null) {
       handler = isSupported() ? new JrtHandler(homePath) : new JrtHandlerStub(homePath);

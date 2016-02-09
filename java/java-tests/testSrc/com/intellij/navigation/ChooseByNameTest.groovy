@@ -215,6 +215,15 @@ class Intf {
     assert getPopupElements(new GotoClassModel2(project), 'Bar:[2,3]') == [c]
   }
 
+  public void "test custom line suffixes"() {
+    def file = myFixture.addFileToProject("Bar.txt", "")
+    def model = new GotoFileModel(project)
+    assert getPopupElements(model, 'Bar:2') == [file]
+    assert getPopupElements(model, 'Bar(2)') == [file]
+    assert getPopupElements(model, 'Bar on line 2') == [file]
+    assert getPopupElements(model, 'Bar at line 2') == [file]
+  }
+
   public void "test dollar"() {
     def bar = myFixture.addClass("package foo; class Bar { class Foo {} }")
     def foo = ApplicationManager.application.runReadAction( { bar.innerClasses[0] } as Computable)
