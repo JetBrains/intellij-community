@@ -958,4 +958,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testRetrieveInferenceErrorsFromContainingCallsIfCurrentDoesNotProvideAny() throws Exception {
     doTest();
   }
+
+  public void testForeachOverCapturedWildcardWithCollectionUpperBound() throws Exception {
+    doTest();
+  }
 }
