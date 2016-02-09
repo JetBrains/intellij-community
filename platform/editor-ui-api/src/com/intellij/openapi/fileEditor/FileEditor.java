@@ -83,7 +83,7 @@ public interface FileEditor extends UserDataHolder, Disposable {
 
   /**
    * @return whether the editor is valid or not. An editor is valid if the contents displayed in it still exists. For example, an editor
-   * displaying the contents of a file stops being valid if the file is deleted.
+   * displaying the contents of a file stops being valid if the file is deleted. Editor can also become invalid when it's disposed.
    */
   boolean isValid();
 

@@ -108,7 +108,8 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
 
   @Override
   public boolean isValid() {
-    return true;
+    TextEditor editor = getTextEditor();
+    return editor == null || editor.isValid();
   }
 
   @Override
