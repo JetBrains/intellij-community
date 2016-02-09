@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -86,6 +87,13 @@ public class JrtFileSystem extends ArchiveFileSystem {
     return PROTOCOL;
   }
 
+  @Nullable
+  @Override
+  protected String normalize(@NotNull String path) {
+    int p = path.indexOf(SEPARATOR);
+    return p > 0 ? FileUtil.normalize(path.substring(0, p)) + path.substring(p) : super.normalize(path);
+  }
+
   @NotNull
   @Override
   protected String extractLocalPath(@NotNull String rootPath) {
@@ -111,7 +119,7 @@ public class JrtFileSystem extends ArchiveFileSystem {
   protected ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
     checkSubscription();
 
-    String homePath = FileUtil.toSystemIndependentName(extractLocalPath(extractRootPath(entryFile.getPath())));
+    String homePath = extractLocalPath(extractRootPath(entryFile.getPath()));
     ArchiveHandler handler = myHandlers.get(homePath);
     if (handler == null) {
       handler = isSupported() ? new JrtHandler(homePath) : new JrtHandlerStub(homePath);
@@ -178,6 +186,11 @@ public class JrtFileSystem extends ArchiveFileSystem {
   @Override
   public void refresh(boolean asynchronous) {
     VfsImplUtil.refresh(this, asynchronous);
+  }
+
+  @Override
+  protected boolean isCorrectFileType(@NotNull VirtualFile local) {
+    return isModularJdk(FileUtil.toSystemDependentName(local.getPath()));
   }
 
   public static boolean isSupported() {
