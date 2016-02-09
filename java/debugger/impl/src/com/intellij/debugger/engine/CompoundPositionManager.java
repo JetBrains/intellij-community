@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ import java.util.List;
 public class CompoundPositionManager extends PositionManagerEx implements MultiRequestPositionManager{
   private static final Logger LOG = Logger.getInstance(CompoundPositionManager.class);
 
-  private final ArrayList<PositionManager> myPositionManagers = new ArrayList<PositionManager>();
+  private final ArrayList<PositionManager> myPositionManagers = new ArrayList<>();
 
   @SuppressWarnings("UnusedDeclaration")
   public CompoundPositionManager() {
@@ -60,7 +60,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     myPositionManagers.add(0, manager);
   }
 
-  private final Cache<Location, SourcePosition> mySourcePositionCache = new Cache<Location, SourcePosition>();
+  private final Cache<Location, SourcePosition> mySourcePositionCache = new Cache<>();
 
   private interface Processor<T> {
     T process(PositionManager positionManager) throws NoDataException;

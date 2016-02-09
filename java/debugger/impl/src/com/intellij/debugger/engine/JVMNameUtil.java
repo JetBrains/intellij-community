@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,7 +126,7 @@ public class JVMNameUtil {
   }
 
   private static class JVMNameBuffer {
-    private final List<JVMName> myList = new ArrayList<JVMName>();
+    private final List<JVMName> myList = new ArrayList<>();
 
     public void append(@NotNull JVMName evaluator){
       myList.add(evaluator);
@@ -141,7 +141,7 @@ public class JVMNameUtil {
     }
 
     public JVMName toName() {
-      final List<JVMName> optimised = new ArrayList<JVMName>();
+      final List<JVMName> optimised = new ArrayList<>();
       for (JVMName evaluator : myList) {
         if (evaluator instanceof JVMRawText && !optimised.isEmpty() && optimised.get(optimised.size() - 1) instanceof JVMRawText) {
           JVMRawText nameEvaluator = (JVMRawText)optimised.get(optimised.size() - 1);
@@ -418,7 +418,7 @@ public class JVMNameUtil {
       return calcClassDisplayName(parent) + "$" + name;
     }
     
-    final Ref<Integer> classIndex = new Ref<Integer>(0);
+    final Ref<Integer> classIndex = new Ref<>(0);
     try {
         parent.accept(new JavaRecursiveElementVisitor() {
           public void visitAnonymousClass(PsiAnonymousClass cls) {

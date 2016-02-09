@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
   public UserRenderersConfigurable() {
     super(new BorderLayout(4, 0));
 
-    myRendererChooser = new ElementsChooser<NodeRenderer>(true);
+    myRendererChooser = new ElementsChooser<>(true);
     setupRenderersList();
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator((JTable)myRendererChooser.getComponent());
@@ -156,7 +156,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
 
   private void flushTo(final RendererConfiguration rendererConfiguration) {
     final int count = myRendererChooser.getElementCount();
-    final List<NodeRenderer> renderers = new ArrayList<NodeRenderer>(count);
+    final List<NodeRenderer> renderers = new ArrayList<>(count);
     for (int idx = 0; idx < count; idx++) {
       renderers.add(myRendererChooser.getElementAt(idx));
     }
@@ -181,7 +181,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
   public void reset(@NotNull NodeRendererSettings settings) {
     myRendererChooser.removeAllElements();
     final RendererConfiguration rendererConfiguration = settings.getCustomRenderers();
-    final ArrayList<NodeRenderer> elementsToSelect = new ArrayList<NodeRenderer>(1);
+    final ArrayList<NodeRenderer> elementsToSelect = new ArrayList<>(1);
     rendererConfiguration.iterateRenderers(new InternalIterator<NodeRenderer>() {
       @Override
       public boolean visit(final NodeRenderer renderer) {

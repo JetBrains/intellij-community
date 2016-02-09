@@ -60,7 +60,7 @@ public class SuspendManagerUtil {
   @NotNull
   public static Set<SuspendContextImpl> getSuspendingContexts(@NotNull SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    Set<SuspendContextImpl> result = new SmartHashSet<SuspendContextImpl>();
+    Set<SuspendContextImpl> result = new SmartHashSet<>();
     for (SuspendContextImpl suspendContext : suspendManager.getEventContexts()) {
       if (suspendContext.suspends(thread)) {
         result.add(suspendContext);

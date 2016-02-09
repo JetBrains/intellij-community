@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,7 +182,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   private List<TextWithImports> getRecents() {
     final String recentsId = getRecentsId();
     if (recentsId != null) {
-      final List<TextWithImports> result = new ArrayList<TextWithImports>();
+      final List<TextWithImports> result = new ArrayList<>();
       List<XExpression> recents = XDebuggerHistoryManager.getInstance(getProject()).getRecentExpressions(getRecentsId());
       for (XExpression expression : recents) {
         if (expression.getExpression().indexOf('\n') == -1) {
@@ -265,7 +265,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   }
 
   private static class MyComboboxModel extends AbstractListModel implements MutableComboBoxModel {
-    private List<TextWithImports> myItems = new ArrayList<TextWithImports>();
+    private List<TextWithImports> myItems = new ArrayList<>();
     private int mySelectedIndex = -1;
 
     private MyComboboxModel(@Nullable final List<TextWithImports> recents) {

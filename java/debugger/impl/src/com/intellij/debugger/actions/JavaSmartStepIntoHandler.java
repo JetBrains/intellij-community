@@ -85,13 +85,13 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       while(true);
 
       //noinspection unchecked
-      final List<SmartStepTarget> targets = new OrderedSet<SmartStepTarget>();
+      final List<SmartStepTarget> targets = new OrderedSet<>();
 
-      final Ref<TextRange> textRange = new Ref<TextRange>(lineRange);
+      final Ref<TextRange> textRange = new Ref<>(lineRange);
 
       final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
-        final Stack<PsiMethod> myContextStack = new Stack<PsiMethod>();
-        final Stack<String> myParamNameStack = new Stack<String>();
+        final Stack<PsiMethod> myContextStack = new Stack<>();
+        final Stack<String> myParamNameStack = new Stack<>();
         private int myNextLambdaExpressionOrdinal = 0;
         private boolean myInsideLambda = false;
 
@@ -220,7 +220,8 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         sibling.accept(methodCollector);
       }
 
-      Range<Integer> lines = new Range<Integer>(doc.getLineNumber(textRange.get().getStartOffset()), doc.getLineNumber(textRange.get().getEndOffset()));
+      Range<Integer> lines =
+        new Range<>(doc.getLineNumber(textRange.get().getStartOffset()), doc.getLineNumber(textRange.get().getEndOffset()));
       for (SmartStepTarget target : targets) {
         target.setCallingExpressionLines(lines);
       }

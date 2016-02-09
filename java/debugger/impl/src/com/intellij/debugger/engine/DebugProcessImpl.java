@@ -125,10 +125,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private ConnectionServiceWrapper myConnectionService;
   private Map<String, Connector.Argument> myArguments;
 
-  private final List<NodeRenderer> myRenderers = new ArrayList<NodeRenderer>();
+  private final List<NodeRenderer> myRenderers = new ArrayList<>();
 
   // we use null key here
-  private final Map<Type, NodeRenderer> myNodeRenderersMap = new HashMap<Type, NodeRenderer>();
+  private final Map<Type, NodeRenderer> myNodeRenderersMap = new HashMap<>();
 
   private final NodeRendererSettingsListener mySettingsListener = new NodeRendererSettingsListener() {
     @Override
@@ -435,7 +435,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @NotNull
   static List<ClassFilter> getActiveFilters() {
-    List<ClassFilter> activeFilters = new ArrayList<ClassFilter>();
+    List<ClassFilter> activeFilters = new ArrayList<>();
     DebuggerSettings settings = DebuggerSettings.getInstance();
     if (settings.TRACING_FILTERS_ENABLED) {
       for (ClassFilter filter : settings.getSteppingFilters()) {
@@ -458,7 +458,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
     List<StepRequest> stepRequests = requestManager.stepRequests();
     if (!stepRequests.isEmpty()) {
-      final List<StepRequest> toDelete = new ArrayList<StepRequest>(stepRequests.size());
+      final List<StepRequest> toDelete = new ArrayList<>(stepRequests.size());
       for (final StepRequest request : stepRequests) {
         ThreadReference threadReference = request.thread();
         // [jeka] on attempt to delete a request assigned to a thread with unknown status, a JDWP error occurs
@@ -1442,7 +1442,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;)Ljava/lang/Class;");
         forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;)Ljava/lang/Class;");
       }
-      final List<Mirror> args = new ArrayList<Mirror>(); // do not use unmodifiable lists because the list is modified by JPDA
+      final List<Mirror> args = new ArrayList<>(); // do not use unmodifiable lists because the list is modified by JPDA
       final StringReference qNameMirror = virtualMachine.mirrorOf(qName);
       args.add(qNameMirror);
       if (classLoader != null) {

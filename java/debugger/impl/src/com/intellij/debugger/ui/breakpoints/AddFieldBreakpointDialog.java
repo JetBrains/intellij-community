@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,11 +88,12 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
         PsiClass selectedClass = getSelectedClass();
         if (selectedClass != null) {
           PsiField[] fields = selectedClass.getFields();
-          MemberChooser<PsiFieldMember> chooser = new MemberChooser<PsiFieldMember>(ContainerUtil.map2Array(fields, PsiFieldMember.class, new Function<PsiField, PsiFieldMember>() {
-            public PsiFieldMember fun(final PsiField s) {
-              return new PsiFieldMember(s);
-            }
-          }), false, false, myProject);
+          MemberChooser<PsiFieldMember> chooser =
+            new MemberChooser<>(ContainerUtil.map2Array(fields, PsiFieldMember.class, new Function<PsiField, PsiFieldMember>() {
+              public PsiFieldMember fun(final PsiField s) {
+                return new PsiFieldMember(s);
+              }
+            }), false, false, myProject);
           chooser.setTitle(DebuggerBundle.message("add.field.breakpoint.dialog.field.chooser.title", fields.length));
           chooser.setCopyJavadocVisible(false);
           chooser.show();

@@ -278,7 +278,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                 //TODO [eu]: this is a quick fix for IDEA-136606, need to move this away from EDT!!!
                 final List<Value> values = value.getValues(0, max);
                 int i = 0;
-                final List<String> vals = new ArrayList<String>(max);
+                final List<String> vals = new ArrayList<>(max);
                 while (i < values.size()) {
                   vals.add(StringUtil.first(values.get(i).toString(), 15, true));
                   i++;
@@ -347,7 +347,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       public void contextAction() throws Exception {
         final XValueChildrenList children = new XValueChildrenList();
         final NodeRenderer renderer = myValueDescriptor.getRenderer(myEvaluationContext.getDebugProcess());
-        final Ref<Integer> remainingNum = new Ref<Integer>(0);
+        final Ref<Integer> remainingNum = new Ref<>(0);
         renderer.buildChildren(myValueDescriptor.getValue(), new ChildrenBuilder() {
           @Override
           public NodeDescriptorFactory getDescriptorManager() {
@@ -523,7 +523,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       return Promise.resolve(evaluationExpression);
     }
     else {
-      final AsyncPromise<XExpression> res = new AsyncPromise<XExpression>();
+      final AsyncPromise<XExpression> res = new AsyncPromise<>();
       myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
         @Override
         public Priority getPriority() {

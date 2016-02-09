@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,10 +48,10 @@ public class BatchEvaluator {
   private ObjectReference myBatchEvaluatorObject;
   private Method myBatchEvaluatorMethod;
 
-  private static final Key<BatchEvaluator> BATCH_EVALUATOR_KEY = new Key<BatchEvaluator>("BatchEvaluator");
-  public static final Key<Boolean> REMOTE_SESSION_KEY = new Key<Boolean>("is_remote_session_key");
+  private static final Key<BatchEvaluator> BATCH_EVALUATOR_KEY = new Key<>("BatchEvaluator");
+  public static final Key<Boolean> REMOTE_SESSION_KEY = new Key<>("is_remote_session_key");
 
-  private final HashMap<SuspendContext, List<ToStringCommand>> myBuffer = new HashMap<SuspendContext, List<ToStringCommand>>();
+  private final HashMap<SuspendContext, List<ToStringCommand>> myBuffer = new HashMap<>();
 
   private BatchEvaluator(DebugProcess process) {
     myDebugProcess = process;
@@ -125,7 +125,7 @@ public class BatchEvaluator {
     else {
       List<ToStringCommand> toStringCommands = myBuffer.get(suspendContext);
       if(toStringCommands == null) {
-        final List<ToStringCommand> commands = new ArrayList<ToStringCommand>();
+        final List<ToStringCommand> commands = new ArrayList<>();
         toStringCommands = commands;
         myBuffer.put(suspendContext, commands);
 
@@ -168,7 +168,7 @@ public class BatchEvaluator {
   private boolean doEvaluateBatch(List<ToStringCommand> requests, EvaluationContext evaluationContext) {
     try {
       DebugProcess debugProcess = evaluationContext.getDebugProcess();
-      List<Value> values = new ArrayList<Value>();
+      List<Value> values = new ArrayList<>();
       for (ToStringCommand toStringCommand : requests) {
         Value value = toStringCommand.getValue();
         values.add(value instanceof ObjectReference ? ((ObjectReference)value) : value);

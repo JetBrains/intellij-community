@@ -57,9 +57,9 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   private final EventSet myEventSet;
   private volatile boolean myIsResumed;
 
-  private final ConcurrentLinkedQueue<SuspendContextCommandImpl> myPostponedCommands = new ConcurrentLinkedQueue<SuspendContextCommandImpl>();
+  private final ConcurrentLinkedQueue<SuspendContextCommandImpl> myPostponedCommands = new ConcurrentLinkedQueue<>();
   public volatile boolean myInProgress;
-  private final HashSet<ObjectReference> myKeptReferences = new HashSet<ObjectReference>();
+  private final HashSet<ObjectReference> myKeptReferences = new HashSet<>();
   private EvaluationContextImpl myEvaluationContext = null;
 
   private JavaExecutionStack myActiveExecutionStack;
@@ -247,7 +247,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(this) {
       @Override
       public void contextAction() throws Exception {
-        List<JavaExecutionStack> res = new ArrayList<JavaExecutionStack>();
+        List<JavaExecutionStack> res = new ArrayList<>();
         Collection<ThreadReferenceProxyImpl> threads = getDebugProcess().getVirtualMachineProxy().allThreads();
         JavaExecutionStack currentStack = null;
         for (ThreadReferenceProxyImpl thread : threads) {
