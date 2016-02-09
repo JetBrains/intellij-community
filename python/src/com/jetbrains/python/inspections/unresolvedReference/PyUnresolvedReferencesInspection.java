@@ -42,6 +42,7 @@ import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.PyCustomMember;
+import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.codeInsight.PyFunctionTypeCommentReferenceContributor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -656,6 +657,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             }
           }
         }
+      }
+      
+      if (reference instanceof PySubstitutionChunkReference && ((PySubstitutionChunkReference)reference).ignoreUnresolved()) {
+        return;        
       }
       registerProblem(node, description, hl_type, null, rangeInElement, actions.toArray(new LocalQuickFix[actions.size()]));
     }
