@@ -7,6 +7,9 @@ import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer;
+import com.jetbrains.python.testing.pytest.PyTestConfigurationProducer;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -18,6 +21,12 @@ import java.util.List;
  */
 @EnvTestTagsRequired(tags = "pytest")
 public class PythonPyTestingTest extends PyEnvTestCase {
+
+  public void testConfigurationProducer() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask(PyTestConfigurationProducer.class, PythonTestConfigurationsModel.PY_TEST_NAME));
+  }
+
   public void testPytestRunner() {
 
     runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
@@ -61,14 +70,14 @@ public class PythonPyTestingTest extends PyEnvTestCase {
           /**
            * We can't rerun one subtest (yield), so we rerun whole "test_even"
            */
-          assertEquals(7, runner.getAllTestsCount());
-          assertEquals(3, runner.getPassedTestsCount());
-          assertEquals(4, runner.getFailedTestsCount());
+          assertEquals(stderr, 7, runner.getAllTestsCount());
+          assertEquals(stderr, 3, runner.getPassedTestsCount());
+          assertEquals(stderr, 4, runner.getFailedTestsCount());
           return;
         }
-        assertEquals(9, runner.getAllTestsCount());
-        assertEquals(5, runner.getPassedTestsCount());
-        assertEquals(4, runner.getFailedTestsCount());
+        assertEquals(stderr, 9, runner.getAllTestsCount());
+        assertEquals(stderr, 5, runner.getPassedTestsCount());
+        assertEquals(stderr, 4, runner.getFailedTestsCount());
         Assert
           .assertThat("No test stdout", MockPrinter.fillPrinter(runner.findTestByName("testOne")).getStdOut(),
                       Matchers.startsWith("I am test1"));

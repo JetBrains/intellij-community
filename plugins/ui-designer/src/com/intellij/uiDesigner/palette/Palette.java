@@ -19,7 +19,10 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -62,14 +65,7 @@ import java.util.Map;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-@State(
-  name = "Palette2",
-  defaultStateAsResource = true,
-  storages = {
-    @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = "uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
-  }
-)
+@State(name = "Palette2", defaultStateAsResource = true, storages = @Storage("uiDesigner.xml"))
 public final class Palette implements Disposable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.Palette");
 

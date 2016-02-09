@@ -138,6 +138,15 @@ public class PsiTypesUtil {
     return null;
   }
 
+  public static PsiType patchMethodGetClassReturnType(@NotNull PsiMethodReferenceExpression methodExpression,
+                                                      @NotNull PsiMethod method) {
+    if (isGetClass(method)) {
+      final PsiType qualifierType = PsiMethodReferenceUtil.getQualifierType(methodExpression);
+      return qualifierType != null ? createJavaLangClassType(methodExpression, qualifierType, true) : null;
+    }
+    return null;
+  }
+  
   public static PsiType patchMethodGetClassReturnType(@NotNull PsiExpression call,
                                                       @NotNull PsiReferenceExpression methodExpression,
                                                       @NotNull PsiMethod method,

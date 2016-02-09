@@ -4,6 +4,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -14,6 +16,11 @@ import java.util.List;
  * @author traff
  */
 public final class PythonUnitTestingTest extends PyEnvTestCase {
+
+  public void testConfigurationProducer() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask(PythonUnitTestConfigurationProducer.class, PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME));
+  }
   public void testUTRunner() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test1.py") {
 

@@ -151,7 +151,7 @@ public class InferenceSessionContainer {
   }
 
   @Nullable
-  private static InferenceSession startTopLevelInference(PsiCall topLevelCall) {
+  private static InferenceSession startTopLevelInference(final PsiCall topLevelCall) {
     final JavaResolveResult result = topLevelCall.resolveMethodGenerics();
     if (result instanceof MethodCandidateInfo) {
       final PsiMethod method = ((MethodCandidateInfo)result).getElement();
@@ -159,11 +159,16 @@ public class InferenceSessionContainer {
       final PsiExpressionList topLevelCallArgumentList = topLevelCall.getArgumentList();
       LOG.assertTrue(topLevelCallArgumentList != null, topLevelCall);
       final PsiExpression[] topLevelArguments = topLevelCallArgumentList.getExpressions();
-      final InferenceSession topLevelSession =
-        new InferenceSession(method.getTypeParameters(), ((MethodCandidateInfo)result).getSiteSubstitutor(), topLevelCall.getManager(), topLevelCall);
-      topLevelSession.initExpressionConstraints(topLevelParameters, topLevelArguments, topLevelCall, method, ((MethodCandidateInfo)result).isVarargs());
-      topLevelSession.infer(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result).createProperties());
-      return topLevelSession;
+      return PsiResolveHelper.ourGraphGuard.doPreventingRecursion(topLevelCall, true, new Computable<InferenceSession>() {
+        @Override
+        public InferenceSession compute() {
+          final InferenceSession topLevelSession =
+            new InferenceSession(method.getTypeParameters(), ((MethodCandidateInfo)result).getSiteSubstitutor(), topLevelCall.getManager(), topLevelCall);
+          topLevelSession.initExpressionConstraints(topLevelParameters, topLevelArguments, topLevelCall, method, ((MethodCandidateInfo)result).isVarargs());
+          topLevelSession.infer(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result).createProperties());
+          return topLevelSession;
+        }
+      });
     }
     return null;
   }
@@ -198,7 +203,8 @@ public class InferenceSessionContainer {
     PsiCall top = null;
     PsiElement parent = PsiTreeUtil.getParentOfType(context, 
                                                     PsiExpressionList.class, 
-                                                    PsiLambdaExpression.class, 
+                                                    PsiLambdaExpression.class,
+                                                    PsiConditionalExpression.class,
                                                     PsiCodeBlock.class, 
                                                     PsiCall.class);
     while (true) {
@@ -227,6 +233,10 @@ public class InferenceSessionContainer {
         }
       }
 
+      if (parent instanceof PsiConditionalExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
+        break;
+      }
+      
       if (parent instanceof PsiLambdaExpression && LambdaUtil.getFunctionalTypeMap().containsKey(parent)) {
         break;
       }
@@ -236,8 +246,11 @@ public class InferenceSessionContainer {
         break;
       }
       final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(psiCall.getArgumentList());
-      if (properties != null && properties.isApplicabilityCheck()) {
-        break;
+      if (properties != null) {
+        if (properties.isApplicabilityCheck() || 
+            parent instanceof PsiLambdaExpression && ((PsiLambdaExpression)parent).hasFormalParameterTypes()) {
+          break;
+        }
       }
 
       top = psiCall;

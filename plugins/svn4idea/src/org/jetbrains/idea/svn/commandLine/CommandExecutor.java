@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -61,7 +61,6 @@ public class CommandExecutor {
   private volatile boolean myWasCancelled;
   @NotNull private final List<File> myTempFiles;
   @NotNull protected final GeneralCommandLine myCommandLine;
-  @NotNull protected final String myLocale;
   protected Process myProcess;
   protected SvnProcessHandler myHandler;
   private OutputStreamWriter myProcessWriter;
@@ -76,7 +75,7 @@ public class CommandExecutor {
   @Nullable private final LineCommandListener myResultBuilder;
   @NotNull private final Command myCommand;
 
-  public CommandExecutor(@NotNull @NonNls String exePath, @NotNull String locale, @NotNull Command command) {
+  public CommandExecutor(@NotNull @NonNls String exePath, @NotNull Command command) {
     myCommand = command;
     myResultBuilder = command.getResultBuilder();
     if (myResultBuilder != null) {
@@ -94,7 +93,6 @@ public class CommandExecutor {
     }
     myCommandLine.addParameter(command.getName().getName());
     myCommandLine.addParameters(prepareParameters(command));
-    myLocale = locale;
     myExitCodeReference = new AtomicReference<Integer>();
   }
 
@@ -166,12 +164,7 @@ public class CommandExecutor {
   }
 
   private void setupLocale() {
-    if (!StringUtil.isEmpty(myLocale)) {
-      Map<String, String> environment = myCommandLine.getEnvironment();
-
-      environment.put("LANGUAGE", "");
-      environment.put("LC_ALL", myLocale);
-    }
+    myCommandLine.withEnvironment(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("svn"));
   }
 
   @NotNull

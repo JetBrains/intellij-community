@@ -55,7 +55,6 @@ import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
@@ -690,17 +689,6 @@ public class XDebugSessionImpl implements XDebugSession {
   private boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression,
                                    @NotNull XSuspendContext suspendContext, boolean doProcessing) {
     if (doProcessing) {
-      XDebuggerEvaluator evaluator = XDebuggerUtilImpl.getEvaluator(suspendContext);
-      String condition = breakpoint.getCondition();
-      if (condition != null && evaluator != null) {
-        LOG.debug("evaluating condition: " + condition);
-        boolean result = evaluator.evaluateCondition(condition);
-        LOG.debug("condition evaluates to " + result);
-        if (!result) {
-          return false;
-        }
-      }
-
       if (breakpoint.isLogMessage()) {
         String text = StringUtil.decapitalize(XBreakpointUtil.getDisplayText(breakpoint));
         final XSourcePosition position = breakpoint.getSourcePosition();
@@ -711,16 +699,6 @@ public class XDebugSessionImpl implements XDebugSession {
 
       if (evaluatedLogExpression != null) {
         printMessage(evaluatedLogExpression, null, null);
-      }
-      else {
-        String expression = breakpoint.getLogExpression();
-        if (expression != null && evaluator != null) {
-          LOG.debug("evaluating log expression: " + expression);
-          final String message = evaluator.evaluateMessage(expression);
-          if (message != null) {
-            printMessage(message, null, null);
-          }
-        }
       }
 
       processDependencies(breakpoint);

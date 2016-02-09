@@ -6,7 +6,11 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.createFile
+import com.intellij.util.systemIndependentPath
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.io.File

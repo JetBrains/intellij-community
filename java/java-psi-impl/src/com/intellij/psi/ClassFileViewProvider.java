@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -27,7 +28,6 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -57,16 +57,30 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
       return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
 
-    // skip inner & anonymous
-    if (isInnerClass(file)) return null;
+    // skip inner, anonymous, missing and corrupted classes
+    try {
+      if (!isInnerClass(file, file.contentsToByteArray(false))) {
+        return new ClsFileImpl(this);
+      }
+    }
+    catch (Exception e) {
+      Logger.getInstance(ClassFileViewProvider.class).debug(file.getPath(), e);
+    }
 
-    return new ClsFileImpl(this);
+    return null;
   }
 
+  /** @deprecated use {@link #isInnerClass(VirtualFile, byte[])} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public static boolean isInnerClass(@NotNull VirtualFile file) {
-    String name = file.getNameWithoutExtension();
-    int p = name.lastIndexOf('$', name.length() - 2);
-    return p > 0 && detectInnerClass(file, null);
+    try {
+      String name = file.getNameWithoutExtension();
+      int p = name.lastIndexOf('$', name.length() - 2);
+      return p > 0 && detectInnerClass(file, file.contentsToByteArray(false));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static boolean isInnerClass(@NotNull VirtualFile file, @NotNull byte[] content) {
@@ -75,20 +89,11 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
     return p > 0 && detectInnerClass(file, content);
   }
 
-  private static boolean detectInnerClass(VirtualFile file, @Nullable byte[] content) {
+  private static boolean detectInnerClass(VirtualFile file, byte[] content) {
     Boolean isInner = IS_INNER_CLASS.get(file);
     if (isInner != null) return isInner;
 
-    if (content == null) {
-      try {
-        content = file.contentsToByteArray(false);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
     ClassReader reader = new ClassReader(content);
-
     final Ref<Boolean> ref = Ref.create(Boolean.FALSE);
     final String className = reader.getClassName();
     reader.accept(new ClassVisitor(Opcodes.ASM5) {

@@ -103,14 +103,9 @@ public class InferenceVariable extends LightTypeParameter {
 
   public Set<InferenceVariable> getDependencies(InferenceSession session) {
     final Set<InferenceVariable> dependencies = new LinkedHashSet<InferenceVariable>();
-    for (Collection<PsiType> boundTypes : myBounds.values()) {
-      if (boundTypes != null) {
-        for (PsiType bound : boundTypes) {
-          session.collectDependencies(bound, dependencies);
-        }
-      }
-    }
-
+    collectBoundDependencies(session, dependencies);
+    collectTransitiveDependencies(session, dependencies, dependencies);
+    
     if (!session.hasCapture(this) && dependencies.isEmpty()) {
       return dependencies;
     }
@@ -126,6 +121,33 @@ public class InferenceVariable extends LightTypeParameter {
     }
     session.collectCaptureDependencies(this, dependencies);
     return dependencies;
+  }
+
+  private void collectTransitiveDependencies(InferenceSession session, 
+                                             Set<InferenceVariable> dependencies,
+                                             Set<InferenceVariable> rootDependencies) {
+    final LinkedHashSet<InferenceVariable> newDependencies = new LinkedHashSet<InferenceVariable>();
+
+    for (InferenceVariable dependency : dependencies) {
+      dependency.collectBoundDependencies(session, newDependencies);
+    }
+    newDependencies.removeAll(rootDependencies);
+    newDependencies.remove(this);
+
+    if (!newDependencies.isEmpty()) {
+      rootDependencies.addAll(newDependencies);
+      collectTransitiveDependencies(session, newDependencies, rootDependencies);
+    }
+  }
+
+  private void collectBoundDependencies(InferenceSession session, Set<InferenceVariable> dependencies) {
+    for (Collection<PsiType> boundTypes : myBounds.values()) {
+      if (boundTypes != null) {
+        for (PsiType bound : boundTypes) {
+          session.collectDependencies(bound, dependencies);
+        }
+      }
+    }
   }
 
   public boolean hasInstantiation(InferenceSession session) {

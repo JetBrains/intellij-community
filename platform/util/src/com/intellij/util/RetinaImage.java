@@ -20,6 +20,7 @@ import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
 
 /**
  * @author Anton Makeev
@@ -27,9 +28,31 @@ import java.awt.image.BufferedImage;
  */
 public class RetinaImage {
 
-  public static Image createFrom(Image image, final int scale, Component ourComponent) {
-    int w = image.getWidth(ourComponent);
-    int h = image.getHeight(ourComponent);
+  /**
+   * Creates a Retina-aware wrapper over a raw image.
+   * The raw image should be provided in scale of the Retina default scale factor (2x).
+   * The wrapper will represent the raw image in the user coordinate space.
+   *
+   * @param image the raw image
+   * @return the Retina-aware wrapper
+   */
+  public static Image createFrom(Image image) {
+    return createFrom(image, 2, ImageLoader.ourComponent);
+  }
+
+  /**
+   * Creates a Retina-aware wrapper over a raw image.
+   * The raw image should be provided in the specified scale.
+   * The wrapper will represent the raw image in the user coordinate space.
+   *
+   * @param image the raw image
+   * @param scale the raw image scale
+   * @param observer the raw image observer
+   * @return the Retina-aware wrapper
+   */
+  public static Image createFrom(Image image, final int scale, ImageObserver observer) {
+    int w = image.getWidth(observer);
+    int h = image.getHeight(observer);
 
     Image hidpi = create(image, w / scale, h / scale, BufferedImage.TYPE_INT_ARGB);
     if (SystemInfo.isAppleJvm) {

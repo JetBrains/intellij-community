@@ -230,12 +230,19 @@ public class EditorTestUtil {
         return charWidthInPixels;
       }
     });
+    setEditorVisibleSizeInPixels(editor, visibleWidth, 1000);
     applianceManager.registerSoftWrapIfNecessary();
     return !model.getRegisteredSoftWraps().isEmpty();
   }
 
   public static void setEditorVisibleSize(Editor editor, int widthInChars, int heightInChars) {
-    Dimension size = new Dimension(widthInChars * EditorUtil.getSpaceWidth(Font.PLAIN, editor), heightInChars * editor.getLineHeight());
+    setEditorVisibleSizeInPixels(editor, 
+                                 widthInChars * EditorUtil.getSpaceWidth(Font.PLAIN, editor), 
+                                 heightInChars * editor.getLineHeight());
+  }
+
+  public static void setEditorVisibleSizeInPixels(Editor editor, int widthInPixels, int heightInPixels) {
+    Dimension size = new Dimension(widthInPixels, heightInPixels);
     ((EditorEx)editor).getScrollPane().getViewport().setExtentSize(size);
   }
 

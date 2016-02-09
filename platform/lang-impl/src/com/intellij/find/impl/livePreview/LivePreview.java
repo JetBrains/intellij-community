@@ -457,8 +457,6 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
       new Processor<RangeHighlighterEx>() {
         @Override
         public boolean process(RangeHighlighterEx highlighter) {
-          if (!highlighter.getEditorFilter().avaliableIn(mySearchResults.getEditor())) return true;
-
           TextAttributes textAttributes =
             highlighter.getTextAttributes();
           if (highlighter.getUserData(SEARCH_MARKER) != null &&

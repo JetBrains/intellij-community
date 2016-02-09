@@ -93,4 +93,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testAsyncForIterable() {
     doTest();
   }
+
+  // PY-18275
+  public void testStrFormatPy3() {
+    doTest();
+  }
 }

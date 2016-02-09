@@ -118,7 +118,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       try {
         info = parseClassSignature(signature);
       }
-      catch (ClsFormatException e) { LOG.warn(signature, e); }
+      catch (ClsFormatException e) {
+        if (LOG.isDebugEnabled()) LOG.debug("source=" + mySource + " signature=" + signature, e);
+      }
     }
     if (info == null) {
       info = parseClassDescription(superName, interfaces);
@@ -299,7 +301,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       try {
         type = SignatureParsing.parseTypeString(new StringCharacterIterator(signature), myMapping);
       }
-      catch (ClsFormatException e) { LOG.warn(signature, e); }
+      catch (ClsFormatException e) {
+        if (LOG.isDebugEnabled()) LOG.debug("source=" + mySource + " signature=" + signature, e);
+      }
     }
     if (type == null) {
       type = toJavaType(Type.getType(desc), myMapping);
@@ -345,7 +349,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
         info = parseMethodSignature(signature, exceptions);
         generic = true;
       }
-      catch (ClsFormatException e) { LOG.warn(signature, e); }
+      catch (ClsFormatException e) {
+        if (LOG.isDebugEnabled()) LOG.debug("source=" + mySource + " signature=" + signature, e);
+      }
     }
     if (info == null) {
       info = parseMethodDescription(desc, exceptions);

@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
+import com.intellij.util.loadElement
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jdom.Parent
@@ -121,7 +122,7 @@ open class FileBasedStorage(file: File,
       else {
         val charBuffer = CharsetToolkit.UTF8_CHARSET.decode(ByteBuffer.wrap(file.contentsToByteArray()))
         lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-        return JDOMUtil.loadDocument(charBuffer).detachRootElement()
+        return loadElement(charBuffer)
       }
     }
     catch (e: JDOMException) {
@@ -230,7 +231,7 @@ fun Parent.toBufferExposingByteArray(lineSeparator: String = "\n"): BufferExposi
   return out
 }
 
-fun isProjectOrModuleFile(fileSpec: String): Boolean = StoragePathMacros.PROJECT_FILE == fileSpec || fileSpec.startsWith(StoragePathMacros.PROJECT_CONFIG_DIR) || fileSpec == StoragePathMacros.MODULE_FILE
+fun isProjectOrModuleFile(fileSpec: String): Boolean = PROJECT_FILE == fileSpec || fileSpec.startsWith(PROJECT_CONFIG_DIR) || fileSpec == StoragePathMacros.MODULE_FILE
 
 fun detectLineSeparators(chars: CharSequence, defaultSeparator: LineSeparator?): LineSeparator {
   for (c in chars) {

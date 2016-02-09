@@ -921,7 +921,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private static int getInvokePolicy(SuspendContext suspendContext) {
-    if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD || Registry.is("debugger.step.resumes.one.thread")) {
+    if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD || isResumeOnlyCurrentThread()) {
       return ObjectReference.INVOKE_SINGLE_THREADED;
     }
     return 0;
@@ -1696,11 +1696,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     protected void resumeAction() {
       SuspendContextImpl context = getSuspendContext();
       if (context != null &&
-          (context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD || Registry.is("debugger.step.resumes.one.thread"))) {
+          (context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD || isResumeOnlyCurrentThread())) {
         myThreadBlockedMonitor.startWatching(myContextThread);
       }
       if (context != null
-          && Registry.is("debugger.step.resumes.one.thread")
+          && isResumeOnlyCurrentThread()
           && context.getSuspendPolicy() == EventRequest.SUSPEND_ALL
           && myContextThread != null) {
         getSuspendManager().resumeThread(context, myContextThread);
@@ -2228,5 +2228,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public DebuggerSession getSession() {
     return mySession;
+  }
+
+  static boolean isResumeOnlyCurrentThread() {
+    return DebuggerSettings.getInstance().RESUME_ONLY_CURRENT_THREAD;
   }
 }

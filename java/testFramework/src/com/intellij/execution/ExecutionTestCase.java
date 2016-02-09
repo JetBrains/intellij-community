@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,10 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
       }
     });
     if (!myModuleOutputDir.exists()) {
+      VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ourOutputRoot);
+      assertNotNull(ourOutputRoot.getAbsolutePath(), vDir);
+      vDir.getChildren();//we need this to load children to VFS to fire VFileCreatedEvent for the output directory
+
       myCompilerTester = new CompilerTester(myProject, Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
       List<CompilerMessage> messages = myCompilerTester.rebuild();
       for (CompilerMessage message : messages) {

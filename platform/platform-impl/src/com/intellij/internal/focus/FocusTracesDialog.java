@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,12 @@
  */
 package com.intellij.internal.focus;
 
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.impl.FocusRequestInfo;
 import com.intellij.ui.JBColor;
@@ -41,10 +45,10 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class FocusTracesDialog extends DialogWrapper {
-  private final JTextPane myStacktrace = new JTextPane();
   private final JBTable myRequestsTable;
   private final List<FocusRequestInfo> myRequests;
   private static final String[] COLUMNS = {"Time", "Forced", "Component"};
+  private final ConsoleView consoleView;
 
   public FocusTracesDialog(Project project, ArrayList<FocusRequestInfo> requests) {
     super(project);
@@ -65,13 +69,11 @@ public class FocusTracesDialog extends DialogWrapper {
     final ListSelectionListener selectionListener = new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
+        if (consoleView == null) return;
         final int index = myRequestsTable.getSelectedRow();
+        consoleView.clear();
         if (-1 < index && index < myRequests.size()) {
-          myStacktrace.setText(myRequests.get(index).getStackTrace());
-          myStacktrace.setCaretPosition(0);
-        }
-        else {
-          myStacktrace.setText("");
+          consoleView.print(myRequests.get(index).getStackTrace(), ConsoleViewContentType.NORMAL_OUTPUT);
         }
       }
     };
@@ -85,6 +87,9 @@ public class FocusTracesDialog extends DialogWrapper {
     columnModel.getColumn(1).setPreferredWidth(60);
     myRequestsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myRequestsTable.changeSelection(0, 0, false, true);
+
+    consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(ProjectManager.getInstance().getDefaultProject()).getConsole();
+
     init();
   }
 
@@ -98,8 +103,13 @@ public class FocusTracesDialog extends DialogWrapper {
     JPanel panel = new JPanel(new BorderLayout());
     JBSplitter splitter = new JBSplitter(true, .5F, .2F, .8F);
     splitter.setFirstComponent(new JBScrollPane(myRequestsTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
+
+    final JComponent consoleComponent = new JPanel(new BorderLayout());
+    consoleComponent.add(consoleView.getComponent(), BorderLayout.CENTER);
+    consoleView.print(myRequests.get(myRequestsTable.getSelectedRow()).getStackTrace(), ConsoleViewContentType.NORMAL_OUTPUT);
+
     splitter.setSecondComponent(
-      new JBScrollPane(myStacktrace, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
+      new JBScrollPane(consoleComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
     panel.add(splitter, BorderLayout.CENTER);
     return panel;
   }
@@ -119,7 +129,7 @@ public class FocusTracesDialog extends DialogWrapper {
     return new AbstractAction("&Copy stacktrace") {
       @Override
       public void actionPerformed(ActionEvent e) {
-        CopyPasteManager.getInstance().setContents(new StringSelection(myStacktrace.getText()));
+        CopyPasteManager.getInstance().setContents(new StringSelection(myRequests.get(myRequestsTable.getSelectedRow()).getStackTrace()));
       }
     };
   }

@@ -459,65 +459,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       return false;
     }
 
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(left);
-    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
-    if (interfaceMethod != null) {
-      final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(left);
-
-      if (PsiType.VOID.equals(interfaceReturnType) || interfaceReturnType == null) {
-        return true;
-      }
-
-      PsiSubstitutor subst = result.getSubstitutor();
-
-      PsiType methodReturnType = null;
-      PsiClass containingClass = null;
-      if (resolve instanceof PsiMethod) {
-        containingClass = ((PsiMethod)resolve).getContainingClass();
-
-        PsiType returnType = PsiTypesUtil.patchMethodGetClassReturnType(this, this, (PsiMethod)resolve, null, PsiUtil.getLanguageLevel(this));
-
-        if (returnType == null) {
-          returnType = ((PsiMethod)resolve).getReturnType();
-        }
-
-        if (PsiType.VOID.equals(returnType)) {
-          return false;
-        }
-
-        PsiClass qContainingClass = PsiMethodReferenceUtil.getQualifierResolveResult(this).getContainingClass();
-        if (qContainingClass != null && containingClass != null &&
-            PsiMethodReferenceUtil.isReceiverType(PsiMethodReferenceUtil.getFirstParameterType(left, this), qContainingClass, subst)) {
-          subst = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, subst);
-          LOG.assertTrue(subst != null);
-        }
-
-        methodReturnType = subst.substitute(returnType);
-      }
-      else if (resolve instanceof PsiClass) {
-        if (resolve == JavaPsiFacade.getElementFactory(resolve.getProject()).getArrayClass(PsiUtil.getLanguageLevel(resolve))) {
-          final PsiTypeParameter[] typeParameters = ((PsiClass)resolve).getTypeParameters();
-          if (typeParameters.length == 1) {
-            final PsiType arrayComponentType = subst.substitute(typeParameters[0]);
-            if (arrayComponentType == null) {
-              return false;
-            }
-            methodReturnType = arrayComponentType.createArrayType();
-          }
-        }
-        containingClass = (PsiClass)resolve;
-      }
-
-      if (methodReturnType == null) {
-        if (containingClass == null) {
-          return false;
-        }
-        methodReturnType = JavaPsiFacade.getElementFactory(getProject()).createType(containingClass, subst);
-      }
-
-      return TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType);
-    }
-    return false;
+    return PsiMethodReferenceUtil.isReturnTypeCompatible(this, result, left);
   }
 
   @Nullable

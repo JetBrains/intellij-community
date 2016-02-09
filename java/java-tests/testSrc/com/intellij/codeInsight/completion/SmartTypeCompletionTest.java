@@ -1163,6 +1163,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNonStaticField() throws Exception { doAntiTest(); }
 
+  public void testLocalClassInExpectedTypeArguments() { doTest(); }
+
   private void doActionTest() throws Exception {
     configureByTestName();
     checkResultByTestName();

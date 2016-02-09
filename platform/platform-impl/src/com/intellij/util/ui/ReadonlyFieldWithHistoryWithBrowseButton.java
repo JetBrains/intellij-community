@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
+import com.intellij.util.PairConvertor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ public interface ReadonlyFieldWithHistoryWithBrowseButton {
   void setPreferredWidthToFitText();
 
   class Builder {
-    private Convertor<ActionEvent, String> myActionListener;
+    private PairConvertor<ActionEvent, String, String> myActionListener;
     private Getter<List<String>> myHistoryProvider;
     private Convertor<TextFieldWithHistory, ListCellRenderer> myRendererCreator;
 
@@ -56,7 +57,7 @@ public interface ReadonlyFieldWithHistoryWithBrowseButton {
       return this;
     }
 
-    public Builder withActionListener(@NotNull final Convertor<ActionEvent, String> listener) {
+    public Builder withActionListener(@NotNull final PairConvertor<ActionEvent, String, String> listener) {
       myActionListener = listener;
       return this;
     }
@@ -74,7 +75,7 @@ public interface ReadonlyFieldWithHistoryWithBrowseButton {
         field.getButton().addActionListener(new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
-            final String value = myActionListener.convert(e);
+            final String value = myActionListener.convert(e, wrapper.get());
             if (value != null) {
               wrapper.set(value);
             }

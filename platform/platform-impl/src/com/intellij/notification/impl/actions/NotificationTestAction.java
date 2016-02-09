@@ -16,6 +16,8 @@
 package com.intellij.notification.impl.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.connect.StatisticsNotification;
+import com.intellij.internal.statistic.updater.StatisticsNotificationManager;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -142,15 +144,15 @@ public class NotificationTestAction extends AnAction implements DumbAware {
             continue;
           }
         }
+        if (line.startsWith("//")) {
+          continue;
+        }
         if (notification == null) {
           notification = new NotificationInfo();
           notifications.add(notification);
         }
         if (line.startsWith("GroupID:")) {
           notification.setGroupId(StringUtil.substringAfter(line, ":"));
-        }
-        else if (line.startsWith("Type:")) {
-          notification.setType(StringUtil.substringAfter(line, ":"));
         }
         else if (line.startsWith("Title:")) {
           notification.setTitle(StringUtil.substringAfter(line, ":"));
@@ -188,7 +190,6 @@ public class NotificationTestAction extends AnAction implements DumbAware {
 
   private static class NotificationInfo implements NotificationListener {
     private String myGroupId;
-    private String myType;
     private String myTitle;
     private String mySubtitle;
     private List<String> myContent;
@@ -202,6 +203,9 @@ public class NotificationTestAction extends AnAction implements DumbAware {
         Icon icon = null;
         if (myGroupId != null) {
           icon = IconLoader.findIcon(myGroupId);
+        }
+        if ("!!!St!!!".equals(myTitle)) {
+          return myNotification = new StatisticsNotification(StatisticsNotificationManager.GROUP_DISPLAY_ID, this).setIcon(icon);
         }
         String displayId = mySticky ? TEST_STICKY_GROUP.getDisplayId() : TEST_GROUP_ID;
         String content = myContent == null ? "" : StringUtil.join(myContent, "\n");
@@ -222,10 +226,6 @@ public class NotificationTestAction extends AnAction implements DumbAware {
 
     public void setGroupId(@Nullable String groupId) {
       myGroupId = groupId;
-    }
-
-    public void setType(@Nullable String type) {
-      myType = type;
     }
 
     public void setTitle(@Nullable String title) {

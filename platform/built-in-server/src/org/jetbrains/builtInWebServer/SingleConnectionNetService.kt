@@ -55,7 +55,7 @@ abstract class SingleConnectionNetService(project: Project) : NetService(project
   }
 
   private fun addCloseListener(it: Channel) {
-    it.closeFuture().addListener {
+    it.closeFuture().addChannelListener {
       val channel = it.channel()
       processChannel.compareAndSet(channel, null)
       channel.eventLoop().shutdownIfOio()

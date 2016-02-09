@@ -16,10 +16,13 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.security.AccessController;
@@ -91,5 +94,15 @@ public class MemoryDumpHelper {
    */
   public static synchronized void captureMemoryDump(@NotNull String dumpPath) throws Exception {
     ourDumpHeap.invoke(ourMXBean, dumpPath, true);
+  }
+
+  public static synchronized void captureMemoryDumpZipped(@NotNull String zipPath) throws Exception {
+    File tempFile = FileUtil.createTempFile("heapDump.", ".hprof");
+    FileUtil.delete(tempFile);
+
+    captureMemoryDump(tempFile.getPath());
+
+    ZipUtil.compressFile(tempFile, new File(zipPath));
+    FileUtil.delete(tempFile);
   }
 }

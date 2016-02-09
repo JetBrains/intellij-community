@@ -40,7 +40,8 @@ public class PyTripleQuoteBackspaceDelegate extends BackspaceHandlerDelegate {
       boolean mayBeTripleQuote = offset >= 3 && offset + 2 < text.length();
       if (mayBeTripleQuote) {
         HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
-        boolean hasTripleQuoteAfter = text.charAt(offset - 1) == c && text.charAt(offset - 2) == c && text.charAt(offset - 3) == c;
+        boolean hasTripleQuoteAfter = offset + 2 < text.length() &&
+                                      text.charAt(offset) == c && text.charAt(offset + 1) == c && text.charAt(offset + 2) == c;
         isTripleQuote = quoteHandler.isOpeningQuote(iterator, offset - 1) && hasTripleQuoteAfter;
       }
     }

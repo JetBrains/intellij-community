@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.components;
 
 import org.jetbrains.annotations.NonNls;
@@ -22,12 +21,21 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
+/**
+ * See http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html
+ */
 public @interface Storage {
-  @NonNls String id() default "default";
+  @Deprecated
+  /**
+   * Please use {@link #value()}.
+   */
+  String file() default "";
 
-  @NonNls String file() default "";
-
-  StorageScheme scheme() default StorageScheme.DEFAULT;
+  /**
+   * Relative to component container configuration root file path.
+   * Consider to use shorthand form - {code}@Storage("yourName.xml"){code} (when you need to specify only file path).
+   */
+  @NonNls String value() default "";
 
   /**
    * If deprecated: Data will be removed on write. And ignored on read if (and only if) new storage exists.
@@ -35,7 +43,7 @@ public @interface Storage {
   boolean deprecated() default false;
 
   /**
-   * You must not store components with different roaming types in one file ({@link #file()}).
+   * You must not store components with different roaming types in one file ({@link #value()}).
    */
   RoamingType roamingType() default RoamingType.DEFAULT;
 
@@ -45,4 +53,10 @@ public @interface Storage {
   Class<? extends StateStorage> storageClass() default StateStorage.class;
 
   Class<? extends StateSplitter> stateSplitter() default StateSplitterEx.class;
+
+  @Deprecated
+  StorageScheme scheme() default StorageScheme.DEFAULT;
+
+  @Deprecated
+  String id() default "default";
 }

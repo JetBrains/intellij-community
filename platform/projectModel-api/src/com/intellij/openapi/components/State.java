@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
+/**
+ * See http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html
+ */
 public @interface State {
   String name();
 
   /**
    * Could be specified as empty list if you need to load only default state ({@link #defaultStateAsResource()} must be true in this case)
    */
-  Storage[] storages();
+  Storage[] storages() default {};
 
   boolean reloadable() default true;
 

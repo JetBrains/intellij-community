@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,21 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -50,10 +52,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("ConstantConditions")
@@ -613,6 +613,112 @@ public class FileTypesTest extends PlatformTestCase {
     finally {
       Extensions.getRootArea().getExtensionPoint(FileTypeRegistry.FileTypeDetector.EP_NAME).unregisterExtension(detector);
       myFileTypeManager.toLog = false;
+    }
+  }
+
+  public void _testStressPlainTextFileWithEverIncreasingLength() throws IOException, InterruptedException {
+    FrequentEventDetector.disableUntil(myTestRootDisposable);
+
+    File f = createTempFile("xx.lkjlkjlkjlj", "a");
+    VirtualFile virtualFile = getVirtualFile(f);
+    assertEquals(PlainTextFileType.INSTANCE, virtualFile.getFileType());
+    //PsiFile psiFile = getPsiManager().findFile(virtualFile);
+    //assertTrue(psiFile instanceof PsiPlainTextFile);
+
+    int NThreads = 8;
+    int N = 1000;
+    Random random = new Random();
+    AtomicReference<Exception> exception = new AtomicReference<>();
+    List<Thread> threads = ContainerUtil.map(new Object[NThreads], o -> {
+      return new Thread(() -> {
+        try {
+          for (int i = 0; i < N; i++) {
+            boolean isText = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+              if (virtualFile.getFileType().isBinary()) {
+                return false;
+              }
+              else {
+                LoadTextUtil.loadText(virtualFile);
+                return true;
+              }
+            });
+
+            if (random.nextInt(3) == 0) {
+              new WriteCommandAction.Simple(getProject()) {
+                @Override
+                protected void run() throws Throwable {
+                  byte[] bytes = new byte[(int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD + (isText ? 1 : 0)];
+                  Arrays.fill(bytes, (byte)' ');
+                  virtualFile.setBinaryContent(bytes);
+                }
+              }.execute().throwException();
+
+
+              //RandomAccessFile ra = new RandomAccessFile(f, "rw");
+              //ra.setLength(ra.length()+(isText ? 1 : -1));
+              //ra.close();
+              //LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(virtualFile));
+              System.out.println(i+"; f = " + f.length()+"; virtualFile="+virtualFile.getLength()+"; type="+virtualFile.getFileType());
+              //Thread.sleep(random.nextInt(100));
+            }
+          }
+        }
+        catch (Exception e) {
+          exception.set(e);
+          e.printStackTrace();
+          throw new RuntimeException(e);
+        }
+      }, "reader");
+    });
+    threads.forEach(Thread::start);
+    for (Thread thread : threads) {
+      while (thread.isAlive()) {
+        if (exception.get() != null) throw new RuntimeException(exception.get());
+        UIUtil.dispatchAllInvocationEvents(); //refresh
+      }
+    }
+    if (exception.get() != null) throw new RuntimeException(exception.get());
+  }
+
+  public void _testStressPlainTextFileWithEverIncreasingLength2() throws IOException, InterruptedException {
+    FrequentEventDetector.disableUntil(myTestRootDisposable);
+
+    File f = createTempFile("xx.asdkjfhlkasjdhf", StringUtil.repeatSymbol(' ', (int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD - 100));
+    VirtualFile virtualFile = getVirtualFile(f);
+    assertEquals(PlainTextFileType.INSTANCE, virtualFile.getFileType());
+    PsiFile psiFile = getPsiManager().findFile(virtualFile);
+    assertTrue(psiFile instanceof PsiPlainTextFile);
+
+    int NThreads = 1;
+    int N = 10;
+    List<Thread> threads = ContainerUtil.map(new Object[NThreads], o -> {
+      return new Thread(() -> {
+        for (int i = 0; i < N; i++) {
+          ApplicationManager.getApplication().runReadAction(() -> {
+            String text = psiFile.getText();
+            System.out.println("text = " + text.length());
+            //if (!virtualFile.getFileType().isBinary()) {
+            //  LoadTextUtil.loadText(virtualFile);
+            //}
+          });
+          if (i % 1 == 0) {
+            try {
+              FileUtil.appendToFile(f, StringUtil.repeatSymbol(' ', 50));
+              LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(virtualFile));
+              System.out.println("f = " + f.length()+"; virtualFile="+virtualFile.getLength()+"; psiFile="+psiFile.isValid()+"; type="+virtualFile.getFileType());
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          }
+        }
+      }, "reader");
+    });
+    threads.forEach(Thread::start);
+    for (Thread thread : threads) {
+      while (thread.isAlive()) {
+        UIUtil.dispatchAllInvocationEvents(); //refresh
+      }
     }
   }
 }

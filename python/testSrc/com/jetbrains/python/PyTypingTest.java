@@ -437,6 +437,18 @@ public class PyTypingTest extends PyTestCase {
            "expr = x.foo\n");
   }
 
+  // PY-18427
+  public void testConditionalType() {
+    doTest("Union[int, str]",
+           "if something:\n" +
+           "    Type = int\n" +
+           "else:\n" +
+           "    Type = str\n" +
+           "\n" +
+           "def f(expr: Type):\n" +
+           "    pass\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

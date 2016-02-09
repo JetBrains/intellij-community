@@ -108,7 +108,8 @@ public final class RequestBuilder {
   public RequestBuilder productNameAsUserAgent() {
     Application app = ApplicationManager.getApplication();
     if (app != null && !app.isDisposed()) {
-      return userAgent(ApplicationInfo.getInstance().getVersionName());
+      ApplicationInfo info = ApplicationInfo.getInstance();
+      return userAgent(info.getVersionName() + "/" + info.getBuild().asStringWithoutProductCode());
     }
     else {
       return userAgent("IntelliJ");

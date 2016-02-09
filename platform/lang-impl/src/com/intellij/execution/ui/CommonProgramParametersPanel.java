@@ -38,6 +38,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -74,8 +75,12 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
 
   protected void init() {
     initComponents();
-    copyDialogCaption(myProgramParametersComponent);
     updateUI();
+    setupAnchor();
+  }
+
+  protected void setupAnchor() {
+    myAnchor = UIUtil.mergeComponentsWithAnchor(myProgramParametersComponent, myWorkingDirectoryComponent, myEnvVariablesComponent);
   }
 
   @Nullable
@@ -111,7 +116,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
 
     setPreferredSize(new Dimension(10, 10));
 
-    setAnchor(myEnvVariablesComponent.getLabel());
+    copyDialogCaption(myProgramParametersComponent);
   }
 
   protected JComponent createComponentWithMacroBrowse(@NotNull final TextFieldWithBrowseButton textAccessor) {

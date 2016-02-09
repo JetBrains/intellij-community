@@ -15,23 +15,26 @@
  */
 package org.jetbrains.plugins.groovy.lang
 
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ThrowableRunnable
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
-
 /**
  * @author peter
  */
@@ -450,6 +453,38 @@ class AwsService {
   private def addGdsl(String text) {
     final PsiFile file = myFixture.addFileToProject("Enhancer.gdsl", text)
     GroovyDslFileIndex.activate(file.virtualFile)
+  }
+
+  @CompileStatic
+  public void "test performance of resolving methods with many siblings"() {
+    int classMethodCount = 50000
+    assert myFixture.addClass("""class Foo {
+${(1..classMethodCount).collect({"void foo${it}() {}"}).join("\n")}
+}""")
+
+    def refCountInBlock = 50
+    def blockCount = 10
+    def methodBody = (1..refCountInBlock).collect({ "foo$it()" }).join("\n")
+    String text = "class Bar extends Foo { " +
+                  (0..blockCount).collect({ "def zoo$it() {\n" + methodBody + "\n}"}).join("\n") +
+                  "}"
+    myFixture.configureByText('a.groovy', '')
+    assert myFixture.file instanceof GroovyFile
+    PlatformTestUtil.startPerformanceTest('many siblings', 10000, {
+      // clear caches
+      WriteCommandAction.runWriteCommandAction(project) {
+        myFixture.editor.document.text = ""
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+        myFixture.editor.document.text = text
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      }
+
+      def refs = SyntaxTraverser.psiTraverser(myFixture.file).filter(GrReferenceElement).toList()
+      assert refs.size() > refCountInBlock * blockCount
+      for (ref in refs) {
+        assert ref.resolve(): ref.text
+      }
+    }).cpuBound().attempts(2).assertTiming()
   }
 
 }

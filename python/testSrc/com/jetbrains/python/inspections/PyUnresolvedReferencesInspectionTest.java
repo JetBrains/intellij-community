@@ -53,7 +53,20 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  public void testSlots() {
+  public void testSlotsAndUnlistedAttrAssign() {
+    doTest();
+  }
+
+  public void testSlotsSuperclass() {
+    doTest();
+  }
+
+  public void testSlotsWithDict() {
+    doTest();
+  }
+
+  // PY-10397
+  public void testSlotsAndListedAttrAccess() {
     doTest();
   }
 

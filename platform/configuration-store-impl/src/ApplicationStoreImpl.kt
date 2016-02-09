@@ -21,7 +21,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
-import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.BasePathMacroManager
 import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
@@ -34,6 +33,8 @@ import org.jdom.Element
 
 private class ApplicationPathMacroManager : BasePathMacroManager(null)
 
+const val APP_CONFIG = "\$APP_CONFIG$"
+
 class ApplicationStoreImpl(private val application: Application, pathMacroManager: PathMacroManager? = null) : ComponentStoreImpl() {
   override val storageManager = ApplicationStorageManager(application, pathMacroManager)
 
@@ -43,7 +44,7 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
 
   override fun setPath(path: String) {
     // app config must be first, because collapseMacros collapse from fist to last, so, at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
-    storageManager.addMacro(StoragePathMacros.APP_CONFIG, "$path/${ApplicationStorageManager.FILE_STORAGE_DIR}")
+    storageManager.addMacro(APP_CONFIG, "$path/${ApplicationStorageManager.FILE_STORAGE_DIR}")
     storageManager.addMacro(ROOT_CONFIG, path)
 
     val configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
@@ -103,12 +104,12 @@ class ApplicationStorageManager(private val application: Application, pathMacroM
     }
   }
 
-  override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), StoragePathMacros.APP_CONFIG)
+  override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
 
   override fun expandMacros(path: String) = if (path[0] == '$') {
     super.expandMacros(path)
   }
   else {
-    "${expandMacro(StoragePathMacros.APP_CONFIG)}/$path"
+    "${expandMacro(APP_CONFIG)}/$path"
   }
 }

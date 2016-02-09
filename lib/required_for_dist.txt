@@ -59,7 +59,7 @@ oromatcher.jar
 picocontainer.jar
 protobuf-2.5.0.jar
 proxy-vole_20131209.jar
-pty4j-0.5.jar
+pty4j-0.6.jar
 purejavacomm.jar
 resolver.jar
 rhino-js-1_7R4.jar
@@ -77,4 +77,4 @@ xercesImpl.jar
 xml-apis.jar
 xmlrpc-2.0.jar
 xpp3-1.1.4-min.jar
-xstream-1.4.3.jar
+xstream-1.4.8.jar

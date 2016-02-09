@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 @State(
   name = "hg4idea.settings",
-  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
+  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State>, DvcsSyncSettings {
 

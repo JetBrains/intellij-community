@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -32,7 +31,7 @@ import java.util.TreeMap;
 
 @State(
   name = "TextDiffSettings",
-  storages = @Storage(file = DiffUtil.DIFF_CONFIG)
+  storages = @Storage(value = DiffUtil.DIFF_CONFIG)
 )
 public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiffSettingsHolder.State> {
   public static final Key<TextDiffSettings> KEY = Key.create("TextDiffSettings");
@@ -58,6 +57,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
     public boolean SHOW_LINE_NUMBERS = true;
     public boolean SHOW_INDENT_LINES = false;
     public boolean USE_SOFT_WRAPS = false;
+    public HighlightingLevel HIGHLIGHTING_LEVEL = HighlightingLevel.INSPECTIONS;
 
     // Fragments settings
     public boolean EXPAND_BY_DEFAULT = true;
@@ -138,6 +138,15 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
     public void setUseSoftWraps(boolean state) {
       PLACE_SETTINGS.USE_SOFT_WRAPS = state;
+    }
+
+    @NotNull
+    public HighlightingLevel getHighlightingLevel() {
+      return PLACE_SETTINGS.HIGHLIGHTING_LEVEL;
+    }
+
+    public void setHighlightingLevel(@NotNull HighlightingLevel state) {
+      PLACE_SETTINGS.HIGHLIGHTING_LEVEL = state;
     }
 
     public int getContextRange() {

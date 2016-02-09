@@ -225,6 +225,11 @@ public class CommonCodeStyleSettings {
   public boolean LINE_COMMENT_AT_FIRST_COLUMN = true;
   public boolean BLOCK_COMMENT_AT_FIRST_COLUMN = true;
 
+  /**
+   * Tells if a space is added when commenting/uncommenting lines with a line comment.
+   */
+  public boolean LINE_COMMENT_ADD_SPACE = false;
+
   public boolean KEEP_LINE_BREAKS = true;
 
   /**

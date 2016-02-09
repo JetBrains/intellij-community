@@ -22,6 +22,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -161,6 +162,9 @@ public class GitRebaseProcess {
 
       saveUpdatedSpec(statuses);
     }
+    catch (ProcessCanceledException pce) {
+      throw pce;
+    }
     catch(Throwable e) {
       myRepositoryManager.setOngoingRebaseSpec(null);
       ExceptionUtil.rethrowUnchecked(e);
@@ -207,6 +211,10 @@ public class GitRebaseProcess {
         }
         LOG.debug("Successfully rebased " + repoName);
         return GitSuccessfulRebase.parseFromOutput(result.getOutput(), skippedCommits);
+      }
+      else if (result.cancelled()) {
+        LOG.info("Rebase was cancelled");
+        throw new ProcessCanceledException();
       }
       else if (rebaseDetector.isDirtyTree() && customMode == null && !retryWhenDirty) {
         // if the initial dirty tree check doesn't find all local changes, we are still ready to stash-on-demand,

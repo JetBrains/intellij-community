@@ -20,9 +20,11 @@ import com.intellij.facet.FacetModel;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -33,6 +35,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactModel;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -47,14 +50,18 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isRelated;
 
 public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProviderImpl implements IdeModifiableModelsProvider {
+  private static final Logger LOG = Logger.getInstance(AbstractIdeModifiableModelsProvider.class);
+
   private ModifiableModuleModel myModifiableModuleModel;
   private Map<Module, ModifiableRootModel> myModifiableRootModels = new THashMap<Module, ModifiableRootModel>();
   private Map<Module, ModifiableFacetModel> myModifiableFacetModels = new THashMap<Module, ModifiableFacetModel>();
+  private Map<Module, String> myProductionModulesForTestModules = new THashMap<Module, String>();
   private Map<Library, Library.ModifiableModel> myModifiableLibraryModels = new IdentityHashMap<Library, Library.ModifiableModel>();
   private ModifiableArtifactModel myModifiableArtifactModel;
   private AbstractIdeModifiableModelsProvider.MyPackagingElementResolvingContext myPackagingElementResolvingContext;
@@ -107,9 +114,26 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   @Override
   public Module newModule(@NotNull final String filePath, final String moduleTypeId) {
     Module module = getModifiableModuleModel().newModule(filePath, moduleTypeId);
+    final String moduleName = FileUtil.getNameWithoutExtension(new File(filePath));
+    if (!module.getName().equals(moduleName)) {
+      try {
+        getModifiableModuleModel().renameModule(module, moduleName);
+      }
+      catch (ModuleWithNameAlreadyExists exists) {
+        LOG.warn(exists);
+      }
+    }
+
     // set module type id explicitly otherwise it can not be set if there is an existing module (with the same filePath) and w/o 'type' attribute
     module.setOption(Module.ELEMENT_TYPE, moduleTypeId);
     return module;
+  }
+
+  @Nullable
+  @Override
+  public Module findIdeModule(@NotNull String ideModuleName) {
+    Module module = getModifiableModuleModel().findModuleByName(ideModuleName);
+    return module == null ? getModifiableModuleModel().getModuleToBeRenamed(ideModuleName) : module;
   }
 
   @Nullable
@@ -361,6 +385,9 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
             model.commit();
           }
         }
+        for (Map.Entry<Module, String> entry : myProductionModulesForTestModules.entrySet()) {
+          TestModuleProperties.getInstance(entry.getKey()).setProductionModuleName(entry.getValue());
+        }
 
         for (Map.Entry<Module, ModifiableFacetModel> each : myModifiableFacetModels.entrySet()) {
           if(!each.getKey().isDisposed()) {
@@ -396,5 +423,10 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     myModifiableRootModels.clear();
     myModifiableFacetModels.clear();
     myModifiableLibraryModels.clear();
+  }
+
+  @Override
+  public void setTestModuleProperties(Module testModule, String productionModuleName) {
+    myProductionModulesForTestModules.put(testModule, productionModuleName);
   }
 }

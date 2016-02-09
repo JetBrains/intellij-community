@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.graph.impl.facade.bek;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImpl;
 import com.intellij.vcs.log.graph.utils.IntList;
@@ -27,20 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class BekSorter {
-
-  public static boolean isBekEnabled() { // todo drop later
-    if (Registry.is("vcs.log.bek.sort.disabled")) {
-      return false;
-    }
-    boolean isInternal = Boolean.valueOf(System.getProperty("idea.is.internal"));
-    boolean isBekEnabled = Registry.is("vcs.log.bek.sort");
-    return isBekEnabled || isInternal;
-  }
-
-  public static boolean isLinearBekEnabled() {
-    return isBekEnabled() && Registry.is("vcs.log.linear.bek.sort");
-  }
-
   @NotNull
   public static BekIntMap createBekMap(@NotNull LinearGraph permanentGraph,
                                        @NotNull GraphLayoutImpl graphLayout,

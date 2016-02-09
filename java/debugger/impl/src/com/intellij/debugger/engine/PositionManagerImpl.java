@@ -23,7 +23,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
-import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -261,7 +260,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           PsiFile file = original.getFile();
           int line = original.getLine();
           if (LambdaMethodFilter.isLambdaName(myExpectedMethodName) && myLambdaOrdinal > -1) {
-            List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(original, false);
+            List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(original, true);
 
             Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
             if (document == null || line >= document.getLineCount()) {
@@ -437,11 +436,11 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
             PsiTreeUtil.treeWalkUp(psiClass, null, new PairProcessor<PsiElement, PsiElement>() {
               @Override
               public boolean process(PsiElement element, PsiElement element2) {
-                sb.append(element);
+                sb.append('\n').append(element);
                 return true;
               }
             });
-            LOG.error("Local or anonymous class " + psiClass + " has no non-local parent, parents:" + sb);
+            LOG.info("Local or anonymous class " + psiClass + " has no non-local parent, parents:" + sb);
           }
         }
         else {
@@ -545,7 +544,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           int locationLine = lnumber - 1;
           PsiFile psiFile = position.getFile().getOriginalFile();
           if (psiFile instanceof PsiCompiledFile) {
-            locationLine = bytecodeToSourceLine(psiFile, locationLine);
+            locationLine = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, locationLine);
             if (locationLine < 0) continue;
           }
           rangeBegin = Math.min(rangeBegin,  locationLine);
@@ -662,24 +661,10 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
   @Nullable
   private static SourcePosition calcLineMappedSourcePosition(PsiFile psiFile, int originalLine) {
-    int line = bytecodeToSourceLine(psiFile, originalLine);
+    int line = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, originalLine);
     if (line > -1) {
       return SourcePosition.createFromLine(psiFile, line - 1);
     }
     return null;
-  }
-
-  private static int bytecodeToSourceLine(PsiFile psiFile, int originalLine) {
-    VirtualFile file = psiFile.getVirtualFile();
-    if (file != null) {
-      LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
-      if (mapping != null) {
-        int line = mapping.bytecodeToSource(originalLine + 1);
-        if (line > -1) {
-          return line;
-        }
-      }
-    }
-    return -1;
   }
 }

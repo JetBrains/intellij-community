@@ -27,6 +27,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.util.Alarm;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.ReflectionUtil;
@@ -701,6 +702,66 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     if (isMacOverlayScrollbar()) {
       paintMacThumb(g, thumbBounds);
     }
+    else if (Registry.is("ide.scroll.new.layout")) {
+      Rectangle bounds = new Rectangle(thumbBounds);
+      if (isThumbTranslucent()) {
+        Alignment alignment = Alignment.get(scrollbar);
+        if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
+          int offset = getThumbOffset(bounds.width);
+          if (offset > 0) {
+            bounds.width -= offset;
+            if (alignment == Alignment.RIGHT) bounds.x += offset;
+          }
+        }
+        else {
+          int offset = getThumbOffset(bounds.height);
+          if (offset > 0) {
+            bounds.height -= offset;
+            if (alignment == Alignment.BOTTOM) bounds.y += offset;
+          }
+        }
+        if (SystemInfo.isMac) {
+          bounds.x += 1;
+          bounds.y += 1;
+          bounds.width -= 2;
+          bounds.height -= 2;
+        }
+      }
+      else if (SystemInfo.isMac) {
+        boolean vertical = scrollbar == null || Adjustable.VERTICAL == scrollbar.getOrientation();
+        bounds.x += vertical ? 3 : 2;
+        bounds.y += vertical ? 2 : 3;
+        bounds.width -= vertical ? 5 : 4;
+        bounds.height -= vertical ? 4 : 5;
+      }
+      else if (Registry.is("ide.scroll.thumb.small.if.opaque")) {
+        bounds.x += 1;
+        bounds.y += 1;
+        bounds.width -= 2;
+        bounds.height -= 2;
+      }
+      if (SystemInfo.isMac) {
+        int arc = Math.min(bounds.width, bounds.height);
+
+        boolean dark = isDark();
+        int c = dark ? 128 : 0;
+        int a = dark ? 40 : 100;
+
+        //noinspection UseJBColor
+        g.setColor(new Color(c, c, c, a));
+
+        Graphics2D g2d = (Graphics2D)g;
+        Object old = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, arc, arc);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
+      }
+      else {
+        float value = (float)myThumbFadeColorShift / getAnimationColorShift();
+        RegionPainter<Float> painter = isDark() ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
+        painter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
+      }
+    }
     else {
       RegionPainter<Integer> painter = UIUtil.getClientProperty(scrollbar, MAXI_THUMB);
       if (painter != null) {
@@ -712,6 +773,30 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         g.translate(-thumbBounds.x, -thumbBounds.y);
       }
     }
+  }
+
+  @Deprecated
+  protected boolean isThumbTranslucent() {
+    return scrollbar == null || !scrollbar.isOpaque();
+  }
+
+  @Deprecated
+  protected int getThumbOffset(int value) {
+    // com.intellij.ui.components.AbstractScrollBarUI.scale
+    float scale = JBUI.scale(10);
+    //noinspection EnumSwitchStatementWhichMissesCases
+    switch (UIUtil.getComponentStyle(scrollbar)) {
+      case LARGE:
+        scale *= 1.15f;
+        break;
+      case SMALL:
+        scale *= 0.857f;
+        break;
+      case MINI:
+        scale *= 0.714f;
+        break;
+    }
+    return value - (int)scale;
   }
 
   private void paintMacThumb(Graphics g, Rectangle thumbBounds) {
@@ -794,6 +879,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
     ThumbPainter.DEFAULT.setScrollBar(scrollbar);
     ThumbPainter.DEFAULT.paint(g, 0, 0, thumbBounds.width, thumbBounds.height, myThumbFadeColorShift);
+    ThumbPainter.DEFAULT.setScrollBar(null);
   }
 
   @Override
@@ -1024,7 +1110,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     @Override
     protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-      if (!isMacOverlayScrollbar()) {
+      if (!Registry.is("ide.scroll.new.layout") && !isMacOverlayScrollbar()) {
         int half = getThickness() / 2;
         int shiftX = isVertical() ? half - 1 : 0;
         int shiftY = isVertical() ? 0 : half - 1;

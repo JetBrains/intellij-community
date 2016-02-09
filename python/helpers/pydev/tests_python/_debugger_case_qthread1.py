@@ -2,7 +2,7 @@ import time
 import sys
 
 try:
-    from PySide import QtCore
+    from PySide import QtCore  # @UnresolvedImport
 except:
     from PyQt4 import QtCore
 

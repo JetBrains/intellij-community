@@ -46,7 +46,7 @@ open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGener
       if (element is GraphEdge) {
         val edge = element
         val normalEdge = LinearGraphUtils.asNormalEdge(edge)
-        if (normalEdge != null) return normalEdge.first + normalEdge.second
+        if (normalEdge != null) return normalEdge.up + normalEdge.down
         return LinearGraphUtils.getNotNullNodeIndex(edge)
       }
 

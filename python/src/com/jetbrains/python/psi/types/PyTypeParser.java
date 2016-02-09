@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
@@ -438,10 +439,14 @@ public class PyTypeParser {
       final Token<PyElementType> firstToken = tokens.get(0);
       final String firstText = firstToken.getText().toString();
       final TextRange firstRange = firstToken.getRange();
-      PyType type = null;
-      PsiElement resolved = file.getElementNamed(firstText);
-      if (resolved != null) {
-        // Local or imported name
+      final List<RatedResolveResult> resolveResults = file.multiResolveName(firstText);
+      if (resolveResults.isEmpty()) {
+        return getImplicitlyResolvedType(tokens, context, types, fullRanges, firstRange);
+      }
+      final List<PyType> members = Lists.newArrayList();
+      for (RatedResolveResult result : resolveResults) {
+        final PsiElement resolved = result.getElement();
+        PyType type = null;
         if (resolved instanceof PyTargetExpression) {
           type = PyTypingTypeProvider.getTypeFromTargetExpression((PyTargetExpression)resolved, context);
         }
@@ -449,9 +454,8 @@ public class PyTypeParser {
           type = context.getType((PyTypedElement)resolved);
         }
         if (type != null) {
-          tokens.remove(0);
           if (!allowResolveToType(type)) {
-            return null;
+            continue;
           }
           if (type instanceof PyClassLikeType) {
             type = ((PyClassLikeType)type).toInstance();
@@ -471,31 +475,42 @@ public class PyTypeParser {
             }
           }
         }
+        members.add(type);
       }
-      else {
-        // Implicitly available in the type string
-        QualifiedName qName = null;
-        while (!tokens.isEmpty()) {
-          final Token<PyElementType> token = tokens.get(0);
-          final String name = token.getText().toString();
-          qName = qName != null ? qName.append(name) : QualifiedName.fromComponents(name);
-          PsiElement module = new QualifiedNameResolverImpl(qName).fromElement(myAnchor).firstResult();
-          if (module == null) {
-            break;
-          }
-          if (module instanceof PsiDirectory) {
-            module = PyUtil.getPackageElement((PsiDirectory)module, myAnchor);
-          }
-          if (module instanceof PyTypedElement) {
-            final PyType moduleType = context.getType((PyTypedElement)module);
-            if (moduleType != null) {
-              type = moduleType;
-              types.put(token.getRange(), type);
-              fullRanges.put(type, TextRange.create(firstRange.getStartOffset(), token.getRange().getEndOffset()));
-            }
-          }
-          tokens.remove(0);
+      if (!members.isEmpty()) {
+        tokens.remove(0);
+      }
+      return PyUnionType.union(members);
+    }
+
+    @Nullable
+    private PyType getImplicitlyResolvedType(@NotNull List<Token<PyElementType>> tokens,
+                                             @NotNull TypeEvalContext context,
+                                             @NotNull Map<TextRange, PyType> types,
+                                             @NotNull Map<PyType, TextRange> fullRanges,
+                                             TextRange firstRange) {
+      PyType type = null;
+      QualifiedName qName = null;
+      while (!tokens.isEmpty()) {
+        final Token<PyElementType> token = tokens.get(0);
+        final String name = token.getText().toString();
+        qName = qName != null ? qName.append(name) : QualifiedName.fromComponents(name);
+        PsiElement module = new QualifiedNameResolverImpl(qName).fromElement(myAnchor).firstResult();
+        if (module == null) {
+          break;
         }
+        if (module instanceof PsiDirectory) {
+          module = PyUtil.getPackageElement((PsiDirectory)module, myAnchor);
+        }
+        if (module instanceof PyTypedElement) {
+          final PyType moduleType = context.getType((PyTypedElement)module);
+          if (moduleType != null) {
+            type = moduleType;
+            types.put(token.getRange(), type);
+            fullRanges.put(type, TextRange.create(firstRange.getStartOffset(), token.getRange().getEndOffset()));
+          }
+        }
+        tokens.remove(0);
       }
       return type;
     }

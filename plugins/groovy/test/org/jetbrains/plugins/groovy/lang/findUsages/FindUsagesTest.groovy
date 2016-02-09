@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -323,14 +323,6 @@ print ab<caret>c
 ''')
   }
 
-  void testResolveBinding2() {
-    doTest(2, '''\
-print ab<caret>c
-
-abc = 4
-''', )
-  }
-
   void testResolveBinding3() {
     doTest(2, '''\
 a<caret>bc = 4
@@ -340,59 +332,10 @@ print abc
   }
 
   void testResolveBinding4() {
-    doTest(2, '''\
+    doTest(1, '''\
 print abc
 
 a<caret>bc = 4
-''', )
-  }
-
-
-  void testResolveBinding5() {
-    doTest(2, '''\
-def foo() {
-  abc = 4
-}
-
-def bar() {
-  print ab<caret>c
-}
-''', )
-  }
-
-  void testResolveBinding6() {
-    doTest(2, '''\
-def foo() {
-  print ab<caret>c
-}
-
-def bar() {
-  abc = 4
-}
-''', )
-  }
-
-  void testResolveBinding7() {
-    doTest(2, '''\
-def foo() {
-  a<caret>bc = 4
-}
-
-def bar() {
-  print abc
-}
-''', )
-  }
-
-  void testResolveBinding8() {
-    doTest(2, '''\
-def foo() {
-  print abc
-}
-
-def bar() {
-  a<caret>bc = 4
-}
 ''', )
   }
 
@@ -431,6 +374,37 @@ aa = 6
 print a<caret>a
 ''', )
   }
+
+  void testBinding13() {
+    doTest(2, '''\
+aaa = 1
+
+def foo() {
+  aa<caret>a
+}
+''')
+  }
+
+  void testBinding14() {
+    doTest(2, '''\
+aa<caret>a = 1
+
+def foo() {
+  aaa
+}
+''')
+  }
+
+  void testBinding15() {
+    doTest(1, '''\
+def foo() {
+  aaa
+}
+
+aa<caret>a = 1
+''')
+  }
+
 
   void testTraitField() {
     doTest(4, '''

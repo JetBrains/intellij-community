@@ -65,14 +65,23 @@ public class JdkBundle {
   static JdkBundle createBundle(@NotNull File jvm, @NotNull String homeSubPath, boolean boot, boolean bundled) {
     File javaHome = SystemInfo.isMac ? new File(jvm, homeSubPath) : jvm;
     if (bundled) javaHome = new File(PathManager.getHomePath(), javaHome.getPath());
-    boolean hasToolsJar = new File(javaHome, "lib" + File.separator + "tools.jar").exists();
-    if (!SystemInfo.isMac && !hasToolsJar) return null; // Skip jre
+
+    boolean isValidBundle = true;
+
+    String jreCheck = System.getProperty("idea.jre.check");
+    if (jreCheck != null && "true".equals(jreCheck)) {
+      isValidBundle = new File(javaHome, "lib" + File.separator + "tools.jar").exists();
+    }
+
+    if (!SystemInfo.isMac && !isValidBundle) return null; // Skip jre
 
     File absJvmLocation = bundled ? new File(PathManager.getHomePath(), jvm.getPath()) : jvm;
     Pair<String, Pair<Version, Integer>> nameVersionAndUpdate = getJDKNameVersionAndUpdate(absJvmLocation, homeSubPath);
 
-    if (SystemInfo.isMac && nameVersionAndUpdate.second != null && nameVersionAndUpdate.second.first.isOrGreaterThan(1, 7) && !hasToolsJar)
+    if (SystemInfo.isMac && nameVersionAndUpdate.second != null && nameVersionAndUpdate.second.first.isOrGreaterThan(1, 7) &&
+        !isValidBundle) {
       return null; // Skip jre
+    }
 
     return new JdkBundle(jvm, nameVersionAndUpdate.first, nameVersionAndUpdate.second, boot, bundled);
   }
@@ -146,7 +155,7 @@ public class JdkBundle {
   }
 
   private static Pair<String, Pair<Version, Integer>> getJDKNameVersionAndUpdate(File jvm, String homeSubPath) {
-    GeneralCommandLine commandLine = new GeneralCommandLine();
+    GeneralCommandLine commandLine = new GeneralCommandLine().withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.NONE);
     commandLine.setExePath(new File(jvm,  homeSubPath + File.separator +  "jre" +
                            File.separator + "bin" + File.separator + "java").getAbsolutePath());
     commandLine.addParameter("-version");

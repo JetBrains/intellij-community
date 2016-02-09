@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -193,8 +194,13 @@ public class DeleteHandler {
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
-        Collection<PsiElement> toCheck = CommonRefactoringUtil.mapFilesToParents(Arrays.asList(elements));
-        if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, toCheck, false)) {
+        Collection<PsiElement> directories = ContainerUtil.newSmartList();
+        for (PsiElement e : elements) {
+          if (e instanceof PsiFileSystemItem && e.getParent() != null) {
+            directories.add(e.getParent());
+          }
+        }
+        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, Arrays.asList(elements), directories, false)) {
           return;
         }
 

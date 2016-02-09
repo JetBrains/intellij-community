@@ -234,4 +234,11 @@ abstract class GitPlatformTest : PlatformTestCase() {
     GitTestUtil.assertNotification(NotificationType.ERROR, title, message, notification)
     return notification
   }
+
+  protected fun assertNoNotification() {
+    val notification = myVcsNotifier.lastNotification
+    if (notification != null) {
+      fail("No notification is expected here, but this one was shown: ${notification.title}/${notification.content}");
+    }
+  }
 }

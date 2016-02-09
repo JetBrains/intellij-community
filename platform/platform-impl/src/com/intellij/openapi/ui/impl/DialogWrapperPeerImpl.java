@@ -879,8 +879,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         try {
           Disposer.clearOwnFields(rootPane);
           rootPane = null;
-
-          ReflectionUtil.resetField(this, "windowListener");
         }
         catch (Exception ignored) {
         }

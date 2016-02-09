@@ -11,5 +11,6 @@ class Pos {
   void testQualified() {
     Member<?> m1 = this.new Member<>() {};
     Nested<?> m2 = new Pos.Nested<>() {};
+    Nested<java.util.List> m3 = new Pos.Nested<>() {};
   }
 }

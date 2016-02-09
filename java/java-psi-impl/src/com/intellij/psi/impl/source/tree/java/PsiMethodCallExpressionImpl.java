@@ -161,7 +161,15 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       final JavaResolveResult[] results = methodExpression.multiResolve(false);
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
 
-      final PsiExpressionList parentArgList = languageLevel.isAtLeast(LanguageLevel.JDK_1_8) ? PsiTreeUtil.getParentOfType(call, PsiExpressionList.class) : null;
+      final PsiExpressionList parentArgList;
+      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+        final PsiElement callParent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+        parentArgList = callParent instanceof PsiConditionalExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)callParent)
+                        ? null : PsiTreeUtil.getParentOfType(call, PsiExpressionList.class);
+      }
+      else {
+        parentArgList = null;
+      }
       final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(parentArgList);
       final boolean genericMethodCall = properties != null && properties.getInfo().isToInferApplicability();
       

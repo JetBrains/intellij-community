@@ -401,9 +401,15 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   protected static boolean scheduleCommand(EvaluationContextImpl evaluationContext,
                                         @NotNull final XCompositeNode node,
                                         final SuspendContextCommandImpl command) {
+    if (node.isObsolete()) {
+      return false;
+    }
     evaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(command.getSuspendContext()) {
       @Override
       public void contextAction() throws Exception {
+        if (node.isObsolete()) {
+          return;
+        }
         command.contextAction();
       }
 

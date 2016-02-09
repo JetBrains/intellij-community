@@ -32,4 +32,6 @@ public interface VcsLogDataPack {
   @NotNull
   PermanentGraph<Integer> getPermanentGraph();
 
+  @NotNull
+  VcsLogFilterCollection getFilters();
 }

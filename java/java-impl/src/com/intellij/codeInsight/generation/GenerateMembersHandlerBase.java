@@ -266,7 +266,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
                                                             boolean allowEmptySelection,
                                                             boolean copyJavadocCheckbox,
                                                             Project project) {
-    MemberChooser<ClassMember> chooser = new MemberChooser<ClassMember>(members, allowEmptySelection, true, project, false, getHeaderPanel(project)) {
+    MemberChooser<ClassMember> chooser = new MemberChooser<ClassMember>(members, allowEmptySelection, true, project, getHeaderPanel(project), getOptionControls()) {
       @Nullable
       @Override
       protected String getHelpId() {
@@ -280,6 +280,11 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
   @Nullable
   protected JComponent getHeaderPanel(Project project) {
+    return null;
+  }
+
+  @Nullable
+  protected JComponent[] getOptionControls() {
     return null;
   }
 

@@ -178,7 +178,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       for (ExternalSourceSet sourceSet : externalProject.getSourceSets().values()) {
         final String moduleId = getModuleId(externalProject, sourceSet);
         final String moduleExternalName = gradleModule.getName() + ":" + sourceSet.getName();
-        final String moduleInternalName = gradleModule.getName() + "_" + sourceSet.getName();
+        final String moduleInternalName = getInternalModuleName(gradleModule, sourceSet.getName());
 
         GradleSourceSetData sourceSetData = new GradleSourceSetData(
           moduleId, moduleExternalName, moduleInternalName, mainModuleFileDirectoryPath, mainModuleConfigPath);
@@ -204,10 +204,14 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
             }
             artifacts.addAll(archivesArtifacts);
           }
-        } else if("test".equals(sourceSet.getName())) {
-          final Set<File> testsArtifacts = externalProject.getArtifactsByConfiguration().get("tests");
-          if (testsArtifacts != null) {
-            artifacts.addAll(testsArtifacts);
+        }
+        else {
+          sourceSetData.setProductionModuleId(getInternalModuleName(gradleModule, "main"));
+          if ("test".equals(sourceSet.getName())) {
+            final Set<File> testsArtifacts = externalProject.getArtifactsByConfiguration().get("tests");
+            if (testsArtifacts != null) {
+              artifacts.addAll(testsArtifacts);
+            }
           }
         }
         sourceSetData.setArtifacts(ContainerUtil.newArrayList(artifacts));
@@ -227,6 +231,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
 
     return mainModuleNode;
+  }
+
+  @NotNull
+  public String getInternalModuleName(@NotNull IdeaModule gradleModule, @NotNull String sourceSetName) {
+    return gradleModule.getName() + "_" + sourceSetName;
   }
 
   @Override

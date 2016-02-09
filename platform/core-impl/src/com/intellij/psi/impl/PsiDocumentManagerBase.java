@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ import java.util.concurrent.ConcurrentMap;
 public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, ProjectComponent {
   static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
-  private static final Key<PsiFile> HARD_REF_TO_PSI = Key.create("HARD_REFERENCE_TO_PSI");
+  private final Key<PsiFile> HARD_REF_TO_PSI = Key.create("HARD_REFERENCE_TO_PSI"); // has to be different for each project to avoid mixups
   private static final Key<List<Runnable>> ACTION_AFTER_COMMIT = Key.create("ACTION_AFTER_COMMIT");
 
   protected final Project myProject;
@@ -120,7 +120,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return psiFile;
   }
 
+  @Deprecated
+  // todo remove when Database Navigator plugin doesn't need that anymore
+  // todo to be removed in idea 17
   public static void cachePsi(@NotNull Document document, @Nullable PsiFile file) {
+    LOG.warn("Unsupported method");
+  }
+
+  public void associatePsi(@NotNull Document document, @Nullable PsiFile file) {
     document.putUserData(HARD_REF_TO_PSI, file);
   }
 
@@ -169,7 +176,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (document != null) {
       if (!file.getViewProvider().isPhysical() && document.getUserData(HARD_REF_TO_PSI) == null) {
         PsiUtilCore.ensureValid(file);
-        cachePsi(document, file);
+        associatePsi(document, file);
       }
       return document;
     }
@@ -189,7 +196,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
       if (!viewProvider.isPhysical()) {
         PsiUtilCore.ensureValid(file);
-        cachePsi(document, file);
+        associatePsi(document, file);
         file.putUserData(HARD_REF_TO_DOCUMENT, document);
       }
     }
@@ -287,9 +294,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   // public for Upsource
   public boolean finishCommit(@NotNull final Document document,
-                       @NotNull final List<Processor<Document>> finishProcessors,
-                       final boolean synchronously,
-                       @NotNull final Object reason) {
+                              @NotNull final List<Processor<Document>> finishProcessors,
+                              final boolean synchronously,
+                              @NotNull final Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
     final boolean[] ok = {true};
     ApplicationManager.getApplication().runWriteAction(new CommitToPsiFileAction(document, myProject) {
@@ -530,18 +537,22 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       List<Map.Entry<Object, Runnable>> entries = new ArrayList<Map.Entry<Object, Runnable>>(new LinkedHashMap<Object, Runnable>(actionsWhenAllDocumentsAreCommitted).entrySet());
       weAreInsideAfterCommitHandler();
 
-      for (Map.Entry<Object, Runnable> entry : entries) {
-        Runnable action = entry.getValue();
-        Object key = entry.getKey();
-        try {
-          myDocumentCommitProcessor.log("Running after commit runnable: ", null, false, key, action);
-          action.run();
-        }
-        catch (Throwable e) {
-          LOG.error("During running "+action, e);
+      try {
+        for (Map.Entry<Object, Runnable> entry : entries) {
+          Runnable action = entry.getValue();
+          Object key = entry.getKey();
+          try {
+            myDocumentCommitProcessor.log("Running after commit runnable: ", null, false, key, action);
+            action.run();
+          }
+          catch (Throwable e) {
+            LOG.error("During running " + action, e);
+          }
         }
       }
-      actionsWhenAllDocumentsAreCommitted.clear();
+      finally {
+        actionsWhenAllDocumentsAreCommitted.clear();
+      }
     }
   }
 

@@ -1,8 +1,8 @@
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.testFramework.file
-import com.intellij.testFramework.isDirectory
-import com.intellij.testFramework.readBytes
+import com.intellij.util.isDirectory
+import com.intellij.util.readBytes
 import org.jetbrains.settingsRepository.SyncType
 import org.junit.Test
 import java.nio.file.Files

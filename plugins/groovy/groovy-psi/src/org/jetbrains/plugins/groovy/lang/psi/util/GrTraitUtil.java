@@ -24,9 +24,9 @@ import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.Contract;
@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import static com.intellij.psi.PsiModifier.ABSTRACT;
@@ -89,14 +90,10 @@ public class GrTraitUtil {
   }
 
   public static Collection<PsiMethod> getCompiledTraitConcreteMethods(@NotNull final ClsClassImpl trait) {
-    return CachedValuesManager.getCachedValue(trait, new CachedValueProvider<Collection<PsiMethod>>() {
-      @Nullable
-      @Override
-      public Result<Collection<PsiMethod>> compute() {
-        final Collection<PsiMethod> result = ContainerUtil.newArrayList();
-        doCollectCompiledTraitMethods(trait, result);
-        return Result.create(result, trait);
-      }
+    return CachedValuesManager.getCachedValue(trait, () -> {
+      final Collection<PsiMethod> result = ContainerUtil.newArrayList();
+      doCollectCompiledTraitMethods(trait, result);
+      return CachedValueProvider.Result.create(result, trait);
     });
   }
 
@@ -112,18 +109,17 @@ public class GrTraitUtil {
       VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + HELPER_SUFFIX);
       if (helperFile != null) {
         int key = FileBasedIndex.getFileId(helperFile);
-        FileBasedIndex.getInstance().processValues(INDEX_ID, key, helperFile, new FileBasedIndex.ValueProcessor<PsiJavaFileStub>() {
-          @Override
-          public boolean process(VirtualFile file, PsiJavaFileStub root) {
-            ((PsiJavaFileStubImpl)root).setPsi((PsiJavaFile)trait.getContainingFile());
-            for (Object stub : root.getChildrenStubs().get(0).getChildrenStubs()) {
-              if (stub instanceof PsiMethodStub) {
-                result.add(createTraitMethodFromCompiledHelperMethod(((PsiMethodStub)stub).getPsi(), trait));
-              }
-            }
-            return true;
-          }
-        }, trait.getResolveScope());
+        List<PsiJavaFileStub> values = FileBasedIndex.getInstance().getValues(INDEX_ID, key, trait.getResolveScope());
+        values.forEach(root -> ((PsiJavaFileStubImpl)root).setPsi((PsiJavaFile)trait.getContainingFile()));
+        values.stream().map(
+          root -> root.getChildrenStubs().get(0).getChildrenStubs()
+        ).<StubElement>flatMap(
+          Collection::stream
+        ).filter(
+          stub -> stub instanceof PsiMethodStub
+        ).forEach(
+          stub -> result.add(createTraitMethodFromCompiledHelperMethod(((PsiMethodStub)stub).getPsi(), trait))
+        );
       }
     }
   }
@@ -191,13 +187,10 @@ public class GrTraitUtil {
 
         final Ref<Boolean> hasChanges = Ref.create(false);
         final PsiTypeVisitor<PsiType> $this = this;
-        final PsiType[] substitutes = ContainerUtil.map2Array(typeParameters, PsiType.class, new Function<PsiType, PsiType>() {
-          @Override
-          public PsiType fun(PsiType type) {
-            final PsiType mapped = type.accept($this);
-            hasChanges.set(mapped != type);
-            return mapped;
-          }
+        final PsiType[] substitutes = ContainerUtil.map2Array(typeParameters, PsiType.class, type -> {
+          final PsiType mapped = type.accept($this);
+          hasChanges.set(mapped != type);
+          return mapped;
         });
         return hasChanges.get() ? elementFactory.createType(resolved, substitutes) : originalType;
       }

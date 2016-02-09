@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -239,7 +239,7 @@ public class GeneralCommandLineTest {
 
   @Test
   public void environmentPassing() throws Exception {
-    Map<String, String> testEnv = new HashMap<String, String>();
+    Map<String, String> testEnv = new HashMap<>();
     testEnv.put("VALUE_1", "some value");
     testEnv.put("VALUE_2", "another\n\"value\"");
 
@@ -252,10 +252,7 @@ public class GeneralCommandLineTest {
   public void unicodeEnvironment() throws Exception {
     assumeTrue("UTF-8".equals(System.getProperty("file.encoding")));
 
-    Map<String, String> testEnv = new HashMap<String, String>();
-    testEnv.put("VALUE_1", UNICODE_RU);
-    testEnv.put("VALUE_2", UNICODE_EU);
-
+    Map<String, String> testEnv = newHashMap(pair("VALUE_1", UNICODE_RU), pair("VALUE_2", UNICODE_EU));
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ENV);
     checkEnvPassing(command, testEnv, true);
     checkEnvPassing(command, testEnv, false);
@@ -357,7 +354,7 @@ public class GeneralCommandLineTest {
     }
 
     Map<String, String> parentEnv = System.getenv();
-    List<String> missed = new ArrayList<String>();
+    List<String> missed = new ArrayList<>();
     for (Map.Entry<String, String> entry : parentEnv.entrySet()) {
       String str = CommandTestHelper.format(entry);
       if (!lines.contains(str)) {

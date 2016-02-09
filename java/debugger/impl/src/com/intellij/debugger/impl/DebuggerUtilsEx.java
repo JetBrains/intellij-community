@@ -31,6 +31,7 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.execution.filters.ExceptionFilters;
+import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
@@ -463,7 +464,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static CodeFragmentFactory getCodeFragmentFactory(@Nullable PsiElement context, @Nullable FileType fileType) {
     DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
     if (fileType == null) {
-      return defaultFactory;
+      if (context == null) {
+        return defaultFactory;
+      }
+      else {
+        fileType = context.getContainingFile().getFileType();
+      }
     }
     for (CodeFragmentFactory factory : ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME)) {
       if (factory != defaultFactory && factory.getFileType().equals(fileType) && factory.isContextAccepted(context)) {
@@ -803,6 +809,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
+  public static boolean isLambdaClassName(String typeName) {
+    return getLambdaBaseClassName(typeName) != null;
+  }
+
+  @Nullable
+  public static String getLambdaBaseClassName(String typeName) {
+    return StringUtil.substringBefore(typeName, "$$Lambda$");
+  }
+
   public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile file = position.getFile();
@@ -822,7 +837,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
     while(true);
 
-    final List<PsiLambdaExpression> lambdas = new ArrayList<PsiLambdaExpression>(3);
+    final List<PsiLambdaExpression> lambdas = new SmartList<>();
     final PsiElementVisitor lambdaCollector = new JavaRecursiveElementVisitor() {
       @Override
       public void visitLambdaExpression(PsiLambdaExpression expression) {
@@ -833,16 +848,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
     };
     element.accept(lambdaCollector);
-    // add initial lambda if we're inside already
-    PsiElement method = getContainingMethod(element);
-    if (method instanceof PsiLambdaExpression) {
-      lambdas.add((PsiLambdaExpression)method);
-    }
     for (PsiElement sibling = getNextElement(element); sibling != null; sibling = getNextElement(sibling)) {
       if (!intersects(lineRange, sibling)) {
         break;
       }
       sibling.accept(lambdaCollector);
+    }
+    // add initial lambda if we're inside already
+    PsiElement method = getContainingMethod(element);
+    if (method instanceof PsiLambdaExpression && !lambdas.contains(method)) {
+      lambdas.add((PsiLambdaExpression)method);
     }
     return lambdas;
   }
@@ -880,8 +895,17 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (body == null || !intersects(lineRange, body)) return null;
     if (body instanceof PsiCodeBlock) {
       for (PsiStatement statement : ((PsiCodeBlock)body).getStatements()) {
-        if (intersects(lineRange, statement)) {
+        // return first statement starting on the line
+        if (lineRange.contains(statement.getTextOffset())) {
           return statement;
+        }
+        // otherwise check all children
+        else if (intersects(lineRange, statement)) {
+          for (PsiElement element : SyntaxTraverser.psiTraverser(statement)) {
+            if (lineRange.contains(element.getTextOffset())) {
+              return element;
+            }
+          }
         }
       }
       return null;
@@ -942,5 +966,19 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     catch (UnsupportedOperationException ignored) {
       // ignore: some J2ME implementations does not provide this operation
     }
+  }
+
+  public static int bytecodeToSourceLine(PsiFile psiFile, int originalLine) {
+    VirtualFile file = psiFile.getVirtualFile();
+    if (file != null) {
+      LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
+      if (mapping != null) {
+        int line = mapping.bytecodeToSource(originalLine + 1);
+        if (line > -1) {
+          return line;
+        }
+      }
+    }
+    return -1;
   }
 }

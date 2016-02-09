@@ -67,14 +67,14 @@ class GitRepositoryReader {
   @NotNull private final File          myRefsRemotesDir; // .git/refs/remotes/
   @NotNull private final File          myPackedRefsFile; // .git/packed-refs
 
-  GitRepositoryReader(@NotNull File gitDir) {
-    myGitDir = gitDir;
-    DvcsUtil.assertFileExists(myGitDir, ".git directory not found in " + gitDir);
-    myHeadFile = new File(myGitDir, "HEAD");
-    DvcsUtil.assertFileExists(myHeadFile, ".git/HEAD file not found in " + gitDir);
-    myRefsHeadsDir = new File(new File(myGitDir, "refs"), "heads");
-    myRefsRemotesDir = new File(new File(myGitDir, "refs"), "remotes");
-    myPackedRefsFile = new File(myGitDir, "packed-refs");
+  GitRepositoryReader(@NotNull GitRepositoryFiles gitFiles) {
+    myGitDir = new File(FileUtil.toSystemDependentName(gitFiles.getGitDirPath()));
+    DvcsUtil.assertFileExists(myGitDir, ".git directory not found in " + myGitDir);
+    myHeadFile = new File(FileUtil.toSystemDependentName(gitFiles.getHeadPath()));
+    DvcsUtil.assertFileExists(myHeadFile, ".git/HEAD file not found in " + myGitDir);
+    myRefsHeadsDir = new File(FileUtil.toSystemDependentName(gitFiles.getRefsHeadsPath()));
+    myRefsRemotesDir = new File(FileUtil.toSystemDependentName(gitFiles.getRefsRemotesPath()));
+    myPackedRefsFile = new File(FileUtil.toSystemDependentName(gitFiles.getPackedRefsPath()));
   }
 
   @NotNull
@@ -229,8 +229,8 @@ class GitRepositoryReader {
   @NotNull
   private Map<String, String> readBranchRefsFromFiles() {
     Map<String, String> result = ContainerUtil.newHashMap(readPackedBranches()); // reading from packed-refs first to overwrite values by values from unpacked refs
-    result.putAll(readFromBranchFiles(myRefsHeadsDir));
-    result.putAll(readFromBranchFiles(myRefsRemotesDir));
+    result.putAll(readFromBranchFiles(myRefsHeadsDir, REFS_HEADS_PREFIX));
+    result.putAll(readFromBranchFiles(myRefsRemotesDir, REFS_REMOTES_PREFIX));
     result.remove(REFS_REMOTES_PREFIX + GitUtil.ORIGIN_HEAD);
     return result;
   }
@@ -265,18 +265,18 @@ class GitRepositoryReader {
   }
 
   @NotNull
-  private Map<String, String> readFromBranchFiles(@NotNull File rootDir) {
-    if (!rootDir.exists()) {
+  private static Map<String, String> readFromBranchFiles(@NotNull final File refsRootDir, @NotNull final String prefix) {
+    if (!refsRootDir.exists()) {
       return Collections.emptyMap();
     }
     final Map<String, String> result = new HashMap<String, String>();
-    FileUtil.processFilesRecursively(rootDir, new Processor<File>() {
+    FileUtil.processFilesRecursively(refsRootDir, new Processor<File>() {
       @Override
       public boolean process(File file) {
         if (!file.isDirectory() && !isHidden(file)) {
-          String relativePath = FileUtil.getRelativePath(myGitDir, file);
+          String relativePath = FileUtil.getRelativePath(refsRootDir, file);
           if (relativePath != null) {
-            String branchName = FileUtil.toSystemIndependentName(relativePath);
+            String branchName = prefix + FileUtil.toSystemIndependentName(relativePath);
             String hash = loadHashFromBranchFile(file);
             if (hash != null) {
               result.put(branchName, hash);

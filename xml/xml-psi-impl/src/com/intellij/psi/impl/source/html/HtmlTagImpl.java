@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.html;
 
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.XmlTagImpl;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
@@ -121,5 +122,10 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
   public String getPrefixByNamespace(String namespace) {
     if (XmlUtil.HTML_URI.equals(namespace)) namespace = XmlUtil.XHTML_URI;
     return super.getPrefixByNamespace(namespace);
+  }
+
+  @Override
+  public XmlTag getParentTag() {
+    return PsiTreeUtil.getParentOfType(this, XmlTag.class);
   }
 }

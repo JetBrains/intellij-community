@@ -29,12 +29,13 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.getParentPath
+import com.intellij.util.systemIndependentPath
 import gnu.trove.THashSet
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
+import java.nio.file.Paths
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
 
@@ -106,9 +107,10 @@ private class ImportSettingsAction : AnAction(), DumbAware {
 
   private fun getRelativeNamesToExtract(chosenComponents: Set<ExportableItem>): Set<String> {
     val result = THashSet<String>()
+    val root = Paths.get(PathManager.getConfigPath())
     for (chosenComponent in chosenComponents) {
       for (exportFile in chosenComponent.files) {
-        result.add(FileUtil.toSystemIndependentName(FileUtilRt.getRelativePath(File(PathManager.getConfigPath()), exportFile)!!))
+        result.add(root.relativize(exportFile).systemIndependentPath)
       }
     }
 

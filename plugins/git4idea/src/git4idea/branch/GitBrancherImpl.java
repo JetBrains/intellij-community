@@ -151,6 +151,16 @@ class GitBrancherImpl implements GitBrancher {
     }.runInBackground();
   }
 
+  @Override
+  public void renameBranch(@NotNull final String currentName, @NotNull final String newName, @NotNull final List<GitRepository> repositories) {
+    new CommonBackgroundTask(myProject, "Renaming " + currentName + " to " + newName + "...", null) {
+      @Override
+      void execute(@NotNull ProgressIndicator indicator) {
+        newWorker(indicator).renameBranch(currentName, newName, repositories);
+      }
+    }.runInBackground();
+  }
+
   /**
    * Executes common operations before/after executing the actual branch operation.
    */

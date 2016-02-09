@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -218,10 +218,12 @@ public class VMOptions {
 
   @NotNull
   public static String getCustomFileName() {
-    String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
-    String platformSuffix = SystemInfo.is64Bit ? "64" : "";
-    String osSuffix = SystemInfo.isWindows ? ".exe" : "";
-    return name + platformSuffix + osSuffix + ".vmoptions";
+    StringBuilder sb = new StringBuilder(32);
+    sb.append(ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US));
+    if (SystemInfo.is64Bit && !SystemInfo.isMac) sb.append("64");
+    if (SystemInfo.isWindows) sb.append(".exe");
+    sb.append(".vmoptions");
+    return sb.toString();
   }
 
   private static String ourTestPath;

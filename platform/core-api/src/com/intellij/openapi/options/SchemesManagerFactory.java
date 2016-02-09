@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,36 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class SchemesManagerFactory {
   /**
    * directoryName — like "keymaps".
    */
   @NotNull
-  public abstract <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String directoryName,
-                                                                                                               @NotNull SchemeProcessor<E> processor,
-                                                                                                               @NotNull RoamingType roamingType);
+  public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String directoryName,
+                                                                                                      @NotNull SchemeProcessor<E> processor,
+                                                                                                      @NotNull RoamingType roamingType) {
+    return create(directoryName, processor, roamingType, null);
+  }
 
   @NotNull
-  public final <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> create(@NotNull String directoryName, @NotNull SchemeProcessor<E> processor) {
-    return createSchemesManager(directoryName, processor, RoamingType.DEFAULT);
+  public final <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> create(@NotNull String directoryName,
+                                                                                              @NotNull SchemeProcessor<E> processor) {
+    return create(directoryName, processor, RoamingType.DEFAULT, null);
   }
+
+  @NotNull
+  public final <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> create(@NotNull String directoryName,
+                                                                                              @NotNull SchemeProcessor<E> processor,
+                                                                                              @NotNull String presentableName) {
+    return create(directoryName, processor, RoamingType.DEFAULT, presentableName);
+  }
+
+  protected abstract <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> create(@NotNull String directoryName,
+                                                                                                    @NotNull SchemeProcessor<E> processor,
+                                                                                                    @NotNull RoamingType roamingType,
+                                                                                                    @Nullable String presentableName);
 
   @NotNull
   public static SchemesManagerFactory getInstance() {

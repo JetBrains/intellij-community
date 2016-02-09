@@ -45,7 +45,7 @@ public class SdkProjectStructureElement extends ProjectStructureElement {
 
   @Override
   public String getPresentableName() {
-    return "SDK '" + mySdk.getName() + "'";
+    return mySdk.getName();
   }
 
   @Override

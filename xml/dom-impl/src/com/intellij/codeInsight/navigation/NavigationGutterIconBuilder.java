@@ -50,7 +50,7 @@ import java.text.MessageFormat;
 import java.util.*;
 
 /**
- * DOM-specific builder for {@link com.intellij.openapi.editor.markup.GutterIconRenderer}
+ * DOM-specific builder for {@link GutterIconRenderer}
  * and {@link com.intellij.codeInsight.daemon.LineMarkerInfo}.
  *
  * @author peter
@@ -243,10 +243,14 @@ public class NavigationGutterIconBuilder<T> {
   private static <T> Factory<T> evaluateAndForget(NotNullLazyValue<T> lazyValue) {
     final Ref<NotNullLazyValue<T>> ref = Ref.create(lazyValue);
     return new Factory<T>() {
+      volatile T result;
+
       @Override
       public T create() {
-        T result = ref.get().getValue();
-        ref.set(null);
+        if (result == null) {
+          result = ref.get().getValue();
+          ref.set(null);
+        }
         return result;
       }
     };

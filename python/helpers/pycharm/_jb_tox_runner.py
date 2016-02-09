@@ -28,7 +28,8 @@ class _PyTest(object):
     def fix(self, command, dir_to_run, bin):
         if command[0] != "py.test":
             return None
-        return [bin, os.path.join(helpers_dir, "pytestrunner.py"), "-p", "pytest_teamcity", dir_to_run] + command[1:]
+        normal_path = os.path.normpath(dir_to_run) + os.sep
+        return [bin, os.path.join(helpers_dir, "pytestrunner.py"), "-p", "pytest_teamcity", normal_path] + command[1:]
 
 
 class _Nose(object):

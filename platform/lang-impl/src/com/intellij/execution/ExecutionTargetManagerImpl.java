@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@State(name = "ExecutionTargetManager", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "ExecutionTargetManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class ExecutionTargetManagerImpl extends ExecutionTargetManager implements PersistentStateComponent<Element> {
   @NotNull private final Project myProject;
   @NotNull private final Object myActiveTargetLock = new Object();

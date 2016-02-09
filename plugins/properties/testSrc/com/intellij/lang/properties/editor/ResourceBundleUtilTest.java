@@ -36,7 +36,7 @@ public class ResourceBundleUtilTest {
     { "with escaped escape symbol - \\\\", "with escaped escape symbol - \\" },
     
     // Special symbols.
-    { "special symbols - \\# and \\! and \\= and \\:", "special symbols - # and ! and = and :" },
+    {"special symbols - # and ! and = and :", "special symbols - # and ! and = and :"},
     
     // White spaces.
     { "trailing white space ", "trailing white space " },
@@ -55,7 +55,7 @@ public class ResourceBundleUtilTest {
     { "wei\\u00DF", "wei\\u00DF" },
 
     // All together.
-    { "\\\t text with \\\nspecial symbols\\:\\\n\\#", "\t text with \nspecial symbols:\n#" }
+    {"\\\t text with \\\nspecial symbols:\\\n#", "\t text with \nspecial symbols:\n#"}
   };
   
   @Test
@@ -64,7 +64,7 @@ public class ResourceBundleUtilTest {
       assertEquals(
         "Expected property value differs from the one converted from value editor text",
         entry[0],
-        PropertiesResourceBundleUtil.fromValueEditorToPropertyValue(entry[1])
+        PropertiesResourceBundleUtil.fromValueEditorToPropertyValue(entry[1], '=')
       );
       assertEquals(
         "Expected value editor text differs from the one converted from property value",

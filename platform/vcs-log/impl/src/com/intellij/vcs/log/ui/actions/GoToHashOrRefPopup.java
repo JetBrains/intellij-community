@@ -15,8 +15,10 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.PlainPrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,9 +28,12 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
@@ -41,8 +46,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -58,14 +63,14 @@ public class GoToHashOrRefPopup {
   @Nullable private VcsRef mySelectedRef;
 
   public GoToHashOrRefPopup(@NotNull final Project project,
-                            @NotNull Collection<VcsRef> variants,
+                            @NotNull Collection<VcsRef> variants, Collection<VirtualFile> roots,
                             @NotNull Function<String, Future> onSelectedHash,
                             @NotNull Function<VcsRef, Future> onSelectedRef,
                             @NotNull VcsLogColorManager colorManager,
                             @NotNull Comparator<VcsRef> comparator) {
     myOnSelectedHash = onSelectedHash;
     myOnSelectedRef = onSelectedRef;
-    myTextField = new TextFieldWithProgress<VcsRef>(project, new VcsRefCompletionProvider(project, variants, colorManager, comparator)) {
+    myTextField = new TextFieldWithProgress<VcsRef>(project, new VcsRefCompletionProvider(project, variants, roots, colorManager, comparator)) {
       @Override
       public void onOk() {
         if (myFuture == null) {
@@ -151,15 +156,21 @@ public class GoToHashOrRefPopup {
     @NotNull private final Project myProject;
     @NotNull private final VcsLogColorManager myColorManager;
     @NotNull private final Comparator<VcsRef> myReferenceComparator;
+    @NotNull private final Map<VirtualFile, String> myCachedRootNames = ContainerUtil.newHashMap();
 
     public VcsRefCompletionProvider(@NotNull Project project,
                                     @NotNull Collection<VcsRef> variants,
+                                    @NotNull Collection<VirtualFile> roots,
                                     @NotNull VcsLogColorManager colorManager,
                                     @NotNull Comparator<VcsRef> comparator) {
       super(variants);
       myProject = project;
       myColorManager = colorManager;
       myReferenceComparator = comparator;
+      for (VirtualFile root : roots) {
+        String text = VcsImplUtil.getShortVcsRootName(myProject, root);
+        myCachedRootNames.put(root, text);
+      }
     }
 
     @Override
@@ -196,7 +207,11 @@ public class GoToHashOrRefPopup {
     @Override
     protected String getTypeText(@NotNull VcsRef item) {
       if (!myColorManager.isMultipleRoots()) return null;
-      return VcsImplUtil.getShortVcsRootName(myProject, item.getRoot());
+      String text = myCachedRootNames.get(item.getRoot());
+      if (text == null) {
+        return VcsImplUtil.getShortVcsRootName(myProject, item.getRoot());
+      }
+      return text;
     }
 
     @Override
@@ -214,6 +229,29 @@ public class GoToHashOrRefPopup {
           myTextField.onOk();
         }
       };
+    }
+
+    @NotNull
+    @Override
+    public Collection<VcsRef> getItems(String prefix, boolean cached, CompletionParameters parameters) {
+      if (prefix == null) {
+        return Collections.emptyList();
+      }
+
+      List<VcsRef> items = new ArrayList<VcsRef>(getMatched(myVariants, prefix));
+      Collections.sort(items, this);
+
+      return items;
+    }
+
+    private List<VcsRef> getMatched(@NotNull Collection<VcsRef> refs, @NotNull String prefix) {
+      final PlainPrefixMatcher prefixMatcher = new PlainPrefixMatcher(prefix);
+      return ContainerUtil.filter(refs, new Condition<VcsRef>() {
+        @Override
+        public boolean value(VcsRef vcsRef) {
+          return prefixMatcher.prefixMatches(vcsRef.getName());
+        }
+      });
     }
   }
 }

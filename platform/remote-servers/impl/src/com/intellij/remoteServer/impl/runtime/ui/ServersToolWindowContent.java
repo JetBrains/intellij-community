@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.impl.runtime.ui.tree.TreeBuilderBase;
 import com.intellij.remoteServer.runtime.ConnectionStatus;
@@ -45,7 +46,7 @@ import java.util.Set;
 /**
  * @author michael.golubev
  */
-public class ServersToolWindowContent extends JPanel implements Disposable {
+public class ServersToolWindowContent extends JPanel implements Disposable, ServersTreeNodeSelector {
   public static final DataKey<ServersToolWindowContent> KEY = DataKey.create("serversToolWindowContent");
   @NonNls private static final String PLACE_TOOLBAR = "ServersToolWindowContent#Toolbar";
   @NonNls private static final String SERVERS_TOOL_WINDOW_TOOLBAR = "RemoteServersViewToolbar";
@@ -210,7 +211,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
   }
 
   private void setupBuilder(final @NotNull Project project) {
-    ServersTreeStructure structure = new ServersTreeStructure(project, myContribution);
+    ServersTreeStructure structure = myContribution.createTreeStructure(project, this);
     myBuilder = new TreeBuilderBase(myTree, structure, myTreeModel) {
       @Override
       protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
@@ -338,15 +339,8 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
     myBuilder.getUi().queueUpdate(connection).doWhenDone(new Runnable() {
       @Override
       public void run() {
-        myBuilder.select(ServersTreeStructure.DeploymentLogNode.class, new TreeVisitor<ServersTreeStructure.DeploymentLogNode>() {
-          @Override
-          public boolean visit(@NotNull ServersTreeStructure.DeploymentLogNode node) {
-            AbstractTreeNode parent = node.getParent();
-            return parent instanceof ServersTreeStructure.DeploymentNodeImpl
-                   && isDeploymentNodeMatch((ServersTreeStructure.DeploymentNodeImpl)parent, connection, deploymentName)
-                   && node.getValue().getPresentableName().equals(logName);
-          }
-        }, null, false);
+        TreeNodeSelector nodeSelector = myContribution.createLogNodeSelector(connection, deploymentName, logName);
+        myBuilder.select(nodeSelector.getNodeClass(), nodeSelector, null, false);
       }
     });
   }
@@ -356,8 +350,8 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
     return node.getServer().equals(connection.getServer());
   }
 
-  private static boolean isDeploymentNodeMatch(@NotNull ServersTreeStructure.DeploymentNodeImpl node,
-                                               @NotNull final ServerConnection<?> connection, @NotNull final String deploymentName) {
+  public static boolean isDeploymentNodeMatch(@NotNull ServersTreeStructure.DeploymentNodeImpl node,
+                                              @NotNull final ServerConnection<?> connection, @NotNull final String deploymentName) {
     ServersTreeStructure.RemoteServerNode serverNode = node.getServerNode();
     return isServerNodeMatch(serverNode, connection)
            && node.getDeployment().getName().equals(deploymentName);

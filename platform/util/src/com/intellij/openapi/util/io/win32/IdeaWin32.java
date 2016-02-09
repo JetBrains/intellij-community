@@ -17,10 +17,16 @@ package com.intellij.openapi.util.io.win32;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.zip.CRC32;
 
 /**
  * Do not use this class directly.
@@ -38,16 +44,31 @@ public class IdeaWin32 {
     IdeaWin32 instance = null;
     if (SystemInfo.isWin2kOrNewer && SystemProperties.getBooleanProperty("idea.use.native.fs.for.win", true)) {
       try {
-        if (UrlClassLoader.tryLoadPlatformLibrary("IdeaWin32")) {
-          instance = new IdeaWin32();
-          LOG.info("Native filesystem for Windows is operational");
+        if (!loadBundledLibrary()) {
+          UrlClassLoader.loadPlatformLibrary("IdeaWin32");
         }
+        instance = new IdeaWin32();
+        LOG.info("Native filesystem for Windows is operational");
       }
       catch (Throwable t) {
         LOG.warn("Failed to initialize native filesystem for Windows", t);
       }
     }
     ourInstance = instance;
+  }
+
+  private static boolean loadBundledLibrary() throws IOException {
+    String name = SystemInfo.is64Bit ? "IdeaWin64" : "IdeaWin32";
+    URL bundled = IdeaWin32.class.getResource(name + ".dll");
+    if (bundled == null) return false;
+    byte[] content = FileUtil.loadBytes(bundled.openStream());
+    CRC32 crc32 = new CRC32();
+    crc32.update(content);
+    long hash = Math.abs(crc32.getValue());
+    File file = new File(FileUtil.getTempDirectory(), name + '.' + hash + ".dll");
+    if (!file.exists()) FileUtil.writeToFile(file, content);
+    System.load(file.getPath());
+    return true;
   }
 
   public static boolean isAvailable() {

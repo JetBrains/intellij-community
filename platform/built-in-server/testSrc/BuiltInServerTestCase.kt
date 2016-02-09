@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit
 
 internal abstract class BuiltInServerTestCase {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 

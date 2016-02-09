@@ -29,6 +29,8 @@ public class ClsGenerics18HighlightingTest extends ClsGenericsHighlightingTest {
 
   public void testIDEA127714() { doTest(); }
 
+  public void testoverload() { doTest(); }
+  
   public void testCaptureContext() {
     String name = getTestName(false);
     addLibrary(name + ".jar", name + "-sources.jar");

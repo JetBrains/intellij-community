@@ -127,9 +127,11 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
         if (getProperty().getPsiElement().isValid()) {
           myInspectionPassInfo =
             ResourceBundleEditorInspectionPass.inspect(getProperty().getKey(), getProperty().getPropertiesFile().getResourceBundle());
-          TextAttributes highlightingAttributes = myInspectionPassInfo.getTextAttributes(colorsScheme);
-          if (highlightingAttributes != null) {
-            return TextAttributes.merge(baseAttrs, highlightingAttributes);
+          if (myInspectionPassInfo != null) {
+            TextAttributes highlightingAttributes = myInspectionPassInfo.getTextAttributes(colorsScheme);
+            if (highlightingAttributes != null) {
+              return TextAttributes.merge(baseAttrs, highlightingAttributes);
+            }
           }
         }
         return baseAttrs;

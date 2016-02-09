@@ -42,6 +42,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompilationStatusListener;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
@@ -236,7 +237,7 @@ public class BuildManager implements Disposable {
             final Pair<Date, File> usageData = readUsageFile(usageFile);
             if (usageData != null) {
               final File projectFile = usageData.second;
-              if ((projectFile != null && !projectFile.exists()) || DateFormatUtil.getDifferenceInDays(usageData.first, now) > unusedThresholdDays) {
+              if (projectFile != null && !projectFile.exists() || DateFormatUtil.getDifferenceInDays(usageData.first, now) > unusedThresholdDays) {
                 LOG.info("Clearing project build data because the project does not exist or was not opened for more than " + unusedThresholdDays + " days: " + buildDataProjectDir.getPath());
                 FileUtil.delete(buildDataProjectDir);
               }
@@ -323,6 +324,7 @@ public class BuildManager implements Disposable {
     });
 
     conn.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener.Adapter() {
+      @Override
       public void batchChangeStarted(Project project) {
         cancelAutoMakeTasks(project);
       }
@@ -342,12 +344,8 @@ public class BuildManager implements Disposable {
       }
     });
 
-    JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-      @Override
-      public void run() {
-        runCommand(myGCTask);
-      }
-    }, 3, 180, TimeUnit.MINUTES);
+    ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay((Runnable)() -> runCommand(myGCTask), 3, 180, TimeUnit.MINUTES);
+    Disposer.register(this, () -> future.cancel(false));
   }
 
   private List<Project> getOpenProjects() {
@@ -774,6 +772,7 @@ public class BuildManager implements Disposable {
                     // For ordinary make all project, app settings and unsaved docs are always saved before build starts.
                     try {
                       SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
                         public void run() {
                           project.save();
                         }
@@ -827,6 +826,7 @@ public class BuildManager implements Disposable {
 
                 if (isProcessPreloadingEnabled(project)) {
                   runCommand(new Runnable() {
+                    @Override
                     public void run() {
                       if (!myPreloadedBuilds.containsKey(projectPath)) {
                         try {
@@ -921,10 +921,6 @@ public class BuildManager implements Disposable {
 
   @NotNull
   public static Pair<Sdk, JavaSdkVersion> getBuildProcessRuntimeSdk(Project project) {
-    Sdk projectJdk = null;
-    int sdkMinorVersion = 0;
-    JavaSdkVersion sdkVersion = null;
-
     final Set<Sdk> candidates = new LinkedHashSet<Sdk>();
     final Sdk defaultSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (defaultSdk != null && defaultSdk.getSdkType() instanceof JavaSdkType) {
@@ -940,6 +936,9 @@ public class BuildManager implements Disposable {
 
     // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
     final JavaSdk javaSdkType = JavaSdk.getInstance();
+    Sdk projectJdk = null;
+    int sdkMinorVersion = 0;
+    JavaSdkVersion sdkVersion = null;
     for (Sdk candidate : candidates) {
       final String vs = candidate.getVersionString();
       if (vs != null) {
@@ -953,7 +952,7 @@ public class BuildManager implements Disposable {
           }
           else {
             final int result = candidateVersion.compareTo(sdkVersion);
-            if (result > 0 || (result == 0 && candidateMinorVersion > sdkMinorVersion)) {
+            if (result > 0 || result == 0 && candidateMinorVersion > sdkMinorVersion) {
               sdkVersion = candidateVersion;
               sdkMinorVersion = candidateMinorVersion;
               projectJdk = candidate;
@@ -976,6 +975,7 @@ public class BuildManager implements Disposable {
 
     // launching build process from projectTaskQueue ensures that no other build process for this project is currently running
     return projectTaskQueue.submit(new Callable<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>() {
+      @Override
       public Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> call() throws Exception {
         if (project.isDisposed()) {
           return null;
@@ -1323,7 +1323,7 @@ public class BuildManager implements Disposable {
     final ServerBootstrap bootstrap = NettyKt.serverBootstrap(new NioEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("External compiler")));
     bootstrap.childHandler(new ChannelInitializer() {
       @Override
-      protected void initChannel(Channel channel) throws Exception {
+      protected void initChannel(@NotNull Channel channel) throws Exception {
         channel.pipeline().addLast(myChannelRegistrar,
                                    new ProtobufVarint32FrameDecoder(),
                                    new ProtobufDecoder(CmdlineRemoteProto.Message.getDefaultInstance()),
@@ -1359,7 +1359,7 @@ public class BuildManager implements Disposable {
     }
   }
 
-  private static abstract class BuildManagerPeriodicTask implements Runnable {
+  private abstract static class BuildManagerPeriodicTask implements Runnable {
     private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
     private final AtomicBoolean myInProgress = new AtomicBoolean(false);
     private final Runnable myTaskRunnable = new Runnable() {
@@ -1408,7 +1408,7 @@ public class BuildManager implements Disposable {
   private static class NotifyingMessageHandler extends DelegatingMessageHandler {
     private final Project myProject;
     private final BuilderMessageHandler myDelegateHandler;
-    private boolean myIsAutomake;
+    private final boolean myIsAutomake;
 
     public NotifyingMessageHandler(@NotNull Project project, @NotNull BuilderMessageHandler delegateHandler, final boolean isAutomake) {
       myProject = project;
@@ -1451,7 +1451,7 @@ public class BuildManager implements Disposable {
 
   private static final class StdOutputCollector extends ProcessAdapter {
     private final Appendable myOutput;
-    private int myStoredLength = 0;
+    private int myStoredLength;
     public StdOutputCollector(Appendable outputSink) {
       myOutput = outputSink;
     }
@@ -1504,22 +1504,50 @@ public class BuildManager implements Disposable {
       });
       conn.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
         private final Set<String> myRootsToRefresh = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+
+        @Override
+        public void automakeCompilationFinished(int errors, int warnings, CompileContext compileContext) {
+          if (!compileContext.getProgressIndicator().isCanceled()) {
+            refreshSources(compileContext);
+          }
+        }
+
         @Override
         public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-          final String[] roots;
+          refreshSources(compileContext);
+        }
+
+        private void refreshSources(CompileContext compileContext) {
+          if (project.isDisposed()) {
+            return;
+          }
+          final Set<String> candidates = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
           synchronized (myRootsToRefresh) {
-            roots = ArrayUtil.toStringArray(myRootsToRefresh);
+            candidates.addAll(myRootsToRefresh);
             myRootsToRefresh.clear();
           }
-          if (roots.length != 0) {
+          if (compileContext.isAnnotationProcessorsEnabled()) {
+            // annotation processors may have re-generated code
+            final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
+            for (Module module : compileContext.getCompileScope().getAffectedModules()) {
+              if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
+                final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+                if (path != null) {
+                  candidates.add(path);
+                }
+              }
+            }
+          }
+
+          if (!candidates.isEmpty()) {
             ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
               @Override
               public void run() {
                 if (project.isDisposed()) {
                   return;
                 }
-                final List<File> rootFiles = new ArrayList<File>(roots.length);
-                for (String root : roots) {
+                final List<File> rootFiles = new ArrayList<File>(candidates.size());
+                for (String root : candidates) {
                   rootFiles.add(new File(root));
                 }
                 // this will ensure that we'll be able to obtain VirtualFile for existing roots
@@ -1528,6 +1556,7 @@ public class BuildManager implements Disposable {
                 final LocalFileSystem lfs = LocalFileSystem.getInstance();
                 final Set<VirtualFile> filesToRefresh = new HashSet<VirtualFile>();
                 ApplicationManager.getApplication().runReadAction(new Runnable() {
+                  @Override
                   public void run() {
                     if (project.isDisposed()) {
                       return;
@@ -1610,7 +1639,7 @@ public class BuildManager implements Disposable {
     final SequentialTaskExecutor taskQueue;
     private final Set<InternedPath> myChanged = new THashSet<InternedPath>();
     private final Set<InternedPath> myDeleted = new THashSet<InternedPath>();
-    private long myNextEventOrdinal = 0L;
+    private long myNextEventOrdinal;
     private boolean myNeedRescan = true;
 
     private ProjectData(@NotNull SequentialTaskExecutor taskQueue) {
@@ -1669,7 +1698,7 @@ public class BuildManager implements Disposable {
     }
   }
 
-  private static abstract class InternedPath {
+  private abstract static class InternedPath {
     protected final int[] myPath;
 
     /**
@@ -1754,7 +1783,7 @@ public class BuildManager implements Disposable {
   private static final class DelegateFuture<T> implements TaskFuture<T> {
     @Nullable
     private TaskFuture<? extends T> myDelegate;
-    private Boolean myRequestedCancelState = null;
+    private Boolean myRequestedCancelState;
 
     @NotNull
     public synchronized TaskFuture<? extends T> getDelegate() {
@@ -1786,6 +1815,7 @@ public class BuildManager implements Disposable {
       return false;
     }
 
+    @Override
     public synchronized boolean cancel(boolean mayInterruptIfRunning) {
       final TaskFuture<? extends T> delegate = myDelegate;
       if (delegate == null) {
@@ -1795,14 +1825,17 @@ public class BuildManager implements Disposable {
       return delegate.cancel(mayInterruptIfRunning);
     }
 
+    @Override
     public void waitFor() {
       getDelegate().waitFor();
     }
 
+    @Override
     public boolean waitFor(long timeout, TimeUnit unit) {
       return getDelegate().waitFor(timeout, unit);
     }
 
+    @Override
     public boolean isCancelled() {
       final TaskFuture<? extends T> delegate;
       synchronized (this) {
@@ -1814,6 +1847,7 @@ public class BuildManager implements Disposable {
       return delegate.isCancelled();
     }
 
+    @Override
     public boolean isDone() {
       final TaskFuture<? extends T> delegate;
       synchronized (this) {
@@ -1825,11 +1859,13 @@ public class BuildManager implements Disposable {
       return delegate.isDone();
     }
 
+    @Override
     public T get() throws InterruptedException, java.util.concurrent.ExecutionException {
       return getDelegate().get();
     }
 
-    public T get(long timeout, TimeUnit unit) throws InterruptedException, java.util.concurrent.ExecutionException, TimeoutException {
+    @Override
+    public T get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, java.util.concurrent.ExecutionException, TimeoutException {
       return getDelegate().get(timeout, unit);
     }
   }

@@ -16,12 +16,13 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,25 +42,26 @@ public class PyWithStatementImpl extends PyElementImpl implements PyWithStatemen
   }
 
   @NotNull
-  public Iterable<PyElement> iterateNames() {
+  public List<PsiNamedElement> getNamedElements() {
     PyWithItem[] items = PsiTreeUtil.getChildrenOfType(this, PyWithItem.class);
-    List<PyElement> result = new ArrayList<PyElement>();
+    List<PsiNamedElement> result = new ArrayList<PsiNamedElement>();
     if (items != null) {
       for (PyWithItem item : items) {
         PyExpression targetExpression = item.getTarget();
-        result.addAll(PyUtil.flattenedParensAndTuples(targetExpression));
+        final List<PyExpression> expressions = PyUtil.flattenedParensAndTuples(targetExpression);
+        for (PyExpression expression : expressions) {
+          if (expression instanceof PsiNamedElement) {
+            result.add((PsiNamedElement)expression);
+          }
+        }
       }
     }
     return result;
   }
 
-  public PsiElement getElementNamed(final String the_name) {
-    PyElement named_elt = IterHelper.findName(iterateNames(), the_name);
-    return named_elt;
-  }
-
-  public boolean mustResolveOutside() {
-    return false;
+  @Nullable
+  public PsiNamedElement getNamedElement(@NotNull final String the_name) {
+    return PyUtil.IterHelper.findName(getNamedElements(), the_name);
   }
 
   public PyWithItem[] getWithItems() {

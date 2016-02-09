@@ -1,10 +1,14 @@
 import sys
 import threading
 import time
-
+import os
 import unittest
-import pydevd_referrers
-from pydev_imports import StringIO
+try:
+    from _pydevd_bundle import pydevd_referrers
+except:
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+    from _pydevd_bundle import pydevd_referrers
+from _pydev_bundle.pydev_imports import StringIO
 
 #=======================================================================================================================
 # Test
@@ -12,7 +16,7 @@ from pydev_imports import StringIO
 class Test(unittest.TestCase):
 
 
-    def testGetReferrers1(self):
+    def test_get_referrers1(self):
 
         container = []
         contained = [1, 2]
@@ -25,7 +29,7 @@ class Test(unittest.TestCase):
         assert 'list[1]' in result
         pydevd_referrers.print_referrers(contained, stream=StringIO())
 
-    def testGetReferrers2(self):
+    def test_get_referrers2(self):
 
         class MyClass(object):
             def __init__(self):
@@ -43,7 +47,7 @@ class Test(unittest.TestCase):
         assert 'MyClass' in result
 
 
-    def testGetReferrers3(self):
+    def test_get_referrers3(self):
 
         class MyClass(object):
             def __init__(self):
@@ -61,7 +65,7 @@ class Test(unittest.TestCase):
         assert 'MyClass' in result
 
 
-    def testGetReferrers4(self):
+    def test_get_referrers4(self):
 
         class MyClass(object):
             def __init__(self):
@@ -75,18 +79,18 @@ class Test(unittest.TestCase):
         assert 'found_as="me"' in result  #Cyclic ref
 
 
-    def testGetReferrers5(self):
+    def test_get_referrers5(self):
         container = dict(a=[1])
 
         # Let's see if we detect the cycle...
         result = pydevd_referrers.get_referrer_info(container['a'])
-        assert 'testGetReferrers5' not in result  #I.e.: NOT in the current method
+        assert 'test_get_referrers5' not in result  #I.e.: NOT in the current method
         assert 'found_as="a"' in result
         assert 'dict' in result
         assert str(id(container)) in result
 
 
-    def testGetReferrers6(self):
+    def test_get_referrers6(self):
         container = dict(a=[1])
 
         def should_appear(obj):
@@ -97,7 +101,7 @@ class Test(unittest.TestCase):
         assert 'should_appear' in result
 
 
-    def testGetReferrers7(self):
+    def test_get_referrers7(self):
 
         class MyThread(threading.Thread):
             def run(self):

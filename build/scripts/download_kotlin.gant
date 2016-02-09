@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import com.intellij.util.text.VersionComparatorUtil
+import groovyjarjarasm.asm.AnnotationVisitor
+import groovyjarjarasm.asm.ClassReader
+import groovyjarjarasm.asm.ClassVisitor
+import groovyjarjarasm.asm.Opcodes
+
+import java.util.jar.JarFile
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
+
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
-String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_Beta4_Idea142branch150versionNoTests"
+String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_Rc_Idea142branch150versionNoTests"
 
 target('default': 'Ensures that build/kotlinc directory contains JARs from Kotlin plugin compatible with current IDEA sources. These JARs are used by build scripts.') {
   def communityHome = guessHome(this)
-  def reasonToUpdate = getReasonToUpdate(communityHome, new File(communityHome, "build/kotlinc"))
+  def classVersionOfCompiledClasses = readKotlinClassVersionOfCompiledClasses()
+  def reasonToUpdate = getReasonToUpdate(communityHome, new File(communityHome, "build/kotlinc"), classVersionOfCompiledClasses)
   if (reasonToUpdate == null) {
     if (isDefined("workIdeaHome")) {
       def workKotlinVersionFile = new File(workIdeaHome, "plugins/Kotlin/kotlinc/build.txt")
@@ -48,29 +57,31 @@ target('default': 'Ensures that build/kotlinc directory contains JARs from Kotli
   projectBuilder.info("Kotlin plugin will be updated: $reasonToUpdate")
 
   if (isDefined("workIdeaHome")) {
-    if (updatePluginFromWorkIdeaInstallation(communityHome, workIdeaHome)) {
+    if (updatePluginFromWorkIdeaInstallation(communityHome, workIdeaHome, classVersionOfCompiledClasses)) {
       return
     }
   }
 
   if (isDefined("kotlin.teamcity.host")) {
-    if (downloadAndExtract(new TeamCityBuildLocator(p("kotlin.teamcity.host"), p("kotlin.build.type.id"), p("kotlin.build.selector")), communityHome)) {
+    if (downloadAndExtract(new TeamCityBuildLocator(p("kotlin.teamcity.host"), p("kotlin.build.type.id"), p("kotlin.build.selector")),
+                           communityHome, classVersionOfCompiledClasses)) {
       return
     }
   }
-  if (!downloadAndExtract(new TeamCityBuildLocator("https://teamcity.jetbrains.com", kotlinBuildConfigurationOnPublicTeamCity, "status:SUCCESS"), communityHome)) {
+  if (!downloadAndExtract(new TeamCityBuildLocator("https://teamcity.jetbrains.com", kotlinBuildConfigurationOnPublicTeamCity, "status:SUCCESS"),
+                          communityHome, classVersionOfCompiledClasses)) {
     projectBuilder.error("Failed to install Kotlin plugin")
   }
 }
 
-private boolean updatePluginFromWorkIdeaInstallation(String communityHome, String workIdeaHome) {
+private boolean updatePluginFromWorkIdeaInstallation(String communityHome, String workIdeaHome, String classVersionOfCompiledClasses) {
   def kotlinPluginFromWorkIdea = new File(workIdeaHome, "plugins/Kotlin")
   if (!kotlinPluginFromWorkIdea.exists()) {
     projectBuilder.info("Cannot use Kotlin from $workIdeaHome: the plugin directory doesn't exist")
     return false
   }
 
-  def reasonToUpdate = getReasonToUpdate(communityHome, new File(kotlinPluginFromWorkIdea, "kotlinc"))
+  def reasonToUpdate = getReasonToUpdate(communityHome, new File(kotlinPluginFromWorkIdea, "kotlinc"), classVersionOfCompiledClasses)
   if (reasonToUpdate != null) {
     projectBuilder.info("Cannot use Kotlin from $workIdeaHome: $reasonToUpdate")
     return false
@@ -90,10 +101,20 @@ private boolean updatePluginFromWorkIdeaInstallation(String communityHome, Strin
   return true
 }
 
-private String getReasonToUpdate(String communityHome, File kotlincHome) {
+private String getReasonToUpdate(String communityHome, File kotlincHome, String classVersionOfCompiledClasses) {
   def buildTxt = new File(kotlincHome, "build.txt")
   if (!buildTxt.exists()) {
     return "Kotlin binaries aren't found at $kotlincHome"
+  }
+
+  if (classVersionOfCompiledClasses != null) {
+    def currentKotlinClassVersion = detectKotlinClassVersionForKotlinDist(kotlincHome)
+    if (currentKotlinClassVersion == null) {
+      projectBuilder.info("Cannot detect Kotlin class file version for $kotlincHome, class file versions compatibility won't be checked")
+    }
+    else if (VersionComparatorUtil.compare(currentKotlinClassVersion, classVersionOfCompiledClasses) < 0) {
+      return "Kotlin compiler produces class-files of version $currentKotlinClassVersion, but IDEA classes have version $classVersionOfCompiledClasses"
+    }
   }
 
   String currentKotlinVersion
@@ -119,15 +140,77 @@ private String getReasonToUpdate(String communityHome, File kotlincHome) {
   if (maxVersion == null) return "maximum required version for Kotlin plugin isn't specified in $externalDependenciesXml.absolutePath"
 
   if (VersionComparatorUtil.compare(currentKotlinVersion, minVersion) < 0) {
-    return "current Kotlin version is $currentKotlinVersion, but at least $minVersion is required";
+    return "Kotlin version is $currentKotlinVersion, but at least $minVersion is required";
   }
   if (VersionComparatorUtil.compare(currentKotlinVersion, maxVersion) > 0) {
-    return "current Kotlin version is $currentKotlinVersion, but at most $maxVersion is required";
+    return "Kotlin version is $currentKotlinVersion, but at most $maxVersion is required";
   }
   return null
 }
 
-private boolean downloadAndExtract(TeamCityBuildLocator buildLocator, String communityHome) {
+private String detectKotlinClassVersionForKotlinDist(File kotlincHome) {
+  def kotlinRuntimeFile = new File(kotlincHome, "lib/kotlin-runtime.jar")
+  def kotlinRuntimeJar = new JarFile(kotlinRuntimeFile)
+  try {
+    try {
+      def unitClassPath = "kotlin/Unit.class"
+      def entry = kotlinRuntimeJar.getJarEntry(unitClassPath)
+      if (entry == null) {
+        projectBuilder.warning("Cannot find $unitClassPath in $kotlinRuntimeJar")
+        return null
+      }
+      return readKotlinClassFileVersion(kotlinRuntimeJar.getInputStream(entry))
+    }
+    finally {
+      kotlinRuntimeJar.close()
+    }
+  }
+  catch (IOException e) {
+    projectBuilder.warning("Cannot detect Kotlin class file version for Kotlin distribution: $e")
+    return null
+  }
+}
+
+
+private String readKotlinClassVersionOfCompiledClasses() {
+  if (!isDefined("modulesOutput")) return null
+
+  def kotlinClassFile = new File("$modulesOutput/production/execution-impl/com/intellij/execution/ui/DefaultJreSelector.class")
+  if (!kotlinClassFile.exists()) {
+    projectBuilder.warning("Cannot detect Kotlin class file version of IDEA classes: $kotlinClassFile doesn't exist")
+    return null
+  }
+
+  try {
+    return kotlinClassFile.withInputStream { readKotlinClassFileVersion(it) }
+  }
+  catch (IOException e) {
+    projectBuilder.warning("Cannot detect Kotlin class file version of IDEA classes: $e")
+    return null
+  }
+}
+
+private String readKotlinClassFileVersion(InputStream classFileStream) {
+  def reader = new ClassReader(classFileStream)
+  String kotlinClassVersion = null
+  reader.accept(new ClassVisitor(Opcodes.ASM5) {
+    AnnotationVisitor visitAnnotation(String annotationName, boolean b) {
+      if (annotationName == "Lkotlin/jvm/internal/KotlinClass;") {
+        return new AnnotationVisitor(Opcodes.ASM5) {
+          void visit(String name, Object value) {
+            if (name == "version") {
+              kotlinClassVersion = (value as Integer[]).join(".")
+            }
+          }
+        }
+      }
+      return null
+    }
+  }, 0)
+  return kotlinClassVersion
+}
+
+private boolean downloadAndExtract(TeamCityBuildLocator buildLocator, String communityHome, String classVersionOfCompiledClasses) {
   String buildNumber;
   try {
     buildNumber = new URL(buildLocator.buildNumberUrl).text
@@ -159,6 +242,10 @@ private boolean downloadAndExtract(TeamCityBuildLocator buildLocator, String com
   ant.unzip(src: pluginZipPath, dest: "$kotlincDir/jps") {
     ant.patternset(includes: "Kotlin/lib/jps/**")
     ant.globmapper(from: "Kotlin/lib/jps/*", to: "*")
+  }
+  def reasonToUpdate = getReasonToUpdate(communityHome, new File(kotlincDir), classVersionOfCompiledClasses)
+  if (reasonToUpdate != null) {
+    projectBuilder.warning("Cannot use the downloaded Kotlin plugin: $reasonToUpdate")
   }
   return true
 }

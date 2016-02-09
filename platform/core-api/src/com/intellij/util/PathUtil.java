@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ public class PathUtil {
   }
 
   public static boolean isValidFileName(@NotNull String fileName) {
-    return PathUtilRt.isValidFileName(fileName);
+    return PathUtilRt.isValidFileName(fileName, true);
   }
 
   public static boolean isValidFileName(@NotNull String fileName, boolean strict) {

@@ -17,6 +17,7 @@ import kotlin.properties.Delegates
 
 internal abstract class GitTestCase : IcsTestCase() {
   companion object {
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 

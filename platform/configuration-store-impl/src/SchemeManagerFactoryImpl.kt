@@ -36,11 +36,11 @@ sealed class SchemeManagerFactoryBase : SchemesManagerFactory(), SettingsSavingC
 
   abstract val componentManager: ComponentManager
 
-  override final fun <T : Scheme, E : ExternalizableScheme> createSchemesManager(directoryName: String, processor: SchemeProcessor<E>, roamingType: RoamingType): SchemesManager<T, E> {
+  override final fun <T : Scheme, E : ExternalizableScheme> create(directoryName: String, processor: SchemeProcessor<E>, roamingType: RoamingType, presentableName: String?): SchemesManager<T, E> {
     val storageManager = (componentManager.stateStore).stateStorageManager
 
     val path = checkPath(directoryName)
-    val manager = SchemeManagerImpl<T, E>(path, processor, (storageManager as? StateStorageManagerImpl)?.streamProvider, pathToFile(path, storageManager), roamingType, componentManager)
+    val manager = SchemeManagerImpl<T, E>(path, processor, (storageManager as? StateStorageManagerImpl)?.streamProvider, pathToFile(path, storageManager), roamingType, componentManager, presentableName)
     @Suppress("CAST_NEVER_SUCCEEDS")
     managers.add(manager as SchemeManagerImpl<Scheme, ExternalizableScheme>)
     return manager

@@ -78,14 +78,14 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
         addElement(referencedName, expr);
       }
     }
-    else if (element instanceof NameDefiner) {
+    else if (element instanceof PyImportedNameDefiner) {
       boolean handledAsImported = false;
       if (element instanceof PyImportElement) {
         final PyImportElement importElement = (PyImportElement)element;
         handledAsImported = handleImportElement(importElement);
       }
       if (! handledAsImported) {
-        final NameDefiner definer = (NameDefiner)element;
+        final PyImportedNameDefiner definer = (PyImportedNameDefiner)element;
         for (PyElement expr : definer.iterateNames()) {
           if (expr != null && expr != myContext) { // NOTE: maybe rather have SingleIterables skip nulls outright?
             if (!expr.isValid()) {
@@ -93,7 +93,7 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
             }
             String referencedName = expr instanceof PyFile ? FileUtil.getNameWithoutExtension(((PyFile)expr).getName()) : expr.getName();
             if (referencedName != null && nameIsAcceptable(referencedName)) {
-              addImportedElement(referencedName, definer, expr);
+              addImportedElement(referencedName, expr);
             }
           }
         }
@@ -122,7 +122,7 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
     mySeenNames.add(name);
   }
 
-  protected void addImportedElement(String referencedName, NameDefiner definer, PyElement expr) {
+  protected void addImportedElement(String referencedName, PyElement expr) {
     addElement(referencedName, expr);
   }
 

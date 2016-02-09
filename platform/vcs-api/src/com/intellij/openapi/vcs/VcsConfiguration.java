@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import java.util.*;
 
 @State(
   name = "VcsManagerConfiguration",
-  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
+  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public final class VcsConfiguration implements PersistentStateComponent<VcsConfiguration> {
   public final static long ourMaximumFileForBaseRevisionSize = 500 * 1000;
@@ -166,7 +166,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  public static VcsConfiguration getInstance(Project project) {
+  public static VcsConfiguration getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, VcsConfiguration.class);
   }
 

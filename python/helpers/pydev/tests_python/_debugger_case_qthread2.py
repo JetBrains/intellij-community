@@ -2,7 +2,7 @@ import time
 import sys
 
 try:
-    from PySide import QtCore
+    from PySide import QtCore  # @UnresolvedImport
 except:
     from PyQt4 import QtCore
 
@@ -10,9 +10,12 @@ except:
 # http://labs.qt.nokia.com/2007/07/05/qthreads-no-longer-abstract/
 class SomeObject(QtCore.QObject):
 
-    finished = QtCore.Signal()
+    try:
+        finished = QtCore.Signal()  # @UndefinedVariable
+    except:
+        finished = QtCore.pyqtSignal()  # @UndefinedVariable
 
-    def longRunning(self):
+    def long_running(self):
         count = 0
         while count < 5:
             time.sleep(.5)
@@ -25,7 +28,7 @@ objThread = QtCore.QThread()
 obj = SomeObject()
 obj.moveToThread(objThread)
 obj.finished.connect(objThread.quit)
-objThread.started.connect(obj.longRunning)
+objThread.started.connect(obj.long_running)
 objThread.finished.connect(app.exit)
 objThread.start()
 app.exec_()
