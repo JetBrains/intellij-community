@@ -105,7 +105,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myReferencesPanel = new ReferencesPanel(myColorManager);
     myCommitDetailsPanel = new DataPanel(logDataHolder.getProject(), logDataHolder.isMultiRoot(), logDataHolder);
 
-    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED) {
+      @Override
+      protected JViewport createViewport() {
+        return new JViewport();
+      }
+    };
     myScrollPane.getVerticalScrollBar().setUnitIncrement(8);
     myMainContentPanel = new JPanel(new MigLayout("flowy, ins 0, hidemode 3, gapy 0")) {
       @Override
