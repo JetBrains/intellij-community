@@ -39,6 +39,7 @@ import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -195,11 +196,14 @@ public class PyPackageUtil {
   }
 
   public static boolean packageManagementEnabled(@Nullable Sdk sdk) {
+    if (!PythonSdkType.isRemote(sdk)) {
+      return true;
+    }
     return new CredentialsTypeExChecker() {
       @Override
       protected boolean checkLanguageContribution(PyCredentialsContribution languageContribution) {
         return languageContribution.isPackageManagementEnabled();
       }
-    }.check(sdk);
+    }.withSshContribution(true).withVagrantContribution(true).withWebDeploymentContribution(true).check(sdk);
   }
 }
