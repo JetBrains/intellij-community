@@ -962,4 +962,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testForeachOverCapturedWildcardWithCollectionUpperBound() throws Exception {
     doTest();
   }
+
+  public void testCapturedWildcardWithPrimitiveTypesChecks() throws Exception {
+    doTest();
+  }
 }
