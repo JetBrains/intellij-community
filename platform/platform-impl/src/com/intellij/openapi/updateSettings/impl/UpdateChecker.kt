@@ -277,11 +277,10 @@ object UpdateChecker {
    * Returns a list of plugins which are currently installed or were installed in the previous installation from which
    * we're importing the settings.
    */
-  @Suppress("DEPRECATION_ERROR")
   private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor> {
     val updateable = ContainerUtil.newTroveMap<PluginId, IdeaPluginDescriptor>()
 
-    updateable += PluginManagerCore.getPlugins().filter { !it.isBundled }.toMapBy { it.pluginId }
+    updateable += PluginManagerCore.getPlugins().filter { !it.isBundled }.associateBy { it.pluginId }
 
     val onceInstalled = File(PathManager.getConfigPath(), PluginManager.INSTALLED_TXT)
     if (onceInstalled.isFile) {
