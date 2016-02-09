@@ -89,6 +89,10 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
     return myScrollBar != null && myScrollBar.isOpaque();
   }
 
+  boolean isAbsolutePositioning(MouseEvent event) {
+    return SwingUtilities.isMiddleMouseButton(event);
+  }
+
   int scale(int value) {
     value = JBUI.scale(value);
     //noinspection EnumSwitchStatementWhichMissesCases
@@ -297,7 +301,7 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
       }
       else if (isTrackVisible && myTrackBounds.contains(myMouseX, myMouseY)) {
         // pressed on the track
-        if (SwingUtilities.isMiddleMouseButton(event)) {
+        if (isAbsolutePositioning(event)) {
           myOffset = (vertical ? myThumbBounds.height : myThumbBounds.width) / 2;
           isDragging = true;
           setValueFrom(event);
