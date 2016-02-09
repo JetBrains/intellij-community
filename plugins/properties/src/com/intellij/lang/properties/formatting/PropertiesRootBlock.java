@@ -67,7 +67,6 @@ public class PropertiesRootBlock extends AbstractBlock {
             }
             propertyNode = propertyNode.getTreeNext();
           }
-          break;
         }
       }
       if (PropertiesTokenTypes.END_OF_LINE_COMMENT.equals(child.getElementType())) {
