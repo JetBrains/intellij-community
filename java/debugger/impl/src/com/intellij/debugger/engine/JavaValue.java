@@ -42,7 +42,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import com.intellij.xdebugger.frame.*;
@@ -462,12 +461,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @NotNull
   @Override
   public ThreeState computeInlineDebuggerData(@NotNull final XInlineDebuggerDataCallback callback) {
-    computeSourcePosition(new XNavigatable() {
-      @Override
-      public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
-        callback.computed(sourcePosition);
-      }
-    }, true);
+    computeSourcePosition(callback::computed, true);
     return ThreeState.YES;
   }
 

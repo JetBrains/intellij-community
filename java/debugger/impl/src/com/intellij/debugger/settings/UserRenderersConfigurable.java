@@ -212,12 +212,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
       final NodeRenderer renderer = (NodeRenderer)NodeRendererSettings.getInstance().createRenderer(CompoundNodeRenderer.UNIQUE_ID);
       renderer.setEnabled(true);
       addRenderer(renderer);
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myNameField.requestFocus();
-        }
-      });
+      SwingUtilities.invokeLater(myNameField::requestFocus);
     }
   }
 

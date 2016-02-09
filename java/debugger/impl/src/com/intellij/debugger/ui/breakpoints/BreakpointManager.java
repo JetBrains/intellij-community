@@ -416,12 +416,7 @@ public class BreakpointManager {
           }
         }
 
-        DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
-          @Override
-          public void run() {
-            updateBreakpointsUI();
-          }
-        });
+        DebuggerInvocationUtil.invokeLater(myProject, BreakpointManager.this::updateBreakpointsUI);
       }
     });
 
@@ -564,12 +559,7 @@ public class BreakpointManager {
         breakpoint.markVerified(requestManager.isVerified(breakpoint));
         requestManager.deleteRequest(breakpoint);
       }
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          updateBreakpointsUI();
-        }
-      });
+      SwingUtilities.invokeLater(this::updateBreakpointsUI);
     }
   }
 
@@ -580,12 +570,7 @@ public class BreakpointManager {
         breakpoint.markVerified(false); // clean cached state
         breakpoint.createRequest(debugProcess);
       }
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          updateBreakpointsUI();
-        }
-      });
+      SwingUtilities.invokeLater(this::updateBreakpointsUI);
     }
   }
 
