@@ -15,8 +15,10 @@
  */
 package com.intellij.vcs.log.printer.idea;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.NodePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
@@ -27,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author erokhins
@@ -210,29 +213,43 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
     for (PrintElement printElement : printElements) {
-      if (printElement instanceof EdgePrintElement) {
-
-        EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
-        Color usualColor = getColor(edgePrintElement);
-
-        if (printElement.isSelected()) {
-          printEdge(MARK_COLOR, true, edgePrintElement);
-          printEdge(usualColor, false, edgePrintElement);
-        }
-        else {
-          printEdge(usualColor, false, edgePrintElement);
-        }
+      if (!printElement.isSelected()) {
+        drawElement(printElement, false);
       }
+    }
 
-      if (printElement instanceof NodePrintElement) {
-        int position = printElement.getPositionInCurrentRow();
-        if (printElement.isSelected()) {
-          paintCircle(position, MARK_COLOR, true);
-          paintCircle(position, getColor(printElement), false);
-        }
-        else {
-          paintCircle(position, getColor(printElement), false);
-        }
+    List<PrintElement> selected = ContainerUtil.filter(printElements, new Condition<PrintElement>() {
+      @Override
+      public boolean value(PrintElement printElement) {
+        return printElement.isSelected();
+      }
+    });
+    for (PrintElement printElement : selected) {
+      drawElement(printElement, true);
+    }
+
+    for (PrintElement printElement : selected) {
+      drawElement(printElement, false);
+    }
+  }
+
+  protected void drawElement(@NotNull PrintElement printElement, boolean selected) {
+    if (printElement instanceof EdgePrintElement) {
+      if (selected) {
+        printEdge(MARK_COLOR, true, (EdgePrintElement)printElement);
+      }
+      else {
+        printEdge(getColor(printElement), false, (EdgePrintElement)printElement);
+      }
+    }
+
+    if (printElement instanceof NodePrintElement) {
+      int position = printElement.getPositionInCurrentRow();
+      if (selected) {
+        paintCircle(position, MARK_COLOR, true);
+      }
+      else {
+        paintCircle(position, getColor(printElement), false);
       }
     }
   }
