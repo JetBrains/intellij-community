@@ -28,7 +28,6 @@ Function ConfirmDesktopShortcut
     ${If} $3 != ""
       !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
       !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" "${PRODUCT_EXE_FILE_64}"
-      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "State" "0"
     ${EndIf}
   ${EndIf}
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
