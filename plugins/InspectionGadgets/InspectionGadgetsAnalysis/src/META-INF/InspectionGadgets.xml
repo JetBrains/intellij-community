@@ -28,7 +28,8 @@
                      key="chain.of.instanceof.checks.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.abstraction.InstanceofChainInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="InstanceofInterfaces" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java" language="JAVA" suppressId="InstanceofConcreteClass" alternativeId="InstanceofInterfaces"
+                     shortName="InstanceofInterfaces" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="instanceof.concrete.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.abstraction.InstanceofInterfacesInspection"/>
