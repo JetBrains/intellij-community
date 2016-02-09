@@ -105,12 +105,15 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myReferencesPanel = new ReferencesPanel(myColorManager);
     myCommitDetailsPanel = new DataPanel(logDataHolder.getProject(), logDataHolder.isMultiRoot(), logDataHolder);
 
-    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.getVerticalScrollBar().setUnitIncrement(8);
     myMainContentPanel = new JPanel(new MigLayout("flowy, ins 0, hidemode 3, gapy 0")) {
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
+        if (myCommitDetailsPanel.isExpanded()) {
+          return size;
+        }
         size.width = myScrollPane.getViewport().getWidth() - 5;
         return size;
       }
@@ -454,6 +457,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     @Override
     public Color getBackground() {
       return getDetailsBackground();
+    }
+
+    public boolean isExpanded() {
+      return myExpanded;
     }
   }
 
