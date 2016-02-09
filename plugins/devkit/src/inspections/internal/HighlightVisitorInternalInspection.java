@@ -23,8 +23,10 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,9 +65,12 @@ public class HighlightVisitorInternalInspection extends BaseJavaBatchLocalInspec
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    final PsiFile file = holder.getFile();
+    if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new HighlightVisitorImpl(JavaPsiFacade.getInstance(holder.getProject()).getResolveHelper()) {
       {
-        final PsiFile file = holder.getFile();
         prepareToRunAsInspection(new HighlightInfoHolder(file) {
           @Override
           public boolean add(@Nullable HighlightInfo info) {
