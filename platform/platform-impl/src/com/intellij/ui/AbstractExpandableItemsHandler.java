@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -24,7 +23,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.MovablePopup;
-import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.MouseEventHandler;
@@ -42,7 +40,6 @@ import java.util.Collections;
 public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType extends JComponent> implements ExpandableItemsHandler<KeyType> {
   protected final ComponentType myComponent;
 
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final CellRendererPane myRendererPane = new CellRendererPane();
   private final JComponent myTipComponent = new JComponent() {
     @Override
@@ -52,6 +49,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }
   };
 
+  private volatile Runnable myRequest;
   private boolean myEnabled = Registry.is("ide.expansion.hints.enabled");
   private final MovablePopup myPopup;
   private KeyType myKey;
@@ -213,10 +211,9 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   protected void handleSelectionChange(final KeyType selected, final boolean processIfUnfocused) {
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
+    if (!EventQueue.isDispatchThread()) {
       return;
     }
-    myUpdateAlarm.cancelAllRequests();
     if (selected == null || !isHandleSelectionEnabled(selected, processIfUnfocused)) {
       hideHint();
       return;
@@ -224,12 +221,17 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (!selected.equals(myKey)) {
       hideHint();
     }
-    myUpdateAlarm.addRequest(new Runnable() {
+    Runnable request = new Runnable() {
       @Override
       public void run() {
-        doHandleSelectionChange(selected, processIfUnfocused);
+        if (myRequest == this) {
+          doHandleSelectionChange(selected, processIfUnfocused);
+        }
       }
-    }, 10);
+    };
+    myRequest = request;
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(request);
   }
 
   private boolean isHandleSelectionEnabled(@NotNull KeyType selected, boolean processIfUnfocused) {
@@ -302,7 +304,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   private void hideHint() {
-    myUpdateAlarm.cancelAllRequests();
+    myRequest = null;
     if (myPopup.isVisible()) {
       myPopup.setVisible(false);
       repaintKeyItem();
