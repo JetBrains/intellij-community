@@ -173,6 +173,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Nullable private MouseEvent myMousePressedEvent;
   @Nullable private MouseEvent myMouseMovedEvent;
+  
+  private final MouseListener myMouseListener = new MyMouseAdapter();
+  private final MouseMotionListener myMouseMotionListener = new MyMouseMotionListener();
 
   /**
    * Holds information about area where mouse was pressed.
@@ -897,6 +900,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFocusListeners.clear();
     myMouseListeners.clear();
     myMouseMotionListeners.clear();
+    
+    myEditorComponent.removeMouseListener(myMouseListener);
+    myGutterComponent.removeMouseListener(myMouseListener);
+    myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
+    myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
     if (myConnection != null) {
       myConnection.disconnect();
@@ -995,13 +1003,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     });
 
-    MyMouseAdapter mouseAdapter = new MyMouseAdapter();
-    myEditorComponent.addMouseListener(mouseAdapter);
-    myGutterComponent.addMouseListener(mouseAdapter);
-
-    MyMouseMotionListener mouseMotionListener = new MyMouseMotionListener();
-    myEditorComponent.addMouseMotionListener(mouseMotionListener);
-    myGutterComponent.addMouseMotionListener(mouseMotionListener);
+    myEditorComponent.addMouseListener(myMouseListener);
+    myGutterComponent.addMouseListener(myMouseListener);
+    myEditorComponent.addMouseMotionListener(myMouseMotionListener);
+    myGutterComponent.addMouseMotionListener(myMouseMotionListener);
 
     myEditorComponent.addFocusListener(new FocusAdapter() {
       @Override
@@ -5828,8 +5833,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void mouseReleased(@NotNull MouseEvent e) {
-      if (isReleased) return;
-      
       myMousePressArea = null;
       runMouseReleasedCommand(e);
       if (!e.isConsumed() && myMousePressedEvent != null && !myMousePressedEvent.isConsumed() &&
