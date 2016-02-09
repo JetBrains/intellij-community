@@ -30,54 +30,7 @@ private pass(String prop) {
   }
 }
 
-target(run_ui_tests: 'Run java tests') {
-  depends([check, compile])
-
-  def classpathFile = "$home/uitests.classpath"
-  List<String> testRuntimeClasspath = projectBuilder.moduleRuntimeClasspath(findModule("community-main"), true)
-  new File(classpathFile).text = testRuntimeClasspath.findAll({ new File((String)it).exists() }).join('\n')
-
-  testcases.each { testCase ->
-    ant.junit(fork: "yes", showoutput: "true", logfailedtests: "true", printsummary: "true") {
-      jvmarg(value: "-Dclasspath.file=${classpathFile}")
-      pass("idea.test.group")
-      pass("idea.test.patterns")
-      pass("idea.fast.only")
-      pass("teamcity.build.tempDir")
-      pass("teamcity.tests.recentlyFailedTests.file")
-
-      System.getProperties().entrySet().each {
-        if (it.key.startsWith("pass.")) {
-          def trimmed = it.key.substring("pass.".length());
-          jvmarg(value: "-D${trimmed}=${it.value}");
-        };
-      }
-
-      if (isDefined("commonJvmArgsForTests")) {
-        commonJvmArgsForTests().each { jvmarg(value: it) }
-      }
-
-      jvmarg(value: "-Dbootstrap.testcase=$testCase")
-
-      if (isDefined("jvm_args")) {
-        jvm_args.each { jvmarg(value: it) }
-      }
-
-      classpath {
-        projectBuilder.moduleRuntimeClasspath(findModule("tests_bootstrap"), false).each {
-          pathelement(location: it)
-        }
-        pathelement(location: "${jdkHome}/lib/tools.jar")
-      }
-
-      formatter(type: "plain")
-      formatter(type: "xml")
-      test(name: 'com.intellij.tests.BootstrapUITests')
-    }
-  }
-}
-
-target('sharded_ui_tests' : "(Experimental) Runs UI tests, sharding across multiple JVMs") {
+target('run_ui_tests' : "Runs UI tests, sharding across multiple JVMs") {
   ant.taskdef(name: "uitest", loaderRef: "GANT_CONTEXT_CLASS_LOADER",  classname: "com.android.antuitest.tasks.UiTestTask")
 
   def classpathFile = "$home/uitests.classpath"
@@ -116,13 +69,8 @@ target('sharded_ui_tests' : "(Experimental) Runs UI tests, sharding across multi
 }
 
 target('default' : "Run all UI tests") {
-  //depends([compile, run_ui_tests])
-  depends([compile, sharded_ui_tests])
+  depends([compile, run_ui_tests])
 }
-
-// To run just your own tests, you can for example write
-//setProperty("testcases", ["com.android.tools.idea.tests.gui.layout.LayoutPreviewTest","com.android.tools.idea.tests.gui.layout.LayoutEditorTest"])
-setProperty("testcases", ["com.android.tools.idea.tests.gui.GuiTestSuite"])
 
 def args = [
         "-Xmx2048m",
