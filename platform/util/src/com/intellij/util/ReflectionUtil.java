@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -486,20 +486,20 @@ public class ReflectionUtil {
     catch (Exception e) {
       // support Kotlin data classes - pass null as default value
       for (Annotation annotation : aClass.getAnnotations()) {
-        if (annotation.annotationType().getName().equals("kotlin.jvm.internal.KotlinClass")) {
+        String name = annotation.annotationType().getName();
+        if (name.equals("kotlin.Metadata") || name.equals("kotlin.jvm.internal.KotlinClass")) {
           Constructor<?>[] constructors = aClass.getDeclaredConstructors();
           Exception exception = e;
           ctorLoop:
-          for (int i = 0; i < constructors.length; i++) {
+          for (Constructor<?> constructor1 : constructors) {
             try {
-              Constructor<?> constructor = constructors[i];
               try {
-                constructor.setAccessible(true);
+                constructor1.setAccessible(true);
               }
               catch (Throwable ignored) {
               }
 
-              Class<?>[] parameterTypes = constructor.getParameterTypes();
+              Class<?>[] parameterTypes = constructor1.getParameterTypes();
               for (Class<?> type : parameterTypes) {
                 if (type.getName().equals("kotlin.jvm.internal.DefaultConstructorMarker")) {
                   continue ctorLoop;
@@ -507,7 +507,7 @@ public class ReflectionUtil {
               }
 
               //noinspection unchecked
-              return (T)constructor.newInstance(new Object[parameterTypes.length]);
+              return (T)constructor1.newInstance(new Object[parameterTypes.length]);
             }
             catch (Exception e1) {
               exception = e1;
