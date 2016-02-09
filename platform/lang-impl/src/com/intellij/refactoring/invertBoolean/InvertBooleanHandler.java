@@ -40,19 +40,22 @@ public class InvertBooleanHandler implements RefactoringActionHandler {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    PsiElement namedElement = adjustElement(element, project, editor);
-    if (namedElement == null) {
+    final InvertBooleanDelegate delegate = findDelegate(element, project, editor);
+    if (delegate == null) {
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("error.wrong.caret.position.method.or.variable.name")), REFACTORING_NAME, INVERT_BOOLEAN_HELP_ID);
       return;
     }
-    new InvertBooleanDialog(namedElement).show();
+    final PsiElement namedElement = delegate.adjustElement(element, project, editor);
+    if (namedElement != null) {
+      new InvertBooleanDialog(namedElement).show();
+    }
   }
 
-  public static PsiElement adjustElement(PsiElement element, Project project, Editor editor) {
+  public static InvertBooleanDelegate findDelegate(PsiElement element, Project project, Editor editor) {
     for (InvertBooleanDelegate delegate : Extensions.getExtensions(InvertBooleanDelegate.EP_NAME)) {
       if (delegate.isVisibleOnElement(element)) {
-        return delegate.adjustElement(element, project, editor);
+        return delegate;
       }
     }
     return null;
@@ -60,12 +63,15 @@ public class InvertBooleanHandler implements RefactoringActionHandler {
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     LOG.assertTrue(elements.length == 1);
-    PsiElement element = adjustElement(elements[0], project, null);
-    if (element == null) {
+    final InvertBooleanDelegate delegate = findDelegate(elements[0], project, null);
+    if (delegate == null) {
       CommonRefactoringUtil.showErrorHint(project, null, RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("error.wrong.caret.position.method.or.variable.name")), REFACTORING_NAME, INVERT_BOOLEAN_HELP_ID);
       return;
     }
-    new InvertBooleanDialog(element).show();
+    PsiElement element = delegate.adjustElement(elements[0], project, null);
+    if (element != null) {
+      new InvertBooleanDialog(element).show();
+    }
   }
 }
