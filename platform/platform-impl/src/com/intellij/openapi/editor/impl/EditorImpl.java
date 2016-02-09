@@ -5828,6 +5828,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void mouseReleased(@NotNull MouseEvent e) {
+      if (isReleased) return;
+      
       myMousePressArea = null;
       runMouseReleasedCommand(e);
       if (!e.isConsumed() && myMousePressedEvent != null && !myMousePressedEvent.isConsumed() &&

@@ -263,7 +263,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
   @Override
   public Object getData(final String dataId) {
     final Editor e = validateCurrentEditor();
-    if (e == null) return null;
+    if (e == null || e.isDisposed()) return null;
 
     // There's no FileEditorManager for default project (which is used in diff command-line application)
     if (!myProject.isDisposed() && !myProject.isDefault()) {

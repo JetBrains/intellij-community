@@ -545,6 +545,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
+    if (myEditor.isDisposed()) return null;
+    
     if (EditorGutter.KEY.is(dataId)) {
       return this;
     }
