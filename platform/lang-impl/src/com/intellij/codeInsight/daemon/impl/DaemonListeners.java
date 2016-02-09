@@ -75,6 +75,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -297,6 +298,8 @@ public class DaemonListeners implements Disposable {
         stopDaemonAndRestartAllFiles("Global color scheme changed");
       }
     }, this);
+
+    connection.subscribe(PsiModificationTracker.TOPIC, () -> stopDaemonAndRestartAllFiles("PSI change"));
 
     commandProcessor.addCommandListener(new MyCommandListener(), this);
     application.addApplicationListener(new MyApplicationListener(), this);
