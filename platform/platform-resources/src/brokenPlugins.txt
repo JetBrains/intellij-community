@@ -39,3 +39,4 @@ com.sencha.idea.IdeaPlugin 6.0.6.456 6.0.4.438 6.0.3.430 6.0.2.414 6.0.1.396 6.0
 com.intellij.swift 144.SNAPSHOT
 SpellChecker 1.0
 com.fedot.idea.requirejs 0.24
+com.widerwille.quicklook 0.8
