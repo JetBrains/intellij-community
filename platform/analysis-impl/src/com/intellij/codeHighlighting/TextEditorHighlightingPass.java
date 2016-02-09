@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +41,8 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   @Nullable protected final Document myDocument;
   @NotNull protected final Project myProject;
   private final boolean myRunIntentionPassAfter;
-  private final long myInitialStamp;
+  private final long myInitialDocStamp;
+  private final long myInitialPsiStamp;
   private volatile int[] myCompletionPredecessorIds = ArrayUtil.EMPTY_INT_ARRAY;
   private volatile int[] myStartingPredecessorIds = ArrayUtil.EMPTY_INT_ARRAY;
   private volatile int myId;
@@ -51,7 +53,8 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myDocument = document;
     myProject = project;
     myRunIntentionPassAfter = runIntentionPassAfter;
-    myInitialStamp = document == null ? 0 : document.getModificationStamp();
+    myInitialDocStamp = document == null ? 0 : document.getModificationStamp();
+    myInitialPsiStamp = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
   }
   protected TextEditorHighlightingPass(@NotNull final Project project, @Nullable final Document document) {
     this(project, document, true);
@@ -85,8 +88,12 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
       return false;
     }
 
-    if (myDocument != null && myDocument.getModificationStamp() != myInitialStamp) return false;
+    if (PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount() != myInitialPsiStamp) {
+      return false;
+    }
+
     if (myDocument != null) {
+      if (myDocument.getModificationStamp() != myInitialDocStamp) return false;
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
       if (file == null || !file.isValid()) return false;
     }
