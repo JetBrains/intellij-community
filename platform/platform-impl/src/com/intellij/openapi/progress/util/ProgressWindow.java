@@ -156,7 +156,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     myProcessId = processId;
   }
 
-  protected void showDialog() {
+  public void showDialog() {
     if (!isRunning() || isCanceled()) {
       return;
     }

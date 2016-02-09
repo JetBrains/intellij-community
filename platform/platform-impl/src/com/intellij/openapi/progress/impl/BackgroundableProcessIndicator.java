@@ -147,7 +147,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   }
 
   @Override
-  protected void showDialog() {
+  public void showDialog() {
     if (myDisposed) return;
 
     if (shouldStartInBackground()) {
