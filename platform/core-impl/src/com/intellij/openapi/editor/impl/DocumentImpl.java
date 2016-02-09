@@ -51,7 +51,10 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.List;
+
+import static com.intellij.openapi.editor.StripTrailingSpacesLineFilter.LINE_FILTER_EXTENSION_POINT;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
@@ -196,6 +199,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (!isStripTrailingSpacesEnabled) {
       return true;
     }
+    StripTrailingSpacesLineFilter[] filters = LINE_FILTER_EXTENSION_POINT.getExtensions(); 
+    for (StripTrailingSpacesLineFilter filter : filters) {
+      if (!filter.isStripSpacesAllowed(project, this)) return true;
+    }
+    BitSet disabledLinesBitSet = new BitSet(getLineCount());
+    for (StripTrailingSpacesLineFilter filter : filters) {
+      if (!filter.apply(project, this, disabledLinesBitSet)) return false;
+    }
 
     boolean markAsNeedsStrippingLater = false;
     CharSequence text = myText;
@@ -219,7 +230,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       lineLoop:
       for (int line = 0; line < getLineCount(); line++) {
         LineSet lineSet = getLineSet();
-        if (inChangedLinesOnly && !lineSet.isModified(line)) continue;
+        if (inChangedLinesOnly && !lineSet.isModified(line) || disabledLinesBitSet.get(line)) continue;
         int whiteSpaceStart = -1;
         final int lineEnd = lineSet.getLineEnd(line) - lineSet.getSeparatorLength(line);
         int lineStart = lineSet.getLineStart(line);
