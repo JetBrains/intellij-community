@@ -299,8 +299,6 @@ public class DaemonListeners implements Disposable {
       }
     }, this);
 
-    connection.subscribe(PsiModificationTracker.TOPIC, () -> stopDaemonAndRestartAllFiles("PSI change"));
-
     commandProcessor.addCommandListener(new MyCommandListener(), this);
     application.addApplicationListener(new MyApplicationListener(), this);
     editorColorsManager.addEditorColorsListener(new MyEditorColorsListener(), this);
