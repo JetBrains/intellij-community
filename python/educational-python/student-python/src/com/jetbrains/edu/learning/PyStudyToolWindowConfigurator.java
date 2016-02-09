@@ -23,7 +23,7 @@ public class PyStudyToolWindowConfigurator implements StudyToolWindowConfigurato
   @Override
   public DefaultActionGroup getActionGroup(Project project) {
     final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new StudyCheckAction());
+    group.add(new PyStudyCheckAction());
     group.add(new StudyPreviousStudyTaskAction());
     group.add(new StudyNextStudyTaskAction());
     group.add(new StudyRefreshTaskFileAction());

@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning.run;
+package com.jetbrains.edu.learning.checker;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.CapturingProcessHandler;
@@ -60,17 +60,14 @@ public class StudySmartChecker {
         int userEnd = userStart + userAnswerPlaceholder.getLength();
         String text = usersDocument.getText(new TextRange(userStart, userEnd));
         windowDocument.replaceString(start, end, text);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            documentManager.saveDocument(windowDocument);
-          }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          documentManager.saveDocument(windowDocument);
         });
         VirtualFile fileWindows = EduUtils.flushWindows(windowTaskFile, windowCopy, true);
         Process smartTestProcess = testRunner.createCheckProcess(project, windowCopy.getPath());
         final CapturingProcessHandler handler = new CapturingProcessHandler(smartTestProcess, null, windowCopy.getPath());
         final ProcessOutput output = handler.runProcess();
-        boolean res = testRunner.getTestsOutput(output).isSuccess();
+        boolean res = StudyTestsOutputParser.getTestsOutput(output).isSuccess();
         StudyTaskManager.getInstance(project).setStatus(userAnswerPlaceholder, res ? StudyStatus.Solved : StudyStatus.Failed);
         StudyUtils.deleteFile(windowCopy);
         if (fileWindows != null) {
@@ -81,10 +78,7 @@ public class StudySmartChecker {
         }
       }
     }
-    catch (ExecutionException e) {
-      LOG.error(e);
-    }
-    catch (IOException e) {
+    catch (ExecutionException | IOException e) {
       LOG.error(e);
     }
   }
