@@ -16,8 +16,8 @@ unzip -q $1.sit -d ~/${EXPLODED}/
 rm $1.sit
 BUILD_NAME=$(ls ~/${EXPLODED}/)
 
-if [ $# -eq 6 ] && [ -f ~/"${6##*[/|\\]}" ]; then
-  archiveJDK="${6##*[/|\\]}"
+if [ $# -eq 6 ] && [ -f $6 ]; then
+  archiveJDK="$6"
   echo "Modifying Info.plist"
   sed -i -e 's/1.6\*/1.6\+/' ~/${EXPLODED}/"$BUILD_NAME"/Contents/Info.plist
   jdk=jdk-bundled
