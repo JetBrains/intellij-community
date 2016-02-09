@@ -176,7 +176,7 @@ public class FileStatusMap implements Disposable {
 
   private void assertAllowModifications() {
     try {
-      assert myAllowDirt;
+      assert myAllowDirt : "PSI/document/model changes are not allowed during highlighting";
     }
     finally {
       myAllowDirt = true; //give next test a chance
