@@ -71,7 +71,7 @@ public class PyTypeParser {
       myImports = imports;
     }
 
-    ParseResult(@Nullable PsiElement element, @NotNull PyType type, @NotNull TextRange range) {
+    ParseResult(@Nullable PsiElement element, @NotNull PyType type, @NotNull TextRange range) { 
       this(element, type, ImmutableMap.of(range, type), ImmutableMap.of(type, range), ImmutableMap.<PyType, PyImportElement>of());
     }
 
@@ -330,6 +330,136 @@ public class PyTypeParser {
 
     try {
       return typeFile.parse(tokenize(type));
+    }
+    catch (ParserException e) {
+      return EMPTY_RESULT;
+    }
+  }
+
+  @NotNull
+  public static ParseResult parsePep484FunctionTypeComment(@NotNull final PsiElement anchor, @NotNull String text) {
+    final ForwardDeclaration<ParseResult, PyElementType> typeExpr = ForwardDeclaration.create();
+
+    final FunctionalParser<ParseResult, PyElementType> classType =
+      token(IDENTIFIER).then(many(op(".").skipThen(token(IDENTIFIER))))
+                       .map(new MakeSimpleType(anchor))
+                       .cached()
+                       .named("class-type");
+
+    final FunctionalParser<ParseResult, PyElementType> paramExpr =
+      classType.thenSkip(op("[")).then(typeExpr).then(many(op(",").skipThen(typeExpr))).thenSkip(op("]"))
+               .map(new Function<Pair<Pair<ParseResult, ParseResult>, List<ParseResult>>, ParseResult>() {
+                 @Override
+                 public ParseResult fun(Pair<Pair<ParseResult, ParseResult>, List<ParseResult>> value) {
+                   final Pair<ParseResult, ParseResult> firstPair = value.getFirst();
+                   final ParseResult first = firstPair.getFirst();
+                   final ParseResult second = firstPair.getSecond();
+                   final List<ParseResult> third = value.getSecond();
+                   final List<PyType> typesInBrackets = new ArrayList<PyType>();
+                   typesInBrackets.add(second.getType());
+                   ParseResult result = first;
+                   result = result.merge(second);
+                   for (ParseResult r : third) {
+                     typesInBrackets.add(r.getType());
+                     result = result.merge(r);
+                   }
+                   final List<PyType> elementTypes = third.isEmpty() ? Collections.singletonList(second.getType()) : typesInBrackets;
+                   final PsiElement resolved = first.getElement();
+                   if (resolved != null) {
+                     final PyType typingType = PyTypingTypeProvider.getType(resolved, elementTypes);
+                     if (typingType != null) {
+                       return result.withType(typingType);
+                     }
+                   }
+                   return EMPTY_RESULT;
+                 }
+               })
+               .named("param-expr");
+
+    final FunctionalParser<ParseResult, PyElementType> singleExpr =
+      paramExpr
+        .or(classType)
+        .named("single-expr");
+
+    typeExpr
+      .define(singleExpr)
+      .named("type-expr");
+
+    final FunctionalParser<ParseResult, PyElementType> argExpr =
+      maybe(op("*")).then(maybe(op("*"))).then(typeExpr)
+        .map(new Function<Pair<Pair<Token<PyElementType>, Token<PyElementType>>, ParseResult>, ParseResult>() {
+          @Override
+          public ParseResult fun(Pair<Pair<Token<PyElementType>, Token<PyElementType>>, ParseResult> pair) {
+            final ParseResult paramResult = pair.getSecond();
+            final PyType paramType = paramResult.getType();
+            int starCount = 0;
+            if (pair.getFirst().getFirst() != null) {
+              starCount++;
+            }
+            if (pair.getFirst().getSecond() != null) {
+              starCount++;
+            }
+            if (starCount == 0) {
+              return paramResult;
+            }
+            else if (starCount == 1) {
+              final PyType type = getTypeByName(anchor, PyNames.COLLECTIONS + "." + PyNames.ITERABLE);
+              if (type instanceof PyClassType) {
+                final PyClass pyClass = ((PyClassType)type).getPyClass();
+                final PyCollectionTypeImpl iterableType = new PyCollectionTypeImpl(pyClass, false, Collections.singletonList(paramType));
+                return paramResult.withType(iterableType);
+              }
+              return EMPTY_RESULT;
+            }
+            else if (starCount == 2) {
+              final PyType type = getTypeByName(anchor, PyNames.COLLECTIONS + "." + PyNames.MAPPING);
+              if (type instanceof PyClassType) {
+                final PyClass pyClass = ((PyClassType)type).getPyClass();
+                return paramResult.withType(new PyCollectionTypeImpl(pyClass, false,
+                                                                     Arrays.asList(getTypeByName(anchor, "str"), paramType)));
+              }
+              return EMPTY_RESULT;
+            }
+            return EMPTY_RESULT;
+          }
+        })
+        .named("param-expr");
+
+    final FunctionalParser<ParseResult, PyElementType> funcExpr =
+      op("(").skipThen(maybe(argExpr.then(many(op(",").skipThen(argExpr))))).thenSkip(op(")")).thenSkip(op("->")).then(typeExpr)
+             .map(new Function<Pair<Pair<ParseResult, List<ParseResult>>, ParseResult>, ParseResult>() {
+               @Override
+               public ParseResult fun(Pair<Pair<ParseResult, List<ParseResult>>, ParseResult> value) {
+                 final List<PyCallableParameter> parameters = new ArrayList<PyCallableParameter>();
+                 final ParseResult returnResult = value.getSecond();
+                 ParseResult result;
+                 final Pair<ParseResult, List<ParseResult>> firstPair = value.getFirst();
+                 if (firstPair != null) {
+                   final ParseResult first = firstPair.getFirst();
+                   final List<ParseResult> second = firstPair.getSecond();
+                   result = first;
+                   parameters.add(new PyCallableParameterImpl(null, first.getType()));
+                   for (ParseResult r : second) {
+                     result = result.merge(r);
+                     parameters.add(new PyCallableParameterImpl(null, r.getType()));
+                   }
+                   result = result.merge(returnResult);
+                 }
+                 else {
+                   result = returnResult;
+                 }
+                 return result.withType(new PyCallableTypeImpl(parameters, returnResult.getType()));
+               }
+             })
+             .named("func-expr");
+
+    final FunctionalParser<ParseResult, PyElementType> typeFile =
+      funcExpr
+        .endOfInput()
+        .named("type-file");
+
+    try {
+      return typeFile.parse(tokenize(text));
     }
     catch (ParserException e) {
       return EMPTY_RESULT;
