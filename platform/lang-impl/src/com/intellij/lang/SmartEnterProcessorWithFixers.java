@@ -29,11 +29,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -171,7 +169,7 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
       return;
     }
 
-    if (!PsiTreeUtil.hasErrorElements(atCaret)) {
+    if (reformatBeforeEnter(atCaret)) {
       reformat(atCaret);
     }
     commit(editor);
@@ -191,6 +189,8 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
                                           : myFirstErrorOffset);
     }
   }
+
+  protected boolean reformatBeforeEnter(@NotNull PsiElement atCaret) {return true;}
 
   protected void addEnterProcessors(FixEnterProcessor... processors) {
     ContainerUtil.addAllNotNull(myEnterProcessors, processors);
