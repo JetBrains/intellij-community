@@ -238,6 +238,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testLongCircuitOperations() { doTest(); }
   public void testUnconditionalForLoop() { doTest(); }
   public void testIncrementParenthesized() { doTest(); }
+  public void testDecrementAnotherObjectField() { doTest(); }
   public void testAnonymousMethodIndependence() { doTest(); }
   public void testAnonymousFieldIndependence() { doTest(); }
   public void testNoConfusionWithAnonymousConstantInitializer() { doTest(); }
