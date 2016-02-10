@@ -44,6 +44,7 @@ public @interface Storage {
   boolean deprecated() default false;
 
   /**
+   * Used by the Settings Repository plugin to determine how application-level settings should be shared between different IDE installations.
    * You must not store components with different roaming types in one file ({@link #value()}).
    */
   RoamingType roamingType() default RoamingType.DEFAULT;
