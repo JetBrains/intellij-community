@@ -8,7 +8,8 @@
       <option name="HTML" value="false" />
       <option name="XSL_TEXT" value="false" />
       <option name="XML" value="false" />
-      <option name="Python" value="true" />
+      <option name="Python" value="false" />
+      <option name="Python_Class" value="true" />
       <option name="Django" value="false" />
       <option name="CSS_PROPERTY_VALUE" value="false" />
       <option name="CSS_DECLARATION_BLOCK" value="false" />
@@ -272,7 +273,8 @@
       <option name="HTML" value="false" />
       <option name="XSL_TEXT" value="false" />
       <option name="XML" value="false" />
-      <option name="Python" value="true" />
+      <option name="Python" value="false" />
+      <option name="Python_Class" value="true" />
       <option name="Django" value="false" />
       <option name="CSS_PROPERTY_VALUE" value="false" />
       <option name="CSS_DECLARATION_BLOCK" value="false" />
@@ -292,7 +294,8 @@
       <option name="HTML" value="false" />
       <option name="XSL_TEXT" value="false" />
       <option name="XML" value="false" />
-      <option name="Python" value="true" />
+      <option name="Python" value="false" />
+      <option name="Python_Class" value="true" />
       <option name="Django" value="false" />
       <option name="CSS_PROPERTY_VALUE" value="false" />
       <option name="CSS_DECLARATION_BLOCK" value="false" />
@@ -312,7 +315,8 @@
       <option name="HTML" value="false" />
       <option name="XSL_TEXT" value="false" />
       <option name="XML" value="false" />
-      <option name="Python" value="true" />
+      <option name="Python" value="false" />
+      <option name="Python_Class" value="true" />
       <option name="Django" value="false" />
       <option name="CSS_PROPERTY_VALUE" value="false" />
       <option name="CSS_DECLARATION_BLOCK" value="false" />
