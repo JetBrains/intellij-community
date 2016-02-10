@@ -91,6 +91,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testGreaterIsNotEquals() throws Throwable { doTest(); }
   public void testNotGreaterIsNotEquals() throws Throwable { doTest(); }
 
+  public void testAnnotationMethodNotNull() { doTest(); }
+
   public void testChainedFinalFieldsDfa() throws Throwable { doTest(); }
   public void testFinalFieldsDifferentInstances() throws Throwable { doTest(); }
   public void testThisFieldGetters() throws Throwable { doTest(); }
