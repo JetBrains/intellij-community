@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.Condition;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -34,6 +35,14 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaCheckBoxUI extends MetalCheckBoxUI {
+
+  public static final Condition<Component> IS_IN_RENDERER = new Condition<Component>() {
+    @Override
+    public boolean value(Component c) {
+      return c instanceof CellRendererPane;
+    }
+  };
+
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(JComponent c) {
     if (UIUtil.getParentOfType(CellRendererPane.class, c) != null) {
@@ -63,8 +72,9 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
                                                      b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
                                                      viewRect, iconRect, textRect, b.getIconTextGap());
 
+
     //background
-    if (c.isOpaque() || c.getParent() instanceof CellRendererPane) {
+    if (c.isOpaque() || UIUtil.findParentByCondition(c, IS_IN_RENDERER) != null ) {
       g.setColor(b.getBackground());
       g.fillRect(0, 0, size.width, size.height);
     }
