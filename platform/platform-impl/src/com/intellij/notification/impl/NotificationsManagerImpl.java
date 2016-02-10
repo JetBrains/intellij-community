@@ -454,8 +454,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     String fontStyle = NotificationsUtil.getFontStyle();
     int prefSize = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null, fontStyle)).getPreferredSize().width;
-    int maxSize = BalloonLayoutConfiguration.MaxWidth;
-    String style = prefSize > maxSize ? "width:" + maxSize + "px;" : null;
+    String style = prefSize > BalloonLayoutConfiguration.MaxWidth ? BalloonLayoutConfiguration.MaxWidthStyle : null;
 
     text.setText(NotificationsUtil.buildHtml(notification, style, true, foreground, fontStyle));
     text.setEditable(false);
@@ -614,7 +613,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     if (notification.isTitle()) {
       String titleValue = NotificationsUtil
-        .buildHtml(notification, StringUtil.defaultIfEmpty(fontStyle, "") + "white-space: nowrap;", false, foreground, null);
+        .buildHtml(notification, StringUtil.defaultIfEmpty(fontStyle, "") + "white-space:nowrap;", false, foreground, null);
       JLabel title = new JLabel(titleValue) {
         @Override
         public void paint(Graphics g) {
@@ -762,7 +761,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     text.setEditorKit(UIUtil.getHTMLEditorKit());
     text
       .setText(NotificationsUtil.buildHtml(null, null, "Content" + StringUtil.repeat("<br>\nContent", lines - 1), null, null, null,
-                                             NotificationsUtil.getFontStyle()));
+                                           NotificationsUtil.getFontStyle()));
     text.setEditable(false);
     text.setOpaque(false);
     text.setBorder(null);
@@ -939,10 +938,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
       Dimension titleSize = myTitleComponent == null ? new Dimension() : size.fun(myTitleComponent);
       Dimension centeredSize = myCenteredComponent == null ? new Dimension() : size.fun(myCenteredComponent);
       Dimension actionSize = myActionPanel == null ? new Dimension() : size.fun(myActionPanel);
-      int expandHeight = myExpandAction == null || myLayoutData.showMinSize ? 0 : size.fun(myExpandAction).height;
+      Dimension expandSize = myExpandAction == null || myLayoutData.showMinSize ? new Dimension() : size.fun(myExpandAction);
 
       int height = myLayoutData.configuration.topSpaceHeight +
-                   titleSize.height + centeredSize.height + Math.max(actionSize.height, expandHeight) +
+                   titleSize.height + centeredSize.height + Math.max(actionSize.height, expandSize.height) +
                    myLayoutData.configuration.bottomSpaceHeight;
 
       if (titleSize.height > 0 && centeredSize.height > 0) {
@@ -955,16 +954,15 @@ public class NotificationsManagerImpl extends NotificationsManager {
         height += myLayoutData.configuration.titleActionsSpaceHeight;
       }
 
-      int width = centeredSize.width;
-      if (width < titleSize.width || width < actionSize.width) {
-        width = Math.min(BalloonLayoutConfiguration.MaxWidth,
-                         Math.max(titleSize.width + myLayoutData.configuration.closeOffset, actionSize.width));
-      }
-      else {
-        width += myLayoutData.configuration.closeOffset;
-      }
+      int titleWidth = titleSize.width + myLayoutData.configuration.closeOffset;
+      int centerWidth = centeredSize.width + myLayoutData.configuration.closeOffset;
+      int actionWidth = actionSize.width + expandSize.width;
 
-      return new Dimension(Math.max(width, BalloonLayoutConfiguration.MinWidth), height);
+      int width = Math.max(centerWidth, Math.max(titleWidth, actionWidth));
+      width = Math.min(width, BalloonLayoutConfiguration.MaxWidth);
+      width = Math.max(width, BalloonLayoutConfiguration.MinWidth);
+
+      return new Dimension(width, height);
     }
 
     @Override
