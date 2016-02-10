@@ -17,14 +17,16 @@ package com.intellij.debugger.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.CompoundPositionManager;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.LambdaMethodFilter;
+import com.intellij.debugger.engine.PositionManagerImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.notification.NotificationType;
@@ -38,10 +40,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiCompiledFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -125,6 +126,12 @@ public class SourceCodeChecker {
         PsiElement psiMethod = DebuggerUtilsEx.getContainingMethod(position);
         if (psiMethod != null) {
           TextRange range = psiMethod.getTextRange();
+          if (psiMethod instanceof PsiDocCommentOwner) {
+            PsiDocComment comment = ((PsiDocCommentOwner)psiMethod).getDocComment();
+            if (comment != null) {
+              range = new TextRange(comment.getTextRange().getEndOffset() + 1, range.getEndOffset());
+            }
+          }
           int startLine = document.getLineNumber(range.getStartOffset()) + 1;
           int endLine = document.getLineNumber(range.getEndOffset()) + 1;
           res = getLinesStream(locations, psiFile).allMatch(line -> startLine <= line && line <= endLine);
@@ -171,18 +178,34 @@ public class SourceCodeChecker {
     DebugProcessImpl process = debuggerContext.getDebugProcess();
     @SuppressWarnings("ConstantConditions")
     VirtualMachine machine = process.getVirtualMachineProxy().getVirtualMachine();
-    CompoundPositionManager positionManager = process.getPositionManager();
+    PositionManagerImpl positionManager = new PositionManagerImpl(process); // only default position manager for now
     List<ReferenceType> types = machine.allClasses();
     System.out.println("Checking " + types.size() + " classes");
+    int i = 0;
     for (ReferenceType type : types) {
+      i++;
       try {
         for (Location loc : type.allLineLocations()) {
           SourcePosition position =
-            ApplicationManager.getApplication().runReadAction((Computable<SourcePosition>)() -> positionManager.getSourcePosition(loc));
-          if (position == null ||
-              (position.getFile() instanceof PsiCompiledFile &&
-               DebuggerUtilsEx.bytecodeToSourceLine(position.getFile(), loc.lineNumber()) == -1)) {
+            ApplicationManager.getApplication().runReadAction((Computable<SourcePosition>)() -> {
+              try {
+                return positionManager.getSourcePosition(loc);
+              }
+              catch (NoDataException ignore) {
+                return null;
+              }
+            });
+          if (position == null) {
             continue;
+          }
+          if (position.getFile() instanceof PsiCompiledFile) {
+            VirtualFile file = position.getFile().getVirtualFile();
+            if (file == null || file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY) == null) {
+              break; // no mapping - skip the whole file
+            }
+            if (DebuggerUtilsEx.bytecodeToSourceLine(position.getFile(), loc.lineNumber()) == -1) {
+              continue;
+            }
           }
           if (check(loc, position, process.getProject()) == ThreeState.NO) {
             System.out.println("failed " + type);
