@@ -125,12 +125,9 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
   }
 
   private File generateTempSourceFile(File workingDir) throws IOException {
-    final Pair<String, String> fileData = ApplicationManager.getApplication().runReadAction(new Computable<Pair<String, String>>() {
-      @Override
-      public Pair<String, String> compute() {
-        final PsiFile file = myData.getGeneratedInnerClass().getContainingFile();
-        return Pair.create(file.getName(), file.getText());
-      }
+    final Pair<String, String> fileData = ApplicationManager.getApplication().runReadAction((Computable<Pair<String, String>>)() -> {
+      PsiFile file = myData.getGeneratedInnerClass().getContainingFile();
+      return Pair.create(file.getName(), file.getText());
     });
     if (fileData.first == null) {
       throw new IOException("Class file name not specified");

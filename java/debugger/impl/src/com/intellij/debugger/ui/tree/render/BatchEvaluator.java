@@ -138,9 +138,7 @@ public class BatchEvaluator {
             myBuffer.remove(suspendContext);
 
             if(!doEvaluateBatch(commands, evaluationContext)) {
-              for (ToStringCommand toStringCommand : commands) {
-                toStringCommand.action();
-              }
+              commands.forEach(ToStringCommand::action);
             }
           }
 

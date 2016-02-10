@@ -91,9 +91,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-        for (ObjectReference objectReference : myKeptReferences) {
-          DebuggerUtilsEx.enableCollection(objectReference);
-        }
+        myKeptReferences.forEach(DebuggerUtilsEx::enableCollection);
         myKeptReferences.clear();
       }
 

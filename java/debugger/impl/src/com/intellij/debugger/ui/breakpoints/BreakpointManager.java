@@ -646,17 +646,12 @@ public class BreakpointManager {
 
   public void updateBreakpointsUI() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    for (Breakpoint breakpoint : getBreakpoints()) {
-      breakpoint.updateUI();
-    }
+    getBreakpoints().forEach(Breakpoint::updateUI);
   }
 
   public void reloadBreakpoints() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-
-    for (Breakpoint breakpoint : getBreakpoints()) {
-      breakpoint.reload();
-    }
+    getBreakpoints().forEach(Breakpoint::reload);
   }
 
   public void fireBreakpointChanged(Breakpoint breakpoint) {

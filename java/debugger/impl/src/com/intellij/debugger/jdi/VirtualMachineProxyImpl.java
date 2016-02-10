@@ -84,10 +84,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       LOG.info(e);
     }
 
-    List<ThreadGroupReference> groups = virtualMachine.topLevelThreadGroups();
-    for (ThreadGroupReference threadGroupReference : groups) {
-      threadGroupCreated(threadGroupReference);
-    }
+    virtualMachine.topLevelThreadGroups().forEach(this::threadGroupCreated);
   }
 
   @NotNull
@@ -688,7 +685,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public void logThreads() {
-    if(LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled()) {
       for (ThreadReferenceProxyImpl thread : allThreads()) {
         if (!thread.isCollected()) {
           LOG.debug("suspends " + thread + " " + thread.getSuspendCount() + " " + thread.isSuspended());

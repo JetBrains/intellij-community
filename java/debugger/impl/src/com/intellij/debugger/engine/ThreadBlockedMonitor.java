@@ -20,8 +20,6 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,12 +50,7 @@ public class ThreadBlockedMonitor {
 
   public ThreadBlockedMonitor(DebugProcessImpl process, Disposable disposable) {
     myProcess = process;
-    myAlarm = new SingleAlarm(new Runnable() {
-      @Override
-      public void run() {
-        checkBlockingThread();
-      }
-    }, 5000, Alarm.ThreadToUse.POOLED_THREAD, disposable);
+    myAlarm = new SingleAlarm(this::checkBlockingThread, 5000, Alarm.ThreadToUse.POOLED_THREAD, disposable);
   }
 
   public void startWatching(@Nullable ThreadReferenceProxy thread) {
@@ -88,21 +81,18 @@ public class ThreadBlockedMonitor {
     XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(
       DebuggerBundle.message("status.thread.blocked.by", blockedThread.name(), blockingThread.name()),
       DebuggerBundle.message("status.thread.blocked.by.resume", blockingThread.name()),
-      NotificationType.INFORMATION, new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            notification.expire();
-            process.getManagerThread().schedule(new DebuggerCommandImpl() {
-              @Override
-              protected void action() throws Exception {
-                ThreadReferenceProxyImpl threadProxy = process.getVirtualMachineProxy().getThreadReferenceProxy(blockingThread);
-                SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(process.getSuspendManager(), threadProxy);
-                process.getManagerThread()
-                  .invoke(process.createResumeThreadCommand(suspendingContext, threadProxy));
-              }
-            });
-          }
+      NotificationType.INFORMATION, (notification, event) -> {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          notification.expire();
+          process.getManagerThread().schedule(new DebuggerCommandImpl() {
+            @Override
+            protected void action() throws Exception {
+              ThreadReferenceProxyImpl threadProxy = process.getVirtualMachineProxy().getThreadReferenceProxy(blockingThread);
+              SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(process.getSuspendManager(), threadProxy);
+              process.getManagerThread()
+                .invoke(process.createResumeThreadCommand(suspendingContext, threadProxy));
+            }
+          });
         }
       }).notify(process.getProject());
   }

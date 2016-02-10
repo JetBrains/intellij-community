@@ -56,7 +56,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
@@ -181,13 +180,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           }
         }
         finally {
-          DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
-            @Override
-            public void run() {
-              final DebuggerSession session = mySession;
-              if (session != null && session.isAttached()) {
-                DebuggerAction.refreshViews(mySession.getXDebugSession());
-              }
+          DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
+            final DebuggerSession session = mySession;
+            if (session != null && session.isAttached()) {
+              DebuggerAction.refreshViews(mySession.getXDebugSession());
             }
           });
         }

@@ -110,9 +110,9 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     myRendererChooser.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(@NotNull ListSelectionEvent e) {
-        if (!e.getValueIsAdjusting()) {
-          updateCurrentRenderer(myRendererChooser.getSelectedElements());
-        }
+      if (!e.getValueIsAdjusting()) {
+        updateCurrentRenderer(myRendererChooser.getSelectedElements());
+      }
       }
     });
   }
@@ -186,11 +186,11 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
       @Override
       public boolean visit(final NodeRenderer renderer) {
         final NodeRenderer clonedRenderer = (NodeRenderer)renderer.clone();
-        myRendererChooser.addElement(clonedRenderer, clonedRenderer.isEnabled());
-        if (elementsToSelect.size() == 0) {
-          elementsToSelect.add(clonedRenderer);
-        }
-        return true;
+      myRendererChooser.addElement(clonedRenderer, clonedRenderer.isEnabled());
+      if (elementsToSelect.size() == 0) {
+        elementsToSelect.add(clonedRenderer);
+      }
+      return true;
       }
     });
     myRendererChooser.selectElements(elementsToSelect);
@@ -224,9 +224,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
 
     @Override
     public void run(AnActionButton button) {
-      for (NodeRenderer selectedElement : myRendererChooser.getSelectedElements()) {
-        myRendererChooser.removeElement(selectedElement);
-      }
+      myRendererChooser.getSelectedElements().forEach(myRendererChooser::removeElement);
     }
   }
 

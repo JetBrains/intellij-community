@@ -71,12 +71,10 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
       try {
         return processor.process(positionManager);
       }
-      catch (NoDataException ignored) {}
+      catch (NoDataException | ProcessCanceledException ignored) {}
       catch (VMDisconnectedException e) {throw e;}
       catch (InternalException e) {LOG.info(e);}
-      catch (ProcessCanceledException ignored) {}
-      catch (Exception e) {LOG.error(e);}
-      catch (AssertionError e) {LOG.error(e);}
+      catch (Exception | AssertionError e) {LOG.error(e);}
     }
     return defaultValue;
   }
@@ -88,13 +86,10 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     SourcePosition res = mySourcePositionCache.get(location);
     if (checkCacheEntry(res, location)) return res;
 
-    return iterate(new Processor<SourcePosition>() {
-      @Override
-      public SourcePosition process(PositionManager positionManager) throws NoDataException {
-        SourcePosition res = positionManager.getSourcePosition(location);
-        mySourcePositionCache.put(location, res);
-        return res;
-      }
+    return iterate(positionManager -> {
+      SourcePosition res1 = positionManager.getSourcePosition(location);
+      mySourcePositionCache.put(location, res1);
+      return res1;
     }, null);
   }
 
@@ -111,12 +106,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   @Override
   @NotNull
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition classPosition) {
-    return iterate(new Processor<List<ReferenceType>>() {
-      @Override
-      public List<ReferenceType> process(PositionManager positionManager) throws NoDataException {
-        return positionManager.getAllClasses(classPosition);
-      }
-    }, Collections.<ReferenceType>emptyList());
+    return iterate(positionManager -> positionManager.getAllClasses(classPosition), Collections.<ReferenceType>emptyList());
   }
 
   @Override
@@ -134,40 +124,27 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     }
 
     final SourcePosition finalPosition = position;
-    return iterate(new Processor<List<Location>>() {
-      @Override
-      public List<Location> process(PositionManager positionManager) throws NoDataException {
-        return positionManager.locationsOfLine(type, finalPosition);
-      }
-    }, Collections.<Location>emptyList());
+    return iterate(positionManager -> positionManager.locationsOfLine(type, finalPosition), Collections.<Location>emptyList());
   }
 
   @Override
   public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position) {
-    return iterate(new Processor<ClassPrepareRequest>() {
-      @Override
-      public ClassPrepareRequest process(PositionManager positionManager) throws NoDataException {
-        return positionManager.createPrepareRequest(requestor, position);
-      }
-    }, null);
+    return iterate(positionManager -> positionManager.createPrepareRequest(requestor, position), null);
   }
 
   @NotNull
   @Override
   public List<ClassPrepareRequest> createPrepareRequests(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position) {
-    return iterate(new Processor<List<ClassPrepareRequest>>() {
-      @Override
-      public List<ClassPrepareRequest> process(PositionManager positionManager) throws NoDataException {
-        if (positionManager instanceof MultiRequestPositionManager) {
-          return ((MultiRequestPositionManager)positionManager).createPrepareRequests(requestor, position);
+    return iterate(positionManager -> {
+      if (positionManager instanceof MultiRequestPositionManager) {
+        return ((MultiRequestPositionManager)positionManager).createPrepareRequests(requestor, position);
+      }
+      else {
+        ClassPrepareRequest prepareRequest = positionManager.createPrepareRequest(requestor, position);
+        if (prepareRequest == null) {
+          return Collections.emptyList();
         }
-        else {
-          ClassPrepareRequest prepareRequest = positionManager.createPrepareRequest(requestor, position);
-          if (prepareRequest == null) {
-            return Collections.emptyList();
-          }
-          return Collections.singletonList(prepareRequest);
-        }
+        return Collections.singletonList(prepareRequest);
       }
     }, Collections.<ClassPrepareRequest>emptyList());
   }

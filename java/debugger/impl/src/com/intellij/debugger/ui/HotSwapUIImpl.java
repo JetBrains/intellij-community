@@ -58,6 +58,7 @@ import javax.swing.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * User: lex
@@ -354,12 +355,8 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
 
   @NotNull
   private List<DebuggerSession> getHotSwappableDebugSessions() {
-    final List<DebuggerSession> sessions = new SmartList<>();
-    for (final DebuggerSession debuggerSession : DebuggerManagerEx.getInstanceEx(myProject).getSessions()) {
-      if (canHotSwap(debuggerSession)) {
-        sessions.add(debuggerSession);
-      }
-    }
-    return sessions;
+    return DebuggerManagerEx.getInstanceEx(myProject).getSessions().stream()
+      .filter(HotSwapUIImpl::canHotSwap)
+      .collect(Collectors.toCollection(SmartList::new));
   }
 }

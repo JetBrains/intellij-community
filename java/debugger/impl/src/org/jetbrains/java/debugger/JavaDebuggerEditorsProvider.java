@@ -35,9 +35,9 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
   @NotNull
@@ -59,11 +59,9 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
   public Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
     if (sourcePosition != null) {
       PsiElement context = getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project);
-      Collection<Language> res = new ArrayList<>();
-      for (CodeFragmentFactory factory : DebuggerUtilsEx.getCodeFragmentFactories(context)) {
-        res.add(factory.getFileType().getLanguage());
-      }
-      return res;
+      return DebuggerUtilsEx.getCodeFragmentFactories(context).stream()
+        .map(factory -> factory.getFileType().getLanguage())
+        .collect(Collectors.toList());
     }
     return Collections.emptyList();
   }

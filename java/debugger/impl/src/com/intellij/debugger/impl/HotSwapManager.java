@@ -210,14 +210,15 @@ public class HotSwapManager extends AbstractProjectComponent {
 
     for (final DebuggerSession debuggerSession : sessions) {
       if (debuggerSession.isAttached()) {
-        scanClassesCommand.addCommand(debuggerSession.getProcess(), new DebuggerCommandImpl() {
-          protected void action() throws Exception {
-            swapProgress.setDebuggerSession(debuggerSession);
-            final Map<String, HotSwapFile> sessionClasses = getInstance(swapProgress.getProject()).scanForModifiedClasses(debuggerSession, swapProgress, scanWithVFS);
-            if (!sessionClasses.isEmpty()) {
-              modifiedClasses.put(debuggerSession, sessionClasses);
-            }
-          }
+                 scanClassesCommand.addCommand(debuggerSession.getProcess(), new DebuggerCommandImpl() {
+                   protected void action() throws Exception {
+                     swapProgress.setDebuggerSession(debuggerSession);
+                     final Map<String, HotSwapFile> sessionClasses =
+                       getInstance(swapProgress.getProject()).scanForModifiedClasses(debuggerSession, swapProgress, scanWithVFS);
+                     if (!sessionClasses.isEmpty()) {
+                       modifiedClasses.put(debuggerSession, sessionClasses);
+                     }
+                   }
         });
       }
     }
