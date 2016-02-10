@@ -49,7 +49,7 @@ public class RefactoringEventData extends UserDataHolderBase {
     addElements(elements);
   }
   
-  public void addElements(Collection<PsiElement> elements) {
+  public void addElements(Collection<? extends PsiElement> elements) {
     putUserData(PSI_ELEMENT_ARRAY_KEY, elements.toArray(new PsiElement[elements.size()]));
   }
   
