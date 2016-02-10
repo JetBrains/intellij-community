@@ -44,6 +44,8 @@ public class JetBrainsProtocolHandler {
       return;
     }
     String platformPrefix = urlParts.get(0);
+    ourMainParameter = null;
+    ourParameters.clear();
     ourCommand = urlParts.get(1);
     if (urlParts.size() > 2) {
       url = url.substring(platformPrefix.length() + 1 + ourCommand.length() + 1);
