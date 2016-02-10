@@ -7,6 +7,8 @@ import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.jetbrains.edu.learning.StudyToolWindowConfigurator;
 import javafx.application.Platform;
@@ -152,8 +154,12 @@ class StudyBrowserWindow extends JFrame {
     if (template == null) {
       LOG.warn("Code mirror template is null");
       return null;
-    }   
+    }
+
+    final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    int fontSize = editorColorsScheme.getEditorFontSize();
     
+    template = template.replace("${font_size}", String.valueOf(fontSize- 2));
     template = template.replace("${highlight_mode}", getClass().getResource("/code-mirror/clike.js").toExternalForm());
     template = template.replace("${codemirror}", getClass().getResource("/code-mirror/codemirror.js").toExternalForm());
     template = template.replace("${python}", getClass().getResource("/code-mirror/python.js").toExternalForm());    
