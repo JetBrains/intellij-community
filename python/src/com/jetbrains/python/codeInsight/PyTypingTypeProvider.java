@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author vlan
@@ -87,6 +90,25 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         }
       }
     }
+    final String comment = getFunctionTypeComment(func);
+    if (comment != null) {
+      final PyTypeParser.ParseResult result = PyTypeParser.parsePep484FunctionTypeComment(param, comment);
+      final PyCallableType functionType = as(result.getType(), PyCallableType.class);
+      if (functionType != null) {
+        final List<PyCallableParameter> paramTypes = functionType.getParameters(context);
+        final PyParameter[] funcParams = func.getParameterList().getParameters();
+        final int startOffset = func.getContainingClass() != null ? 1 : 0;
+        for (int paramIndex = 0; paramIndex < funcParams.length; paramIndex++) {
+          if (funcParams[paramIndex] == param) {
+            final int typeIndex = paramIndex - startOffset;
+            if (typeIndex >= 0 && typeIndex < paramTypes.size()) {
+              return Ref.create(paramTypes.get(typeIndex).getType(context));
+            }
+            break;
+          }
+        }
+      }
+    }
     return null;
   }
 
@@ -107,6 +129,14 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyType constructorType = getGenericConstructorType(function, context);
       if (constructorType != null) {
         return Ref.create(constructorType);
+      }
+      final String comment = getFunctionTypeComment(function);
+      if (comment != null) {
+        final PyTypeParser.ParseResult result = PyTypeParser.parsePep484FunctionTypeComment(callable, comment);
+        final PyCallableType funcType = as(result.getType(), PyCallableType.class);
+        if (funcType != null) {
+          return Ref.create(funcType.getReturnType(context));
+        }
       }
     }
     return null;
@@ -157,6 +187,25 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         if (m.matches()) {
           return m.group(1);
         }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getFunctionTypeComment(@NotNull PyFunction func) {
+    final PyStatementList statements = func.getStatementList();
+    final PsiComment comment;
+    if (statements.getStatements().length != 0) {
+      comment = as(statements.getFirstChild(), PsiComment.class);
+    }
+    else {
+      comment = as(PyPsiUtils.getNextNonWhitespaceSibling(statements), PsiComment.class);
+    }
+    if (comment != null) {
+      final Matcher m = TYPE_COMMENT_PATTERN.matcher(comment.getText());
+      if (m.matches()) {
+        return m.group(1);
       }
     }
     return null;
