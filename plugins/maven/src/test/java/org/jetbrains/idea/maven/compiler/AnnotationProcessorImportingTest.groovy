@@ -26,7 +26,7 @@ import org.jetbrains.idea.maven.importing.configurers.MavenAnnotationProcessorCo
 @SuppressWarnings("GroovyPointlessBoolean")
 class AnnotationProcessorImportingTest extends MavenImportingTestCase {
 
-  public void testSettingTargetLevel() throws Exception {
+  public void testImportAnnotationProcessorProfiles() throws Exception {
     createModulePom("module1", """
 <groupId>test</groupId>
 <artifactId>module1</artifactId>
@@ -126,7 +126,8 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
 
     def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
 
-    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.MAVEN_DEFAULT_ANNOTATION_PROFILE).getModuleNames() == new HashSet<String>(["module1"])
+    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.MAVEN_DEFAULT_ANNOTATION_PROFILE).getModuleNames() == new HashSet<String>(["module1", "module4"])
+    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE) == null
     assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.PROFILE_PREFIX + 'module2').getProcessors() == new HashSet<String>(["com.test.SourceCodeGeneratingAnnotationProcessor2"])
     assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.PROFILE_PREFIX + 'module3') == null
     assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.PROFILE_PREFIX + 'module3_1') == null

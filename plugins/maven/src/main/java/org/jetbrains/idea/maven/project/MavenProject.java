@@ -358,14 +358,14 @@ public class MavenProject {
       MavenPlugin bscMavenPlugin = findPlugin("org.bsc.maven", "maven-processor-plugin");
       Element cfg = getPluginGoalConfiguration(bscMavenPlugin, testSources ? "process-test" : "process");
       if (bscMavenPlugin != null && cfg == null) {
-        return getBuildDirectory() + "/generated-sources/apt";
+        return getBuildDirectory() + (testSources ?  "/generated-sources/apt-test" : "/generated-sources/apt");
       }
       if (cfg != null) {
         String out = MavenJDOMUtil.findChildValueByPath(cfg, "outputDirectory");
         if (out == null) {
           out = MavenJDOMUtil.findChildValueByPath(cfg, "defaultOutputDirectory");
           if (out == null) {
-            return getBuildDirectory() + "/generated-sources/apt";
+            return getBuildDirectory() + (testSources ?  "/generated-sources/apt-test" : "/generated-sources/apt");
           }
         }
 
