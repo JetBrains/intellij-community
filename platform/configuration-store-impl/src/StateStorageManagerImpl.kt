@@ -41,6 +41,8 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.regex.Pattern
 import kotlin.concurrent.withLock
 
+private val MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)")
+
 /**
  * If componentManager not specified, storage will not add file tracker (see VirtualFileTracker)
  */
@@ -61,9 +63,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     get() = true
 
   companion object {
-    private val MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)")
-
-    fun createDefaultVirtualTracker(componentManager: ComponentManager?) = when (componentManager) {
+    private fun createDefaultVirtualTracker(componentManager: ComponentManager?) = when (componentManager) {
       null -> {
         null
       }
@@ -401,5 +401,5 @@ private fun String.startsWithMacro(macro: String): Boolean {
 fun removeMacroIfStartsWith(path: String, macro: String) = if (path.startsWithMacro(macro)) path.substring(macro.length + 1) else path
 
 @Suppress("DEPRECATION")
-val Storage.path: String
+internal val Storage.path: String
   get() = if (value.isNullOrEmpty()) file else value
