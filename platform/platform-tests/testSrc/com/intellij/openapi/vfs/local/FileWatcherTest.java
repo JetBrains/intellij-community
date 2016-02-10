@@ -775,11 +775,6 @@ public class FileWatcherTest extends PlatformTestCase {
   }
 
   public void testUnicodePaths() throws Exception {
-    if (SystemInfo.isMac) {
-      System.err.println("Ignored: not yet supported");
-      return;
-    }
-
     File topDir = createTestDir(myTempDirectory, UNICODE_NAME_1);
     File testFile = createTestFile(topDir, UNICODE_NAME_2 + ".txt");
     refresh(topDir);
