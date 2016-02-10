@@ -25,7 +25,9 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyElementImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -113,10 +115,10 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   }
 
   @Nullable
-  public static PyType fromCall(PyCallExpression call, int level) {
+  public static PyType fromCall(@NotNull PyCallExpression call, @NotNull TypeEvalContext context, int level) {
     final String name = PyPsiUtils.strValue(call.getArgument(0, PyExpression.class));
-    final PyExpression fieldNamesExpression = PyPsiUtils.flattenParens(call.getArgument(1, PyExpression.class));
-    if (name == null || fieldNamesExpression == null) {
+    final PyExpression fieldNamesExpression = resolveFieldNamesExpression(call, context);
+    if (name == null || fieldNamesExpression == null || !context.maySwitchToAST(fieldNamesExpression)) {
       return null;
     }
     List<String> fieldNames = null;
@@ -138,7 +140,26 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     return null;
   }
 
-  private static List<String> parseFieldNamesString(String fieldNamesString) {
+  @Nullable
+  private static PyExpression resolveFieldNamesExpression(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+    final PyExpression fieldNamesExpression = PyPsiUtils.flattenParens(call.getArgument(1, PyExpression.class));
+
+    if (fieldNamesExpression instanceof PyReferenceExpression) {
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+      final QualifiedResolveResult resolveResult = ((PyReferenceExpression)fieldNamesExpression).followAssignmentsChain(resolveContext);
+
+      final PsiElement resolvedFieldNamesExpression = resolveResult.getElement();
+
+      if (resolvedFieldNamesExpression instanceof PyExpression) {
+        return (PyExpression)resolvedFieldNamesExpression;
+      }
+    }
+
+    return fieldNamesExpression;
+  }
+
+  @NotNull
+  private static List<String> parseFieldNamesString(@NotNull String fieldNamesString) {
     List<String> result = new ArrayList<String>();
     for(String name: StringUtil.tokenize(fieldNamesString, ", ")) {
       result.add(name);
