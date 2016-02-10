@@ -67,6 +67,10 @@ public abstract class JavaCodeFragmentFactory {
    * Flag for {@linkplain #createTypeCodeFragment(String, PsiElement, boolean, int)} - allows disjunctive type.
    */
   public static final int ALLOW_DISJUNCTION = 0x04;
+  /**
+   * Flag for {@linkplain #createTypeCodeFragment(String, PsiElement, boolean, int)} - allows conjunctive type.
+   */
+  public static final int ALLOW_INTERSECTION = 0x08;
 
   /**
    * Creates a Java type code fragment from the text of the name of a Java type (the name
@@ -98,7 +102,7 @@ public abstract class JavaCodeFragmentFactory {
   public abstract PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text,
                                                              @Nullable PsiElement context,
                                                              boolean isPhysical,
-                                                             @MagicConstant(flags = {ALLOW_VOID, ALLOW_ELLIPSIS, ALLOW_DISJUNCTION}) int flags);
+                                                             @MagicConstant(flags = {ALLOW_VOID, ALLOW_ELLIPSIS, ALLOW_DISJUNCTION, ALLOW_INTERSECTION}) int flags);
 
   /**
    * Creates a Java reference code fragment from the text of a Java reference to a

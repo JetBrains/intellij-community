@@ -207,7 +207,10 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     }
 
     IElementType i = myContentElementType;
-    if (i == JavaElementType.TYPE_TEXT || i == JavaElementType.EXPRESSION_STATEMENT || i == JavaElementType.REFERENCE_TEXT) {
+    if (i == JavaElementType.TYPE_WITH_CONJUNCTIONS_TEXT ||
+        i == JavaElementType.TYPE_WITH_DISJUNCTIONS_TEXT ||
+        i == JavaElementType.EXPRESSION_STATEMENT ||
+        i == JavaElementType.REFERENCE_TEXT) {
       return true;
     }
     else {

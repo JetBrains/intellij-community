@@ -22,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author dsl
@@ -42,6 +43,7 @@ public interface TypeParameterInfo {
       myBoundValue = boundValue != null ? CanonicalTypes.createTypeWrapper(boundValue) : null;
     }
 
+    @TestOnly
     public New(@NotNull PsiClass aClass,
                @NotNull @NonNls String name,
                @NotNull @NonNls String defaultValue,
