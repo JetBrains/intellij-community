@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SuspendManagerUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.SuspendManagerUtil");
@@ -60,13 +61,9 @@ public class SuspendManagerUtil {
   @NotNull
   public static Set<SuspendContextImpl> getSuspendingContexts(@NotNull SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    Set<SuspendContextImpl> result = new SmartHashSet<>();
-    for (SuspendContextImpl suspendContext : suspendManager.getEventContexts()) {
-      if (suspendContext.suspends(thread)) {
-        result.add(suspendContext);
-      }
-    }
-    return result;
+    return suspendManager.getEventContexts().stream()
+      .filter(suspendContext -> suspendContext.suspends(thread))
+      .collect(Collectors.toCollection(SmartHashSet::new));
   }
 
   @Nullable
