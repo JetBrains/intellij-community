@@ -27,3 +27,4 @@ SourceSafe
 TFS
 ro.redeul.google.go
 com.intellij.plugins.html.instantEditing
+com.jetbrains.intellij.api.watcher

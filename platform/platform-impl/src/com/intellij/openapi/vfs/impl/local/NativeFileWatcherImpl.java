@@ -45,10 +45,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.text.Normalizer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -287,12 +286,18 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   private static class MyProcessHandler extends OSProcessHandler {
+    private static final Charset CHARSET = SystemInfo.isWindows | SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : null;
+
     private final BufferedWriter myWriter;
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     private MyProcessHandler(@NotNull Process process, @NotNull String commandLine) {
-      super(process, commandLine, SystemInfo.isWindows ? CharsetToolkit.UTF8_CHARSET : null);  // do not access EncodingManager here
-      myWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+      super(process, commandLine, CHARSET);
+      myWriter = new BufferedWriter(writer(process.getOutputStream()));
+    }
+
+    private static OutputStreamWriter writer(OutputStream stream) {
+      return CHARSET != null ? new OutputStreamWriter(stream, CHARSET) :  new OutputStreamWriter(stream);
     }
 
     private void writeLine(String line) throws IOException {
@@ -422,6 +427,10 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       if ((op == WatcherOp.CHANGE || op == WatcherOp.STATS) && isRepetition(path)) {
         if (LOG.isTraceEnabled()) LOG.trace("repetition: " + path);
         return;
+      }
+
+      if (SystemInfo.isMac) {
+        path = Normalizer.normalize(path, Normalizer.Form.NFC);
       }
 
       switch (op) {
