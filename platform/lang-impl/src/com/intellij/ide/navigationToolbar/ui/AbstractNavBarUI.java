@@ -139,6 +139,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     final Color selection = UIUtil.getListSelectionBackground();
 
     Graphics2D g2 = result.createGraphics();
+    g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 
