@@ -358,13 +358,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
     }
     finally {
-      myDocumentCommitProcessor.log("in PDI.finishDoc: ", null, synchronously, success, myUncommittedDocuments);
+      myDocumentCommitProcessor.log(myProject, "in PDI.finishDoc: ", null, success, document);
       if (success) {
         myUncommittedDocuments.remove(document);
-        myDocumentCommitProcessor.log("in PDI.finishDoc: removed doc", null, synchronously, success, myUncommittedDocuments);
+        myDocumentCommitProcessor.log(myProject, "in PDI.finishDoc: removed doc", null, document);
       }
       myIsCommitInProgress = false;
-      myDocumentCommitProcessor.log("in PDI.finishDoc: exit", null, synchronously, success, myUncommittedDocuments);
+      myDocumentCommitProcessor.log(myProject, "in PDI.finishDoc: exit", null, success, document);
     }
 
     return success;
@@ -504,7 +504,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, actions);
     }
     actions.add(action);
-    myDocumentCommitProcessor.log("PDI: added performWhenAllCommitted", null, false, action, myUncommittedDocuments);
+    myDocumentCommitProcessor.log(myProject, "PDI: added performWhenAllCommitted", null, action);
     return false;
   }
 
@@ -542,7 +542,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
           Runnable action = entry.getValue();
           Object key = entry.getKey();
           try {
-            myDocumentCommitProcessor.log("Running after commit runnable: ", null, false, key, action);
+            myDocumentCommitProcessor.log(myProject, "Running after commit runnable: ", null, key, action);
             action.run();
           }
           catch (Throwable e) {
@@ -773,7 +773,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (commitNecessary) {
       assert !(document instanceof DocumentWindow);
       myUncommittedDocuments.add(document);
-      myDocumentCommitProcessor.log("added uncommitted doc", null, false, myProject, document, ((DocumentEx)document).isInBulkUpdate());
+      myDocumentCommitProcessor.log(myProject, "documentChanged()", null, document, ((DocumentEx)document).isInBulkUpdate(), event);
       if (forceCommit) {
         commitDocument(document);
       }
