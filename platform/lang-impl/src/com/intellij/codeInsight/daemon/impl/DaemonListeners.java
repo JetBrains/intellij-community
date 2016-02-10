@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -195,14 +194,11 @@ public class DaemonListeners implements Disposable {
           return; //no need to stop daemon if something happened in the console
         }
         if (!application.isUnitTestMode()) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (!editor.getComponent().isShowing() || myProject.isDisposed()) {
-                return;
-              }
-              myDaemonCodeAnalyzer.hideLastIntentionHint();
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (!editor.getComponent().isShowing() || myProject.isDisposed()) {
+              return;
             }
+            myDaemonCodeAnalyzer.hideLastIntentionHint();
           }, ModalityState.current());
         }
       }
@@ -250,19 +246,13 @@ public class DaemonListeners implements Disposable {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         // mem leak after closing last editor otherwise
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            myDaemonCodeAnalyzer.hideLastIntentionHint();
-          }
-        });
+        UIUtil.invokeLaterIfNeeded(myDaemonCodeAnalyzer::hideLastIntentionHint);
       }
     };
     editorFactory.addEditorFactoryListener(editorFactoryListener, this);
 
     PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)psiDocumentManager;
-    PsiChangeHandler changeHandler = new PsiChangeHandler(myProject, documentManager, editorFactory,connection,
-                                                          daemonCodeAnalyzer.getFileStatusMap());
+    PsiChangeHandler changeHandler = new PsiChangeHandler(myProject, documentManager, editorFactory,connection, daemonCodeAnalyzer.getFileStatusMap());
     Disposer.register(this, changeHandler);
     psiManager.addPsiTreeChangeListener(changeHandler, changeHandler);
 
@@ -285,19 +275,9 @@ public class DaemonListeners implements Disposable {
       }
     });
 
-    connection.subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
-      @Override
-      public void powerSaveStateChanged() {
-        stopDaemon(true, "Power save mode change");
-      }
-    });
+    connection.subscribe(PowerSaveMode.TOPIC, () -> stopDaemon(true, "Power save mode change"));
 
-    editorColorsManager.addEditorColorsListener(new EditorColorsListener() {
-      @Override
-      public void globalSchemeChange(EditorColorsScheme scheme) {
-        stopDaemonAndRestartAllFiles("Global color scheme changed");
-      }
-    }, this);
+    editorColorsManager.addEditorColorsListener(scheme -> stopDaemonAndRestartAllFiles("Global color scheme changed"), this);
 
     commandProcessor.addCommandListener(new MyCommandListener(), this);
     application.addApplicationListener(new MyApplicationListener(), this);
@@ -327,7 +307,7 @@ public class DaemonListeners implements Disposable {
               final EditorColorsScheme editorColorScheme = null;
 
               UpdateHighlightersUtil.setHighlightersToEditor(myProject, document, 0, document.getTextLength(),
-                                                             Collections.<HighlightInfo>emptyList(),
+                                                             Collections.emptyList(),
                                                              editorColorScheme,
                                                              Pass.UPDATE_ALL);
             }
@@ -341,23 +321,15 @@ public class DaemonListeners implements Disposable {
 
     ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(new ErrorStripeHandler(myProject), this);
 
-    ModalityStateListener modalityStateListener = new ModalityStateListener() {
-      @Override
-      public void beforeModalityStateChanged(boolean entering) {
-        // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
-        boolean inModalContext = LaterInvocator.isInModalContext();
-        stopDaemon(inModalContext, "Modality change. Was modal: "+inModalContext);
-        myDaemonCodeAnalyzer.setUpdateByTimerEnabled(inModalContext);
-      }
+    ModalityStateListener modalityStateListener = entering -> {
+      // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
+      boolean inModalContext = LaterInvocator.isInModalContext();
+      stopDaemon(inModalContext, "Modality change. Was modal: "+inModalContext);
+      myDaemonCodeAnalyzer.setUpdateByTimerEnabled(inModalContext);
     };
     LaterInvocator.addModalityStateListener(modalityStateListener,this);
 
-    messageBus.connect().subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, new Runnable() {
-      @Override
-      public void run() {
-        stopDaemonAndRestartAllFiles("Severities changed");
-      }
-    });
+    messageBus.connect().subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
 
     if (RefResolveService.ENABLED) {
       RefResolveService resolveService = RefResolveService.getInstance(project);
@@ -537,17 +509,14 @@ public class DaemonListeners implements Disposable {
 
   private TogglePopupHintsPanel myTogglePopupHintsPanel;
   private void inspectionProfilesInitialized() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
-        StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-        myTogglePopupHintsPanel = new TogglePopupHintsPanel(myProject);
-        statusBar.addWidget(myTogglePopupHintsPanel, myProject);
-        updateStatusBar();
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myProject.isDisposed()) return;
+      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+      myTogglePopupHintsPanel = new TogglePopupHintsPanel(myProject);
+      statusBar.addWidget(myTogglePopupHintsPanel, myProject);
+      updateStatusBar();
 
-        stopDaemonAndRestartAllFiles("Inspection profiles activated");
-      }
+      stopDaemonAndRestartAllFiles("Inspection profiles activated");
     });
   }
 
@@ -578,7 +547,7 @@ public class DaemonListeners implements Disposable {
     @NotNull
     private final TooltipController myTooltipController;
 
-    public MyEditorMouseListener(@NotNull TooltipController tooltipController) {
+    MyEditorMouseListener(@NotNull TooltipController tooltipController) {
       myTooltipController = tooltipController;
     }
 
