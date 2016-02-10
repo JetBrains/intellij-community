@@ -16,9 +16,12 @@
 package com.intellij.refactoring.changeClassSignature;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,13 +79,25 @@ public interface TypeParameterInfo {
     public PsiTypeParameter getTypeParameter(PsiTypeParameter[] parameters, Project project) {
       final String extendsText = myBoundValue == null
                                  ? ""
-                                 : " extends " + myBoundValue.getType(null, PsiManager.getInstance(project)).getCanonicalText();
+                                 : " extends " + getCanonicalText(myBoundValue.getType(null, PsiManager.getInstance(project)));
       return JavaPsiFacade.getElementFactory(project).createTypeParameterFromText(myNewName +
                                                                                   extendsText, null);
     }
 
     public CanonicalTypes.Type getDefaultValue() {
       return myDefaultValue;
+    }
+
+    private static String getCanonicalText(PsiType boundType) {
+      if (boundType instanceof PsiIntersectionType) {
+        return StringUtil.join(ContainerUtil.map(((PsiIntersectionType)boundType).getConjuncts(), new Function<PsiType, String>() {
+          @Override
+          public String fun(PsiType type) {
+            return type.getCanonicalText();
+          }
+        }), " & ");
+      }
+      return boundType.getCanonicalText();
     }
   }
 

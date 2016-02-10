@@ -127,13 +127,8 @@ public class PsiIntersectionType extends PsiType.Stub {
 
   @NotNull
   @Override
-  public String getCanonicalText(final boolean annotated) {
-    return StringUtil.join(myConjuncts, new Function<PsiType, String>() {
-      @Override
-      public String fun(PsiType psiType) {
-        return psiType.getCanonicalText(annotated);
-      }
-    }, " & ");
+  public String getCanonicalText(boolean annotated) {
+    return myConjuncts[0].getCanonicalText(annotated);
   }
 
   @NotNull
