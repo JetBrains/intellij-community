@@ -157,9 +157,11 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
           compilerConfiguration.removeModuleProcessorProfile(moduleProfile);
         }
         else if (p == mergedProfile || isSimilarProfiles(mergedProfile, moduleProfile)) {
-          mergedProfile.addModuleNames(moduleProfile.getModuleNames());
-          moduleProfile.clearModuleNames();
-          compilerConfiguration.removeModuleProcessorProfile(moduleProfile);
+          if(moduleProfile != mergedProfile) {
+            mergedProfile.addModuleNames(moduleProfile.getModuleNames());
+            moduleProfile.clearModuleNames();
+            compilerConfiguration.removeModuleProcessorProfile(moduleProfile);
+          }
           if (p != mergedProfile) {
             mergedProfile.addModuleNames(p.getModuleNames());
             p.clearModuleNames();
