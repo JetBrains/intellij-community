@@ -61,8 +61,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         assertEquals(SkeletonVersionChecker.BUILTIN_NAME, header.getBinaryFile());
 
         // Run inspections on a file that uses builtins
-        myFixture.configureByFile(getTestName(false) + ".py");
-
+        edt(() -> myFixture.configureByFile(getTestName(false) + ".py"));
 
         PsiFile expr = myFixture.getFile();
 
@@ -106,7 +105,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         LocalFileSystem.getInstance().refresh(false);
 
         // Run inspections on code that uses named tuples
-        myFixture.configureByFile(getTestName(false) + ".py");
+        edt(() -> myFixture.configureByFile(getTestName(false) + ".py"));
         myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
 
         edt(new Runnable() {
@@ -180,7 +179,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
     runTest(new SkeletonsTask() {
       @Override
       protected void runTestOn(@NotNull Sdk sdk) {
-        myFixture.configureByFile(getTestName(false) + ".py");
+        edt(() -> myFixture.configureByFile(getTestName(false) + ".py"));
         myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
 
         edt(new Runnable() {
