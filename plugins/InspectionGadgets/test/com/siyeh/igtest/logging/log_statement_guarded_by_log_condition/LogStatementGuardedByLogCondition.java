@@ -5,7 +5,7 @@ public class LogStatementGuardedByLogCondition {
     private static final Logger LOG = Logger.getLogger("log");
 
     void guarded(Object object) {
-        if (LOG.isDebug()) {
+        if (((LOG.isDebug()))) {
             if (true) {
                 if (true) {
                     LOG.debug("really expensive logging" + object);
