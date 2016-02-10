@@ -142,7 +142,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
       else {
         ClassPrepareRequest prepareRequest = positionManager.createPrepareRequest(requestor, position);
         if (prepareRequest == null) {
-          return Collections.emptyList();
+          return Collections.<ClassPrepareRequest>emptyList();
         }
         return Collections.singletonList(prepareRequest);
       }
