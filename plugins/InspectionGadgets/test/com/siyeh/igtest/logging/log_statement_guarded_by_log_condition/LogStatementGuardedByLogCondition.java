@@ -17,7 +17,7 @@ public class LogStatementGuardedByLogCondition {
     void unguarded(Object object) {
         if (true) {
             if (true) {
-                LOG.debug("log log log " + object);
+                LOG.<warning descr="'debug()' logging calls not guarded by log condition">debug</warning>("log log log " + object);
             }
         }
     }
@@ -26,14 +26,14 @@ public class LogStatementGuardedByLogCondition {
         if (LOG.isTrace()) {
             if (true) {
                 if (true) {
-                    LOG.debug("really expensive logging" + object);
+                    LOG.<warning descr="'debug()' logging calls not guarded by log condition">debug</warning>("really expensive logging" + object);
                 }
             }
         }
     }
 
     void alternativeDebugMethodSignature(int i) {
-        LOG.debug(i, "asdfasdf");
+        LOG.<warning descr="'debug()' logging calls not guarded by log condition">debug</warning>(i, "asdfasdf");
     }
 
   static class Logger {
