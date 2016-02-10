@@ -3,7 +3,7 @@ package com.jetbrains.env.python;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -65,12 +65,13 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
 
         PsiFile expr = myFixture.getFile();
 
-        final Module module = ModuleUtil.findModuleForPsiElement(expr);
+        final Module module = ModuleUtilCore.findModuleForPsiElement(expr);
 
         final Sdk sdkFromModule = PythonSdkType.findPythonSdk(module);
         assertNotNull(sdkFromModule);
 
         final Sdk sdkFromPsi = PyBuiltinCache.findSdkForFile(expr.getContainingFile());
+        assertNotNull(sdkFromPsi);
         final PyFile builtinsFromSdkCache = PythonSdkPathCache.getInstance(project, sdkFromPsi).getBuiltins().getBuiltinsFile();
         assertNotNull(builtinsFromSdkCache);
         assertEquals(builtins, builtinsFromSdkCache);
@@ -80,12 +81,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         assertEquals(builtins, builtinsFromPsi);
 
         myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-        edt(new Runnable() {
-          @Override
-          public void run() {
-            myFixture.checkHighlighting(true, false, false);
-          }
-        });
+        edt(() -> myFixture.checkHighlighting(true, false, false));
       }
     });
   }
@@ -108,12 +104,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         edt(() -> myFixture.configureByFile(getTestName(false) + ".py"));
         myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
 
-        edt(new Runnable() {
-          @Override
-          public void run() {
-            myFixture.checkHighlighting(true, false, false);
-          }
-        });
+        edt(() -> myFixture.checkHighlighting(true, false, false));
       }
     });
   }
@@ -124,16 +115,13 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
       protected void runTestOn(@NotNull Sdk sdk) {
         myFixture.configureByText(PythonFileType.INSTANCE,
                                   "expr = slice(1, 2).start\n");
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-            final PsiFile file = myFixture.getFile();
-            final TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), file);
-            final PyType type = context.getType(expr);
-            final String actualType = PythonDocumentationProvider.getTypeName(type, context);
-            assertEquals("int", actualType);
-          }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+          final PsiFile file = myFixture.getFile();
+          final TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), file);
+          final PyType type = context.getType(expr);
+          final String actualType = PythonDocumentationProvider.getTypeName(type, context);
+          assertEquals("int", actualType);
         });
       }
     });
@@ -152,17 +140,14 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         final Project project = myFixture.getProject();
         final PyFile builtins = PyBuiltinCache.getBuiltinsForSdk(project, sdk);
         assertNotNull(builtins);
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            final PyClass cls = builtins.findTopLevelClass("int");
-            assertNotNull(cls);
-            final Property prop = cls.findProperty("real", true, null);
-            assertNotNull(prop);
-            assertIsNotNull(prop.getGetter());
-            assertIsNotNull(prop.getSetter());
-            assertIsNotNull(prop.getDeleter());
-          }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          final PyClass cls = builtins.findTopLevelClass("int");
+          assertNotNull(cls);
+          final Property prop = cls.findProperty("real", true, null);
+          assertNotNull(prop);
+          assertIsNotNull(prop.getGetter());
+          assertIsNotNull(prop.getSetter());
+          assertIsNotNull(prop.getDeleter());
         });
       }
 
@@ -182,12 +167,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         edt(() -> myFixture.configureByFile(getTestName(false) + ".py"));
         myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
 
-        edt(new Runnable() {
-          @Override
-          public void run() {
-            myFixture.checkHighlighting(true, false, false);
-          }
-        });
+        edt(() -> myFixture.checkHighlighting(true, false, false));
       }
     });
   }
@@ -198,7 +178,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
   }
 
 
-  private abstract class SkeletonsTask extends PyExecutionFixtureTestTask {
+  private abstract static class SkeletonsTask extends PyExecutionFixtureTestTask {
     @Override
     protected String getTestDataPath() {
       return PythonTestUtil.getTestDataPath() + "/skeletons/";
