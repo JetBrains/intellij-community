@@ -133,6 +133,9 @@ public final class SocketLock {
           }
         }
 
+        if (isShutdownCommand()) {
+          System.exit(0);
+        }
         final String[] lockedPaths = {myConfigPath, mySystemPath};
         int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr() ? 1 : 2;
         myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false, new NotNullProducer<ChannelHandler>() {
@@ -217,7 +220,7 @@ public final class SocketLock {
             String response = in.readUTF();
             log("read: response=%s", response);
             if (response.equals(OK_RESPONSE)) {
-              if (isShutdownCommand(args)) {
+              if (isShutdownCommand()) {
                 printPID(portNumber);
               }
               return ActivateStatus.ACTIVATED;
@@ -268,8 +271,8 @@ public final class SocketLock {
     }
   }
 
-  private static boolean isShutdownCommand(String[] args) {
-    return args.length != 0 && Pattern.matches(JetBrainsProtocolHandler.PROTOCOL + "[*]?[a-z0-9A-Z]*/shutdown.*", args[0]);
+  private static boolean isShutdownCommand() {
+    return "shutdown".equals(JetBrainsProtocolHandler.getCommand());
   }
 
   private static String[] checkForJetBrainsProtocolCommand(String[] args) {
