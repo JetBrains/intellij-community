@@ -1154,7 +1154,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     highlightErrors();
 
-    IntentionHintComponentImpl hintComponent = (IntentionHintComponentImpl)codeAnalyzer.getLastIntentionHint();
+    IntentionHintComponentImpl hintComponent = (IntentionHintComponentImpl)codeAnalyzer.getLastIntentionHint(myEditor);
     assertNotNull(hintComponent);
     assertFalse(hintComponent.isDisposed());
     assertNotNull(hintComponent.getComponentHint());
@@ -1162,7 +1162,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     type("x");
     highlightErrors();
-    hintComponent = (IntentionHintComponentImpl)codeAnalyzer.getLastIntentionHint();
+    hintComponent = (IntentionHintComponentImpl)codeAnalyzer.getLastIntentionHint(myEditor);
     assertNotNull(hintComponent);
     assertFalse(hintComponent.isDisposed());
     assertNotNull(hintComponent.getComponentHint());
@@ -2118,12 +2118,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
 
     highlightErrors();
-    IntentionHintComponent lastHintBeforeDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
+    IntentionHintComponent lastHintBeforeDeletion = myDaemonCodeAnalyzer.getLastIntentionHint(myEditor);
     assertNotNull(lastHintBeforeDeletion);
 
     delete(myEditor);
     highlightErrors();
-    IntentionHintComponent lastHintAfterDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
+    IntentionHintComponent lastHintAfterDeletion = myDaemonCodeAnalyzer.getLastIntentionHint(myEditor);
     assertSame(lastHintBeforeDeletion, lastHintAfterDeletion);
 
     assertEmpty(visibleHints);

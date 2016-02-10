@@ -7,10 +7,29 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 public class IntentionHintComponentProviderImpl implements IntentionHintComponentProvider {
+
+  private volatile IntentionHintComponent myLastIntentionHint;
+
+  @Override
+  public void hideLastIntentionHint(@NotNull Editor editor) {
+    IntentionHintComponent hint = myLastIntentionHint;
+    if (hint != null && hint.isVisible()) {
+      hint.hide();
+      myLastIntentionHint = null;
+    }
+  }
+
+  @Override
+  @Nullable
+  public IntentionHintComponent getLastIntentionHint(@NotNull Editor editor) {
+    return myLastIntentionHint;
+  }
+
   @NotNull
   @Override
   public IntentionHintComponent showIntentionHint(@NotNull Project project,

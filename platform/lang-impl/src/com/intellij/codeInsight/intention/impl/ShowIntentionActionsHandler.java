@@ -76,7 +76,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     ShowIntentionsPass.getActionsToShow(editor, file, intentions, -1);
-    IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
+    IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint(editor);
     if (hintComponent != null) {
       PopupUpdateResult result = hintComponent.isForEditor(editor)
                                                         ? hintComponent.updateActions(intentions)

@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -15,6 +16,11 @@ public interface IntentionHintComponentProvider {
       return ServiceManager.getService(IntentionHintComponentProvider.class);
     }
   }
+
+  void hideLastIntentionHint(@NotNull Editor editor);
+
+  @Nullable
+  IntentionHintComponent getLastIntentionHint(@NotNull Editor editor);
 
   @NotNull
   IntentionHintComponent showIntentionHint(@NotNull Project project,
