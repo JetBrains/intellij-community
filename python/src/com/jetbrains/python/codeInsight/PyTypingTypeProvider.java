@@ -28,7 +28,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +89,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         }
       }
     }
-    final String comment = getFunctionTypeComment(func);
+    final String comment = getTypeComment(func);
     if (comment != null) {
       final PyTypeParser.ParseResult result = PyTypeParser.parsePep484FunctionTypeComment(param, comment);
       final PyCallableType functionType = as(result.getType(), PyCallableType.class);
@@ -130,7 +129,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (constructorType != null) {
         return Ref.create(constructorType);
       }
-      final String comment = getFunctionTypeComment(function);
+      final String comment = getTypeComment(function);
       if (comment != null) {
         final PyTypeParser.ParseResult result = PyTypeParser.parsePep484FunctionTypeComment(callable, comment);
         final PyCallableType funcType = as(result.getType(), PyCallableType.class);
@@ -183,30 +182,26 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PsiComment comment = getSameLineTrailingCommentChild(commentContainer);
       if (comment != null) {
         final String text = comment.getText();
-        final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
-        if (m.matches()) {
-          return m.group(1);
-        }
+        return getTypeCommentValue(text);
       }
     }
     return null;
   }
 
   @Nullable
-  private static String getFunctionTypeComment(@NotNull PyFunction func) {
-    final PyStatementList statements = func.getStatementList();
-    final PsiComment comment;
-    if (statements.getStatements().length != 0) {
-      comment = as(statements.getFirstChild(), PsiComment.class);
-    }
-    else {
-      comment = as(PyPsiUtils.getNextNonWhitespaceSibling(statements), PsiComment.class);
-    }
+  private static String getTypeComment(@NotNull PyFunction function) {
+    final PsiComment comment = function.getTypeComment();
     if (comment != null) {
-      final Matcher m = TYPE_COMMENT_PATTERN.matcher(comment.getText());
-      if (m.matches()) {
-        return m.group(1);
-      }
+      return getTypeCommentValue(comment.getText());
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getTypeCommentValue(@NotNull String text) {
+    final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
+    if (m.matches()) {
+      return m.group(1);
     }
     return null;
   }
