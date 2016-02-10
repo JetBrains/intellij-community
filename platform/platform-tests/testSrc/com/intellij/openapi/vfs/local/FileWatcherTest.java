@@ -58,7 +58,8 @@ public class FileWatcherTest extends PlatformTestCase {
   private static final int INTER_RESPONSE_DELAY = 500;  // time to wait for a next event in a sequence
   private static final int NATIVE_PROCESS_DELAY = 60000;  // time to wait for a native watcher response
 
-  @SuppressWarnings("SpellCheckingInspection") private static final String UNICODE_NAME = "Юникоде-Úñíçødê.txt";
+  @SuppressWarnings("SpellCheckingInspection") private static final String UNICODE_NAME_1 = "Úñíçødê";
+  @SuppressWarnings("SpellCheckingInspection") private static final String UNICODE_NAME_2 = "Юникоде";
 
   private FileWatcher myWatcher;
   private LocalFileSystem myFileSystem;
@@ -779,8 +780,8 @@ public class FileWatcherTest extends PlatformTestCase {
       return;
     }
 
-    File topDir = createTestDir(myTempDirectory, "top");
-    File testFile = createTestFile(topDir, UNICODE_NAME);
+    File topDir = createTestDir(myTempDirectory, UNICODE_NAME_1);
+    File testFile = createTestFile(topDir, UNICODE_NAME_2 + ".txt");
     refresh(topDir);
 
     LocalFileSystem.WatchRequest request = watch(topDir);
