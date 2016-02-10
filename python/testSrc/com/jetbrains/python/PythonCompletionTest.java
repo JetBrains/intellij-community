@@ -94,6 +94,11 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-14044
+  public void testNamedTupleInitParams() {
+    doTest();
+  }
+
   public void testSuperInitParams() {      // PY-505
     doTest();
   }

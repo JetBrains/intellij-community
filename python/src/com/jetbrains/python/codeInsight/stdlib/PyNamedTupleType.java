@@ -149,4 +149,9 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   public int getElementCount() {
     return myFields.size();
   }
+
+  @NotNull
+  public List<String> getElementNames() {
+    return Collections.unmodifiableList(myFields);
+  }
 }
