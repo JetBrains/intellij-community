@@ -15,16 +15,26 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.PathMacroManager
-import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
 import java.io.File
+
+private val MODULE_FILE_STORAGE_ANNOTATION = ProjectFileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 
 private open class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   override val project = module.project
 
   override val storageManager = ModuleStateStorageManager(pathMacroManager.createTrackingSubstitutor(), module)
+
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
+    val storages = stateSpec.storages
+    if (storages.isEmpty()) {
+      return arrayOf(MODULE_FILE_STORAGE_ANNOTATION)
+    }
+    else {
+      return super.getStorageSpecs(component, stateSpec, operation)
+    }
+  }
 
   override fun setPath(path: String) {
     if (!storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)) {

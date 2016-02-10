@@ -55,10 +55,8 @@ const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
 val IProjectStore.nameFile: Path
   get() = Paths.get(projectBasePath, Project.DIRECTORY_STORE_FOLDER, ProjectImpl.NAME_FILE)
 
-internal val PROJECT_FILE_STORAGE_ANNOTATION = ProjectFileStorageAnnotation()
-internal val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = object : ProjectFileStorageAnnotation() {
-  override fun deprecated() = true
-}
+internal val PROJECT_FILE_STORAGE_ANNOTATION = ProjectFileStorageAnnotation(PROJECT_FILE, false)
+internal val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = ProjectFileStorageAnnotation(PROJECT_FILE, true)
 
 abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreImpl(), IProjectStore {
   // protected setter used in upsource

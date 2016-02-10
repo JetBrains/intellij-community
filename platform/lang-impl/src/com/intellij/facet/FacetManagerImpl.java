@@ -27,8 +27,6 @@ import com.intellij.facet.impl.invalid.InvalidFacetType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
@@ -51,10 +49,7 @@ import java.util.*;
 /**
  * @author nik
  */
-@State(
-  name = FacetManagerImpl.COMPONENT_NAME,
-  storages = @Storage(StoragePathMacros.MODULE_FILE)
-)
+@State(name = FacetManagerImpl.COMPONENT_NAME)
 public class FacetManagerImpl extends FacetManager implements ModuleComponent, PersistentStateComponent<FacetManagerState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.FacetManagerImpl");
   @NonNls public static final String COMPONENT_NAME = "FacetManager";

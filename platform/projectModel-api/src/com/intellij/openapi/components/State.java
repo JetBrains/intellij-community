@@ -36,10 +36,10 @@ public @interface State {
    * <p>Application-level: optional if you need to load only default state ({@link #defaultStateAsResource} must be true in this case).</p>
    *
    * <p>Project-level: optional, standard project file will be used by default
-   * (
-   * {@code *.ipr} file for file-based and
-   * {@code .idea/misc.xml} for directory-based
-   * ).</p>
+   * ({@code *.ipr} file for file-based and
+   * {@code .idea/misc.xml} for directory-based).</p>
+   *
+   * <p>Module-level: optional, corresponding module file will be used (<code>*.iml</code>).</p>
    */
   Storage[] storages() default {};
 
