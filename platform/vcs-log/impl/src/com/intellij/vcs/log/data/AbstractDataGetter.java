@@ -295,9 +295,14 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
           return myHashMap.getCommitId(commitId).getHash().asString();
         }
       });
-      List<? extends T> details = readDetails(myLogProviders.get(entry.getKey()), entry.getKey(), hashStrings);
-      result.addAll(details);
-      saveInCache(details);
+      VcsLogProvider logProvider = myLogProviders.get(entry.getKey());
+      if (logProvider != null) {
+        List<? extends T> details = readDetails(logProvider, entry.getKey(), hashStrings);
+        result.addAll(details);
+        saveInCache(details);
+      } else {
+        LOG.error("No log provider for root " + entry.getKey().getPath() + ". All known log providers " + myLogProviders);
+      }
     }
     return result;
   }
