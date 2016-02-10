@@ -47,7 +47,7 @@ public final class EnumerationChildrenRenderer extends ReferenceRenderer impleme
   public static final @NonNls String CHILD_NAME = "Name";
 
   public EnumerationChildrenRenderer() {
-    this(new ArrayList<Pair<String, TextWithImports>>());
+    this(new ArrayList<>());
   }
 
   public EnumerationChildrenRenderer(List<Pair<String, TextWithImports>> children) {

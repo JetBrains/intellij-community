@@ -303,8 +303,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
 
   private class MyCompilationStatusListener implements CompilationStatusListener {
 
-    private final AtomicReference<Map<String, List<String>>>
-      myGeneratedPaths = new AtomicReference<>(new HashMap<String, List<String>>());
+    private final AtomicReference<Map<String, List<String>>> myGeneratedPaths = new AtomicReference<>(new HashMap<>());
     private final THashSet<File> myOutputRoots;
 
     private MyCompilationStatusListener() {
@@ -328,7 +327,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
     }
 
     public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-      final Map<String, List<String>> generated = myGeneratedPaths.getAndSet(new HashMap<String, List<String>>());
+      final Map<String, List<String>> generated = myGeneratedPaths.getAndSet(new HashMap<>());
       if (myProject.isDisposed()) {
         return;
       }

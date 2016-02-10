@@ -357,7 +357,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     if (expressions != null && expressions.length > 0) {
       final ArrayList<Pair<String, TextWithImports>> childrenList = new ArrayList<>(expressions.length);
       for (final String[] expression : expressions) {
-        childrenList.add(new Pair<String, TextWithImports>(expression[0], new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression[1], "", StdFileTypes.JAVA)));
+        childrenList.add(
+          new Pair<>(expression[0], new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression[1], "", StdFileTypes.JAVA)));
       }
       childrenRenderer.setChildren(childrenList);
     }
