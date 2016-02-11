@@ -144,6 +144,11 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     showMessage("No commits selected");
   }
 
+  @NotNull
+  public static String formatDateTime(long time) {
+    return " on " + DateFormatUtil.formatDate(time) + " at " + DateFormatUtil.formatTime(time);
+  }
+
   @Override
   public Color getBackground() {
     return getDetailsBackground();
@@ -447,11 +452,6 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         authorText += " (committed " + formatDateTime(commitTime) + ")";
       }
       return authorText;
-    }
-
-    @NotNull
-    private static String formatDateTime(long time) {
-      return " on " + DateFormatUtil.formatDate(time) + " at " + DateFormatUtil.formatTime(time);
     }
 
     @Override

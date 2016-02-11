@@ -110,7 +110,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
                                      "\nAnswer:" +
                                      answer;
             updater.run();
-            getTable().handleAnswer(answer, true, null);
+            getTable().handleAnswer(answer, true, null, null);
           }
         });
       }

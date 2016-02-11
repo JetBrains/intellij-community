@@ -17,11 +17,14 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
 import com.intellij.ide.CopyProvider;
+import com.intellij.ide.IdeTooltip;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,6 +32,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -383,7 +387,10 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     return VcsLogColorManagerImpl.getBackgroundColor(colorManager.getRootColor(root));
   }
 
-  public void handleAnswer(@Nullable GraphAnswer<Integer> answer, boolean dataCouldChange, @Nullable Selection previousSelection) {
+  public void handleAnswer(@Nullable GraphAnswer<Integer> answer,
+                           boolean dataCouldChange,
+                           @Nullable Selection previousSelection,
+                           @Nullable MouseEvent e) {
     if (dataCouldChange) {
       GraphTableModel graphTableModel = (GraphTableModel)getModel();
 
@@ -391,7 +398,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
       // since fireTableDataChanged clears selection we restore it here
       if (previousSelection != null) {
-        previousSelection.restore(getVisibleGraph(), answer == null || answer.getCommitToJump() != null);
+        previousSelection.restore(getVisibleGraph(), answer == null || (answer.getCommitToJump() != null && answer.doJump()));
       }
     }
 
@@ -406,11 +413,48 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     }
     if (answer.getCommitToJump() != null) {
       Integer row = getGraphTableModel().getVisiblePack().getVisibleGraph().getVisibleRowIndex(answer.getCommitToJump());
-      if (row != null && row >= 0) {
+      if (row != null && row >= 0 && answer.doJump()) {
         jumpToRow(row);
+        // TODO wait for the full log and then jump
+        return;
       }
-      // TODO wait for the full log and then jump
+      if (e != null) showToolTip(getArrowTooltipText(answer.getCommitToJump(), row), e);
     }
+  }
+
+  @NotNull
+  private String getArrowTooltipText(int commit, @Nullable Integer row) {
+    // mini details getter needs row in order to pre-load commit
+    // this is going to be fixed soon
+    VcsShortCommitDetails details;
+    if (row == null || row < 0) {
+      details = myLogDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commit);
+    }
+    else {
+      details = myLogDataHolder.getMiniDetailsGetter().getCommitData(row, getGraphTableModel());
+    }
+    String balloonText;
+    if (details != null && !(details instanceof LoadingDetails)) {
+      balloonText = "Jump to <b>\"" +
+                    StringUtil.shortenTextWithEllipsis(details.getSubject(), 50, 0, "...") +
+                    "\"</b> by " +
+                    details.getAuthor().getName() +
+                    DetailsPanel.formatDateTime(details.getAuthorTime());
+    }
+    else {
+      CommitId commitId = myLogDataHolder.getCommitId(commit);
+      balloonText = "Jump to commit" + " " + commitId.getHash().toShortString() + " in " + commitId.getRoot().getName();
+    }
+    return balloonText;
+  }
+
+  protected void showToolTip(@NotNull String text, @NotNull MouseEvent e) {
+    // standard tooltip does not allow to customize its location, and locating tooltip above can obscure some important info
+    Point point = new Point(e.getX() + 5, e.getY());
+
+    JEditorPane tipComponent = IdeTooltipManager.initPane(text, new HintHint(this, point).setAwtTooltip(true), null);
+    IdeTooltip tooltip = new IdeTooltip(this, point, new Wrapper(tipComponent)).setPreferredPosition(Balloon.Position.atRight);
+    IdeTooltipManager.getInstance().show(tooltip, false);
   }
 
   @NotNull
@@ -565,9 +609,8 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       Selection previousSelection = getSelection();
       GraphAnswer<Integer> answer =
         getVisibleGraph().getActionController().performAction(new GraphAction.GraphActionImpl(printElement, actionType));
-      handleAnswer(answer, actionType == GraphAction.Type.MOUSE_CLICK && printElement != null, previousSelection);
+      handleAnswer(answer, actionType == GraphAction.Type.MOUSE_CLICK && printElement != null, previousSelection, e);
     }
-
 
     private boolean isAboveLink(MouseEvent e) {
       return myLinkListener.getTagAt(e) != null;

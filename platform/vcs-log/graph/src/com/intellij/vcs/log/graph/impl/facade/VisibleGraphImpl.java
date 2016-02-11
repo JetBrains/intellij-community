@@ -151,11 +151,11 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
 
       if (action.getType() == GraphAction.Type.MOUSE_OVER) {
         myPrintElementManager.setSelectedElement(affectedElement);
-        return new GraphAnswerImpl<CommitId>(getCursor(true), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null);
+        return new GraphAnswerImpl<CommitId>(getCursor(true), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null, false);
       }
 
       if (action.getType() == GraphAction.Type.MOUSE_CLICK) {
-        return new GraphAnswerImpl<CommitId>(getCursor(false), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null);
+        return new GraphAnswerImpl<CommitId>(getCursor(false), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null, true);
       }
 
       return null;
@@ -204,7 +204,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
           graphUpdater.run();
           updatePrintElementGenerator();
         }
-      });
+      }, false);
     }
   }
 
@@ -212,11 +212,13 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     @Nullable private final Cursor myCursor;
     @Nullable private final CommitId myCommitToJump;
     @Nullable private final Runnable myUpdater;
+    private final boolean myDoJump;
 
-    private GraphAnswerImpl(@Nullable Cursor cursor, @Nullable CommitId commitToJump, @Nullable Runnable updater) {
+    private GraphAnswerImpl(@Nullable Cursor cursor, @Nullable CommitId commitToJump, @Nullable Runnable updater, boolean doJump) {
       myCursor = cursor;
       myCommitToJump = commitToJump;
       myUpdater = updater;
+      myDoJump = doJump;
     }
 
     @Nullable
@@ -235,6 +237,11 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     @Override
     public Runnable getGraphUpdater() {
       return myUpdater;
+    }
+
+    @Override
+    public boolean doJump() {
+      return myDoJump;
     }
   }
 
