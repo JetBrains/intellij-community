@@ -48,9 +48,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.usageView.UsageInfo;
@@ -438,7 +436,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private JComponent createBaseRightComponentFor(PsiElement containingElement, BatchProblemDescriptor descriptor) {
     final int count = descriptor.getProblemCount();
-    if (count == 1 || containingElement != null) {
+    if (count == 1 || (containingElement != null && !(containingElement instanceof PsiDirectory))) {
       final PsiElement element = descriptor.getFirstProblemElement();
       LOG.assertTrue(element != null);
       final PsiElement referencedElement = containingElement == null ? descriptor.getFirstProblemElement() : containingElement;
@@ -457,7 +455,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       settings.setRightMarginShown(true);
       settings.setRightMargin(60);
 
-      editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
       editor.getCaretModel().moveToOffset(referencedElement.getTextOffset());
       editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
       UsagePreviewPanel
