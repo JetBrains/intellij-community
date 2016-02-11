@@ -68,6 +68,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   private Balloon.Layer myLayer;
   private boolean myBlockClicks = false;
+  private boolean myRequestFocus = false;
 
   public BalloonPopupBuilderImpl(@Nullable Map<Disposable, List<Balloon>> storage, @NotNull final JComponent content) {
     myStorage = storage;
@@ -141,6 +142,13 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   @Override
   public BalloonBuilder setBlockClicksThroughBalloon(boolean block) {
     myBlockClicks = block;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public BalloonBuilder setRequestFocus(boolean requestFocus) {
+    myRequestFocus = requestFocus;
     return this;
   }
 
@@ -250,7 +258,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
       myContent, myBorder, myBorderInsets, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myShowCallout, myCloseButtonEnabled,
       myFadeoutTime, myHideOnFrameResize, myHideOnLinkClick, myClickHandler, myCloseOnClick, myAnimationCycle, myCalloutShift,
       myPositionChangeXShift, myPositionChangeYShift, myDialogMode, myTitle, myContentInsets, myShadow, mySmallVariant, myBlockClicks,
-      myLayer);
+      myLayer, myRequestFocus);
 
     if (myStorage != null && myAnchor != null) {
       List<Balloon> balloons = myStorage.get(myAnchor);

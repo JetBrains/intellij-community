@@ -60,7 +60,7 @@ public class BalloonTest {
 
           balloon.set(new BalloonImpl(
             new JLabel("Content"), Color.black, null , MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, false, null,
-            false, 500, 25, 0, 0, false, "This is the title", new Insets(2, 2, 2, 2), true, false, false, Balloon.Layer.normal));
+            false, 500, 25, 0, 0, false, "This is the title", new Insets(2, 2, 2, 2), true, false, false, Balloon.Layer.normal, false));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {
