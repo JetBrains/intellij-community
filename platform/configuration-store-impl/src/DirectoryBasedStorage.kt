@@ -33,14 +33,15 @@ import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.SmartHashSet
+import com.intellij.util.systemIndependentPath
 import gnu.trove.THashMap
 import org.jdom.Element
-import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.ByteBuffer
+import java.nio.file.Path
 
-open class DirectoryBasedStorage(private val dir: File,
+open class DirectoryBasedStorage(private val dir: Path,
                                  private val splitter: StateSplitter,
                                  private val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null) : StateStorageBase<StateMap>() {
   private @Volatile var virtualFile: VirtualFile? = null
@@ -93,7 +94,7 @@ open class DirectoryBasedStorage(private val dir: File,
   private fun getVirtualFile(): VirtualFile? {
     var result = virtualFile
     if (result == null) {
-      result = LocalFileSystem.getInstance().findFileByIoFile(dir)
+      result = LocalFileSystem.getInstance().findFileByPath(dir.systemIndependentPath)
       virtualFile = result
     }
     return result

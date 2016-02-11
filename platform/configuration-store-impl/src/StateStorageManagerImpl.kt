@@ -36,6 +36,8 @@ import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.io.IOException
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import java.util.regex.Pattern
@@ -195,7 +197,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     val filePath = expandMacros(collapsedPath)
     @Suppress("DEPRECATION")
     if (stateSplitter != StateSplitter::class.java && stateSplitter != StateSplitterEx::class.java) {
-      val storage = MyDirectoryStorage(this, File(filePath), ReflectionUtil.newInstance(stateSplitter))
+      val storage = MyDirectoryStorage(this, Paths.get(filePath), ReflectionUtil.newInstance(stateSplitter))
       virtualFileTracker?.put(filePath, storage)
       return storage
     }
@@ -212,7 +214,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     return storage
   }
 
-  private class MyDirectoryStorage(override val storageManager: StateStorageManagerImpl, file: File, @Suppress("DEPRECATION") splitter: StateSplitter) :
+  private class MyDirectoryStorage(override val storageManager: StateStorageManagerImpl, file: Path, @Suppress("DEPRECATION") splitter: StateSplitter) :
     DirectoryBasedStorage(file, splitter, storageManager.pathMacroSubstitutor), StorageVirtualFileTracker.TrackedStorage
 
   private class MyFileStorage(override val storageManager: StateStorageManagerImpl,

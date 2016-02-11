@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,8 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
+import com.intellij.util.exists
+import com.intellij.util.move
 import org.jetbrains.keychain.CredentialsStore
 import org.jetbrains.keychain.FileCredentialsStore
 import org.jetbrains.keychain.OsXCredentialsStore
@@ -40,11 +42,12 @@ import org.jetbrains.keychain.isOSXCredentialsStoreSupported
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.GitRepositoryService
 import org.jetbrains.settingsRepository.git.processChildren
-import java.io.File
 import java.io.InputStream
+import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.properties.Delegates
 
-val PLUGIN_NAME: String = "Settings Repository"
+internal const val PLUGIN_NAME: String = "Settings Repository"
 
 internal val LOG: Logger = Logger.getInstance(IcsManager::class.java)
 
@@ -52,7 +55,7 @@ val icsManager by lazy(LazyThreadSafetyMode.NONE) {
   ApplicationLoadListener.EP_NAME.findExtension(IcsApplicationLoadListener::class.java).icsManager
 }
 
-class IcsManager(dir: File) {
+class IcsManager(dir: Path) {
   val credentialsStore = object : AtomicNotNullLazyValue<CredentialsStore>() {
     override fun compute(): CredentialsStore {
       if (isOSXCredentialsStoreSupported && SystemProperties.getBooleanProperty("ics.use.osx.keychain", true)) {
@@ -63,14 +66,14 @@ class IcsManager(dir: File) {
           LOG.error(e)
         }
       }
-      return FileCredentialsStore(File(dir, ".git_auth"))
+      return FileCredentialsStore(dir.resolve(".git_auth"))
     }
   }
 
-   val settingsFile = File(dir, "config.json")
+  val settingsFile = dir.resolve("config.json")
 
   val settings: IcsSettings
-  val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, File(dir, "repository"))
+  val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, dir.resolve("repository"))
 
   init {
     try {
@@ -226,14 +229,14 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
     }
 
     val customPath = System.getProperty("ics.settingsRepository")
-    val pluginSystemDir = if (customPath == null) File(configPath, "settingsRepository") else File(FileUtil.expandUserHome(customPath))
+    val pluginSystemDir = if (customPath == null) Paths.get(configPath, "settingsRepository") else Paths.get(FileUtil.expandUserHome(customPath))
     icsManager = IcsManager(pluginSystemDir)
 
     if (!pluginSystemDir.exists()) {
       try {
-        val oldPluginDir = File(PathManager.getSystemPath(), "settingsRepository")
+        val oldPluginDir = Paths.get(PathManager.getSystemPath(), "settingsRepository")
         if (oldPluginDir.exists()) {
-          FileUtil.rename(oldPluginDir, pluginSystemDir)
+          oldPluginDir.move(pluginSystemDir)
         }
       }
       catch (e: Throwable) {

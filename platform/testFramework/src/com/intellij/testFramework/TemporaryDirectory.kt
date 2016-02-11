@@ -25,7 +25,6 @@ import com.intellij.util.lang.CompoundRuntimeException
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
-import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -55,12 +54,7 @@ class TemporaryDirectory : ExternalResource() {
     paths.clear()
   }
 
-  /**
-   * Directory is not created.
-   */
-  fun newDirectory(directoryName: String? = null): File = generatePath(directoryName).toFile()
-
-  fun newPath(directoryName: String? = null, refreshVfs: Boolean = true): Path {
+  fun newPath(directoryName: String? = null, refreshVfs: Boolean = false): Path {
     val path = generatePath(directoryName)
     if (refreshVfs) {
       path.refreshVfs()
