@@ -151,7 +151,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        syncBrowser();
+        syncRightPanel();
         if (isAutoScrollMode()) {
           OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(InspectionResultsView.this), false);
         }
@@ -337,9 +337,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   @Override
-  public void dispose(){
+  public void dispose() {
+    releaseEditor();
     mySplitter.dispose();
-    //myBrowser.dispose();
     myInspectionProfile = null;
     myDisposed = true;
   }
@@ -379,7 +379,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return null;
   }
 
-  private void syncBrowser() {
+  private void syncRightPanel() {
     if (myTree.getSelectionModel().getSelectionCount() != 1) {
       //myBrowser.showEmpty();
     }
@@ -393,18 +393,18 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           final RefEntity refSelected = refElementNode.getElement();
           if (node.isLeaf()) {
             LOG.assertTrue(problem != null);
-            showInBrowser(refSelected, BatchProblemDescriptor.single(problem));
+            showInRightPanel(refSelected, BatchProblemDescriptor.single(problem));
           }
           else {
-            showInBrowser(refSelected, node.accumulateProblemInfo(new BatchProblemDescriptor(false)));
+            showInRightPanel(refSelected, node.accumulateProblemInfo(new BatchProblemDescriptor(false)));
           }
         }
         else if (node instanceof ProblemDescriptionNode) {
           final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
-          showInBrowser(problemNode.getElement(), BatchProblemDescriptor.single(problemNode.getDescriptor()));
+          showInRightPanel(problemNode.getElement(), BatchProblemDescriptor.single(problemNode.getDescriptor()));
         }
         else if (node instanceof InspectionNode) {
-          showInBrowser(null, node.accumulateProblemInfo(new BatchProblemDescriptor(false)));
+          showInRightPanel(null, node.accumulateProblemInfo(new BatchProblemDescriptor(false)));
         }
         else {
           mySplitter.setSecondComponent(new JPanel());
@@ -413,7 +413,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
-  private void showInBrowser(final RefEntity refEntity, BatchProblemDescriptor intersector) {
+  private void showInRightPanel(final RefEntity refEntity, BatchProblemDescriptor intersector) {
     //todo use refentity to determine
     Cursor currentCursor = getCursor();
     setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -437,10 +437,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private JComponent createBaseRightComponentFor(PsiElement containingElement, BatchProblemDescriptor descriptor) {
     final int count = descriptor.getProblemCount();
-    if (myPreviewEditor != null) {
-      EditorFactory.getInstance().releaseEditor(myPreviewEditor);
-      myPreviewEditor = null;
-    }
+    releaseEditor();
     if (count == 1 || (containingElement != null && !(containingElement instanceof PsiDirectory))) {
       final PsiElement element = descriptor.getFirstProblemElement();
       LOG.assertTrue(element != null);
@@ -931,5 +928,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       return getElementToHighlight(((PsiNameIdentifierOwner)element).getNameIdentifier());
     }
     return Collections.singletonList(new UsageInfo(element));
+  }
+
+  private void releaseEditor() {
+    if (myPreviewEditor != null) {
+      EditorFactory.getInstance().releaseEditor(myPreviewEditor);
+      myPreviewEditor = null;
+    }
   }
 }
