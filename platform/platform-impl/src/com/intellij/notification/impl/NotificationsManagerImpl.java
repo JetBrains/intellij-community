@@ -19,7 +19,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJButtonUI;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.actionSystem.*;
@@ -401,7 +400,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
         JButton button = new JButton(action) {
           @Override
           public void setUI(ButtonUI ui) {
-            boolean isDarcula = ui instanceof DarculaButtonUI && !(ui instanceof MacIntelliJButtonUI);
+            boolean isDarcula = ui instanceof DarculaButtonUI && UIUtil.isUnderDarcula();
             if (isDarcula) {
               ui = new DarculaButtonUI() {
                 @Override
