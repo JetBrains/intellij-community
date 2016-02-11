@@ -119,11 +119,11 @@ class MacDistributionBuilder {
     ant.delete(file: sitFilePath)
     ftpAction("put", false, "777") {
       ant.fileset(dir: "$communityHome/build/mac") {
-        include(name: "signapp_ce.sh")
+        include(name: "signapp.sh")
       }
     }
 
-    sshExec("$remoteDir/signapp_ce.sh ${sitFileName} ${fullBuildNumber} ${macHostProperties.userName} ${macHostProperties.password} \"${macHostProperties.codesignString}\" \"${PathUtilRt.getFileName(customJDKTarPath)}\"")
+    sshExec("$remoteDir/signapp.sh ${sitFileName} ${fullBuildNumber} ${macHostProperties.userName} ${macHostProperties.password} \"${macHostProperties.codesignString}\" \"${PathUtilRt.getFileName(customJDKTarPath)}\"")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
         include(name: "${sitFileName}.sit")
