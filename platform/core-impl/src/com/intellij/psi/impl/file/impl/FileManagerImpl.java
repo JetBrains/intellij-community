@@ -592,7 +592,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void markInvalidations(Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap) {
-    DebugUtil.startPsiModification("markInvalidations");
+    DebugUtil.startPsiModification(null);
     try {
       for (Map.Entry<VirtualFile, FileViewProvider> entry : originalFileToPsiFileMap.entrySet()) {
         FileViewProvider viewProvider = entry.getValue();

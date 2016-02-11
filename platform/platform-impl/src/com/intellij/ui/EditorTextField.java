@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -365,8 +365,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   private void initEditor() {
     myEditor = createEditor();
-    final JComponent component = myEditor.getComponent();
-    add(component, BorderLayout.CENTER);
+    myEditor.getContentComponent().setEnabled(isEnabled());
+    add(myEditor.getComponent(), BorderLayout.CENTER);
   }
 
   @Override
@@ -426,17 +426,6 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     editor.getSettings().setCaretRowShown(false);
-    editor.setColorsScheme(new DelegateColorScheme(colorsScheme) {
-      @Override
-      public TextAttributes getAttributes(TextAttributesKey key) {
-        final TextAttributes attributes = super.getAttributes(key);
-        if (!isEnabled() && attributes != null) {
-          return new TextAttributes(UIUtil.getInactiveTextColor(), attributes.getBackgroundColor(), attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
-        }
-
-        return attributes;
-      }
-    });
 
     // color scheme settings:
     setupEditorFont(editor);
@@ -479,10 +468,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     editor.setCaretEnabled(!myIsViewer);
     settings.setLineCursorWidth(1);
 
-    if (myProject != null && myIsViewer) {
-      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+    if (myProject != null) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (psiFile != null) {
-        DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(psiFile, false);
+        DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(psiFile, !myIsViewer);
       }
     }
 

@@ -20,22 +20,23 @@ import org.jetbrains.annotations.NonNls;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-@Retention(RetentionPolicy.RUNTIME)
 /**
- * See http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html
+ * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html">Persisting States</a>
  */
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Storage {
   @Deprecated
   /**
-   * Please use {@link #value()}.
+   * @deprecated Use {@link #value()}.
    */
   String file() default "";
 
   /**
-   * Relative to component container configuration root file path.
-   * Consider to use shorthand form - {code}@Storage("yourName.xml"){code} (when you need to specify only file path).
+   * Relative to component container configuration root path.
+   * Consider to use shorthand form - <code>@Storage("yourName.xml")</code> (when you need to specify only file path).
    */
-  @NonNls String value() default "";
+  @NonNls
+  String value() default "";
 
   /**
    * If deprecated: Data will be removed on write. And ignored on read if (and only if) new storage exists.
@@ -43,20 +44,29 @@ public @interface Storage {
   boolean deprecated() default false;
 
   /**
+   * Used by the Settings Repository plugin to determine how application-level settings should be shared between different IDE installations.
    * You must not store components with different roaming types in one file ({@link #value()}).
    */
   RoamingType roamingType() default RoamingType.DEFAULT;
 
   /**
-   * Class must have constructor (ComponentManager componentManager, StateStorageManager storageManager). componentManager parameter can have more concrete type - e.g. Module (if storage intended to support only one type)
+   * Class must have constructor {@code (ComponentManager componentManager, StateStorageManager storageManager)}.
+   * {@code componentManager} parameter can have more concrete type - e.g. Module (if storage intended to support only one type).
    */
   Class<? extends StateStorage> storageClass() default StateStorage.class;
 
+  @SuppressWarnings("deprecation")
   Class<? extends StateSplitter> stateSplitter() default StateSplitterEx.class;
 
   @Deprecated
+  /**
+   * @deprecated Not required and not used anymore.
+   */
   StorageScheme scheme() default StorageScheme.DEFAULT;
 
   @Deprecated
+  /**
+   * @deprecated Not required and not used anymore.
+   */
   String id() default "default";
 }

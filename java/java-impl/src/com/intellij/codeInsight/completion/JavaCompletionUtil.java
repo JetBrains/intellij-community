@@ -289,13 +289,8 @@ public class JavaCompletionUtil {
   private static Set<LookupElement> processJavaQualifiedReference(PsiElement element, PsiJavaReference javaReference, ElementFilter elementFilter,
                                                         JavaCompletionProcessor.Options options,
                                                         final PrefixMatcher matcher, CompletionParameters parameters) {
-    final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
-    final Condition<String> nameCondition = new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return matcher.prefixMatches(s);
-      }
-    };
+    final Set<LookupElement> set = new LinkedHashSet<>();
+    final Condition<String> nameCondition = matcher::prefixMatches;
 
     PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     boolean checkInitialized = parameters.getInvocationCount() <= 1 && call != null && PsiKeyword.SUPER.equals(call.getMethodExpression().getText());
@@ -322,9 +317,9 @@ public class JavaCompletionUtil {
     PsiClass qualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifierType);
     final boolean honorExcludes = qualifierClass == null || !isInExcludedPackage(qualifierClass, false);
 
-    final Set<PsiMember> mentioned = new THashSet<PsiMember>();
+    final Set<PsiMember> mentioned = new THashSet<>();
     for (CompletionElement completionElement : processor.getResults()) {
-      for (LookupElement item : createLookupElements(completionElement, javaReference)) {
+      for (LookupElement item : createLookupElements(completionElement, javaReference, processor)) {
         item.putUserData(QUALIFIER_TYPE_ATTR, qualifierType);
         final Object o = item.getObject();
         if (o instanceof PsiClass && !isSourceLevelAccessible(element, (PsiClass)o, pkgContext)) {
@@ -528,7 +523,7 @@ public class JavaCompletionUtil {
     return false;
   }
 
-  static List<? extends LookupElement> createLookupElements(CompletionElement completionElement, PsiJavaReference reference) {
+  static List<? extends LookupElement> createLookupElements(CompletionElement completionElement, PsiJavaReference reference, JavaCompletionProcessor processor) {
     Object completion = completionElement.getElement();
     assert !(completion instanceof LookupElement);
 
@@ -556,7 +551,16 @@ public class JavaCompletionUtil {
       return Collections.singletonList(JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)completion, true).setSubstitutor(substitutor));
     }
     if (completion instanceof PsiMethod) {
-      return Collections.singletonList(new JavaMethodCallElement((PsiMethod)completion).setQualifierSubstitutor(substitutor));
+      PsiMethod method = (PsiMethod)completion;
+      JavaMethodCallElement item = new JavaMethodCallElement(method).setQualifierSubstitutor(substitutor);
+      if (processor.shouldQualifyMethodCall(method)) {
+        PsiClass containingClass = method.getContainingClass();
+        String className = containingClass == null ? null : containingClass.getName();
+        if (className != null) {
+          item.setForcedQualifier(className + (method.hasModifierProperty(PsiModifier.STATIC) ? "." : ".this."));
+        }
+      }
+      return Collections.singletonList(item);
     }
     if (completion instanceof PsiVariable) {
       return Collections.singletonList(new VariableLookupItem((PsiVariable)completion).setSubstitutor(substitutor));

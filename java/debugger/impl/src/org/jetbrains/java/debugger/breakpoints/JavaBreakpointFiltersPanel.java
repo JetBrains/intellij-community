@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -216,7 +216,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   }
 
   private void updateInstanceFilterEditor(boolean updateText) {
-    List<String> filters = new ArrayList<String>();
+    List<String> filters = new ArrayList<>();
     for (InstanceFilter instanceFilter : myInstanceFilters) {
       if (instanceFilter.isEnabled()) {
         filters.add(Long.toString(instanceFilter.getId()));
@@ -257,8 +257,8 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   private void reloadClassFilters() {
     String filtersText = myClassFiltersField.getText();
 
-    ArrayList<ClassFilter> classFilters     = new ArrayList<ClassFilter>();
-    ArrayList<ClassFilter> exclusionFilters = new ArrayList<ClassFilter>();
+    ArrayList<ClassFilter> classFilters     = new ArrayList<>();
+    ArrayList<ClassFilter> exclusionFilters = new ArrayList<>();
     int startFilter = -1;
     for(int i = 0; i <= filtersText.length(); i++) {
       if(i < filtersText.length() && !Character.isWhitespace(filtersText.charAt(i))){
@@ -295,7 +295,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   private void reloadInstanceFilters() {
     String filtersText = myInstanceFiltersField.getText();
 
-    ArrayList<InstanceFilter> idxs = new ArrayList<InstanceFilter>();
+    ArrayList<InstanceFilter> idxs = new ArrayList<>();
     int startNumber = -1;
     for(int i = 0; i <= filtersText.length(); i++) {
       if(i < filtersText.length() && Character.isDigit(filtersText.charAt(i))) {
@@ -319,13 +319,13 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   }
 
   private void updateClassFilterEditor(boolean updateText) {
-    List<String> filters = new ArrayList<String>();
+    List<String> filters = new ArrayList<>();
     for (ClassFilter classFilter : myClassFilters) {
       if (classFilter.isEnabled()) {
         filters.add(classFilter.getPattern());
       }
     }
-    List<String> excludeFilters = new ArrayList<String>();
+    List<String> excludeFilters = new ArrayList<>();
     for (ClassFilter classFilter : myClassExclusionFilters) {
       if (classFilter.isEnabled()) {
         excludeFilters.add("-" + classFilter.getPattern());

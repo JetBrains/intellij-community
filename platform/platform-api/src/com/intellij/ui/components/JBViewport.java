@@ -323,14 +323,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     @Override
     public void paintBorder(Component view, Graphics g, int x, int y, int width, int height) {
       if (myBorder != null) {
-        if (view instanceof JComponent) {
-          Insets insets = new Insets(0, 0, 0, 0);
-          addViewInsets((JComponent)view, insets);
-          x += insets.left;
-          y += insets.top;
-          width -= insets.left + insets.right;
-          height -= insets.top + insets.bottom;
-        }
+        // additional insets are used inside a custom border
         myBorder.paintBorder(view, g, x, y, width, height);
       }
     }

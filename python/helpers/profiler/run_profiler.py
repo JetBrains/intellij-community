@@ -1,8 +1,8 @@
 import os
-import pydev_imports
 import sys
 import time
 import traceback
+from _pydev_bundle import pydev_imports
 from _pydevd_bundle.pydevd_utils import save_main_module
 from socket import AF_INET
 from socket import SOCK_STREAM

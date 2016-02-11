@@ -358,14 +358,14 @@ public class MavenProject {
       MavenPlugin bscMavenPlugin = findPlugin("org.bsc.maven", "maven-processor-plugin");
       Element cfg = getPluginGoalConfiguration(bscMavenPlugin, testSources ? "process-test" : "process");
       if (bscMavenPlugin != null && cfg == null) {
-        return getBuildDirectory() + "/generated-sources/apt";
+        return getBuildDirectory() + (testSources ?  "/generated-sources/apt-test" : "/generated-sources/apt");
       }
       if (cfg != null) {
         String out = MavenJDOMUtil.findChildValueByPath(cfg, "outputDirectory");
         if (out == null) {
           out = MavenJDOMUtil.findChildValueByPath(cfg, "defaultOutputDirectory");
           if (out == null) {
-            return getBuildDirectory() + "/generated-sources/apt";
+            return getBuildDirectory() + (testSources ?  "/generated-sources/apt-test" : "/generated-sources/apt");
           }
         }
 
@@ -442,14 +442,7 @@ public class MavenProject {
     Map<String, String> res = new LinkedHashMap<String, String>();
 
     String compilerArgument = compilerConfig.getChildText("compilerArgument");
-    if (!StringUtil.isEmptyOrSpaces(compilerArgument)) {
-      ParametersList parametersList = new ParametersList();
-      parametersList.addParametersString(compilerArgument);
-
-      for (String param : parametersList.getParameters()) {
-        addAnnotationProcessorOption(param, res);
-      }
-    }
+    addAnnotationProcessorOptionFomrParametersString(compilerArgument, res);
 
     Element compilerArgs = compilerConfig.getChild("compilerArgs");
     if (compilerArgs != null) {
@@ -474,6 +467,17 @@ public class MavenProject {
     return res;
   }
 
+  private static void addAnnotationProcessorOptionFomrParametersString(String compilerArguments, Map<String, String> res) {
+    if (!StringUtil.isEmptyOrSpaces(compilerArguments)) {
+      ParametersList parametersList = new ParametersList();
+      parametersList.addParametersString(compilerArguments);
+
+      for (String param : parametersList.getParameters()) {
+        addAnnotationProcessorOption(param, res);
+      }
+    }
+  }
+
   private static void addAnnotationProcessorOption(String compilerArg, Map<String, String> optionsMap) {
     if (compilerArg == null || compilerArg.trim().isEmpty()) return;
 
@@ -494,6 +498,9 @@ public class MavenProject {
     }
     LinkedHashMap<String, String> res = new LinkedHashMap<String, String>();
     if (cfg != null) {
+      String compilerArguments = cfg.getChildText("compilerArguments");
+      addAnnotationProcessorOptionFomrParametersString(compilerArguments, res);
+
       final Element optionsElement = cfg.getChild("options");
       if (optionsElement != null) {
         for (Element option : optionsElement.getChildren()) {

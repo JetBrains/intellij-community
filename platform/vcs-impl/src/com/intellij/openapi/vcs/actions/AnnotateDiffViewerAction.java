@@ -48,10 +48,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
@@ -59,8 +57,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
@@ -234,7 +230,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
 
         if (revision instanceof CurrentContentRevision) {
           VirtualFile file = ((CurrentContentRevision)revision).getVirtualFile();
-          FileAnnotationLoader loader = doCreateAnnotationsLoader(vcs, file);
+          FileAnnotationLoader loader = doCreateAnnotationsLoader(project, vcs, file);
           if (loader != null) return loader;
         }
         else {
@@ -252,19 +248,16 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
         if (content instanceof FileContent) {
           VirtualFile file = ((FileContent)content).getFile();
           AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
-          FileAnnotationLoader loader = doCreateAnnotationsLoader(vcs, file);
+          FileAnnotationLoader loader = doCreateAnnotationsLoader(project, vcs, file);
           if (loader != null) return loader;
         }
 
-        VcsFileRevision[] fileRevisions = request.getUserData(VcsHistoryUtil.REVISIONS_KEY);
-        if (fileRevisions != null && fileRevisions.length == 2) {
-          VcsFileRevision fileRevision = side.select(fileRevisions);
-          if (fileRevision instanceof VcsFileRevisionEx) {
-            FilePath filePath = ((VcsFileRevisionEx)fileRevision).getPath();
-            AbstractVcs vcs = VcsUtil.getVcsFor(project, filePath);
-            FileAnnotationLoader loader = doCreateAnnotationsLoader(vcs, filePath, fileRevision.getRevisionNumber());
-            if (loader != null) return loader;
-          }
+        Pair<FilePath, VcsRevisionNumber> info = content.getUserData(VcsHistoryUtil.REVISION_INFO_KEY);
+        if (info != null) {
+          FilePath filePath = info.first;
+          AbstractVcs vcs = VcsUtil.getVcsFor(project, filePath);
+          FileAnnotationLoader loader = doCreateAnnotationsLoader(vcs, filePath, info.second);
+          if (loader != null) return loader;
         }
       }
     }
@@ -273,10 +266,17 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
   }
 
   @Nullable
-  private static FileAnnotationLoader doCreateAnnotationsLoader(@Nullable AbstractVcs vcs, @Nullable final VirtualFile file) {
+  private static FileAnnotationLoader doCreateAnnotationsLoader(@NotNull Project project,
+                                                                @Nullable AbstractVcs vcs,
+                                                                @Nullable final VirtualFile file) {
     if (vcs == null || file == null) return null;
     final AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
     if (annotationProvider == null) return null;
+
+    FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(file);
+    if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED || fileStatus == FileStatus.IGNORED) {
+      return null;
+    }
 
     // TODO: cache them too, listening for ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener() ?
     return new FileAnnotationLoader(vcs, false) {

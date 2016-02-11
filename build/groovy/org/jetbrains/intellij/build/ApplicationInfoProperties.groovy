@@ -1,5 +1,3 @@
-import groovy.transform.Immutable
-
 /*
  * Copyright 2000-2015 JetBrains s.r.o.
  *
@@ -15,6 +13,9 @@ import groovy.transform.Immutable
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.intellij.build
+
+import groovy.transform.Immutable
 
 /**
  * @author nik

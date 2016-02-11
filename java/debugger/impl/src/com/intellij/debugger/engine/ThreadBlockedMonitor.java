@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,19 +43,14 @@ import java.util.HashSet;
 public class ThreadBlockedMonitor {
   private static final Logger LOG = Logger.getInstance(ThreadBlockedMonitor.class);
 
-  private final Collection<ThreadReferenceProxy> myWatchedThreads = new HashSet<ThreadReferenceProxy>();
+  private final Collection<ThreadReferenceProxy> myWatchedThreads = new HashSet<>();
 
   private final SingleAlarm myAlarm;
   private final DebugProcessImpl myProcess;
 
   public ThreadBlockedMonitor(DebugProcessImpl process, Disposable disposable) {
     myProcess = process;
-    myAlarm = new SingleAlarm(new Runnable() {
-      @Override
-      public void run() {
-        checkBlockingThread();
-      }
-    }, 5000, Alarm.ThreadToUse.POOLED_THREAD, disposable);
+    myAlarm = new SingleAlarm(this::checkBlockingThread, 5000, Alarm.ThreadToUse.POOLED_THREAD, disposable);
   }
 
   public void startWatching(@Nullable ThreadReferenceProxy thread) {
@@ -88,21 +81,18 @@ public class ThreadBlockedMonitor {
     XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(
       DebuggerBundle.message("status.thread.blocked.by", blockedThread.name(), blockingThread.name()),
       DebuggerBundle.message("status.thread.blocked.by.resume", blockingThread.name()),
-      NotificationType.INFORMATION, new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            notification.expire();
-            process.getManagerThread().schedule(new DebuggerCommandImpl() {
-              @Override
-              protected void action() throws Exception {
-                ThreadReferenceProxyImpl threadProxy = process.getVirtualMachineProxy().getThreadReferenceProxy(blockingThread);
-                SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(process.getSuspendManager(), threadProxy);
-                process.getManagerThread()
-                  .invoke(process.createResumeThreadCommand(suspendingContext, threadProxy));
-              }
-            });
-          }
+      NotificationType.INFORMATION, (notification, event) -> {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          notification.expire();
+          process.getManagerThread().schedule(new DebuggerCommandImpl() {
+            @Override
+            protected void action() throws Exception {
+              ThreadReferenceProxyImpl threadProxy = process.getVirtualMachineProxy().getThreadReferenceProxy(blockingThread);
+              SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(process.getSuspendManager(), threadProxy);
+              process.getManagerThread()
+                .invoke(process.createResumeThreadCommand(suspendingContext, threadProxy));
+            }
+          });
         }
       }).notify(process.getProject());
   }

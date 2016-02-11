@@ -108,7 +108,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
   }
   
   private static Pair<String, Map<String, ObjectReference>> createMarkupVariablesText(Map<?, ValueMarkup> markupMap) {
-    final Map<String, ObjectReference> reverseMap = new HashMap<String, ObjectReference>();
+    final Map<String, ObjectReference> reverseMap = new HashMap<>();
     final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
     try {
       for (Map.Entry<?, ValueMarkup> entry : markupMap.entrySet()) {

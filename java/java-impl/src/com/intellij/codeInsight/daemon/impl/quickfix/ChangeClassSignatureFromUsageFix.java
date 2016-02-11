@@ -24,7 +24,6 @@ import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
 import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -123,24 +122,14 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
       else {
         suggestedName = suggester.suggestUnusedName("T");
       }
-      final PsiTypeCodeFragment boundFragment = createBoundCodeFragment(boundType, typeElement, factory);
+      final PsiTypeCodeFragment boundFragment = ChangeClassSignatureDialog.createTableCodeFragment(boundType, typeElement, factory, true);
       result.add(new TypeParameterInfoView(new TypeParameterInfo.New(suggestedName, defaultType, null),
                                            boundFragment,
                                            boundType == null ? factory.createTypeCodeFragment(suggestedName, typeElement, true)
-                                                             : createBoundCodeFragment(boundType, typeElement, factory)));
+                                                             : ChangeClassSignatureDialog
+                                             .createTableCodeFragment(boundType, typeElement, factory, false)));
     }
     return result;
-  }
-
-  private static PsiTypeCodeFragment createBoundCodeFragment(@Nullable PsiClassType boundType,
-                                                             @NotNull PsiElement context,
-                                                             @NotNull JavaCodeFragmentFactory factory) {
-    final PsiTypeCodeFragment boundFragment =
-      factory.createTypeCodeFragment(boundType == null ? "" : boundType.getClassName(), context, true);
-    if (boundType != null) {
-      boundFragment.addImportsFromString(boundType.getCanonicalText());
-    }
-    return boundFragment;
   }
 
   private static boolean isAssignable(@NotNull PsiTypeParameter typeParameter, @NotNull PsiType type) {

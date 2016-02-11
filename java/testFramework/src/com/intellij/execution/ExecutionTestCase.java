@@ -37,6 +37,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Arrays;
@@ -179,7 +180,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     return myModuleOutputDir.getAbsolutePath();
   }
 
-  public void waitProcess(final ProcessHandler processHandler) {
+  public void waitProcess(@NotNull final ProcessHandler processHandler) {
     Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, getTestRootDisposable());
 
     final boolean[] isRunning = {true};

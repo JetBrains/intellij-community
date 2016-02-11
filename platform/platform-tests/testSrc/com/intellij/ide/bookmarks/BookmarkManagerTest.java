@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import java.util.List;
  * @since 12/27/10 1:43 PM
  */
 public class BookmarkManagerTest extends AbstractEditorTest {
-  private final List<Bookmark> myBookmarks = new ArrayList<Bookmark>();
+  private final List<Bookmark> myBookmarks = new ArrayList<>();
   
   @Override
   protected void tearDown() throws Exception {
@@ -181,6 +181,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
 
     Document document = FileDocumentManager.getInstance().getDocument(myVFile);
     assertNotNull(document);
+    PsiDocumentManager.getInstance(getProject()).getPsiFile(document); // create psi so that PsiChangeHandler won't leak
 
     document.insertString(0, "line 0\n");
     assertEquals(2, bookmark.getLine());

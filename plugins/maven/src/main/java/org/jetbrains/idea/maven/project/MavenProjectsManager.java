@@ -730,9 +730,15 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @Nullable
-  public MavenProject findAggregator(@NotNull MavenProject module) {
+  public MavenProject findAggregator(@NotNull MavenProject mavenProject) {
     if (!isInitialized()) return null;
-    return myProjectsTree.findAggregator(module);
+    return myProjectsTree.findAggregator(mavenProject);
+  }
+
+  @Nullable
+  public MavenProject findRootProject(@NotNull MavenProject mavenProject) {
+    if (!isInitialized()) return null;
+    return myProjectsTree.findRootProject(mavenProject);
   }
 
   @NotNull

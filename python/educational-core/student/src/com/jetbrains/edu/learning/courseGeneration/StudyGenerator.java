@@ -122,7 +122,14 @@ public class StudyGenerator {
                   }
                 });
                 for (File file : files) {
-                  FileUtil.copy(file, new File(baseDir.getPath(), file.getName()));
+                  File dir = new File(baseDir.getPath(), file.getName());
+                  if (file.isDirectory()) {
+                    FileUtil.copyDir(file, dir);
+                    continue;
+                  }
+
+                  FileUtil.copy(file, dir);
+
                 }
               }
               catch (IOException e) {

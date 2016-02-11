@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.*;
@@ -216,12 +217,14 @@ public abstract class JavaValueModifier extends XValueModifier {
       public void threadAction() {
         ExpressionEvaluator evaluator;
         try {
-          evaluator = DebuggerInvocationUtil
-            .commitAndRunReadAction(evaluationContext.getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
+          final Project project = evaluationContext.getProject();
+          evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
               public ExpressionEvaluator compute() throws EvaluateException {
                 return EvaluatorBuilderImpl
-                  .build(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression), ContextUtil.getContextElement(evaluationContext),
-                         ContextUtil.getSourcePosition(evaluationContext));
+                  .build(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression),
+                         ContextUtil.getContextElement(evaluationContext),
+                         ContextUtil.getSourcePosition(evaluationContext),
+                         project);
               }
             });
 

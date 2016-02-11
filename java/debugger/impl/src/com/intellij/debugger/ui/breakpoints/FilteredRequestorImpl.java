@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,7 +142,7 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
     myClassExclusionFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(EXCLUSION_FILTER_OPTION_NAME));
 
     final ClassFilter [] instanceFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(INSTANCE_ID_OPTION_NAME));
-    final List<InstanceFilter> iFilters = new ArrayList<InstanceFilter>(instanceFilters.length);
+    final List<InstanceFilter> iFilters = new ArrayList<>(instanceFilters.length);
 
     for (ClassFilter instanceFilter : instanceFilters) {
       try {

@@ -137,17 +137,14 @@ public class BalloonLayoutImpl implements BalloonLayout {
       return;
     }
 
-    int width = 0;
     for (Balloon balloon : myBalloons) {
-      Dimension size = balloon.getPreferredSize();
-      width = Math.max(width, size.width);
       BalloonLayoutData layoutData = myLayoutData.get(balloon);
       if (layoutData != null) {
-        layoutData.height = size.height;
+        layoutData.height = balloon.getPreferredSize().height;
       }
     }
 
-    myWidth = width;
+    myWidth = BalloonLayoutConfiguration.FixedWidth;
   }
 
   private void relayout() {

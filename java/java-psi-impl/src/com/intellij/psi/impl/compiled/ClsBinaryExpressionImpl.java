@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,26 +22,18 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-abstract class ClsBinaryExpressionImpl extends ClsElementImpl implements PsiBinaryExpression {
+class ClsBinaryExpressionImpl extends ClsElementImpl implements PsiBinaryExpression {
   private final ClsElementImpl myParent;
+  private final PsiJavaToken myOperator;
   private final PsiExpression myLOperand;
-  private final PsiJavaToken myOperation;
   private final PsiExpression myROperand;
 
-  ClsBinaryExpressionImpl(@NotNull ClsElementImpl parent) {
+  ClsBinaryExpressionImpl(ClsElementImpl parent, PsiJavaToken sign, PsiExpression left, PsiExpression right) {
     myParent = parent;
-    myLOperand = createLOperand();
-    myOperation = createOperation();
-    myROperand = createROperand();
+    myOperator = new ClsJavaTokenImpl(this, sign.getTokenType(), sign.getText());
+    myLOperand = ClsParsingUtil.psiToClsExpression(left, this);
+    myROperand = ClsParsingUtil.psiToClsExpression(right, this);
   }
-
-  @NotNull
-  protected abstract PsiJavaToken createOperation();
-  @NotNull
-  protected abstract PsiExpression createLOperand();
-  @NotNull
-  protected abstract ClsLiteralExpressionImpl createROperand();
-
 
   @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
@@ -55,13 +47,13 @@ abstract class ClsBinaryExpressionImpl extends ClsElementImpl implements PsiBina
 
   @Override
   public String getText() {
-    return StringUtil.join(myLOperand.getText(), " ", myOperation.getText(), " ", myROperand.getText());
+    return StringUtil.join(myLOperand.getText(), " ", myOperator.getText(), " ", myROperand.getText());
   }
 
   @NotNull
   @Override
   public PsiElement[] getChildren() {
-    return new PsiElement[]{myLOperand, myOperation, myROperand};
+    return new PsiElement[]{myLOperand, myOperator, myROperand};
   }
 
   @Override
@@ -94,13 +86,13 @@ abstract class ClsBinaryExpressionImpl extends ClsElementImpl implements PsiBina
   @NotNull
   @Override
   public PsiJavaToken getOperationSign() {
-    return myOperation;
+    return myOperator;
   }
 
   @NotNull
   @Override
   public IElementType getOperationTokenType() {
-    return myOperation.getTokenType();
+    return myOperator.getTokenType();
   }
 
   @Override

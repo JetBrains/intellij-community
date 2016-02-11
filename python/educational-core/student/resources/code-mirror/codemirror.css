@@ -1,8 +1,11 @@
 body {
     margin-left: 20px;
-    /*font-family: Serif, serif;*/
-    font-family: monospace;
-    font-weight: lighter;
+    font-family: Helvetica, sans-serif;
+    color: #4f5254;
+}
+
+code {
+    font-family: "Source Code Pro", fantasy;
 }
 /* BASICS */
 .task-help pre code {

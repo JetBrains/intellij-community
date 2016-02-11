@@ -46,6 +46,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.plaf.UIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -60,6 +61,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+
+import static java.util.Locale.ENGLISH;
 
 /**
  * User: spLeaner
@@ -675,7 +678,16 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   private static class ColorRenderer extends JLabel implements Renderer<Color> {
     public JComponent setValue(@NotNull final Color value) {
-      setText("r:" + value.getRed() + ", g:" + value.getGreen() + ", b:" + value.getBlue() + ", a:" + value.getAlpha());
+      StringBuilder sb = new StringBuilder();
+      String hex = Integer.toHexString(value.getRGB());
+      for (int i = hex.length(); i < 8; i++) sb.append('0');
+      sb.append(hex.toUpperCase(ENGLISH));
+      sb.append(", r:").append(value.getRed());
+      sb.append(", g:").append(value.getGreen());
+      sb.append(", b:").append(value.getBlue());
+      sb.append(", a:").append(value.getAlpha());
+      if (value instanceof UIResource) sb.append(" [UI]");
+      setText(sb.toString());
       setIcon(new ColorIcon(13, 11, value, true));
       return this;
     }
@@ -683,7 +695,12 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   private static class FontRenderer extends JLabel implements Renderer<Font> {
     public JComponent setValue(@NotNull final Font value) {
-      setText(value.getFontName() + " (" + value.getFamily() + "), " + value.getSize() + "px");
+      StringBuilder sb = new StringBuilder();
+      sb.append(value.getFontName()).append(" (").append(value.getFamily()).append("), ").append(value.getSize()).append("px");
+      if (Font.BOLD == (Font.BOLD & value.getStyle())) sb.append(" bold");
+      if (Font.ITALIC == (Font.ITALIC & value.getStyle())) sb.append(" italic");
+      if (value instanceof UIResource) sb.append(" [UI]");
+      setText(sb.toString());
       return this;
     }
   }
@@ -727,7 +744,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     final List<String> PROPERTIES = Arrays.asList(
       "ui", "getLocation", "getLocationOnScreen",
       "getSize", "isOpaque", "getBorder",
-      "getForeground", "getBackground", "getFont",
+      "getForeground", "isForegroundSet",
+      "getBackground", "isBackgroundSet",
+      "getFont", "isFontSet",
       "getMinimumSize", "getMaximumSize", "getPreferredSize",
       "getAlignmentX", "getAlignmentY",
       "getText", "isEditable", "getIcon",

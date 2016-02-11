@@ -302,8 +302,8 @@ public class PerformanceWatcher implements ApplicationComponent {
 
       myPublisher.dumpedThreads(file, threadDump);
     }
-    catch (IOException ignored) {
-      LOG.error("failed to write thread dump file");
+    catch (IOException e) {
+      LOG.info("failed to write thread dump file: " + e.getMessage());
     }
     return file;
   }

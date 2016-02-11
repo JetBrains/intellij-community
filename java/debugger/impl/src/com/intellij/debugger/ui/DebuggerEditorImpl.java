@@ -131,7 +131,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor {
 
         ListPopup popup = createLanguagePopup();
         popup.showUnderneathOf(myChooseFactory);
-        myPopup = new WeakReference<ListPopup>(popup);
+        myPopup = new WeakReference<>(popup);
         return true;
       }
     }.installOn(myChooseFactory);

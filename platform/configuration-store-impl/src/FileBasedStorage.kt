@@ -136,7 +136,7 @@ open class FileBasedStorage(file: File,
 
   private fun processReadException(e: Exception?) {
     val contentTruncated = e == null
-    blockSavingTheContent = !contentTruncated && (isProjectOrModuleFile(fileSpec) || fileSpec == StoragePathMacros.WORKSPACE_FILE)
+    blockSavingTheContent = !contentTruncated && (PROJECT_FILE == fileSpec || fileSpec.startsWith(PROJECT_CONFIG_DIR) || fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)
     if (!ApplicationManager.getApplication().isUnitTestMode && !ApplicationManager.getApplication().isHeadlessEnvironment) {
       if (e != null) {
         LOG.info(e)
@@ -225,15 +225,13 @@ private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparat
   }
 }
 
-fun Parent.toBufferExposingByteArray(lineSeparator: String = "\n"): BufferExposingByteArrayOutputStream {
+internal fun Parent.toBufferExposingByteArray(lineSeparator: String = "\n"): BufferExposingByteArrayOutputStream {
   val out = BufferExposingByteArrayOutputStream(512)
   JDOMUtil.writeParent(this, out, lineSeparator)
   return out
 }
 
-fun isProjectOrModuleFile(fileSpec: String): Boolean = PROJECT_FILE == fileSpec || fileSpec.startsWith(PROJECT_CONFIG_DIR) || fileSpec == StoragePathMacros.MODULE_FILE
-
-fun detectLineSeparators(chars: CharSequence, defaultSeparator: LineSeparator?): LineSeparator {
+internal fun detectLineSeparators(chars: CharSequence, defaultSeparator: LineSeparator?): LineSeparator {
   for (c in chars) {
     if (c == '\r') {
       return LineSeparator.CRLF

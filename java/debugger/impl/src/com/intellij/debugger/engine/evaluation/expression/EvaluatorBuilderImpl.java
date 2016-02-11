@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,13 +59,10 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     return ourInstance;
   }
 
-  public static ExpressionEvaluator build(final TextWithImports text, @Nullable PsiElement contextElement, final SourcePosition position) throws EvaluateException {
-    if (contextElement == null) {
-      throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
-    }
-
-    final Project project = contextElement.getProject();
-
+  public static ExpressionEvaluator build(final TextWithImports text,
+                                          @Nullable PsiElement contextElement,
+                                          @Nullable final SourcePosition position,
+                                          @NotNull Project project) throws EvaluateException {
     CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, contextElement);
     PsiCodeFragment codeFragment = factory.createCodeFragment(text, contextElement, project);
     if (codeFragment == null) {
@@ -87,7 +84,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     private Evaluator myResult = null;
     private PsiClass myContextPsiClass;
     private CodeFragmentEvaluator myCurrentFragmentEvaluator;
-    private final Set<JavaCodeFragment> myVisitedFragments = new HashSet<JavaCodeFragment>();
+    private final Set<JavaCodeFragment> myVisitedFragments = new HashSet<>();
     @Nullable
     private final SourcePosition myPosition;
 
@@ -98,7 +95,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     @Override
     public void visitCodeFragment(JavaCodeFragment codeFragment) {
       myVisitedFragments.add(codeFragment);
-      ArrayList<Evaluator> evaluators = new ArrayList<Evaluator>();
+      ArrayList<Evaluator> evaluators = new ArrayList<>();
 
       CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
 
@@ -522,7 +519,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitDeclarationStatement(PsiDeclarationStatement statement) {
-      List<Evaluator> evaluators = new ArrayList<Evaluator>();
+      List<Evaluator> evaluators = new ArrayList<>();
 
       PsiElement[] declaredElements = statement.getDeclaredElements();
       for (PsiElement declaredElement : declaredElements) {

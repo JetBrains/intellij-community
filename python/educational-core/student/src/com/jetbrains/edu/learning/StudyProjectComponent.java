@@ -50,9 +50,9 @@ import java.util.Map;
 public class StudyProjectComponent implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(StudyProjectComponent.class.getName());
   private final Project myProject;
-
   private FileCreatedByUserListener myListener;
-
+  // Shows could we use JavaFX Task Description panel or should use Swing
+  private boolean useJavaFx = true;
   private Map<Keymap, List<Pair<String, String>>> myDeletedShortcuts = new HashMap<Keymap, List<Pair<String, String>>>();
   private StudyProjectComponent(@NotNull final Project project) {
     myProject = project;
@@ -61,7 +61,14 @@ public class StudyProjectComponent implements ProjectComponent {
   @Override
   public void projectOpened() {
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
-    Platform.setImplicitExit(false);
+    // Check if user has javafx lib in his JDK. Now bundled JDK doesn't have this lib inside.
+    try {
+      Platform.setImplicitExit(false);
+    }
+    catch (NoClassDefFoundError e) {
+      useJavaFx = false;
+    }
+
     if (course != null && !course.isUpToDate()) {
       course.setUpToDate(true);
       updateCourse();
@@ -264,6 +271,10 @@ public class StudyProjectComponent implements ProjectComponent {
   public static StudyProjectComponent getInstance(@NotNull final Project project) {
     final Module module = ModuleManager.getInstance(project).getModules()[0];
     return module.getComponent(StudyProjectComponent.class);
+  }
+
+  public boolean useJavaFx() {
+    return useJavaFx;
   }
 
   private class FileCreatedByUserListener extends VirtualFileAdapter {

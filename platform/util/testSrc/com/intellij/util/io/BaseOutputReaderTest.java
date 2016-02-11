@@ -35,7 +35,8 @@ import static org.junit.Assert.assertNotNull;
 
 public class BaseOutputReaderTest {
   private static final String[] TEST_DATA = {"first\n", "incomplete", "-continuation\n", "last\n"};
-  private static final int TIMEOUT = 500;
+  private static final int SEND_TIMEOUT = 500;
+  private static final int SLEEP_TIMEOUT = 60000;
 
   private static class TestOutputReader extends BaseOutputReader {
     private final List<String> myLines = Collections.synchronizedList(new ArrayList<String>());
@@ -119,12 +120,12 @@ public class BaseOutputReaderTest {
   @SuppressWarnings("BusyWait")
   public static void main(String[] args) throws InterruptedException {
     if (args.length > 0 && "sleep".equals(args[0])) {
-      Thread.sleep(60000);
+      Thread.sleep(SLEEP_TIMEOUT);
     }
     else if (args.length > 0 && "data".equals(args[0])) {
       for (String line : TEST_DATA) {
         System.out.print(line);
-        Thread.sleep(TIMEOUT);
+        Thread.sleep(SEND_TIMEOUT);
       }
     }
     else {

@@ -15,8 +15,10 @@
  */
 package com.intellij.vcs.log.printer.idea;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.NodePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
@@ -27,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author erokhins
@@ -79,7 +82,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
                            dash[0] / 2);
   }
 
-  private void paintUpLine(int from, int to, Color color, boolean hasArrow, boolean isUsual, boolean isSelected, boolean isTerminal) {
+  private void paintUpLine(int from, int to, @NotNull Color color, boolean hasArrow, boolean isUsual, boolean isSelected, boolean isTerminal) {
     // paint vertical lines normal size
     // paint non-vertical lines twice the size to make them dock with each other well
     int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
@@ -99,7 +102,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
   }
 
-  private void paintDownLine(int from, int to, Color color, boolean hasArrow, boolean isUsual, boolean isSelected, boolean isTerminal) {
+  private void paintDownLine(int from, int to, @NotNull Color color, boolean hasArrow, boolean isUsual, boolean isSelected, boolean isTerminal) {
     int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
     if (from == to) {
       int y2 = getRowHeight() - 1 - (isTerminal ? PrintParameters.getCircleRadius(getRowHeight()) / 2 + 1 : 0);
@@ -117,7 +120,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
   }
 
-  private void paintLine(Color color,
+  private void paintLine(@NotNull Color color,
                          boolean hasArrow,
                          int x1,
                          int y1,
@@ -158,7 +161,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     return Pair.create((int)Math.round(rotateX + centerX), (int)Math.round(rotateY + centerY));
   }
 
-  private void paintCircle(int position, Color color, boolean select) {
+  private void paintCircle(int position, @NotNull Color color, boolean select) {
     int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
     int circleRadius = PrintParameters.getCircleRadius(getRowHeight());
     int selectedCircleRadius = PrintParameters.getSelectedCircleRadius(getRowHeight());
@@ -198,7 +201,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     return myColorGenerator.getColor(printElement.getColorId());
   }
 
-  private static boolean isUsual(PrintElement printElement) {
+  private static boolean isUsual(@NotNull PrintElement printElement) {
     if (!(printElement instanceof EdgePrintElement)) return true;
     EdgePrintElement.LineStyle lineStyle = ((EdgePrintElement)printElement).getLineStyle();
     return lineStyle == EdgePrintElement.LineStyle.SOLID;
@@ -210,34 +213,48 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
     for (PrintElement printElement : printElements) {
-      if (printElement instanceof EdgePrintElement) {
-
-        EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
-        Color usualColor = getColor(edgePrintElement);
-
-        if (printElement.isSelected()) {
-          printEdge(MARK_COLOR, true, edgePrintElement);
-          printEdge(usualColor, false, edgePrintElement);
-        }
-        else {
-          printEdge(usualColor, false, edgePrintElement);
-        }
+      if (!printElement.isSelected()) {
+        drawElement(printElement, false);
       }
+    }
 
-      if (printElement instanceof NodePrintElement) {
-        int position = printElement.getPositionInCurrentRow();
-        if (printElement.isSelected()) {
-          paintCircle(position, MARK_COLOR, true);
-          paintCircle(position, getColor(printElement), false);
-        }
-        else {
-          paintCircle(position, getColor(printElement), false);
-        }
+    List<PrintElement> selected = ContainerUtil.filter(printElements, new Condition<PrintElement>() {
+      @Override
+      public boolean value(PrintElement printElement) {
+        return printElement.isSelected();
+      }
+    });
+    for (PrintElement printElement : selected) {
+      drawElement(printElement, true);
+    }
+
+    for (PrintElement printElement : selected) {
+      drawElement(printElement, false);
+    }
+  }
+
+  protected void drawElement(@NotNull PrintElement printElement, boolean isSelected) {
+    if (printElement instanceof EdgePrintElement) {
+      if (isSelected) {
+        printEdge(MARK_COLOR, true, (EdgePrintElement)printElement);
+      }
+      else {
+        printEdge(getColor(printElement), false, (EdgePrintElement)printElement);
+      }
+    }
+
+    if (printElement instanceof NodePrintElement) {
+      int position = printElement.getPositionInCurrentRow();
+      if (isSelected) {
+        paintCircle(position, MARK_COLOR, true);
+      }
+      else {
+        paintCircle(position, getColor(printElement), false);
       }
     }
   }
 
-  private void printEdge(Color color, boolean isSelected, EdgePrintElement edgePrintElement) {
+  private void printEdge(@NotNull Color color, boolean isSelected, @NotNull EdgePrintElement edgePrintElement) {
     int from = edgePrintElement.getPositionInCurrentRow();
     int to = edgePrintElement.getPositionInOtherRow();
     boolean isUsual = isUsual(edgePrintElement);

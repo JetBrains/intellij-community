@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,6 +139,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     final Color selection = UIUtil.getListSelectionBackground();
 
     Graphics2D g2 = result.createGraphics();
+    g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 
@@ -289,11 +290,11 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Insets getWrapperPanelInsets(Insets insets) {
-    final JBInsets result = JBUI.insets(insets);
-    if (shouldPaintWrapperPanel()) {
-      result.top += JBUI.scale(1);
-    }
-    return result;
+    //final JBInsets result = JBUI.insets(insets);
+    //if (shouldPaintWrapperPanel()) {
+    //  result.top += JBUI.scale(1);
+    //}
+    return insets;
   }
 
   private static boolean shouldPaintWrapperPanel() {

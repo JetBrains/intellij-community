@@ -33,6 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.ExtensionException;
@@ -94,7 +95,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
             return;
           }
         }
-        chooseAmbiguousTarget(editor, offset, elements);
+        chooseAmbiguousTarget(editor, offset, elements, file);
         return;
       }
 
@@ -102,7 +103,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       PsiElement navElement = element.getNavigationElement();
       navElement = TargetElementUtil.getInstance().getGotoDeclarationTarget(element, navElement);
       if (navElement != null) {
-        gotoTargetElement(navElement);
+        gotoTargetElement(navElement, editor, file);
       }
     }
     catch (IndexNotReadyException e) {
@@ -121,13 +122,10 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return null;
   }
 
-  private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements) {
-    PsiElementProcessor<PsiElement> navigateProcessor = new PsiElementProcessor<PsiElement>() {
-      @Override
-      public boolean execute(@NotNull final PsiElement element) {
-        gotoTargetElement(element);
-        return true;
-      }
+  private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements, PsiFile currentFile) {
+    PsiElementProcessor<PsiElement> navigateProcessor = element -> {
+      gotoTargetElement(element, editor, currentFile);
+      return true;
     };
     boolean found =
       chooseAmbiguousTarget(editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"), elements);
@@ -136,7 +134,13 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  private static void gotoTargetElement(PsiElement element) {
+  private static void gotoTargetElement(@NotNull PsiElement element, @NotNull Editor currentEditor, @NotNull PsiFile currentFile) {
+    if (element.getContainingFile() == currentFile) {
+      currentEditor.getCaretModel().moveToOffset(element.getTextOffset());
+      currentEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      return;
+    }
+
     Navigatable navigatable = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor(element);
     if (navigatable != null && navigatable.canNavigate()) {
       navigatable.navigate(true);

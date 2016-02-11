@@ -248,7 +248,7 @@ public class InferenceSessionContainer {
       final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(psiCall.getArgumentList());
       if (properties != null) {
         if (properties.isApplicabilityCheck() || 
-            parent instanceof PsiLambdaExpression && ((PsiLambdaExpression)parent).hasFormalParameterTypes()) {
+            lambdaExpression != null && lambdaExpression.hasFormalParameterTypes()) {
           break;
         }
       }

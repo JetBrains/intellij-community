@@ -105,12 +105,15 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myReferencesPanel = new ReferencesPanel(myColorManager);
     myCommitDetailsPanel = new DataPanel(logDataHolder.getProject(), logDataHolder.isMultiRoot(), logDataHolder);
 
-    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.getVerticalScrollBar().setUnitIncrement(8);
     myMainContentPanel = new JPanel(new MigLayout("flowy, ins 0, hidemode 3, gapy 0")) {
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
+        if (myCommitDetailsPanel.isExpanded()) {
+          return size;
+        }
         size.width = myScrollPane.getViewport().getWidth() - 5;
         return size;
       }
@@ -324,8 +327,24 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       if (myBranches.isEmpty()) return "<i>Not in any branch</i>";
       if (myExpanded) {
         int rowCount = (int)Math.ceil((double)myBranches.size() / BRANCHES_TABLE_COLUMN_COUNT);
-        HtmlTableBuilder builder = new HtmlTableBuilder();
 
+        int[] means = new int[BRANCHES_TABLE_COLUMN_COUNT - 1];
+        int[] max = new int[BRANCHES_TABLE_COLUMN_COUNT - 1];
+
+        for (int i = 0; i < rowCount; i++){
+          for (int j = 0; j < BRANCHES_TABLE_COLUMN_COUNT - 1; j++) {
+            int index = rowCount * j + i;
+            if (index < myBranches.size()) {
+              means[j] += myBranches.get(index).length();
+              max[j] = Math.max(myBranches.get(index).length(), max[j]);
+            }
+          }
+        }
+        for (int j = 0; j < BRANCHES_TABLE_COLUMN_COUNT - 1; j++) {
+          means[j] /= rowCount;
+        }
+
+        HtmlTableBuilder builder = new HtmlTableBuilder();
         for (int i = 0; i < rowCount; i++) {
           builder.startRow();
           if (i == 0) {
@@ -340,11 +359,18 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
             if (index >= myBranches.size()) {
               builder.append("");
             }
-            else if (index != myBranches.size() - 1) {
-              builder.append(myBranches.get(index) + "," + StringUtil.repeat("&nbsp;", 20), LEFT_ALIGN);
-            }
             else {
-              builder.append(myBranches.get(index), LEFT_ALIGN);
+              String branch = myBranches.get(index);
+              if (index != myBranches.size() - 1) {
+                int space = 0;
+                if (j < BRANCHES_TABLE_COLUMN_COUNT - 1 && branch.length() == max[j]) {
+                  space = Math.max(means[j] + 20 - max[j], 5);
+                }
+                builder.append(branch + "," + StringUtil.repeat("&nbsp;", space), LEFT_ALIGN);
+              }
+              else {
+                builder.append(branch, LEFT_ALIGN);
+              }
             }
           }
 
@@ -454,6 +480,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     @Override
     public Color getBackground() {
       return getDetailsBackground();
+    }
+
+    public boolean isExpanded() {
+      return myExpanded;
     }
   }
 

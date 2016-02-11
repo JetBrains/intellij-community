@@ -59,7 +59,7 @@ public class JBScrollPane extends JScrollPane {
 
   @Deprecated
   public static final RegionPainter<Float> THUMB_PAINTER = new ProtectedPainter(new SubtractThumbPainter(.20f, .15f, Gray.x80, Gray.x91),
-                                                                                new ThumbPainter(.35f, .25f, Gray.x80, Gray.x6E));
+                                                                                new ThumbPainter(.7f, .2f, Gray.x99, Gray.x8C));
   @Deprecated
   public static final RegionPainter<Float> THUMB_DARK_PAINTER = new ThumbPainter(.35f, .25f, Gray.x80, Gray.x94);
 

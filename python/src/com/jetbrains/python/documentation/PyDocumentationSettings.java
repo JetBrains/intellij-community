@@ -17,8 +17,6 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,10 +37,7 @@ import java.util.List;
 /**
  * @author yole
  */
-@State(
-  name = "PyDocumentationSettings",
-  storages = @Storage(StoragePathMacros.MODULE_FILE)
-)
+@State(name = "PyDocumentationSettings")
 public class PyDocumentationSettings implements PersistentStateComponent<PyDocumentationSettings> {
   public static final DocStringFormat DEFAULT_DOCSTRING_FORMAT = DocStringFormat.REST;
 

@@ -16,9 +16,11 @@
 
 body {
     margin-left: 20px;
-    /*font-family: Serif, serif;*/
-    font-family: monospace;
-    font-weight: lighter;
+    font-family: Helvetica, sans-serif;
+}
+
+code {
+    font-family: Courier, monospace;
 }
 
 /* BASICS */

@@ -26,6 +26,9 @@ interface Stream<T> {
   <V> V <warning descr="Lambda unfriendly overload of method 'map()'">map</warning>(IntFunction<V> intMapper);
 }
 class X {
+  <warning descr="Lambda unfriendly overload of constructor 'X()'">X</warning>(IntPredicate p) {}
+  <warning descr="Lambda unfriendly overload of constructor 'X()'">X</warning>(Function<String, String> f) {}
+
   void <warning descr="Lambda unfriendly overload of method 'a()'">a</warning>(IntPredicate p) {}
   void <warning descr="Lambda unfriendly overload of method 'a()'">a</warning> (Function<String, String> f) {}
 
