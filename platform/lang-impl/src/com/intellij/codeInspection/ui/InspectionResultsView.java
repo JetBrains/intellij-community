@@ -455,16 +455,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       myPreviewEditor = EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), true);
       final EditorSettings settings = myPreviewEditor.getSettings();
       settings.setLineNumbersShown(false);
-      settings.setLineNumbersShown(false);
-      settings.setWhitespacesShown(false);
       settings.setLineMarkerAreaShown(false);
-      settings.setIndentGuidesShown(false);
-      settings.setFoldingOutlineShown(false);
       settings.setAdditionalColumnsCount(0);
       settings.setAdditionalLinesCount(0);
+      settings.setLeadingWhitespaceShown(true);
       settings.setRightMarginShown(true);
       settings.setRightMargin(60);
-
       myPreviewEditor.getCaretModel().moveToOffset(referencedElement.getTextOffset());
       myPreviewEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
       UsagePreviewPanel
