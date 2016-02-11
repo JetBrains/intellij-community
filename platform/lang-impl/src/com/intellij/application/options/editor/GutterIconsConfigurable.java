@@ -60,7 +60,7 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
   @Nullable
   @Override
   public String getHelpTopic() {
-    return null;
+    return "reference.settings.editor.gutter.icons";
   }
 
   @Nullable
