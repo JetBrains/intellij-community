@@ -16,9 +16,6 @@
 package com.intellij.testIntegration;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.TestStateStorage;
-import com.intellij.execution.testframework.TestIconMapper;
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -29,34 +26,20 @@ import java.util.List;
 import java.util.Map;
 
 public class SelectTestStep extends BaseListPopupStep<String> {
-  private final Map<String, TestStateStorage.Record> myRecords;
   private final RecentTestRunner myRunner;
+  private final TestLocator myTestLocator;
+  private final Map<String, Icon> myIcons;
 
-  public SelectTestStep(Map<String, TestStateStorage.Record> records, RecentTestRunner runner) {
-    super("Debug Recent Tests", getUrls(records, runner));
+  public SelectTestStep(List<String> urls, Map<String, Icon> icons, RecentTestRunner runner, TestLocator locator) {
+    super("Debug Recent Tests", urls);
     myRunner = runner;
-    myRecords = records;
+    myIcons = icons;
+    myTestLocator = locator;
   }
 
-  private static List<String> getUrls(Map<String, TestStateStorage.Record> records, RecentTestRunner runner) {
-    RecentTestsData data = new RecentTestsData(runner);
-
-    for (Map.Entry<String, TestStateStorage.Record> entry : records.entrySet()) {
-      String url = entry.getKey();
-      TestStateStorage.Record record = entry.getValue();
-      data.addTest(url, getMagnitude(record.magnitude), record.date);
-    }
-
-    return data.calculateTestList();
-  }
-
-  private static TestStateInfo.Magnitude getMagnitude(int magnitude) {
-    for (TestStateInfo.Magnitude m : TestStateInfo.Magnitude.values()) {
-      if (m.getValue() == magnitude) {
-        return m;
-      }
-    }
-    return null;
+  @Override
+  public Icon getIconFor(String value) {
+    return myIcons.get(value);
   }
 
   @NotNull
@@ -69,17 +52,10 @@ public class SelectTestStep extends BaseListPopupStep<String> {
   public boolean isSpeedSearchEnabled() {
     return true;
   }
-
-  @Override
-  public Icon getIconFor(String value) {
-    TestStateStorage.Record record = myRecords.get(value);
-    TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(record.magnitude);
-    return TestIconMapper.getIcon(magnitude);
-  }
   
   @Override
   public PopupStep onChosen(String url, boolean finalChoice) {
-    Location location = myRunner.getLocation(url);
+    Location location = myTestLocator.getLocation(url);
     myRunner.run(location);
     return null;
   }

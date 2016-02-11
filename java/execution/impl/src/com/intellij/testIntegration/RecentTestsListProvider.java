@@ -15,6 +15,7 @@
  */
 package com.intellij.testIntegration;
 
+import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -27,7 +28,40 @@ import java.util.*;
 import static com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.*;
 import static com.intellij.testIntegration.TestInfo.select;
 
-public class RecentTestsData {
+
+public class RecentTestsListProvider {
+  private final Map<String, TestStateStorage.Record> myRecords;
+
+  public RecentTestsListProvider(Map<String, TestStateStorage.Record> records) {
+    myRecords = records;  
+  }
+  
+  public List<String> getUrlsToShowFromHistory() {
+    if (myRecords == null) return ContainerUtil.emptyList();
+    
+    RecentTestsData data = new RecentTestsData();
+    for (Map.Entry<String, TestStateStorage.Record> entry : myRecords.entrySet()) {
+      String url = entry.getKey();
+      TestStateStorage.Record record = entry.getValue();
+      if (TestLocator.canLocate(url)) {
+        data.addTest(url, getMagnitude(record.magnitude), record.date);
+      }
+    }
+
+    return data.getSortedTestsList();
+  }
+  
+  private static TestStateInfo.Magnitude getMagnitude(int magnitude) {
+    for (TestStateInfo.Magnitude m : values()) {
+      if (m.getValue() == magnitude) {
+        return m;
+      }
+    }
+    return null;
+  }
+}
+
+class RecentTestsData {
   private static Comparator<TestInfo> BY_PATH_COMPARATOR = new Comparator<TestInfo>() {
     @Override
     public int compare(TestInfo o1, TestInfo o2) {
@@ -50,18 +84,13 @@ public class RecentTestsData {
       return -o1.getRunDate().compareTo(o2.getRunDate());
     }
   };
-
-  private final RecentTestRunner myRunner;
+  
   private final Map<String, SuiteInfo> mySuites = ContainerUtil.newHashMap();
 
   private List<TestInfo> myTestsWithoutSuites = ContainerUtil.newArrayList();
 
-  public RecentTestsData(RecentTestRunner runner) {
-    myRunner = runner;
-  }
-
   public void addTest(String url, TestStateInfo.Magnitude magnitude, Date runDate) {
-    if (myRunner.isSuite(url)) {
+    if (TestLocator.isSuite(url)) {
       mySuites.put(url, new SuiteInfo(url, magnitude, runDate));
       return;
     }
@@ -91,7 +120,7 @@ public class RecentTestsData {
     return null;
   }
 
-  public List<String> calculateTestList() {
+  public List<String> getSortedTestsList() {
     distributeUnmatchedTests();
     List<String> result = ContainerUtil.newArrayList();
     fillWithTests(result, ERROR_INDEX, FAILED_INDEX);
@@ -285,20 +314,6 @@ class TestInfo {
           }
         }
         return false;
-      }
-    });
-  }
-
-  public static <T extends TestInfo> List<T> selectNot(Collection<T> infos, final TestStateInfo.Magnitude... magnitudes) {
-    return ContainerUtil.filter(infos, new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        for (TestStateInfo.Magnitude magnitude : magnitudes) {
-          if (t.getMagnitude() == magnitude) {
-            return false;
-          }
-        }
-        return true;
       }
     });
   }
