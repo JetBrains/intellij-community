@@ -20,10 +20,7 @@ import com.intellij.execution.TestStateStorage
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.LightIdeaTestCase
-import com.intellij.testIntegration.RecentTestRunner
-import com.intellij.testIntegration.RecentTestsListProvider
-import com.intellij.testIntegration.SelectTestStep
-import com.intellij.testIntegration.TestLocator
+import com.intellij.testIntegration.*
 import org.assertj.core.api.Assertions.assertThat
 import org.mockito.Matchers
 import org.mockito.Mockito.`when`
@@ -35,7 +32,6 @@ fun failed(date: Date) = TestStateStorage.Record(TestStateInfo.Magnitude.FAILED_
 
 class RecentTestsStepTest: LightIdeaTestCase() {
   val runner = mock(RecentTestRunner::class.java)
-  val testLocator = createLocator()
 
   val passed = passed(Date(0))
   val failed = failed(Date(0))
@@ -43,14 +39,14 @@ class RecentTestsStepTest: LightIdeaTestCase() {
   class TestStorage {
     private val map: MutableMap<String, TestStateStorage.Record> = hashMapOf()
     
-    fun addSuite(name: String, pass: Boolean, date: Date = Date(0)) {
+    fun addSuite(name: String, pass: Boolean, date: Date = Date(0), language: String = "java") {
       val magnitude = if (pass) TestStateInfo.Magnitude.PASSED_INDEX else TestStateInfo.Magnitude.FAILED_INDEX
-      addSuite(name, magnitude, date)
+      addSuite(name, magnitude, date, language)
     }
     
-    fun addSuite(name: String, magnitude: TestStateInfo.Magnitude, date: Date = Date(0)) {
+    fun addSuite(name: String, magnitude: TestStateInfo.Magnitude, date: Date = Date(0), language: String = "java") {
       val record = TestStateStorage.Record(magnitude.value, date)
-      map.put("java:suite://$name", record)
+      map.put("$language:suite://$name", record)
     }
     
     fun addTest(name: String, magnitude: TestStateInfo.Magnitude, date: Date = Date(0)) {
@@ -63,14 +59,10 @@ class RecentTestsStepTest: LightIdeaTestCase() {
       addTest(name, magnitude, date)
     }
     
-    fun addJsSuite(name: String, pass: Boolean, date: Date = Date(0)) {
-      val magnitude = if (pass) TestStateInfo.Magnitude.PASSED_INDEX else TestStateInfo.Magnitude.FAILED_INDEX
-      val record = TestStateStorage.Record(magnitude.value, date)
-      map.put("js:suite://$name", record)
-    }
-    
     fun getMap() = map
 
+    fun getSuite(name: String, language: String = "java") = map["$language:suite://$name"]
+    
     fun removeUrl(url: String) {
       map.remove(url)
     }
@@ -145,11 +137,13 @@ class RecentTestsStepTest: LightIdeaTestCase() {
   
   fun `test show only java tests`() {
     val storage = TestStorage()
+    
     storage.addSuite("JavaTest1", true)
     storage.addSuite("JavaTest2", true)
-    storage.addJsSuite("JsSuite1", true)
-    storage.addJsSuite("JsSuite2", true)
-    storage.addJsSuite("JsSuite3", true)
+    
+    storage.addSuite("JsSuite1", true, Date(0), "js")
+    storage.addSuite("JsSuite2", true, Date(0), "js")
+    storage.addSuite("JsSuite3", true, Date(0), "js")
     
     val values = getSortedList(storage.getMap())
     assertThat(values.map { VirtualFileManager.extractPath(it) }).isEqualTo(listOf("JavaTest1", "JavaTest2"))
@@ -235,22 +229,76 @@ class RecentTestsStepTest: LightIdeaTestCase() {
     assertThat(values).isEqualTo(listOf("ASTest"))
   }
   
-  private fun createLocator(): TestLocator {
+  private fun locatorReturningNullIfContains(substring: String): TestLocator {
     val locator = mock(TestLocator::class.java)
     `when`(locator.getLocation(Matchers.anyString())).thenAnswer {
       val url = it.arguments[0] as String
-      if (url.contains("<")) null else mock(Location::class.java)
+      if (url.contains(substring)) null else mock(Location::class.java)
     }
     return locator
   }
   
   fun `test shown value without protocol`() {
-    val step = SelectTestStep(emptyList(), emptyMap(), runner, testLocator)
+    val step = SelectTestStep(emptyList(), emptyMap(), runner, mock(TestLocator::class.java))
     var shownValue = step.getTextFor("java:suite://JavaFormatterSuperDuperTest")
     assertThat(shownValue).isEqualTo("JavaFormatterSuperDuperTest")
     
     shownValue = step.getTextFor("java:test://JavaFormatterSuperDuperTest.testItMakesMeSadToFixIt")
     assertThat(shownValue).isEqualTo("JavaFormatterSuperDuperTest.testItMakesMeSadToFixIt")
   }
-  
+
+  fun `test do not show urls which we can locate without location`() {
+    val storage = TestStorage()
+
+    storage.addSuite("ASTest", true)
+    storage.addSuite("BSTest", false)
+    storage.addTest("BSTest.fff", false)
+    storage.addTest("BSTest.ppp", true)
+
+    storage.addTest("<default package>", false)
+    storage.addSuite("<default package>", false)
+
+    val testStorageMock = createMockStorage(storage)
+
+    val map = storage.getMap()
+
+    val cleaner = DeadTestsCleaner(testStorageMock, map.keys.toList(), locatorReturningNullIfContains("<"))
+    cleaner.run()
+
+    val sortedUrlList = getSortedList(storage.getMap())
+    val values = sortedUrlList.map { VirtualFileManager.extractPath(it) }
+
+    assertThat(values).isEqualTo(listOf("BSTest.fff", "BSTest", "ASTest"))
+    assertThat(storage.getSuite("<default package>")).isEqualTo(null)
+  }
+
+  fun `test do not remove tests if we are unable to locate them`() {
+    val storage = TestStorage()
+
+    storage.addSuite("ASTest", true)
+    
+    storage.addSuite("JsSuite1", true, Date(), "js")
+    storage.addSuite("JsSuite2", true, Date(), "js")
+    
+    val testStorageMock = createMockStorage(storage)
+    
+    val sortedUrlList = getSortedList(storage.getMap())
+    
+    val cleaner = DeadTestsCleaner(testStorageMock, sortedUrlList, locatorReturningNullIfContains("JsSuite"))
+    cleaner.run()
+
+    assertThat(storage.getSuite("JsSuite1", "js")).isNotEqualTo(null)
+    assertThat(storage.getSuite("JsSuite2", "js")).isNotEqualTo(null)
+  }
+
+  private fun createMockStorage(storage: TestStorage): TestStateStorage? {
+    val testStorageMock = mock(TestStateStorage::class.java)
+    `when`(testStorageMock.removeState(Matchers.anyString())).then {
+      val url = it.arguments[0]as String
+      storage.removeUrl(url)
+    }
+    return testStorageMock
+  }
+
+
 }

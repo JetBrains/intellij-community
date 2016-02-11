@@ -21,6 +21,7 @@ import com.intellij.execution.testframework.TestIconMapper;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -74,6 +75,8 @@ public class ShowRecentTests extends AnAction {
 
     RecentTestsListPopup popup = new RecentTestsListPopup(selectStepTest, testRunner, testLocator);
     popup.showCenteredInCurrentWindow(project);
+    
+    ApplicationManager.getApplication().executeOnPooledThread(new DeadTestsCleaner(testStorage, urls, testLocator));
   }
   
   private static Icon getIconFor(String value, Map<String, TestStateStorage.Record> records) {
