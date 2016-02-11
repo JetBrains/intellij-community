@@ -10,8 +10,10 @@ public class PyStudyToolWindowConfigurator extends StudyBaseToolWindowConfigurat
   @NotNull
   @Override
   public DefaultActionGroup getActionGroup(Project project) {
-    final DefaultActionGroup group = super.getActionGroup(project);
+    final DefaultActionGroup baseGroup = super.getActionGroup(project);
+    final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new PyStudyCheckAction());
+    group.addAll(baseGroup);
     return group;
   }
 
