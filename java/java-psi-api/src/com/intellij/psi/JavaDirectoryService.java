@@ -75,7 +75,11 @@ public abstract class JavaDirectoryService {
    *  true show dialog asking for undefined variables
    *  false leave them blank
    */
-  public abstract PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName, boolean askForUndefinedVariables) throws IncorrectOperationException;
+  public abstract PsiClass createClass(@NotNull PsiDirectory dir,
+                                       @NotNull String name,
+                                       @NotNull String templateName,
+                                       Map<String, String> creationOptions,
+                                       boolean askForUndefinedVariables) throws IncorrectOperationException;
 
   /**
    * @param additionalProperties additional properties to be substituted in the template
