@@ -109,6 +109,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private final InspectionRVContentProvider myProvider;
   private AnAction myIncludeAction;
   private AnAction myExcludeAction;
+  private Editor myPreviewEditor;
 
   public InspectionResultsView(@NotNull final Project project,
                                final InspectionProfile inspectionProfile,
@@ -436,14 +437,18 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private JComponent createBaseRightComponentFor(PsiElement containingElement, BatchProblemDescriptor descriptor) {
     final int count = descriptor.getProblemCount();
+    if (myPreviewEditor != null) {
+      EditorFactory.getInstance().releaseEditor(myPreviewEditor);
+      myPreviewEditor = null;
+    }
     if (count == 1 || (containingElement != null && !(containingElement instanceof PsiDirectory))) {
       final PsiElement element = descriptor.getFirstProblemElement();
       LOG.assertTrue(element != null);
       final PsiElement referencedElement = containingElement == null ? descriptor.getFirstProblemElement() : containingElement;
       final PsiFile file = referencedElement.getContainingFile();
       final Document document = PsiDocumentManager.getInstance(referencedElement.getProject()).getDocument(file);
-      Editor editor = EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), true);
-      final EditorSettings settings = editor.getSettings();
+      myPreviewEditor = EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), true);
+      final EditorSettings settings = myPreviewEditor.getSettings();
       settings.setLineNumbersShown(false);
       settings.setLineNumbersShown(false);
       settings.setWhitespacesShown(false);
@@ -455,12 +460,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       settings.setRightMarginShown(true);
       settings.setRightMargin(60);
 
-      editor.getCaretModel().moveToOffset(referencedElement.getTextOffset());
-      editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      myPreviewEditor.getCaretModel().moveToOffset(referencedElement.getTextOffset());
+      myPreviewEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
       UsagePreviewPanel
-        .highlight(containingElement == null ? Collections.singletonList(new UsageInfo(referencedElement)) : Collections.emptyList(),
-                   editor, myProject);
-      return editor.getComponent();
+        .highlight(containingElement == null
+                   ? Collections.singletonList(new UsageInfo(referencedElement))
+                   : getElementToHighlight(containingElement),
+                   myPreviewEditor, myProject);
+      return myPreviewEditor.getComponent();
     }
     else if (count > 1) {
       return new InspectionNodeInfo(myTree.getSelectedToolWrapper(), myProject);
@@ -915,18 +922,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
-  private static RefEntity findLeafIfOnlyOne(@NotNull RefEntity entity) {
-    RefEntity current = entity;
-    while (current != null) {
-      final List<RefEntity> children = current.getChildren();
-      if (children.size() > 1) {
-        return null;
-      }
-      if (children.isEmpty()) {
-        return current;
-      }
-      current = children.get(0);
+  @NotNull
+  private static List<UsageInfo> getElementToHighlight(@Nullable PsiElement element) {
+    if (element instanceof PsiFile || element == null) {
+      return Collections.emptyList();
     }
-    return null;
+    if (element instanceof PsiNameIdentifierOwner) {
+      return getElementToHighlight(((PsiNameIdentifierOwner)element).getNameIdentifier());
+    }
+    return Collections.singletonList(new UsageInfo(element));
   }
 }
