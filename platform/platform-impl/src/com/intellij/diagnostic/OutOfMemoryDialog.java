@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,15 @@ package com.intellij.diagnostic;
 import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.Main;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.MemoryDumpHelper;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,8 +52,10 @@ public class OutOfMemoryDialog extends DialogWrapper {
   private JBLabel myCodeCacheUnitsLabel;
   private JBLabel myCodeCacheCurrentValueLabel;
   private JBLabel mySettingsFileHintLabel;
+  private JBLabel myDumpMessageLabel;
   private final Action myContinueAction;
   private final Action myShutdownAction;
+  private final Action myHeapDumpAction;
 
   public OutOfMemoryDialog(@NotNull MemoryKind memoryKind) {
     super(false);
@@ -88,6 +94,14 @@ public class OutOfMemoryDialog extends DialogWrapper {
       }
     };
     myShutdownAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
+
+    boolean heapDump = memoryKind == MemoryKind.HEAP && MemoryDumpHelper.memoryDumpAvailable();
+    myHeapDumpAction = !heapDump ? null : new DialogWrapperAction(DiagnosticBundle.message("diagnostic.out.of.memory.dump")) {
+      @Override
+      protected void doAction(ActionEvent e) {
+        snapshot();
+      }
+    };
 
     configControls(MemoryKind.HEAP, myHeapSizeLabel, myHeapSizeField, myHeapUnitsLabel, myHeapCurrentValueLabel);
     configControls(MemoryKind.PERM_GEN, myPermGenSizeLabel, myPermGenSizeField, myPermGenUnitsLabel, myPermGenCurrentValueLabel);
@@ -137,6 +151,51 @@ public class OutOfMemoryDialog extends DialogWrapper {
     catch (NumberFormatException ignored) { }
   }
 
+  @SuppressWarnings("SSBasedInspection")
+  private void snapshot() {
+    enableControls(false);
+    myDumpMessageLabel.setVisible(true);
+    myDumpMessageLabel.setText("Dumping memory...");
+
+    Runnable task = new Runnable() {
+      @Override
+      public void run() {
+        TimeoutUtil.sleep(250);  // to give UI chance to update
+        String message = "";
+        try {
+          String name = ApplicationNamesInfo.getInstance().getLowercaseProductName();
+          String path = SystemProperties.getUserHome() + File.separator + "heapDump-" + name + '-' + System.currentTimeMillis() + ".hprof";
+          MemoryDumpHelper.captureMemoryDump(path);
+          message = "Dumped to " + path;
+        }
+        catch (Throwable t) {
+          message = "Error: " + t.getMessage();
+        }
+        finally {
+          final String _message = message;
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              myDumpMessageLabel.setText(_message);
+              enableControls(true);
+            }
+          });
+        }
+      }
+    };
+    new Thread(task, "OOME Heap Dump").start();
+  }
+
+  @SuppressWarnings("Duplicates")
+  private void enableControls(boolean enabled) {
+    myHeapSizeField.setEnabled(enabled);
+    myPermGenSizeField.setEnabled(enabled);
+    myCodeCacheSizeField.setEnabled(enabled);
+    myShutdownAction.setEnabled(enabled);
+    myContinueAction.setEnabled(enabled);
+    myHeapDumpAction.setEnabled(enabled);
+  }
+
   @Override
   protected JComponent createCenterPanel() {
     return myContentPane;
@@ -145,7 +204,8 @@ public class OutOfMemoryDialog extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createActions() {
-    return new Action[]{myShutdownAction, myContinueAction};
+    return myHeapDumpAction != null ? new Action[]{myShutdownAction, myContinueAction, myHeapDumpAction}
+                                    : new Action[]{myShutdownAction, myContinueAction};
   }
 
   @Override
