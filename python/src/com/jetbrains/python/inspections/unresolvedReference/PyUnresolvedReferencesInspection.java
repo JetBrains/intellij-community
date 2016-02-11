@@ -47,7 +47,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
-import com.jetbrains.python.codeInsight.imports.PythonReferenceImporter;
+import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.docstrings.DocStringParameterReference;
 import com.jetbrains.python.documentation.docstrings.DocStringTypeReference;
@@ -593,7 +593,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           description = PyBundle.message("INSP.unresolved.ref.$0", refText);
 
           // look in other imported modules for this whole name
-          if (PythonReferenceImporter.isImportable(element)) {
+          if (PythonImportUtils.isImportable(element)) {
             addAutoImportFix(node, reference, actions);
           }
 
@@ -918,7 +918,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     private static void addAutoImportFix(PyElement node, PsiReference reference, List<LocalQuickFix> actions) {
       final PsiFile file = InjectedLanguageManager.getInstance(node.getProject()).getTopLevelFile(node);
       if (!(file instanceof PyFile)) return;
-      AutoImportQuickFix importFix = PythonReferenceImporter.proposeImportFix(node, reference);
+      AutoImportQuickFix importFix = PythonImportUtils.proposeImportFix(node, reference);
       if (importFix != null) {
         if (!suppressHintForAutoImport(node, importFix) && PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP) {
           final AutoImportHintAction autoImportHintAction = new AutoImportHintAction(importFix);
