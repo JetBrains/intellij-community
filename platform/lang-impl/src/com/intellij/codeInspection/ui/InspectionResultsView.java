@@ -51,6 +51,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ConcurrencyUtil;
@@ -382,9 +383,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private void syncRightPanel() {
     if (myTree.getSelectionModel().getSelectionCount() != 1) {
-      final JLabel multipleSelectionLabel = new JLabel("Select inspection tree node to see problem description");
+      final JLabel multipleSelectionLabel = new JBLabel(InspectionViewNavigationPanel.getTitleText(false, false));
       multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP);
-      multipleSelectionLabel.setBorder(IdeBorderFactory.createEmptyBorder(JBUI.scale(5), JBUI.scale(5), 0, 0));
+      multipleSelectionLabel.setBorder(IdeBorderFactory.createEmptyBorder(5, 7, 0, 0));
       mySplitter.setSecondComponent(multipleSelectionLabel);
     }
     else {
@@ -411,8 +412,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         else if (node instanceof InspectionNode) {
           showInRightPanel(null, node.accumulateProblemInfo(new BatchProblemDescriptor(false)), node.isValid());
         }
+        else if (node instanceof InspectionRootNode || node instanceof InspectionGroupNode) {
+          mySplitter.setSecondComponent(new InspectionViewNavigationPanel(node, myTree));
+        }
         else {
-          mySplitter.setSecondComponent(new JPanel());
+          LOG.error("Unexpected node: " + node.getClass());
         }
       }
     }
