@@ -151,7 +151,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
 
       if (action.getType() == GraphAction.Type.MOUSE_OVER) {
         myPrintElementManager.setSelectedElement(affectedElement);
-        return new GraphAnswerImpl<CommitId>(getCursor(true), null, null);
+        return new GraphAnswerImpl<CommitId>(getCursor(true), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null);
       }
 
       if (action.getType() == GraphAction.Type.MOUSE_CLICK) {
@@ -197,11 +197,8 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     }
 
     private GraphAnswer<CommitId> convert(@NotNull final LinearGraphController.LinearGraphAnswer answer) {
-      CommitId commitToJump = null;
-      Integer nodeId = answer.getCommitToJump();
-      if (nodeId != null) commitToJump = myPermanentGraph.getPermanentCommitsInfo().getCommitId(nodeId);
       final Runnable graphUpdater = answer.getGraphUpdater();
-      return new GraphAnswerImpl<CommitId>(answer.getCursorToSet(), commitToJump, graphUpdater == null ? null : new Runnable() {
+      return new GraphAnswerImpl<CommitId>(answer.getCursorToSet(), null, graphUpdater == null ? null : new Runnable() {
         @Override
         public void run() {
           graphUpdater.run();
