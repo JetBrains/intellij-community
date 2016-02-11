@@ -33,6 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.ExtensionException;
@@ -136,6 +137,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   private static void gotoTargetElement(@NotNull PsiElement element, @NotNull Editor currentEditor, @NotNull PsiFile currentFile) {
     if (element.getContainingFile() == currentFile) {
       currentEditor.getCaretModel().moveToOffset(element.getTextOffset());
+      currentEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
       return;
     }
 
