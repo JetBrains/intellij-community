@@ -59,13 +59,10 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     return ourInstance;
   }
 
-  public static ExpressionEvaluator build(final TextWithImports text, @Nullable PsiElement contextElement, final SourcePosition position) throws EvaluateException {
-    if (contextElement == null) {
-      throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
-    }
-
-    final Project project = contextElement.getProject();
-
+  public static ExpressionEvaluator build(final TextWithImports text,
+                                          @Nullable PsiElement contextElement,
+                                          @Nullable final SourcePosition position,
+                                          @NotNull Project project) throws EvaluateException {
     CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, contextElement);
     PsiCodeFragment codeFragment = factory.createCodeFragment(text, contextElement, project);
     if (codeFragment == null) {

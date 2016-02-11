@@ -269,10 +269,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
           final TextWithImports expressionToEvaluate = getLogMessage();
           try {
-            ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
+            ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
               @Override
               public ExpressionEvaluator compute() throws EvaluateException {
-                return EvaluatorBuilderImpl.build(expressionToEvaluate, ContextUtil.getContextElement(context), ContextUtil.getSourcePosition(context));
+                return EvaluatorBuilderImpl.build(expressionToEvaluate,
+                                                  ContextUtil.getContextElement(context),
+                                                  ContextUtil.getSourcePosition(context),
+                                                  myProject);
               }
             });
             final Value eval = evaluator.evaluate(context);
@@ -353,7 +356,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     }
 
     try {
-      ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(context.getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
+      final Project project = context.getProject();
+      ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
         @Override
         public ExpressionEvaluator compute() throws EvaluateException {
           final SourcePosition contextSourcePosition = ContextUtil.getSourcePosition(context);
@@ -364,7 +368,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
           if (contextPsiElement == null) {
             contextPsiElement = getEvaluationElement(); // as a last resort
           }
-          return EvaluatorBuilderImpl.build(getCondition(), contextPsiElement, contextSourcePosition);
+          return EvaluatorBuilderImpl.build(getCondition(), contextPsiElement, contextSourcePosition, project);
         }
       });
       Object value = UnBoxingEvaluator.unbox(evaluator.evaluate(context), context);
