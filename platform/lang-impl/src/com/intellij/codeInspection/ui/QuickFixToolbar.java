@@ -73,7 +73,7 @@ public class QuickFixToolbar extends JPanel {
       panels.add((JPanel)add(line));
     }
     if (multipleDescriptors) {
-      panels.get(0).setBorder(IdeBorderFactory.createEmptyBorder(new Insets(JBUI.scale(5), 0, 0, 0)));
+      panels.get(0).setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
     }
 
     fill(getBulbPlacement(hasFixes), QuickFixToolbar::createBulbIcon, panels);
@@ -89,7 +89,7 @@ public class QuickFixToolbar extends JPanel {
       new JBLabel((hasFixes ? " Fix " : " ") + problemsCount + " warnings " + (target == null ? "" : ("in " + target.getName())));
     Font font = label.getFont();
     if (!hasFixes) {
-      label.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(JBUI.scale(0), JBUI.scale(3), JBUI.scale(6), 0)));
+      label.setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 6, 0));
     }
     label.setFont(new Font(font.getFontName(), Font.BOLD, font.getSize()));
     return label;
@@ -98,7 +98,7 @@ public class QuickFixToolbar extends JPanel {
   @NotNull
   private static JLabel createBulbIcon() {
     final JLabel label = new JLabel(AllIcons.Actions.IntentionBulb);
-    label.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(0, JBUI.scale(10), 0, 0)));
+    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
     return label;
   }
 
@@ -108,7 +108,6 @@ public class QuickFixToolbar extends JPanel {
     final ComboBoxAction action = new ComboBoxAction() {
       {
         getTemplatePresentation().setText("Suppress");
-        setSmallVariant(false);
       }
 
       @NotNull
@@ -119,6 +118,7 @@ public class QuickFixToolbar extends JPanel {
         return group;
       }
     };
+    action.setSmallVariant(false);
     return action.createCustomComponent(action.getTemplatePresentation());
   }
 
@@ -145,9 +145,8 @@ public class QuickFixToolbar extends JPanel {
       });
       sortedFixes.addAll(fixes);
     }
-    //TODO sort fixes
     JPanel fixPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, JBUI.scale(3), JBUI.scale(5)));
-    if (sortedFixes.size() > 3) {
+    if (sortedFixes.size() > MAX_FIX_COUNT) {
       final ComboBoxAction fixComboBox = new ComboBoxAction() {
         {
           getTemplatePresentation().setText("Apply quick fixes");

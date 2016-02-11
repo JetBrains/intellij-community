@@ -27,6 +27,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,7 @@ public class InspectionNodeInfo extends JPanel {
 
   public InspectionNodeInfo(final InspectionToolWrapper toolWrapper, Project project) {
     setLayout(new GridBagLayout());
-    setBorder(IdeBorderFactory.createEmptyBorder(new Insets(0, JBUI.scale(3), 0, 0)));
+    setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 0, 0));
     myProject = project;
     myTitle = new SimpleColoredComponent();
     myCurrentProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProjectProfileImpl();
@@ -57,14 +58,14 @@ public class InspectionNodeInfo extends JPanel {
     myButton = new JButton();
 
     add(myTitle,
-        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, JBUI.scale(2), 0, 0),
+        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new JBInsets(0, 2, 0, 0),
                                0, 0));
     add(new JBLabel(String.valueOf(toolWrapper.loadDescription()), UIUtil.ComponentStyle.SMALL),
         new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                               new Insets(JBUI.scale(5), JBUI.scale(5), 0, 0), 0, 0));
+                               new JBInsets(5, 5, 0, 0), 0, 0));
     add(myButton,
         new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                               new Insets(JBUI.scale(15), 0, 0, 0), 0, 0));
+                               new JBInsets(15, 0, 0, 0), 0, 0));
     updateEnableButtonText(false);
 
     new ClickListener() {
@@ -80,15 +81,12 @@ public class InspectionNodeInfo extends JPanel {
     boolean isEnabled = myCurrentProfile.isToolEnabled(myKey);
     if (revert) {
       final boolean isEnabledAsFinal = isEnabled;
-      DisableInspectionToolAction.modifyAndCommitProjectProfile(new Consumer<ModifiableModel>() {
-        @Override
-        public void consume(ModifiableModel model) {
-          if (isEnabledAsFinal) {
-            model.disableTool(myKey.getID(), myProject);
-          }
-          else {
-            ((InspectionProfileImpl)model).enableTool(myKey.getID(), myProject);
-          }
+      DisableInspectionToolAction.modifyAndCommitProjectProfile(model -> {
+        if (isEnabledAsFinal) {
+          model.disableTool(myKey.getID(), myProject);
+        }
+        else {
+          ((InspectionProfileImpl)model).enableTool(myKey.getID(), myProject);
         }
       }, myProject);
       isEnabled = !isEnabled;
