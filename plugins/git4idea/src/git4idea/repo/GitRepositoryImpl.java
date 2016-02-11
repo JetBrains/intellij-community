@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitLocalBranch;
@@ -197,7 +196,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   @NotNull
   private GitRepoInfo readRepoInfo() {
-    File configFile = new File(FileUtil.toSystemDependentName(myRepositoryFiles.getConfigPath()));
+    File configFile = myRepositoryFiles.getConfigFile();
     GitConfig config = GitConfig.read(myPlatformFacade, configFile);
     Collection<GitRemote> remotes = config.parseRemotes();
     GitBranchState state = myReader.readState(remotes);
