@@ -253,14 +253,14 @@ public class DfaPsiUtil {
 
   @Nullable
   public static PsiCodeBlock getTopmostBlockInSameClass(@NotNull PsiElement position) {
-    PsiCodeBlock block = PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class, false, PsiMember.class, PsiFile.class);
+    PsiCodeBlock block = PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class, false, PsiMember.class, PsiFile.class, PsiLambdaExpression.class);
     if (block == null) {
       return null;
     }
 
     PsiCodeBlock lastBlock = block;
     while (true) {
-      block = PsiTreeUtil.getParentOfType(block, PsiCodeBlock.class, true, PsiMember.class, PsiFile.class);
+      block = PsiTreeUtil.getParentOfType(block, PsiCodeBlock.class, true, PsiMember.class, PsiFile.class, PsiLambdaExpression.class);
       if (block == null) {
         return lastBlock;
       }
