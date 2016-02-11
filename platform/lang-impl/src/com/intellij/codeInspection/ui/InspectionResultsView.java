@@ -57,6 +57,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.*;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -381,7 +382,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private void syncRightPanel() {
     if (myTree.getSelectionModel().getSelectionCount() != 1) {
-      //myBrowser.showEmpty();
+      final JLabel multipleSelectionLabel = new JLabel("Select inspection tree node to see problem description");
+      multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP);
+      multipleSelectionLabel.setBorder(IdeBorderFactory.createEmptyBorder(JBUI.scale(5), JBUI.scale(5), 0, 0));
+      mySplitter.setSecondComponent(multipleSelectionLabel);
     }
     else {
       TreePath pathSelected = myTree.getSelectionModel().getLeadSelectionPath();
