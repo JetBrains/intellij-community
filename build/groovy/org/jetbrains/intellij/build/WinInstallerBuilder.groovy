@@ -1,8 +1,5 @@
-import com.intellij.openapi.util.SystemInfoRt
-import org.codehaus.gant.GantBuilder
-import org.jetbrains.jps.gant.JpsGantProjectBuilder
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +13,11 @@ import org.jetbrains.jps.gant.JpsGantProjectBuilder
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.intellij.build
 
+import com.intellij.openapi.util.SystemInfoRt
+import org.codehaus.gant.GantBuilder
+import org.jetbrains.jps.gant.JpsGantProjectBuilder
 /**
  * @author nik
  */
