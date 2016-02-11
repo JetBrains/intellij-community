@@ -16,7 +16,6 @@
 
 package com.intellij.util;
 
-import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.DifferenceFilter;
@@ -421,17 +420,16 @@ public class ReflectionUtil {
     }
   }
 
-  static {
-    // method getConstructorAccessorMethod is not necessary since JDK7, use acquireConstructorAccessor return value instead
-    assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
-  }
   private static final Method acquireConstructorAccessorMethod = getDeclaredMethod(Constructor.class, "acquireConstructorAccessor");
   private static final Method getConstructorAccessorMethod = getDeclaredMethod(Constructor.class, "getConstructorAccessor");
 
-  @NotNull
+  /** @deprecated private API (to be removed in IDEA 17) */
   public static ConstructorAccessor getConstructorAccessor(@NotNull Constructor constructor) {
+    if (acquireConstructorAccessorMethod == null || getConstructorAccessorMethod == null) {
+      throw new IllegalStateException();
+    }
+
     constructor.setAccessible(true);
-    // it is faster to invoke constructor via sun.reflect.ConstructorAccessor; it avoids AccessibleObject.checkAccess()
     try {
       acquireConstructorAccessorMethod.invoke(constructor);
       return (ConstructorAccessor)getConstructorAccessorMethod.invoke(constructor);
@@ -441,20 +439,22 @@ public class ReflectionUtil {
     }
   }
 
-  @NotNull
-  public static <T> T createInstanceViaConstructorAccessor(@NotNull ConstructorAccessor constructorAccessor,
-                                                           @NotNull Object... arguments) {
+  /** @deprecated private API, use {@link #createInstance(Constructor, Object...)} instead (to be removed in IDEA 17) */
+  public static <T> T createInstanceViaConstructorAccessor(@NotNull ConstructorAccessor constructorAccessor, @NotNull Object... arguments) {
     try {
-      return (T)constructorAccessor.newInstance(arguments);
+      @SuppressWarnings("unchecked") T t = (T)constructorAccessor.newInstance(arguments);
+      return t;
     }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
-  @NotNull
+
+  /** @deprecated private API, use {@link #newInstance(Class)} instead (to be removed in IDEA 17) */
   public static <T> T createInstanceViaConstructorAccessor(@NotNull ConstructorAccessor constructorAccessor) {
     try {
-      return (T)constructorAccessor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
+      @SuppressWarnings("unchecked") T t = (T)constructorAccessor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
+      return t;
     }
     catch (Exception e) {
       throw new RuntimeException(e);
