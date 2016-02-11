@@ -48,6 +48,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -56,8 +57,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
@@ -253,15 +252,12 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
           if (loader != null) return loader;
         }
 
-        VcsFileRevision[] fileRevisions = request.getUserData(VcsHistoryUtil.REVISIONS_KEY);
-        if (fileRevisions != null && fileRevisions.length == 2) {
-          VcsFileRevision fileRevision = side.select(fileRevisions);
-          if (fileRevision instanceof VcsFileRevisionEx) {
-            FilePath filePath = ((VcsFileRevisionEx)fileRevision).getPath();
-            AbstractVcs vcs = VcsUtil.getVcsFor(project, filePath);
-            FileAnnotationLoader loader = doCreateAnnotationsLoader(vcs, filePath, fileRevision.getRevisionNumber());
-            if (loader != null) return loader;
-          }
+        Pair<FilePath, VcsRevisionNumber> info = content.getUserData(VcsHistoryUtil.REVISION_INFO_KEY);
+        if (info != null) {
+          FilePath filePath = info.first;
+          AbstractVcs vcs = VcsUtil.getVcsFor(project, filePath);
+          FileAnnotationLoader loader = doCreateAnnotationsLoader(vcs, filePath, info.second);
+          if (loader != null) return loader;
         }
       }
     }
