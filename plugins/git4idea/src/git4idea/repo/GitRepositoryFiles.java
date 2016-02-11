@@ -17,7 +17,6 @@ package git4idea.repo;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +30,6 @@ import static git4idea.GitUtil.DOT_GIT;
 /**
  * Stores paths to Git service files (from .git/ directory) that are used by IDEA, and provides test-methods to check if a file
  * matches once of them.
- *
- * @author Kirill Likhodedov
  */
 public class GitRepositoryFiles {
 
@@ -59,7 +56,7 @@ public class GitRepositoryFiles {
   public static final String GIT_MERGE_MSG = DOT_GIT + slash(MERGE_MSG);
   public static final String GIT_SQUASH_MSG = DOT_GIT + slash(SQUASH_MSG);
 
-  private final String myGitDirPath;
+  private final String myMainDirPath;
   private final String myConfigFilePath;
   private final String myHeadFilePath;
   private final String myIndexFilePath;
@@ -75,47 +72,32 @@ public class GitRepositoryFiles {
   private final String myInfoDirPath;
   private final String myExcludePath;
 
-  private GitRepositoryFiles(@NotNull VirtualFile gitDir,
-                             @NotNull File configFile,
-                             @NotNull File headFile,
-                             @NotNull File refsDir,
-                             @NotNull File packedRefsFile) {
-    myGitDirPath = GitFileUtils.stripFileProtocolPrefix(gitDir.getPath());
-    myConfigFilePath = FileUtil.toSystemIndependentName(configFile.getPath());
-    myHeadFilePath = FileUtil.toSystemIndependentName(headFile.getPath());
-    myIndexFilePath = myGitDirPath + slash(INDEX);
-    myMergeHeadPath = myGitDirPath + slash(MERGE_HEAD);
-    myOrigHeadPath = myGitDirPath + slash(ORIG_HEAD);
-    myCommitMessagePath = myGitDirPath + slash(COMMIT_EDITMSG);
-    myRebaseApplyPath = myGitDirPath + slash(REBASE_APPLY);
-    myRebaseMergePath = myGitDirPath + slash(REBASE_MERGE);
-    myPackedRefsPath = FileUtil.toSystemIndependentName(packedRefsFile.getPath());
-    String refsPath = FileUtil.toSystemIndependentName(refsDir.getPath());
+  private GitRepositoryFiles(@NotNull String mainDir, @NotNull String worktreeDir) {
+    myMainDirPath = mainDir;
+    myConfigFilePath = mainDir + slash(CONFIG);
+    myPackedRefsPath = mainDir + slash(PACKED_REFS);
+    String refsPath = mainDir + slash(REFS);
     myRefsHeadsDirPath = refsPath + slash(HEADS);
     myRefsTagsPath = refsPath + slash(TAGS);
     myRefsRemotesDirPath = refsPath + slash(REMOTES);
-    myInfoDirPath = myGitDirPath + slash(INFO);
-    myExcludePath = myGitDirPath + slash(INFO_EXCLUDE);
+    myInfoDirPath = mainDir + slash(INFO);
+    myExcludePath = mainDir + slash(INFO_EXCLUDE);
+
+    myHeadFilePath = worktreeDir + slash(HEAD);
+    myIndexFilePath = worktreeDir + slash(INDEX);
+    myMergeHeadPath = worktreeDir + slash(MERGE_HEAD);
+    myOrigHeadPath = worktreeDir + slash(ORIG_HEAD);
+    myCommitMessagePath = worktreeDir + slash(COMMIT_EDITMSG);
+    myRebaseApplyPath = worktreeDir + slash(REBASE_APPLY);
+    myRebaseMergePath = worktreeDir + slash(REBASE_MERGE);
   }
 
   @NotNull
   public static GitRepositoryFiles getInstance(@NotNull VirtualFile gitDir) {
     VirtualFile gitDirForWorktree = getMainGitDirForWorktree(gitDir);
-    File headFile = new File(gitDir.getPath(), HEAD);
-    File refsDir;
-    File packedRefsFile;
-    File configFile;
-    if (gitDirForWorktree == null) {
-      refsDir = new File(gitDir.getPath(), REFS);
-      packedRefsFile = new File(gitDir.getPath(), PACKED_REFS);
-      configFile = new File(gitDir.getPath(), CONFIG);
-    }
-    else {
-      refsDir = new File(gitDirForWorktree.getPath(), REFS);
-      packedRefsFile = new File(gitDirForWorktree.getPath(), PACKED_REFS);
-      configFile = new File(gitDirForWorktree.getPath(), CONFIG);
-    }
-    return new GitRepositoryFiles(gitDir, configFile, headFile, refsDir, packedRefsFile);
+    String mainDir = gitDirForWorktree == null ? gitDir.getPath() : gitDirForWorktree.getPath();
+    String worktreeDir = gitDir.getPath();
+    return new GitRepositoryFiles(mainDir, worktreeDir);
   }
 
   /**
@@ -151,38 +133,48 @@ public class GitRepositoryFiles {
   }
 
   @NotNull
-  String getGitDirPath() {
-    return myGitDirPath;
+  File getRefsHeadsFile() {
+    return new File(FileUtil.toSystemDependentName(myRefsHeadsDirPath));
   }
 
   @NotNull
-  String getRefsHeadsPath() {
-    return myRefsHeadsDirPath;
+  File getRefsRemotesFile() {
+    return new File(FileUtil.toSystemDependentName(myRefsRemotesDirPath));
   }
 
   @NotNull
-  String getRefsRemotesPath() {
-    return myRefsRemotesDirPath;
+  File getRefsTagsFile() {
+    return new File(FileUtil.toSystemDependentName(myRefsTagsPath));
   }
 
   @NotNull
-  String getRefsTagsPath() {
-    return myRefsTagsPath;
+  File getPackedRefsPath() {
+    return new File(FileUtil.toSystemDependentName(myPackedRefsPath));
   }
 
   @NotNull
-  public String getPackedRefsPath() {
-    return myPackedRefsPath;
+  File getHeadFile() {
+    return new File(FileUtil.toSystemDependentName(myHeadFilePath));
   }
 
   @NotNull
-  public String getHeadPath() {
-    return myHeadFilePath;
+  File getConfigFile() {
+    return new File(FileUtil.toSystemDependentName(myConfigFilePath));
   }
 
   @NotNull
-  public String getConfigPath() {
-    return myConfigFilePath;
+  File getRebaseMergeDir() {
+    return new File(FileUtil.toSystemDependentName(myRebaseMergePath));
+  }
+
+  @NotNull
+  File getRebaseApplyDir() {
+    return new File(FileUtil.toSystemDependentName(myRebaseApplyPath));
+  }
+
+  @NotNull
+  File getMergeHeadFile() {
+    return new File(FileUtil.toSystemDependentName(myMergeHeadPath));
   }
 
   /**
@@ -228,7 +220,7 @@ public class GitRepositoryFiles {
    * @return true iff the filePath represents the .git/refs/heads... file for the given branch.
    */
   public boolean isBranchFile(@NotNull String filePath, @NotNull String fullBranchName) {
-    return FileUtil.pathsEqual(filePath, myGitDirPath + slash(fullBranchName));
+    return FileUtil.pathsEqual(filePath, myMainDirPath + slash(fullBranchName));
   }
 
   /**

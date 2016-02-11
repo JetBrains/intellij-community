@@ -54,9 +54,9 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
 
     myRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
     visitSubDirsInVfs(gitDir);
-    myHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsHeadsPath());
-    myRemotesDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsRemotesPath());
-    myTagsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsTagsPath());
+    myHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsHeadsFile());
+    myRemotesDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsRemotesFile());
+    myTagsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsTagsFile());
 
     Project project = repository.getProject();
     myUpdateQueue = new QueueProcessor<Object>(new DvcsUtil.Updater(repository), project.getDisposed());
