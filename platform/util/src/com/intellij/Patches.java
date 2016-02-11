@@ -75,7 +75,7 @@ public class Patches {
    * https://bugs.openjdk.java.net/browse/JDK-8020443
    */
   public static final boolean SUN_BUG_ID_8020443 =
-    SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isJavaVersionAtLeast("1.9");
+    SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isJavaVersionAtLeast("1.8.0_60");
 
   /**
    * XToolkit.getScreenInsets() may be very slow.
