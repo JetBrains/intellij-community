@@ -65,7 +65,7 @@ class MacDistributionBuilder {
     projectBuilder.stage("building .dmg")
     def dmgImageCopy = "$artifactsPath/${fullBuildNumber}.png"
     ant.copy(file: dmgImagePath, tofile: dmgImageCopy)
-    ftpAction("send") {
+    ftpAction("put") {
       ant.fileset(file: dmgImageCopy)
     }
     ant.delete(file: dmgImageCopy)
@@ -104,7 +104,7 @@ class MacDistributionBuilder {
     projectBuilder.stage("signing .mac.zip")
 
     if (new File(customJDKTarPath).exists()) {
-      ftpAction("send") {
+      ftpAction("put") {
         ant.fileset(file: customJDKTarPath)
       }
     }
@@ -113,7 +113,7 @@ class MacDistributionBuilder {
     }
 
     projectBuilder.info("Sending $sitFilePath")
-    ftpAction("send") {
+    ftpAction("put") {
       ant.fileset(file: sitFilePath)
     }
     ant.delete(file: sitFilePath)
