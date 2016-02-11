@@ -30,7 +30,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -1996,6 +1995,10 @@ public abstract class DialogWrapper {
     public int getMinimumHeight() {
       return getMinimumSize().height;
     }
+  }
+
+  public boolean isShowingError() {
+    return myErrorText.shouldBeVisible();
   }
 
   @NotNull

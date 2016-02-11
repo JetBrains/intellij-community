@@ -70,8 +70,9 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   public PsiClass createClass(@NotNull PsiDirectory dir,
                               @NotNull String name,
                               @NotNull String templateName,
+                              @NotNull Map<String, String> creationOptions,
                               boolean askForUndefinedVariables) throws IncorrectOperationException {
-    return createClass(dir, name, templateName, askForUndefinedVariables, Collections.<String, String>emptyMap());
+    return createClass(dir, name, templateName, askForUndefinedVariables, creationOptions);
   }
 
   @Override

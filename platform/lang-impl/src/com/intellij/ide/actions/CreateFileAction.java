@@ -43,7 +43,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 public class CreateFileAction extends CreateElementActionBase implements DumbAware {
@@ -67,7 +69,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     MyInputValidator validator = new MyValidator(project, directory);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       try {
-        return validator.create("test");
+        return validator.create("test", Collections.<String, String>emptyMap());
       }
       catch (Exception e) {
         throw new RuntimeException(e);
@@ -217,9 +219,9 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
 
     @Override
-    public PsiElement[] create(String newName) throws Exception {
+    public PsiElement[] create(String newName, Map<String, String> creationOptions) throws Exception {
       UsageTrigger.trigger("CreateFile." + CreateFileAction.this.getClass().getSimpleName());
-      return super.create(newName);
+      return super.create(newName, creationOptions);
     }
 
     @Override
