@@ -479,6 +479,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configure()
     assertStringItems 'final', 'finalize'
   }
+  public void testMethodCallAfterFinally() { doTest() }
   public void testPrivateInAnonymous() throws Throwable { doTest() }
 
   public void testMethodParenthesesSpaces() throws Throwable {
