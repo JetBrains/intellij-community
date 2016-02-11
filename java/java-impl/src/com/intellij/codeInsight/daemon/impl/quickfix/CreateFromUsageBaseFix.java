@@ -440,7 +440,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         }, commandName, commandName);
       }
     };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isOnAir()) {
       runnable.run();
     }
     else {
