@@ -482,6 +482,22 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testMethodCallAfterFinally() { doTest() }
   public void testPrivateInAnonymous() throws Throwable { doTest() }
 
+  public void testStaticMethodFromOuterClass() {
+    configure()
+    assertStringItems 'foo', 'A.foo', 'for'
+    assert LookupElementPresentation.renderElement(myItems[1]).itemText == 'A.foo'
+    selectItem(myItems[1])
+    checkResult()
+  }
+
+  public void testInstanceMethodFromOuterClass() {
+    configure()
+    assertStringItems 'foo', 'A.this.foo', 'for'
+    assert LookupElementPresentation.renderElement(myItems[1]).itemText == 'A.this.foo'
+    selectItem(myItems[1])
+    checkResult()
+  }
+
   public void testMethodParenthesesSpaces() throws Throwable {
     codeStyleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true
     codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
