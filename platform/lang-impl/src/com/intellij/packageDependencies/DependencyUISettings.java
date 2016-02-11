@@ -25,7 +25,10 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 
 @State(
   name = "DependencyUISettings",
-  storages = @Storage("other.xml")
+  storages = {
+    @Storage("ui.lnf.xml"),
+    @Storage(value = "other.xml", deprecated = true)
+  }
 )
 public class DependencyUISettings implements PersistentStateComponent<DependencyUISettings> {
   public boolean UI_FLATTEN_PACKAGES = true;
