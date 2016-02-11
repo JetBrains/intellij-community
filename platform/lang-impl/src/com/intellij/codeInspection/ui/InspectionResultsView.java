@@ -398,18 +398,18 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           final RefEntity refSelected = refElementNode.getElement();
           if (node.isLeaf()) {
             LOG.assertTrue(problem != null);
-            showInRightPanel(refSelected, BatchProblemDescriptor.single(problem));
+            showInRightPanel(refSelected, BatchProblemDescriptor.single(problem), node.isValid());
           }
           else {
-            showInRightPanel(refSelected, node.accumulateProblemInfo(new BatchProblemDescriptor(false)));
+            showInRightPanel(refSelected, node.accumulateProblemInfo(new BatchProblemDescriptor(false)), node.isValid());
           }
         }
         else if (node instanceof ProblemDescriptionNode) {
           final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
-          showInRightPanel(problemNode.getElement(), BatchProblemDescriptor.single(problemNode.getDescriptor()));
+          showInRightPanel(problemNode.getElement(), BatchProblemDescriptor.single(problemNode.getDescriptor()), node.isValid());
         }
         else if (node instanceof InspectionNode) {
-          showInRightPanel(null, node.accumulateProblemInfo(new BatchProblemDescriptor(false)));
+          showInRightPanel(null, node.accumulateProblemInfo(new BatchProblemDescriptor(false)), node.isValid());
         }
         else {
           mySplitter.setSecondComponent(new JPanel());
@@ -418,23 +418,25 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
-  private void showInRightPanel(final RefEntity refEntity, BatchProblemDescriptor intersector) {
+  private void showInRightPanel(final RefEntity refEntity, BatchProblemDescriptor descriptor, boolean valid) {
     //todo use refentity to determine
     Cursor currentCursor = getCursor();
     setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
-    if (intersector != null) {
+    if (descriptor != null) {
       final JPanel editorPanel = new JPanel();
       editorPanel.setLayout(new BorderLayout());
 
       final PsiElement containingElement = refEntity instanceof RefElement ? ((RefElement)refEntity).getElement() : null;
-      final QuickFixToolbar toolbar = new QuickFixToolbar(intersector,
-                                                          myTree.getSelectedToolWrapper(),
-                                                          myTree.getSelectionPaths(),
-                                                          myProject,
-                                                          containingElement);
-      editorPanel.add(toolbar, BorderLayout.NORTH);
-      editorPanel.add(createBaseRightComponentFor(containingElement, intersector), BorderLayout.CENTER);
+      if (valid && descriptor.getProblemCount() > 0) {
+        editorPanel.add(new QuickFixToolbar(descriptor,
+                                            myTree.getSelectedToolWrapper(),
+                                            myTree.getSelectionPaths(),
+                                            myProject,
+                                            containingElement),
+                        BorderLayout.NORTH);
+      }
+      editorPanel.add(createBaseRightComponentFor(containingElement, descriptor), BorderLayout.CENTER);
       mySplitter.setSecondComponent(editorPanel);
     }
     setCursor(currentCursor);
@@ -443,8 +445,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private JComponent createBaseRightComponentFor(PsiElement containingElement, BatchProblemDescriptor descriptor) {
     final int count = descriptor.getProblemCount();
     if (count == 1 || (containingElement != null && !(containingElement instanceof PsiDirectory))) {
-      final PsiElement element = descriptor.getFirstProblemElement();
-      LOG.assertTrue(element != null);
       final PsiElement referencedElement = containingElement == null ? descriptor.getFirstProblemElement() : containingElement;
       final PsiFile file = referencedElement.getContainingFile();
       final Document document = PsiDocumentManager.getInstance(referencedElement.getProject()).getDocument(file);
