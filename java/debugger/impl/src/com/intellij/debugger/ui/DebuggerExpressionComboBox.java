@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
-import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +40,7 @@ import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author ven
@@ -182,15 +182,10 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   private List<TextWithImports> getRecents() {
     final String recentsId = getRecentsId();
     if (recentsId != null) {
-      final List<TextWithImports> result = new ArrayList<TextWithImports>();
-      List<XExpression> recents = XDebuggerHistoryManager.getInstance(getProject()).getRecentExpressions(getRecentsId());
-      for (XExpression expression : recents) {
-        if (expression.getExpression().indexOf('\n') == -1) {
-          result.add(TextWithImportsImpl.fromXExpression(expression));
-        }
-      }
-
-      return result;
+      return XDebuggerHistoryManager.getInstance(getProject()).getRecentExpressions(recentsId).stream()
+        .filter(expression -> expression.getExpression().indexOf('\n') == -1)
+        .map(TextWithImportsImpl::fromXExpression)
+        .collect(Collectors.toList());
     }
 
     return null;
@@ -265,7 +260,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   }
 
   private static class MyComboboxModel extends AbstractListModel implements MutableComboBoxModel {
-    private List<TextWithImports> myItems = new ArrayList<TextWithImports>();
+    private List<TextWithImports> myItems = new ArrayList<>();
     private int mySelectedIndex = -1;
 
     private MyComboboxModel(@Nullable final List<TextWithImports> recents) {

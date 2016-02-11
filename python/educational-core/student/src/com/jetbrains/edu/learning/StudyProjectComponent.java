@@ -35,6 +35,7 @@ import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
 import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
+import javafx.application.Platform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +61,7 @@ public class StudyProjectComponent implements ProjectComponent {
   @Override
   public void projectOpened() {
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+    Platform.setImplicitExit(false);
     if (course != null && !course.isUpToDate()) {
       course.setUpToDate(true);
       updateCourse();

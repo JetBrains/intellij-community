@@ -15,6 +15,7 @@
  */
 package com.intellij.testIntergration
 
+import com.intellij.execution.Location
 import com.intellij.execution.TestStateStorage
 import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testIntegration.RecentTestRunner
 import com.intellij.testIntegration.SelectTestStep
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Ignore
 import org.junit.Test
 import org.mockito.Matchers
 import org.mockito.Mockito.`when`
@@ -41,13 +43,23 @@ class RecentTestsStepTest {
     private val map: MutableMap<String, TestStateStorage.Record> = hashMapOf()
     
     fun addSuite(name: String, pass: Boolean, date: Date = Date(0)) {
-      val record = if (pass) passed(date) else failed(date)
+      val magnitude = if (pass) TestStateInfo.Magnitude.PASSED_INDEX else TestStateInfo.Magnitude.FAILED_INDEX
+      addSuite(name, magnitude, date)
+    }
+    
+    fun addSuite(name: String, magnitude: TestStateInfo.Magnitude, date: Date = Date(0)) {
+      val record = TestStateStorage.Record(magnitude.value, date)
       map.put("java:suite://$name", record)
+    }
+    
+    fun addTest(name: String, magnitude: TestStateInfo.Magnitude, date: Date = Date(0)) {
+      val record = TestStateStorage.Record(magnitude.value, date)
+      map.put("java:test://$name", record)
     }
 
     fun addTest(name: String, pass: Boolean, date: Date = Date(0)) {
-      val record = if (pass) passed(date) else failed(date)
-      map.put("java:test://$name", record)
+      val magnitude = if (pass) TestStateInfo.Magnitude.PASSED_INDEX else TestStateInfo.Magnitude.FAILED_INDEX
+      addTest(name, magnitude, date)
     }
     
     fun getMap() = map
@@ -81,6 +93,19 @@ class RecentTestsStepTest {
     val values = step.values.map { VirtualFileManager.extractPath(it) }
 
     assertThat(values).isEqualTo(listOf("ASTest", "ASTest.bbbb", "ASTest.cccc", "ASTest.aaaa"))
+  }
+  
+  @Test
+  fun `show ignored`() {
+    val storage = TestStorage()
+    storage.addSuite("ASTest", TestStateInfo.Magnitude.IGNORED_INDEX)
+    storage.addTest("ASTest.ignored", TestStateInfo.Magnitude.IGNORED_INDEX)
+    storage.addTest("ASTest.passed", pass = true)
+    
+    val step = SelectTestStep(storage.getMap(), runner)
+    val values = step.values.map { VirtualFileManager.extractPath(it) }
+
+    assertThat(values).isEqualTo(listOf("ASTest"))
   }
   
   @Test
@@ -126,14 +151,88 @@ class RecentTestsStepTest {
     val step = SelectTestStep(map, runner)
     
     val expected = listOf(
-        "java:suite://JavaFormatterFailed",
         "java:test://JavaFormatterFailed.fail",
-        "java:suite://JavaFormatterSuperDuperTest",
+        "java:suite://JavaFormatterFailed",
         "java:test://JavaFormatterSuperDuperTest.testFail",
+        "java:suite://JavaFormatterSuperDuperTest",
         "java:suite://Test"
     )
     
     assertThat(step.values).isEqualTo(expected)
+  }
+
+  @Test
+  fun `if failed more than 2 tests show suite first`() {
+    val storage = TestStorage()
+    storage.addSuite("ASTest", false)
+    storage.addTest("ASTest.failed1", false, Date(3000))
+    storage.addTest("ASTest.failed2", false, Date(2000))
+    storage.addTest("ASTest.failed3", false, Date(1000))
+    storage.addTest("ASTest.passed1", true)
+
+    val step = SelectTestStep(storage.getMap(), runner)
+    val values = step.values.map { VirtualFileManager.extractPath(it) }
+
+    assertThat(values).isEqualTo(listOf(
+        "ASTest",
+        "ASTest.failed1",
+        "ASTest.failed2",
+        "ASTest.failed3"
+    ))
+  }
+
+  @Test
+  fun `if failed less than 3 tests, show tests first`() {
+    val storage = TestStorage()
+
+    storage.addSuite("ASTest", false)
+    storage.addTest("ASTest.failed1", false, Date(3000))
+    storage.addTest("ASTest.failed2", false, Date(2000))
+    storage.addTest("ASTest.passed1", true)
+
+    val step = SelectTestStep(storage.getMap(), runner)
+    val values = step.values.map { VirtualFileManager.extractPath(it) }
+
+    assertThat(values).isEqualTo(listOf(
+        "ASTest.failed1",
+        "ASTest.failed2",
+        "ASTest"
+    ))
+  }
+
+  @Test
+  fun `if all failed show only suite`() {
+    val storage = TestStorage()
+
+    storage.addSuite("ASTest", false)
+    storage.addTest("ASTest.failed1", false)
+    storage.addTest("ASTest.failed2", false)
+    storage.addTest("ASTest.failed3", false)
+    storage.addTest("ASTest.failed4", false)
+
+    val step = SelectTestStep(storage.getMap(), runner)
+    val values = step.values.map { VirtualFileManager.extractPath(it) }
+
+    assertThat(values).isEqualTo(listOf("ASTest"))
+  }
+  
+  @Ignore
+  @Test
+  fun `do not show urls without location`() {
+    val storage = TestStorage()
+    
+    storage.addSuite("ASTest", true)
+    storage.addSuite("BSTest", false)
+    storage.addTest("BSTest.fff", false)
+    storage.addTest("BSTest.ppp", true)
+
+    storage.addTest("<default package>", false)
+    storage.addSuite("<default package>", false)
+
+    val step = SelectTestStep(storage.getMap(), runner)
+    val values = step.values.map { VirtualFileManager.extractPath(it) }
+    
+    assertThat(values).isEqualTo(listOf("BSTest", "BSTest.fff", "ASTest"))
   }
 
   private fun createRunner(): RecentTestRunner {
@@ -142,6 +241,10 @@ class RecentTestsStepTest {
       val url = it.arguments[0] as String
       val protocol = VirtualFileManager.extractProtocol(url)
       JavaTestLocator.SUITE_PROTOCOL.startsWith(protocol.toString())
+    }
+    `when`(runner.getLocation(Matchers.anyString())).thenAnswer { 
+      val url = it.arguments[0] as String
+      if (url.contains("<")) null else mock(Location::class.java)
     }
     return runner
   }

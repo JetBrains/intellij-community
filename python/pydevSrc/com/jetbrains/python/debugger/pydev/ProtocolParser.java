@@ -160,7 +160,7 @@ public class ProtocolParser {
     final String name = readString(reader, "name", "");
     final int stopReason = readInt(reader, "stop_reason", 0);
     String message = readString(reader, "message", "None");
-    if ("None".equals(message)) {
+    if ("None".equals(message) || message.isEmpty()) {
       message = null;
     }
 

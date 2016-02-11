@@ -105,11 +105,15 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myReferencesPanel = new ReferencesPanel(myColorManager);
     myCommitDetailsPanel = new DataPanel(logDataHolder.getProject(), logDataHolder.isMultiRoot(), logDataHolder);
 
-    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    myScrollPane.getVerticalScrollBar().setUnitIncrement(8);
     myMainContentPanel = new JPanel(new MigLayout("flowy, ins 0, hidemode 3, gapy 0")) {
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
+        if (myCommitDetailsPanel.isExpanded()) {
+          return size;
+        }
         size.width = myScrollPane.getViewport().getWidth() - 5;
         return size;
       }
@@ -200,12 +204,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
   private void updateDetailsBorder(@Nullable VcsFullCommitDetails data) {
     if (data == null || !myColorManager.isMultipleRoots()) {
-      myMainContentPanel.setBorder(BorderFactory.createEmptyBorder());
+      myMainContentPanel.setBorder(BorderFactory.createEmptyBorder(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
+                                                                   VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2, 0, 0));
     }
     else {
       Color color = VcsLogGraphTable.getRootBackgroundColor(data.getRoot(), myColorManager);
       myMainContentPanel.setBorder(new CompoundBorder(new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_COLORED_WIDTH, 0, 0, color),
-                                                      new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, 0, 0,
+                                                      new MatteBorder(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
+                                                                      VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, 0, 0,
                                                                       new JBColor(new NotNullProducer<Color>() {
                                                                         @NotNull
                                                                         @Override
@@ -452,6 +458,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     public Color getBackground() {
       return getDetailsBackground();
     }
+
+    public boolean isExpanded() {
+      return myExpanded;
+    }
   }
 
   private static class ReferencesPanel extends JPanel {
@@ -459,7 +469,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     @NotNull private List<VcsRef> myReferences;
 
     ReferencesPanel(@NotNull VcsLogColorManager colorManager) {
-      super(new FlowLayout(FlowLayout.LEADING, 5, 2));
+      super(new FlowLayout(FlowLayout.LEADING, 4, 2));
       myReferencePainter = new VcsRefPainter(colorManager, false);
       myReferences = Collections.emptyList();
       setOpaque(false);

@@ -15,13 +15,16 @@
  */
 package com.intellij.notification.impl.ui;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,14 +54,15 @@ public class NotificationsUtil {
       title = StringUtil.trimLog(title, TITLE_LIMIT);
       content = StringUtil.trimLog(content, CONTENT_LIMIT);
     }
-    return buildHtml(title, null, content, style, "#" + ColorUtil.toHex(getMessageType(notification).getTitleForeground()), null);
+    return buildHtml(title, null, content, style, "#" + ColorUtil.toHex(getMessageType(notification).getTitleForeground()), null, null);
   }
 
   @NotNull
   public static String buildHtml(@NotNull final Notification notification,
                                  @Nullable String style,
                                  boolean isContent,
-                                 @Nullable Color color) {
+                                 @Nullable Color color,
+                                 @Nullable String contentStyle) {
     String title = !isContent ? notification.getTitle() : "";
     String subtitle = !isContent ? notification.getSubtitle() : null;
     String content = isContent ? notification.getContent() : "";
@@ -73,20 +77,21 @@ public class NotificationsUtil {
       content = StringUtil.trimLog(content, CONTENT_LIMIT);
     }
     String colorText = color == null ? null : "#" + ColorUtil.toHex(color);
-    return buildHtml(title, subtitle, content, style, isContent ? null : colorText, isContent ? colorText : null);
+    return buildHtml(title, subtitle, content, style, isContent ? null : colorText, isContent ? colorText : null, contentStyle);
   }
 
   public static String buildHtml(@Nullable String title, @Nullable String subtitle, @Nullable String content, @Nullable String style) {
-    return buildHtml(title, subtitle, content, style, null, null);
+    return buildHtml(title, subtitle, content, style, null, null, null);
   }
 
   @NotNull
-  private static String buildHtml(@Nullable String title,
-                                  @Nullable String subtitle,
-                                  @Nullable String content,
-                                  @Nullable String style,
-                                  @Nullable String titleColor,
-                                  @Nullable String contentColor) {
+  public static String buildHtml(@Nullable String title,
+                                 @Nullable String subtitle,
+                                 @Nullable String content,
+                                 @Nullable String style,
+                                 @Nullable String titleColor,
+                                 @Nullable String contentColor,
+                                 @Nullable String contentStyle) {
     if (StringUtil.isEmpty(title) && !StringUtil.isEmpty(subtitle)) {
       title = subtitle;
       subtitle = null;
@@ -106,12 +111,29 @@ public class NotificationsUtil {
       result.append("&nbsp;").append(subtitle);
     }
     if (!StringUtil.isEmpty(content)) {
-      result.append("<p").append(contentColor == null ? ">" : " color=\"" + contentColor + "\">").append(content).append("</p>");
+      result.append("<p").append(contentStyle == null ? "" : " style=\"" + contentStyle + "\"")
+        .append(contentColor == null ? ">" : " color=\"" + contentColor + "\">").append(content).append("</p>");
     }
     if (style != null) {
       result.append("</div>");
     }
     return XmlStringUtil.wrapInHtml(result.toString());
+  }
+
+  @Nullable
+  public static String getFontStyle() {
+    String fontName = null;
+    UISettings uiSettings = UISettings.getInstance();
+    if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
+      fontName = uiSettings.FONT_FACE;
+    }
+    else {
+      Pair<String, Integer> systemFontData = UIUtil.getSystemFontData();
+      if (systemFontData != null) {
+        fontName = systemFontData.first;
+      }
+    }
+    return StringUtil.isEmpty(fontName) ? null : "font-family:" + fontName + ";";
   }
 
   @Nullable
@@ -140,10 +162,13 @@ public class NotificationsUtil {
   @NotNull
   public static MessageType getMessageType(@NotNull Notification notification) {
     switch (notification.getType()) {
-      case WARNING: return MessageType.WARNING;
-      case ERROR: return MessageType.ERROR;
+      case WARNING:
+        return MessageType.WARNING;
+      case ERROR:
+        return MessageType.ERROR;
       case INFORMATION:
-      default: return MessageType.INFO;
+      default:
+        return MessageType.INFO;
     }
   }
 

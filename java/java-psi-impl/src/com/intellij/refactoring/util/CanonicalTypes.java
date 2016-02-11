@@ -246,11 +246,13 @@ public class CanonicalTypes {
     }
   }
 
-  private static class DisjunctionType extends Type {
+  private static class LogicalOperationType extends Type {
     private final List<Type> myTypes;
+    private final boolean myDisjunction;
 
-    private DisjunctionType(List<Type> types) {
+    private LogicalOperationType(List<Type> types, boolean disjunction) {
       myTypes = types;
+      myDisjunction = disjunction;
     }
 
     @NotNull
@@ -262,7 +264,7 @@ public class CanonicalTypes {
           return type.getType(context, manager);
         }
       });
-      return new PsiDisjunctionType(types, manager);
+      return myDisjunction ? new PsiDisjunctionType(types, manager) : PsiIntersectionType.createIntersection(types);
     }
 
     @Override
@@ -272,7 +274,7 @@ public class CanonicalTypes {
         public String fun(Type type) {
           return type.getTypeText();
         }
-      }, "|");
+      }, myDisjunction ? "|" : "&");
     }
 
     @Override
@@ -337,7 +339,19 @@ public class CanonicalTypes {
           return type.accept(Creator.this);
         }
       });
-      return new DisjunctionType(types);
+      return new LogicalOperationType(types, true);
+    }
+
+    @Nullable
+    @Override
+    public Type visitIntersectionType(PsiIntersectionType type) {
+      List<Type> types = ContainerUtil.map(type.getConjuncts(), new Function<PsiType, Type>() {
+        @Override
+        public Type fun(PsiType type) {
+          return type.accept(Creator.this);
+        }
+      });
+      return new LogicalOperationType(types, false);
     }
   }
 

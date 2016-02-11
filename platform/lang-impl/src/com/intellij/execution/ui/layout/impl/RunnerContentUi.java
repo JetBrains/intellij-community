@@ -232,6 +232,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     final NonOpaquePanel wrappper = new NonOpaquePanel(new BorderLayout(0, 0));
     wrappper.add(myToolbar, BorderLayout.WEST);
     wrappper.add(myTabs.getComponent(), BorderLayout.CENTER);
+    wrappper.setBorder(new EmptyBorder(-1, 0, 0, 0));
 
     myComponent.setContent(wrappper);
 

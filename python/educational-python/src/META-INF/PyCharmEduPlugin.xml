@@ -19,19 +19,12 @@
     </component>
   </application-components>
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="Edu.executeFile" interface="com.jetbrains.python.edu.PyExecuteFileExtensionPoint"/>
-  </extensionPoints>
-
   <extensions defaultExtensionNs="com.intellij">
       <programRunner implementation="com.jetbrains.python.edu.debugger.PyEduDebugRunner"/>
       <executor implementation="com.jetbrains.python.edu.debugger.PyEduDebugExecutor" order="first,after run"/>
       <consoleInputFilterProvider implementation="com.jetbrains.python.edu.debugger.PyEduConsoleInputFilterProvider"/>
-  </extensions>
-  <extensions defaultExtensionNs="Edu">
-    <executeFile implementation="com.jetbrains.python.edu.PyEduAddParametersAction" order="last"/>
-    <executeFile implementation="com.jetbrains.python.edu.PyDebugCurrentFile"/>
-
+      <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
+                        serviceImplementation="com.jetbrains.edu.learning.StudyInstructionPainter" overrides="true"/>
   </extensions>
 
 </idea-plugin>

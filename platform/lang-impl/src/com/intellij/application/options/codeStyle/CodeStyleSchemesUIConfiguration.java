@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.net.URL;
  */
 @State(
   name = "CodeStyleSchemesUIConfiguration",
-  storages = {@Storage(file = "other.xml", roamingType = RoamingType.DISABLED)}
+  storages = {@Storage(value = "other.xml", roamingType = RoamingType.DISABLED)}
 )
 public class CodeStyleSchemesUIConfiguration implements PersistentStateComponent<CodeStyleSchemesUIConfiguration> {
   public String RECENT_IMPORT_FILE_LOCATION = "";

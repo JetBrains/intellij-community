@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,11 +195,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, @NotNull final SourcePosition classPosition) {
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classPosition);
 
-    for (ReferenceType refType : debugProcess.getPositionManager().getAllClasses(classPosition)) {
-      if (refType.isPrepared()) {
-        processClassPrepare(debugProcess, refType);
-      }
-    }
+    debugProcess.getPositionManager().getAllClasses(classPosition).stream()
+      .filter(ReferenceType::isPrepared)
+      .forEach(refType -> processClassPrepare(debugProcess, refType));
   }
 
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {

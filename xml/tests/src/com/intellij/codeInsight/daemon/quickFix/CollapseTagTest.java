@@ -34,4 +34,9 @@ public class CollapseTagTest extends LightPlatformCodeInsightFixtureTestCase{
     PsiFile file = myFixture.configureByText(XmlFileType.INSTANCE, "<a>    <caret>   <b/> </a>");
     assertFalse(new CollapseTagIntention().isAvailable(getProject(), myFixture.getEditor(), file));
   }
+
+  public void testAlreadyCollapsed() throws Exception {
+    PsiFile file = myFixture.configureByText(XmlFileType.INSTANCE, "<a/>");
+    assertFalse(new CollapseTagIntention().isAvailable(getProject(), myFixture.getEditor(), file));
+  }
 }

@@ -221,8 +221,14 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return true;
   }
 
-  private static boolean addAssignedAttributes(ResolveResultList ret, String referencedName, PyQualifiedExpression qualifier) {
-    for (PyExpression ex : collectAssignedAttributes(qualifier)) {
+  private static boolean addAssignedAttributes(ResolveResultList ret,
+                                               String referencedName,
+                                               @NotNull final PyQualifiedExpression qualifier) {
+    final QualifiedName qName = qualifier.asQualifiedName();
+    if (qName == null) {
+      return false;
+    }
+    for (PyExpression ex : collectAssignedAttributes(qName, qualifier)) {
       if (referencedName.equals(ex.getName())) {
         ret.poke(ex, RatedResolveResult.RATE_NORMAL);
         return true;
@@ -276,7 +282,12 @@ public class PyQualifiedReference extends PyReferenceImpl {
         }
       }
       if (qualifier instanceof PyQualifiedExpression) {
-        Collection<PyExpression> attrs = collectAssignedAttributes((PyQualifiedExpression)qualifier);
+        final PyQualifiedExpression qualifierExpression = (PyQualifiedExpression)qualifier;
+        final QualifiedName qualifiedName = qualifierExpression.asQualifiedName();
+        if (qualifiedName == null) {
+          return variants.toArray();
+        }
+        final Collection<PyExpression> attrs = collectAssignedAttributes(qualifiedName, qualifier);
         for (PyExpression ex : attrs) {
           final String name = ex.getName();
           if (name != null && name.endsWith(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) {
@@ -402,29 +413,27 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return ArrayUtil.toObjectArray(results);
   }
 
-  private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
+  @NotNull
+  public static Collection<PyExpression> collectAssignedAttributes(@NotNull final QualifiedName qualifierQName,
+                                                                   @NotNull final PsiElement anchor) {
     final Set<String> names = new HashSet<String>();
-    final QualifiedName qualifierQName = qualifier.asQualifiedName();
-    if (qualifierQName != null) {
-      final List<PyExpression> results = new ArrayList<PyExpression>();
-      for (ScopeOwner owner = ScopeUtil.getScopeOwner(qualifier); owner != null; owner = ScopeUtil.getScopeOwner(owner)) {
-        final Scope scope = ControlFlowCache.getScope(owner);
-        for (PyTargetExpression target : scope.getTargetExpressions()) {
-          final QualifiedName targetQName = target.asQualifiedName();
-          if (targetQName != null) {
-            if (targetQName.getComponentCount() == qualifierQName.getComponentCount() + 1 && targetQName.matchesPrefix(qualifierQName)) {
-              final String name = target.getName();
-              if (!names.contains(name)) {
-                names.add(name);
-                results.add(target);
-              }
+    final List<PyExpression> results = new ArrayList<PyExpression>();
+    for (ScopeOwner owner = ScopeUtil.getScopeOwner(anchor); owner != null; owner = ScopeUtil.getScopeOwner(owner)) {
+      final Scope scope = ControlFlowCache.getScope(owner);
+      for (final PyTargetExpression target : scope.getTargetExpressions()) {
+        final QualifiedName targetQName = target.asQualifiedName();
+        if (targetQName != null) {
+          if (targetQName.getComponentCount() == qualifierQName.getComponentCount() + 1 && targetQName.matchesPrefix(qualifierQName)) {
+            final String name = target.getName();
+            if (!names.contains(name)) {
+              names.add(name);
+              results.add(target);
             }
           }
         }
       }
-      return results;
     }
-    return Collections.emptyList();
+    return results;
   }
 
   @Override

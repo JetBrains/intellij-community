@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import java.util.Map;
 
 @State(
   name = "RunnerLayoutSettings",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/runner.layout.xml", roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = "runner.layout.xml", roamingType = RoamingType.DISABLED)
 )
 public class RunnerLayoutSettings implements PersistentStateComponent<Element> {
   public static RunnerLayoutSettings getInstance() {

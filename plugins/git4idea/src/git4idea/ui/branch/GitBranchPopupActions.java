@@ -253,8 +253,8 @@ class GitBranchPopupActions {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         String newName = Messages.showInputDialog(myProject, "Enter new name for the branch " + myCurrentBranchName,
-                                                  "Rename Branch " + myCurrentBranchName,
-                                                  Messages.getQuestionIcon(), "", GitNewBranchNameValidator.newInstance(myRepositories));
+                                                  "Rename Branch " + myCurrentBranchName, Messages.getQuestionIcon(),
+                                                  myCurrentBranchName, GitNewBranchNameValidator.newInstance(myRepositories));
         if (newName != null) {
           GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
           brancher.renameBranch(myCurrentBranchName, newName, myRepositories);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.concurrent.Executor;
@@ -67,8 +68,25 @@ public class ProgressIndicatorUtils {
   }
 
   /**
+   * Same as {@link #runInReadActionWithWriteActionPriority(Runnable)}, optionally allowing to pass a {@link ProgressIndicatorUtils}
+   * instance, which can be used to cancel action externally.
+   */
+  public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, 
+                                                               @Nullable ProgressIndicator progressIndicator) {
+    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
+    runWithWriteActionPriority(new Runnable() {
+      @Override
+      public void run() {
+        result.set(ApplicationManagerEx.getApplicationEx().tryRunReadAction(action));
+      }
+    }, progressIndicator == null ? new ProgressIndicatorBase() : progressIndicator);
+    return result.get();
+  }
+
+  /**
    * This method attempts to run provided action synchronously in a read action, so that, if possible, it wouldn't impact any pending, 
-   * executing or future write actions. 
+   * executing or future write actions (for this to work effectively the action should invoke {@link ProgressManager#checkCanceled()} or 
+   * {@link ProgressIndicator#checkCanceled()} often enough). 
    * It returns <code>true</code> if action was executed successfully. It returns <code>false</code> if the action was not
    * executed successfully, i.e. if:
    * <ul>
@@ -81,18 +99,7 @@ public class ProgressIndicatorUtils {
    * 100% CPU usage.
    */
   public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action) {
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
-    runWithWriteActionPriority(new Runnable() {
-      @Override
-      public void run() {
-        result.set(ApplicationManagerEx.getApplicationEx().tryRunReadAction(action));
-      }
-    });
-    return result.get();
-  }
-
-  public static boolean runWithWriteActionPriority(@NotNull final Runnable action) {
-    return runWithWriteActionPriority(action, new ProgressIndicatorBase());
+    return runInReadActionWithWriteActionPriority(action, null);
   }
 
   public static boolean runWithWriteActionPriority(@NotNull final Runnable action,

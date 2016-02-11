@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -331,7 +331,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     }
 
     psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
-    PsiDocumentManagerBase.cachePsi(documentWindow, psiFile);
+    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(psiFile.getProject())).associatePsi(documentWindow, psiFile);
 
     keepTreeFromChameleoningBack(psiFile);
 

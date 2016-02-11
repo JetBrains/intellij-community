@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.impl.runtime.ui.tree.TreeBuilderBase;
 import com.intellij.remoteServer.runtime.ConnectionStatus;
@@ -45,7 +46,7 @@ import java.util.Set;
 /**
  * @author michael.golubev
  */
-public class ServersToolWindowContent extends JPanel implements Disposable {
+public class ServersToolWindowContent extends JPanel implements Disposable, ServersTreeNodeSelector {
   public static final DataKey<ServersToolWindowContent> KEY = DataKey.create("serversToolWindowContent");
   @NonNls private static final String PLACE_TOOLBAR = "ServersToolWindowContent#Toolbar";
   @NonNls private static final String SERVERS_TOOL_WINDOW_TOOLBAR = "RemoteServersViewToolbar";
@@ -210,7 +211,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
   }
 
   private void setupBuilder(final @NotNull Project project) {
-    ServersTreeStructure structure = myContribution.createTreeStructure(project);
+    ServersTreeStructure structure = myContribution.createTreeStructure(project, this);
     myBuilder = new TreeBuilderBase(myTree, structure, myTreeModel) {
       @Override
       protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {

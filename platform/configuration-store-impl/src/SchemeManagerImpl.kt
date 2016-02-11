@@ -53,12 +53,13 @@ import java.io.IOException
 import java.io.InputStream
 import java.util.*
 
-class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val fileSpec: String,
-                                                                     private val processor: SchemeProcessor<E>,
-                                                                     private val provider: StreamProvider?,
-                                                                     private val ioDirectory: File,
-                                                                     private val roamingType: RoamingType = RoamingType.DEFAULT,
-                                                                     virtualFileTrackerDisposable: Disposable? = null) : SchemesManager<T, E>(), SafeWriteRequestor {
+class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: String,
+                                                              private val processor: SchemeProcessor<E>,
+                                                              private val provider: StreamProvider?,
+                                                              private val ioDirectory: File,
+                                                              val roamingType: RoamingType = RoamingType.DEFAULT,
+                                                              virtualFileTrackerDisposable: Disposable? = null,
+                                                              val presentableName: String? = null) : SchemesManager<T, E>(), SafeWriteRequestor {
   private val schemes = ArrayList<T>()
   private val readOnlyExternalizableSchemes = THashMap<String, E>()
 

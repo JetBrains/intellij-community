@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.FList;
@@ -156,6 +158,7 @@ public class DebugReflectionUtil {
       String result = "";
       while (backLink != null) {
         String valueStr;
+        AccessToken token = ReadAction.start();
         try {
           valueStr = backLink.value instanceof FList
                      ? "FList (size="+((FList)backLink.value).size()+")" :
@@ -165,6 +168,9 @@ public class DebugReflectionUtil {
         }
         catch (Throwable e) {
           valueStr = "(" + e.getMessage() + " while computing .toString())";
+        }
+        finally {
+          token.finish();
         }
         Field field = backLink.field;
         String fieldName = field == null ? "?" : field.getDeclaringClass().getName()+"."+field.getName();

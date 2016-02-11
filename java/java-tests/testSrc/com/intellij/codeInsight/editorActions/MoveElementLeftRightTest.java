@@ -74,6 +74,11 @@ public class MoveElementLeftRightTest extends AbstractMoveElementLeftRightTest {
     doTestFromLeftToRight("enum E { AA<caret>, BB, }",
                           "enum E { BB, AA<caret>, }");
   }
+  
+  public void testMoveAnnotationParameters() throws Exception {
+    doTestFromLeftToRight("@SomeAnnotation(p1=<caret>1, p2 = \"2\") class C {}",
+                          "@SomeAnnotation(p2 = \"2\", p1=<caret>1) class C {}");
+  }
 
   @Override
   protected void configureEditor(String contents) throws Exception {

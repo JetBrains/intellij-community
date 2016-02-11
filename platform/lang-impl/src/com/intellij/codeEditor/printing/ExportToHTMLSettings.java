@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 
-@State(
-  name = "ExportToHTMLSettings",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.WORKSPACE_FILE
-    )}
-)
+@State(name = "ExportToHTMLSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ExportToHTMLSettings implements PersistentStateComponent<ExportToHTMLSettings> {
   public boolean PRINT_LINE_NUMBERS;
   public boolean OPEN_IN_BROWSER;

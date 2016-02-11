@@ -235,8 +235,7 @@ public class UIUtil {
   private static final AbstractAction REDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(ActionEvent e) {
-      Object source = e.getSource();
-      UndoManager manager = source instanceof JComponent ? getClientProperty((JComponent)source, UNDO_MANAGER) : null;
+      UndoManager manager = getClientProperty(e.getSource(), UNDO_MANAGER);
       if (manager != null && manager.canRedo()) {
         manager.redo();
       }
@@ -245,8 +244,7 @@ public class UIUtil {
   private static final AbstractAction UNDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(ActionEvent e) {
-      Object source = e.getSource();
-      UndoManager manager = source instanceof JComponent ? getClientProperty((JComponent)source, UNDO_MANAGER) : null;
+      UndoManager manager = getClientProperty(e.getSource(), UNDO_MANAGER);
       if (manager != null && manager.canUndo()) {
         manager.undo();
       }
@@ -514,8 +512,41 @@ public class UIUtil {
     }
   }
 
-  public static <T> T getClientProperty(@NotNull JComponent component, @NotNull Key<T> key) {
-    return (T)component.getClientProperty(key);
+  /**
+   * @param component a Swing component that may hold a client property value
+   * @param key       the client property key
+   * @return {@code true} if the property of the specified component is set to {@code true}
+   */
+  public static boolean isClientPropertyTrue(Object component, @NotNull Object key) {
+    return Boolean.TRUE.equals(getClientProperty(component, key));
+  }
+
+  /**
+   * @param component a Swing component that may hold a client property value
+   * @param key       the client property key that specifies a return type
+   * @return the property value from the specified component or {@code null}
+   */
+  public static Object getClientProperty(Object component, @NotNull Object key) {
+    return component instanceof JComponent ? ((JComponent)component).getClientProperty(key) : null;
+  }
+
+  /**
+   * @param component a Swing component that may hold a client property value
+   * @param key       the client property key that specifies a return type
+   * @return the property value from the specified component or {@code null}
+   */
+  public static <T> T getClientProperty(Object component, @NotNull Class<T> type) {
+    return ObjectUtils.tryCast(getClientProperty(component, (Object)type), type);
+  }
+
+  /**
+   * @param component a Swing component that may hold a client property value
+   * @param key       the client property key that specifies a return type
+   * @return the property value from the specified component or {@code null}
+   */
+  public static <T> T getClientProperty(Object component, @NotNull Key<T> key) {
+    //noinspection unchecked
+    return (T)getClientProperty(component, (Object)key);
   }
 
   public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {

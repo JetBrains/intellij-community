@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +46,20 @@ public class BalloonLayoutConfiguration {
   public final int allActionsOffset;
   public final int beforeGearSpace;
 
-  public static final int MaxWidth = JBUI.scale(350);
+  public static final int FixedWidth;
+  public static final int MaxWidth;
   public static final int MinWidth = JBUI.scale(100);
+
+  public static final String MaxWidthStyle = "width:" + JBUI.scale(SystemInfo.isMac ? 230 : 210) + "px;";
+
+  static {
+    int width = SystemInfo.isMac ? 350 : 330;
+    width += AllIcons.Ide.Notification.Shadow.Left.getIconWidth();
+    width += AllIcons.Ide.Notification.Shadow.Right.getIconWidth();
+
+    FixedWidth = JBUI.scale(width);
+    MaxWidth = JBUI.scale(width - 60);
+  }
 
   public static final int NotificationSpace = JBUI.scale(10);
 
@@ -67,13 +80,13 @@ public class BalloonLayoutConfiguration {
   @NotNull
   private static BalloonLayoutConfiguration twoLines() {
     return new BalloonLayoutConfiguration(new JBDimension(10, 11),
-                                          JBUI.scale(14), JBUI.scale(8), JBUI.scale(8), JBUI.scale(8), JBUI.scale(14));
+                                          JBUI.scale(11), JBUI.scale(5), JBUI.scale(5), JBUI.scale(5), JBUI.scale(14));
   }
 
   @NotNull
   private static BalloonLayoutConfiguration treeLines() {
     return new BalloonLayoutConfiguration(new JBDimension(10, 7),
-                                          JBUI.scale(10), JBUI.scale(6), JBUI.scale(10), 0, JBUI.scale(8));
+                                          JBUI.scale(7), JBUI.scale(3), JBUI.scale(7), 0, JBUI.scale(8));
   }
 
   private BalloonLayoutConfiguration(@NotNull Dimension iconOffset,

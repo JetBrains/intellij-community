@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import com.intellij.util.PathUtilRt
 import org.apache.tools.ant.types.Path
 import org.apache.tools.ant.util.SplitClassLoader
 import org.codehaus.gant.GantBuilder
@@ -112,7 +114,7 @@ class MacDistributionBuilder {
       }
     }
 
-    sshExec("./signapp_ce.sh ${sitFileName} ${fullBuildNumber} ${macHostProperties.userName} ${macHostProperties.password} \"${macHostProperties.codesignString}\" ${customJDKTarPath}")
+    sshExec("./signapp_ce.sh ${sitFileName} ${fullBuildNumber} ${macHostProperties.userName} ${macHostProperties.password} \"${macHostProperties.codesignString}\" \"${PathUtilRt.getFileName(customJDKTarPath)}\"")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
         include(name: "${sitFileName}.sit")

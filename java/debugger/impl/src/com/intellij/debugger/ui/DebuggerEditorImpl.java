@@ -131,7 +131,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor {
 
         ListPopup popup = createLanguagePopup();
         popup.showUnderneathOf(myChooseFactory);
-        myPopup = new WeakReference<ListPopup>(popup);
+        myPopup = new WeakReference<>(popup);
         return true;
       }
     }.installOn(myChooseFactory);
@@ -256,7 +256,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor {
     myCurrentDocument = PsiDocumentManager.getInstance(getProject()).getDocument(codeFragment);
 
     if (myCurrentDocument != null) {
-      PsiDocumentManagerBase.cachePsi(myCurrentDocument, codeFragment);
+      ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject())).associatePsi(myCurrentDocument, codeFragment);
       for (DocumentListener documentListener : myDocumentListeners) {
         myCurrentDocument.addDocumentListener(documentListener);
       }

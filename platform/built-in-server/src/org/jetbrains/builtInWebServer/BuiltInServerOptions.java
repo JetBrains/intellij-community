@@ -2,7 +2,10 @@ package org.jetbrains.builtInWebServer;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SimpleConfigurable;
 import com.intellij.openapi.util.Getter;
@@ -23,7 +26,7 @@ import java.util.Collections;
 
 @State(
   name = "BuiltInServerOptions",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
+  storages = @Storage("other.xml")
 )
 public class BuiltInServerOptions implements PersistentStateComponent<BuiltInServerOptions>, Getter<BuiltInServerOptions> {
   private static final int DEFAULT_PORT = 63342;

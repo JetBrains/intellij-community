@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.AbbreviationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +31,7 @@ import java.util.*;
  */
 @State(
   name = "AbbreviationManager",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/abbreviations.xml", roamingType = RoamingType.PER_OS)}
+  storages = @Storage(value = "abbreviations.xml", roamingType = RoamingType.PER_OS)
 )
 public class AbbreviationManagerImpl extends AbbreviationManager implements PersistentStateComponent<Element> {
   private final Map<String, List<String>> myAbbreviation2ActionId = new THashMap<String, List<String>>();

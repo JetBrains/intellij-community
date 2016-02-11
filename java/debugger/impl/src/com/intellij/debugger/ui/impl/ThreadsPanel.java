@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
@@ -149,12 +148,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
     final int childCount = from.getChildCount();
     for (int idx = 0; idx < childCount; idx++) {
       final DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)from.getChildAt(idx);
-      child.getDescriptor().updateRepresentation(null, new DescriptorLabelListener() {
-        @Override
-        public void labelChanged() {
-          child.labelChanged();
-        }
-      });
+      child.getDescriptor().updateRepresentation(null, child::labelChanged);
       updateNodeLabels(child);
     }
   }

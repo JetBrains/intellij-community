@@ -408,6 +408,7 @@
     <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
 
     <jbProtocolCommand implementation="com.intellij.openapi.project.impl.JBProtocolOpenProjectCommand"/>
+    <jbProtocolCommand implementation="com.intellij.openapi.application.JBProtocolShutdownCommand"/>
 
     <intentionAction>
       <className>com.intellij.openapi.editor.actions.FlipCommaIntention</className>
@@ -421,5 +422,8 @@
                          displayName="Startup Tasks"
                          id="preferences.startup.tasks" nonDefaultProject="true"/>
     <postStartupActivity implementation="com.intellij.execution.startup.ProjectStartupRunner"/>
+
+    <applicationService serviceInterface="com.intellij.remote.ext.CredentialsManager"
+                        serviceImplementation="com.intellij.remote.ext.CredentialsManagerImpl"/>
   </extensions>
 </idea-plugin>

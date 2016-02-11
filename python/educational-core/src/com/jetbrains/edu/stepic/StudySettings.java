@@ -17,17 +17,17 @@ package com.jetbrains.edu.stepic;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("MethodMayBeStatic")
-@State(
-  name = "StudySettings",
-  storages = {@Storage(
-    file = StoragePathMacros.APP_CONFIG + "/stepic_settings.xml")})
+@State(name = "StudySettings", storages = @Storage("stepic_settings.xml"))
 public class StudySettings implements PersistentStateComponent<StudySettings.State> {
 
   private State myState = new State();

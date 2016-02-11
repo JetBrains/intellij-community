@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author dcheryasov
  */
-public interface PyExceptPart extends PyElement, StubBasedPsiElement<PyExceptPartStub>, NameDefiner, PyStatementPart {
+public interface PyExceptPart extends PyElement, StubBasedPsiElement<PyExceptPartStub>, PyNamedElementContainer, PyStatementPart {
   PyExceptPart[] EMPTY_ARRAY = new PyExceptPart[0];
 
   @Nullable

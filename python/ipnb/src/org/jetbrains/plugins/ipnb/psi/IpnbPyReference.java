@@ -69,7 +69,7 @@ public class IpnbPyReference extends PyReferenceImpl {
           final Editor editor = ((IpnbCodePanel)editablePanel).getEditor();
           final IpnbPyFragment psiFile = (IpnbPyFragment)PsiDocumentManager.getInstance(myElement.getProject()).getPsiFile(editor.getDocument());
           if (psiFile == null) continue;
-          ResolveProcessor processor = new ResolveProcessor(referencedName);
+          final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
 
           PyResolveUtil.scopeCrawlUp(processor, psiFile, referencedName, psiFile);
           final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, psiFile, psiFile);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
           if (currentThread != null) {
             root.insert(nodeManager.createNode(nodeManager.getThreadDescriptor(null, currentThread), evaluationContext), 0);
           }
-          List<ThreadReferenceProxyImpl> allThreads = new ArrayList<ThreadReferenceProxyImpl>(vm.allThreads());
+          List<ThreadReferenceProxyImpl> allThreads = new ArrayList<>(vm.allThreads());
           Collections.sort(allThreads, ThreadReferenceProxyImpl.ourComparator);
 
           for (ThreadReferenceProxyImpl threadProxy : allThreads) {
@@ -164,7 +164,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
       final boolean hasThreadToSelect = suspendContextThread != null; // thread can be null if pause was pressed
       final List<ThreadGroupReferenceProxyImpl> groups;
       if (hasThreadToSelect && showGroups) {
-        groups = new ArrayList<ThreadGroupReferenceProxyImpl>();
+        groups = new ArrayList<>();
         for(ThreadGroupReferenceProxyImpl group = suspendContextThread.threadGroupProxy(); group != null; group = group.parent()) {
           groups.add(group);
         }

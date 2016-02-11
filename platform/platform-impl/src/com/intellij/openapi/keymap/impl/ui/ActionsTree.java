@@ -593,7 +593,7 @@ public class ActionsTree {
             myFilter, text, Font.PLAIN, foreground, selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground(), this);
         }
       }
-      putClientProperty(AbstractExpandableItemsHandler.DISABLE_EXPANDABLE_HANDLER, myHaveLink ? true : null);
+      putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
     }
 
     private void setupLinkDimensions(Rectangle treeVisibleRect, int rowX) {

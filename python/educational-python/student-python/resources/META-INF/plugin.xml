@@ -23,7 +23,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <directoryProjectGenerator implementation="com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator"/>
-    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyExecuteFileLineMarkerProvider"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <inspectionExtension implementation="com.jetbrains.edu.learning.highlighting.PyStudyInspectionExtension"/>
@@ -33,6 +32,7 @@
   <extensions defaultExtensionNs="Edu">
     <StudyExecutor implementationClass="com.jetbrains.edu.learning.PyStudyExecutor" language="Python"/>
     <StudyLanguageManager implementationClass="com.jetbrains.edu.learning.PyStudyLanguageManager" language="Python"/>
+    <studyToolWindowConfigurator implementation="com.jetbrains.edu.learning.PyStudyToolWindowConfigurator" />
   </extensions>
   <actions>
     <action id="WelcomeScreen.PythonIntro" class="com.jetbrains.edu.learning.actions.PyStudyIntroductionCourseAction"

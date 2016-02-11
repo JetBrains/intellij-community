@@ -19,7 +19,6 @@ import com.intellij.util.diff.Diff;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("ConstantConditions")
 class DiffChangeDiffIterable extends ChangeDiffIterableBase {
   @Nullable private final Diff.Change myChange;
 
@@ -34,6 +33,7 @@ class DiffChangeDiffIterable extends ChangeDiffIterableBase {
     return new DiffChangeChangeIterable(myChange);
   }
 
+  @SuppressWarnings("ConstantConditions")
   private static class DiffChangeChangeIterable implements ChangeIterable {
     @Nullable private Diff.Change myChange;
 

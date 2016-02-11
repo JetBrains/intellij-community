@@ -18,7 +18,6 @@ package com.intellij.ui.components;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.util.ui.RegionPainter;
-import com.intellij.util.ui.UIUtil;
 
 import java.awt.Graphics2D;
 import javax.swing.JComponent;
@@ -62,12 +61,13 @@ final class DefaultScrollBarUI extends AbstractScrollBarUI {
 
   @Override
   void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    paint(JBScrollPane.TRACK_PAINTER, g, x, y, width, height, c, myTrackValue, false);
+    RegionPainter<Float> p = isDark(c) ? JBScrollPane.TRACK_DARK_PAINTER : JBScrollPane.TRACK_PAINTER;
+    paint(p, g, x, y, width, height, c, myTrackValue, false);
   }
 
   @Override
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    RegionPainter<Float> p = UIUtil.isUnderDarcula() ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
+    RegionPainter<Float> p = isDark(c) ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
     paint(p, g, x, y, width, height, c, myThumbValue, Registry.is("ide.scroll.thumb.small.if.opaque"));
   }
 

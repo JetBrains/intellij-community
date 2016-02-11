@@ -227,15 +227,19 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   @Override
   public boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other) {
     if (other instanceof SelfElementInfo) {
-      SelfElementInfo otherInfo = (SelfElementInfo)other;
+      final SelfElementInfo otherInfo = (SelfElementInfo)other;
       if (!getVirtualFile().equals(other.getVirtualFile()) || myType != otherInfo.myType) return false;
 
-      Segment range1 = getPsiRange();
-      Segment range2 = otherInfo.getPsiRange();
-      return range1 != null && range2 != null
-             && range1.getStartOffset() == range2.getStartOffset()
-             && range1.getEndOffset() == range2.getEndOffset()
-        ;
+      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          Segment range1 = getPsiRange();
+          Segment range2 = otherInfo.getPsiRange();
+          return range1 != null && range2 != null
+                 && range1.getStartOffset() == range2.getStartOffset()
+                 && range1.getEndOffset() == range2.getEndOffset();
+        }
+      });
     }
     return areRestoredElementsEqual(other);
   }

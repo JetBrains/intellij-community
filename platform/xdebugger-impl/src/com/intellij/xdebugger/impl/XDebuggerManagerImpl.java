@@ -65,10 +65,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author nik
  */
-@State(
-  name = XDebuggerManagerImpl.COMPONENT_NAME,
-  storages = {@Storage(
-    file = StoragePathMacros.WORKSPACE_FILE)})
+@State(name = XDebuggerManagerImpl.COMPONENT_NAME, storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class XDebuggerManagerImpl extends XDebuggerManager
   implements NamedComponent, PersistentStateComponent<XDebuggerManagerImpl.XDebuggerState> {
   @NonNls public static final String COMPONENT_NAME = "XDebuggerManager";

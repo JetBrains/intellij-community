@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,15 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.lang.XmlCodeFoldingSettings;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 @State(
   name = "XmlFoldingSettings",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/editor.codeinsight.xml")
+  storages = @Storage("editor.codeinsight.xml")
 )
 public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentStateComponent<XmlFoldingSettings> {
   public static XmlFoldingSettings getInstance() {

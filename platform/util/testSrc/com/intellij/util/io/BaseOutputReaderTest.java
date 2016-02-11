@@ -15,7 +15,6 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.execution.CommandLineUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -23,9 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,14 +35,15 @@ import static org.junit.Assert.assertNotNull;
 
 public class BaseOutputReaderTest {
   private static final String[] TEST_DATA = {"first\n", "incomplete", "-continuation\n", "last\n"};
-  private static final int TIMEOUT = 500;
+  private static final int SEND_TIMEOUT = 500;
+  private static final int SLEEP_TIMEOUT = 60000;
 
   private static class TestOutputReader extends BaseOutputReader {
     private final List<String> myLines = Collections.synchronizedList(new ArrayList<String>());
 
-    private TestOutputReader(InputStream stream, SleepingPolicy sleepingPolicy, String commandLine) {
+    private TestOutputReader(InputStream stream, SleepingPolicy sleepingPolicy) {
       super(stream, null, sleepingPolicy);
-      start(CommandLineUtil.extractPresentableName(commandLine));
+      start(BaseOutputReaderTest.class.getSimpleName());
     }
 
     @Override
@@ -61,27 +59,29 @@ public class BaseOutputReaderTest {
   }
 
   @Test(timeout = 30000)
-  public void testBlocking() throws Exception {
-    doTest(BaseDataReader.SleepingPolicy.BLOCKING);
+  public void testBlockingRead() throws Exception {
+    doReadTest(BaseDataReader.SleepingPolicy.BLOCKING);
   }
 
   @Test(timeout = 30000)
-  public void testNonBlocking() throws Exception {
-    doTest(BaseDataReader.SleepingPolicy.SIMPLE);
+  public void testNonBlockingRead() throws Exception {
+    doReadTest(BaseDataReader.SleepingPolicy.SIMPLE);
   }
 
-  private void doTest(BaseDataReader.SleepingPolicy policy) throws IOException, URISyntaxException, InterruptedException {
-    String java = System.getProperty("java.home") + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java");
+  @Test(timeout = 30000)
+  public void testBlockingStop() throws Exception {
+    doStopTest(BaseDataReader.SleepingPolicy.BLOCKING);
+  }
 
-    String className = BaseOutputReaderTest.class.getName();
-    URL url = getClass().getClassLoader().getResource(className.replace(".", "/") + ".class");
-    assertNotNull(url);
-    File dir = new File(url.toURI());
-    for (int i = 0; i < StringUtil.countChars(className, '.') + 1; i++) dir = dir.getParentFile();
+  @Test(timeout = 30000)
+  public void testNonBlockingStop() throws Exception {
+    doStopTest(BaseDataReader.SleepingPolicy.SIMPLE);
+  }
 
-    String[] cmd = {java, "-cp", dir.getPath(), className};
-    Process process = new ProcessBuilder(cmd).redirectErrorStream(true).start();
-    TestOutputReader reader = new TestOutputReader(process.getInputStream(), policy, StringUtil.join(cmd, " "));
+  private void doReadTest(BaseDataReader.SleepingPolicy policy) throws Exception {
+    Process process = launchTest("data");
+    TestOutputReader reader = new TestOutputReader(process.getInputStream(), policy);
+
     process.waitFor();
     reader.stop();
     reader.waitFor();
@@ -90,12 +90,46 @@ public class BaseOutputReaderTest {
     assertEquals(Arrays.asList(TEST_DATA), reader.myLines);
   }
 
-  // needed for test
+  private void doStopTest(BaseDataReader.SleepingPolicy policy) throws Exception {
+    Process process = launchTest("sleep");
+    TestOutputReader reader = new TestOutputReader(process.getInputStream(), policy);
+
+    try {
+      reader.stop();
+      reader.waitFor();
+    }
+    finally {
+      process.destroy();
+      process.waitFor();
+    }
+  }
+
+  private Process launchTest(String mode) throws Exception {
+    String java = System.getProperty("java.home") + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java");
+
+    String className = BaseOutputReaderTest.class.getName();
+    URL url = getClass().getClassLoader().getResource(className.replace('.', '/') + ".class");
+    assertNotNull(url);
+    File dir = new File(url.toURI());
+    for (int i = 0; i < StringUtil.countChars(className, '.') + 1; i++) dir = dir.getParentFile();
+
+    String[] cmd = {java, "-cp", dir.getPath(), className, mode};
+    return new ProcessBuilder(cmd).redirectErrorStream(true).start();
+  }
+
   @SuppressWarnings("BusyWait")
   public static void main(String[] args) throws InterruptedException {
-    for (String line : TEST_DATA) {
-      System.out.print(line);
-      Thread.sleep(TIMEOUT);
+    if (args.length > 0 && "sleep".equals(args[0])) {
+      Thread.sleep(SLEEP_TIMEOUT);
+    }
+    else if (args.length > 0 && "data".equals(args[0])) {
+      for (String line : TEST_DATA) {
+        System.out.print(line);
+        Thread.sleep(SEND_TIMEOUT);
+      }
+    }
+    else {
+      throw new IllegalArgumentException(Arrays.toString(args));
     }
   }
 }

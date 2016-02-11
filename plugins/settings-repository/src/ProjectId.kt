@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.util.xmlb.XmlSerializerUtil
 
-@State(name = "IcsProjectId", storages = arrayOf(Storage(file = StoragePathMacros.WORKSPACE_FILE)))
+@State(name = "IcsProjectId", storages = arrayOf(Storage(StoragePathMacros.WORKSPACE_FILE)))
 class ProjectId : PersistentStateComponent<ProjectId> {
   var uid: String? = null
   var path: String? = null

@@ -20,6 +20,7 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
@@ -107,11 +108,6 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
     myTableModel = new MyTableModel();
     init();
-  }
-
-  private PsiTypeCodeFragment createValueCodeFragment() {
-    final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(myProject);
-    return factory.createTypeCodeFragment("", myClass.getLBrace(), true);
   }
 
   protected JComponent createNorthPanel() {
@@ -233,11 +229,21 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     }
     catch (PsiTypeCodeFragment.NoTypeException e) {
       return updater == InfoUpdater.DEFAULT_VALUE
-             ? RefactoringBundle.message("changeSignature.no.type.for.parameter", info.getName(null))
+             ? RefactoringBundle.message("changeSignature.no.type.for.parameter", "default value", info.getName(null))
              : null;
     }
     updater.updateInfo(info, valueType);
     return null;
+  }
+
+  public static PsiTypeCodeFragment createTableCodeFragment(@Nullable PsiClassType type,
+                                                            @NotNull PsiElement context,
+                                                            @NotNull JavaCodeFragmentFactory factory,
+                                                            boolean allowConjunctions) {
+    return factory.createTypeCodeFragment(type == null ? "" : type.getCanonicalText(),
+                                          context,
+                                          true,
+                                          (allowConjunctions && PsiUtil.isLanguageLevel8OrHigher(context)) ? JavaCodeFragmentFactory.ALLOW_INTERSECTION : 0);
   }
 
   private class MyTableModel extends AbstractTableModel implements EditableModel {
@@ -290,6 +296,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
         case NAME_COLUMN:
           ((TypeParameterInfo.New)myTypeParameterInfos.get(rowIndex)).setNewName((String)aValue);
           break;
+        case BOUND_VALUE_COLUMN:
         case DEFAULT_VALUE_COLUMN:
           break;
         default:
@@ -300,8 +307,10 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     public void addRow() {
       TableUtil.stopEditing(myTable);
       myTypeParameterInfos.add(new TypeParameterInfo.New("", null, null));
-      myBoundValueTypeCodeFragments.add(createValueCodeFragment());
-      myDefaultValueTypeCodeFragments.add(createValueCodeFragment());
+      JavaCodeFragmentFactory codeFragmentFactory = JavaCodeFragmentFactory.getInstance(myProject);
+      PsiElement context = myClass.getLBrace() != null ? myClass.getLBrace() : myClass;
+      myBoundValueTypeCodeFragments.add(createTableCodeFragment(null, context, codeFragmentFactory, true));
+      myDefaultValueTypeCodeFragments.add(createTableCodeFragment(null, context, codeFragmentFactory, false));
       final int row = myDefaultValueTypeCodeFragments.size() - 1;
       fireTableRowsInserted(row, row);
     }

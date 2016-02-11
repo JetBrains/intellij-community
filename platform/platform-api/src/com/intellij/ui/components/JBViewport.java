@@ -153,8 +153,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   @Nullable
   @Override
   public Magnificator getMagnificator() {
-    JComponent view = (JComponent)getView();
-    return view != null ? UIUtil.getClientProperty(view, Magnificator.CLIENT_PROPERTY_KEY) : null;
+    return UIUtil.getClientProperty(getView(), Magnificator.CLIENT_PROPERTY_KEY);
   }
 
   @Override
@@ -188,8 +187,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
    */
   private static Alignment getAlignment(JScrollBar bar) {
     if (bar != null && bar.isVisible() && !bar.isOpaque()) {
-      Object property = bar.getClientProperty(Alignment.class);
-      if (property instanceof Alignment) return (Alignment)property;
+      return UIUtil.getClientProperty(bar, Alignment.class);
     }
     return null;
   }
@@ -252,7 +250,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   }
 
   private static void updateBorder(Component view) {
-    if (SystemInfo.isMac || view instanceof JTable) return; // tables are not supported yet
+    if (view instanceof JTable) return; // tables are not supported yet
     if (view instanceof JComponent) {
       JComponent component = (JComponent)view;
       Border border = component.getBorder();
@@ -325,14 +323,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     @Override
     public void paintBorder(Component view, Graphics g, int x, int y, int width, int height) {
       if (myBorder != null) {
-        if (view instanceof JComponent) {
-          Insets insets = new Insets(0, 0, 0, 0);
-          addViewInsets((JComponent)view, insets);
-          x += insets.left;
-          y += insets.top;
-          width -= insets.left + insets.right;
-          height -= insets.top + insets.bottom;
-        }
+        // additional insets are used inside a custom border
         myBorder.paintBorder(view, g, x, y, width, height);
       }
     }
@@ -352,7 +343,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
               if (va == Alignment.LEFT) {
                 insets.left += vsb.getWidth();
               }
-              else if (va == Alignment.RIGHT) {
+              else if (va == Alignment.RIGHT && !SystemInfo.isMac) {
                 insets.right += vsb.getWidth();
               }
             }
@@ -363,7 +354,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
               if (ha == Alignment.TOP) {
                 insets.top += hsb.getHeight();
               }
-              else if (ha == Alignment.BOTTOM) {
+              else if (ha == Alignment.BOTTOM && !SystemInfo.isMac) {
                 insets.bottom += hsb.getHeight();
               }
             }

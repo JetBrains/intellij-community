@@ -671,7 +671,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     final int[] count = {0};
     MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
-    modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
+    modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener.Adapter() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
         count[0]++;
@@ -680,10 +680,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
         count[0]++;
-      }
-
-      @Override
-      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged) {
       }
     });
 
@@ -718,7 +714,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
 
       @Override
-      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged) {
+      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleChanged) {
         changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("changed")));
       }
 
@@ -769,7 +765,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
 
       @Override
-      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged) {
+      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleChanged) {
         changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("changed")));
       }
 

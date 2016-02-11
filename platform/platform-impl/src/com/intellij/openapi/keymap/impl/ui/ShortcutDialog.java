@@ -158,6 +158,9 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
       scroll.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
     }
     scroll.getVerticalScrollBar().setUnitIncrement(JBUI.scale(10));
+    scroll.getVerticalScrollBar().setOpaque(false);
+    scroll.getViewport().setOpaque(false);
+    scroll.setOpaque(false);
 
     JBPanel panel = new JBPanel(new BorderLayout());
     panel.add(BorderLayout.NORTH, label);

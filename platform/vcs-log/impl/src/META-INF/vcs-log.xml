@@ -49,11 +49,12 @@
     <group id="Vcs.Log.Settings">
       <reference id="Vcs.Log.ShowBranchesPanelAction"/>
       <reference id="Vcs.Log.ShowRootsColumnAction"/>
+      <separator/>
+      <reference id="Vcs.Log.CollapseAll"/>
+      <reference id="Vcs.Log.ExpandAll"/>
       <reference id="Vcs.Log.HighlightersActionGroup"/>
     </group>
     <group id="Vcs.Log.Toolbar">
-      <reference id="Vcs.Log.CollapseAll"/>
-      <reference id="Vcs.Log.ExpandAll"/>
       <reference id="Vcs.Log.ShowLongEdges"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
     </group>

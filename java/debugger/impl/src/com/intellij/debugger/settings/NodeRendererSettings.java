@@ -28,7 +28,10 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -57,9 +60,7 @@ import java.util.List;
 @State(
   name="NodeRendererSettings",
   storages= {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/debugger.renderers.xml"
-    )}
+    @Storage("debugger.renderers.xml")}
 )
 public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String REFERENCE_RENDERER = "Reference renderer";
@@ -242,7 +243,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
   public List<NodeRenderer> getAllRenderers() {
     // the order is important as the renderers are applied according to it
-    final List<NodeRenderer> allRenderers = new ArrayList<NodeRenderer>();
+    final List<NodeRenderer> allRenderers = new ArrayList<>();
 
     // user defined renderers must come first
     myCustomRenderers.iterateRenderers(new InternalIterator<NodeRenderer>() {
@@ -354,9 +355,10 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   private static EnumerationChildrenRenderer createEnumerationChildrenRenderer(@NonNls String[][] expressions) {
     final EnumerationChildrenRenderer childrenRenderer = new EnumerationChildrenRenderer();
     if (expressions != null && expressions.length > 0) {
-      final ArrayList<Pair<String, TextWithImports>> childrenList = new ArrayList<Pair<String, TextWithImports>>(expressions.length);
+      final ArrayList<Pair<String, TextWithImports>> childrenList = new ArrayList<>(expressions.length);
       for (final String[] expression : expressions) {
-        childrenList.add(new Pair<String, TextWithImports>(expression[0], new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression[1], "", StdFileTypes.JAVA)));
+        childrenList.add(
+          new Pair<>(expression[0], new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression[1], "", StdFileTypes.JAVA)));
       }
       childrenRenderer.setChildren(childrenList);
     }
@@ -424,14 +426,14 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       if (eval != null) {
         final WatchItemDescriptor evalDescriptor = new WatchItemDescriptor(evaluationContext.getProject(), evaluator.getReferenceExpression(), eval);
         evalDescriptor.setShowIdLabel(false);
-        return new Pair<Computable<String>, ValueDescriptorImpl>(new Computable<String>() {
+        return new Pair<>(new Computable<String>() {
           public String compute() {
             evalDescriptor.updateRepresentation((EvaluationContextImpl)evaluationContext, listener);
             return evalDescriptor.getValueLabel();
           }
         }, evalDescriptor);
       }
-      return new Pair<Computable<String>, ValueDescriptorImpl>(NULL_LABEL_COMPUTABLE, null);
+      return new Pair<>(NULL_LABEL_COMPUTABLE, null);
     }
 
     public String getUniqueId() {

@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
+import com.intellij.util.loadElement
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jdom.Parent
@@ -121,7 +122,7 @@ open class FileBasedStorage(file: File,
       else {
         val charBuffer = CharsetToolkit.UTF8_CHARSET.decode(ByteBuffer.wrap(file.contentsToByteArray()))
         lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-        return JDOMUtil.loadDocument(charBuffer).detachRootElement()
+        return loadElement(charBuffer)
       }
     }
     catch (e: JDOMException) {
@@ -135,7 +136,7 @@ open class FileBasedStorage(file: File,
 
   private fun processReadException(e: Exception?) {
     val contentTruncated = e == null
-    blockSavingTheContent = !contentTruncated && (isProjectOrModuleFile(fileSpec) || fileSpec == StoragePathMacros.WORKSPACE_FILE)
+    blockSavingTheContent = !contentTruncated && (PROJECT_FILE == fileSpec || fileSpec.startsWith(PROJECT_CONFIG_DIR) || fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)
     if (!ApplicationManager.getApplication().isUnitTestMode && !ApplicationManager.getApplication().isHeadlessEnvironment) {
       if (e != null) {
         LOG.info(e)
@@ -224,15 +225,13 @@ private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparat
   }
 }
 
-fun Parent.toBufferExposingByteArray(lineSeparator: String = "\n"): BufferExposingByteArrayOutputStream {
+internal fun Parent.toBufferExposingByteArray(lineSeparator: String = "\n"): BufferExposingByteArrayOutputStream {
   val out = BufferExposingByteArrayOutputStream(512)
   JDOMUtil.writeParent(this, out, lineSeparator)
   return out
 }
 
-fun isProjectOrModuleFile(fileSpec: String): Boolean = StoragePathMacros.PROJECT_FILE == fileSpec || fileSpec.startsWith(StoragePathMacros.PROJECT_CONFIG_DIR) || fileSpec == StoragePathMacros.MODULE_FILE
-
-fun detectLineSeparators(chars: CharSequence, defaultSeparator: LineSeparator?): LineSeparator {
+internal fun detectLineSeparators(chars: CharSequence, defaultSeparator: LineSeparator?): LineSeparator {
   for (c in chars) {
     if (c == '\r') {
       return LineSeparator.CRLF

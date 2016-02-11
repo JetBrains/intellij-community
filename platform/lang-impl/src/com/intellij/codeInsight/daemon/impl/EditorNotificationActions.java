@@ -29,7 +29,7 @@ import javax.swing.*;
 import java.util.List;
 
 public class EditorNotificationActions {
-  public static void getDescriptorsForEditor(@NotNull Editor editor, @NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors) {
+  public static void collectDescriptorsForEditor(@NotNull Editor editor, @NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors) {
     Project project = editor.getProject();
     if (project == null) return;
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);

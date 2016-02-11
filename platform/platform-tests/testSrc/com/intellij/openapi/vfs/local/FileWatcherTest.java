@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,10 +53,13 @@ import static com.intellij.openapi.util.io.IoTestUtil.*;
 
 @SuppressWarnings("Duplicates")
 public class FileWatcherTest extends PlatformTestCase {
+  private static final Logger LOG = Logger.getInstance(NativeFileWatcherImpl.class);
+
   private static final int INTER_RESPONSE_DELAY = 500;  // time to wait for a next event in a sequence
   private static final int NATIVE_PROCESS_DELAY = 60000;  // time to wait for a native watcher response
 
-  private static final Logger LOG = Logger.getInstance(NativeFileWatcherImpl.class);
+  @SuppressWarnings("SpellCheckingInspection") private static final String UNICODE_NAME_1 = "Úñíçødê";
+  @SuppressWarnings("SpellCheckingInspection") private static final String UNICODE_NAME_2 = "Юникоде";
 
   private FileWatcher myWatcher;
   private LocalFileSystem myFileSystem;
@@ -772,14 +775,8 @@ public class FileWatcherTest extends PlatformTestCase {
   }
 
   public void testUnicodePaths() throws Exception {
-    if (!SystemInfo.isUnix || SystemInfo.isMac) {
-      System.err.println("Ignored: well-defined FS required");
-      return;
-    }
-
-    File topDir = createTestDir(myTempDirectory, "top");
-    File testDir = createTestDir(topDir, "тест");
-    File testFile = createTestFile(testDir, "файл.txt");
+    File topDir = createTestDir(myTempDirectory, UNICODE_NAME_1);
+    File testFile = createTestFile(topDir, UNICODE_NAME_2 + ".txt");
     refresh(topDir);
 
     LocalFileSystem.WatchRequest request = watch(topDir);

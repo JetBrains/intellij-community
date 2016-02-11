@@ -390,6 +390,17 @@ foo()
       eval 'x', '5'
     }
   }
+  void "test non-identifier script name"() {
+    def file = myFixture.addFileToProject('foo-bar.groovy', '''\
+int x = 1
+println "hello"
+''')
+    addBreakpoint file.name, 1
+    runDebugger file, {
+      waitForBreakpoint()
+      eval 'x', '1'
+    }
+  }
 
   public void "test navigation outside source"() {
     def module1 = addModule("module1", false)

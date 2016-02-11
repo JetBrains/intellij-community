@@ -21619,9 +21619,9 @@
     <option name="home" hit="Entity Local Home Interface" />
     <option name="interface" hit="Entity Local Home Interface" />
     <option name="local" hit="Entity Local Home Interface" />
-    <option name="erb" hit="Erb File.html" />
-    <option name="file" hit="Erb File.html" />
-    <option name="html" hit="Erb File.html" />
+    <option name="erb" hit="Erb File" />
+    <option name="file" hit="Erb File" />
+    <option name="html" hit="Erb File" />
     <option name="file" hit="File Header" />
     <option name="header" hit="File Header" />
     <option name="annotated" hit="Filter Annotated Class" />

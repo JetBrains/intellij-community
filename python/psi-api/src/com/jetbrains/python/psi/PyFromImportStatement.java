@@ -28,7 +28,8 @@ import java.util.List;
 /**
  * Describes "from ... import" statements.
  */
-public interface PyFromImportStatement extends PyImportStatementBase, StubBasedPsiElement<PyFromImportStatementStub> {
+public interface PyFromImportStatement extends PyImportStatementBase, StubBasedPsiElement<PyFromImportStatementStub>,
+                                               PyImplicitImportNameDefiner {
   boolean isStarImport();
 
   /**

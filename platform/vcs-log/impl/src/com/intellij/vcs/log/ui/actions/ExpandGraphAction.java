@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,39 +15,33 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogUi;
-import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
-public class ExpandGraphAction extends GraphAction {
-  public ExpandGraphAction() {
-    super("Expand all branches", "Expand all branches", VcsLogIcons.ExpandBranches);
+import javax.swing.*;
+
+public class ExpandGraphAction extends CollapseOrExpandGraphAction {
+  @Override
+  protected void executeAction(@NotNull VcsLogUiImpl vcsLogUi) {
+    vcsLogUi.expandAll();
   }
 
+  @NotNull
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsLogUi ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    ((VcsLogUiImpl)ui).expandAll();
+  protected Icon getMergesIcon() {
+    return VcsLogIcons.ExpandMerges;
   }
 
+  @NotNull
   @Override
-  protected void update(@NotNull VcsLogUi ui, @NotNull AnActionEvent e) {
-    if (!ui.getFilterUi().getFilters().getDetailsFilters().isEmpty()) {
-      e.getPresentation().setEnabled(false);
-    }
-    if (ui.getBekType() == PermanentGraph.SortType.LinearBek) {
-      e.getPresentation().setIcon(VcsLogIcons.ExpandMerges);
-      e.getPresentation().setText("Expand all merges");
-      e.getPresentation().setDescription("Expand all merges");
-    }
-    else {
-      e.getPresentation().setIcon(VcsLogIcons.ExpandBranches);
-      e.getPresentation().setText("Expand all linear branches");
-      e.getPresentation().setDescription("Expand all linear branches");
-    }
+  protected Icon getBranchesIcon() {
+    return VcsLogIcons.ExpandMerges;
+  }
+
+  @NotNull
+  @Override
+  protected String getPrefix() {
+    return "Expand ";
   }
 }

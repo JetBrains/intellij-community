@@ -821,7 +821,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       final String ns = map.get(prefix);
       if (ns != null) return ns;
     }
-    if (parent instanceof XmlTag) return ((XmlTag)parent).getNamespaceByPrefix(prefix);
+    XmlTag parentTag = getParentTag();
+    if (parentTag != null) return parentTag.getNamespaceByPrefix(prefix);
     //The prefix 'xml' is by definition bound to the namespace name http://www.w3.org/XML/1998/namespace. It MAY, but need not, be declared
     if (XML_NS_PREFIX.equals(prefix)) return XmlUtil.XML_NAMESPACE_URI;
 
@@ -861,7 +862,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       final String ns = keysByValue == null || keysByValue.isEmpty() ? null : keysByValue.get(0);
       if (ns != null) return ns;
     }
-    if (parent instanceof XmlTag) return ((XmlTag)parent).getPrefixByNamespace(namespace);
+    XmlTag parentTag = getParentTag();
+    if (parentTag != null) return parentTag.getPrefixByNamespace(namespace);
     //The prefix 'xml' is by definition bound to the namespace name http://www.w3.org/XML/1998/namespace. It MAY, but need not, be declared
     if (XmlUtil.XML_NAMESPACE_URI.equals(namespace)) return XML_NS_PREFIX;
     return null;

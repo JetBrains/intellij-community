@@ -268,6 +268,14 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testCodeBlockLambdaWithoutParamsIsValueCompatibleChecks() throws Exception {
+    doTest();
+  }
+
+  public void testInferenceFromReturnLambdaStatementWhereContainingMethodNonGeneric() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

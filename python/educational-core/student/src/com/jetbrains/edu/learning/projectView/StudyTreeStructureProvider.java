@@ -27,14 +27,14 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
     if (!isCourseBasedProject(parent)) {
       return children;
     }
-    Collection<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
+    Collection<AbstractTreeNode> nodes = new ArrayList<>();
     for (AbstractTreeNode node : children) {
       final Project project = node.getProject();
       if (project != null) {
         if (node.getValue() instanceof PsiDirectory) {
           final PsiDirectory nodeValue = (PsiDirectory)node.getValue();
           final String name = nodeValue.getName();
-          if (name != null && !name.contains(EduNames.USER_TESTS) && !name.startsWith(".")) {
+          if (!name.contains(EduNames.USER_TESTS) && !name.startsWith(".") && !"lib".equals(name)) {
             AbstractTreeNode newNode = createStudyDirectoryNode(settings, project, nodeValue);
             nodes.add(newNode);
           }

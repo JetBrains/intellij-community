@@ -20,8 +20,8 @@ import com.intellij.configurationStore.write
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.testFramework.file
-import com.intellij.testFramework.writeChild
 import com.intellij.util.PathUtilRt
+import com.intellij.util.writeChild
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.jgit.dirCache.writePath

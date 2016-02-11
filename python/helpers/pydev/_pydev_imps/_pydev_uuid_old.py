@@ -344,7 +344,7 @@ def _ipconfig_getnode():
     try:
         import ctypes
         buffer = ctypes.create_string_buffer(300)
-        ctypes.windll.kernel32.GetSystemDirectoryA(buffer, 300)
+        ctypes.windll.kernel32.GetSystemDirectoryA(buffer, 300)  # @UndefinedVariable
         dirs.insert(0, buffer.value.decode('mbcs'))
     except:
         pass

@@ -17,7 +17,10 @@ package com.intellij.ide.actions
 
 import com.intellij.AbstractBundle
 import com.intellij.CommonBundle
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.ROOT_CONFIG
+import com.intellij.configurationStore.SchemeManagerFactoryBase
+import com.intellij.configurationStore.path
+import com.intellij.configurationStore.sortByDeprecated
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
@@ -34,14 +37,12 @@ import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.OptionsBundle
+import com.intellij.openapi.options.SchemesManagerFactory
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.util.PairProcessor
-import com.intellij.util.PlatformUtils
-import com.intellij.util.ReflectionUtil
+import com.intellij.util.*
 import com.intellij.util.containers.putValue
 import com.intellij.util.io.ZipUtil
 import gnu.trove.THashMap
@@ -80,14 +81,14 @@ private class ExportSettingsAction : AnAction(), DumbAware {
     val saveFile = dialog.exportFile
     try {
       if (saveFile.exists() && Messages.showOkCancelDialog(
-        IdeBundle.message("prompt.overwrite.settings.file", FileUtil.toSystemDependentName(saveFile.path)),
+        IdeBundle.message("prompt.overwrite.settings.file", saveFile.toString()),
         IdeBundle.message("title.file.already.exists"), Messages.getWarningIcon()) != Messages.OK) {
         return
       }
 
-      exportSettings(exportFiles, saveFile.outputStream().buffered(), FileUtilRt.toSystemIndependentName(PathManager.getConfigPath()))
+      exportSettings(exportFiles, saveFile.outputStream(), FileUtilRt.toSystemIndependentName(PathManager.getConfigPath()))
       ShowFilePathAction.showDialog(AnAction.getEventProject(e), IdeBundle.message("message.settings.exported.successfully"),
-        IdeBundle.message("title.export.successful"), saveFile, null)
+        IdeBundle.message("title.export.successful"), saveFile.toFile(), null)
     }
     catch (e1: IOException) {
       Messages.showErrorDialog(IdeBundle.message("error.writing.settings", e1.toString()), IdeBundle.message("title.error.writing.file"))
@@ -197,8 +198,8 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
       return@PairProcessor true
     }
 
-    val storage = sortStoragesByDeprecated(stateAnnotation.storages).firstOrNull() ?: return@PairProcessor true
-    if (!(storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && storage.scheme == StorageScheme.DEFAULT && !storage.file.isNullOrEmpty())) {
+    val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return@PairProcessor true
+    if (!(storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && !storage.path.isNullOrEmpty())) {
       return@PairProcessor true
     }
 
@@ -206,16 +207,18 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     var additionalExportPath = stateAnnotation.additionalExportFile
     if (additionalExportPath.isNotEmpty()) {
       // backward compatibility - path can contain macro
-      if (additionalExportPath[0] != '$') {
-        additionalExportPath = "$ROOT_CONFIG/$additionalExportPath"
+      if (additionalExportPath[0] == '$') {
+        additionalExportFile = Paths.get(storageManager.expandMacros(additionalExportPath))
       }
-      additionalExportFile = Paths.get(storageManager.expandMacros(additionalExportPath))
+      else {
+        additionalExportFile = Paths.get(storageManager.expandMacros(ROOT_CONFIG), additionalExportPath)
+      }
       if (isSkipFile(additionalExportFile)) {
         additionalExportFile = null
       }
     }
 
-    val file = Paths.get(storageManager.expandMacros(storage.file))
+    val file = Paths.get(storageManager.expandMacros(storage.path))
     val isFileIncluded = !isSkipFile(file)
     if (isFileIncluded || additionalExportFile != null) {
       if (computePresentableNames && onlyExisting && additionalExportFile == null && file.fileName.toString().endsWith(".xml")) {
@@ -234,6 +237,16 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     }
     true
   })
+
+  // must be in the end - because most of SchemeManager clients specify additionalExportFile in the State spec
+  (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
+    if (it.roamingType != RoamingType.DISABLED && it.presentableName != null && it.fileSpec.getOrNull(0) != '$') {
+      val file = Paths.get(storageManager.expandMacros(ROOT_CONFIG), it.fileSpec)
+      if (!result.containsKey(file) && !isSkipFile(file)) {
+        result.putValue(file, ExportableItem(listOf(file), it.presentableName, it.roamingType))
+      }
+    }
+  }
   return result
 }
 

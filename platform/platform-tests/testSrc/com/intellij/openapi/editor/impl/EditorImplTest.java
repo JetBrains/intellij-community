@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.testFramework.EditorTestUtil;
 
+import javax.swing.*;
 import java.awt.*;
 
 public class EditorImplTest extends AbstractEditorTest {
@@ -244,5 +245,19 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("<caret>\n\t");
     delete();
     assertEquals(new LogicalPosition(0, 4), myEditor.offsetToLogicalPosition(1));
+  }
+  
+  public void testSoftWrapsUpdateAfterEditorWasHidden() throws Exception {
+    initText("long long line");
+    configureSoftWraps(6);
+    verifySoftWrapPositions(5, 10);
+
+    JViewport viewport = ((EditorEx)myEditor).getScrollPane().getViewport();
+    Dimension normalSize = viewport.getExtentSize();
+    viewport.setExtentSize(new Dimension(0, 0));
+    myEditor.getDocument().deleteString(5, 14);
+    viewport.setExtentSize(normalSize);
+    
+    verifySoftWrapPositions();
   }
 }

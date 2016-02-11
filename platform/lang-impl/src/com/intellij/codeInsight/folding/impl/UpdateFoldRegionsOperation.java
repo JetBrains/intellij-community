@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,8 @@ class UpdateFoldRegionsOperation implements Runnable {
     List<FoldRegion> newRegions = addNewRegions(info, foldingModel, elementsToFold, rangeToExpandStatusMap, shouldExpand, groupExpand);
 
     applyExpandStatus(newRegions, shouldExpand, groupExpand);
+    
+    foldingModel.clearDocumentRangesModificationStatus();
   }
 
   private static void applyExpandStatus(@NotNull List<FoldRegion> newRegions,
@@ -248,7 +250,10 @@ class UpdateFoldRegionsOperation implements Runnable {
   }
 
   private boolean regionCanBeRemovedWhenCollapsed(FoldRegion region) {
-    return Boolean.TRUE.equals(region.getUserData(CAN_BE_REMOVED_WHEN_COLLAPSED)) || !region.isValid() || isRegionInCaretLine(region);
+    return Boolean.TRUE.equals(region.getUserData(CAN_BE_REMOVED_WHEN_COLLAPSED)) ||
+           ((FoldingModelEx)myEditor.getFoldingModel()).hasDocumentRegionChangedFor(region) ||
+           !region.isValid() ||
+           isRegionInCaretLine(region);
   }
 
   private boolean isRegionInCaretLine(FoldRegion region) {

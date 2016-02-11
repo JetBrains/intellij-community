@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 
 public class DescriptorTree {
-  private final HashMap<NodeDescriptor, List<NodeDescriptor>> myChildrenMap = new HashMap<NodeDescriptor, List<NodeDescriptor>>();
-  private final List<NodeDescriptor> myRootChildren = new ArrayList<NodeDescriptor>();
+  private final HashMap<NodeDescriptor, List<NodeDescriptor>> myChildrenMap = new HashMap<>();
+  private final List<NodeDescriptor> myRootChildren = new ArrayList<>();
   private final boolean myInitial;
   private int myFrameCount = -1;
   private int myFrameIndex = -1;
@@ -60,7 +60,7 @@ public class DescriptorTree {
     else {
       children = myChildrenMap.get(parent);
       if(children == null) {
-        children = new ArrayList<NodeDescriptor>();
+        children = new ArrayList<>();
         myChildrenMap.put(parent, children);
       }
     }

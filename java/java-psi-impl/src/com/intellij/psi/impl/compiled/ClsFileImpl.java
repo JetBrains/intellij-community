@@ -38,7 +38,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -613,7 +612,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   private static String getPackageName(String internalName) {
     int p = internalName.lastIndexOf('/');
-    return p > 0 ? internalName.substring(0, p).replace('/', '.') : StringUtilRt.EMPTY_STRING;
+    return p > 0 ? internalName.substring(0, p).replace('/', '.') : "";
   }
 
   private static final InnerClassSourceStrategy<VirtualFile> STRATEGY = new InnerClassSourceStrategy<VirtualFile>() {

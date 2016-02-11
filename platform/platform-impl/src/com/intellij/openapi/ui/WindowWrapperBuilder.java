@@ -2,8 +2,10 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper.Mode;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +21,7 @@ public class WindowWrapperBuilder {
   @Nullable private Project myProject;
   @Nullable private Component myParent;
   @Nullable private String myTitle;
-  @Nullable private JComponent myPreferredFocusedComponent;
+  @Nullable private Computable<JComponent> myPreferredFocusedComponent;
   @Nullable private String myDimensionServiceKey;
   @Nullable private Runnable myOnShowCallback;
 
@@ -48,7 +50,13 @@ public class WindowWrapperBuilder {
 
   @NotNull
   public WindowWrapperBuilder setPreferredFocusedComponent(@Nullable JComponent preferredFocusedComponent) {
-    myPreferredFocusedComponent = preferredFocusedComponent;
+    myPreferredFocusedComponent = new Computable.PredefinedValueComputable<JComponent>(preferredFocusedComponent);
+    return this;
+  }
+
+  @NotNull
+  public WindowWrapperBuilder setPreferredFocusedComponent(@Nullable Computable<JComponent> computable) {
+    myPreferredFocusedComponent = computable;
     return this;
   }
 
@@ -77,6 +85,16 @@ public class WindowWrapperBuilder {
     }
   }
 
+  private static void installOnShowCallback(@Nullable Window window, @Nullable final Runnable onShowCallback) {
+    if (window == null || onShowCallback == null) return;
+    window.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowOpened(WindowEvent e) {
+        onShowCallback.run();
+      }
+    });
+  }
+
   private static class DialogWindowWrapper implements WindowWrapper {
     @Nullable private final Project myProject;
     @NotNull private final JComponent myComponent;
@@ -94,15 +112,7 @@ public class WindowWrapperBuilder {
                  : new MyDialogWrapper(builder.myProject, builder.myComponent);
       myDialog.setParameters(builder.myDimensionServiceKey, builder.myPreferredFocusedComponent);
 
-      final Runnable onShowCallback = builder.myOnShowCallback;
-      if (onShowCallback != null) {
-        myDialog.getWindow().addWindowListener(new WindowAdapter() {
-          @Override
-          public void windowOpened(WindowEvent e) {
-            onShowCallback.run();
-          }
-        });
-      }
+      installOnShowCallback(myDialog.getWindow(), builder.myOnShowCallback);
 
       setTitle(builder.myTitle);
       switch (builder.myMode) {
@@ -170,7 +180,7 @@ public class WindowWrapperBuilder {
     private static class MyDialogWrapper extends DialogWrapper {
       @NotNull private JComponent myComponent;
       @Nullable private String myDimensionServiceKey;
-      @Nullable private JComponent myPreferredFocusedComponent;
+      @Nullable private Computable<JComponent> myPreferredFocusedComponent;
 
       public MyDialogWrapper(@Nullable Project project, @NotNull JComponent component) {
         super(project, true);
@@ -183,7 +193,7 @@ public class WindowWrapperBuilder {
       }
 
       public void setParameters(@Nullable String dimensionServiceKey,
-                                @Nullable JComponent preferredFocusedComponent) {
+                                @Nullable Computable<JComponent> preferredFocusedComponent) {
         myDimensionServiceKey = dimensionServiceKey;
         myPreferredFocusedComponent = preferredFocusedComponent;
       }
@@ -221,7 +231,8 @@ public class WindowWrapperBuilder {
       @Nullable
       @Override
       public JComponent getPreferredFocusedComponent() {
-        return myPreferredFocusedComponent;
+        if (myPreferredFocusedComponent != null) return myPreferredFocusedComponent.compute();
+        return super.getPreferredFocusedComponent();
       }
     }
   }
@@ -232,7 +243,7 @@ public class WindowWrapperBuilder {
     @NotNull private final Mode myMode;
     @Nullable private final Runnable myOnShowCallback;
 
-    @NotNull private final FrameWrapper myFrame;
+    @NotNull private final MyFrameWrapper myFrame;
 
     public FrameWindowWrapper(@NotNull WindowWrapperBuilder builder) {
       assert builder.myMode == Mode.FRAME;
@@ -240,12 +251,13 @@ public class WindowWrapperBuilder {
       myProject = builder.myProject;
       myComponent = builder.myComponent;
       myMode = builder.myMode;
+
+      myFrame = new MyFrameWrapper(builder.myProject, builder.myDimensionServiceKey);
+      myFrame.setParameters(builder.myPreferredFocusedComponent);
+
       myOnShowCallback = builder.myOnShowCallback;
 
-      myFrame = new FrameWrapper(builder.myProject, builder.myDimensionServiceKey);
-
       myFrame.setComponent(builder.myComponent);
-      myFrame.setPreferredFocusedComponent(builder.myPreferredFocusedComponent);
       myFrame.setTitle(builder.myTitle);
       myFrame.closeOnEsc();
       Disposer.register(myFrame, this);
@@ -304,6 +316,24 @@ public class WindowWrapperBuilder {
     @Override
     public void dispose() {
       Disposer.dispose(myFrame);
+    }
+
+    private static class MyFrameWrapper extends FrameWrapper {
+      private Computable<JComponent> myPreferredFocusedComponent;
+
+      public MyFrameWrapper(Project project, @Nullable @NonNls String dimensionServiceKey) {
+        super(project, dimensionServiceKey);
+      }
+
+      public void setParameters(@Nullable Computable<JComponent> preferredFocusedComponent) {
+        myPreferredFocusedComponent = preferredFocusedComponent;
+      }
+
+      @Override
+      public JComponent getPreferredFocusedComponent() {
+        if (myPreferredFocusedComponent != null) return myPreferredFocusedComponent.compute();
+        return super.getPreferredFocusedComponent();
+      }
     }
   }
 }

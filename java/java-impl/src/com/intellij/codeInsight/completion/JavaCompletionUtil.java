@@ -271,13 +271,12 @@ public class JavaCompletionUtil {
             final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)declarationScope;
             final int parameterIndex = lambdaExpression.getParameterList().getParameterIndex((PsiParameter)resolve);
             final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
-            final boolean overloadsFound = LambdaUtil.processParentOverloads(lambdaExpression, new Consumer<PsiType>() {
-              @Override
-              public void consume(PsiType functionalInterfaceType) {
-                PsiType qualifierType = LambdaUtil.getLambdaParameterFromType(functionalInterfaceType, parameterIndex);
-                PsiReferenceExpression fakeRef = createReference("xxx.xxx", createContextWithXxxVariable(element, qualifierType));
-                set.addAll(processJavaQualifiedReference(fakeRef.getReferenceNameElement(), fakeRef, elementFilter, options, matcher, parameters));
-              }
+            final boolean overloadsFound = LambdaUtil.processParentOverloads(lambdaExpression, functionalInterfaceType -> {
+              PsiType qualifierType = LambdaUtil.getLambdaParameterFromType(functionalInterfaceType, parameterIndex);
+              if (qualifierType == null) return;
+
+              PsiReferenceExpression fakeRef = createReference("xxx.xxx", createContextWithXxxVariable(element, qualifierType));
+              set.addAll(processJavaQualifiedReference(fakeRef.getReferenceNameElement(), fakeRef, elementFilter, options, matcher, parameters));
             });
             if (overloadsFound) return set;
           }
@@ -890,7 +889,7 @@ public class JavaCompletionUtil {
     return true;
   }
 
-  public static FakePsiElement createContextWithXxxVariable(final PsiElement place, final PsiType varType) {
+  public static FakePsiElement createContextWithXxxVariable(@NotNull PsiElement place, @NotNull PsiType varType) {
     return new FakePsiElement() {
       @Override
       public boolean processDeclarations(@NotNull PsiScopeProcessor processor,

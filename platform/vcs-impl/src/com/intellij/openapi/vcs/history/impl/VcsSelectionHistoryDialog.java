@@ -36,8 +36,11 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
+import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -45,9 +48,9 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +64,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -85,37 +87,6 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       return asString();
     }
   };
-
-  private static final ColumnInfo REVISION = new ColumnInfo(VcsBundle.message("column.name.revision.version")) {
-    @Override
-    public Object valueOf(Object object) {
-      return ((VcsFileRevision)object).getRevisionNumber();
-    }
-  };
-
-  private static final ColumnInfo DATE = new ColumnInfo(VcsBundle.message("column.name.revision.list.date")) {
-    @Override
-    public Object valueOf(Object object) {
-      Date date = ((VcsFileRevision)object).getRevisionDate();
-      if (date == null) return "";
-      return DateFormatUtil.formatPrettyDateTime(date);
-    }
-  };
-
-  private static final ColumnInfo MESSAGE = new ColumnInfo(VcsBundle.message("column.name.revision.list.message")) {
-    @Override
-    public Object valueOf(Object object) {
-      return ((VcsFileRevision)object).getCommitMessage();
-    }
-  };
-
-  private static final ColumnInfo AUTHOR = new ColumnInfo(VcsBundle.message("column.name.revision.list.author")) {
-    @Override
-    public Object valueOf(Object object) {
-      return ((VcsFileRevision)object).getAuthor();
-    }
-  };
-  private static final ColumnInfo[] COLUMNS = new ColumnInfo[]{REVISION, DATE, AUTHOR, MESSAGE};
 
   private static final float DIFF_SPLITTER_PROPORTION = 0.5f;
   private static final float COMMENTS_SPLITTER_PROPORTION = 0.8f;
@@ -142,7 +113,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   private final Splitter mySplitter;
   private final DiffRequestPanel myDiffPanel;
   private final JCheckBox myChangesOnlyCheckBox = new JCheckBox(VcsBundle.message("checkbox.show.changed.revisions.only"));
-  private final JTextArea myComments = new JTextArea();
+  private final JEditorPane myComments;
 
   private boolean myIsDuringUpdate = false;
   private boolean myIsDisposed = false;
@@ -167,13 +138,24 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     mySelectionEnd = selectionEnd;
     myHelpId = notNull(vcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history");
 
+    myComments = new JEditorPane(UIUtil.HTML_MIME, "");
+    myComments.setPreferredSize(new Dimension(150, 100));
+    myComments.setEditable(false);
+    myComments.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+
     JRootPane rootPane = ((RootPaneContainer)getFrame()).getRootPane();
     final VcsDependentHistoryComponents components = vcsHistoryProvider.getUICustomization(session, rootPane);
 
+    ColumnInfo[] defaultColumns = new ColumnInfo[]{
+      new FileHistoryPanelImpl.RevisionColumnInfo(null),
+      new FileHistoryPanelImpl.DateColumnInfo(),
+      new FileHistoryPanelImpl.AuthorColumnInfo(),
+      new FileHistoryPanelImpl.MessageColumnInfo(project)};
     ColumnInfo[] additionalColumns = notNull(components.getColumns(), ColumnInfo.EMPTY_ARRAY);
-    myListModel = new ListTableModel<VcsFileRevision>(ArrayUtil.mergeArrays(COLUMNS, additionalColumns));
+    myListModel = new ListTableModel<VcsFileRevision>(ArrayUtil.mergeArrays(defaultColumns, additionalColumns));
     myListModel.setSortable(false);
     myList = new TableView<VcsFileRevision>(myListModel);
+    new TableLinkMouseListener().installOn(myList);
 
     myList.getEmptyText().setText(VcsBundle.message("history.empty"));
 
@@ -195,7 +177,8 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
         final VcsFileRevision revision;
         if (myList.getSelectedRowCount() == 1 && !myList.isEmpty()) {
           revision = myList.getItems().get(myList.getSelectedRow());
-          myComments.setText(revision.getCommitMessage());
+          String message = IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, revision.getCommitMessage());
+          myComments.setText(message);
           myComments.setCaretPosition(0);
         }
         else {
@@ -417,15 +400,9 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   }
 
   private JComponent createComments(final JComponent addComp) {
-    final JLabel label = new JLabel("Commit Message:");
-
     JPanel panel = new JPanel(new BorderLayout(4, 4));
-    panel.add(label, BorderLayout.NORTH);
+    panel.add(new JLabel("Commit Message:"), BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(myComments), BorderLayout.CENTER);
-
-    myComments.setRows(5);
-    myComments.setEditable(false);
-    myComments.setLineWrap(true);
 
     final Splitter splitter = new Splitter(false);
     splitter.setFirstComponent(panel);

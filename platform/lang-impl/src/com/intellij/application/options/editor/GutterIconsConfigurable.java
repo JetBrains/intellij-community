@@ -25,6 +25,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.util.Function;
@@ -40,7 +41,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Dmitry Avdeev
@@ -79,25 +79,21 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
         }
       };
     MultiMap<PluginDescriptor, LanguageExtensionPoint<LineMarkerProvider>> map = ContainerUtil.groupBy(Arrays.asList(extensions), function);
+    Map<GutterIconDescriptor, PluginDescriptor> pluginDescriptorMap = ContainerUtil.newHashMap();
     myDescriptors = new ArrayList<GutterIconDescriptor>();
     for (final PluginDescriptor descriptor : map.keySet()) {
       Collection<LanguageExtensionPoint<LineMarkerProvider>> points = map.get(descriptor);
-      final AtomicBoolean first = new AtomicBoolean(true);
       for (LanguageExtensionPoint<LineMarkerProvider> extensionPoint : points) {
         GutterIconDescriptor instance = (GutterIconDescriptor)extensionPoint.getInstance();
         if (instance.getOptions().length > 0) {
           for (GutterIconDescriptor option : instance.getOptions()) {
-            if (first.getAndSet(false)) {
-              myFirstDescriptors.put(instance, descriptor);
-            }
             myDescriptors.add(option);
+            pluginDescriptorMap.put(option, descriptor);
           }
         }
         else {
-          if (first.getAndSet(false)) {
-            myFirstDescriptors.put(instance, descriptor);
-          }
           myDescriptors.add(instance);
+          pluginDescriptorMap.put(instance, descriptor);
         }
       }
     }
@@ -110,6 +106,22 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
       }
     }
     myDescriptors.addAll(options);
+    myDescriptors.sort(new Comparator<GutterIconDescriptor>() {
+      @Override
+      public int compare(GutterIconDescriptor o1, GutterIconDescriptor o2) {
+        if (pluginDescriptorMap.get(o1) != pluginDescriptorMap.get(o2)) return 0;
+        return Comparing.compare(o1.getName(), o2.getName());
+      }
+    });
+    PluginDescriptor current = null;
+    for (GutterIconDescriptor descriptor : myDescriptors) {
+      PluginDescriptor pluginDescriptor = pluginDescriptorMap.get(descriptor);
+      if (pluginDescriptor != current) {
+        myFirstDescriptors.put(descriptor, pluginDescriptor);
+        current = pluginDescriptor;
+      }
+    }
+
     myList.setItems(myDescriptors, new Function<GutterIconDescriptor, String>() {
       @Override
       public String fun(GutterIconDescriptor descriptor) {

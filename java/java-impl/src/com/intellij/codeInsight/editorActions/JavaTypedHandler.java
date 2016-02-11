@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -91,9 +90,6 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       autoPopupMemberLookup(project, editor);
     }
 
-
-    final FileType originalFileType = getOriginalFileType(file);
-
     int offsetBefore = editor.getCaretModel().getOffset();
 
     //important to calculate before inserting charTyped
@@ -115,7 +111,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     if (c == ';') {
       if (handleSemicolon(editor, fileType)) return Result.STOP;
     }
-    if (originalFileType == StdFileTypes.JAVA && c == '{') {
+    if (fileType == StdFileTypes.JAVA && c == '{') {
       int offset = editor.getCaretModel().getOffset();
       if (offset == 0) {
         return Result.CONTINUE;
@@ -146,10 +142,17 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         }, "Insert block statement", null);
         return Result.STOP;
       }
+
+      PsiElement prevLeaf = leaf == null ? null : PsiTreeUtil.prevVisibleLeaf(leaf);
+      if (PsiUtil.isJavaToken(prevLeaf, JavaTokenType.ARROW) || 
+          PsiTreeUtil.getParentOfType(prevLeaf, PsiNewExpression.class, true, PsiCodeBlock.class, PsiMember.class) != null) {
+        return Result.CONTINUE;
+      }
+
       if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null) {
         EditorModificationUtil.insertStringAtCaret(editor, "{");
         TypedHandler.indentOpenedBrace(project, editor);
-        return Result.STOP;
+        return Result.STOP; // use case: manually wrapping part of method's code in 'if', 'while', etc
       }
     }
 
@@ -189,12 +192,6 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       }
     }
     return Result.CONTINUE;
-  }
-
-  @Nullable
-  private static FileType getOriginalFileType(final PsiFile file) {
-    final VirtualFile virtualFile = file.getVirtualFile();
-    return virtualFile != null ? virtualFile.getFileType() : null;
   }
 
   private static boolean handleSemicolon(Editor editor, FileType fileType) {

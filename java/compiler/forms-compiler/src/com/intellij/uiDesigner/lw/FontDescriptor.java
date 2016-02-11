@@ -63,6 +63,9 @@ public class FontDescriptor {
   }
 
   public Font getFont(Font defaultFont) {
+    if (myFontName == null && defaultFont == null) {
+      return null;
+    }
     return new Font(myFontName != null ? myFontName : defaultFont.getFontName(),
                     myFontStyle >= 0 ? myFontStyle : defaultFont.getStyle(),
                     myFontSize >= 0 ? myFontSize : defaultFont.getSize());

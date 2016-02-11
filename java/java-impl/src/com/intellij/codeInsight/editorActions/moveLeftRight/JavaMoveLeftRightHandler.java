@@ -22,12 +22,15 @@ import org.jetbrains.annotations.NotNull;
 public class JavaMoveLeftRightHandler extends MoveElementLeftRightHandler {
   @NotNull
   @Override
-  public PsiElement[] getMoveableSubElements(@NotNull PsiElement element) {
+  public PsiElement[] getMovableSubElements(@NotNull PsiElement element) {
     if (element instanceof PsiParameterList) {
       return ((PsiParameterList)element).getParameters();
     }
     else if (element instanceof PsiExpressionList) {
       return  ((PsiExpressionList)element).getExpressions();
+    }
+    else if (element instanceof PsiAnnotationParameterList) {
+      return  ((PsiAnnotationParameterList)element).getAttributes();
     }
     else if (element instanceof PsiArrayInitializerExpression) {
       return  ((PsiArrayInitializerExpression)element).getInitializers();

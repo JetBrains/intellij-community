@@ -27,6 +27,8 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 @VisibleForTesting
 public class MacroParser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.MacroParser");
@@ -76,13 +78,13 @@ public class MacroParser {
       return new ConstantNode("");
     }
 
-    Macro macro = MacroFactory.createMacro(token);
-    if (macro == null) {
+    List<Macro> macros = MacroFactory.getMacros(token);
+    if (macros.isEmpty()) {
       return parseVariable(lexer, expression);
     }
 
     advance(lexer);
-    MacroCallNode macroCallNode = new MacroCallNode(macro);
+    MacroCallNode macroCallNode = new MacroCallNode(macros.get(0));
     if (lexer.getTokenType() == null) {
       return macroCallNode;
     }

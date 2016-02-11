@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,8 @@ import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.util.*;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
@@ -276,11 +278,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         leakers.append("\n");
       }
 
-      String dumpPath = PathManager.getHomePath() + "/leakedProjects.hprof";
-      System.out.println("##teamcity[publishArtifacts 'leakedProjects.hprof']");
+      String dumpPath = PathManager.getHomePath() + "/leakedProjects.hprof.zip";
+      System.out.println("##teamcity[publishArtifacts 'leakedProjects.hprof.zip']");
       try {
         FileUtil.delete(new File(dumpPath));
-        MemoryDumpHelper.captureMemoryDump(dumpPath);
+        MemoryDumpHelper.captureMemoryDumpZipped(dumpPath);
       }
       catch (Exception ex) {
         ex.printStackTrace();
@@ -375,6 +377,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       Project defaultProject = projectManager.getDefaultProject();
       ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
     }
+
+    ((FileBasedIndexImpl) FileBasedIndex.getInstance()).cleanupForNextTest();
 
     LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
     if (localFileSystem != null) {
@@ -647,7 +651,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         ourTestTime = DEFAULT_TEST_TIME;
         try {
           try {
+            myAssertionsInTestDetected = true;
             setUp();
+            myAssertionsInTestDetected = false;
           }
           catch (Throwable e) {
             try {
@@ -787,7 +793,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return createTempDir(getTestName(true), refresh);
   }
 
-  protected File createTempFile(String name, @Nullable String text) throws IOException {
+  @NotNull
+  protected File createTempFile(@NotNull String name, @Nullable String text) throws IOException {
     File directory = createTempDirectory();
     File file = new File(directory, name);
     if (!file.createNewFile()) {

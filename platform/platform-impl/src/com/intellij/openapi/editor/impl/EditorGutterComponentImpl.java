@@ -58,10 +58,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Function;
-import com.intellij.util.IconUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -146,7 +143,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private TIntObjectHashMap<Color> myTextFgColors = new TIntObjectHashMap<Color>();
   private boolean myPaintBackground = true;
   private boolean myLeftFreePaintersAreaShown;
-  private boolean myRightFreePaintersAreaShown = true;
+  private boolean myRightFreePaintersAreaShown;
+  private boolean myForceLeftFreePaintersAreaShown = false;
+  private boolean myForceRightFreePaintersAreaShown = false;
   private int myLastNonDumbModeIconAreaWidth = 0;
 
   @SuppressWarnings("unchecked")
@@ -308,7 +307,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int startX = myEditor.isInDistractionFreeMode() ? 0 : getWhitespaceSeparatorOffset() + (isFoldingOutlineShown() ? 1 : 0);
     if (myEditor.myUseNewRendering) {
       com.intellij.openapi.editor.impl.view.IterationState state =
-        new com.intellij.openapi.editor.impl.view.IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, false, true, true, false);
+        new com.intellij.openapi.editor.impl.view.IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, 
+                                                                 false, true, false, true, false);
       while (!state.atEnd()) {
         drawEditorBackgroundForRange(g, state.getStartOffset(), state.getEndOffset(), state.getMergedAttributes(),
                                      defaultBackgroundColor, defaultForegroundColor, startX);
@@ -545,6 +545,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
+    if (myEditor.isDisposed()) return null;
+    
     if (EditorGutter.KEY.is(dataId)) {
       return this;
     }
@@ -716,18 +718,19 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void calcLineMarkerAreaWidth() {
     myLineToGutterRenderers = new TIntObjectHashMap<List<GutterMark>>();
-    myLeftFreePaintersAreaShown = false;
+    myLeftFreePaintersAreaShown = myForceLeftFreePaintersAreaShown;
+    myRightFreePaintersAreaShown = myForceRightFreePaintersAreaShown;
 
     processRangeHighlighters(0, myEditor.getDocument().getTextLength(), new RangeHighlighterProcessor() {
       @Override
       public void process(@NotNull RangeHighlighter highlighter) {
         LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
-        if (lineMarkerRenderer instanceof LineMarkerRendererEx && 
-            ((LineMarkerRendererEx)lineMarkerRenderer).getPosition() == LineMarkerRendererEx.Position.LEFT && 
-            isLineMarkerVisible(highlighter)) {
-          myLeftFreePaintersAreaShown = true;
+        if (lineMarkerRenderer != null) {
+          LineMarkerRendererEx.Position position = getLineMarkerPosition(lineMarkerRenderer);
+          if (position == LineMarkerRendererEx.Position.LEFT && isLineMarkerVisible(highlighter)) myLeftFreePaintersAreaShown = true;
+          if (position == LineMarkerRendererEx.Position.RIGHT && isLineMarkerVisible(highlighter)) myRightFreePaintersAreaShown = true;
         }
-        
+
         GutterMark renderer = highlighter.getGutterIconRenderer();
         if (renderer == null) {
           return;
@@ -870,13 +873,29 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       endY += myEditor.getLineHeight();
     }
 
-    LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
-    boolean leftPosition = renderer instanceof LineMarkerRendererEx && 
-                           ((LineMarkerRendererEx)renderer).getPosition() == LineMarkerRendererEx.Position.LEFT;
+    LineMarkerRenderer renderer = ObjectUtils.assertNotNull(highlighter.getLineMarkerRenderer());
+    LineMarkerRendererEx.Position position = getLineMarkerPosition(renderer);
+
+    int w;
+    int x;
+    switch (position) {
+      case LEFT:
+        w = getLeftFreePaintersAreaWidth();
+        x = getLeftFreePaintersAreaOffset();
+        break;
+      case RIGHT:
+        w = getRightFreePaintersAreaWidth();
+        x = getLineMarkerFreePaintersAreaOffset() - 1;
+        break;
+      case CUSTOM:
+        w = getWidth();
+        x = 0;
+        break;
+      default:
+        throw new IllegalArgumentException(position.name());
+    }
 
     int height = endY - startY;
-    int w = leftPosition ? getLeftFreePaintersAreaWidth() : getRightFreePaintersAreaWidth();
-    int x = leftPosition ? getLeftFreePaintersAreaOffset() : getLineMarkerFreePaintersAreaOffset() - 1;
     return new Rectangle(x, startY, w, height);
   }
 
@@ -1040,9 +1059,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void drawFoldingAnchor(int width, Rectangle clip, Graphics2D g, int anchorX, int visualLine,
                                  DisplayedFoldingAnchor.Type type, boolean active) {
-
-    final int off = (int)(JBUI.scale(2) * myEditor.getScale());
+    int off = (int)((float)width / 4);
     int height = width + off;
+    int baseHeight = height - width / 2;
     int y = getFoldAnchorY(visualLine, width);
     switch (type) {
       case COLLAPSED:
@@ -1052,14 +1071,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         break;
       case EXPANDED_TOP:
         if (y <= clip.y + clip.height && y + height >= clip.y) {
-          drawDirectedBox(g, anchorX, y, width, height, width - off, active);
+          drawDirectedBox(g, anchorX, y, width, height, baseHeight, active);
         }
         break;
       case EXPANDED_BOTTOM:
         //noinspection SuspiciousNameCombination
         y += width;
         if (y - height <= clip.y + clip.height && y >= clip.y) {
-          drawDirectedBox(g, anchorX, y, width, -height, -width + off, active);
+          drawDirectedBox(g, anchorX, y, width, -height, -baseHeight, active);
         }
         break;
     }
@@ -1084,7 +1103,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     try {
-      final int off = JBUI.scale(2);
+      int off = getSquareInnerOffset(width);
       int[] xPoints = {anchorX, anchorX + width, anchorX + width, anchorX + width / 2, anchorX};
       int[] yPoints = {y, y, y + baseHeight, y + height, y + baseHeight};
 
@@ -1109,8 +1128,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                   int width,
                                   boolean active) {
     drawSquareWithMinus(g, anchorX, y, width, active);
-    final int off = JBUI.scale(2);
+    int off = getSquareInnerOffset(width);
     UIUtil.drawLine(g, anchorX + width / 2, y + off, anchorX + width / 2, y + width - off);
+  }
+
+  /**
+   * Returns the gap between the sign and the square itself
+   */
+  private static int getSquareInnerOffset(int width) {
+    return Math.max(width / 5, JBUI.scale(2));
   }
 
   @SuppressWarnings("SuspiciousNameCombination")
@@ -1124,14 +1150,23 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     g.setColor(getOutlineColor(active));
     g.drawRect(anchorX, y, width, width);
-    final int off = JBUI.scale(2);
+    int off = getSquareInnerOffset(width);
     // Draw plus
     if (!active) g.setColor(getOutlineColor(true));
     UIUtil.drawLine(g, anchorX + off, y + width / 2, anchorX + width - off, y + width / 2);
   }
 
   private int getFoldingAnchorWidth() {
-    return (int)(Math.min(JBUI.scale(4) * myEditor.getScale(), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2);
+    // have to be odd number to be perfectly symmetric (as long as we have plus sign inside)
+    return roundToEven(Math.min(JBUI.scale(4) * myEditor.getScale(), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2);
+  }
+
+  private static int roundToEven(float f) {
+    int lower = (int)Math.floor(f);
+    int upper = (int)Math.ceil(f);
+    if (lower % 2 == 0) return lower;
+    if (upper % 2 == 0) return upper;
+    return lower > 0 ? lower - 1 : 0; // lower == upper == f
   }
 
   public int getFoldingAreaOffset() {
@@ -1671,8 +1706,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Override
-  public void setShowRightFreePaintersArea(boolean value) {
-    myRightFreePaintersAreaShown = value;
+  public void setForceShowLeftFreePaintersArea(boolean value) {
+    myForceLeftFreePaintersAreaShown = value;
+  }
+
+  @Override
+  public void setForceShowRightFreePaintersArea(boolean value) {
+    myForceRightFreePaintersAreaShown = value;
   }
 
   private void invokePopup(MouseEvent e) {
@@ -1792,6 +1832,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Nullable
   private GutterIconRenderer getGutterRenderer(final MouseEvent e) {
     return (GutterIconRenderer)getGutterRenderer(e.getPoint());
+  }
+
+  @NotNull
+  private static LineMarkerRendererEx.Position getLineMarkerPosition(@NotNull LineMarkerRenderer renderer) {
+    if (renderer instanceof LineMarkerRendererEx) {
+      return ((LineMarkerRendererEx)renderer).getPosition();
+    }
+    return LineMarkerRendererEx.Position.RIGHT;
   }
 
   public int convertX(int x) {

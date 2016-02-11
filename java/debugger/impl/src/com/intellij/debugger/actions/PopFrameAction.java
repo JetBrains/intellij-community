@@ -217,7 +217,7 @@ public class PopFrameAction extends DebuggerAction {
     if (position == null) {
       return Collections.emptyList();
     }
-    List<PsiStatement> res = new ArrayList<PsiStatement>();
+    List<PsiStatement> res = new ArrayList<>();
     PsiElement element = position.getFile().findElementAt(position.getOffset());
     PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
     while (tryStatement != null) {

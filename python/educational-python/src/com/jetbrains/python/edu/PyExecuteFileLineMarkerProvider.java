@@ -13,9 +13,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -36,12 +39,34 @@ public class PyExecuteFileLineMarkerProvider implements LineMarkerProvider {
     }
     PsiElement file = elements.get(0).getContainingFile();
     final RunContextAction runAction = new RunContextAction(DefaultRunExecutor.getRunExecutorInstance());
+    final PyExecuteFileExtensionPoint[] extensions =
+      ApplicationManager.getApplication().getExtensions(PyExecuteFileExtensionPoint.EP_NAME);
+
+    final List<AnAction> actions = new ArrayList<AnAction>();
+    final DefaultActionGroup group = new DefaultActionGroup();
+    if (PlatformUtils.isPyCharmEducational()) {
+      group.add(runAction);
+    }
+    for (PyExecuteFileExtensionPoint extension : extensions) {
+      AnAction action = extension.getRunAction();
+      if (action != null && extension.accept(file.getProject())) {
+        actions.add(action);
+        group.add(action);
+      }
+    }
+
+    if (actions.isEmpty() && !PlatformUtils.isPyCharmEducational()) {
+      return;
+    }
+
+    Icon icon = PlatformUtils.isPyCharmEducational() ? AllIcons.Actions.Execute : actions.get(0).getTemplatePresentation().getIcon();
     final LineMarkerInfo<PsiElement> markerInfo = new LineMarkerInfo<PsiElement>(
-      file, file.getTextRange(), AllIcons.Actions.Execute, Pass.UPDATE_OVERRIDEN_MARKERS,
+      file, file.getTextRange(), icon, Pass.UPDATE_OVERRIDEN_MARKERS,
       new Function<PsiElement, String>() {
         @Override
         public String fun(PsiElement e) {
-          return "Execute '" + e.getContainingFile().getName() + "'";
+          String text = "Execute '" + e.getContainingFile().getName() + "'";
+          return PlatformUtils.isPyCharmEducational() ? text : actions.get(0).getTemplatePresentation().getText();
         }
       }, null,
       GutterIconRenderer.Alignment.RIGHT) {
@@ -51,22 +76,17 @@ public class PyExecuteFileLineMarkerProvider implements LineMarkerProvider {
         return new LineMarkerGutterIconRenderer<PsiElement>(this) {
           @Override
           public AnAction getClickAction() {
-            return runAction;
+            return PlatformUtils.isPyCharmEducational() ? runAction : actions.get(0);
           }
 
           @Nullable
           @Override
           public ActionGroup getPopupMenuActions() {
-            final DefaultActionGroup group = new DefaultActionGroup();
-            group.add(runAction);
-            final PyExecuteFileExtensionPoint[] extensions =
-              ApplicationManager.getApplication().getExtensions(PyExecuteFileExtensionPoint.EP_NAME);
-            for (PyExecuteFileExtensionPoint extension : extensions) {
-              final AnAction action = extension.getRunAction();
-              if (action == null) {
-                continue;
-              }
-              group.add(action);
+            if (!PlatformUtils.isPyCharmEducational() && actions.isEmpty()) {
+              return null;
+            }
+            if (actions.size() == 1) {
+              return null;
             }
             return group;
           }

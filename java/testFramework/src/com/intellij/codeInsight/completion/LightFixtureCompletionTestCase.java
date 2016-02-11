@@ -73,7 +73,7 @@ public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFix
     myFixture.checkResultByFile(path);
   }
 
-  protected void selectItem(LookupElement item, final char completionChar) {
+  protected void selectItem(@NotNull LookupElement item, final char completionChar) {
     final LookupImpl lookup = getLookup();
     lookup.setCurrentItem(item);
     if (LookupEvent.isSpecialCompletionChar(completionChar)) {

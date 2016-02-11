@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: 28-Feb-2006
  */
-@State(
-  name = "AnalysisUIOptions",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.WORKSPACE_FILE
-    )}
-)
+@State(name = "AnalysisUIOptions", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOptions> {
   public static AnalysisUIOptions getInstance(Project project) {
     return ServiceManager.getService(project, AnalysisUIOptions.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,14 +74,10 @@ class CommitToIcsAction : CommonCheckinFilesAction() {
     return project is ProjectEx && (project.stateStore as IProjectStore).storageScheme == StorageScheme.DIRECTORY_BASED && super.isApplicableRoot(file, status, dataContext) && !file.isDirectory && isProjectConfigFile(file, dataContext.project!!)
   }
 
-  override fun prepareRootsForCommit(roots: Array<out FilePath>, project: Project) = roots as Array<FilePath>
+  override fun prepareRootsForCommit(roots: Array<FilePath>, project: Project) = roots
 
   override fun performCheckIn(context: VcsContext, project: Project, roots: Array<out FilePath>) {
-    val projectId = getProjectId(project)
-    if (projectId == null) {
-      return
-    }
-
+    val projectId = getProjectId(project) ?: return
     val changes = context.selectedChanges
     val collectConsumer = ProjectChangeCollectConsumer(project)
     if (changes != null && changes.isNotEmpty()) {

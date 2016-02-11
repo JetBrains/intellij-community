@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiUtil;
@@ -68,7 +69,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return PsiUtil.isLanguageLevel5OrHigher(file)
-           && file.getLanguage().isKindOf(JavaLanguage.INSTANCE)
+           && file instanceof PsiJavaFile
            && getElement() != null
            && getElement().isValid()
            && getQualifierExpression() == null

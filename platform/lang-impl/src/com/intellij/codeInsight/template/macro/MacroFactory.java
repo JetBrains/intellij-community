@@ -18,48 +18,36 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.Macro;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.List;
 
 public class MacroFactory {
-  private static HashMap<String,Macro> myMacroTable = null;
-
-  private MacroFactory() {
-  }
+  private static final MultiMap<String, Macro> myMacroTable = init();
 
   public static Macro createMacro(@NonNls String name) {
-    if(myMacroTable == null) {
-      init();
-    }
+    return ContainerUtil.getFirstItem(myMacroTable.get(name));
+  }
 
-    return myMacroTable.get(name);
+  public static List<Macro> getMacros(@NonNls String name) {
+    return (List<Macro>)myMacroTable.get(name);
   }
 
   public static Macro[] getMacros() {
-    if(myMacroTable == null) {
-      init();
-    }
-
-    final Collection<Macro> values = myMacroTable.values();
+    final Collection<? extends Macro> values = myMacroTable.values();
     return values.toArray(new Macro[values.size()]);
   }
 
-  private static void init() {
-    myMacroTable = new HashMap<String, Macro>();
-
+  private static MultiMap<String, Macro> init() {
+    MultiMap<String, Macro> result = MultiMap.create();
     for(Macro macro: Extensions.getExtensions(Macro.EP_NAME)) {
-      myMacroTable.put(macro.getName(), macro);
+      result.putValue(macro.getName(), macro);
     }
+    return result;
   }
 
-  /**
-   * @deprecated use com.intellij.liveTemplateMacro extension point instead
-   */
-  public static void register(Macro macro) {
-    if (myMacroTable == null) init();
-    myMacroTable.put(macro.getName(), macro);
-  }
 }
 

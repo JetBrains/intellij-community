@@ -57,7 +57,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
       for (PsiParameter parameter : parameters) {
         final PsiType type = session.substituteWithInferenceVariables(substitutor.substitute(parameter.getType()));
         if (!session.isProperType(type)) {
-          //session.registerIncompatibleErrorMessage("Parameter type in not yet inferred: " + type.getPresentableText());
+          //session.registerIncompatibleErrorMessage("Parameter type in not yet inferred: " + session.getPresentableText(type));
           return false;
         }
       }

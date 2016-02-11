@@ -93,7 +93,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
         if (debuggerSession != null && debuggerContext.getSuspendContext() != null) {
           final Semaphore semaphore = new Semaphore();
           semaphore.down();
-          final AtomicReference<PsiType> nameRef = new AtomicReference<PsiType>();
+          final AtomicReference<PsiType> nameRef = new AtomicReference<>();
           final RuntimeTypeEvaluator worker =
             new RuntimeTypeEvaluator(null, expression, debuggerContext, ProgressManager.getInstance().getProgressIndicator()) {
               @Override

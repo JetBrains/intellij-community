@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
@@ -209,6 +210,15 @@ public class CloudAccountSelectionEditor {
       return;
     }
     CloudRunConfigurationUtil.createRunConfiguration(account, module, configuration);
+  }
+
+  public void setSelectedAccount(String accountName) {
+    for (int i = 0; i < myAccountComboBox.getItemCount(); i++) {
+      AccountItem accountItem = (AccountItem)myAccountComboBox.getItemAt(i);
+      if (StringUtil.equals(accountName, accountItem.getAccount().getName())) {
+        myAccountComboBox.setSelectedItem(accountItem);
+      }
+    }
   }
 
   private static class AccountItem {

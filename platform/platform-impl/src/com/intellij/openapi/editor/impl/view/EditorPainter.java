@@ -801,9 +801,9 @@ class EditorPainter implements TextDrawingCallback {
     EditorSettings settings = myEditor.getSettings();
     Color caretColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
     if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
-    g.setColor(caretColor);
     int minX = getMinX();
     for (EditorImpl.CaretRectangle location : locations) {
+      g.setColor(caretColor);
       int x = location.myPoint.x;
       int y = location.myPoint.y;
       Caret caret = location.myCaret;
@@ -882,7 +882,7 @@ class EditorPainter implements TextDrawingCallback {
         SoftWrap softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset);
         if (softWrap != null) {
           prevEndOffset = offset;
-          it = new IterationState(myEditor, offset == 0 ? 0 : offset - 1, visualLineEndOffset, true, false, false, false);
+          it = new IterationState(myEditor, offset == 0 ? 0 : offset - 1, visualLineEndOffset, true, false, false, false, false);
           if (it.getEndOffset() <= offset) {
             it.advance();
           }
@@ -895,7 +895,8 @@ class EditorPainter implements TextDrawingCallback {
       FoldRegion foldRegion = fragment.getCurrentFoldRegion();
       if (foldRegion == null) {
         if (start != prevEndOffset) {
-          it = new IterationState(myEditor, start, fragment.isRtl() ? offset : visualLineEndOffset, true, false, false, fragment.isRtl());
+          it = new IterationState(myEditor, start, fragment.isRtl() ? offset : visualLineEndOffset, 
+                                  true, false, false, false, fragment.isRtl());
         }
         prevEndOffset = end;
         assert it != null;
@@ -920,8 +921,8 @@ class EditorPainter implements TextDrawingCallback {
       else {
         float xNew = fragment.getEndX();
         if (xNew >= clip.getMinX()) {
-          painter.paint(g, fragment, 0, fragment.getEndVisualColumn() - fragment.getStartVisualColumn(), getFoldRegionAttributes(foldRegion), 
-                        x, xNew, y);
+          painter.paint(g, fragment, 0, fragment.getEndVisualColumn() - fragment.getStartVisualColumn(), 
+                        getFoldRegionAttributes(foldRegion), x, xNew, y);
         }
         x = xNew;
         prevEndOffset = -1;
@@ -932,7 +933,7 @@ class EditorPainter implements TextDrawingCallback {
     }
     if (it == null || it.getEndOffset() != visualLineEndOffset) {
       it = new IterationState(myEditor, visualLineEndOffset == offset ? visualLineEndOffset : visualLineEndOffset - 1, visualLineEndOffset, 
-                              true, false, false, false);
+                              true, false, false, false, false);
     }
     if (!it.atEnd()) {
       it.advance();

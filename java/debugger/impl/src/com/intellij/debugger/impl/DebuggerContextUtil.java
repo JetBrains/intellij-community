@@ -61,6 +61,7 @@ public class DebuggerContextUtil {
             @Override
             public void run() {
               manager.setState(newContext, session.getState(), DebuggerSession.Event.REFRESH, null);
+              SourceCodeChecker.checkSource(newContext);
             }
           });
         }
@@ -95,7 +96,7 @@ public class DebuggerContextUtil {
           Editor editor = ((FileEditorManagerImpl)FileEditorManager.getInstance(file.getProject())).getSelectedTextEditor(true);
 
           //final Editor editor = fileEditor instanceof TextEditorImpl ? ((TextEditorImpl)fileEditor).getEditor() : null;
-          if (editor != null && position != null && file.getVirtualFile().equals(position.getFile())) {
+          if (editor != null && position != null && position.getFile().equals(file.getOriginalFile().getVirtualFile())) {
             PsiMethod method = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class, false);
             final Collection<TextRange> ranges =
               IdentifierHighlighterPass.getUsages(psi, method != null ? method : file, false);

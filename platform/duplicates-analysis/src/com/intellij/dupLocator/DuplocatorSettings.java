@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.intellij.dupLocator;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 import java.util.HashSet;
@@ -24,8 +27,8 @@ import java.util.Set;
 @State(
   name = "DuplocatorSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/duplocatorSettings.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+    @Storage("duplocatorSettings.xml"),
+    @Storage(value = "other.xml", deprecated = true)
   }
 )
 public class DuplocatorSettings implements PersistentStateComponent<DuplocatorSettings> {

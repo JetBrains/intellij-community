@@ -74,7 +74,7 @@ public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler 
     while (element != null) {
       List<MoveElementLeftRightHandler> handlers = MoveElementLeftRightHandler.EXTENSION.allForLanguage(element.getLanguage());
       for (MoveElementLeftRightHandler handler : handlers) {
-        PsiElement[] elementList = handler.getMoveableSubElements(element);
+        PsiElement[] elementList = handler.getMovableSubElements(element);
         if (elementList.length > 1) {
           Arrays.sort(elementList, BY_OFFSET);
           PsiElement first = elementList[0];

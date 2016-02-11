@@ -276,7 +276,7 @@ libraryLicense(name: "Plexus Utils", libraryName: "plexus-utils-1.5.5.jar", vers
 libraryLicense(name: "pockets", attachedTo: "python-helpers", version: "0.2.4", license: "BSD", url: "http://pockets.readthedocs.org/")
 libraryLicense(name: "protobuf", version: "2.5.0", license: "New BSD", url: "http://code.google.com/p/protobuf/", licenseUrl: "http://code.google.com/p/protobuf/source/browse/trunk/COPYING.txt?r=367")
 libraryLicense(name: "proxy-vole", libraryName: "proxy-vole", version: "20131209", license: "New BSD License", url: "http://code.google.com/p/proxy-vole/", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause")
-libraryLicense(name: "pty4j", libraryName: "pty4j", version: "0.5", license: "Eclipse Public License v1.0", url: "https://github.com/traff/pty4j")
+libraryLicense(name: "pty4j", libraryName: "pty4j", version: "0.6", license: "Eclipse Public License v1.0", url: "https://github.com/traff/pty4j")
 libraryLicense(name: "PureJavaComm", libraryName: "purejavacomm", version: "0.0.16", license: "BSD", url: "http://www.sparetimelabs.com/purejavacomm")
 libraryLicense(name: "ReflectASM", libraryName: "reflectasm-1.0.7.jar", version: "1.0.7", license: "BSD", url: "https://github.com/EsotericSoftware/reflectasm", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause")
 libraryLicense(name: "Relax NG Object Model", libraryName: "rngom-20051226-patched.jar", license: "MIT", url: "http://java.net/projects/rngom/", licenseUrl: "http://www.opensource.org/licenses/mit-license.php")

@@ -173,6 +173,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Nullable private MouseEvent myMousePressedEvent;
   @Nullable private MouseEvent myMouseMovedEvent;
+  
+  private final MouseListener myMouseListener = new MyMouseAdapter();
+  private final MouseMotionListener myMouseMotionListener = new MyMouseMotionListener();
 
   /**
    * Holds information about area where mouse was pressed.
@@ -374,16 +377,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        attributesChanged(highlighter, areRenderersInvolved(highlighter));
+        attributesChanged(highlighter, areRenderersInvolved(highlighter), false);
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        attributesChanged(highlighter, areRenderersInvolved(highlighter));
+        attributesChanged(highlighter, areRenderersInvolved(highlighter), false);
       }
 
       @Override
-      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged) {
+      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleChanged) {
         if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
         
         if (myUseNewRendering && renderersChanged) {
@@ -408,7 +411,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
         int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
         TextAttributes attributes = highlighter.getTextAttributes();
-        if (myUseNewRendering && start != end && attributes != null && attributes.getFontType() != Font.PLAIN) {
+        if (myUseNewRendering && start != end && (fontStyleChanged || attributes != null && attributes.getFontType() != Font.PLAIN)) {
           myView.invalidateRange(start, end);
         }
         repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
@@ -531,6 +534,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane = new MyScrollPane();
+    myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
     if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7") && Registry.is("editor.mac.smooth.scrolling")) {
       PreciseMouseWheelScroller.install(myScrollPane);
     }
@@ -856,6 +860,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     );
   }
 
+  /**
+   * To be called when editor was not disposed while it should
+   */
+  public void throwEditorNotDisposedError(@NonNls @NotNull final String msg) {
+    myTraceableDisposable.throwObjectNotDisposedError(msg);
+  }
+
+  /**
+   * In case of "editor not disposed error" use {@link #throwEditorNotDisposedError(String)}
+   */
   public void throwDisposalError(@NonNls @NotNull String msg) {
     myTraceableDisposable.throwDisposalError(msg);
   }
@@ -886,6 +900,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFocusListeners.clear();
     myMouseListeners.clear();
     myMouseMotionListeners.clear();
+    
+    myEditorComponent.removeMouseListener(myMouseListener);
+    myGutterComponent.removeMouseListener(myMouseListener);
+    myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
+    myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
     if (myConnection != null) {
       myConnection.disconnect();
@@ -984,13 +1003,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     });
 
-    MyMouseAdapter mouseAdapter = new MyMouseAdapter();
-    myEditorComponent.addMouseListener(mouseAdapter);
-    myGutterComponent.addMouseListener(mouseAdapter);
-
-    MyMouseMotionListener mouseMotionListener = new MyMouseMotionListener();
-    myEditorComponent.addMouseMotionListener(mouseMotionListener);
-    myGutterComponent.addMouseMotionListener(mouseMotionListener);
+    myEditorComponent.addMouseListener(myMouseListener);
+    myGutterComponent.addMouseListener(myMouseListener);
+    myEditorComponent.addMouseMotionListener(myMouseMotionListener);
+    myGutterComponent.addMouseMotionListener(myMouseMotionListener);
 
     myEditorComponent.addFocusListener(new FocusAdapter() {
       @Override
@@ -2025,9 +2041,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (!dim.equals(myPreferredSize) && !myDocument.isInBulkUpdate()) {
       dim = mySizeAdjustmentStrategy.adjust(dim, myPreferredSize, this);
-      if (dim == null) {
-        return;
-      }
       myPreferredSize = dim;
 
       myGutterComponent.updateSize();
@@ -4674,12 +4687,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private long mySleepTime = 500;
     private boolean myIsBlinkCaret = true;
     @Nullable private EditorImpl myEditor;
-    @NotNull private final MyRepaintRunnable myRepaintRunnable;
+    @NotNull private final MyRepaintRunnable myRepaintRunnable = new MyRepaintRunnable();
     private ScheduledFuture<?> mySchedulerHandle;
-
-    private RepaintCursorCommand() {
-      myRepaintRunnable = new MyRepaintRunnable();
-    }
 
     private class MyRepaintRunnable implements Runnable {
       @Override
@@ -5496,7 +5505,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     for (RangeHighlighter highlighter : myDocumentMarkupModel.getDelegate().getAllHighlighters()) {
       boolean oldAvailable = oldFilter == null || oldFilter.value(highlighter);
       boolean newAvailable = filter == null || filter.value(highlighter);
-      if (oldAvailable != newAvailable) myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true);
+      if (oldAvailable != newAvailable) myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true, false);
     }
   }
 

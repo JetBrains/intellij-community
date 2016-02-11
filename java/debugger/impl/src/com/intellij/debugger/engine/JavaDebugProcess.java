@@ -89,7 +89,7 @@ public class JavaDebugProcess extends XDebugProcess {
     myEditorsProvider = new JavaDebuggerEditorsProvider();
     final DebugProcessImpl process = javaSession.getProcess();
 
-    List<XBreakpointHandler> handlers = new ArrayList<XBreakpointHandler>();
+    List<XBreakpointHandler> handlers = new ArrayList<>();
     handlers.add(new JavaBreakpointHandler.JavaLineBreakpointHandler(process));
     handlers.add(new JavaBreakpointHandler.JavaExceptionBreakpointHandler(process));
     handlers.add(new JavaBreakpointHandler.JavaFieldBreakpointHandler(process));
@@ -127,11 +127,13 @@ public class JavaDebugProcess extends XDebugProcess {
                       threadProxy != null && ((LocatableEvent)second).thread() == threadProxy.getThreadReference()) {
                     ((XDebugSessionImpl)getSession()).breakpointReachedNoProcessing(xBreakpoint, newSuspendContext);
                     unsetPausedIfNeeded(newContext);
+                    SourceCodeChecker.checkSource(newContext);
                     return;
                   }
                 }
                 getSession().positionReached(newSuspendContext);
                 unsetPausedIfNeeded(newContext);
+                SourceCodeChecker.checkSource(newContext);
               }
             });
           }

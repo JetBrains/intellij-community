@@ -127,7 +127,7 @@ public class SidePanel extends JPanel {
             myCountLabel.setText(errorsCount > 100 ? "100+" : String.valueOf(errorsCount));
           }
         }
-        if (UIUtil.getClientProperty(list, ExpandableItemsHandler.EXPANDED_RENDERER) == Boolean.TRUE) {
+        if (UIUtil.isClientPropertyTrue(list, ExpandableItemsHandler.EXPANDED_RENDERER)) {
           Rectangle bounds = list.getCellBounds(index, index);
           bounds.setSize((int)component.getPreferredSize().getWidth(), (int)bounds.getHeight());
           AbstractExpandableItemsHandler.setRelativeBounds(component, bounds, myExtraPanel, myValidationParent);

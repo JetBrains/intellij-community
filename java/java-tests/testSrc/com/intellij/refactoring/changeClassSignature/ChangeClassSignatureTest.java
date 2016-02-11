@@ -2,8 +2,7 @@ package com.intellij.refactoring.changeClassSignature;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.refactoring.LightRefactoringTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -97,6 +96,19 @@ public class ChangeClassSignatureTest extends LightRefactoringTestCase {
   public void testAddWithBound() throws Exception {
     doTest(aClass -> new TypeParameterInfo[]{
       new TypeParameterInfo.New(aClass, "T", "java.util.List", "java.util.Collection")
+    });
+  }
+
+  public void testAddBoundWithIntersection() throws Exception {
+    doTest(aClass -> {
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
+      final PsiFile context = aClass.getContainingFile();
+      return new TypeParameterInfo[]{
+        new TypeParameterInfo.New("T",
+                                  factory.createTypeFromText("Some", context),
+                                  PsiIntersectionType.createIntersection(factory.createTypeFromText("java.lang.Runnable", context),
+                                                                         factory.createTypeFromText("java.io.Serializable", context)))
+      };
     });
   }
 

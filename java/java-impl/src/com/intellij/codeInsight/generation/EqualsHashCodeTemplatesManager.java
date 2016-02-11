@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.codeInsight.generation;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,13 +32,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Set;
 
-@State(
-  name = "EqualsHashCodeTemplates",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/equalsHashCodeTemplates.xml"
-    )}
-)
+@State(name = "EqualsHashCodeTemplates", storages = @Storage("equalsHashCodeTemplates.xml"))
 public class EqualsHashCodeTemplatesManager extends TemplatesManager {
   private static final String DEFAULT_EQUALS = "/com/intellij/codeInsight/generation/defaultEquals.vm";
   private static final String DEFAULT_HASH_CODE = "/com/intellij/codeInsight/generation/defaultHashCode.vm";

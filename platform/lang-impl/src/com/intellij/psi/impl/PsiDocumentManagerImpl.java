@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
       if (myUnitTestMode) {
         myStopTrackingDocuments = true;
         try {
-          LOG.error("Too many uncommitted documents for " + myProject + ":\n" + StringUtil.join(myUncommittedDocuments, "\n") + 
+          LOG.error("Too many uncommitted documents for " + myProject + "(" +myUncommittedDocuments.size()+")"+
+                    ":\n" + StringUtil.join(myUncommittedDocuments, "\n") +
                     "\n\n Project creation trace: " + myProject.getUserData(ProjectImpl.CREATION_TRACE));
         }
         finally {

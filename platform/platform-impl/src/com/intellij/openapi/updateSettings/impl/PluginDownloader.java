@@ -140,9 +140,7 @@ public class PluginDownloader {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return false;
       }
-      if (!descriptor.isBundled()) {
-        myOldFile = descriptor.getPath();
-      }
+      myOldFile = descriptor.isBundled() ? null : descriptor.getPath();
     }
 
     // download plugin
@@ -207,7 +205,7 @@ public class PluginDownloader {
 
   @Nullable
   public static IdeaPluginDescriptorImpl loadDescriptionFromJar(final File file) throws IOException {
-    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptorFromJar(file);
+    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptor(file, PluginManagerCore.PLUGIN_XML);
     if (descriptor == null) {
       if (file.getName().endsWith(".zip")) {
         final File outputDir = FileUtil.createTempDirectory("plugin", "");

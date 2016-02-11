@@ -26,10 +26,9 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.breakpoints.*
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
-import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
+import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.connection.VmConnection
-import org.jetbrains.debugger.frame.SuspendContextImpl
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -39,7 +38,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
                                                      private val smartStepIntoHandler: XSmartStepIntoHandler<*>? = null,
                                                      protected val executionResult: ExecutionResult? = null) : XDebugProcess(session) {
   protected val repeatStepInto: AtomicBoolean = AtomicBoolean()
-  @Volatile protected var lastStep: StepAction? = null
+  @Volatile var lastStep: StepAction? = null
   @Volatile protected var lastCallFrame: CallFrame? = null
   @Volatile protected var isForceStep: Boolean = false
   @Volatile protected var disableDoNotStepIntoLibraries: Boolean = false
@@ -126,19 +125,19 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   // some VM (firefox for example) doesn't implement step out correctly, so, we need to fix it
   protected open fun isVmStepOutCorrect() = true
 
-  override final fun resume() {
+  override fun resume() {
     continueVm(StepAction.CONTINUE)
   }
 
   /**
    * You can override this method to avoid SuspendContextManager implementation, but it is not recommended.
    */
-  protected open fun continueVm(stepAction: StepAction) {
+  protected open fun continueVm(stepAction: StepAction): Promise<*>? {
     val suspendContextManager = vm!!.suspendContextManager
     if (stepAction === StepAction.CONTINUE) {
       if (suspendContextManager.context == null) {
         // on resumed we ask session to resume, and session then call our "resume", but we have already resumed, so, we don't need to send "continue" message
-        return
+        return null
       }
 
       lastStep = null
@@ -149,50 +148,12 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     else {
       lastStep = stepAction
     }
-    suspendContextManager.continueVm(stepAction, 1)
+    return suspendContextManager.continueVm(stepAction, 1)
   }
 
-  protected fun setOverlay() {
-    vm!!.suspendContextManager.setOverlayMessage("Paused in debugger")
-  }
-
-  protected fun processBreakpoint(suspendContext: SuspendContext<*>, breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl) {
-    val condition = breakpoint.conditionExpression?.expression
-    if (!processBreakpointConditionsAtIdeSide || condition == null) {
-      processBreakpointLogExpressionAndSuspend(breakpoint, xSuspendContext, suspendContext)
-    }
-    else {
-      xSuspendContext.evaluateExpression(condition)
-        .done(suspendContext) {
-          if ("false" == it) {
-            resume()
-          }
-          else {
-            processBreakpointLogExpressionAndSuspend(breakpoint, xSuspendContext, suspendContext)
-          }
-        }
-        .rejected(suspendContext) { processBreakpointLogExpressionAndSuspend(breakpoint, xSuspendContext, suspendContext) }
-    }
-  }
-
-  private fun processBreakpointLogExpressionAndSuspend(breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl, suspendContext: SuspendContext<*>) {
-    val logExpression = breakpoint.logExpressionObject?.expression
-    if (logExpression == null) {
-      breakpointReached(breakpoint, null, xSuspendContext)
-    }
-    else {
-      xSuspendContext.evaluateExpression(logExpression)
-        .done(suspendContext) { breakpointReached(breakpoint, it, xSuspendContext) }
-        .rejected(suspendContext) { breakpointReached(breakpoint, "Failed to evaluate expression: $logExpression", xSuspendContext) }
-    }
-  }
-
-  private fun breakpointReached(breakpoint: XBreakpoint<*>, evaluatedLogExpression: String?, suspendContext: XSuspendContext) {
-    if (session.breakpointReached(breakpoint, evaluatedLogExpression, suspendContext)) {
-      setOverlay()
-    }
-    else {
-      resume()
+  protected fun setOverlay(context: SuspendContext<*>) {
+    if (context.workerId == null) {
+      vm!!.suspendContextManager.setOverlayMessage("Paused in debugger")
     }
   }
 

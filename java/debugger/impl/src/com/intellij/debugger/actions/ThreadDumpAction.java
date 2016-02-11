@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,9 +85,9 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
 
   static List<ThreadState> buildThreadStates(VirtualMachineProxyImpl vmProxy) {
     final List<ThreadReference> threads = vmProxy.getVirtualMachine().allThreads();
-    final List<ThreadState> result = new ArrayList<ThreadState>();
-    final Map<String, ThreadState> nameToThreadMap = new HashMap<String, ThreadState>();
-    final Map<String, String> waitingMap = new HashMap<String, String>(); // key 'waits_for' value
+    final List<ThreadState> result = new ArrayList<>();
+    final Map<String, ThreadState> nameToThreadMap = new HashMap<>();
+    final Map<String, String> waitingMap = new HashMap<>(); // key 'waits_for' value
     for (ThreadReference threadReference : threads) {
       final StringBuilder buffer = new StringBuilder();
       boolean hasEmptyStack = true;
@@ -175,13 +175,13 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
         final List<StackFrame> frames = threadReference.frames();
         hasEmptyStack = frames.size() == 0;
 
-        final TIntObjectHashMap<List<ObjectReference>> lockedAt = new TIntObjectHashMap<List<ObjectReference>>();
+        final TIntObjectHashMap<List<ObjectReference>> lockedAt = new TIntObjectHashMap<>();
         if (vmProxy.canGetMonitorFrameInfo()) {
           for (MonitorInfo info : threadReference.ownedMonitorsAndFrames()) {
             final int stackDepth = info.stackDepth();
             List<ObjectReference> monitors;
             if ((monitors = lockedAt.get(stackDepth)) == null) {
-              lockedAt.put(stackDepth, monitors = new SmartList<ObjectReference>());
+              lockedAt.put(stackDepth, monitors = new SmartList<>());
             }
             monitors.add(info.monitor());
           }

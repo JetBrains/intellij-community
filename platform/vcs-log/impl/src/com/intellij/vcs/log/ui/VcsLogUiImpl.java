@@ -68,7 +68,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myMainFrame = new MainFrame(logDataHolder, this, project, settings, uiProperties, myLog, myVisiblePack);
 
     for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
-      addHighlighter(factory.createHighlighter(logDataHolder, myUiProperties, myMainFrame.getFilterUi()));
+      getTable().addHighlighter(factory.createHighlighter(logDataHolder, this));
     }
   }
 
@@ -320,18 +320,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   public VisiblePack getDataPack() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myVisiblePack;
-  }
-
-  @Override
-  public void addHighlighter(@NotNull VcsLogHighlighter highlighter) {
-    getTable().addHighlighter(highlighter);
-    repaintUI();
-  }
-
-  @Override
-  public void removeHighlighter(@NotNull VcsLogHighlighter highlighter) {
-    getTable().removeHighlighter(highlighter);
-    repaintUI();
   }
 
   @Override

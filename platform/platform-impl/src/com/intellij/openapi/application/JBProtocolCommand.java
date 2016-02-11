@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,16 @@ import java.util.Map;
  */
 public abstract class JBProtocolCommand {
   public static final ExtensionPointName<JBProtocolCommand> EP_NAME = new ExtensionPointName<JBProtocolCommand>("com.intellij.jbProtocolCommand");
+  private final String myCommand;
+
+  public JBProtocolCommand(@NotNull String command) {
+    myCommand = command;
+  }
 
   @NotNull
-  public abstract String getCommandName();
+  public final String getCommandName() {
+    return myCommand;
+  }
 
   public abstract void perform(String target, Map<String, String> parameters);
 

@@ -192,14 +192,27 @@ private String readKotlinClassVersionOfCompiledClasses() {
 
 private String readKotlinClassFileVersion(InputStream classFileStream) {
   def reader = new ClassReader(classFileStream)
-  String kotlinClassVersion = null
+  String kotlinBytecodeVersion = null
+  String kotlinMetaDataVersion = null
   reader.accept(new ClassVisitor(Opcodes.ASM5) {
     AnnotationVisitor visitAnnotation(String annotationName, boolean b) {
       if (annotationName == "Lkotlin/jvm/internal/KotlinClass;") {
         return new AnnotationVisitor(Opcodes.ASM5) {
           void visit(String name, Object value) {
             if (name == "version") {
-              kotlinClassVersion = (value as Integer[]).join(".")
+              kotlinBytecodeVersion = (value as Integer[]).join(".")
+            }
+          }
+        }
+      }
+      else if (annotationName == "Lkotlin/Metadata;") {
+        return new AnnotationVisitor(Opcodes.ASM5) {
+          void visit(String name, Object value) {
+            if (name == "mv") {
+              kotlinMetaDataVersion = (value as Integer[]).join(".")
+            }
+            else if (name == "bv") {
+              kotlinBytecodeVersion = (value as Integer[]).join(".")
             }
           }
         }
@@ -207,7 +220,10 @@ private String readKotlinClassFileVersion(InputStream classFileStream) {
       return null
     }
   }, 0)
-  return kotlinClassVersion
+  if (kotlinBytecodeVersion != null && kotlinMetaDataVersion != null) {
+    kotlinBytecodeVersion = kotlinBytecodeVersion + "." + kotlinMetaDataVersion
+  }
+  return kotlinBytecodeVersion
 }
 
 private boolean downloadAndExtract(TeamCityBuildLocator buildLocator, String communityHome, String classVersionOfCompiledClasses) {
@@ -243,7 +259,7 @@ private boolean downloadAndExtract(TeamCityBuildLocator buildLocator, String com
     ant.patternset(includes: "Kotlin/lib/jps/**")
     ant.globmapper(from: "Kotlin/lib/jps/*", to: "*")
   }
-  def reasonToUpdate = getReasonToUpdate(communityHome, kotlincDir, classVersionOfCompiledClasses)
+  def reasonToUpdate = getReasonToUpdate(communityHome, new File(kotlincDir), classVersionOfCompiledClasses)
   if (reasonToUpdate != null) {
     projectBuilder.warning("Cannot use the downloaded Kotlin plugin: $reasonToUpdate")
   }

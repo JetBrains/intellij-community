@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,7 +151,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
       final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(dataContext);
       final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
       if (debugProcess != null) { // if there is an active debugsession
-        final Ref<SourcePosition> positionRef = new Ref<SourcePosition>(null);
+        final Ref<SourcePosition> positionRef = new Ref<>(null);
         debugProcess.getManagerThread().invokeAndWait(new DebuggerContextCommandImpl(debuggerContext) {
           public Priority getPriority() {
             return Priority.HIGH;

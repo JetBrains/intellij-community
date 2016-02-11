@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
@@ -56,6 +55,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
       return UISettings.getShadowInstance().EDITOR_AA_TYPE;
     }
   };
+  private static final String HELP_URL = "https://confluence.jetbrains.com/display/IDEADEV/Support+for+Ligatures+in+Editor";
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
@@ -104,13 +104,8 @@ public class FontOptions extends JPanel implements OptionsPanel{
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
     myEnableLigaturesCheckbox.setBorder(null);
     panel.add(myEnableLigaturesCheckbox);
-    myLigaturesInfoLinkLabel = new LinkLabel<Void>(ApplicationBundle.message("ligatures.more.info"), null, new LinkListener<Void>() {
-      @Override
-      public void linkSelected(LinkLabel aSource, Void aLinkData) {
-        BrowserUtil.browse("https://confluence.jetbrains.com/display/IDEADEV/Support+for+Ligatures+in+Editor");
-      }
-    });
-    myLigaturesInfoLinkLabel.setBorder(new EmptyBorder(0, 5, 0, 0));
+    myLigaturesInfoLinkLabel = new LinkLabel<>(ApplicationBundle.message("ligatures.more.info"), null, (LinkListener<Void>)(aSource, aLinkData) -> BrowserUtil.browse(HELP_URL));
+    myLigaturesInfoLinkLabel.setBorder(JBUI.Borders.emptyLeft(5));
     panel.add(myLigaturesInfoLinkLabel);
     add(panel, "newline, sx 2");
 
@@ -119,13 +114,10 @@ public class FontOptions extends JPanel implements OptionsPanel{
     mySecondaryCombo.setEnabled(false);
 
     myOnlyMonospacedCheckBox.setSelected(EditorColorsManager.getInstance().isUseOnlyMonospacedFonts());
-    myOnlyMonospacedCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        EditorColorsManager.getInstance().setUseOnlyMonospacedFonts(myOnlyMonospacedCheckBox.isSelected());
-        myPrimaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
-        mySecondaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
-      }
+    myOnlyMonospacedCheckBox.addActionListener(e -> {
+      EditorColorsManager.getInstance().setUseOnlyMonospacedFonts(myOnlyMonospacedCheckBox.isSelected());
+      myPrimaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
+      mySecondaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
     });
     myPrimaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
     myPrimaryCombo.setRenderer(RENDERER);
@@ -133,30 +125,19 @@ public class FontOptions extends JPanel implements OptionsPanel{
     mySecondaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
     mySecondaryCombo.setRenderer(RENDERER);
 
-    myUseSecondaryFontCheckbox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        mySecondaryCombo.setEnabled(myUseSecondaryFontCheckbox.isSelected());
-        syncFontFamilies();
-      }
+    myUseSecondaryFontCheckbox.addActionListener(e -> {
+      mySecondaryCombo.setEnabled(myUseSecondaryFontCheckbox.isSelected());
+      syncFontFamilies();
     });
-    ItemListener itemListener = new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          syncFontFamilies();
-        }
+    ItemListener itemListener = e -> {
+      if (e.getStateChange() == ItemEvent.SELECTED) {
+        syncFontFamilies();
       }
     };
     myPrimaryCombo.addItemListener(itemListener);
     mySecondaryCombo.addItemListener(itemListener);
 
-    ActionListener actionListener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        syncFontFamilies();
-      }
-    };
+    ActionListener actionListener = e -> syncFontFamilies();
     myPrimaryCombo.addActionListener(actionListener);
     mySecondaryCombo.addActionListener(actionListener);
 
@@ -214,12 +195,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
         }
       }
     });
-    myEnableLigaturesCheckbox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        getFontPreferences().setUseLigatures(myEnableLigaturesCheckbox.isSelected());
-      }
-    });
+    myEnableLigaturesCheckbox.addActionListener(e -> getFontPreferences().setUseLigatures(myEnableLigaturesCheckbox.isSelected()));
   }
 
   private int getFontSizeFromField() {
@@ -368,6 +344,6 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
   @Override
   public Set<String> processListOptions() {
-    return new HashSet<String>();
+    return new HashSet<>();
   }
 }

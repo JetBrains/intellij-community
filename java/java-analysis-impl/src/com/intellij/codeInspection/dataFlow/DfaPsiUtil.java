@@ -70,8 +70,17 @@ public class DfaPsiUtil {
       return Nullness.UNKNOWN;
     }
 
-    if (owner instanceof PsiEnumConstant) {
+    if (owner instanceof PsiEnumConstant || PsiUtil.isAnnotationMethod(owner)) {
       return Nullness.NOT_NULL;
+    }
+    if (owner instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)owner;
+      if ("valueOf".equals(method.getName()) && method.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null && containingClass.isEnum()) {
+          return Nullness.NOT_NULL;
+        }
+      }
     }
 
     if (resultType != null) {

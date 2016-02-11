@@ -41,6 +41,8 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.regex.Pattern
 import kotlin.concurrent.withLock
 
+private val MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)")
+
 /**
  * If componentManager not specified, storage will not add file tracker (see VirtualFileTracker)
  */
@@ -61,9 +63,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     get() = true
 
   companion object {
-    private val MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)")
-
-    fun createDefaultVirtualTracker(componentManager: ComponentManager?) = when (componentManager) {
+    private fun createDefaultVirtualTracker(componentManager: ComponentManager?) = when (componentManager) {
       null -> {
         null
       }
@@ -130,7 +130,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
   }
 
-  override final fun getStateStorage(storageSpec: Storage) = getOrCreateStorage(storageSpec.file, storageSpec.roamingType,
+  override final fun getStateStorage(storageSpec: Storage) = getOrCreateStorage(storageSpec.path, storageSpec.roamingType,
           JavaAnnotationHelperForKotlin.getStorageClass(storageSpec), JavaAnnotationHelperForKotlin.getStateSplitterClass(storageSpec))
 
   protected open fun normalizeFileSpec(fileSpec: String): String {
@@ -142,7 +142,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   fun getOrCreateStorage(collapsedPath: String,
                          roamingType: RoamingType = RoamingType.DEFAULT,
                          storageClass: Class<out StateStorage> = StateStorage::class.java,
-                         @Suppress("DEPRECATION") @SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java): StateStorage {
+                         @Suppress("DEPRECATION") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java): StateStorage {
     val normalizedCollapsedPath = normalizeFileSpec(collapsedPath)
     val key = if (storageClass == StateStorage::class.java) normalizedCollapsedPath else storageClass.name
     storageLock.withLock {
@@ -399,3 +399,7 @@ private fun String.startsWithMacro(macro: String): Boolean {
 }
 
 fun removeMacroIfStartsWith(path: String, macro: String) = if (path.startsWithMacro(macro)) path.substring(macro.length + 1) else path
+
+@Suppress("DEPRECATION")
+internal val Storage.path: String
+  get() = if (value.isNullOrEmpty()) file else value

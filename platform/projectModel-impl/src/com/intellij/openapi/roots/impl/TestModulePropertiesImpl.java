@@ -17,8 +17,6 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
@@ -30,10 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-@State(
-  name = "TestModuleProperties",
-  storages = @Storage(file = StoragePathMacros.MODULE_FILE)
-)
+@State(name = "TestModuleProperties")
 public class TestModulePropertiesImpl extends TestModuleProperties implements PersistentStateComponent<TestModulePropertiesImpl.TestModulePropertiesState> {
   private final ModulePointerManager myModulePointerManager;
   private ModulePointer myProductionModulePointer;
@@ -69,7 +64,7 @@ public class TestModulePropertiesImpl extends TestModuleProperties implements Pe
 
   @Override
   public void loadState(TestModulePropertiesState state) {
-
+    setProductionModuleName(state.moduleName);
   }
 
   public static class TestModulePropertiesState {

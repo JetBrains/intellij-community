@@ -35,6 +35,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.*;
@@ -128,10 +129,15 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     initColumnSize();
   }
 
-  public void updateDataPack(@NotNull VisiblePack visiblePack) {
+  public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {
     VcsLogGraphTable.Selection previousSelection = getSelection();
     getGraphTableModel().setVisiblePack(visiblePack);
     previousSelection.restore(visiblePack.getVisibleGraph(), true);
+
+    for (VcsLogHighlighter highlighter: myHighlighters) {
+      highlighter.update(visiblePack, permGraphChanged);
+    }
+
     setPaintBusy(false);
     initColumnSize();
   }
@@ -320,20 +326,22 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
         .createStyle(dummyRendererComponent.getForeground(), dummyRendererComponent.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
     }
 
-    final RowInfo<Integer> rowInfo = visibleGraph.getRowInfo(row);
+    RowInfo<Integer> rowInfo = visibleGraph.getRowInfo(row);
 
     VcsLogHighlighter.VcsCommitStyle defaultStyle = VcsCommitStyleFactory
       .createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : dummyRendererComponent.getForeground(),
                    dummyRendererComponent.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
 
+    final VcsShortCommitDetails details = myLogDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(rowInfo.getCommit());
+    if (details == null || details instanceof LoadingDetails) return defaultStyle;
+
     List<VcsLogHighlighter.VcsCommitStyle> styles =
       ContainerUtil.map(myHighlighters, new Function<VcsLogHighlighter, VcsLogHighlighter.VcsCommitStyle>() {
         @Override
         public VcsLogHighlighter.VcsCommitStyle fun(VcsLogHighlighter highlighter) {
-          return highlighter.getStyle(rowInfo.getCommit(), selected);
+          return highlighter.getStyle(details, selected);
         }
       });
-
     return VcsCommitStyleFactory.combine(ContainerUtil.append(styles, defaultStyle));
   }
 
@@ -559,7 +567,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
     private void performAction(@NotNull MouseEvent e, @NotNull final GraphAction.Type actionType) {
       int row = PositionUtil.getRowIndex(e.getPoint(), getRowHeight());
-      if (row > getRowCount() - 1) {
+      if (row < 0 || row > getRowCount() - 1) {
         return;
       }
       Point point = calcPoint4Graph(e.getPoint());

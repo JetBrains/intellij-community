@@ -87,7 +87,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   @NotNull
   @Override
   public Breakpoint<JavaLineBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
-    return new LineBreakpoint<JavaLineBreakpointProperties>(project, breakpoint);
+    return new LineBreakpoint<>(project, breakpoint);
   }
 
   @Override
@@ -120,7 +120,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       return Collections.emptyList();
     }
 
-    List<JavaBreakpointVariant> res = new SmartList<JavaBreakpointVariant>();
+    List<JavaBreakpointVariant> res = new SmartList<>();
     res.add(new JavaBreakpointVariant(position)); //all
 
     if (!(startMethod instanceof PsiLambdaExpression)) {

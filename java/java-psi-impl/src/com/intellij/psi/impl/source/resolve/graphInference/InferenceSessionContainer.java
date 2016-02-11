@@ -246,8 +246,11 @@ public class InferenceSessionContainer {
         break;
       }
       final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(psiCall.getArgumentList());
-      if (properties != null && properties.isApplicabilityCheck()) {
-        break;
+      if (properties != null) {
+        if (properties.isApplicabilityCheck() || 
+            lambdaExpression != null && lambdaExpression.hasFormalParameterTypes()) {
+          break;
+        }
       }
 
       top = psiCall;

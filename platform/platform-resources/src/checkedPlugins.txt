@@ -22,8 +22,9 @@ AWSCloudFormation
 Dart
 IdeaVIM
 IDETalk
-Commander
+com.intellij.commander
 SourceSafe
 TFS
 ro.redeul.google.go
-LiveEdit
+com.intellij.plugins.html.instantEditing
+com.jetbrains.intellij.api.watcher

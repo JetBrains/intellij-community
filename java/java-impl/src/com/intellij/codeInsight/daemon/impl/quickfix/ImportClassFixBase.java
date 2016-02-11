@@ -235,12 +235,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   protected static List<PsiClass> filterAssignableFrom(PsiType type, List<PsiClass> candidates) {
     final PsiClass actualClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (actualClass != null) {
-      return ContainerUtil.findAll(candidates, new Condition<PsiClass>() {
-        @Override
-        public boolean value(PsiClass psiClass) {
-          return InheritanceUtil.isInheritorOrSelf(psiClass, actualClass, true);
-        }
-      });
+      return ContainerUtil.findAll(candidates, psiClass -> InheritanceUtil.isInheritorOrSelf(actualClass, psiClass, true));
     }
     return candidates;
   }
@@ -309,7 +304,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     }
     PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);
     final Project project = myElement.getProject();
-    CodeInsightUtil.sortIdenticalShortNameClasses(classes, myRef);
+    CodeInsightUtil.sortIdenticalShortNamedMembers(classes, myRef);
 
     final QuestionAction action = createAddImportAction(classes, project, editor);
 

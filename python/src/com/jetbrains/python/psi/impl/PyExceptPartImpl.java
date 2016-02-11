@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
@@ -23,7 +25,7 @@ import com.jetbrains.python.psi.stubs.PyExceptPartStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author dcheryasov
@@ -58,16 +60,20 @@ public class PyExceptPartImpl extends PyBaseElementImpl<PyExceptPartStub> implem
   }
 
   @NotNull
-  public Iterable<PyElement> iterateNames() {
-    return new ArrayList<PyElement>(PyUtil.flattenedParensAndStars(getTarget()));
+  public List<PsiNamedElement> getNamedElements() {
+    final List<PyExpression> expressions = PyUtil.flattenedParensAndStars(getTarget());
+    final List<PsiNamedElement> results = Lists.newArrayList();
+    for (PyExpression expression : expressions) {
+      if (expression instanceof PsiNamedElement) {
+        results.add((PsiNamedElement)expression);
+      }
+    }
+    return results;
   }
 
-  public PyElement getElementNamed(final String the_name) {
+  @Nullable
+  public PsiNamedElement getNamedElement(@NotNull final String the_name) {
     // Requires switching from stubs to AST in getTarget()
-    return IterHelper.findName(iterateNames(), the_name);
-  }
-
-  public boolean mustResolveOutside() {
-    return false;
+    return PyUtil.IterHelper.findName(getNamedElements(), the_name);
   }
 }

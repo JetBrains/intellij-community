@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -63,8 +62,7 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends AnAction {
                                                 Messages.getQuestionIcon());
     if (result == Messages.YES) {
       final Ref<VcsException> exception = new Ref<VcsException>();
-      ProgressManager
-        .getInstance().run(new Task.Backgroundable(project, markText, true, BackgroundFromStartOption.getInstance()) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, markText, true) {
         public void run(@NotNull ProgressIndicator indicator) {
           resolveLocallyDeletedTextConflict(locallyDeletedChecker, exception);
         }

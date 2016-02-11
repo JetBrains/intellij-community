@@ -14,6 +14,9 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
+import com.intellij.util.parentSystemIndependentPath
+import com.intellij.util.readText
+import com.intellij.util.systemIndependentPath
 import gnu.trove.TObjectIntHashMap
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule

@@ -23,11 +23,11 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -80,10 +80,10 @@ public class ReturnNullInspectionBase extends BaseInspection {
     }
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
-      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(method.getReturnType());
-      if (aClass != null && CommonClassNames.JAVA_UTIL_OPTIONAL.equals(aClass.getQualifiedName())) {
+      final PsiType type = method.getReturnType();
+      if (TypeUtils.isOptional(type)) {
         // don't suggest to annotate Optional methods as Nullable
-        return new ReplaceWithEmptyOptionalFix();
+        return new ReplaceWithEmptyOptionalFix(((PsiClassType)type).rawType().getCanonicalText());
       }
     }
 
@@ -99,18 +99,26 @@ public class ReturnNullInspectionBase extends BaseInspection {
   }
 
   private static class ReplaceWithEmptyOptionalFix extends InspectionGadgetsFix {
+
+    private final String myTypeText;
+
+    public ReplaceWithEmptyOptionalFix(String typeText) {
+      myTypeText = typeText;
+    }
+
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("return.of.null.optional.quickfix");
+      return InspectionGadgetsBundle.message("return.of.null.optional.quickfix", myTypeText,
+                                             "com.google.common.base.Optional".equals(myTypeText) ? "absent" : "empty");
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("return.of.null.optional.quickfix.family");
     }
 
     @Override
@@ -120,7 +128,12 @@ public class ReturnNullInspectionBase extends BaseInspection {
         return;
       }
       final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
-      PsiReplacementUtil.replaceExpression(literalExpression, "java.util.Optional.empty()");
+      if ("com.google.common.base.Optional".equals(myTypeText)) {
+        PsiReplacementUtil.replaceExpression(literalExpression, myTypeText + ".absent()");
+      }
+      else {
+        PsiReplacementUtil.replaceExpression(literalExpression, myTypeText + ".empty()");
+      }
     }
   }
 
@@ -187,8 +200,7 @@ public class ReturnNullInspectionBase extends BaseInspection {
         return;
       }
 
-      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
-      if (aClass != null && "java.util.Optional".equals(aClass.getQualifiedName())) {
+      if (TypeUtils.isOptional(returnType)) {
         registerError(value, value);
         return;
       }

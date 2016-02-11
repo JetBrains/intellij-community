@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class BreakpointManager {
   private static final String CONVERTED_PARAM = "converted";
 
   private final Project myProject;
-  private final Map<String, String> myUIProperties = new LinkedHashMap<String, String>();
+  private final Map<String, String> myUIProperties = new LinkedHashMap<>();
 
   private final StartupManager myStartupManager;
 
@@ -305,7 +305,7 @@ public class BreakpointManager {
     return null;
   }
 
-  private final Map<String, Element> myOriginalBreakpointsNodes = new LinkedHashMap<String, Element>();
+  private final Map<String, Element> myOriginalBreakpointsNodes = new LinkedHashMap<>();
 
   public void readExternal(@NotNull final Element parentNode) {
     myOriginalBreakpointsNodes.clear();
@@ -331,7 +331,7 @@ public class BreakpointManager {
       @Override
       @SuppressWarnings({"HardCodedStringLiteral"})
       public void run() {
-        final Map<String, Breakpoint> nameToBreakpointMap = new THashMap<String, Breakpoint>();
+        final Map<String, Breakpoint> nameToBreakpointMap = new THashMap<>();
         try {
           final List groups = parentNode.getChildren();
           for (final Object group1 : groups) {
@@ -416,12 +416,7 @@ public class BreakpointManager {
           }
         }
 
-        DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
-          @Override
-          public void run() {
-            updateBreakpointsUI();
-          }
-        });
+        DebuggerInvocationUtil.invokeLater(myProject, BreakpointManager.this::updateBreakpointsUI);
       }
     });
 
@@ -564,12 +559,7 @@ public class BreakpointManager {
         breakpoint.markVerified(requestManager.isVerified(breakpoint));
         requestManager.deleteRequest(breakpoint);
       }
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          updateBreakpointsUI();
-        }
-      });
+      SwingUtilities.invokeLater(this::updateBreakpointsUI);
     }
   }
 
@@ -580,12 +570,7 @@ public class BreakpointManager {
         breakpoint.markVerified(false); // clean cached state
         breakpoint.createRequest(debugProcess);
       }
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          updateBreakpointsUI();
-        }
-      });
+      SwingUtilities.invokeLater(this::updateBreakpointsUI);
     }
   }
 
@@ -661,17 +646,12 @@ public class BreakpointManager {
 
   public void updateBreakpointsUI() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    for (Breakpoint breakpoint : getBreakpoints()) {
-      breakpoint.updateUI();
-    }
+    getBreakpoints().forEach(Breakpoint::updateUI);
   }
 
   public void reloadBreakpoints() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-
-    for (Breakpoint breakpoint : getBreakpoints()) {
-      breakpoint.reload();
-    }
+    getBreakpoints().forEach(Breakpoint::reload);
   }
 
   public void fireBreakpointChanged(Breakpoint breakpoint) {

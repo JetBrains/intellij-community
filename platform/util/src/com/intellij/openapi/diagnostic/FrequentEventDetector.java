@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.diagnostic;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,6 +44,7 @@ public class FrequentEventDetector {
   private final int myEventCountThreshold;
   private final int myTimeSpanMs;
   private final Level myLevel;
+  private static boolean enabled = true;
 
   public FrequentEventDetector(int eventCountThreshold, int timeSpanMs) {
     this(eventCountThreshold, timeSpanMs, Level.INFO);
@@ -54,6 +57,7 @@ public class FrequentEventDetector {
   }
 
   public void eventHappened(@NotNull Object event) {
+    if (!enabled) return;
     if (myEventsPosted.incrementAndGet() > myEventCountThreshold) {
       boolean shouldLog = false;
 
@@ -94,5 +98,15 @@ public class FrequentEventDetector {
         }
       }
     }
+  }
+
+  public static void disableUntil(@NotNull Disposable reenable) {
+    enabled = false;
+    Disposer.register(reenable, new Disposable() {
+      @Override
+      public void dispose() {
+        enabled = true;
+      }
+    });
   }
 }

@@ -66,7 +66,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
     };
   }
 
-  private static boolean isCollapsibleTag(final XmlTag tag) {
+  static boolean isCollapsibleTag(final XmlTag tag) {
     final String name = tag.getName().toLowerCase();
     return tag.getLanguage() == XMLLanguage.INSTANCE ||
            "link".equals(name) || "br".equals(name) || "meta".equals(name) || "img".equals(name) || "input".equals(name) || "hr".equals(name);
@@ -91,6 +91,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
     return "CheckTagEmptyBody";
   }
 
+  @SuppressWarnings("IntentionDescriptionNotFoundInspection")
   public static class Fix extends CollapseTagIntention {
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
