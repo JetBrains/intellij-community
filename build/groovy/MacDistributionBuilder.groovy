@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import com.intellij.util.PathUtilRt
 import org.apache.tools.ant.types.Path
 import org.apache.tools.ant.util.SplitClassLoader
@@ -45,14 +44,19 @@ class MacDistributionBuilder {
    */
   String dmgImagePath
 
+
+  private String remoteDir
   /**
    * Converts ${targetFileName}.mac.zip file to ${targetFileName}.dmg installer with signed application inside
    * @return path to created .dmg file
    */
   String signAndBuildDmg(String targetFileName) {
     defineTasks()
+    remoteDir = "intellij-builds/$fullBuildNumber"
     def sitFilePath = "$artifactsPath/${targetFileName}.sit"
     ant.copy(file: "$artifactsPath/${targetFileName}.mac.zip", tofile: sitFilePath)
+    ftpAction("mkdir") {
+    }
     signMacZip(targetFileName, sitFilePath)
     return buildDmg(targetFileName)
   }
@@ -65,6 +69,7 @@ class MacDistributionBuilder {
       ant.fileset(file: dmgImageCopy)
     }
     ant.delete(file: dmgImageCopy)
+
     ftpAction("put", false, "777") {
       ant.fileset(dir: "$communityHome/build/mac") {
         include(name: "makedmg.sh")
@@ -72,16 +77,20 @@ class MacDistributionBuilder {
       }
     }
 
-    sshExec("./makedmg.sh ${sitFileName} ${fullBuildNumber}")
+    sshExec("$remoteDir/makedmg.sh ${sitFileName} ${fullBuildNumber}")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
         include(name: "${sitFileName}.dmg")
       }
     }
     ftpAction("delete") {
-      ant.fileset(dir: artifactsPath) {
-        include(name: "${sitFileName}.sit")
-        include(name: "${sitFileName}.dmg")
+      ant.fileset() {
+        include(name: "**")
+      }
+    }
+    ftpAction("rmdir", true, null, 0, PathUtilRt.getParentPath(remoteDir)) {
+      ant.fileset() {
+        include(name: "${PathUtilRt.getFileName(remoteDir)}/**")
       }
     }
     def dmgFilePath = "$artifactsPath/${sitFileName}.dmg"
@@ -114,7 +123,7 @@ class MacDistributionBuilder {
       }
     }
 
-    sshExec("./signapp_ce.sh ${sitFileName} ${fullBuildNumber} ${macHostProperties.userName} ${macHostProperties.password} \"${macHostProperties.codesignString}\" \"${PathUtilRt.getFileName(customJDKTarPath)}\"")
+    sshExec("$remoteDir/signapp_ce.sh ${sitFileName} ${fullBuildNumber} ${macHostProperties.userName} ${macHostProperties.password} \"${macHostProperties.codesignString}\" \"${PathUtilRt.getFileName(customJDKTarPath)}\"")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
         include(name: "${sitFileName}.sit")
@@ -162,12 +171,13 @@ class MacDistributionBuilder {
     )
   }
 
-  def ftpAction(String action, boolean binary = true, String chmod = null, int retriesAllowed = 0, Closure filesets) {
+  def ftpAction(String action, boolean binary = true, String chmod = null, int retriesAllowed = 0, String overrideRemoteDir = null, Closure filesets) {
     Map<String, String> args = [
       server        : macHostProperties.host,
       userid        : macHostProperties.userName,
       password      : macHostProperties.password,
       action        : action,
+      remotedir     : overrideRemoteDir ?: remoteDir,
       binary        : binary ? "yes" : "no",
       passive       : "yes",
       retriesallowed: "$retriesAllowed"
