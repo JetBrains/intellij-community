@@ -21,6 +21,7 @@ import com.intellij.codeInspection.QuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,6 +121,11 @@ public class BatchProblemDescriptor {
         }
       }
     }
+  }
+
+  public QuickFix findFixFor(String name) {
+    LOG.assertTrue(!myOnlyCount);
+    return ContainerUtil.getFirstItem(myMap.get(name)).getFixes()[0];
   }
 
   public boolean isIntersectionTrivial() {

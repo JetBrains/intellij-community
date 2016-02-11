@@ -391,6 +391,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       TreePath pathSelected = myTree.getSelectionModel().getLeadSelectionPath();
       if (pathSelected != null) {
         final InspectionTreeNode node = (InspectionTreeNode)pathSelected.getLastPathComponent();
+        releaseEditor();
         if (node instanceof RefElementNode) {
           final RefElementNode refElementNode = (RefElementNode)node;
           final CommonProblemDescriptor problem = refElementNode.getProblem();
@@ -441,7 +442,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private JComponent createBaseRightComponentFor(PsiElement containingElement, BatchProblemDescriptor descriptor) {
     final int count = descriptor.getProblemCount();
-    releaseEditor();
     if (count == 1 || (containingElement != null && !(containingElement instanceof PsiDirectory))) {
       final PsiElement element = descriptor.getFirstProblemElement();
       LOG.assertTrue(element != null);
