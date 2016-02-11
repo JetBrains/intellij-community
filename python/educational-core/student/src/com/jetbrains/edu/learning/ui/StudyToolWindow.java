@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.OnePixelSplitter;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Task;
@@ -37,7 +36,6 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyToolWindowConfigurator;
 import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -72,16 +70,16 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
 
     setContent(mySplitPane);
 
-    StudyToolWindowConfigurator configurator = getStudyToolWindowConfigurator(project);
+    StudyToolWindowConfigurator configurator = StudyUtils.getConfigurator(project);
     assert configurator != null;
     final FileEditorManagerListener listener = configurator.getFileEditorManagerListener(project, this);
     project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
   }
 
   private void addAdditionalPanels(Project project) {
-    StudyToolWindowConfigurator configurator = getStudyToolWindowConfigurator(project);
+    StudyToolWindowConfigurator configurator = StudyUtils.getConfigurator(project);
     assert configurator != null;
-    HashMap<String, JPanel> panels = configurator.getAdditionalPanels(project);
+    Map<String, JPanel> panels = configurator.getAdditionalPanels(project);
     for (Map.Entry<String, JPanel> entry: panels.entrySet()) {
       myContentPanel.add(entry.getKey(), entry.getValue());
     }
@@ -155,22 +153,11 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
       LOG.warn("Course is null");
       return new DefaultActionGroup();
     }
-    StudyToolWindowConfigurator configurator = getStudyToolWindowConfigurator(project);
+    StudyToolWindowConfigurator configurator = StudyUtils.getConfigurator(project);
     assert configurator != null;
 
     return configurator.getActionGroup(project);
   }
 
   public abstract void setTaskText(String text) ;
-
-  @Nullable
-  private static StudyToolWindowConfigurator getStudyToolWindowConfigurator(@NotNull Project project) {
-    StudyToolWindowConfigurator[] extensions = StudyToolWindowConfigurator.EP_NAME.getExtensions();
-    for (StudyToolWindowConfigurator extension: extensions) {
-      if (extension.accept(project)) {
-        return extension;
-      }
-    }
-    return null;
-  }
 }
