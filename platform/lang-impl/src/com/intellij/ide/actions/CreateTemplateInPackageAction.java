@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -48,8 +49,8 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
 
   @Override
   @Nullable
-  protected T createFile(String name, String templateName, PsiDirectory dir) {
-    return checkOrCreate(name, dir, templateName);
+  protected T createFile(String name, String templateName, Map<String, String> creationOptions, PsiDirectory dir) {
+    return checkOrCreate(name, dir, templateName, creationOptions);
   }
 
   @Nullable
@@ -80,7 +81,8 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
   protected abstract boolean checkPackageExists(PsiDirectory directory);
 
   @Nullable
-  private T checkOrCreate(String newName, PsiDirectory directory, String templateName) throws IncorrectOperationException {
+  private T checkOrCreate(String newName, PsiDirectory directory, String templateName, Map<String, String> creationOptions)
+    throws IncorrectOperationException {
     PsiDirectory dir = directory;
     String className = removeExtension(templateName, newName);
 
@@ -101,7 +103,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
       className = names[names.length - 1];
     }
 
-    return doCreate(dir, className, templateName);
+    return doCreate(dir, className, templateName, creationOptions);
   }
 
   protected String removeExtension(String templateName, String className) {
@@ -113,6 +115,6 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
   }
 
   @Nullable
-  protected abstract T doCreate(final PsiDirectory dir, final String className, String templateName) throws IncorrectOperationException;
-
+  protected abstract T doCreate(final PsiDirectory dir, final String className, String templateName, Map<String, String> creationOptions)
+    throws IncorrectOperationException;
 }
