@@ -71,11 +71,6 @@ public class RefElementNode extends InspectionTreeNode {
     return myIcon.getIcon();
   }
 
-  @Override
-  public int getProblemCount() {
-    return Math.max(1, super.getProblemCount());
-  }
-
   public String toString() {
     final RefEntity element = getElement();
     if (element == null || !element.isValid()) {

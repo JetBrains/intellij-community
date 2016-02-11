@@ -35,14 +35,13 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
   @Nullable
   public abstract Icon getIcon(boolean expanded);
 
-  public int getProblemCount() {
-    int sum = 0;
+  public BatchProblemDescriptor accumulateProblemInfo(BatchProblemDescriptor accumulator) {
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
-      sum += child.getProblemCount();
+      child.accumulateProblemInfo(accumulator);
     }
-    return sum;
+    return accumulator;
   }
 
   public boolean isValid() {

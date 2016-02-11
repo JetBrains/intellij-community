@@ -258,7 +258,7 @@ public class InspectionTree extends Tree {
       append(node.toString(),
              patchAttr(node, appearsBold(node) ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : getMainForegroundAttributes(node)));
 
-      int problemCount = node.getProblemCount();
+      int problemCount = node.accumulateProblemInfo(new BatchProblemDescriptor(true)).getProblemCount();
       if (!leaf) {
         append(" " + InspectionsBundle.message("inspection.problem.descriptor.count", problemCount), patchAttr(node, SimpleTextAttributes.GRAYED_ATTRIBUTES));
       }

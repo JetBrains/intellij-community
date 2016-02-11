@@ -21,7 +21,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
@@ -36,11 +35,8 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -52,14 +48,17 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -80,6 +79,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
@@ -87,11 +87,12 @@ import java.util.concurrent.ConcurrentMap;
  * @author max
  */
 public class InspectionResultsView extends JPanel implements Disposable, OccurenceNavigator, DataProvider {
+  private static final Logger LOG = Logger.getInstance(InspectionResultsView.class);
+
   public static final DataKey<InspectionResultsView> DATA_KEY = DataKey.create("inspectionView");
 
   private final Project myProject;
   private final InspectionTree myTree;
-  private final Browser myBrowser;
   private final ConcurrentMap<HighlightDisplayLevel, ConcurrentMap<String, InspectionGroupNode>> myGroups = ContainerUtil.newConcurrentMap();
   private final OccurenceNavigator myOccurenceNavigator;
   private volatile InspectionProfile myInspectionProfile;
@@ -129,12 +130,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     myOccurenceNavigator = initOccurenceNavigator();
 
-    myBrowser = new Browser(this);
-
     mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(myProject).SPLITTER_PROPORTION);
 
     mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT | SideBorder.RIGHT));
-    mySplitter.setSecondComponent(myBrowser);
 
     mySplitter.addPropertyChangeListener(new PropertyChangeListener() {
       @Override
@@ -145,30 +143,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
     });
     add(mySplitter, BorderLayout.CENTER);
-
-    myBrowser.addClickListener(new Browser.ClickListener() {
-      @Override
-      public void referenceClicked(final Browser.ClickEvent e) {
-        if (e.getEventType() == Browser.ClickEvent.REF_ELEMENT) {
-          final RefElement refElement = e.getClickedElement();
-          final OpenFileDescriptor descriptor = getOpenFileDescriptor(refElement);
-          if (descriptor != null) {
-            FileEditorManager.getInstance(project).openTextEditor(descriptor, false);
-          }
-        }
-        else if (e.getEventType() == Browser.ClickEvent.FILE_OFFSET) {
-          final VirtualFile file = e.getFile();
-          final OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, e.getStartOffset());
-          final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-          if (editor != null) {
-            final TextAttributes selectionAttributes =
-              EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-            HighlightManager.getInstance(project)
-            .addRangeHighlight(editor, e.getStartOffset(), e.getEndOffset(), selectionAttributes, true, null);
-          }
-        }
-      }
-    });
 
     createActionsToolbar();
     TreeUtil.selectFirstNode(myTree);
@@ -366,7 +340,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   @Override
   public void dispose(){
     mySplitter.dispose();
-    myBrowser.dispose();
+    //myBrowser.dispose();
     myInspectionProfile = null;
     myDisposed = true;
   }
@@ -408,7 +382,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private void syncBrowser() {
     if (myTree.getSelectionModel().getSelectionCount() != 1) {
-      myBrowser.showEmpty();
+      //myBrowser.showEmpty();
     }
     else {
       TreePath pathSelected = myTree.getSelectionModel().getLeadSelectionPath();
@@ -418,46 +392,84 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           final RefElementNode refElementNode = (RefElementNode)node;
           final CommonProblemDescriptor problem = refElementNode.getProblem();
           final RefEntity refSelected = refElementNode.getElement();
-          if (problem != null) {
-            showInBrowser(refSelected, problem);
+          if (node.isLeaf()) {
+            LOG.assertTrue(problem != null);
+            showInBrowser(refSelected, BatchProblemDescriptor.single(problem));
           }
           else {
-            showInBrowser(refSelected);
+            showInBrowser(refSelected, node.accumulateProblemInfo(new BatchProblemDescriptor(false)));
           }
         }
         else if (node instanceof ProblemDescriptionNode) {
           final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
-          showInBrowser(problemNode.getElement(), problemNode.getDescriptor());
+          showInBrowser(problemNode.getElement(), BatchProblemDescriptor.single(problemNode.getDescriptor()));
         }
         else if (node instanceof InspectionNode) {
-          showInBrowser(((InspectionNode)node).getToolWrapper());
+          showInBrowser(null, node.accumulateProblemInfo(new BatchProblemDescriptor(false)));
         }
         else {
-          myBrowser.showEmpty();
+          mySplitter.setSecondComponent(new JPanel());
         }
       }
     }
   }
 
-  private void showInBrowser(final RefEntity refEntity) {
+  private void showInBrowser(final RefEntity refEntity, BatchProblemDescriptor intersector) {
+    //todo use refentity to determine
     Cursor currentCursor = getCursor();
     setCursor(new Cursor(Cursor.WAIT_CURSOR));
-    myBrowser.showPageFor(refEntity);
+
+    if (intersector != null) {
+      final JPanel editorPanel = new JPanel();
+      editorPanel.setLayout(new BorderLayout());
+
+      final PsiElement containingElement = refEntity instanceof RefElement ? ((RefElement)refEntity).getElement() : null;
+      final QuickFixToolbar toolbar = new QuickFixToolbar(intersector,
+                                                          myTree.getSelectedToolWrapper(),
+                                                          myTree.getSelectionPaths(),
+                                                          myProject,
+                                                          containingElement);
+      editorPanel.add(toolbar, BorderLayout.NORTH);
+      editorPanel.add(createBaseRightComponentFor(containingElement, intersector), BorderLayout.CENTER);
+      mySplitter.setSecondComponent(editorPanel);
+    }
     setCursor(currentCursor);
   }
 
-  private void showInBrowser(@NotNull InspectionToolWrapper toolWrapper) {
-    Cursor currentCursor = getCursor();
-    setCursor(new Cursor(Cursor.WAIT_CURSOR));
-    myBrowser.showDescription(toolWrapper);
-    setCursor(currentCursor);
-  }
+  private JComponent createBaseRightComponentFor(PsiElement containingElement, BatchProblemDescriptor descriptor) {
+    final int count = descriptor.getProblemCount();
+    if (count == 1 || containingElement != null) {
+      final PsiElement element = descriptor.getFirstProblemElement();
+      LOG.assertTrue(element != null);
+      final PsiElement referencedElement = containingElement == null ? descriptor.getFirstProblemElement() : containingElement;
+      final PsiFile file = referencedElement.getContainingFile();
+      final Document document = PsiDocumentManager.getInstance(referencedElement.getProject()).getDocument(file);
+      Editor editor = EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), true);
+      final EditorSettings settings = editor.getSettings();
+      settings.setLineNumbersShown(false);
+      settings.setLineNumbersShown(false);
+      settings.setWhitespacesShown(false);
+      settings.setLineMarkerAreaShown(false);
+      settings.setIndentGuidesShown(false);
+      settings.setFoldingOutlineShown(false);
+      settings.setAdditionalColumnsCount(0);
+      settings.setAdditionalLinesCount(0);
+      settings.setRightMarginShown(true);
+      settings.setRightMargin(60);
 
-  private void showInBrowser(final RefEntity refEntity, CommonProblemDescriptor descriptor) {
-    Cursor currentCursor = getCursor();
-    setCursor(new Cursor(Cursor.WAIT_CURSOR));
-    myBrowser.showPageFor(refEntity, descriptor);
-    setCursor(currentCursor);
+      editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      editor.getCaretModel().moveToOffset(referencedElement.getTextOffset());
+      editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      UsagePreviewPanel
+        .highlight(containingElement == null ? Collections.singletonList(new UsageInfo(referencedElement)) : Collections.emptyList(),
+                   editor, myProject);
+      return editor.getComponent();
+    }
+    else if (count > 1) {
+      return new InspectionNodeInfo(myTree.getSelectedToolWrapper(), myProject);
+    }
+    //TODO must not happen
+    return new JPanel();
   }
 
   @NotNull
@@ -904,5 +916,20 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         myGlobalInspectionContext.doInspections(myScope);
       }
     }
+  }
+
+  private static RefEntity findLeafIfOnlyOne(@NotNull RefEntity entity) {
+    RefEntity current = entity;
+    while (current != null) {
+      final List<RefEntity> children = current.getChildren();
+      if (children.size() > 1) {
+        return null;
+      }
+      if (children.isEmpty()) {
+        return current;
+      }
+      current = children.get(0);
+    }
+    return null;
   }
 }
