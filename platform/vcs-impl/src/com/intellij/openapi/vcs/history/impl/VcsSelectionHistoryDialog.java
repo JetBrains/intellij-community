@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
@@ -46,7 +47,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -114,6 +114,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   private final DiffRequestPanel myDiffPanel;
   private final JCheckBox myChangesOnlyCheckBox = new JCheckBox(VcsBundle.message("checkbox.show.changed.revisions.only"));
   private final JEditorPane myComments;
+  private final CurrentRevision myCurrentRevision;
 
   private boolean myIsDuringUpdate = false;
   private boolean myIsDisposed = false;
@@ -161,7 +162,8 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
     myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, this, getFrame());
 
-    myRevisions.add(new CurrentRevision(file, LOCAL_REVISION_NUMBER));
+    myCurrentRevision = new CurrentRevision(file, LOCAL_REVISION_NUMBER);
+    myRevisions.add(myCurrentRevision);
     myRevisions.addAll(session.getRevisionList());
 
     myBlocks.addAll(Collections.<Block>nCopies(myRevisions.size(), null));
@@ -417,15 +419,9 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       VcsFileRevision selectedObject = myList.getSelectedObject();
       return selectedObject instanceof CurrentRevision ? null : selectedObject;
     }
-    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
-      List<VcsFileRevision> objects = myList.getSelectedObjects();
-      List<VcsRevisionNumber> revisionNumbers = ContainerUtil.mapNotNull(objects, new Function<VcsFileRevision, VcsRevisionNumber>() {
-        @Override
-        public VcsRevisionNumber fun(VcsFileRevision revision) {
-          return revision instanceof CurrentRevision ? null : revision.getRevisionNumber();
-        }
-      });
-      return ArrayUtil.toObjectArray(revisionNumbers, VcsRevisionNumber.class);
+    else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
+      List<VcsFileRevision> revisions = ContainerUtil.filter(myList.getSelectedObjects(), Conditions.notEqualTo(myCurrentRevision));
+      return ArrayUtil.toObjectArray(revisions, VcsFileRevision.class);
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
       return myActiveVcs.getKeyInstanceMethod();
@@ -475,7 +471,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
     public void update(final AnActionEvent e) {
       e.getPresentation().setEnabled(myList.getSelectedRowCount() > 1 ||
-                                     myList.getSelectedRowCount() == 1 && myList.getSelectedRow() != 0);
+                                     myList.getSelectedRowCount() == 1 && myList.getSelectedObject() != myCurrentRevision);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -510,17 +506,16 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     }
 
     public void update(final AnActionEvent e) {
-      e.getPresentation().setEnabled(myList.getSelectedRowCount() == 1 && myList.getSelectedRow() != 0);
+      e.getPresentation().setEnabled(myList.getSelectedRowCount() == 1 && myList.getSelectedObject() != myCurrentRevision);
     }
 
     public void actionPerformed(AnActionEvent e) {
       VcsFileRevision revision = myList.getSelectedObject();
       if (revision == null) return;
 
-      VcsFileRevision localRevision = myRevisions.get(0);
       FilePath filePath = VcsUtil.getFilePath(myFile);
 
-      getDiffHandler().showDiffForTwo(myProject, filePath, revision, localRevision);
+      getDiffHandler().showDiffForTwo(myProject, filePath, revision, myCurrentRevision);
     }
   }
 
