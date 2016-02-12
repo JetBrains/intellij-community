@@ -78,13 +78,6 @@ public class Patches {
     SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isJavaVersionAtLeast("1.8.0_60");
 
   /**
-   * XToolkit.getScreenInsets() may be very slow.
-   * See https://bugs.openjdk.java.net/browse/JDK-8004103.
-   */
-  public static final boolean JDK_BUG_ID_8004103 =
-    SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless() && SystemInfo.isJavaVersionAtLeast("1.7");
-
-  /**
    * On some WMs modal dialogs may show behind full screen window.
    * See http://bugs.sun.com/view_bug.do?bug_id=8013359.
    */
@@ -147,4 +140,12 @@ public class Patches {
    * On Mac OS font ligatures are not supported for natively loaded fonts, font needs to be loaded explicitly by JDK. 
    */
   public static final boolean JDK_BUG_ID_7162125 = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.9");
+
+  /**
+   * XToolkit.getScreenInsets() may be very slow.
+   * See https://bugs.openjdk.java.net/browse/JDK-8004103.
+   */
+  public static boolean isJdkBugId8004103() {
+    return SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless() && SystemInfo.isJavaVersionAtLeast("1.7");
+  }
 }
