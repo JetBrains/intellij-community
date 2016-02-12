@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.net.NetUtils;
 
+import javax.swing.*;
 import java.lang.management.ManagementFactory;
 
 /**
@@ -33,11 +34,11 @@ import java.lang.management.ManagementFactory;
 public class DebugAttachDetector {
   private static final Logger LOG = Logger.getInstance(DebugAttachDetector.class);
 
-  private String myHost = null;
+  private String myHost;
   private int myPort = -1;
   private SingleAlarm myAlarm;
   private boolean myAttached;
-  private boolean myReady = false;
+  private boolean myReady;
 
   public DebugAttachDetector() {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
@@ -89,7 +90,15 @@ public class DebugAttachDetector {
                                                     myAttached ? "attached" : "detached",
                                                     NotificationType.WARNING));
         }
-        myAlarm.request();
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            // check for disposal in EDT because it's where the app is disposed
+            if (!myAlarm.isDisposed()) {
+              myAlarm.request();
+            }
+          }
+        });
       }
     }, 5000, Alarm.ThreadToUse.POOLED_THREAD, app);
     myAlarm.request();
