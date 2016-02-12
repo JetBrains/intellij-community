@@ -35,6 +35,7 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.ScrollPaneUI;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -65,6 +66,7 @@ public class JBScrollPane extends JScrollPane {
 
   private int myViewportBorderWidth = -1;
   private boolean myHasOverlayScrollbars;
+  private volatile boolean myBackgroundRequested; // avoid cyclic references
 
   public JBScrollPane(int viewportWidth) {
     init(false);
@@ -89,6 +91,26 @@ public class JBScrollPane extends JScrollPane {
   public JBScrollPane(Component view, int vsbPolicy, int hsbPolicy) {
     super(view, vsbPolicy, hsbPolicy);
     init();
+  }
+
+  @Override
+  public Color getBackground() {
+    Color color = super.getBackground();
+    if (!myBackgroundRequested && EventQueue.isDispatchThread() && Registry.is("ide.scroll.background.auto")) {
+      if (!isBackgroundSet() || color instanceof UIResource) {
+        Component child = getViewport();
+        if (child != null) {
+          try {
+            myBackgroundRequested = true;
+            return child.getBackground();
+          }
+          finally {
+            myBackgroundRequested = false;
+          }
+        }
+      }
+    }
+    return color;
   }
 
   public static JScrollPane findScrollPane(Component c) {

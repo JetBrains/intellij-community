@@ -94,6 +94,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   private Dimension myTempViewSize;
   private boolean mySaveTempViewSize;
+  private volatile boolean myBackgroundRequested; // avoid cyclic references
 
   public JBViewport() {
     addContainerListener(new ContainerListener() {
@@ -115,6 +116,26 @@ public class JBViewport extends JViewport implements ZoomableViewport {
         }
       }
     });
+  }
+
+  @Override
+  public Color getBackground() {
+    Color color = super.getBackground();
+    if (!myBackgroundRequested && EventQueue.isDispatchThread() && Registry.is("ide.scroll.background.auto")) {
+      if (!isBackgroundSet() || color instanceof UIResource) {
+        Component child = getView();
+        if (child != null) {
+          try {
+            myBackgroundRequested = true;
+            return child.getBackground();
+          }
+          finally {
+            myBackgroundRequested = false;
+          }
+        }
+      }
+    }
+    return color;
   }
 
   @Override
