@@ -15,18 +15,18 @@
  */
 package com.intellij.internal;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.Alarm;
-import com.intellij.util.SingleAlarm;
 import com.intellij.util.net.NetUtils;
 
-import javax.swing.*;
 import java.lang.management.ManagementFactory;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author egor
@@ -36,7 +36,7 @@ public class DebugAttachDetector {
 
   private String myHost;
   private int myPort = -1;
-  private SingleAlarm myAlarm;
+  private ScheduledFuture<?> myTask;
   private boolean myAttached;
   private boolean myReady;
 
@@ -75,32 +75,22 @@ public class DebugAttachDetector {
 
     if (myPort < 0) return;
 
-    myAlarm = new SingleAlarm(new Runnable() {
-      @Override
-      public void run() {
-        boolean attached = !NetUtils.canConnectToRemoteSocket(myHost, myPort);
-        if (!myReady) {
-          myAttached = attached;
-          myReady = true;
-        }
-        else if (attached != myAttached) {
-          myAttached = attached;
-          Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                                                    "Remote debugger",
-                                                    myAttached ? "attached" : "detached",
-                                                    NotificationType.WARNING));
-        }
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            // check for disposal in EDT because it's where the app is disposed
-            if (!myAlarm.isDisposed()) {
-              myAlarm.request();
-            }
+    myTask = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
+        @Override
+        public void run() {
+          boolean attached = !NetUtils.canConnectToRemoteSocket(myHost, myPort);
+          if (!myReady) {
+            myAttached = attached;
+            myReady = true;
           }
-        });
-      }
-    }, 5000, Alarm.ThreadToUse.POOLED_THREAD, app);
-    myAlarm.request();
+          else if (attached != myAttached) {
+            myAttached = attached;
+            Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
+                                                      "Remote debugger",
+                                                      myAttached ? "attached" : "detached",
+                                                      NotificationType.WARNING));
+          }
+        }
+      }, 5, 5, TimeUnit.SECONDS);
   }
 }
