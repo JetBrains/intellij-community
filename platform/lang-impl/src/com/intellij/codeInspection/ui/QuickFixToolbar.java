@@ -53,8 +53,7 @@ import java.util.function.Supplier;
  * @author Dmitry Batkovich
  */
 public class QuickFixToolbar extends JPanel {
-  private static final int FIX_MAX_NAME_LENGTH = 40;
-  private static final int MAX_FIX_COUNT = 3;
+  private static final int MAX_FIX_COUNT = 2;
 
   @NotNull private final Project myProject;
 
@@ -125,8 +124,8 @@ public class QuickFixToolbar extends JPanel {
   }
 
   @NotNull
-  private JPanel createFixPanel(List<QuickFix> fixes,
-                                InspectionToolWrapper toolWrapper) {
+  private static JPanel createFixPanel(List<QuickFix> fixes,
+                                       InspectionToolWrapper toolWrapper) {
     final Collection<QuickFix> sortedFixes;
     if (fixes.size() == 1) {
       sortedFixes = fixes;
