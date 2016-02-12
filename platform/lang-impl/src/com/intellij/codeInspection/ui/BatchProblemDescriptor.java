@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,11 +24,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Dmitry Batkovich
@@ -104,28 +104,23 @@ public class BatchProblemDescriptor {
     return null;
   }
 
-  public Set<String> getQuickFixNames() {
+  @NotNull
+  public List<QuickFix> getQuickFixRepresentatives() {
     LOG.assertTrue(!myOnlyCount);
-    return myMap.keySet();
-  }
-
-  public void applyFixes(final String name, final Project project) {
-    LOG.assertTrue(!myOnlyCount);
-    for (CommonProblemDescriptor descriptor : myMap.get(name)) {
-      final QuickFix[] fixes = descriptor.getFixes();
-      LOG.assertTrue(fixes != null);
-      for (QuickFix fix : fixes) {
-        if (name.equals(fix.getName())) {
-          //noinspection unchecked
-          fix.applyFix(project, descriptor);
+    List<QuickFix> result = new ArrayList<>(myMap.size());
+    for (Map.Entry<String, Collection<CommonProblemDescriptor>> e : myMap.entrySet()) {
+      final String fixName = e.getKey();
+      final Collection<CommonProblemDescriptor> descriptors = e.getValue();
+      final CommonProblemDescriptor representative = ContainerUtil.getFirstItem(descriptors);
+      LOG.assertTrue(representative != null);
+      for (QuickFix fix : representative.getFixes()) {
+        if (fix.getName().equals(fixName)) {
+          result.add(fix);
+          break;
         }
       }
     }
-  }
-
-  public QuickFix findFixFor(String name) {
-    LOG.assertTrue(!myOnlyCount);
-    return ContainerUtil.getFirstItem(myMap.get(name)).getFixes()[0];
+    return result;
   }
 
   public boolean isIntersectionTrivial() {
