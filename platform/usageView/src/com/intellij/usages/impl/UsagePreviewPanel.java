@@ -122,7 +122,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
       public void run() {
         if (project.isDisposed()) return;
         //noinspection ConstantConditions
-        if (editor1 == editor) {
+        if (editor1 == editor && !editor.isDisposed()) {
           doHighlight(infos, editor, project);
         }
       }
