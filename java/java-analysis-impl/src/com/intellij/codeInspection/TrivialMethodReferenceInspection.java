@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -62,6 +63,7 @@ public class TrivialMethodReferenceInspection extends BaseJavaBatchLocalInspecti
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       final PsiElement parent = element != null ? element.getParent() : null;
       if (parent instanceof PsiMethodReferenceExpression) {
         final PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)parent).getQualifierExpression();
