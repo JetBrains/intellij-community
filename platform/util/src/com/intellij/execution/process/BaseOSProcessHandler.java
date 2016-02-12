@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import static com.intellij.util.io.BaseDataReader.AdaptiveSleepingPolicy;
 
 public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor {
   private static final Logger LOG = Logger.getInstance(BaseOSProcessHandler.class);
@@ -148,7 +146,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   @NotNull
   private BaseDataReader.SleepingPolicy getPolicy() {
     if (useNonBlockingRead()) {
-      return useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : BaseDataReader.SleepingPolicy.SIMPLE;
+      return useAdaptiveSleepingPolicyWhenReadingOutput() ? new BaseDataReader.AdaptiveSleepingPolicy() : BaseDataReader.SleepingPolicy.SIMPLE;
     }
     else {
       //use blocking read policy
@@ -301,5 +299,17 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   @Override
   public String toString() {
     return myCommandLine;
+  }
+
+  @Override
+  public boolean waitFor() {
+    boolean result = super.waitFor();
+    try {
+      myWaitFor.waitFor();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    return result;
   }
 }
