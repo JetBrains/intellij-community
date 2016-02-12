@@ -21,6 +21,7 @@ import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ui.actions.SuppressActionWrapper;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -111,10 +112,8 @@ public class QuickFixToolbar extends JPanel {
 
       @NotNull
       @Override
-      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-        final DefaultActionGroup group = new DefaultActionGroup();
-        group.addAll(new SuppressActionWrapper(project, toolWrapper, paths).getChildren(null));
-        return group;
+      protected ActionGroup createPopupActionGroup(JComponent button) {
+        return new SuppressActionWrapper(project, toolWrapper, paths);
       }
     };
     action.setSmallVariant(false);
