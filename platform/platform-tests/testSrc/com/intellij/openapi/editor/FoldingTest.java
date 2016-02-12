@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.testFramework.TestFileType;
-
-import static org.junit.Assert.assertArrayEquals;
+import org.junit.Assert;
 
 /**
  * @author max
@@ -157,7 +156,7 @@ public class FoldingTest extends AbstractEditorTest {
     addCollapsedFoldRegion(10, 12, "???");
 
     FoldRegion[] topLevelRegions = myModel.fetchTopLevel();
-    assertArrayEquals(new FoldRegion[]{region}, topLevelRegions);
+    Assert.assertArrayEquals(new FoldRegion[]{region}, topLevelRegions);
   }
 
   public void testLastCollapsedRegionBefore() {
@@ -184,8 +183,14 @@ public class FoldingTest extends AbstractEditorTest {
   public void testModelRemainsConsistentOnTextRemoval() {
     addCollapsedFoldRegion(0, 10, "...");
     addCollapsedFoldRegion(1, 9, "...");
-    
-    myEditor.getDocument().deleteString(0, 1);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        myEditor.getDocument().deleteString(0, 1);
+      }
+    });
+
     addFoldRegion(20, 21, "..."); // an arbitrary action to rebuild folding caches
     
     assertTrue(myModel.isOffsetCollapsed(5));
@@ -195,8 +200,14 @@ public class FoldingTest extends AbstractEditorTest {
     addFoldRegion(0, 5, "...");
     addFoldRegion(0, 4, "...");
     assertNumberOfValidFoldRegions(2);
-    
-    myEditor.getDocument().deleteString(4, 5);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        myEditor.getDocument().deleteString(4, 5);
+      }
+    });
+
 
     assertNumberOfValidFoldRegions(1);
   }
@@ -204,7 +215,13 @@ public class FoldingTest extends AbstractEditorTest {
   public void testTopLevelRegionRemainsTopLevelAfterMergingIdenticalRegions() {
     addCollapsedFoldRegion(10, 15, "...");
     addCollapsedFoldRegion(10, 14, "...");
-    myEditor.getDocument().deleteString(14, 15);
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        myEditor.getDocument().deleteString(14, 15);
+      }
+    });
+
 
     FoldRegion region = myModel.getCollapsedRegionAtOffset(10);
     assertNotNull(region);

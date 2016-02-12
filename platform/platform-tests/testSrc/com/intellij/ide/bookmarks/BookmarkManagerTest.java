@@ -15,12 +15,16 @@
  */
 package com.intellij.ide.bookmarks;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.TestFileType;
@@ -60,8 +64,14 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     addBookmark(2);
     List<Bookmark> bookmarksBefore = getManager().getValidBookmarks();
     assertEquals(1, bookmarksBefore.size());
-    
-    myEditor.getDocument().setText(text);
+
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        myEditor.getDocument().setText(text);
+      }
+    }.execute().throwException();
+
     List<Bookmark> bookmarksAfter = getManager().getValidBookmarks();
     assertEquals(1, bookmarksAfter.size());
     assertSame(bookmarksBefore.get(0), bookmarksAfter.get(0));
@@ -157,8 +167,14 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       "}";
     init(text, TestFileType.TEXT);
     addBookmark(2);
-    
-    myEditor.getDocument().setText("111\n222" + text + "333");
+
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        myEditor.getDocument().setText("111\n222" + text + "333");
+      }
+    }.execute().throwException();
+
     List<Bookmark> bookmarks = getManager().getValidBookmarks();
     assertEquals(1, bookmarks.size());
     Bookmark bookmark = bookmarks.get(0);
@@ -171,8 +187,19 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       "public class Test {\n" +
       "}";
 
-    myVFile = getSourceRoot().createChildData(null, getTestName(false) + ".txt");
-    VfsUtil.saveText(myVFile, text);
+    myVFile = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        try {
+          VirtualFile file = getSourceRoot().createChildData(null, getTestName(false) + ".txt");
+          VfsUtil.saveText(file, text);
+          return file;
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     Bookmark bookmark = getManager().addTextBookmark(myVFile, 1, "xxx");
@@ -183,7 +210,13 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     assertNotNull(document);
     PsiDocumentManager.getInstance(getProject()).getPsiFile(document); // create psi so that PsiChangeHandler won't leak
 
-    document.insertString(0, "line 0\n");
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        document.insertString(0, "line 0\n");
+      }
+    }.execute().throwException();
+
     assertEquals(2, bookmark.getLine());
 
     myEditor = createEditor(myVFile);

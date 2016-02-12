@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
@@ -175,7 +176,14 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
 
     Document document = configureFromFileText("x.txt", "xxx <caret>\nyyy\n\t\t\t");
     // make any modification, so that Document and file content differ. Otherwise save won't be, and "on-save" actions won't be called.
-    document.insertString(0, " ");
+    WriteCommandAction.runWriteCommandAction(getProject(),
+                                             new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(0, " ");
+      }
+    });
+
 
     FileDocumentManager.getInstance().saveAllDocuments();
     checkResultByText(" xxx <caret>\nyyy\n\t\t\t\n");
@@ -218,8 +226,19 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
 
   @NotNull
   private static Editor createHeavyEditor(@NotNull String name, @NotNull String text) throws IOException {
-    VirtualFile myVFile = getSourceRoot().createChildData(null, name);
-    VfsUtil.saveText(myVFile, text);
+    VirtualFile myVFile = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        try {
+          VirtualFile file = getSourceRoot().createChildData(null, name);
+          VfsUtil.saveText(file, text);
+          return file;
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     final Document document = manager.getDocument(myVFile);
     manager.reloadFromDisk(document);
