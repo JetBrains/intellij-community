@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.source.resolve.reference.impl.providers;
+package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.psi.PsiFileSystemItem;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+/**
+ * @author Dmitry Avdeev
+ */
+public interface WizardDelegate {
 
-import java.util.Collection;
+  void doNextAction();
 
-public interface FileReferenceResolver {
-  @Nullable
-  PsiFileSystemItem resolveFileReference(@NotNull FileReference reference, @NotNull String name);
+  void doPreviousAction();
 
-  Collection<Object> getVariants(@NotNull FileReference reference);
+  void doFinishAction();
 }

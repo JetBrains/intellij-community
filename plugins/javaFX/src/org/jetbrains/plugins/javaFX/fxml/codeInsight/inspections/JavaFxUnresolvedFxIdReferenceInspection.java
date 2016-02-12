@@ -36,6 +36,7 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
@@ -146,7 +147,11 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
       }
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiField field = factory.createField(reference.getCanonicalText(), PsiType.INT);
-      VisibilityUtil.setVisibility(field.getModifierList(), PsiModifier.PUBLIC);
+      PsiModifierList modifierList = field.getModifierList();
+      if (modifierList != null) {
+        VisibilityUtil.setVisibility(modifierList, PsiModifier.PRIVATE);
+        modifierList.addAnnotation(JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION);
+      }
 
       field = CreateFieldFromUsageHelper.insertField(targetClass, field, psiElement);
 

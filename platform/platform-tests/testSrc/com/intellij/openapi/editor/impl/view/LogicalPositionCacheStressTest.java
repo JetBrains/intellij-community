@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -91,7 +92,12 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
       Document document = editor.getDocument();
       int offset = random.nextInt(document.getTextLength() + 1);
       CharSequence text = generateText(random);
-      document.insertString(offset, text);
+      WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+        @Override
+        public void run() {
+          document.insertString(offset, text);
+        }
+      });
     }
   }
 
@@ -103,7 +109,12 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
       if (textLength <= 0) return;
       int from = random.nextInt(textLength + 1);
       int to = random.nextInt(textLength + 1);
-      document.deleteString(Math.min(from, to), Math.max(from, to));
+      WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+        @Override
+        public void run() {
+          document.deleteString(Math.min(from, to), Math.max(from, to));
+        }
+      });
     }
   }
 
@@ -116,7 +127,12 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
       int from = random.nextInt(textLength + 1);
       int to = random.nextInt(textLength + 1);
       CharSequence text = generateText(random);
-      document.replaceString(Math.min(from, to), Math.max(from, to), text);
+      WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+        @Override
+        public void run() {
+          document.replaceString(Math.min(from, to), Math.max(from, to), text);
+        }
+      });
     }
   }
 
@@ -129,12 +145,17 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
       int[] offsets = new int[] {random.nextInt(textLength + 1), random.nextInt(textLength + 1), random.nextInt(textLength + 1)};
       Arrays.sort(offsets);
       if (offsets[0] == offsets[1] || offsets[1] == offsets[2]) return;
-      if (random.nextBoolean()) {
-        ((DocumentEx)document).moveText(offsets[0], offsets[1], offsets[2]);
-      }
-      else {
-        ((DocumentEx)document).moveText(offsets[1], offsets[2], offsets[0]);
-      }
+      WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+        @Override
+        public void run() {
+          if (random.nextBoolean()) {
+            ((DocumentEx)document).moveText(offsets[0], offsets[1], offsets[2]);
+          }
+          else {
+            ((DocumentEx)document).moveText(offsets[1], offsets[2], offsets[0]);
+          }
+        }
+      });
     }
   }
 }

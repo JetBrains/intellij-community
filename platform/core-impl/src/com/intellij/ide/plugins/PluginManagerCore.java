@@ -903,7 +903,7 @@ public class PluginManagerCore {
     int i = 0;
     for (URL url : urls) {
       IdeaPluginDescriptorImpl descriptor = loadDescriptorFromResource(url);
-      if (descriptor != null) {
+      if (descriptor != null && !result.contains(descriptor)) {
         descriptor.setUseCoreClassLoader(true);
         result.add(descriptor);
         if (progress != null && !SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) {

@@ -56,57 +56,9 @@ import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PythonReferenceImporter implements ReferenceImporter {
-  @Override
-  public boolean autoImportReferenceAtCursor(@NotNull final Editor editor, @NotNull final PsiFile file) {
-    if (!(file instanceof PyFile)) {
-      return false;
-    }
-    int caretOffset = editor.getCaretModel().getOffset();
-    Document document = editor.getDocument();
-    int lineNumber = document.getLineNumber(caretOffset);
-    int startOffset = document.getLineStartOffset(lineNumber);
-    int endOffset = document.getLineEndOffset(lineNumber);
+public final class PythonImportUtils {
+  private PythonImportUtils() {
 
-    List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffset);
-    for (PsiElement element : elements) {
-      if (element instanceof PyReferenceExpression && isImportable(element)) {
-        final PyReferenceExpression refExpr = (PyReferenceExpression)element;
-        if (!refExpr.isQualified()) {
-          final PsiPolyVariantReference reference = refExpr.getReference();
-          if (reference.resolve() == null) {
-            AutoImportQuickFix fix = proposeImportFix(refExpr, reference);
-            if (fix != null && fix.getCandidatesCount() == 1) {
-              fix.invoke(file);
-            }
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public boolean autoImportReferenceAt(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
-    if (!(file instanceof PyFile)) {
-      return false;
-    }
-    PsiReference element = file.findReferenceAt(offset);
-    if (element instanceof PyReferenceExpression && isImportable((PsiElement)element)) {
-      final PyReferenceExpression refExpr = (PyReferenceExpression)element;
-      if (!refExpr.isQualified()) {
-        final PsiPolyVariantReference reference = refExpr.getReference();
-        if (reference.resolve() == null) {
-          AutoImportQuickFix fix = proposeImportFix(refExpr, reference);
-          if (fix != null && fix.getCandidatesCount() == 1) {
-            fix.invoke(file);
-          }
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @Nullable

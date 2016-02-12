@@ -149,7 +149,6 @@
     <runConfigurationProducer implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.attest.PythonAtTestConfigurationProducer"/>
 
-    <!-- <referenceImporter implementation="com.jetbrains.python.codeInsight.imports.PythonReferenceImporter"/> -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <definitionsSearch implementation="com.jetbrains.python.psi.search.PyDefinitionsSearch"/>
     <gotoTargetRendererProvider implementation="com.jetbrains.python.codeInsight.PyGotoTargetRendererProvider"/>
@@ -388,6 +387,7 @@
     <inlineActionHandler implementation="com.jetbrains.python.refactoring.inline.PyInlineLocalHandler"/>
     <codeInsight.gotoSuper language="Python" implementationClass="com.jetbrains.python.codeInsight.PyGotoSuperHandler"/>
     <gotoDeclarationHandler implementation="com.jetbrains.python.codeInsight.PyBreakContinueGotoProvider" order="FIRST"/>
+    <gotoDeclarationHandler implementation="com.jetbrains.python.psi.impl.PyGotoDeclarationHandler"/>
     <lang.smartEnterProcessor language="Python"
                               implementationClass="com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor"/>
     <statementUpDownMover implementation="com.jetbrains.python.codeInsight.editorActions.moveUpDown.PyStatementMover" id="statement"

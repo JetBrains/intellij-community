@@ -378,7 +378,7 @@ public class BuildManager implements Disposable {
     doNotify(paths, true);
   }
 
-  public void runCommand(Runnable command) {
+  public void runCommand(@NotNull Runnable command) {
     myRequestsProcessor.submit(command);
   }
 
@@ -672,13 +672,12 @@ public class BuildManager implements Disposable {
       return null;
     }
 
-    final DelegateFuture<BuilderMessageHandler> _future = new DelegateFuture<BuilderMessageHandler>();
+    final DelegateFuture<?> _future = new DelegateFuture<>();
     // by using the same queue that processes events we ensure that
     // the build will be aware of all events that have happened before this request
     runCommand(new Runnable() {
       @Override
       public void run() {
-
         final Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> preloaded = takePreloadedProcess(projectPath);
         final RequestFuture<PreloadedProcessMessageHandler> preloadedFuture = preloaded != null? preloaded.first : null;
         final boolean usingPreloadedProcess = preloadedFuture != null;
@@ -694,7 +693,6 @@ public class BuildManager implements Disposable {
         }
 
         final RequestFuture<? extends BuilderMessageHandler> future = usingPreloadedProcess? preloadedFuture : new RequestFuture<BuilderMessageHandler>(handler, sessionId, new CancelBuildSessionAction<BuilderMessageHandler>());
-        _future.setDelegate(future);
 
         if (!usingPreloadedProcess && (future.isCancelled() || project.isDisposed())) {
           // in case of preloaded process the process was already running, so the handler will be notified upon process termination
@@ -741,7 +739,7 @@ public class BuildManager implements Disposable {
         }
 
         try {
-          projectTaskQueue.submit(new Runnable() {
+          Future<?> buildFuture = projectTaskQueue.submit(new Runnable() {
             @Override
             public void run() {
               Throwable execFailure = null;
@@ -778,11 +776,11 @@ public class BuildManager implements Disposable {
                         }
                       });
                     }
-                    catch(Throwable e) {
+                    catch (Throwable e) {
                       LOG.info(e);
                     }
                   }
-                  
+
                   processHandler = launchBuildProcess(project, myListenPort, sessionId, false);
                   errorsOnLaunch = new StringBuffer();
                   processHandler.addProcessListener(new StdOutputCollector((StringBuffer)errorsOnLaunch));
@@ -840,10 +838,12 @@ public class BuildManager implements Disposable {
                     }
                   });
                 }
-
               }
             }
           });
+          TaskFutureAdapter adapter = new TaskFutureAdapter<>(buildFuture);
+          boolean set = _future.setDelegate(adapter);
+          assert set;
         }
         catch (Throwable e) {
           handleProcessExecutionFailure(sessionId, e);

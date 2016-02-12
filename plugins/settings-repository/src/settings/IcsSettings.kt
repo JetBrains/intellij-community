@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,8 @@ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectWriter
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.PathUtilRt
-import com.intellij.util.SmartList
-import com.intellij.util.Time
-import java.io.File
+import com.intellij.util.*
+import java.nio.file.Path
 
 private val DEFAULT_COMMIT_DELAY = 10 * Time.MINUTE
 
@@ -59,22 +57,22 @@ class MyPrettyPrinter : DefaultPrettyPrinter() {
   }
 }
 
-fun saveSettings(settings: IcsSettings, settingsFile: File) {
+fun saveSettings(settings: IcsSettings, settingsFile: Path) {
   val serialized = ObjectMapper().writer<ObjectWriter>(MyPrettyPrinter()).writeValueAsBytes(settings)
   if (serialized.size <= 2) {
-    FileUtil.delete(settingsFile)
+    settingsFile.delete()
   }
   else {
-    FileUtil.writeToFile(settingsFile, serialized)
+    settingsFile.write(serialized)
   }
 }
 
-fun loadSettings(settingsFile: File): IcsSettings {
+fun loadSettings(settingsFile: Path): IcsSettings {
   if (!settingsFile.exists()) {
     return IcsSettings()
   }
 
-  val settings = ObjectMapper().readValue(settingsFile, IcsSettings::class.java)
+  val settings = ObjectMapper().readValue(settingsFile.toFile(), IcsSettings::class.java)
   if (settings.commitDelay <= 0) {
     settings.commitDelay = DEFAULT_COMMIT_DELAY
   }

@@ -112,7 +112,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   @Override
   public void paint(@NotNull Graphics g) {
     if (!isEnabled()) {
-      g = new Grayer((Graphics2D)g, EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+      g = new Grayer((Graphics2D)g, getBackground());
     }
     super.paint(g);
   }

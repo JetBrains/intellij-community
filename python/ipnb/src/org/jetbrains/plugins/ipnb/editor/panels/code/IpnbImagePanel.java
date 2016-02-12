@@ -12,7 +12,6 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 
 public class IpnbImagePanel extends IpnbCodeOutputPanel<IpnbImageOutputCell> {
   private static final Logger LOG = Logger.getInstance(IpnbImagePanel.class);
@@ -32,7 +31,7 @@ public class IpnbImagePanel extends IpnbCodeOutputPanel<IpnbImageOutputCell> {
         BufferedImage image = ImageIO.read(new ByteArrayInputStream(btDataFile));
         label.setIcon(new ImageIcon(image));
       }
-      catch (IOException e) {
+      catch (Exception e) {
         LOG.error("Couldn't parse image. " + e.getMessage());
       }
     }

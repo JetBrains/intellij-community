@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,7 @@ public class InvertBooleanHandler implements RefactoringActionHandler {
       return;
     }
     final PsiElement namedElement = delegate.adjustElement(element, project, editor);
-    if (namedElement != null) {
+    if (namedElement != null && PsiElementRenameHandler.canRename(project, editor, namedElement)) {
       new InvertBooleanDialog(namedElement).show();
     }
   }
@@ -70,7 +71,7 @@ public class InvertBooleanHandler implements RefactoringActionHandler {
       return;
     }
     PsiElement element = delegate.adjustElement(elements[0], project, null);
-    if (element != null) {
+    if (element != null && PsiElementRenameHandler.canRename(project, null, element)) {
       new InvertBooleanDialog(element).show();
     }
   }
