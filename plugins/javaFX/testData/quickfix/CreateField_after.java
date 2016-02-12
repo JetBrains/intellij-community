@@ -1,5 +1,7 @@
+import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 
 public class CreateControllerMethod {
-    public Button btn;
+    @FXML
+    private Button btn;
 }
