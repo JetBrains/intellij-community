@@ -583,7 +583,10 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   public PsiComment getTypeComment() {
     final PyStatementList statements = getStatementList();
     if (statements.getStatements().length != 0) {
-      return as(statements.getFirstChild(), PsiComment.class);
+      final PsiComment comment = as(statements.getFirstChild(), PsiComment.class);
+      if (comment != null && PyTypingTypeProvider.getTypeCommentValue(comment.getText()) != null) {
+        return comment;
+      }
     }
     return null;
   }

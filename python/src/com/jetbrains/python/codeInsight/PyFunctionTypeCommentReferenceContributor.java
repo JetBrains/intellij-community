@@ -46,10 +46,7 @@ public class PyFunctionTypeCommentReferenceContributor extends PsiReferenceContr
       @Override
       public boolean accepts(@NotNull PsiComment comment, ProcessingContext context) {
         final PyFunction func = PsiTreeUtil.getParentOfType(comment, PyFunction.class);
-        if (func != null && func.getTypeComment() == comment) {
-          return PyTypingTypeProvider.getTypeCommentValue(comment.getText()) != null;
-        }
-        return false;
+        return func != null && func.getTypeComment() == comment;
       }
     });
   
