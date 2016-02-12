@@ -60,6 +60,20 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  public void testTestModulePropertiesForModuleWithHyphenInName() throws Exception {
+    createSettingsFile("rootProject.name='my-project'");
+    importProject(
+      "apply plugin: 'java'"
+    );
+
+    assertModules("my-project", "my_project_main", "my_project_test");
+
+    final Module testModule = getModule("my_project_test");
+    TestModuleProperties testModuleProperties = TestModuleProperties.getInstance(testModule);
+    assertEquals("my_project_main", testModuleProperties.getProductionModuleName());
+  }
+
+  @Test
   public void testInheritProjectJdkForModules() throws Exception {
     importProject(
       "apply plugin: 'java'"

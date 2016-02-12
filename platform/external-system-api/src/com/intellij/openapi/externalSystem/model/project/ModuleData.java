@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.model.project;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +57,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
                        @NotNull String internalName,
                        @NotNull String moduleFileDirectoryPath,
                        @NotNull String externalConfigPath) {
-    super(owner, externalName, FileUtil.sanitizeFileName(internalName));
+    super(owner, externalName, internalName);
     myId = id;
     myModuleTypeId = typeId;
     myExternalConfigPath = externalConfigPath;
