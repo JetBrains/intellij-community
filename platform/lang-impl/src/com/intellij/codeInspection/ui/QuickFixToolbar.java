@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.ClickListener;
@@ -77,10 +76,10 @@ public class QuickFixToolbar extends JPanel {
     }
 
     fill(getBulbPlacement(hasFixes), QuickFixToolbar::createBulbIcon, panels);
-    fill(getDescriptionLabelPlacement(hasFixes, multipleDescriptors),
+    fill(getDescriptionLabelPlacement(multipleDescriptors),
          () -> getLabel(hasFixes, (PsiNamedElement)containingElement, descriptor.getProblemCount()), panels);
     fill(getFixesPlacement(hasFixes, multipleDescriptors), () -> createFixPanel(descriptor, project, fixes), panels);
-    fill(getSuppressPlacement(hasFixes, multipleDescriptors), () -> createSuppressionCombo(toolWrapper, paths, project), panels);
+    fill(getSuppressPlacement(multipleDescriptors), () -> createSuppressionCombo(toolWrapper, paths, project), panels);
   }
 
   @NotNull
@@ -194,36 +193,29 @@ public class QuickFixToolbar extends JPanel {
     });
   }
 
-  private static void fill(@Nullable Couple<Integer> point,
+  private static void fill(int row,
                            @NotNull Supplier<JComponent> componentSupplier,
                            @NotNull List<JPanel> parent) {
-    if (point == null) {
+    if (row == -1) {
       return;
     }
-    final int y = point.getSecond();
-    final JPanel row = parent.get(y);
-    row.add(componentSupplier.get());
+    final JPanel rowPanel = parent.get(row);
+    rowPanel.add(componentSupplier.get());
   }
 
-  @NotNull
-  private static Couple<Integer> getSuppressPlacement(boolean hasQuickFixes, boolean multipleDescriptors) {
-    return hasQuickFixes
-           ? multipleDescriptors ? Couple.of(1, 1) : Couple.of(2, 0)
-           : Couple.of(0, multipleDescriptors ? 1 : 0);
+  private static int getSuppressPlacement(boolean multipleDescriptors) {
+    return multipleDescriptors ? 1 : 0;
   }
 
-  @Nullable
-  private static Couple<Integer> getFixesPlacement(boolean hasQuickFixes, boolean multipleDescriptors) {
-    return hasQuickFixes ? multipleDescriptors ? Couple.of(0, 1) : Couple.of(1, 0) : null;
+  private static int getFixesPlacement(boolean hasQuickFixes, boolean multipleDescriptors) {
+    return hasQuickFixes ? multipleDescriptors ? 1 : 0 : -1;
   }
 
-  @Nullable
-  private static Couple<Integer> getDescriptionLabelPlacement(boolean hasQuickFixes, boolean multipleDescriptors) {
-    return multipleDescriptors ? Couple.of(hasQuickFixes ? 1 : 0, 0) : null;
+  private static int getDescriptionLabelPlacement(boolean multipleDescriptors) {
+    return multipleDescriptors ? 0 : -1;
   }
 
-  @Nullable
-  private static Couple<Integer> getBulbPlacement(boolean hasQuickFixes) {
-    return hasQuickFixes ? Couple.of(0, 0) : null;
+  private static int getBulbPlacement(boolean hasQuickFixes) {
+    return hasQuickFixes ? 0 : -1;
   }
 }
