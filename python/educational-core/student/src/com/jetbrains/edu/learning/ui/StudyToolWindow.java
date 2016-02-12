@@ -28,8 +28,10 @@ import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.StudyPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyToolWindowConfigurator;
 import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,14 +67,14 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
 
     setContent(mySplitPane);
 
-    StudyToolWindowConfigurator configurator = StudyUtils.getConfigurator(project);
+    StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
     assert configurator != null;
     final FileEditorManagerListener listener = configurator.getFileEditorManagerListener(project, this);
     project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
   }
 
   private void addAdditionalPanels(Project project) {
-    StudyToolWindowConfigurator configurator = StudyUtils.getConfigurator(project);
+    StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
     assert configurator != null;
     Map<String, JPanel> panels = configurator.getAdditionalPanels(project);
     for (Map.Entry<String, JPanel> entry: panels.entrySet()) {
@@ -129,7 +131,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
       LOG.warn("Course is null");
       return new DefaultActionGroup();
     }
-    StudyToolWindowConfigurator configurator = StudyUtils.getConfigurator(project);
+    StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
     assert configurator != null;
 
     return configurator.getActionGroup(project);

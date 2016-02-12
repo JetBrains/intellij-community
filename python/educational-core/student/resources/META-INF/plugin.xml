@@ -35,7 +35,7 @@
     <extensionPoint qualifiedName="Edu.StudyLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.jetbrains.edu.learning.StudyLanguageManager"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="Edu.studyToolWindowConfigurator" interface="com.jetbrains.edu.learning.StudyToolWindowConfigurator"/>
+    <extensionPoint qualifiedName="Edu.studyPluginConfigurator" interface="com.jetbrains.edu.learning.StudyPluginConfigurator"/>
   </extensionPoints>
 
   <actions>
@@ -75,11 +75,13 @@
                       serviceImplementation="com.jetbrains.edu.learning.StudyDocumentationManager" overrides="true"/>
     <postStartupActivity implementation="com.jetbrains.edu.learning.stepic.StudyCoursesUpdater"/>
 
-    <applicationConfigurable groupId="tools" instance="com.jetbrains.edu.learning.stepic.StudyConfigurable"
-                             id="com.jetbrains.edu.learning.stepic.StudyConfigurable"
+    <applicationConfigurable groupId="tools" instance="com.jetbrains.edu.learning.settings.StudyConfigurable"
+                             id="com.jetbrains.edu.learning.settings.StudyConfigurable"
                              displayName="Educational"/>
     <applicationService serviceInterface="com.jetbrains.edu.learning.stepic.StudySettings"
                         serviceImplementation="com.jetbrains.edu.learning.stepic.StudySettings"/>
+    <projectService serviceInterface="com.jetbrains.edu.learning.settings.PyStudySettings"
+                    serviceImplementation="com.jetbrains.edu.learning.settings.PyStudySettings"/>
 
     <toolWindow id="Task Description" anchor="right" factoryClass="com.jetbrains.edu.learning.ui.StudyToolWindowFactory" conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>
     <toolWindow id="Course Progress" anchor="left" factoryClass="com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory" conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>

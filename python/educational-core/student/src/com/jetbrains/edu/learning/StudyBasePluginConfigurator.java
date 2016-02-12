@@ -17,7 +17,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
 
-public abstract class StudyBaseToolWindowConfigurator implements StudyToolWindowConfigurator {
+public abstract class StudyBasePluginConfigurator implements StudyPluginConfigurator {
   @NotNull
   @Override
   public DefaultActionGroup getActionGroup(Project project) {
@@ -86,5 +86,11 @@ public abstract class StudyBaseToolWindowConfigurator implements StudyToolWindow
         toolWindow.setTaskText(text);
       }
     };
+  }
+
+  @Nullable
+  @Override
+  public StudyAfterCheckAction[] getAfterCheckActions() {
+    return null;
   }
 }

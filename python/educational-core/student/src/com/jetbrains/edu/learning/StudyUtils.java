@@ -450,9 +450,9 @@ public class StudyUtils {
   }
   
   @Nullable
-  public static StudyToolWindowConfigurator getConfigurator(@NotNull final Project project) {
-    StudyToolWindowConfigurator[] extensions = StudyToolWindowConfigurator.EP_NAME.getExtensions();
-    for (StudyToolWindowConfigurator extension: extensions) {
+  public static StudyPluginConfigurator getConfigurator(@NotNull final Project project) {
+    StudyPluginConfigurator[] extensions = StudyPluginConfigurator.EP_NAME.getExtensions();
+    for (StudyPluginConfigurator extension: extensions) {
       if (extension.accept(project)) {
         return extension;
       }
