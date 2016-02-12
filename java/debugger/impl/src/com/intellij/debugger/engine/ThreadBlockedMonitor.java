@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
@@ -23,9 +24,8 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.Alarm;
-import com.intellij.util.SingleAlarm;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ObjectReference;
@@ -36,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author egor
@@ -45,12 +47,12 @@ public class ThreadBlockedMonitor {
 
   private final Collection<ThreadReferenceProxy> myWatchedThreads = new HashSet<>();
 
-  private final SingleAlarm myAlarm;
+  private ScheduledFuture<?> myTask;
   private final DebugProcessImpl myProcess;
 
   public ThreadBlockedMonitor(DebugProcessImpl process, Disposable disposable) {
     myProcess = process;
-    myAlarm = new SingleAlarm(this::checkBlockingThread, 5000, Alarm.ThreadToUse.POOLED_THREAD, disposable);
+    Disposer.register(disposable, this::cancelTask);
   }
 
   public void startWatching(@Nullable ThreadReferenceProxy thread) {
@@ -58,7 +60,9 @@ public class ThreadBlockedMonitor {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (thread != null) {
       myWatchedThreads.add(thread);
-      myAlarm.request();
+      if (myTask == null) {
+        myTask = JobScheduler.getScheduler().scheduleWithFixedDelay(this::checkBlockingThread, 5, 5, TimeUnit.SECONDS);
+      }
     }
   }
 
@@ -71,7 +75,14 @@ public class ThreadBlockedMonitor {
       myWatchedThreads.clear();
     }
     if (myWatchedThreads.isEmpty()) {
-      myAlarm.cancel();
+      cancelTask();
+    }
+  }
+
+  private void cancelTask() {
+    if (myTask != null) {
+      myTask.cancel(true);
+      myTask = null;
     }
   }
 
@@ -129,7 +140,6 @@ public class ThreadBlockedMonitor {
         }
         finally {
           vmProxy.getVirtualMachine().resume();
-          myAlarm.request();
         }
       }
     });
