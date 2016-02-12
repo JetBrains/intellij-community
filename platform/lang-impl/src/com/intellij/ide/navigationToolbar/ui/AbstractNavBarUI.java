@@ -293,7 +293,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     if (shouldPaintWrapperPanel()) {
       result.top += JBUI.scale(1);
     }
-    return insets;
+    return result;
   }
 
   private static boolean shouldPaintWrapperPanel() {
