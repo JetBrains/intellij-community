@@ -19,10 +19,12 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import org.junit.Test;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.List;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Dmitry Avdeev
@@ -46,5 +48,15 @@ public class PluginDescriptorTest {
     assertTrue(file + " not exist", file.exists());
     IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptor(file, PluginManagerCore.PLUGIN_XML);
     assertNull(descriptor);
+  }
+
+  @Test
+  public void testFilteringDuplicates() throws MalformedURLException {
+    URL[] urls = {
+      new File(getTestDataPath(), "duplicate1.jar").toURI().toURL(),
+      new File(getTestDataPath(), "duplicate2.jar").toURI().toURL()
+    };
+    List<? extends IdeaPluginDescriptor> descriptors = PluginManagerCore.testLoadDescriptorsFromClassPath(new URLClassLoader(urls, null));
+    assertEquals(1, descriptors.size());
   }
 }
