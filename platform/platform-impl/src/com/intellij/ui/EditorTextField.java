@@ -479,27 +479,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFileType));
     }
 
-    final EditorColorsScheme colorsScheme = editor.getColorsScheme();
     editor.getSettings().setCaretRowShown(false);
-    if (!isEnabled()) {
-      editor.setColorsScheme(new DelegateColorScheme(colorsScheme) {
-        @Nullable
-        @Override
-        public Color getColor(ColorKey key) {
-          return super.getColor(key);
-        }
-
-        @Override
-        public TextAttributes getAttributes(TextAttributesKey key) {
-          final TextAttributes attributes = super.getAttributes(key);
-          if (!isEnabled()) {
-            return new TextAttributes(UIUtil.getInactiveTextColor(), attributes.getBackgroundColor(), attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
-          }
-
-          return attributes;
-        }
-      });
-    }
 
     editor.setOneLineMode(myOneLineMode);
     editor.getCaretModel().moveToOffset(myDocument.getTextLength());
