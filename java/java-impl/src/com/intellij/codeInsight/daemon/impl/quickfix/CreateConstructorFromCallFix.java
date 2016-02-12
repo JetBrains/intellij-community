@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -51,7 +52,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  protected void invokeImpl(final PsiClass targetClass) {
+  protected void invokeImpl(final PsiClass targetClass, @Nullable JVMElementMutableView mutableView) {
     final Project project = myConstructorCall.getProject();
     JVMElementFactory elementFactory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);
     if (elementFactory == null) elementFactory = JavaPsiFacade.getElementFactory(project);
@@ -67,7 +68,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
 
       constructor = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(constructor);
       Template template = templateBuilder.buildTemplate();
-      final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);
+      final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass, mutableView);
       if (editor == null) return;
       final TextRange textRange = constructor.getTextRange();
       editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());

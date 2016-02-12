@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -43,7 +44,7 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
   }
 
   @Override
-  protected void invokeImpl(final PsiClass targetClass) {
+  protected void invokeImpl(final PsiClass targetClass, @Nullable JVMElementMutableView mutableView) {
     PsiNewExpression newExpression = getNewExpression();
     PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
     assert ref != null;
@@ -67,7 +68,7 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
     created = (PsiClass)targetClass.add(created);
 
     setupGenericParameters(created, ref);
-    setupClassFromNewExpression(created, newExpression);
+    setupClassFromNewExpression(created, newExpression, mutableView);
   }
 
   private static boolean isInThisOrSuperCall(PsiNewExpression newExpression) {

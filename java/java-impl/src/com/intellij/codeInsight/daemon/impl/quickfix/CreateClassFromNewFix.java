@@ -27,7 +27,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -50,7 +49,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  protected void invokeImpl(PsiClass targetClass) {
+  protected void invokeImpl(PsiClass targetClass, @Nullable JVMElementMutableView mutableView) {
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
     final Project project = targetClass.getProject();
 
@@ -80,14 +79,16 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
         new WriteCommandAction(project, getText(), getText()) {
           @Override
           protected void run(@NotNull Result result) throws Throwable {
-            setupClassFromNewExpression(psiClass[0], newExpression);
+            setupClassFromNewExpression(psiClass[0], newExpression, mutableView);
           }
         }.execute();
       }
     });
   }
 
-  protected void setupClassFromNewExpression(final PsiClass psiClass, final PsiNewExpression newExpression) {
+  protected void setupClassFromNewExpression(final PsiClass psiClass,
+                                             final PsiNewExpression newExpression,
+                                             @Nullable JVMElementMutableView mutator) {
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(newExpression.getProject()).getElementFactory();
@@ -116,7 +117,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       final Template template = templateBuilder.buildTemplate();
       template.setToReformat(true);
 
-      final Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
+      final Editor editor = positionCursor(project, aClass.getContainingFile(), aClass, mutator);
       if (editor == null) return;
       final RangeMarker textRange = editor.getDocument().createRangeMarker(aClass.getTextRange());
       final Runnable runnable = new Runnable() {
@@ -144,7 +145,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       }
     }
     else {
-      positionCursor(project, aClass.getContainingFile(), aClass);
+      positionCursor(project, aClass.getContainingFile(), aClass, mutator);
     }
   }
 

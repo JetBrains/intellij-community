@@ -58,7 +58,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  protected void invokeImpl(final PsiClass targetClass) {
+  protected void invokeImpl(final PsiClass targetClass, @Nullable JVMElementMutableView mutableView) {
     if (targetClass == null) return;
 
     PsiNameValuePair nameValuePair = getNameValuePair();
@@ -84,7 +84,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     final ExpectedTypeInfo[] expectedTypes =
       new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE)};
     CreateMethodFromUsageFix.doCreate(targetClass, method, true, ContainerUtil.map2List(PsiExpression.EMPTY_ARRAY, Pair.<PsiExpression, PsiType>createFunction(null)),
-                                      getTargetSubstitutor(nameValuePair), expectedTypes, context);
+                                      getTargetSubstitutor(nameValuePair), expectedTypes, context, mutableView);
   }
 
   @Nullable

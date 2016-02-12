@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +68,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
   }
 
   @Override
-  protected void invokeImpl(final PsiClass targetClass) {
+  protected void invokeImpl(final PsiClass targetClass, @Nullable JVMElementMutableView mutableView) {
     final Project project = myReferenceExpression.getProject();
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);
     if (factory == null) factory = JavaPsiFacade.getElementFactory(project);
@@ -107,7 +108,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
     setupVisibility(parentClass, targetClass, field.getModifierList());
 
-    createFieldFromUsageTemplate(targetClass, project, expectedTypes, field, createConstantField(), myReferenceExpression);
+    createFieldFromUsageTemplate(targetClass, project, expectedTypes, field, createConstantField(), myReferenceExpression, mutableView);
   }
 
   public static void createFieldFromUsageTemplate(final PsiClass targetClass,
@@ -115,9 +116,10 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
                                                   final ExpectedTypeInfo[] expectedTypes,
                                                   final PsiField field,
                                                   final boolean createConstantField,
-                                                  final PsiElement context) {
+                                                  final PsiElement context,
+                                                  @Nullable JVMElementMutableView mutator) {
     final PsiFile targetFile = targetClass.getContainingFile();
-    final Editor newEditor = positionCursor(project, targetFile, field);
+    final Editor newEditor = positionCursor(project, targetFile, field, mutator);
     if (newEditor == null) return;
     Template template =
       CreateFieldFromUsageHelper.setupTemplate(field, expectedTypes, targetClass, newEditor, context, createConstantField);

@@ -43,6 +43,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -181,7 +182,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
   }
 
   @Override
-  protected void invokeImpl(PsiClass targetClass) {
+  protected void invokeImpl(PsiClass targetClass, @Nullable JVMElementMutableView mutableView) {
     PsiManager manager = myMethodCall.getManager();
     final Project project = manager.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
@@ -221,7 +222,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
       expectedTypes = new PsiType[]{type};
     }
 
-    positionCursor(project, targetClass.getContainingFile(), targetClass);
+    positionCursor(project, targetClass.getContainingFile(), targetClass, mutableView);
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
@@ -263,7 +264,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     Template template = builder.buildTemplate();
     TextRange textRange = accessor.getTextRange();
     final PsiFile file = targetClass.getContainingFile();
-    final Editor editor = positionCursor(project, targetClass.getContainingFile(), accessor);
+    final Editor editor = positionCursor(project, targetClass.getContainingFile(), accessor, mutableView);
     if (editor == null) return;
     editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
     editor.getCaretModel().moveToOffset(textRange.getStartOffset());
@@ -284,7 +285,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
             if (aClass == null) return;
             PsiField field = aClass.findFieldByName(fieldName, true);
             if (field != null){
-              CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field);
+              CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field, mutableView);
               return;
             }
             PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
@@ -294,7 +295,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
                 field = factory.createField(fieldName, type);
                 field = (PsiField)aClass.add(field);
                 PsiUtil.setModifierProperty(field, PsiModifier.STATIC, isStatic1);
-                CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field);
+                CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field, mutableView);
               }
               catch (IncorrectOperationException e) {
                 LOG.error(e);
@@ -323,9 +324,9 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     });
   }
 
-  protected void beforeTemplateFinished(PsiClass aClass, PsiField field) {
+  protected void beforeTemplateFinished(PsiClass aClass, PsiField field, @Nullable JVMElementMutableView mutator) {
     if (myMethodCall.isValid()) {
-      positionCursor(myMethodCall.getProject(), myMethodCall.getContainingFile(), myMethodCall);
+      positionCursor(myMethodCall.getProject(), myMethodCall.getContainingFile(), myMethodCall, mutator);
     }
   }
 

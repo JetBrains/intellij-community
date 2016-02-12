@@ -79,7 +79,7 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  protected void invokeImpl(final PsiClass targetClass) {
+  protected void invokeImpl(final PsiClass targetClass, @Nullable JVMElementMutableView mutableView) {
     if (targetClass == null) return;
     PsiMethodReferenceExpression expression = getMethodReference();
     if (expression == null) return;
@@ -97,8 +97,9 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
     JVMElementFactory elementFactory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);
     if (elementFactory == null) elementFactory = JavaPsiFacade.getElementFactory(project);
 
-    PsiMethod method = expression.isConstructor() ? (PsiMethod)targetClass.add(elementFactory.createConstructor()) 
-                                                  : CreateMethodFromUsageFix.createMethod(targetClass, parentClass, enclosingContext, methodName);
+    PsiMethod method = expression.isConstructor()
+                       ? (PsiMethod)targetClass.add(elementFactory.createConstructor())
+                       : CreateMethodFromUsageFix.createMethod(targetClass, parentClass, enclosingContext, methodName, mutableView);
     if (method == null) {
       return;
     }
@@ -134,7 +135,7 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
                                         }
                                       }),
                                       PsiSubstitutor.EMPTY,
-                                      expectedTypes, context);
+                                      expectedTypes, context, mutableView);
   }
 
   

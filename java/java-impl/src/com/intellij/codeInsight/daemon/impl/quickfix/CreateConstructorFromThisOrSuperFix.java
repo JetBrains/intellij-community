@@ -33,6 +33,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -75,7 +76,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
   }
 
   @Override
-  protected void invokeImpl(PsiClass targetClass) {
+  protected void invokeImpl(PsiClass targetClass, @Nullable JVMElementMutableView mutableView) {
     final PsiFile callSite = myMethodCall.getContainingFile();
     final Project project = myMethodCall.getProject();
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
@@ -102,7 +103,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
       rangeMarker.dispose();
 
       Template template = templateBuilder.buildTemplate();
-      final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);
+      final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass, mutableView);
       if (editor == null) return;
       final TextRange textRange = constructor.getTextRange();
       final PsiFile file = targetClass.getContainingFile();
