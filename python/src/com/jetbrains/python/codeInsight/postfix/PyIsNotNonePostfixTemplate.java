@@ -17,19 +17,18 @@ package com.jetbrains.python.codeInsight.postfix;
 
 import com.intellij.codeInsight.template.postfix.templates.SurroundPostfixTemplateBase;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyIsNotNoneSurrounder;
 import org.jetbrains.annotations.NotNull;
 
 public class PyIsNotNonePostfixTemplate extends SurroundPostfixTemplateBase {
 
-  public static final String TEMPLATE_DESCRIPTION = "if expr is not None";
-
   public PyIsNotNonePostfixTemplate() {
-    super("ifnn", TEMPLATE_DESCRIPTION, PyPostfixUtils.PY_PSI_INFO, PyPostfixUtils.selectorTopmost());
+    super("ifnn", "if expr is not None", PyPostfixUtils.PY_PSI_INFO, PyPostfixUtils.selectorTopmost());
   }
 
   @NotNull
   @Override
   protected Surrounder getSurrounder() {
-    return new PyBinaryConditionSurrounder("if a is not None: \n pass", TEMPLATE_DESCRIPTION);
+    return new PyIsNotNoneSurrounder();
   }
 }

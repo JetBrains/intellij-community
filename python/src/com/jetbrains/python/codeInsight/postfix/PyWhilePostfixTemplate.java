@@ -17,52 +17,18 @@ package com.jetbrains.python.codeInsight.postfix;
 
 import com.intellij.codeInsight.template.postfix.templates.SurroundPostfixTemplateBase;
 import com.intellij.lang.surroundWith.Surrounder;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyStatement;
-import com.jetbrains.python.psi.PyStatementListContainer;
-import com.jetbrains.python.psi.PyWhileStatement;
+import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyWhileExpressionSurrounder;
 import org.jetbrains.annotations.NotNull;
 
 public class PyWhilePostfixTemplate extends SurroundPostfixTemplateBase {
 
-  public static final String TEMPLATE_DESCRIPTION = "while expr";
-
   public PyWhilePostfixTemplate() {
-    super("while", TEMPLATE_DESCRIPTION, PyPostfixUtils.PY_PSI_INFO, PyPostfixUtils.selectorTopmost());
+    super("while", "while expr", PyPostfixUtils.PY_PSI_INFO, PyPostfixUtils.selectorTopmost());
   }
 
   @NotNull
   @Override
   protected Surrounder getSurrounder() {
-    return new PyWhileSurrounder();
-  }
-
-  private static class PyWhileSurrounder extends PyExpressionAsConditionSurrounder {
-
-    @Override
-    protected String getTextToGenerate() {
-      return "while a:\n pass";
-    }
-
-    @Override
-    protected PyExpression getCondition(PyStatement statement) {
-      if (statement instanceof PyWhileStatement) {
-        return ((PyWhileStatement)statement).getWhilePart().getCondition();
-      }
-      return null;
-    }
-
-    @Override
-    protected PyStatementListContainer getStatementListContainer(PyStatement statement) {
-      if (statement instanceof PyWhileStatement) {
-        return ((PyWhileStatement)statement).getWhilePart();
-      }
-      return null;
-    }
-
-    @Override
-    public String getTemplateDescription() {
-      return TEMPLATE_DESCRIPTION;
-    }
+    return new PyWhileExpressionSurrounder();
   }
 }

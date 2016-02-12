@@ -17,53 +17,18 @@ package com.jetbrains.python.codeInsight.postfix;
 
 import com.intellij.codeInsight.template.postfix.templates.SurroundPostfixTemplateBase;
 import com.intellij.lang.surroundWith.Surrounder;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyIfStatement;
-import com.jetbrains.python.psi.PyStatement;
-import com.jetbrains.python.psi.PyStatementListContainer;
+import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyIfExpressionSurrounder;
 import org.jetbrains.annotations.NotNull;
 
 public class PyIfPostfixTemplate extends SurroundPostfixTemplateBase {
 
-  public static final String TEMPLATE_DESCRIPTION = "if expr";
-
   public PyIfPostfixTemplate() {
-    super("if", TEMPLATE_DESCRIPTION, PyPostfixUtils.PY_PSI_INFO, PyPostfixUtils.selectorTopmost());
+    super("if", "if expr", PyPostfixUtils.PY_PSI_INFO, PyPostfixUtils.selectorTopmost());
   }
 
   @NotNull
   @Override
   protected Surrounder getSurrounder() {
-    return new PyIfSurrounder();
-  }
-
-
-  private static class PyIfSurrounder extends PyExpressionAsConditionSurrounder {
-
-    @Override
-    protected String getTextToGenerate() {
-      return "if a:\n pass";
-    }
-
-    @Override
-    protected PyExpression getCondition(PyStatement statement) {
-      if (statement instanceof PyIfStatement) {
-        return ((PyIfStatement)statement).getIfPart().getCondition();
-      }
-      return null;
-    }
-
-    @Override
-    protected PyStatementListContainer getStatementListContainer(PyStatement statement) {
-      if (statement instanceof PyIfStatement) {
-        return ((PyIfStatement)statement).getIfPart();
-      }
-      return null;
-    }
-
-    @Override
-    public String getTemplateDescription() {
-      return TEMPLATE_DESCRIPTION;
-    }
+    return new PyIfExpressionSurrounder();
   }
 }
