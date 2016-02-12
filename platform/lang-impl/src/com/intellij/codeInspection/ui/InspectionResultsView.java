@@ -423,27 +423,30 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private void showInRightPanel(final RefEntity refEntity, BatchProblemDescriptor descriptor, boolean valid) {
-    //todo use refentity to determine
     Cursor currentCursor = getCursor();
-    setCursor(new Cursor(Cursor.WAIT_CURSOR));
+    try {
+      setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
-    if (descriptor != null) {
-      final JPanel editorPanel = new JPanel();
-      editorPanel.setLayout(new BorderLayout());
+      if (descriptor != null) {
+        final JPanel editorPanel = new JPanel();
+        editorPanel.setLayout(new BorderLayout());
 
-      final PsiElement containingElement = refEntity instanceof RefElement ? ((RefElement)refEntity).getElement() : null;
-      if (valid && descriptor.getProblemCount() > 0) {
-        editorPanel.add(new QuickFixToolbar(descriptor,
-                                            myTree.getSelectedToolWrapper(),
-                                            myTree.getSelectionPaths(),
-                                            myProject,
-                                            containingElement),
-                        BorderLayout.NORTH);
+        final PsiElement containingElement = refEntity instanceof RefElement ? ((RefElement)refEntity).getElement() : null;
+        if (valid && descriptor.getProblemCount() > 0) {
+          editorPanel.add(new QuickFixToolbar(descriptor,
+                                              myTree.getSelectedToolWrapper(),
+                                              myTree.getSelectionPaths(),
+                                              myProject,
+                                              containingElement),
+                          BorderLayout.NORTH);
+        }
+        editorPanel.add(createBaseRightComponentFor(containingElement, descriptor), BorderLayout.CENTER);
+        mySplitter.setSecondComponent(editorPanel);
       }
-      editorPanel.add(createBaseRightComponentFor(containingElement, descriptor), BorderLayout.CENTER);
-      mySplitter.setSecondComponent(editorPanel);
     }
-    setCursor(currentCursor);
+    finally {
+      setCursor(currentCursor);
+    }
   }
 
   private JComponent createBaseRightComponentFor(PsiElement containingElement, BatchProblemDescriptor descriptor) {
