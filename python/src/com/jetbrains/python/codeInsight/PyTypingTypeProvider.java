@@ -89,23 +89,22 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         }
       }
     }
-    if (!context.maySwitchToAST(func)) {
-      final String comment = getTypeComment(func);
-      if (comment != null) {
-        final PyTypeParser.ParseResult result = PyTypeParser.parsePep484FunctionTypeComment(param, comment);
-        final PyCallableType functionType = as(result.getType(), PyCallableType.class);
-        if (functionType != null) {
-          final List<PyCallableParameter> paramTypes = functionType.getParameters(context);
-          final PyParameter[] funcParams = func.getParameterList().getParameters();
-          final int startOffset = func.getContainingClass() != null ? 1 : 0;
-          for (int paramIndex = 0; paramIndex < funcParams.length; paramIndex++) {
-            if (funcParams[paramIndex] == param) {
-              final int typeIndex = paramIndex - startOffset;
-              if (typeIndex >= 0 && typeIndex < paramTypes.size()) {
-                return Ref.create(paramTypes.get(typeIndex).getType(context));
-              }
-              break;
+    final String comment = func.getTypeCommentAnnotation();
+    if (comment != null) {
+      final PyTypeParser.ParseResult result = PyTypeParser.parsePep484FunctionTypeComment(param, comment);
+      final PyCallableType functionType = as(result.getType(), PyCallableType.class);
+      if (functionType != null) {
+        final List<PyCallableParameter> paramTypes = functionType.getParameters(context);
+        assert paramTypes != null;
+        final PyParameter[] funcParams = func.getParameterList().getParameters();
+        final int startOffset = func.getContainingClass() != null ? 1 : 0;
+        for (int paramIndex = 0; paramIndex < funcParams.length; paramIndex++) {
+          if (funcParams[paramIndex] == param) {
+            final int typeIndex = paramIndex - startOffset;
+            if (typeIndex >= 0 && typeIndex < paramTypes.size()) {
+              return Ref.create(paramTypes.get(typeIndex).getType(context));
             }
+            break;
           }
         }
       }
@@ -131,14 +130,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (constructorType != null) {
         return Ref.create(constructorType);
       }
-      if (context.maySwitchToAST(function)) {
-        final String comment = getTypeComment(function);
-        if (comment != null) {
-          final PyTypeParser.ParseResult result = PyTypeParser.parsePep484FunctionTypeComment(callable, comment);
-          final PyCallableType funcType = as(result.getType(), PyCallableType.class);
-          if (funcType != null) {
-            return Ref.create(funcType.getReturnType(context));
-          }
+      final String comment = function.getTypeCommentAnnotation();
+      if (comment != null) {
+        final PyTypeParser.ParseResult result = PyTypeParser.parsePep484FunctionTypeComment(callable, comment);
+        final PyCallableType funcType = as(result.getType(), PyCallableType.class);
+        if (funcType != null) {
+          return Ref.create(funcType.getReturnType(context));
         }
       }
     }
@@ -188,16 +185,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         final String text = comment.getText();
         return getTypeCommentValue(text);
       }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static String getTypeComment(@NotNull PyFunction function) {
-    // XXX: Requires switching from stub to AST
-    final PsiComment comment = function.getTypeComment();
-    if (comment != null) {
-      return getTypeCommentValue(comment.getText());
     }
     return null;
   }

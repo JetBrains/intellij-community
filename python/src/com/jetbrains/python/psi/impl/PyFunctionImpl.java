@@ -37,6 +37,7 @@ import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -581,14 +582,24 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   public PsiComment getTypeComment() {
     final PyStatementList statements = getStatementList();
-    final PsiComment comment;
     if (statements.getStatements().length != 0) {
-      comment = as(statements.getFirstChild(), PsiComment.class);
+      return as(statements.getFirstChild(), PsiComment.class);
     }
-    else {
-      comment = as(PyPsiUtils.getNextNonWhitespaceSibling(statements), PsiComment.class);
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getTypeCommentAnnotation() {
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return stub.getTypeComment(); 
     }
-    return comment;
+    final PsiComment comment = getTypeComment();
+    if (comment != null) {
+      return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
+    }
+    return null;
   }
 
   @NotNull

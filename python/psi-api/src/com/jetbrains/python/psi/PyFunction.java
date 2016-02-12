@@ -106,10 +106,22 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
    * Returns a comment that immediately follows function header and precedes any child statement (including docstring).
    * It's supposed to start with conventional "type:" prefix and contain function type in PEP 484 compatible format
    * (https://www.python.org/dev/peps/pep-0484/#suggested-syntax-for-python-2-7-and-straddling-code).
+   * <p/>
+   * Use {@link #getTypeCommentAnnotation()} to make sure that the comment indeed starts with "type:" and get its content
+   * with the prefix stripped.
+   *
+   * @see #getTypeCommentAnnotation()
    */
   @Nullable
   PsiComment getTypeComment();
 
+  /**
+   * Returns type annotation after the "type:" prefix extracted from the commentary returned by {@link #getTypeComment()}.
+   *
+   * @see #getTypeComment()
+   */
+  @Nullable
+  String getTypeCommentAnnotation();
 
   /**
    * Searches for function attributes.
