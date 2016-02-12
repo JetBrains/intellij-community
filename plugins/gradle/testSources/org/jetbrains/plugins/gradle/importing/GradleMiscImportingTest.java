@@ -66,11 +66,11 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
       "apply plugin: 'java'"
     );
 
-    assertModules("my-project", "my_project_main", "my_project_test");
+    assertModules("my-project", "my-project_main", "my-project_test");
 
-    final Module testModule = getModule("my_project_test");
+    final Module testModule = getModule("my-project_test");
     TestModuleProperties testModuleProperties = TestModuleProperties.getInstance(testModule);
-    assertEquals("my_project_main", testModuleProperties.getProductionModuleName());
+    assertEquals("my-project_main", testModuleProperties.getProductionModuleName());
   }
 
   @Test

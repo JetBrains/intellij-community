@@ -235,7 +235,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @NotNull
   private static String getInternalModuleName(@NotNull IdeaModule gradleModule, @NotNull String sourceSetName) {
-    return FileUtil.sanitizeFileName(gradleModule.getName() + "_" + sourceSetName);
+    return PathUtilRt.suggestFileName(gradleModule.getName() + "_" + sourceSetName, true, false);
   }
 
   @Override
