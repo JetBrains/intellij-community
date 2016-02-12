@@ -17,7 +17,6 @@ package com.intellij.ide.navigationToolbar.ui;
 
 import com.intellij.ide.navigationToolbar.NavBarItem;
 import com.intellij.ide.navigationToolbar.NavBarPanel;
-import com.intellij.ide.navigationToolbar.NavBarRootPaneExtension;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
@@ -290,15 +289,15 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Insets getWrapperPanelInsets(Insets insets) {
-    //final JBInsets result = JBUI.insets(insets);
-    //if (shouldPaintWrapperPanel()) {
-    //  result.top += JBUI.scale(1);
-    //}
-    return insets;
+    final JBInsets result = JBUI.insets(insets);
+    if (shouldPaintWrapperPanel()) {
+      result.top += JBUI.scale(1);
+    }
+    return result;
   }
 
   private static boolean shouldPaintWrapperPanel() {
-    return !UISettings.getInstance().SHOW_MAIN_TOOLBAR && NavBarRootPaneExtension.runToolbarExists();
+    return false; //return !UISettings.getInstance().SHOW_MAIN_TOOLBAR && NavBarRootPaneExtension.runToolbarExists();
   }
 
   protected Color getBackgroundColor() {
