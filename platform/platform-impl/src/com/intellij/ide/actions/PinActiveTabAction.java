@@ -16,8 +16,12 @@
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ui.layout.ViewContext;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
@@ -30,118 +34,86 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PinActiveTabAction extends ToggleAction implements DumbAware {
-  /**
-   * @return selected editor or <code>null</code>
-   */
-  @Nullable
-  private static VirtualFile getFile(final DataContext context){
-    Project project = CommonDataKeys.PROJECT.getData(context);
-    if(project == null){
-      return null;
-    }
-
-    return CommonDataKeys.VIRTUAL_FILE.getData(context);
-  }
-
-  /**
-   * @return selected content or <code>null</code>
-   */
-  @Nullable
-  private static Content getContent(final DataContext context){
-    Content[] contents = ViewContext.CONTENT_KEY.getData(context);
-    if (contents != null && contents.length == 1) return contents[0];
-    
-    ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(context, true);
-    if (contentManager == null){
-      return null;
-    }
-    return contentManager.getSelectedContent();
-  }
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    DataContext context = e.getDataContext();
-    VirtualFile file = getFile(context);
-    if(file != null){
-      // 1. Check editor
-      EditorWindow editorWindow = getEditorWindow(context);
-      if (editorWindow != null) {
-        if (!editorWindow.isFileOpen(file)) {
-          file = editorWindow.getSelectedFile();
-          if (file == null) return false;
-        }
+    Content content = getNonEditorContent(e);
+    if (content != null && content.isPinnable()) return content.isPinned();
 
-        return editorWindow.isFilePinned(file);
-      }
-    }
-    // 2. Check content
-    final Content content = getContent(context);
-    if(content != null){
-      return content.isPinned();
-    }
-    else{
-      return false;
-    }
+    EditorWindow window = getEditorWindow(e);
+    VirtualFile selectedFile = window == null ? null : getFileInWindow(e, window);
+    return selectedFile != null && window.isFilePinned(selectedFile);
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    DataContext context = e.getDataContext();
-    VirtualFile file = getFile(context);
-    if(file != null){
-      // 1. Check editor
-      EditorWindow editorWindow = getEditorWindow(context);
-      if (editorWindow != null) {
-        if (!editorWindow.isFileOpen(file)) {
-          file = editorWindow.getSelectedFile();
-          if (file == null) return;
-        }
-
-        editorWindow.setFilePinned(file, state);
-        return;
+    Content content = getNonEditorContent(e);
+    if (content != null && content.isPinnable()) {
+      content.setPinned(state);
+    }
+    else {
+      EditorWindow window = getEditorWindow(e);
+      VirtualFile selectedFile = window == null ? null : getFileInWindow(e, window);
+      if (selectedFile != null) {
+        window.setFilePinned(selectedFile, state);
       }
     }
-    Content content = getContent(context); // at this point content cannot be null
-    assert content != null : context;
-    content.setPinned(state);
-  }
-
-  private static EditorWindow getEditorWindow(DataContext dataContext) {
-    EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
-    if (editorWindow == null) {
-      Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      if (project != null) {
-        editorWindow = FileEditorManagerEx.getInstanceEx(project).getCurrentWindow();
-      }
-    }
-    return editorWindow;
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
+    boolean selected = isSelected(e);
+    e.getPresentation().putClientProperty(SELECTED_PROPERTY, selected);
 
-    Presentation presentation = e.getPresentation();
-    DataContext context = e.getDataContext();
-    EditorWindow window = getEditorWindow(context);
-    if (window == null || window.getOwner().isPreview()) {
-      presentation.setEnabledAndVisible(false);
+    String text;
+    boolean enable;
+    EditorWindow window = getEditorWindow(e);
+    VirtualFile selectedFile = window == null ? null : getFileInWindow(e, window);
+    if (selectedFile != null) {
+      enable = !window.getOwner().isPreview();
     }
     else {
-      if (getFile(context) != null) {
-        presentation.setEnabledAndVisible(true);
-      }
-      else {
-        Content content = getContent(context);
-        presentation.setEnabledAndVisible(content != null && content.isPinnable());
-      }
+      Content content = getNonEditorContent(e);
+      enable = content != null && content.isPinnable();
     }
-
-    if (ActionPlaces.EDITOR_TAB_POPUP.equals(e.getPlace()) || ViewContext.CELL_POPUP_PLACE.equals(e.getPlace())) {
-      presentation.setText(isSelected(e) ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab"));
+    // add the word "active" if the target tab is not current
+    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) ||
+        !(selectedFile == null || selectedFile.equals(e.getData(CommonDataKeys.VIRTUAL_FILE)))) {
+      text = selected ? IdeBundle.message("action.unpin.active.tab") : IdeBundle.message("action.pin.active.tab");
     }
     else {
-      presentation.setText(isSelected(e) ? IdeBundle.message("action.unpin.active.tab") : IdeBundle.message("action.pin.active.tab"));
+      text = selected ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab");
     }
+    e.getPresentation().setIcon(ActionPlaces.isToolbarPlace(e.getPlace())? AllIcons.General.Pin_tab : null);
+    e.getPresentation().setText(text);
+    e.getPresentation().setEnabledAndVisible(enable);
+  }
+
+  @Nullable
+  private static Content getNonEditorContent(@NotNull AnActionEvent e) {
+    if (e.getData(EditorWindow.DATA_KEY) != null) return null;
+    Content[] contents = e.getData(ViewContext.CONTENT_KEY);
+    if (contents != null && contents.length == 1) return contents[0];
+
+    ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(e.getDataContext(), true);
+    return contentManager == null ? null : contentManager.getSelectedContent();
+  }
+
+  @Nullable
+  private static EditorWindow getEditorWindow(@NotNull AnActionEvent e) {
+    EditorWindow window = e.getData(EditorWindow.DATA_KEY);
+    if (window == null) {
+      Project project = e.getProject();
+      window = project == null ? null : FileEditorManagerEx.getInstanceEx(project).getCurrentWindow();
+    }
+    return window;
+  }
+
+  @Nullable
+  private static VirtualFile getFileInWindow(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (file == null) file = window.getSelectedFile();
+    if (file != null && window.isFileOpen(file)) return file;
+    return null;
   }
 }
