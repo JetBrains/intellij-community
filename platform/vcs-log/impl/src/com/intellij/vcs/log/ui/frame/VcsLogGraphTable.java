@@ -443,7 +443,10 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     }
     else {
       CommitId commitId = myLogDataHolder.getCommitId(commit);
-      balloonText = "Jump to commit" + " " + commitId.getHash().toShortString() + " in " + commitId.getRoot().getName();
+      balloonText = "Jump to commit" + " " + commitId.getHash().toShortString();
+      if (myUi.isMultipleRoots()) {
+        balloonText += " in " + commitId.getRoot().getName();
+      }
     }
     return balloonText;
   }
