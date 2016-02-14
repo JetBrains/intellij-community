@@ -38,7 +38,7 @@ public class SetterProcessor extends AbstractClassProcessor {
   }
 
   protected SetterProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
-    super(supportedAnnotationClass, supportedClass);
+    super(supportedAnnotationClass, supportedClass, true);
   }
 
   protected SetterFieldProcessor getFieldProcessor() {

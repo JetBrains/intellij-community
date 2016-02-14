@@ -57,25 +57,25 @@ public class SingularHandlerFactory {
   }
 
   @NotNull
-  public static BuilderElementHandler getHandlerFor(@NotNull PsiVariable psiVariable, @Nullable PsiAnnotation singularAnnotation) {
+  public static BuilderElementHandler getHandlerFor(@NotNull PsiVariable psiVariable, @Nullable PsiAnnotation singularAnnotation, boolean shouldGenerateFullBodyBlock) {
     if (null == singularAnnotation) {
-      return new NonSingularHandler();
+      return new NonSingularHandler(shouldGenerateFullBodyBlock);
     }
 
     final PsiType psiType = psiVariable.getType();
     final String qualifiedName = PsiTypeUtil.getQualifiedName(psiType);
     if (!isInvalidSingularType(qualifiedName)) {
       if (COLLECTION_TYPES.contains(qualifiedName)) {
-        return new SingularCollectionHandler();
+        return new SingularCollectionHandler(shouldGenerateFullBodyBlock);
       }
       if (MAP_TYPES.contains(qualifiedName)) {
-        return new SingularMapHandler();
+        return new SingularMapHandler(shouldGenerateFullBodyBlock);
       }
       if (GUAVA_COLLECTION_TYPES.contains(qualifiedName)) {
-        return new SingularGuavaCollectionHandler(qualifiedName, qualifiedName.contains("Sorted"));
+        return new SingularGuavaCollectionHandler(qualifiedName, qualifiedName.contains("Sorted"), shouldGenerateFullBodyBlock);
       }
       if (GUAVA_MAP_TYPES.contains(qualifiedName)) {
-        return new SingularGuavaMapHandler(qualifiedName, qualifiedName.contains("Sorted"));
+        return new SingularGuavaMapHandler(qualifiedName, qualifiedName.contains("Sorted"), shouldGenerateFullBodyBlock);
       }
     }
     return new EmptyBuilderElementHandler();

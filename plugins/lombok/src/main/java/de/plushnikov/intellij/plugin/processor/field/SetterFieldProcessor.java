@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.field;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -39,7 +40,7 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
   }
 
   protected SetterFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
-    super(supportedAnnotationClass, supportedClass);
+    super(supportedAnnotationClass, supportedClass, true);
   }
 
   @Override
@@ -157,20 +158,31 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
       addOnXAnnotations(setterAnnotation, methodParameterModifierList, "onParam");
     }
 
-
-    final String thisOrClass = isStatic ? psiClass.getName() : "this";
-    String blockText = String.format("%s.%s = %s;", thisOrClass, psiField.getName(), methodParameter.getName());
-    if (!isStatic && !PsiType.VOID.equals(returnType)) {
-      blockText += "return this;";
-    }
-
-    method.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
+    method.withBody(createCodeBlock(psiField, psiClass, returnType, isStatic, methodParameter));
 
     PsiModifierList methodModifierList = method.getModifierList();
     copyAnnotations(psiField, methodModifierList, LombokUtils.DEPRECATED_PATTERN);
     addOnXAnnotations(setterAnnotation, methodModifierList, "onMethod");
 
     return method;
+  }
+
+  @NotNull
+  private PsiCodeBlock createCodeBlock(@NotNull PsiField psiField, @NotNull PsiClass psiClass, PsiType returnType, boolean isStatic, PsiParameter methodParameter) {
+    final String blockText;
+    if (isShouldGenerateFullBodyBlock()) {
+      final String thisOrClass = isStatic ? psiClass.getName() : "this";
+      blockText = String.format("%s.%s = %s; ", thisOrClass, psiField.getName(), methodParameter.getName());
+    } else {
+      blockText = "";
+    }
+
+    String codeBlockText = blockText;
+    if (!isStatic && !PsiType.VOID.equals(returnType)) {
+      codeBlockText += "return this;";
+    }
+
+    return PsiMethodUtil.createCodeBlockFromText(codeBlockText, psiClass);
   }
 
   protected PsiType getReturnType(@NotNull PsiField psiField) {

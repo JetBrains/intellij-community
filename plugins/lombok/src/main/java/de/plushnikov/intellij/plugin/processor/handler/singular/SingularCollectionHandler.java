@@ -12,6 +12,10 @@ import java.text.MessageFormat;
 
 public class SingularCollectionHandler extends AbstractSingularHandler {
 
+  public SingularCollectionHandler(boolean shouldGenerateFullBodyBlock) {
+    super(shouldGenerateFullBodyBlock);
+  }
+
   protected void addOneMethodParameter(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, @NotNull LombokLightMethodBuilder methodBuilder) {
     if (psiParameterTypes.length == 1) {
       methodBuilder.withParameter(singularName, psiParameterTypes[0]);

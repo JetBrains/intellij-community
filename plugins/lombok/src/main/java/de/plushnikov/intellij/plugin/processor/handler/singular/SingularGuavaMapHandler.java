@@ -23,7 +23,8 @@ public class SingularGuavaMapHandler extends SingularMapHandler {
   private final String guavaQualifiedName;
   private final boolean sortedCollection;
 
-  public SingularGuavaMapHandler(String guavaQualifiedName, boolean sortedCollection) {
+  public SingularGuavaMapHandler(String guavaQualifiedName, boolean sortedCollection, boolean shouldGenerateFullBodyBlock) {
+    super(shouldGenerateFullBodyBlock);
     this.guavaQualifiedName = guavaQualifiedName;
     this.sortedCollection = sortedCollection;
   }

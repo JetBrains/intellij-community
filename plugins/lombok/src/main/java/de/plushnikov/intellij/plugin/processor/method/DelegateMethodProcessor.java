@@ -23,8 +23,8 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
   }
 
   protected DelegateMethodProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass) {
-    super(supportedAnnotationClass, PsiMethod.class);
-    handler = new DelegateHandler(shouldGenerateFullBodyBlock());
+    super(supportedAnnotationClass, PsiMethod.class, true);
+    handler = new DelegateHandler(true);
   }
 
   @Override

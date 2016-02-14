@@ -32,7 +32,7 @@ import java.util.List;
 public class DataProcessor extends AbstractClassProcessor {
 
   public DataProcessor() {
-    super(Data.class, PsiMethod.class);
+    super(Data.class, PsiMethod.class, true);
   }
 
   @Override

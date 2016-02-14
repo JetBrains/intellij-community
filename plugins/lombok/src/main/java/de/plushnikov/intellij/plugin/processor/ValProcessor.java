@@ -48,7 +48,7 @@ public class ValProcessor extends AbstractProcessor {
   };
 
   public ValProcessor() {
-    super(val.class, PsiElement.class);
+    super(val.class, PsiElement.class, true);
   }
 
   @Override

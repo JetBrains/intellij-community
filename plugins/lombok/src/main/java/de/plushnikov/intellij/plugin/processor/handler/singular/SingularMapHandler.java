@@ -25,6 +25,10 @@ public class SingularMapHandler extends AbstractSingularHandler {
   private static final String LOMBOK_KEY = "$key";
   private static final String LOMBOK_VALUE = "$value";
 
+  public SingularMapHandler(boolean shouldGenerateFullBodyBlock) {
+    super(shouldGenerateFullBodyBlock);
+  }
+
   @Override
   public void appendBuildCall(@NotNull StringBuilder buildMethodParameters, @NotNull String fieldName) {
     final String keyName = fieldName + LOMBOK_KEY;

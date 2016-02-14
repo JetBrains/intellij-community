@@ -23,7 +23,7 @@ import java.util.List;
 public class ParcelableMethodsProcessor extends AbstractClassProcessor {
 
   public ParcelableMethodsProcessor() {
-    super(Parcelable.class, PsiMethod.class);
+    super(Parcelable.class, PsiMethod.class, true);
   }
 
   @Override

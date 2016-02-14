@@ -33,15 +33,17 @@ import java.util.List;
  */
 public class BuilderProcessor extends AbstractClassProcessor {
 
-  private final BuilderHandler builderHandler = new BuilderHandler();
-  private final AllArgsConstructorProcessor allArgsConstructorProcessor = new AllArgsConstructorProcessor();
+  private final BuilderHandler builderHandler;
+  private final AllArgsConstructorProcessor allArgsConstructorProcessor;
 
   public BuilderProcessor() {
     this(Builder.class);
   }
 
   protected BuilderProcessor(@NotNull Class<? extends Annotation> builderClass) {
-    super(builderClass, PsiMethod.class);
+    super(builderClass, PsiMethod.class, true);
+    builderHandler = new BuilderHandler(true);
+    allArgsConstructorProcessor = new AllArgsConstructorProcessor();
   }
 
   @Override

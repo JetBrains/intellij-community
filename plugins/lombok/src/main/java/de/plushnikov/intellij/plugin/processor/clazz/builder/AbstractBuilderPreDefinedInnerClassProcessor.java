@@ -25,10 +25,11 @@ import java.util.List;
 
 public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends AbstractClassProcessor {
 
-  protected final BuilderHandler builderHandler = new BuilderHandler();
+  protected final BuilderHandler builderHandler;
 
   public AbstractBuilderPreDefinedInnerClassProcessor(Class<? extends Annotation> supportedAnnotationClass, Class<? extends PsiElement> supportedClass) {
-    super(supportedAnnotationClass, supportedClass);
+    super(supportedAnnotationClass, supportedClass, true);
+    builderHandler = new BuilderHandler(true);
   }
 
   @Override

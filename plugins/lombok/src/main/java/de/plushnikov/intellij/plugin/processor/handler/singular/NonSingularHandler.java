@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.handler.singular;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -19,6 +20,12 @@ import java.util.List;
 
 public class NonSingularHandler implements BuilderElementHandler {
   public static final String SETTER_PREFIX = "set";
+
+  private final boolean shouldGenerateFullBodyBlock;
+
+  public NonSingularHandler(boolean shouldGenerateFullBodyBlock) {
+    this.shouldGenerateFullBodyBlock = shouldGenerateFullBodyBlock;
+  }
 
   public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo) {
     final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
@@ -37,7 +44,18 @@ public class NonSingularHandler implements BuilderElementHandler {
         .withParameter(psiFieldName, psiVariable.getType())
         .withNavigationElement(psiVariable)
         .withModifier(PsiModifier.PUBLIC)
-        .withBody(PsiMethodUtil.createCodeBlockFromText(getAllMethodBody(psiFieldName, fluentBuilder), innerClass)));
+        .withBody(createCodeBlock(innerClass, fluentBuilder, psiFieldName)));
+  }
+
+  @NotNull
+  private PsiCodeBlock createCodeBlock(@NotNull PsiClass innerClass, boolean fluentBuilder, String psiFieldName) {
+    final String blockText;
+    if (shouldGenerateFullBodyBlock) {
+      blockText = getAllMethodBody(psiFieldName, fluentBuilder);
+    } else {
+      blockText = "return null;";
+    }
+    return PsiMethodUtil.createCodeBlockFromText(blockText, innerClass);
   }
 
   @Override

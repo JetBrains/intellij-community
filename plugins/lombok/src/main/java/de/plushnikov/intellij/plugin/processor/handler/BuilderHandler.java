@@ -84,6 +84,13 @@ public class BuilderHandler {
   private final ToStringProcessor toStringProcessor = new ToStringProcessor();
   private final NoArgsConstructorProcessor noArgsConstructorProcessor = new NoArgsConstructorProcessor();
 
+  private final boolean shouldGenerateFullBodyBlock;
+
+  public BuilderHandler(boolean shouldGenerateFullBodyBlock) {
+    this.shouldGenerateFullBodyBlock = shouldGenerateFullBodyBlock;
+  }
+
+
   public boolean validate(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder problemBuilder) {
     boolean result = validateAnnotationOnRightType(psiClass, problemBuilder);
     if (result) {
@@ -260,12 +267,22 @@ public class BuilderHandler {
         .withMethodReturnType(psiTypeWithGenerics)
         .withContainingClass(containingClass)
         .withNavigationElement(psiAnnotation)
-        .withModifier(PsiModifier.PUBLIC);
+        .withModifier(PsiModifier.PUBLIC)
+        .withBody(createBuilderMethodCodeBlock(containingClass, psiTypeWithGenerics));
 
     addTypeParameters(builderPsiClass, psiMethod, method);
-
-    method.withBody(PsiMethodUtil.createCodeBlockFromText(String.format("return new %s();", psiTypeWithGenerics.getPresentableText()), containingClass));
     return method;
+  }
+
+  @NotNull
+  private PsiCodeBlock createBuilderMethodCodeBlock(@NotNull PsiClass containingClass, PsiType psiTypeWithGenerics) {
+    final String blockText;
+    if (shouldGenerateFullBodyBlock) {
+      blockText = String.format("return new %s();", psiTypeWithGenerics.getPresentableText());
+    } else {
+      blockText = "return null;";
+    }
+    return PsiMethodUtil.createCodeBlockFromText(blockText, containingClass);
   }
 
   @NotNull
@@ -317,7 +334,7 @@ public class BuilderHandler {
       final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
 
       final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(psiVariable, Singular.class);
-      final BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiVariable, singularAnnotation);
+      final BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiVariable, singularAnnotation, shouldGenerateFullBodyBlock);
 
       // skip methods already defined in builder class
       if (!existedMethodNames.contains(fieldName)) {
@@ -414,7 +431,7 @@ public class BuilderHandler {
     List<PsiField> fields = new ArrayList<PsiField>();
     for (PsiVariable psiVariable : psiVariables) {
       final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(psiVariable, Singular.class);
-      BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiVariable, singularAnnotation);
+      BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiVariable, singularAnnotation, shouldGenerateFullBodyBlock);
       handler.addBuilderField(fields, psiVariable, psiBuilderClass, accessorsInfo);
     }
     return fields;
@@ -441,33 +458,13 @@ public class BuilderHandler {
   @NotNull
   private PsiMethod createBuildMethod(@NotNull PsiClass parentClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderClass, @NotNull PsiType psiBuilderType,
                                       @NotNull String buildMethodName, @NotNull String buildMethodParameters) {
-    final String codeBlockFormat;
-
-    final String callExpressionText;
-    if (null == psiMethod) {
-      codeBlockFormat = "return new %s(%s);";
-      callExpressionText = psiBuilderType.getPresentableText();
-    } else {
-      if (PsiType.VOID.equals(psiBuilderType)) {
-        codeBlockFormat = "%s(%s);";
-      } else if (psiMethod.isConstructor()) {
-        codeBlockFormat = "return new %s(%s);";
-      } else {
-        codeBlockFormat = "return %s(%s);";
-      }
-      callExpressionText = psiMethod.getName();
-    }
-
-    final PsiCodeBlock psiCodeBlock = PsiMethodUtil.createCodeBlockFromText(
-        String.format(codeBlockFormat, callExpressionText, buildMethodParameters),
-        builderClass);
 
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(parentClass.getManager(), buildMethodName)
         .withMethodReturnType(psiBuilderType)
         .withContainingClass(builderClass)
         .withNavigationElement(parentClass)
         .withModifier(PsiModifier.PUBLIC)
-        .withBody(psiCodeBlock);
+        .withBody(createBuildMethodCodeBlock(psiMethod, builderClass, psiBuilderType, buildMethodParameters));
 
     if (null == psiMethod) {
       final Collection<PsiMethod> classConstructors = PsiClassUtil.collectClassConstructorIntern(parentClass);
@@ -482,6 +479,32 @@ public class BuilderHandler {
     addTypeParameters(builderClass, psiMethod, methodBuilder);
 
     return methodBuilder;
+  }
+
+  @NotNull
+  private PsiCodeBlock createBuildMethodCodeBlock(@Nullable PsiMethod psiMethod, @NotNull PsiClass builderClass, @NotNull PsiType psiBuilderType, @NotNull String buildMethodParameters) {
+    final String blockText;
+    if (shouldGenerateFullBodyBlock) {
+      final String codeBlockFormat;
+      final String callExpressionText;
+      if (null == psiMethod) {
+        codeBlockFormat = "return new %s(%s);";
+        callExpressionText = psiBuilderType.getPresentableText();
+      } else {
+        if (PsiType.VOID.equals(psiBuilderType)) {
+          codeBlockFormat = "%s(%s);";
+        } else if (psiMethod.isConstructor()) {
+          codeBlockFormat = "return new %s(%s);";
+        } else {
+          codeBlockFormat = "return %s(%s);";
+        }
+        callExpressionText = psiMethod.getName();
+      }
+      blockText = String.format(codeBlockFormat, callExpressionText, buildMethodParameters);
+    } else {
+      blockText = "return " + PsiTypeUtil.getReturnValueOfType(psiBuilderType) + ";";
+    }
+    return PsiMethodUtil.createCodeBlockFromText(blockText, builderClass);
   }
 
   private void addExceptions(LombokLightMethodBuilder methodBuilder, PsiMethod psiMethod) {

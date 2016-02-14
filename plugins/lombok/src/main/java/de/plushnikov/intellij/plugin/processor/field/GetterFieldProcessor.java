@@ -34,11 +34,11 @@ import java.util.List;
 public class GetterFieldProcessor extends AbstractFieldProcessor {
 
   public GetterFieldProcessor() {
-    super(Getter.class, PsiMethod.class);
+    super(Getter.class, PsiMethod.class, true);
   }
 
   protected GetterFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
-    super(supportedAnnotationClass, supportedClass);
+    super(supportedAnnotationClass, supportedClass, true);
   }
 
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {

@@ -26,7 +26,7 @@ public class WitherProcessor extends AbstractClassProcessor {
   private final WitherFieldProcessor fieldProcessor = new WitherFieldProcessor();
 
   public WitherProcessor() {
-    super(Wither.class, PsiMethod.class);
+    super(Wither.class, PsiMethod.class, true);
   }
 
   @Override

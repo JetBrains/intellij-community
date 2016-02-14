@@ -36,7 +36,7 @@ public class ValueProcessor extends AbstractClassProcessor {
   }
 
   protected ValueProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass) {
-    super(supportedAnnotationClass, PsiMethod.class);
+    super(supportedAnnotationClass, PsiMethod.class, true);
   }
 
   @Override

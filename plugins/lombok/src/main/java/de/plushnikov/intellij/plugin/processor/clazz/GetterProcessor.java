@@ -35,7 +35,7 @@ public class GetterProcessor extends AbstractClassProcessor {
   private final GetterFieldProcessor fieldProcessor = new GetterFieldProcessor();
 
   public GetterProcessor() {
-    super(Getter.class, PsiMethod.class);
+    super(Getter.class, PsiMethod.class, true);
   }
 
   @Override

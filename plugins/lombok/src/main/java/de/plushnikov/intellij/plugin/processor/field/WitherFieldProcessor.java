@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.field;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -38,7 +39,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
   private final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor = new RequiredArgsConstructorProcessor();
 
   public WitherFieldProcessor() {
-    super(Wither.class, PsiMethod.class);
+    super(Wither.class, PsiMethod.class, true);
   }
 
   @Override
@@ -193,11 +194,21 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
       addOnXAnnotations(witherAnnotation, methodParameterModifierList, "onParam");
       result.withParameter(methodParameter);
 
-      final String paramString = getConstructorCall(psiField, psiFieldContainingClass);
-      final String blockText = String.format("return this.%s == %s ? this : new %s(%s);", psiFieldName, psiFieldName, returnType.getCanonicalText(), paramString);
-      result.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiFieldContainingClass));
+      result.withBody(createCodeBlock(psiField, psiFieldContainingClass, returnType, psiFieldName));
     }
     return result;
+  }
+
+  @NotNull
+  private PsiCodeBlock createCodeBlock(@NotNull PsiField psiField, PsiClass psiFieldContainingClass, PsiType returnType, String psiFieldName) {
+    final String blockText;
+    if (isShouldGenerateFullBodyBlock()) {
+      final String paramString = getConstructorCall(psiField, psiFieldContainingClass);
+      blockText = String.format("return this.%s == %s ? this : new %s(%s);", psiFieldName, psiFieldName, returnType.getCanonicalText(), paramString);
+    } else {
+      blockText = "return null;";
+    }
+    return PsiMethodUtil.createCodeBlockFromText(blockText, psiFieldContainingClass);
   }
 
   private String getWitherName(@NotNull AccessorsInfo accessorsInfo, String psiFieldName, PsiType psiFieldType) {

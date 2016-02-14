@@ -28,8 +28,8 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
   }
 
   protected DelegateFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass) {
-    super(supportedAnnotationClass, PsiMethod.class);
-    handler = new DelegateHandler(shouldGenerateFullBodyBlock());
+    super(supportedAnnotationClass, PsiMethod.class, true);
+    handler = new DelegateHandler(true);
   }
 
   @Override

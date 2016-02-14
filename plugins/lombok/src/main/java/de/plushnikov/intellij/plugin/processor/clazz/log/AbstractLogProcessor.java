@@ -38,7 +38,7 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   private final String loggerCategory;
 
   protected AbstractLogProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull String loggerType, @NotNull String loggerInitializer, @NotNull String loggerCategory) {
-    super(supportedAnnotationClass, PsiField.class);
+    super(supportedAnnotationClass, PsiField.class, true);
     this.loggerType = loggerType;
     this.loggerInitializer = loggerInitializer;
     this.loggerCategory = loggerCategory;

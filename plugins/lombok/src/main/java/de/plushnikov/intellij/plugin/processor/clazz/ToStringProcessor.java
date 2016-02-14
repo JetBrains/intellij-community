@@ -39,7 +39,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
   public static final String METHOD_NAME = "toString";
 
   public ToStringProcessor() {
-    super(ToString.class, PsiMethod.class);
+    super(ToString.class, PsiMethod.class, true);
   }
 
   @Override
@@ -115,7 +115,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
   @NotNull
   private PsiCodeBlock createCodeBlock(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> psiFields, @NotNull PsiAnnotation psiAnnotation) {
     final String blockText;
-    if (shouldGenerateFullBodyBlock()) {
+    if (isShouldGenerateFullBodyBlock()) {
       final String paramString = createParamString(psiClass, psiFields, psiAnnotation);
       blockText = String.format("return \"%s(%s)\";", psiClass.getQualifiedName(), paramString);
     } else {

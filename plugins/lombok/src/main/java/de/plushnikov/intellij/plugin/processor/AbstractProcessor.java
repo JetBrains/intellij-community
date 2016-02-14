@@ -45,16 +45,20 @@ public abstract class AbstractProcessor implements Processor {
    */
   private final Class<? extends PsiElement> supportedClass;
 
+  private final boolean shouldGenerateFullBodyBlock;
+
   /**
    * Constructor for all Lombok-Processors
    *
-   * @param supportedAnnotationClass annotation this processor supports
-   * @param supportedClass           kind of output elements this processor supports
+   * @param supportedAnnotationClass    annotation this processor supports
+   * @param supportedClass              kind of output elements this processor supports
+   * @param shouldGenerateFullBodyBlock should full code block be generated for all generated methods
    */
-  protected AbstractProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
+  protected AbstractProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass, boolean shouldGenerateFullBodyBlock) {
     this.supportedAnnotationClass = supportedAnnotationClass;
     this.supportedAnnotation = supportedAnnotationClass.getName();
     this.supportedClass = supportedClass;
+    this.shouldGenerateFullBodyBlock = shouldGenerateFullBodyBlock;
   }
 
   @NotNull
@@ -86,8 +90,8 @@ public abstract class AbstractProcessor implements Processor {
   }
 
   @Override
-  public boolean shouldGenerateFullBodyBlock() {
-    return true;
+  public boolean isShouldGenerateFullBodyBlock() {
+    return shouldGenerateFullBodyBlock;
   }
 
   @Override

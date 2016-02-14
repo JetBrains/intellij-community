@@ -15,7 +15,8 @@ public class SingularGuavaCollectionHandler extends SingularCollectionHandler {
   private final String guavaQualifiedName;
   private final boolean sortedCollection;
 
-  public SingularGuavaCollectionHandler(String guavaQualifiedName, boolean sortedCollection) {
+  public SingularGuavaCollectionHandler(String guavaQualifiedName, boolean sortedCollection, boolean shouldGenerateFullBodyBlock) {
+    super(shouldGenerateFullBodyBlock);
     this.guavaQualifiedName = guavaQualifiedName;
     this.sortedCollection = sortedCollection;
   }

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -48,7 +49,7 @@ import java.util.List;
 public abstract class AbstractConstructorClassProcessor extends AbstractClassProcessor {
 
   protected AbstractConstructorClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
-    super(supportedAnnotationClass, supportedClass);
+    super(supportedAnnotationClass, supportedClass, true);
   }
 
   @Override
@@ -307,12 +308,22 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       }
     }
 
-    final String psiClassName = buildClassNameWithGenericTypeParameters(psiClass);
-    final String paramsText = useJavaDefaults ? "" : joinParameters(method.getParameterList());
-    final String blockText = String.format("return new %s(%s);", psiClassName, paramsText);
-    method.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
+    method.withBody(createStaticCodeBlock(psiClass, useJavaDefaults, method.getParameterList()));
 
     return method;
+  }
+
+  @NotNull
+  private PsiCodeBlock createStaticCodeBlock(@NotNull PsiClass psiClass, boolean useJavaDefaults, @NotNull final PsiParameterList parameterList) {
+    final String blockText;
+    if (isShouldGenerateFullBodyBlock()) {
+      final String psiClassName = buildClassNameWithGenericTypeParameters(psiClass);
+      final String paramsText = useJavaDefaults ? "" : joinParameters(parameterList);
+      blockText = String.format("return new %s(%s);", psiClassName, paramsText);
+    } else {
+      blockText = "return null;";
+    }
+    return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
   }
 
   private String buildClassNameWithGenericTypeParameters(@NotNull final PsiClass psiClass) {

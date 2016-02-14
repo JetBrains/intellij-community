@@ -6,6 +6,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -24,6 +25,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public abstract class AbstractSingularHandler implements BuilderElementHandler {
+  private final boolean shouldGenerateFullBodyBlock;
+
+  public AbstractSingularHandler(boolean shouldGenerateFullBodyBlock) {
+    this.shouldGenerateFullBodyBlock = shouldGenerateFullBodyBlock;
+  }
 
   @Override
   public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo) {
@@ -55,7 +61,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
         .withContainingClass(innerClass)
         .withNavigationElement(psiVariable)
         .withModifier(PsiModifier.PUBLIC)
-        .withBody(PsiMethodUtil.createCodeBlockFromText(getOneMethodBody(singularName, psiFieldName, psiParameterTypes, fluentBuilder), innerClass));
+        .withBody(createOneAddMethodCodeBlock(innerClass, fluentBuilder, singularName, psiFieldName, psiParameterTypes));
 
     addOneMethodParameter(singularName, psiParameterTypes, oneAddMethod);
     methods.add(oneAddMethod);
@@ -65,10 +71,32 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
         .withContainingClass(innerClass)
         .withNavigationElement(psiVariable)
         .withModifier(PsiModifier.PUBLIC)
-        .withBody(PsiMethodUtil.createCodeBlockFromText(getAllMethodBody(psiFieldName, psiParameterTypes, fluentBuilder), innerClass));
+        .withBody(createAllAddMethodCodeBlock(innerClass, fluentBuilder, psiFieldName, psiParameterTypes));
 
     addAllMethodParameter(psiFieldName, psiFieldType, allAddMethod);
     methods.add(allAddMethod);
+  }
+
+  @NotNull
+  private PsiCodeBlock createOneAddMethodCodeBlock(@NotNull PsiClass innerClass, boolean fluentBuilder, String singularName, String psiFieldName, PsiType[] psiParameterTypes) {
+    final String blockText;
+    if (shouldGenerateFullBodyBlock) {
+      blockText = getOneMethodBody(singularName, psiFieldName, psiParameterTypes, fluentBuilder);
+    } else {
+      blockText = fluentBuilder ? "return this;" : "";
+    }
+    return PsiMethodUtil.createCodeBlockFromText(blockText, innerClass);
+  }
+
+  @NotNull
+  private PsiCodeBlock createAllAddMethodCodeBlock(@NotNull PsiClass innerClass, boolean fluentBuilder, String psiFieldName, PsiType[] psiParameterTypes) {
+    final String blockText;
+    if (shouldGenerateFullBodyBlock) {
+      blockText = getAllMethodBody(psiFieldName, psiParameterTypes, fluentBuilder);
+    } else {
+      blockText = fluentBuilder ? "return this;" : "";
+    }
+    return PsiMethodUtil.createCodeBlockFromText(blockText, innerClass);
   }
 
   protected abstract void addOneMethodParameter(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, @NotNull LombokLightMethodBuilder methodBuilder);

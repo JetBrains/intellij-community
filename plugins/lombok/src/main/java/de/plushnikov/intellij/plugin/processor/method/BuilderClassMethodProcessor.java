@@ -23,14 +23,15 @@ import java.util.List;
  */
 public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
 
-  private final BuilderHandler builderHandler = new BuilderHandler();
+  private final BuilderHandler builderHandler;
 
   public BuilderClassMethodProcessor() {
     this(Builder.class);
   }
 
   protected BuilderClassMethodProcessor(@NotNull Class<? extends Annotation> builderClass) {
-    super(builderClass, PsiClass.class);
+    super(builderClass, PsiClass.class, true);
+    builderHandler = new BuilderHandler(true);
   }
 
   @Override
