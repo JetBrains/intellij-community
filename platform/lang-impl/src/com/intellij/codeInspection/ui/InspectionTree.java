@@ -164,24 +164,14 @@ public class InspectionTree extends Tree {
   }
 
   public CommonProblemDescriptor[] getSelectedDescriptors() {
-    final InspectionToolWrapper toolWrapper = getSelectedToolWrapper();
     if (getSelectionCount() == 0) return EMPTY_DESCRIPTORS;
     final TreePath[] paths = getSelectionPaths();
-    final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
+    if (paths == null) return EMPTY_DESCRIPTORS;
+    BatchProblemDescriptor accumulator = new BatchProblemDescriptor(true);
     for (TreePath path : paths) {
-      Object node = path.getLastPathComponent();
-      traverseDescriptors((InspectionTreeNode)node, descriptors);
+      ((InspectionTreeNode)path.getLastPathComponent()).accumulateProblemInfo(accumulator);
     }
-    return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
-  }
-
-  private static void traverseDescriptors(InspectionTreeNode node, LinkedHashSet<CommonProblemDescriptor> descriptors){
-    if (node instanceof ProblemDescriptionNode) {
-      descriptors.add(((ProblemDescriptionNode)node).getDescriptor());
-    }
-    for(int i = node.getChildCount() - 1; i >= 0; i--){
-      traverseDescriptors((InspectionTreeNode)node.getChildAt(i), descriptors);
-    }
+    return accumulator.getDescriptors().toArray(new CommonProblemDescriptor[accumulator.getProblemCount()]);
   }
 
   private void nodeStructureChanged(InspectionTreeNode node) {

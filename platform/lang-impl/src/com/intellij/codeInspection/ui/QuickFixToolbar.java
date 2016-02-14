@@ -21,14 +21,13 @@ import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalQuickFixWrapper;
 import com.intellij.codeInspection.ui.actions.SuppressActionWrapper;
+import com.intellij.codeInspection.ui.actions.occurrences.GoToSubsequentOccurrenceAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -55,15 +54,12 @@ import java.util.function.Supplier;
 public class QuickFixToolbar extends JPanel {
   private static final int MAX_FIX_COUNT = 2;
 
-  @NotNull private final Project myProject;
-
   public QuickFixToolbar(@NotNull BatchProblemDescriptor descriptor,
                          @NotNull InspectionToolWrapper toolWrapper,
-                         @NotNull TreePath[] paths,
+                         @NotNull TreePath path,
                          @NotNull Project project,
+                         @Nullable Editor editor,
                          @Nullable PsiElement containingElement) {
-
-    myProject = project;
     final List<QuickFix> fixes = descriptor.getQuickFixRepresentatives();
     final boolean hasFixes = !fixes.isEmpty();
     final boolean multipleDescriptors = descriptor.getProblemCount() > 1;
@@ -83,11 +79,13 @@ public class QuickFixToolbar extends JPanel {
     fill(getDescriptionLabelPlacement(multipleDescriptors),
          () -> getLabel(hasFixes, (PsiNamedElement)containingElement, descriptor.getProblemCount()), panels);
     fill(getFixesPlacement(hasFixes, multipleDescriptors), () -> createFixPanel(fixes, toolWrapper), panels);
-    fill(getSuppressPlacement(multipleDescriptors), () -> createSuppressionCombo(toolWrapper, paths, project), panels);
+    fill(getSuppressPlacement(multipleDescriptors), () -> createSuppressionCombo(toolWrapper, path, project), panels);
+    fill(multipleDescriptors && editor != null ? 1 : -1, () -> ActionManager.getInstance().createActionToolbar("", GoToSubsequentOccurrenceAction.createNextPreviousActions(
+      editor, descriptor.getDescriptors()), true).getComponent(), panels);
   }
 
   @NotNull
-  private JLabel getLabel(boolean hasFixes, PsiNamedElement target, int problemsCount) {
+  private static JLabel getLabel(boolean hasFixes, PsiNamedElement target, int problemsCount) {
     final JBLabel label =
       new JBLabel((hasFixes ? " Fix " : " ") + problemsCount + " warnings " + (target == null ? "" : ("in " + target.getName())));
     Font font = label.getFont();
@@ -106,7 +104,7 @@ public class QuickFixToolbar extends JPanel {
   }
 
   private static JComponent createSuppressionCombo(@NotNull final InspectionToolWrapper toolWrapper,
-                                                   @NotNull final TreePath[] paths,
+                                                   @NotNull final TreePath path,
                                                    @NotNull final Project project) {
     final ComboBoxAction action = new ComboBoxAction() {
       {
@@ -116,7 +114,7 @@ public class QuickFixToolbar extends JPanel {
       @NotNull
       @Override
       protected ActionGroup createPopupActionGroup(JComponent button) {
-        return new SuppressActionWrapper(project, toolWrapper, paths);
+        return new SuppressActionWrapper(project, toolWrapper, path);
       }
     };
     action.setSmallVariant(false);

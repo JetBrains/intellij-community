@@ -63,7 +63,7 @@ public class SuppressActionWrapper extends ActionGroup {
 
   public SuppressActionWrapper(@NotNull final Project project,
                                @NotNull final InspectionToolWrapper toolWrapper,
-                               @NotNull final TreePath[] paths) {
+                               @NotNull final TreePath... paths) {
     super(InspectionsBundle.message("suppress.inspection.problem"), false);
     myProject = project;
     myManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);

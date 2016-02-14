@@ -36,7 +36,7 @@ public class BatchProblemDescriptor {
   private final static Logger LOG = Logger.getInstance(BatchProblemDescriptor.class);
 
   private MultiMap<String, CommonProblemDescriptor> myMap = null;
-  private final List<CommonProblemDescriptor> myDescriptors = new ArrayList<>();
+  private final LinkedHashSet<CommonProblemDescriptor> myDescriptors = new LinkedHashSet<>();
   private final boolean myOnlyCount;
 
   public BatchProblemDescriptor(boolean count) {
@@ -88,6 +88,17 @@ public class BatchProblemDescriptor {
     return intersector;
   }
 
+  public PsiElement getProblemElementIfOnlyOne() {
+    if (myDescriptors.size() != 1) {
+      return null;
+    }
+    CommonProblemDescriptor descriptor = myDescriptors.iterator().next();
+    if (descriptor instanceof ProblemDescriptorBase) {
+      return ((ProblemDescriptorBase)descriptor).getPsiElement();
+    }
+    return null;
+  }
+
   public int getProblemCount() {
     return myDescriptors.size();
   }
@@ -113,7 +124,9 @@ public class BatchProblemDescriptor {
       final Collection<CommonProblemDescriptor> descriptors = e.getValue();
       final CommonProblemDescriptor representative = ContainerUtil.getFirstItem(descriptors);
       LOG.assertTrue(representative != null);
-      for (QuickFix fix : representative.getFixes()) {
+      QuickFix[] fixes = representative.getFixes();
+      LOG.assertTrue(fixes != null);
+      for (QuickFix fix : fixes) {
         if (fix.getName().equals(fixName)) {
           result.add(fix);
           break;
@@ -126,5 +139,9 @@ public class BatchProblemDescriptor {
   public boolean isIntersectionTrivial() {
     LOG.assertTrue(!myOnlyCount);
     return myMap != null && myMap.isEmpty();
+  }
+
+  public List<CommonProblemDescriptor> getDescriptors() {
+    return new ArrayList<>(myDescriptors);
   }
 }

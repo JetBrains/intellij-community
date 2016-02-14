@@ -58,7 +58,6 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.*;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -82,6 +81,7 @@ import java.util.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 /**
  * @author max
@@ -426,21 +426,23 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     Cursor currentCursor = getCursor();
     try {
       setCursor(new Cursor(Cursor.WAIT_CURSOR));
-
       if (descriptor != null) {
         final JPanel editorPanel = new JPanel();
         editorPanel.setLayout(new BorderLayout());
-
-        final PsiElement containingElement = refEntity instanceof RefElement ? ((RefElement)refEntity).getElement() : null;
+        PsiElement containingElement = descriptor.getProblemElementIfOnlyOne();
+        if (containingElement == null && refEntity instanceof RefElement) {
+          containingElement = ((RefElement)refEntity).getElement();
+        }
+        editorPanel.add(createBaseRightComponentFor(containingElement, descriptor), BorderLayout.CENTER);
         if (valid && descriptor.getProblemCount() > 0) {
           editorPanel.add(new QuickFixToolbar(descriptor,
                                               myTree.getSelectedToolWrapper(),
-                                              myTree.getSelectionPaths(),
+                                              myTree.getSelectionPaths()[0],
                                               myProject,
+                                              myPreviewEditor,
                                               containingElement),
                           BorderLayout.NORTH);
         }
-        editorPanel.add(createBaseRightComponentFor(containingElement, descriptor), BorderLayout.CENTER);
         mySplitter.setSecondComponent(editorPanel);
       }
     }
@@ -452,7 +454,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private JComponent createBaseRightComponentFor(PsiElement containingElement, BatchProblemDescriptor descriptor) {
     final int count = descriptor.getProblemCount();
     if (count == 1 || (containingElement != null && !(containingElement instanceof PsiDirectory))) {
-      final PsiElement referencedElement = containingElement == null ? descriptor.getFirstProblemElement() : containingElement;
+      final PsiElement referencedElement = descriptor.getFirstProblemElement();
       final PsiFile file = referencedElement.getContainingFile();
       final Document document = PsiDocumentManager.getInstance(referencedElement.getProject()).getDocument(file);
       myPreviewEditor = EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), true);
@@ -464,11 +466,13 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       settings.setLeadingWhitespaceShown(true);
       settings.setRightMarginShown(true);
       settings.setRightMargin(60);
-      myPreviewEditor.getCaretModel().moveToOffset(referencedElement.getTextOffset());
-      myPreviewEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      if (count != 1) {
+        myPreviewEditor.getCaretModel().moveToOffset(referencedElement.getTextOffset());
+        myPreviewEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      }
       UsagePreviewPanel
         .highlight(containingElement == null
-                   ? Collections.singletonList(new UsageInfo(referencedElement))
+                   ? Collections.emptyList()
                    : getElementToHighlight(containingElement),
                    myPreviewEditor, myProject);
       return myPreviewEditor.getComponent();
