@@ -27,17 +27,8 @@ def getProperties(String home, String buildNumber) {
   def gradleVersion = "2.10"
   def studioCustomRepo = System.getenv().STUDIO_CUSTOM_REPO
   def studioRepo = studioCustomRepo ?: "${home}/../../prebuilts/tools/common/offline-m2"
-  def blazeJvmArgs = "-Dgoogle.internal=true\n" + "-Ddisable.android.first.run=true\n" +
-                     "-Denable.csi.reports=true\n" +
-                     // "-Dblaze.helper.binaries=${installation_path}\n" +
-                     "-Dblaze.experiments.file=/google/data/ro/teams/as-with-blaze/experiments/blaze-experiments-00\n" +
-                     "-Dblaze.product.short.name=aswb\n" +
-                     "-Dcaches.indexerThreadsCount=24\n" +
-                     "-Dandroid.studio.sdk.manager.disabled=true\n" +
-                     "-Dstudio.projectview=true"
 
   def enableUITests = System.getProperty("studio.ui.tests") ? !System.getProperty("studio.ui.tests").isEmpty() : false
-  def enableBlaze = System.getProperty("enable.blaze") ? !System.getProperty("enable.blaze").isEmpty() : false
 
   return new ProductProperties() {
     {
@@ -67,7 +58,7 @@ def getProperties(String home, String buildNumber) {
       relativeAndroidHome = "$androidRoot"
       relativeAndroidToolsBaseHome = "$toolsBaseRoot"
       excludedPlugins = ["ant", "ByteCodeViewer", "devkit", "eclipse", "javaFX", "Kotlin", "uiDesigner", "xpath", "xslt-debugger", "maven"]
-      ideJvmArgs = "-Didea.platform.prefix=$platformPrefix" + (enableBlaze ? " " + blazeJvmArgs : "")
+      ideJvmArgs = "-Didea.platform.prefix=$platformPrefix"
 
       configNotice  = "#\n" +
                       "# *DO NOT* modify this file directly. If there is a value that you would like to override,\n" +
@@ -248,24 +239,6 @@ def getProperties(String home, String buildNumber) {
             }
           }
 
-          if (enableBlaze) {
-            dir("aswb") {
-              dir("lib") {
-                jar("aswb.jar") {
-                  module("aswb")
-                }
-                jar("blaze-api.jar") {
-                  module("blaze-api")
-                }
-                jar("blaze-impl.jar") {
-                  module("blaze-impl")
-                }
-                fileset(dir: "$home/../vendor/google3/blaze/blaze-impl/lib") { include(name: "*.jar") }
-                fileset(dir: "$home/../vendor/google3/blaze/blaze-impl/lib/google3_deps") { include(name: "google3_deps_repackaged.jar") }
-              }
-            }
-          }
-
           if (enableUITests) {
             dir("android") {
               dir("lib") {
@@ -305,6 +278,42 @@ def getProperties(String home, String buildNumber) {
 
     def customMacLayout(targetDirectory) {
       ant.copy(file: "$home/$androidRoot/android/lib/libwebp/mac/libwebp_jni64.dylib", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.dylib")
+    }
+
+    // Patches plugin XML to stamp the current version and link the plugin to only this version of the IDE.
+    // Different to setPluginVersionAndSince as this will use an existing version tag and only add idea-version
+    def patchPluginXml(String moduleName, String version) {
+      def file = new File(projectBuilder.moduleOutput(findModule(moduleName)) + "/META-INF/plugin.xml")
+      if (file.isFile()) {
+        def text = file.text
+        text = text.replaceAll("SNAPSHOT", version);
+        text = text.replace("</version>", "</version>\n  <idea-version since-build=\"${version}\" until-build=\"${version}\"/>\n");
+        file.text = text;
+      }
+    }
+
+    def finishLayout(out) {
+      patchPluginXml("aswb", buildNumber);
+
+      layout(out) {
+        zip("studio-aswb-plugin.zip") {
+          dir("aswb") {
+            dir("lib") {
+              jar("aswb.jar") {
+                module("aswb")
+              }
+              jar("blaze-api.jar") {
+                module("blaze-api")
+              }
+              jar("blaze-impl.jar") {
+                module("blaze-impl")
+              }
+              fileset(dir: "$home/../vendor/google3/blaze/blaze-impl/lib") { include(name: "*.jar") }
+              fileset(dir: "$home/../vendor/google3/blaze/blaze-impl/lib/google3_deps") { include(name: "google3_deps_repackaged.jar") }
+            }
+          }
+        }
+      }
     }
   }
 }
