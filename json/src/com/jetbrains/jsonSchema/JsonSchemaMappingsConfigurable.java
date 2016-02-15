@@ -76,6 +76,13 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   @Nullable
   @Override
+  protected String getEmptySelectionString() {
+    return myRoot.children().hasMoreElements() ? "Select JSON Schema to view" :
+           "Please add a JSON Schema file and configure its usage";
+  }
+
+  @Nullable
+  @Override
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
     result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
