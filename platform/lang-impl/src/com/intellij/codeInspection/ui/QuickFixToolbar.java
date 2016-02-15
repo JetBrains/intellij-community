@@ -90,11 +90,11 @@ public class QuickFixToolbar extends JPanel {
     SimpleColoredComponent label = new SimpleColoredComponent();
     boolean hasFixesNonIntersectedFixes = fixes != null && fixes.length == 0;
     boolean hasFixes = fixes != null && fixes.length != 0;
-    label.append((hasFixes ? " Fix " : " ") + problemsCount + " warnings " + (targetName == null ? "" : ("in " + targetName)) + (
+    label.append((hasFixes ? " Fix " : " ") + problemsCount + " problems" + (targetName == null ? "" : (" in " + targetName)) + (
       hasFixesNonIntersectedFixes
       ? ":" : ""), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     if (hasFixesNonIntersectedFixes) {
-      label.append(" select a problem to see its quick fixes");
+      label.append(" select a single problem to see its quick fixes");
     }
 
     if (!hasFixes) {
