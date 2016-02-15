@@ -184,14 +184,15 @@ public class JsonSchemaMappingsView {
 
       bag.setDefaultAnchor(GridBagConstraints.NORTHWEST);
       final JBRadioButton radioPattern = new JBRadioButton("Filename pattern:");
-      panel.add(radioPattern, bag.nextLine().next().fillCellNone().weightx(0));
-      panel.add(patternField, bag.next().fillCellHorizontally().weightx(1));
-
       final JBRadioButton radioDirectory = new JBRadioButton("Files under:");
+      final JBRadioButton radioFile = new JBRadioButton("File:");
+
       panel.add(radioDirectory, bag.nextLine().next().fillCellNone().weightx(0));
       panel.add(directoryField, bag.next().fillCellHorizontally().weightx(1));
 
-      final JBRadioButton radioFile = new JBRadioButton("File:");
+      panel.add(radioPattern, bag.nextLine().next().fillCellNone().weightx(0));
+      panel.add(patternField, bag.next().fillCellHorizontally().weightx(1));
+
       panel.add(radioFile, bag.nextLine().next().fillCellNone().weightx(0));
       panel.add(fileField, bag.next().fillCellHorizontally().weightx(1));
 
@@ -203,12 +204,15 @@ public class JsonSchemaMappingsView {
       group.add(radioDirectory);
       group.add(radioFile);
 
-      radioPattern.setSelected(true);
+      radioDirectory.setSelected(true);
+
+      patternField.setMinimumSize(new Dimension(JBUI.scale(200), UIUtil.getInformationIcon().getIconHeight()));
+      patternField.getEmptyText().setText("Example: *.config.json");
 
       final DialogBuilder builder = new DialogBuilder();
       builder.setTitle("Add JSON Schema Mapping");
       builder.setNorthPanel(panel);
-      builder.setPreferredFocusComponent(patternField);
+      builder.setPreferredFocusComponent(directoryField);
       builder.setDimensionServiceKey("com.jetbrains.jsonSchema.JsonSchemaMappingsView#add");
       builder.setHelpId(ADD_SCHEMA_MAPPING);
 
