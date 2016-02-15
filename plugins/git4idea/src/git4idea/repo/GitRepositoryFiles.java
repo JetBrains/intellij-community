@@ -16,11 +16,14 @@
 package git4idea.repo;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -108,15 +111,20 @@ public class GitRepositoryFiles {
    */
   @Nullable
   private static VirtualFile getMainGitDirForWorktree(@NotNull VirtualFile gitDir) {
-    VirtualFile parent = gitDir.getParent();
-    if (parent == null) return null;
-    VirtualFile grandParent = parent.getParent();
-    if (grandParent == null) return null;
-    if (!gitDir.getName().equals(DOT_GIT) && parent.getName().equals("worktrees") && grandParent.getName().equals(DOT_GIT)) {
-      LOG.info("git dir " + gitDir.getPath() + " is a worktree");
-      return grandParent;
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile commonDir = lfs.refreshAndFindFileByPath(gitDir.getPath() + "/commondir");
+    if (commonDir == null) return null;
+    String pathToMain;
+    try {
+      pathToMain = VfsUtilCore.loadText(commonDir).trim();
     }
-    return null;
+    catch (IOException e) {
+      LOG.error("Couldn't load " + commonDir, e);
+      return null;
+    }
+    VirtualFile mainDir = gitDir.findFileByRelativePath(pathToMain);
+    if (mainDir != null) return mainDir;
+    return lfs.refreshAndFindFileByPath(pathToMain); // absolute path is also possible
   }
 
   @NotNull
