@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.StubBasedPsiElement;
@@ -36,6 +37,7 @@ import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -58,6 +60,7 @@ import java.util.*;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
+import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsModifierWrappingCall;
 
 /**
@@ -573,6 +576,33 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   public PyAnnotation getAnnotation() {
     return getStubOrPsiChild(PyElementTypes.ANNOTATION);
+  }
+
+  @Nullable
+  @Override
+  public PsiComment getTypeComment() {
+    final PyStatementList statements = getStatementList();
+    if (statements.getStatements().length != 0) {
+      final PsiComment comment = as(statements.getFirstChild(), PsiComment.class);
+      if (comment != null && PyTypingTypeProvider.getTypeCommentValue(comment.getText()) != null) {
+        return comment;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getTypeCommentAnnotation() {
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return stub.getTypeComment(); 
+    }
+    final PsiComment comment = getTypeComment();
+    if (comment != null) {
+      return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
+    }
+    return null;
   }
 
   @NotNull

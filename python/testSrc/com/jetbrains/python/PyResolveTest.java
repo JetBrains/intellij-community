@@ -651,6 +651,11 @@ public class PyResolveTest extends PyResolveTestCase {
     assertEquals("kwg", ((PyStringLiteralExpression)target).getStringValue());
   }
 
+  // PY-18254
+  public void testFunctionTypeComment() {
+    assertResolvesTo(PyClass.class, "MyClass");
+  }
+
   public void testGlobalNotDefinedAtTopLevel() {
     assertResolvesTo(PyTargetExpression.class, "foo");
   }
