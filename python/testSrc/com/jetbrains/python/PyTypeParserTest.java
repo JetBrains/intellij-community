@@ -291,15 +291,13 @@ public class PyTypeParserTest extends PyTestCase {
     assertNotNull(type2);
     assertEquals("MyObject", type2.getName());
     
-    final PyCollectionType type3 = as(parameterTypes.get(2).getType(context), PyCollectionType.class);
+    final PyClassType type3 = as(parameterTypes.get(2).getType(context), PyClassType.class);
     assertNotNull(type3);
-    assertEquals("Iterable", type3.getName());
-    assertSize(1, type3.getElementTypes(context));
-    assertEquals("str", type3.getElementTypes(context).get(0).getName());
+    assertEquals("tuple", type3.getName());
     
     final PyCollectionType type4 = as(parameterTypes.get(3).getType(context), PyCollectionType.class);
     assertNotNull(type4);
-    assertEquals("Mapping", type4.getName());
+    assertEquals("dict", type4.getName());
     assertSize(2,  type4.getElementTypes(context));
     assertEquals("str", type4.getElementTypes(context).get(0).getName());
     assertEquals("int", type4.getElementTypes(context).get(1).getName());

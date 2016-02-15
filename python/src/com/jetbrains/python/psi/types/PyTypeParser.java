@@ -403,20 +403,20 @@ public class PyTypeParser {
               return paramResult;
             }
             else if (starCount == 1) {
-              final PyType type = getTypeByName(anchor, PyNames.COLLECTIONS + "." + PyNames.ITERABLE);
-              if (type instanceof PyClassType) {
-                final PyClass pyClass = ((PyClassType)type).getPyClass();
-                final PyCollectionTypeImpl iterableType = new PyCollectionTypeImpl(pyClass, false, Collections.singletonList(paramType));
-                return paramResult.withType(iterableType);
+              final PyClassType tupleType = PyBuiltinCache.getInstance(anchor).getTupleType();;
+              // TODO How to represent unbound homogeneous tuple?
+              if (tupleType != null) {
+                return paramResult.withType(tupleType);
               }
               return EMPTY_RESULT;
             }
             else if (starCount == 2) {
-              final PyType type = getTypeByName(anchor, PyNames.COLLECTIONS + "." + PyNames.MAPPING);
-              if (type instanceof PyClassType) {
-                final PyClass pyClass = ((PyClassType)type).getPyClass();
+              final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
+              final PyClassType type = builtinCache.getDictType();
+              if (type != null) {
+                final PyClass pyClass = type.getPyClass();
                 return paramResult.withType(new PyCollectionTypeImpl(pyClass, false,
-                                                                     Arrays.asList(getTypeByName(anchor, "str"), paramType)));
+                                                                     Arrays.asList(builtinCache.getStrType(), paramType)));
               }
               return EMPTY_RESULT;
             }
