@@ -189,6 +189,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  /**
+   * Checks that text of a comment starts with the "type:" prefix and returns trimmed part afterwards. This trailing part is supposed to 
+   * contain type annotation in PEP 484 compatible format, that can be parsed with either {@link PyTypeParser#parse(PsiElement, String)}
+   * or {@link PyTypeParser#parsePep484FunctionTypeComment(PsiElement, String)}.
+   */
   @Nullable
   public static String getTypeCommentValue(@NotNull String text) {
     final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
