@@ -60,8 +60,8 @@ import os
 import subprocess
 import sys
 
-miniconda32_envs = getattr(os.environ, 'MINICONDA32_ENVS', r'C:\tools\Miniconda32\envs')
-miniconda64_envs = getattr(os.environ, 'MINICONDA64_ENVS', r'C:\tools\Miniconda\envs')
+miniconda32_envs = os.getenv('MINICONDA32_ENVS', r'C:\tools\Miniconda32\envs')
+miniconda64_envs = os.getenv('MINICONDA64_ENVS', r'C:\tools\Miniconda\envs')
 
 python_installations = [
     r'%s\py27_32\python.exe' % miniconda32_envs,
