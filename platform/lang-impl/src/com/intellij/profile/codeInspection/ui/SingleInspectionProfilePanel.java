@@ -92,8 +92,6 @@ import java.io.StringReader;
 import java.util.*;
 import java.util.List;
 
-import com.intellij.util.containers.Queue;
-
 /**
  * User: anna
  * Date: 31-May-2006
@@ -773,9 +771,9 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   // TODO 134099: see IntentionDescriptionPanel#readHTML
-  private boolean readHTML(String text) {
+  public static boolean readHTML(JEditorPane browser, String text) {
     try {
-      myBrowser.read(new StringReader(text), null);
+      browser.read(new StringReader(text), null);
       return true;
     }
     catch (IOException ignored) {
@@ -783,10 +781,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
   }
 
-  // TODO 134099: see IntentionDescriptionPanel#toHTML
-  private String toHTML(String text) {
-    final HintHint hintHint = new HintHint(myBrowser, new Point(0, 0));
-    hintHint.setFont(UIUtil.getLabelFont());
+  // TODO 134099: see IntentionDescriptionPanel#setHTML
+  public static String toHTML(JEditorPane browser, String text, boolean miniFontSize) {
+    final HintHint hintHint = new HintHint(browser, new Point(0, 0));
+    hintHint.setFont(miniFontSize ? UIUtil.getLabelFont(UIUtil.FontSize.SMALL) : UIUtil.getLabelFont());
     return HintUtil.prepareHintText(text, hintHint);
   }
 
@@ -806,8 +804,8 @@ public class SingleInspectionProfilePanel extends JPanel {
           final Descriptor defaultDescriptor = singleNode.getDefaultDescriptor();
           final String description = defaultDescriptor.loadDescription();
           try {
-            if (!readHTML(SearchUtil.markup(toHTML(description), myProfileFilter.getFilter()))) {
-              readHTML(toHTML("<b>" + UNDER_CONSTRUCTION + "</b>"));
+            if (!readHTML(myBrowser, SearchUtil.markup(toHTML(myBrowser, description, false), myProfileFilter.getFilter()))) {
+              readHTML(myBrowser, toHTML(myBrowser, "<b>" + UNDER_CONSTRUCTION + "</b>", false));
             }
           }
           catch (Throwable t) {
@@ -819,11 +817,11 @@ public class SingleInspectionProfilePanel extends JPanel {
 
         }
         else {
-          readHTML(toHTML("Can't find inspection description."));
+          readHTML(myBrowser, toHTML(myBrowser, "Can't find inspection description.", false));
         }
       }
       else {
-        readHTML(toHTML("Multiple inspections are selected. You can edit them as a single inspection."));
+        readHTML(myBrowser, toHTML(myBrowser, "Multiple inspections are selected. You can edit them as a single inspection.", false));
       }
 
       myOptionsPanel.removeAll();
@@ -1021,7 +1019,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void initOptionsAndDescriptionPanel() {
     myOptionsPanel.removeAll();
-    readHTML(EMPTY_HTML);
+    readHTML(myBrowser, EMPTY_HTML);
     myOptionsPanel.validate();
     myOptionsPanel.repaint();
   }

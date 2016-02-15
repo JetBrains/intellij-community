@@ -16,19 +16,15 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiElement;
+import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,6 +36,8 @@ import java.awt.event.MouseEvent;
  * @author Dmitry Batkovich
  */
 public class InspectionNodeInfo extends JPanel {
+  private final static Logger LOG = Logger.getInstance(InspectionNodeInfo.class);
+
   private final JButton myButton;
   private final SimpleColoredComponent myTitle;
   private final HighlightDisplayKey myKey;
@@ -60,7 +58,16 @@ public class InspectionNodeInfo extends JPanel {
     add(myTitle,
         new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new JBInsets(0, 2, 0, 0),
                                0, 0));
-    add(new JBLabel(String.valueOf(toolWrapper.loadDescription()), UIUtil.ComponentStyle.SMALL),
+
+    JEditorPane description = new JEditorPane();
+    description.setContentType(UIUtil.HTML_MIME);
+    description.setEditable(false);
+    description.setOpaque(false);
+    description.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+    SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolWrapper.loadDescription(),
+                                                                                           true));
+
+    add(description,
         new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                new JBInsets(5, 5, 0, 0), 0, 0));
     add(myButton,
