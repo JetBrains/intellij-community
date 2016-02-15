@@ -68,6 +68,14 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     doTestWithDefaultVisibility("Create field 'btn'", "CreateField", PsiModifier.PROTECTED, ".java");
   }
 
+  public void testCreateFieldPrivateVisibility() throws Exception {
+    doTestWithDefaultVisibility("Create field 'btn'", "CreateField", PsiModifier.PRIVATE, ".java");
+  }
+
+  public void testCreateFieldPackageLocalVisibility() throws Exception {
+    doTestWithDefaultVisibility("Create field 'btn'", "CreateField", PsiModifier.PACKAGE_LOCAL, ".java");
+  }
+
   public void testCreateFieldEscalateVisibility() throws Exception {
     doTestWithDefaultVisibility("Create field 'btn'", "CreateField", VisibilityUtil.ESCALATE_VISIBILITY, ".java");
   }
