@@ -51,7 +51,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
 
   private void createUIComponents() {
     TableModelEditor.DialogItemEditor<PySteppingFilter> itemEditor = new DialogEditor();
-    myPySteppingFilterEditor = new TableModelEditor<PySteppingFilter>(COLUMNS, itemEditor, "No filters");
+    myPySteppingFilterEditor = new TableModelEditor<PySteppingFilter>(COLUMNS, itemEditor, "No script filters configured");
     mySteppingPanel = new JPanel(new BorderLayout());
     mySteppingPanel.add(myPySteppingFilterEditor.createComponent());
   }
@@ -133,7 +133,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
 
     @Override
     public void edit(@NotNull PySteppingFilter item, @NotNull Function<PySteppingFilter, PySteppingFilter> mutator, boolean isAdd) {
-      String pattern = Messages.showInputDialog(myPanel, "Specify wildcard",
+      String pattern = Messages.showInputDialog(myPanel, "Specify Python wildcard (semicolon ';' as name separator):",
                                                 "Stepping Filter", null, item.getFilter(),
                                                 new NonEmptyInputValidator());
       if (pattern != null) {
