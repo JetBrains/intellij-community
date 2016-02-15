@@ -17,18 +17,16 @@ package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RenamePyLiteralExpressionProcessor extends RenamePyElementProcessor {
-  private static final Class[] UNSUPPORTED = {PyNumericLiteralExpression.class, PyNoneLiteralExpression.class, PyBoolLiteralExpression.class};
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return PsiTreeUtil.instanceOf(element, PyLiteralExpression.class);
@@ -37,13 +35,7 @@ public class RenamePyLiteralExpressionProcessor extends RenamePyElementProcessor
   @Override
   public void renameElement(PsiElement element, String newName, UsageInfo[] usages, @Nullable RefactoringElementListener listener)
     throws IncorrectOperationException {
-    if (PsiTreeUtil.instanceOf(element, UNSUPPORTED)) throw new IncorrectOperationException();
-    ((PyStringLiteralExpression)element).updateText("\"" + newName + "\"");
-    for (UsageInfo usageInfo: usages) {
-      PsiReference reference = usageInfo.getReference();
-      if (reference == null) return;
-      reference.handleElementRename("\"" + newName + "\"");
-    }
+    throw new IncorrectOperationException();
   }
 
   @Override
