@@ -823,6 +823,11 @@ public class PythonCompletionTest extends PyTestCase {
     assertUnderscoredMethodSpecialAttributesSuggested();
   }
 
+  // PY-5833
+  public void testPassedNamedTupleAttributes() {
+    doTest();
+  }
+
   private void assertUnderscoredFunctionAttributesSuggested() {
     final List<String> suggested = doTestByFile();
     assertNotNull(suggested);
