@@ -67,7 +67,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   Set<RefModule> getModuleProblems();
   @Nullable
-  QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements);
+  QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable CommonProblemDescriptor[] descriptors);
   @NotNull
   Map<RefEntity, CommonProblemDescriptor[]> getProblemElements();
   @NotNull
@@ -86,6 +86,8 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   GlobalInspectionContextImpl getContext();
   void ignoreProblem(RefEntity refEntity, CommonProblemDescriptor problem, int idx);
   @Nullable
-  QuickFixAction[] extractActiveFixes(@NotNull RefEntity[] refElements, @NotNull Map<RefEntity, Set<QuickFix>> actions);
+  QuickFixAction[] extractActiveFixes(@NotNull RefEntity[] refElements,
+                                      @NotNull Map<RefEntity, CommonProblemDescriptor[]> descriptorMap,
+                                      @Nullable CommonProblemDescriptor[] allowedDescriptors);
   void exportResults(@NotNull final Element parentNode);
 }

@@ -65,8 +65,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -75,8 +73,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.HashSet;
 import java.util.List;
@@ -486,7 +482,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private void registerActionShortcuts(@NotNull InspectionToolPresentation presentation) {
-    final QuickFixAction[] fixes = presentation.getQuickFixes(RefEntity.EMPTY_ELEMENTS_ARRAY);
+    final QuickFixAction[] fixes = presentation.getQuickFixes(RefEntity.EMPTY_ELEMENTS_ARRAY, null);
     if (fixes != null) {
       for (QuickFixAction fix : fixes) {
         fix.registerCustomShortcutSet(fix.getShortcutSet(), this);

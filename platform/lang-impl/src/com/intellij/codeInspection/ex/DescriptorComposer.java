@@ -75,7 +75,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
   }
 
   public static String[] quickFixTexts(RefEntity where, @NotNull InspectionToolPresentation toolPresentation){
-    QuickFixAction[] quickFixes = toolPresentation.getQuickFixes(new RefEntity[] {where});
+    QuickFixAction[] quickFixes = toolPresentation.getQuickFixes(new RefEntity[] {where}, null);
     if (quickFixes == null) {
       return null;
     }
