@@ -55,19 +55,22 @@ deactivate
 '''
 
 from __future__ import unicode_literals
+
 import os
 import subprocess
 import sys
 
+miniconda32_envs = getattr(os.environ, 'MINICONDA32_ENVS', r'C:\tools\Miniconda32\envs')
+miniconda64_envs = getattr(os.environ, 'MINICONDA64_ENVS', r'C:\tools\Miniconda\envs')
 
 python_installations = [
-    r'C:\tools\Miniconda32\envs\py27_32\python.exe',
-    r'C:\tools\Miniconda32\envs\py34_32\python.exe',
-    r'C:\tools\Miniconda32\envs\py35_32\python.exe',
+    r'%s\py27_32\python.exe' % miniconda32_envs,
+    r'%s\py34_32\python.exe' % miniconda32_envs,
+    r'%s\py35_32\python.exe' % miniconda32_envs,
 
-    r'C:\tools\Miniconda\envs\py27_64\python.exe',
-    r'C:\tools\Miniconda\envs\py34_64\python.exe',
-    r'C:\tools\Miniconda\envs\py35_64\python.exe',
+    r'%s\py27_64\python.exe' % miniconda64_envs,
+    r'%s\py34_64\python.exe' % miniconda64_envs,
+    r'%s\py35_64\python.exe' % miniconda64_envs,
 ]
 
 root_dir = os.path.dirname(os.path.dirname(__file__))
