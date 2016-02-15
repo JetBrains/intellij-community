@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -97,6 +98,12 @@ public class VcsLogManager implements Disposable {
       @Override
       public void dispose() {
         myDataManager.removeDataPackChangeListener(listener);
+      }
+    });
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        ui.getFilterer().onRefresh();
       }
     });
   }

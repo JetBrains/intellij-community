@@ -123,13 +123,6 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
 
   public void addDataPackChangeListener(@NotNull final DataPackChangeListener listener) {
     myDataPackChangeListeners.add(listener);
-
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        listener.onDataPackChange(myRefresher.getCurrentDataPack());
-      }
-    });
   }
 
   public void removeDataPackChangeListener(@NotNull DataPackChangeListener listener) {
