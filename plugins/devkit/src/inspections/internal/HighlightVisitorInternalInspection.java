@@ -26,6 +26,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -74,7 +75,9 @@ public class HighlightVisitorInternalInspection extends BaseJavaBatchLocalInspec
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
-    if (virtualFile == null || CompilerConfiguration.getInstance(holder.getProject()).isExcludedFromCompilation(virtualFile)) {
+    if (virtualFile == null ||
+        virtualFile.getFileType() != StdFileTypes.JAVA ||
+        CompilerConfiguration.getInstance(holder.getProject()).isExcludedFromCompilation(virtualFile)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new HighlightVisitorImpl(JavaPsiFacade.getInstance(holder.getProject()).getResolveHelper()) {

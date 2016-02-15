@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -155,7 +156,9 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+      final PsiElement psiElement = descriptor.getPsiElement();
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(psiElement)) return;
+      final PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(psiElement, PsiMethodCallExpression.class);
       if (callExpression != null) {
         final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(callExpression.getMethodExpression().getQualifierExpression());
         if (qualifierExpression instanceof PsiTypeCastExpression) {

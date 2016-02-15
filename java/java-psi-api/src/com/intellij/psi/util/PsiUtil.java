@@ -970,7 +970,8 @@ public final class PsiUtil extends PsiUtilCore {
       }
     }
 
-    return getLanguageLevel(element.getProject());
+    PsiResolveHelper instance = PsiResolveHelper.SERVICE.getInstance(element.getProject());
+    return instance != null ? instance.getEffectiveLanguageLevel(getVirtualFile(file)) : LanguageLevel.HIGHEST;
   }
 
   @NotNull

@@ -883,6 +883,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     isReleased = true;
     clearSettingsCache();
+    mySizeAdjustmentStrategy.cancelAllRequests();
 
     myFoldingModel.dispose();
     mySoftWrapModel.release();
