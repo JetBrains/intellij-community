@@ -447,7 +447,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
       return DebuggerTreeNodeExpression.substituteThis(
         vDescriptor.getRenderer(context.getDebugProcess()).getChildValueExpression(new DebuggerTreeNodeMock(value), context),
-        ((PsiExpression)parentEvaluation), vDescriptor.getValue()
+        ((PsiExpression)parentEvaluation), vDescriptor.getValue(),
+        context
       );
     }
 

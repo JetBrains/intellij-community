@@ -142,7 +142,8 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
     return DebuggerTreeNodeExpression.substituteThis(
       childrenRenderer.getChildValueExpression(node, context),
       (PsiExpression)myChildrenExpression.getPsiExpression(node.getProject()).copy(),
-      expressionValue);
+      expressionValue,
+      context);
   }
 
   private static NodeRenderer getChildrenRenderer(Value childrenValue, ValueDescriptor parentDescriptor) {
