@@ -72,7 +72,7 @@ public class QuickFixToolbar extends JPanel {
       panels.get(0).setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
     }
 
-    fill(getBulbPlacement(hasFixes), QuickFixToolbar::createBulbIcon, panels);
+    //fill(getBulbPlacement(hasFixes), QuickFixToolbar::createBulbIcon, panels);
     fill(getDescriptionLabelPlacement(multipleDescriptors),
          () -> getLabel(hasFixes, (InspectionTreeNode)tree.getSelectionPath().getLastPathComponent(), problemCount), panels);
     fill(getFixesPlacement(hasFixes, multipleDescriptors), () -> createFixPanel(fixes), panels);
@@ -127,6 +127,7 @@ public class QuickFixToolbar extends JPanel {
       final ComboBoxAction fixComboBox = new ComboBoxAction() {
         {
           getTemplatePresentation().setText("Apply quick fixes");
+          getTemplatePresentation().setIcon(AllIcons.Actions.CreateFromUsage);
           setSmallVariant(false);
         }
 
@@ -186,13 +187,14 @@ public class QuickFixToolbar extends JPanel {
 
     public MyCustomComponentLocalQuickFixWrapper(@NotNull QuickFixAction underlying) {
       myUnderlying = underlying;
-      getTemplatePresentation().setText(underlying.getTemplatePresentation().getText());
+      copyFrom(underlying);
     }
 
 
     @Override
     public JComponent createCustomComponent(Presentation presentation) {
       final JButton button = new JButton(presentation.getText());
+      button.setIcon(presentation.getIcon());
       new ClickListener() {
         @Override
         public boolean onClick(@NotNull MouseEvent event, int clickCount) {
