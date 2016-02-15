@@ -48,7 +48,7 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
     }
   }
 
-  private static class MyProvider implements JsonSchemaFileProvider {
+  private static class MyProvider implements JsonSchemaFileProvider, JsonSchemaImportedProviderMarker {
     @NotNull private final File myFile;
     @NotNull private final List<Processor<VirtualFile>> myPatterns;
 

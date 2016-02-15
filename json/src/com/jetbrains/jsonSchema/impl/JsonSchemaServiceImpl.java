@@ -2,6 +2,7 @@ package com.jetbrains.jsonSchema.impl;
 
 
 import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.idea.RareLogger;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
+import com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderMarker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +21,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class JsonSchemaServiceImpl implements JsonSchemaService {
   private static final Logger LOGGER = Logger.getInstance(JsonSchemaServiceImpl.class);
+  private static final Logger RARE_LOGGER = RareLogger.wrap(LOGGER, false);
   @Nullable
   private final Project myProject;
   private final ConcurrentMap<JsonSchemaFileProvider, JsonSchemaObjectCodeInsightWrapper> myWrappers = ContainerUtil.newConcurrentMap();
@@ -58,8 +61,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   @Nullable
-  private static JsonSchemaObjectCodeInsightWrapper createWrapper(@NotNull JsonSchemaFileProvider provide) {
-    Reader reader = provide.getSchemaReader();
+  private static JsonSchemaObjectCodeInsightWrapper createWrapper(@NotNull JsonSchemaFileProvider provider) {
+    Reader reader = provider.getSchemaReader();
     try {
       if (reader != null) {
         JsonSchemaObject resultObject = new JsonSchemaReader().read(reader);
@@ -67,7 +70,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
       }
     }
     catch (Exception e) {
-      LOGGER.error("Error while processing json schema file: " + e.getMessage(), e);//todo logging level depending on internal/external schema
+      final String message = "Error while processing json schema file: " + e.getMessage();
+      if (provider instanceof JsonSchemaImportedProviderMarker) {
+        RARE_LOGGER.info(message, e);
+      } else {
+        LOGGER.error(message, e);
+      }
     }
     return null;
   }
