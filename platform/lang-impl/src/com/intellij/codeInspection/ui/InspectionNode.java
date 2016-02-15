@@ -51,7 +51,7 @@ public class InspectionNode extends InspectionTreeNode {
 
   public boolean isTooBigForOnlineRefresh() {
     if (!myTooBigForOnlineRefresh) {
-      myTooBigForOnlineRefresh = accumulateProblemInfo(new BatchProblemDescriptor(true)).getProblemCount() > 1000;
+      myTooBigForOnlineRefresh = getProblemCount() > 1000;
     }
     return myTooBigForOnlineRefresh;
   }

@@ -166,12 +166,23 @@ public class InspectionTree extends Tree {
   public CommonProblemDescriptor[] getSelectedDescriptors() {
     if (getSelectionCount() == 0) return EMPTY_DESCRIPTORS;
     final TreePath[] paths = getSelectionPaths();
-    if (paths == null) return EMPTY_DESCRIPTORS;
-    BatchProblemDescriptor accumulator = new BatchProblemDescriptor(true);
+    final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
     for (TreePath path : paths) {
-      ((InspectionTreeNode)path.getLastPathComponent()).accumulateProblemInfo(accumulator);
+      Object node = path.getLastPathComponent();
+      traverseDescriptors((InspectionTreeNode)node, descriptors);
     }
-    return accumulator.getDescriptors().toArray(new CommonProblemDescriptor[accumulator.getProblemCount()]);
+    return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
+  }
+
+  private static void traverseDescriptors(InspectionTreeNode node, LinkedHashSet<CommonProblemDescriptor> descriptors){
+    if (node instanceof ProblemDescriptionNode) {
+      if (node.isValid() && !node.isResolved()) {
+        descriptors.add(((ProblemDescriptionNode)node).getDescriptor());
+      }
+    }
+    for(int i = node.getChildCount() - 1; i >= 0; i--){
+      traverseDescriptors((InspectionTreeNode)node.getChildAt(i), descriptors);
+    }
   }
 
   private void nodeStructureChanged(InspectionTreeNode node) {
@@ -248,7 +259,7 @@ public class InspectionTree extends Tree {
       append(node.toString(),
              patchAttr(node, appearsBold(node) ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : getMainForegroundAttributes(node)));
 
-      int problemCount = node.accumulateProblemInfo(new BatchProblemDescriptor(true)).getProblemCount();
+      int problemCount = node.getProblemCount();
       if (!leaf) {
         append(" " + InspectionsBundle.message("inspection.problem.descriptor.count", problemCount), patchAttr(node, SimpleTextAttributes.GRAYED_ATTRIBUTES));
       }

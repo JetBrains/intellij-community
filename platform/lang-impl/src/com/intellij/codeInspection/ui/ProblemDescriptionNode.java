@@ -88,11 +88,8 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   @Override
-  public BatchProblemDescriptor accumulateProblemInfo(BatchProblemDescriptor accumulator) {
-    if (isValid()) {
-      accumulator.addProblem(getDescriptor());
-    }
-    return accumulator;
+  public int getProblemCount() {
+    return 1;
   }
 
   @Override

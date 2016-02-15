@@ -33,6 +33,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -61,20 +62,20 @@ public class GoToSubsequentOccurrenceAction extends AnAction {
     myManager.selectSubsequent(myNext);
   }
 
-  public static ActionGroup createNextPreviousActions(@NotNull Editor editor, @NotNull List<CommonProblemDescriptor> descriptors) {
+  public static ActionGroup createNextPreviousActions(@NotNull Editor editor, @NotNull CommonProblemDescriptor[] descriptors) {
     OccurrencesManager manager = new OccurrencesManager(editor, descriptors);
     return new DefaultActionGroup(new GoToSubsequentOccurrenceAction(false, manager), new GoToSubsequentOccurrenceAction(true, manager));
   }
 
   private static class OccurrencesManager {
     private final Editor myEditor;
-    private final List<ProblemDescriptorBase> myChildren;
+    private final ProblemDescriptorBase[] myChildren;
 
     private int mySelected = -1;
 
-    private OccurrencesManager(@NotNull Editor editor, @NotNull List<CommonProblemDescriptor> descriptors) {
+    private OccurrencesManager(@NotNull Editor editor, @NotNull CommonProblemDescriptor[] descriptors) {
       myEditor = editor;
-      myChildren = descriptors.stream()
+      myChildren = Arrays.stream(descriptors)
         .filter(d -> d instanceof ProblemDescriptorBase)
         .map(d -> (ProblemDescriptorBase) d)
         .filter(d -> {
@@ -82,7 +83,7 @@ public class GoToSubsequentOccurrenceAction extends AnAction {
           return element != null && element.isValid();
         })
         .sorted((o1, o2) -> o1.getPsiElement().getTextOffset() - o2.getPsiElement().getTextOffset())
-        .collect(Collectors.toList());
+        .toArray(ProblemDescriptorBase[]::new);
       selectSubsequent(true);
     }
 
@@ -90,12 +91,12 @@ public class GoToSubsequentOccurrenceAction extends AnAction {
       int subsequentIdz = mySelected;
       while (true) {
         subsequentIdz += next ?  1 : -1;
-        subsequentIdz += myChildren.size();
-        subsequentIdz %= myChildren.size();
+        subsequentIdz += myChildren.length;
+        subsequentIdz %= myChildren.length;
         if (mySelected == subsequentIdz) {
           throw new IllegalStateException("Selection is unavailable");
         }
-        ProblemDescriptorBase descriptorBase = myChildren.get(subsequentIdz);
+        ProblemDescriptorBase descriptorBase = myChildren[subsequentIdz];
         if (descriptorBase.getPsiElement().isValid()) {
           mySelected = subsequentIdz;
           PsiElement toSelect = descriptorBase.getPsiElement();
@@ -110,13 +111,14 @@ public class GoToSubsequentOccurrenceAction extends AnAction {
     public boolean hasValidSubsequent() {
       int subsequentIdz = mySelected;
       while (true) {
-        subsequentIdz += 1 + myChildren.size();
-        subsequentIdz %= myChildren.size();
+        subsequentIdz += 1 + myChildren.length;
+        subsequentIdz %= myChildren.length;
         if (mySelected == subsequentIdz) {
           return false;
         }
-        ProblemDescriptorBase descriptorBase = myChildren.get(subsequentIdz);
-        if (descriptorBase.getPsiElement().isValid()) {
+        ProblemDescriptorBase descriptorBase = myChildren[subsequentIdz];
+        PsiElement element = descriptorBase.getPsiElement();
+        if (element != null && element.isValid()) {
           return true;
         }
       }

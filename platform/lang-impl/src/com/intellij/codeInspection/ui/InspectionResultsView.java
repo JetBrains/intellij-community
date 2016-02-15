@@ -81,7 +81,6 @@ import java.util.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 
 /**
  * @author max
@@ -399,18 +398,18 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           final RefEntity refSelected = refElementNode.getElement();
           if (node.isLeaf()) {
             LOG.assertTrue(problem != null);
-            showInRightPanel(refSelected, BatchProblemDescriptor.single(problem), node.isValid());
+            showInRightPanel(refSelected);
           }
           else {
-            showInRightPanel(refSelected, node.accumulateProblemInfo(new BatchProblemDescriptor(false)), node.isValid());
+            showInRightPanel(refSelected);
           }
         }
         else if (node instanceof ProblemDescriptionNode) {
           final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
-          showInRightPanel(problemNode.getElement(), BatchProblemDescriptor.single(problemNode.getDescriptor()), node.isValid());
+          showInRightPanel(problemNode.getElement());
         }
         else if (node instanceof InspectionNode) {
-          showInRightPanel(null, node.accumulateProblemInfo(new BatchProblemDescriptor(false)), node.isValid());
+          showInRightPanel(null);
         }
         else if (node instanceof InspectionRootNode || node instanceof InspectionGroupNode) {
           mySplitter.setSecondComponent(new InspectionViewNavigationPanel(node, myTree));
@@ -422,41 +421,35 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
-  private void showInRightPanel(final RefEntity refEntity, BatchProblemDescriptor descriptor, boolean valid) {
+  private void showInRightPanel(@Nullable final RefEntity refEntity) {
     Cursor currentCursor = getCursor();
     try {
       setCursor(new Cursor(Cursor.WAIT_CURSOR));
-      if (descriptor != null) {
-        final JPanel editorPanel = new JPanel();
-        editorPanel.setLayout(new BorderLayout());
-        PsiElement containingElement = descriptor.getProblemElementIfOnlyOne();
-        if (containingElement == null && refEntity instanceof RefElement) {
-          containingElement = ((RefElement)refEntity).getElement();
-        }
-        editorPanel.add(createBaseRightComponentFor(containingElement, descriptor), BorderLayout.CENTER);
-        if (valid && descriptor.getProblemCount() > 0) {
-          editorPanel.add(new QuickFixToolbar(descriptor,
-                                              myTree.getSelectedToolWrapper(),
-                                              myTree.getSelectionPaths()[0],
-                                              myProject,
-                                              myPreviewEditor,
-                                              containingElement),
-                          BorderLayout.NORTH);
-        }
-        mySplitter.setSecondComponent(editorPanel);
+      final JPanel editorPanel = new JPanel();
+      editorPanel.setLayout(new BorderLayout());
+      CommonProblemDescriptor[] descriptors = myTree.getSelectedDescriptors();
+      editorPanel.add(createBaseRightComponentFor(descriptors, refEntity), BorderLayout.CENTER);
+      if (descriptors.length > 0) {
+        editorPanel.add(new QuickFixToolbar(myTree,
+                                            myProject,
+                                            myPreviewEditor,
+                                            myProvider.getQuickFixes(myTree.getSelectedToolWrapper(), myTree)),
+                        BorderLayout.NORTH);
       }
+      mySplitter.setSecondComponent(editorPanel);
     }
     finally {
       setCursor(currentCursor);
     }
   }
 
-  private JComponent createBaseRightComponentFor(PsiElement containingElement, BatchProblemDescriptor descriptor) {
-    final int count = descriptor.getProblemCount();
-    if (count == 1 || (containingElement != null && !(containingElement instanceof PsiDirectory))) {
-      final PsiElement referencedElement = descriptor.getFirstProblemElement();
-      final PsiFile file = referencedElement.getContainingFile();
-      final Document document = PsiDocumentManager.getInstance(referencedElement.getProject()).getDocument(file);
+  private JComponent createBaseRightComponentFor(CommonProblemDescriptor[] descriptors,
+                                                 RefEntity selectedEntity) {
+    final int count = descriptors.length;
+    if (selectedEntity instanceof RefElement && !(((RefElement)selectedEntity).getElement() instanceof PsiDirectory)) {
+      PsiElement selectedElement = ((RefElement)selectedEntity).getElement();
+      final PsiFile file = selectedElement.getContainingFile();
+      final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       myPreviewEditor = EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), true);
       final EditorSettings settings = myPreviewEditor.getSettings();
       settings.setLineNumbersShown(false);
@@ -466,21 +459,19 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       settings.setLeadingWhitespaceShown(true);
       settings.setRightMarginShown(true);
       settings.setRightMargin(60);
+      PsiElement toHighlight = selectedElement;
       if (count != 1) {
-        myPreviewEditor.getCaretModel().moveToOffset(referencedElement.getTextOffset());
+        myPreviewEditor.getCaretModel().moveToOffset(selectedElement.getTextOffset());
         myPreviewEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      } else if (descriptors[0] instanceof ProblemDescriptorBase) {
+        toHighlight = ((ProblemDescriptorBase) descriptors[0]).getPsiElement();
       }
-      UsagePreviewPanel
-        .highlight(containingElement == null
-                   ? Collections.emptyList()
-                   : getElementToHighlight(containingElement),
-                   myPreviewEditor, myProject);
+      UsagePreviewPanel.highlight(getElementToHighlight(toHighlight), myPreviewEditor, myProject);
       return myPreviewEditor.getComponent();
     }
-    else if (count > 1) {
+    else if (selectedEntity == null) {
       return new InspectionNodeInfo(myTree.getSelectedToolWrapper(), myProject);
     }
-    //TODO must not happen
     return new JPanel();
   }
 
