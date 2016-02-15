@@ -20,7 +20,9 @@ import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -49,6 +51,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ConcurrentPackedBitsArray;
@@ -213,9 +216,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       @Override
       public void onSchemeDeleted(@NotNull AbstractFileType scheme) {
-        fireBeforeFileTypesChanged();
-        myPatternsTable.removeAllAssociations(scheme);
-        fireFileTypesChanged();
+        GuiUtils.invokeLaterIfNeeded(() -> {
+          Application app = ApplicationManager.getApplication();
+          app.runWriteAction(() -> fireBeforeFileTypesChanged());
+          myPatternsTable.removeAllAssociations(scheme);
+          app.runWriteAction(() -> fireFileTypesChanged());
+        }, ModalityState.NON_MODAL);
       }
     });
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
@@ -1122,7 +1128,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     if (savedVersion < 13) {
-      // we want *.lib back since it's an important user artifact for CLion, also for IDEA project itself, since we have some libs.  
+      // we want *.lib back since it's an important user artifact for CLion, also for IDEA project itself, since we have some libs.
       unignoreMask("*.lib");
     }
 
@@ -1130,7 +1136,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       // we want .bundle back, bundler keeps useful data there
       unignoreMask(".bundle");
     }
-    
+
     if (savedVersion < 16) {
       // we want .tox back to allow users selecting interpreters from it
       unignoreMask(".tox");

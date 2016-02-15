@@ -157,9 +157,11 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
   }
 
-  fun getCachedFileStorages(changed: Collection<String>, deleted: Collection<String>) = storageLock.withLock { Pair(getCachedFileStorages(changed), getCachedFileStorages(deleted)) }
+  fun getCachedFileStorages(changed: Collection<String>, deleted: Collection<String>, pathNormalizer: ((String) -> String)? = null) = storageLock.withLock {
+    Pair(getCachedFileStorages(changed, pathNormalizer), getCachedFileStorages(deleted, pathNormalizer))
+  }
 
-  fun getCachedFileStorages(fileSpecs: Collection<String>): Collection<FileBasedStorage> {
+  fun getCachedFileStorages(fileSpecs: Collection<String>, pathNormalizer: ((String) -> String)? = null): Collection<FileBasedStorage> {
     if (fileSpecs.isEmpty()) {
       return emptyList()
     }
@@ -167,7 +169,8 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     storageLock.withLock {
       var result: MutableList<FileBasedStorage>? = null
       for (fileSpec in fileSpecs) {
-        val storage = storages[normalizeFileSpec(fileSpec)]
+        val path = normalizeFileSpec(pathNormalizer?.invoke(fileSpec) ?: fileSpec)
+        val storage = storages.get(path)
         if (storage is FileBasedStorage) {
           if (result == null) {
             result = SmartList<FileBasedStorage>()

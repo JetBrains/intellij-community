@@ -15,6 +15,7 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
@@ -37,9 +38,11 @@ import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.ui.AppUIUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.containers.SmartHashSet
+import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.JDOMXIncluder
@@ -110,7 +113,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       val project = this.project
       val app = ApplicationManager.getApplication()
       if (project != null && !app.isHeadlessEnvironment && !app.isUnitTestMode && project.isInitialized) {
-        StorageUtil.notifyUnknownMacros(this, project, componentNameIfStateExists)
+        notifyUnknownMacros(this, project, componentNameIfStateExists)
       }
     }
   }
@@ -478,4 +481,35 @@ internal fun Array<Storage>.sortByDeprecated(): Array<out Storage> {
   }
 
   return sortedArrayWith(deprecatedComparator)
+}
+
+private fun notifyUnknownMacros(store: IComponentStore, project: Project, componentName: String) {
+  val substitutor = store.stateStorageManager.macroSubstitutor ?: return
+
+  val immutableMacros = substitutor.getUnknownMacros(componentName)
+  if (immutableMacros.isEmpty()) {
+    return
+  }
+
+  val macros = LinkedHashSet(immutableMacros)
+  AppUIUtil.invokeOnEdt(Runnable {
+    var notified: MutableList<String>? = null
+    val manager = NotificationsManager.getNotificationsManager()
+    for (notification in manager.getNotificationsOfType(UnknownMacroNotification::class.java, project)) {
+      if (notified == null) {
+        notified = SmartList<String>()
+      }
+      notified.addAll(notification.macros)
+    }
+    if (!notified.isNullOrEmpty()) {
+      macros.removeAll(notified!!)
+    }
+
+    if (macros.isEmpty()) {
+      return@Runnable
+    }
+
+    LOG.debug("Reporting unknown path macros $macros in component $componentName")
+    StorageUtil.doNotify(macros, project, Collections.singletonMap(substitutor, store))
+  }, project.disposed)
 }

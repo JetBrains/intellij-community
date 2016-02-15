@@ -103,6 +103,11 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
   }
 
   @Override
+  public KeyStroke[] getFindKeyStrokes() {
+    return getKeyStrokesByActionId("Find");
+  }
+
+  @Override
   public ColorPalette getTerminalColorPalette() {
     return new JBTerminalSchemeColorPalette(myColorScheme);
   }
@@ -149,6 +154,12 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
   public TextStyle getSelectionColor() {
     return new TextStyle(TerminalColor.awt(myColorScheme.getColor(EditorColors.SELECTION_FOREGROUND_COLOR)),
                          TerminalColor.awt(myColorScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)));
+  }
+
+  @Override
+  public TextStyle getFoundPatternColor() {
+    return new TextStyle(TerminalColor.awt(myColorScheme.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getForegroundColor()),
+                         TerminalColor.awt(myColorScheme.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getBackgroundColor()));
   }
 
   @Override

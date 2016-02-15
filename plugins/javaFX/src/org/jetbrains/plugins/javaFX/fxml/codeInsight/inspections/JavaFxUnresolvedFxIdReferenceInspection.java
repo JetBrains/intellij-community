@@ -27,6 +27,7 @@ import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -147,10 +148,15 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
       }
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiField field = factory.createField(reference.getCanonicalText(), PsiType.INT);
-      PsiModifierList modifierList = field.getModifierList();
+      final PsiModifierList modifierList = field.getModifierList();
       if (modifierList != null) {
-        VisibilityUtil.setVisibility(modifierList, PsiModifier.PRIVATE);
-        modifierList.addAnnotation(JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION);
+        @PsiModifier.ModifierConstant
+        String visibility = CodeStyleSettingsManager.getSettings(targetClass.getProject()).VISIBILITY;
+        if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) visibility = PsiModifier.PRIVATE;
+        VisibilityUtil.setVisibility(modifierList, visibility);
+        if (!PsiModifier.PUBLIC.equals(visibility)) {
+          modifierList.addAnnotation(JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION);
+        }
       }
 
       field = CreateFieldFromUsageHelper.insertField(targetClass, field, psiElement);

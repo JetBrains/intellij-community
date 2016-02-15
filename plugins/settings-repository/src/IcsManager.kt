@@ -121,7 +121,7 @@ class IcsManager(dir: Path) {
         throw IllegalStateException("Delete is prohibited now")
       }
 
-      repositoryManager.delete(buildPath(fileSpec, roamingType))
+      repositoryManager.delete(toRepositoryPath(fileSpec, roamingType))
       scheduleCommit()
     }
   }
@@ -186,7 +186,7 @@ class IcsManager(dir: Path) {
       get() = repositoryActive
 
     override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
-      val fullPath = buildPath(path, roamingType, null)
+      val fullPath = toRepositoryPath(path, roamingType, null)
 
       // first of all we must load read-only schemes - scheme could be overridden if bundled or read-only, so, such schemes must be loaded first
       for (repository in readOnlySourcesManager.repositories) {
@@ -206,12 +206,12 @@ class IcsManager(dir: Path) {
       }
     }
 
-    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) = repositoryManager.write(buildPath(fileSpec, roamingType, projectId), content, size)
+    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) = repositoryManager.write(toRepositoryPath(fileSpec, roamingType, projectId), content, size)
 
     protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
 
     override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
-      return repositoryManager.read(buildPath(fileSpec, roamingType, projectId))
+      return repositoryManager.read(toRepositoryPath(fileSpec, roamingType, projectId))
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {

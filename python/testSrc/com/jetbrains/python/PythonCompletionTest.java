@@ -94,6 +94,11 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-14044
+  public void testNamedTupleInitParams() {
+    doTest();
+  }
+
   public void testSuperInitParams() {      // PY-505
     doTest();
   }
@@ -944,6 +949,31 @@ public class PythonCompletionTest extends PyTestCase {
     final List<String> variants = doTestByFile();
     assertNotNull(variants);
     assertDoesntContain(variants, "_foo(self)");
+  }
+
+  // PY-12425
+  public void testInstanceFromDefinedCallAttr() {
+    doTest();
+  }
+
+  // PY-12425
+  public void testInstanceFromFunctionAssignedToCallAttr() {
+    doTest();
+  }
+
+  // PY-12425
+  public void testInstanceFromCallableAssignedToCallAttr() {
+    doTest();
+  }
+
+  // PY-12425
+  public void testInstanceFromInheritedCallAttr() {
+    doTest();
+  }
+
+  // PY-12425
+  public void testInstanceFromProvidedCallAttr() {
+    doMultiFileTest();
   }
 
   @Override
