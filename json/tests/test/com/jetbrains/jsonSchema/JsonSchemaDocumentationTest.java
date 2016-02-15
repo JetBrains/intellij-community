@@ -25,7 +25,7 @@ public class JsonSchemaDocumentationTest extends LightPlatformCodeInsightFixture
 
   @Override
   protected String getBasePath() {
-    return "/json/jsonSchema/testData/documentation";
+    return "/json/tests/testData/jsonSchema/documentation";
   }
 
   public void testSimple() throws Exception {

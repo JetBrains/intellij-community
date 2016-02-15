@@ -27,7 +27,7 @@ import java.util.List;
 public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
   @Override
   protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/json/jsonSchema/testData/highlighting";
+    return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonSchema/highlighting";
   }
 
   public void testNumberMultipleWrong() throws Exception {

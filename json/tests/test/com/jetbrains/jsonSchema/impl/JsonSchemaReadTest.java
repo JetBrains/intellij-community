@@ -13,7 +13,7 @@ import java.util.List;
 public class JsonSchemaReadTest {
   @org.junit.Test
   public void testReadSchemaItself() throws Exception {
-    final File file = new File(PlatformTestUtil.getCommunityPath(), "json/jsonSchema/testData/schema.json");
+    final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/schema.json");
     Assert.assertTrue(file.exists());
     final JsonSchemaReader reader = new JsonSchemaReader();
     final JsonSchemaObject read = reader.read(new FileReader(file));
