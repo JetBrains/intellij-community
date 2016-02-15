@@ -51,10 +51,9 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.List;
 
-import static com.intellij.openapi.editor.StripTrailingSpacesLineFilter.LINE_FILTER_EXTENSION_POINT;
+import static com.intellij.openapi.editor.StripTrailingSpacesFilterFactory.LINE_FILTER_EXTENSION_POINT;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
@@ -199,13 +198,21 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (!isStripTrailingSpacesEnabled) {
       return true;
     }
-    StripTrailingSpacesLineFilter[] filters = LINE_FILTER_EXTENSION_POINT.getExtensions(); 
-    for (StripTrailingSpacesLineFilter filter : filters) {
-      if (!filter.isStripSpacesAllowed(project, this)) return true;
-    }
-    BitSet disabledLinesBitSet = new BitSet(getLineCount());
-    for (StripTrailingSpacesLineFilter filter : filters) {
-      if (!filter.apply(project, this, disabledLinesBitSet)) return false;
+    List<StripTrailingSpacesFilter> filters = new ArrayList<StripTrailingSpacesFilter>();
+    for (StripTrailingSpacesFilterFactory filterFactory : LINE_FILTER_EXTENSION_POINT.getExtensions()) {
+      StripTrailingSpacesFilter filter = filterFactory.createFilter(project, this);
+      StripTrailingSpacesFilter.DocumentLevelPermission permission = filter.getDocumentLevelPermission();
+      switch(permission) {
+        case NOT_ALLOWED:
+          return true;
+        case POSTPONED:
+          return false;
+        case FILTER_BY_LINE:
+          filters.add(filter);
+          break;
+        case ALL_LINES:
+          break;
+      }
     }
 
     boolean markAsNeedsStrippingLater = false;
@@ -230,7 +237,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       lineLoop:
       for (int line = 0; line < getLineCount(); line++) {
         LineSet lineSet = getLineSet();
-        if (inChangedLinesOnly && !lineSet.isModified(line) || disabledLinesBitSet.get(line)) continue;
+        if (inChangedLinesOnly && !lineSet.isModified(line) || canStripSpacesFrom(line, filters)) continue;
         int whiteSpaceStart = -1;
         final int lineEnd = lineSet.getLineEnd(line) - lineSet.getSeparatorLength(line);
         int lineStart = lineSet.getLineStart(line);
@@ -286,6 +293,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       });
     }
     return markAsNeedsStrippingLater;
+  }
+
+  private static boolean canStripSpacesFrom(int line, @NotNull List<StripTrailingSpacesFilter> filters) {
+    for (StripTrailingSpacesFilter filter :  filters) {
+      if (!filter.isStripSpacesAllowedForLine(line)) return false;
+    }
+    return true;
   }
 
   @Override
