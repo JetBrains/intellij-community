@@ -398,10 +398,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
           showInRightPanel(problemNode.getElement());
         }
-        else if (node instanceof InspectionNode) {
+        else if (node instanceof InspectionNode || node instanceof InspectionPackageNode || node instanceof InspectionModuleNode) {
           showInRightPanel(null);
         }
-        else if (node instanceof InspectionRootNode || node instanceof InspectionGroupNode) {
+        else if (node instanceof InspectionRootNode || node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
           mySplitter.setSecondComponent(new InspectionViewNavigationPanel(node, myTree));
         }
         else {
