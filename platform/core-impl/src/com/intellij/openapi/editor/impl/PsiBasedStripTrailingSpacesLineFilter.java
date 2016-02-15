@@ -18,10 +18,9 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.StripTrailingSpacesFilter;
+import com.intellij.openapi.editor.StripTrailingSpacesLineFilter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -30,37 +29,28 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.BitSet;
 
-public abstract class PsiBasedStripTrailingSpacesFilter extends StripTrailingSpacesFilter {
-  private @Nullable BitSet myDisabledLinesBitSet;
-  private final @NotNull Document myDocument;
-
-  protected PsiBasedStripTrailingSpacesFilter(@Nullable Project project, @NotNull Document document) {
-    myDocument = document;
-    setDocumentLevelPermission(process(project, document));
+public abstract class PsiBasedStripTrailingSpacesLineFilter extends StripTrailingSpacesLineFilter {
+  @Override
+  public boolean isStripSpacesAllowed(@Nullable Project project, @NotNull Document document) {
+    return true;
   }
 
   @Override
-  public boolean isStripSpacesAllowedForLine(int line) {
-    return myDisabledLinesBitSet != null && myDisabledLinesBitSet.get(line);
-  }
-
-  public final DocumentLevelPermission process(@Nullable Project project, @NotNull Document document) {
+  public final boolean apply(@Nullable Project project, @NotNull Document document, @NotNull BitSet disabledLinesBitSet) {
     Language language = getDocumentLanguage(document);
     if (language != null && isApplicableTo(language)) {
-      myDisabledLinesBitSet = new BitSet(document.getLineCount());
       PsiFile psiFile = getPsiFile(project, document);
       if (psiFile != null) {
-        process(document, psiFile);
-        return DocumentLevelPermission.FILTER_BY_LINE;
+        return apply(document, psiFile, disabledLinesBitSet);
       }
-      return DocumentLevelPermission.POSTPONED;
+      return false;
     }
-    return DocumentLevelPermission.ALL_LINES;
+    return true;
   }
   
   protected abstract boolean isApplicableTo(@NotNull Language language);
   
-  protected abstract void process(@NotNull Document document, @NotNull PsiFile psiFile);
+  protected abstract boolean apply(@NotNull Document document, @NotNull PsiFile psiFile, BitSet disabledLinesBitSet);
 
   @Nullable
   private static Language getDocumentLanguage(@NotNull Document document) {
@@ -81,13 +71,5 @@ public abstract class PsiBasedStripTrailingSpacesFilter extends StripTrailingSpa
       }
     }
     return null;
-  }
-
-  protected final void disableRange(@NotNull TextRange range) {
-    if (myDisabledLinesBitSet != null) {
-      int startLine = myDocument.getLineNumber(range.getStartOffset());
-      int endLine = myDocument.getLineNumber(range.getEndOffset());
-      myDisabledLinesBitSet.set(startLine, endLine);
-    }
   }
 }

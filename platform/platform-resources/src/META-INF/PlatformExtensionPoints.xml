@@ -262,6 +262,6 @@
     <extensionPoint name="remote.credentialsType" interface="com.intellij.remote.ext.CredentialsTypeEx"/>
     <extensionPoint name="remote.credentialsLanguageContribution"
                     interface="com.intellij.remote.ext.CredentialsLanguageContribution"/>
-    <extensionPoint name="stripTrailingSpacesFilterFactory" interface="com.intellij.openapi.editor.StripTrailingSpacesFilterFactory"/>
+    <extensionPoint name="stripTrailingSpacesLineFilter" interface="com.intellij.openapi.editor.StripTrailingSpacesLineFilter"/>
   </extensionPoints>
 </idea-plugin>
