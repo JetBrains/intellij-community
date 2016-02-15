@@ -436,22 +436,14 @@ object UpdateChecker {
     }
   }
 
-  private fun showNotification(project: Project?,
-                               message: String,
-                               runnable: (() -> Unit)?,
-                               notificationType: NotificationUniqueType?) {
-    if (notificationType != null) {
-      if (!ourShownNotificationTypes.add(notificationType)) {
-        return
-      }
+  private fun showNotification(project: Project?, message: String, action: (() -> Unit), notificationType: NotificationUniqueType) {
+    if (!ourShownNotificationTypes.add(notificationType)) {
+      return
     }
 
-    var listener: NotificationListener? = null
-    if (runnable != null) {
-      listener = NotificationListener { notification, event ->
-        notification.expire()
-        runnable.invoke()
-      }
+    var listener = NotificationListener { notification, event ->
+      notification.expire()
+      action.invoke()
     }
 
     val title = IdeBundle.message("update.notifications.title")
