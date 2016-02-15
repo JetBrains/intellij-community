@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.BiDirectionalEnumerator;
 import com.intellij.util.containers.Enumerator;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
@@ -28,8 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class InMemoryHashMap implements VcsLogHashMap {
-  private final Enumerator<CommitId> myEnumerator = new Enumerator<CommitId>(1, TObjectHashingStrategy.CANONICAL);
-  private final TIntObjectHashMap<CommitId> myIntToObjectMap = new TIntObjectHashMap<CommitId>();
+  private final BiDirectionalEnumerator<CommitId> myEnumerator = new BiDirectionalEnumerator<CommitId>(1, TObjectHashingStrategy.CANONICAL);
 
   @Override
   public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
@@ -37,27 +37,20 @@ public class InMemoryHashMap implements VcsLogHashMap {
   }
 
   private int getOrPut(@NotNull Hash hash, @NotNull VirtualFile root) {
-    CommitId commitId = new CommitId(hash, root);
-    int index = myEnumerator.enumerate(commitId);
-    myIntToObjectMap.put(index, commitId);
-    return index;
+    return myEnumerator.enumerate(new CommitId(hash, root));
   }
 
   @NotNull
   @Override
   public CommitId getCommitId(int commitIndex) {
-    CommitId hash = myIntToObjectMap.get(commitIndex);
-    if (hash == null) {
-      throw new RuntimeException("Can not find hash by index " + commitIndex);
-    }
-    return hash;
+    return myEnumerator.getValue(commitIndex);
   }
 
   @Nullable
   @Override
   public CommitId findCommitId(@NotNull final Condition<CommitId> condition) {
     final CommitId[] result = new CommitId[]{null};
-    myIntToObjectMap.forEachValue(new TObjectProcedure<CommitId>() {
+    myEnumerator.forEachValue(new TObjectProcedure<CommitId>() {
       @Override
       public boolean execute(CommitId commitId) {
         if (condition.value(commitId)) {
