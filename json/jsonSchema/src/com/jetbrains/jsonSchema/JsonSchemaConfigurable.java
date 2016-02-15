@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.CollectConsumer;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author Irina.Chernushina on 2/2/2016.
@@ -97,8 +99,18 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
     if (StringUtil.isEmptyOrSpaces(myDisplayName)) throw new ConfigurationException("Schema name is empty");
     if (StringUtil.isEmptyOrSpaces(myView.getSchemaSubPath())) throw new ConfigurationException("Schema path is empty");
     if (!Comparing.equal(myView.getSchemaSubPath(), mySchema.getRelativePathToSchema())) {
-      if (!JsonSchemaReader.isJsonSchema(new File(myProject.getBasePath(), myView.getSchemaSubPath()).getPath())) {
-        throw new ConfigurationException("Can not read JSON schema from file");
+      final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
+      final File file = new File(myProject.getBasePath(), myView.getSchemaSubPath());
+      try {
+        if (!JsonSchemaReader.isJsonSchema(FileUtil.loadFile(file), collectConsumer)) {
+          final String message;
+          if (collectConsumer.getResult().isEmpty()) message = "Can not read JSON schema from file (Unknown reason)";
+          else message = "Can not read JSON schema from file: " + StringUtil.join(collectConsumer.getResult(), "; ");
+          throw new ConfigurationException(message);
+        }
+      }
+      catch (IOException e) {
+        throw new ConfigurationException("Can not read JSON schema from file: " + e.getMessage());
       }
     }
   }

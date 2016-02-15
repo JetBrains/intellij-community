@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.IconUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
@@ -383,8 +384,12 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
         myError = "Problem during reading JSON schema from '" + myFile.getName() + "': " + e1.getMessage();
         return false;
       }
-      if (!JsonSchemaReader.isJsonSchema(myText)) {
-        myError = "JSON Schema not found in '" + myFile.getName() + "'";
+      final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
+      if (!JsonSchemaReader.isJsonSchema(myText, collectConsumer)) {
+        myError = "JSON Schema not found or contain error in '" + myFile.getName() + "'";
+        if (!collectConsumer.getResult().isEmpty()) {
+          myError += ": " + StringUtil.join(collectConsumer.getResult(), "; ");
+        }
         return false;
       }
       if (!myLoadText) myText = null;

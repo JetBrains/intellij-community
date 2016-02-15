@@ -4,6 +4,7 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import com.intellij.util.Consumer;
 import com.intellij.util.ThrowablePairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,13 +35,15 @@ public class JsonSchemaReader {
     return object;
   }
 
-  public static boolean isJsonSchema(@NotNull final String string) {
+  public static boolean isJsonSchema(@NotNull final String string, Consumer<String> errorConsumer) {
     try {
       new JsonSchemaReader().read(new java.io.StringReader(string));
       return true;
     } catch (IOException e) {
+      errorConsumer.consume(e.getMessage());
       return false;
     } catch (Exception e) {
+      errorConsumer.consume(e.getMessage());
       return false;
     }
   }
