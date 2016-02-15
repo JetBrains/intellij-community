@@ -33,6 +33,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +76,7 @@ public class QuickFixToolbar extends JPanel {
 
     //fill(getBulbPlacement(hasFixes), QuickFixToolbar::createBulbIcon, panels);
     fill(getDescriptionLabelPlacement(multipleDescriptors),
-         () -> getLabel(hasFixes, (InspectionTreeNode)tree.getSelectionPath().getLastPathComponent(), problemCount), panels);
+         () -> getLabel(fixes, (InspectionTreeNode)tree.getSelectionPath().getLastPathComponent(), problemCount), panels);
     fill(getFixesPlacement(hasFixes, multipleDescriptors), () -> createFixPanel(fixes), panels);
     fill(getSuppressPlacement(multipleDescriptors), () -> createSuppressionCombo(tree.getSelectedToolWrapper()
       , tree.getSelectionPath(), project), panels);
@@ -83,15 +85,21 @@ public class QuickFixToolbar extends JPanel {
   }
 
   @NotNull
-  private static JLabel getLabel(boolean hasFixes, InspectionTreeNode targetNode, int problemsCount) {
+  private static JComponent getLabel(QuickFixAction[] fixes, InspectionTreeNode targetNode, int problemsCount) {
     final String targetName = targetNode instanceof RefElementNode ? ((RefElementNode)targetNode).getElement().getName() : null;
-    final JBLabel label =
-      new JBLabel((hasFixes ? " Fix " : " ") + problemsCount + " warnings " + (targetName == null ? "" : ("in " + targetName)));
-    Font font = label.getFont();
+    SimpleColoredComponent label = new SimpleColoredComponent();
+    boolean hasFixesNonIntersectedFixes = fixes != null && fixes.length == 0;
+    boolean hasFixes = fixes != null && fixes.length != 0;
+    label.append((hasFixes ? " Fix " : " ") + problemsCount + " warnings " + (targetName == null ? "" : ("in " + targetName)) + (
+      hasFixesNonIntersectedFixes
+      ? ":" : ""), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    if (hasFixesNonIntersectedFixes) {
+      label.append(" select a problem to see its quick fixes");
+    }
+
     if (!hasFixes) {
       label.setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 6, 0));
     }
-    label.setFont(new Font(font.getFontName(), Font.BOLD, font.getSize()));
     return label;
   }
 

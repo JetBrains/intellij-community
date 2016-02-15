@@ -685,7 +685,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
               if (!isFound) {
                 result.remove(clazz);
                 if (result.isEmpty()) {
-                  return null;
+                  return QuickFixAction.EMPTY;
                 }
               }
             }
