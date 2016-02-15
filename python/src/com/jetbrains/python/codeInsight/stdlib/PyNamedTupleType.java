@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyElementImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -117,51 +116,60 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @Nullable
   public static PyType fromCall(@NotNull PyCallExpression call, @NotNull TypeEvalContext context, int level) {
     final String name = PyPsiUtils.strValue(call.getArgument(0, PyExpression.class));
-    final PyExpression fieldNamesExpression = resolveFieldNamesExpression(call, context);
-    if (name == null || fieldNamesExpression == null || !context.maySwitchToAST(fieldNamesExpression)) {
+    final PyExpression fieldsExpression = resolveFieldsExpression(call, context);
+
+    if (name == null || fieldsExpression == null || !context.maySwitchToAST(fieldsExpression)) {
       return null;
     }
-    List<String> fieldNames = null;
-    if (fieldNamesExpression instanceof PySequenceExpression) {
-      fieldNames = PyUtil.strListValue(fieldNamesExpression);
-    }
-    else {
-      final String fieldNamesString = PyPsiUtils.strValue(fieldNamesExpression);
-      if (fieldNamesString != null) {
-        fieldNames = parseFieldNamesString(fieldNamesString);
-      }
-    }
+
+    final List<String> fieldNames = getFieldNames(fieldsExpression);
+
     if (fieldNames != null) {
       PyClass tuple = PyBuiltinCache.getInstance(call).getClass(PyNames.FAKE_NAMEDTUPLE);
       if (tuple != null) {
         return new PyNamedTupleType(tuple, call, name, fieldNames, level);
       }
     }
+
     return null;
   }
 
   @Nullable
-  private static PyExpression resolveFieldNamesExpression(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
-    final PyExpression fieldNamesExpression = PyPsiUtils.flattenParens(call.getArgument(1, PyExpression.class));
+  private static PyExpression resolveFieldsExpression(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+    final PyExpression fieldsExpression = PyPsiUtils.flattenParens(call.getArgument(1, PyExpression.class));
 
-    if (fieldNamesExpression instanceof PyReferenceExpression) {
+    if (fieldsExpression instanceof PyReferenceExpression) {
       final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-      final QualifiedResolveResult resolveResult = ((PyReferenceExpression)fieldNamesExpression).followAssignmentsChain(resolveContext);
+      final QualifiedResolveResult resolveResult = ((PyReferenceExpression)fieldsExpression).followAssignmentsChain(resolveContext);
 
-      final PsiElement resolvedFieldNamesExpression = resolveResult.getElement();
+      final PsiElement resolvedFieldsExpression = resolveResult.getElement();
 
-      if (resolvedFieldNamesExpression instanceof PyExpression) {
-        return (PyExpression)resolvedFieldNamesExpression;
+      if (resolvedFieldsExpression instanceof PyExpression) {
+        return (PyExpression)resolvedFieldsExpression;
       }
     }
 
-    return fieldNamesExpression;
+    return fieldsExpression;
   }
 
-  @NotNull
-  private static List<String> parseFieldNamesString(@NotNull String fieldNamesString) {
-    List<String> result = new ArrayList<String>();
-    for(String name: StringUtil.tokenize(fieldNamesString, ", ")) {
+  @Nullable
+  private static List<String> getFieldNames(@NotNull PyExpression fieldsExpression) {
+    if (fieldsExpression instanceof PySequenceExpression) {
+      return PyUtil.strListValue(fieldsExpression);
+    }
+    else {
+      return parseFieldNames(PyPsiUtils.strValue(fieldsExpression));
+    }
+  }
+
+  @Nullable
+  private static List<String> parseFieldNames(@Nullable String fieldsString) {
+    if (fieldsString == null) {
+      return null;
+    }
+
+    final List<String> result = new ArrayList<String>();
+    for (String name : StringUtil.tokenize(fieldsString, ", ")) {
       result.add(name);
     }
     return result;
