@@ -1,0 +1,254 @@
+[
+    [a, [a, [a, [a, [a, [a, [a, [a, [a, [a,
+    [a, [a, [a, [a, [a, [a, [a, [a, [a, [a,
+    [a, [a, [a, [a, [a, [a, [a, [a, [a, [a,
+    [a, [a, [a, [a, [a, [a, [a, [a, [a, [a,
+]
+-----
+Groovy script
+  Generalized list
+    PsiElement([)('[')
+    PsiWhiteSpace('\n    ')
+    Generalized list
+      PsiElement([)('[')
+      Reference expression
+        PsiElement(identifier)('a')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Generalized list
+        PsiElement([)('[')
+        Reference expression
+          PsiElement(identifier)('a')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Generalized list
+          PsiElement([)('[')
+          Reference expression
+            PsiElement(identifier)('a')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Generalized list
+            PsiElement([)('[')
+            Reference expression
+              PsiElement(identifier)('a')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Generalized list
+              PsiElement([)('[')
+              Reference expression
+                PsiElement(identifier)('a')
+              PsiElement(,)(',')
+              PsiWhiteSpace(' ')
+              Generalized list
+                PsiElement([)('[')
+                Reference expression
+                  PsiElement(identifier)('a')
+                PsiElement(,)(',')
+                PsiWhiteSpace(' ')
+                Generalized list
+                  PsiElement([)('[')
+                  Reference expression
+                    PsiElement(identifier)('a')
+                  PsiElement(,)(',')
+                  PsiWhiteSpace(' ')
+                  Generalized list
+                    PsiElement([)('[')
+                    Reference expression
+                      PsiElement(identifier)('a')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    Generalized list
+                      PsiElement([)('[')
+                      Reference expression
+                        PsiElement(identifier)('a')
+                      PsiElement(,)(',')
+                      PsiWhiteSpace(' ')
+                      Generalized list
+                        PsiElement([)('[')
+                        Reference expression
+                          PsiElement(identifier)('a')
+                        PsiElement(,)(',')
+                        PsiWhiteSpace('\n    ')
+                        Generalized list
+                          PsiElement([)('[')
+                          Reference expression
+                            PsiElement(identifier)('a')
+                          PsiElement(,)(',')
+                          PsiWhiteSpace(' ')
+                          Generalized list
+                            PsiElement([)('[')
+                            Reference expression
+                              PsiElement(identifier)('a')
+                            PsiElement(,)(',')
+                            PsiWhiteSpace(' ')
+                            Generalized list
+                              PsiElement([)('[')
+                              Reference expression
+                                PsiElement(identifier)('a')
+                              PsiElement(,)(',')
+                              PsiWhiteSpace(' ')
+                              Generalized list
+                                PsiElement([)('[')
+                                Reference expression
+                                  PsiElement(identifier)('a')
+                                PsiElement(,)(',')
+                                PsiWhiteSpace(' ')
+                                Generalized list
+                                  PsiElement([)('[')
+                                  Reference expression
+                                    PsiElement(identifier)('a')
+                                  PsiElement(,)(',')
+                                  PsiWhiteSpace(' ')
+                                  Generalized list
+                                    PsiElement([)('[')
+                                    Reference expression
+                                      PsiElement(identifier)('a')
+                                    PsiElement(,)(',')
+                                    PsiWhiteSpace(' ')
+                                    Generalized list
+                                      PsiElement([)('[')
+                                      Reference expression
+                                        PsiElement(identifier)('a')
+                                      PsiElement(,)(',')
+                                      PsiWhiteSpace(' ')
+                                      Generalized list
+                                        PsiElement([)('[')
+                                        Reference expression
+                                          PsiElement(identifier)('a')
+                                        PsiElement(,)(',')
+                                        PsiWhiteSpace(' ')
+                                        Generalized list
+                                          PsiElement([)('[')
+                                          Reference expression
+                                            PsiElement(identifier)('a')
+                                          PsiElement(,)(',')
+                                          PsiWhiteSpace(' ')
+                                          Generalized list
+                                            PsiElement([)('[')
+                                            Reference expression
+                                              PsiElement(identifier)('a')
+                                            PsiElement(,)(',')
+                                            PsiWhiteSpace('\n    ')
+                                            Generalized list
+                                              PsiElement([)('[')
+                                              Reference expression
+                                                PsiElement(identifier)('a')
+                                              PsiElement(,)(',')
+                                              PsiWhiteSpace(' ')
+                                              Generalized list
+                                                PsiElement([)('[')
+                                                Reference expression
+                                                  PsiElement(identifier)('a')
+                                                PsiElement(,)(',')
+                                                PsiWhiteSpace(' ')
+                                                Generalized list
+                                                  PsiElement([)('[')
+                                                  Reference expression
+                                                    PsiElement(identifier)('a')
+                                                  PsiElement(,)(',')
+                                                  PsiWhiteSpace(' ')
+                                                  Generalized list
+                                                    PsiElement([)('[')
+                                                    Reference expression
+                                                      PsiElement(identifier)('a')
+                                                    PsiElement(,)(',')
+                                                    PsiWhiteSpace(' ')
+                                                    Generalized list
+                                                      PsiElement([)('[')
+                                                      Reference expression
+                                                        PsiElement(identifier)('a')
+                                                      PsiElement(,)(',')
+                                                      PsiWhiteSpace(' ')
+                                                      Generalized list
+                                                        PsiElement([)('[')
+                                                        Reference expression
+                                                          PsiElement(identifier)('a')
+                                                        PsiElement(,)(',')
+                                                        PsiWhiteSpace(' ')
+                                                        Generalized list
+                                                          PsiElement([)('[')
+                                                          Reference expression
+                                                            PsiElement(identifier)('a')
+                                                          PsiElement(,)(',')
+                                                          PsiWhiteSpace(' ')
+                                                          Generalized list
+                                                            PsiElement([)('[')
+                                                            Reference expression
+                                                              PsiElement(identifier)('a')
+                                                            PsiElement(,)(',')
+                                                            PsiWhiteSpace(' ')
+                                                            Generalized list
+                                                              PsiElement([)('[')
+                                                              Reference expression
+                                                                PsiElement(identifier)('a')
+                                                              PsiElement(,)(',')
+                                                              PsiWhiteSpace(' ')
+                                                              Generalized list
+                                                                PsiElement([)('[')
+                                                                Reference expression
+                                                                  PsiElement(identifier)('a')
+                                                                PsiElement(,)(',')
+                                                                PsiWhiteSpace('\n    ')
+                                                                Generalized list
+                                                                  PsiElement([)('[')
+                                                                  Reference expression
+                                                                    PsiElement(identifier)('a')
+                                                                  PsiElement(,)(',')
+                                                                  PsiWhiteSpace(' ')
+                                                                  Generalized list
+                                                                    PsiElement([)('[')
+                                                                    Reference expression
+                                                                      PsiElement(identifier)('a')
+                                                                    PsiElement(,)(',')
+                                                                    PsiWhiteSpace(' ')
+                                                                    Generalized list
+                                                                      PsiElement([)('[')
+                                                                      Reference expression
+                                                                        PsiElement(identifier)('a')
+                                                                      PsiElement(,)(',')
+                                                                      PsiWhiteSpace(' ')
+                                                                      Generalized list
+                                                                        PsiElement([)('[')
+                                                                        Reference expression
+                                                                          PsiElement(identifier)('a')
+                                                                        PsiElement(,)(',')
+                                                                        PsiWhiteSpace(' ')
+                                                                        Generalized list
+                                                                          PsiElement([)('[')
+                                                                          Reference expression
+                                                                            PsiElement(identifier)('a')
+                                                                          PsiElement(,)(',')
+                                                                          PsiWhiteSpace(' ')
+                                                                          Generalized list
+                                                                            PsiElement([)('[')
+                                                                            Reference expression
+                                                                              PsiElement(identifier)('a')
+                                                                            PsiElement(,)(',')
+                                                                            PsiWhiteSpace(' ')
+                                                                            Generalized list
+                                                                              PsiElement([)('[')
+                                                                              Reference expression
+                                                                                PsiElement(identifier)('a')
+                                                                              PsiElement(,)(',')
+                                                                              PsiWhiteSpace(' ')
+                                                                              Generalized list
+                                                                                PsiElement([)('[')
+                                                                                Reference expression
+                                                                                  PsiElement(identifier)('a')
+                                                                                PsiElement(,)(',')
+                                                                                PsiWhiteSpace(' ')
+                                                                                Generalized list
+                                                                                  PsiElement([)('[')
+                                                                                  Reference expression
+                                                                                    PsiElement(identifier)('a')
+                                                                                  PsiElement(,)(',')
+                                                                                  PsiWhiteSpace(' ')
+                                                                                  Generalized list
+                                                                                    PsiElement([)('[')
+                                                                                    Reference expression
+                                                                                      PsiElement(identifier)('a')
+                                                                                    PsiElement(,)(',')
+                                                                                    PsiWhiteSpace('\n')
+                                                                                    PsiElement(])(']')
+                                                                                  PsiErrorElement:']' expected
+                                                                                    <empty list>
