@@ -113,7 +113,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   private final FileStatusMap myFileStatusMap;
   private DaemonCodeAnalyzerSettings myLastSettings;
 
-  private volatile IntentionHintComponent myLastIntentionHint;
   private volatile boolean myDisposed;     // the only possible transition: false -> true
   private volatile boolean myInitialized;  // the only possible transition: false -> true
 
@@ -722,7 +721,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       return;
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
-    hideLastIntentionHint();
+    hideLastIntentionHint(editor);
     
     if (editor.getCaretModel().getCaretCount() > 1) return;
     
@@ -730,21 +729,16 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     if (hasToRecreate) {
       hintComponent.recreate();
     }
-    myLastIntentionHint = hintComponent;
   }
 
-  void hideLastIntentionHint() {
+  void hideLastIntentionHint(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    IntentionHintComponent hint = myLastIntentionHint;
-    if (hint != null && hint.isVisible()) {
-      hint.hide();
-      myLastIntentionHint = null;
-    }
+    IntentionHintComponent.hideLastIntentionHint(editor);
   }
 
   @Nullable
-  public IntentionHintComponent getLastIntentionHint() {
-    return myLastIntentionHint;
+  public IntentionHintComponent getLastIntentionHint(@NotNull Editor editor) {
+    return IntentionHintComponent.getLastIntentionHint(editor);
   }
 
   @Nullable

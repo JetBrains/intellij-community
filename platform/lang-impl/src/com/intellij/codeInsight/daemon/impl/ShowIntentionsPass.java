@@ -261,7 +261,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   private void updateActions(@NotNull DaemonCodeAnalyzerImpl codeAnalyzer) {
-    IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
+    IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint(myEditor);
     if (!myShowBulb || hintComponent == null || !hintComponent.isForEditor(myEditor)) {
       return;
     }

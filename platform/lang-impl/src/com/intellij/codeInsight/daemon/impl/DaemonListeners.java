@@ -189,7 +189,7 @@ public class DaemonListeners implements Disposable {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         final Editor editor = e.getEditor();
-        if (!editor.getComponent().isShowing() && !application.isUnitTestMode() ||
+        if (!editor.getComponent().isShowing() && !application.isUnitTestMode() && !application.isOnAir() ||
             !worthBothering(editor.getDocument(), editor.getProject())) {
           return; //no need to stop daemon if something happened in the console
         }
@@ -197,10 +197,10 @@ public class DaemonListeners implements Disposable {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              if (!editor.getComponent().isShowing() || myProject.isDisposed()) {
+              if ((!application.isOnAir() && !editor.getComponent().isShowing()) || myProject.isDisposed()) {
                 return;
               }
-              myDaemonCodeAnalyzer.hideLastIntentionHint();
+              myDaemonCodeAnalyzer.hideLastIntentionHint(editor);
             }
           }, ModalityState.current());
         }
@@ -247,12 +247,12 @@ public class DaemonListeners implements Disposable {
       }
 
       @Override
-      public void editorReleased(@NotNull EditorFactoryEvent event) {
+      public void editorReleased(@NotNull final EditorFactoryEvent event) {
         // mem leak after closing last editor otherwise
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            myDaemonCodeAnalyzer.hideLastIntentionHint();
+            myDaemonCodeAnalyzer.hideLastIntentionHint(event.getEditor());
           }
         });
       }

@@ -71,6 +71,14 @@ public abstract class IntentionHintComponent implements Disposable {
     return IntentionHintComponentProvider.SERVICE.getInstance().showIntentionHint(project, file, editor, intentions, showExpanded);
   }
 
+  public static void hideLastIntentionHint(@NotNull Editor editor) {
+    IntentionHintComponentProvider.SERVICE.getInstance().hideLastIntentionHint(editor);
+  }
+
+  public static IntentionHintComponent getLastIntentionHint(@NotNull Editor editor) {
+    return IntentionHintComponentProvider.SERVICE.getInstance().getLastIntentionHint(editor);
+  }
+
   @NotNull
   public static IntentionHintComponent showIntentionHint(@NotNull final Project project,
                                                              @NotNull PsiFile file,
