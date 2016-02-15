@@ -21,6 +21,8 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.runBatchUpdate
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.options.ExternalizableScheme
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemesManagerFactory
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -28,12 +30,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.util.SmartList
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.ui.UIUtil
 import gnu.trove.THashSet
+import org.eclipse.jgit.errors.NoRemoteRepositoryException
 import java.util.*
-
-private val LOG_1 = org.jetbrains.settingsRepository.LOG
 
 internal class SyncManager(private val icsManager: IcsManager, private val autoSyncManager: AutoSyncManager) {
   @Volatile var writeAndDeleteProhibited = false
@@ -61,11 +63,11 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
                 // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
               }
               catch (e: ProcessCanceledException) {
-                LOG_1.warn("Canceled")
+                LOG.warn("Canceled")
                 return
               }
               catch (e: Throwable) {
-                LOG_1.error(e)
+                LOG.error(e)
 
                 // "RESET_TO_*" will do "reset hard", so, probably, error will be gone, so, we can continue operation
                 if (syncType == SyncType.MERGE) {
@@ -110,23 +112,24 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
               }
             }
             catch (e: ProcessCanceledException) {
-              LOG_1.debug("Canceled")
+              LOG.debug("Canceled")
               return
             }
             catch (e: Throwable) {
               if (e !is AuthenticationException && e !is NoRemoteRepositoryException && e !is CannotResolveConflictInTestMode) {
-                LOG_1.error(e)
+                LOG.error(e)
               }
               exception = e
               return
             }
 
             icsManager.repositoryActive = true
+            val isSmartSchemeReload = syncType != SyncType.OVERWRITE_LOCAL
             if (updateResult != null) {
               val app = ApplicationManager.getApplication()
-              restartApplication = updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult!!, app.messageBus)
+              restartApplication = updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult!!, app.messageBus, syncType == SyncType.OVERWRITE_LOCAL)
             }
-            if (!restartApplication && syncType == SyncType.OVERWRITE_LOCAL) {
+            if (!restartApplication && !isSmartSchemeReload) {
               (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
                 it.reload()
               }
@@ -150,10 +153,30 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
   }
 }
 
-internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateResult: UpdateResult, messageBus: MessageBus): Boolean {
+internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateResult: UpdateResult, messageBus: MessageBus, reloadAllSchemes: Boolean = false): Boolean {
   val changedComponentNames = LinkedHashSet<String>()
-  val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted)
-  if (changed.isEmpty() && deleted.isEmpty()) {
+  val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted, { toIdeaPath(it) })
+
+  val schemeManagersToReload = SmartList<SchemeManagerImpl<Scheme, ExternalizableScheme>>()
+  (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
+    if (reloadAllSchemes) {
+      schemeManagersToReload.add(it)
+    }
+    else {
+      for (path in updateResult.changed) {
+        if (it.fileSpec == toIdeaPath(path)) {
+          schemeManagersToReload.add(it)
+        }
+      }
+      for (path in updateResult.deleted) {
+        if (it.fileSpec == toIdeaPath(path)) {
+          schemeManagersToReload.add(it)
+        }
+      }
+    }
+  }
+
+  if (changed.isEmpty() && deleted.isEmpty() && schemeManagersToReload.isEmpty()) {
     return false
   }
 
@@ -161,6 +184,10 @@ internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateR
     val notReloadableComponents: Collection<String>
     updateStateStorage(changedComponentNames, changed, false)
     updateStateStorage(changedComponentNames, deleted, true)
+
+    for (schemeManager in schemeManagersToReload) {
+      schemeManager.reload()
+    }
 
     if (changedComponentNames.isEmpty()) {
       return@Computable false
@@ -174,10 +201,7 @@ internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateR
       store.reinitComponents(changedComponentNames, changedStorageSet, notReloadableComponents)
     }
 
-    if (notReloadableComponents.isEmpty()) {
-      return@Computable false
-    }
-    askToRestart(store, notReloadableComponents, null, true)
+    !notReloadableComponents.isEmpty() && askToRestart(store, notReloadableComponents, null, true)
   })!!
 }
 
@@ -187,7 +211,7 @@ private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateS
       (stateStorage as XmlElementStorage).updatedFromStreamProvider(changedComponentNames, deleted)
     }
     catch (e: Throwable) {
-      LOG_1.error(e)
+      LOG.error(e)
     }
   }
 }

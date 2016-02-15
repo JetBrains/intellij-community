@@ -107,7 +107,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourKeymapManagerInitialized = true;
   }
-  
+
   public static int getMultiCaretActionModifier() {
     return SystemInfo.isMac ? KeyEvent.VK_ALT : KeyEvent.VK_CONTROL;
   }
@@ -204,10 +204,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     Element child = state.getChild(ACTIVE_KEYMAP);
     String activeKeymapName = child == null ? null : child.getAttributeValue(NAME_ATTRIBUTE);
     if (!StringUtil.isEmptyOrSpaces(activeKeymapName)) {
-      Keymap keymap = getKeymap(activeKeymapName);
-      if (keymap != null) {
-        setActiveKeymap(keymap);
-      }
+      mySchemesManager.setCurrentSchemeName(activeKeymapName);
     }
   }
 
