@@ -103,6 +103,10 @@ class EditorSizeAdjustmentStrategy {
     scheduleSizeUpdate(editor);
     return result;
   }
+  
+  void cancelAllRequests() {
+    myAlarm.cancelAllRequests();
+  }
 
   /**
    * Removes old timings.

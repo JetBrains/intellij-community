@@ -235,9 +235,16 @@ public class StudyUtils {
     if (course == null) {
       return null;
     }
-    final VirtualFile taskDir = file.getParent();
+    VirtualFile taskDir = file.getParent();
     if (taskDir == null) {
       return null;
+    }
+    //need this because of multi-module generation
+    if ("src".equals(taskDir.getName())) {
+      taskDir = taskDir.getParent();
+      if (taskDir == null) {
+        return null;
+      }
     }
     final String taskDirName = taskDir.getName();
     if (taskDirName.contains(EduNames.TASK)) {
@@ -392,6 +399,12 @@ public class StudyUtils {
     }
     if (taskDirectory != null) {
       VirtualFile taskTextFile = taskDirectory.findChild(EduNames.TASK_HTML);
+      if (taskTextFile == null) {
+        VirtualFile srcDir = taskDirectory.findChild("src");
+        if (srcDir != null) {
+           taskTextFile = srcDir.findChild(EduNames.TASK_HTML);
+        }
+      }
       if (taskTextFile != null) {
         try {
           return FileUtil.loadTextAndClose(taskTextFile.getInputStream());

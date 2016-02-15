@@ -46,10 +46,10 @@ import java.util.Map;
 public class StudyProjectGenerator {
   private static final Logger LOG = Logger.getInstance(StudyProjectGenerator.class.getName());
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
-  private static final File ourCoursesDir = new File(PathManager.getConfigPath(), "courses");
+  protected static final File ourCoursesDir = new File(PathManager.getConfigPath(), "courses");
   private static final String CACHE_NAME = "courseNames.txt";
   private List<CourseInfo> myCourses = new ArrayList<>();
-  private CourseInfo mySelectedCourseInfo;
+  protected CourseInfo mySelectedCourseInfo;
   private static final String COURSE_NAME_ATTRIBUTE = "name";
   private static final String COURSE_DESCRIPTION = "description";
   public static final String AUTHOR_ATTRIBUTE = "authors";
@@ -82,7 +82,7 @@ public class StudyProjectGenerator {
                                                     })));
   }
 
-  private Course getCourse() {
+  protected Course getCourse() {
     Reader reader = null;
     try {
       final File courseFile = new File(new File(ourCoursesDir, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
