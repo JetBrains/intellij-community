@@ -118,6 +118,11 @@ class ThreadTracer:
                     # print('skipped: trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
                     return None
 
+            # ignore files matching stepping filters
+            if additional_info.pydev_step_cmd != -1 and py_db.is_filter_enabled and \
+                    py_db.is_ignored_by_filters(abs_path_real_path_and_base[1]):
+                return None
+
             # print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
             if additional_info.is_tracing:
                 return None  #we don't wan't to trace code invoked from pydevd_frame.trace_dispatch

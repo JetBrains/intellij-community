@@ -35,6 +35,7 @@ import static java.util.Collections.singletonList;
 public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> implements Getter<PyDebuggerSettings> {
   private boolean mySteppingFiltersEnabled;
   private @NotNull List<PySteppingFilter> mySteppingFilters;
+  public static final String FILTERS_DIVIDER = ";";
 
   public PyDebuggerSettings() {
     super("python");
@@ -56,6 +57,17 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
   @NotNull
   public List<PySteppingFilter> getSteppingFilters() {
     return mySteppingFilters;
+  }
+
+  @NotNull
+  public String getSteppingFiltersStringPresentation() {
+    StringBuilder sb = new StringBuilder();
+    for (PySteppingFilter filter : mySteppingFilters) {
+      if (filter.isEnabled()) {
+        sb.append(filter.getFilter()).append(FILTERS_DIVIDER);
+      }
+    }
+    return sb.toString();
   }
 
   public void setSteppingFilters(@NotNull List<PySteppingFilter> steppingFilters) {

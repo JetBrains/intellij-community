@@ -45,6 +45,26 @@ public class PySteppingFilter {
   }
 
   public void setFilter(@NotNull String filter) {
-    myFilter = filter;
+    myFilter = filter.replace('\\', '/');
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof PySteppingFilter)) return false;
+
+    PySteppingFilter filter = (PySteppingFilter)o;
+
+    if (isEnabled() != filter.isEnabled()) return false;
+    if (!getFilter().equals(filter.getFilter())) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = (isEnabled() ? 1 : 0);
+    result = 31 * result + getFilter().hashCode();
+    return result;
   }
 }
