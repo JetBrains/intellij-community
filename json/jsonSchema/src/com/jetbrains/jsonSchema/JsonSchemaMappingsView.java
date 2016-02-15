@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit;
  * @author Irina.Chernushina on 2/2/2016.
  */
 public class JsonSchemaMappingsView {
+  private static final String ADD_SCHEMA_MAPPING = "settings.json.schema.add.mapping";
   private TableView<JsonSchemaMappingsConfigurationBase.Item> myTableView;
   private ToolbarDecorator myDecorator;
   private JComponent myComponent;
@@ -209,6 +210,7 @@ public class JsonSchemaMappingsView {
       builder.setNorthPanel(panel);
       builder.setPreferredFocusComponent(patternField);
       builder.setDimensionServiceKey("com.jetbrains.jsonSchema.JsonSchemaMappingsView#add");
+      builder.setHelpId(ADD_SCHEMA_MAPPING);
 
       final Getter<String> textGetter = new Getter<String>() {
         @Override
