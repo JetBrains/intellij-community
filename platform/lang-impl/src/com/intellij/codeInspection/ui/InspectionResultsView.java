@@ -134,12 +134,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT | SideBorder.RIGHT));
 
-    mySplitter.addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
-          myGlobalInspectionContext.setSplitterProportion(((Float)evt.getNewValue()).floatValue());
-        }
+    mySplitter.addPropertyChangeListener(evt -> {
+      if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
+        myGlobalInspectionContext.setSplitterProportion(((Float)evt.getNewValue()).floatValue());
       }
     });
     add(mySplitter, BorderLayout.CENTER);
@@ -149,13 +146,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private void initTreeListeners() {
-    myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-      @Override
-      public void valueChanged(TreeSelectionEvent e) {
-        syncRightPanel();
-        if (isAutoScrollMode()) {
-          OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(InspectionResultsView.this), false);
-        }
+    myTree.getSelectionModel().addTreeSelectionListener(e -> {
+      syncRightPanel();
+      if (isAutoScrollMode()) {
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(InspectionResultsView.this), false);
       }
     });
 
@@ -846,6 +840,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   public AnalysisScope getScope() {
     return myScope;
+  }
+
+  public void updateRightPanel() {
+    syncRightPanel();
   }
 
   private class CloseAction extends AnAction implements DumbAware {
