@@ -1,0 +1,1 @@
+print "first is {<caret>}, second is {}".format(1, 2)

@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,13 +31,15 @@ import org.jetbrains.annotations.Nullable;
 public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiteralExpression> implements PsiReferenceEx{
   private final int myPosition;
   private final PyStringFormatParser.SubstitutionChunk myChunk;
+  private final boolean myIsPercent;
   private boolean myIgnoreUnresolved = false;
 
   public PySubstitutionChunkReference(@NotNull final PyStringLiteralExpression element,
-                                      @NotNull final PyStringFormatParser.SubstitutionChunk chunk, final int position) {
+                                      @NotNull final PyStringFormatParser.SubstitutionChunk chunk, final int position, boolean isPercent) {
     super(element, getKeyWordRange(element, chunk));
     myChunk = chunk;
     myPosition = position;
+    myIsPercent = isPercent;
   }
   
   @Nullable
@@ -64,8 +67,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   @Nullable
   @Override
   public PsiElement resolve() {
-    boolean isPercentString = myElement.getParent() instanceof PyBinaryExpression;
-     if (isPercentString) {
+     if (myIsPercent) {
       return resolvePercentString();
     }
     else {
@@ -91,7 +93,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
         if (position < arguments.length) return arguments[position];
       
         if (arguments[0] instanceof PyBinaryExpression && ((PyBinaryExpression)arguments[0]).isOperator("+")) {
-          return processNotNestedBinaryExpression((PyBinaryExpression)arguments[0]);
+          return resolveNotNestedBinaryExpression((PyBinaryExpression)arguments[0]);
         }
       }
     }
@@ -117,7 +119,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   private PsiElement resolveKeyword(PyExpression pyExpression) {
     PyExpression expression = pyExpression;
     if (pyExpression instanceof  PyParenthesizedExpression) {
-      expression = getContainedExpression((PyParenthesizedExpression)pyExpression);
+      expression = PyPsiUtils.flattenParens(pyExpression);
     }
     
     myIgnoreUnresolved = expression instanceof PyReferenceExpression;
@@ -130,6 +132,9 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
           }
       }
     }
+    else if (expression instanceof PyCallExpression) {
+      return resolveCallExpression((PyCallExpression)expression);
+    }
     
     return null;
   }
@@ -137,34 +142,37 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   @Nullable
   private PsiElement resolvePositional(PyExpression expression) {
     PsiElement result = null;
+    PyExpression containedExpression = expression;
     if (expression instanceof PyParenthesizedExpression) {
-      final PyExpression containedExpression = getContainedExpression((PyParenthesizedExpression)expression);
-      
-      if (containedExpression instanceof PyTupleExpression) {
-        final PyExpression[] elements = ((PySequenceExpression)containedExpression).getElements();
-        if (elements.length > myPosition) {
-          result = elements[myPosition];
-        }
-      }
-      else if (containedExpression instanceof PyBinaryExpression && ((PyBinaryExpression)containedExpression).isOperator("+")) {
-        result = processNotNestedBinaryExpression((PyBinaryExpression)containedExpression);
-      }
-      else if (containedExpression instanceof PyReferenceExpression) {
-        myIgnoreUnresolved = true;
+      containedExpression = PyPsiUtils.flattenParens(expression);
+    }
+    if (containedExpression instanceof PyTupleExpression) {
+      final PyExpression[] elements = ((PySequenceExpression)containedExpression).getElements();
+      if (elements.length > myPosition) {
+        result = elements[myPosition];
       }
     }
-    else if (expression instanceof PyReferenceExpression) {
+    else if (containedExpression instanceof PyBinaryExpression && ((PyBinaryExpression)containedExpression).isOperator("+")) {
+      result = resolveNotNestedBinaryExpression((PyBinaryExpression)containedExpression);
+    }
+    else if (containedExpression instanceof PyLiteralExpression && myPosition == 0) {
+      return expression;
+    }
+    else if (containedExpression instanceof PyCallExpression) {
+      return resolveCallExpression((PyCallExpression)expression);
+    }
+    else if (containedExpression instanceof PyReferenceExpression) {
       myIgnoreUnresolved = true;
     }
     return result;
   }
 
   @Nullable
-  private PsiElement processNotNestedBinaryExpression(PyBinaryExpression containedExpression) {
+  private PsiElement resolveNotNestedBinaryExpression(PyBinaryExpression containedExpression) {
     PyExpression left = containedExpression.getLeftExpression();
     PyExpression right = containedExpression.getRightExpression();
     if (left instanceof PyParenthesizedExpression) {
-      PyExpression leftTuple = getContainedExpression((PyParenthesizedExpression)left);
+      PyExpression leftTuple = PyPsiUtils.flattenParens(left);
       if (leftTuple instanceof PyTupleExpression) {
         PyExpression[] leftTupleElements = ((PyTupleExpression)leftTuple).getElements();
         int leftTupleLength = leftTupleElements.length;
@@ -172,7 +180,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
           return leftTupleElements[myPosition];
         }
         if (right instanceof PyParenthesizedExpression) {
-          PyExpression rightTuple = ((PyParenthesizedExpression)right).getContainedExpression();
+          PyExpression rightTuple = PyPsiUtils.flattenParens(right);
           if (rightTuple instanceof PyTupleExpression) {
             PyExpression[] rightTupleElements = ((PyTupleExpression)rightTuple).getElements();
             int rightLength = rightTupleElements.length;
@@ -183,15 +191,6 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       }
     }
     return null;
-  }
-
-  @Nullable
-  private static PyExpression getContainedExpression(@NotNull final PyParenthesizedExpression parenthesizedExpression) {
-    PyExpression containedExpression = parenthesizedExpression.getContainedExpression();
-    while (containedExpression instanceof PyParenthesizedExpression) {
-      containedExpression = ((PyParenthesizedExpression)containedExpression).getContainedExpression();
-    }
-    return containedExpression;
   }
 
   @Nullable
@@ -218,6 +217,10 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
                 return key;
               }
             }
+            else {
+              myIgnoreUnresolved = true;
+              break;
+            }
           }
         }
         else {
@@ -227,7 +230,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
             elements = ((PyListLiteralExpression)pyExpression).getElements();
           }
           else if (pyExpression instanceof PyParenthesizedExpression) {
-            PyExpression expression = getContainedExpression((PyParenthesizedExpression)pyExpression);
+            PyExpression expression = PyPsiUtils.flattenParens(pyExpression);
             if (expression instanceof PyTupleExpression) {
               elements = ((PyTupleExpression)expression).getElements();
               }
@@ -238,12 +241,35 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
           }
         }        
       }
+      else if ((pyExpression = PsiTreeUtil.getChildOfType(args[0], PyCallExpression.class)) != null) {
+        return resolveCallExpression((PyCallExpression)pyExpression);
+      }
       else if (PsiTreeUtil.getChildOfType(args[0], PyReferenceExpression.class) != null) {
         myIgnoreUnresolved = true;
       }
     }
     return null;
   }
+
+  @Nullable
+  private PyExpression resolveCallExpression(PyCallExpression pyExpression) {
+    PyExpression callee = pyExpression.getCallee();
+    if (callee != null) {
+      String name = callee.getName();
+
+      if ("dict".equals(name)) {
+        PyArgumentList list = pyExpression.getArgumentList();
+        if (list != null) {
+          return list.getKeywordArgument(myChunk.getMappingKey());
+        }
+      }
+      else {
+        myIgnoreUnresolved = true;
+      }
+    }
+    return null;
+  }
+
   @NotNull
   @Override
   public Object[] getVariants() {

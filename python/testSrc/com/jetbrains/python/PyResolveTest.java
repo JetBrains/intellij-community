@@ -611,70 +611,75 @@ public class PyResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFunction.class, "__rmatmul__");
   }
 
-  //PY-2478
+  //PY-2748
   public void testFormatStringKWArgs() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyKeywordArgument);
     assertEquals("fst", ((PyKeywordArgument)target).getKeyword());
   }
 
-  //PY-2478
+  //PY-2748
   public void testFormatPositionalArgs() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyReferenceExpression);
     assertEquals("string", target.getText());
   }
 
-  //PY-2478
+  //PY-2748
   public void testFormatArgsAndKWargs() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyStringLiteralExpression);
   }
 
-  //PY-2478
+  //PY-2748
   public void testFormatArgsAndKWargs1() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyKeywordArgument);
     assertEquals("kwd", ((PyKeywordArgument)target).getKeyword());
   }
-  
+
+  //PY-2748
   public void testFormatStringWithPackedDictAsArgument() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyStringLiteralExpression);
     assertEquals("\"fst\"", target.getText());    
   }
 
+  //PY-2748
   public void testFormatStringWithPackedListAsArgument() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyNumericLiteralExpression);
     assertEquals("1", target.getText());
   }
 
+  //PY-2748
   public void testFormatStringWithPackedTupleAsArgument() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyStringLiteralExpression);
     assertEquals("\"snd\"", target.getText());
   }
-  
+
+  //PY-2748
   public void testFormatStringWithBinExprAsArg() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyStringLiteralExpression);
     assertEquals("\"snd\"", target.getText());
   }
-  
+
+  //PY-2748
   public void testFormatStringWithRefAsArgument() {
     PsiElement target = resolve();
     assertEquals(null, target);
   }
   
 
-  //PY-2478
+  //PY-2748
   public void testPercentPositionalArgs() {
     PsiElement target = resolve();
     assertTrue(target instanceof PyStringLiteralExpression);
   }
 
-  //PY-2478
+  //PY-2748
   public void testPercentKeyWordArgs() {
     PsiElement target = resolve();
     assertTrue(target instanceof PyStringLiteralExpression);
@@ -692,25 +697,44 @@ public class PyResolveTest extends PyResolveTestCase {
     assertEquals("snd", ((PyStringLiteralExpression)target).getStringValue());    
   }
 
-  //PY-2478
+  //PY-2748
   public void testPercentStringBinaryStatementArg() {
     PsiElement target = resolve();
     assertTrue(target instanceof PyStringLiteralExpression);
     assertEquals("1", ((PyStringLiteralExpression)target).getStringValue());
   }
 
-  //PY-2478
+  //PY-2748
   public void testPercentStringArgWithRedundantParentheses() {
     PsiElement target = resolve();
     assertTrue(target instanceof PyStringLiteralExpression);
     assertEquals("1", ((PyStringLiteralExpression)target).getStringValue());
   }
-  
+
+  //PY-2748
   public void testPercentStringWithRefAsArgument() {
     PsiElement target = resolve();
     assertEquals(null, target);    
   }
-  
+
+  //PY-2748
+  public void testPercentStringWithOneStringArgument() {
+    PsiElement target = resolve();
+    assertEquals("hello", ((PyStringLiteralExpression)target).getStringValue());
+  }
+
+  //PY-2748
+  public void testFormatStringPackedDictCall() {
+    PsiElement target = resolve();
+    assertEquals("fo", ((PyStringLiteralExpression)((PyKeywordArgument)target).getValueExpression()).getStringValue());
+  }
+
+  //PY-2748
+  public void testPercentStringDictCall() {
+    PsiElement target = resolve();
+    assertEquals("hello", ((PyStringLiteralExpression)((PyKeywordArgument)target).getValueExpression()).getStringValue());
+  }
+
 
   public void testGlobalNotDefinedAtTopLevel() {
     assertResolvesTo(PyTargetExpression.class, "foo");
