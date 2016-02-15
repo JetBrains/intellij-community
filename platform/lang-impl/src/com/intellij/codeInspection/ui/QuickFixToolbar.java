@@ -70,7 +70,7 @@ public class QuickFixToolbar extends JPanel {
       line.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
       panels.add((JPanel)add(line));
     }
-    if (multipleDescriptors) {
+    if (multipleDescriptors || !hasFixes) {
       panels.get(0).setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
     }
 
