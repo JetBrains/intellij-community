@@ -15,39 +15,19 @@
  */
 package git4idea.repo
 
-import com.intellij.openapi.vfs.LocalFileSystem
-import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
-import git4idea.branch.GitBranchesCollection
-import git4idea.config.GitVersion
 import git4idea.test.GitExecutor.*
-import git4idea.test.GitPlatformTest
 import git4idea.test.GitTestUtil
-import git4idea.test.GitTestUtil.initRepo
-import org.junit.Assume.assumeTrue
 import java.io.File
 
-class GitWorkTreeTest : GitPlatformTest() {
+class GitStandardWorkTreeTest : GitWorkTreeBaseTest() {
 
-  private lateinit var myMainRoot: String
-  private lateinit var myRepo : GitRepository
-
-  override fun setUp() {
-    super.setUp()
-    cd(myTestRoot)
-    assumeTrue(GitVersion.parse(git("version")).isLaterOrEqual(GitVersion(2, 5, 0, 0)))
-
+  override fun initMainRepo() : String {
     val mainDir = File(myTestRoot, "main")
     assertTrue(mainDir.mkdir())
-    myMainRoot = mainDir.path
-    initRepo(myMainRoot, true)
-
-    git("worktree add $myProjectPath")
-    val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(myProjectPath, GitUtil.DOT_GIT))
-    assertNotNull(gitDir)
-    myRepo = GitTestUtil.registerRepo(project, myProjectPath)
-    assertEquals(1, myGitRepositoryManager.repositories.size)
-    assertNotNull(myGitRepositoryManager.getRepositoryForRoot(myProjectRoot))
+    val path = mainDir.path
+    GitTestUtil.initRepo(path, true)
+    return path
   }
 
   fun `test local branches`() {
@@ -61,7 +41,7 @@ class GitWorkTreeTest : GitPlatformTest() {
     val branches = myRepo.branches
     val expectedBranches = listOf("master", "feature", "project") // 'project' is created automatically by `git worktree add`
     assertSameElements("Local branches are identified incorrectly",
-                       branches.localBranches.map {it.name}, expectedBranches)
+        branches.localBranches.map { it.name }, expectedBranches)
     assertBranchHash(masterHead, branches, "master")
     assertBranchHash(featureHead, branches, "feature")
   }
@@ -78,7 +58,8 @@ class GitWorkTreeTest : GitPlatformTest() {
 
     val branches = myRepo.branches
     assertSameElements("Remote branches are identified incorrectly",
-                       branches.remoteBranches.map {it.nameForLocalOperations}, listOf("origin/master", "origin/feature"))
+                       branches.remoteBranches.map { it.nameForLocalOperations },
+                       listOf("origin/master", "origin/feature"))
     assertBranchHash(masterHead, branches, "origin/master")
     assertBranchHash(featureHead, branches, "origin/feature")
   }
@@ -103,16 +84,13 @@ class GitWorkTreeTest : GitPlatformTest() {
     assertEquals("origin/master", trackInfo.remoteBranch.nameForLocalOperations)
   }
 
-  private fun setUpRemote() {
+  private fun setUpRemote(): String {
     cd(myTestRoot)
     git("clone --bare $myMainRoot parent.git")
     cd(myMainRoot)
     val parentPath = File(myTestRoot, "parent.git").path
     git("remote add origin $parentPath")
     git("push origin -u master")
-  }
-
-  private fun assertBranchHash(expectedHash: String, branches: GitBranchesCollection, branchName: String) {
-    assertEquals(expectedHash, branches.getHash(branches.findBranchByName(branchName)!!)!!.asString())
+    return parentPath
   }
 }
