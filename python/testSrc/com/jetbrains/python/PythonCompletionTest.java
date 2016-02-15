@@ -946,6 +946,31 @@ public class PythonCompletionTest extends PyTestCase {
     assertDoesntContain(variants, "_foo(self)");
   }
 
+  // PY-12425
+  public void testInstanceFromDefinedCallAttr() {
+    doTest();
+  }
+
+  // PY-12425
+  public void testInstanceFromFunctionAssignedToCallAttr() {
+    doTest();
+  }
+
+  // PY-12425
+  public void testInstanceFromCallableAssignedToCallAttr() {
+    doTest();
+  }
+
+  // PY-12425
+  public void testInstanceFromInheritedCallAttr() {
+    doTest();
+  }
+
+  // PY-12425
+  public void testInstanceFromProvidedCallAttr() {
+    doMultiFileTest();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";

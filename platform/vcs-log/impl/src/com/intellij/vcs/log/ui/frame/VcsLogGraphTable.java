@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
+import com.google.common.primitives.Ints;
 import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -437,7 +438,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
     public Selection(@NotNull VcsLogGraphTable table) {
       myTable = table;
-      List<Integer> selectedRows = ContainerUtil.sorted(toList(myTable.getSelectedRows()));
+      List<Integer> selectedRows = ContainerUtil.sorted(Ints.asList(myTable.getSelectedRows()));
       Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(myTable);
       myScrollToTop = visibleRows.first - 1 == 0;
 
@@ -464,14 +465,6 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
       myVisibleSelectedCommit = visibleSelectedCommit;
       myDelta = delta;
-    }
-
-    private static List<Integer> toList(int[] array) {
-      List<Integer> result = ContainerUtil.newArrayList();
-      for (int i : array) {
-        result.add(i);
-      }
-      return result;
     }
 
     public void restore(@NotNull VisibleGraph<Integer> newVisibleGraph, boolean scrollToSelection) {
