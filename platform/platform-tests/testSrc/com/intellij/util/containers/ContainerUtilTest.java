@@ -252,6 +252,16 @@ public class ContainerUtilTest extends TestCase {
     assertSame(EmptyIterator.getInstance(), iterator);
   }
 
+  public void testIdenticalItemsInLockFreeCOW() {
+    List<String> list = ContainerUtil.createLockFreeCopyOnWriteList(Arrays.asList("a", "b"));
+    list.add("a");
+    assertEquals(3, list.size());
+    list.remove("a");
+    assertEquals(2, list.size());
+    list.remove("a");
+    assertEquals(1, list.size());
+  }
+
   public void testLockFreeCOWIteratorRemove() {
     List<String> seq = Arrays.asList("0", "1", "2", "3", "4");
     LockFreeCopyOnWriteArrayList<String> my = (LockFreeCopyOnWriteArrayList<String>)ContainerUtil.createLockFreeCopyOnWriteList(seq);
