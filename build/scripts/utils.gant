@@ -411,6 +411,7 @@ binding.setVariable("platformImplementationModules", [
   "jps-model-impl",
   "jps-model-serialization",
   "json",
+  "jsonSchema",
   "lang-impl",
   "lvcs-impl",
   "platform-impl",
