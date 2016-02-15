@@ -35,6 +35,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor {
   private static final Logger LOG = Logger.getInstance(BaseOSProcessHandler.class);
@@ -288,6 +289,18 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     boolean result = super.waitFor();
     try {
       myWaitFor.waitFor();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    return result;
+  }
+
+  @Override
+  public boolean waitFor(long timeoutInMilliseconds) {
+    boolean result = super.waitFor(timeoutInMilliseconds);
+    try {
+      result &= myWaitFor.waitFor(timeoutInMilliseconds, TimeUnit.MILLISECONDS);
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
