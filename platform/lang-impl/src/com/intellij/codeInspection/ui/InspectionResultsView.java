@@ -371,17 +371,21 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private void syncRightPanel() {
+    releaseEditor();
     if (myTree.getSelectionModel().getSelectionCount() != 1) {
-      final JLabel multipleSelectionLabel = new JBLabel(InspectionViewNavigationPanel.getTitleText(false, false));
-      multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP);
-      multipleSelectionLabel.setBorder(IdeBorderFactory.createEmptyBorder(5, 7, 0, 0));
-      mySplitter.setSecondComponent(multipleSelectionLabel);
+      if (myTree.getSelectedToolWrapper() == null) {
+        final JLabel multipleSelectionLabel = new JBLabel(InspectionViewNavigationPanel.getTitleText(false, false));
+        multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP);
+        multipleSelectionLabel.setBorder(IdeBorderFactory.createEmptyBorder(5, 7, 0, 0));
+        mySplitter.setSecondComponent(multipleSelectionLabel);
+      } else {
+        showInRightPanel(null);
+      }
     }
     else {
       TreePath pathSelected = myTree.getSelectionModel().getLeadSelectionPath();
       if (pathSelected != null) {
         final InspectionTreeNode node = (InspectionTreeNode)pathSelected.getLastPathComponent();
-        releaseEditor();
         if (node instanceof RefElementNode) {
           final RefElementNode refElementNode = (RefElementNode)node;
           final CommonProblemDescriptor problem = refElementNode.getProblem();

@@ -109,6 +109,9 @@ public class InspectionTree extends Tree {
       Object[] nodes = path.getPath();
       for (int j = nodes.length - 1; j >= 0; j--) {
         Object node = nodes[j];
+        if (node instanceof InspectionGroupNode) {
+          return null;
+        }
         if (node instanceof InspectionNode) {
           InspectionToolWrapper wrapper = ((InspectionNode)node).getToolWrapper();
           if (toolWrapper == null) {

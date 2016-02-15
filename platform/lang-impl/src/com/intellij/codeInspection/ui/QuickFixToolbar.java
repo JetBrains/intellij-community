@@ -76,7 +76,7 @@ public class QuickFixToolbar extends JPanel {
 
     //fill(getBulbPlacement(hasFixes), QuickFixToolbar::createBulbIcon, panels);
     fill(getDescriptionLabelPlacement(multipleDescriptors),
-         () -> getLabel(fixes, (InspectionTreeNode)tree.getSelectionPath().getLastPathComponent(), problemCount), panels);
+         () -> getLabel(fixes, tree.getSelectionCount() == 1 ? (InspectionTreeNode)tree.getSelectionPath().getLastPathComponent() : null, problemCount), panels);
     fill(getFixesPlacement(hasFixes, multipleDescriptors), () -> createFixPanel(fixes), panels);
     fill(getSuppressPlacement(multipleDescriptors), () -> createSuppressionCombo(tree.getSelectedToolWrapper()
       , tree.getSelectionPath(), project), panels);
