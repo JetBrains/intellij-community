@@ -73,6 +73,7 @@
   </extensions>
   <extensions defaultExtensionNs="JavaScript">
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderFactory"/>
+    <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaSelfProviderFactory"/>
   </extensions>
 
   <extensionPoints>
