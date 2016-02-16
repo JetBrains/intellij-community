@@ -227,12 +227,21 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
       final ModifiableRootModel rootModel = moduleEditor.getModifiableRootModel();
       final ContentEntry[] contents = rootModel.getContentEntries();
+      final String moduleName = moduleEditor.getName();
+      Set<VirtualFile> sourceRoots = new HashSet<>();
+      for (ContentEntry content : contents) {
+        for (VirtualFile root : content.getSourceFolderFiles()) {
+          if (!sourceRoots.add(root)) {
+            throw new ConfigurationException(ProjectBundle.message("module.paths.validation.duplicate.source.root.in.same.module.error", root.getPresentableUrl(), moduleName));
+          }
+        }
+      }
+
       for (ContentEntry contentEntry : contents) {
         final VirtualFile contentRoot = contentEntry.getFile();
         if (contentRoot == null) {
           continue;
         }
-        final String moduleName = moduleEditor.getName();
         final String previousName = contentRootToModuleNameMap.put(contentRoot, moduleName);
         if (previousName != null && !previousName.equals(moduleName)) {
           throw new ConfigurationException(
