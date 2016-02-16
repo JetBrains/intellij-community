@@ -127,7 +127,7 @@ public class JsonSchemaMappingsView {
     return items;
   }
 
-  public void setItems(VirtualFile schemaFile, final List<JsonSchemaMappingsConfigurationBase.Item> data) {
+  public void setItems(String schemaFilePath, final List<JsonSchemaMappingsConfigurationBase.Item> data) {
     /*final ArrayList<JsonSchemaMappingsConfigurationBase.Item> copy = new ArrayList<JsonSchemaMappingsConfigurationBase.Item>();
     if (myProject != null && myProject.getBasePath() != null) {
       for (JsonSchemaMappingsConfigurationBase.Item item : copy) {
@@ -141,8 +141,9 @@ public class JsonSchemaMappingsView {
     } else {
       copy.addAll(data);
     }*/
-    mySchemaField.setText(FileUtil.toSystemDependentName(schemaFile.getPath()));
-    myTableView.setModelAndUpdateColumns(new ListTableModel<JsonSchemaMappingsConfigurationBase.Item>(createColumns(), new ArrayList<JsonSchemaMappingsConfigurationBase.Item>(data)));
+    mySchemaField.setText(schemaFilePath);
+    myTableView.setModelAndUpdateColumns(
+      new ListTableModel<JsonSchemaMappingsConfigurationBase.Item>(createColumns(), new ArrayList<JsonSchemaMappingsConfigurationBase.Item>(data)));
   }
 
   public String getSchemaSubPath() {
