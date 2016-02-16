@@ -270,6 +270,12 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
 
     lines {
+      ("A_B_o_o_Y_Z_ _A_B_ _ _Y_Z" - "A_B_o_o_Y_Z_ _A_B_u_u_Y_Z_ _A_B_ _ _Y_Z")
+      default(ins(9, 9, 7))
+      testAll()
+    }
+
+    lines {
       ("A_B_o_o_ _A_B_z_z" - "A_B_o_o_ _A_B_u_u_ _A_B_z_z")
       default(ins(5, 5, 5))
       testAll()

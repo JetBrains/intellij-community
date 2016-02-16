@@ -82,6 +82,9 @@ abstract class ChunkOptimizer<T> {
     int equalForward = expandForward(myData1, myData2, range1.end1, range1.end2, range1.end1 + count2, range1.end2 + count2);
     int equalBackward = expandBackward(myData1, myData2, range2.start1 - count1, range2.start2 - count1, range2.start1, range2.start2);
 
+    // nothing to do
+    if (equalForward == 0 && equalBackward == 0) return;
+
     // merge chunks left [A]B[B] -> [AB]B
     if (equalForward == count2) {
       myRanges.remove(myRanges.size() - 1);
@@ -226,12 +229,12 @@ abstract class ChunkOptimizer<T> {
       List<Line> touchLines = touchSide.select(myData1, myData2);
       int touchStart = touchSide.select(range2.start1, range2.start2);
 
-      int shiftForward = findNextUnimportantLine(touchLines, touchStart, equalForward, 0);
-      int shiftBackward = findPrevUnimportantLine(touchLines, touchStart - 1, equalBackward, 0);
+      int shiftForward = findNextUnimportantLine(touchLines, touchStart, equalForward + 1, 0);
+      int shiftBackward = findPrevUnimportantLine(touchLines, touchStart - 1, equalBackward + 1, 0);
 
       if (shiftForward == -1 && shiftBackward == -1 && myThreshold != 0) {
-        shiftForward = findNextUnimportantLine(touchLines, touchStart, equalForward, myThreshold);
-        shiftBackward = findPrevUnimportantLine(touchLines, touchStart - 1, equalBackward, myThreshold);
+        shiftForward = findNextUnimportantLine(touchLines, touchStart, equalForward + 1, myThreshold);
+        shiftBackward = findPrevUnimportantLine(touchLines, touchStart - 1, equalBackward + 1, myThreshold);
       }
 
       if (shiftForward == 0 || shiftBackward == 0) return 0;
