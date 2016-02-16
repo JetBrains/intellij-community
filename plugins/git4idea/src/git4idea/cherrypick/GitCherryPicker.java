@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
@@ -362,7 +361,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   private void removeCherryPickHead(@NotNull GitRepository repository) {
-    File cherryPickHeadFile = new File(repository.getGitDir().getPath(), CHERRY_PICK_HEAD_FILE);
+    File cherryPickHeadFile = repository.getRepositoryFiles().getCherryPickHead();
     final VirtualFile cherryPickHead = myPlatformFacade.getLocalFileSystem().refreshAndFindFileByIoFile(cherryPickHeadFile);
 
     if (cherryPickHead != null && cherryPickHead.exists()) {

@@ -44,6 +44,12 @@ public class MockGitRepository implements GitRepository {
 
   @NotNull
   @Override
+  public GitRepositoryFiles getRepositoryFiles() {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
   public GitUntrackedFilesHolder getUntrackedFilesHolder() {
     throw new UnsupportedOperationException();
   }
