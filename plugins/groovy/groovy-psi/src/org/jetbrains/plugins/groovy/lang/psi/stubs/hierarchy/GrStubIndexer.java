@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,9 @@ public class GrStubIndexer {
   }
 
   private static void processImport(GrImportStatementStub imp, List<Import> imports, Set<String> namesCache) {
-    String fullName = PsiNameHelper.getQualifiedClassName(imp.getReferenceText(), true);
+    String referenceText = imp.getReferenceText();
+    if (referenceText == null) return;
+    String fullName = PsiNameHelper.getQualifiedClassName(referenceText, true);
     if (imp.isOnDemand() || namesCache.contains(shortName(fullName))) {
       imports.add(new Import(fullName, imp.isStatic(), imp.isOnDemand(), imp.getAliasName()));
     }
