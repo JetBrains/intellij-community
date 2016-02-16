@@ -226,12 +226,12 @@ abstract class ChunkOptimizer<T> {
       List<Line> touchLines = touchSide.select(myData1, myData2);
       int touchStart = touchSide.select(range2.start1, range2.start2);
 
-      int shiftForward = findUnimportantLineShift(touchLines, touchStart, equalForward, true, 0);
-      int shiftBackward = findUnimportantLineShift(touchLines, touchStart - 1, equalBackward, false, 0);
+      int shiftForward = findNextUnimportantLine(touchLines, touchStart, equalForward, 0);
+      int shiftBackward = findPrevUnimportantLine(touchLines, touchStart - 1, equalBackward, 0);
 
       if (shiftForward == -1 && shiftBackward == -1 && myThreshold != 0) {
-        shiftForward = findUnimportantLineShift(touchLines, touchStart, equalForward, true, myThreshold);
-        shiftBackward = findUnimportantLineShift(touchLines, touchStart - 1, equalBackward, false, myThreshold);
+        shiftForward = findNextUnimportantLine(touchLines, touchStart, equalForward, myThreshold);
+        shiftBackward = findPrevUnimportantLine(touchLines, touchStart - 1, equalBackward, myThreshold);
       }
 
       if (shiftForward == 0 || shiftBackward == 0) return 0;
@@ -240,12 +240,16 @@ abstract class ChunkOptimizer<T> {
       return shiftForward != -1 ? shiftForward : -shiftBackward;
     }
 
-    private static int findUnimportantLineShift(@NotNull List<Line> lines, int offset, int count, boolean leftToRight, int threshold) {
+    private static int findNextUnimportantLine(@NotNull List<Line> lines, int offset, int count, int threshold) {
       for (int i = 0; i < count; i++) {
-        int index = leftToRight ? offset + i : offset - i;
-        if (lines.get(index).getNonSpaceChars() <= threshold) {
-          return i;
-        }
+        if (lines.get(offset + i).getNonSpaceChars() <= threshold) return i;
+      }
+      return -1;
+    }
+
+    private static int findPrevUnimportantLine(@NotNull List<Line> lines, int offset, int count, int threshold) {
+      for (int i = 0; i < count; i++) {
+        if (lines.get(offset - i).getNonSpaceChars() <= threshold) return i;
       }
       return -1;
     }
