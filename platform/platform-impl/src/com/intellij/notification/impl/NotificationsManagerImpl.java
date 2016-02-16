@@ -279,13 +279,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
   public static Window findWindowForBalloon(@Nullable Project project) {
     Window frame = WindowManager.getInstance().getFrame(project);
     if (frame == null && project == null) {
+      frame = (Window)WelcomeFrame.getInstance();
+    }
+    if (frame == null && project == null) {
       frame = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
       while (frame instanceof DialogWrapperDialog && ((DialogWrapperDialog)frame).getDialogWrapper().isModalProgress()) {
         frame = frame.getOwner();
       }
-    }
-    if (frame == null && project == null) {
-      frame = (Window)WelcomeFrame.getInstance();
     }
     return frame;
   }
@@ -434,11 +434,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
       }
 
       if (!defaultButton.isNull()) {
-        content.addPropertyChangeListener("ancestor", new PropertyChangeListener() {
+        UIUtil.addParentChangeListener(content, new PropertyChangeListener() {
           @Override
           public void propertyChange(PropertyChangeEvent event) {
             if (event.getOldValue() == null && event.getNewValue() != null) {
-              content.removePropertyChangeListener("ancestor", this);
+              UIUtil.removeParentChangeListener(content, this);
               JRootPane rootPane = UIUtil.getRootPane(content);
               if (rootPane != null) {
                 rootPane.setDefaultButton(defaultButton.get());
@@ -462,7 +462,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
     final BalloonLayoutData layoutData = new BalloonLayoutData();
     layoutDataRef.set(layoutData);
 
-    final Color foreground = new JBColor(Gray._0, Gray._191);
+    Color foregroundR = Gray._0;
+    Color foregroundD = Gray._191;
+    final Color foreground = new JBColor(foregroundR, foregroundD);
+
     final JBColor fillColor = new JBColor(Gray._242, new Color(78, 80, 82));
 
     final JEditorPane text = new JEditorPane() {
@@ -490,7 +493,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
     int prefSize = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null, fontStyle)).getPreferredSize().width;
     String style = prefSize > BalloonLayoutConfiguration.MaxWidth ? BalloonLayoutConfiguration.MaxWidthStyle : null;
 
-    text.setText(NotificationsUtil.buildHtml(notification, style, true, foreground, fontStyle));
+    String textR = NotificationsUtil.buildHtml(notification, style, true, foregroundR, fontStyle);
+    String textD = NotificationsUtil.buildHtml(notification, style, true, foregroundD, fontStyle);
+    LafHandler lafHandler = new LafHandler(text, textR, textD);
+    layoutData.lafHandler = lafHandler;
+
     text.setEditable(false);
     text.setOpaque(false);
 
@@ -639,9 +646,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
     content.add(centerPanel, BorderLayout.CENTER);
 
     if (notification.isTitle()) {
-      String titleValue = NotificationsUtil
-        .buildHtml(notification, StringUtil.defaultIfEmpty(fontStyle, "") + "white-space:nowrap;", false, foreground, null);
-      JLabel title = new JLabel(titleValue);
+      String titleStyle = StringUtil.defaultIfEmpty(fontStyle, "") + "white-space:nowrap;";
+      String titleR = NotificationsUtil.buildHtml(notification, titleStyle, false, foregroundR, null);
+      String titleD = NotificationsUtil.buildHtml(notification, titleStyle, false, foregroundD, null);
+      JLabel title = new JLabel();
+      lafHandler.setTitle(title, titleR, titleD);
       title.setOpaque(false);
       if (UIUtil.isUnderNimbusLookAndFeel()) {
         title.setBackground(UIUtil.TRANSPARENT_COLOR);
@@ -1047,6 +1056,46 @@ public class NotificationsManagerImpl extends NotificationsManager {
         int y = parent.getHeight() - size.height - myLayoutData.configuration.bottomSpaceHeight;
         myActionPanel.setBounds(0, y, width, size.height);
       }
+    }
+  }
+
+  private static class LafHandler implements Runnable {
+    private final JEditorPane myContent;
+    private final String myContentTextR;
+    private final String myContentTextD;
+
+    private JLabel myTitle;
+    private String myTitleTextR;
+    private String myTitleTextD;
+
+    public LafHandler(@NotNull JEditorPane content, @NotNull String textR, @NotNull String textD) {
+      myContent = content;
+      myContentTextR = textR;
+      myContentTextD = textD;
+      updateContent();
+    }
+
+    public void setTitle(@NotNull JLabel title, @NotNull String textR, @NotNull String textD) {
+      myTitle = title;
+      myTitleTextR = textR;
+      myTitleTextD = textD;
+      updateTitle();
+    }
+
+    private void updateTitle() {
+      myTitle.setText(UIUtil.isUnderDarcula() ? myTitleTextD : myTitleTextR);
+    }
+
+    private void updateContent() {
+      myContent.setText(UIUtil.isUnderDarcula() ? myContentTextD : myContentTextR);
+    }
+
+    @Override
+    public void run() {
+      if (myTitle != null) {
+        updateTitle();
+      }
+      updateContent();
     }
   }
 }
