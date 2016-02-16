@@ -17,6 +17,7 @@ package com.jetbrains.python.debugger.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SimpleConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -60,11 +61,11 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
   }
 
   @NotNull
-  public String getSteppingFiltersStringPresentation() {
+  public String getSteppingFiltersForProject(@NotNull Project project) {
     StringBuilder sb = new StringBuilder();
     for (PySteppingFilter filter : mySteppingFilters) {
       if (filter.isEnabled()) {
-        sb.append(filter.getSystemIndependentFilter()).append(FILTERS_DIVIDER);
+        sb.append(filter.getAbsolutePlatformIndependentFilter(project)).append(FILTERS_DIVIDER);
       }
     }
     return sb.toString();
