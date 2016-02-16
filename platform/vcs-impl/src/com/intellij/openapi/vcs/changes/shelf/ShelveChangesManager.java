@@ -873,6 +873,14 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   private void deleteListImpl(@NotNull final ShelvedChangeList changeList) {
     FileUtil.delete(new File(myFileProcessor.getBaseDir(), changeList.getName()));
+    //backward compatibility deletion: if we didn't preform resource migration
+    FileUtil.delete(new File(changeList.PATH));
+    for (ShelvedBinaryFile binaryFile : changeList.getBinaryFiles()) {
+      final String path = binaryFile.SHELVED_PATH;
+      if (path != null) {
+        FileUtil.delete(new File(path));
+      }
+    }
   }
 
   public void renameChangeList(final ShelvedChangeList changeList, final String newName) {
