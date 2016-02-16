@@ -40,6 +40,10 @@ public class DaemonTooltipUtil {
   }
 
   public static void showInfoTooltip(@NotNull final HighlightInfo info, @NotNull Editor editor, final int defaultOffset, final int currentWidth) {
+    showInfoTooltip(info, editor, defaultOffset, currentWidth, false);
+  }
+
+  public static void showInfoTooltip(@NotNull final HighlightInfo info, @NotNull Editor editor, final int defaultOffset, final int currentWidth, final boolean requestFocus) {
     if (info.getToolTip() == null) return;
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
 
@@ -56,7 +60,11 @@ public class DaemonTooltipUtil {
       editor.getComponent().getRootPane().getLayeredPane()
     );
 
-    TooltipController.getInstance().showTooltip(editor, p, info.getToolTip(), currentWidth, false, DAEMON_INFO_GROUP, new HintHint(editor, bestPoint).setAwtTooltip(true).setHighlighterType(true).setCalloutShift(
-      editor.getLineHeight() / 2 - 1));
+    HintHint hintHint = new HintHint(editor, bestPoint)
+      .setAwtTooltip(true)
+      .setHighlighterType(true)
+      .setRequestFocus(requestFocus)
+      .setCalloutShift(editor.getLineHeight() / 2 - 1);
+    TooltipController.getInstance().showTooltip(editor, p, info.getToolTip(), currentWidth, false, DAEMON_INFO_GROUP, hintHint);
   }
 }
