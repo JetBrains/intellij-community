@@ -332,7 +332,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   @Override
   public void dispose() {
-    releaseEditor();
+    releaseEditor(myPreviewEditor);
     mySplitter.dispose();
     myInspectionProfile = null;
     myDisposed = true;
@@ -422,7 +422,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         oldEditor.putUserData(PREVIEW_EDITOR_IS_REUSED_KEY, null);
       }
       else {
-        releaseEditor();
+        releaseEditor(oldEditor);
       }
     }
   }
@@ -967,10 +967,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return Collections.singletonList(new UsageInfo(element));
   }
 
-  private void releaseEditor() {
-    if (myPreviewEditor != null) {
-      EditorFactory.getInstance().releaseEditor(myPreviewEditor);
-      myPreviewEditor = null;
+  private static void releaseEditor(@Nullable Editor editor) {
+    if (editor != null && !editor.isDisposed()) {
+      EditorFactory.getInstance().releaseEditor(editor);
     }
   }
 }
