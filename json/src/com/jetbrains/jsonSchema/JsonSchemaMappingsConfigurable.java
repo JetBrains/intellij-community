@@ -243,6 +243,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   @Override
   public void apply() throws ConfigurationException {
     final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> uiList = getUiList(true);
+    validate(uiList);
     final Map<String, JsonSchemaMappingsConfigurationBase.SchemaInfo> appMap = new HashMap<String, JsonSchemaMappingsConfigurationBase.SchemaInfo>();
     final Map<String, JsonSchemaMappingsConfigurationBase.SchemaInfo> projectMap = new HashMap<String, JsonSchemaMappingsConfigurationBase.SchemaInfo>();
     for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : uiList) {
@@ -261,6 +262,16 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     for (Project project : projects) {
       final JsonSchemaService service = JsonSchemaService.Impl.get(project);
       if (service != null) service.reset();
+    }
+  }
+
+  private static void validate(@NotNull List<JsonSchemaMappingsConfigurationBase.SchemaInfo> list) throws ConfigurationException {
+    final Set<String> set = new HashSet<>();
+    for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : list) {
+      if (set.contains(info.getName())) {
+        throw new ConfigurationException("Duplicate schema name: '" + info.getName() + "'");
+      }
+      set.add(info.getName());
     }
   }
 
