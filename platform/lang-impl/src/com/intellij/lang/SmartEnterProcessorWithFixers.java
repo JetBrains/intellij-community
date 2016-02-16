@@ -119,6 +119,7 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
 
       PsiElement atCaret = getStatementAtCaret(editor, file);
       if (atCaret == null) {
+        processDefaultEnter(project, editor, file);
         return;
       }
 
@@ -146,6 +147,10 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
       LOG.error(e);
     }
   }
+
+  protected void processDefaultEnter(@NotNull final Project project,
+                                     @NotNull final Editor editor,
+                                     @NotNull final PsiFile file) {}
 
   protected void collectAllElements(@NotNull PsiElement element, @NotNull OrderedSet<PsiElement> result, boolean recursive) {
     result.add(0, element);
