@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -179,6 +179,9 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
         panel.add(checkBox, BorderLayout.CENTER);
         panel.setBackground(getBackground(false));
         label.setBackground(getBackground(selected));
+        if (!checkBox.isOpaque()) {
+          checkBox.setOpaque(true);
+        }
         checkBox.setBorder(null);
 
         PluginDescriptor pluginDescriptor = myFirstDescriptors.get(descriptor);
