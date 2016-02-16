@@ -21,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.ObjectWriter
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.*
 import java.nio.file.Path
@@ -58,7 +57,7 @@ class MyPrettyPrinter : DefaultPrettyPrinter() {
 }
 
 fun saveSettings(settings: IcsSettings, settingsFile: Path) {
-  val serialized = ObjectMapper().writer<ObjectWriter>(MyPrettyPrinter()).writeValueAsBytes(settings)
+  val serialized = ObjectMapper().writer(MyPrettyPrinter()).writeValueAsBytes(settings)
   if (serialized.size <= 2) {
     settingsFile.delete()
   }
