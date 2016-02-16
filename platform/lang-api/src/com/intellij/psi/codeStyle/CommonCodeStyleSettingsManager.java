@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,24 +18,28 @@ package com.intellij.psi.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Manages common code style settings for every language using them.
  *
  * @author Rustam Vishnyakov
  */
-public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
+public class CommonCodeStyleSettingsManager {
   private volatile Map<Language, CommonCodeStyleSettings> myCommonSettingsMap;
   private volatile Map<String, Content> myUnknownSettingsMap;
 
@@ -43,7 +47,6 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
 
   @NonNls private static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
   private static final String LANGUAGE_ATTR = "language";
-
 
   CommonCodeStyleSettingsManager(@NotNull CodeStyleSettings parentSettings) {
     myParentSettings = parentSettings;
@@ -155,15 +158,12 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
     }
   }
 
-  @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     synchronized (this) {
       initCommonSettingsMap();
-      final List list = element.getChildren(COMMON_SETTINGS_TAG);
-      for (Object o : list) {
-        final Element commonSettingsElement = (Element)o;
+      for (Element commonSettingsElement : element.getChildren(COMMON_SETTINGS_TAG)) {
         final String languageId = commonSettingsElement.getAttributeValue(LANGUAGE_ATTR);
-        if (languageId != null && !languageId.isEmpty()) {
+        if (!StringUtil.isEmpty(languageId)) {
           Language target = Language.findLanguageByID(languageId);
           boolean isKnownLanguage = target != null;
           if (isKnownLanguage) {
@@ -180,7 +180,7 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
             }
           }
           if (!isKnownLanguage) {
-            myUnknownSettingsMap.put(languageId, (Content)commonSettingsElement.clone());
+            myUnknownSettingsMap.put(languageId, commonSettingsElement.clone());
           }
         }
       }
@@ -188,27 +188,23 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
     }
   }
 
-  @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     synchronized (this) {
-      if (myCommonSettingsMap == null) return;
+      if (myCommonSettingsMap == null) {
+        return;
+      }
 
-      final Map<String, Language> id2lang = new HashMap<String, Language>();
-      for (final Language language : myCommonSettingsMap.keySet()) {
+      final Map<String, Language> id2lang = new THashMap<>();
+      for (Language language : myCommonSettingsMap.keySet()) {
         id2lang.put(language.getID(), language);
       }
 
-      final Set<String> langIdList = new HashSet<String>();
+      final Set<String> langIdList = new THashSet<>();
       langIdList.addAll(myUnknownSettingsMap.keySet());
       langIdList.addAll(id2lang.keySet());
 
       final String[] languages = ArrayUtil.toStringArray(langIdList);
-      Arrays.sort(languages, new Comparator<String>() {
-        @Override
-        public int compare(@NotNull final String o1, final String o2) {
-          return o1.compareTo(o2);
-        }
-      });
+      Arrays.sort(languages, String::compareTo);
 
       for (final String id : languages) {
         final Language language = id2lang.get(id);
@@ -220,9 +216,12 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
           if (!commonSettingsElement.getChildren().isEmpty()) {
             element.addContent(commonSettingsElement);
           }
-        } else {
+        }
+        else {
           final Content unknown = myUnknownSettingsMap.get(id);
-          if (unknown != null) element.addContent(unknown.detach());
+          if (unknown != null) {
+            element.addContent(unknown.detach());
+          }
         }
       }
     }
