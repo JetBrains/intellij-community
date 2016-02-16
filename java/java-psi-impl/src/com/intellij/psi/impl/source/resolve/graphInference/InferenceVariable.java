@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ public class InferenceVariable extends LightTypeParameter {
     super(parameter);
     myName = name;
     myContext = context;
+    TypeConversionUtil.markAsFreshVariable(this, context);
   }
 
   public PsiType getInstantiation() {
