@@ -194,7 +194,8 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   }*/
 
   private void addCreatedMappings(@NotNull VirtualFile schemaFile, @NotNull final JsonSchemaMappingsConfigurationBase.SchemaInfo info) {
-    final MyNode node = new MyNode(new JsonSchemaConfigurable(myProject, schemaFile, info, myTreeUpdater), info.isApplicationLevel());
+    final MyNode node = new MyNode(new JsonSchemaConfigurable(myProject, FileUtil.toSystemDependentName(schemaFile.getPath()),
+                                                              info, myTreeUpdater), info.isApplicationLevel());
     addNode(node, myRoot);
     selectNodeInTree(node, true);
   }
@@ -206,11 +207,8 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
     final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> list = getStoredList();
     for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : list) {
-      final String[] parts = info.getRelativePathToSchema().replace('\\', '/').split("/");
-      final VirtualFile schemaFile = VfsUtil.findRelativeFile(myProject.getBaseDir(), parts);
-      if (schemaFile != null) {
-        myRoot.add(new MyNode(new JsonSchemaConfigurable(myProject, schemaFile, info, myTreeUpdater), info.isApplicationLevel()));
-      }
+      myRoot.add(new MyNode(new JsonSchemaConfigurable(myProject, new File(myProject.getBasePath(), info.getRelativePathToSchema()).getPath(),
+                                                       info, myTreeUpdater), info.isApplicationLevel()));
     }
     ((DefaultTreeModel) myTree.getModel()).reload(myRoot);
     if (myRoot.children().hasMoreElements()) {

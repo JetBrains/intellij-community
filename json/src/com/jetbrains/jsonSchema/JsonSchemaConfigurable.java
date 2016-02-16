@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CollectConsumer;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
 import org.jetbrains.annotations.Nls;
@@ -22,18 +21,18 @@ import java.io.IOException;
  */
 public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappingsConfigurationBase.SchemaInfo> {
   private final Project myProject;
-  @NotNull private final VirtualFile myFile;
+  @NotNull private final String mySchemaFilePath;
   @NotNull private final JsonSchemaMappingsConfigurationBase.SchemaInfo mySchema;
   @Nullable private final Runnable myTree;
   private JsonSchemaMappingsView myView;
   private String myDisplayName;
 
   public JsonSchemaConfigurable(Project project,
-                                @NotNull VirtualFile schemaFile, @NotNull JsonSchemaMappingsConfigurationBase.SchemaInfo schema,
+                                @NotNull String schemaFilePath, @NotNull JsonSchemaMappingsConfigurationBase.SchemaInfo schema,
                                 @Nullable Runnable updateTree) {
     super(true, updateTree);
     myProject = project;
-    myFile = schemaFile;
+    mySchemaFilePath = schemaFilePath;
     mySchema = schema;
     myTree = updateTree;
     myDisplayName = mySchema.getName();
@@ -98,27 +97,25 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
   private void doValidation() throws ConfigurationException {
     if (StringUtil.isEmptyOrSpaces(myDisplayName)) throw new ConfigurationException("Schema name is empty");
     if (StringUtil.isEmptyOrSpaces(myView.getSchemaSubPath())) throw new ConfigurationException("Schema path is empty");
-    if (!Comparing.equal(myView.getSchemaSubPath(), mySchema.getRelativePathToSchema())) {
-      final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
-      final File file = new File(myProject.getBasePath(), myView.getSchemaSubPath());
-      try {
-        if (!JsonSchemaReader.isJsonSchema(FileUtil.loadFile(file), collectConsumer)) {
-          final String message;
-          if (collectConsumer.getResult().isEmpty()) message = "Can not read JSON schema from file (Unknown reason)";
-          else message = "Can not read JSON schema from file: " + StringUtil.join(collectConsumer.getResult(), "; ");
-          throw new ConfigurationException(message);
-        }
+    final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
+    final File file = new File(myProject.getBasePath(), myView.getSchemaSubPath());
+    try {
+      if (!JsonSchemaReader.isJsonSchema(FileUtil.loadFile(file), collectConsumer)) {
+        final String message;
+        if (collectConsumer.getResult().isEmpty()) message = "Can not read JSON schema from file (Unknown reason)";
+        else message = "Can not read JSON schema from file: " + StringUtil.join(collectConsumer.getResult(), "; ");
+        throw new ConfigurationException(message);
       }
-      catch (IOException e) {
-        throw new ConfigurationException("Can not read JSON schema from file: " + e.getMessage());
-      }
+    }
+    catch (IOException e) {
+      throw new ConfigurationException("Can not read JSON schema from file: " + e.getMessage());
     }
   }
 
   @Override
   public void reset() {
     if (myView == null) return;
-    myView.setItems(myFile, mySchema.getPatterns());
+    myView.setItems(mySchemaFilePath, mySchema.getPatterns());
     setDisplayName(mySchema.getName());
   }
 
