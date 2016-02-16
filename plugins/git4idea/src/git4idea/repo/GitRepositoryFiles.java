@@ -17,8 +17,10 @@ package git4idea.repo;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +38,7 @@ import static git4idea.GitUtil.DOT_GIT;
  */
 public class GitRepositoryFiles {
 
+  public static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
   public static final String COMMIT_EDITMSG = "COMMIT_EDITMSG";
   public static final String CONFIG = "config";
   public static final String HEAD = "HEAD";
@@ -59,11 +62,14 @@ public class GitRepositoryFiles {
   public static final String GIT_MERGE_MSG = DOT_GIT + slash(MERGE_MSG);
   public static final String GIT_SQUASH_MSG = DOT_GIT + slash(SQUASH_MSG);
 
-  private final String myMainDirPath;
+  private final VirtualFile myMainDir;
+  private final VirtualFile myWorktreeDir;
+
   private final String myConfigFilePath;
   private final String myHeadFilePath;
   private final String myIndexFilePath;
   private final String myMergeHeadPath;
+  private final String myCherryPickHeadPath;
   private final String myOrigHeadPath;
   private final String myRebaseApplyPath;
   private final String myRebaseMergePath;
@@ -75,32 +81,36 @@ public class GitRepositoryFiles {
   private final String myInfoDirPath;
   private final String myExcludePath;
 
-  private GitRepositoryFiles(@NotNull String mainDir, @NotNull String worktreeDir) {
-    myMainDirPath = mainDir;
-    myConfigFilePath = mainDir + slash(CONFIG);
-    myPackedRefsPath = mainDir + slash(PACKED_REFS);
-    String refsPath = mainDir + slash(REFS);
+  private GitRepositoryFiles(@NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
+    myMainDir = mainDir;
+    myWorktreeDir = worktreeDir;
+    
+    String mainPath = myMainDir.getPath();
+    myConfigFilePath = mainPath + slash(CONFIG);
+    myPackedRefsPath = mainPath + slash(PACKED_REFS);
+    String refsPath = mainPath + slash(REFS);
     myRefsHeadsDirPath = refsPath + slash(HEADS);
     myRefsTagsPath = refsPath + slash(TAGS);
     myRefsRemotesDirPath = refsPath + slash(REMOTES);
-    myInfoDirPath = mainDir + slash(INFO);
-    myExcludePath = mainDir + slash(INFO_EXCLUDE);
+    myInfoDirPath = mainPath + slash(INFO);
+    myExcludePath = mainPath + slash(INFO_EXCLUDE);
 
-    myHeadFilePath = worktreeDir + slash(HEAD);
-    myIndexFilePath = worktreeDir + slash(INDEX);
-    myMergeHeadPath = worktreeDir + slash(MERGE_HEAD);
-    myOrigHeadPath = worktreeDir + slash(ORIG_HEAD);
-    myCommitMessagePath = worktreeDir + slash(COMMIT_EDITMSG);
-    myRebaseApplyPath = worktreeDir + slash(REBASE_APPLY);
-    myRebaseMergePath = worktreeDir + slash(REBASE_MERGE);
+    String worktreePath = myWorktreeDir.getPath();
+    myHeadFilePath = worktreePath + slash(HEAD);
+    myIndexFilePath = worktreePath + slash(INDEX);
+    myMergeHeadPath = worktreePath + slash(MERGE_HEAD);
+    myCherryPickHeadPath = worktreePath + slash(CHERRY_PICK_HEAD);
+    myOrigHeadPath = worktreePath + slash(ORIG_HEAD);
+    myCommitMessagePath = worktreePath + slash(COMMIT_EDITMSG);
+    myRebaseApplyPath = worktreePath + slash(REBASE_APPLY);
+    myRebaseMergePath = worktreePath + slash(REBASE_MERGE);
   }
 
   @NotNull
   public static GitRepositoryFiles getInstance(@NotNull VirtualFile gitDir) {
     VirtualFile gitDirForWorktree = getMainGitDirForWorktree(gitDir);
-    String mainDir = gitDirForWorktree == null ? gitDir.getPath() : gitDirForWorktree.getPath();
-    String worktreeDir = gitDir.getPath();
-    return new GitRepositoryFiles(mainDir, worktreeDir);
+    VirtualFile mainDir = gitDirForWorktree == null ? gitDir : gitDirForWorktree;
+    return new GitRepositoryFiles(mainDir, gitDir);
   }
 
   /**
@@ -185,6 +195,11 @@ public class GitRepositoryFiles {
     return new File(FileUtil.toSystemDependentName(myMergeHeadPath));
   }
 
+  @NotNull
+  public File getCherryPickHead() {
+    return new File(FileUtil.toSystemDependentName(myCherryPickHeadPath));
+  }
+
   /**
    * {@code .git/config}
    */
@@ -228,7 +243,7 @@ public class GitRepositoryFiles {
    * @return true iff the filePath represents the .git/refs/heads... file for the given branch.
    */
   public boolean isBranchFile(@NotNull String filePath, @NotNull String fullBranchName) {
-    return FileUtil.pathsEqual(filePath, myMainDirPath + slash(fullBranchName));
+    return FileUtil.pathsEqual(filePath, myMainDir.getPath() + slash(fullBranchName));
   }
 
   /**
@@ -277,4 +292,12 @@ public class GitRepositoryFiles {
     return path.equals(myExcludePath);
   }
 
+  public void refresh(boolean async) {
+    VfsUtil.markDirtyAndRefresh(async, true, false, myMainDir, myWorktreeDir);
+  }
+
+  @NotNull
+  Collection<VirtualFile> getRootDirs() {
+    return ContainerUtil.newHashSet(myMainDir, myWorktreeDir);
+  }
 }

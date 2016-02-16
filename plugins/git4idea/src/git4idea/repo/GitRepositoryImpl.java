@@ -62,7 +62,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     myReader = new GitRepositoryReader(myRepositoryFiles);
     myInfo = readRepoInfo();
     if (!light) {
-      myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
+      myUntrackedFilesHolder = new GitUntrackedFilesHolder(this, myRepositoryFiles);
       Disposer.register(this, myUntrackedFilesHolder);
     }
     else {
@@ -93,15 +93,21 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   }
 
   private void setupUpdater() {
-    GitRepositoryUpdater updater = new GitRepositoryUpdater(this);
+    GitRepositoryUpdater updater = new GitRepositoryUpdater(this, myRepositoryFiles);
     Disposer.register(this, updater);
   }
 
-
+  @Deprecated
   @NotNull
   @Override
   public VirtualFile getGitDir() {
     return myGitDir;
+  }
+
+  @NotNull
+  @Override
+  public GitRepositoryFiles getRepositoryFiles() {
+    return myRepositoryFiles;
   }
 
   @Override
