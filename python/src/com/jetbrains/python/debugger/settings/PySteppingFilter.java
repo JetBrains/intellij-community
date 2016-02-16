@@ -49,7 +49,7 @@ public class PySteppingFilter {
   @NotNull
   public String getAbsolutePlatformIndependentFilter(@NotNull Project project) {
     StringBuilder resultFilter = new StringBuilder();
-    if (FileUtil.isAbsolutePlatformIndependent(myFilter)) {
+    if (FileUtil.isAbsolutePlatformIndependent(myFilter) || myFilter.startsWith("*")) {
       resultFilter.append(myFilter);
     }
     else {
