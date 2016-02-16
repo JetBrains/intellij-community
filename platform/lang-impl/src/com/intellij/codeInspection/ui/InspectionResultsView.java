@@ -35,6 +35,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -442,6 +443,15 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     final int count = descriptors.length;
     if (selectedEntity instanceof RefElement && !(((RefElement)selectedEntity).getElement() instanceof PsiDirectory)) {
       PsiElement selectedElement = ((RefElement)selectedEntity).getElement();
+      if (count == 1) {
+        final CommonProblemDescriptor descriptor = descriptors[0];
+        if (descriptor instanceof ProblemDescriptorBase) {
+          final PsiElement element = ((ProblemDescriptorBase)descriptor).getPsiElement();
+          if (element != null) {
+            selectedElement = element;
+          }
+        }
+      }
       final PsiFile file = selectedElement.getContainingFile();
       final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       myPreviewEditor = EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), true);
@@ -453,14 +463,17 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       settings.setLeadingWhitespaceShown(true);
       settings.setRightMarginShown(true);
       settings.setRightMargin(60);
-      PsiElement toHighlight = selectedElement;
-      if (count != 1) {
-        myPreviewEditor.getCaretModel().moveToOffset(selectedElement.getTextOffset());
-        myPreviewEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-      } else if (descriptors[0] instanceof ProblemDescriptorBase) {
-        toHighlight = ((ProblemDescriptorBase) descriptors[0]).getPsiElement();
+      UsagePreviewPanel.highlight(Collections.emptyList(), myPreviewEditor, myProject);
+      if (count == 1) {
+        final PsiElement finalSelectedElement = selectedElement;
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (myPreviewEditor != null && !myPreviewEditor.isDisposed()) {
+            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+            myPreviewEditor.getCaretModel().moveToOffset(finalSelectedElement.getTextOffset());
+            myPreviewEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+          }
+        }, ModalityState.NON_MODAL);
       }
-      UsagePreviewPanel.highlight(getElementToHighlight(toHighlight), myPreviewEditor, myProject);
       return myPreviewEditor.getComponent();
     }
     else if (selectedEntity == null) {

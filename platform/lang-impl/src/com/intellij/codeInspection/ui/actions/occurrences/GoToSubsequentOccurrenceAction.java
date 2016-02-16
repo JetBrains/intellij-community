@@ -29,6 +29,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -99,10 +100,14 @@ public class GoToSubsequentOccurrenceAction extends AnAction {
         ProblemDescriptorBase descriptorBase = myChildren[subsequentIdz];
         if (descriptorBase.getPsiElement().isValid()) {
           mySelected = subsequentIdz;
-          PsiElement toSelect = descriptorBase.getPsiElement();
-          myEditor.getCaretModel().moveToOffset(toSelect.getTextOffset());
-          myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-          myEditor.getSelectionModel().setSelection(toSelect.getTextRange().getStartOffset(), toSelect.getTextRange().getEndOffset());
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (myEditor == null || myEditor.isDisposed()) return;
+            PsiElement toSelect = descriptorBase.getPsiElement();
+            PsiDocumentManager.getInstance(myEditor.getProject()).commitAllDocuments();
+            myEditor.getCaretModel().moveToOffset(toSelect.getTextOffset());
+            myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+            myEditor.getSelectionModel().setSelection(toSelect.getTextRange().getStartOffset(), toSelect.getTextRange().getEndOffset());
+          }, ModalityState.NON_MODAL);
           return;
         }
       }
