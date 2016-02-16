@@ -685,7 +685,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
         Evaluator objectEvaluator;
         if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
-          objectEvaluator = new TypeEvaluator(JVMNameUtil.getContextClassJVMQualifiedName(SourcePosition.createFromElement(psiField)));
+          JVMName className = JVMNameUtil.getContextClassJVMQualifiedName(SourcePosition.createFromElement(psiField));
+          if (className == null) {
+            className = JVMNameUtil.getJVMQualifiedName(fieldClass);
+          }
+          objectEvaluator = new TypeEvaluator(className);
         }
         else if(qualifier != null) {
           qualifier.accept(this);
