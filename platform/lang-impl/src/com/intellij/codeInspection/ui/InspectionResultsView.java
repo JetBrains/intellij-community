@@ -379,8 +379,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP);
         multipleSelectionLabel.setBorder(IdeBorderFactory.createEmptyBorder(5, 7, 0, 0));
         mySplitter.setSecondComponent(multipleSelectionLabel);
-      } else {
-        showInRightPanel(null);
+      }
+      else {
+        showInRightPanel(myTree.getCommonSelectedElement());
       }
     }
     else {
