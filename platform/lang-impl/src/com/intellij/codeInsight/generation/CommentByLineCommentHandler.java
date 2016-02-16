@@ -640,7 +640,9 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
         }
       }
       else {
-        if (block.addSpace && document.getCharsSequence().charAt(shiftedStartOffset) != '\n') {
+        if (block.addSpace &&
+            shiftedStartOffset < document.getTextLength() &&
+            document.getCharsSequence().charAt(shiftedStartOffset) != '\n') {
           prefix += ' ';
         }
         document.insertString(offset, prefix);
