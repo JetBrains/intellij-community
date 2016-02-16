@@ -24,6 +24,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -226,21 +227,59 @@ abstract class ChunkOptimizer<T> {
 
     @Override
     protected int getShift(@NotNull Side touchSide, int equalForward, int equalBackward, @NotNull Range range1, @NotNull Range range2) {
+      Integer shift;
+
+      shift = getUnchangedBoundaryShift(touchSide, equalForward, equalBackward, range1, range2, 0);
+      if (shift != null) return shift;
+
+      shift = getChangedBoundaryShift(touchSide, equalForward, equalBackward, range1, range2, 0);
+      if (shift != null) return shift;
+
+      shift = getUnchangedBoundaryShift(touchSide, equalForward, equalBackward, range1, range2, myThreshold);
+      if (shift != null) return shift;
+
+      shift = getChangedBoundaryShift(touchSide, equalForward, equalBackward, range1, range2, myThreshold);
+      if (shift != null) return shift;
+
+      return 0;
+    }
+
+    /**
+     * search for an empty line boundary in unchanged lines
+     * ie: we want insertion/deletion to go right before/after of an empty line
+     */
+    @Nullable
+    private Integer getUnchangedBoundaryShift(@NotNull Side touchSide,
+                                              int equalForward, int equalBackward,
+                                              @NotNull Range range1, @NotNull Range range2,
+                                              int threshold) {
       List<Line> touchLines = touchSide.select(myData1, myData2);
       int touchStart = touchSide.select(range2.start1, range2.start2);
 
-      int shiftForward = findNextUnimportantLine(touchLines, touchStart, equalForward + 1, 0);
-      int shiftBackward = findPrevUnimportantLine(touchLines, touchStart - 1, equalBackward + 1, 0);
+      int shiftForward = findNextUnimportantLine(touchLines, touchStart, equalForward + 1, threshold);
+      int shiftBackward = findPrevUnimportantLine(touchLines, touchStart - 1, equalBackward + 1, threshold);
 
-      if (shiftForward == -1 && shiftBackward == -1 && myThreshold != 0) {
-        shiftForward = findNextUnimportantLine(touchLines, touchStart, equalForward + 1, myThreshold);
-        shiftBackward = findPrevUnimportantLine(touchLines, touchStart - 1, equalBackward + 1, myThreshold);
-      }
+      return getShift(shiftForward, shiftBackward);
+    }
 
-      if (shiftForward == 0 || shiftBackward == 0) return 0;
-      if (shiftForward == -1 && shiftBackward == -1) return 0;
+    /**
+     * search for an empty line boundary in changed lines
+     * ie: we want insertion/deletion to start/end with an empty line
+     */
+    @Nullable
+    private Integer getChangedBoundaryShift(@NotNull Side touchSide,
+                                            int equalForward, int equalBackward,
+                                            @NotNull Range range1, @NotNull Range range2,
+                                            int threshold) {
+      Side nonTouchSide = touchSide.other();
+      List<Line> nonTouchLines = nonTouchSide.select(myData1, myData2);
+      int changeStart = nonTouchSide.select(range1.end1, range1.end2);
+      int changeEnd = nonTouchSide.select(range2.start1, range2.start2);
 
-      return shiftForward != -1 ? shiftForward : -shiftBackward;
+      int shiftForward = findNextUnimportantLine(nonTouchLines, changeStart, equalForward + 1, threshold);
+      int shiftBackward = findPrevUnimportantLine(nonTouchLines, changeEnd - 1, equalBackward + 1, threshold);
+
+      return getShift(shiftForward, shiftBackward);
     }
 
     private static int findNextUnimportantLine(@NotNull List<Line> lines, int offset, int count, int threshold) {
@@ -255,6 +294,14 @@ abstract class ChunkOptimizer<T> {
         if (lines.get(offset - i).getNonSpaceChars() <= threshold) return i;
       }
       return -1;
+    }
+
+    @Nullable
+    private static Integer getShift(int shiftForward, int shiftBackward) {
+      if (shiftForward == -1 && shiftBackward == -1) return null;
+      if (shiftForward == 0 || shiftBackward == 0) return 0;
+
+      return shiftForward != -1 ? shiftForward : -shiftBackward;
     }
   }
 }
