@@ -133,7 +133,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
 
     @Override
     public void edit(@NotNull PySteppingFilter item, @NotNull Function<PySteppingFilter, PySteppingFilter> mutator, boolean isAdd) {
-      String pattern = Messages.showInputDialog(myPanel, "Specify Python wildcard (semicolon ';' as name separator):",
+      String pattern = Messages.showInputDialog(myPanel, "Specify glob pattern",
                                                 "Stepping Filter", null, item.getFilter(),
                                                 new NonEmptyInputValidator());
       if (pattern != null) {
