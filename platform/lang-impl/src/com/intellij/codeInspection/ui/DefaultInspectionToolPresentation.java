@@ -652,10 +652,10 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
                                              @Nullable CommonProblemDescriptor[] allowedDescriptors) {
     final Set<CommonProblemDescriptor> allowedDescriptorSet = allowedDescriptors == null ? null : ContainerUtil.newHashSet(allowedDescriptors);
     Map<Class, QuickFixAction> result = new com.intellij.util.containers.HashMap<>();
+    boolean isFirst = true;
     for (RefEntity refElement : refElements) {
       final CommonProblemDescriptor[] descriptors = descriptorMap.get(refElement);
       if (descriptors == null) continue;
-      boolean isFirst = true;
       for (CommonProblemDescriptor d : descriptors) {
         if (allowedDescriptorSet != null && !allowedDescriptorSet.contains(d)) {
           continue;
@@ -679,6 +679,18 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
                 final Class klass = getFixClass(fix);
                 if (clazz.equals(klass)) {
                   isFound = true;
+                  final QuickFixAction quickFixAction = result.get(clazz);
+                  try {
+                    String familyName = fix.getFamilyName();
+                    familyName = !familyName.isEmpty() ? "\'" + familyName + "\'" : familyName;
+                    ((LocalQuickFixWrapper)quickFixAction)
+                      .setText(InspectionsBundle.message("inspection.descriptor.provider.apply.fix", familyName));
+                  }
+                  catch (AbstractMethodError e) {
+                    //for plugin compatibility
+                    ((LocalQuickFixWrapper)quickFixAction)
+                      .setText(InspectionsBundle.message("inspection.descriptor.provider.apply.fix", ""));
+                  }
                   break;
                 }
               }

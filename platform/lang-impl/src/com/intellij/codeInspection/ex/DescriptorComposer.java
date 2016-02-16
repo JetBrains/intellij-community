@@ -81,7 +81,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
     }
     List<String> texts = new ArrayList<String>();
     for (QuickFixAction quickFix : quickFixes) {
-      String text = quickFix.getText(where);
+      String text = quickFix.getText();
       if (text == null) continue;
       texts.add(escapeQuickFixText(text));
     }

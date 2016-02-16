@@ -40,28 +40,20 @@ import java.util.Set;
  */
 public class LocalQuickFixWrapper extends QuickFixAction {
   private final QuickFix myFix;
-  private String myText;
 
   public LocalQuickFixWrapper(@NotNull QuickFix fix, @NotNull InspectionToolWrapper toolWrapper) {
     super(fix.getName(), toolWrapper);
     myFix = fix;
-    myText = myFix.getName();
+    setText(myFix.getName());
   }
 
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    getTemplatePresentation().setText(myText);
-    e.getPresentation().setText(myText);
-  }
-
-  @Override
-  public String getText(RefEntity where) {
-    return myText;
   }
 
   public void setText(@NotNull String text) {
-    myText = text;
+    getTemplatePresentation().setText(text);
   }
 
 
