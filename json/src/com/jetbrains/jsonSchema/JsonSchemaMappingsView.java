@@ -275,8 +275,9 @@ public class JsonSchemaMappingsView {
     }
   }
 
-  private String getRelativePath(@NotNull Project project, @NotNull String text) {
+  private static String getRelativePath(@NotNull Project project, @NotNull String text) {
     if (project.isDefault()) return text;
+    if (StringUtil.isEmptyOrSpaces(text)) return text;
     final String relativePath = FileUtil.getRelativePath(new File(project.getBasePath()), new File(text));
     return relativePath == null ? text : relativePath;
   }
