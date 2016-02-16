@@ -43,6 +43,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -86,6 +87,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private static final Logger LOG = Logger.getInstance(InspectionResultsView.class);
 
   public static final DataKey<InspectionResultsView> DATA_KEY = DataKey.create("inspectionView");
+  private static final Key<Boolean> PREVIEW_EDITOR_IS_REUSED_KEY = Key.<Boolean>create("inspection.tool.window.preview.editor.is.reused.");
 
   private final Project myProject;
   private final InspectionTree myTree;
@@ -372,7 +374,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private void syncRightPanel() {
-    releaseEditor();
+    final Editor oldEditor = myPreviewEditor;
     if (myTree.getSelectionModel().getSelectionCount() != 1) {
       if (myTree.getSelectedToolWrapper() == null) {
         final JLabel multipleSelectionLabel = new JBLabel(InspectionViewNavigationPanel.getTitleText(false, false));
@@ -415,6 +417,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         }
       }
     }
+    if (oldEditor != null) {
+      if (Boolean.TRUE.equals(oldEditor.getUserData(PREVIEW_EDITOR_IS_REUSED_KEY))) {
+        oldEditor.putUserData(PREVIEW_EDITOR_IS_REUSED_KEY, null);
+      }
+      else {
+        releaseEditor();
+      }
+    }
   }
 
   private void showInRightPanel(@Nullable final RefEntity refEntity) {
@@ -426,10 +436,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       CommonProblemDescriptor[] descriptors = myTree.getSelectedDescriptors();
       editorPanel.add(createBaseRightComponentFor(descriptors, refEntity), BorderLayout.CENTER);
       if (descriptors.length > 0) {
+        final InspectionToolWrapper tool = myTree.getSelectedToolWrapper();
+        LOG.assertTrue(tool != null);
         editorPanel.add(new QuickFixToolbar(myTree,
                                             myProject,
                                             myPreviewEditor,
-                                            myProvider.getQuickFixes(myTree.getSelectedToolWrapper(), myTree)),
+                                            myProvider.getQuickFixes(tool, myTree)),
                         BorderLayout.NORTH);
       }
       mySplitter.setSecondComponent(editorPanel);
@@ -437,6 +449,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     finally {
       setCursor(currentCursor);
     }
+  }
+
+  private boolean reuseEditorFor(Document document) {
+    return myPreviewEditor != null && !myPreviewEditor.isDisposed() && myPreviewEditor.getDocument() == document;
   }
 
   private JComponent createBaseRightComponentFor(CommonProblemDescriptor[] descriptors,
@@ -455,16 +471,23 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       final PsiFile file = selectedElement.getContainingFile();
       final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-      myPreviewEditor = EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), true);
-      final EditorSettings settings = myPreviewEditor.getSettings();
-      settings.setLineNumbersShown(false);
-      settings.setLineMarkerAreaShown(false);
-      settings.setAdditionalColumnsCount(0);
-      settings.setAdditionalLinesCount(0);
-      settings.setLeadingWhitespaceShown(true);
-      settings.setRightMarginShown(true);
-      settings.setRightMargin(60);
-      UsagePreviewPanel.highlight(Collections.emptyList(), myPreviewEditor, myProject);
+
+      if (reuseEditorFor(document)) {
+        myPreviewEditor.putUserData(PREVIEW_EDITOR_IS_REUSED_KEY, true);
+      }
+      else {
+        myPreviewEditor = EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), true);
+        final EditorSettings settings = myPreviewEditor.getSettings();
+        settings.setLineNumbersShown(false);
+        settings.setLineMarkerAreaShown(false);
+        settings.setAdditionalColumnsCount(0);
+        settings.setAdditionalLinesCount(0);
+        settings.setLeadingWhitespaceShown(true);
+        settings.setRightMarginShown(true);
+        settings.setRightMargin(60);
+        UsagePreviewPanel.highlight(Collections.emptyList(), myPreviewEditor, myProject);
+      }
+
       if (count == 1) {
         final PsiElement finalSelectedElement = selectedElement;
         ApplicationManager.getApplication().invokeLater(() -> {
