@@ -581,4 +581,29 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   public void toBack() {
     super.toBack();
   }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleIdeFrameImpl();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleIdeFrameImpl extends AccessibleJFrame {
+    @Override
+    public String getAccessibleName() {
+      final StringBuilder builder = new StringBuilder();
+
+      if (myProject != null) {
+        builder.append(myProject.getName());
+        builder.append(" - ");
+      }
+
+      final String applicationName = ((ApplicationInfoEx)ApplicationInfo.getInstance()).getFullApplicationName();
+      builder.append(applicationName);
+
+      return builder.toString();
+    }
+  }
 }
