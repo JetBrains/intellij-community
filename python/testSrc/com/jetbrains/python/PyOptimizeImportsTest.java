@@ -81,6 +81,12 @@ public class PyOptimizeImportsTest extends PyTestCase {
     myFixture.checkResultByFile(testName + "/main.after.py");
   }
 
+  // PY-18521
+  public void testImportsFromTypingUnusedInTypeComments() {
+    myFixture.copyDirectoryToProject("../typing", "");
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(true) + ".py");
     OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
