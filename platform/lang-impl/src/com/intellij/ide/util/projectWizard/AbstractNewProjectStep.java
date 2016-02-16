@@ -57,14 +57,17 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
 
     NullableConsumer<ProjectSettingsStepBase> callback = customization.createCallback();
     ProjectSpecificAction projectSpecificAction = customization.createProjectSpecificAction(callback);
-    
-    addAll(projectSpecificAction.getChildren(null));
+    addProjectSpecificAction(projectSpecificAction);
 
     DirectoryProjectGenerator[] generators = customization.getProjectGenerators();
     customization.setUpBasicAction(projectSpecificAction, generators);
 
     addAll(customization.getActions(generators, callback));
     addAll(customization.getExtraActions(callback));
+  }
+
+  protected void addProjectSpecificAction(@NotNull final ProjectSpecificAction projectSpecificAction) {
+    addAll(projectSpecificAction.getChildren(null));
   }
 
   protected static abstract class Customization {
