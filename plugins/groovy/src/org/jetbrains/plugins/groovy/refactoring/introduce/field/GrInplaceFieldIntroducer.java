@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -268,7 +268,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
 
     PsiElement scope = context.getScope();
 
-    if (isReplaceAllOccurrences()) {
+    if (isReplaceAllOccurrences() || occurrences.length == 1) {
       PsiElement parent = PsiTreeUtil.findCommonParent(occurrences);
       PsiElement container = GrIntroduceHandlerBase.getEnclosingContainer(parent);
       if (container != null && PsiTreeUtil.isAncestor(scope, container, false)) {
@@ -277,8 +277,6 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
           result.add(GrIntroduceFieldSettings.Init.CUR_METHOD);
         }
       }
-    } else {
-      result.add(GrIntroduceFieldSettings.Init.CUR_METHOD);
     }
 
     if (scope instanceof GrTypeDefinition && TestFrameworks.getInstance().isTestClass((PsiClass)scope)) {
