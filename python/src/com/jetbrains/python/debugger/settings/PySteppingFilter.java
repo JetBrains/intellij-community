@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.debugger.settings;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PySteppingFilter {
@@ -45,8 +47,15 @@ public class PySteppingFilter {
   }
 
   @NotNull
-  public String getSystemIndependentFilter() {
-    return myFilter.replace('\\', '/');
+  public String getAbsolutePlatformIndependentFilter(@NotNull Project project) {
+    StringBuilder resultFilter = new StringBuilder();
+    if (FileUtil.isAbsolutePlatformIndependent(myFilter)) {
+      resultFilter.append(myFilter);
+    }
+    else {
+      resultFilter.append(project.getBasePath()).append('/').append(myFilter);
+    }
+    return resultFilter.toString().replace('\\', '/');
   }
 
   public void setFilter(@NotNull String filter) {

@@ -293,7 +293,7 @@ public class PyDebugRunner extends GenericProgramRunner {
 
     PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
     if (debuggerSettings.isSteppingFiltersEnabled()) {
-      cmd.getEnvironment().put(PYDEVD_FILTERS, debuggerSettings.getSteppingFiltersStringPresentation());
+      cmd.getEnvironment().put(PYDEVD_FILTERS, debuggerSettings.getSteppingFiltersForProject(project));
     }
 
     addProjectRootsToEnv(project, cmd);
