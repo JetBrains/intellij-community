@@ -956,17 +956,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
-  @NotNull
-  private static List<UsageInfo> getElementToHighlight(@Nullable PsiElement element) {
-    if (element instanceof PsiFile || element == null) {
-      return Collections.emptyList();
-    }
-    if (element instanceof PsiNameIdentifierOwner) {
-      return getElementToHighlight(((PsiNameIdentifierOwner)element).getNameIdentifier());
-    }
-    return Collections.singletonList(new UsageInfo(element));
-  }
-
   private static void releaseEditor(@Nullable Editor editor) {
     if (editor != null && !editor.isDisposed()) {
       EditorFactory.getInstance().releaseEditor(editor);
