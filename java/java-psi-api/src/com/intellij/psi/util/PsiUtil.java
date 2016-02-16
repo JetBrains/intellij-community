@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -123,7 +124,11 @@ public final class PsiUtil extends PsiUtilCore {
     if (type instanceof PsiCapturedWildcardType) {
       final PsiType upperBound = ((PsiCapturedWildcardType)type).getUpperBound();
       if (upperBound instanceof PsiClassType) {
-        String classText = "class I<T extends " + upperBound.getCanonicalText() + "> {}";
+        final PsiClass resolved = ((PsiClassType)upperBound).resolve();
+        final PsiFile containingFile = resolved != null ? resolved.getContainingFile() : null;
+        final String packageName = containingFile instanceof PsiClassOwner ? ((PsiClassOwner)containingFile).getPackageName() : null;
+        String classText = StringUtil.isEmptyOrSpaces(packageName) ? "" : "package " +packageName + ";\n ";
+        classText += "class I<T extends " + upperBound.getCanonicalText() + "> {}";
         final PsiJavaFile file =
           (PsiJavaFile)PsiFileFactory.getInstance(expression.getProject()).createFileFromText("inference_dummy.java", JavaLanguage.INSTANCE, classText);
         final PsiTypeParameter freshParameter = file.getClasses()[0].getTypeParameters()[0];

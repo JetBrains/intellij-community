@@ -966,4 +966,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testCapturedWildcardWithPrimitiveTypesChecks() throws Exception {
     doTest();
   }
+
+  public void testCapturedWildcardPackageLocalAccess() throws Exception {
+    doTest();
+  }
 }
