@@ -48,7 +48,7 @@ public class RecentProjectsManagerImpl extends RecentProjectsManagerBase {
 
   @Override
   protected void doOpenProject(@NotNull String projectPath, Project projectToClose, boolean forceOpenInNewFrame) {
-    if (!new File(projectPath, Project.DIRECTORY_STORE_FOLDER).exists()) {
+    if (new File(projectPath).isDirectory() && !new File(projectPath, Project.DIRECTORY_STORE_FOLDER).exists()) {
       VirtualFile projectDir = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(projectPath));
       PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
       if (projectDir != null && processor != null) {
