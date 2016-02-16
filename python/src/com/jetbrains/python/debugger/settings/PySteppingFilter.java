@@ -44,8 +44,13 @@ public class PySteppingFilter {
     return myFilter;
   }
 
+  @NotNull
+  public String getSystemIndependentFilter() {
+    return myFilter.replace('\\', '/');
+  }
+
   public void setFilter(@NotNull String filter) {
-    myFilter = filter.replace('\\', '/');
+    myFilter = filter;
   }
 
   @Override

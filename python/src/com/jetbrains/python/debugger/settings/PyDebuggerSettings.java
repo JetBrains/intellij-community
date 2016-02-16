@@ -64,7 +64,7 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
     StringBuilder sb = new StringBuilder();
     for (PySteppingFilter filter : mySteppingFilters) {
       if (filter.isEnabled()) {
-        sb.append(filter.getFilter()).append(FILTERS_DIVIDER);
+        sb.append(filter.getSystemIndependentFilter()).append(FILTERS_DIVIDER);
       }
     }
     return sb.toString();
