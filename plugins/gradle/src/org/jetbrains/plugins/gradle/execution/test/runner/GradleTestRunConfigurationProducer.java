@@ -46,6 +46,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.List;
 
+import static org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST;
 import static org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings.PreferredTestRunner.GRADLE_TEST_RUNNER;
 import static org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings.PreferredTestRunner.PLATFORM_TEST_RUNNER;
 
@@ -63,7 +64,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
 
   @Override
   public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
-    return GradleSystemRunningSettings.getInstance().getPreferredTestRunner() == null ||
+    return GradleSystemRunningSettings.getInstance().getPreferredTestRunner() == CHOOSE_PER_TEST ||
            GradleSystemRunningSettings.getInstance().getPreferredTestRunner() == GRADLE_TEST_RUNNER;
   }
 
