@@ -254,6 +254,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private final boolean myHideOnKey;
   private final boolean myHideOnAction;
   private final boolean myEnableCloseButton;
+  private final boolean myRequestFocus;
+  private Component myOriginalFocusOwner;
 
   public BalloonImpl(@NotNull JComponent content,
                      @NotNull Color borderColor,
@@ -279,7 +281,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
                      boolean shadow,
                      boolean smallVariant,
                      boolean blockClicks,
-                     Layer layer) {
+                     Layer layer,
+                     boolean requestFocus) {
     myBorderColor = borderColor;
     myBorderInsets = borderInsets != null ? borderInsets : new Insets(3, 3, 3, 3);
     myFillColor = fillColor;
@@ -300,6 +303,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myTitle = title;
     myLayer = layer != null ? layer : Layer.normal;
     myBlockClicks = blockClicks;
+    myRequestFocus = requestFocus;
     MnemonicHelper.init(content);
 
     if (!myDialogMode) {
@@ -472,6 +476,22 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         }
       });
     }
+    if (myRequestFocus) {
+      myFocusManager.doWhenFocusSettlesDown(new ExpirableRunnable() {
+        @Override
+        public boolean isExpired() {
+          return isDisposed();
+        }
+
+        @Override
+        public void run() {
+          myOriginalFocusOwner = myFocusManager.getFocusOwner();
+
+          // Set the focus to "myContent"
+          myFocusManager.requestFocus(getContentToFocus(), true);
+        }
+      });
+    }
 
     myLayeredPane.addComponentListener(myComponentListener);
 
@@ -587,6 +607,32 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         });
       }
     }
+  }
+
+  /**
+   * Figure out the component to focus inside the {@link myContent} field.
+   */
+  @NotNull
+  private Component getContentToFocus() {
+    Component focusComponent = myContent;
+    while (true) {
+      // Setting focus to a JScrollPane is not very useful. Better setting focus to the
+      // contained view. This is useful for Tooltip popups, for example.
+      if (focusComponent instanceof JScrollPane) {
+        JViewport viewport = ((JScrollPane)focusComponent).getViewport();
+        if (viewport == null)
+          break;
+        Component child = viewport.getView();
+        if (child == null)
+          break;
+        focusComponent = child;
+        continue;
+      }
+
+      // Done if we can't find anything to dive into
+      break;
+    }
+    return focusComponent;
   }
 
   private Rectangle getRecForPosition(AbstractPosition position, boolean adjust) {
@@ -816,6 +862,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       @Override
       public void run() {
         myFadedOut = true;
+        if (myRequestFocus) {
+          if (myOriginalFocusOwner != null) {
+            myFocusManager.requestFocus(myOriginalFocusOwner, false);
+          }
+        }
 
         for (JBPopupListener each : myListeners) {
           each.onClosed(new LightweightWindowEvent(BalloonImpl.this, ok));

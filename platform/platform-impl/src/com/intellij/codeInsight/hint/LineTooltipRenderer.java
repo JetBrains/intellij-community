@@ -29,6 +29,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -38,6 +39,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.URL;
@@ -101,6 +103,10 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     scrollPane.setViewportBorder(null);
 
+    if (hintHint.isRequestFocus()) {
+      pane.setFocusable(true);
+    }
+
     final Ref<AnAction> actionRef = new Ref<AnAction>();
     final LightweightHint hint = new LightweightHint(scrollPane) {
       @Override
@@ -123,6 +129,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
       @Override
       public void actionPerformed(final AnActionEvent e) {
+        // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
+        hintHint.setRequestFocus(ScreenReader.isActive() && (e.getInputEvent() instanceof KeyEvent));
         expand(hint, editor, p, pane, alignToRight, group, hintHint);
       }
     });
