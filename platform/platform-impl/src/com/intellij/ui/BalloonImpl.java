@@ -996,8 +996,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         getUpdatedBounds(balloon.myLayeredPane.getSize(), balloon.myForcedBounds, balloon.myComp.getPreferredSize(), balloon.myShowPointer,
                          balloon.myTargetPoint, balloon.myContainerInsets);
 
-      final Point point = getShiftedPoint(bounds.getLocation(), balloon.getShadowBorderInsets());
-      bounds.setLocation(point);
+      if (balloon.myShadowBorderProvider == null) {
+        bounds.setLocation(getShiftedPoint(bounds.getLocation(), balloon.getShadowBorderInsets()));
+      }
       balloon.myComp._setBounds(bounds);
     }
 
