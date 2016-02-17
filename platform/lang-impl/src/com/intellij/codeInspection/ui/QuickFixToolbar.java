@@ -16,10 +16,8 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixAction;
-import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.ui.actions.SuppressActionWrapper;
 import com.intellij.codeInspection.ui.actions.occurrences.GoToSubsequentOccurrenceAction;
 import com.intellij.icons.AllIcons;
@@ -29,13 +27,10 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,8 +115,10 @@ public class QuickFixToolbar extends JPanel {
 
       @NotNull
       @Override
-      protected ActionGroup createPopupActionGroup(JComponent button) {
-        return new SuppressActionWrapper(project, toolWrapper, path);
+      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+        DefaultActionGroup group = new DefaultActionGroup();
+        group.addAll(new SuppressActionWrapper(project, toolWrapper, path).getChildren(null));
+        return group;
       }
     };
     action.setSmallVariant(false);

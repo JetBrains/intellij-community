@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       DataContext context = e.getDataContext();
       Project project = e.getProject();
       if (project == null) return;
-      ActionGroup group = createPopupActionGroup(button);
+      DefaultActionGroup group = createPopupActionGroup(button);
       ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
         myPopupTitle, group, context, false, shouldShowDisabledActions(), false, null, getMaxRows(), getPreselectCondition());
       popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
@@ -122,9 +122,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return false;
   }
 
-
   @NotNull
-  protected abstract ActionGroup createPopupActionGroup(JComponent button);
+  protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
 
   protected int getMaxRows() {
     return 30;
@@ -279,7 +278,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     protected JBPopup createPopup(Runnable onDispose) {
-      ActionGroup group = createPopupActionGroup(this);
+      DefaultActionGroup group = createPopupActionGroup(this);
 
       DataContext context = getDataContext();
       ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
