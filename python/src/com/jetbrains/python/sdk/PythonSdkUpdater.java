@@ -180,7 +180,12 @@ public class PythonSdkUpdater implements StartupActivity {
                 }
               }
               finally {
-                ourUnderRefresh.remove(homePath);
+                try {
+                  ourUnderRefresh.remove(homePath);
+                }
+                catch (IllegalStateException e) {
+                  LOG.error(e);
+                }
               }
             }
           }
