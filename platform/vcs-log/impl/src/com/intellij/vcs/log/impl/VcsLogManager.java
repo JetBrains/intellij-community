@@ -129,7 +129,8 @@ public class VcsLogManager implements Disposable {
     }
 
     for (Map.Entry<VcsLogProvider, Collection<VirtualFile>> entry : providers2roots.entrySet()) {
-      entry.getKey().subscribeToRootRefreshEvents(entry.getValue(), refresher);
+      Disposable disposable = entry.getKey().subscribeToRootRefreshEvents(entry.getValue(), refresher);
+      Disposer.register(refresher, disposable);
     }
   }
 
