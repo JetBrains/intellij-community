@@ -411,9 +411,8 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
     lines() {
       ("====}_==== }_Y_====}" - "====}_Y_====}")
       default(del(1, 1, 1)) // result after second step correction
-      ignore(mod(1, 1, 2, 1)) // result looks strange because of 'diff.unimportant.line.char.count'
-      testDefault()
-      testTrim()
+      ignore(ins(1, 1, 1), del(2, 3, 2)) // result looks strange because of 'diff.unimportant.line.char.count'
+      testAll()
     }
   }
 
