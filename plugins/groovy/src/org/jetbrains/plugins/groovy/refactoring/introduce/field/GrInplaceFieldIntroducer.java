@@ -252,8 +252,11 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
   }
 
   private EnumSet<GrIntroduceFieldSettings.Init> getApplicableInitPlaces() {
-    GrIntroduceContext context = getContext();
-    PsiElement[] occurrences = getOccurrences();
+    return getApplicableInitPlaces(getContext(), isReplaceAllOccurrences());
+  }
+
+  public static EnumSet<GrIntroduceFieldSettings.Init> getApplicableInitPlaces(GrIntroduceContext context,
+                                                                               boolean replaceAllOccurrences) {
     EnumSet<GrIntroduceFieldSettings.Init> result = EnumSet.noneOf(GrIntroduceFieldSettings.Init.class);
 
     if (context.getExpression() != null ||
@@ -268,7 +271,8 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
 
     PsiElement scope = context.getScope();
 
-    if (isReplaceAllOccurrences() || occurrences.length == 1) {
+    if (replaceAllOccurrences || context.getExpression() != null) {
+      PsiElement[] occurrences = replaceAllOccurrences ? context.getOccurrences() : new PsiElement[]{context.getExpression()};
       PsiElement parent = PsiTreeUtil.findCommonParent(occurrences);
       PsiElement container = GrIntroduceHandlerBase.getEnclosingContainer(parent);
       if (container != null && PsiTreeUtil.isAncestor(scope, container, false)) {
