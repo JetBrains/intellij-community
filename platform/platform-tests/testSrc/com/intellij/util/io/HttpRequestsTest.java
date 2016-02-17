@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 
@@ -33,12 +34,14 @@ public class HttpRequestsTest  {
   private static final String LOCALHOST = "127.0.0.1";
 
   private HttpServer myServer;
+  private String myUrl;
 
   @Before
   public void setUp() throws IOException {
     myServer = HttpServer.create();
     myServer.bind(new InetSocketAddress(LOCALHOST, 0), 1);
     myServer.start();
+    myUrl = "http://" + LOCALHOST + ":" + myServer.getAddress().getPort();
   }
 
   @After
@@ -65,8 +68,7 @@ public class HttpRequestsTest  {
       ex.close();
     });
 
-    String url = "http://" + LOCALHOST + ":" + myServer.getAddress().getPort();
-    HttpRequests.request(url).readTimeout(50).readString(null);
+    HttpRequests.request(myUrl).readTimeout(50).readString(null);
     fail();
   }
 
@@ -79,8 +81,18 @@ public class HttpRequestsTest  {
       ex.close();
     });
 
-    String url = "http://" + LOCALHOST + ":" + myServer.getAddress().getPort();
-    String content = HttpRequests.request(url).readString(null);
-    assertEquals("hello", content);
+    assertEquals("hello", HttpRequests.request(myUrl).readString(null));
+  }
+
+  @Test(timeout = 5000)
+  public void testTuning() throws IOException {
+    myServer.createContext("/", ex -> {
+      ex.sendResponseHeaders("HEAD".equals(ex.getRequestMethod()) ? 200 : 501, -1);
+      ex.close();
+    });
+
+    assertEquals(200, HttpRequests.request(myUrl)
+      .tuner((c) -> ((HttpURLConnection)c).setRequestMethod("HEAD"))
+      .tryConnect());
   }
 }
