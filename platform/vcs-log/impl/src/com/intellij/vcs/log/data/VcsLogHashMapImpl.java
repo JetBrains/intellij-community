@@ -86,13 +86,13 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
       IOUtil.deleteAllFilesStartingWith(new File(LOG_CACHE_APP_DIR, logId));
     }
 
-    Disposer.register(project, this);
     myPersistentEnumerator = IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentEnumerator<CommitId>, IOException>() {
       @Override
       public PersistentEnumerator<CommitId> compute() throws IOException {
         return new PersistentEnumerator<CommitId>(mapFile, new MyCommitIdKeyDescriptor(project), Page.PAGE_SIZE);
       }
     }, mapFile);
+    Disposer.register(project, this);
   }
 
   @NotNull
