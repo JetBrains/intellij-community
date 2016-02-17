@@ -1,5 +1,6 @@
 package com.jetbrains.jsonSchema;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -131,7 +132,8 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   private void addProjectSchema() {
     final VirtualFile file =
-      FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(), myProject, null);
+      FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(
+        JsonBundle.message("json.schema.add.schema.chooser.title")), myProject, null);
     if (file != null) {
       final String relativePath = VfsUtil.getRelativePath(file, myProject.getBaseDir());
       if (relativePath == null) {
