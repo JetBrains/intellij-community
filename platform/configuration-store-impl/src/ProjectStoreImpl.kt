@@ -367,7 +367,8 @@ private class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager
   }
 }
 
-private class PlatformLangProjectStoreClassProvider : ProjectStoreClassProvider {
+// used in upsource
+class PlatformLangProjectStoreClassProvider : ProjectStoreClassProvider {
   override fun getProjectStoreClass(isDefaultProject: Boolean): Class<out IComponentStore> {
     return if (isDefaultProject) DefaultProjectStoreImpl::class.java else ProjectWithModulesStoreImpl::class.java
   }
