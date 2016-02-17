@@ -916,7 +916,7 @@ public class CommonCodeStyleSettings {
   public int WRAP_ON_TYPING = WrapOnTyping.DEFAULT.intValue;
 
   //-------------------------Indent options-------------------------------------------------
-  public static class IndentOptions implements Cloneable {
+  public static class IndentOptions implements Cloneable, JDOMExternalizable {
     public int INDENT_SIZE = 4;
     public int CONTINUATION_INDENT_SIZE = 8;
     public int TAB_SIZE = 4;
@@ -931,10 +931,12 @@ public class CommonCodeStyleSettings {
     private static final Key<CommonCodeStyleSettings.IndentOptions> INDENT_OPTIONS_KEY = Key.create("INDENT_OPTIONS_KEY");
     private boolean myInaccurate;
 
+    @Override
     public void readExternal(Element element) throws InvalidDataException {
       DefaultJDOMExternalizer.readExternal(this, element);
     }
 
+    @Override
     public void writeExternal(Element element) throws WriteExternalException {
       DefaultJDOMExternalizer.writeExternal(this, element, field -> {
         if ("KEEP_INDENTS_ON_EMPTY_LINES".equals(field.getName())) {
