@@ -80,7 +80,6 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
   private final PersistentEnumerator<CommitId> myPersistentEnumerator;
 
   public VcsLogHashMapImpl(@NotNull final Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) throws IOException {
-    cleanupOldNaming(project, logProviders);
     String logId = calcLogId(project, logProviders);
     final File mapFile = new File(LOG_CACHE_APP_DIR, logId + "." + VERSION);
     if (!mapFile.exists()) {
@@ -100,13 +99,6 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
   private static String calcLogId(@NotNull Project project, @NotNull final Map<VirtualFile, VcsLogProvider> logProviders) {
     int hashcode = calcLogProvidersHash(logProviders);
     return project.getLocationHash() + "." + Integer.toHexString(hashcode);
-  }
-
-  // TODO remove in IDEA 15
-  private static void cleanupOldNaming(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    int hashcode = calcLogProvidersHash(providers);
-    String oldLogId = project.getName() + "." + hashcode;
-    FileUtil.delete(new File(LOG_CACHE, oldLogId));
   }
 
   private static int calcLogProvidersHash(@NotNull final Map<VirtualFile, VcsLogProvider> logProviders) {
