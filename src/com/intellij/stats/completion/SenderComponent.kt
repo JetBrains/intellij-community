@@ -11,6 +11,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.Time
 import org.apache.http.client.fluent.Form
 import org.apache.http.client.fluent.Request
+import org.apache.http.util.EntityUtils
 import java.io.File
 import java.io.IOException
 import javax.swing.SwingUtilities
@@ -47,8 +48,7 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
 }
 
 class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileManager, val requestService: RequestService) {
-    private val LOG = Logger.getInstance(StatisticSender::class.java)
-
+    
     private fun prepareTextToSend(fileToSend: File): String {
         if (fileToSend.exists()) {
             val text = fileToSend.readText()
@@ -91,6 +91,7 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
 
 abstract class RequestService {
     abstract fun post(url: String, params: Map<String, String>): ResponseData?
+    abstract fun get(url: String): ResponseData?
     
     companion object {
         fun getInstance() = ServiceManager.getService(RequestService::class.java)
@@ -113,7 +114,24 @@ class SimpleRequestService: RequestService() {
         }
     }
 
+    override fun get(url: String): ResponseData? {
+        try {
+            var data: ResponseData? = null
+            Request.Get(url).execute().handleResponse { 
+                val text = EntityUtils.toString(it.entity)
+                data = ResponseData(it.statusLine.statusCode, text)   
+            }
+            return data
+        } catch (e: IOException) {
+            LOG.warn(e)
+            return null
+        }
+    }
 }
 
 
-data class ResponseData(val code: Int)
+data class ResponseData(val code: Int, val text: String = "") {
+    
+    fun isOK() = code >= 200 && code < 300
+    
+}
