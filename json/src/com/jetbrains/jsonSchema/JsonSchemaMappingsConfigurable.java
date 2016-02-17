@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MasterDetailsComponent;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -140,6 +141,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
       final JsonSchemaChecker importer = new JsonSchemaChecker(file, true);
       if (!importer.checkSchemaFile()) {
         if (!StringUtil.isEmptyOrSpaces(importer.getError())) {
+          JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(importer.getError(), MessageType.ERROR).notify(myProject);
           Messages.showErrorDialog(myProject, importer.getError(), READ_JSON_SCHEMA);
         }
         return;

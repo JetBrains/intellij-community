@@ -2,6 +2,7 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -104,12 +105,19 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
         final String message;
         if (collectConsumer.getResult().isEmpty()) message = "Can not read JSON schema from file (Unknown reason)";
         else message = "Can not read JSON schema from file: " + StringUtil.join(collectConsumer.getResult(), "; ");
+        logErrorForUser(message);
         throw new ConfigurationException(message);
       }
     }
     catch (IOException e) {
-      throw new ConfigurationException("Can not read JSON schema from file: " + e.getMessage());
+      final String message = "Can not read JSON schema from file: " + e.getMessage();
+      logErrorForUser(message);
+      throw new ConfigurationException(message);
     }
+  }
+
+  private void logErrorForUser(@NotNull final String error) {
+    JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(error, MessageType.ERROR).notify(myProject);
   }
 
   @Override
