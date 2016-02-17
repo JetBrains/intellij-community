@@ -20,14 +20,13 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -53,10 +52,6 @@ import java.util.zip.GZIPInputStream;
  * }</pre>
  */
 public final class HttpRequests {
-  // todo[r.sh] drop condition in IDEA 15
-  private static final boolean ourWrapClassLoader =
-    SystemInfo.isJavaVersionAtLeast("1.7") && !SystemProperties.getBooleanProperty("idea.parallel.class.loader", true);
-
   private static final int BLOCK_SIZE = 16 * 1024;
   private static final Pattern CHARSET_PATTERN = Pattern.compile("charset=([^;]+)");
 
@@ -355,9 +350,8 @@ public final class HttpRequests {
     }
   }
 
-
   private static <T> T process(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
-    if (ourWrapClassLoader) {
+    if (!UrlClassLoader.PARALLEL_CAPABLE) {
       // hack-around for class loader lock in sun.net.www.protocol.http.NegotiateAuthentication (IDEA-131621)
       ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
       try (URLClassLoader cl = new URLClassLoader(new URL[0], oldClassLoader)) {
