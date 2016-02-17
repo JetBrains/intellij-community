@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
@@ -34,7 +33,10 @@ import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.Page;
 import com.intellij.util.io.PersistentEnumerator;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogHashMap;
+import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRootsRegistry;
 import org.jetbrains.annotations.NotNull;
@@ -188,7 +190,7 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
   }
 
   private static class MyCommitIdKeyDescriptor implements KeyDescriptor<CommitId> {
-      private final VcsRootsRegistry myRootsRegistry;
+    @NotNull private final VcsRootsRegistry myRootsRegistry;
 
     public MyCommitIdKeyDescriptor(@NotNull Project project) {
       myRootsRegistry = ServiceManager.getService(project, VcsRootsRegistry.class);
