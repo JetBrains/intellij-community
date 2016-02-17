@@ -16,6 +16,7 @@
 package com.jetbrains.edu.learning.ui;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -53,6 +54,7 @@ public class StudySwingToolWindow extends StudyToolWindow {
     }
     myTaskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
     myTaskTextPane.setText(taskText);
+    myTaskTextPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
     return myTaskTextPane;
   }
 
