@@ -21,9 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 public class ProcessWaitFor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessWaitFor");
@@ -79,4 +77,31 @@ public class ProcessWaitFor {
   public void setTerminationCallback(@NotNull Consumer<Integer> r) {
     myTerminationCallback.offer(r);
   }
+
+  public void waitFor() throws InterruptedException {
+    try {
+      myWaitForThreadFuture.get();
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
+    }
+    catch (CancellationException ignored) {
+    }
+  }
+
+  public boolean waitFor(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
+    try {
+      myWaitForThreadFuture.get(timeout, unit);
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
+    }
+    catch (CancellationException ignored) {
+    }
+    catch (TimeoutException ignored) {
+    }
+
+    return myWaitForThreadFuture.isDone();
+  }
+
 }

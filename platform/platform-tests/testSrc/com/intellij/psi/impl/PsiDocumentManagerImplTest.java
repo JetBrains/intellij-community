@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -306,6 +307,40 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertEquals(2, count.get());
   }
 
+  public void testDocumentCommittedInBackgroundEventuallyEvenDespiteTyping() throws InterruptedException, IOException {
+    VirtualFile virtualFile = getVirtualFile(createTempFile("X.java", ""));
+    PsiFile file = findFile(virtualFile);
+    assertNotNull(file);
+    assertTrue(file.isPhysical());
+    final Document document = getDocument(file);
+    assertNotNull(document);
+
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      document.insertString(0, "class X {"+StringUtil.repeat("public int IIII = 222;\n",10000)+"}");
+    });
+
+    while (!getPsiDocumentManager().isCommitted(document)) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+
+    assertEquals(StdFileTypes.JAVA.getLanguage(), file.getLanguage());
+
+    for (int i=0;i<300;i++) {
+      assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
+      WriteCommandAction.runWriteCommandAction(null, () -> {
+        document.insertString(0, "/**/");
+        assertFalse(getPsiDocumentManager().isCommitted(document));
+      });
+      waitForCommit(document, i);
+      WriteCommandAction.runWriteCommandAction(null, () -> {
+        document.deleteString(0, "/**/".length());
+      });
+      waitTenSecondsForCommit(document);
+      assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
+      //System.out.println("i = " + i);
+    }
+  }
+
   private static void waitAndPump(Semaphore semaphore, int timeout) {
     final long limit = System.currentTimeMillis() + timeout;
     while (System.currentTimeMillis() < limit) {
@@ -335,8 +370,8 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       final PsiDocumentManagerImpl alienDocManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(alienProject);
       final Document alienDocument = alienDocManager.getDocument(alienFile);
       assertSame(document, alienDocument);
-      assertEquals(0, alienDocManager.getUncommittedDocuments().length);
-      assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
+      assertEmpty(alienDocManager.getUncommittedDocuments());
+      assertEmpty(getPsiDocumentManager().getUncommittedDocuments());
 
       WriteCommandAction.runWriteCommandAction(null, () -> {
         document.setText("xxx");
@@ -346,10 +381,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       assertEquals("xxx", document.getText());
       assertEquals("xxx", alienDocument.getText());
 
-      long t1 = System.currentTimeMillis() + TIMEOUT;
-      while (!getPsiDocumentManager().isCommitted(document) && System.currentTimeMillis() < t1) {
-        UIUtil.dispatchAllInvocationEvents();
-      }
+      waitForCommit(document, TIMEOUT);
       assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
 
       long t2 = System.currentTimeMillis() + TIMEOUT;
@@ -458,25 +490,16 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     });
     assertNotSame(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
 
-    long start = System.currentTimeMillis();
-    while (System.currentTimeMillis() - start < 10000) {
-      UIUtil.dispatchAllInvocationEvents();
-      // must not be committed until exit modal dialog
-      assertFalse(getPsiDocumentManager().isCommitted(document));
-    }
+    // must not be committed until exit modal dialog
+    waitTenSecondsForCommit(document);
+    assertFalse(getPsiDocumentManager().isCommitted(document));
+
     LaterInvocator.leaveModal(dialog);
     assertEquals(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
 
-    start = System.currentTimeMillis();
-
-    // must committ
-    while (System.currentTimeMillis() - start < 10000 && !getPsiDocumentManager().isCommitted(document)) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
-
+    // must commit
+    waitTenSecondsForCommit(document);
     assertTrue(getPsiDocumentManager().isCommitted(document));
-
-
 
     // check that inside modal dialog commit is possible
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -487,15 +510,64 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     });
     assertNotSame(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
 
-    // must committ
-    while (System.currentTimeMillis() - start < 10000 && !getPsiDocumentManager().isCommitted(document)) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
+    // must commit
+    waitTenSecondsForCommit(document);
 
     assertTrue(getPsiDocumentManager().isCommitted(document));
     LaterInvocator.leaveModal(dialog);
   }
-  
+
+  public void testChangeDocumentThenEnterModalDialogThenCallPerformWhenAllCommittedShouldFireWhileInsideModal() throws IOException {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
+    PsiFile psiFile = findFile(vFile);
+    final Document document = getDocument(psiFile);
+
+    final DialogWrapper dialog = new DialogWrapper(getProject()) {
+      @Nullable
+      @Override
+      protected JComponent createCenterPanel() {
+        return null;
+      }
+    };
+
+    disposeOnTearDown(() -> dialog.close(DialogWrapper.OK_EXIT_CODE));
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      // commit thread is paused
+      document.setText("xx");
+
+      LaterInvocator.enterModal(dialog);
+    });
+    assertNotSame(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
+
+
+    // must not commit in background by default when modality changed
+    waitTenSecondsForCommit(document);
+    assertFalse(getPsiDocumentManager().isCommitted(document));
+
+    // but, when performWhenAllCommitted() in modal context called, should re-add documents into queue nevertheless
+    boolean[] calledPerformWhenAllCommitted = new boolean[1];
+    getPsiDocumentManager().performWhenAllCommitted(() -> calledPerformWhenAllCommitted[0] = true);
+
+    // must commit now
+    waitTenSecondsForCommit(document);
+    assertTrue(getPsiDocumentManager().isCommitted(document));
+    assertTrue(calledPerformWhenAllCommitted[0]);
+
+    LaterInvocator.leaveModal(dialog);
+    assertEquals(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
+  }
+
+  private void waitTenSecondsForCommit(Document document) {
+    waitForCommit(document, 10000);
+  }
+
+  private void waitForCommit(Document document, int millis) {
+    long start = System.currentTimeMillis();
+    while (System.currentTimeMillis() - start < millis && !getPsiDocumentManager().isCommitted(document)) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+  }
+
   public void testReparseDoesNotModifyDocument() throws Exception {
     VirtualFile file = createTempFile("txt", null, "1\n2\n3\n", Charset.forName("UTF-8"));
     file.putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY, EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);

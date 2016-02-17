@@ -19,6 +19,7 @@ import com.google.common.collect.Ordering;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
@@ -49,8 +50,8 @@ public class PyImportOptimizer implements ImportOptimizer {
                                                                                                           Collections.<String>emptyList());
     file.accept(new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyElement(PyElement node) {
-        super.visitPyElement(node);
+      public void visitElement(PsiElement node) {
+        super.visitElement(node);
         node.accept(visitor);
       }
     });

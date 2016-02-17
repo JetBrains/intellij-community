@@ -53,15 +53,19 @@ import java.io.File;
  */
 public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardStep> {
   protected final WizardContext myWizardContext;
+  @Nullable
+  private WizardDelegate myDelegate;
 
   public AbstractProjectWizard(String title, Project project, String defaultPath) {
     super(title, project);
     myWizardContext = initContext(project, defaultPath, getDisposable());
+    myWizardContext.setWizard(this);
   }
 
   public AbstractProjectWizard(String title, Project project, Component dialogParent) {
     super(title, dialogParent);
     myWizardContext = initContext(project, null, getDisposable());
+    myWizardContext.setWizard(this);
   }
 
   @Override
@@ -174,6 +178,10 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   @VisibleForTesting
   public boolean doFinishAction() {
+    if (myDelegate != null) {
+      myDelegate.doFinishAction();
+      return true;
+    }
     int idx = getCurrentStep();
     try {
       do {
@@ -239,6 +247,10 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   @Override
   public void doNextAction() {
+    if (myDelegate != null) {
+      myDelegate.doNextAction();
+      return;
+    }
     final ModuleWizardStep step = getCurrentStepObject();
     if (!commitStepData(step)) {
       return;
@@ -269,6 +281,10 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   @Override
   protected void doPreviousAction() {
+    if (myDelegate != null) {
+      myDelegate.doPreviousAction();
+      return;
+    }
     final ModuleWizardStep step = getCurrentStepObject();
     step.onStepLeaving();
     if (step instanceof StepWithSubSteps) {
@@ -334,5 +350,9 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   private static boolean isNotFirstSubStepInStep(ModuleWizardStep current) {
     return current instanceof StepWithSubSteps && !((StepWithSubSteps)current).isFirst();
+  }
+
+  public void setDelegate(@Nullable WizardDelegate delegate) {
+    myDelegate = delegate;
   }
 }

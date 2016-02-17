@@ -48,17 +48,34 @@ public class BalloonLayoutConfiguration {
 
   public static final int FixedWidth;
   public static final int MaxWidth;
+
   public static final int MinWidth = JBUI.scale(100);
 
-  public static final String MaxWidthStyle = "width:" + JBUI.scale(SystemInfo.isMac ? 230 : 210) + "px;";
+  public static final String MaxWidthStyle;
 
   static {
-    int width = SystemInfo.isMac ? 350 : 330;
+    int width;
+    int styleWidth;
+
+    if (SystemInfo.isMac) {
+      width = 360;
+      styleWidth = 240;
+    }
+    else if (SystemInfo.isLinux) {
+      width = 410;
+      styleWidth = 270;
+    }
+    else {
+      width = 330;
+      styleWidth = 205;
+    }
+
     width += AllIcons.Ide.Notification.Shadow.Left.getIconWidth();
     width += AllIcons.Ide.Notification.Shadow.Right.getIconWidth();
 
     FixedWidth = JBUI.scale(width);
     MaxWidth = JBUI.scale(width - 60);
+    MaxWidthStyle = "width:" + JBUI.scale(styleWidth) + "px;";
   }
 
   public static final int NotificationSpace = JBUI.scale(10);

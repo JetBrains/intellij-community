@@ -17,6 +17,8 @@ package com.intellij.notification.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.FrameStateManager;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.actionSystem.*;
@@ -59,15 +61,16 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.plaf.ButtonUI;
+import javax.swing.plaf.ColorUIResource;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.ui.NotificationBalloonActionProvider.drawRect;
-import static com.intellij.ui.NotificationBalloonActionProvider.icon;
 
 /**
  * @author spleaner
@@ -276,13 +279,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
   public static Window findWindowForBalloon(@Nullable Project project) {
     Window frame = WindowManager.getInstance().getFrame(project);
     if (frame == null && project == null) {
+      frame = (Window)WelcomeFrame.getInstance();
+    }
+    if (frame == null && project == null) {
       frame = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
       while (frame instanceof DialogWrapperDialog && ((DialogWrapperDialog)frame).getDialogWrapper().isModalProgress()) {
         frame = frame.getOwner();
       }
-    }
-    if (frame == null && project == null) {
-      frame = (Window)WelcomeFrame.getInstance();
     }
     return frame;
   }
@@ -330,8 +333,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     if (text.getCaret() != null) {
       text.setCaretPosition(0);
     }
-    JScrollPane pane = new JScrollPane(text); // do not add 1px border for viewport on UI update
-    pane.setBorder(BorderFactory.createEmptyBorder());
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(text, true); // do not add 1px border for viewport on UI update
     pane.setOpaque(false);
     pane.getViewport().setOpaque(false);
     content.add(pane, BorderLayout.CENTER);
@@ -382,31 +384,70 @@ public class NotificationsManagerImpl extends NotificationsManager {
   }
 
   @Nullable
-  private static JPanel createButtons(@NotNull Notification notification, @NotNull JPanel content, @Nullable HyperlinkListener listener) {
+  private static JPanel createButtons(@NotNull Notification notification,
+                                      @NotNull final JPanel content,
+                                      @Nullable HyperlinkListener listener) {
     if (notification instanceof NotificationActionProvider) {
-      NotificationActionProvider provider = (NotificationActionProvider)notification;
-      JPanel buttons = new JPanel(new HorizontalLayout(5)) {
-        @Override
-        public void paint(Graphics g) {
-          super.paint(g);
-          g.setColor(Color.red);
-          drawRect(g, 0, 0, getWidth(), getHeight());
-        }
-      };
+      JPanel buttons = new JPanel(new HorizontalLayout(5));
       buttons.setOpaque(false);
       content.add(BorderLayout.SOUTH, buttons);
-      for (Action action : provider.getActions(listener)) {
+
+      final Ref<JButton> defaultButton = new Ref<JButton>();
+
+      NotificationActionProvider provider = (NotificationActionProvider)notification;
+      for (NotificationActionProvider.Action action : provider.getActions(listener)) {
         JButton button = new JButton(action) {
           @Override
-          public void paint(Graphics g) {
-            super.paint(g);
-            g.setColor(Color.green);
-            drawRect(g, 0, 0, getWidth(), getHeight());
+          public void setUI(ButtonUI ui) {
+            boolean isDarcula = ui instanceof DarculaButtonUI && UIUtil.isUnderDarcula();
+            if (isDarcula) {
+              ui = new DarculaButtonUI() {
+                @Override
+                protected Color getButtonColor1() {
+                  return new ColorUIResource(0x464b4c);
+                }
+
+                @Override
+                protected Color getButtonColor2() {
+                  return new ColorUIResource(0x383c3d);
+                }
+              };
+            }
+            super.setUI(ui);
+            if (isDarcula) {
+              setBorder(new DarculaButtonPainter() {
+                @Override
+                protected Color getBorderColor() {
+                  return new ColorUIResource(0x616263);
+                }
+              });
+            }
           }
         };
+
         button.setOpaque(false);
+        if (action.isDefaultAction()) {
+          defaultButton.setIfNull(button);
+        }
+
         buttons.add(HorizontalLayout.RIGHT, button);
       }
+
+      if (!defaultButton.isNull()) {
+        UIUtil.addParentChangeListener(content, new PropertyChangeListener() {
+          @Override
+          public void propertyChange(PropertyChangeEvent event) {
+            if (event.getOldValue() == null && event.getNewValue() != null) {
+              UIUtil.removeParentChangeListener(content, this);
+              JRootPane rootPane = UIUtil.getRootPane(content);
+              if (rootPane != null) {
+                rootPane.setDefaultButton(defaultButton.get());
+              }
+            }
+          }
+        });
+      }
+
       return buttons;
     }
     return null;
@@ -421,7 +462,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
     final BalloonLayoutData layoutData = new BalloonLayoutData();
     layoutDataRef.set(layoutData);
 
-    final Color foreground = new JBColor(Gray._0, Gray._191);
+    Color foregroundR = Gray._0;
+    Color foregroundD = Gray._191;
+    final Color foreground = new JBColor(foregroundR, foregroundD);
+
     final JBColor fillColor = new JBColor(Gray._242, new Color(78, 80, 82));
 
     final JEditorPane text = new JEditorPane() {
@@ -436,13 +480,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
           }
         }
       }
-
-      @Override
-      public void paint(Graphics g) {
-        super.paint(g);
-        g.setColor(Color.magenta);
-        drawRect(g, 0, 0, getWidth(), getHeight());
-      }
     };
     text.setEditorKit(UIUtil.getHTMLEditorKit());
     text.setForeground(foreground);
@@ -456,7 +493,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
     int prefSize = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null, fontStyle)).getPreferredSize().width;
     String style = prefSize > BalloonLayoutConfiguration.MaxWidth ? BalloonLayoutConfiguration.MaxWidthStyle : null;
 
-    text.setText(NotificationsUtil.buildHtml(notification, style, true, foreground, fontStyle));
+    String textR = NotificationsUtil.buildHtml(notification, style, true, foregroundR, fontStyle);
+    String textD = NotificationsUtil.buildHtml(notification, style, true, foregroundD, fontStyle);
+    LafHandler lafHandler = new LafHandler(text, textR, textD);
+    layoutData.lafHandler = lafHandler;
+
     text.setEditable(false);
     text.setOpaque(false);
 
@@ -542,7 +583,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
       pane.setPreferredSize(size);
 
-      expandAction = new LinkLabel<Void>(null, icon(AllIcons.Ide.Notification.Expand), new LinkListener<Void>() {
+      expandAction = new LinkLabel<Void>(null, AllIcons.Ide.Notification.Expand, new LinkListener<Void>() {
         @Override
         public void linkSelected(LinkLabel link, Void ignored) {
           layoutData.showMinSize = !layoutData.showMinSize;
@@ -553,14 +594,14 @@ public class NotificationsManagerImpl extends NotificationsManager {
           if (layoutData.showMinSize) {
             size.height = layoutData.twoLineHeight;
             pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-            link.setIcon(icon(AllIcons.Ide.Notification.Expand));
-            link.setHoveringIcon(icon(AllIcons.Ide.Notification.ExpandHover));
+            link.setIcon(AllIcons.Ide.Notification.Expand);
+            link.setHoveringIcon(AllIcons.Ide.Notification.ExpandHover);
           }
           else {
             size.height = layoutData.fullHeight;
             pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-            link.setIcon(icon(AllIcons.Ide.Notification.Collapse));
-            link.setHoveringIcon(icon(AllIcons.Ide.Notification.CollapseHover));
+            link.setIcon(AllIcons.Ide.Notification.Collapse);
+            link.setHoveringIcon(AllIcons.Ide.Notification.CollapseHover);
           }
 
           text.setPreferredSize(size);
@@ -575,18 +616,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
           layoutData.doLayout.run();
         }
       });
-      expandAction.setHoveringIcon(icon(AllIcons.Ide.Notification.ExpandHover));
+      expandAction.setHoveringIcon(AllIcons.Ide.Notification.ExpandHover);
     }
 
     final CenteredLayoutWithActions layout = new CenteredLayoutWithActions(text, layoutData);
     JPanel centerPanel = new NonOpaquePanel(layout) {
-      @Override
-      public void paint(Graphics g) {
-        super.paint(g);
-        g.setColor(Color.red);
-        drawRect(g, 0, 0, getWidth(), getHeight());
-      }
-
       @Override
       protected void paintChildren(Graphics g) {
         super.paintChildren(g);
@@ -612,16 +646,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
     content.add(centerPanel, BorderLayout.CENTER);
 
     if (notification.isTitle()) {
-      String titleValue = NotificationsUtil
-        .buildHtml(notification, StringUtil.defaultIfEmpty(fontStyle, "") + "white-space:nowrap;", false, foreground, null);
-      JLabel title = new JLabel(titleValue) {
-        @Override
-        public void paint(Graphics g) {
-          super.paint(g);
-          g.setColor(Color.blue);
-          drawRect(g, 0, 0, getWidth(), getHeight());
-        }
-      };
+      String titleStyle = StringUtil.defaultIfEmpty(fontStyle, "") + "white-space:nowrap;";
+      String titleR = NotificationsUtil.buildHtml(notification, titleStyle, false, foregroundR, null);
+      String titleD = NotificationsUtil.buildHtml(notification, titleStyle, false, foregroundD, null);
+      JLabel title = new JLabel();
+      lafHandler.setTitle(title, titleR, titleD);
       title.setOpaque(false);
       if (UIUtil.isUnderNimbusLookAndFeel()) {
         title.setBackground(UIUtil.TRANSPARENT_COLOR);
@@ -638,14 +667,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
       centerPanel.add(pane, BorderLayout.CENTER);
     }
 
-    final Icon icon = icon(NotificationsUtil.getIcon(notification));
+    final Icon icon = NotificationsUtil.getIcon(notification);
     JComponent iconComponent = new JComponent() {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         icon.paintIcon(this, g, layoutData.configuration.iconOffset.width, layoutData.configuration.iconOffset.height);
-        g.setColor(Color.black);
-        drawRect(g, 0, 0, getWidth(), getHeight());
       }
     };
     iconComponent.setOpaque(false);
@@ -703,14 +730,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static void createActionPanel(@NotNull Notification notification, @NotNull JPanel centerPanel, int gap) {
-    JPanel actionPanel = new NonOpaquePanel(new HorizontalLayout(gap, SwingConstants.CENTER)) {
-      @Override
-      public void paint(Graphics g) {
-        super.paint(g);
-        g.setColor(Color.yellow);
-        drawRect(g, 0, 0, getWidth(), getHeight());
-      }
-    };
+    JPanel actionPanel = new NonOpaquePanel(new HorizontalLayout(gap, SwingConstants.CENTER));
     centerPanel.add(BorderLayout.SOUTH, actionPanel);
 
     List<AnAction> actions = notification.getActions();
@@ -745,14 +765,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
           public void linkSelected(LinkLabel aSource, AnAction action) {
             Notification.fire(action);
           }
-        }, action) {
-          @Override
-          public void paint(Graphics g) {
-            super.paint(g);
-            g.setColor(Color.green);
-            drawRect(g, 0, 0, getWidth(), getHeight());
-          }
-        });
+        }, action));
     }
   }
 
@@ -1043,6 +1056,46 @@ public class NotificationsManagerImpl extends NotificationsManager {
         int y = parent.getHeight() - size.height - myLayoutData.configuration.bottomSpaceHeight;
         myActionPanel.setBounds(0, y, width, size.height);
       }
+    }
+  }
+
+  private static class LafHandler implements Runnable {
+    private final JEditorPane myContent;
+    private final String myContentTextR;
+    private final String myContentTextD;
+
+    private JLabel myTitle;
+    private String myTitleTextR;
+    private String myTitleTextD;
+
+    public LafHandler(@NotNull JEditorPane content, @NotNull String textR, @NotNull String textD) {
+      myContent = content;
+      myContentTextR = textR;
+      myContentTextD = textD;
+      updateContent();
+    }
+
+    public void setTitle(@NotNull JLabel title, @NotNull String textR, @NotNull String textD) {
+      myTitle = title;
+      myTitleTextR = textR;
+      myTitleTextD = textD;
+      updateTitle();
+    }
+
+    private void updateTitle() {
+      myTitle.setText(UIUtil.isUnderDarcula() ? myTitleTextD : myTitleTextR);
+    }
+
+    private void updateContent() {
+      myContent.setText(UIUtil.isUnderDarcula() ? myContentTextD : myContentTextR);
+    }
+
+    @Override
+    public void run() {
+      if (myTitle != null) {
+        updateTitle();
+      }
+      updateContent();
     }
   }
 }

@@ -76,7 +76,7 @@ class ModuleStoreTest {
 
   @Test fun `must be empty if classpath storage`() {
     // we must not use VFS here, file must not be created
-    val moduleFile = tempDirManager.newPath("module").resolve("test.iml")
+    val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")
     moduleFile.createModule().useAndDispose {
       ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
       saveStore()
@@ -92,7 +92,7 @@ class ModuleStoreTest {
 
   @Test fun `one batch update session if several modules changed`() {
     val nameToCount = TObjectIntHashMap<String>()
-    val root = tempDirManager.newPath()
+    val root = tempDirManager.newPath(refreshVfs = true)
 
     fun Module.addContentRoot() {
       val moduleName = name

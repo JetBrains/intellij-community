@@ -49,7 +49,7 @@ internal class TestManager(val projectRule: ProjectRule, private val tempDirMana
     projectRule.project
 
     if (filePath!! == "_tmp_") {
-      val file = tempDirManager.newPath(".txt")
+      val file = tempDirManager.newPath(".txt", refreshVfs = true)
       if (!annotation!!.doNotCreate) {
         file.createFile()
       }

@@ -75,7 +75,7 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
       final PsiClassType.ClassResolveResult sResult = ((PsiClassType)s).resolveGenerics();
       final PsiClass tClass = tResult.getElement();
       final PsiClass sClass = sResult.getElement();
-      if (tClass != null && sClass != null) {
+      if (tClass != null && sClass != null && !(sClass instanceof InferenceVariable)) {
         final PsiSubstitutor sSubstitutor = TypeConversionUtil.getClassSubstitutor(tClass, sClass, sResult.getSubstitutor());
         if (sSubstitutor != null) {
           if (PsiUtil.isRawSubstitutor(tClass, sSubstitutor)) {

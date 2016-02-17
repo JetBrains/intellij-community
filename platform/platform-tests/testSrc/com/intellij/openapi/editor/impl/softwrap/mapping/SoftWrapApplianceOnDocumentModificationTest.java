@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -726,7 +727,13 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     addCollapsedFoldRegion(foldStartOffset, foldEndOffset, "...");
     
     // Simulate addition of the new import that modifies existing fold region.
-    myEditor.getDocument().insertString(foldEndOffset, "\nimport java.util.Date;\n");
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        myEditor.getDocument().insertString(foldEndOffset, "\nimport java.util.Date;\n");
+      }
+    });
+
     final FoldingModel foldingModel = myEditor.getFoldingModel();
     foldingModel.runBatchFoldingOperation(() -> {
       FoldRegion oldFoldRegion = getFoldRegion(foldStartOffset);
@@ -757,7 +764,13 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     addCollapsedFoldRegion(foldStartOffset, foldEndOffset, "...");
 
     int modificationOffset = text.indexOf("java.util.Set");
-    myEditor.getDocument().insertString(modificationOffset, "import java.util.HashSet;\n");
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        myEditor.getDocument().insertString(modificationOffset, "import java.util.HashSet;\n");
+      }
+    });
+
     // Used to get StackOverflowError here, hence, no additional checking is performed.
   }
 
@@ -833,8 +846,14 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     final EditorSettings settings = getEditor().getSettings();
     settings.setUseSoftWraps(false);
     int startOffset = text.indexOf("\t third") - 1;
-    getEditor().getDocument().deleteString(startOffset, text.length());
-    
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        getEditor().getDocument().deleteString(startOffset, text.length());
+      }
+    });
+
+
     // Enable soft wraps and ensure that the cache is correctly re-built.
     settings.setUseSoftWraps(true);
     
@@ -1044,7 +1063,13 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     addCollapsedFoldRegion(4, 8, "...");
     addCollapsedFoldRegion(13, 15, "...");
 
-    myEditor.getDocument().insertString(10, "C");
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        myEditor.getDocument().insertString(10, "C");
+      }
+    });
+
 
     // verify that cached layout data is intact after document change and position recalculation is done correctly
     assertEquals(new LogicalPosition(0, 0), myEditor.visualToLogicalPosition(new VisualPosition(0, 0)));
@@ -1120,7 +1145,13 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     configureSoftWraps(100);
     addCollapsedFoldRegion(0, 4, "...");
 
-    ((DocumentEx)myEditor.getDocument()).moveText(0, 4, 12);
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        ((DocumentEx)myEditor.getDocument()).moveText(0, 4, 12);
+      }
+    });
+
 
     assertEquals(new LogicalPosition(2, 0), myEditor.visualToLogicalPosition(new VisualPosition(2, 1)));
   }

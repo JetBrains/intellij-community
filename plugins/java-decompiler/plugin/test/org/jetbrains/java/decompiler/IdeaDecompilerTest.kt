@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   fun testPerformance() {
     val decompiler = IdeaDecompiler()
     val file = getTestFile("${PlatformTestUtil.getRtJarPath()}!/javax/swing/JTable.class")
-    PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 4000, { decompiler.getText(file) }).cpuBound().useLegacyScaling().assertTiming()
+    PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 10000, { decompiler.getText(file) }).cpuBound().assertTiming()
   }
 
   fun testCancellation() {
@@ -124,8 +124,11 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
       return
     }
 
-    val file = getTestFile("${PlatformTestUtil.getRtJarPath()}!/javax/swing/JTable.class")
+    val file = getTestFile("${PlatformTestUtil.getRtJarPath()}!/javax/swing/JComponent.class")
     val decompiler = ClassFileDecompilers.find(file) as IdeaDecompiler
+
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(file))
+    assertNull(decompiler.getProgress(file))
 
     val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, project)
     alarm.addRequest(object : Runnable {
@@ -142,6 +145,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
 
     try {
       FileDocumentManager.getInstance().getDocument(file)
+      alarm.cancelAllRequests()
       fail("should have been cancelled")
     }
     catch (ignored: ProcessCanceledException) { }

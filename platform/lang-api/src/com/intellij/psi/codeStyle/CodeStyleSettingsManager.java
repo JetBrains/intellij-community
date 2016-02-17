@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,19 +79,11 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     return CodeStyleSchemes.getInstance().findPreferredScheme(PREFERRED_PROJECT_CODE_STYLE).getCodeStyleSettings();
   }
 
-  private void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  private void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettingsManager>(this, new CodeStyleSettingsManager()));
-  }
-
   @Override
   public Element getState() {
     Element result = new Element("state");
     try {
-      writeExternal(result);
+      DefaultJDOMExternalizer.writeExternal(this, result, new DifferenceFilter<CodeStyleSettingsManager>(this, new CodeStyleSettingsManager()));
     }
     catch (WriteExternalException e) {
       LOG.error(e);
@@ -102,7 +94,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   @Override
   public void loadState(Element state) {
     try {
-      readExternal(state);
+      DefaultJDOMExternalizer.readExternal(this, state);
       myIsLoaded = true;
     }
     catch (InvalidDataException e) {

@@ -164,7 +164,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     boolean shouldUpdateUI = false;
     String _fontFace = myComponent.myFontCombo.getFontName();
     LafManager lafManager = LafManager.getInstance();
-    if (_fontSize != settings.FONT_SIZE || !settings.FONT_FACE.equals(_fontFace)) {
+    if (_fontSize != settings.FONT_SIZE || !Comparing.equal(settings.FONT_FACE, _fontFace)) {
       settings.FONT_SIZE = _fontSize;
       settings.FONT_FACE = _fontFace;
       shouldUpdateUI = true;

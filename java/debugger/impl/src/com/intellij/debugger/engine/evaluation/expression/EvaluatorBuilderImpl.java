@@ -59,13 +59,10 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     return ourInstance;
   }
 
-  public static ExpressionEvaluator build(final TextWithImports text, @Nullable PsiElement contextElement, final SourcePosition position) throws EvaluateException {
-    if (contextElement == null) {
-      throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
-    }
-
-    final Project project = contextElement.getProject();
-
+  public static ExpressionEvaluator build(final TextWithImports text,
+                                          @Nullable PsiElement contextElement,
+                                          @Nullable final SourcePosition position,
+                                          @NotNull Project project) throws EvaluateException {
     CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, contextElement);
     PsiCodeFragment codeFragment = factory.createCodeFragment(text, contextElement, project);
     if (codeFragment == null) {
@@ -688,7 +685,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
         Evaluator objectEvaluator;
         if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
-          objectEvaluator = new TypeEvaluator(JVMNameUtil.getContextClassJVMQualifiedName(SourcePosition.createFromElement(psiField)));
+          JVMName className = JVMNameUtil.getContextClassJVMQualifiedName(SourcePosition.createFromElement(psiField));
+          if (className == null) {
+            className = JVMNameUtil.getJVMQualifiedName(fieldClass);
+          }
+          objectEvaluator = new TypeEvaluator(className);
         }
         else if(qualifier != null) {
           qualifier.accept(this);

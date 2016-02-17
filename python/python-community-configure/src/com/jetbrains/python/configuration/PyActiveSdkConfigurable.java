@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.configuration;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -31,6 +32,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -70,6 +72,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private JButton myDetailsButton;
   private static final String SHOW_ALL = PyBundle.message("active.sdk.dialog.show.all.item");
   private Set<Sdk> myInitialSdkSet;
+
+  private Disposable myDisposable = null;
 
   public PyActiveSdkConfigurable(@NotNull Project project) {
     myModule = null;
@@ -149,14 +153,21 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     c.weightx = 0.0;
     myMainPanel.add(myDetailsButton, c);
 
+    final PyCustomSdkUiProvider customUiProvider = PyCustomSdkUiProvider.getInstance();
+    if (customUiProvider != null) {
+      myDisposable = Disposer.newDisposable();
+      customUiProvider.customizeActiveSdkPanel(myProject, mySdkCombo, myMainPanel, c, myDisposable);
+    }
+
     c.insets = new Insets(2,2,0,2);
     c.gridx = 0;
-    c.gridy = 1;
+    c.gridy++;
     c.gridwidth = 3;
+    c.weightx = 0.0;
     myMainPanel.add(emptyLabel, c);
 
     c.gridx = 0;
-    c.gridy = 2;
+    c.gridy++;
     c.weighty = 1.;
     c.gridwidth = 3;
     c.gridheight = GridBagConstraints.RELATIVE;
@@ -165,7 +176,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     c.gridheight = GridBagConstraints.REMAINDER;
     c.gridx = 0;
-    c.gridy = 3;
+    c.gridy++;
     c.gridwidth = 3;
     c.weighty = 0.;
     c.fill = GridBagConstraints.HORIZONTAL;
@@ -374,6 +385,9 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   public void disposeUIResources() {
     myProjectSdksModel.removeListener(mySdkModelListener);
     myInterpreterList.disposeModel();
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+    }
   }
 
   private class MySdkModelListener implements SdkModel.Listener {

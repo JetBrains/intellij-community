@@ -22,11 +22,16 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,6 +72,12 @@ public class HighlightVisitorInternalInspection extends BaseJavaBatchLocalInspec
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     final PsiFile file = holder.getFile();
     if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
+    if (virtualFile == null ||
+        virtualFile.getFileType() != StdFileTypes.JAVA ||
+        CompilerConfiguration.getInstance(holder.getProject()).isExcludedFromCompilation(virtualFile)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new HighlightVisitorImpl(JavaPsiFacade.getInstance(holder.getProject()).getResolveHelper()) {

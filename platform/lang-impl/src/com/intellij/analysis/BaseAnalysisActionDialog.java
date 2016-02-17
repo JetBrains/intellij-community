@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private final String myAnalysisNoon;
   private ButtonGroup myGroup;
 
-  private static final String ALL = AnalysisScopeBundle.message("scope.option.uncommited.files.all.changelists.choice");
+  private static final String ALL = AnalysisScopeBundle.message("scope.option.uncommitted.files.all.changelists.choice");
   private final AnalysisUIOptions myAnalysisOptions;
   @Nullable private final PsiElement myContext;
 

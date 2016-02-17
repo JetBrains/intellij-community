@@ -415,4 +415,14 @@ public class PyStubsTest extends PyTestCase {
     assertNotNull(d.getMetaClassType(context));
     assertNotParsed(file);
   }
+
+  // PY-18254
+  public void testFunctionTypeComment() {
+    final PyFile file = getTestFile();
+    final PyFunction func = file.findTopLevelFunction("func");
+    assertNotNull(func);
+    final String annotation = func.getTypeCommentAnnotation();
+    assertEquals("(str) -> int", annotation);
+    assertNotParsed(file);
+  }
 }

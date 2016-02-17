@@ -154,6 +154,17 @@ public class MoveMembersTest extends MultiFileTestCase {
     }
   }
 
+  public void testExistingFieldInSuper() throws Exception {
+    try {
+      doTest("B", "A", 0, 1);
+      fail("conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Field <b><code>truth</code></b> already exists in the target class.\n" +
+                   "Method <b><code>important()</code></b> already exists in the target class.", e.getMessage());
+    }
+  }
+
   public void testInnerToInterface() throws Exception {
     doTest("A", "B", 0);
   }

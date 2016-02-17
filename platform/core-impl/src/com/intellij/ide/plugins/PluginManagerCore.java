@@ -55,6 +55,7 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -903,7 +904,7 @@ public class PluginManagerCore {
     int i = 0;
     for (URL url : urls) {
       IdeaPluginDescriptorImpl descriptor = loadDescriptorFromResource(url);
-      if (descriptor != null) {
+      if (descriptor != null && !result.contains(descriptor)) {
         descriptor.setUseCoreClassLoader(true);
         result.add(descriptor);
         if (progress != null && !SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) {
@@ -917,13 +918,13 @@ public class PluginManagerCore {
   private static IdeaPluginDescriptorImpl loadDescriptorFromResource(@NotNull URL resource) {
     try {
       if (URLUtil.FILE_PROTOCOL.equals(resource.getProtocol())) {
-        File descriptorFile = new File(resource.toURI());
+        File descriptorFile = urlToFile(resource);
         File pluginDir = descriptorFile.getParentFile().getParentFile();
         return loadDescriptor(pluginDir, descriptorFile.getName());
       }
       else if (URLUtil.JAR_PROTOCOL.equals(resource.getProtocol())) {
         String path = resource.getFile();
-        File pluginJar = new File(new URL(path.substring(0, path.indexOf(URLUtil.JAR_SEPARATOR))).toURI());
+        File pluginJar = urlToFile(new URL(path.substring(0, path.indexOf(URLUtil.JAR_SEPARATOR))));
         return loadDescriptor(pluginJar, PathUtil.getFileName(path));
       }
     }
@@ -932,6 +933,20 @@ public class PluginManagerCore {
     }
 
     return null;
+  }
+
+  // work around corrupted URLs produced by File.getURL()
+  private static File urlToFile(URL url) throws URISyntaxException, MalformedURLException {
+    try {
+      return new File(url.toURI());
+    }
+    catch (URISyntaxException e) {
+      String str = url.toString();
+      if (str.indexOf(' ') > 0) {
+        return new File(new URL(StringUtil.replace(str, " ", "%20")).toURI());
+      }
+      throw e;
+    }
   }
 
   private static void loadDescriptorsFromProperty(@NotNull List<IdeaPluginDescriptorImpl> result) {

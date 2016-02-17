@@ -156,6 +156,10 @@ public class LineStatusTracker {
         for (final Range range : myRanges) {
           createHighlighter(range);
         }
+
+        if (myRanges.isEmpty()) {
+          markFileUnchanged();
+        }
       }
       catch (FilesTooBigForDiffException e) {
         installAnathema();

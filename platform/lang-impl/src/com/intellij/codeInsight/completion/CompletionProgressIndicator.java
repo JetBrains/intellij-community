@@ -107,10 +107,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final LookupAdapter myLookupListener = new LookupAdapter() {
     @Override
     public void itemSelected(LookupEvent event) {
-      finishCompletionProcess(false);
-
       LookupElement item = event.getItem();
-      if (item == null) return;
+      boolean dispose = item == null;
+      finishCompletionProcess(dispose);
+      if (dispose) return;
 
       setMergeCommand();
 

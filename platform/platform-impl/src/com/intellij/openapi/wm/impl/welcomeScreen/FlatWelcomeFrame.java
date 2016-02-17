@@ -695,11 +695,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
        @Override
        public boolean hasSeparatorAboveOf(AnAction value) {
          int index = groups.indexOf(value);
-         if (index < 1) return false;
-         AnAction upper = groups.get(index - 1);
-         if (getParentGroupName(upper) == null && getParentGroupName(value) != null) return true;
+         final String parentGroupName = getParentGroupName(value);
 
-         return !Comparing.equal(getParentGroupName(upper), getParentGroupName(value));
+         if (index < 1) return parentGroupName != null;
+         AnAction upper = groups.get(index - 1);
+         if (getParentGroupName(upper) == null && parentGroupName != null) return true;
+
+         return !Comparing.equal(getParentGroupName(upper), parentGroupName);
        }
      })
 

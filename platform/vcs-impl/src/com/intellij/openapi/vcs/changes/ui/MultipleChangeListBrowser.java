@@ -217,10 +217,8 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
     super.buildToolBar(toolBarGroup);
 
-    ActionManager actionManager = ActionManager.getInstance();
-    final AnAction moveAction = actionManager.getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST);
-    moveAction.registerCustomShortcutSet(CommonShortcuts.getMove(), myViewer);
-    toolBarGroup.add(moveAction);
+    EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
+    toolBarGroup.add(ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST));
   }
 
   @Override

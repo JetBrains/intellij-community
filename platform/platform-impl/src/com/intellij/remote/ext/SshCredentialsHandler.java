@@ -52,6 +52,6 @@ public class SshCredentialsHandler extends RemoteCredentialsHandlerBase<RemoteCr
   @NotNull
   private String constructSshCredentialsFullPath() {
     RemoteCredentials cred = getCredentials();
-    return RemoteCredentialsHolder.SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getPort();
+    return RemoteCredentialsHolder.SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getLiteralPort();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -108,7 +109,12 @@ public class EditorStressTest extends AbstractEditorTest {
     public void perform(EditorEx editor, Random random) {
       Document document = editor.getDocument();
       int offset = random.nextInt(document.getTextLength() + 1);
-      document.insertString(offset, myText);
+      new WriteCommandAction.Simple(getProject()) {
+        @Override
+        protected void run() throws Throwable {
+          document.insertString(offset, myText);
+        }
+      }.execute().throwException();
     }
   }
 
@@ -119,7 +125,12 @@ public class EditorStressTest extends AbstractEditorTest {
       int textLength = document.getTextLength();
       if (textLength <= 0) return;
       int offset = random.nextInt(textLength);
-      document.deleteString(offset, offset + 1);
+      new WriteCommandAction.Simple(getProject()) {
+        @Override
+        protected void run() throws Throwable {
+          document.deleteString(offset, offset + 1);
+        }
+      }.execute().throwException();
     }
   }
 
@@ -132,7 +143,12 @@ public class EditorStressTest extends AbstractEditorTest {
       int offset = random.nextInt(textLength);
       int targetOffset = random.nextInt(textLength + 1);
       if (targetOffset < offset || targetOffset > offset + 1) {
-        ((DocumentEx)document).moveText(offset, offset + 1, targetOffset);
+        new WriteCommandAction.Simple(getProject()) {
+          @Override
+          protected void run() throws Throwable {
+            ((DocumentEx)document).moveText(offset, offset + 1, targetOffset);
+          }
+        }.execute().throwException();
       }
     }
   }

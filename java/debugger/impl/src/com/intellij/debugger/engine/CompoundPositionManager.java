@@ -30,10 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.sun.jdi.InternalException;
-import com.sun.jdi.Location;
-import com.sun.jdi.ReferenceType;
-import com.sun.jdi.VMDisconnectedException;
+import com.sun.jdi.*;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +69,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
         return processor.process(positionManager);
       }
       catch (NoDataException | ProcessCanceledException ignored) {}
-      catch (VMDisconnectedException e) {throw e;}
+      catch (VMDisconnectedException | ObjectCollectedException e) {throw e;}
       catch (InternalException e) {LOG.info(e);}
       catch (Exception | AssertionError e) {LOG.error(e);}
     }

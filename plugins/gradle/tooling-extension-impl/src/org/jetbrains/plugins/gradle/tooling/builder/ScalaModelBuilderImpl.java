@@ -31,6 +31,9 @@ import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaCompileOptionsIm
 import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaForkOptionsImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaModelImpl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Vladislav.Soroka
  * @since 1/31/14
@@ -80,7 +83,7 @@ public class ScalaModelBuilderImpl implements ModelBuilderService {
     if (options == null) return null;
 
     ScalaCompileOptionsImpl result = new ScalaCompileOptionsImpl();
-    result.setAdditionalParameters(options.getAdditionalParameters());
+    result.setAdditionalParameters(wrapStringList(options.getAdditionalParameters()));
     result.setDaemonServer(options.getDaemonServer());
     result.setDebugLevel(options.getDebugLevel());
     result.setDeprecation(options.isDeprecation());
@@ -92,7 +95,7 @@ public class ScalaModelBuilderImpl implements ModelBuilderService {
     result.setListFiles(options.isListFiles());
     result.setLoggingLevel(options.getLoggingLevel());
     result.setDebugLevel(options.getDebugLevel());
-    result.setLoggingPhases(options.getLoggingPhases());
+    result.setLoggingPhases(wrapStringList(options.getLoggingPhases()));
     result.setOptimize(options.isOptimize());
     result.setUnchecked(options.isUnchecked());
     result.setUseAnt(options.isUseAnt());
@@ -102,12 +105,23 @@ public class ScalaModelBuilderImpl implements ModelBuilderService {
   }
 
   @Nullable
+  private static List<String> wrapStringList(@Nullable List<String> list) {
+    if (list == null) return null;
+    List<String> strings = new ArrayList<String>();
+    for (CharSequence s : list) {
+      // fix serialization issue if 's' is an instance of groovy.lang.GString [IDEA-125174]
+      strings.add(s.toString());
+    }
+    return strings;
+  }
+
+  @Nullable
   @Contract("null -> null")
   private static ScalaForkOptionsImpl create(@Nullable ScalaForkOptions forkOptions) {
     if (forkOptions == null) return null;
 
     ScalaForkOptionsImpl result = new ScalaForkOptionsImpl();
-    result.setJvmArgs(forkOptions.getJvmArgs());
+    result.setJvmArgs(wrapStringList(forkOptions.getJvmArgs()));
     result.setMemoryInitialSize(forkOptions.getMemoryInitialSize());
     result.setMemoryMaximumSize(forkOptions.getMemoryMaximumSize());
     return result;

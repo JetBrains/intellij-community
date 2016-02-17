@@ -58,5 +58,5 @@ public interface ExternalSystemExecutionConsoleManager<
 
   boolean isApplicableFor(@NotNull ExternalSystemTask task);
 
-  AnAction[] getRestartActions();
+  AnAction[] getRestartActions(@NotNull ExternalSystemExecutionConsole consoleView);
 }

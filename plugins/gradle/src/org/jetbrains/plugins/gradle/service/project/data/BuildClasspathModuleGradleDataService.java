@@ -173,6 +173,8 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
     }
     localSettings.setProjectBuildClasspath(localProjectBuildClasspath);
 
-    GradleBuildClasspathManager.getInstance(project).reload();
+    if(!project.isDisposed()) {
+      GradleBuildClasspathManager.getInstance(project).reload();
+    }
   }
 }

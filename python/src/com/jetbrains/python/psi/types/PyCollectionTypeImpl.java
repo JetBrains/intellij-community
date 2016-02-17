@@ -34,6 +34,16 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
     myElementTypes = elementTypes;
   }
 
+
+  @Nullable
+  @Override
+  public PyType getReturnType(@NotNull final TypeEvalContext context) {
+    if (isDefinition()) {
+      return new PyCollectionTypeImpl(getPyClass(), false, myElementTypes);
+    }
+    return null;
+  }
+
   @NotNull
   @Override
   public List<PyType> getElementTypes(@NotNull TypeEvalContext context) {
@@ -50,6 +60,11 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
       return null;
     }
     return new PyCollectionTypeImpl(pyClass, isDefinition, elementTypes);
+  }
+
+  @Override
+  public PyClassType toInstance() {
+    return myIsDefinition ? new PyCollectionTypeImpl(myClass, false, myElementTypes) : this;
   }
 
   @Override

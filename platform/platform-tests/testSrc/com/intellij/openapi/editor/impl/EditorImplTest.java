@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -70,11 +71,17 @@ public class EditorImplTest extends AbstractEditorTest {
     assertEquals(4, EditorUtil.getTabSize(myEditor));
     assertEquals("[FoldRegion +(59:64), placeholder=' { ', FoldRegion +(85:88), placeholder=' }']", myEditor.getFoldingModel().toString());
     verifySoftWrapPositions(52, 85);
-    
-    Document document = myEditor.getDocument();
-    for (int i = document.getLineCount() - 1; i >= 0; i--) {
-      document.insertString(document.getLineStartOffset(i), "//");
-    }
+
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        Document document = myEditor.getDocument();
+        for (int i = document.getLineCount() - 1; i >= 0; i--) {
+          document.insertString(document.getLineStartOffset(i), "//");
+        }
+      }
+    }.execute().throwException();
+
 
     verifySoftWrapPositions(58, 93);
   }
@@ -105,13 +112,19 @@ public class EditorImplTest extends AbstractEditorTest {
   public void testNoExceptionDuringBulkModeDocumentUpdate() throws Exception {
     initText("something");
     DocumentEx document = (DocumentEx)myEditor.getDocument();
-    document.setInBulkUpdate(true);
-    try {
-      document.setText("something\telse");
-    }
-    finally {
-      document.setInBulkUpdate(false);
-    }
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        document.setInBulkUpdate(true);
+        try {
+          document.setText("something\telse");
+        }
+        finally {
+          document.setInBulkUpdate(false);
+        }
+      }
+    }.execute().throwException();
+
     checkResultByText("something\telse");
   }
 
@@ -147,8 +160,14 @@ public class EditorImplTest extends AbstractEditorTest {
   public void testNavigationInsideNonNormalizedLineTerminator() throws Exception {
     initText("");
     ((DocumentImpl)myEditor.getDocument()).setAcceptSlashR(true);
-    myEditor.getDocument().insertString(0, "abc\r\ndef");
-    
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        myEditor.getDocument().insertString(0, "abc\r\ndef");
+      }
+    }.execute().throwException();
+
+
     myEditor.getCaretModel().moveToOffset(4);
     
     assertEquals(new LogicalPosition(0, 3), myEditor.getCaretModel().getLogicalPosition());
@@ -159,26 +178,38 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("long long line<caret>");
     configureSoftWraps(12);
     DocumentEx document = (DocumentEx)myEditor.getDocument();
-    document.setInBulkUpdate(true);
-    document.replaceString(4, 5, "-");
-    document.setInBulkUpdate(false);
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        document.setInBulkUpdate(true);
+        document.replaceString(4, 5, "-");
+        document.setInBulkUpdate(false);
+      }
+    }.execute().throwException();
+
     assertEquals(new VisualPosition(1, 5), myEditor.getCaretModel().getVisualPosition());
   }
   
   public void testSuccessiveBulkModeOperations() throws Exception {
     initText("some text");
     DocumentEx document = (DocumentEx)myEditor.getDocument();
-    
-    document.setInBulkUpdate(true);
-    document.replaceString(4, 5, "-");
-    document.setInBulkUpdate(false);
-    
-    myEditor.getCaretModel().moveToOffset(9);
-    
-    document.setInBulkUpdate(true);
-    document.replaceString(4, 5, "+");
-    document.setInBulkUpdate(false);
-    
+
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        document.setInBulkUpdate(true);
+        document.replaceString(4, 5, "-");
+        document.setInBulkUpdate(false);
+
+        myEditor.getCaretModel().moveToOffset(9);
+
+        document.setInBulkUpdate(true);
+        document.replaceString(4, 5, "+");
+        document.setInBulkUpdate(false);
+      }
+    }.execute().throwException();
+
+
     checkResultByText("some+text<caret>");
   }
   
@@ -220,10 +251,16 @@ public class EditorImplTest extends AbstractEditorTest {
   
   public void testUpdatingCaretPositionAfterBulkMode() throws Exception {
     initText("a<caret>bc");
-    DocumentEx document = (DocumentEx)myEditor.getDocument();
-    document.setInBulkUpdate(true);
-    document.insertString(0, "\n "); // we're changing number of visual lines, and invalidating text layout for caret line
-    document.setInBulkUpdate(false);
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        DocumentEx document = (DocumentEx)myEditor.getDocument();
+        document.setInBulkUpdate(true);
+        document.insertString(0, "\n "); // we're changing number of visual lines, and invalidating text layout for caret line
+        document.setInBulkUpdate(false);
+      }
+    }.execute().throwException();
+
     checkResultByText("\n a<caret>bc");
   }
   
@@ -255,7 +292,13 @@ public class EditorImplTest extends AbstractEditorTest {
     JViewport viewport = ((EditorEx)myEditor).getScrollPane().getViewport();
     Dimension normalSize = viewport.getExtentSize();
     viewport.setExtentSize(new Dimension(0, 0));
-    myEditor.getDocument().deleteString(5, 14);
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        myEditor.getDocument().deleteString(5, 14);
+      }
+    }.execute().throwException();
+
     viewport.setExtentSize(normalSize);
     
     verifySoftWrapPositions();

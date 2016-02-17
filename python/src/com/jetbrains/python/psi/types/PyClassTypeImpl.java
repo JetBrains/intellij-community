@@ -38,7 +38,10 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyResolveResultRater;
 import com.jetbrains.python.psi.impl.ResolveResultList;
-import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveProcessor;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -374,7 +377,52 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
-    return getReturnType(context);
+    if (!isDefinition()) {
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+      final List<? extends RatedResolveResult> resolveResults = resolveMember(PyNames.CALL, callSite, AccessDirection.READ, resolveContext);
+
+      if (resolveResults != null) {
+        final ArrayList<PyType> result = new ArrayList<PyType>();
+
+        for (RatedResolveResult resolveResult : resolveResults) {
+          result.addAll(
+            getPossibleReturnTypes(resolveResult.getElement(), context)
+          );
+        }
+
+        return PyUnionType.union(result);
+      }
+    }
+
+    return null;
+  }
+
+  @NotNull
+  private static List<PyType> getPossibleReturnTypes(@Nullable PsiElement element, @NotNull TypeEvalContext context) {
+    final ArrayList<PyType> result = new ArrayList<PyType>();
+
+    if (element instanceof PyTypedElement) {
+      final PyType elementType = context.getType((PyTypedElement)element);
+
+      result.addAll(getPossibleReturnTypes(elementType, context));
+
+      if (elementType instanceof PyUnionType) {
+        for (PyType type : ((PyUnionType)elementType).getMembers()) {
+          result.addAll(getPossibleReturnTypes(type, context));
+        }
+      }
+    }
+
+    return result;
+  }
+
+  @NotNull
+  private static List<PyType> getPossibleReturnTypes(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    if (type instanceof PyCallableType) {
+      return Collections.singletonList(((PyCallableType)type).getReturnType(context));
+    }
+
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -724,6 +772,5 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     public boolean value(final PsiElement target) {
       return (instance != target);
     }
-
   }
 }

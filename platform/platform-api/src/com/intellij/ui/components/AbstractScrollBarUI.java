@@ -110,8 +110,9 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
   @Override
   public void installUI(JComponent c) {
     myScrollBar = (JScrollBar)c;
-    myScrollBar.setBackground(new JBColor(new ColorProducer(c, 0xF5F5F5, 0x3C3F41)));
-    myScrollBar.setForeground(new JBColor(new ColorProducer(c, 0xE6E6E6, 0x3C3F41)));
+    boolean auto = Registry.is("ide.scroll.background.auto");
+    myScrollBar.setBackground(auto ? null : new JBColor(new ColorProducer(c, 0xF5F5F5, 0x3C3F41)));
+    myScrollBar.setForeground(auto ? null : new JBColor(new ColorProducer(c, 0xE6E6E6, 0x3C3F41)));
     myScrollBar.setFocusable(false);
     myScrollBar.addMouseListener(myListener);
     myScrollBar.addMouseMotionListener(myListener);

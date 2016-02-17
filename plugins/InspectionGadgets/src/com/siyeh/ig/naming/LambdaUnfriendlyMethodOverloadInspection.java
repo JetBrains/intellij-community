@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,10 @@ public class LambdaUnfriendlyMethodOverloadInspection extends LambdaUnfriendlyMe
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiMethod method = (PsiMethod)infos[0];
+    if (method.isConstructor()) {
+      return null;
+    }
     return new RenameFix();
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,16 +82,19 @@ public abstract class XDebuggerEditorBase {
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        ListPopup oldPopup = SoftReference.dereference(myPopup);
-        if (oldPopup != null && !oldPopup.isDisposed()) {
-          oldPopup.cancel();
-          myPopup = null;
+        if (myChooseFactory.isEnabled()) {
+          ListPopup oldPopup = SoftReference.dereference(myPopup);
+          if (oldPopup != null && !oldPopup.isDisposed()) {
+            oldPopup.cancel();
+            myPopup = null;
+            return true;
+          }
+          ListPopup popup = createLanguagePopup();
+          popup.showUnderneathOf(myChooseFactory);
+          myPopup = new WeakReference<ListPopup>(popup);
           return true;
         }
-        ListPopup popup = createLanguagePopup();
-        popup.showUnderneathOf(myChooseFactory);
-        myPopup = new WeakReference<ListPopup>(popup);
-        return true;
+        return false;
       }
     }.installOn(myChooseFactory);
   }

@@ -508,7 +508,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         iteration +=".map(";
         final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
         final PsiClass functionClass = psiFacade.findClass("java.util.function.Function", GlobalSearchScope.allScope(project));
-        final PsiClassType functionalInterfaceType = functionClass != null ? psiFacade.getElementFactory().createType(functionClass, parameter.getType(), expression.getType()) : null;
+        final PsiType[] paramTypes = {parameter.getType(), expression.getType()};
+        for (int i = 0; i < paramTypes.length; i++) {
+          if (paramTypes[i] instanceof PsiPrimitiveType) {
+            paramTypes[i] = ((PsiPrimitiveType)paramTypes[i]).getBoxedType(expression);
+          }
+        }
+        final PsiClassType functionalInterfaceType = functionClass != null ? psiFacade.getElementFactory().createType(functionClass, paramTypes) : null;
         final PsiCallExpression toConvertCall = LambdaCanBeMethodReferenceInspection
           .canBeMethodReferenceProblem(expression, new PsiParameter[]{parameter}, functionalInterfaceType);
         final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, functionalInterfaceType, new PsiParameter[]{parameter});

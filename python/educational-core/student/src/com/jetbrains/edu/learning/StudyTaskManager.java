@@ -34,10 +34,10 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   private Course myCourse;
   private OldCourse myOldCourse;
   public int VERSION = 2;
-  public Map<AnswerPlaceholder, StudyStatus> myStudyStatusMap = new HashMap<AnswerPlaceholder, StudyStatus>();
-  public Map<TaskFile, StudyStatus> myTaskStatusMap = new HashMap<TaskFile, StudyStatus>();
-  public Map<Task, List<UserTest>> myUserTests = new HashMap<Task, List<UserTest>>();
-  public List<String> myInvisibleFiles = new ArrayList<String>();
+  public Map<AnswerPlaceholder, StudyStatus> myStudyStatusMap = new HashMap<>();
+  public Map<TaskFile, StudyStatus> myTaskStatusMap = new HashMap<>();
+  public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
+  public List<String> myInvisibleFiles = new ArrayList<>();
 
   private StudyTaskManager() {
   }
@@ -52,16 +52,13 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   }
 
   public void setStatus(AnswerPlaceholder placeholder, StudyStatus status) {
-    if (myStudyStatusMap == null) {
-      myStudyStatusMap = new HashMap<AnswerPlaceholder, StudyStatus>();
-    }
-    myStudyStatusMap.put(placeholder, status);
+    placeholder.setStatus(status);
   }
 
   public void addUserTest(@NotNull final Task task, UserTest userTest) {
     List<UserTest> userTests = myUserTests.get(task);
     if (userTests == null) {
-      userTests = new ArrayList<UserTest>();
+      userTests = new ArrayList<>();
       myUserTests.put(task, userTests);
     }
     userTests.add(userTest);
@@ -86,29 +83,27 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
 
 
   public void setStatus(Task task, StudyStatus status) {
+    task.setStatus(status);
     for (TaskFile taskFile : task.getTaskFiles().values()) {
       setStatus(taskFile, status);
     }
   }
 
   public void setStatus(TaskFile file, StudyStatus status) {
-    if (file.getAnswerPlaceholders().isEmpty()) {
-      if (myTaskStatusMap == null) {
-        myTaskStatusMap = new HashMap<TaskFile, StudyStatus>();
-      }
-      myTaskStatusMap.put(file, status);
-    }
     for (AnswerPlaceholder answerPlaceholder : file.getAnswerPlaceholders()) {
       setStatus(answerPlaceholder, status);
     }
   }
 
   public StudyStatus getStatus(AnswerPlaceholder placeholder) {
-    StudyStatus status = myStudyStatusMap.get(placeholder);
+    StudyStatus status = placeholder.getStatus();
+    if (status != StudyStatus.Uninitialized) return status;
+    
+    status = myStudyStatusMap.get(placeholder);
     if (status == null) {
       status = StudyStatus.Unchecked;
-      myStudyStatusMap.put(placeholder, status);
     }
+    placeholder.setStatus(status);
     return status;
   }
 
@@ -124,15 +119,21 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   }
 
   public StudyStatus getStatus(@NotNull final Task task) {
+    StudyStatus taskStatus = task.getStatus();
+    if (taskStatus != StudyStatus.Uninitialized) return taskStatus;
+    
     for (TaskFile taskFile : task.getTaskFiles().values()) {
       StudyStatus taskFileStatus = getStatus(taskFile);
       if (taskFileStatus == StudyStatus.Unchecked) {
+        task.setStatus(StudyStatus.Unchecked);
         return StudyStatus.Unchecked;
       }
       if (taskFileStatus == StudyStatus.Failed) {
+        task.setStatus(StudyStatus.Failed);
         return StudyStatus.Failed;
       }
     }
+    task.setStatus(StudyStatus.Solved);
     return StudyStatus.Solved;
   }
 
