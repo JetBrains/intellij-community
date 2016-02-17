@@ -379,6 +379,14 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testUncheckedWarningDuringStrictSubtyping() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA150688() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }
