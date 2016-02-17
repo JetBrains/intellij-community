@@ -20,23 +20,35 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Allows to suppress stripping spaces from some lines or from entire document when the document is being saved and
  * "Strip spaces on Save" option is not "None".
+ * 
+ * @see StripTrailingSpacesFilterFactory
  */
 public interface StripTrailingSpacesFilter {
-  
+
+  /**
+   * The filter which completely prohibits removing trailing spaces from a document regardless of other filters.
+   */
   StripTrailingSpacesFilter NOT_ALLOWED = new StripTrailingSpacesFilter() {
     @Override
     public boolean isStripSpacesAllowedForLine(int line) {
       return false;
     }
   };
-  
+
+  /**
+   * Tells that strip trailing spaces is not currently possible since some conditions are not met for proper document processing.
+   * The filter will force another attempt to strip trailing spaces later regardless of other filters.
+   */
   StripTrailingSpacesFilter POSTPONED = new StripTrailingSpacesFilter() {
     @Override
     public boolean isStripSpacesAllowedForLine(int line) {
       return false;
     }
   };
-  
+
+  /**
+   * The filter which does not put any restrictions on trailing spaces removal. Other filters may be taken into account.
+   */
   StripTrailingSpacesFilter ALL_LINES = new StripTrailingSpacesFilter() {
     @Override
     public boolean isStripSpacesAllowedForLine(int line) {
@@ -44,6 +56,10 @@ public interface StripTrailingSpacesFilter {
     }
   };
 
+  /**
+   * @param line  The document line.
+   * @return True if trailing spaces can be removed from the line, false otherwise.
+   */
   boolean isStripSpacesAllowedForLine(int line);
 
 }

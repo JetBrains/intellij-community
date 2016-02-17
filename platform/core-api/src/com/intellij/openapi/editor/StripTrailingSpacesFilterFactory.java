@@ -20,10 +20,23 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * An extension point to create filters which may put restrictions on how trailing spaces will be handled in a document. 
+ */
 public abstract class StripTrailingSpacesFilterFactory {
   public static final ExtensionPointName<StripTrailingSpacesFilterFactory> EXTENSION_POINT
     = new ExtensionPointName<StripTrailingSpacesFilterFactory>("com.intellij.stripTrailingSpacesFilterFactory");
 
+  /**
+   * Creates a filter which may restrict trailing spaces removal.
+   *
+   * @param project The current project or null if there is no project context.
+   * @param document The document to be processed.
+   * @return The filter as defined in {@link StripTrailingSpacesFilter}. The factory may return one of the several predefined filters:
+   *         {@link StripTrailingSpacesFilter#NOT_ALLOWED}, {@link StripTrailingSpacesFilter#POSTPONED} or 
+   *         {@link StripTrailingSpacesFilter#ALL_LINES}. The latter can be returned, for example, if a language-specific logic is not
+   *         applicable to the document.
+   */
   @NotNull
   public abstract StripTrailingSpacesFilter createFilter(@Nullable Project project, @NotNull Document document);
 }
