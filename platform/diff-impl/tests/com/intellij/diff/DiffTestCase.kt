@@ -100,10 +100,6 @@ abstract class DiffTestCase : UsefulTestCase() {
 
   fun parseSource(string: CharSequence): String = string.toString().replace('_', '\n')
 
-  fun parseMatching(before: String, after: String): Couple<BitSet> {
-    return Couple.of(parseMatching(before), parseMatching(after))
-  }
-
   fun parseMatching(matching: String): BitSet {
     val set = BitSet()
     matching.filterNot { it == '.' }.forEachIndexed { i, c -> if (c != ' ') set.set(i) }

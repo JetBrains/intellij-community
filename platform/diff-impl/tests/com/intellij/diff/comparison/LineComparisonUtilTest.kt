@@ -257,7 +257,7 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   fun `test regression - shifted similar lines should be matched as a single change, not insertion-deletion`() {
     lines {
       (" X_  X" - "  X_   X")
-      default(mod(0, 0, 2, 2))
+      ("--_---" - "---_----").default()
       testDefault()
     }
   }
@@ -265,25 +265,25 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   fun `test prefer chunks bounded by empty line`() {
     lines {
       ("A_B_o_o_Y_Z_ _A_B_z_z_Y_Z" - "A_B_o_o_Y_Z_ _A_B_u_u_Y_Z_ _A_B_z_z_Y_Z")
-      default(ins(7, 7, 7))
+      (" _ _ _ _ _ _ _ _ _ _ _ _ " - " _ _ _ _ _ _ _-_-_-_-_-_-_-_ _ _ _ _ _ ").default()
       testAll()
     }
 
     lines {
       ("A_B_o_o_Y_Z_ _A_B_ _ _Y_Z" - "A_B_o_o_Y_Z_ _A_B_u_u_Y_Z_ _A_B_ _ _Y_Z")
-      default(ins(9, 9, 7))
+      (" _ _ _ _ _ _ _ _ _ _ _ _ " - " _ _ _ _ _ _ _ _ _-_-_-_-_-_-_-_ _ _ _ ").default()
       testAll()
     }
 
     lines {
       ("A_B_o_o_ _A_B_z_z" - "A_B_o_o_ _A_B_u_u_ _A_B_z_z")
-      default(ins(5, 5, 5))
+      (" _ _ _ _ _ _ _ _ " - " _ _ _ _ _-_-_-_-_-_ _ _ _ ").default()
       testAll()
     }
 
     lines {
       ("o_o_Y_Z_ _z_z_Y_Z" - "o_o_Y_Z_ _u_u_Y_Z_ _z_z_Y_Z")
-      default(ins(5, 5, 5))
+      (" _ _ _ _ _ _ _ _ " - " _ _ _ _ _-_-_-_-_-_ _ _ _ ").default()
       testAll()
     }
   }
@@ -292,21 +292,24 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
     lines {
       ("A====_B====_o====_o====_Y====_Z====_!_A====_B====_z====_z====_Y====_Z====" -
        "A====_B====_o====_o====_Y====_Z====_!_A====_B====_u====_u====_Y====_Z====_!_A====_B====_z====_z====_Y====_Z====")
-      default(ins(7, 7, 7))
+      ("     _     _     _     _     _     _ _     _     _     _     _     _     " -
+       "     _     _     _     _     _     _ _-----_-----_-----_-----_-----_-----_-_     _     _     _     _     _     ").default()
       testAll()
     }
 
     lines {
       ("A====_B====_o====_o====_Y====_Z====_ _A====_B====_!_!_Y====_Z====" -
        "A====_B====_o====_o====_Y====_Z====_ _A====_B====_u====_u====_Y====_Z====_ _A====_B====_!_!_Y====_Z====")
-      default(ins(7, 7, 7))
+      ("     _     _     _     _     _     _ _     _     _ _ _     _     " -
+       "     _     _     _     _     _     _ _-----_-----_-----_-----_-----_-----_-_     _     _ _ _     _     ").default()
       testAll()
     }
 
     lines {
       ("A====_B====_o====_o====_Y====_Z====_!_A====_B====_ _ _Y====_Z====" -
        "A====_B====_o====_o====_Y====_Z====_!_A====_B====_u====_u====_Y====_Z====_!_A====_B====_ _ _Y====_Z====")
-      default(ins(9, 9, 7))
+      ("     _     _     _     _     _     _ _     _     _ _ _     _     " -
+       "     _     _     _     _     _     _ _     _     _-----_-----_-----_-----_-_-----_-----_ _ _     _     ").default()
       testAll()
     }
   }
@@ -314,7 +317,7 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   fun `test prefer chunks bounded by empty line - using inserted content`() {
     lines {
       ("e_x_A_B_z" - "x_A_B_ _q_A_B_z")
-      default(del(0, 0, 1), ins(4, 3, 4))
+      ("-_ _ _ _ " - " _ _ _-_-_-_-_ ").default()
       testAll()
     }
   }
@@ -322,12 +325,13 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   fun `test prefer smaller amount of chunks`() {
     lines() {
       ("X_A_X_Y_" - "X_Y_")
-      default(del(0, 0, 2))
+      ("-_-_ _ _" - " _ _").default()
       testAll()
     }
 
     lines() {
       (" __x___y" - "__y")
+      ("-**-*__ " - "__ ").default()
       default(del(0, 0, 3))
       testAll()
     }
@@ -335,7 +339,8 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
     lines {
       ("U======_X======_Y======_z======_X======_Y======_X======_U======_X======_z======" -
        "U======_Y======_X======_U======_X======")
-      default(del(1, 1, 4), del(9, 5, 1))
+      ("       _-------_-------_-------_-------_       _       _       _       _-------" -
+       "       _       _       _       _       ").default()
       testAll()
     }
   }
@@ -343,7 +348,7 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   fun `test regression - can trim chunks after 'compareTwoSteps'`() {
     lines {
       ("q__7_ 6_ 7" - "_7")
-      default(del(0, 0, 1), del(3, 2, 2))
+      ("-*_ _--*--" - "_ ").default()
       testDefault()
     }
   }
@@ -351,7 +356,7 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   fun `test regression - can trim chunks after 'optimizeLineChunks'`() {
     lines {
       ("A=====_ B=====_ }_}_B=====_" - "A=====_ }_}_B=====_")
-      default(del(1, 1, 1))
+      ("      _-------_  _ _      _" - "      _  _ _      _").default()
       testAll()
     }
   }
@@ -359,26 +364,26 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   fun `test bad cases caused by 'compareTwoStep' logic`() {
     lines {
       ("x_!" - "!_x_y")
-      default(del(0, 0, 1), ins(2, 1, 2))
+      ("-_ " - " _-_-").default()
       testAll()
     }
 
     lines {
       ("!_x_y" - "x_!")
-      default(del(0, 0, 1), mod(2, 1, 1, 1))
+      ("-_ _-" - " _-").default()
       testAll()
     }
 
     lines {
       ("x_! " - "!_x_y")
-      default(mod(0, 0, 2, 3))
-      trim(del(0, 0, 1), ins(2, 1, 2))
+      ("-_--" - "-_-_-").default()
+      ("-_  " - " _-_-").trim()
       testAll()
     }
 
     lines {
       ("!_x_y" - "x_! ")
-      default(del(0, 0, 1), mod(2, 1, 1, 1))
+      ("-_ _-" - " _--").default()
       testAll()
     }
 
@@ -393,16 +398,16 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   fun `test bad cases caused by 'compareSmart' logic`() {
     lines {
       ("A=====_ B=====_ }_}_B=====" - "A=====_ }_}_B=====")
-      // TODO trim(del(1, 1, 1))
-      default(del(1, 1, 1))
-      trim(ins(1, 1, 2), del(2, 4, 3))
+      // TODO ("      _-------_  _ _      " - "      _  _ _      ").trim()
+      ("      _-------_  _ _      " - "      _  _ _      ").default()
+      ("      _       _--_-_------" - "      _--_-_      ").trim()
       testAll()
     }
 
     lines {
       ("A=====_ B=====_X_ }_}_Z_B=====_" - "A=====_ }_}_B=====_")
-      // TODO default(del(1, 1, 2), del(5, 3, 1))
-      default(mod(1, 1, 5, 2))
+      // TODO ("      _-------_-_  _ _-_      _" - "      _  _ _      _").default()
+      ("      _-------_-_--_-_-_      _" - "      _--_-_      _").default()
       testAll()
     }
   }
@@ -410,8 +415,8 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   fun `test trim changed blocks after second step correction`() {
     lines() {
       ("====}_==== }_Y_====}" - "====}_Y_====}")
-      default(del(1, 1, 1)) // result after second step correction
-      ignore(ins(1, 1, 1), del(2, 3, 2)) // result looks strange because of 'diff.unimportant.line.char.count'
+      ("     _------_ _     " - "     _ _     ").default() // result after second step correction
+      ("     _      _-_-----" - "     _-_     ").ignore()  // result looks strange because of 'diff.unimportant.line.char.count'
       testAll()
     }
   }
@@ -419,7 +424,7 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   fun `test second step correction processes all confusing lines`() {
     lines {
       ("====}_==== }_Y_==== }_====}" - "==== }_Y_==== }")
-      default(del(0, 0, 1), del(4, 3, 1))
+      ("-----_      _ _      _-----" - "      _ _      ").default()
       testDefault()
     }
   }
