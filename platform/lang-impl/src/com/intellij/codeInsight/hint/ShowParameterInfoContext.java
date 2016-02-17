@@ -48,14 +48,17 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   private final int myParameterListStart;
   private PsiElement myHighlightedElement;
   private Object[] myItems;
+  private boolean myRequestFocus;
 
   public ShowParameterInfoContext(final Editor editor, final Project project,
-                                    final PsiFile file, int offset, int parameterListStart) {
+                                  final PsiFile file, int offset, int parameterListStart,
+                                  boolean requestFocus) {
     myEditor = editor;
     myProject = project;
     myFile = file;
     myParameterListStart = parameterListStart;
     myOffset = offset;
+    myRequestFocus = requestFocus;
   }
 
   @Override
@@ -108,7 +111,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   public void showHint(PsiElement element, int offset, ParameterInfoHandler handler) {
     final Object[] itemsToShow = getItemsToShow();
     if (itemsToShow == null || itemsToShow.length == 0) return;
-    showMethodInfo(getProject(), getEditor(), element, getHighlightedElement(), itemsToShow, offset, handler);
+    showMethodInfo(getProject(), getEditor(), element, getHighlightedElement(), itemsToShow, offset, handler, myRequestFocus);
   }
 
   private static void showParameterHint(final PsiElement element,
@@ -117,11 +120,12 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                         final Project project,
                                         @Nullable PsiElement highlighted,
                                         final int elementStart,
-                                        final ParameterInfoHandler handler) {
+                                        final ParameterInfoHandler handler,
+                                        final boolean requestFocus) {
     if (ParameterInfoController.isAlreadyShown(editor, elementStart)) return;
 
     if (editor.isDisposed() || !editor.getComponent().isVisible()) return;
-    final ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor,handler);
+    final ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor,handler,requestFocus);
     component.setParameterOwner(element);
     if (highlighted != null) {
       component.setHighlightedParameter(highlighted);
@@ -145,6 +149,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
 
         HintHint hintHint = HintManagerImpl.createHintHint(editor, pos.getFirst(), hint, pos.getSecond());
         hintHint.setExplicitClose(true);
+        hintHint.setRequestFocus(requestFocus);
 
         Editor editorToShow = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
         // is case of injection we need to calculate position for EditorWindow
@@ -160,9 +165,10 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                      PsiElement highlighted,
                                      Object[] candidates,
                                      int offset,
-                                     ParameterInfoHandler handler
+                                     ParameterInfoHandler handler,
+                                     boolean requestFocus
                                      ) {
-    showParameterHint(list, editor, candidates, project, candidates.length > 1 ? highlighted : null, offset, handler);
+    showParameterHint(list, editor, candidates, project, candidates.length > 1 ? highlighted : null, offset, handler, requestFocus);
   }
 
   /**
