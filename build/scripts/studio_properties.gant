@@ -293,12 +293,17 @@ def getProperties(String home, String buildNumber) {
         return
       }
       ant.copy(file: "$home/../adt/idea/native/installer/win/builds/uninstall.exe", tofile: "$targetDirectory/uninstall.exe")
+      ant.copy(file: "$home/$androidRoot/android/lib/libwebp/win/webp_jni.dll", tofile: "$targetDirectory/plugins/android/lib/webp_jni.dll")
+      ant.copy(file: "$home/$androidRoot/android/lib/libwebp/win/webp_jni64.dll", tofile: "$targetDirectory/plugins/android/lib/webp_jni64.dll")
     }
 
     def customLinLayout(targetDirectory) {
+      ant.copy(file: "$home/$androidRoot/android/lib/libwebp/linux/libwebp_jni.so", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni.so")
+      ant.copy(file: "$home/$androidRoot/android/lib/libwebp/linux/libwebp_jni64.so", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.so")
     }
 
     def customMacLayout(targetDirectory) {
+      ant.copy(file: "$home/$androidRoot/android/lib/libwebp/mac/libwebp_jni64.dylib", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.dylib")
     }
   }
 }
