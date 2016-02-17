@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.util.VisibilityUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -317,10 +318,10 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         ? list.hasExplicitModifier(PsiModifier.PACKAGE_LOCAL)
         : list.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
       if (element instanceof PsiClass && element.getParent() instanceof PsiDeclarationStatement) {// local class
-        appendModifier(buffer, PsiBundle.message("local.class.preposition"));
+        append(buffer, PsiBundle.message("local.class.preposition"));
       }
       else {
-        appendModifier(buffer, PsiBundle.visibilityPresentation(PsiModifier.PACKAGE_LOCAL));
+        appendModifier(buffer, PsiModifier.PACKAGE_LOCAL);
       }
     }
 
@@ -356,7 +357,11 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     }
   }
 
-  private static void appendModifier(final StringBuilder buffer, final String modifier) {
+  private static void appendModifier(final StringBuilder buffer, @PsiModifier.ModifierConstant @NotNull String modifier) {
+    append(buffer, VisibilityUtil.toPresentableText(modifier));
+  }
+
+  private static void append(StringBuilder buffer, String modifier) {
     appendSpaceIfNeeded(buffer);
     buffer.append(modifier);
   }

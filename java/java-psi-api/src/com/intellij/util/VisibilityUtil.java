@@ -100,6 +100,8 @@ public class VisibilityUtil  {
     return PsiModifier.PACKAGE_LOCAL;
   }
 
+  @NotNull
+  @NonNls
   public static String getVisibilityString(@PsiModifier.ModifierConstant String visibilityModifier) {
     if(PsiModifier.PACKAGE_LOCAL.equals(visibilityModifier)) {
       return "";
