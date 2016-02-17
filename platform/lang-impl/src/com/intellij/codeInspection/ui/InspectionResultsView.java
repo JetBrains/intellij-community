@@ -392,15 +392,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         final InspectionTreeNode node = (InspectionTreeNode)pathSelected.getLastPathComponent();
         if (node instanceof RefElementNode) {
           final RefElementNode refElementNode = (RefElementNode)node;
-          final CommonProblemDescriptor problem = refElementNode.getProblem();
           final RefEntity refSelected = refElementNode.getElement();
-          if (node.isLeaf()) {
-            LOG.assertTrue(problem != null);
-            showInRightPanel(refSelected);
-          }
-          else {
-            showInRightPanel(refSelected);
-          }
+          showInRightPanel(refSelected);
         }
         else if (node instanceof ProblemDescriptionNode) {
           final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;

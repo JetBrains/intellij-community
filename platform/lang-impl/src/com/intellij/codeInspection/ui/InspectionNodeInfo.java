@@ -65,8 +65,8 @@ public class InspectionNodeInfo extends JPanel {
     description.setEditable(false);
     description.setOpaque(false);
     description.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-    SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolWrapper.loadDescription(),
-                                                                                           true));
+    final String toolDescription = toolWrapper.loadDescription();
+    SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, true));
 
     add(ScrollPaneFactory.createScrollPane(description, true),
         new GridBagConstraints(0, 1, 1, 1, 0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
