@@ -21,5 +21,5 @@ import java.util.*
  * @author Konstantin.Ulitin
  */
 abstract class WorkerManagerBase : WorkerManager {
-  override val activeWorkers: Set<String> = Collections.emptySet()
+  override val activeWorkers: Map<String, WebWorker> = Collections.emptyMap()
 }
