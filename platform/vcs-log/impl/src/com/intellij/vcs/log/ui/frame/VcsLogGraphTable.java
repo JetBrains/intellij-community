@@ -83,7 +83,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
   private static final int MAX_ROWS_TO_CALC_OFFSET = 100;
 
-  @NotNull private final VcsLogUiImpl myUI;
+  @NotNull private final VcsLogUiImpl myUi;
   private final VcsLogDataHolder myLogDataHolder;
   private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
@@ -104,13 +104,13 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     }
   };
 
-  public VcsLogGraphTable(@NotNull VcsLogUiImpl UI, @NotNull final VcsLogDataHolder logDataHolder, @NotNull VisiblePack initialDataPack) {
+  public VcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull final VcsLogDataHolder logDataHolder, @NotNull VisiblePack initialDataPack) {
     super();
-    myUI = UI;
+    myUi = ui;
     myLogDataHolder = logDataHolder;
     myGraphCommitCellRenderer = new GraphCommitCellRender(logDataHolder, myGraphCellPainter, this);
 
-    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
+    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUi));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);
     setDefaultRenderer(String.class, new StringCellRenderer());
 
@@ -125,7 +125,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     PopupHandler.installPopupHandler(this, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     ScrollingUtil.installActions(this, false);
 
-    GraphTableModel model = new GraphTableModel(initialDataPack, myLogDataHolder, myUI);
+    GraphTableModel model = new GraphTableModel(initialDataPack, myLogDataHolder, myUi);
     setModel(model);
     initColumnSize();
   }
@@ -193,10 +193,10 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
   private void setRootColumnSize(TableColumn column) {
     int rootWidth;
-    if (!myUI.isMultipleRoots()) {
+    if (!myUi.isMultipleRoots()) {
       rootWidth = 0;
     }
-    else if (!myUI.isShowRootNames()) {
+    else if (!myUi.isShowRootNames()) {
       rootWidth = ROOT_INDICATOR_WIDTH;
     }
     else {
@@ -231,7 +231,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
         return "<html><b>" +
                ((VirtualFile)at).getPresentableUrl() +
                "</b><br/>Click to " +
-               (myUI.isShowRootNames() ? "collapse" : "expand") +
+               (myUi.isShowRootNames() ? "collapse" : "expand") +
                "</html>";
       }
     }
@@ -363,7 +363,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
   private boolean expandOrCollapseRoots(@NotNull MouseEvent e) {
     TableColumn column = getRootColumnOrNull(e);
     if (column != null) {
-      myUI.setShowRootNames(!myUI.isShowRootNames());
+      myUi.setShowRootNames(!myUi.isShowRootNames());
       return true;
     }
     return false;
@@ -400,7 +400,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       }
     }
 
-    myUI.repaintUI(); // in case of repaintUI doing something more than just repainting this table in some distant future
+    myUi.repaintUI(); // in case of repaintUI doing something more than just repainting this table in some distant future
 
     if (answer == null) {
       return;

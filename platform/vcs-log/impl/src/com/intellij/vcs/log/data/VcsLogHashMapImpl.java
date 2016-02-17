@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
@@ -34,7 +33,10 @@ import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.Page;
 import com.intellij.util.io.PersistentEnumerator;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogHashMap;
+import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRootsRegistry;
 import org.jetbrains.annotations.NotNull;
@@ -80,33 +82,25 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
   private final PersistentEnumerator<CommitId> myPersistentEnumerator;
 
   public VcsLogHashMapImpl(@NotNull final Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) throws IOException {
-    cleanupOldNaming(project, logProviders);
     String logId = calcLogId(project, logProviders);
     final File mapFile = new File(LOG_CACHE_APP_DIR, logId + "." + VERSION);
     if (!mapFile.exists()) {
       IOUtil.deleteAllFilesStartingWith(new File(LOG_CACHE_APP_DIR, logId));
     }
 
-    Disposer.register(project, this);
     myPersistentEnumerator = IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentEnumerator<CommitId>, IOException>() {
       @Override
       public PersistentEnumerator<CommitId> compute() throws IOException {
         return new PersistentEnumerator<CommitId>(mapFile, new MyCommitIdKeyDescriptor(project), Page.PAGE_SIZE);
       }
     }, mapFile);
+    Disposer.register(project, this);
   }
 
   @NotNull
   private static String calcLogId(@NotNull Project project, @NotNull final Map<VirtualFile, VcsLogProvider> logProviders) {
     int hashcode = calcLogProvidersHash(logProviders);
     return project.getLocationHash() + "." + Integer.toHexString(hashcode);
-  }
-
-  // TODO remove in IDEA 15
-  private static void cleanupOldNaming(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    int hashcode = calcLogProvidersHash(providers);
-    String oldLogId = project.getName() + "." + hashcode;
-    FileUtil.delete(new File(LOG_CACHE, oldLogId));
   }
 
   private static int calcLogProvidersHash(@NotNull final Map<VirtualFile, VcsLogProvider> logProviders) {
@@ -196,7 +190,7 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
   }
 
   private static class MyCommitIdKeyDescriptor implements KeyDescriptor<CommitId> {
-      private final VcsRootsRegistry myRootsRegistry;
+    @NotNull private final VcsRootsRegistry myRootsRegistry;
 
     public MyCommitIdKeyDescriptor(@NotNull Project project) {
       myRootsRegistry = ServiceManager.getService(project, VcsRootsRegistry.class);

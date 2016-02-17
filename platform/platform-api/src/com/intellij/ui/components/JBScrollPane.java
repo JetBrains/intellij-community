@@ -570,7 +570,6 @@ public class JBScrollPane extends JScrollPane {
       // so that if we don't ask after resetting the bounds we may have gotten the wrong answer.
       if (viewport != null) {
         viewport.setBounds(bounds);
-        pane.setComponentZOrder(viewport, pane.getComponentCount() - 1);
         if (scrollable != null && hsbOpaque && vsbOpaque) {
           viewTracksViewportWidth = scrollable.getScrollableTracksViewportWidth();
           viewTracksViewportHeight = scrollable.getScrollableTracksViewportHeight();
@@ -655,7 +654,6 @@ public class JBScrollPane extends JScrollPane {
           int overlapY = !hsbOnTop ? 0 : overlapHeight;
           vsb.setBounds(vsbBounds.x, vsbBounds.y + overlapY, vsbBounds.width, vsbBounds.height - overlapHeight);
           vsb.putClientProperty(Alignment.class, vsbOnLeft ? Alignment.LEFT : Alignment.RIGHT);
-          pane.setComponentZOrder(vsb, 0);
         }
         // Modify the bounds of the translucent scroll bar.
         if (!vsbOpaque) {
@@ -713,6 +711,20 @@ public class JBScrollPane extends JScrollPane {
                              hsbOnTop ? hsbBounds.y : colHeadBounds.y,
                              vsbOnLeft ? rowHeadBounds.width : vsbBounds.width,
                              hsbOnTop ? hsbBounds.height : colHeadBounds.height);
+      }
+      if (!vsbOpaque && vsbNeeded || !hsbOpaque && hsbNeeded) {
+        fixComponentZOrder(vsb, 0);
+        fixComponentZOrder(viewport, -1);
+      }
+    }
+
+    private static void fixComponentZOrder(Component component, int index) {
+      if (component != null) {
+        Container parent = component.getParent();
+        synchronized (parent.getTreeLock()) {
+          if (index < 0) index += parent.getComponentCount();
+          parent.setComponentZOrder(component, index);
+        }
       }
     }
 

@@ -41,7 +41,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SequentialModalProgressTask;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +101,7 @@ public class QuickFixAction extends AnAction {
     return false;
   }
 
-  public String getText(RefEntity where) {
+  public String getText() {
     return getTemplatePresentation().getText();
   }
 
@@ -110,15 +109,13 @@ public class QuickFixAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
-    if (isProblemDescriptorsAcceptable()) {
-      final CommonProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
-      if (descriptors.length > 0) {
-        doApplyFix(view.getProject(), descriptors, tree.getContext());
-        return;
-      }
+    final CommonProblemDescriptor[] descriptors;
+    if (isProblemDescriptorsAcceptable() && (descriptors = tree.getSelectedDescriptors()).length > 0) {
+      doApplyFix(view.getProject(), descriptors, tree.getContext());
+    } else {
+      doApplyFix(getSelectedElements(e), view);
     }
-
-    doApplyFix(getSelectedElements(e), view);
+    view.updateRightPanel();
   }
 
 

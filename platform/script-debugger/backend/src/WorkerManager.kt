@@ -19,5 +19,5 @@ package org.jetbrains.debugger
  * @author Konstantin.Ulitin
  */
 interface WorkerManager {
-  val activeWorkers: Set<String>
+  val activeWorkers: Map<String, WebWorker>
 }

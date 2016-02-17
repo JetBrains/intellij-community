@@ -1,5 +1,6 @@
 package com.jetbrains.jsonSchema;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -12,6 +13,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MasterDetailsComponent;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -130,7 +132,8 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   private void addProjectSchema() {
     final VirtualFile file =
-      FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(), myProject, null);
+      FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(
+        JsonBundle.message("json.schema.add.schema.chooser.title")), myProject, null);
     if (file != null) {
       final String relativePath = VfsUtil.getRelativePath(file, myProject.getBaseDir());
       if (relativePath == null) {
@@ -140,6 +143,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
       final JsonSchemaChecker importer = new JsonSchemaChecker(file, true);
       if (!importer.checkSchemaFile()) {
         if (!StringUtil.isEmptyOrSpaces(importer.getError())) {
+          JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(importer.getError(), MessageType.ERROR).notify(myProject);
           Messages.showErrorDialog(myProject, importer.getError(), READ_JSON_SCHEMA);
         }
         return;
@@ -194,7 +198,8 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   }*/
 
   private void addCreatedMappings(@NotNull VirtualFile schemaFile, @NotNull final JsonSchemaMappingsConfigurationBase.SchemaInfo info) {
-    final MyNode node = new MyNode(new JsonSchemaConfigurable(myProject, schemaFile, info, myTreeUpdater), info.isApplicationLevel());
+    final MyNode node = new MyNode(new JsonSchemaConfigurable(myProject, FileUtil.toSystemDependentName(schemaFile.getPath()),
+                                                              info, myTreeUpdater), info.isApplicationLevel());
     addNode(node, myRoot);
     selectNodeInTree(node, true);
   }
@@ -206,11 +211,8 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
     final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> list = getStoredList();
     for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : list) {
-      final String[] parts = info.getRelativePathToSchema().replace('\\', '/').split("/");
-      final VirtualFile schemaFile = VfsUtil.findRelativeFile(myProject.getBaseDir(), parts);
-      if (schemaFile != null) {
-        myRoot.add(new MyNode(new JsonSchemaConfigurable(myProject, schemaFile, info, myTreeUpdater), info.isApplicationLevel()));
-      }
+      myRoot.add(new MyNode(new JsonSchemaConfigurable(myProject, new File(myProject.getBasePath(), info.getRelativePathToSchema()).getPath(),
+                                                       info, myTreeUpdater), info.isApplicationLevel()));
     }
     ((DefaultTreeModel) myTree.getModel()).reload(myRoot);
     if (myRoot.children().hasMoreElements()) {

@@ -1,5 +1,6 @@
 package com.jetbrains.jsonSchema;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ModalityState;
@@ -81,7 +82,7 @@ public class JsonSchemaMappingsView {
     final JPanel wrapper = new JPanel(new BorderLayout());
     final JPanel wrapper2 = new JPanel(new BorderLayout());
     mySchemaField = new TextFieldWithBrowseButton();
-    SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, "Select JSON Schema File",
+    SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, JsonBundle.message("json.schema.add.schema.chooser.title"),
                                                      FileChooserDescriptorFactory.createSingleFileDescriptor());
     attachNavigateToSchema();
     final JBLabel label = new JBLabel("JSON schema file:");
@@ -127,7 +128,7 @@ public class JsonSchemaMappingsView {
     return items;
   }
 
-  public void setItems(VirtualFile schemaFile, final List<JsonSchemaMappingsConfigurationBase.Item> data) {
+  public void setItems(String schemaFilePath, final List<JsonSchemaMappingsConfigurationBase.Item> data) {
     /*final ArrayList<JsonSchemaMappingsConfigurationBase.Item> copy = new ArrayList<JsonSchemaMappingsConfigurationBase.Item>();
     if (myProject != null && myProject.getBasePath() != null) {
       for (JsonSchemaMappingsConfigurationBase.Item item : copy) {
@@ -141,8 +142,9 @@ public class JsonSchemaMappingsView {
     } else {
       copy.addAll(data);
     }*/
-    mySchemaField.setText(FileUtil.toSystemDependentName(schemaFile.getPath()));
-    myTableView.setModelAndUpdateColumns(new ListTableModel<JsonSchemaMappingsConfigurationBase.Item>(createColumns(), new ArrayList<JsonSchemaMappingsConfigurationBase.Item>(data)));
+    mySchemaField.setText(schemaFilePath);
+    myTableView.setModelAndUpdateColumns(
+      new ListTableModel<JsonSchemaMappingsConfigurationBase.Item>(createColumns(), new ArrayList<JsonSchemaMappingsConfigurationBase.Item>(data)));
   }
 
   public String getSchemaSubPath() {

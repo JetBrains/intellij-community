@@ -81,7 +81,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       DataContext context = e.getDataContext();
       Project project = e.getProject();
       if (project == null) return;
-      DefaultActionGroup group = createPopupActionGroup(button);
+      ActionGroup group = createPopupActionGroup(button);
       ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
         myPopupTitle, group, context, false, shouldShowDisabledActions(), false, null, getMaxRows(), getPreselectCondition());
       popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
@@ -124,7 +124,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
 
   @NotNull
-  protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
+  protected abstract ActionGroup createPopupActionGroup(JComponent button);
 
   protected int getMaxRows() {
     return 30;
@@ -152,7 +152,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setModel(new MyButtonModel());
       setHorizontalAlignment(LEFT);
       setFocusable(false);
-      putClientProperty("styleCombo", Boolean.TRUE);
+      if (isSmallVariant()) {
+        putClientProperty("styleCombo", Boolean.TRUE);
+      }
       Insets margins = getMargin();
       setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
       if (isSmallVariant()) {
@@ -277,7 +279,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     protected JBPopup createPopup(Runnable onDispose) {
-      DefaultActionGroup group = createPopupActionGroup(this);
+      ActionGroup group = createPopupActionGroup(this);
 
       DataContext context = getDataContext();
       ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
@@ -410,7 +412,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       final Dimension size = getSize();
 
       if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-        putClientProperty("styleCombo", Boolean.TRUE);
         super.paint(g);
       } else {
         UISettings.setupAntialiasing(g);

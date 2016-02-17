@@ -106,6 +106,11 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
     invoke(project, element);
   }
 
+  @Override
+  public boolean isSuppressAll() {
+    return SuppressionUtil.ALL.equals(myID);
+  }
+
   protected final void replaceSuppressionComment(@NotNull final PsiElement comment) {
     SuppressionUtil.replaceSuppressionComment(comment, myID, myReplaceOtherSuppressionIds, getCommentLanguage(comment));
   }

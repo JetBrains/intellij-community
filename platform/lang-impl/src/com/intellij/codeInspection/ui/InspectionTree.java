@@ -109,6 +109,9 @@ public class InspectionTree extends Tree {
       Object[] nodes = path.getPath();
       for (int j = nodes.length - 1; j >= 0; j--) {
         Object node = nodes[j];
+        if (node instanceof InspectionGroupNode) {
+          return null;
+        }
         if (node instanceof InspectionNode) {
           InspectionToolWrapper wrapper = ((InspectionNode)node).getToolWrapper();
           if (toolWrapper == null) {
@@ -123,6 +126,36 @@ public class InspectionTree extends Tree {
     }
 
     return toolWrapper;
+  }
+
+  @Nullable
+  public RefEntity getCommonSelectedElement() {
+    final Object node = getCommonSelectedNode();
+    return node instanceof RefElementNode ? ((RefElementNode)node).getElement() : null;
+  }
+
+  @Nullable
+  private Object getCommonSelectedNode() {
+    final TreePath[] paths = getSelectionPaths();
+    if (paths == null) return null;
+    final Object[][] resolvedPaths = new Object[paths.length][];
+    for (int i = 0; i < paths.length; i++) {
+      TreePath path = paths[i];
+      resolvedPaths[i] = path.getPath();
+    }
+
+    Object currentCommonNode = null;
+    for (int i = 0; i < resolvedPaths[0].length; i++) {
+      final Object currentNode = resolvedPaths[0][i];
+      for (int j = 1; j < resolvedPaths.length; j++) {
+        final Object o = resolvedPaths[j][i];
+        if (!o.equals(currentNode)) {
+          return currentCommonNode;
+        }
+      }
+      currentCommonNode = currentNode;
+    }
+    return currentCommonNode;
   }
 
   @NotNull
@@ -164,7 +197,6 @@ public class InspectionTree extends Tree {
   }
 
   public CommonProblemDescriptor[] getSelectedDescriptors() {
-    final InspectionToolWrapper toolWrapper = getSelectedToolWrapper();
     if (getSelectionCount() == 0) return EMPTY_DESCRIPTORS;
     final TreePath[] paths = getSelectionPaths();
     final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
@@ -177,7 +209,9 @@ public class InspectionTree extends Tree {
 
   private static void traverseDescriptors(InspectionTreeNode node, LinkedHashSet<CommonProblemDescriptor> descriptors){
     if (node instanceof ProblemDescriptionNode) {
-      descriptors.add(((ProblemDescriptionNode)node).getDescriptor());
+      if (node.isValid() && !node.isResolved()) {
+        descriptors.add(((ProblemDescriptionNode)node).getDescriptor());
+      }
     }
     for(int i = node.getChildCount() - 1; i >= 0; i--){
       traverseDescriptors((InspectionTreeNode)node.getChildAt(i), descriptors);

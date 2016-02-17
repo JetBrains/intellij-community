@@ -23,13 +23,16 @@ public class AnswerPlaceholder {
   private int myIndex = -1;
   private String myTaskText;
   private MyInitialState myInitialState;
+  private StudyStatus myStatus = StudyStatus.Uninitialized;
 
   @Transient private TaskFile myTaskFile;
 
   public void initAnswerPlaceholder(final TaskFile file, boolean isRestarted) {
     if (!isRestarted) {
       setInitialState(new MyInitialState(getLine(), getLength(), getStart()));
+      myStatus = file.getTask().getStatus();
     }
+
     setTaskFile(file);
   }
 
@@ -134,6 +137,14 @@ public class AnswerPlaceholder {
     line = myInitialState.myLine;
     start = myInitialState.myStart;
     length = myInitialState.myLength;
+  }
+
+  public StudyStatus getStatus() {
+    return myStatus;
+  }
+
+  public void setStatus(StudyStatus status) {
+    myStatus = status;
   }
 
   public static class MyInitialState {

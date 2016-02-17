@@ -100,6 +100,10 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
    */
   public abstract boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element);
 
+  public boolean isSuppressAll() {
+    return false;
+  }
+
   @Nullable
   private static PsiElement getElement(@NotNull Editor editor, @NotNull PsiFile file) {
     CaretModel caretModel = editor.getCaretModel();

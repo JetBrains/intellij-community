@@ -18,11 +18,8 @@ package com.jetbrains.jsonSchema.extension;
 import com.intellij.json.JsonFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ResourceUtil;
-import com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurationBase;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +28,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.URL;
-import java.util.Map;
 
 /**
  * @author Irina.Chernushina on 2/16/2016.
@@ -46,15 +42,7 @@ public class JsonSchemaSelfProviderFactory implements JsonSchemaProviderFactory 
         @Override
         public boolean isAvailable(@NotNull VirtualFile file) {
           if (project == null || !JsonFileType.INSTANCE.equals(file.getFileType())) return false;
-          final JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
-          final Map<String, JsonSchemaMappingsConfigurationBase.SchemaInfo> map = configuration.getStateMap();
-          for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : map.values()) {
-            final String pathToSchema = FileUtil.toSystemIndependentName(info.getRelativePathToSchema());
-            if (! file.getPath().endsWith(pathToSchema)) continue;
-            final VirtualFile schemaFile = VfsUtil.findRelativeFile(project.getBaseDir(), pathToSchema);
-            if (file.equals(schemaFile)) return true;
-          }
-          return false;
+          return JsonSchemaMappingsProjectConfiguration.getInstance(project).isRegisteredSchemaFile(file);
         }
 
         @Nullable
