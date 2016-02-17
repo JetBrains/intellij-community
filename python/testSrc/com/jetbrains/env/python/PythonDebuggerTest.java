@@ -783,6 +783,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         List<PySteppingFilter> filters = new ArrayList<>();
         filters.add(new PySteppingFilter(true, "*/test_m?_code.py"));
         final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
+        debuggerSettings.setLibrariesFilterEnabled(true);
         debuggerSettings.setSteppingFiltersEnabled(true);
         debuggerSettings.setSteppingFilters(filters);
       }
@@ -797,6 +798,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         stepInto();
         waitForPause();
+        eval("stopped_in_user_file").hasValue("True");
         stepInto();
         waitForPause();
         eval("stopped_in_user_file").hasValue("True");
