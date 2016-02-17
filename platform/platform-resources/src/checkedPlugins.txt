@@ -27,3 +27,14 @@ SourceSafe
 TFS
 ro.redeul.google.go
 com.intellij.plugins.html.instantEditing
+com.jetbrains.php.framework
+com.intellij.phing
+com.intellij.apacheConfig
+com.jetbrains.plugins.ini4idea
+com.jetbrains.php.gae
+com.jetbrains.php.drupal
+com.jetbrains.php.wordPress
+org.jetbrains.plugins.phpstorm-remote-interpreter
+com.jetbrains.php.behat
+com.jetbrains.php.blade
+com.jetbrains.performancePlugin
