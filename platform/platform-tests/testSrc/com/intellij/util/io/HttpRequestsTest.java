@@ -27,6 +27,8 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 
+import static java.net.HttpURLConnection.HTTP_NOT_IMPLEMENTED;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -87,11 +89,11 @@ public class HttpRequestsTest  {
   @Test(timeout = 5000)
   public void testTuning() throws IOException {
     myServer.createContext("/", ex -> {
-      ex.sendResponseHeaders("HEAD".equals(ex.getRequestMethod()) ? 200 : 501, -1);
+      ex.sendResponseHeaders("HEAD".equals(ex.getRequestMethod()) ? HTTP_NO_CONTENT : HTTP_NOT_IMPLEMENTED, -1);
       ex.close();
     });
 
-    assertEquals(200, HttpRequests.request(myUrl)
+    assertEquals(HTTP_NO_CONTENT, HttpRequests.request(myUrl)
       .tuner((c) -> ((HttpURLConnection)c).setRequestMethod("HEAD"))
       .tryConnect());
   }
