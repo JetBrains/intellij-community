@@ -1,5 +1,6 @@
 package com.jetbrains.jsonSchema;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ModalityState;
@@ -81,7 +82,7 @@ public class JsonSchemaMappingsView {
     final JPanel wrapper = new JPanel(new BorderLayout());
     final JPanel wrapper2 = new JPanel(new BorderLayout());
     mySchemaField = new TextFieldWithBrowseButton();
-    SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, "Select JSON Schema File",
+    SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, JsonBundle.message("json.schema.add.schema.chooser.title"),
                                                      FileChooserDescriptorFactory.createSingleFileDescriptor());
     attachNavigateToSchema();
     final JBLabel label = new JBLabel("JSON schema file:");
