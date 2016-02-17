@@ -6,7 +6,9 @@ import java.io.File
 
 abstract class UrlProvider {
     abstract val statsServerPostUrl: String
-
+    
+    abstract val experimentDataUrl: String
+    
     companion object {
         fun getInstance() = ServiceManager.getService(UrlProvider::class.java)
     }
@@ -23,7 +25,10 @@ abstract class FilePathProvider {
 }
 
 class InternalUrlProvider: UrlProvider() {
-    override val statsServerPostUrl = "http://unit-617.labs.intellij.net:8080/stats/upload"
+    private val host = "http://unit-617.labs.intellij.net:8080"
+    
+    override val statsServerPostUrl = "$host/stats/upload"
+    override val experimentDataUrl = "$host/experiment"
 }
 
 class PluginDirectoryFilePathProvider: FilePathProvider() {

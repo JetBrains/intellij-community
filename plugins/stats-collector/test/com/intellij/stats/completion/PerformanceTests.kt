@@ -3,10 +3,7 @@ package com.intellij.stats.completion
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.testFramework.PlatformLiteFixture
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.Time
-import org.mockito.Matchers
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.picocontainer.MutablePicoContainer
@@ -69,6 +66,10 @@ class Test {
             override fun post(url: String, params: Map<String, String>): ResponseData {
                 Thread.sleep(5000)
                 return ResponseData(200)
+            }
+
+            override fun get(url: String): ResponseData? {
+                throw UnsupportedOperationException()
             }
         }
         

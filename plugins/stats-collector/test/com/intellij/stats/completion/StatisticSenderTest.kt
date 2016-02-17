@@ -53,6 +53,10 @@ class StatisticsSenderTest: LightPlatformTestCase() {
                 lastSendDataUrl = url
                 return ResponseData(200)
             }
+
+            override fun get(url: String): ResponseData? {
+                throw UnsupportedOperationException()
+            }
         }
         
         pico = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
