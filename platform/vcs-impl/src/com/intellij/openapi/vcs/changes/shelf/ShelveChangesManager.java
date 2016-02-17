@@ -601,6 +601,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
                                                    patches, targetChangeList, binaryPatchApplier, commitContext, reverse, leftConflictTitle,
                                                    rightConflictTitle);
         patchApplier.setIsSystemOperation(systemOperation);
+        patchApplier.execute(showSuccessNotification, systemOperation);
         if (isRemoveFilesFromShelf() || systemOperation) {
           remainingPatches.addAll(patchApplier.getRemainingPatches());
           if (remainingPatches.isEmpty() && remainingBinaries.isEmpty()) {
@@ -610,8 +611,6 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
             saveRemainingPatches(changeList, remainingPatches, remainingBinaries, commitContext);
           }
         }
-
-        patchApplier.execute(showSuccessNotification, systemOperation);
       }
     }, ModalityState.defaultModalityState());
   }
