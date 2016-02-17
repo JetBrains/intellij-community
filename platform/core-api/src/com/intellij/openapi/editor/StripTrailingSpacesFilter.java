@@ -17,7 +17,7 @@ package com.intellij.openapi.editor;
 
 /**
  * Allows to suppress stripping spaces from some lines or from entire document when the document is being saved and
- * "Strip spaces on Save" option is not "None".
+ * "Settings|Editor|General|Strip trailing spaces on save" option is not "None".
  * 
  * @see StripTrailingSpacesFilterFactory
  */
@@ -55,9 +55,8 @@ public interface StripTrailingSpacesFilter {
   };
 
   /**
-   * @param line  The document line.
+   * @param line  The document line. Lines are from 0 to {@link com.intellij.openapi.editor.Document#getLineCount()} - 1 inclusive.
    * @return True if trailing spaces can be removed from the line, false otherwise.
    */
   boolean isStripSpacesAllowedForLine(int line);
-
 }
