@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -353,10 +353,11 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @PsiModifier.ModifierConstant
-  @Nullable
+  @NotNull
   public static String getAccessModifier(@AccessLevel int accessLevel) {
+    assert accessLevel > 0 && accessLevel <= accessModifiers.length : accessLevel;
     @SuppressWarnings("UnnecessaryLocalVariable") @PsiModifier.ModifierConstant
-    final String modifier = accessLevel > accessModifiers.length ? null : accessModifiers[accessLevel - 1];
+    final String modifier =  accessModifiers[accessLevel - 1];
     return modifier;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 
 public class VisibilityUtil  {
@@ -107,7 +108,8 @@ public class VisibilityUtil  {
   }
 
   @Nls
-  public static String getVisibilityStringToDisplay(PsiMember member) {
+  @NotNull
+  public static String getVisibilityStringToDisplay(@NotNull PsiMember member) {
     if (member.hasModifierProperty(PsiModifier.PUBLIC)) {
       return toPresentableText(PsiModifier.PUBLIC);
     }
@@ -120,7 +122,8 @@ public class VisibilityUtil  {
     return toPresentableText(PsiModifier.PACKAGE_LOCAL);
   }
 
-  public static String toPresentableText(@PsiModifier.ModifierConstant String modifier) {
+  @NotNull
+  public static String toPresentableText(@PsiModifier.ModifierConstant @NotNull String modifier) {
     return PsiBundle.visibilityPresentation(modifier);
   }
 

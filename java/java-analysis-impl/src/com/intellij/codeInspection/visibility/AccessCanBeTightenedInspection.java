@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -185,12 +186,14 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
         log(member.getName() + " unused; ignore");
         return; // do not propose private for unused method
       }
+
       int max = maxLevel.get();
       if (max == PsiUtil.ACCESS_LEVEL_PRIVATE && memberClass == null) {
         max = suggestPackageLocal(member);
       }
 
-      log(member.getName()+": effective level is '" + PsiUtil.getAccessModifier(max) + "'");
+      String maxModifier = PsiUtil.getAccessModifier(max);
+      log(member.getName() + ": effective level is '" + maxModifier + "'");
 
       if (max < currentLevel) {
         if (max == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL && member instanceof PsiClass && childMembersAreUsedOutsideMyPackage.contains(member)) {
@@ -205,7 +208,7 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
             }
           });
         assert toHighlight != null : member +" ; " + ((PsiNameIdentifierOwner)member).getNameIdentifier() + "; "+ memberModifierList.getText();
-        myHolder.registerProblem(toHighlight, "Access can be "+PsiUtil.getAccessModifier(max), new ChangeModifierFix(PsiUtil.getAccessModifier(max)));
+        myHolder.registerProblem(toHighlight, "Access can be " + VisibilityUtil.toPresentableText(maxModifier), new ChangeModifierFix(maxModifier));
       }
     }
 
