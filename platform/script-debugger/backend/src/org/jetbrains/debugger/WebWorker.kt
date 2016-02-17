@@ -15,9 +15,11 @@
  */
 package org.jetbrains.debugger
 
+
 /**
  * @author Konstantin.Ulitin
  */
-interface WorkerManager {
-  val activeWorkers: Map<String, WebWorker>
+interface WebWorker {
+  val id: String
+  val url: String
 }
