@@ -75,13 +75,13 @@ public class HttpRequestsTest  {
   @Test(timeout = 5000)
   public void testDataRead() throws IOException {
     myServer.createContext("/", ex -> {
-      ex.getResponseHeaders().add("Content-Type", "text/plain");
+      ex.getResponseHeaders().add("Content-Type", "text/plain; charset=koi8-r");
       ex.sendResponseHeaders(200, 0);
-      ex.getResponseBody().write("hello".getBytes("US-ASCII"));
+      ex.getResponseBody().write("hello кодировочки".getBytes("koi8-r"));
       ex.close();
     });
 
-    assertEquals("hello", HttpRequests.request(myUrl).readString(null));
+    assertEquals("hello кодировочки", HttpRequests.request(myUrl).readString(null));
   }
 
   @Test(timeout = 5000)

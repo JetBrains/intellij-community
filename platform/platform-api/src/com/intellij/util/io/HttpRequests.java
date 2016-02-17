@@ -38,6 +38,8 @@ import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.Charset;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -56,6 +58,7 @@ public final class HttpRequests {
     SystemInfo.isJavaVersionAtLeast("1.7") && !SystemProperties.getBooleanProperty("idea.parallel.class.loader", true);
 
   private static final int BLOCK_SIZE = 16 * 1024;
+  private static final Pattern CHARSET_PATTERN = Pattern.compile("charset=([^;]+)");
 
   private HttpRequests() { }
 
@@ -377,13 +380,19 @@ public final class HttpRequests {
   }
 
   private static Charset getCharset(Request request) throws IOException {
-    String contentEncoding = request.getConnection().getContentEncoding();
-    if (contentEncoding != null) {
-      try {
-        return Charset.forName(contentEncoding);
+    String contentType = request.getConnection().getContentType();
+    if (!StringUtil.isEmptyOrSpaces(contentType)) {
+      Matcher m = CHARSET_PATTERN.matcher(contentType);
+      if (m.find()) {
+        try {
+          return Charset.forName(StringUtil.unquoteString(m.group(1)));
+        }
+        catch (IllegalArgumentException e) {
+          throw new IOException("unknown charset (" + contentType + ")", e);
+        }
       }
-      catch (Exception ignored) { }
     }
+
     return CharsetToolkit.UTF8_CHARSET;
   }
 
