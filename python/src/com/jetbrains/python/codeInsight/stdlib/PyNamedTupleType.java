@@ -118,7 +118,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     final String name = PyPsiUtils.strValue(call.getArgument(0, PyExpression.class));
     final PyExpression fieldsExpression = resolveFieldsExpression(call, context);
 
-    if (name == null || fieldsExpression == null || !context.maySwitchToAST(fieldsExpression)) {
+    if (name == null || fieldsExpression == null) {
       return null;
     }
 
