@@ -35,9 +35,10 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
   private static final ColumnInfo[] COLUMNS = {
     new EnabledColumn(), new FilterColumn()
   };
-  private JBCheckBox myStepFilterEnabledCheckBox;
   private JPanel myPanel;
   private JPanel mySteppingPanel;
+  private JBCheckBox myLibrariesFilterCheckBox;
+  private JBCheckBox myStepFilterEnabledCheckBox;
   private TableModelEditor<PySteppingFilter> myPySteppingFilterEditor;
 
   public PyDebuggerSteppingConfigurableUi() {
@@ -58,6 +59,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
 
   @Override
   public void reset(@NotNull PyDebuggerSettings settings) {
+    myLibrariesFilterCheckBox.setSelected(settings.isLibrariesFilterEnabled());
     myStepFilterEnabledCheckBox.setSelected(settings.isSteppingFiltersEnabled());
     myPySteppingFilterEditor.reset(settings.getSteppingFilters());
     myPySteppingFilterEditor.enabled(myStepFilterEnabledCheckBox.isSelected());
@@ -65,12 +67,14 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
 
   @Override
   public boolean isModified(@NotNull PyDebuggerSettings settings) {
-    return myStepFilterEnabledCheckBox.isSelected() != settings.isSteppingFiltersEnabled()
+    return myLibrariesFilterCheckBox.isSelected() != settings.isLibrariesFilterEnabled()
+           || myStepFilterEnabledCheckBox.isSelected() != settings.isSteppingFiltersEnabled()
            || myPySteppingFilterEditor.isModified();
   }
 
   @Override
   public void apply(@NotNull PyDebuggerSettings settings) throws ConfigurationException {
+    settings.setLibrariesFilterEnabled(myLibrariesFilterCheckBox.isSelected());
     settings.setSteppingFiltersEnabled(myStepFilterEnabledCheckBox.isSelected());
     if (myPySteppingFilterEditor.isModified()) {
       settings.setSteppingFilters(myPySteppingFilterEditor.apply());

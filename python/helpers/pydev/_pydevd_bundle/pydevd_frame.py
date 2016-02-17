@@ -453,11 +453,15 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                                             stop = False
                                             main_debugger.first_breakpoint_reached = True
                 else:
-                    pass
                     # if the frame is traced after breakpoint stop,
                     # but the file should be ignored while stepping because of filters
-                    if step_cmd != -1 and main_debugger.is_filter_enabled and main_debugger.is_ignored_by_filters(filename):
-                        return self.trace_dispatch
+                    if step_cmd != -1:
+                        if main_debugger.is_filter_enabled and main_debugger.is_ignored_by_filters(filename):
+                            # ignore files matching stepping filters
+                            return self.trace_dispatch
+                        if main_debugger.is_filter_libraries and main_debugger.not_in_scope(filename):
+                            # ignore library files while stepping
+                            return self.trace_dispatch
                 if stop:
                     self.set_suspend(thread, CMD_SET_BREAK)
                 elif flag and plugin_manager is not None:
