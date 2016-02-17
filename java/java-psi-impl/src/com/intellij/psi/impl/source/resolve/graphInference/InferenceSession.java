@@ -46,22 +46,23 @@ public class InferenceSession {
   private static final Function<Pair<PsiType, PsiType>, PsiType> UPPER_BOUND_FUNCTION = new Function<Pair<PsiType, PsiType>, PsiType>() {
     @Override
     public PsiType fun(Pair<PsiType, PsiType> pair) {
-      if (pair.first instanceof PsiArrayType && TypesDistinctProver.proveArrayTypeDistinct((PsiArrayType)pair.first, pair.second)) {
-        return null;
-      }
-      if (pair.second instanceof PsiArrayType && TypesDistinctProver.proveArrayTypeDistinct((PsiArrayType)pair.second, pair.first)) {
-        return null;
-      }
-      
-      if (pair.first instanceof PsiCapturedWildcardType && TypesDistinctProver.provablyDistinct(((PsiCapturedWildcardType)pair.first).getUpperBound(), pair.second)) {
-        return null;
-      }
+      if (!isValidGlb(pair.first, pair.second)) return null;
+      if (!isValidGlb(pair.second, pair.first)) return null;
 
-      if (pair.second instanceof PsiCapturedWildcardType && TypesDistinctProver.provablyDistinct(((PsiCapturedWildcardType)pair.second).getUpperBound(), pair.first)) {
-        return null;
-      }
-      
       return GenericsUtil.getGreatestLowerBound(pair.first, pair.second);
+    }
+
+    private boolean isValidGlb(PsiType first, PsiType second) {
+      if (second instanceof PsiArrayType && TypesDistinctProver.proveArrayTypeDistinct((PsiArrayType)second, first)) {
+        return false;
+      }
+      if (second instanceof PsiCapturedWildcardType && !first.isAssignableFrom(second)) {
+        final PsiClass conjunct = PsiUtil.resolveClassInType(first);
+        if (conjunct != null && !conjunct.isInterface() ) {
+          return false;
+        }
+      }
+      return true;
     }
   };
 
