@@ -7,6 +7,7 @@ public class AssignmentToNull
     public static void main(String[] args)
     {
         new AssignmentToNull(new Object()).bar();
+        <warning descr="Assignment of variable 'args[0]' to 'null'">args[0]</warning> = null;
     }
 
     public AssignmentToNull(Object foo)

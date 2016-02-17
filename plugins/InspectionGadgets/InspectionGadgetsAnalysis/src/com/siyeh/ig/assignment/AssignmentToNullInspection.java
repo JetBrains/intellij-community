@@ -49,7 +49,11 @@ public class AssignmentToNullInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)infos[0];
+    final Object info = infos[0];
+    if (!(info instanceof PsiReferenceExpression)) {
+      return null;
+    }
+    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)info;
     if (TypeUtils.isOptional(referenceExpression.getType())) {
       return null;
     }
