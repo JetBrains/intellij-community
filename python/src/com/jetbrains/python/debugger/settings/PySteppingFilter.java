@@ -49,11 +49,12 @@ public class PySteppingFilter {
   @NotNull
   public String getAbsolutePlatformIndependentFilter(@NotNull Project project) {
     StringBuilder resultFilter = new StringBuilder();
-    if (FileUtil.isAbsolutePlatformIndependent(myFilter) || myFilter.startsWith("*")) {
-      resultFilter.append(myFilter);
-    }
-    else {
-      resultFilter.append(project.getBasePath()).append('/').append(myFilter);
+    final String[] filters = myFilter.split(PyDebuggerSettings.FILTERS_DIVIDER);
+    for (String filter : filters) {
+      if (!(FileUtil.isAbsolutePlatformIndependent(filter) || filter.startsWith("*"))) {
+        resultFilter.append(project.getBasePath()).append('/');
+      }
+      resultFilter.append(filter).append(PyDebuggerSettings.FILTERS_DIVIDER);
     }
     return resultFilter.toString().replace('\\', '/');
   }
