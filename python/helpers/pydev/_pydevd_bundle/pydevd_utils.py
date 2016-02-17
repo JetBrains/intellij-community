@@ -154,6 +154,10 @@ def is_filter_enabled():
     return os.getenv('PYDEVD_FILTERS') is not None
 
 
+def is_filter_libraries():
+    return os.getenv('PYDEVD_FILTER_LIBRARIES') is not None
+
+
 def _get_stepping_filters(filters_cache=[]):
     if not filters_cache:
         filters = os.getenv('PYDEVD_FILTERS', '').split(';')
