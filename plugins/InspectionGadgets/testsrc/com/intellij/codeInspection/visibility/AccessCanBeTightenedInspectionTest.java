@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
            "class C {\n" +
            "    final int /*Access can be private*/fd/**/ = 0;\n" +
            "    /*Access can be private*/public/**/ int fd2;\n" +
-           "    /*Access can be packageLocal*/public/**/ int forSubClass;\n" +
+           "    /*Access can be package local*/public/**/ int forSubClass;\n" +
            "    @Override\n" +
            "    public int hashCode() {\n" +
            "      return fd + fd2;\n" + // use field
@@ -58,7 +58,7 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
            "@interface Ann{ String value(); }\n" +
            "@Ann(value = C.VAL\n)" +
            "class C {\n" +
-           "    /*Access can be packageLocal*/public/**/ static final String VAL = \"xx\";\n" +
+           "    /*Access can be package local*/public/**/ static final String VAL = \"xx\";\n" +
            "}");
   }
 
