@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.editor;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * Allows to suppress stripping spaces from some lines or from entire document when the document is being saved and
  * "Strip spaces on Save" option is not "None".
