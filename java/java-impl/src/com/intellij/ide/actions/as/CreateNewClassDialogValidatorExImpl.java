@@ -23,16 +23,11 @@ import com.intellij.openapi.ui.as.CreateNewClassDialogValidatorEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiNameHelper;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
-
 public class CreateNewClassDialogValidatorExImpl implements CreateNewClassDialogValidatorEx {
   public static final String INVALID_PACKAGE_MESSAGE = "This is not a valid Java package name";
-  public static final String INVALID_INTERFACES_MESSAGE =
-    "Interfaces must follow the pattern [&lt;interface0&gt;] [, &lt;interface1&gt; ...]";
   public static final String INVALID_QUALIFIED_NAME = "This is not a valid Java qualified name";
   private static final String INVALID_MODIFIER_COMBINATION_MESSAGE = "A class cannot be both abstract and final";
 
@@ -49,19 +44,18 @@ public class CreateNewClassDialogValidatorExImpl implements CreateNewClassDialog
   @Override
   public boolean checkSuperclass(@NotNull String inputString) {
     // TODO Check for self-inheritance or final inheritance.
-    String superclass = inputString.trim();
-    return superclass.isEmpty() || isValidJavaIdentifier(superclass);
+    return checkQualifiedName(inputString);
   }
 
   @Override
-  public boolean checkInterfaces(@NotNull String inputString) {
-    // TODO Same as superclass.
-    return CharMatcher.WHITESPACE.matchesAllOf(inputString) || checkList(inputString, ",", false);
+  public boolean checkInterface(@NotNull String inputString) {
+    // TODO Check for self-inheritance.
+    return checkQualifiedName(inputString);
   }
 
   @Override
   public boolean checkPackage(@NotNull String inputString) {
-    return !CharMatcher.WHITESPACE.matchesAllOf(inputString) && checkList(inputString, ".", true);
+    return !CharMatcher.WHITESPACE.matchesAllOf(inputString) && checkList(inputString, ".");
   }
 
   @Override
@@ -87,7 +81,7 @@ public class CreateNewClassDialogValidatorExImpl implements CreateNewClassDialog
   @NotNull
   @Override
   public String getInterfacesErrorText(String inputString) {
-    return INVALID_INTERFACES_MESSAGE;
+    return INVALID_QUALIFIED_NAME;
   }
 
   @NotNull
@@ -113,10 +107,13 @@ public class CreateNewClassDialogValidatorExImpl implements CreateNewClassDialog
     return !CharMatcher.WHITESPACE.matchesAllOf(inputString) && getErrorText(inputString) == null;
   }
 
-  private static boolean checkList(String inputString, String delimiter, boolean allowDuplicates) {
-    Set<String> identifiers = new HashSet<String>();
+  private static boolean checkQualifiedName(@NotNull String qualifiedName) {
+    return CharMatcher.WHITESPACE.matchesAllOf(qualifiedName) || checkList(qualifiedName, ".");
+  }
+
+  private static boolean checkList(@NotNull String inputString, @NotNull String delimiter) {
     for (String identifier : Splitter.on(delimiter).trimResults().split(inputString)) {
-      if (!isValidJavaIdentifier(identifier) || (!allowDuplicates && !identifiers.add(identifier))) {
+      if (!isValidJavaIdentifier(identifier)) {
         return false;
       }
     }

@@ -19,7 +19,7 @@ import com.intellij.openapi.ui.InputValidator;
 
 public interface CreateNewClassDialogValidator extends InputValidator {
   boolean checkSuperclass(String inputString);
-  boolean checkInterfaces(String inputString);
+  boolean checkInterface(String inputString);
   boolean checkPackage(String inputString);
   boolean checkAbstractAndFinal(boolean isAbstract, boolean isFinal);
 }
