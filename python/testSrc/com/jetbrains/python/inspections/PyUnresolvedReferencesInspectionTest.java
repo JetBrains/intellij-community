@@ -348,7 +348,12 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest("a.py");
   }
 
-  public void testBytesIORead() {
+  public void testBytesIOMethods() {
+    doTest();
+  }
+
+  // PY-18322
+  public void testFileMethods() {
     doTest();
   }
 

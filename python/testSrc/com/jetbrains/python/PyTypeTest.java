@@ -694,17 +694,17 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testOpenDefault() {
-    doTest("FileIO[str]",
+    doTest("file",
            "expr = open('foo')\n");
   }
 
   public void testOpenText() {
-    doTest("FileIO[str]",
+    doTest("file",
            "expr = open('foo', 'r')\n");
   }
 
   public void testOpenBinary() {
-    doTest("FileIO[str]",
+    doTest("file",
            "expr = open('foo', 'rb')\n");
   }
 
