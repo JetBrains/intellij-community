@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   protected val repeatStepInto: AtomicBoolean = AtomicBoolean()
   @Volatile var lastStep: StepAction? = null
   @Volatile protected var lastCallFrame: CallFrame? = null
-  @Volatile protected var isForceStep: Boolean = false
-  @Volatile protected var disableDoNotStepIntoLibraries: Boolean = false
+  @Volatile protected var isForceStep = false
+  @Volatile protected var disableDoNotStepIntoLibraries = false
 
   protected val urlToFileCache: ConcurrentMap<Url, VirtualFile> = ContainerUtil.newConcurrentMap<Url, VirtualFile>()
 
