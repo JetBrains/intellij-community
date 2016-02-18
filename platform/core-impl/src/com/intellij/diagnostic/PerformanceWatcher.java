@@ -56,20 +56,21 @@ import java.util.concurrent.TimeUnit;
  */
 public class PerformanceWatcher implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.PerformanceWatcher");
+  private static final int TOLERABLE_LATENCY = 100;
   private final ScheduledFuture<?> myThread;
-  private volatile int myLoopCounter;
-  private volatile int mySwingThreadCounter;
   private final ThreadMXBean myThreadMXBean;
   private final DateFormat myDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
   private final File mySessionLogDir;
-  private int myUnresponsiveDuration;
   private File myCurHangLogDir;
   private List<StackTraceElement> myStacktraceCommonPart;
   private final IdePerformanceListener myPublisher;
 
   private volatile ApdexData mySwingApdex = ApdexData.EMPTY;
   private volatile ApdexData myGeneralApdex = ApdexData.EMPTY;
-  private volatile long intervalStart = System.currentTimeMillis();
+  private volatile long myLastSampling = System.currentTimeMillis();
+  private volatile long myLastAliveEdt = System.currentTimeMillis();
+  private long myLastDumpTime = 0;
+  private long myFreezeStart = 0;
 
   /**
    * If the product is unresponsive for UNRESPONSIVE_THRESHOLD_SECONDS, dump threads every UNRESPONSIVE_INTERVAL_SECONDS
@@ -96,7 +97,7 @@ public class PerformanceWatcher implements ApplicationComponent {
     myThread = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
       @Override
       public void run() {
-        checkEDTResponsiveness();
+        samplePerformance();
       }
     }, SAMPLING_INTERVAL_MS, SAMPLING_INTERVAL_MS, TimeUnit.MILLISECONDS);
   }
@@ -211,34 +212,36 @@ public class PerformanceWatcher implements ApplicationComponent {
            UNRESPONSIVE_THRESHOLD_SECONDS != 0;
   }
 
-  private void checkEDTResponsiveness() {
+  private void samplePerformance() {
     long millis = System.currentTimeMillis();
-    long diff = millis - intervalStart - SAMPLING_INTERVAL_MS;
+    long diff = millis - myLastSampling - SAMPLING_INTERVAL_MS;
+    myLastSampling = millis;
+
     // an unexpected delay of 3 seconds is considered as several delays: of 3, 2 and 1 seconds, because otherwise
     // this background thread would be sampled 3 times.
     while (diff >= 0) {
-      myGeneralApdex = myGeneralApdex.withEvent(100, diff);
+      myGeneralApdex = myGeneralApdex.withEvent(TOLERABLE_LATENCY, diff);
       diff -= SAMPLING_INTERVAL_MS;
     }
 
-    if (millis - intervalStart >= UNRESPONSIVE_INTERVAL_SECONDS * 1000) {
-      intervalStart = millis;
-      if (mySwingThreadCounter != myLoopCounter) {
-        edtFrozen();
-      }
-      else {
-        edtResponds();
-      }
+    long sinceLastEdt = millis - myLastAliveEdt;
+    if (sinceLastEdt >= UNRESPONSIVE_THRESHOLD_SECONDS * 1000) {
+      edtFrozen(millis);
     }
-    myLoopCounter++;
+    else if (sinceLastEdt <= SAMPLING_INTERVAL_MS) {
+      edtResponds(millis);
+    }
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new SwingThreadRunnable(myLoopCounter));
+    SwingUtilities.invokeLater(new SwingThreadRunnable(millis));
   }
 
-  private void edtFrozen() {
-    myUnresponsiveDuration += UNRESPONSIVE_INTERVAL_SECONDS;
-    if (myUnresponsiveDuration >= UNRESPONSIVE_THRESHOLD_SECONDS) {
-      myPublisher.uiFreezeStarted();
+  private void edtFrozen(long currentMillis) {
+    if (currentMillis - myLastDumpTime >= UNRESPONSIVE_INTERVAL_SECONDS * 1000) {
+      myLastDumpTime = currentMillis;
+      if (myFreezeStart == 0) {
+        myFreezeStart = myLastAliveEdt;
+        myPublisher.uiFreezeStarted();
+      }
       if (myCurHangLogDir == mySessionLogDir) {
         //System.out.println("EDT is not responding at " + myPrintDateFormat.format(new Date()));
         myCurHangLogDir = new File(mySessionLogDir, myDateFormat.format(new Date()));
@@ -247,25 +250,24 @@ public class PerformanceWatcher implements ApplicationComponent {
     }
   }
 
-  private void edtResponds() {
-    if (myUnresponsiveDuration >= UNRESPONSIVE_THRESHOLD_SECONDS) {
-      //System.out.println("EDT was unresponsive for " + myUnresponsiveDuration + " seconds");
+  private void edtResponds(long currentMillis) {
+    if (myFreezeStart != 0) {
       if (myCurHangLogDir != mySessionLogDir && myCurHangLogDir.exists()) {
+        int unresponsiveDuration = (int)(currentMillis - myFreezeStart) / 1000;
         //noinspection ResultOfMethodCallIgnored
-        myCurHangLogDir.renameTo(new File(mySessionLogDir, getLogDirForHang()));
-        myPublisher.uiFreezeFinished(myUnresponsiveDuration);
+        myCurHangLogDir.renameTo(new File(mySessionLogDir, getLogDirForHang(unresponsiveDuration)));
+        myPublisher.uiFreezeFinished(unresponsiveDuration);
       }
-      myUnresponsiveDuration = 0;
+      myFreezeStart = 0;
       myCurHangLogDir = mySessionLogDir;
 
       myStacktraceCommonPart = null;
     }
-    myUnresponsiveDuration = 0;
   }
 
-  private String getLogDirForHang() {
+  private String getLogDirForHang(int unresponsiveDuration) {
     StringBuilder name = new StringBuilder("freeze-" + myCurHangLogDir.getName());
-    name.append("-").append(myUnresponsiveDuration);
+    name.append("-").append(unresponsiveDuration);
     if (myStacktraceCommonPart != null && !myStacktraceCommonPart.isEmpty()) {
       final StackTraceElement element = myStacktraceCommonPart.get(0);
       name.append("-").append(StringUtil.getShortName(element.getClassName())).append(".").append(element.getMethodName());
@@ -337,17 +339,17 @@ public class PerformanceWatcher implements ApplicationComponent {
   }
 
   private class SwingThreadRunnable implements Runnable {
-    private final int myCount;
-    private final long myCreationMillis = System.currentTimeMillis();
+    private final long myCreationMillis;
 
-    private SwingThreadRunnable(final int count) {
-      myCount = count;
+    SwingThreadRunnable(long creationMillis) {
+      myCreationMillis = creationMillis;
     }
 
     @Override
     public void run() {
-      mySwingThreadCounter = myCount;
-      mySwingApdex = mySwingApdex.withEvent(100, System.currentTimeMillis() - myCreationMillis);
+      long millis = System.currentTimeMillis();
+      mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, millis - myCreationMillis);
+      myLastAliveEdt = millis;
     }
   }
 
