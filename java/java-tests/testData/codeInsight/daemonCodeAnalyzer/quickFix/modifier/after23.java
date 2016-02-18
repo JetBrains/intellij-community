@@ -1,4 +1,4 @@
-// "Make 'a.i' package local" "true"
+// "Make 'a.i' package-private" "true"
 import java.io.*;
 
 class a {
