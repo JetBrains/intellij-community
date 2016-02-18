@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.util.Alarm;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
@@ -42,7 +43,7 @@ import static com.intellij.ui.mac.foundation.Foundation.*;
 final class MacScrollBarUI extends AbstractScrollBarUI {
   private static final RegistryValue DISABLED = Registry.get("ide.mac.disableMacScrollbars");
   private static final List<MacScrollBarUI> UI = Collections.synchronizedList(new ArrayList<MacScrollBarUI>());
-  private boolean myThumbUpdated;
+  private final Alarm myAlarm = new Alarm();
 
   @Override
   int getThickness() {
@@ -61,12 +62,15 @@ final class MacScrollBarUI extends AbstractScrollBarUI {
 
   @Override
   boolean isBorderNeeded(JComponent c) {
-    return myTrackAnimator.myValue > 0;
+    return !c.isOpaque() && myTrackAnimator.myValue > 0 && myThumbAnimator.myValue > 0;
   }
 
   @Override
   void onTrackHover(boolean hover) {
-    myThumbAnimator.start(hover);
+    myTrackAnimator.start(hover);
+    if (isOpaque()) {
+      myThumbAnimator.start(hover);
+    }
   }
 
   @Override
@@ -75,6 +79,10 @@ final class MacScrollBarUI extends AbstractScrollBarUI {
 
   @Override
   void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
+    if (isBorderNeeded(c)) {
+      RegionPainter<Float> p = isDark(c) ? JBScrollPane.TRACK_DARK_PAINTER : JBScrollPane.TRACK_PAINTER;
+      paint(p, g, x, y, width, height, c, myTrackAnimator.myValue, false);
+    }
   }
 
   @Override
@@ -83,8 +91,22 @@ final class MacScrollBarUI extends AbstractScrollBarUI {
     if (c.isOpaque()) {
       paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, true);
     }
-    else if (!myThumbUpdated) {
-      paint(p, g, x, y, width, height, c, 1, false);
+    else if (myThumbAnimator.myValue > 0) {
+      paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, false);
+    }
+  }
+
+  @Override
+  void onThumbMove() {
+    if (!isOpaque()) {
+      myThumbAnimator.rewind(true);
+      myAlarm.cancelAllRequests();
+      myAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          myThumbAnimator.start(false);
+        }
+      }, 500);
     }
   }
 
@@ -98,6 +120,7 @@ final class MacScrollBarUI extends AbstractScrollBarUI {
   @Override
   public void uninstallUI(JComponent c) {
     UI.remove(this);
+    myAlarm.cancelAllRequests();
     super.uninstallUI(c);
   }
 
@@ -106,6 +129,7 @@ final class MacScrollBarUI extends AbstractScrollBarUI {
     if (myScrollBar != null) {
       myScrollBar.setOpaque(!overlay);
       myScrollBar.repaint();
+      onThumbMove();
     }
   }
 

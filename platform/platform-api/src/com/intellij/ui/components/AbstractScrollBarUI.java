@@ -95,6 +95,9 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
     repaint();
   }
 
+  void onThumbMove() {
+  }
+
   void paint(RegionPainter<Float> p, Graphics2D g, int x, int y, int width, int height, JComponent c, float value, boolean small) {
     if (!c.isOpaque()) {
       Alignment alignment = Alignment.get(c);
@@ -286,7 +289,7 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
         int value = getValue();
         int maxY = myTrackBounds.y + myTrackBounds.height - height;
         int y = (value < max - extent) ? (myTrackBounds.height - height) * (value - min) / (range - extent) : maxY;
-        myThumbBounds.setBounds(myTrackBounds.x, adjust(y, myTrackBounds.y, maxY), myTrackBounds.width, height);
+        setThumbBounds(myTrackBounds.x, adjust(y, myTrackBounds.y, maxY), myTrackBounds.width, height);
       }
     }
     else {
@@ -300,8 +303,15 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
         int maxX = myTrackBounds.x + myTrackBounds.width - width;
         int x = (value < max - extent) ? (myTrackBounds.width - width) * (value - min) / (range - extent) : maxX;
         if (!myScrollBar.getComponentOrientation().isLeftToRight()) x = myTrackBounds.x - x + maxX;
-        myThumbBounds.setBounds(adjust(x, myTrackBounds.x, maxX), myTrackBounds.y, width, myTrackBounds.height);
+        setThumbBounds(adjust(x, myTrackBounds.x, maxX), myTrackBounds.y, width, myTrackBounds.height);
       }
+    }
+  }
+
+  private void setThumbBounds(int x, int y, int width, int height) {
+    if (myThumbBounds.x != x || myThumbBounds.y != y || myThumbBounds.width != width || myThumbBounds.height != height) {
+      myThumbBounds.setBounds(x, y, width, height);
+      onThumbMove();
     }
   }
 
@@ -487,6 +497,7 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
           int minY = Math.min(myThumbBounds.y, thumbPos);
           int maxY = Math.max(myThumbBounds.y, thumbPos) + myThumbBounds.height;
           myThumbBounds.y = thumbPos;
+          onThumbMove();
           repaint(myThumbBounds.x, minY, myThumbBounds.width, maxY - minY);
         }
       }
@@ -498,6 +509,7 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
           int minX = Math.min(myThumbBounds.x, thumbPos);
           int maxX = Math.max(myThumbBounds.x, thumbPos) + myThumbBounds.width;
           myThumbBounds.x = thumbPos;
+          onThumbMove();
           repaint(minX, myThumbBounds.y, maxX - minX, myThumbBounds.height);
         }
       }

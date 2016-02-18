@@ -51,10 +51,26 @@ abstract class TwoWayAnimator {
     }
   }
 
+  void rewind(boolean forward) {
+    stop();
+    if (forward) {
+      if (myFrame != myMaxFrame) setFrame(myMaxFrame);
+    }
+    else {
+      if (myFrame != 0) setFrame(0);
+    }
+  }
+
   void stop() {
     myAlarm.cancelAllRequests();
     myForwardAnimator.suspend();
     myBackwardAnimator.suspend();
+  }
+
+  void setFrame(int frame) {
+    myFrame = frame;
+    myValue = frame == 0 ? 0 : frame == myMaxFrame ? 1 : (float)frame / myMaxFrame;
+    onValueUpdate();
   }
 
   private final class MyAnimator extends Animator implements Runnable {
@@ -74,9 +90,7 @@ abstract class TwoWayAnimator {
     @Override
     public void paintNow(int frame, int totalFrames, int cycle) {
       if (isForward() ? (frame > myFrame) : (frame < myFrame)) {
-        myFrame = frame;
-        myValue = frame == 0 ? 0 : frame == myMaxFrame ? 1 : (float)frame / myMaxFrame;
-        onValueUpdate();
+        setFrame(frame);
       }
     }
   }
