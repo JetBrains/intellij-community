@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 public class VisiblePack implements VcsLogDataPack {
-
+  @NotNull
   public static final VisiblePack EMPTY = new VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false, VcsLogFilterCollectionImpl.EMPTY);
 
   @NotNull private final DataPack myDataPack;

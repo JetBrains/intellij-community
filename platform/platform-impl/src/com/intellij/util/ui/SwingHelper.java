@@ -270,23 +270,27 @@ public class SwingHelper {
     if (!shouldUpdate(comboBox, newItems)) {
       return;
     }
-    Object selectedItem = comboBox.getSelectedItem();
+    Object itemToSelect = comboBox.getSelectedItem();
+    boolean preserveSelection = true;
     //noinspection SuspiciousMethodCalls
-    if (selectedItem != null && !newItems.contains(selectedItem)) {
-      selectedItem = null;
-    }
-    if (selectedItem == null && newItems.contains(newSelectedItemIfSelectionCannotBePreserved)) {
-      selectedItem = newSelectedItemIfSelectionCannotBePreserved;
+    if (!newItems.contains(itemToSelect)) {
+      if (newItems.contains(newSelectedItemIfSelectionCannotBePreserved)) {
+        itemToSelect = newSelectedItemIfSelectionCannotBePreserved;
+      }
+      else {
+        itemToSelect = null;
+        preserveSelection = false;
+      }
     }
     comboBox.removeAllItems();
     for (T newItem : newItems) {
       comboBox.addItem(newItem);
     }
-    if (selectedItem != null) {
+    if (preserveSelection) {
       int count = comboBox.getItemCount();
       for (int i = 0; i < count; i++) {
         Object item = comboBox.getItemAt(i);
-        if (selectedItem.equals(item)) {
+        if (ComparatorUtil.equalsNullable(itemToSelect, item)) {
           comboBox.setSelectedIndex(i);
           break;
         }

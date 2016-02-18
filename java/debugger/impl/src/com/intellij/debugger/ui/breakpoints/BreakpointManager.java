@@ -178,7 +178,7 @@ public class BreakpointManager {
       typeCls = JavaExceptionBreakpointType.class;
     }
     if (typeCls != null) {
-      XBreakpointType<XBreakpoint<?>, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
+      XBreakpointType type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
       ((XBreakpointManagerImpl)getXBreakpointManager()).getBreakpointDefaults(type).setSuspendPolicy(Breakpoint.transformSuspendPolicy(defaults.getSuspendPolicy()));
     }
   }
@@ -241,7 +241,7 @@ public class BreakpointManager {
   @NotNull
   public ExceptionBreakpoint addExceptionBreakpoint(@NotNull final String exceptionClassName, final String packageName) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final JavaExceptionBreakpointType type = (JavaExceptionBreakpointType)XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
+    final JavaExceptionBreakpointType type = XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
     return ApplicationManager.getApplication().runWriteAction(new Computable<ExceptionBreakpoint>() {
       @Override
       public ExceptionBreakpoint compute() {
@@ -370,7 +370,7 @@ public class BreakpointManager {
               final Element breakpointElement = group.getChild("breakpoint");
               if (breakpointElement != null) {
                 XBreakpointManager manager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
-                JavaExceptionBreakpointType type = (JavaExceptionBreakpointType)XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
+                JavaExceptionBreakpointType type = XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
                 XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = manager.getDefaultBreakpoint(type);
                 Breakpoint breakpoint = getJavaBreakpoint(xBreakpoint);
                 if (breakpoint != null) {

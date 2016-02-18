@@ -217,16 +217,10 @@ class StudyBrowserWindow extends JFrame {
           myEngine.setJavaScriptEnabled(true);
           myEngine.getLoadWorker().cancel();
           ev.preventDefault();
-
-          ApplicationManager.getApplication().invokeLater(() -> {
-            final String href = getLink((Element)ev.getTarget());
-            if (href == null) return;
-            final StudyBrowserWindow studyBrowserWindow = new StudyBrowserWindow(false, true);
-            studyBrowserWindow.addBackAndOpenButtons();
-            studyBrowserWindow.load(href);
-            studyBrowserWindow.setVisible(true);
-          });
-
+          final String href = getLink((Element)ev.getTarget());
+          if (href == null) return;
+          BrowserUtil.browse(href);
+          
         }
       }
 

@@ -35,20 +35,20 @@ public class BranchesPanel extends JPanel {
   private static final int TOP = 2;
   private static final int BOTTOM = 3;
   @NotNull private final VcsLogDataHolder myDataHolder;
-  @NotNull private final VcsLogUiImpl myUI;
+  @NotNull private final VcsLogUiImpl myUi;
   @NotNull private final VcsRefPainter myReferencePainter;
 
   @NotNull private LinkedHashMap<VirtualFile, List<RefGroup>> myRefGroups;
   @Nullable private Collection<VirtualFile> myRoots = null;
 
-  public BranchesPanel(@NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUiImpl UI, @NotNull RefsModel initialRefsModel) {
+  public BranchesPanel(@NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUiImpl ui, @NotNull RefsModel initialRefsModel) {
     super(new FlowLayout(FlowLayout.LEADING, BIG_ROOTS_GAP - 2 * SMALL_ROOTS_GAP, 0));
     setBorder(new EmptyBorder(TOP, SMALL_ROOTS_GAP, BOTTOM, SMALL_ROOTS_GAP));
 
     myDataHolder = dataHolder;
-    myUI = UI;
+    myUi = ui;
     myRefGroups = getRefsToDisplayOnPanel(initialRefsModel);
-    myReferencePainter = new VcsRefPainter(myUI.getColorManager(), true);
+    myReferencePainter = new VcsRefPainter(myUi.getColorManager(), true);
 
     recreateComponents();
   }
@@ -129,7 +129,7 @@ public class BranchesPanel extends JPanel {
       myGroups = groups;
 
       for (RefGroup group : myGroups) {
-        add(new ReferenceGroupComponent(group, myReferencePainter, myUI, root));
+        add(new ReferenceGroupComponent(group, myReferencePainter, myUi, root));
       }
     }
   }

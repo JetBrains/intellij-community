@@ -275,7 +275,7 @@ public class FileWatcherTest extends PlatformTestCase {
     refresh(topDir);
 
     LocalFileSystem.WatchRequest topRequest = watch(topDir, false);
-    LocalFileSystem.WatchRequest subRequest = watch(sub2Dir);
+    LocalFileSystem.WatchRequest subRequest = watch(sub2Dir, true);
     try {
       myAccept = true;
       FileUtil.writeToFile(watchedFile1, "new content");
@@ -397,7 +397,8 @@ public class FileWatcherTest extends PlatformTestCase {
     File fileOutsideFlatWatchRoot = createTestFile(cDir, "test.txt");
     refresh(rootDir);
 
-    LocalFileSystem.WatchRequest aLinkRequest = watch(aLink, false), cDirRequest = watch(cDir, false);
+    LocalFileSystem.WatchRequest aLinkRequest = watch(aLink, false);
+    LocalFileSystem.WatchRequest cDirRequest = watch(cDir, false);
     try {
       myAccept = true;
       FileUtil.writeToFile(flatWatchedFile, "new content");
@@ -408,8 +409,7 @@ public class FileWatcherTest extends PlatformTestCase {
       assertEvent(VFileContentChangeEvent.class, fileOutsideFlatWatchRoot.getPath());
     }
     finally {
-      unwatch(aLinkRequest);
-      unwatch(cDirRequest);
+      unwatch(aLinkRequest, cDirRequest);
       delete(rootDir);
     }
   }
@@ -427,7 +427,8 @@ public class FileWatcherTest extends PlatformTestCase {
     String bFilePath = bLink.getPath() + "/" + cDir.getName() + "/" + file.getName();
     String cFilePath = cLink.getPath() + "/" + file.getName();
 
-    LocalFileSystem.WatchRequest bRequest = watch(bLink), cRequest = watch(cLink);
+    LocalFileSystem.WatchRequest bRequest = watch(bLink);
+    LocalFileSystem.WatchRequest cRequest = watch(cLink);
     try {
       myAccept = true;
       FileUtil.writeToFile(file, "new content");
@@ -442,8 +443,7 @@ public class FileWatcherTest extends PlatformTestCase {
       assertEvent(VFileCreateEvent.class, bFilePath, cFilePath);
     }
     finally {
-      unwatch(bRequest);
-      unwatch(cRequest);
+      unwatch(bRequest, cRequest);
       delete(rootDir);
     }
   }

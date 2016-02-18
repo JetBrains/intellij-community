@@ -4,6 +4,7 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowablePairConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +18,8 @@ import java.util.*;
  * @author Irina.Chernushina on 8/27/2015.
  */
 public class JsonSchemaReader {
+  public static final NotificationGroup ERRORS_NOTIFICATION = NotificationGroup.logOnlyGroup("JSON Schema");
+
   public JsonSchemaObject read(@NotNull final Reader reader) throws IOException {
     final JsonReader in = new JsonReader(reader);
 

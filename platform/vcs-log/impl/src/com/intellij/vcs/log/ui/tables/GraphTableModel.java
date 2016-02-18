@@ -45,9 +45,9 @@ public class GraphTableModel extends AbstractTableModel {
 
   private boolean myMoreRequested;
 
-  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUiImpl UI) {
+  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUiImpl ui) {
     myLogDataHolder = dataHolder;
-    myUi = UI;
+    myUi = ui;
     myDataPack = dataPack;
     myDataHolder = dataHolder;
   }

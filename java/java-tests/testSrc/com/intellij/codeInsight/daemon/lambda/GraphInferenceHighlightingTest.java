@@ -375,6 +375,26 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testInferenceVariablesErasure() throws Exception {
+    doTest();
+  }
+
+  public void testUncheckedWarningConvertingToInferenceVariable() throws Exception {
+    doTest();
+  }
+
+  public void testUncheckedWarningDuringStrictSubtyping() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA150688() throws Exception {
+    doTest();
+  }
+
+  public void testGlbValidityWithCapturedWildcards() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,9 +92,10 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
             OpenFileDescriptor descriptor = ((FileHyperlinkInfo)hyperlinkInfo).getDescriptor();
             if (descriptor == null) continue;
 
-            int offset = descriptor.getOffset();
             PsiFile psiFile = worker.getFile();
-            if (offset <= 0 || psiFile == null) continue;
+            if (psiFile == null || psiFile instanceof PsiCompiledFile) continue;
+            int offset = descriptor.getOffset();
+            if (offset <= 0) continue;
 
             PsiElement element = psiFile.findElementAt(offset);
             PsiTryStatement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, true, PsiClass.class);

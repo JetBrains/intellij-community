@@ -838,17 +838,7 @@ class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: Stri
     }
   }
 
-  override fun getAllSchemeNames(): Collection<String> {
-    if (schemes.isEmpty()) {
-      return emptyList()
-    }
-
-    val names = ArrayList<String>(schemes.size)
-    for (scheme in schemes) {
-      names.add(scheme.name)
-    }
-    return names
-  }
+  override fun getAllSchemeNames() = if (schemes.isEmpty()) emptyList() else schemes.map { it.name }
 
   override fun isMetadataEditable(scheme: E) = !readOnlyExternalizableSchemes.containsKey(scheme.name)
 

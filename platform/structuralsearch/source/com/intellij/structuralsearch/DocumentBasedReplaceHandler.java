@@ -21,7 +21,7 @@ public class DocumentBasedReplaceHandler extends StructuralReplaceHandler {
   private final Project myProject;
   private final Map<ReplacementInfo, RangeMarker> myRangeMarkers = new HashMap<ReplacementInfo, RangeMarker>();
 
-  DocumentBasedReplaceHandler(Project project) {
+  public DocumentBasedReplaceHandler(Project project) {
     myProject = project;
   }
 

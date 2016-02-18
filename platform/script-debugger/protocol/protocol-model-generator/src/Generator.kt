@@ -219,7 +219,7 @@ internal class Generator(outputDir: String, private val rootPackage: String, req
 val READER_INTERFACE_NAME = "ProtocolResponseReader"
 
 private fun isDomainSkipped(domain: ProtocolMetaModel.Domain): Boolean {
-  if (domain.domain() == "CSS" || domain.domain() == "Inspector" || domain.domain() == "Worker") {
+  if (domain.domain() == "CSS" || domain.domain() == "Inspector" || domain.domain() == "Worker" || domain.domain() == "ServiceWorker") {
     return false
   }
 

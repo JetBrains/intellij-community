@@ -43,16 +43,21 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
     final Map<String, JsonSchemaMappingsConfigurationBase.SchemaInfo> map = configuration.getStateMap();
     for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : map.values()) {
       if (!info.getPatterns().isEmpty()) {
-        list.add(new MyProvider(project, configuration.convertToAbsoluteFile(info.getRelativePathToSchema()), info.getPatterns()));
+        list.add(new MyProvider(project, info.getName(), configuration.convertToAbsoluteFile(info.getRelativePathToSchema()), info.getPatterns()));
       }
     }
   }
 
   private static class MyProvider implements JsonSchemaFileProvider, JsonSchemaImportedProviderMarker {
+    @NotNull private final String myName;
     @NotNull private final File myFile;
     @NotNull private final List<Processor<VirtualFile>> myPatterns;
 
-    public MyProvider(@Nullable final Project project, @NotNull File file, @NotNull List<JsonSchemaMappingsConfigurationBase.Item> patterns) {
+    public MyProvider(@Nullable final Project project,
+                      @NotNull String name,
+                      @NotNull File file,
+                      @NotNull List<JsonSchemaMappingsConfigurationBase.Item> patterns) {
+      myName = name;
       myFile = file;
       myPatterns = new ArrayList<Processor<VirtualFile>>();
       for (final JsonSchemaMappingsConfigurationBase.Item pattern : patterns) {
@@ -93,6 +98,12 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
           }
         }
       }
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myName;
     }
 
     @Override

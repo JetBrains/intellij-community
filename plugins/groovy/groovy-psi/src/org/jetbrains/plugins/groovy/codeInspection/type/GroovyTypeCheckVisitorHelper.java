@@ -191,7 +191,7 @@ public class GroovyTypeCheckVisitorHelper {
 
     final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
     for (Pair<Integer, PsiType> error : allErrors) {
-      if (args.size() > error.first) {
+      if (args.size() > error.first && error.second != null) {
         fixes.add(new ParameterCastFix(error.first, error.second, args.get(error.first)));
       }
     }

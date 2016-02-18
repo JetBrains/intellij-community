@@ -64,6 +64,12 @@ public class JBScrollPane extends JScrollPane {
   @Deprecated
   public static final RegionPainter<Float> THUMB_DARK_PAINTER = new ThumbPainter(.35f, .25f, Gray.x80, Gray.x94);
 
+  @Deprecated
+  public static final RegionPainter<Float> MAC_THUMB_PAINTER = new RoundThumbPainter(2, .5f, .4f, Gray.x99);
+
+  @Deprecated
+  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = new RoundThumbPainter(2, .15f, .25f, Gray.x80);
+
   private int myViewportBorderWidth = -1;
   private boolean myHasOverlayScrollbars;
   private volatile boolean myBackgroundRequested; // avoid cyclic references
@@ -315,7 +321,9 @@ public class JBScrollPane extends JScrollPane {
       if (ui instanceof AbstractScrollBarUI) return;
       setUI(!SystemInfo.isMac && Registry.is("ide.scroll.new.layout")
             ? new DefaultScrollBarUI()
-            : ButtonlessScrollBarUI.createNormal());
+            : SystemInfo.isMac && Registry.is("mac.scroll.new.ui")
+              ? new MacScrollBarUI()
+              : ButtonlessScrollBarUI.createNormal());
     }
 
     @Override
@@ -570,7 +578,6 @@ public class JBScrollPane extends JScrollPane {
       // so that if we don't ask after resetting the bounds we may have gotten the wrong answer.
       if (viewport != null) {
         viewport.setBounds(bounds);
-        pane.setComponentZOrder(viewport, pane.getComponentCount() - 1);
         if (scrollable != null && hsbOpaque && vsbOpaque) {
           viewTracksViewportWidth = scrollable.getScrollableTracksViewportWidth();
           viewTracksViewportHeight = scrollable.getScrollableTracksViewportHeight();
@@ -655,7 +662,6 @@ public class JBScrollPane extends JScrollPane {
           int overlapY = !hsbOnTop ? 0 : overlapHeight;
           vsb.setBounds(vsbBounds.x, vsbBounds.y + overlapY, vsbBounds.width, vsbBounds.height - overlapHeight);
           vsb.putClientProperty(Alignment.class, vsbOnLeft ? Alignment.LEFT : Alignment.RIGHT);
-          pane.setComponentZOrder(vsb, 0);
         }
         // Modify the bounds of the translucent scroll bar.
         if (!vsbOpaque) {
@@ -713,6 +719,20 @@ public class JBScrollPane extends JScrollPane {
                              hsbOnTop ? hsbBounds.y : colHeadBounds.y,
                              vsbOnLeft ? rowHeadBounds.width : vsbBounds.width,
                              hsbOnTop ? hsbBounds.height : colHeadBounds.height);
+      }
+      if (!vsbOpaque && vsbNeeded || !hsbOpaque && hsbNeeded) {
+        fixComponentZOrder(vsb, 0);
+        fixComponentZOrder(viewport, -1);
+      }
+    }
+
+    private static void fixComponentZOrder(Component component, int index) {
+      if (component != null) {
+        Container parent = component.getParent();
+        synchronized (parent.getTreeLock()) {
+          if (index < 0) index += parent.getComponentCount();
+          parent.setComponentZOrder(component, index);
+        }
       }
     }
 
@@ -789,7 +809,6 @@ public class JBScrollPane extends JScrollPane {
     }
 
     void paint(Graphics2D g, int x, int y, int width, int height) {
-      g.setColor(myFillColor);
       g.fillRect(x, y, width, height);
     }
 
@@ -802,10 +821,33 @@ public class JBScrollPane extends JScrollPane {
           g.setComposite(alpha < 1
                          ? newComposite(alpha)
                          : AlphaComposite.SrcOver);
+          g.setColor(myFillColor);
           paint(g, x, y, width, height);
           g.setComposite(old);
         }
       }
+    }
+  }
+
+  private static class RoundThumbPainter extends AlphaPainter {
+    private final int myBorder;
+
+    private RoundThumbPainter(int border, float base, float delta, Color fill) {
+      super(base, delta, fill);
+      myBorder = border;
+    }
+
+    @Override
+    void paint(Graphics2D g, int x, int y, int width, int height) {
+      Object old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+      width -= myBorder + myBorder;
+      height -= myBorder + myBorder;
+
+      int arc = Math.min(width, height);
+      g.fillRoundRect(x + myBorder, y + myBorder, width, height, arc, arc);
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
     }
   }
 

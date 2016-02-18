@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
+import java.util.Collection;
 
 public class SaveSchemeDialog extends DialogWrapper {
   private final JTextField mySchemeName = new JTextField();
-  private final List<String> myExistingNames;
+  private final Collection<String> myExistingNames;
 
-  public SaveSchemeDialog(@NotNull Component parent, String title, @NotNull List<String> existingNames, @NotNull String selectedName) {
+  public SaveSchemeDialog(@NotNull Component parent, String title, @NotNull Collection<String> existingNames, @NotNull String selectedName) {
     super(parent, false);
     myExistingNames = existingNames;
     setTitle(title);

@@ -68,7 +68,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class ViewOfflineResultsAction extends AnAction implements DumbAware {
+public class ViewOfflineResultsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.ViewOfflineResultsAction");
   @NonNls private static final String XML_EXTENSION = "xml";
 

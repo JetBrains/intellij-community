@@ -19,9 +19,11 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * User: anna
@@ -211,6 +213,42 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testAllowPropertyTypeClass() throws Exception {
     doTest("ColumnConstraints");
+  }
+
+  public void testFxIdExactOptionsLabel() throws Exception {
+    doOptionsTest(Arrays.asList("parentPrivateLabel", "parentPublicLabel", "privateLabel", "publicLabel", "parentControl", "control", "grandLabel"),
+                  "FxIdExactOptionsController", "FxIdExactOptionsModel");
+  }
+
+  public void testFxIdExactOptionsDefine() throws Exception {
+    doOptionsTest(Arrays.asList("parentModel", "model"), "FxIdExactOptionsController", "FxIdExactOptionsModel");
+  }
+
+  public void testFxIdGuessedOptionsRoot() throws Exception {
+    doOptionsTest(Arrays.asList("pane", "box", "model"), "FxIdGuessedOptionsController");
+  }
+
+  public void testFxIdGuessedOptionsNode() throws Exception {
+    doOptionsTest(Arrays.asList("pane", "node", "box", "model"), "FxIdGuessedOptionsController");
+  }
+
+  public void testFxIdGuessedOptionsDefine() throws Exception {
+    doOptionsTest(Arrays.asList("pane", "node", "box", "model", "text", "target"), "FxIdGuessedOptionsController");
+  }
+
+  public void testFxIdGuessedOptionsNested() throws Exception {
+    doOptionsTest(Arrays.asList("pane", "node", "box", "model", "text", "target"), "FxIdGuessedOptionsController");
+  }
+
+  private void doOptionsTest(final List<String> expectedOptions, final String... javaClasses) {
+    final List<String> files = new ArrayList<>();
+    files.add(getTestName(true) + ".fxml");
+    Arrays.stream(javaClasses).map(name -> name + ".java").forEach(files::add);
+    myFixture.configureByFiles(ArrayUtil.toStringArray(files));
+    complete();
+
+    final Set<String> actualOptions = Arrays.stream(myItems).map(LookupElement::getLookupString).collect(Collectors.toSet());
+    assertEquals(new HashSet<>(expectedOptions), actualOptions);
   }
 
   public void testOnlyCssAsStylesheets() throws Exception {

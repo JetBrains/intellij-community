@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,7 +122,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return false;
   }
 
-
   @NotNull
   protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
 
@@ -152,7 +151,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setModel(new MyButtonModel());
       setHorizontalAlignment(LEFT);
       setFocusable(false);
-      putClientProperty("styleCombo", Boolean.TRUE);
+      if (isSmallVariant()) {
+        putClientProperty("styleCombo", Boolean.TRUE);
+      }
       Insets margins = getMargin();
       setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
       if (isSmallVariant()) {
@@ -410,7 +411,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       final Dimension size = getSize();
 
       if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-        putClientProperty("styleCombo", Boolean.TRUE);
         super.paint(g);
       } else {
         UISettings.setupAntialiasing(g);

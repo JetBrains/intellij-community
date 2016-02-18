@@ -12,4 +12,7 @@ public interface JsonSchemaFileProvider {
 
   @Nullable
   Reader getSchemaReader();
+
+  @NotNull
+  String getName();
 }

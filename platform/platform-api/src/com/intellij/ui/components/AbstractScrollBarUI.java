@@ -52,7 +52,7 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
   private final Rectangle myTrackBounds = new Rectangle();
   private final Rectangle myLeadingBounds = new Rectangle();
 
-  private JScrollBar myScrollBar;
+  JScrollBar myScrollBar;
 
   private boolean isTrackVisible;
   private boolean isValueCached;

@@ -42,6 +42,7 @@ import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugConsoleCommunication;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
+import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.DebugAwareConfiguration;
@@ -70,6 +71,8 @@ public class PyDebugRunner extends GenericProgramRunner {
   public static final String PYTHON_ASYNCIO_DEBUG = "PYTHONASYNCIODEBUG";
   @SuppressWarnings("SpellCheckingInspection")
   public static final String GEVENT_SUPPORT = "GEVENT_SUPPORT";
+  public static final String PYDEVD_FILTERS = "PYDEVD_FILTERS";
+  public static final String PYDEVD_FILTER_LIBRARIES = "PYDEVD_FILTER_LIBRARIES";
   public static boolean isModule = false;
 
   @Override
@@ -287,6 +290,14 @@ public class PyDebugRunner extends GenericProgramRunner {
 
     if (PyDebuggerOptionsProvider.getInstance(project).isSupportGeventDebugging()) {
       cmd.getEnvironment().put(GEVENT_SUPPORT, "True");
+    }
+
+    PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
+    if (debuggerSettings.isSteppingFiltersEnabled()) {
+      cmd.getEnvironment().put(PYDEVD_FILTERS, debuggerSettings.getSteppingFiltersForProject(project));
+    }
+    if (debuggerSettings.isLibrariesFilterEnabled()) {
+      cmd.getEnvironment().put(PYDEVD_FILTER_LIBRARIES, "True");
     }
 
     addProjectRootsToEnv(project, cmd);

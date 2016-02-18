@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,12 +43,13 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
   }
 
   protected ProgressWrapper(@NotNull ProgressIndicator original, boolean checkCanceledForMe) {
+    assert original instanceof StandardProgressIndicator : "Original indicator must be StandardProcessIndicator";
     myOriginal = original;
     myCheckCanceledForMe = checkCanceledForMe;
     nested = 1 + (original instanceof ProgressWrapper ? ((ProgressWrapper)original).nested : -1);
-    if (nested > 50) {
-      LOG.error("Too many wrapped indicators");
-    }
+    //if (nested > 50) {
+    //  LOG.error("Too many wrapped indicators");
+    //}
     ProgressManager.assertNotCircular(original);
   }
 
@@ -60,13 +61,36 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
 
   @Override
   public final boolean isCanceled() {
-    return myOriginal.isCanceled() || myCheckCanceledForMe && super.isCanceled();
+    ProgressWrapper current = this;
+    while (true) {
+      if (current.myCheckCanceledForMe && current.isCanceledRaw()) return true;
+      ProgressIndicator original = current.getOriginalProgressIndicator();
+      if (original instanceof ProgressWrapper) {
+        current = (ProgressWrapper)original;
+      }
+      else {
+        return original.isCanceled();
+      }
+    }
   }
+
+  private boolean isCanceledRaw() { return super.isCanceled(); }
+  private void checkCanceledRaw() { super.checkCanceled(); }
 
   @Override
   public final void checkCanceled() {
-    myOriginal.checkCanceled();
-    super.checkCanceled();
+    ProgressWrapper current = this;
+    while (true) {
+      current.checkCanceledRaw();
+      ProgressIndicator original = current.getOriginalProgressIndicator();
+      if (original instanceof ProgressWrapper) {
+        current = (ProgressWrapper)original;
+      }
+      else {
+        original.checkCanceled();
+        break;
+      }
+    }
   }
 
   @Override
