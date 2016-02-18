@@ -114,7 +114,8 @@ def getProperties(String home, String buildNumber) {
           }
           dir("plugins") {
             jar("profiler-plugin.jar") {
-              module("profiler-plugin")
+              // Temp: Is not building in Jenkins:
+              // module("profiler-plugin")
             }
           }
         }
