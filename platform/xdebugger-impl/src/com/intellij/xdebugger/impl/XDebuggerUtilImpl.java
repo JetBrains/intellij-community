@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -282,7 +282,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @Override
-  public <B extends XBreakpoint<?>> XBreakpointType<B, ?> findBreakpointType(@NotNull Class<? extends XBreakpointType<B, ?>> typeClass) {
+  public <T extends XBreakpointType> T findBreakpointType(@NotNull Class<T> typeClass) {
     if (myBreakpointTypeByClass == null) {
       myBreakpointTypeByClass = new THashMap<Class<? extends XBreakpointType>, XBreakpointType<?, ?>>();
       for (XBreakpointType<?, ?> breakpointType : XBreakpointUtil.getBreakpointTypes()) {
@@ -291,7 +291,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     }
     XBreakpointType<?, ?> type = myBreakpointTypeByClass.get(typeClass);
     //noinspection unchecked
-    return (XBreakpointType<B, ?>)type;
+    return (T)type;
   }
 
   @Override

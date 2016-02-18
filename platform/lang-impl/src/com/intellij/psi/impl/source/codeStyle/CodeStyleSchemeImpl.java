@@ -17,10 +17,10 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalizableSchemeAdapter;
+import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     init(parentScheme, null);
   }
 
-  void init(@NotNull CodeStyleSchemes schemesManager) {
+  void init(@NotNull SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> schemesManager) {
     LOG.assertTrue(myCodeStyleSettings == null, "Already initialized");
     init(myParentSchemeName == null ? null : schemesManager.findSchemeByName(myParentSchemeName), myRootElement);
     myParentSchemeName = null;

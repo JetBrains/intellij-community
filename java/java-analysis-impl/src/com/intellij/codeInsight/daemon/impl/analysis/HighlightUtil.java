@@ -181,7 +181,7 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   /**
-   * make element protected/package local/public suggestion
+   * make element protected/package-private/public suggestion
    */
   static void registerAccessQuickFixAction(@NotNull PsiMember refElement,
                                            @NotNull PsiJavaCodeReferenceElement place,
@@ -243,7 +243,7 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   private static PsiClass getPackageLocalClassInTheMiddle(@NotNull PsiElement place) {
     if (place instanceof PsiReferenceExpression) {
-      // check for package local classes in the middle
+      // check for package-private classes in the middle
       PsiReferenceExpression expression = (PsiReferenceExpression)place;
       while (true) {
         PsiElement resolved = expression.resolve();

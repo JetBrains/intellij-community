@@ -11,7 +11,7 @@ class a extends Component {
         s.<error descr="'createBuffers(int, java.awt.BufferCapabilities)' has protected access in 'java.awt.Component.FlipBufferStrategy'">createBuffers</error>(1,null);
 
         // TODO
-        // now cannot distinquish private from package local in class files
+        // now cannot distinquish private from package-private in class files
         //< error descr="'java.awt.Component.SingleBufferStrategy' has private access in 'java.awt.Component'">SingleBufferStrategy< /error> s2 = null;
         //Object o = s2.< error descr="'caps' has private access in 'java.awt.Component.SingleBufferStrategy'">caps< /error>;
     }

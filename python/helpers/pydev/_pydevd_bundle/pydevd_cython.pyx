@@ -16,7 +16,7 @@ from _pydevd_bundle.pydevd_frame import PyDBFrame
 cdef class PyDBAdditionalThreadInfo:
 # ELSE
 # class PyDBAdditionalThreadInfo(object):
-# ENDIF
+    # ENDIF
 
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
     cdef public int pydev_state;
@@ -214,7 +214,6 @@ try:
     from inspect import CO_GENERATOR
 except:
     CO_GENERATOR = 0
-
 
 try:
     from _pydevd_bundle.pydevd_signature import send_signature_call_trace
@@ -650,6 +649,16 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                                                 (base == DEBUG_START_PY3K[0] and back.f_code.co_name == DEBUG_START_PY3K[1]):
                                             stop = False
                                             main_debugger.first_breakpoint_reached = True
+                else:
+                    # if the frame is traced after breakpoint stop,
+                    # but the file should be ignored while stepping because of filters
+                    if step_cmd != -1:
+                        if main_debugger.is_filter_enabled and main_debugger.is_ignored_by_filters(filename):
+                            # ignore files matching stepping filters
+                            return self.trace_dispatch
+                        if main_debugger.is_filter_libraries and main_debugger.not_in_scope(filename):
+                            # ignore library files while stepping
+                            return self.trace_dispatch
                 if stop:
                     self.set_suspend(thread, CMD_SET_BREAK)
                 elif flag and plugin_manager is not None:
@@ -934,6 +943,14 @@ cdef class ThreadTracer:
                         return None
                 else:
                     # print('skipped: trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
+                    return None
+
+            if additional_info.pydev_step_cmd != -1:
+                if py_db.is_filter_enabled and py_db.is_ignored_by_filters(abs_path_real_path_and_base[1]):
+                    # ignore files matching stepping filters
+                    return None
+                if py_db.is_filter_libraries and py_db.not_in_scope(abs_path_real_path_and_base[1]):
+                    # ignore library files while stepping
                     return None
 
             # print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)

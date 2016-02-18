@@ -426,9 +426,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       setCursor(new Cursor(Cursor.WAIT_CURSOR));
       final JPanel editorPanel = new JPanel();
       editorPanel.setLayout(new BorderLayout());
-      CommonProblemDescriptor[] descriptors = myTree.getSelectedDescriptors();
-      editorPanel.add(createBaseRightComponentFor(descriptors, refEntity), BorderLayout.CENTER);
-      if (descriptors.length > 0) {
+      final int problemCount = myTree.getSelectedProblemCount();
+      editorPanel.add(createBaseRightComponentFor(problemCount, refEntity), BorderLayout.CENTER);
+      if (problemCount > 0) {
         final InspectionToolWrapper tool = myTree.getSelectedToolWrapper();
         LOG.assertTrue(tool != null);
         editorPanel.add(new QuickFixToolbar(myTree,
@@ -448,17 +448,18 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myPreviewEditor != null && !myPreviewEditor.isDisposed() && myPreviewEditor.getDocument() == document;
   }
 
-  private JComponent createBaseRightComponentFor(CommonProblemDescriptor[] descriptors,
-                                                 RefEntity selectedEntity) {
-    final int count = descriptors.length;
+  private JComponent createBaseRightComponentFor(int problemCount, RefEntity selectedEntity) {
     if (selectedEntity instanceof RefElement && !(((RefElement)selectedEntity).getElement() instanceof PsiDirectory)) {
       PsiElement selectedElement = ((RefElement)selectedEntity).getElement();
-      if (count == 1) {
-        final CommonProblemDescriptor descriptor = descriptors[0];
-        if (descriptor instanceof ProblemDescriptorBase) {
-          final PsiElement element = ((ProblemDescriptorBase)descriptor).getPsiElement();
-          if (element != null) {
-            selectedElement = element;
+      if (problemCount == 1) {
+        CommonProblemDescriptor[] descriptors = myTree.getSelectedDescriptors();
+        if (descriptors.length != 0) {
+          final CommonProblemDescriptor descriptor = descriptors[0];
+          if (descriptor instanceof ProblemDescriptorBase) {
+            final PsiElement element = ((ProblemDescriptorBase)descriptor).getPsiElement();
+            if (element != null) {
+              selectedElement = element;
+            }
           }
         }
       }
@@ -481,7 +482,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         UsagePreviewPanel.highlight(Collections.emptyList(), myPreviewEditor, myProject);
       }
 
-      if (count == 1) {
+      if (problemCount == 1) {
         final PsiElement finalSelectedElement = selectedElement;
         ApplicationManager.getApplication().invokeLater(() -> {
           if (myPreviewEditor != null && !myPreviewEditor.isDisposed()) {

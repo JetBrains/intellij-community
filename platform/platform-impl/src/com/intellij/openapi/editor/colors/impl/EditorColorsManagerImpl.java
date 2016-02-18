@@ -102,7 +102,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       @NotNull
       @Override
       public State getState(@NotNull EditorColorsSchemeImpl scheme) {
-        return scheme instanceof ReadOnlyColorsScheme ? State.NON_PERSISTENT : State.POSSIBLY_CHANGED;
+        return !(scheme instanceof ReadOnlyColorsScheme) && scheme.isSaveNeeded() ? State.POSSIBLY_CHANGED : State.NON_PERSISTENT;
       }
 
       @Override

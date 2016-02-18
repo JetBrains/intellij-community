@@ -67,9 +67,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.Date;
-import java.util.EventObject;
+import java.util.*;
 import java.util.List;
 
 public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvider {
@@ -135,7 +133,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
     getGraphTableModel().setVisiblePack(visiblePack);
     previousSelection.restore(visiblePack.getVisibleGraph(), true);
 
-    for (VcsLogHighlighter highlighter: myHighlighters) {
+    for (VcsLogHighlighter highlighter : myHighlighters) {
       highlighter.update(visiblePack, permGraphChanged);
     }
 
@@ -177,15 +175,17 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
         int maxWidth = 0;
         for (int row = 0; row < maxRowsToCheck; row++) {
           String value = getModel().getValueAt(row, i).toString();
-          maxWidth = Math.max(getFontMetrics(tableFont).stringWidth(value), maxWidth);
+          maxWidth = Math.max(getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth(value), maxWidth);
           if (!value.isEmpty()) sizeCalculated = true;
         }
-        column.setMinWidth(Math.min(maxWidth + UIUtil.DEFAULT_HGAP, MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
-        column.setWidth(column.getMinWidth());
+        int min = Math.min(maxWidth + UIUtil.DEFAULT_HGAP, MAX_DEFAULT_AUTHOR_COLUMN_WIDTH);
+        column.setMinWidth(min);
+        column.setWidth(min);
       }
       else if (i == GraphTableModel.DATE_COLUMN) { // all dates have nearly equal sizes
-        column.setMinWidth(getFontMetrics(tableFont).stringWidth("mm" + DateFormatUtil.formatDateTime(new Date())));
-        column.setWidth(column.getMinWidth());
+        int min = getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth("mm" + DateFormatUtil.formatDateTime(new Date()));
+        column.setMinWidth(min);
+        column.setWidth(min);
       }
     }
     return sizeCalculated;

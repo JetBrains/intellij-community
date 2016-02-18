@@ -32,8 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.BitSet;
 
 public abstract class PsiBasedStripTrailingSpacesFilter implements StripTrailingSpacesFilter {
-  private final @NotNull BitSet myDisabledLinesBitSet;
-  private final @NotNull Document myDocument;
+  @NotNull private final BitSet myDisabledLinesBitSet;
+  @NotNull private final Document myDocument;
   
   public abstract static class Factory extends StripTrailingSpacesFilterFactory {
     @NotNull

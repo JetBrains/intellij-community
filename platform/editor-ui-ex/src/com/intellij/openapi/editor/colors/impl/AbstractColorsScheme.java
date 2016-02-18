@@ -67,6 +67,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   private String mySchemeName;
 
   private float myConsoleLineSpacing = -1;
+  
+  private boolean myIsSaveNeeded;
 
   // version influences XML format and triggers migration
   private int myVersion = CURR_VERSION;
@@ -549,6 +551,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     if (attrElements.getChildren().size() > 0) {
       parentNode.addContent(attrElements);
     }
+    
+    myIsSaveNeeded = false;
   }
 
   private static void writeLigaturesPreferences(Element parentNode, FontPreferences preferences, String optionName) {
@@ -728,5 +732,13 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   protected static boolean containsValue(@Nullable TextAttributes attributes) {
     return attributes != null && attributes.containsValue();
+  }
+
+  public boolean isSaveNeeded() {
+    return myIsSaveNeeded;
+  }
+
+  public void setSaveNeeded(boolean isSaveNeeded) {
+    myIsSaveNeeded = isSaveNeeded;
   }
 }

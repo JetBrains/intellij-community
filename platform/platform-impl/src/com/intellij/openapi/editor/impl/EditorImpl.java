@@ -6550,6 +6550,72 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  static boolean handleDrop(@NotNull EditorImpl editor, @NotNull final Transferable t) {
+    final EditorDropHandler dropHandler = editor.getDropHandler();
+    if (dropHandler != null && dropHandler.canHandleDrop(t.getTransferDataFlavors())) {
+      dropHandler.handleDrop(t, editor.getProject(), null);
+      return true;
+    }
+
+    final int caretOffset = editor.getCaretModel().getOffset();
+    if (editor.myDraggedRange != null
+        && editor.myDraggedRange.getStartOffset() <= caretOffset && caretOffset < editor.myDraggedRange.getEndOffset()) {
+      return false;
+    }
+
+    if (editor.myDraggedRange != null) {
+      editor.getCaretModel().moveToOffset(editor.mySavedCaretOffsetForDNDUndoHack);
+    }
+
+    CommandProcessor.getInstance().executeCommand(editor.myProject, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              editor.getSelectionModel().removeSelection();
+
+              final int offset;
+              if (editor.myDraggedRange != null) {
+                editor.getCaretModel().moveToOffset(caretOffset);
+                offset = caretOffset;
+              }
+              else {
+                offset = editor.getCaretModel().getOffset();
+              }
+              if (editor.getDocument().getRangeGuard(offset, offset) != null) {
+                return;
+              }
+
+              editor.putUserData(LAST_PASTED_REGION, null);
+
+              EditorActionHandler pasteHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
+              LOG.assertTrue(pasteHandler instanceof EditorTextInsertHandler);
+              ((EditorTextInsertHandler)pasteHandler).execute(editor, editor.getDataContext(), new Producer<Transferable>() {
+                @Override
+                public Transferable produce() {
+                  return t;
+                }
+              });
+
+              TextRange range = editor.getUserData(LAST_PASTED_REGION);
+              if (range != null) {
+                editor.getCaretModel().moveToOffset(range.getStartOffset());
+                editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+              }
+            }
+            catch (Exception exception) {
+              LOG.error(exception);
+            }
+          }
+        });
+      }
+    }, EditorBundle.message("paste.command.name"), DND_COMMAND_KEY, UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+
+    return true;
+  }
+
   private static class MyTransferHandler extends TransferHandler {
     private static EditorImpl getEditor(@NotNull JComponent comp) {
       EditorComponentImpl editorComponent = (EditorComponentImpl)comp;
@@ -6558,73 +6624,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public boolean importData(@NotNull final JComponent comp, @NotNull final Transferable t) {
-      final EditorImpl editor = getEditor(comp);
-
-      final EditorDropHandler dropHandler = editor.getDropHandler();
-      if (dropHandler != null && dropHandler.canHandleDrop(t.getTransferDataFlavors())) {
-        dropHandler.handleDrop(t, editor.getProject(), null);
-        return true;
-      }
-
-      final int caretOffset = editor.getCaretModel().getOffset();
-      if (editor.myDraggedRange != null
-          && editor.myDraggedRange.getStartOffset() <= caretOffset && caretOffset < editor.myDraggedRange.getEndOffset()) {
-        return false;
-      }
-
-      if (editor.myDraggedRange != null) {
-        editor.getCaretModel().moveToOffset(editor.mySavedCaretOffsetForDNDUndoHack);
-      }
-
-      CommandProcessor.getInstance().executeCommand(editor.myProject, new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                editor.getSelectionModel().removeSelection();
-
-                final int offset;
-                if (editor.myDraggedRange != null) {
-                  editor.getCaretModel().moveToOffset(caretOffset);
-                  offset = caretOffset;
-                }
-                else {
-                  offset = editor.getCaretModel().getOffset();
-                }
-                if (editor.getDocument().getRangeGuard(offset, offset) != null) {
-                  return;
-                }
-
-                editor.putUserData(LAST_PASTED_REGION, null);
-
-                EditorActionHandler pasteHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
-                LOG.assertTrue(pasteHandler instanceof EditorTextInsertHandler);
-                ((EditorTextInsertHandler)pasteHandler).execute(editor, editor.getDataContext(), new Producer<Transferable>() {
-                  @Override
-                  public Transferable produce() {
-                    return t;
-                  }
-                });
-
-                TextRange range = editor.getUserData(LAST_PASTED_REGION);
-                if (range != null) {
-                  editor.getCaretModel().moveToOffset(range.getStartOffset());
-                  editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-                }
-              }
-              catch (Exception exception) {
-                LOG.error(exception);
-              }
-            }
-          });
-        }
-      }, EditorBundle.message("paste.command.name"), DND_COMMAND_KEY, UndoConfirmationPolicy.DEFAULT, editor.getDocument());
-
-      return true;
+      return handleDrop(getEditor(comp), t);
     }
-
+    
     @Override
     public boolean canImport(@NotNull JComponent comp, @NotNull DataFlavor[] transferFlavors) {
       Editor editor = getEditor(comp);

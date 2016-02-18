@@ -38,6 +38,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +59,6 @@ public class InspectionTree extends Tree {
   private final HashSet<Object> myExpandedUserObjects;
   @NotNull private final GlobalInspectionContextImpl myContext;
   private SelectionPath mySelectionPath;
-  private static final ProblemDescriptor[] EMPTY_DESCRIPTORS = new ProblemDescriptor[0];
 
   public InspectionTree(@NotNull Project project, @NotNull GlobalInspectionContextImpl context) {
     super(new InspectionRootNode(project));
@@ -197,7 +197,7 @@ public class InspectionTree extends Tree {
   }
 
   public CommonProblemDescriptor[] getSelectedDescriptors() {
-    if (getSelectionCount() == 0) return EMPTY_DESCRIPTORS;
+    if (getSelectionCount() == 0) return CommonProblemDescriptor.EMPTY_ARRAY;
     final TreePath[] paths = getSelectionPaths();
     final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
     for (TreePath path : paths) {
@@ -207,10 +207,49 @@ public class InspectionTree extends Tree {
     return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
   }
 
+  public int getSelectedProblemCount() {
+    if (getSelectionCount() == 0) return 0;
+    final TreePath[] paths = getSelectionPaths();
+
+    Set<InspectionTreeNode> result = new HashSet<>();
+    MultiMap<InspectionTreeNode, InspectionTreeNode> rootDependencies = new MultiMap<>();
+    for (TreePath path : paths) {
+
+      final InspectionTreeNode node = (InspectionTreeNode)path.getLastPathComponent();
+      final Collection<InspectionTreeNode> visitedChildren = rootDependencies.get(node);
+      for (InspectionTreeNode child : visitedChildren) {
+        result.remove(child);
+      }
+
+      boolean needToAdd = true;
+      for (int i = 0; i < path.getPathCount() - 1; i++) {
+        final InspectionTreeNode parent = (InspectionTreeNode) path.getPathComponent(i);
+        rootDependencies.putValue(parent, node);
+        if (result.contains(parent)) {
+          needToAdd = false;
+          break;
+        }
+      }
+
+      if (needToAdd) {
+        result.add(node);
+      }
+    }
+
+    int count = 0;
+    for (InspectionTreeNode node : result) {
+      count += node.getProblemCount();
+    }
+    return count;
+  }
+
   private static void traverseDescriptors(InspectionTreeNode node, LinkedHashSet<CommonProblemDescriptor> descriptors){
     if (node instanceof ProblemDescriptionNode) {
       if (node.isValid() && !node.isResolved()) {
-        descriptors.add(((ProblemDescriptionNode)node).getDescriptor());
+        final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
+        if (descriptor != null) {
+          descriptors.add(descriptor);
+        }
       }
     }
     for(int i = node.getChildCount() - 1; i >= 0; i--){

@@ -28,8 +28,9 @@ abstract class TwoWayAnimator {
 
   private final int myMaxFrame;
   private int myFrame;
+  float myValue;
 
-  abstract void onFrame(int frame, int maxFrame);
+  abstract void onValueUpdate();
 
   TwoWayAnimator(String name, int totalFrames, int cycleDuration, int pauseForward, int pauseBackward) {
     myMaxFrame = totalFrames - 1;
@@ -37,17 +38,20 @@ abstract class TwoWayAnimator {
     myBackwardAnimator = new MyAnimator(name + "BackwardAnimator", totalFrames, cycleDuration, pauseBackward, false);
   }
 
-  void startForward() {
+  void start(boolean forward) {
     stop();
-    myForwardAnimator.start();
+    MyAnimator animator = forward ? myForwardAnimator : myBackwardAnimator;
+    if (!forward ? myFrame > 0 : myFrame < myMaxFrame) {
+      if (forward ? myFrame > 0 : myFrame < myMaxFrame) {
+        animator.run();
+      }
+      else {
+        myAlarm.addRequest(animator, animator.myPause);
+      }
+    }
   }
 
-  void startBackward() {
-    stop();
-    myBackwardAnimator.start();
-  }
-
-  private void stop() {
+  void stop() {
     myAlarm.cancelAllRequests();
     myForwardAnimator.suspend();
     myBackwardAnimator.suspend();
@@ -61,15 +65,6 @@ abstract class TwoWayAnimator {
       myPause = pause;
     }
 
-    private void start() {
-      if (isForward() ? myFrame > 0 : myFrame < myMaxFrame) {
-        run();
-      }
-      else {
-        myAlarm.addRequest(this, myPause);
-      }
-    }
-
     @Override
     public void run() {
       reset();
@@ -80,7 +75,8 @@ abstract class TwoWayAnimator {
     public void paintNow(int frame, int totalFrames, int cycle) {
       if (isForward() ? (frame > myFrame) : (frame < myFrame)) {
         myFrame = frame;
-        onFrame(myFrame, myMaxFrame);
+        myValue = frame == 0 ? 0 : frame == myMaxFrame ? 1 : (float)frame / myMaxFrame;
+        onValueUpdate();
       }
     }
   }

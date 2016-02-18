@@ -16,19 +16,17 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.util.ui.RegionPainter;
 
 import java.awt.Graphics2D;
+import java.awt.event.MouseEvent;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 /**
  * @author Sergey.Malenkov
  */
 final class DefaultScrollBarUI extends AbstractScrollBarUI {
-  private float myTrackValue;
-  private float myThumbValue;
-
   @Override
   int getThickness() {
     return scale(isOpaque() ? 13 : 14);
@@ -40,85 +38,46 @@ final class DefaultScrollBarUI extends AbstractScrollBarUI {
   }
 
   @Override
+  boolean isAbsolutePositioning(MouseEvent event) {
+    return SwingUtilities.isMiddleMouseButton(event);
+  }
+
+  @Override
+  boolean isBorderNeeded(JComponent c) {
+    return c.isOpaque() && Registry.is("ide.scroll.track.border.paint");
+  }
+
+  @Override
   void onTrackHover(boolean hover) {
-    if (hover) {
-      myTrackAnimator.startForward();
-    }
-    else {
-      myTrackAnimator.startBackward();
-    }
+    myTrackAnimator.start(hover);
   }
 
   @Override
   void onThumbHover(boolean hover) {
-    if (hover) {
-      myThumbAnimator.startForward();
-    }
-    else {
-      myThumbAnimator.startBackward();
-    }
+    myThumbAnimator.start(hover);
   }
 
   @Override
   void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
     RegionPainter<Float> p = isDark(c) ? JBScrollPane.TRACK_DARK_PAINTER : JBScrollPane.TRACK_PAINTER;
-    paint(p, g, x, y, width, height, c, myTrackValue, false);
+    paint(p, g, x, y, width, height, c, myTrackAnimator.myValue, false);
   }
 
   @Override
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
     RegionPainter<Float> p = isDark(c) ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
-    paint(p, g, x, y, width, height, c, myThumbValue, Registry.is("ide.scroll.thumb.small.if.opaque"));
+    paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, Registry.is("ide.scroll.thumb.small.if.opaque"));
   }
 
-  private void paint(RegionPainter<Float> p, Graphics2D g, int x, int y, int width, int height, JComponent c, float value, boolean small) {
-    if (!c.isOpaque()) {
-      Alignment alignment = Alignment.get(c);
-      if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
-        int offset = getAnimatedValue(width - getMinimalThickness());
-        if (offset > 0) {
-          width -= offset;
-          if (alignment == Alignment.RIGHT) x += offset;
-        }
-      }
-      else {
-        int offset = getAnimatedValue(height - getMinimalThickness());
-        if (offset > 0) {
-          height -= offset;
-          if (alignment == Alignment.BOTTOM) y += offset;
-        }
-      }
-    }
-    else if (small) {
-      x += 1;
-      y += 1;
-      width -= 2;
-      height -= 2;
-    }
-    p.paint(g, x, y, width, height, value);
+  @Override
+  void onTrackUpdate() {
+    setTrackVisible(myTrackAnimator.myValue > 0);
+    super.onTrackUpdate();
   }
 
-  private int getAnimatedValue(int value) {
-    if (!Registry.is("ide.scroll.bar.expand.animation")) return value;
-    if (myTrackValue <= 0) return value;
-    if (myTrackValue >= 1) return 0;
-    return (int)(.5f + value * (1 - myTrackValue));
+  int getTrackOffset(int offset) {
+    return Registry.is("ide.scroll.bar.expand.animation")
+           ? super.getTrackOffset(offset)
+           : offset;
   }
-
-  private TwoWayAnimator myTrackAnimator = new TwoWayAnimator("ScrollBarTrack", 6, 125, 150, 300) {
-    @Override
-    void onFrame(int frame, int maxFrame) {
-      myTrackValue = (float)frame / maxFrame;
-      setTrackVisible(frame > 0);
-      repaint();
-    }
-  };
-
-  private TwoWayAnimator myThumbAnimator = new TwoWayAnimator("ScrollBarThumb", 6, 125, 150, 300) {
-    @Override
-    void onFrame(int frame, int maxFrame) {
-      myThumbValue = (float)frame / maxFrame;
-      repaint();
-    }
-  };
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.ui;
+package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.documentation.DocumentationProvider;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+/**
+ * @author Irina.Chernushina on 2/18/2016.
+ */
+public interface CodeInsightProviders {
+  @NotNull
+  CompletionContributor getContributor();
 
-public abstract class CompletionEditor extends JComponent {
-  public abstract void setText(TextWithImports text);
+  @NotNull
+  Annotator getAnnotator();
 
-  public abstract TextWithImports getText();
-
-  public abstract void setContext(@Nullable PsiElement context);
-
-  public abstract PsiElement getContext();
-
-  public abstract String getRecentsId();
+  @NotNull
+  DocumentationProvider getDocumentationProvider();
 }
