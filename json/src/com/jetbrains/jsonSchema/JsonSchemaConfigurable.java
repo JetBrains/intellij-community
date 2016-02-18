@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CollectConsumer;
@@ -24,9 +25,10 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
   private final Project myProject;
   @NotNull private final String mySchemaFilePath;
   @NotNull private final JsonSchemaMappingsConfigurationBase.SchemaInfo mySchema;
-  @Nullable private final Runnable myTree;
+  @Nullable private final Runnable myTreeUpdater;
   private JsonSchemaMappingsView myView;
   private String myDisplayName;
+  private String myError;
 
   public JsonSchemaConfigurable(Project project,
                                 @NotNull String schemaFilePath, @NotNull JsonSchemaMappingsConfigurationBase.SchemaInfo schema,
@@ -35,7 +37,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
     myProject = project;
     mySchemaFilePath = schemaFilePath;
     mySchema = schema;
-    myTree = updateTree;
+    myTreeUpdater = updateTree;
     myDisplayName = mySchema.getName();
   }
 
@@ -62,7 +64,8 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
   @Override
   public JComponent createOptionsPanel() {
     if (myView == null) {
-      myView = new JsonSchemaMappingsView(myProject);
+      myView = new JsonSchemaMappingsView(myProject, myTreeUpdater);
+      myView.setError(myError);
     }
     return myView.getComponent();
   }
@@ -130,7 +133,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
   public JsonSchemaMappingsConfigurationBase.SchemaInfo getUiSchema() {
     final JsonSchemaMappingsConfigurationBase.SchemaInfo info = new JsonSchemaMappingsConfigurationBase.SchemaInfo();
     info.setApplicationLevel(mySchema.isApplicationLevel());
-    if (myView != null) {
+    if (myView != null && myView.isInitialized()) {
       info.setName(getDisplayName());
       info.setPatterns(myView.getData());
       info.setRelativePathToSchema(myView.getSchemaSubPath());
@@ -144,6 +147,13 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
 
   @Override
   public void disposeUIResources() {
+    if (myView != null) Disposer.dispose(myView);
+  }
 
+  public void setError(String error) {
+    myError = error;
+    if (myView != null) {
+      myView.setError(error);
+    }
   }
 }
