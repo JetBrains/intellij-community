@@ -3,6 +3,7 @@ package com.intellij.stats.completion.experiment
 import com.google.gson.Gson
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.stats.completion.RequestService
 import com.intellij.stats.completion.UrlProvider
 import com.intellij.util.Time
@@ -34,7 +35,8 @@ class ABTesterHelper(private val requestSender: RequestService, private val urlP
     }
     
     protected fun updateExperimentData() {
-        val response = requestSender.get(urlProvider.experimentDataUrl)
+        val uid = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())
+        val response = requestSender.get(urlProvider.experimentDataUrl + "/$uid")
         if (response != null && response.isOK()) {
             experimentInfo = gson.fromJson(response.text, ExperimentInfo::class.java)
             lastUpdate = Date()
