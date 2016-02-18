@@ -1240,7 +1240,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults() && qualifierExpression != null) {
       final PsiClass psiClass = PsiUtil.resolveClassInType(qualifierExpression.getType());
       if (psiClass != null) {
-        myHolder.add(GenericsHighlightUtil.areSupersAccessible(psiClass, qualifierExpression));
+        myHolder.add(GenericsHighlightUtil.areSupersAccessible(psiClass, expression));
       }
     }
   }
