@@ -20,6 +20,7 @@ import com.intellij.idea.Main;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
@@ -52,10 +53,9 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     PathManager.loadProperties();
 
     Collection<URL> classpath = new LinkedHashSet<URL>();
-    addParentClasspath(classpath, false);
     addIDEALibraries(classpath);
     addAdditionalClassPath(classpath);
-    addParentClasspath(classpath, true);
+    addParentClasspath(classpath);
 
     UrlClassLoader.Builder builder = UrlClassLoader.build()
       .urls(filterClassPath(new ArrayList<URL>(classpath)))
@@ -82,10 +82,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     return newClassLoader;
   }
 
-  private static void addParentClasspath(Collection<URL> classpath, boolean ext) throws MalformedURLException {
-    String[] extDirs = System.getProperty("java.ext.dirs", "").split(File.pathSeparator);
-    if (ext && extDirs.length == 0) return;
-
+  private static void addParentClasspath(Collection<URL> classpath) throws MalformedURLException {
     List<URLClassLoader> loaders = new ArrayList<URLClassLoader>(2);
     for (ClassLoader loader = BootstrapClassLoaderUtil.class.getClassLoader(); loader != null; loader = loader.getParent()) {
       if (loader instanceof URLClassLoader) {
@@ -95,11 +92,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
         getLogger().warn("Unknown class loader: " + loader.getClass().getName());
       }
     }
-
     for (URLClassLoader loader : loaders) {
-      /* TODO: Android Studio used to do the following *instead* of the below URL iteration;
-         Consider whether this approach (skipping extension dir jars) or using
-          IntelliJ's approach (putting them at the end) is safest.
       if ("sun.misc.Launcher$ExtClassLoader".equals(loader.getClass().getName())) {
         // The java.ext.dirs system property is deprecated in JDK8 and gone in JDK9. It was used to specify "system" jars and native
         // libraries that would take precedence over the regular classpath, except that in our case it can lead to duplicate libraries and
@@ -113,23 +106,6 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
         }
       } else {
         ContainerUtil.addAll(classpath, loader.getURLs());
-      }
-      */
-      URL[] urls = loader.getURLs();
-      for (URL url : urls) {
-        String path = urlToPath(url);
-
-        boolean isExt = false;
-        for (String extDir : extDirs) {
-          if (path.startsWith(extDir) && path.length() > extDir.length() && path.charAt(extDir.length()) == File.separatorChar) {
-            isExt = true;
-            break;
-          }
-        }
-
-        if (isExt == ext) {
-          classpath.add(url);
-        }
       }
     }
   }
