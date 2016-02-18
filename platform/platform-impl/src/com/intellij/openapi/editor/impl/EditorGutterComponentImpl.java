@@ -73,6 +73,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.util.*;
@@ -201,6 +203,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
               }
             }
           }
+          else if (attachedObject instanceof DnDNativeTarget.EventInfo && myEditor.getSettings().isDndEnabled()) {
+            Transferable transferable = ((DnDNativeTarget.EventInfo)attachedObject).getTransferable();
+            if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+              EditorImpl.handleDrop(myEditor, transferable);
+            }
+          }
         }
       })
       .setTargetChecker(new DnDTargetChecker() {
@@ -217,6 +225,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
               }
             }
           }
+          else if (attachedObject instanceof DnDNativeTarget.EventInfo && myEditor.getSettings().isDndEnabled()) {
+            Transferable transferable = ((DnDNativeTarget.EventInfo)attachedObject).getTransferable();
+            if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+              final int line = convertPointToLineNumber(e.getPoint());
+              if (line != -1) {
+                e.setDropPossible(true);
+                myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getLineStartOffset(line));
+              }
+            }
+          }
           return true;
         }
       })
@@ -227,6 +245,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           return new DnDImage(image, new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
         }
       })
+      .enableAsNativeTarget() // required to accept dragging from editor (as editor component doesn't use DnDSupport to implement drag'n'drop)
       .install();
   }
 
