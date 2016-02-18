@@ -28,7 +28,7 @@ class InternalUrlProvider: UrlProvider() {
     private val host = "http://unit-617.labs.intellij.net:8080"
     
     override val statsServerPostUrl = "$host/stats/upload"
-    override val experimentDataUrl = "$host/experiment"
+    override val experimentDataUrl = "$host/experiment/info"
 }
 
 class PluginDirectoryFilePathProvider: FilePathProvider() {
