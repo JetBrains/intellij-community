@@ -3,6 +3,9 @@
     <output-path>$PROJECT_DIR$/out/artifacts/gradle_plugins</output-path>
     <root id="archive" name="profiler-plugin.jar">
       <element id="module-output" name="profiler-plugin" />
+      <element id="archive" name="profilers-support-lib.jar">
+        <element id="module-output" name="profiler-supportlib" />
+      </element>
     </root>
   </artifact>
 </component>
