@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.RegionPainter;
@@ -43,8 +42,6 @@ import static com.intellij.ui.mac.foundation.Foundation.*;
 final class MacScrollBarUI extends AbstractScrollBarUI {
   private static final RegistryValue DISABLED = Registry.get("ide.mac.disableMacScrollbars");
   private static final List<MacScrollBarUI> UI = Collections.synchronizedList(new ArrayList<MacScrollBarUI>());
-  private float myTrackValue;
-  private float myThumbValue;
   private boolean myThumbUpdated;
 
   @Override
@@ -58,13 +55,18 @@ final class MacScrollBarUI extends AbstractScrollBarUI {
   }
 
   @Override
+  boolean isAbsolutePositioning(MouseEvent event) {
+    return Behavior.JumpToSpot == Behavior.CURRENT.get();
+  }
+
+  @Override
+  boolean isBorderNeeded(JComponent c) {
+    return myTrackAnimator.myValue > 0;
+  }
+
+  @Override
   void onTrackHover(boolean hover) {
-    if (hover) {
-      myThumbAnimator.startForward();
-    }
-    else {
-      myThumbAnimator.startBackward();
-    }
+    myThumbAnimator.start(hover);
   }
 
   @Override
@@ -77,40 +79,13 @@ final class MacScrollBarUI extends AbstractScrollBarUI {
 
   @Override
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
+    RegionPainter<Float> p = isDark(c) ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
     if (c.isOpaque()) {
-      RegionPainter<Float> p = isDark(c) ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
-      p.paint(g, x + 1, y + 1, width - 2, height - 2, myThumbValue);
+      paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, true);
     }
     else if (!myThumbUpdated) {
-      Alignment alignment = Alignment.get(c);
-      if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
-        int offset = getAnimatedValue(width - getMinimalThickness());
-        if (offset > 0) {
-          width -= offset;
-          if (alignment == Alignment.RIGHT) x += offset;
-        }
-      }
-      else {
-        int offset = getAnimatedValue(height - getMinimalThickness());
-        if (offset > 0) {
-          height -= offset;
-          if (alignment == Alignment.BOTTOM) y += offset;
-        }
-      }
-      RegionPainter<Float> p = isDark(c) ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
-      p.paint(g, x, y, width, height, 1f);
+      paint(p, g, x, y, width, height, c, 1, false);
     }
-  }
-
-  private int getAnimatedValue(int value) {
-    if (myTrackValue <= 0) return value;
-    if (myTrackValue >= 1) return 0;
-    return (int)(.5f + value * (1 - myTrackValue));
-  }
-
-  @Override
-  boolean isAbsolutePositioning(MouseEvent event) {
-    return Behavior.JumpToSpot == Behavior.CURRENT.get();
   }
 
   @Override
@@ -133,23 +108,6 @@ final class MacScrollBarUI extends AbstractScrollBarUI {
       myScrollBar.repaint();
     }
   }
-
-  private TwoWayAnimator myTrackAnimator = new TwoWayAnimator("ScrollBarTrack", 6, 125, 150, 300) {
-    @Override
-    void onFrame(int frame, int maxFrame) {
-      myTrackValue = (float)frame / maxFrame;
-      //setTrackVisible(frame > 0);
-      repaint();
-    }
-  };
-
-  private TwoWayAnimator myThumbAnimator = new TwoWayAnimator("ScrollBarThumb", 6, 125, 150, 300) {
-    @Override
-    void onFrame(int frame, int maxFrame) {
-      myThumbValue = (float)frame / maxFrame;
-      repaint();
-    }
-  };
 
   private static ID createDelegate(String name, Pointer pointer, Callback callback) {
     ID delegateClass = allocateObjcClassPair(getObjcClass("NSObject"), name);

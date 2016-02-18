@@ -48,6 +48,19 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
   private final Listener myListener = new Listener();
   private final Timer myScrollTimer = UIUtil.createNamedTimer("ScrollBarThumbScrollTimer", 60, myListener);
 
+  final TwoWayAnimator myTrackAnimator = new TwoWayAnimator("ScrollBarTrack", 6, 125, 150, 300) {
+    @Override
+    void onValueUpdate() {
+      onTrackUpdate();
+    }
+  };
+  final TwoWayAnimator myThumbAnimator = new TwoWayAnimator("ScrollBarThumb", 6, 125, 150, 300) {
+    @Override
+    void onValueUpdate() {
+      onThumbUpdate();
+    }
+  };
+
   private final Rectangle myThumbBounds = new Rectangle();
   private final Rectangle myTrackBounds = new Rectangle();
   private final Rectangle myLeadingBounds = new Rectangle();
@@ -62,6 +75,10 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
 
   abstract int getMinimalThickness();
 
+  abstract boolean isAbsolutePositioning(MouseEvent event);
+
+  abstract boolean isBorderNeeded(JComponent c);
+
   abstract void onTrackHover(boolean hover);
 
   abstract void onThumbHover(boolean hover);
@@ -69,6 +86,48 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
   abstract void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c);
 
   abstract void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c);
+
+  void onTrackUpdate() {
+    repaint();
+  }
+
+  void onThumbUpdate() {
+    repaint();
+  }
+
+  void paint(RegionPainter<Float> p, Graphics2D g, int x, int y, int width, int height, JComponent c, float value, boolean small) {
+    if (!c.isOpaque()) {
+      Alignment alignment = Alignment.get(c);
+      if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
+        int offset = getTrackOffset(width - getMinimalThickness());
+        if (offset > 0) {
+          width -= offset;
+          if (alignment == Alignment.RIGHT) x += offset;
+        }
+      }
+      else {
+        int offset = getTrackOffset(height - getMinimalThickness());
+        if (offset > 0) {
+          height -= offset;
+          if (alignment == Alignment.BOTTOM) y += offset;
+        }
+      }
+    }
+    else if (small) {
+      x += 1;
+      y += 1;
+      width -= 2;
+      height -= 2;
+    }
+    p.paint(g, x, y, width, height, value);
+  }
+
+  int getTrackOffset(int offset) {
+    float value = myTrackAnimator.myValue;
+    if (value <= 0) return offset;
+    if (value >= 1) return 0;
+    return (int)(.5f + offset * (1 - value));
+  }
 
   void setTrackVisible(boolean trackVisible) {
     if (isTrackVisible != trackVisible) {
@@ -87,10 +146,6 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
 
   boolean isOpaque() {
     return myScrollBar != null && myScrollBar.isOpaque();
-  }
-
-  boolean isAbsolutePositioning(MouseEvent event) {
-    return SwingUtilities.isMiddleMouseButton(event);
   }
 
   int scale(int value) {
@@ -125,6 +180,8 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
   @Override
   public void uninstallUI(JComponent c) {
     myScrollTimer.stop();
+    myTrackAnimator.stop();
+    myThumbAnimator.stop();
     myScrollBar.removeFocusListener(myListener);
     myScrollBar.removePropertyChangeListener(myListener);
     myScrollBar.getModel().removeChangeListener(myListener);
@@ -150,35 +207,33 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
     if (alignment != null && g instanceof Graphics2D) {
       Rectangle bounds = new Rectangle(c.getSize());
       JBInsets.removeFrom(bounds, c.getInsets());
-      if (c.isOpaque() && c.getParent() instanceof JScrollPane) {
-        if (Registry.is("ide.scroll.track.border.paint")) {
-          Color foreground = c.getForeground();
-          if (foreground != null && !foreground.equals(c.getBackground())) {
-            g.setColor(foreground);
-            switch (alignment) {
-              case TOP:
-                bounds.height--;
-                g.drawLine(bounds.x, bounds.y + bounds.height, bounds.x + bounds.width, bounds.y + bounds.height);
-                break;
-              case LEFT:
-                bounds.width--;
-                g.drawLine(bounds.x + bounds.width, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height);
-                break;
-              case RIGHT:
-                g.drawLine(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height);
-                bounds.width--;
-                bounds.x++;
-                break;
-              case BOTTOM:
-                g.drawLine(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y);
-                bounds.height--;
-                bounds.y++;
-                break;
-            }
+      if (c.getParent() instanceof JScrollPane) {
+        Color foreground = c.getForeground();
+        if (foreground != null && !foreground.equals(c.getBackground()) && isBorderNeeded(c)) {
+          g.setColor(foreground);
+          switch (alignment) {
+            case TOP:
+              bounds.height--;
+              g.drawLine(bounds.x, bounds.y + bounds.height, bounds.x + bounds.width, bounds.y + bounds.height);
+              break;
+            case LEFT:
+              bounds.width--;
+              g.drawLine(bounds.x + bounds.width, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height);
+              break;
+            case RIGHT:
+              g.drawLine(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height);
+              bounds.width--;
+              bounds.x++;
+              break;
+            case BOTTOM:
+              g.drawLine(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y);
+              bounds.height--;
+              bounds.y++;
+              break;
           }
         }
       }
-      else if (isTrackVisible) {
+      if (isTrackVisible && !c.isOpaque()) {
         paintTrack((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, c);
       }
       // process a square area before the track
@@ -300,7 +355,7 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
         myOffset = vertical ? (myMouseY - myThumbBounds.y) : (myMouseX - myThumbBounds.x);
         isDragging = true;
       }
-      else if (isTrackVisible && myTrackBounds.contains(myMouseX, myMouseY)) {
+      else if ((isTrackVisible || myScrollBar.isOpaque()) && myTrackBounds.contains(myMouseX, myMouseY)) {
         // pressed on the track
         if (isAbsolutePositioning(event)) {
           myOffset = (vertical ? myThumbBounds.height : myThumbBounds.width) / 2;
@@ -552,7 +607,7 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
     return UIUtil.isUnderDarcula();
   }
 
-  private final class ColorProducer implements NotNullProducer<Color> {
+  private static final class ColorProducer implements NotNullProducer<Color> {
     private final JComponent myComponent;
     private final Color myBrightColor;
     private final Color myDarkColor;
