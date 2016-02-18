@@ -38,6 +38,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -205,6 +206,42 @@ public class InspectionTree extends Tree {
       traverseDescriptors((InspectionTreeNode)node, descriptors);
     }
     return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
+  }
+
+  public int getSelectedProblemCount() {
+    if (getSelectionCount() == 0) return 0;
+    final TreePath[] paths = getSelectionPaths();
+
+    Set<InspectionTreeNode> result = new HashSet<>();
+    MultiMap<InspectionTreeNode, InspectionTreeNode> rootDependencies = new MultiMap<>();
+    for (TreePath path : paths) {
+
+      final InspectionTreeNode node = (InspectionTreeNode)path.getLastPathComponent();
+      final Collection<InspectionTreeNode> visitedChildren = rootDependencies.get(node);
+      for (InspectionTreeNode child : visitedChildren) {
+        result.remove(child);
+      }
+
+      boolean needToAdd = true;
+      for (int i = 0; i < path.getPathCount() - 1; i++) {
+        final InspectionTreeNode parent = (InspectionTreeNode) path.getPathComponent(i);
+        rootDependencies.putValue(parent, node);
+        if (result.contains(parent)) {
+          needToAdd = false;
+          break;
+        }
+      }
+
+      if (needToAdd) {
+        result.add(node);
+      }
+    }
+
+    int count = 0;
+    for (InspectionTreeNode node : result) {
+      count += node.getProblemCount();
+    }
+    return count;
   }
 
   private static void traverseDescriptors(InspectionTreeNode node, LinkedHashSet<CommonProblemDescriptor> descriptors){
