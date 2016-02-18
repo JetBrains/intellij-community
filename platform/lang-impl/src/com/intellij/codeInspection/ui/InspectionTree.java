@@ -247,7 +247,10 @@ public class InspectionTree extends Tree {
   private static void traverseDescriptors(InspectionTreeNode node, LinkedHashSet<CommonProblemDescriptor> descriptors){
     if (node instanceof ProblemDescriptionNode) {
       if (node.isValid() && !node.isResolved()) {
-        descriptors.add(((ProblemDescriptionNode)node).getDescriptor());
+        final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
+        if (descriptor != null) {
+          descriptors.add(descriptor);
+        }
       }
     }
     for(int i = node.getChildCount() - 1; i >= 0; i--){

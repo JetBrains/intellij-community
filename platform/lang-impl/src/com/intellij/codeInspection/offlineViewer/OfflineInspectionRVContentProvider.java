@@ -77,10 +77,13 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
             final OfflineProblemDescriptorNode descriptorNode = (OfflineProblemDescriptorNode)node;
             final RefEntity element = descriptorNode.getElement();
             selectedElements.add(element);
-            CommonProblemDescriptor[] quickFixes = actions.get(element);
-            actions.put(element, quickFixes == null ?
-                                 new CommonProblemDescriptor[]{descriptorNode.getDescriptor()} :
-                                 DefaultInspectionToolPresentation.mergeDescriptors(quickFixes, new CommonProblemDescriptor[]{descriptorNode.getDescriptor()}));
+            CommonProblemDescriptor[] descriptors = actions.get(element);
+            final CommonProblemDescriptor descriptor = descriptorNode.getDescriptor();
+            final CommonProblemDescriptor[] descriptorAsArray = descriptor == null ? CommonProblemDescriptor.EMPTY_ARRAY
+                                                                                   : new CommonProblemDescriptor[]{descriptor};
+            actions.put(element, descriptors == null ?
+                                 descriptorAsArray :
+                                 DefaultInspectionToolPresentation.mergeDescriptors(descriptors, descriptorAsArray));
           }
           else if (node instanceof RefElementNode) {
             selectedElements.add(((RefElementNode)node).getElement());

@@ -453,11 +453,13 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       PsiElement selectedElement = ((RefElement)selectedEntity).getElement();
       if (problemCount == 1) {
         CommonProblemDescriptor[] descriptors = myTree.getSelectedDescriptors();
-        final CommonProblemDescriptor descriptor = descriptors[0];
-        if (descriptor instanceof ProblemDescriptorBase) {
-          final PsiElement element = ((ProblemDescriptorBase)descriptor).getPsiElement();
-          if (element != null) {
-            selectedElement = element;
+        if (descriptors.length != 0) {
+          final CommonProblemDescriptor descriptor = descriptors[0];
+          if (descriptor instanceof ProblemDescriptorBase) {
+            final PsiElement element = ((ProblemDescriptorBase)descriptor).getPsiElement();
+            if (element != null) {
+              selectedElement = element;
+            }
           }
         }
       }
