@@ -423,7 +423,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private void showInRightPanel(@Nullable final RefEntity refEntity) {
     Cursor currentCursor = getCursor();
     try {
-      final long ms = System.currentTimeMillis();
       setCursor(new Cursor(Cursor.WAIT_CURSOR));
       final JPanel editorPanel = new JPanel();
       editorPanel.setLayout(new BorderLayout());
