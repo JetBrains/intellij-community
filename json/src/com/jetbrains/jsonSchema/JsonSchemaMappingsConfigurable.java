@@ -1,5 +1,6 @@
 package com.jetbrains.jsonSchema;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -185,6 +186,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
       final JsonSchemaService service = JsonSchemaService.Impl.get(project);
       if (service != null) service.reset();
     }
+    if (myProject != null) DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
   private static void validate(@NotNull List<JsonSchemaMappingsConfigurationBase.SchemaInfo> list) throws ConfigurationException {
