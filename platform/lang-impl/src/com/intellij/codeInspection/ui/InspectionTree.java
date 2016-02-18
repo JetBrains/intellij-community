@@ -59,7 +59,6 @@ public class InspectionTree extends Tree {
   private final HashSet<Object> myExpandedUserObjects;
   @NotNull private final GlobalInspectionContextImpl myContext;
   private SelectionPath mySelectionPath;
-  private static final ProblemDescriptor[] EMPTY_DESCRIPTORS = new ProblemDescriptor[0];
 
   public InspectionTree(@NotNull Project project, @NotNull GlobalInspectionContextImpl context) {
     super(new InspectionRootNode(project));
@@ -198,7 +197,7 @@ public class InspectionTree extends Tree {
   }
 
   public CommonProblemDescriptor[] getSelectedDescriptors() {
-    if (getSelectionCount() == 0) return EMPTY_DESCRIPTORS;
+    if (getSelectionCount() == 0) return CommonProblemDescriptor.EMPTY_ARRAY;
     final TreePath[] paths = getSelectionPaths();
     final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
     for (TreePath path : paths) {
