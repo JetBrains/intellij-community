@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef __FSNOTIFIER_H
-#define __FSNOTIFIER_H
+#pragma once
+
+#define VERSION "20160218.1348"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -82,6 +83,3 @@ char* read_line(FILE* stream);
 
 // path comparison
 bool is_parent_path(const char* parent_path, const char* child_path);
-
-
-#endif
