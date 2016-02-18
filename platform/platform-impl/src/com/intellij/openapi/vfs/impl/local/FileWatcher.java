@@ -54,9 +54,9 @@ public class FileWatcher {
   };
 
   public static class DirtyPaths {
-    public final List<String> dirtyPaths = ContainerUtil.newSmartList();
-    public final List<String> dirtyPathsRecursive = ContainerUtil.newSmartList();
-    public final List<String> dirtyDirectories = ContainerUtil.newSmartList();
+    public final Set<String> dirtyPaths = ContainerUtil.newTroveSet();
+    public final Set<String> dirtyPathsRecursive = ContainerUtil.newTroveSet();
+    public final Set<String> dirtyDirectories = ContainerUtil.newTroveSet();
 
     public static final DirtyPaths EMPTY = new DirtyPaths();
 
@@ -199,10 +199,23 @@ public class FileWatcher {
       Collection<String> paths = myPathMap.getWatchedPaths(path, true, false);
       if (!paths.isEmpty()) {
         synchronized (myLock) {
-          myDirtyPaths.dirtyPaths.addAll(paths);
+          for (String eachPath : paths) {
+            doAddDirtyPath(eachPath);
+          }
         }
       }
       notifyOnAnyEvent();
+    }
+
+    private void doAddDirtyPath(String path) {
+      if (!myDirtyPaths.dirtyPathsRecursive.contains(path)) {
+        myDirtyPaths.dirtyPaths.add(path);
+      }
+    }
+
+    private void doAddDirtyPathRecursive(String path) {
+      myDirtyPaths.dirtyPaths.remove(path);
+      myDirtyPaths.dirtyPathsRecursive.add(path);
     }
 
     @Override
@@ -211,10 +224,10 @@ public class FileWatcher {
       if (!paths.isEmpty()) {
         synchronized (myLock) {
           for (String p : paths) {
-            myDirtyPaths.dirtyPathsRecursive.add(p);
+            doAddDirtyPathRecursive(p);
             String parentPath = new File(p).getParent();
             if (parentPath != null) {
-              myDirtyPaths.dirtyPaths.add(parentPath);
+              doAddDirtyPath(parentPath);
             }
           }
         }
@@ -238,7 +251,9 @@ public class FileWatcher {
       Collection<String> paths = myPathMap.getWatchedPaths(path, false, false);
       if (!paths.isEmpty()) {
         synchronized (myLock) {
-          myDirtyPaths.dirtyPathsRecursive.addAll(paths);
+          for (String each : paths) {
+            doAddDirtyPathRecursive(each);
+          }
         }
       }
       notifyOnAnyEvent();

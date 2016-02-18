@@ -271,7 +271,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
-  private void markPathsDirty(List<String> dirtyPaths) {
+  private void markPathsDirty(Iterable<String> dirtyPaths) {
     for (String dirtyPath : dirtyPaths) {
       VirtualFile file = findFileByPathIfCached(dirtyPath);
       if (file instanceof NewVirtualFile) {
@@ -280,7 +280,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
-  private void markFlatDirsDirty(List<String> dirtyPaths) {
+  private void markFlatDirsDirty(Iterable<String> dirtyPaths) {
     for (String dirtyPath : dirtyPaths) {
       VirtualFile file = findFileOrParentIfCached(dirtyPath);
       if (file instanceof NewVirtualFile) {
@@ -293,7 +293,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
-  private void markRecursiveDirsDirty(List<String> dirtyPaths) {
+  private void markRecursiveDirsDirty(Iterable<String> dirtyPaths) {
     for (String dirtyPath : dirtyPaths) {
       VirtualFile file = findFileOrParentIfCached(dirtyPath);
       if (file instanceof NewVirtualFile) {
