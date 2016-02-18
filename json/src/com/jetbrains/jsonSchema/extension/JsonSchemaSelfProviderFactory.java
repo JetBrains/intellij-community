@@ -52,6 +52,12 @@ public class JsonSchemaSelfProviderFactory implements JsonSchemaProviderFactory 
           return content == null ? null : new StringReader(content);
         }
 
+        @NotNull
+        @Override
+        public String getName() {
+          return "schema.json";
+        }
+
         @Nullable
         private String getContent() {
           ClassLoader loader = JsonSchemaSelfProviderFactory.class.getClassLoader();

@@ -28,4 +28,10 @@ public class JsonSchemaTestProvider implements JsonSchemaFileProvider {
   public Reader getSchemaReader() {
     return new StringReader(mySchemaText);
   }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return "test";
+  }
 }
