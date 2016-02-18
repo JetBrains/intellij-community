@@ -189,6 +189,11 @@ public class JsonSchemaMappingsConfigurationBase implements PersistentStateCompo
       myIsDirectory = directory;
     }
 
+    public String getPresentation() {
+      final String prefix = myIsPattern ? "Pattern: " : (myIsDirectory ? "Directory: " : "File: ");
+      return prefix + myPath;
+    }
+
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
