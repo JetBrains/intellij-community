@@ -168,12 +168,9 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   public void apply() throws ConfigurationException {
     final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> uiList = getUiList(true);
     validate(uiList);
-    final Map<String, JsonSchemaMappingsConfigurationBase.SchemaInfo> appMap = new HashMap<String, JsonSchemaMappingsConfigurationBase.SchemaInfo>();
     final Map<String, JsonSchemaMappingsConfigurationBase.SchemaInfo> projectMap = new HashMap<String, JsonSchemaMappingsConfigurationBase.SchemaInfo>();
     for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : uiList) {
-      if (info.isApplicationLevel()) {
-        appMap.put(info.getName(), info);
-      } else {
+      if (!info.isApplicationLevel()) {
         projectMap.put(info.getName(), info);
       }
     }
