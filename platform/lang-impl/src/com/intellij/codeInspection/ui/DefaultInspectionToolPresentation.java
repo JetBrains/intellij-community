@@ -274,6 +274,9 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     Equality<CommonProblemDescriptor> equality = new Equality<CommonProblemDescriptor>() {
       @Override
       public boolean equals(CommonProblemDescriptor o1, CommonProblemDescriptor o2) {
+        if (o1 == o2) {
+          return true;
+        }
         if (o1 instanceof ProblemDescriptor) {
           ProblemDescriptorBase p1 = (ProblemDescriptorBase)o1;
           ProblemDescriptorBase p2 = (ProblemDescriptorBase)o2;
@@ -660,6 +663,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         if (allowedDescriptorSet != null && !allowedDescriptorSet.contains(d)) {
           continue;
         }
+        if (d == null) continue;
         QuickFix[] fixes = d.getFixes();
         if (fixes != null) {
           if (isFirst) {
