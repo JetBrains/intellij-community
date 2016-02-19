@@ -368,12 +368,17 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Nullable
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context) {
-    return getCallType(context, null);
+    return getReturnType(context, null);
   }
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyCallSiteExpression callSite) {
+  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
+    return getReturnType(context, callSite);
+  }
+
+  @Nullable
+  private PyType getReturnType(@NotNull TypeEvalContext context, @Nullable PyCallSiteExpression callSite) {
     if (!isDefinition()) {
       final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
       final List<? extends RatedResolveResult> resolveResults = resolveMember(PyNames.CALL, callSite, AccessDirection.READ, resolveContext);
@@ -389,7 +394,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
         return PyUnionType.union(result);
       }
-    } else {
+    }
+    else {
       return new PyClassTypeImpl(getPyClass(), false);
     }
 
