@@ -28,6 +28,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 
 import static java.net.HttpURLConnection.HTTP_NOT_IMPLEMENTED;
+import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -96,5 +97,15 @@ public class HttpRequestsTest  {
     assertEquals(HTTP_NO_CONTENT, HttpRequests.request(myUrl)
       .tuner((c) -> ((HttpURLConnection)c).setRequestMethod("HEAD"))
       .tryConnect());
+  }
+
+  @Test(timeout = 5000)
+  public void testNotModified() throws IOException {
+    myServer.createContext("/", ex -> {
+      ex.sendResponseHeaders(HTTP_NOT_MODIFIED, -1);
+      ex.close();
+    });
+
+    assertEquals(0, HttpRequests.request(myUrl).readBytes(null).length);
   }
 }
