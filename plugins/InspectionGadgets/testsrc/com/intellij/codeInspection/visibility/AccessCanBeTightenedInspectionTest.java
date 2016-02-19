@@ -117,6 +117,17 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
            "}");
   }
 
+  public void testDoNotSuggestPrivateForAbstractIDEA151875() {
+    doTest("class C {\n" +
+           "  abstract static class Inner {\n" +
+           "    abstract void foo();\n"+
+           "  }\n" +
+           "  void f(Inner i) {\n" +
+           "    i.foo();\n" +
+           "  }\n"+
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     VisibilityInspection inspection = new VisibilityInspection();

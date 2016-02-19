@@ -24,14 +24,11 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.fixes.ChangeModifierFix;
@@ -149,37 +146,31 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       final PsiPackage memberPackage = memberDirectory == null ? null : JavaDirectoryService.getInstance().getPackage(memberDirectory);
       log(member.getName()+ ": checking effective level for "+member);
       boolean result =
-        UnusedSymbolUtil.processUsages(project, memberFile, member, new EmptyProgressIndicator(), null, new Processor<UsageInfo>() {
-          @Override
-          public boolean process(UsageInfo info) {
-            foundUsage.set(true);
-            PsiFile psiFile = info.getFile();
-            if (psiFile == null) return true;
-            if (!(psiFile instanceof PsiJavaFile)) {
-              log("     refd from " + psiFile.getName() + "; set to public");
-              maxLevel.set(PsiUtil.ACCESS_LEVEL_PUBLIC);
-              if (memberClass != null) {
-                childMembersAreUsedOutsideMyPackage.add(memberClass);
-              }
-              return false; // referenced from XML, has to be public
-            }
-            //int offset = info.getNavigationOffset();
-            //if (offset == -1) return true;
-            PsiElement element = info.getElement();
-            if (element == null) return true;
-            @PsiUtil.AccessLevel
-            int level = getEffectiveLevel(element, psiFile, member, memberFile, memberClass, memberPackage);
-            log("    ref in file " + psiFile.getName() + "; level = " + PsiUtil.getAccessModifier(level) + "; (" + element + ")");
-            while (true) {
-              int oldLevel = maxLevel.get();
-              if (level <= oldLevel || maxLevel.compareAndSet(oldLevel, level)) break;
-            }
-            if (level == PsiUtil.ACCESS_LEVEL_PUBLIC && memberClass != null) {
+        UnusedSymbolUtil.processUsages(project, memberFile, member, new EmptyProgressIndicator(), null, info -> {
+          foundUsage.set(true);
+          PsiFile psiFile = info.getFile();
+          if (psiFile == null) return true;
+          if (!(psiFile instanceof PsiJavaFile)) {
+            log("     refd from " + psiFile.getName() + "; set to public");
+            maxLevel.set(PsiUtil.ACCESS_LEVEL_PUBLIC);
+            if (memberClass != null) {
               childMembersAreUsedOutsideMyPackage.add(memberClass);
             }
-
-            return level != PsiUtil.ACCESS_LEVEL_PUBLIC;
+            return false; // referenced from XML, has to be public
           }
+          //int offset = info.getNavigationOffset();
+          //if (offset == -1) return true;
+          PsiElement element = info.getElement();
+          if (element == null) return true;
+          @PsiUtil.AccessLevel
+          int level = getEffectiveLevel(element, psiFile, member, memberFile, memberClass, memberPackage);
+          log("    ref in file " + psiFile.getName() + "; level = " + PsiUtil.getAccessModifier(level) + "; (" + element + ")");
+          maxLevel.getAndAccumulate(level, Math::max);
+          if (level == PsiUtil.ACCESS_LEVEL_PUBLIC && memberClass != null) {
+            childMembersAreUsedOutsideMyPackage.add(memberClass);
+          }
+
+          return level != PsiUtil.ACCESS_LEVEL_PUBLIC;
         });
 
       if (!foundUsage.get()) {
@@ -201,12 +192,8 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
           return; // e.g. some public method is used outside my package (without importing class)
         }
         PsiElement toHighlight = currentLevel == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL ? ((PsiNameIdentifierOwner)member).getNameIdentifier() : ContainerUtil.find(
-          memberModifierList.getChildren(), new Condition<PsiElement>() {
-            @Override
-            public boolean value(PsiElement element) {
-              return element instanceof PsiKeyword && element.getText().equals(PsiUtil.getAccessModifier(currentLevel));
-            }
-          });
+          memberModifierList.getChildren(),
+          element -> element instanceof PsiKeyword && element.getText().equals(PsiUtil.getAccessModifier(currentLevel)));
         assert toHighlight != null : member +" ; " + ((PsiNameIdentifierOwner)member).getNameIdentifier() + "; "+ memberModifierList.getText();
         myHolder.registerProblem(toHighlight, "Access can be " + VisibilityUtil.toPresentableText(maxModifier), new ChangeModifierFix(maxModifier));
       }
@@ -220,6 +207,7 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
                                   PsiClass memberClass,
                                   PsiPackage memberPackage) {
       PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      boolean isAbstractMember = member.hasModifierProperty(PsiModifier.ABSTRACT);
       if (memberClass != null && PsiTreeUtil.isAncestor(aClass, memberClass, false) ||
           aClass != null && PsiTreeUtil.isAncestor(memberClass, aClass, false)) {
         // access from the same file can be via private
@@ -232,8 +220,8 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
           return suggestPackageLocal(member);
         }
 
-        return myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS ||
-               !isInnerClass(memberClass) ? PsiUtil.ACCESS_LEVEL_PRIVATE : suggestPackageLocal(member);
+        return !isAbstractMember && (myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS ||
+               !isInnerClass(memberClass)) ? PsiUtil.ACCESS_LEVEL_PRIVATE : suggestPackageLocal(member);
       }
       //if (file == memberFile) {
       //  return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
