@@ -20,6 +20,6 @@ public class YAMLScalarElementManipulator extends AbstractElementManipulator<YAM
   @Override
   public YAMLScalar handleContentChange(@NotNull YAMLScalar element, @NotNull TextRange range, String newContent)
     throws IncorrectOperationException {
-    return element;
+    throw new IncorrectOperationException();
   }
 }

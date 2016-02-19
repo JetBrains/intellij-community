@@ -1,6 +1,7 @@
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -70,17 +71,32 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
     }
   }
 
-  @NotNull
   @Override
-  public String getTextValue() {
-    final String gluedText = super.getTextValue();
-    if (isSingleQuote()) {
-      return StringUtil.replace(gluedText, "''", "'");
+  protected List<Pair<TextRange, String>> getDecodeReplacements(@NotNull CharSequence input) {
+    List<Pair<TextRange, String>> result = new ArrayList<>();
+    
+    for (int i = 0; i + 1 < input.length(); ++i) {
+      final CharSequence subSequence = input.subSequence(i, i + 2);
+      final TextRange textRange = TextRange.create(i, i + 2);
+      
+      if (isSingleQuote() && "''".equals(subSequence)) {
+        result.add(Pair.create(textRange, "'"));
+      }
+      else if (!isSingleQuote() && "\\\n".equals(subSequence)) {
+        result.add(Pair.create(textRange, ""));
+      }
+      else if (!isSingleQuote() && "\\ ".equals(subSequence)) {
+        result.add(Pair.create(textRange, " "));
+      }
+      else if (!isSingleQuote() && "\\\"".equals(subSequence)) {
+        result.add(Pair.create(textRange, "\""));
+      }
+      else {
+        i--;
+      }
+      i++;
     }
-    else {
-      final String trimmedEndEscapes = StringUtil.replace(gluedText, new String[]{"\\\n", "\\ "}, new String[]{"", " "});
-      return StringUtil.replaceUnicodeEscapeSequences(trimmedEndEscapes);
-    }
+    return result;
   }
 
   @Override
