@@ -72,6 +72,8 @@ public abstract class ProductProperties {
 
   def customMacLayout(targetDirectory) {}
 
+  def finishLayout(out) {}
+
   String icon128
   String ico
   String icns
