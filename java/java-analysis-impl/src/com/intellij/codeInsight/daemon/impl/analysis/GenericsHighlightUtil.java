@@ -1494,19 +1494,21 @@ public class GenericsHighlightUtil {
         return "Cannot access " + HighlightUtil.formatClass(aClass);
       }
 
-      if (checkParameters && superType instanceof PsiClassType) {
-        for (PsiType psiType : ((PsiClassType)superType).getParameters()) {
-          final String notAccessibleMessage = isSuperTypeAccessible(psiType, classes, checkParameters, resolveScope, factory);
+      if (checkParameters) {
+        if (superType instanceof PsiClassType) {
+          for (PsiType psiType : ((PsiClassType)superType).getParameters()) {
+            final String notAccessibleMessage = isSuperTypeAccessible(psiType, classes, true, resolveScope, factory);
+            if (notAccessibleMessage != null) {
+              return notAccessibleMessage;
+            }
+          }
+        }
+
+        for (PsiClassType type : aClass.getSuperTypes()) {
+          final String notAccessibleMessage = isSuperTypeAccessible(type, classes, true, resolveScope, factory);
           if (notAccessibleMessage != null) {
             return notAccessibleMessage;
           }
-        }
-      }
-
-      for (PsiClassType type : aClass.getSuperTypes()) {
-        final String notAccessibleMessage = isSuperTypeAccessible(type, classes, checkParameters, resolveScope, factory);
-        if (notAccessibleMessage != null) {
-          return notAccessibleMessage;
         }
       }
     }
