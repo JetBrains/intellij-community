@@ -437,7 +437,7 @@ public final class HttpRequests {
       if (connection instanceof HttpURLConnection) {
         int responseCode = ((HttpURLConnection)connection).getResponseCode();
 
-        if (responseCode < 200 || responseCode >= 300) {
+        if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
           ((HttpURLConnection)connection).disconnect();
 
           if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {

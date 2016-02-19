@@ -71,6 +71,7 @@
     <lang.documentationProvider language="JSON"
                                 implementationClass="com.jetbrains.jsonSchema.ide.JsonSchemaDocumentationProvider"/>
     <refactoring.elementListenerProvider implementation="com.jetbrains.jsonSchema.JsonSchemaRefactoringListenerProvider"/>
+    <editorNotificationProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaConflictNotificationProvider"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript">
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderFactory"/>
