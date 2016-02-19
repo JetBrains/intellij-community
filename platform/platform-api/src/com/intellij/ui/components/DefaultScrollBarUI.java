@@ -69,12 +69,6 @@ final class DefaultScrollBarUI extends AbstractScrollBarUI {
     paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, Registry.is("ide.scroll.thumb.small.if.opaque"));
   }
 
-  @Override
-  void onTrackUpdate() {
-    setTrackVisible(myTrackAnimator.myValue > 0);
-    super.onTrackUpdate();
-  }
-
   int getTrackOffset(int offset) {
     return Registry.is("ide.scroll.bar.expand.animation")
            ? super.getTrackOffset(offset)

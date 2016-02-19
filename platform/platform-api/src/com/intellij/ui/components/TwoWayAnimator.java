@@ -93,5 +93,10 @@ abstract class TwoWayAnimator {
         setFrame(frame);
       }
     }
+
+    @Override
+    protected void paintCycleEnd() {
+      setFrame(isForward() ? myMaxFrame : 0);
+    }
   }
 }

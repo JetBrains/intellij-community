@@ -44,6 +44,7 @@ final class MacScrollBarUI extends AbstractScrollBarUI {
   private static final RegistryValue DISABLED = Registry.get("ide.mac.disableMacScrollbars");
   private static final List<MacScrollBarUI> UI = Collections.synchronizedList(new ArrayList<MacScrollBarUI>());
   private final Alarm myAlarm = new Alarm();
+  private boolean myTrackHovered;
 
   @Override
   int getThickness() {
@@ -66,9 +67,15 @@ final class MacScrollBarUI extends AbstractScrollBarUI {
   }
 
   @Override
+  boolean isTrackClickable() {
+    return myScrollBar.isOpaque() || (myTrackAnimator.myValue > 0 && myThumbAnimator.myValue > 0);
+  }
+
+  @Override
   void onTrackHover(boolean hover) {
+    myTrackHovered = hover;
     myTrackAnimator.start(hover);
-    if (isOpaque()) {
+    if (!hover || isOpaque()) {
       myThumbAnimator.start(hover);
     }
   }
@@ -98,15 +105,17 @@ final class MacScrollBarUI extends AbstractScrollBarUI {
 
   @Override
   void onThumbMove() {
-    if (!isOpaque()) {
+    if (myScrollBar != null && myScrollBar.isShowing() && !myScrollBar.isOpaque()) {
       myThumbAnimator.rewind(true);
       myAlarm.cancelAllRequests();
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          myThumbAnimator.start(false);
-        }
-      }, 500);
+      if (!myTrackHovered) {
+        myAlarm.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            myThumbAnimator.start(false);
+          }
+        }, 500);
+      }
     }
   }
 

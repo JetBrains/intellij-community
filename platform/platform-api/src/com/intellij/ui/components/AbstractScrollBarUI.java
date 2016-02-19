@@ -51,13 +51,13 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
   final TwoWayAnimator myTrackAnimator = new TwoWayAnimator("ScrollBarTrack", 6, 125, 150, 300) {
     @Override
     void onValueUpdate() {
-      onTrackUpdate();
+      repaint();
     }
   };
   final TwoWayAnimator myThumbAnimator = new TwoWayAnimator("ScrollBarThumb", 6, 125, 150, 300) {
     @Override
     void onValueUpdate() {
-      onThumbUpdate();
+      repaint();
     }
   };
 
@@ -67,7 +67,6 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
 
   JScrollBar myScrollBar;
 
-  private boolean isTrackVisible;
   private boolean isValueCached;
   private int myCachedValue;
 
@@ -79,6 +78,10 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
 
   abstract boolean isBorderNeeded(JComponent c);
 
+  boolean isTrackClickable() {
+    return myScrollBar.isOpaque() || myTrackAnimator.myValue > 0;
+  }
+
   abstract void onTrackHover(boolean hover);
 
   abstract void onThumbHover(boolean hover);
@@ -86,14 +89,6 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
   abstract void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c);
 
   abstract void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c);
-
-  void onTrackUpdate() {
-    repaint();
-  }
-
-  void onThumbUpdate() {
-    repaint();
-  }
 
   void onThumbMove() {
   }
@@ -130,13 +125,6 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
     if (value <= 0) return offset;
     if (value >= 1) return 0;
     return (int)(.5f + offset * (1 - value));
-  }
-
-  void setTrackVisible(boolean trackVisible) {
-    if (isTrackVisible != trackVisible) {
-      isTrackVisible = trackVisible;
-      repaint();
-    }
   }
 
   void repaint() {
@@ -236,7 +224,7 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
           }
         }
       }
-      if (isTrackVisible && !c.isOpaque()) {
+      if (!c.isOpaque() && myTrackAnimator.myValue > 0) {
         paintTrack((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, c);
       }
       // process a square area before the track
@@ -365,7 +353,7 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
         myOffset = vertical ? (myMouseY - myThumbBounds.y) : (myMouseX - myThumbBounds.x);
         isDragging = true;
       }
-      else if ((isTrackVisible || myScrollBar.isOpaque()) && myTrackBounds.contains(myMouseX, myMouseY)) {
+      else if (isTrackClickable() && myTrackBounds.contains(myMouseX, myMouseY)) {
         // pressed on the track
         if (isAbsolutePositioning(event)) {
           myOffset = (vertical ? myThumbBounds.height : myThumbBounds.width) / 2;
@@ -481,6 +469,12 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
       }
       if ("model" == name || "orientation" == name || "componentOrientation" == name) {
         repaint();
+      }
+      if ("opaque" == name || "visible" == name) {
+        myTrackAnimator.rewind(false);
+        myThumbAnimator.rewind(false);
+        myTrackBounds.setBounds(0, 0, 0, 0);
+        myThumbBounds.setBounds(0, 0, 0, 0);
       }
     }
 
