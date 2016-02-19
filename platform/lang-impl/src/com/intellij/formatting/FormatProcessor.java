@@ -165,6 +165,8 @@ public class FormatProcessor {
   private MultiMap<ExpandableIndent, AbstractBlockWrapper> myExpandableIndents;
   private int myTotalBlocksWithAlignments;
   private int myBlockRollbacks;
+  
+  private AlignmentCyclesDetector myCyclesDetector;
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
@@ -742,8 +744,9 @@ public class FormatProcessor {
     BlockAlignmentProcessor.Context context = new BlockAlignmentProcessor.Context(
       myDocument, alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks,
       getIndentOptionsToUse(myCurrentBlock, myDefaultIndentOption));
-    BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
     final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock);
+    myCyclesDetector.registerOffsetResponsibleBlock(offsetResponsibleBlock);
+    BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
     switch (result) {
       case TARGET_BLOCK_PROCESSED_NOT_ALIGNED: return true;
       case TARGET_BLOCK_ALIGNED: storeAlignmentMapping(); return true;
@@ -757,13 +760,13 @@ public class FormatProcessor {
         blocksCausedRealignment.add(myCurrentBlock);
         storeAlignmentMapping(myCurrentBlock, offsetResponsibleBlock);
         
-        if (myBlockRollbacks > myTotalBlocksWithAlignments) {
+        if (myCyclesDetector.isCycleDetected()) {
           reportAlignmentProcessingError(context);
           return true;
         }
         else {
+          myCyclesDetector.registerBlockRollback(myCurrentBlock);
           myCurrentBlock = offsetResponsibleBlock.getNextBlock();
-          myBlockRollbacks++;
         }
         onCurrentLineChanged();
         return false;
@@ -1419,6 +1422,8 @@ public class FormatProcessor {
       myLastWhiteSpace.append(Math.max(lastBlockOffset, myWrapper.getEndOffset()), myModel, myDefaultIndentOption);
       myAlignmentsInsideRangesToModify = myWrapper.getAlignmentsInsideRangeToModify();
       myTotalBlocksWithAlignments = myWrapper.getBlocksToAlign().values().size();
+
+      myCyclesDetector = new AlignmentCyclesDetector(myTotalBlocksWithAlignments);
     }
   }
 
