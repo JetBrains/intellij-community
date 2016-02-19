@@ -35,6 +35,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.datatransfer.DataFlavor;
+import java.util.Collections;
+
 import static com.intellij.openapi.util.text.StringUtil.unescapeStringCharacters;
 
 public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
@@ -154,6 +157,8 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       return text;
     }
 
+    if (rawText != null && wasUnescaped(text, rawText.rawText)) return rawText.rawText;
+    
     if (isStringLiteral(token)) {
       StringBuilder buffer = new StringBuilder(text.length());
       @NonNls String breaker = getLineBreaker(token);
@@ -173,6 +178,16 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       return escapeCharCharacters(text, token);
     }
     return text;
+  }
+
+  private static boolean wasUnescaped(String text, String originalText) {
+    try {
+      return new TextBlockTransferable(unescapeStringCharacters(originalText), Collections.emptyList(), null)
+        .getTransferData(DataFlavor.stringFlavor).equals(text);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e); // shouldn't happen
+    }
   }
 
   protected String getLineBreaker(PsiElement token) {
