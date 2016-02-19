@@ -11,7 +11,7 @@ PROG_DIR=$(dirname "$0")
 
 function die() {
   echo "$*" > /dev/stderr
-  echo "Usage: $0 [<out_dir> <dist_dir> <build_number>] [--enable-uitests] [--enable-blaze]" > /dev/stderr
+  echo "Usage: $0 [<out_dir> <dist_dir> <build_number>] [--enable-uitests]" > /dev/stderr
   exit 1
 }
 
@@ -53,12 +53,9 @@ function set_java8_home() {
 }
 
 UI_TESTS=
-BLAZE=
 while [[ -n "$1" ]]; do
   if [[ $1 == "--enable-uitests" ]]; then
     UI_TESTS=1
-  elif [[ $1 == "--enable-blaze" ]]; then
-    BLAZE=1
   elif [[ -z "$OUT" ]]; then
     OUT="$1"
   elif [[ -z "$DIST" ]]; then
@@ -92,7 +89,6 @@ echo "## Dist dir : $DIST"
 echo "## Qualifier: $QUAL"
 echo "## Build Num: $BNUM"
 echo "## UI Tests : $UI_TESTS"
-echo "## BLAZE    : $BLAZE"
 echo
 
 set_java_home
@@ -103,12 +99,13 @@ export JDK_18_x64=$JAVA8_HOME
 
 export PATH=$JDK_18_x64/bin:$PATH
 
-$ANT "-Dout=$OUT" "-Dbuild=$BNUM" "-Denable.ui.tests=$UI_TESTS" "-Dinclude.blaze=$BLAZE"
+$ANT "-Dout=$OUT" "-Dbuild=$BNUM" "-Denable.ui.tests=$UI_TESTS"
 
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
 cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"/
 cp -Rfv "$OUT"/updater-full.jar "$DIST"/android-studio-updater.jar
+cp -Rfv "$OUT"/studio-aswb-plugin.zip "$DIST/android-studio-aswb-$BNUM"
 # write the version number into the windows installer dir
 echo $BNUM > ../adt/idea/native/installer/win/version
 (cd ../adt/idea/native/installer/win && zip -r - ".") > "$DIST"/android-studio-bundle-data.zip
