@@ -274,6 +274,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   @Override
   public void reset() {
     fillTree();
+    updateWarningText();
   }
 
   @Override
@@ -312,7 +313,13 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   @Override
   public void dispose() {
-
+    final Enumeration children = myRoot.children();
+    while (children.hasMoreElements()) {
+      Object o = children.nextElement();
+      if (o instanceof MyNode) {
+        ((MyNode)o).getConfigurable().disposeUIResources();
+      }
+    }
   }
 
   @NotNull
