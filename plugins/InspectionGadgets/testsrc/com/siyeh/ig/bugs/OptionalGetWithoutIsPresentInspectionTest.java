@@ -43,6 +43,18 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTe
            "}");
   }
 
+  public void testOptionalWithoutVariable() {
+    doTest("import java.util.Optional;" +
+           "class X {" +
+           "    {" +
+           "        System.out.println(getName()./*'Optional.get()' without 'isPresent()' check*/get/**/());" +
+           "    }" +
+           "    Optional<String> getName() {" +
+           "        return Optional.empty();" +
+           "    }" +
+           "}");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
@@ -59,6 +71,9 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTe
       "  }" +
       "  public boolean isPresent() {" +
       "    return true;" +
+      "  }" +
+      "  public static<T> Optional<T> empty() {" +
+      "    return new Optional<>();" +
       "  }" +
       "}",
 

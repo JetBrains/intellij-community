@@ -62,16 +62,18 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
         return;
       }
       final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
-      if (!(qualifier instanceof PsiReferenceExpression)) {
+      if (qualifier == null) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
       final PsiType type = qualifier.getType();
       if (!TypeUtils.isOptional(type)) {
         return;
       }
-      if (isSurroundedByIsPresentGuard(referenceExpression)) {
-        return;
+      if (qualifier instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
+        if (isSurroundedByIsPresentGuard(referenceExpression)) {
+          return;
+        }
       }
       registerMethodCallError(expression, type);
     }
