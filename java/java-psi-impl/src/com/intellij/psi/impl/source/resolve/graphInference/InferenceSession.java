@@ -359,7 +359,7 @@ public class InferenceSession {
         return;
       }
 
-      if (parameters != null && args != null && !MethodCandidateInfo.isOverloadCheck()) {
+      if (parameters != null && args != null && !isOverloadCheck()) {
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<ConstraintFormula>();
         if (parameters.length > 0) {
           collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints, properties.isVarargs(), initialSubstitutor);
@@ -394,6 +394,21 @@ public class InferenceSession {
         mySiteSubstitutor = mySiteSubstitutor.put(param, mapping);
       }
     }
+  }
+
+  private boolean isOverloadCheck() {
+    if (myContext != null) {
+      for (Object o : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
+        final PsiExpressionList element = (PsiExpressionList)o;
+        for (PsiExpression expression : element.getExpressions()) {
+          if (expression == myContext) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+    return MethodCandidateInfo.isOverloadCheck();
   }
 
   private void collectAdditionalConstraints(PsiParameter[] parameters,

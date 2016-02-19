@@ -208,6 +208,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testTypeCalculationOfQualifierShouldNotDependOnOverloadResolutionOfContainingMethodCall() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }
