@@ -123,6 +123,8 @@ target('default': 'The default target') {
     // Generate updater.jar from the updater module (patch updater)
     layoutUpdater(out)
   }
+
+  productProperties.finishLayout(out);
 }
 
 target('build-dist-jars' : 'Target to build jars from locally compiled classes') {
