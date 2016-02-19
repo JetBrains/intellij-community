@@ -4,30 +4,22 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.idea.RareLogger;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurable;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderMarker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,6 +70,20 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   @Nullable
+  @Override
+  public List<Pair<Boolean, String>> getMatchingSchemaDescriptors(@Nullable VirtualFile file) {
+    final List<JsonSchemaObjectCodeInsightWrapper> wrappers = getWrappers(file);
+    if (wrappers == null || wrappers.isEmpty()) return null;
+    return ContainerUtil.map(wrappers, new NotNullFunction<JsonSchemaObjectCodeInsightWrapper, Pair<Boolean, String>>() {
+      @NotNull
+      @Override
+      public Pair<Boolean, String> fun(JsonSchemaObjectCodeInsightWrapper wrapper) {
+        return Pair.create(wrapper.isUserSchema(), wrapper.getName());
+      }
+    });
+  }
+
+  @Nullable
   private static JsonSchemaObjectCodeInsightWrapper createWrapper(@NotNull JsonSchemaFileProvider provider) {
     Reader reader = provider.getSchemaReader();
     try {
@@ -104,6 +110,15 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Nullable
   private CodeInsightProviders getWrapper(@Nullable VirtualFile file) {
+    final List<JsonSchemaObjectCodeInsightWrapper> wrappers = getWrappers(file);
+    if (wrappers == null || wrappers.isEmpty()) {
+      return null;
+    }
+    return (wrappers.size() == 1 ? wrappers.get(0) : new CompositeCodeInsightProviderWithWarning(wrappers));
+  }
+
+  @Nullable
+  private List<JsonSchemaObjectCodeInsightWrapper> getWrappers(@Nullable VirtualFile file) {
     if (file == null) return null;
     final List<JsonSchemaObjectCodeInsightWrapper> wrappers = new ArrayList<>();
     JsonSchemaProviderFactory[] factories = getProviderFactories();
@@ -123,8 +138,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
         }
       }
     }
-
-    return wrappers.isEmpty() ? null : (wrappers.size() == 1 ? wrappers.get(0) : new CompositeCodeInsightProviderWithWarning(wrappers));
+    return wrappers;
   }
 
   private static class CompositeCodeInsightProviderWithWarning implements CodeInsightProviders {
@@ -144,68 +158,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
         }
       };
       myAnnotator = new Annotator() {
-        private String message;
-        {
-          boolean haveSystemSchemas = false;
-          for (JsonSchemaObjectCodeInsightWrapper wrapper : myWrappers) {
-            haveSystemSchemas |= !wrapper.isUserSchema();
-          }
-          boolean withTypes = haveSystemSchemas;
-          final List<String> names = new ArrayList<>();
-          for (JsonSchemaObjectCodeInsightWrapper wrapper : myWrappers) {
-            if (withTypes) {
-              names.add((wrapper.isUserSchema() ? "user" : "system") + " schema '" + wrapper.getName() + "'");
-            } else {
-              names.add(wrapper.getName());
-            }
-          }
-          message = "<html>There are several JSON Schemas mapped to this file: " + StringUtil.join(names, "; ") + "</html>";
-        }
-
         @Override
         public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-          if (element instanceof PsiFile) {
-            addFileLevelWarning(element, holder);
-          }
           for (JsonSchemaObjectCodeInsightWrapper wrapper : myWrappers) {
             wrapper.getAnnotator().annotate(element, holder);
           }
-        }
-
-        private void addFileLevelWarning(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-          final Annotation annotation = holder.createErrorAnnotation(element, message);
-          annotation.setFileLevelAnnotation(true);
-          annotation.registerFix(new IntentionAction() {
-            @Nls
-            @NotNull
-            @Override
-            public String getText() {
-              return "Edit JSON Schema Mappings";
-            }
-
-            @Nls
-            @NotNull
-            @Override
-            public String getFamilyName() {
-              return "JSON Schema";
-            }
-
-            @Override
-            public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-              return true;
-            }
-
-            @Override
-            public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-              ShowSettingsUtil.getInstance().editConfigurable(project, new JsonSchemaMappingsConfigurable(project));
-              DaemonCodeAnalyzer.getInstance(project).restart(file);
-            }
-
-            @Override
-            public boolean startInWriteAction() {
-              return false;
-            }
-          });
         }
       };
       final List<DocumentationProvider> list = new ArrayList<>();
