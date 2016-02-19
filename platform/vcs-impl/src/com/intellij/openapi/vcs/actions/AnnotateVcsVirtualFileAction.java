@@ -50,7 +50,7 @@ import java.util.List;
 public class AnnotateVcsVirtualFileAction {
   private static final Logger LOG = Logger.getInstance(AnnotateVcsVirtualFileAction.class);
 
-  public static boolean isEnabled(AnActionEvent e) {
+  private static boolean isEnabled(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDisposed()) return false;
 
@@ -69,12 +69,12 @@ public class AnnotateVcsVirtualFileAction {
     return provider instanceof AnnotationProviderEx;
   }
 
-  public static boolean isSuspended(AnActionEvent e) {
+  private static boolean isSuspended(AnActionEvent e) {
     VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
     return AnnotateToggleAction.getBackgroundableLock(e.getRequiredData(CommonDataKeys.PROJECT), file).isLocked();
   }
 
-  public static boolean isAnnotated(AnActionEvent e) {
+  private static boolean isAnnotated(AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
     List<Editor> editors = getEditors(project, file);
@@ -86,7 +86,7 @@ public class AnnotateVcsVirtualFileAction {
     });
   }
 
-  public static void perform(AnActionEvent e, boolean selected) {
+  private static void perform(AnActionEvent e, boolean selected) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
     List<Editor> editors = getEditors(project, file);
@@ -195,6 +195,28 @@ public class AnnotateVcsVirtualFileAction {
       this.vcs = vcs;
       this.filePath = filePath;
       this.revisionNumber = revisionNumber;
+    }
+  }
+
+  public static class Provider implements AnnotateToggleAction.Provider {
+    @Override
+    public boolean isEnabled(AnActionEvent e) {
+      return AnnotateVcsVirtualFileAction.isEnabled(e);
+    }
+
+    @Override
+    public boolean isSuspended(AnActionEvent e) {
+      return AnnotateVcsVirtualFileAction.isSuspended(e);
+    }
+
+    @Override
+    public boolean isAnnotated(AnActionEvent e) {
+      return AnnotateVcsVirtualFileAction.isAnnotated(e);
+    }
+
+    @Override
+    public void perform(AnActionEvent e, boolean selected) {
+      AnnotateVcsVirtualFileAction.perform(e, selected);
     }
   }
 }

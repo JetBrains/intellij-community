@@ -18,9 +18,9 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -53,49 +53,26 @@ import java.util.Map;
  * @author: lesya
  */
 public class AnnotateToggleAction extends ToggleAction implements DumbAware, AnnotationColors {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.actions.AnnotateToggleAction");
+  public static final ExtensionPointName<Provider> EP_NAME =
+    ExtensionPointName.create("com.intellij.openapi.vcs.actions.AnnotateToggleAction.Provider");
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    boolean enabled = false;
-    if (AnnotateLocalFileAction.isEnabled(e)) {
-      enabled = !AnnotateLocalFileAction.isSuspended(e);
-    }
-    else if (AnnotateDiffViewerAction.isEnabled(e)) {
-      enabled = !AnnotateDiffViewerAction.isSuspended(e);
-    }
-    else if (AnnotateVcsVirtualFileAction.isEnabled(e)) {
-      enabled = !AnnotateVcsVirtualFileAction.isSuspended(e);
-    }
-    e.getPresentation().setEnabled(enabled);
+    Provider provider = getProvider(e);
+    e.getPresentation().setEnabled(provider != null && !provider.isSuspended(e));
   }
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    if (AnnotateLocalFileAction.isEnabled(e)) {
-      return AnnotateLocalFileAction.isAnnotated(e);
-    }
-    else if (AnnotateDiffViewerAction.isEnabled(e)) {
-      return AnnotateDiffViewerAction.isAnnotated(e);
-    }
-    else if (AnnotateVcsVirtualFileAction.isEnabled(e)) {
-      return AnnotateVcsVirtualFileAction.isAnnotated(e);
-    }
-    return false;
+    Provider provider = getProvider(e);
+    return provider != null && provider.isAnnotated(e);
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean selected) {
-    if (AnnotateLocalFileAction.isEnabled(e)) {
-      AnnotateLocalFileAction.perform(e, selected);
-    }
-    else if (AnnotateDiffViewerAction.isEnabled(e)) {
-      AnnotateDiffViewerAction.perform(e, selected);
-    }
-    else if (AnnotateVcsVirtualFileAction.isEnabled(e)) {
-      AnnotateVcsVirtualFileAction.perform(e, selected);
-    }
+    Provider provider = getProvider(e);
+    if (provider != null) provider.perform(e, selected);
   }
 
   public static void doAnnotate(@NotNull final Editor editor,
@@ -262,5 +239,23 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
   @NotNull
   public static BackgroundableActionLock getBackgroundableLock(@NotNull Project project, @NotNull VirtualFile file) {
     return BackgroundableActionLock.getLock(project, VcsBackgroundableActions.ANNOTATE, file.getPath());
+  }
+
+  @Nullable
+  private static Provider getProvider(AnActionEvent e) {
+    for (Provider provider : EP_NAME.getExtensions()) {
+      if (provider.isEnabled(e)) return provider;
+    }
+    return null;
+  }
+
+  public interface Provider {
+    boolean isEnabled(AnActionEvent e);
+
+    boolean isSuspended(AnActionEvent e);
+
+    boolean isAnnotated(AnActionEvent e);
+
+    void perform(AnActionEvent e, boolean selected);
   }
 }

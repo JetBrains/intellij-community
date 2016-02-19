@@ -77,7 +77,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware {
-  public static final Logger LOG = Logger.getInstance(AnnotateDiffViewerAction.class);
+  private static final Logger LOG = Logger.getInstance(AnnotateDiffViewerAction.class);
 
   private static final Key<AnnotationData[]> CACHE_KEY = Key.create("Diff.AnnotateAction.Cache");
   private static final Key<boolean[]> ANNOTATIONS_SHOWN_KEY = Key.create("Diff.AnnotateAction.AnnotationShown");
@@ -127,7 +127,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     return new EventData(viewer, editor, annotator, side);
   }
 
-  public static boolean isEnabled(AnActionEvent e) {
+  private static boolean isEnabled(AnActionEvent e) {
     EventData data = collectEventData(e);
     if (data == null) return false;
 
@@ -136,19 +136,19 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     return createAnnotationsLoader(data.viewer.getProject(), data.viewer.getRequest(), data.side) != null;
   }
 
-  public static boolean isSuspended(AnActionEvent e) {
+  private static boolean isSuspended(AnActionEvent e) {
     EventData data = collectEventData(e);
     return data != null && getBackgroundableLock(data.viewer, data.side).isLocked();
   }
 
-  public static boolean isAnnotated(AnActionEvent e) {
+  private static boolean isAnnotated(AnActionEvent e) {
     EventData data = collectEventData(e);
     assert data != null;
     //noinspection unchecked
     return data.annotator.isAnnotationShown(data.viewer, data.side);
   }
 
-  public static void perform(AnActionEvent e, boolean selected) {
+  private static void perform(AnActionEvent e, boolean selected) {
     EventData data = collectEventData(e);
     assert data != null;
 
@@ -175,7 +175,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     perform(e, state);
   }
 
-  public static <T extends DiffViewerBase> void doAnnotate(@NotNull final ViewerAnnotator<T> annotator,
+  private static <T extends DiffViewerBase> void doAnnotate(@NotNull final ViewerAnnotator<T> annotator,
                                                            @NotNull final T viewer,
                                                            @NotNull final Side side) {
     final Project project = viewer.getProject();
@@ -615,6 +615,28 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
       this.editor = editor;
       this.annotator = annotator;
       this.side = side;
+    }
+  }
+
+  public static class Provider implements AnnotateToggleAction.Provider {
+    @Override
+    public boolean isEnabled(AnActionEvent e) {
+      return AnnotateDiffViewerAction.isEnabled(e);
+    }
+
+    @Override
+    public boolean isSuspended(AnActionEvent e) {
+      return AnnotateDiffViewerAction.isSuspended(e);
+    }
+
+    @Override
+    public boolean isAnnotated(AnActionEvent e) {
+      return AnnotateDiffViewerAction.isAnnotated(e);
+    }
+
+    @Override
+    public void perform(AnActionEvent e, boolean selected) {
+      AnnotateDiffViewerAction.perform(e, selected);
     }
   }
 }

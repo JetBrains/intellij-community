@@ -46,7 +46,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 public class AnnotateLocalFileAction {
   private static final Logger LOG = Logger.getInstance(AnnotateLocalFileAction.class);
 
-  public static boolean isEnabled(AnActionEvent e) {
+  private static boolean isEnabled(AnActionEvent e) {
     VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
 
     Project project = context.getProject();
@@ -69,12 +69,12 @@ public class AnnotateLocalFileAction {
     return true;
   }
 
-  public static boolean isSuspended(AnActionEvent e) {
+  private static boolean isSuspended(AnActionEvent e) {
     VirtualFile file = assertNotNull(VcsContextFactory.SERVICE.getInstance().createContextOn(e).getSelectedFile());
     return AnnotateToggleAction.getBackgroundableLock(e.getRequiredData(CommonDataKeys.PROJECT), file).isLocked();
   }
 
-  public static boolean isAnnotated(AnActionEvent e) {
+  private static boolean isAnnotated(AnActionEvent e) {
     VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
 
     Editor editor = context.getEditor();
@@ -90,7 +90,7 @@ public class AnnotateLocalFileAction {
     });
   }
 
-  public static void perform(AnActionEvent e, boolean selected) {
+  private static void perform(AnActionEvent e, boolean selected) {
     final VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
 
     if (!selected) {
@@ -180,5 +180,27 @@ public class AnnotateLocalFileAction {
       }
     }
     return list;
+  }
+
+  public static class Provider implements AnnotateToggleAction.Provider {
+    @Override
+    public boolean isEnabled(AnActionEvent e) {
+      return AnnotateLocalFileAction.isEnabled(e);
+    }
+
+    @Override
+    public boolean isSuspended(AnActionEvent e) {
+      return AnnotateLocalFileAction.isSuspended(e);
+    }
+
+    @Override
+    public boolean isAnnotated(AnActionEvent e) {
+      return AnnotateLocalFileAction.isAnnotated(e);
+    }
+
+    @Override
+    public void perform(AnActionEvent e, boolean selected) {
+      AnnotateLocalFileAction.perform(e, selected);
+    }
   }
 }
