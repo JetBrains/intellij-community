@@ -100,8 +100,7 @@ public abstract class CloudServerRuntimeInstance
               = callback.addDeployment(application.getApplicationName(),
                                        application,
                                        application.getStatus(),
-                                       application.getStatusText(),
-                                       application.getGroup());
+                                       application.getStatusText());
             application.setDeploymentModel(deployment);
           }
           callback.succeeded();
@@ -113,7 +112,7 @@ public abstract class CloudServerRuntimeInstance
     }, callback);
   }
 
-  private List<CloudApplicationRuntime> getApplications() throws ServerRuntimeException {
+  protected List<CloudApplicationRuntime> getApplications() throws ServerRuntimeException {
     return getAgentTaskExecutor().execute(new Computable<List<CloudApplicationRuntime>>() {
 
       @Override
