@@ -74,8 +74,6 @@ public abstract class ProductProperties {
 
   def finishLayout(out) {}
 
-  def Map getPathVariables() { return []; }
-
   String icon128
   String ico
   String icns

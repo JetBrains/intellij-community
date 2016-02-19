@@ -147,9 +147,6 @@ binding.setVariable("loadProject", {
     return
   }
   setPathVariable("KOTLIN_BUNDLED", bundledKotlinPath)
-  productProperties.getPathVariables().entrySet().each {
-    setPathVariable(it.key, it.value);
-  }
   projectBuilder.buildIncrementally = Boolean.parseBoolean(p("jps.build.incrementally", "false"))
   def dataDirName = projectBuilder.buildIncrementally ? ".jps-incremental-build" : ".jps-build-data"
   projectBuilder.dataStorageRoot = new File("$out/$dataDirName")
