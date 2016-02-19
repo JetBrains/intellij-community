@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorTextField
 import com.intellij.util.LineSeparator
+import com.intellij.util.PlatformUtils
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
@@ -148,7 +149,11 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   }
 
   override fun file(): Path? = file.value
-  override fun template(): String = "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options\n\n${VMOptions.read() ?: ""}"
+  override fun template(): String =
+      if ("AndroidStudio" == PlatformUtils.getPlatformPrefix())
+        "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options, see https://developer.android.com/studio/intro/studio-config.html\n"
+      else
+        "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options\n\n${VMOptions.read() ?: ""}"
 
   fun isEnabled(): Boolean = file() != null
 
