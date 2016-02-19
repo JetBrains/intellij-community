@@ -8,4 +8,6 @@ public abstract class A implements List<Stream<String>> {
   public void bar() {}
   
   public Stream<String> myField;
+  
+  public A a() {}
 }

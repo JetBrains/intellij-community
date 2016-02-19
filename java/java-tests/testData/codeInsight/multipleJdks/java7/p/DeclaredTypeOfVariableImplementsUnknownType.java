@@ -8,6 +8,8 @@ abstract class B {
     a.bar();
     
     <error descr="Cannot access java.util.stream.Stream">a.myField</error>;
+
+    a.a();
   }
 
   void f(java.util.List<? extends A> a) {
