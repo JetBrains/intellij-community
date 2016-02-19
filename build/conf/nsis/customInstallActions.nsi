@@ -21,13 +21,13 @@ FunctionEnd
 
 Function ConfirmDesktopShortcut
   !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" "${PRODUCT_EXE_FILE}"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" "32-bit launcher"
   ${StrRep} $R0 ${PRODUCT_EXE_FILE_64} "64.exe" ".exe"
   ${If} $R0 == ${PRODUCT_EXE_FILE}
     call searchJava64
     ${If} $3 != ""
       !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
-      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" "${PRODUCT_EXE_FILE_64}"
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" "64-bit launcher"
     ${EndIf}
   ${EndIf}
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
