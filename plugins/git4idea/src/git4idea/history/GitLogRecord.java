@@ -49,14 +49,20 @@ class GitLogRecord {
   private final List<String> myPaths;
   private final List<GitLogStatusInfo> myStatusInfo;
   private final boolean mySupportsRawBody;
+  private final String myNotes;
 
   private GitHandler myHandler;
 
-  GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options, @NotNull List<String> paths, @NotNull List<GitLogStatusInfo> statusInfo, boolean supportsRawBody) {
+  GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options,
+               @NotNull List<String> paths,
+               @NotNull List<GitLogStatusInfo> statusInfo,
+               @Nullable String notes,
+               boolean supportsRawBody) {
     myOptions = options;
     myPaths = paths;
     myStatusInfo = statusInfo;
     mySupportsRawBody = supportsRawBody;
+    myNotes = notes;
   }
 
   private List<String> getPaths() {
@@ -94,6 +100,7 @@ class GitLogRecord {
   String getBody() { return lookup(BODY); }
   String getRawBody() { return lookup(RAW_BODY); }
   String getShortenedRefLog() { return lookup(SHORT_REF_LOG_SELECTOR); }
+  @Nullable String getNotes() { return myNotes; }
 
   // access methods with some formatting or conversion
 
@@ -123,7 +130,8 @@ class GitLogRecord {
   }
 
   String getFullMessage() {
-    return mySupportsRawBody ? getRawBody().trim() : ((getSubject() + "\n\n" + getBody()).trim());
+    String notes = myNotes == null ? "" : "\n\nNotes:\n " + myNotes;
+    return mySupportsRawBody ? getRawBody().trim() + notes : ((getSubject() + "\n\n" + getBody() + notes).trim());
   }
 
   String[] getParentsHashes() {
