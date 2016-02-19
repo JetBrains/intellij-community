@@ -121,7 +121,7 @@ public class DuplicatesImpl {
             @Override
             protected String getMessage() {
               final String message = super.getMessage();
-              return prompt != null ? message + prompt : message;
+              return prompt != null ? message + " " + prompt : message;
             }
           };
           promptDialog.show();
