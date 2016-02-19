@@ -51,9 +51,9 @@ public class CacheUpdateRunner {
                                   Collection<VirtualFile> files,
                                   Project project, Consumer<FileContent> processor) {
     indicator.checkCanceled();
-    final FileContentQueue queue = new FileContentQueue();
+    final FileContentQueue queue = new FileContentQueue(files, indicator);
     final double total = files.size();
-    queue.queue(files, indicator);
+    queue.startLoading();
 
     Consumer<VirtualFile> progressUpdater = new Consumer<VirtualFile>() {
       // need set here to handle queue push-backs after checkCancelled() in order
