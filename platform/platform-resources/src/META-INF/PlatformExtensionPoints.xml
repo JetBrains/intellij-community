@@ -263,5 +263,8 @@
     <extensionPoint name="remote.credentialsLanguageContribution"
                     interface="com.intellij.remote.ext.CredentialsLanguageContribution"/>
     <extensionPoint name="stripTrailingSpacesFilterFactory" interface="com.intellij.openapi.editor.StripTrailingSpacesFilterFactory"/>
+
+    <extensionPoint name="notification.parentGroup" beanClass="com.intellij.notification.impl.NotificationParentGroupBean"/>
+    <extensionPoint name="notification.group" beanClass="com.intellij.notification.impl.NotificationGroupBean"/>
   </extensionPoints>
 </idea-plugin>
