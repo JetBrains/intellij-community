@@ -15,6 +15,8 @@
  */
 package com.jetbrains.jsonSchema;
 
+import com.intellij.json.JsonLanguage;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,7 +39,8 @@ public class JsonSchemaRefactoringListenerProvider implements RefactoringElement
       return null;
     }
     VirtualFile fileAtElement = PsiUtilBase.asVirtualFile(element);
-    if (fileAtElement == null) {
+    if (fileAtElement == null || !(fileAtElement.getFileType() instanceof LanguageFileType) ||
+      !(((LanguageFileType)fileAtElement.getFileType()).getLanguage().isKindOf(JsonLanguage.INSTANCE))) {
       return null;
     }
     Project project = element.getProject();
