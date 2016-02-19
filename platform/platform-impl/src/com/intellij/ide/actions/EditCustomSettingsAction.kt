@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorTextField
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.IoErrorText
 import java.io.File
 import java.io.IOException
@@ -160,6 +161,9 @@ class EditCustomVmOptionsAction : EditCustomSettingsAction() {
 
   override fun file(): Path? = file.value
   override fun template(): String =
+      if ("AndroidStudio" == PlatformUtils.getPlatformPrefix())
+        "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options, see https://developer.android.com/studio/intro/studio-config.html\n"
+      else
     "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options (expand/override 'bin${File.separator}${VMOptions.getFileName()}')\n\n"
   override fun charset(): Charset = VMOptions.getFileCharset()
 
