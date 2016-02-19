@@ -114,19 +114,16 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
 
   private static final Key<Boolean> IN_PREVIEW_USAGE_FLAG = Key.create("IN_PREVIEW_USAGE_FLAG");
 
-
   public static void highlight(@NotNull final List<UsageInfo> infos, @NotNull final Editor editor, @NotNull final Project project) {
-    @SuppressWarnings("UnnecessaryLocalVariable") final Editor editor1 = editor;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         if (project.isDisposed()) return;
-        //noinspection ConstantConditions
-        if (editor1 == editor && !editor.isDisposed()) {
+        if (!editor.isDisposed()) {
           doHighlight(infos, editor, project);
         }
       }
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.current());
   }
 
   private static void doHighlight(@NotNull List<UsageInfo> infos, @NotNull Editor editor, @NotNull Project project) {
