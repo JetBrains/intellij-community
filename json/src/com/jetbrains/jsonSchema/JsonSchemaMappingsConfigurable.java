@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ThreeState;
@@ -183,7 +184,10 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
       final JsonSchemaService service = JsonSchemaService.Impl.get(project);
       if (service != null) service.reset();
     }
-    if (myProject != null) DaemonCodeAnalyzer.getInstance(myProject).restart();
+    if (myProject != null) {
+      DaemonCodeAnalyzer.getInstance(myProject).restart();
+      EditorNotifications.getInstance(myProject).updateAllNotifications();
+    }
   }
 
   private static void validate(@NotNull List<JsonSchemaMappingsConfigurationBase.SchemaInfo> list) throws ConfigurationException {
