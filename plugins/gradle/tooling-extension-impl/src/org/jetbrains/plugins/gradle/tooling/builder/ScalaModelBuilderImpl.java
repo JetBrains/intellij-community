@@ -32,6 +32,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaForkOptionsImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaModelImpl;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -50,22 +51,33 @@ public class ScalaModelBuilderImpl implements ModelBuilderService {
   @Override
   public Object buildAll(String modelName, Project project) {
     final ScalaPlugin scalaPlugin = project.getPlugins().findPlugin(ScalaPlugin.class);
-    if (scalaPlugin == null) return null;
 
-    final ScalaModelImpl scalaModel = new ScalaModelImpl();
-
-    for (Task task : project.getTasks()) {
-      if (task instanceof ScalaCompile && COMPILE_SCALA_TASK.equals(task.getName())) {
-        ScalaCompile scalaCompile = (ScalaCompile)task;
-        scalaModel.setScalaClasspath(scalaCompile.getScalaClasspath().getFiles());
-        scalaModel.setZincClasspath(scalaCompile.getZincClasspath().getFiles());
-        scalaModel.setScalaCompileOptions(create(scalaCompile.getScalaCompileOptions()));
-        scalaModel.setTargetCompatibility(scalaCompile.getTargetCompatibility());
-        scalaModel.setSourceCompatibility(scalaCompile.getSourceCompatibility());
-        break;
+    ScalaModel scalaModel = null;
+    if (scalaPlugin != null) {
+      Task scalaTask = project.getTasks().getByName(COMPILE_SCALA_TASK);
+      scalaModel = createModel(scalaTask);
+    }
+    else {
+      Iterator<ScalaCompile> it = project.getTasks().withType(ScalaCompile.class).iterator();
+      if (it.hasNext()) {
+        scalaModel = createModel(it.next());
       }
     }
 
+    return scalaModel;
+  }
+
+  @Nullable
+  private static ScalaModel createModel(@Nullable Task task) {
+    if (!(task instanceof ScalaCompile)) return null;
+
+    ScalaCompile scalaCompile = (ScalaCompile)task;
+    ScalaModelImpl scalaModel = new ScalaModelImpl();
+    scalaModel.setScalaClasspath(scalaCompile.getScalaClasspath().getFiles());
+    scalaModel.setZincClasspath(scalaCompile.getZincClasspath().getFiles());
+    scalaModel.setScalaCompileOptions(create(scalaCompile.getScalaCompileOptions()));
+    scalaModel.setTargetCompatibility(scalaCompile.getTargetCompatibility());
+    scalaModel.setSourceCompatibility(scalaCompile.getSourceCompatibility());
     return scalaModel;
   }
 
