@@ -291,15 +291,6 @@ def getProperties(String home, String buildNumber) {
       }
     }
 
-    def Map getPathVariables() {
-      sdk = System.getenv("ANDROID_HOME")
-      if (sdk == null) {
-        projectBuilder.error("ANDROID_HOME environment variable not found");
-        return [];
-      }
-      return [ANDROID_HOME: sdk];
-    }
-
     def finishLayout(out) {
       patchPluginXml("aswb", buildNumber);
 
