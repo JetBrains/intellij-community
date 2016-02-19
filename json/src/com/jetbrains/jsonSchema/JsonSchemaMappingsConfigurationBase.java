@@ -1,6 +1,10 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -120,6 +124,12 @@ public class JsonSchemaMappingsConfigurationBase implements PersistentStateCompo
       if (myPatterns.remove(item)) {
         Collections.sort(myPatterns, COMPARATOR);
       }
+    }
+
+    @Nullable
+    public VirtualFile getSchemaFile(@NotNull final Project project) {
+      final String pathToSchema = FileUtil.toSystemIndependentName(getRelativePathToSchema());
+      return VfsUtil.findRelativeFile(project.getBaseDir(), pathToSchema);
     }
 
     @Override
