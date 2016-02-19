@@ -22,6 +22,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class AccessibleContextUtil {
+  //@VisibleForTesting
+  static final String PUNCTUATION_CHARACTER = ".";
+  //@VisibleForTesting
+  static final String PUNCTUATION_SEPARATOR = "  ";
+
   public static void setName(@NotNull JComponent component, @NotNull JComponent source) {
     setName(component, source.getAccessibleContext().getAccessibleName());
   }
@@ -94,5 +99,37 @@ public class AccessibleContextUtil {
   public static @Nullable String combineAccessibleStrings(@Nullable String s1, @NotNull String separator1, @Nullable  String s2,
                                                           @NotNull String separator2, @Nullable  String s3) {
     return combineAccessibleStrings(combineAccessibleStrings(s1, separator1, s2), separator2, s3);
+  }
+
+  /**
+   * Given a multi-line string, return an single line string where new line separators
+   * are replaced with a punctuation character. This is useful for returning text to
+   * screen readers, as they tend to ignore new line separators during speech, but
+   * they do pause at punctuation characters.
+   */
+  public static @NotNull String replaceLineSeparatorsWithPunctuation(@Nullable String text) {
+    if (StringUtil.isEmpty(text))
+      return "";
+
+    // Split by new line, removing empty lines and white-spaces at end of lines.
+    String[] lines = StringUtil.splitByLines(text);
+
+    // Join lines, ensuring each line end with a punctuation.
+    final StringBuilder result = new StringBuilder();
+    boolean first = true;
+    for (String line : lines) {
+      line = line.trim();
+      if (!StringUtil.isEmpty(line)) {
+        if (first)
+          first = false;
+        else
+          result.append(PUNCTUATION_SEPARATOR);
+        result.append(line);
+        if (!line.endsWith(PUNCTUATION_CHARACTER)) {
+          result.append(PUNCTUATION_CHARACTER);
+        }
+      }
+    }
+    return result.toString();
   }
 }
