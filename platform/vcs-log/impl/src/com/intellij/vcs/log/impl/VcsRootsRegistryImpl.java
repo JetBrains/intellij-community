@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
-import com.intellij.vcs.log.data.VcsLogHashMapImpl;
+import com.intellij.vcs.log.util.PersistentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +44,7 @@ public class VcsRootsRegistryImpl implements VcsRootsRegistry, Disposable {
   @NotNull
   private static File getStorageFile(@NotNull Project project) {
     String logId = project.getName() + "." + project.getBaseDir().getPath().hashCode();
-    File rootsCache = new File(VcsLogHashMapImpl.LOG_CACHE, "roots");
+    File rootsCache = new File(PersistentUtil.LOG_CACHE, "roots");
     final File mapFile = new File(rootsCache, logId + "." + VERSION);
     if (!mapFile.exists()) {
       IOUtil.deleteAllFilesStartingWith(new File(rootsCache, logId));
