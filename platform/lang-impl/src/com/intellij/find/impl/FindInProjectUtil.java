@@ -413,7 +413,11 @@ public class FindInProjectUtil {
 
         @Override
         public String fun(PsiElement element) {
-          return regExpCharPsiClass.isInstance(element) ? element.getText() : " ";
+          if(regExpCharPsiClass.isInstance(element)) {
+            String text = element.getText();
+            if (!"\\n".equals(text) && !"\\t".equals(text) && !"\\f".equals(text) && !"\\r".equals(text)) return text;
+          }
+          return " ";
         }
       }, "");
     } finally {
