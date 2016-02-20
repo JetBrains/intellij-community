@@ -305,17 +305,4 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
 
       setupFractionalMetrics(g2d);
   }
-
-  /**
-   * @return true when Remote Desktop (i.e. Windows RDP) is connected
-   * @deprecated Use RemoteDesktopDetector class - it should work in more cases. To be removed in IDEA 16.
-   */
-  @SuppressWarnings("unused")
-  public static boolean isRemoteDesktopConnected() {
-    if (System.getProperty("os.name").contains("Windows")) {
-      final Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
-      return map != null && RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT.equals(map.get(RenderingHints.KEY_TEXT_ANTIALIASING));
-    }
-    return false;
-  }
 }

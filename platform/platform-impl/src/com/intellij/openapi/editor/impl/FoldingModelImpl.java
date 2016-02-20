@@ -490,12 +490,6 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     return myFoldTree.fetchTopLevel();
   }
 
-  @Override
-  @Nullable
-  public FoldRegion fetchOutermost(int offset) {
-    return myFoldTree.fetchOutermost(offset);
-  }
-
   public FoldRegion[] fetchCollapsedAt(int offset) {
     return myFoldTree.fetchCollapsedAt(offset);
   }

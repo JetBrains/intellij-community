@@ -746,18 +746,6 @@ public class FindManagerImpl extends FindManager {
   }
 
   @Override
-  public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model) throws MalformedReplacementStringException {
-    String toReplace = model.getStringToReplace();
-    if (model.isRegularExpressions()) {
-      return getStringToReplaceByRegexp0(foundString, model);
-    }
-    if (model.isPreserveCase()) {
-      return replaceWithCaseRespect (toReplace, foundString);
-    }
-    return toReplace;
-  }
-
-  @Override
   public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model,
                                    int startOffset, @NotNull CharSequence documentText) throws MalformedReplacementStringException{
     String toReplace = model.getStringToReplace();

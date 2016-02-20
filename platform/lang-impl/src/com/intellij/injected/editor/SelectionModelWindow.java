@@ -17,7 +17,6 @@
 package com.intellij.injected.editor;
 
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.SelectionListener;
@@ -155,15 +154,6 @@ public class SelectionModelWindow implements SelectionModel {
   }
 
   @Override
-  public void removeBlockSelection() {
-  }
-
-  @Override
-  public boolean hasBlockSelection() {
-    return false;
-  }
-
-  @Override
   @NotNull
   public int[] getBlockSelectionStarts() {
     int[] result = myHostModel.getBlockSelectionStarts();
@@ -181,26 +171,6 @@ public class SelectionModelWindow implements SelectionModel {
       result[i] = myDocument.hostToInjected(result[i]);
     }
     return result;
-  }
-
-  @Override
-  public LogicalPosition getBlockStart() {
-    return null;
-  }
-
-  @Override
-  public LogicalPosition getBlockEnd() {
-    return null;
-  }
-
-  @Override
-  public boolean isBlockSelectionGuarded() {
-    return false;
-  }
-
-  @Override
-  public RangeMarker getBlockSelectionGuard() {
-    return null;
   }
 
   @Override

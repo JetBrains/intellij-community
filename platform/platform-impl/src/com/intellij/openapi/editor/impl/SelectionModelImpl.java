@@ -205,35 +205,6 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   @Override
-  public void removeBlockSelection() {
-  }
-
-  @Override
-  public boolean hasBlockSelection() {
-    return false;
-  }
-
-  @Override
-  public LogicalPosition getBlockStart() {
-    return null;
-  }
-
-  @Override
-  public LogicalPosition getBlockEnd() {
-    return null;
-  }
-
-  @Override
-  public boolean isBlockSelectionGuarded() {
-    return false;
-  }
-
-  @Override
-  public RangeMarker getBlockSelectionGuard() {
-    return null;
-  }
-
-  @Override
   @NotNull
   public int[] getBlockSelectionStarts() {
     Collection<Caret> carets = myEditor.getCaretModel().getAllCarets();

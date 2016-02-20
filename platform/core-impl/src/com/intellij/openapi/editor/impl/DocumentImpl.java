@@ -707,18 +707,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
                           int initialStartOffset,
                           int initialOldLength) {
     assertNotNestedModification();
-    boolean enableRecursiveModifications = Registry.is("enable.recursive.document.changes"); // temporary property, to remove in IDEA 16
     myChangeInProgress = true;
     try {
       DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced, initialStartOffset, initialOldLength);
-      try {
-        doBeforeChangedUpdate(event);
-      }
-      finally {
-        if (enableRecursiveModifications) {
-          myChangeInProgress = false;
-        }
-      }
+      doBeforeChangedUpdate(event);
       myTextString = null;
       ImmutableText prevText = myText;
       myText = newText;
@@ -726,9 +718,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       sequence.incrementAndGet();
     }
     finally {
-      if (!enableRecursiveModifications) {
-        myChangeInProgress = false;
-      }
+      myChangeInProgress = false;
     }
   }
 

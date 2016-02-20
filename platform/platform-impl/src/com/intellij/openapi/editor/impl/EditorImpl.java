@@ -183,7 +183,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Nullable private EditorMouseEventArea myMousePressArea;
   private int mySavedSelectionStart = -1;
   private int mySavedSelectionEnd   = -1;
-  private int myLastColumnNumber;
 
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private MyEditable myEditable;
@@ -1482,7 +1481,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @NotNull
-  @Override
   public LogicalPosition offsetToLogicalPosition(int offset, boolean softWrapAware) {
     if (myUseNewRendering) return myView.offsetToLogicalPosition(offset);
     if (softWrapAware) {
@@ -3910,7 +3908,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return logicalPositionToOffset(pos, true);
   }
 
-  @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition pos, boolean softWrapAware) {
     if (myUseNewRendering) return myView.logicalPositionToOffset(pos);
     if (softWrapAware) {
@@ -3941,18 +3938,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return end;
   }
 
-  @Override
-  public void setLastColumnNumber(int val) {
-    assertIsDispatchThread();
-    myLastColumnNumber = val;
-  }
-
-  @Override
-  public int getLastColumnNumber() {
-    assertReadAccess();
-    return myLastColumnNumber;
-  }
-
   /**
    * @return information about total number of lines that can be viewed by user. I.e. this is a number of all document
    *         lines (considering that single logical document line may be represented on multiple visual lines because of
@@ -3975,7 +3960,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return logicalToVisualPosition(logicalPos, true);
   }
 
-  @Override
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
     if (myUseNewRendering) return myView.logicalToVisualPosition(logicalPos, false);
@@ -4119,7 +4103,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return visualToLogicalPosition(visiblePos, true);
   }
 
-  @Override
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos, boolean softWrapAware) {
     if (myUseNewRendering) return myView.visualToLogicalPosition(visiblePos);
