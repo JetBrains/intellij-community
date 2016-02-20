@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -115,7 +116,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   @NotNull
-  public JComponent createTextFilter() {
+  public SearchTextField createTextFilter() {
     final SearchTextFieldWithStoredHistory textFilter = new SearchTextFieldWithStoredHistory(VCS_LOG_TEXT_FILTER_HISTORY) {
       @Override
       protected void onFieldCleared() {
