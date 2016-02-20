@@ -6,6 +6,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLTokenTypes;
+import org.jetbrains.yaml.YAMLUtil;
+import org.jetbrains.yaml.lexer.YAMLGrammarCharUtil;
 import org.jetbrains.yaml.psi.YAMLQuotedText;
 
 import java.util.ArrayList;
@@ -36,7 +38,7 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
         lineStart++;
       }
       else {
-        while (lineStart < line.length() && Character.isWhitespace(line.charAt(lineStart))) {
+        while (lineStart < line.length() && YAMLGrammarCharUtil.isSpaceLike(line.charAt(lineStart))) {
           lineStart++;
         }
       }
@@ -45,7 +47,7 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
         lineEnd--;
       }
       else {
-        while (lineEnd > lineStart && Character.isWhitespace(line.charAt(lineEnd - 1))) {
+        while (lineEnd > lineStart && YAMLGrammarCharUtil.isSpaceLike(line.charAt(lineEnd - 1))) {
           lineEnd--;
         }
       }
@@ -92,16 +94,82 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
         result.add(Pair.create(textRange, "\""));
       }
       else {
+        //noinspection AssignmentToForLoopParameter
         i--;
       }
+      //noinspection AssignmentToForLoopParameter
       i++;
     }
     return result;
   }
 
   @Override
+  protected List<Pair<TextRange, String>> getEncodeReplacements(@NotNull CharSequence input) throws IllegalArgumentException {
+    // check for consistency
+    if (isSingleQuote()) {
+      for (int i = 0; i < input.length(); ++i) {
+        if (input.charAt(i) == '\n' && !isSurroundedByNoSpace(input, i)) {
+          throw new IllegalArgumentException("Newlines with spaces around are not convertible");
+        }
+      }
+    }
+    
+    final int indent = YAMLUtil.getIndentToThisElement(this);
+    final String indentString = StringUtil.repeatSymbol(' ', indent);
+    
+    final List<Pair<TextRange, String>> result = new ArrayList<>();
+    int currentLength = 0;
+    for (int i = 0; i < input.length(); ++i) {
+      if (input.charAt(i) == '\n') {
+        if (!isSingleQuote() && i + 1 < input.length() && YAMLGrammarCharUtil.isSpaceLike(input.charAt(i + 1))) {
+          result.add(Pair.create(TextRange.from(i, 1), "\\\n" + indentString + "\\"));
+        }
+        else {
+          result.add(Pair.create(TextRange.from(i, 1), "\n\n" + indentString));
+        }
+        currentLength = 0;
+        continue;
+      }
+
+
+      if (currentLength > MAX_SCALAR_LENGTH_PREDEFINED 
+          && (!isSingleQuote() || (input.charAt(i) == ' ' && isSurroundedByNoSpace(input, i)))) {
+        final String replacement;
+        if (isSingleQuote()) {
+          replacement = "\n" + indentString;
+        }
+        else if (YAMLGrammarCharUtil.isSpaceLike(input.charAt(i))) {
+          replacement = "\\\n" + indentString + "\\";
+        }
+        else {
+          replacement = "\\\n" + indentString;
+        }
+        result.add(Pair.create(TextRange.from(i, isSingleQuote() ? 1 : 0), replacement));
+        currentLength = 0;
+      }
+
+      currentLength++;
+      
+      if (isSingleQuote() && input.charAt(i) == '\'') {
+        result.add(Pair.create(TextRange.from(i, 1), "''"));
+        continue;
+      }
+      
+      if (!isSingleQuote()) {
+        if (input.charAt(i) == '"') {
+          result.add(Pair.create(TextRange.from(i, 1), "\\\""));
+        }
+        else if (input.charAt(i) == '\\') {
+          result.add(Pair.create(TextRange.from(i, 1), "\\\\"));
+        }
+      }
+    }
+    return result;
+  }
+
+  @Override
   public boolean isMultiline() {
-    return getText().contains("\n");
+    return textContains('\n');
   }
 
   public boolean isSingleQuote() {

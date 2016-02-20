@@ -93,6 +93,10 @@ public class YAMLScalarLiteralEscaperTest extends LightPlatformCodeInsightFixtur
   public void testDoubleQuote2() {
     doTest();
   }
+  
+  public void testDoubleQuote3() {
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(true) + ".yml");

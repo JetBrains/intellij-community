@@ -10,12 +10,15 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.yaml.lexer.YAMLGrammarCharUtil;
 import org.jetbrains.yaml.psi.YAMLScalar;
 
 import java.util.Collections;
 import java.util.List;
 
 public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar {
+  protected static final int MAX_SCALAR_LENGTH_PREDEFINED = 60;
+  
   public YAMLScalarImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -30,8 +33,8 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
     return Collections.emptyList();
   }
   
-  protected List<Pair<TextRange, String>> getEncodeReplacements(@NotNull CharSequence input) {
-    return Collections.emptyList();
+  protected List<Pair<TextRange, String>> getEncodeReplacements(@NotNull CharSequence input) throws IllegalArgumentException {
+    throw new IllegalArgumentException("Not implemented");
   }
 
   @NotNull
@@ -86,8 +89,8 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
     return new MyLiteralTextEscaper(this);
   }
   
-  @NotNull
-  private static String processReplacements(@NotNull CharSequence input, 
+  @NotNull 
+  static String processReplacements(@NotNull CharSequence input, 
                                             @NotNull List<Pair<TextRange, String>> replacements) throws IndexOutOfBoundsException {
     StringBuilder result = new StringBuilder();
     int currentOffset = 0;
@@ -98,6 +101,11 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
     }
     result.append(input.subSequence(currentOffset, input.length()));
     return result.toString();
+  }
+
+  protected static boolean isSurroundedByNoSpace(CharSequence text, int pos) {
+    return (pos - 1 < 0 || !YAMLGrammarCharUtil.isSpaceLike(text.charAt(pos - 1)))
+           && (pos + 1 >= text.length() || !YAMLGrammarCharUtil.isSpaceLike(text.charAt(pos + 1)));
   }
 
   private static class MyLiteralTextEscaper extends LiteralTextEscaper<YAMLScalarImpl> {
