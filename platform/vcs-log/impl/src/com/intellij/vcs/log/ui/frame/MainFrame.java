@@ -320,6 +320,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return myToolbar;
   }
 
+  @NotNull
+  public SearchTextField getTextFilter() {
+    return myTextFilter;
+  }
+
   public boolean areGraphActionsEnabled() {
     return myGraphTable.getRowCount() > 0;
   }
@@ -402,5 +407,4 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return Arrays.<Component>asList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent(), myTextFilter.getTextEditor());
     }
   }
-
 }

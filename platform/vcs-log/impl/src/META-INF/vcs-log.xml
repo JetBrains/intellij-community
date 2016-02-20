@@ -46,6 +46,9 @@
     <action class="com.intellij.vcs.log.ui.actions.ShowDetailsAction" id="Vcs.Log.ShowDetailsAction"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowBranchesPanelAction" id="Vcs.Log.ShowBranchesPanelAction"/>
+    <action class="com.intellij.vcs.log.ui.actions.FocusTextFilterAction" id="Vcs.Log.FocusTextFilter">
+      <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
+    </action>
     <group class="com.intellij.vcs.log.ui.actions.HighlightersActionGroup" id="Vcs.Log.HighlightersActionGroup"/>
     <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction" id="Vcs.Log.OpenAnotherTab"/>
     <action class="com.intellij.vcs.log.ui.actions.CloseLogTabAction" id="Vcs.Log.CloseLogTabAction"/>
@@ -77,6 +80,7 @@
       <reference ref="Vcs.Log.CreatePatch"/>
       <separator/>
       <reference ref="Vcs.Log.GoToRef"/>
+      <reference ref="Vcs.Log.FocusTextFilter"/>
       <separator/>
       <reference ref="Vcs.Log.IntelliSortChooser"/>
       <reference ref="Vcs.Log.CollapseAll"/>
