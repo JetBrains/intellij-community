@@ -1869,8 +1869,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       final String expected2 = "import static java.lang.Math.abs;class X { void m(java.util.Random r) { abs(r.nextInt()); }}";
       assertEquals("don't add broken static imports", expected2, replacer.testReplace(in2, what, by, options, true));
 
-      final String by2 = "new java.util.AbstractMap.SimpleEntry(\"\", \"\")";
-      final String expected3 = "import static java.util.AbstractMap.SimpleEntry;class X {{ new SimpleEntry(\"\", \"\"); }}";
+      final String by2 = "new java.util.Map.Entry() {}";
+      final String expected3 = "import static java.util.Map.Entry;class X {{ new Entry() {}; }}";
       assertEquals("", expected3, replacer.testReplace(in, what, by2, options, true));
 
       final String in3 = "import java.util.Collections;" +
@@ -1889,6 +1889,24 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                                "  }" +
                                "}";
       assertEquals("don't break references with type parameters", expected4, replacer.testReplace(in3, what3, by3, options, true));
+
+      final String in4 = "import java.util.Collections;\n" +
+                         "public class X {\n" +
+                         "    void some() {\n" +
+                         "        System.out.println(1);\n" +
+                         "        boolean b = Collections.eq(null, null);\n" +
+                         "    }\n" +
+                         "}";
+      final String what4 = "System.out.println(1);";
+      final String by4 = "System.out.println(2);";
+      final String expected5 = "import java.util.Collections;import static java.lang.System.out;\n" +
+                               "public class X {\n" +
+                               "    void some() {\n" +
+                               "        out.println(2);\n" +
+                               "        boolean b = Collections.eq(null, null);\n" +
+                               "    }\n" +
+                               "}";
+      assertEquals("don't add static import to inaccessible members", expected5, replacer.testReplace(in4, what4, by4, options, true));
     } finally {
       options.setToUseStaticImport(save);
     }
