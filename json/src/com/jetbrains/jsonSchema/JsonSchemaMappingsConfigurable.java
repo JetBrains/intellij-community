@@ -105,7 +105,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     if (file != null) {
       final String relativePath = VfsUtil.getRelativePath(file, myProject.getBaseDir());
       if (relativePath == null) {
-        Messages.showErrorDialog(myProject, "Please select file under project root or import schema.", ADD_PROJECT_SCHEMA);
+        Messages.showErrorDialog(myProject, "Please select file under project root.", ADD_PROJECT_SCHEMA);
         return;
       }
       final JsonSchemaChecker importer = new JsonSchemaChecker(file, true);
