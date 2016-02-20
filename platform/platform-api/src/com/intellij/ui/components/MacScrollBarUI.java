@@ -40,7 +40,7 @@ import static com.intellij.ui.mac.foundation.Foundation.*;
 /**
  * @author Sergey.Malenkov
  */
-final class MacScrollBarUI extends AbstractScrollBarUI {
+final class MacScrollBarUI extends DefaultScrollBarUI {
   private static final RegistryValue DISABLED = Registry.get("ide.mac.disableMacScrollbars");
   private static final List<MacScrollBarUI> UI = Collections.synchronizedList(new ArrayList<MacScrollBarUI>());
   private final Alarm myAlarm = new Alarm();

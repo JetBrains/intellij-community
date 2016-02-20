@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -318,12 +318,8 @@ public class JBScrollPane extends JScrollPane {
     @Override
     public void updateUI() {
       ScrollBarUI ui = getUI();
-      if (ui instanceof AbstractScrollBarUI) return;
-      setUI(!SystemInfo.isMac && Registry.is("ide.scroll.new.layout")
-            ? new DefaultScrollBarUI()
-            : SystemInfo.isMac && Registry.is("mac.scroll.new.ui")
-              ? new MacScrollBarUI()
-              : ButtonlessScrollBarUI.createNormal());
+      if (ui instanceof DefaultScrollBarUI) return;
+      setUI(DefaultScrollBarUI.createUI(this));
     }
 
     @Override
