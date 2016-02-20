@@ -135,7 +135,7 @@ public class AlignmentImpl extends Alignment {
    *
    * @param block   wrapped block to register within the current alignment object
    */
-  void setOffsetRespBlock(final LeafBlockWrapper block) {
+  public void setOffsetRespBlock(final LeafBlockWrapper block) {
     if (block == null) {
       return;
     }
