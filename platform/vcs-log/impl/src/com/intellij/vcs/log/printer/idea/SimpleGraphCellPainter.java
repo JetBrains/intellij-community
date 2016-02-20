@@ -35,11 +35,10 @@ import java.util.List;
  * @author erokhins
  */
 public class SimpleGraphCellPainter implements GraphCellPainter {
-
   private static final Color MARK_COLOR = JBColor.BLACK;
   private static final double ARROW_ANGLE_COS2 = 0.7;
   private static final double ARROW_LENGTH = 0.3;
-  private Graphics2D g2;
+
   @NotNull private final ColorGenerator myColorGenerator;
 
   public SimpleGraphCellPainter(@NotNull ColorGenerator colorGenerator) {
@@ -82,7 +81,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
                            dash[0] / 2);
   }
 
-  private void paintUpLine(int from, int to, @NotNull Color color, boolean hasArrow, boolean isUsual, boolean isSelected, boolean isTerminal) {
+  private void paintUpLine(@NotNull Graphics2D g2, int from, int to, @NotNull Color color, boolean hasArrow, boolean isUsual, boolean isSelected, boolean isTerminal) {
     // paint vertical lines normal size
     // paint non-vertical lines twice the size to make them dock with each other well
     int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
@@ -90,7 +89,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
       int x = nodeWidth * from + nodeWidth / 2;
       int y1 = getRowHeight() / 2 - 1;
       int y2 = isTerminal ? PrintParameters.getCircleRadius(getRowHeight()) / 2 + 1 : 0;
-      paintLine(color, hasArrow, x, y1, x, y2, x, y2, isUsual, isSelected);
+      paintLine(g2, color, hasArrow, x, y1, x, y2, x, y2, isUsual, isSelected);
     }
     else {
       assert !isTerminal;
@@ -98,17 +97,17 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
       int y1 = getRowHeight() / 2;
       int x2 = nodeWidth * to + nodeWidth / 2;
       int y2 = -getRowHeight() / 2;
-      paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2, isUsual, isSelected);
+      paintLine(g2, color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2, isUsual, isSelected);
     }
   }
 
-  private void paintDownLine(int from, int to, @NotNull Color color, boolean hasArrow, boolean isUsual, boolean isSelected, boolean isTerminal) {
+  private void paintDownLine(@NotNull Graphics2D g2, int from, int to, @NotNull Color color, boolean hasArrow, boolean isUsual, boolean isSelected, boolean isTerminal) {
     int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
     if (from == to) {
       int y2 = getRowHeight() - 1 - (isTerminal ? PrintParameters.getCircleRadius(getRowHeight()) / 2 + 1 : 0);
       int y1 = getRowHeight() / 2;
       int x = nodeWidth * from + nodeWidth / 2;
-      paintLine(color, hasArrow, x, y1, x, y2, x, y2, isUsual, isSelected);
+      paintLine(g2, color, hasArrow, x, y1, x, y2, x, y2, isUsual, isSelected);
     }
     else {
       assert !isTerminal;
@@ -116,11 +115,12 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
       int y1 = getRowHeight() / 2;
       int x2 = nodeWidth * to + nodeWidth / 2;
       int y2 = getRowHeight() + getRowHeight() / 2;
-      paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2, isUsual, isSelected);
+      paintLine(g2, color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2, isUsual, isSelected);
     }
   }
 
-  private void paintLine(@NotNull Color color,
+  private void paintLine(@NotNull Graphics2D g2,
+                         @NotNull Color color,
                          boolean hasArrow,
                          int x1,
                          int y1,
@@ -133,7 +133,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     g2.setColor(color);
 
     int length = (x1 == x2) ? getRowHeight() : (int)Math.ceil(Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)));
-    setStroke(isUsual || hasArrow, isSelected, length);
+    setStroke(g2, isUsual || hasArrow, isSelected, length);
 
     g2.drawLine(x1, y1, x2, y2);
     if (hasArrow) {
@@ -161,7 +161,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     return Pair.create((int)Math.round(rotateX + centerX), (int)Math.round(rotateY + centerY));
   }
 
-  private void paintCircle(int position, @NotNull Color color, boolean select) {
+  private void paintCircle(@NotNull Graphics2D g2, int position, @NotNull Color color, boolean select) {
     int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
     int circleRadius = PrintParameters.getCircleRadius(getRowHeight());
     int selectedCircleRadius = PrintParameters.getSelectedCircleRadius(getRowHeight());
@@ -177,7 +177,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     g2.fill(circle);
   }
 
-  private void setStroke(boolean usual, boolean select, int edgeLength) {
+  private void setStroke(@NotNull Graphics2D g2, boolean usual, boolean select, int edgeLength) {
     if (usual) {
       if (select) {
         g2.setStroke(getSelectedStroke());
@@ -209,12 +209,11 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
   @Override
   public void draw(@NotNull Graphics2D g2, @NotNull Collection<? extends PrintElement> printElements) {
-    this.g2 = g2;
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
     for (PrintElement printElement : printElements) {
       if (!printElement.isSelected()) {
-        drawElement(printElement, false);
+        drawElement(g2, printElement, false);
       }
     }
 
@@ -225,46 +224,46 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
       }
     });
     for (PrintElement printElement : selected) {
-      drawElement(printElement, true);
+      drawElement(g2, printElement, true);
     }
 
     for (PrintElement printElement : selected) {
-      drawElement(printElement, false);
+      drawElement(g2, printElement, false);
     }
   }
 
-  protected void drawElement(@NotNull PrintElement printElement, boolean isSelected) {
+  protected void drawElement(@NotNull Graphics2D g2, @NotNull PrintElement printElement, boolean isSelected) {
     if (printElement instanceof EdgePrintElement) {
       if (isSelected) {
-        printEdge(MARK_COLOR, true, (EdgePrintElement)printElement);
+        printEdge(g2, MARK_COLOR, true, (EdgePrintElement)printElement);
       }
       else {
-        printEdge(getColor(printElement), false, (EdgePrintElement)printElement);
+        printEdge(g2, getColor(printElement), false, (EdgePrintElement)printElement);
       }
     }
 
     if (printElement instanceof NodePrintElement) {
       int position = printElement.getPositionInCurrentRow();
       if (isSelected) {
-        paintCircle(position, MARK_COLOR, true);
+        paintCircle(g2, position, MARK_COLOR, true);
       }
       else {
-        paintCircle(position, getColor(printElement), false);
+        paintCircle(g2, position, getColor(printElement), false);
       }
     }
   }
 
-  private void printEdge(@NotNull Color color, boolean isSelected, @NotNull EdgePrintElement edgePrintElement) {
+  private void printEdge(@NotNull Graphics2D g2, @NotNull Color color, boolean isSelected, @NotNull EdgePrintElement edgePrintElement) {
     int from = edgePrintElement.getPositionInCurrentRow();
     int to = edgePrintElement.getPositionInOtherRow();
     boolean isUsual = isUsual(edgePrintElement);
 
     if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-      paintDownLine(from, to, color, edgePrintElement.hasArrow(), isUsual, isSelected,
+      paintDownLine(g2, from, to, color, edgePrintElement.hasArrow(), isUsual, isSelected,
                     edgePrintElement instanceof TerminalEdgePrintElement);
     }
     else {
-      paintUpLine(from, to, color, edgePrintElement.hasArrow(), isUsual, isSelected, edgePrintElement instanceof TerminalEdgePrintElement);
+      paintUpLine(g2, from, to, color, edgePrintElement.hasArrow(), isUsual, isSelected, edgePrintElement instanceof TerminalEdgePrintElement);
     }
   }
 
