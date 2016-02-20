@@ -292,7 +292,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
   @Nullable
   @Override
-  public PrintElement mouseOver(@NotNull Collection<? extends PrintElement> printElements, int x, int y) {
+  public PrintElement getElementUnderCursor(@NotNull Collection<? extends PrintElement> printElements, int x, int y) {
     int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
     for (PrintElement printElement : printElements) {
       if (printElement instanceof NodePrintElement) {

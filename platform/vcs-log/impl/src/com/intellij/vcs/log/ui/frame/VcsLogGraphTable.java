@@ -560,7 +560,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       }
       Point point = calcPoint4Graph(e.getPoint());
       Collection<? extends PrintElement> printElements = getVisibleGraph().getRowInfo(row).getPrintElements();
-      PrintElement printElement = myGraphCellPainter.mouseOver(printElements, point.x, point.y);
+      PrintElement printElement = myGraphCellPainter.getElementUnderCursor(printElements, point.x, point.y);
 
       Selection previousSelection = getSelection();
       GraphAnswer<Integer> answer =
@@ -735,7 +735,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       }
       Point point = calcPoint4Graph(e.getPoint());
       Collection<? extends PrintElement> printElements = getVisibleGraph().getRowInfo(row).getPrintElements();
-      PrintElement printElement = myGraphCellPainter.mouseOver(printElements, point.x, point.y);
+      PrintElement printElement = myGraphCellPainter.getElementUnderCursor(printElements, point.x, point.y);
       return printElement == null;
     }
 

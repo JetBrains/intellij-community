@@ -30,7 +30,7 @@ public interface GraphCellPainter {
   void draw(@NotNull Graphics2D g2, @NotNull Collection<? extends PrintElement> printElements);
 
   @Nullable
-  PrintElement mouseOver(@NotNull Collection<? extends PrintElement> printElements, int x, int y);
+  PrintElement getElementUnderCursor(@NotNull Collection<? extends PrintElement> printElements, int x, int y);
 
 }
 
