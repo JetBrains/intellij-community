@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullComputable;
@@ -38,6 +39,7 @@ import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,6 +144,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
         }
       }
     });
+    textFilter.getTextEditor().setToolTipText("Use " + KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.VCS_LOG_FOCUS_TEXT_FILTER) + " to switch between text filter and commits list");
     return textFilter;
   }
 
