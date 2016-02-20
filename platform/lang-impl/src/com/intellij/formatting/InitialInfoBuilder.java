@@ -122,8 +122,12 @@ public class InitialInfoBuilder {
     }
     return minOffset;
   }
+  
+  public FormattingDocumentModel getFormattingDocumentModel() {
+    return myModel;
+  }
 
-  int getEndOffset() {
+  public int getEndOffset() {
     int maxDocOffset = myModel.getTextLength();
     int maxOffset = myRootBlockWrapper != null ? myRootBlockWrapper.getEndOffset() : 0;
     if (myAffectedRanges != null) {

@@ -17,70 +17,37 @@
 package com.intellij.formatting;
 
 import com.intellij.formatting.engine.*;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static com.intellij.formatting.InitialInfoBuilder.prepareToBuildBlocksSequentially;
 
 public class FormatProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatProcessor");
-  private Set<Alignment> myAlignmentsInsideRangesToModify = null;
+  
+  private final WrapBlocksState myWrapState;
+  
   private boolean myReformatContext;
-
-  private Map<AbstractBlockWrapper, Block> myInfos;
-  private CompositeBlockWrapper myRootBlockWrapper;
-
   
-  private DependentSpacingEngine myDependentSpacingEngine;
-  private Ref<DependentSpacingEngine> myDependentSpacingRef = Ref.create();
-  private AlignmentHelper myAlignmentHelper;
-  
-  private IndentAdjuster myIndentAdjuster;
-  
-
   private final BlockIndentOptions myBlockIndentOptions;
   private final CommonCodeStyleSettings.IndentOptions myDefaultIndentOption;
   private final CodeStyleSettings mySettings;
   private final Document myDocument;
   
-  private BlockMapperHelper myBlockMapperHelper;
-  
-  private LeafBlockWrapper myFirstTokenBlock;
-  private Ref<LeafBlockWrapper> myFirstTokenBlockRef = Ref.create(); 
-  private LeafBlockWrapper myLastTokenBlock;
-
   
   @NotNull
   private final FormattingProgressCallback myProgressCallback;
 
-  private WhiteSpace                      myLastWhiteSpace;
   private boolean                         myDisposed;
-  private final int myRightMargin;
 
   @NotNull
   private StateProcessor myStateProcessor;
-  private Ref<MultiMap<ExpandableIndent, AbstractBlockWrapper>> myExpandableIndentsRef = Ref.create();
-  
-  private WrapProcessor myWrapProcessor;
-  
-  private Ref<IndentAdjuster> myIndentAdjusterRef = Ref.create();
-  private Ref<BlockMapperHelper> myBlockMapperHelperRef = Ref.create();
-  private Ref<WrapProcessor> myWrapProcessorRef = Ref.create();
-  private Ref<Set<Alignment>> myAlignmentsInsideRangesToModifyRef = Ref.create();
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
@@ -100,102 +67,29 @@ public class FormatProcessor {
     myProgressCallback = callback;
     myDefaultIndentOption = options.myIndentOptions;
     mySettings = options.mySettings;
-    myBlockIndentOptions = new BlockIndentOptions(mySettings, myDefaultIndentOption);
+    myBlockIndentOptions = new BlockIndentOptions(mySettings, myDefaultIndentOption, block);
     myDocument = model.getDocument();
     myReformatContext = options.myReformatContext;
-    myRightMargin = getRightMargin(block);
     
     final InitialInfoBuilder builder = prepareToBuildBlocksSequentially(block, model, options, mySettings, myDefaultIndentOption, myProgressCallback);
-    final WrapBlocksState wrapState = new WrapBlocksState(builder);
-    wrapState.setOnDone(new Runnable() {
-      @Override
-      public void run() {
-        myInfos = builder.getBlockToInfoMap();
-        myRootBlockWrapper = builder.getRootBlockWrapper();
-        myFirstTokenBlock = builder.getFirstTokenBlock();
-        myFirstTokenBlockRef.set(myFirstTokenBlock);
-        myLastTokenBlock = builder.getLastTokenBlock();
-        
-        int lastBlockOffset = myLastTokenBlock.getEndOffset();
-        myLastWhiteSpace = new WhiteSpace(lastBlockOffset, false);
-        myLastWhiteSpace.append(Math.max(lastBlockOffset, builder.getEndOffset()), model, myDefaultIndentOption);
-        
-        myBlockMapperHelper = new BlockMapperHelper(myFirstTokenBlock, myLastTokenBlock);
-        myBlockMapperHelperRef.set(myBlockMapperHelper);
-        
-        myDependentSpacingEngine = new DependentSpacingEngine(myBlockMapperHelper);
-        myDependentSpacingRef.set(myDependentSpacingEngine);
-        
-        myAlignmentsInsideRangesToModify = builder.getAlignmentsInsideRangeToModify();
-        myAlignmentsInsideRangesToModifyRef.set(myAlignmentsInsideRangesToModify);
-        
-        myAlignmentHelper = new AlignmentHelper(myDocument, builder.getBlocksToAlign(), myBlockIndentOptions);
-        
-        myIndentAdjuster = new IndentAdjuster(myBlockIndentOptions, myAlignmentHelper);
-        myIndentAdjusterRef.set(myIndentAdjuster);
-        
-        myExpandableIndentsRef.set(builder.getExpandableIndentsBlocks());
-        
-        myWrapProcessor = new WrapProcessor(myBlockMapperHelper, myIndentAdjuster, myRightMargin);
-        myWrapProcessorRef.set(myWrapProcessor);
-      } 
-    });
-    myStateProcessor = new StateProcessor(wrapState);
+    myWrapState = new WrapBlocksState(builder, myBlockIndentOptions);
+    
+    myStateProcessor = new StateProcessor(myWrapState);
   }
   
   public BlockMapperHelper getBlockMapperHelper() {
-    return myBlockMapperHelper;
-  }
-
-  private int getRightMargin(Block rootBlock) {
-    Language language = null;
-    if (rootBlock instanceof ASTBlock) {
-      ASTNode node = ((ASTBlock)rootBlock).getNode();
-      if (node != null) {
-        PsiElement psiElement = node.getPsi();
-        if (psiElement.isValid()) {
-          PsiFile psiFile = psiElement.getContainingFile();
-          if (psiFile != null) {
-            language = psiFile.getViewProvider().getBaseLanguage();
-          }
-        }
-      }
-    }
-    return mySettings.getRightMargin(language);
+    return myWrapState.getBlockMapperHelper();
   }
 
   public void format(FormattingModel model) {
     format(model, false);
   }
 
-  /**
-   * Asks current processor to perform formatting.
-   * <p/>
-   * There are two processing approaches at the moment:
-   * <pre>
-   * <ul>
-   *   <li>perform formatting during the current method call;</li>
-   *   <li>
-   *     split the whole formatting process to the set of fine-grained tasks and execute them sequentially during
-   *     subsequent {@link #iteration()} calls;
-   *   </li>
-   * </ul>
-   * </pre>
-   * <p/>
-   * Here is rationale for the second approach - formatting may introduce changes to the underlying document and IntelliJ IDEA
-   * is designed in a way that write access is allowed from EDT only. That means that every time we execute particular action
-   * from EDT we have no chance of performing any other actions from EDT simultaneously (e.g. we may want to show progress bar
-   * that reflects current formatting state but the progress bar can' bet updated if formatting is performed during a single long
-   * method call). So, we can interleave formatting iterations with GUI state updates.
-   *
-   * @param model         target formatting model
-   * @param sequentially  flag that indicates what kind of processing should be used
-   */
   public void format(FormattingModel model, boolean sequentially) {
     if (sequentially) {
-      myStateProcessor.setNextState(createAdjustWhiteSpaceState());
-      myStateProcessor.setNextState(new ExpandChildrenIndent(myDocument, myIndentAdjusterRef, myExpandableIndentsRef));
-      myStateProcessor.setNextState(new ApplyChangesState(myFirstTokenBlockRef, model, myBlockIndentOptions, myProgressCallback));
+      myStateProcessor.setNextState(new AdjustWhiteSpacesState(myWrapState, myProgressCallback, myReformatContext));
+      myStateProcessor.setNextState(new ExpandChildrenIndent(myDocument, myWrapState));
+      myStateProcessor.setNextState(new ApplyChangesState(model, myWrapState, myProgressCallback, myBlockIndentOptions));
     }
     else {
       formatWithoutRealModifications(false);
@@ -203,24 +97,6 @@ public class FormatProcessor {
     }
   }
 
-  @NotNull
-  private AdjustWhiteSpacesState createAdjustWhiteSpaceState() {
-    return new AdjustWhiteSpacesState(myFirstTokenBlockRef,
-                                      myDependentSpacingRef,
-                                      myWrapProcessorRef,
-                                      myIndentAdjusterRef,
-                                      myBlockMapperHelperRef,
-                                      myAlignmentsInsideRangesToModifyRef,
-                                      myReformatContext,
-                                      myProgressCallback);
-  }
-
-  /**
-   * Asks current processor to perform processing iteration
-   *
-   * @return    <code>true</code> if the processing is finished; <code>false</code> otherwise
-   * @see #format(FormattingModel, boolean)
-   */
   public boolean iteration() {
     if (myStateProcessor.isDone()) {
       return true;
@@ -242,21 +118,12 @@ public class FormatProcessor {
 
   @SuppressWarnings({"WhileLoopSpinsOnField"})
   public void formatWithoutRealModifications(boolean sequentially) {
-    myStateProcessor.setNextState(createAdjustWhiteSpaceState());
-    myStateProcessor.setNextState(new ExpandChildrenIndent(myDocument, myIndentAdjusterRef, myExpandableIndentsRef));
+    myStateProcessor.setNextState(new AdjustWhiteSpacesState(myWrapState, myProgressCallback, myReformatContext));
+    myStateProcessor.setNextState(new ExpandChildrenIndent(myDocument, myWrapState));
     if (sequentially) {
       return;
     }
     doIterationsSynchronously();
-  }
-
-  private void reset() {
-    myAlignmentHelper.reset();
-    myDependentSpacingEngine.clear();
-    myWrapProcessor.reset();
-    if (myRootBlockWrapper != null) {
-      myRootBlockWrapper.reset();
-    }
   }
 
   public void performModifications(FormattingModel model) {
@@ -264,8 +131,7 @@ public class FormatProcessor {
   }
 
   public void performModifications(FormattingModel model, boolean sequentially) {
-    assert !myDisposed;
-    myStateProcessor.setNextState(new ApplyChangesState(myFirstTokenBlockRef, model, myBlockIndentOptions, myProgressCallback));
+    myStateProcessor.setNextState(new ApplyChangesState(model, myWrapState, myProgressCallback, myBlockIndentOptions));
 
     if (sequentially) {
       return;
@@ -281,7 +147,7 @@ public class FormatProcessor {
   }
 
   public void setAllWhiteSpacesAreReadOnly() {
-    LeafBlockWrapper current = myFirstTokenBlock;
+    LeafBlockWrapper current = myWrapState.getFirstBlock();
     while (current != null) {
       current.getWhiteSpace().setReadOnly(true);
       current = current.getNextBlock();
@@ -309,7 +175,7 @@ public class FormatProcessor {
       if (parent == null) return new IndentInfo(0, 0, 0);
     }
     int index = getNewChildPosition(parent, offset);
-    final Block block = myInfos.get(parent);
+    final Block block = myWrapState.getBlockToInfoMap().get(parent);
 
     if (block == null) {
       return new IndentInfo(0, 0, 0);
@@ -320,7 +186,8 @@ public class FormatProcessor {
       return new IndentInfo(0, 0, 0);
     }
 
-    return myIndentAdjuster.adjustLineIndent(current, info);
+    IndentAdjuster adjuster = myWrapState.getIndentAdjuster();
+    return adjuster.adjustLineIndent(current, info);
   }
 
   @Nullable
@@ -409,8 +276,9 @@ public class FormatProcessor {
   @Nullable
   private AbstractBlockWrapper getPreviousIncompleteBlock(final LeafBlockWrapper block, final int offset) {
     if (block == null) {
-      if (myLastTokenBlock.isIncomplete()) {
-        return myLastTokenBlock;
+      LeafBlockWrapper lastTokenBlock = myWrapState.getLastBlock();
+      if (lastTokenBlock.isIncomplete()) {
+        return lastTokenBlock;
       }
       else {
         return null;
@@ -497,7 +365,8 @@ public class FormatProcessor {
   }
   
   private LeafBlockWrapper processBlocksBefore(final int offset) {
-    AdjustWhiteSpacesState state = new AdjustWhiteSpacesState(myFirstTokenBlock, myDependentSpacingEngine, myWrapProcessor, myIndentAdjuster, myBlockMapperHelper, myAlignmentsInsideRangesToModify, myReformatContext, myProgressCallback);
+    AdjustWhiteSpacesState state = new AdjustWhiteSpacesState(myWrapState, myProgressCallback, myReformatContext);
+    state.prepare();
     
     LeafBlockWrapper last = null;
     while (!state.isDone() && state.getCurrentBlock().getStartOffset() < offset) {
@@ -509,11 +378,11 @@ public class FormatProcessor {
   }
 
   public LeafBlockWrapper getFirstTokenBlock() {
-    return myFirstTokenBlock;
+    return myWrapState.getFirstBlock();
   }
 
   public WhiteSpace getLastWhiteSpace() {
-    return myLastWhiteSpace;
+    return myWrapState.getLastWhiteSpace();
   }
   
   public static class FormatOptions {

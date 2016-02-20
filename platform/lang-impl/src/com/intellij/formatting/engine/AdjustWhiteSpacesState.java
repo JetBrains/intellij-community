@@ -17,7 +17,6 @@ package com.intellij.formatting.engine;
 
 import com.intellij.formatting.*;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -28,17 +27,12 @@ import java.util.Set;
 public class AdjustWhiteSpacesState extends State {
 
   private final FormattingProgressCallback myProgressCallback;
+  
+  private WrapBlocksState myWrapBlocksState;
 
-  private Ref<LeafBlockWrapper> myFirstBlockRef;
-  private Ref<WrapProcessor> myWrapProcessorRef;
-  private Ref<IndentAdjuster> myIndentAdjusterRef;
-  private Ref<BlockMapperHelper> myBlockMapperHelperRef;
-  private Ref<Set<Alignment>> myAlignmentsInsideRangesToModifyRef;
 
   private LeafBlockWrapper myCurrentBlock;
-
-  private Ref<DependentSpacingEngine> myDependentSpacingEngineRef;
-
+  
   private DependentSpacingEngine myDependentSpacingEngine;
   private WrapProcessor myWrapProcessor;
   private BlockMapperHelper myBlockMapperHelper;
@@ -49,24 +43,27 @@ public class AdjustWhiteSpacesState extends State {
   private Set<Alignment> myAlignmentsInsideRangesToModify = null;
 
   private final HashSet<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
+  private LeafBlockWrapper myFirstBlock;
 
-
-  public AdjustWhiteSpacesState(Ref<LeafBlockWrapper> firstBlockRef,
-                                Ref<DependentSpacingEngine> dependentSpacingEngineRef,
-                                Ref<WrapProcessor> wrapProcessorRef,
-                                Ref<IndentAdjuster> indentAdjusterRef,
-                                Ref<BlockMapperHelper> blockMapperHelperRef,
-                                Ref<Set<Alignment>> alignmentsInsideRanges,
-                                boolean isReformatContext,
-                                FormattingProgressCallback progressCallback) {
-    myFirstBlockRef = firstBlockRef;
-    myDependentSpacingEngineRef = dependentSpacingEngineRef;
-    myWrapProcessorRef = wrapProcessorRef;
+  public AdjustWhiteSpacesState(WrapBlocksState state, 
+                                FormattingProgressCallback progressCallback,
+                                boolean isReformatContext) {
+    myWrapBlocksState = state;
     myProgressCallback = progressCallback;
-    myIndentAdjusterRef = indentAdjusterRef;
-    myBlockMapperHelperRef = blockMapperHelperRef;
     myReformatContext = isReformatContext;
-    myAlignmentsInsideRangesToModifyRef = alignmentsInsideRanges;
+  }
+
+  @Override
+  public void prepare() {
+    if (myWrapBlocksState != null) {
+      myFirstBlock = myWrapBlocksState.getFirstBlock();
+      myCurrentBlock = myFirstBlock;
+      myDependentSpacingEngine = myWrapBlocksState.getDependentSpacingEngine();
+      myWrapProcessor = myWrapBlocksState.getWrapProcessor();
+      myIndentAdjuster = myWrapBlocksState.getIndentAdjuster();
+      myBlockMapperHelper = myWrapBlocksState.getBlockMapperHelper();
+      myAlignmentsInsideRangesToModify = myWrapBlocksState.getAlignmentsInsideRangesToModify();
+    }
   }
 
   public AdjustWhiteSpacesState(LeafBlockWrapper firstBlock,
@@ -78,6 +75,7 @@ public class AdjustWhiteSpacesState extends State {
                                 boolean isReformatContext,
                                 FormattingProgressCallback progressCallback) 
   {
+    myWrapBlocksState = null;
     myCurrentBlock = firstBlock;
     myDependentSpacingEngine = dependentSpacingEngine;
     myWrapProcessor = wrapProcessor;
@@ -94,16 +92,6 @@ public class AdjustWhiteSpacesState extends State {
 
   @Override
   public void doIteration() {
-    if (myDependentSpacingEngine == null) {
-      myDependentSpacingEngine = myDependentSpacingEngineRef.get();
-      myCurrentBlock = myFirstBlockRef.get();
-      myWrapProcessor = myWrapProcessorRef.get();
-      myIndentAdjuster = myIndentAdjusterRef.get();
-      myWrapProcessor = myWrapProcessorRef.get();
-      myBlockMapperHelper = myBlockMapperHelperRef.get();
-      myAlignmentsInsideRangesToModify = myAlignmentsInsideRangesToModifyRef.get();
-    }
-
     LeafBlockWrapper blockToProcess = myCurrentBlock;
     processToken();
     if (blockToProcess != null) {
@@ -120,7 +108,7 @@ public class AdjustWhiteSpacesState extends State {
     else {
       myAlignAgain.clear();
       myDependentSpacingEngine.clear();
-      myCurrentBlock = myFirstBlockRef.get();
+      myCurrentBlock = myFirstBlock;
     }
   }
 

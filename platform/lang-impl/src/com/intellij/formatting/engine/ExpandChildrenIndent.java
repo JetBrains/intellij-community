@@ -17,7 +17,6 @@ package com.intellij.formatting.engine;
 
 import com.intellij.formatting.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,32 +26,29 @@ import java.util.List;
 import java.util.Set;
 
 public class ExpandChildrenIndent extends State {
-  private final Ref<MultiMap<ExpandableIndent, AbstractBlockWrapper>> myExpandableIndentsRef;
-  private final Ref<IndentAdjuster> myIndentAdjusterRef;
-
   private final Document myDocument;
+  private final WrapBlocksState myWrapState;
   private IndentAdjuster myIndentAdjuster;
   private MultiMap<ExpandableIndent, AbstractBlockWrapper> myExpandableIndents;
   private LeafBlockWrapper myCurrentBlock;
 
-  public ExpandChildrenIndent(Document document,
-                              Ref<IndentAdjuster> indentAdjuster,
-                              Ref<MultiMap<ExpandableIndent, AbstractBlockWrapper>> expandableIndentsRef) {
-    myExpandableIndentsRef = expandableIndentsRef;
-    myIndentAdjusterRef = indentAdjuster;
-    myDocument = document;
-  }
-
   private Iterator<ExpandableIndent> myIterator;
   private MultiMap<Alignment, LeafBlockWrapper> myBlocksToRealign = new MultiMap<Alignment, LeafBlockWrapper>();
 
+  public ExpandChildrenIndent(Document document, WrapBlocksState state) {
+    myDocument = document;
+    myWrapState = state;
+  }
+
+  @Override
+  public void prepare() {
+    myExpandableIndents = myWrapState.getExpandableIndent();
+    myIndentAdjuster = myWrapState.getIndentAdjuster();
+    myIterator = myExpandableIndents.keySet().iterator();
+  }
+
   @Override
   protected void doIteration() {
-    if (myIterator == null) {
-      myExpandableIndents = myExpandableIndentsRef.get();
-      myIndentAdjuster = myIndentAdjusterRef.get();
-      myIterator = myExpandableIndents.keySet().iterator();
-    }
     if (!myIterator.hasNext()) {
       setDone(true);
       return;

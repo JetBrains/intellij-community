@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.BulkChangesMerger;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,9 +40,9 @@ public class ApplyChangesState extends State {
 
 
   private final FormattingModel myModel;
-
-  private final Ref<LeafBlockWrapper> myFirstTokenBlock;
+  
   private final FormattingProgressCallback myProgressCallback;
+  private final WrapBlocksState myWrapState;
 
   private List<LeafBlockWrapper> myBlocksToModify;
   private int myShift;
@@ -52,16 +51,13 @@ public class ApplyChangesState extends State {
 
   private BlockIndentOptions myBlockIndentOptions;
 
-  public ApplyChangesState(Ref<LeafBlockWrapper> firstBlock,
-                           FormattingModel model,
-                           BlockIndentOptions indentOptions,
-                           FormattingProgressCallback progressCallback) {
+  public ApplyChangesState(FormattingModel model, WrapBlocksState state, FormattingProgressCallback callback, BlockIndentOptions options) {
     myModel = model;
-    myBlockIndentOptions = indentOptions;
-    myFirstTokenBlock = firstBlock;
-    myProgressCallback = progressCallback;
+    myWrapState = state;
+    myProgressCallback = callback;
+    myBlockIndentOptions = options;
   }
-  
+
   /**
    * Performs formatter changes in a series of blocks, for each block a new contents of document is calculated
    * and whole document is replaced in one operation.
@@ -133,8 +129,8 @@ public class ApplyChangesState extends State {
 
   private List<LeafBlockWrapper> collectBlocksToModify() {
     List<LeafBlockWrapper> blocksToModify = new ArrayList<LeafBlockWrapper>();
-
-    for (LeafBlockWrapper block = myFirstTokenBlock.get(); block != null; block = block.getNextBlock()) {
+    LeafBlockWrapper firstBlock = myWrapState.getFirstBlock();
+    for (LeafBlockWrapper block = firstBlock; block != null; block = block.getNextBlock()) {
       final WhiteSpace whiteSpace = block.getWhiteSpace();
       if (!whiteSpace.isReadOnly()) {
         final String newWhiteSpace = whiteSpace.generateWhiteSpace(myBlockIndentOptions.getIndentOptions(block));
