@@ -2,6 +2,7 @@ package com.intellij.vcs.log.graph;
 
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.printer.idea.ColorGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -10,7 +11,7 @@ import java.util.Map;
 /**
  * @author erokhins
  */
-public class ColorGenerator {
+public class DefaultColorGenerator implements ColorGenerator {
 
   private static final Map<Integer, JBColor> ourColorMap = ContainerUtil.newHashMap();
 
@@ -19,7 +20,8 @@ public class ColorGenerator {
   }
 
   @NotNull
-  public static JBColor getColor(int branchNumber) {
+  @Override
+  public JBColor getColor(int branchNumber) {
     JBColor color = ourColorMap.get(branchNumber);
     if (color == null) {
       color = calcColor(branchNumber);

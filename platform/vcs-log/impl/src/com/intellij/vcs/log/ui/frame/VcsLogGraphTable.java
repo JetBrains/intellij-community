@@ -90,12 +90,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
 
-  private final GraphCellPainter myGraphCellPainter = new SimpleGraphCellPainter(new com.intellij.vcs.log.printer.idea.ColorGenerator() {
-    @Override
-    public Color getColor(int colorId) {
-      return ColorGenerator.getColor(colorId);
-    }
-  }) {
+  private final GraphCellPainter myGraphCellPainter = new SimpleGraphCellPainter(new DefaultColorGenerator()) {
     @Override
     protected int getRowHeight() {
       return VcsLogGraphTable.this.getRowHeight();
