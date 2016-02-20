@@ -359,13 +359,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
     }
     finally {
-      myDocumentCommitProcessor.log(myProject, "in PDI.finishDoc: ", null, success, document);
       if (success) {
         myUncommittedDocuments.remove(document);
-        myDocumentCommitProcessor.log(myProject, "in PDI.finishDoc: removed doc", null, document);
       }
       myIsCommitInProgress = false;
-      myDocumentCommitProcessor.log(myProject, "in PDI.finishDoc: exit", null, success, document);
     }
 
     return success;
@@ -505,7 +502,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, actions);
     }
     actions.add(action);
-    myDocumentCommitProcessor.log(myProject, "PDI: added performWhenAllCommitted", null, action);
 
     ModalityState current = ModalityState.current();
     if (current != ModalityState.NON_MODAL) {
@@ -551,9 +547,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       try {
         for (Map.Entry<Object, Runnable> entry : entries) {
           Runnable action = entry.getValue();
-          Object key = entry.getKey();
           try {
-            myDocumentCommitProcessor.log(myProject, "Running after commit runnable: ", null, key, action);
             action.run();
           }
           catch (Throwable e) {
@@ -676,7 +670,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   boolean isInUncommittedSet(@NotNull Document document) {
-    if (document instanceof DocumentWindow) return isInUncommittedSet(((DocumentWindow)document).getDelegate());
+    if (document instanceof DocumentWindow) document = ((DocumentWindow)document).getDelegate();
     return myUncommittedDocuments.contains(document);
   }
 
@@ -687,7 +681,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public boolean isCommitted(@NotNull Document document) {
-    if (document instanceof DocumentWindow) return isCommitted(((DocumentWindow)document).getDelegate());
+    if (document instanceof DocumentWindow) document = ((DocumentWindow)document).getDelegate();
     if (getSynchronizer().isInSynchronization(document)) return true;
     return !((DocumentEx)document).isInEventsHandling() && !isInUncommittedSet(document);
   }
@@ -784,7 +778,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (commitNecessary) {
       assert !(document instanceof DocumentWindow);
       myUncommittedDocuments.add(document);
-      myDocumentCommitProcessor.log(myProject, "documentChanged()", null, document, ((DocumentEx)document).isInBulkUpdate(), event);
       if (forceCommit) {
         commitDocument(document);
       }
