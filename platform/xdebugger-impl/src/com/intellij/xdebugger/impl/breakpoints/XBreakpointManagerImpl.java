@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,8 +91,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        XBreakpointBase<?, ?, ?>[] breakpoints = getAllBreakpoints();
-        for (XBreakpointBase<?, ?, ?> breakpoint : breakpoints) {
+        for (XBreakpointBase breakpoint : getAllBreakpoints()) {
           XSourcePosition position = breakpoint.getSourcePosition();
           if (position != null && Comparing.equal(position.getFile(), file)) {
             fireBreakpointChanged(breakpoint);
