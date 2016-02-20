@@ -540,7 +540,7 @@ public class TypeMigrationLabeler {
 
     if (!userDefinedType) {
       final Set<PsiTypeParameter> collector;
-      if (type instanceof PsiClassReferenceType) {
+      if (type instanceof PsiClassType) {
         collector = type.accept(new PsiExtendedTypeVisitor<Set<PsiTypeParameter>>() {
           private final Set<PsiTypeParameter> myResult = new HashSet<PsiTypeParameter>();
 
