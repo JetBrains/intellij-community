@@ -85,11 +85,11 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     }
     else if (outputCell instanceof IpnbHtmlOutputCell) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbHtmlPanel((IpnbHtmlOutputCell)outputCell));
+                     new IpnbHtmlPanel((IpnbHtmlOutputCell)outputCell, myParent.getIpnbFilePanel()));
     }
     else if (outputCell instanceof IpnbLatexOutputCell) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbLatexPanel((IpnbLatexOutputCell)outputCell));
+                     new IpnbLatexPanel((IpnbLatexOutputCell)outputCell, myParent.getIpnbFilePanel()));
     }
     else if (outputCell instanceof IpnbErrorOutputCell) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
@@ -101,7 +101,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     }
     else if (outputCell.getSourceAsString() != null) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbCodeOutputPanel<IpnbOutputCell>(outputCell));
+                     new IpnbCodeOutputPanel<IpnbOutputCell>(outputCell, myParent.getIpnbFilePanel()));
     }
     mainPanel.add(panel);
   }
