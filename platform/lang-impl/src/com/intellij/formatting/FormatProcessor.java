@@ -585,23 +585,19 @@ public class FormatProcessor {
     }
     return result;
   }
-
+  
   private void processBlocksBefore(final int offset) {
-    while (true) {
-      myAlignAgain.clear();
-      myCurrentBlock = myFirstTokenBlock;
-      while (myCurrentBlock != null && myCurrentBlock.getStartOffset() < offset) {
-        processToken();
-        if (myCurrentBlock == null) {
-          myCurrentBlock = myLastTokenBlock;
-          if (myCurrentBlock != null) {
-            myProgressCallback.afterProcessingBlock(myCurrentBlock);
-          }
-          break;
-        }
-      }
-      if (myAlignAgain.isEmpty()) return;
-      reset();
+    AdjustWhiteSpacesState state = new AdjustWhiteSpacesState();
+    myCurrentBlock = myFirstTokenBlock;
+
+    LeafBlockWrapper last = null;
+    while (!state.isDone() && myCurrentBlock.getStartOffset() < offset) {
+      last = myCurrentBlock;
+      state.doIteration();
+    }
+
+    if (myCurrentBlock == null) {
+      myCurrentBlock = last;
     }
   }
 
