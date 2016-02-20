@@ -2,6 +2,7 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.testFramework.PlatformTestUtil;
 import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.FileReader;
@@ -49,5 +50,14 @@ public class JsonSchemaReadTest {
     Assert.assertTrue(haveIntegerType);
     Assert.assertEquals(0, defaultValue.intValue());
     Assert.assertEquals(0, minValue.intValue());
+  }
+
+  @Test
+  public void testReadSchemaWithCustomTags() throws Exception {
+    final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/withNotesCustomTag.json");
+    Assert.assertTrue(file.exists());
+    final JsonSchemaReader reader = new JsonSchemaReader();
+    final JsonSchemaObject read = reader.read(new FileReader(file));
+    Assert.assertTrue(read.getDefinitions().get("common").getProperties().containsKey("id"));
   }
 }

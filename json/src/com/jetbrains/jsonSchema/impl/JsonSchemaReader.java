@@ -688,6 +688,10 @@ public class JsonSchemaReader {
     }
 
     void readSingleDefinition(JsonReader in, String name, JsonSchemaObject object) throws IOException {
+      if (in.peek() != JsonToken.BEGIN_OBJECT) {
+        in.skipValue();  // if unknown property has non-object value, than it is not a definition, lets ignore it
+        return;
+      }
       final JsonSchemaObject defined = read(in);
       if (defined == null) return;
       Map<String, JsonSchemaObject> definitions = object.getDefinitions();
