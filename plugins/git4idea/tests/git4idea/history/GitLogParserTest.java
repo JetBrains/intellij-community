@@ -38,9 +38,8 @@ import static git4idea.history.GitLogParser.NameStatus.*;
 public class GitLogParserTest extends GitPlatformTest {
 
   public static final GitLogOption[] GIT_LOG_OPTIONS =
-    new GitLogOption[]{HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
-      COMMITTER_EMAIL, SUBJECT, BODY, PARENTS, PARENTS, RAW_BODY, REF_NAMES
-    };
+    new GitLogOption[]{HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, SUBJECT, BODY, PARENTS,
+      PARENTS, RAW_BODY, REF_NAMES, NOTES};
   private VirtualFile myRoot;
   private GitLogParser myParser;
   private GitTestLogRecord myRecord;
@@ -97,6 +96,7 @@ public class GitLogParserTest extends GitPlatformTest {
     .put(GitTestLogRecordInfo.PARENTS,      new String[] { "7c1298fd1f93df414ce0d87128532f819de2cbd4" })
     .put(GitTestLogRecordInfo.CHANGES,      new GitTestChange[] { GitTestChange.modified("src/CClass.java") })
     .put(GitTestLogRecordInfo.REFS,         Arrays.asList("refs/heads/sly->name", "refs/remotes/origin/master", "refs/tags/v1.0"))
+    .put(GitTestLogRecordInfo.NOTES,        "Reviewed by John Doe")
     .build());
   public static final List<GitTestLogRecord> ALL_RECORDS = Arrays.asList(RECORD1, RECORD2, RECORD3);
 
@@ -234,6 +234,7 @@ public class GitLogParserTest extends GitPlatformTest {
     assertEquals(expected.getSubject(), actual.getSubject());
     assertEquals(expected.getBody(), actual.getBody());
     assertEquals(expected.rawBody(), actual.getRawBody());
+    assertEquals(expected.getNotes(), actual.getNotes());
 
     assertSameElements(actual.getParentsHashes(), expected.getParents());
 
@@ -318,7 +319,8 @@ public class GitLogParserTest extends GitPlatformTest {
     BODY,
     PARENTS,
     REFS,
-    CHANGES
+    CHANGES,
+    NOTES
   }
 
   private static class GitTestLogRecord {
@@ -367,6 +369,10 @@ public class GitLogParserTest extends GitPlatformTest {
 
     public String[] getParents() {
       return (String[])myData.get(GitTestLogRecordInfo.PARENTS);
+    }
+
+    public String getNotes() {
+      return (String)myData.get(GitTestLogRecordInfo.NOTES);
     }
 
     @NotNull
@@ -469,7 +475,11 @@ public class GitLogParserTest extends GitPlatformTest {
     String prepareOutputLine(NameStatus nameStatusOption) {
       StringBuilder sb = new StringBuilder(RECORD_START);
       for (GitLogOption option : GIT_LOG_OPTIONS) {
-        sb.append(optionToValue(option)).append(ITEMS_SEPARATOR);
+        String value = optionToValue(option);
+        if (value != null) {
+          sb.append(value);
+        }
+        sb.append(ITEMS_SEPARATOR);
       }
       sb.append(RECORD_END);
 
@@ -509,6 +519,8 @@ public class GitLogParserTest extends GitPlatformTest {
           return parentsAsString();
         case REF_NAMES:
           return getRefsForOutput();
+        case NOTES:
+          return getNotes();
         case SHORT_REF_LOG_SELECTOR:
           break;
       }

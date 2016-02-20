@@ -826,7 +826,7 @@ public class GitHistoryUtils {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser.NameStatus status = withChanges ? GitLogParser.NameStatus.STATUS : GitLogParser.NameStatus.NONE;
     GitLogParser.GitLogOption[] options = { HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL,
-      PARENTS, SUBJECT, BODY, RAW_BODY };
+      PARENTS, SUBJECT, BODY, RAW_BODY, NOTES };
     if (withRefs) {
       options = ArrayUtil.append(options, REF_NAMES);
     }

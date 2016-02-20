@@ -15,6 +15,7 @@
  */
 package git4idea.history;
 
+import com.google.common.base.Strings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
@@ -112,7 +113,7 @@ public class GitLogParser {
   enum GitLogOption {
     HASH("H"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_TIME("at"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"),
     COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"), PARENTS("P"), REF_NAMES("d"), SHORT_REF_LOG_SELECTOR("gd"),
-    RAW_BODY("B");
+    RAW_BODY("B"), NOTES("N");
 
     private String myPlaceholder;
     GitLogOption(String placeholder) { myPlaceholder = placeholder; }
@@ -247,7 +248,8 @@ public class GitLogParser {
         }
       }
     }
-    return new GitLogRecord(res, paths, statuses, mySupportsRawBody);
+    String notes = Strings.emptyToNull(StringUtil.trim(res.get(GitLogOption.NOTES)));
+    return new GitLogRecord(res, paths, statuses, notes, mySupportsRawBody);
   }
 
 
