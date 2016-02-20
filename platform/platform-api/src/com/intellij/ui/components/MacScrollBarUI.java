@@ -46,14 +46,8 @@ final class MacScrollBarUI extends AbstractScrollBarUI {
   private final Alarm myAlarm = new Alarm();
   private boolean myTrackHovered;
 
-  @Override
-  int getThickness() {
-    return scale(isOpaque() ? 14 : 15);
-  }
-
-  @Override
-  int getMinimalThickness() {
-    return scale(11);
+  MacScrollBarUI() {
+    super(14, 15, 11);
   }
 
   @Override
@@ -72,10 +66,15 @@ final class MacScrollBarUI extends AbstractScrollBarUI {
   }
 
   @Override
+  boolean isTrackExpandable() {
+    return true;
+  }
+
+  @Override
   void onTrackHover(boolean hover) {
     myTrackHovered = hover;
     myTrackAnimator.start(hover);
-    if (!hover || isOpaque()) {
+    if (!hover || myScrollBar != null && myScrollBar.isOpaque()) {
       myThumbAnimator.start(hover);
     }
   }
@@ -86,10 +85,7 @@ final class MacScrollBarUI extends AbstractScrollBarUI {
 
   @Override
   void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    if (isBorderNeeded(c)) {
-      RegionPainter<Float> p = isDark(c) ? JBScrollPane.TRACK_DARK_PAINTER : JBScrollPane.TRACK_PAINTER;
-      paint(p, g, x, y, width, height, c, myTrackAnimator.myValue, false);
-    }
+    if (isBorderNeeded(c)) super.paintTrack(g, x, y, width, height, c);
   }
 
   @Override
@@ -134,9 +130,9 @@ final class MacScrollBarUI extends AbstractScrollBarUI {
   }
 
   private void updateStyle(Style style) {
-    boolean overlay = style == Style.Overlay;
     if (myScrollBar != null) {
-      myScrollBar.setOpaque(!overlay);
+      myScrollBar.setOpaque(style != Style.Overlay);
+      myScrollBar.revalidate();
       myScrollBar.repaint();
       onThumbMove();
     }

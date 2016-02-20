@@ -64,31 +64,62 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
   private final Rectangle myThumbBounds = new Rectangle();
   private final Rectangle myTrackBounds = new Rectangle();
   private final Rectangle myLeadingBounds = new Rectangle();
+  private final int myThickness;
+  private final int myThicknessMax;
+  private final int myThicknessMin;
 
   JScrollBar myScrollBar;
 
   private boolean isValueCached;
   private int myCachedValue;
 
-  abstract int getThickness();
+  AbstractScrollBarUI(int thickness, int thicknessMax, int thicknessMin) {
+    myThickness = thickness;
+    myThicknessMax = thicknessMax;
+    myThicknessMin = thicknessMin;
+  }
 
-  abstract int getMinimalThickness();
+  int getThickness() {
+    return scale(myScrollBar == null || myScrollBar.isOpaque() ? myThickness : myThicknessMax);
+  }
 
-  abstract boolean isAbsolutePositioning(MouseEvent event);
+  int getMinimalThickness() {
+    return scale(myThicknessMin);
+  }
 
-  abstract boolean isBorderNeeded(JComponent c);
+  boolean isAbsolutePositioning(MouseEvent event) {
+    return SwingUtilities.isMiddleMouseButton(event);
+  }
+
+  boolean isBorderNeeded(JComponent c) {
+    return c.isOpaque() && Registry.is("ide.scroll.track.border.paint");
+  }
 
   boolean isTrackClickable() {
     return myScrollBar.isOpaque() || myTrackAnimator.myValue > 0;
   }
 
-  abstract void onTrackHover(boolean hover);
+  boolean isTrackExpandable() {
+    return Registry.is("ide.scroll.bar.expand.animation");
+  }
 
-  abstract void onThumbHover(boolean hover);
+  void onTrackHover(boolean hover) {
+    myTrackAnimator.start(hover);
+  }
 
-  abstract void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c);
+  void onThumbHover(boolean hover) {
+    myThumbAnimator.start(hover);
+  }
 
-  abstract void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c);
+  void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
+    RegionPainter<Float> p = isDark(c) ? JBScrollPane.TRACK_DARK_PAINTER : JBScrollPane.TRACK_PAINTER;
+    paint(p, g, x, y, width, height, c, myTrackAnimator.myValue, false);
+  }
+
+  void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
+    RegionPainter<Float> p = isDark(c) ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
+    paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, Registry.is("ide.scroll.thumb.small.if.opaque"));
+  }
 
   void onThumbMove() {
   }
@@ -120,7 +151,8 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
     p.paint(g, x, y, width, height, value);
   }
 
-  int getTrackOffset(int offset) {
+  private int getTrackOffset(int offset) {
+    if (!isTrackExpandable()) return offset;
     float value = myTrackAnimator.myValue;
     if (value <= 0) return offset;
     if (value >= 1) return 0;
@@ -135,11 +167,7 @@ abstract class AbstractScrollBarUI extends ScrollBarUI {
     if (myScrollBar != null) myScrollBar.repaint(x, y, width, height);
   }
 
-  boolean isOpaque() {
-    return myScrollBar != null && myScrollBar.isOpaque();
-  }
-
-  int scale(int value) {
+  private int scale(int value) {
     value = JBUI.scale(value);
     //noinspection EnumSwitchStatementWhichMissesCases
     switch (UIUtil.getComponentStyle(myScrollBar)) {
