@@ -398,12 +398,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     listener.installOn(myDualView.getTreeView());
     setEmptyText(CommonBundle.getLoadingTreeNodeText());
 
+    myPopupActions = createPopupActions();
+
     createDualView();
     if (isStaticEmbedded) {
       setIsStaticAndEmbedded(isStaticEmbedded);
     }
-
-    myPopupActions = createPopupActions();
 
     myHistoryPanelRefresh = new AsynchConsumer<VcsHistorySession>() {
       public void finished() {
