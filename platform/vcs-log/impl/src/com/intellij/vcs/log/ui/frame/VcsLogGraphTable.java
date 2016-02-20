@@ -82,15 +82,15 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
   private static final int MAX_ROWS_TO_CALC_OFFSET = 100;
 
   @NotNull private final VcsLogUiImpl myUi;
-  private final VcsLogDataHolder myLogDataHolder;
-  private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
+  @NotNull private final VcsLogDataHolder myLogDataHolder;
+  @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
-  private final GraphCommitCellRender myGraphCommitCellRenderer;
+  @NotNull private final GraphCommitCellRender myGraphCommitCellRenderer;
   private boolean myColumnsSizeInitialized = false;
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
 
-  private final GraphCellPainter myGraphCellPainter = new SimpleGraphCellPainter(new DefaultColorGenerator()) {
+  @NotNull private final GraphCellPainter myGraphCellPainter = new SimpleGraphCellPainter(new DefaultColorGenerator()) {
     @Override
     protected int getRowHeight() {
       return VcsLogGraphTable.this.getRowHeight();
