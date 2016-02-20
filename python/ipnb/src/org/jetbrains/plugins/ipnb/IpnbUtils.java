@@ -1,243 +1,259 @@
 package org.jetbrains.plugins.ipnb;
 
+import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.MarkdownUtil;
 import com.intellij.util.ui.UIUtil;
-import com.petebevin.markdown.MarkdownProcessor;
-import net.sourceforge.jeuclid.MathMLParserSupport;
-import net.sourceforge.jeuclid.context.LayoutContextImpl;
-import net.sourceforge.jeuclid.context.Parameter;
-import net.sourceforge.jeuclid.converter.Converter;
+import javafx.application.Platform;
+import javafx.concurrent.Worker;
+import javafx.embed.swing.JFXPanel;
+import javafx.event.EventHandler;
+import javafx.scene.Scene;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebEvent;
+import javafx.scene.web.WebView;
+import netscape.javascript.JSException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
-import org.jetbrains.plugins.ipnb.editor.panels.IpnbTexPackageDefinitions;
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
-import uk.ac.ed.ph.snuggletex.SnuggleEngine;
-import uk.ac.ed.ph.snuggletex.SnuggleInput;
-import uk.ac.ed.ph.snuggletex.SnuggleSession;
-import uk.ac.ed.ph.snuggletex.XMLStringOutputOptions;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.events.Event;
+import org.w3c.dom.events.EventListener;
+import org.w3c.dom.events.EventTarget;
 
 import javax.swing.*;
-import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
-import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.net.MalformedURLException;
+import java.awt.event.MouseWheelEvent;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.Hashtable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class IpnbUtils {
   private static final Logger LOG = Logger.getInstance(IpnbUtils.class);
-  private static final MarkdownProcessor ourMarkdownProcessor = new MarkdownProcessor();
-  private static final String ourImagePrefix = "http://image";
-  private static final Font ourFont = new Font(Font.SERIF, Font.PLAIN, 16);
-  private static final String ourBodyRule = "body { font-family: \"DejaVu\"; " +
-                                         "font-size: " + ourFont.getSize() + "pt;}";
+  private static final String ourPrefix = "<html><head><script type=\"text/x-mathjax-config\">\n" +
+                                          "            MathJax.Hub.Config({\n" +
+                                          "                tex2jax: {\n" +
+                                          "                    inlineMath: [ ['$','$'], [\"\\\\(\",\"\\\\)\"] ],\n" +
+                                          "                    displayMath: [ ['$$','$$'], [\"\\\\[\",\"\\\\]\"] ],\n" +
+                                          "                    processEscapes: true,\n" +
+                                          "                    processEnvironments: true\n" +
+                                          "                },\n" +
+                                          "                displayAlign: 'center',\n" +
+                                          "                \"HTML-CSS\": {\n" +
+                                          "                    styles: {'#mydiv': {\"font-size\": %s}},\n" +
+                                          "                    preferredFont: null,\n" +
+                                          "                    linebreaks: { automatic: true }\n" +
+                                          "                }\n" +
+                                          "            });\n" +
+                                          "</script><script type=\"text/javascript\"\n" +
+                                          " src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full\">\n" +
+                                          " </script></head><body><div id=\"mydiv\">";
 
-  private static final String ourCodeRule = "code { font-family: \"DejaVu\"; " +
-                                         "font-size: " + ourFont.getSize() + "pt;}";
+  private static final String ourPostfix = "</div></body></html>";
+  private static URL ourStyleUrl;
 
-  private static final String ourAlertRule = ".alert{ background-color: #fcf8e3;" +
-                                                     "color: #c09853;" +
-                                                     "padding: 8px 35px 8px 14px;" +
-                                                     "border: 1px solid #fbeed5;}";
+  public static JComponent createLatexPane(@NotNull final String source, int width) {
+    final JComponent panel = createHtmlPanel(source, width);
 
-  private static final String ourAlertSuccessRule = ".alert-success{ background-color: #dff0d8;\n" +
-                                                    "color: #468847;" +
-                                                    "padding: 8px 35px 8px 14px;" +
-                                                    "border: 1px solid #d6e9c6;}";
-
-  private static final String ourAlertErrorRule = ".alert-error{ background-color: #f2dede;\n" +
-                                                  "color: #b94a48;" +
-                                                  "padding: 8px 35px 8px 14px;" +
-                                                  "border: 1px solid #eed3d7;}";
-
-  public static String markdown2Html(@NotNull String description) {
-    description = StringUtil.replace(description, "class=\"alert alert-success\"", "class=\"alert-success\"");
-    description = StringUtil.replace(description, "class=\"alert alert-error\"", "class=\"alert-error\"");
-    ArrayList<String> lines = ContainerUtil.newArrayList(description.split("\n|\r|\r\n"));
-    MarkdownUtil.replaceHeaders(lines);
-    return ourMarkdownProcessor.markdown(StringUtil.join(lines, "\n"));
-  }
-
-  public static JEditorPane createLatexPane(@NotNull final String source) {
-    final JEditorPane editorPane = new JEditorPane();
-    editorPane.setBackground(IpnbEditorUtil.getBackground());
-    editorPane.setContentType(new HTMLEditorKit().getContentType());
-    editorPane.setEditorKit(new HTMLEditorKit());
-    final HTMLDocument document = (HTMLDocument)editorPane.getDocument();
-    final StyleSheet sheet = document.getStyleSheet();
-    sheet.addRule(ourBodyRule);
-    sheet.addRule(ourCodeRule);
-    sheet.addRule(ourAlertRule);
-    sheet.addRule(ourAlertSuccessRule);
-    sheet.addRule(ourAlertErrorRule);
-
-    editorPane.setEditable(false);
-
-    final String html = convertToHtml(source, document);
-    editorPane.setText("<html><body>" + html + "</body></html>");
-
-    editorPane.addMouseListener(new MouseAdapter() {
+    panel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        final Container parent = editorPane.getParent();
-        final MouseEvent parentEvent = SwingUtilities.convertMouseEvent(editorPane, e, parent);
+        final Container parent = panel.getParent();
+        final MouseEvent parentEvent = SwingUtilities.convertMouseEvent(panel, e, parent);
         parent.dispatchEvent(parentEvent);
       }
     });
-    editorPane.addHyperlinkListener(new BrowserHyperlinkListener());
     //TODO: jump to the section (see User Interface#Utilities)
 
-    return editorPane;
+    return panel;
   }
 
+  public static JComponent createHtmlPanel(@NotNull final String source, int width) {
+    Platform.setImplicitExit(false);
 
-  private static String convertToHtml(@NotNull final String source, @NotNull final HTMLDocument document) {
+    final JFXPanel javafxPanel = new JFXPanel(){
+      @Override
+      protected void processMouseWheelEvent(MouseWheelEvent e) {
+        final Container parent = getParent();
+        final MouseEvent parentEvent = SwingUtilities.convertMouseEvent(this, e, parent);
+        parent.dispatchEvent(parentEvent);
+      }
+    };
+    javafxPanel.setBackground(IpnbEditorUtil.getBackground());
+
+    Platform.runLater(() -> {
+      final WebView webView = new WebView();
+      webView.setOnDragDetected(new EventHandler<javafx.scene.input.MouseEvent>() {
+        @Override
+        public void handle(javafx.scene.input.MouseEvent event) {
+        }
+      });
+      final WebEngine engine = webView.getEngine();
+      initHyperlinkListener(engine);
+      engine.setOnStatusChanged(new EventHandler<WebEvent<String>>() {
+        public void handle(WebEvent<String> status) {
+          adjustHeight(webView, javafxPanel, source);
+        }
+      });
+
+      final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
+      engine.loadContent(prefix + convertToHtml(source) + ourPostfix);
+      final BorderPane pane = new BorderPane(webView);
+      final Scene scene = new Scene(pane, width != 0 ? width : 20, 20);
+      javafxPanel.setScene(scene);
+      Platform.runLater(() -> adjustHeight(webView, javafxPanel, source));
+      updateLaf(LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo,
+                pane, engine, javafxPanel);
+    });
+
+    return javafxPanel;
+  }
+
+  private static String convertToHtml(@NotNull String source) {
     final StringBuilder result = new StringBuilder();
-    StringBuilder markdown = new StringBuilder();
-    StringBuilder formula = new StringBuilder();
-    boolean inCode = false;
-    int inMultiStringCode = 0;
-    boolean inEnd = false;
+
+    source = replaceLinks(source);
     boolean escaped = false;
-    boolean backQuoted = false;
-
-    int imageIndex = 0;
-    for (int i = 0; i != source.length(); ++i) {
-      final char charAt = source.charAt(i);
-
-      if (charAt == '`') {
-        backQuoted = !backQuoted;
-        if (source.length() > i + 2 && source.charAt(i + 1) == '`' && source.charAt(i + 2) == '`') {
-          markdown.append(escaped ? "</code>" : "<code>");
-          escaped = !escaped;
-          //noinspection AssignmentToForLoopParameter
-          i += 2;
-          continue;
-        }
-      }
-      if (escaped && charAt == '\n') {
-        markdown.append("<br/>");
-        continue;
-      }
-
-      if (!escaped && !backQuoted) {
-        if (charAt == '$' && source.length() > i + 1 && source.charAt(i+1) != '$') {
-          inCode = !inCode;
-        }
-
-        if (charAt == '\\' && source.substring(i).startsWith("\\begin")) {
-          inMultiStringCode += 1;
-        }
-        if (charAt == '\\' && source.substring(i).startsWith("\\end")) {
-          inEnd = true;
-        }
-      }
-
-      final boolean doubleDollar = charAt == '$' && ((source.length() > i + 1 && source.charAt(i + 1) == '$')
-                                                     || (i >= 1  && source.charAt(i - 1) == '$'));
-      if (inCode || inMultiStringCode != 0 || (!backQuoted && doubleDollar)) {
-        if (markdown.length() != 0) {
-          result.append(markdown.toString());
-          markdown = new StringBuilder();
-        }
-        formula.append(charAt);
-      }
-      else {
-        if (formula.length() != 0 && charAt == '$') {
-          formula.append(charAt);
-        }
-        else {
-          markdown.append(charAt);
-        }
-        if (formula.length() != 0) {
-          addFormula(formula.toString(), document, imageIndex, result);
-
-          imageIndex += 1;
-          formula = new StringBuilder();
-        }
-      }
-
-      if (inEnd && charAt == '}') {
-        inMultiStringCode -= 1;
-        inEnd = false;
-      }
-
+    int start = 0;
+    int end = StringUtil.indexOf(source, "```");
+    while (end > 0) {
+      result.append(source.substring(start, end));
+      result.append(escaped? "</pre>" : "<pre>");
+      escaped = !escaped;
+      start = end + 3;
+      end = StringUtil.indexOf(source, "```", end + 1);
     }
-    if (formula.length() != 0) {
-      addFormula(formula.toString(), document, imageIndex, result);
-    }
-    if (markdown.length() != 0) {
-      result.append(markdown.toString());
-    }
-    return markdown2Html(result.toString());
+    result.append(source.substring(start));
+
+
+    return result.toString();
   }
 
-  private static void addFormula(@NotNull final String formulaText, @NotNull final HTMLDocument editorDocument, int imageIndex, StringBuilder result) {
-    final SnuggleEngine engine = new SnuggleEngine();
-    engine.getPackages().add(0, IpnbTexPackageDefinitions.getPackage());
+  @NotNull
+  private static String replaceLinks(@NotNull String source) {
+    final Pattern inlineLink = Pattern.compile("(\\[(.*?)\\]\\([ \\t]*<?(.*?)>?[ \\t]*(([\'\"])(.*?)\\5)?\\))", 32);
+    final Matcher matcher = inlineLink.matcher(source);
+    final StringBuffer sb = new StringBuffer();
+    while (matcher.find()) {
+      String linkText = matcher.group(2);
+      String url = matcher.group(3);
+      String title = matcher.group(6);
+      StringBuilder link = new StringBuilder();
+      link.append("<a href=\"").append(url).append("\"");
+      if(title != null) {
+        link.append(" title=\"");
+        link.append(title);
+        link.append("\"");
+      }
 
-    final SnuggleSession session = engine.createSession();
+      link.append(">").append(linkText);
+      link.append("</a>");
+      matcher.appendReplacement(sb, link.toString());
+    }
+    matcher.appendTail(sb);
 
-    final SnuggleInput input = new SnuggleInput(formulaText);
+    source = sb.toString();
+    return source;
+  }
 
+  private static void initHyperlinkListener(@NotNull final WebEngine engine) {
+    engine.getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
+      if (newState == Worker.State.SUCCEEDED) {
+        final EventListener listener = new HyperlinkListener(engine);
+        addListenerToAllHyperlinkItems(engine, listener);
+      }
+    });
+  }
+
+  private static void addListenerToAllHyperlinkItems(WebEngine engine, EventListener listener) {
+    final Document doc = engine.getDocument();
+    if (doc != null) {
+      final NodeList nodeList = doc.getElementsByTagName("a");
+      for (int i = 0; i < nodeList.getLength(); i++) {
+        ((EventTarget)nodeList.item(i)).addEventListener("click", listener, false);
+      }
+    }
+  }
+
+  private static class HyperlinkListener implements EventListener {
+    @NotNull private final WebEngine myEngine;
+
+    public HyperlinkListener(@NotNull final WebEngine engine) {
+      myEngine = engine;
+    }
+
+    @Override
+    public void handleEvent(Event ev) {
+      String domEventType = ev.getType();
+      if (domEventType.equals("click")) {
+        myEngine.setJavaScriptEnabled(true);
+        myEngine.getLoadWorker().cancel();
+        ev.preventDefault();
+
+        UIUtil.invokeLaterIfNeeded(() -> {
+
+          final String href = ((Element)ev.getTarget()).getAttribute("href");
+          if (href == null) return;
+          final URI address;
+          try {
+            address = new URI(href);
+            BrowserUtil.browse(address);
+          }
+          catch (URISyntaxException e) {
+            LOG.warn(e.getMessage());
+          }
+        });
+
+      }
+    }
+  }
+
+  private static void adjustHeight(final WebView webView, final JFXPanel javafxPanel, String source) {
     try {
-      session.parseInput(input);
-      XMLStringOutputOptions options = new XMLStringOutputOptions();
-      options.setIndenting(true);
-      options.setAddingMathSourceAnnotations(false);
-      final String xmlString = session.buildXMLString(options);
-      if (xmlString == null) return;
-      final LayoutContextImpl context = (LayoutContextImpl)LayoutContextImpl.getDefaultLayoutContext();
-      context.setParameter(Parameter.MATHCOLOR, UIUtil.getTextAreaForeground());
-      context.setParameter(Parameter.MATHSIZE, 18);
+      Object result = webView.getEngine().executeScript("document.getElementById(\"mydiv\").offsetHeight");
+      if (result instanceof Integer) {
+        final int fontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
+        double x = (double)source.length() * 8 / (int)result;
+        final double height = (source.length() * fontSize) / x + 20;
+        final int width = (int)(webView.getWidth() == 0 ? 1500 : webView.getWidth());
+        final Dimension size = new Dimension(width, (int)height);
 
-      final Document document = MathMLParserSupport.parseString(xmlString);
-
-      final BufferedImage image = Converter.getInstance().render(document, context);
-
-      try {
-        @SuppressWarnings("unchecked")
-        Dictionary<URL, BufferedImage> cache = (Dictionary<URL, BufferedImage>)editorDocument.getProperty("imageCache");
-        if (cache == null) {
-          //noinspection UseOfObsoleteCollectionType
-          cache = new Hashtable<URL, BufferedImage>();
-          editorDocument.putProperty("imageCache", cache);
-        }
-
-        final URL u = new URL(ourImagePrefix + imageIndex + ".jpg");
-        cache.put(u, image);
-      }
-      catch (MalformedURLException e) {
-        LOG.error(e);
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            javafxPanel.setPreferredSize(size);
+            javafxPanel.revalidate();
+            javafxPanel.repaint();
+          }
+        });
       }
     }
-    catch (IOException e) {
-      LOG.error(e);
+    catch (JSException ignore) {
     }
-    catch (SAXException e) {
-      LOG.error(e);
-      LOG.info("formula text " + formulaText);
+  }
+
+  private static void updateLaf(boolean isDarcula, BorderPane pane, WebEngine engine, JFXPanel jfxPanel) {
+    if (isDarcula) {
+      updateLafDarcula(pane, engine, jfxPanel);
     }
-    catch (ParserConfigurationException e) {
-      LOG.error(e);
-    }
-    if (formulaText.startsWith("$$") || formulaText.startsWith("\\begin")) {
-      result.append("<p style = \"text-align:center;\"><img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\"/></p>");
-    }
-    else
-      result.append("<img src=\"").append(ourImagePrefix).append(imageIndex).append(".jpg\"/>");
+  }
+
+  private static void updateLafDarcula(BorderPane pane, WebEngine engine, JFXPanel jfxPanel) {
+    Platform.runLater(() -> {
+      ourStyleUrl = IpnbFileType.class.getResource("/style/javaFXBrowserDarcula.css");
+      engine.setUserStyleSheetLocation(ourStyleUrl.toExternalForm());
+      pane.setStyle("-fx-background-color: #313335");
+      jfxPanel.getScene().getStylesheets().add(ourStyleUrl.toExternalForm());
+      engine.reload();
+    });
   }
 }
