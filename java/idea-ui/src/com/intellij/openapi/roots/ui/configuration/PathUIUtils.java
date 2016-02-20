@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.libraries.ui.RootDetector;
@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.libraries.ui.impl.LibraryRootsDetectorImpl;
 import com.intellij.openapi.roots.libraries.ui.impl.RootDetectionUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.*;
@@ -35,14 +34,7 @@ import java.util.List;
  * @author Constantine.Plotnikov
  */
 public class PathUIUtils {
-  public static final RootDetector JAVA_SOURCE_ROOT_DETECTOR = new RootDetector(OrderRootType.SOURCES, false, "sources") {
-    @NotNull
-    @Override
-    public Collection<VirtualFile> detectRoots(@NotNull VirtualFile rootCandidate,
-                                               @NotNull ProgressIndicator progressIndicator) {
-      return JavaVfsSourceRootDetectionUtil.suggestRoots(rootCandidate, progressIndicator);
-    }
-  };
+  public static final RootDetector JAVA_SOURCE_ROOT_DETECTOR = new JavaSourceRootDetector();
 
   private PathUIUtils() {
   }
@@ -57,7 +49,7 @@ public class PathUIUtils {
    */
   public static VirtualFile[] scanAndSelectDetectedJavaSourceRoots(Component parentComponent, final VirtualFile[] rootCandidates) {
     final List<OrderRoot> orderRoots = RootDetectionUtil.detectRoots(Arrays.asList(rootCandidates), parentComponent, null,
-                                                                     new LibraryRootsDetectorImpl(Collections.singletonList(JAVA_SOURCE_ROOT_DETECTOR)),
+                                                                     new LibraryRootsDetectorImpl(Arrays.asList(Extensions.getExtensions(RootDetector.JAVA_SOURCE_ROOT_DETECTOR))),
                                                                      new OrderRootType[0]);
     final List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (OrderRoot root : orderRoots) {
