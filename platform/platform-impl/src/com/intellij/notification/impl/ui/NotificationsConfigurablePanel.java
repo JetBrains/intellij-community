@@ -40,6 +40,7 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -198,6 +199,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       super(new NotificationsTreeTableModel());
       StripeTable.apply(this);
       setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      getTree().setCellRenderer(new TreeColumnCellRenderer(this));
 
       final TableColumn idColumn = getColumnModel().getColumn(ID_COLUMN);
       idColumn.setPreferredWidth(200);
@@ -296,6 +298,29 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         TreePath newSelection = ((NotificationsTreeTableModel)getTableModel()).removeRow(selection);
         addSelectedPath(newSelection);
       }
+    }
+  }
+
+  private static class TreeColumnCellRenderer extends JLabel implements TreeCellRenderer {
+    private final JTable myTable;
+
+    public TreeColumnCellRenderer(@NotNull JTable table) {
+      myTable = table;
+      setHorizontalAlignment(SwingConstants.CENTER);
+      setVerticalAlignment(SwingConstants.CENTER);
+    }
+
+    @Override
+    public Component getTreeCellRendererComponent(JTree tree,
+                                                  Object value,
+                                                  boolean selected,
+                                                  boolean expanded,
+                                                  boolean leaf,
+                                                  int row,
+                                                  boolean hasFocus) {
+      setForeground(selected ? myTable.getSelectionForeground() : myTable.getForeground());
+      setText(value.toString());
+      return this;
     }
   }
 
@@ -494,7 +519,8 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         Object object = child.getUserObject();
         if (object instanceof SettingsWrapper) {
           ((SettingsWrapper)object).remove();
-        } else {
+        }
+        else {
           removeChildSettings(child);
         }
       }
