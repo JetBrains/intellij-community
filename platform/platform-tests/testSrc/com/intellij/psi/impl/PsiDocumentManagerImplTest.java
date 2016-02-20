@@ -24,11 +24,15 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -46,6 +50,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -610,5 +615,49 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     });
     getPsiDocumentManager().commitAllDocuments();
     assertTrue(getPsiDocumentManager().isCommitted(document));
+  }
+
+  public void testUndoShouldAddToCommitQueue() throws IOException {
+    VirtualFile virtualFile = getVirtualFile(createTempFile("X.java", ""));
+    PsiFile file = findFile(virtualFile);
+    assertTrue(file.getFileType().getName().equals("JAVA"));
+
+    assertNotNull(file);
+    assertTrue(file.isPhysical());
+
+    Editor editor = FileEditorManager.getInstance(myProject).openTextEditor(new OpenFileDescriptor(getProject(), virtualFile, 0), false);
+    ((EditorImpl)editor).setCaretActive();
+
+    final Document document = editor.getDocument(); //getDocument(file);
+
+    String text = "class X {" + StringUtil.repeat("void fff() {}\n", 1000) +
+               "}";
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      document.insertString(0, text);
+    });
+
+    for (int i=0;i<300;i++) {
+      getPsiDocumentManager().commitAllDocuments();
+      assertTrue(getPsiDocumentManager().isCommitted(document));
+
+      String insert = "ddfdkjh";
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        document.insertString(0, insert);
+      });
+
+      TimeoutUtil.sleep(50);
+
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        document.replaceString(0, insert.length(), "");
+      });
+
+      FileDocumentManager.getInstance().saveDocument(document);
+
+      assertEquals(text, editor.getDocument().getText());
+
+      waitTenSecondsForCommit(document);
+      assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
+      System.out.println("i = " + i);
+    }
   }
 }

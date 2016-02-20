@@ -134,7 +134,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     synchronized (lock) {
       cancel(reason);
       myEnabled = false;
-      log(null, "Disabled", null, reason);
     }
   }
 
@@ -142,7 +141,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     synchronized (lock) {
       myEnabled = true;
       wakeUpQueue();
-      log(null, "Enabled", null, reason);
     }
   }
 
@@ -266,7 +264,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       }
     }
 
-    //System.out.println(s);
+    System.out.println(s);
 
     synchronized (log) {
       log.append(s).append("\n");
@@ -376,8 +374,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
         indicator = task.indicator;
         project = task.project;
 
-        log(project, "Pulled", task, indicator, myEnabled);
-
         if (project.isDisposed() || !((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).isInUncommittedSet(document)) {
           log(project, "Abandon and proceed to next", task);
           return true;
@@ -408,13 +404,11 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
         }, commitTask.indicator);
         finishRunnable = result[0];
         success = finishRunnable != null;
-        log(project, "commit returned", task, finishRunnable, indicator);
       }
 
       if (success) {
         assert !myApplication.isDispatchThread();
         myApplication.invokeLater(finishRunnable, task.myCreationModalityState);
-        log(project, "InvokeLater finishRunnable", task, finishRunnable, task.myCreationModalityState);
       }
     }
     catch (ProcessCanceledException e) {
@@ -512,7 +506,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       }
       currentTask = task;
     }
-    log(task == null ? null : task.project, "new task started", task, reason);
   }
 
   // returns finish commit Runnable (to be invoked later in EDT), or null on failure
@@ -522,7 +515,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       assert !task.indicator.isCanceled();
     }
     final Project project = task.project;
-    log(project, "commitUnderProgress()", task, synchronously, task.indicator);
 
     final Document document = task.document;
     final PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
@@ -534,17 +526,16 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
         if (project.isDisposed()) return;
 
         if (documentManager.isCommitted(document)) return;
-        boolean changeStillValid = task.modificationStamp == document.getModificationStamp();
 
-        if (!changeStillValid) {
-          log(project, "Doc changed", task, task.modificationStamp, document.getModificationStamp());
+        if (!task.isStillValid()) {
+          log(project, "Doc changed", task);
           task.indicator.cancel();
           return;
         }
 
         FileViewProvider viewProvider = documentManager.getCachedViewProvider(document);
         if (viewProvider == null) {
-          finishProcessors.add(handleCommitWithoutPsi(documentManager, document, task));
+          finishProcessors.add(handleCommitWithoutPsi(documentManager, task));
           return;
         }
 
@@ -589,18 +580,16 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
           }
         }
 
-        log(project, "Executing later finishCommit", task);
         try {
-          boolean changeStillValid = task.modificationStamp == document.getModificationStamp();
+          boolean changeStillValid = task.isStillValid();
           boolean success = changeStillValid && documentManager.finishCommit(document, finishProcessors, synchronously, task.reason);
           if (synchronously) {
             assert success;
           }
           if (!changeStillValid) {
-            log(project, "document changed; ignore", task, task.modificationStamp, document.getModificationStamp());
+            log(project, "document changed; ignore", task);
             return;
           }
-          log(project, "after call finishCommit", task, success);
           if (synchronously || success) {
             assert !documentManager.isInUncommittedSet(document);
           }
@@ -619,15 +608,12 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
   @NotNull
   private Processor<Document> handleCommitWithoutPsi(@NotNull final PsiDocumentManagerBase documentManager,
-                                                     @NotNull Document document,
                                                      @NotNull final CommitTask task) {
-    final long startDocModificationTimeStamp = document.getModificationStamp();
     return new Processor<Document>() {
       @Override
       public boolean process(Document document) {
-        log(task.project, "Finishing without PSI", task, document.getModificationStamp(), startDocModificationTimeStamp);
-        if (document.getModificationStamp() != startDocModificationTimeStamp ||
-            documentManager.getCachedViewProvider(document) != null) {
+        log(task.project, "Finishing without PSI", task);
+        if (!task.isStillValid() || documentManager.getCachedViewProvider(document) != null) {
           return false;
         }
 

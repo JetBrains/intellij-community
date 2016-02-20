@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -64,7 +65,7 @@ public abstract class DocumentCommitProcessor {
   protected static class CommitTask {
     @NotNull final Document document;
     @NotNull final Project project;
-    final long modificationStamp;
+    private final int modificationSequence; // store initial document modification sequence here to check if it changed later before commit in EDT
 
     // when queued it's not started
     // when dequeued it's started
@@ -88,7 +89,7 @@ public abstract class DocumentCommitProcessor {
       myCreationModalityState = currentModalityState;
       myLastCommittedText = PsiDocumentManager.getInstance(project).getLastCommittedText(document);
       myOldFileNodes = oldFileNodes;
-      modificationStamp = document.getModificationStamp();
+      modificationSequence = ((DocumentEx)document).getModificationSequence();
     }
 
     @NonNls
@@ -96,7 +97,9 @@ public abstract class DocumentCommitProcessor {
     public String toString() {
       return "Doc: " + document + " (\"" + StringUtil.first(document.getImmutableCharSequence(), 40, true).toString().replaceAll("\n", " ") + "\")"
              + (indicator.isCanceled() ? " (Canceled)" : "")
-             + " Reason: " + reason;
+             + " Reason: " + reason
+             + (isStillValid() ? "" : "; changed: old seq="+modificationSequence+", new seq="+ ((DocumentEx)document).getModificationSequence())
+        ;
     }
 
     @Override
@@ -115,6 +118,10 @@ public abstract class DocumentCommitProcessor {
       result = 31 * result + project.hashCode();
       return result;
     }
+
+    public boolean isStillValid() {
+      return ((DocumentEx)document).getModificationSequence() == modificationSequence;
+    }
   }
 
   // public for Upsource
@@ -123,7 +130,6 @@ public abstract class DocumentCommitProcessor {
                                       @NotNull final PsiFile file,
                                       @NotNull final FileASTNode oldFileNode) {
     Document document = task.document;
-    final long startDocModificationTimeStamp = document.getModificationStamp();
     final CharSequence newDocumentText = document.getImmutableCharSequence();
     final TextRange changedPsiRange = getChangedPsiRange(file, task.myLastCommittedText, newDocumentText);
     if (changedPsiRange == null) {
@@ -137,16 +143,13 @@ public abstract class DocumentCommitProcessor {
     }
 
     BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
-    log(task.project, "blockSupport.reparseRange()", task);
     final DiffLog diffLog = blockSupport.reparseRange(file, oldFileNode, changedPsiRange, newDocumentText, task.indicator, task.myLastCommittedText);
-    log(task.project, "blockSupport.reparseRange() end", task);
 
     return new Processor<Document>() {
       @Override
       public boolean process(Document document) {
         ApplicationManager.getApplication().assertWriteAccessAllowed();
-        log(task.project, "Finishing", task, document.getModificationStamp(), startDocModificationTimeStamp);
-        if (document.getModificationStamp() != startDocModificationTimeStamp ||
+        if (!task.isStillValid() ||
             ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject())).getCachedViewProvider(document) != file.getViewProvider()) {
           return false; // optimistic locking failed
         }
