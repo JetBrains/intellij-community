@@ -81,7 +81,14 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
                            dash[0] / 2);
   }
 
-  private void paintUpLine(@NotNull Graphics2D g2, int from, int to, @NotNull Color color, boolean hasArrow, boolean isUsual, boolean isSelected, boolean isTerminal) {
+  private void paintUpLine(@NotNull Graphics2D g2,
+                           @NotNull Color color,
+                           int from,
+                           int to,
+                           boolean hasArrow,
+                           boolean isUsual,
+                           boolean isSelected,
+                           boolean isTerminal) {
     // paint vertical lines normal size
     // paint non-vertical lines twice the size to make them dock with each other well
     int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
@@ -101,7 +108,14 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
   }
 
-  private void paintDownLine(@NotNull Graphics2D g2, int from, int to, @NotNull Color color, boolean hasArrow, boolean isUsual, boolean isSelected, boolean isTerminal) {
+  private void paintDownLine(@NotNull Graphics2D g2,
+                             @NotNull Color color,
+                             int from,
+                             int to,
+                             boolean hasArrow,
+                             boolean isUsual,
+                             boolean isSelected,
+                             boolean isTerminal) {
     int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
     if (from == to) {
       int y2 = getRowHeight() - 1 - (isTerminal ? PrintParameters.getCircleRadius(getRowHeight()) / 2 + 1 : 0);
@@ -138,16 +152,24 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     g2.drawLine(x1, y1, x2, y2);
     if (hasArrow) {
       Pair<Integer, Integer> rotate1 =
-        rotate(x1, y1, startArrowX, startArrowY, Math.sqrt(ARROW_ANGLE_COS2), Math.sqrt(1 - ARROW_ANGLE_COS2), ARROW_LENGTH * getRowHeight());
+        rotate(x1, y1, startArrowX, startArrowY, Math.sqrt(ARROW_ANGLE_COS2), Math.sqrt(1 - ARROW_ANGLE_COS2),
+               ARROW_LENGTH * getRowHeight());
       Pair<Integer, Integer> rotate2 =
-        rotate(x1, y1, startArrowX, startArrowY, Math.sqrt(ARROW_ANGLE_COS2), -Math.sqrt(1 - ARROW_ANGLE_COS2), ARROW_LENGTH * getRowHeight());
+        rotate(x1, y1, startArrowX, startArrowY, Math.sqrt(ARROW_ANGLE_COS2), -Math.sqrt(1 - ARROW_ANGLE_COS2),
+               ARROW_LENGTH * getRowHeight());
       g2.drawLine(startArrowX, startArrowY, rotate1.first, rotate1.second);
       g2.drawLine(startArrowX, startArrowY, rotate2.first, rotate2.second);
     }
   }
 
   @NotNull
-  private static Pair<Integer, Integer> rotate(double x, double y, double centerX, double centerY, double cos, double sin, double arrowLength) {
+  private static Pair<Integer, Integer> rotate(double x,
+                                               double y,
+                                               double centerX,
+                                               double centerY,
+                                               double cos,
+                                               double sin,
+                                               double arrowLength) {
     double translateX = (x - centerX);
     double translateY = (y - centerY);
 
@@ -259,11 +281,12 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     boolean isUsual = isUsual(edgePrintElement);
 
     if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-      paintDownLine(g2, from, to, color, edgePrintElement.hasArrow(), isUsual, isSelected,
+      paintDownLine(g2, color, from, to, edgePrintElement.hasArrow(), isUsual, isSelected,
                     edgePrintElement instanceof TerminalEdgePrintElement);
     }
     else {
-      paintUpLine(g2, from, to, color, edgePrintElement.hasArrow(), isUsual, isSelected, edgePrintElement instanceof TerminalEdgePrintElement);
+      paintUpLine(g2, color, from, to, edgePrintElement.hasArrow(), isUsual, isSelected,
+                  edgePrintElement instanceof TerminalEdgePrintElement);
     }
   }
 
