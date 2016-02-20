@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import javax.swing.*;
 
 class XBreakpointItem extends BreakpointItem {
   private final XBreakpoint<?> myBreakpoint;
-  private XLightBreakpointPropertiesPanel<XBreakpointBase<?,?,?>> myPropertiesPanel;
+  private XLightBreakpointPropertiesPanel myPropertiesPanel;
 
   public XBreakpointItem(XBreakpoint<?> breakpoint) {
     myBreakpoint = breakpoint;
@@ -85,7 +85,7 @@ class XBreakpointItem extends BreakpointItem {
 
   @Override
   public String footerText() {
-    return ((XBreakpointBase)myBreakpoint).getType().getDisplayText(myBreakpoint);
+    return XBreakpointUtil.getDisplayText(myBreakpoint);
   }
 
   @Override
@@ -104,7 +104,7 @@ class XBreakpointItem extends BreakpointItem {
       myPropertiesPanel = null;
     }
     if (!editorOnly) {
-      myPropertiesPanel = new XLightBreakpointPropertiesPanel<XBreakpointBase<?,?,?>>(project, getManager(), breakpoint, true);
+      myPropertiesPanel = new XLightBreakpointPropertiesPanel(project, getManager(), breakpoint, true);
 
       panel.setPropertiesPanel(myPropertiesPanel.getMainPanel());
     }

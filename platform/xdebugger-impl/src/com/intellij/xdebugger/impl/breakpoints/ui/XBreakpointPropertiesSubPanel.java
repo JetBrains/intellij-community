@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,18 @@
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class XBreakpointPropertiesSubPanel<B extends XBreakpoint<?>> {
+public abstract class XBreakpointPropertiesSubPanel {
   protected Project myProject;
   protected XBreakpointManager myBreakpointManager;
-  protected B myBreakpoint;
-  protected XBreakpointType<?, ? extends XBreakpointProperties> myBreakpointType;
+  protected XBreakpointBase myBreakpoint;
+  protected XBreakpointType myBreakpointType;
 
-  public void init(Project project, final XBreakpointManager breakpointManager, @NotNull B breakpoint) {
+  public void init(Project project, final XBreakpointManager breakpointManager, @NotNull XBreakpointBase breakpoint) {
     myProject = project;
     myBreakpointManager = breakpointManager;
     myBreakpoint = breakpoint;

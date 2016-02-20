@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,8 +185,8 @@ public class DebuggerUIUtil {
                                                   final boolean showAllOptions,
                                                   final XBreakpoint breakpoint) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    final XLightBreakpointPropertiesPanel<XBreakpointBase<?, ?, ?>> propertiesPanel =
-      new XLightBreakpointPropertiesPanel<XBreakpointBase<?, ?, ?>>(project, breakpointManager, (XBreakpointBase)breakpoint,
+    final XLightBreakpointPropertiesPanel propertiesPanel =
+      new XLightBreakpointPropertiesPanel(project, breakpointManager, (XBreakpointBase)breakpoint,
                                                                     showAllOptions);
 
     final Ref<Balloon> balloonRef = Ref.create(null);
