@@ -119,6 +119,15 @@ public class JBScrollPane extends JScrollPane {
     return color;
   }
 
+  static Color getViewBackground(JScrollPane pane) {
+    if (pane == null) return null;
+    JViewport viewport = pane.getViewport();
+    if (viewport == null) return null;
+    Component view = viewport.getView();
+    if (view == null) return null;
+    return view.getBackground();
+  }
+
   public static JScrollPane findScrollPane(Component c) {
     if (c == null) return null;
 
@@ -394,14 +403,7 @@ public class JBScrollPane extends JScrollPane {
 
     private void updateColor(Component c) {
       if (!(c instanceof JScrollPane)) return;
-
-      JViewport vp = ((JScrollPane)c).getViewport();
-      if (vp == null) return;
-
-      Component view = vp.getView();
-      if (view == null) return;
-
-      lineColor = view.getBackground();
+      lineColor = getViewBackground((JScrollPane)c);
     }
   }
 

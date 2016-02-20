@@ -190,9 +190,8 @@ class DefaultScrollBarUI extends ScrollBarUI {
   @Override
   public void installUI(JComponent c) {
     myScrollBar = (JScrollBar)c;
-    boolean auto = Registry.is("ide.scroll.background.auto");
-    myScrollBar.setBackground(auto ? null : new JBColor(new ColorProducer(c, 0xF5F5F5, 0x3C3F41)));
-    myScrollBar.setForeground(auto ? null : new JBColor(new ColorProducer(c, 0xE6E6E6, 0x3C3F41)));
+    myScrollBar.setBackground(new JBColor(new ColorProducer(c, 0xF5F5F5, 0x3C3F41)));
+    myScrollBar.setForeground(new JBColor(new ColorProducer(c, 0xE6E6E6, 0x3C3F41)));
     myScrollBar.setFocusable(false);
     myScrollBar.addMouseListener(myListener);
     myScrollBar.addMouseMotionListener(myListener);
@@ -230,11 +229,22 @@ class DefaultScrollBarUI extends ScrollBarUI {
   public void paint(Graphics g, JComponent c) {
     Alignment alignment = Alignment.get(c);
     if (alignment != null && g instanceof Graphics2D) {
-      Rectangle bounds = new Rectangle(c.getSize());
+      Container parent = c.getParent();
+      Color background = null;
+      if (c.isOpaque()) {
+        background = Registry.is("ide.scroll.background.auto") && parent instanceof JScrollPane
+                     ? JBScrollPane.getViewBackground((JScrollPane)parent)
+                     : c.getBackground();
+        if (background != null) {
+          g.setColor(background);
+          g.fillRect(0, 0, c.getWidth(), c.getHeight());
+        }
+      }
+      Rectangle bounds = new Rectangle(c.getWidth(), c.getHeight());
       JBInsets.removeFrom(bounds, c.getInsets());
-      if (c.getParent() instanceof JScrollPane) {
+      if (parent instanceof JScrollPane) {
         Color foreground = c.getForeground();
-        if (foreground != null && !foreground.equals(c.getBackground()) && isBorderNeeded(c)) {
+        if (foreground != null && !foreground.equals(background) && isBorderNeeded(c)) {
           g.setColor(foreground);
           switch (alignment) {
             case TOP:
@@ -631,16 +641,8 @@ class DefaultScrollBarUI extends ScrollBarUI {
           property = pane.getClientProperty(BRIGHTNESS_FROM_VIEW);
         }
         if (property instanceof Boolean && (Boolean)property) {
-          JViewport viewport = pane.getViewport();
-          if (viewport != null) {
-            Component view = viewport.getView();
-            if (view != null) {
-              Color color = view.getBackground();
-              if (color != null) {
-                return ColorUtil.isDark(color);
-              }
-            }
-          }
+          Color color = JBScrollPane.getViewBackground(pane);
+          if (color != null) return ColorUtil.isDark(color);
         }
       }
     }
