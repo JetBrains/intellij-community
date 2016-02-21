@@ -58,10 +58,9 @@ each command has a format:
     * PYDB - pydevd, the python end
 '''
 
-from _pydev_imps import _pydev_threading as threading
+from _pydev_bundle.pydev_imports import _queue
 from _pydev_imps import _pydev_time as time, _pydev_thread
 from _pydev_imps._pydev_socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
-from _pydev_bundle.pydev_imports import _queue
 from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
 
 try:
@@ -115,9 +114,8 @@ CMD_REMOVE_DJANGO_EXCEPTION_BREAK = 126
 CMD_SET_NEXT_STATEMENT = 127
 CMD_SMART_STEP_INTO = 128
 CMD_EXIT = 129
+
 CMD_SIGNATURE_CALL_TRACE = 130
-
-
 
 CMD_SET_PY_EXCEPTION = 131
 CMD_GET_FILE_CONTENTS = 132
@@ -142,35 +140,36 @@ CMD_RETURN = 502
 CMD_ERROR = 901
 
 ID_TO_MEANING = {
-    '101':'CMD_RUN',
-    '102':'CMD_LIST_THREADS',
-    '103':'CMD_THREAD_CREATE',
-    '104':'CMD_THREAD_KILL',
-    '105':'CMD_THREAD_SUSPEND',
-    '106':'CMD_THREAD_RUN',
-    '107':'CMD_STEP_INTO',
-    '108':'CMD_STEP_OVER',
-    '109':'CMD_STEP_RETURN',
-    '110':'CMD_GET_VARIABLE',
-    '111':'CMD_SET_BREAK',
-    '112':'CMD_REMOVE_BREAK',
-    '113':'CMD_EVALUATE_EXPRESSION',
-    '114':'CMD_GET_FRAME',
-    '115':'CMD_EXEC_EXPRESSION',
-    '116':'CMD_WRITE_TO_CONSOLE',
-    '117':'CMD_CHANGE_VARIABLE',
-    '118':'CMD_RUN_TO_LINE',
-    '119':'CMD_RELOAD_CODE',
-    '120':'CMD_GET_COMPLETIONS',
-    '121':'CMD_CONSOLE_EXEC',
-    '122':'CMD_ADD_EXCEPTION_BREAK',
-    '123':'CMD_REMOVE_EXCEPTION_BREAK',
-    '124':'CMD_LOAD_SOURCE',
-    '125':'CMD_ADD_DJANGO_EXCEPTION_BREAK',
-    '126':'CMD_REMOVE_DJANGO_EXCEPTION_BREAK',
-    '127':'CMD_SET_NEXT_STATEMENT',
-    '128':'CMD_SMART_STEP_INTO',
+    '101': 'CMD_RUN',
+    '102': 'CMD_LIST_THREADS',
+    '103': 'CMD_THREAD_CREATE',
+    '104': 'CMD_THREAD_KILL',
+    '105': 'CMD_THREAD_SUSPEND',
+    '106': 'CMD_THREAD_RUN',
+    '107': 'CMD_STEP_INTO',
+    '108': 'CMD_STEP_OVER',
+    '109': 'CMD_STEP_RETURN',
+    '110': 'CMD_GET_VARIABLE',
+    '111': 'CMD_SET_BREAK',
+    '112': 'CMD_REMOVE_BREAK',
+    '113': 'CMD_EVALUATE_EXPRESSION',
+    '114': 'CMD_GET_FRAME',
+    '115': 'CMD_EXEC_EXPRESSION',
+    '116': 'CMD_WRITE_TO_CONSOLE',
+    '117': 'CMD_CHANGE_VARIABLE',
+    '118': 'CMD_RUN_TO_LINE',
+    '119': 'CMD_RELOAD_CODE',
+    '120': 'CMD_GET_COMPLETIONS',
+    '121': 'CMD_CONSOLE_EXEC',
+    '122': 'CMD_ADD_EXCEPTION_BREAK',
+    '123': 'CMD_REMOVE_EXCEPTION_BREAK',
+    '124': 'CMD_LOAD_SOURCE',
+    '125': 'CMD_ADD_DJANGO_EXCEPTION_BREAK',
+    '126': 'CMD_REMOVE_DJANGO_EXCEPTION_BREAK',
+    '127': 'CMD_SET_NEXT_STATEMENT',
+    '128': 'CMD_SMART_STEP_INTO',
     '129': 'CMD_EXIT',
+    
     '130': 'CMD_SIGNATURE_CALL_TRACE',
 
     '131': 'CMD_SET_PY_EXCEPTION',
@@ -184,14 +183,13 @@ ID_TO_MEANING = {
     '139': 'CMD_SEND_CURR_EXCEPTION_TRACE_PROCEEDED',
     '140': 'CMD_IGNORE_THROWN_EXCEPTION_AT',
     '141': 'CMD_ENABLE_DONT_TRACE',
+    '143': 'CMD_GET_ARRAY',
+    '144': 'CMD_STEP_INTO_MY_CODE',
+    '145': 'CMD_GET_CONCURRENCY_EVENT',
 
-    '501':'CMD_VERSION',
-    '502':'CMD_RETURN',
-    '901':'CMD_ERROR',
-
-    '143':'CMD_GET_ARRAY',
-    '144':'CMD_STEP_INTO_MY_CODE',
-    '145':'CMD_GET_CONCURRENCY_EVENT',
+    '501': 'CMD_VERSION',
+    '502': 'CMD_RETURN',
+    '901': 'CMD_ERROR',
     }
 
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
