@@ -275,7 +275,8 @@ public class PyDocstringGenerator {
       if (param.getType() == null) {
         String type;
         if (signature != null) {
-          type = StringUtil.notNullize(signature.getArgTypeQualifiedName(param.getName()));
+          type = StringUtil.notNullize(param.isReturnValue() ? signature.getReturnTypeQualifiedName() :
+                                       signature.getArgTypeQualifiedName(param.getName()));
         }
         else {
           type = paramTypes.get(paramCoordinates);
