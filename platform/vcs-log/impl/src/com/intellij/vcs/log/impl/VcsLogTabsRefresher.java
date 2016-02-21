@@ -80,7 +80,7 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
   }
 
   private void tabActivated(@NotNull VcsLogFilterer filterer, boolean firstTime) {
-    if (hasPostponedRoots()) {
+    if (!myRootsToRefresh.isEmpty()) {
       refreshPostponedRoots();
     }
     else {
@@ -113,10 +113,6 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
     Set<VirtualFile> toRefresh = new HashSet<VirtualFile>(myRootsToRefresh);
     myRootsToRefresh.removeAll(toRefresh); // clear the set, but keep roots which could possibly arrive after collecting them in the var.
     myDataManager.refresh(toRefresh);
-  }
-
-  private boolean hasPostponedRoots() {
-    return !myRootsToRefresh.isEmpty();
   }
 
   private boolean isOneOfTabsVisible() {
