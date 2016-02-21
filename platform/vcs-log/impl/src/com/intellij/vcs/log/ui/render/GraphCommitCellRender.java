@@ -11,7 +11,7 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.printer.idea.GraphCellPainter;
-import com.intellij.vcs.log.printer.idea.PrintParameters;
+import com.intellij.vcs.log.printer.idea.PaintParameters;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,13 +74,13 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
     super.paintComponent(g);
 
     if (myRefs != null) {
-      int paddingX = (myGraphImage != null ? myGraphImage.getWidth() : 0) + PrintParameters.LABEL_PADDING;
+      int paddingX = (myGraphImage != null ? myGraphImage.getWidth() : 0) + PaintParameters.LABEL_PADDING;
       Map<String, Color> labelsForReferences = collectLabelsForRefs(myRefs);
       for (Map.Entry<String, Color> entry : labelsForReferences.entrySet()) {
         Dimension size = myTextLabelPainter.calculateSize(entry.getKey(), g.getFontMetrics(TextLabelPainter.getFont()));
         int paddingY = (myGraphTable.getRowHeight() - size.height) / 2;
         myTextLabelPainter.paint((Graphics2D)g, entry.getKey(), paddingX, paddingY, entry.getValue());
-        paddingX += size.width + PrintParameters.LABEL_PADDING;
+        paddingX += size.width + PaintParameters.LABEL_PADDING;
       }
     }
 
@@ -129,12 +129,12 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
     }
     maxIndex++;
     final BufferedImage image = UIUtil
-      .createImage(PrintParameters.getNodeWidth(myGraphTable.getRowHeight()) * (maxIndex + 4), myGraphTable.getRowHeight(),
+      .createImage(PaintParameters.getNodeWidth(myGraphTable.getRowHeight()) * (maxIndex + 4), myGraphTable.getRowHeight(),
                    BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = image.createGraphics();
     myPainter.draw(g2, printElements);
 
-    final int width = maxIndex * PrintParameters.getNodeWidth(myGraphTable.getRowHeight());
+    final int width = maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight());
     return new PaintInfo(image, width);
   }
 
@@ -158,10 +158,10 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
   private int calculateReferencePadding(@NotNull Collection<VcsRef> references) {
     if (references.isEmpty()) return 0;
 
-    int paddingX = 2 * PrintParameters.LABEL_PADDING;
+    int paddingX = 2 * PaintParameters.LABEL_PADDING;
     for (String label : collectLabelsForRefs(references).keySet()) {
       Dimension size = myTextLabelPainter.calculateSize(label, this.getFontMetrics(TextLabelPainter.getFont()));
-      paddingX += size.width + PrintParameters.LABEL_PADDING;
+      paddingX += size.width + PaintParameters.LABEL_PADDING;
     }
     return paddingX;
   }

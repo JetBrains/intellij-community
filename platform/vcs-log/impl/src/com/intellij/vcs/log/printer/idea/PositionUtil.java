@@ -19,8 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-import static com.intellij.vcs.log.printer.idea.PrintParameters.*;
-
 public class PositionUtil {
   private static float distance(int x1, int y1, int x2, int y2) {
     return (float)Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));

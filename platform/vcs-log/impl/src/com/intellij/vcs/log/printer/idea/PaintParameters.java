@@ -15,7 +15,7 @@
  */
 package com.intellij.vcs.log.printer.idea;
 
-public class PrintParameters {
+public class PaintParameters {
 
   private static final int WIDTH_NODE = 15;
   private static final int CIRCLE_RADIUS = 4;

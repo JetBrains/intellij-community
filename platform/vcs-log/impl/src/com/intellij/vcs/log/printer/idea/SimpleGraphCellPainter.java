@@ -46,7 +46,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   protected int getRowHeight() {
-    return PrintParameters.ROW_HEIGHT;
+    return PaintParameters.ROW_HEIGHT;
   }
 
   private float[] getDashLength(int edgeLength) {
@@ -61,23 +61,23 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
   @NotNull
   private BasicStroke getOrdinaryStroke() {
-    return new BasicStroke(PrintParameters.getLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
+    return new BasicStroke(PaintParameters.getLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
   }
 
   @NotNull
   private BasicStroke getSelectedStroke() {
-    return new BasicStroke(PrintParameters.getSelectedLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
+    return new BasicStroke(PaintParameters.getSelectedLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
   }
 
   @NotNull
   private Stroke getDashedStroke(float[] dash) {
-    return new BasicStroke(PrintParameters.getLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, dash,
+    return new BasicStroke(PaintParameters.getLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, dash,
                            dash[0] / 2);
   }
 
   @NotNull
   private Stroke getSelectedDashedStroke(float[] dash) {
-    return new BasicStroke(PrintParameters.getSelectedLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, dash,
+    return new BasicStroke(PaintParameters.getSelectedLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, dash,
                            dash[0] / 2);
   }
 
@@ -91,11 +91,11 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
                            boolean isTerminal) {
     // paint vertical lines normal size
     // paint non-vertical lines twice the size to make them dock with each other well
-    int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
+    int nodeWidth = PaintParameters.getNodeWidth(getRowHeight());
     if (from == to) {
       int x = nodeWidth * from + nodeWidth / 2;
       int y1 = getRowHeight() / 2 - 1;
-      int y2 = isTerminal ? PrintParameters.getCircleRadius(getRowHeight()) / 2 + 1 : 0;
+      int y2 = isTerminal ? PaintParameters.getCircleRadius(getRowHeight()) / 2 + 1 : 0;
       paintLine(g2, color, hasArrow, x, y1, x, y2, x, y2, isUsual, isSelected);
     }
     else {
@@ -116,9 +116,9 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
                              boolean isUsual,
                              boolean isSelected,
                              boolean isTerminal) {
-    int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
+    int nodeWidth = PaintParameters.getNodeWidth(getRowHeight());
     if (from == to) {
-      int y2 = getRowHeight() - 1 - (isTerminal ? PrintParameters.getCircleRadius(getRowHeight()) / 2 + 1 : 0);
+      int y2 = getRowHeight() - 1 - (isTerminal ? PaintParameters.getCircleRadius(getRowHeight()) / 2 + 1 : 0);
       int y1 = getRowHeight() / 2;
       int x = nodeWidth * from + nodeWidth / 2;
       paintLine(g2, color, hasArrow, x, y1, x, y2, x, y2, isUsual, isSelected);
@@ -184,9 +184,9 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   private void paintCircle(@NotNull Graphics2D g2, int position, @NotNull Color color, boolean select) {
-    int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
-    int circleRadius = PrintParameters.getCircleRadius(getRowHeight());
-    int selectedCircleRadius = PrintParameters.getSelectedCircleRadius(getRowHeight());
+    int nodeWidth = PaintParameters.getNodeWidth(getRowHeight());
+    int circleRadius = PaintParameters.getCircleRadius(getRowHeight());
+    int selectedCircleRadius = PaintParameters.getSelectedCircleRadius(getRowHeight());
 
     int x0 = nodeWidth * position + nodeWidth / 2;
     int y0 = getRowHeight() / 2;
@@ -293,10 +293,10 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   @Nullable
   @Override
   public PrintElement getElementUnderCursor(@NotNull Collection<? extends PrintElement> printElements, int x, int y) {
-    int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
+    int nodeWidth = PaintParameters.getNodeWidth(getRowHeight());
     for (PrintElement printElement : printElements) {
       if (printElement instanceof NodePrintElement) {
-        int circleRadius = PrintParameters.getCircleRadius(getRowHeight());
+        int circleRadius = PaintParameters.getCircleRadius(getRowHeight());
         if (PositionUtil.overNode(printElement.getPositionInCurrentRow(), x, y, getRowHeight(), nodeWidth, circleRadius)) {
           return printElement;
         }
@@ -306,7 +306,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     for (PrintElement printElement : printElements) {
       if (printElement instanceof EdgePrintElement) {
         EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
-        float lineThickness = PrintParameters.getLineThickness(getRowHeight());
+        float lineThickness = PaintParameters.getLineThickness(getRowHeight());
         if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
           if (PositionUtil
             .overDownEdge(edgePrintElement.getPositionInCurrentRow(), edgePrintElement.getPositionInOtherRow(), x, y, getRowHeight(),
