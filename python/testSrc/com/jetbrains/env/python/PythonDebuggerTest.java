@@ -441,7 +441,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  private static void createExceptionBreak(IdeaProjectTestFixture fixture,
+  public static void createExceptionBreak(IdeaProjectTestFixture fixture,
                                            boolean notifyOnTerminate,
                                            boolean notifyOnFirst,
                                            boolean ignoreLibraries) {
