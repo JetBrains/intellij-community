@@ -130,8 +130,8 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         try {
           visiblePack = getVisiblePack(visiblePack, requests);
         }
-        catch (ProcessCanceledException ignored) {
-          return;
+        catch (ProcessCanceledException reThrown) {
+          throw reThrown;
         }
         catch (Throwable t) {
           LOG.error("Error while filtering log", t);
