@@ -415,7 +415,7 @@ public class FindInProjectUtil {
         public String fun(PsiElement element) {
           if(regExpCharPsiClass.isInstance(element)) {
             String text = element.getText();
-            if (!"\\n".equals(text) && !"\\t".equals(text) && !"\\f".equals(text) && !"\\r".equals(text)) return text;
+            if (!text.startsWith("\\")) return text;
           }
           return " ";
         }
