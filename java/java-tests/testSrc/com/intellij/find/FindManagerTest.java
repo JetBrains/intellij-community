@@ -870,6 +870,8 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertEquals(" Foo ", buildStringToFindForIndicesFromRegExp("\\bFoo\\b", myProject));
     assertEquals("", buildStringToFindForIndicesFromRegExp("foo|bar", myProject));
     assertEquals(" Exit Foo Bar Baz", buildStringToFindForIndicesFromRegExp("\\nExit\\tFoo\\rBar\\fBaz", myProject));
+    assertEquals(" Foo Bar Baz Exit", buildStringToFindForIndicesFromRegExp("\\012Foo\\u000ABar\\x0ABaz\\aExit", myProject));
+    assertEquals(" Foo Bar BazCooBoo", buildStringToFindForIndicesFromRegExp("\\1Foo\\sBar\\DBaz\\QCoo\\E\\QBoo", myProject));
   }
 
   public void testCreateFileMaskCondition() {
