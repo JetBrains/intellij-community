@@ -16,6 +16,8 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -55,8 +57,8 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
   @NotNull private final ToolWindowImpl myToolWindow;
   @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
 
-  @NotNull private final Map<String, VcsLogFilterer> myTabToFiltererMap = ContainerUtil.newConcurrentMap();
-  @NotNull private final Set<VirtualFile> myRootsToRefresh = ContainerUtil.newConcurrentSet();
+  @NotNull private final Map<String, VcsLogFilterer> myTabToFiltererMap = ContainerUtil.newHashMap();
+  @NotNull private final Set<VirtualFile> myRootsToRefresh = ContainerUtil.newHashSet();
 
   public VcsLogTabsRefresher(@NotNull Project project, @NotNull VcsLogDataManager dataManager) {
     myDataManager = dataManager;
@@ -100,13 +102,18 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
   }
 
   @Override
-  public void refresh(@NotNull VirtualFile root) {
-    if (isOneOfTabsVisible()) {
-      myDataManager.refresh(Collections.singleton(root));
-    }
-    else {
-      myRootsToRefresh.add(root);
-    }
+  public void refresh(@NotNull final VirtualFile root) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (isOneOfTabsVisible()) {
+          myDataManager.refresh(Collections.singleton(root));
+        }
+        else {
+          myRootsToRefresh.add(root);
+        }
+      }
+    }, ModalityState.any());
   }
 
   private void refreshPostponedRoots() {
