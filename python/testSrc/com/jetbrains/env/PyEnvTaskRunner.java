@@ -107,7 +107,7 @@ public class PyEnvTaskRunner {
     if (url == null) {
       return null;
     }
-    return PyTestSdkTools.createTempSdk(url, SdkCreationType.SDK_PACKAGES_AND_SKELETONS, null);
+    return PyTestSdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null);
   }
 
   protected boolean shouldRun(String root, PyTestTask task) {
