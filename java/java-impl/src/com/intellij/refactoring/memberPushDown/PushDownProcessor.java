@@ -165,27 +165,9 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     pushDownConflicts.checkSourceClassConflicts();
 
     if (usagesIn.length == 0) {
-      if (myClass.isEnum() || myClass.hasModifierProperty(PsiModifier.FINAL)) {
-        if (Messages.showOkCancelDialog((myClass.isEnum() ? "Enum " + myClass.getQualifiedName() + " doesn't have constants to inline to. " : "Final class " + myClass.getQualifiedName() + "does not have inheritors. ") +
-                                        "Pushing members down will result in them being deleted. " +
-                                        "Would you like to proceed?", JavaPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon()) != Messages.OK) {
-          return false;
-        }
-      } else {
-        String noInheritors = myClass.isInterface() ?
-                              RefactoringBundle.message("interface.0.does.not.have.inheritors", myClass.getQualifiedName()) :
-                              RefactoringBundle.message("class.0.does.not.have.inheritors", myClass.getQualifiedName());
-        final String message = noInheritors + "\n" + RefactoringBundle.message("push.down.will.delete.members");
-        final int answer = Messages.showYesNoCancelDialog(message, JavaPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon());
-        if (answer == Messages.YES) {
-          myCreateClassDlg = CreateSubclassAction.chooseSubclassToCreate(myClass);
-          if (myCreateClassDlg != null) {
-            pushDownConflicts.checkTargetClassConflicts(null, false, myCreateClassDlg.getTargetDirectory());
-            return showConflicts(pushDownConflicts.getConflicts(), usagesIn);
-          } else {
-            return false;
-          }
-        } else if (answer != Messages.NO) return false;
+      Boolean answered = preprocessNoInheritorsFound(usagesIn, pushDownConflicts);
+      if (answered != null) {
+        return answered;
       }
     }
     Runnable runnable = new Runnable() {
@@ -195,10 +177,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           @Override
           public void run() {
             for (UsageInfo usage : usagesIn) {
-              final PsiElement element = usage.getElement();
-              if (element instanceof PsiClass) {
-                pushDownConflicts.checkTargetClassConflicts((PsiClass)element, usagesIn.length > 1, element);
-              }
+              pushDownConflicts.checkTargetClassConflicts(usage.getElement(), usagesIn.length > 1, usage.getElement());
             }
           }
         });
@@ -209,17 +188,34 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       return false;
     }
 
-    for (UsageInfo info : usagesIn) {
-      final PsiElement element = info.getElement();
-      if (element instanceof PsiFunctionalExpression) {
-        pushDownConflicts.getConflicts().putValue(element, RefactoringBundle.message("functional.interface.broken"));
-      }
-    }
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(myClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE);
-    if (annotation != null && isMoved(LambdaUtil.getFunctionalInterfaceMethod(myClass))) {
-      pushDownConflicts.getConflicts().putValue(annotation, RefactoringBundle.message("functional.interface.broken"));
-    }
     return showConflicts(pushDownConflicts.getConflicts(), usagesIn);
+  }
+
+  @Nullable
+  protected Boolean preprocessNoInheritorsFound(UsageInfo[] usagesIn, PushDownConflicts pushDownConflicts) {
+    if (myClass.isEnum() || myClass.hasModifierProperty(PsiModifier.FINAL)) {
+      if (Messages.showOkCancelDialog((myClass.isEnum() ? "Enum " + myClass.getQualifiedName() + " doesn't have constants to inline to. " : "Final class " + myClass.getQualifiedName() + "does not have inheritors. ") +
+                                      "Pushing members down will result in them being deleted. " +
+                                      "Would you like to proceed?", JavaPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon()) != Messages.OK) {
+        return false;
+      }
+    } else {
+      String noInheritors = myClass.isInterface() ?
+                            RefactoringBundle.message("interface.0.does.not.have.inheritors", myClass.getQualifiedName()) :
+                            RefactoringBundle.message("class.0.does.not.have.inheritors", myClass.getQualifiedName());
+      final String message = noInheritors + "\n" + RefactoringBundle.message("push.down.will.delete.members");
+      final int answer = Messages.showYesNoCancelDialog(message, JavaPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon());
+      if (answer == Messages.YES) {
+        myCreateClassDlg = CreateSubclassAction.chooseSubclassToCreate(myClass);
+        if (myCreateClassDlg != null) {
+          pushDownConflicts.checkTargetClassConflicts(null, false, myCreateClassDlg.getTargetDirectory());
+          return showConflicts(pushDownConflicts.getConflicts(), usagesIn);
+        } else {
+          return false;
+        }
+      } else if (answer != Messages.NO) return false;
+    }
+    return null;
   }
 
   @Override
@@ -524,12 +520,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       if (newMember != null) {
         decodeRefs(newMember, targetClass);
         //rebind imports first
-        Collections.sort(refsToRebind, new Comparator<PsiReference>() {
-          @Override
-          public int compare(PsiReference o1, PsiReference o2) {
-            return PsiUtil.BY_POSITION.compare(o1.getElement(), o2.getElement());
-          }
-        });
+        Collections.sort(refsToRebind, Comparator.comparing(PsiReference::getElement, PsiUtil.BY_POSITION));
         for (PsiReference psiReference : refsToRebind) {
           JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(psiReference.bindToElement(newMember));
         }
