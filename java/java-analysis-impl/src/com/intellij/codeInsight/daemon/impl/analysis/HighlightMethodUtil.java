@@ -24,7 +24,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.Comparing;
@@ -398,7 +397,7 @@ public class HighlightMethodUtil {
           String description = JavaErrorMessages.message("wrong.method.arguments", methodName, containerName, argTypes);
           final Ref<PsiElement> elementToHighlight = new Ref<PsiElement>(list);
           String toolTip;
-          if (parent instanceof PsiClass && !ApplicationManager.getApplication().isUnitTestMode()) {
+          if (parent instanceof PsiClass) {
             toolTip = buildOneLineMismatchDescription(list, candidateInfo, elementToHighlight);
             if (toolTip == null) {
               toolTip = createMismatchedArgumentsHtmlTooltip(candidateInfo, list);
