@@ -13,472 +13,259 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs.local;
+package com.intellij.openapi.vfs.local
 
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.local.FileWatcher;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.Alarm;
-import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.impl.local.FileWatcher
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
+import com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.Alarm
+import com.intellij.util.TimeoutUtil
+import com.intellij.util.concurrency.Semaphore
+import org.junit.After
+import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import java.io.File
+import java.util.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+class FileWatcherTest : BareTestFixtureTestCase() {
+  private val LOG: Logger by lazy { Logger.getInstance(NativeFileWatcherImpl::class.java) }
 
-import static com.intellij.openapi.util.io.IoTestUtil.*;
+  private val START_STOP_DELAY = 10000L      // time to wait for the watcher spin up/down
+  private val INTER_RESPONSE_DELAY = 500L    // time to wait for a next event in a sequence
+  private val NATIVE_PROCESS_DELAY = 60000L  // time to wait for a native watcher response
+  private val SHORT_PROCESS_DELAY = 5000L    // time to wait when no native watcher response is expected
 
-@SuppressWarnings("Duplicates")
-public class FileWatcherTest extends PlatformTestCase {
-  private static final Logger LOG = Logger.getInstance(NativeFileWatcherImpl.class);
+  private val UNICODE_NAME_1 = "Úñíçødê"
+  private val UNICODE_NAME_2 = "Юникоде"
 
-  private static final int INTER_RESPONSE_DELAY = 500;  // time to wait for a next event in a sequence
-  private static final int NATIVE_PROCESS_DELAY = 60000;  // time to wait for a native watcher response
+  @Rule @JvmField val tempDir = TempDirectory()
 
-  @SuppressWarnings("SpellCheckingInspection") private static final String UNICODE_NAME_1 = "Úñíçødê";
-  @SuppressWarnings("SpellCheckingInspection") private static final String UNICODE_NAME_2 = "Юникоде";
+  private lateinit var fs: LocalFileSystem
+  private lateinit var root: VirtualFile
+  private lateinit var watcher: FileWatcher
+  private lateinit var alarm: Alarm
 
-  private FileWatcher myWatcher;
-  private LocalFileSystem myFileSystem;
-  private MessageBusConnection myConnection;
-  private volatile boolean myAccept = false;
-  private Alarm myAlarm;
-  private final Object myWaiter = new Object();
-  private int myTimeout = NATIVE_PROCESS_DELAY;
-  private final List<VFileEvent> myEvents = ContainerUtil.newArrayList();
-  private File myTempDirectory;
+  private val watcherEvents = Semaphore()
 
-  @Override
-  protected void setUp() throws Exception {
-    LOG.debug("================== setting up " + getName() + " ==================");
+  @Before fun setUp() {
+    LOG.debug("================== setting up " + getTestName(false) + " ==================")
 
-    super.setUp();
+    fs = LocalFileSystem.getInstance()
+    root = refresh(tempDir.root)
 
-    myFileSystem = LocalFileSystem.getInstance();
-    assertNotNull(myFileSystem);
+    watcher = (fs as LocalFileSystemImpl).fileWatcher
+    assertFalse(watcher.isOperational)
+    watcher.startup {
+      alarm.cancelAllRequests()
+      alarm.addRequest({ watcherEvents.up() }, INTER_RESPONSE_DELAY)
+    }
+    wait { !watcher.isOperational }
 
-    myWatcher = ((LocalFileSystemImpl)myFileSystem).getFileWatcher();
-    assertNotNull(myWatcher);
-    assertFalse(myWatcher.isOperational());
-    myWatcher.startup(() -> {
-      LOG.debug("-- (event, expected=" + myAccept + ")");
-      if (!myAccept) return;
-      myAlarm.cancelAllRequests();
-      myAlarm.addRequest(() -> {
-        myAccept = false;
-        LOG.debug("** waiting finished");
-        synchronized (myWaiter) {
-          myWaiter.notifyAll();
-        }
-      }, INTER_RESPONSE_DELAY);
-    });
-    assertTrue(myWatcher.isOperational());
+    alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, testRootDisposable)
 
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getProject());
-    myTimeout = NATIVE_PROCESS_DELAY;
+    LOG.debug("================== setting up " + getTestName(false) + " ==================")
+  }
 
-    myConnection = ApplicationManager.getApplication().getMessageBus().connect();
-    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
-      @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
-        synchronized (myEvents) {
-          events.stream().filter(VFileEvent::isFromRefresh).forEach(myEvents::add);
-        }
+  @After fun tearDown() {
+    LOG.debug("================== tearing down up " + getTestName(false) + " ==================")
+
+    watcher.shutdown()
+    wait { watcher.isOperational }
+
+    runInEdtAndWait {
+      runWriteAction {
+        root.delete(this)
       }
-    });
+      (fs as LocalFileSystemImpl).cleanupForNextTest()
+    }
 
-    ((LocalFileSystemImpl)myFileSystem).cleanupForNextTest();
-
-    myTempDirectory = createTestDir(getName());
-
-    LOG.debug("================== setting up " + getName() + " ==================");
+    LOG.debug("================== tearing down up " + getTestName(false) + " ==================")
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    LOG.debug("================== tearing down " + getName() + " ==================");
+  // test cases
 
-    try {
-      myAccept = false;
-      myAlarm.cancelAllRequests();
-      myConnection.disconnect();
-      myWatcher.shutdown();
-      assertFalse(myWatcher.isOperational());
-      FileUtil.delete(myTempDirectory);
-    }
-    finally {
-      myFileSystem = null;
-      myWatcher = null;
-      super.tearDown();
-    }
-
-    LOG.debug("================== tearing down " + getName() + " ==================");
+  @Test fun testWatchRequestConvention() {
+    val dir = tempDir.newFolder("dir")
+    val r1 = watch(dir)
+    val r2 = watch(dir)
+    assertFalse(r1 == r2)
   }
 
+  @Test fun testFileRoot() {
+    val file = tempDir.newFile("test.txt")
+    refresh(file)
 
-  public void testWatchRequestConvention() {
-    File dir = createTestDir("top");
-
-    LocalFileSystem.WatchRequest r1 = myFileSystem.addRootToWatch(dir.getPath(), true);
-    LocalFileSystem.WatchRequest r2 = myFileSystem.addRootToWatch(dir.getPath(), true);
-    assertNotNull(r1);
-    assertNotNull(r2);
-    assertFalse(r1.equals(r2));
-
-    myFileSystem.removeWatchedRoots(ContainerUtil.immutableList(r1, r2));
-    FileUtil.delete(dir);
+    watch(file)
+    assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
+    assertEvents({ file.delete() }, mapOf(file to 'D'))
+    assertEvents({ file.writeText("re-creation") }, mapOf(file to 'C'))
   }
 
-  public void testFileRoot() throws Exception {
-    File file = createTestFile(myTempDirectory, "test.txt");
-    refresh(file);
+  @Test fun testNonCanonicallyNamedFileRoot() {
+    assumeTrue(!SystemInfo.isFileSystemCaseSensitive)
 
-    LocalFileSystem.WatchRequest request = watch(file);
-    try {
-      myAccept = true;
-      FileUtil.writeToFile(file, "new content");
-      assertEvent(VFileContentChangeEvent.class, file.getPath());
+    val file = tempDir.newFile("test.txt")
+    refresh(file)
 
-      myAccept = true;
-      FileUtil.delete(file);
-      assertEvent(VFileDeleteEvent.class, file.getPath());
-
-      myAccept = true;
-      FileUtil.writeToFile(file, "re-creation");
-      assertEvent(VFileCreateEvent.class, file.getPath());
-    }
-    finally {
-      unwatch(request);
-      delete(file);
-    }
+    watch(File(file.path.toUpperCase(Locale.US)))
+    assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
+    assertEvents({ file.delete() }, mapOf(file to 'D'))
+    assertEvents({ file.writeText("re-creation") }, mapOf(file to 'C'))
   }
 
-  public void testNonCanonicallyNamedFileRoot() throws Exception {
-    if (SystemInfo.isFileSystemCaseSensitive) {
-      System.err.println("Ignored: case-insensitive FS required");
-      return;
-    }
+  @Test fun testDirectoryRecursive() {
+    val top = tempDir.newFolder("top")
+    val sub = File(top, "sub")
+    val file = File(sub, "test.txt")
+    refresh(top)
 
-    File file = createTestFile(myTempDirectory, "test.txt");
-    refresh(file);
-
-    String watchRoot = file.getPath().toUpperCase(Locale.US);
-    LocalFileSystem.WatchRequest request = watch(new File(watchRoot));
-    try {
-      myAccept = true;
-      FileUtil.writeToFile(file, "new content");
-      assertEvent(VFileContentChangeEvent.class, file.getPath());
-
-      myAccept = true;
-      FileUtil.delete(file);
-      assertEvent(VFileDeleteEvent.class, file.getPath());
-
-      myAccept = true;
-      FileUtil.writeToFile(file, "re-creation");
-      assertEvent(VFileCreateEvent.class, file.getPath());
-    }
-    finally {
-      unwatch(request);
-      delete(file);
-    }
+    watch(top)
+    assertEvents({ sub.mkdir() }, mapOf(sub to 'C'))
+    refresh(sub)
+    assertEvents({ file.createNewFile() }, mapOf(file to 'C'))
+    assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
+    assertEvents({ file.delete() }, mapOf(file to 'D'))
+    assertEvents({ file.writeText("re-creation") }, mapOf(file to 'C'))
   }
 
-  public void testDirectoryRecursive() throws Exception {
-    File topDir = createTestDir(myTempDirectory, "top");
-    refresh(topDir);
+  @Test fun testDirectoryFlat() {
+    val top = tempDir.newFolder("top")
+    val watchedFile = tempDir.newFile("top/test.txt")
+    val unwatchedFile = tempDir.newFile("top/sub/test.txt")
+    refresh(top)
 
-    LocalFileSystem.WatchRequest request = watch(topDir);
-    try {
-      myAccept = true;
-      File subDir = createTestDir(topDir, "sub");
-      assertEvent(VFileCreateEvent.class, subDir.getPath());
-      refresh(subDir);
-
-      myAccept = true;
-      File file = createTestFile(subDir, "test.txt");
-      assertEvent(VFileCreateEvent.class, file.getPath());
-
-      myAccept = true;
-      FileUtil.writeToFile(file, "new content");
-      assertEvent(VFileContentChangeEvent.class, file.getPath());
-
-      myAccept = true;
-      FileUtil.delete(file);
-      assertEvent(VFileDeleteEvent.class, file.getPath());
-
-      myAccept = true;
-      FileUtil.writeToFile(file, "re-creation");
-      assertEvent(VFileCreateEvent.class, file.getPath());
-    }
-    finally {
-      unwatch(request);
-      delete(topDir);
-    }
+    watch(top, false)
+    assertEvents({ watchedFile.writeText("new content") }, mapOf(watchedFile to 'U'))
+    assertEvents({ unwatchedFile.writeText("new content") }, mapOf(), SHORT_PROCESS_DELAY)
   }
 
-  public void testDirectoryFlat() throws Exception {
-    File topDir = createTestDir(myTempDirectory, "top");
-    File watchedFile = createTestFile(topDir, "test.txt");
-    File subDir = createTestDir(topDir, "sub");
-    File unwatchedFile = createTestFile(subDir, "test.txt");
-    refresh(topDir);
+  @Test fun testDirectoryMixed() {
+    val top = tempDir.newFolder("top")
+    val sub = tempDir.newFolder("top/sub2")
+    val unwatchedFile = tempDir.newFile("top/sub1/test.txt")
+    val watchedFile1 = tempDir.newFile("top/test.txt")
+    val watchedFile2 = tempDir.newFile("top/sub2/sub/test.txt")
+    refresh(top)
 
-    LocalFileSystem.WatchRequest request = watch(topDir, false);
-    try {
-      myAccept = true;
-      FileUtil.writeToFile(watchedFile, "new content");
-      assertEvent(VFileContentChangeEvent.class, watchedFile.getPath());
-
-      myTimeout = 10 * INTER_RESPONSE_DELAY;
-      myAccept = true;
-      FileUtil.writeToFile(unwatchedFile, "new content");
-      assertEvent(VFileEvent.class);
-      myTimeout = NATIVE_PROCESS_DELAY;
-    }
-    finally {
-      unwatch(request);
-      delete(topDir);
-    }
+    watch(top, false)
+    watch(sub, true)
+    assertEvents(
+        { listOf(watchedFile1, watchedFile2, unwatchedFile).forEach { it.writeText("new content") } },
+        mapOf(watchedFile1 to 'U', watchedFile2 to 'U'))
   }
 
-  public void testDirectoryMixed() throws Exception {
-    File topDir = createTestDir(myTempDirectory, "top");
-    File watchedFile1 = createTestFile(topDir, "test.txt");
-    File sub1Dir = createTestDir(topDir, "sub1");
-    File unwatchedFile = createTestFile(sub1Dir, "test.txt");
-    File sub2Dir = createTestDir(topDir, "sub2");
-    File sub2subDir = createTestDir(sub2Dir, "sub");
-    File watchedFile2 = createTestFile(sub2subDir, "test.txt");
-    refresh(topDir);
+  @Test fun testIncorrectPath() {
+    val root = tempDir.newFolder("root")
+    val file = tempDir.newFile("root/file.zip")
+    val pseudoDir = File(file, "sub/zip")
+    refresh(root)
 
-    LocalFileSystem.WatchRequest topRequest = watch(topDir, false);
-    LocalFileSystem.WatchRequest subRequest = watch(sub2Dir, true);
-    try {
-      myAccept = true;
-      FileUtil.writeToFile(watchedFile1, "new content");
-      FileUtil.writeToFile(watchedFile2, "new content");
-      FileUtil.writeToFile(unwatchedFile, "new content");
-      assertEvent(VFileContentChangeEvent.class, watchedFile1.getPath(), watchedFile2.getPath());
-    }
-    finally {
-      unwatch(subRequest, topRequest);
-      delete(topDir);
-    }
+    watch(pseudoDir, false)
+    assertEvents({ file.writeText("new content") }, mapOf(), SHORT_PROCESS_DELAY)
   }
 
-  public void testDirectoryNonExisting() throws Exception {
-    File topDir = createTestDir(myTempDirectory, "top");
-    File subDir = new File(topDir, "subDir");
-    File file = new File(subDir, "file.txt");
-    refresh(topDir);
+  @Test fun testDirectoryOverlapping() {
+    val top = tempDir.newFolder("top")
+    val topFile = tempDir.newFile("top/file1.txt")
+    val sub = tempDir.newFolder("top/sub")
+    val subFile = tempDir.newFile("top/sub/file2.txt")
+    val side = tempDir.newFolder("side")
+    val sideFile = tempDir.newFile("side/file3.txt")
+    refresh(top)
+    refresh(side)
 
-    LocalFileSystem.WatchRequest request = watch(subDir);
-    try {
-      myAccept = true;
-      assertTrue(subDir.toString(), subDir.mkdir());
-      assertEvent(VFileCreateEvent.class, subDir.getPath());
-      refresh(subDir);
+    watch(sub)
+    watch(side)
+    assertEvents(
+        { listOf(subFile, sideFile).forEach { it.writeText("first content") } },
+        mapOf(subFile to 'U', sideFile to 'U'))
 
-      myAccept = true;
-      FileUtil.writeToFile(file, "new content");
-      assertEvent(VFileCreateEvent.class, file.getPath());
-    }
-    finally {
-      unwatch(request);
-      delete(topDir);
-    }
-  }
+    assertEvents(
+        { listOf(topFile, subFile, sideFile).forEach { it.writeText("new content") } },
+        mapOf(subFile to 'U', sideFile to 'U'))
 
-  public void testIncorrectPath() throws Exception {
-    File topDir = createTestDir(myTempDirectory, "top");
-    File file = createTestFile(topDir, "file.zip");
-    File subDir = new File(file, "sub/zip");
-    refresh(topDir);
+    val requestForTopDir = watch(top)
+    assertEvents(
+        { listOf(topFile, subFile, sideFile).forEach { it.writeText("newer content") } },
+        mapOf(topFile to 'U', subFile to 'U', sideFile to 'U'))
+    unwatch(requestForTopDir)
 
-    LocalFileSystem.WatchRequest request = watch(subDir, false);
-    try {
-      myTimeout = 10 * INTER_RESPONSE_DELAY;
-      myAccept = true;
-      FileUtil.writeToFile(file, "new content");
-      assertEvent(VFileEvent.class);
-      myTimeout = NATIVE_PROCESS_DELAY;
-    }
-    finally {
-      unwatch(request);
-      delete(topDir);
-    }
-  }
+    assertEvents(
+        { listOf(topFile, subFile, sideFile).forEach { it.writeText("newest content") } },
+        mapOf(subFile to 'U', sideFile to 'U'))
 
-  public void testDirectoryOverlapping() throws Exception {
-    File topDir = createTestDir(myTempDirectory, "top");
-    File fileInTopDir = createTestFile(topDir, "file1.txt");
-    File subDir = createTestDir(topDir, "sub");
-    File fileInSubDir = createTestFile(subDir, "file2.txt");
-    File sideDir = createTestDir(myTempDirectory, "side");
-    File fileInSideDir = createTestFile(sideDir, "file3.txt");
-    refresh(topDir);
-    refresh(sideDir);
-
-    LocalFileSystem.WatchRequest requestForSubDir = watch(subDir);
-    LocalFileSystem.WatchRequest requestForSideDir = watch(sideDir);
-    try {
-      myAccept = true;
-      FileUtil.writeToFile(fileInSubDir, "first content");
-      FileUtil.writeToFile(fileInSideDir, "first content");
-      assertEvent(VFileContentChangeEvent.class, fileInSubDir.getPath(), fileInSideDir.getPath());
-
-      myAccept = true;
-      FileUtil.writeToFile(fileInTopDir, "new content");
-      FileUtil.writeToFile(fileInSubDir, "new content");
-      FileUtil.writeToFile(fileInSideDir, "new content");
-      assertEvent(VFileContentChangeEvent.class, fileInSubDir.getPath(), fileInSideDir.getPath());
-
-      LocalFileSystem.WatchRequest requestForTopDir = watch(topDir);
-      try {
-        myAccept = true;
-        FileUtil.writeToFile(fileInTopDir, "newer content");
-        FileUtil.writeToFile(fileInSubDir, "newer content");
-        FileUtil.writeToFile(fileInSideDir, "newer content");
-        assertEvent(VFileContentChangeEvent.class, fileInTopDir.getPath(), fileInSubDir.getPath(), fileInSideDir.getPath());
-      }
-      finally {
-        unwatch(requestForTopDir);
-      }
-
-      myAccept = true;
-      FileUtil.writeToFile(fileInTopDir, "newest content");
-      FileUtil.writeToFile(fileInSubDir, "newest content");
-      FileUtil.writeToFile(fileInSideDir, "newest content");
-      assertEvent(VFileContentChangeEvent.class, fileInSubDir.getPath(), fileInSideDir.getPath());
-
-      myAccept = true;
-      FileUtil.delete(fileInTopDir);
-      FileUtil.delete(fileInSubDir);
-      FileUtil.delete(fileInSideDir);
-      assertEvent(VFileDeleteEvent.class, fileInTopDir.getPath(), fileInSubDir.getPath(), fileInSideDir.getPath());
-    }
-    finally {
-      unwatch(requestForSubDir, requestForSideDir);
-      delete(topDir);
-    }
+    assertEvents(
+        { listOf(topFile, subFile, sideFile).forEach { it.delete() } },
+        mapOf(topFile to 'D', subFile to 'D', sideFile to 'D'))
   }
 
   // ensure that flat roots set via symbolic paths behave correctly and do not report dirty files returned from other recursive roots
-  public void testSymbolicLinkIntoFlatRoot() throws Exception {
-    File rootDir = createTestDir("root");
-    File aDir = createTestDir(rootDir, "A");
-    File bDir = createTestDir(aDir, "B");
-    File cDir = createTestDir(bDir, "C");
-    File aLink = createSymLink(aDir.getPath(), rootDir.getPath() + "/aLink");
-    File flatWatchedFile = createTestFile(aLink, "test.txt");
-    File fileOutsideFlatWatchRoot = createTestFile(cDir, "test.txt");
-    refresh(rootDir);
+  @Test fun testSymbolicLinkIntoFlatRoot() {
+    val root = tempDir.newFolder("root")
+    val cDir = tempDir.newFolder("root/A/B/C")
+    val aLink = IoTestUtil.createSymLink("${root.path}/A", "${root.path}/aLink")
+    val flatWatchedFile = tempDir.newFile("root/aLink/test.txt")
+    val fileOutsideFlatWatchRoot = tempDir.newFile("root/A/B/C/test.txt")
+    refresh(root)
 
-    LocalFileSystem.WatchRequest aLinkRequest = watch(aLink, false);
-    LocalFileSystem.WatchRequest cDirRequest = watch(cDir, false);
-    try {
-      myAccept = true;
-      FileUtil.writeToFile(flatWatchedFile, "new content");
-      assertEvent(VFileContentChangeEvent.class, flatWatchedFile.getPath());
-
-      myAccept = true;
-      FileUtil.writeToFile(fileOutsideFlatWatchRoot, "new content");
-      assertEvent(VFileContentChangeEvent.class, fileOutsideFlatWatchRoot.getPath());
-    }
-    finally {
-      unwatch(aLinkRequest, cDirRequest);
-      delete(rootDir);
-    }
+    watch(aLink, false)
+    watch(cDir, false)
+    assertEvents({ flatWatchedFile.writeText("new content") }, mapOf(flatWatchedFile to 'U'))
+    assertEvents({ fileOutsideFlatWatchRoot.writeText("new content") }, mapOf(fileOutsideFlatWatchRoot to 'U'))
   }
 
-  public void testMultipleSymbolicLinkPathsToFile() throws Exception {
-    File rootDir = createTestDir("root");
-    File aDir = createTestDir(rootDir, "A");
-    File bDir = createTestDir(aDir, "B");
-    File cDir = createTestDir(bDir, "C");
-    File file = createTestFile(cDir, "test.txt");
-    File bLink = createSymLink(bDir.getPath(), rootDir.getPath() + "/bLink");
-    File cLink = createSymLink(cDir.getPath(), rootDir.getPath() + "/cLink");
-    refresh(rootDir);
+  @Test fun testMultipleSymbolicLinkPathsToFile() {
+    val root = tempDir.newFolder("root")
+    val file = tempDir.newFile("root/A/B/C/test.txt")
+    val bLink = IoTestUtil.createSymLink("${root.path}/A/B", "${root.path}/bLink")
+    val cLink = IoTestUtil.createSymLink("${root.path}/A/B/C", "${root.path}/cLink")
+    refresh(root)
+    val bFilePath = File(bLink.path, "C/${file.name}")
+    val cFilePath = File(cLink.path, file.name)
 
-    String bFilePath = bLink.getPath() + "/" + cDir.getName() + "/" + file.getName();
-    String cFilePath = cLink.getPath() + "/" + file.getName();
-
-    LocalFileSystem.WatchRequest bRequest = watch(bLink);
-    LocalFileSystem.WatchRequest cRequest = watch(cLink);
-    try {
-      myAccept = true;
-      FileUtil.writeToFile(file, "new content");
-      assertEvent(VFileContentChangeEvent.class, bFilePath, cFilePath);
-
-      myAccept = true;
-      FileUtil.delete(file);
-      assertEvent(VFileDeleteEvent.class, bFilePath, cFilePath);
-
-      myAccept = true;
-      FileUtil.writeToFile(file, "re-creation");
-      assertEvent(VFileCreateEvent.class, bFilePath, cFilePath);
-    }
-    finally {
-      unwatch(bRequest, cRequest);
-      delete(rootDir);
-    }
+    watch(bLink)
+    watch(cLink)
+    assertEvents({ file.writeText("new content") }, mapOf(bFilePath to 'U', cFilePath to 'U'))
+    assertEvents({ file.delete() }, mapOf(bFilePath to 'D', cFilePath to 'D'))
+    assertEvents({ file.writeText("re-creation") }, mapOf(bFilePath to 'C', cFilePath to 'C'))
   }
 
-  public void testSymbolicLinkAboveWatchRoot() throws Exception {
-    File topDir = createTestDir("top");
-    File topLink = createSymLink(topDir.getPath(), "link");
-    File subDir = createTestDir(topDir, "sub");
-    File file = createTestFile(subDir, "test.txt");
-    File fileLink = new File(new File(topLink, subDir.getName()), file.getName());
-    refresh(topDir);
-    refresh(topLink);
+  @Test fun testSymbolicLinkAboveWatchRoot() {
+    val top = tempDir.newFolder("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
+    val link = IoTestUtil.createSymLink("${top.path}/dir1/dir2", "${top.path}/link")
+    val fileLink = File(top, "link/dir3/test.txt")
+    refresh(top)
 
-    final LocalFileSystem.WatchRequest request = watch(topLink);
-    try {
-      myAccept = true;
-      FileUtil.writeToFile(file, "new content");
-      assertEvent(VFileContentChangeEvent.class, fileLink.getPath());
-
-      myAccept = true;
-      FileUtil.delete(file);
-      assertEvent(VFileDeleteEvent.class, fileLink.getPath());
-
-      myAccept = true;
-      FileUtil.writeToFile(file, "re-creation");
-      assertEvent(VFileCreateEvent.class, fileLink.getPath());
-    }
-    finally {
-      unwatch(request);
-      delete(topLink);
-      delete(topDir);
-    }
+    watch(link)
+    assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
+    assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
+    assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
   }
 
-/*
+  /*
   public void testSymlinkBelowWatchRoot() throws Exception {
     final File targetDir = FileUtil.createTempDirectory("top.", null);
     final File file = FileUtil.createTempFile(targetDir, "test.", ".txt");
@@ -511,462 +298,274 @@ public class FileWatcherTest extends PlatformTestCase {
   }
 */
 
-  public void testSubst() throws Exception {
-    if (!SystemInfo.isWindows) {
-      System.err.println("Ignored: Windows required");
-      return;
-    }
+  @Test fun testSubst() {
+    assumeTrue(SystemInfo.isWindows)
 
-    File targetDir = createTestDir(myTempDirectory, "top");
-    File subDir = createTestDir(targetDir, "sub");
-    File file = createTestFile(subDir, "test.txt");
-    File rootFile = createSubst(targetDir.getPath());
-    VfsRootAccess.allowRootAccess(getTestRootDisposable(), rootFile.getPath());
-    VirtualFile vfsRoot = myFileSystem.findFileByIoFile(rootFile);
+    val target = tempDir.newFolder("top")
+    val file = tempDir.newFile("top/sub/test.txt")
+
+    val substRoot = IoTestUtil.createSubst(target.path)
+    VfsRootAccess.allowRootAccess(testRootDisposable, substRoot.path)
+    val vfsRoot = fs.findFileByIoFile(substRoot)!!
+
+    val substFile = File(substRoot, "sub/test.txt")
+    refresh(target)
+    refresh(substRoot)
 
     try {
-      assertNotNull(rootFile.getPath(), vfsRoot);
-      File substDir = new File(rootFile, subDir.getName());
-      File substFile = new File(substDir, file.getName());
-      refresh(targetDir);
-      refresh(substDir);
+      watch(substRoot)
+      assertEvents({ file.writeText("new content") }, mapOf(substFile to 'U'))
 
-      LocalFileSystem.WatchRequest request = watch(substDir);
-      try {
-        myAccept = true;
-        FileUtil.writeToFile(file, "new content");
-        assertEvent(VFileContentChangeEvent.class, substFile.getPath());
+      val request = watch(target)
+      assertEvents({ file.writeText("updated content") }, mapOf(file to 'U', substFile to 'U'))
+      assertEvents({ file.delete() }, mapOf(file to 'D', substFile to 'D'))
+      unwatch(request)
 
-        LocalFileSystem.WatchRequest request2 = watch(targetDir);
-        try {
-          myAccept = true;
-          FileUtil.delete(file);
-          assertEvent(VFileDeleteEvent.class, file.getPath(), substFile.getPath());
-        }
-        finally {
-          unwatch(request2);
-        }
-
-        myAccept = true;
-        FileUtil.writeToFile(file, "re-creation");
-        assertEvent(VFileCreateEvent.class, substFile.getPath());
-      }
-      finally {
-        unwatch(request);
-      }
+      assertEvents({ file.writeText("re-creation") }, mapOf(substFile to 'C'))
     }
     finally {
-      delete(targetDir);
-      deleteSubst(rootFile.getPath());
-      if (vfsRoot != null) {
-        ((NewVirtualFile)vfsRoot).markDirty();
-        myFileSystem.refresh(false);
-      }
+      IoTestUtil.deleteSubst(substRoot.path)
+      (vfsRoot as NewVirtualFile).markDirty()
+      fs.refresh(false)
     }
   }
 
-  public void testDirectoryRecreation() throws Exception {
-    File rootDir = createTestDir(myTempDirectory, "root");
-    File topDir = createTestDir(rootDir, "top");
-    File file1 = createTestFile(topDir, "file1.txt", "abc");
-    File file2 = createTestFile(topDir, "file2.txt", "123");
-    refresh(topDir);
+  @Test fun testDirectoryRecreation() {
+    val root = tempDir.newFolder("root")
+    val dir = tempDir.newFolder("root/dir")
+    val file1 = tempDir.newFile("root/dir/file1.txt")
+    val file2 = tempDir.newFile("root/dir/file2.txt")
+    refresh(root)
 
-    LocalFileSystem.WatchRequest request = watch(rootDir);
-    try {
-      myAccept = true;
-      assertTrue(FileUtil.delete(topDir));
-      assertTrue(topDir.mkdir());
-      TimeoutUtil.sleep(100);
-      assertTrue(file1.createNewFile());
-      assertTrue(file2.createNewFile());
-      assertEvent(VFileContentChangeEvent.class, file1.getPath(), file2.getPath());
-    }
-    finally {
-      unwatch(request);
-      delete(topDir);
-    }
+    watch(root)
+    assertEvents(
+        { dir.deleteRecursively(); dir.mkdir(); arrayOf(file1, file2).forEach { it.writeText("text") } },
+        mapOf(file1 to 'U', file2 to 'U'))
   }
 
-  public void testWatchRootRecreation() throws Exception {
-    File rootDir = createTestDir(myTempDirectory, "root");
-    File file1 = createTestFile(rootDir, "file1.txt", "abc");
-    File file2 = createTestFile(rootDir, "file2.txt", "123");
-    refresh(rootDir);
+  @Test fun testWatchRootRecreation() {
+    val root = tempDir.newFolder("root")
+    val file1 = tempDir.newFile("root/file1.txt")
+    val file2 = tempDir.newFile("root/file2.txt")
+    refresh(root)
 
-    LocalFileSystem.WatchRequest request = watch(rootDir);
-    try {
-      myAccept = true;
-      assertTrue(FileUtil.delete(rootDir));
-      assertTrue(rootDir.mkdir());
-      if (SystemInfo.isLinux) TimeoutUtil.sleep(1500);  // implementation specific
-      assertTrue(file1.createNewFile());
-      assertTrue(file2.createNewFile());
-      assertEvent(VFileContentChangeEvent.class, file1.getPath(), file2.getPath());
-    }
-    finally {
-      unwatch(request);
-      delete(rootDir);
-    }
+    watch(root)
+    assertEvents(
+        {
+          root.deleteRecursively(); root.mkdir()
+          if (SystemInfo.isLinux) TimeoutUtil.sleep(1500)  // implementation specific
+          arrayOf(file1, file2).forEach { it.writeText("text") }
+        },
+        mapOf(file1 to 'U', file2 to 'U'))
   }
 
-  public void testWatchRootRenameRemove() throws Exception {
-    File topDir = createTestDir(myTempDirectory, "top");
-    File rootDir = createTestDir(topDir, "root");
-    File rootDir2 = new File(topDir, "_" + rootDir.getName());
-    refresh(topDir);
+  @Test fun testWatchRootRenameRemove() {
+    val top = tempDir.newFolder("top")
+    val root = tempDir.newFolder("top/root")
+    val root2 = File(top, "_root")
+    refresh(top)
 
-    LocalFileSystem.WatchRequest request = watch(rootDir);
-    try {
-      myAccept = true;
-      assertTrue(rootDir.renameTo(rootDir2));
-      assertEvent(VFileEvent.class, rootDir.getPath(), rootDir2.getPath());
-
-      myAccept = true;
-      assertTrue(rootDir2.renameTo(rootDir));
-      assertEvent(VFileEvent.class, rootDir.getPath(), rootDir2.getPath());
-
-      myAccept = true;
-      assertTrue(FileUtil.delete(rootDir));
-      assertEvent(VFileDeleteEvent.class, rootDir.getPath());
-
-      myAccept = true;
-      assertTrue(rootDir.mkdirs());
-      assertEvent(VFileCreateEvent.class, rootDir.getPath());
-
-      myAccept = true;
-      assertTrue(FileUtil.delete(topDir));
-      assertEvent(VFileDeleteEvent.class, topDir.getPath());
-
-      // todo[r.sh] current VFS implementation loses watch root once it's removed; this probably should be fixed
-      myAccept = true;
-      assertTrue(rootDir.mkdirs());
-      assertEvent(VFileCreateEvent.class);
-    }
-    finally {
-      unwatch(request);
-      delete(topDir);
-    }
+    watch(root)
+    assertEvents({ root.renameTo(root2) }, mapOf(root to 'D', root2 to 'C'))
+    assertEvents({ root2.renameTo(root) }, mapOf(root to 'C', root2 to 'D'))
+    assertEvents({ root.deleteRecursively() }, mapOf(root to 'D'))
+    assertEvents({ root.mkdirs() }, mapOf(root to 'C'))
+    assertEvents({ top.deleteRecursively() }, mapOf(top to 'D'))
+    // todo[r.sh] current VFS implementation loses watch root once it's removed; this probably should be fixed
+    assertEvents({ root.mkdirs() }, mapOf())
   }
 
-  public void testSwitchingToFsRoot() throws Exception {
-    File topDir = createTestDir(myTempDirectory, "top");
-    File rootDir = createTestDir(topDir, "root");
-    File file1 = createTestFile(topDir, "1.txt");
-    File file2 = createTestFile(rootDir, "2.txt");
-    refresh(topDir);
+  @Test fun testSwitchingToFsRoot() {
+    val top = tempDir.newFolder("top")
+    val root = tempDir.newFolder("top/root")
+    val file1 = tempDir.newFile("top/1.txt")
+    val file2 = tempDir.newFile("top/root/2.txt")
+    refresh(top)
+    val fsRoot = File(if (SystemInfo.isUnix) "/" else top.path.substring(0, 3))
+    assertTrue(fsRoot.exists(), "can't guess root of " + top)
 
-    File fsRoot = new File(SystemInfo.isUnix ? "/" : topDir.getPath().substring(0, topDir.getPath().indexOf(File.separatorChar)) + "\\");
-    assertTrue("can't guess root of " + topDir, fsRoot.exists());
+    val request = watch(root)
+    assertEvents({ arrayOf(file1, file2).forEach { it.writeText("new content") } }, mapOf(file2 to 'U'))
 
-    LocalFileSystem.WatchRequest request = watch(rootDir);
-    try {
-      myAccept = true;
-      FileUtil.writeToFile(file1, "abc");
-      FileUtil.writeToFile(file2, "abc");
-      assertEvent(VFileContentChangeEvent.class, file2.getPath());
+    val rootRequest = watch(fsRoot)
+    assertEvents({ arrayOf(file1, file2).forEach { it.writeText("12345") } }, mapOf(file1 to 'U', file2 to 'U'), SHORT_PROCESS_DELAY)
+    unwatch(rootRequest)
 
-      LocalFileSystem.WatchRequest rootRequest = watch(fsRoot);
-      try {
-        myTimeout = 10 * INTER_RESPONSE_DELAY;
-        myAccept = true;
-        FileUtil.writeToFile(file1, "12345");
-        FileUtil.writeToFile(file2, "12345");
-        assertEvent(VFileContentChangeEvent.class, file1.getPath(), file2.getPath());
-        myTimeout = NATIVE_PROCESS_DELAY;
-      }
-      finally {
-        unwatch(rootRequest);
-      }
+    assertEvents({ arrayOf(file1, file2).forEach { it.writeText("") } }, mapOf(file2 to 'U'))
 
-      myAccept = true;
-      FileUtil.writeToFile(file1, "");
-      FileUtil.writeToFile(file2, "");
-      assertEvent(VFileContentChangeEvent.class, file2.getPath());
-    }
-    finally {
-      unwatch(request);
-    }
-
-    myTimeout = 10 * INTER_RESPONSE_DELAY;
-    myAccept = true;
-    FileUtil.writeToFile(file1, "xyz");
-    FileUtil.writeToFile(file2, "xyz");
-    assertEvent(VFileEvent.class);
-    myTimeout = NATIVE_PROCESS_DELAY;
+    unwatch(request)
+    assertEvents({ arrayOf(file1, file2).forEach { it.writeText("xyz") } }, mapOf(), SHORT_PROCESS_DELAY)
   }
 
-  public void testLineBreaksInName() throws Exception {
-    if (!SystemInfo.isUnix) {
-      System.err.println("Ignored: Unix required");
-      return;
-    }
+  @Test fun testLineBreaksInName() {
+    assumeTrue(SystemInfo.isUnix)
 
-    File topDir = createTestDir(myTempDirectory, "topDir");
-    File testDir = createTestDir(topDir, "weird\ndir\nname");
-    File testFile = createTestFile(testDir, "weird\nfile\nname");
-    refresh(topDir);
+    val root = tempDir.newFolder("root")
+    val file = tempDir.newFile("root/weird\ndir\nname/weird\nfile\nname")
+    refresh(root)
 
-    LocalFileSystem.WatchRequest request = watch(topDir);
-    try {
-      myAccept = true;
-      FileUtil.writeToFile(testFile, "abc");
-      assertEvent(VFileContentChangeEvent.class, testFile.getPath());
-    }
-    finally {
-      unwatch(request);
-    }
+    watch(root)
+    assertEvents({ file.writeText("abc") }, mapOf(file to 'U'))
   }
 
-  public void testHiddenFiles() throws Exception {
-    if (!SystemInfo.isWindows) {
-      System.err.println("Ignored: Windows required");
-      return;
-    }
+  @Test fun testHiddenFiles() {
+    assumeTrue(SystemInfo.isWindows)
 
-    File topDir = createTestDir(myTempDirectory, "topDir");
-    File testDir = createTestDir(topDir, "dir");
-    File testFile = createTestFile(testDir, "file", "123");
-    refresh(topDir);
+    val root = tempDir.newFolder("root")
+    val file = tempDir.newFile("root/dir/file")
+    refresh(root)
 
-    LocalFileSystem.WatchRequest request = watch(topDir);
-    try {
-      myAccept = true;
-      setHidden(testFile.getPath(), true);
-      assertEvent(VFilePropertyChangeEvent.class, testFile.getPath());
-    }
-    finally {
-      unwatch(request);
-    }
+    watch(root)
+    assertEvents({ IoTestUtil.setHidden(file.path, true) }, mapOf(file to 'P'))
   }
 
-  public void testFileCaseChange() throws Exception {
-    if (SystemInfo.isFileSystemCaseSensitive) {
-      System.err.println("Ignored: case-insensitive FS required");
-      return;
-    }
+  @Test fun testFileCaseChange() {
+    assumeTrue(!SystemInfo.isFileSystemCaseSensitive)
 
-    File topDir = createTestDir(myTempDirectory, "topDir");
-    File testFile = createTestFile(topDir, "file.txt", "123");
-    refresh(topDir);
+    val root = tempDir.newFolder("root")
+    val file = tempDir.newFile("root/file.txt")
+    val newFile = File(file.parent, StringUtil.capitalize(file.name))
+    refresh(root)
 
-    LocalFileSystem.WatchRequest request = watch(topDir);
-    try {
-      myAccept = true;
-      File newFile = new File(testFile.getParent(), StringUtil.capitalize(testFile.getName()));
-      FileUtil.rename(testFile, newFile);
-      assertEvent(VFilePropertyChangeEvent.class, newFile.getPath());
-    }
-    finally {
-      unwatch(request);
-    }
+    watch(root)
+    assertEvents({ file.renameTo(newFile) }, mapOf(newFile to 'P'))
   }
 
-  public void testPartialRefresh() throws Exception {
+  @Test fun testPartialRefresh() {
     // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
-    File top = createTestDir(myTempDirectory, "top");
-    LocalFileSystemTest.doTestPartialRefresh(top);
+    val top = tempDir.newFolder("top")
+    LocalFileSystemTest.doTestPartialRefresh(top)
   }
 
-  public void testInterruptedRefresh() throws Exception {
+  @Test fun testInterruptedRefresh() {
     // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
-    File top = createTestDir(myTempDirectory, "top");
-    LocalFileSystemTest.doTestInterruptedRefresh(top);
+    val top = tempDir.newFolder("top")
+    LocalFileSystemTest.doTestInterruptedRefresh(top)
   }
 
-  public void testUnicodePaths() throws Exception {
-    File topDir = createTestDir(myTempDirectory, UNICODE_NAME_1);
-    File testFile = createTestFile(topDir, UNICODE_NAME_2 + ".txt");
-    refresh(topDir);
+  @Test fun testUnicodePaths() {
+    val root = tempDir.newFolder(UNICODE_NAME_1)
+    val file = tempDir.newFile("${UNICODE_NAME_1}/${UNICODE_NAME_2}.txt")
+    refresh(root)
+    watch(root)
 
-    LocalFileSystem.WatchRequest request = watch(topDir);
-    try {
-      myAccept = true;
-      FileUtil.writeToFile(testFile, "abc");
-      assertEvent(VFileContentChangeEvent.class, testFile.getPath());
-    }
-    finally {
-      unwatch(request);
-    }
+    assertEvents({ file.writeText("abc") }, mapOf(file to 'U'))
   }
 
-  public void testDisplacementByIsomorphicTree() throws Exception {
-    if (SystemInfo.isMac) {
-      System.out.println("** skipped");
-      return;
-    }
+  @Test fun testDisplacementByIsomorphicTree() {
+    assumeTrue(!SystemInfo.isMac)
 
-    File top = createTestDir(myTempDirectory, "top");
-    File up = createTestDir(top, "up");
-    File middle = createTestDir(up, "middle");
-    File file = createTestFile(middle, "file.txt", "original content");
-    File up_copy = new File(top, "up_copy");
-    FileUtil.copyDir(up, up_copy);
-    FileUtil.writeToFile(file, "new content");
+    val top = tempDir.newFolder("top")
+    val root = tempDir.newFolder("top/root")
+    val file = tempDir.newFile("top/root/middle/file.txt")
+    file.writeText("original content")
+    val root_copy = File(top, "root_copy")
+    root.copyRecursively(root_copy)
+    file.writeText("new content")
+    val root_bak = File(top, "root.bak")
 
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-    assertNotNull(vFile);
-    assertEquals("new content", VfsUtilCore.loadText(vFile));
+    val vFile = fs.refreshAndFindFileByIoFile(file)!!
+    assertEquals("new content", VfsUtilCore.loadText(vFile))
 
-    LocalFileSystem.WatchRequest request = watch(up);
-    try {
-      myAccept = true;
-      FileUtil.rename(up, new File(top, "up.bak"));
-      FileUtil.rename(up_copy, up);
-      assertEvent(VFileContentChangeEvent.class, file.getPath());
-      assertTrue(vFile.isValid());
-      assertEquals("original content", VfsUtilCore.loadText(vFile));
-    }
-    finally {
-      unwatch(request);
-    }
+    watch(root)
+    assertEvents({ root.renameTo(root_bak); root_copy.renameTo(root) }, mapOf(file to 'U'))
+    assertTrue(vFile.isValid)
+    assertEquals("original content", VfsUtilCore.loadText(vFile))
   }
 
-  public void testWatchRootReplacement() throws IOException {
-    File top = createTestDir(myTempDirectory, "top");
-    File dir1 = createTestDir(top, "dir1");
-    File dir2 = createTestDir(top, "dir2");
-    File f1 = createTestFile(dir1, "f.txt");
-    File f2 = createTestFile(dir2, "f.txt");
-    refresh(f1);
-    refresh(f2);
+  @Test fun testWatchRootReplacement() {
+    val root1 = tempDir.newFolder("top/root1")
+    val root2 = tempDir.newFolder("top/root2")
+    val file1 = tempDir.newFile("top/root1/file.txt")
+    val file2 = tempDir.newFile("top/root2/file.txt")
+    refresh(file1)
+    refresh(file2)
 
-    Ref<LocalFileSystem.WatchRequest> request = Ref.create(watch(dir1));
-    try {
-      myAccept = true;
-      FileUtil.writeToFile(f1, "data");
-      FileUtil.writeToFile(f2, "data");
-      assertEvent(VFileContentChangeEvent.class, f1.getPath());
+    var request = watch(root1)
+    assertEvents({ arrayOf(file1, file2).forEach { it.writeText("data") } }, mapOf(file1 to 'U'))
+    fs.replaceWatchedRoot(request, root2.path, true)
+    wait { watcher.isSettingRoots }
+    assertEvents({ arrayOf(file1, file2).forEach { it.writeText("more data") } }, mapOf(file2 to 'U'))
+  }
 
-      String newRoot = dir2.getPath();
-      getEvents("events to replace watch root", () -> request.set(myFileSystem.replaceWatchedRoot(request.get(), newRoot, true)));
+  @Test fun testPermissionUpdate() {
+    val file = tempDir.newFile("test.txt")
+    val vFile = refresh(file)
+    assertTrue(vFile.isWritable)
+    val win = SystemInfo.isWindows
 
-      myAccept = true;
-      FileUtil.writeToFile(f1, "more data");
-      FileUtil.writeToFile(f2, "more data");
-      assertEvent(VFileContentChangeEvent.class, f2.getPath());
-    }
-    finally {
-      unwatch(request.get());
+    watch(file)
+    assertEvents(
+        { PlatformTestUtil.assertSuccessful(GeneralCommandLine(if (win) "attrib" else "chmod", if (win) "+R" else "500", file.path)) },
+        mapOf(file to 'P'))
+    assertFalse(vFile.isWritable)
+    assertEvents(
+        { PlatformTestUtil.assertSuccessful(GeneralCommandLine(if (win) "attrib" else "chmod", if (win) "-R" else "700", file.path)) },
+        mapOf(file to 'P'))
+    assertTrue(vFile.isWritable)
+  }
+
+  // helpers
+
+  private fun wait(timeout: Long = START_STOP_DELAY, condition: () -> Boolean) {
+    val stopAt = System.currentTimeMillis() + timeout
+    while (condition()) {
+      assertTrue(System.currentTimeMillis() < stopAt, "operation timed out")
+      TimeoutUtil.sleep(10)
     }
   }
 
-  public void testPermissionUpdate() throws IOException {
-    File file = createTestFile(myTempDirectory, "test.txt", "some content");
-    VirtualFile vFile = refresh(file);
-    assertTrue(vFile.isWritable());
-    boolean win = SystemInfo.isWindows;
-
-    LocalFileSystem.WatchRequest request = watch(file);
-    try {
-      myAccept = true;
-      PlatformTestUtil.assertSuccessful(new GeneralCommandLine(win ? "attrib" : "chmod", win ? "+R" : "500", file.getPath()));
-      assertEvent(VFilePropertyChangeEvent.class, file.getPath());
-      assertFalse(vFile.isWritable());
-
-      myAccept = true;
-      PlatformTestUtil.assertSuccessful(new GeneralCommandLine(win ? "attrib" : "chmod", win ? "-R" : "700", file.getPath()));
-      assertEvent(VFilePropertyChangeEvent.class, file.getPath());
-      assertTrue(vFile.isWritable());
-    }
-    finally {
-      unwatch(request);
-      delete(file);
-    }
+  private fun watch(file: File, recursive: Boolean = true): LocalFileSystem.WatchRequest {
+    val request = fs.addRootToWatch(file.path, recursive)!!
+    wait { watcher.isSettingRoots }
+    return request
   }
 
-
-  @NotNull
-  private LocalFileSystem.WatchRequest watch(File watchFile) {
-    return watch(watchFile, true);
+  private fun unwatch(request: LocalFileSystem.WatchRequest) {
+    fs.removeWatchedRoot(request)
+    wait { watcher.isSettingRoots }
+    fs.refresh(false)
   }
 
-  @NotNull
-  private LocalFileSystem.WatchRequest watch(File watchFile, boolean recursive) {
-    Ref<LocalFileSystem.WatchRequest> request = Ref.create();
-    getEvents("events to add watch " + watchFile, () -> request.set(myFileSystem.addRootToWatch(watchFile.getPath(), recursive)));
-    assertFalse(request.isNull());
-    assertFalse(myWatcher.isSettingRoots());
-    return request.get();
-  }
-
-
-  private void unwatch(LocalFileSystem.WatchRequest... requests) {
-    getEvents("events to stop watching", () -> myFileSystem.removeWatchedRoots(Arrays.asList(requests)));
-  }
-
-  private VirtualFile refresh(File file) {
-    VirtualFile vFile = myFileSystem.refreshAndFindFileByIoFile(file);
-    assertNotNull(file.toString(), vFile);
-    VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        file.getChildren();
-        return true;
+  private fun refresh(file: File): VirtualFile {
+    val vFile = fs.refreshAndFindFileByIoFile(file)!!
+    VfsUtilCore.visitChildrenRecursively(vFile, object : VirtualFileVisitor<Any>() {
+      override fun visitFile(file: VirtualFile): Boolean {
+        file.children; return true
       }
-    });
-    return vFile;
+    })
+    vFile.refresh(false, true)
+    return vFile
   }
 
-  private void delete(File file) throws IOException {
-    VirtualFile vFile = myFileSystem.findFileByIoFile(file);
-    if (vFile != null) {
-      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-      try {
-        vFile.delete(this);
+  private fun assertEvents(action: () -> Unit, expectedOps: Map<File, Char>, timeout: Long = NATIVE_PROCESS_DELAY) {
+    LOG.debug("** waiting for ${expectedOps}")
+    watcherEvents.down()
+    alarm.cancelAllRequests()
+    action()
+    watcherEvents.waitFor(timeout)
+    LOG.debug("** done waiting")
+
+    val allEvents = arrayListOf<VFileEvent>()
+    val connection = ApplicationManager.getApplication().messageBus.connect()
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener.Adapter() {
+      override fun after(events: List<VFileEvent>) {
+        allEvents.addAll(events)
       }
-      finally {
-        token.finish();
-      }
-    }
-    if (file.exists()) {
-      FileUtil.delete(file);
-    }
+    })
+    fs.refresh(false)
+    connection.disconnect()
+
+    val expected = expectedOps.entries.map { "${it.value} : ${FileUtil.toSystemIndependentName(it.key.path)}" }.sorted()
+    val actual = allEvents.map { "${eventType(it)} : ${it.file?.path}" }.sorted()
+    assertEquals(expected, actual)
   }
 
-  private List<VFileEvent> getEvents(String msg, @Nullable Runnable action) {
-    LOG.debug("** waiting for " + msg);
-    myAccept = true;
-
-    if (action != null) {
-      action.run();
-    }
-
-    long timeout = myTimeout, start = System.currentTimeMillis();
-    try {
-      synchronized (myWaiter) {
-        //noinspection WaitNotInLoop
-        myWaiter.wait(timeout);
-      }
-    }
-    catch (InterruptedException e) {
-      LOG.warn(e);
-    }
-
-    LOG.debug("** waited for " + (System.currentTimeMillis() - start) + " of " + timeout);
-    myFileSystem.refresh(false);
-
-    List<VFileEvent> result;
-    synchronized (myEvents) {
-      result = ContainerUtil.newArrayList(myEvents);
-      myEvents.clear();
-    }
-
-    LOG.debug("** events: " + result.size());
-    return result;
-  }
-
-  private void assertEvent(Class<? extends VFileEvent> type, String... paths) {
-    List<VFileEvent> events = getEvents(type.getSimpleName(), null);
-    assertEquals(events.toString(), paths.length, events.size());
-
-    Set<String> pathSet = Stream.of(paths).map(FileUtil::toSystemIndependentName).collect(Collectors.toSet());
-
-    for (VFileEvent event : events) {
-      assertTrue(event.toString(), type.isInstance(event));
-      VirtualFile eventFile = event.getFile();
-      assertNotNull(event.toString(), eventFile);
-      assertTrue(eventFile + " not in " + Arrays.toString(paths), pathSet.remove(eventFile.getPath()));
-    }
+  private fun eventType(e: VFileEvent): Char = when (e) {
+    is VFileCreateEvent -> 'C'
+    is VFileDeleteEvent -> 'D'
+    is VFileContentChangeEvent -> 'U'
+    is VFilePropertyChangeEvent -> 'P'
+    else -> '?'
   }
 }
