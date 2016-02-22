@@ -20,10 +20,7 @@ import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.StatisticsUtilKt;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,12 +28,9 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataManager;
-import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
@@ -56,19 +50,19 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
     VcsLogDataManager dataManager = logManager.getDataManager();
     if (dataManager != null) {
       DataPack dataPack = dataManager.getDataPack();
-      PermanentGraph<Integer> permanentGraph = dataPack.getPermanentGraph();
-      MultiMap<VcsKey, VirtualFile> groupedRoots = groupRootsByVcs(dataPack.getLogProviders());
+      if (dataPack.isFull()) {
+        PermanentGraph<Integer> permanentGraph = dataPack.getPermanentGraph();
+        MultiMap<VcsKey, VirtualFile> groupedRoots = groupRootsByVcs(dataPack.getLogProviders());
 
-      Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
-      usages.add(StatisticsUtilKt.getCountingUsage("data.commit.count", permanentGraph.getAllCommits().size(),
-                                                   asList(0, 1, 100, 1000, 10 * 1000, 100 * 1000, 500 * 1000)));
-      for (VcsKey vcs : groupedRoots.keySet()) {
-        usages.add(StatisticsUtilKt.getCountingUsage("data." + vcs.getName().toLowerCase() + ".root.count",
-                                                     groupedRoots.get(vcs).size(),
-                                                     asList(0, 1, 2, 5, 8, 15, 30, 50, 100)
-        ));
+        Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
+        usages.add(StatisticsUtilKt.getCountingUsage("data.commit.count", permanentGraph.getAllCommits().size(),
+                                                     asList(0, 1, 100, 1000, 10 * 1000, 100 * 1000, 500 * 1000)));
+        for (VcsKey vcs : groupedRoots.keySet()) {
+          usages.add(StatisticsUtilKt.getCountingUsage("data." + vcs.getName().toLowerCase() + ".root.count", groupedRoots.get(vcs).size(),
+                                                       asList(0, 1, 2, 5, 8, 15, 30, 50, 100)));
+        }
+        return usages;
       }
-      return usages;
     }
     return Collections.emptySet();
   }
