@@ -312,7 +312,7 @@ public class PerformanceWatcher implements ApplicationComponent {
 
   private static void checkMemoryUsage(File file) {
     final Runtime rt = Runtime.getRuntime();
-    final long allocatedMem = rt.totalMemory();
+    final long allocatedMem = rt.maxMemory();
     final long unusedMem = rt.freeMemory();
     if (unusedMem < allocatedMem / 5) {
       LOG.info("High memory usage (free " + unusedMem / 1024 / 1024 +
