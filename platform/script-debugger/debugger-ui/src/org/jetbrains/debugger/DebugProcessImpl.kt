@@ -17,6 +17,7 @@ package org.jetbrains.debugger
 
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 import com.intellij.util.containers.ContainerUtil
@@ -24,6 +25,7 @@ import com.intellij.util.io.socketConnection.ConnectionStatus
 import com.intellij.xdebugger.DefaultDebugProcessHandler
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
@@ -184,29 +186,60 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   override fun checkCanInitBreakpoints(): Boolean {
     if (connection.state.status == ConnectionStatus.CONNECTED) {
       // breakpointsInitiated could be set in another thread and at this point work (init breakpoints) could be not yet performed
-      return setBreakpoints(false)
+      return initBreakpoints(false)
     }
 
     if (connectedListenerAdded.compareAndSet(false, true)) {
       connection.stateChanged {
         if (it.status == ConnectionStatus.CONNECTED) {
-          setBreakpoints(true)
+          initBreakpoints(true)
         }
       }
     }
     return false
   }
 
-  open protected fun setBreakpoints(setBreakpoints: Boolean): Boolean {
-    return breakpointsInitiated.compareAndSet(false, true)
+  protected fun initBreakpoints(setBreakpoints: Boolean): Boolean {
+    if (breakpointsInitiated.compareAndSet(false, true)) {
+      doInitBreakpoints(setBreakpoints)
+      return true
+    }
+    else {
+      return false
+    }
+  }
+
+  protected open fun doInitBreakpoints(setBreakpoints: Boolean) {
+    if (setBreakpoints) {
+      beforeInitBreakpoints(vm!!)
+      runReadAction { session.initBreakpoints() }
+    }
+  }
+
+  protected open fun beforeInitBreakpoints(vm: Vm) {
+  }
+
+  protected fun addChildVm(vm: Vm) {
+    beforeInitBreakpoints(vm)
+
+    val breakpointManager = XDebuggerManager.getInstance(session.project).breakpointManager
+    @Suppress("UNCHECKED_CAST")
+    for (breakpointHandler in breakpointHandlers) {
+      if (breakpointHandler is LineBreakpointHandler) {
+        val breakpoints = runReadAction { breakpointManager.getBreakpoints(breakpointHandler.breakpointTypeClass) }
+        for (breakpoint in breakpoints) {
+          breakpointHandler.manager.setBreakpoint(vm, breakpoint)
+        }
+      }
+    }
   }
 }
 
 @Suppress("UNCHECKED_CAST")
-class LineBreakpointHandler(breakpointTypeClass: Class<out XBreakpointType<out XLineBreakpoint<*>, *>>, private val manager: LineBreakpointManager)
+class LineBreakpointHandler(breakpointTypeClass: Class<out XBreakpointType<out XLineBreakpoint<*>, *>>, internal val manager: LineBreakpointManager)
     : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass as Class<out XBreakpointType<XLineBreakpoint<*>, *>>) {
   override fun registerBreakpoint(breakpoint: XLineBreakpoint<*>) {
-    manager.setBreakpoint(breakpoint)
+    manager.setBreakpoint(manager.debugProcess.vm!!, breakpoint)
   }
 
   override fun unregisterBreakpoint(breakpoint: XLineBreakpoint<*>, temporary: Boolean) {
