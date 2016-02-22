@@ -28,17 +28,21 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.debugger.PySignature;
+import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: ktisha
- *
+ * <p>
  * Helps to specify type  in annotations in python3
  */
 public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
@@ -79,11 +83,23 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   private static void annotateParameter(Project project, Editor editor, @NotNull PyNamedParameter parameter) {
     final PyExpression defaultParamValue = parameter.getDefaultValue();
 
-    final String name = StringUtil.notNullize(parameter.getName());
+    final String paramName = StringUtil.notNullize(parameter.getName());
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
     final String defaultParamText = defaultParamValue == null ? null : defaultParamValue.getText();
-    final PyNamedParameter namedParameter = elementGenerator.createParameter(name, defaultParamText, PyNames.OBJECT,
+
+    String paramType = PyNames.OBJECT;
+
+    PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
+    if (function != null) {
+      final PySignature signature = PySignatureCacheManager.getInstance(parameter.getProject()).findSignature(
+        function);
+      if (signature != null) {
+        paramType = ObjectUtils.chooseNotNull(signature.getArgTypeQualifiedName(paramName), paramType);
+      }
+    }
+
+    final PyNamedParameter namedParameter = elementGenerator.createParameter(paramName, defaultParamText, paramType,
                                                                              LanguageLevel.forElement(parameter));
     assert namedParameter != null;
     parameter = (PyNamedParameter)parameter.replace(namedParameter);
@@ -97,7 +113,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
       assert annotationValue != null : "Generated parameter must have annotation";
       final int replacementStart = annotation.getStartOffsetInParent() + annotationValue.getStartOffsetInParent();
       builder.replaceRange(TextRange.create(replacementStart,
-                                            replacementStart + annotationValue.getTextLength()), PyNames.OBJECT);
+                                            replacementStart + annotationValue.getTextLength()), paramType);
       final Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
       TemplateManager.getInstance(project).startTemplate(editor, template);
     }
@@ -108,7 +124,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
 
     if (callable instanceof PyFunction) {
       final String annotationText = " -> " + PyNames.OBJECT;
-      
+
       final PsiElement prevElem = PyPsiUtils.getPrevNonCommentSibling(((PyFunction)callable).getStatementList(), true);
       assert prevElem != null;
 
@@ -126,8 +142,8 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
       finally {
         manager.commitDocument(document);
       }
-      
-      
+
+
       callable = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(callable);
       final PyAnnotation annotation = ((PyFunction)callable).getAnnotation();
       assert annotation != null;
