@@ -122,8 +122,20 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   private void annotateReturnType(Project project, Document document, PsiElement resolved) {
     PyCallable callable = getCallable(resolved);
 
+    String returnType = PyNames.OBJECT;
+
     if (callable instanceof PyFunction) {
-      final String annotationText = " -> " + PyNames.OBJECT;
+      PyFunction function = (PyFunction) callable;
+      final PySignature signature = PySignatureCacheManager.getInstance(project).findSignature(
+        function);
+      if (signature != null) {
+        returnType = ObjectUtils.chooseNotNull(signature.getReturnTypeQualifiedName(), returnType);
+      }
+    }
+
+
+    if (callable instanceof PyFunction) {
+      final String annotationText = " -> " + returnType;
 
       final PsiElement prevElem = PyPsiUtils.getPrevNonCommentSibling(((PyFunction)callable).getStatementList(), true);
       assert prevElem != null;
@@ -152,7 +164,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
       final int offset = annotationValue.getTextOffset();
 
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotationValue);
-      builder.replaceRange(TextRange.create(0, PyNames.OBJECT.length()), PyNames.OBJECT);
+      builder.replaceRange(TextRange.create(0, returnType.length()), returnType);
       final Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
       final OpenFileDescriptor descriptor = new OpenFileDescriptor(
         project,
