@@ -73,14 +73,17 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
     final PyNamedParameter parameter = getParameter(problemElement, resolved);
 
     if (parameter != null) {
-      annotateParameter(project, editor, parameter);
+      annotateParameter(project, editor, parameter, true);
     }
     else {
-      annotateReturnType(project, editor.getDocument(), elementAt);
+      annotateReturnType(project, editor.getDocument(), elementAt, true);
     }
   }
 
-  private static void annotateParameter(Project project, Editor editor, @NotNull PyNamedParameter parameter) {
+  static PyNamedParameter annotateParameter(Project project,
+                                                   Editor editor,
+                                                   @NotNull PyNamedParameter parameter,
+                                                   boolean createTemplate) {
     final PyExpression defaultParamValue = parameter.getDefaultValue();
 
     final String paramName = StringUtil.notNullize(parameter.getName());
@@ -106,7 +109,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
     parameter = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(parameter);
     editor.getCaretModel().moveToOffset(parameter.getTextOffset());
     final PyAnnotation annotation = parameter.getAnnotation();
-    if (annotation != null) {
+    if (annotation != null && createTemplate) {
       final PyExpression annotationValue = annotation.getValue();
 
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(parameter);
@@ -117,42 +120,42 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
       final Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
       TemplateManager.getInstance(project).startTemplate(editor, template);
     }
+
+    return parameter;
   }
 
-  private void annotateReturnType(Project project, Document document, PsiElement resolved) {
+  public static PyExpression annotateReturnType(Project project, Document document, PsiElement resolved, boolean createTemplate) {
     PyCallable callable = getCallable(resolved);
 
     String returnType = PyNames.OBJECT;
 
     if (callable instanceof PyFunction) {
-      PyFunction function = (PyFunction) callable;
+      PyFunction function = (PyFunction)callable;
       final PySignature signature = PySignatureCacheManager.getInstance(project).findSignature(
         function);
       if (signature != null) {
         returnType = ObjectUtils.chooseNotNull(signature.getReturnTypeQualifiedName(), returnType);
       }
-    }
 
-
-    if (callable instanceof PyFunction) {
       final String annotationText = " -> " + returnType;
 
       final PsiElement prevElem = PyPsiUtils.getPrevNonCommentSibling(((PyFunction)callable).getStatementList(), true);
       assert prevElem != null;
 
       final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+      Document documentWithCollable = manager.getDocument(callable.getContainingFile());
       try {
         final TextRange range = prevElem.getTextRange();
-        manager.doPostponedOperationsAndUnblockDocument(document);
+        manager.doPostponedOperationsAndUnblockDocument(documentWithCollable);
         if (prevElem.getNode().getElementType() == PyTokenTypes.COLON) {
-          document.insertString(range.getStartOffset(), annotationText);
+          documentWithCollable.insertString(range.getStartOffset(), annotationText);
         }
         else {
-          document.insertString(range.getEndOffset(), annotationText + ":");
+          documentWithCollable.insertString(range.getEndOffset(), annotationText + ":");
         }
       }
       finally {
-        manager.commitDocument(document);
+        manager.commitDocument(documentWithCollable);
       }
 
 
@@ -161,22 +164,28 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
       assert annotation != null;
       final PyExpression annotationValue = annotation.getValue();
       assert annotationValue != null : "Generated function must have annotation";
-      final int offset = annotationValue.getTextOffset();
 
-      final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotationValue);
-      builder.replaceRange(TextRange.create(0, returnType.length()), returnType);
-      final Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
-      final OpenFileDescriptor descriptor = new OpenFileDescriptor(
-        project,
-        callable.getContainingFile().getVirtualFile(),
-        offset
-      );
-      final Editor targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-      if (targetEditor != null) {
-        targetEditor.getCaretModel().moveToOffset(offset);
-        TemplateManager.getInstance(project).startTemplate(targetEditor, template);
+      if (createTemplate) {
+        final int offset = annotationValue.getTextOffset();
+
+        final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotationValue);
+        builder.replaceRange(TextRange.create(0, returnType.length()), returnType);
+        final Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
+        final OpenFileDescriptor descriptor = new OpenFileDescriptor(
+          project,
+          callable.getContainingFile().getVirtualFile(),
+          offset
+        );
+        final Editor targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+        if (targetEditor != null) {
+          targetEditor.getCaretModel().moveToOffset(offset);
+          TemplateManager.getInstance(project).startTemplate(targetEditor, template);
+        }
       }
+      return annotationValue;
     }
+
+    return null;
   }
 
   @Override
