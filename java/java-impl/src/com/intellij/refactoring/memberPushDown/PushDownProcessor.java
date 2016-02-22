@@ -82,7 +82,13 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
-    return new PushDownUsageViewDescriptor(myClass);
+    return new PushDownUsageViewDescriptor<PsiMember, MemberInfo>(myClass, myMemberInfos);
+  }
+
+  @NotNull
+  @Override
+  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
+    return Collections.singletonList(myClass);
   }
 
   @Nullable

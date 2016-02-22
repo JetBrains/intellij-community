@@ -15,19 +15,28 @@
  */
 package com.intellij.refactoring.memberPushDown;
 
-import com.intellij.psi.PsiClass;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-class PushDownUsageViewDescriptor implements UsageViewDescriptor {
-  private final PsiClass myClass;
-  private final String myProcessedElementsHeader = RefactoringBundle.message("push.down.members.elements.header");
+class PushDownUsageViewDescriptor<E extends PsiElement, M extends MemberInfoBase<E>> implements UsageViewDescriptor {
+  private final PsiElement[] myMembers;
+  private final String myProcessedElementsHeader;
 
-  public PushDownUsageViewDescriptor(PsiClass aClass) {
-    myClass = aClass;
+  public PushDownUsageViewDescriptor(E aClass, M[] memberInfos) {
+    myMembers = ContainerUtil.map(memberInfos, new Function<M, PsiElement>() {
+      @Override
+      public PsiElement fun(M info) {
+        return info.getMember();
+      }
+    }, PsiElement.EMPTY_ARRAY);
+    myProcessedElementsHeader = RefactoringBundle.message("push.down.members.elements.header") + " " + DescriptiveNameUtil.getDescriptiveName(aClass);
   }
 
   public String getProcessedElementsHeader() {
@@ -36,7 +45,7 @@ class PushDownUsageViewDescriptor implements UsageViewDescriptor {
 
   @NotNull
   public PsiElement[] getElements() {
-    return new PsiElement[]{myClass};
+    return myMembers;
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
