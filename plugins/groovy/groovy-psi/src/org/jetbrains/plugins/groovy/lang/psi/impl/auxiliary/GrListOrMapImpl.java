@@ -47,6 +47,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import static com.intellij.psi.util.PsiUtil.*;
+
 /**
  * @author ilyas
  */
@@ -73,12 +75,17 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
   @Override
   public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
-    if (getInitializers().length == 0) {
-      return super.addInternal(first, last, getNode().getFirstChildNode(), false);
+    ASTNode result = super.addInternal(first, last, anchor, before);
+    if (first == last) {
+      if (anchor == null) {
+        anchor = result;
+      }
+      if (!before) {
+        anchor = anchor.getTreeNext();
+      }
+      getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", anchor);
     }
-    final ASTNode lastChild = getNode().getLastChildNode();
-    getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", lastChild);
-    return super.addInternal(first, last, lastChild.getTreePrev(), false);
+    return result;
   }
 
   @Override
@@ -195,8 +202,8 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
           PsiClass hashMap = facade.findClass(GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP, scope);
           if (hashMap != null) {
             PsiSubstitutor mapSubstitutor = PsiSubstitutor.EMPTY.
-              put(hashMap.getTypeParameters()[0], com.intellij.psi.util.PsiUtil.substituteTypeParameter(lType,  CommonClassNames.JAVA_UTIL_MAP, 0, false)).
-              put(hashMap.getTypeParameters()[1], com.intellij.psi.util.PsiUtil.substituteTypeParameter(lType,  CommonClassNames.JAVA_UTIL_MAP, 1, false));
+              put(hashMap.getTypeParameters()[0], substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 0, false)).
+              put(hashMap.getTypeParameters()[1], substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 1, false));
             return facade.getElementFactory().createType(hashMap, mapSubstitutor);
           }
         }
@@ -218,7 +225,8 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
           if (arrayList == null) arrayList = facade.findClass(CommonClassNames.JAVA_UTIL_LIST, scope);
           if (arrayList != null) {
             PsiSubstitutor arrayListSubstitutor = PsiSubstitutor.EMPTY.
-              put(arrayList.getTypeParameters()[0], com.intellij.psi.util.PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_LIST, 0, false));
+              put(arrayList.getTypeParameters()[0],
+                  substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_LIST, 0, false));
             return facade.getElementFactory().createType(arrayList, arrayListSubstitutor);
           }
         }

@@ -88,69 +88,19 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
     return -1;
   }
 
-  /*@Override
-  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    GrParameter[] params = getParameters();
-
-    if (params.length == 0) {
-      element = add(element);
-    }
-    else {
-      element = super.addAfter(element, anchor);
-      final ASTNode astNode = getNode();
-      if (anchor != null) {
-        astNode.addLeaf(mCOMMA, ",", element.getNode());
-      }
-      else {
-        astNode.addLeaf(mCOMMA, ",", element.getNextSibling().getNode());
-      }
-      CodeStyleManager.getInstance(getManager().getProject()).reformat(this);
-    }
-
-    return element;
-  }
-
-  @Override
-  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    GrParameter[] params = getParameters();
-
-    if (params.length == 0) {
-      element = add(element);
-    }
-    else {
-      element = super.addBefore(element, anchor);
-      final ASTNode astNode = getNode();
-      if (anchor != null) {
-        astNode.addLeaf(mCOMMA, ",", anchor.getNode());
-      }
-      else {
-        astNode.addLeaf(mCOMMA, ",", element.getNode());
-      }
-      CodeStyleManager.getInstance(getManager().getProject()).reformat(this);
-    }
-
-    return element;
-  }*/
-
-
   @Override
   public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
     GrParameter[] params = getParameters();
 
     ASTNode result = super.addInternal(first, last, anchor, before);
     if (first == last && first.getPsi() instanceof GrParameter && params.length > 0) {
-      if (before.booleanValue() && anchor != null) {
-        getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", anchor);
+      if (anchor == null) {
+        anchor = result;
       }
-      else if (before.booleanValue() && anchor == null) {
-        getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", result);
+      if (!before) {
+        anchor = anchor.getTreeNext();
       }
-      else if (!before.booleanValue() && anchor != null) {
-        getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", result);
-      }
-      else if (!before.booleanValue() && anchor == null) {
-        getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", result.getTreeNext());
-      }
+      getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", anchor);
     }
     return result;
   }

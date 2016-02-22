@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -24,6 +25,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -41,7 +43,7 @@ public class FlipCommaIntention implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Flip ','";
+    return QuickFixBundle.message("flip.comma.intention");
   }
 
   @Override
@@ -76,14 +78,13 @@ public class FlipCommaIntention implements IntentionAction {
     PsiElement prev = smartAdvanceAsExpr(comma, false);
     PsiElement next = smartAdvanceAsExpr(comma, true);
     if (prev != null && next != null) {
-      boolean caretBeforeComma = editor.getCaretModel().getOffset() <= comma.getTextRange().getStartOffset();
-      PsiElement nextAnchor = next.getPrevSibling();
-      PsiElement prevAnchor = prev.getNextSibling();
-      comma.getParent().addBefore(next, prevAnchor);
-      comma.getParent().addAfter(prev, nextAnchor);
-      next.delete();
+      PsiElement parent = comma.getParent();
+      parent.addAfter(prev, next);
       prev.delete();
-      editor.getCaretModel().moveToOffset(caretBeforeComma ? comma.getTextRange().getStartOffset() : comma.getTextRange().getEndOffset());
+      
+      CodeStyleManager.getInstance(parent.getProject()).reformat(parent, true);
+
+      editor.getCaretModel().moveToOffset(next.getTextRange().getEndOffset());
     }
   }
 
