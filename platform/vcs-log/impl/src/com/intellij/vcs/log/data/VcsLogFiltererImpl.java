@@ -163,18 +163,8 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
     @Nullable
     private VisiblePack getVisiblePack(@Nullable VisiblePack visiblePack, @NotNull List<Request> requests) {
-      int invalidateRequest = ContainerUtil.lastIndexOf(requests, new Condition<Request>() {
-        @Override
-        public boolean value(Request request) {
-          return request instanceof InvalidateRequest;
-        }
-      });
-      int refreshRequest = ContainerUtil.lastIndexOf(requests, new Condition<Request>() {
-        @Override
-        public boolean value(Request request) {
-          return request instanceof RefreshRequest;
-        }
-      });
+      int invalidateRequest = ContainerUtil.lastIndexOfInstance(requests, InvalidateRequest.class);
+      int refreshRequest = ContainerUtil.lastIndexOfInstance(requests, RefreshRequest.class);
 
       FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
       SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
