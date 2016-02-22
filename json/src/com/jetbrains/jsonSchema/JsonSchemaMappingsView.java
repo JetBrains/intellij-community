@@ -295,9 +295,12 @@ public class JsonSchemaMappingsView implements Disposable {
   }
 
   private static String getRelativePath(@NotNull Project project, @NotNull String text) {
+    text = text.trim();
     if (project.isDefault()) return text;
     if (StringUtil.isEmptyOrSpaces(text)) return text;
-    final String relativePath = FileUtil.getRelativePath(new File(project.getBasePath()), new File(text));
+    final File ioFile = new File(text);
+    if (!ioFile.isAbsolute()) return text;
+    final String relativePath = FileUtil.getRelativePath(new File(project.getBasePath()), ioFile);
     return relativePath == null ? text : relativePath;
   }
 }
