@@ -52,6 +52,7 @@ class XBreakpointItem extends BreakpointItem {
     setupGenericRenderer(renderer, false);
   }
 
+  @Override
   public void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView) {
     if (plainView) {
       renderer.setIcon(getIcon());
@@ -65,6 +66,7 @@ class XBreakpointItem extends BreakpointItem {
     }
   }
 
+  @Override
   public String getDisplayText() {
     return XBreakpointUtil.getShortText(myBreakpoint);
   }
@@ -74,6 +76,7 @@ class XBreakpointItem extends BreakpointItem {
     return ((XBreakpointBase)myBreakpoint).getUserDescription();
   }
 
+  @Override
   public Icon getIcon() {
     return ((XBreakpointBase)myBreakpoint).getIcon();
   }
@@ -95,6 +98,7 @@ class XBreakpointItem extends BreakpointItem {
     }
   }
 
+  @Override
   public void doUpdateDetailView(DetailView panel, boolean editorOnly) {
     XBreakpointBase breakpoint = (XBreakpointBase)myBreakpoint;
     Project project = breakpoint.getProject();
@@ -159,6 +163,7 @@ class XBreakpointItem extends BreakpointItem {
   public void removed(Project project) {
     final XBreakpointManagerImpl breakpointManager = getManager();
     new WriteAction() {
+      @Override
       protected void run(@NotNull final Result result) {
         breakpointManager.removeBreakpoint(myBreakpoint);
       }
@@ -195,6 +200,7 @@ class XBreakpointItem extends BreakpointItem {
     }
   }
 
+  @Override
   public void dispose() {
     if (myPropertiesPanel != null) {
       myPropertiesPanel.dispose();

@@ -64,6 +64,7 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
     mySplitterProportionKey = splitterProportionKey;
   }
 
+  @Override
   @NotNull
   protected XDebuggerEditorBase getInputEditor() {
     return myMultilineEditor;

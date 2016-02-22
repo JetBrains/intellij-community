@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,19 +65,11 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     final SetValueInplaceEditor editor = new SetValueInplaceEditor(node, nodeName);
 
     if (editor.myModifier != null) {
-      editor.myModifier.calculateInitialValueEditorText(new XValueModifier.XInitialValueCallback() {
-        @Override
-        public void setValue(final String initialValue) {
-          AppUIUtil.invokeOnEdt(new Runnable() {
-            @Override
-            public void run() {
-              if (editor.getTree().isShowing()) {
-                editor.show(initialValue);
-              }
-            }
-          });
+      editor.myModifier.calculateInitialValueEditorText(initialValue -> AppUIUtil.invokeOnEdt(() -> {
+        if (editor.getTree().isShowing()) {
+          editor.show(initialValue);
         }
-      });
+      }));
     }
     else {
       editor.show(null);
@@ -107,30 +99,22 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
       @Override
       public void valueModified() {
         if (isDetachedTree(myTree)) {
-          AppUIUtil.invokeOnEdt(new Runnable() {
-            @Override
-            public void run() {
-              myTree.rebuildAndRestore(treeState);
-            }
-          });
+          AppUIUtil.invokeOnEdt(() -> myTree.rebuildAndRestore(treeState));
         }
         XDebuggerUtilImpl.rebuildAllSessionsViews(getProject());
       }
 
       @Override
       public void errorOccurred(@NotNull final String errorMessage) {
-        AppUIUtil.invokeOnEdt(new Runnable() {
-          @Override
-          public void run() {
-            myTree.rebuildAndRestore(treeState);
+        AppUIUtil.invokeOnEdt(() -> {
+          myTree.rebuildAndRestore(treeState);
 
-            Editor editor = myExpressionEditor.getEditor();
-            if (editor != null) {
-              HintManager.getInstance().showErrorHint(editor, errorMessage);
-            }
-            else {
-              Messages.showErrorDialog(myTree, errorMessage);
-            }
+          Editor editor = myExpressionEditor.getEditor();
+          if (editor != null) {
+            HintManager.getInstance().showErrorHint(editor, errorMessage);
+          }
+          else {
+            Messages.showErrorDialog(myTree, errorMessage);
           }
         });
         XDebuggerUtilImpl.rebuildAllSessionsViews(getProject());

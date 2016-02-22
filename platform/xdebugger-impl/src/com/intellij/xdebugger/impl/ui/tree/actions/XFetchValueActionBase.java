@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,12 +163,9 @@ public abstract class XFetchValueActionBase extends AnAction {
     }
 
     public void evaluationComplete(final int index, @NotNull final String value) {
-      AppUIUtil.invokeOnEdt(new Runnable() {
-        @Override
-        public void run() {
-          values.set(index, value);
-          finish();
-        }
+      AppUIUtil.invokeOnEdt(() -> {
+        values.set(index, value);
+        finish();
       });
     }
   }

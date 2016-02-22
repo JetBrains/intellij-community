@@ -489,7 +489,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   public <B extends XLineBreakpoint<?>> List<XBreakpointGroupingRule<B, ?>> getGroupingByFileRuleAsList() {
-    return Collections.singletonList(this.getGroupingByFileRule());
+    return Collections.singletonList(getGroupingByFileRule());
   }
 
   @Override
