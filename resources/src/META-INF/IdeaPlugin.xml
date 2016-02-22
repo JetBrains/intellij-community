@@ -228,6 +228,11 @@
       <with attribute="implementationClass" implements="com.intellij.refactoring.memberPullUp.PullUpHelperFactory"/>
     </extensionPoint>
 
+    <extensionPoint name="refactoring.pushDownHelper" interface="com.intellij.refactoring.memberPushDown.PushDownHelper"/>
+    <extensionPoint name="refactoring.pushDownLanguageHelper" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.memberPushDown.PushDownLanguageHelper"/>
+    </extensionPoint>
+
     <extensionPoint name="classTypePointerFactory" interface="com.intellij.psi.ClassTypePointerFactory"/>
 
     <!--<extensionPoint name="expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
@@ -1699,6 +1704,12 @@
     <codeInsight.externalLibraryResolver implementation="com.intellij.codeInspection.concurrencyAnnotations.JCiPExternalLibraryResolver"/>
 
     <refactoring.pullUpHelperFactory language="JAVA" implementationClass="com.intellij.refactoring.memberPullUp.JavaPullUpHelperFactory"/>
+
+    <refactoring.pushDownHelper id="javaPushDownHelper" implementation="com.intellij.refactoring.memberPushDown.JavaPushDownHelper"/>
+    <refactoring.pushDownLanguageHelper id="javaPushDownLanguageHelper"
+                                        language="JAVA"
+                                        implementationClass="com.intellij.refactoring.memberPushDown.JavaPushDownLanguageHelper"/>
+
     <hierarchy.referenceProcessor implementation="com.intellij.ide.hierarchy.call.JavaCallReferenceProcessor"/>
     <projectTemplate projectType="JAVA_MODULE" templatePath="resources/projectTemplates/Java/Command_Line_App.zip"/>
     <generatedSourcesFilter implementation="com.intellij.openapi.roots.JavaGeneratedSourcesFilter"/>
