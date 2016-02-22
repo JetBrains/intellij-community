@@ -21,10 +21,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Panel with branch labels, above the graph.
@@ -73,7 +71,7 @@ public class BranchesPanel extends JPanel {
     Collection<VcsRef> allRefs = refsModel.getBranches();
 
     LinkedHashMap<VirtualFile, List<RefGroup>> groups = ContainerUtil.newLinkedHashMap();
-    for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
+    for (Map.Entry<VirtualFile, Set<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
       groups.put(entry.getKey(),
                  expandExpandableGroups(myDataManager.getLogProvider(entry.getKey()).getReferenceManager().group(entry.getValue())));
     }
