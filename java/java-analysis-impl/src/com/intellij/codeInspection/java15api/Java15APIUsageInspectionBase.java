@@ -72,13 +72,16 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
   private static final Map<LanguageLevel, Reference<Set<String>>> ourForbiddenAPI = ContainerUtil.newEnumMap(LanguageLevel.class);
   private static final Set<String> ourIgnored16ClassesAPI = new THashSet<String>(10);
   private static final Map<LanguageLevel, String> ourPresentableShortMessage = ContainerUtil.newEnumMap(LanguageLevel.class);
+
+  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_1_9;
+
   static {
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_3, "1.4");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_4, "1.5");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_5, "1.6");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_6, "1.7");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_7, "1.8");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_1_9, "1.9");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_1_8, "1.9");
 
     loadForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }
@@ -390,7 +393,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     if (forbiddenApi.contains(signature)) {
       return true;
     }
-    if (languageLevel.compareTo(LanguageLevel.HIGHEST) == 0) {
+    if (languageLevel.compareTo(ourHighestKnownLanguage) == 0) {
       return false;
     }
     LanguageLevel nextLanguageLevel = LanguageLevel.values()[languageLevel.ordinal() + 1];
