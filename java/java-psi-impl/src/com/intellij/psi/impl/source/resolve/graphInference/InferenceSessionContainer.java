@@ -108,6 +108,9 @@ public class InferenceSessionContainer {
                 .collectAdditionalAndInfer(parameters, arguments, properties, compoundInitialState.getInitialSubstitutor());
             }
           }
+          else if (topLevelCall instanceof PsiMethodCallExpression) {
+            return new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent).prepareSubstitution();
+          }
         }
       }
     }
