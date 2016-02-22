@@ -1,45 +1,26 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-public final class ScriptRegExpBreakpointTarget extends BreakpointTarget {
-  private final String regExp;
-  public final String language;
-
-  public ScriptRegExpBreakpointTarget(@NotNull String regExp, @Nullable String language) {
-    this.regExp = regExp;
-    this.language = language;
-  }
-
-  @Override
-  public <R> R accept(Visitor<R> visitor) {
-    if (visitor instanceof ScriptRegExpSupportVisitor) {
-      return ((ScriptRegExpSupportVisitor<R>)visitor).visitRegExp(this);
+class ScriptRegExpBreakpointTarget(private val regExp: String, val language: String? = null) : BreakpointTarget() {
+  override fun <R> accept(visitor: BreakpointTarget.Visitor<R>): R {
+    if (visitor is ScriptRegExpSupportVisitor<*>) {
+      return (visitor as ScriptRegExpSupportVisitor<R>).visitRegExp(this)
     }
     else {
-      return visitor.visitUnknown(this);
+      return visitor.visitUnknown(this)
     }
   }
 
-  @Override
-  public String toString() {
-    return regExp;
+  override fun toString() = regExp
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) {
+      return true
+    }
+    if (other == null || javaClass != other.javaClass) {
+      return false
+    }
+    return regExp == (other as ScriptRegExpBreakpointTarget).regExp
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    return regExp.equals(((ScriptRegExpBreakpointTarget)o).regExp);
-  }
-
-  @Override
-  public int hashCode() {
-    return regExp.hashCode();
-  }
+  override fun hashCode() = regExp.hashCode()
 }
