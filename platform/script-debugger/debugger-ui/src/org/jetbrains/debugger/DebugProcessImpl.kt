@@ -24,7 +24,9 @@ import com.intellij.util.io.socketConnection.ConnectionStatus
 import com.intellij.xdebugger.DefaultDebugProcessHandler
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.breakpoints.*
+import com.intellij.xdebugger.breakpoints.XBreakpointHandler
+import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import org.jetbrains.concurrency.Promise
@@ -46,6 +48,9 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   protected val urlToFileCache: ConcurrentMap<Url, VirtualFile> = ContainerUtil.newConcurrentMap<Url, VirtualFile>()
 
   var processBreakpointConditionsAtIdeSide: Boolean = false
+
+  private val connectedListenerAdded = AtomicBoolean()
+  private val breakpointsInitiated = AtomicBoolean()
 
   private val _breakpointHandlers: Array<XBreakpointHandler<*>> by lazy(LazyThreadSafetyMode.NONE) { createBreakpointHandlers() }
 
@@ -174,10 +179,32 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   open fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>): List<Location> = throw UnsupportedOperationException()
 
   override fun isLibraryFrameFilterSupported() = true
+
+  // todo make final (go plugin compatibility)
+  override fun checkCanInitBreakpoints(): Boolean {
+    if (connection.state.status == ConnectionStatus.CONNECTED) {
+      // breakpointsInitiated could be set in another thread and at this point work (init breakpoints) could be not yet performed
+      return setBreakpoints(false)
+    }
+
+    if (connectedListenerAdded.compareAndSet(false, true)) {
+      connection.stateChanged {
+        if (it.status == ConnectionStatus.CONNECTED) {
+          setBreakpoints(true)
+        }
+      }
+    }
+    return false
+  }
+
+  open protected fun setBreakpoints(setBreakpoints: Boolean): Boolean {
+    return breakpointsInitiated.compareAndSet(false, true)
+  }
 }
 
-class LineBreakpointHandler(breakpointTypeClass: Class<out XLineBreakpointType<*>>, private val manager: LineBreakpointManager)
-    : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass as Class<out XBreakpointType<XLineBreakpoint<*>, out XBreakpointProperties<*>>>) {
+@Suppress("UNCHECKED_CAST")
+class LineBreakpointHandler(breakpointTypeClass: Class<out XBreakpointType<out XLineBreakpoint<*>, *>>, private val manager: LineBreakpointManager)
+    : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass as Class<out XBreakpointType<XLineBreakpoint<*>, *>>) {
   override fun registerBreakpoint(breakpoint: XLineBreakpoint<*>) {
     manager.setBreakpoint(breakpoint)
   }
