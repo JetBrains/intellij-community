@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,18 +25,23 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-class PushDownUsageViewDescriptor<E extends PsiElement, M extends MemberInfoBase<E>> implements UsageViewDescriptor {
+public class PushDownUsageViewDescriptor<M extends MemberInfoBase> implements UsageViewDescriptor {
   private final PsiElement[] myMembers;
   private final String myProcessedElementsHeader;
 
-  public PushDownUsageViewDescriptor(E aClass, M[] memberInfos) {
-    myMembers = ContainerUtil.map(memberInfos, new Function<M, PsiElement>() {
+  public PushDownUsageViewDescriptor(PsiElement aClass) {
+    this(aClass, null);
+  }
+
+  public PushDownUsageViewDescriptor(PsiElement aClass, M[] memberInfos) {
+    myMembers = memberInfos != null ? ContainerUtil.map(memberInfos, new Function<M, PsiElement>() {
       @Override
       public PsiElement fun(M info) {
         return info.getMember();
       }
-    }, PsiElement.EMPTY_ARRAY);
-    myProcessedElementsHeader = RefactoringBundle.message("push.down.members.elements.header") + " " + DescriptiveNameUtil.getDescriptiveName(aClass);
+    }, PsiElement.EMPTY_ARRAY) : new PsiElement[] {aClass};
+    myProcessedElementsHeader = RefactoringBundle.message("push.down.members.elements.header", 
+                                                          memberInfos != null ? DescriptiveNameUtil.getDescriptiveName(aClass) : "");
   }
 
   public String getProcessedElementsHeader() {

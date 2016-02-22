@@ -82,7 +82,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
-    return new PushDownUsageViewDescriptor<PsiMember, MemberInfo>(myClass, myMemberInfos);
+    return new PushDownUsageViewDescriptor<MemberInfo>(myClass, myMemberInfos);
   }
 
   @NotNull
