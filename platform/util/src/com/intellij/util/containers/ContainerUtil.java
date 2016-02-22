@@ -2367,6 +2367,16 @@ public class ContainerUtil extends ContainerUtilRt {
     return i < 0 ? null : (U)list.get(i);
   }
 
+  @Contract(pure = true)
+  public static <T, U extends T> int lastIndexOfInstance(@NotNull List<T> list, @NotNull final Class<U> clazz) {
+    return lastIndexOf(list, new Condition<T>() {
+      @Override
+      public boolean value(T t) {
+        return clazz.isInstance(t);
+      }
+    });
+  }
+
   @Contract(pure=true)
   public static <T> int indexOf(@NotNull List<T> list, @NotNull final T object) {
     return indexOf(list, new Condition<T>() {
