@@ -35,17 +35,11 @@ public class IterableStreamConversionRule extends TypeConversionRule {
                                                      PsiMember member,
                                                      PsiExpression context,
                                                      TypeMigrationLabeler labeler) {
-    if (BaseGuavaTypeConversionRule
-      .canConvert(from, to, CommonClassNames.JAVA_LANG_ITERABLE, StreamApiConstants.JAVA_UTIL_STREAM_STREAM)) {
-      if (context instanceof PsiReferenceExpression) {
-        final PsiElement resolved = ((PsiReferenceExpression)context).resolve();
-        if (resolved instanceof PsiVariable) {
-          final PsiClass aClass = PsiTypesUtil.getPsiClass(((PsiVariable)resolved).getType());
-          if (aClass != null && GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName())) {
-            return new TypeConversionDescriptor("$it$", GuavaFluentIterableConversionRule.STREAM_COLLECT_TO_LIST);
-          }
-        }
-      }
+    if (BaseGuavaTypeConversionRule.canConvert(from,
+                                               to,
+                                               CommonClassNames.JAVA_LANG_ITERABLE,
+                                               StreamApiConstants.JAVA_UTIL_STREAM_STREAM)) {
+      return new GuavaTypeConversionDescriptor("$it$", "$it$").setConvertParameterAsLambda(false);
     }
     return null;
   }

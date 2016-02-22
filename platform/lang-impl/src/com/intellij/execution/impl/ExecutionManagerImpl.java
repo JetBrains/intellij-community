@@ -40,6 +40,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -47,6 +48,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.Alarm;
@@ -340,7 +342,18 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
         @Override
         public void run() {
           if (!myProject.isDisposed()) {
-            DumbService.getInstance(myProject).runWhenSmart(startRunnable);
+            if (!Registry.is("dumb.aware.run.configurations")) {
+              DumbService.getInstance(myProject).runWhenSmart(startRunnable);
+            } else {
+              try {
+                DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
+                startRunnable.run();
+              } catch (IndexNotReadyException ignored) {
+                ExecutionUtil.handleExecutionError(environment, new ExecutionException("cannot start while indexing is in progress."));
+              } finally {
+                DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
+              }
+            }
           }
         }
       });
@@ -488,7 +501,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
     awaitingTerminationAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (DumbService.getInstance(myProject).isDumb() || ExecutorRegistry.getInstance().isStarting(environment)) {
+        if ((DumbService.getInstance(myProject).isDumb() && !Registry.is("dumb.aware.run.configurations")) || ExecutorRegistry.getInstance().isStarting(environment)) {
           awaitingTerminationAlarm.addRequest(this, 100);
           return;
         }

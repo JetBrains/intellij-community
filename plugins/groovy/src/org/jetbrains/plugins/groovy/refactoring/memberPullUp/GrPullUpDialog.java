@@ -97,11 +97,9 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
   protected void updateMemberInfo() {
     super.updateMemberInfo();
     getRefactorAction().setEnabled(GroovyLanguage.INSTANCE.equals(getSuperClass().getLanguage()));
-    if (myMemberSelectionPanel != null) {
-      ((MyMemberInfoModel)myMemberInfoModel).setSuperClass(getSuperClass());
-      myMemberSelectionPanel.getTable().setMemberInfos(myMemberInfos);
-      myMemberSelectionPanel.getTable().fireExternalDataChange();
-    }
+    ((MyMemberInfoModel)myMemberInfoModel).setSuperClass(getSuperClass());
+    myMemberSelectionPanel.getTable().setMemberInfos(myMemberInfos);
+    myMemberSelectionPanel.getTable().fireExternalDataChange();
   }
 
   @Override

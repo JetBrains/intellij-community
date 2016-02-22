@@ -509,7 +509,7 @@ public class IdeEventQueue extends EventQueue {
       MouseEvent src = (MouseEvent)e;
       if (src.getButton() < 6) {
         // Convert these events(buttons 4&5 in are produced by touchpad, they must be converted to horizontal scrolling events
-        e = new MouseWheelEvent(src.getComponent(), src.getID(), src.getWhen(),
+        e = new MouseWheelEvent(src.getComponent(), MouseEvent.MOUSE_WHEEL, src.getWhen(),
                                 src.getModifiers() | InputEvent.SHIFT_DOWN_MASK, src.getX(), src.getY(),
                                 0, false, MouseWheelEvent.WHEEL_UNIT_SCROLL, src.getClickCount(), src.getButton() == 4 ? -1 : 1);
       }
@@ -1156,7 +1156,7 @@ public class IdeEventQueue extends EventQueue {
   private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1009, 100);
   @Override
   public void postEvent(@NotNull AWTEvent theEvent) {
-    myFrequentEventDetector.eventHappened();
+    myFrequentEventDetector.eventHappened(theEvent);
     super.postEvent(theEvent);
   }
 

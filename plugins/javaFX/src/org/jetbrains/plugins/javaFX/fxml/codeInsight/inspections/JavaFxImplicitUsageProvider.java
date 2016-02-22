@@ -18,9 +18,11 @@ package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import org.jetbrains.plugins.javaFX.JavaFxControllerClassIndex;
-import org.jetbrains.plugins.javaFX.JavaFxIdsIndex;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import org.jetbrains.plugins.javaFX.indexing.JavaFxControllerClassIndex;
+import org.jetbrains.plugins.javaFX.indexing.JavaFxIdsIndex;
 
 import java.util.Collection;
 import java.util.List;

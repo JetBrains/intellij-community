@@ -1,0 +1,11 @@
+import java.util.function.Supplier;
+
+class Test {
+  {
+    Supplier<String> sup = () -> null;
+  }
+
+  private String get() {
+    return null;
+  }
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 
 /**
@@ -80,7 +80,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   public void setEnabled(boolean enable) {
     if (enable == myComboBox.isEnabled()) return;
 
-    myComboBox.setEnabled(enable);
+    UIUtil.setEnabled(myComponent, enable, true);
     //myComboBox.setEditable(enable);
 
     if (enable) {
@@ -144,13 +144,6 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
   @Override
   public XExpression getExpression() {
-    ComboPopup popup = myComboBox.getPopup();
-    if (popup != null && popup.isVisible()) {
-      Object value = popup.getList().getSelectedValue();
-      if (value != null) {
-        return (XExpression)value;
-      }
-    }
     Object document = myEditor.getItem();
     if (document instanceof Document) { // sometimes null on Mac
       return getEditorsProvider().createExpression(getProject(), (Document)document, myExpression.getLanguage(), EvaluationMode.EXPRESSION);

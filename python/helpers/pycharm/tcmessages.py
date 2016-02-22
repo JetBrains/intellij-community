@@ -16,6 +16,8 @@ class TeamcityServiceMessages:
         Last suite we entered in
         """
 
+        self.number_of_tests = 0
+
     def escapeValue(self, value):
         if sys.version_info[0] <= 2 and isinstance(value, unicode):
             s = value.encode("utf-8")
@@ -46,11 +48,13 @@ class TeamcityServiceMessages:
     def testStarted(self, testName, location=None):
         self.message('testStarted', name=testName, locationHint=location)
         self.test_stack.append(testName)
+        self.number_of_tests = self.number_of_tests + 1
 
 
     def testFinished(self, testName, duration=None):
         self.message('testFinished', name=testName, duration=duration)
         self.__pop_current_test()
+
 
 
     def testIgnored(self, testName, message=''):

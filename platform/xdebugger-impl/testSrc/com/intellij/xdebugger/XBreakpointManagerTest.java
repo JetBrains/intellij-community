@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package com.intellij.xdebugger;
 
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.JdomKt;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -167,8 +166,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     "<option name=\"time\" value=\"1\" />" +
     "</breakpoint-manager>";
     try {
-      Document document = JDOMUtil.loadDocument(oldStyle);
-      load(document.getRootElement());
+      load(JdomKt.loadElement(oldStyle));
     }
     catch (Exception e) {
       e.printStackTrace();

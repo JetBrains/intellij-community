@@ -633,6 +633,14 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     FindUtil.replace(myProject, myEditor, 0, model);
     assertEquals("FooBar fooBar", myEditor.getDocument().getText());
+
+    configureByText(FileTypes.PLAIN_TEXT, "abc1 Abc1 ABC1");
+
+    model.setStringToFind("ABC1");
+    model.setStringToReplace("DEF1");
+
+    FindUtil.replace(myProject, myEditor, 0, model);
+    assertEquals("def1 Def1 DEF1", myEditor.getDocument().getText());
   }
 
   public void testFindWholeWords() {
@@ -861,6 +869,9 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertEquals("public static   MyType my   = 1;", buildStringToFindForIndicesFromRegExp("public static (@A)? MyType my\\w+?  = 1;", myProject));
     assertEquals(" Foo ", buildStringToFindForIndicesFromRegExp("\\bFoo\\b", myProject));
     assertEquals("", buildStringToFindForIndicesFromRegExp("foo|bar", myProject));
+    assertEquals(" Exit Foo Bar Baz", buildStringToFindForIndicesFromRegExp("\\nExit\\tFoo\\rBar\\fBaz", myProject));
+    assertEquals(" Foo Bar Baz Exit", buildStringToFindForIndicesFromRegExp("\\012Foo\\u000ABar\\x0ABaz\\aExit", myProject));
+    assertEquals(" Foo Bar BazCooBoo", buildStringToFindForIndicesFromRegExp("\\1Foo\\sBar\\DBaz\\QCoo\\E\\QBoo", myProject));
   }
 
   public void testCreateFileMaskCondition() {

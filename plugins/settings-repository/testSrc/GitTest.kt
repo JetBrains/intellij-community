@@ -20,8 +20,8 @@ import com.intellij.configurationStore.write
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.testFramework.file
-import com.intellij.testFramework.writeChild
 import com.intellij.util.PathUtilRt
+import com.intellij.util.writeChild
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.jgit.dirCache.writePath
@@ -120,8 +120,7 @@ internal class GitTest : GitTestCase() {
     assertThat(repositoryManager.getUpstream()).isEqualTo(url)
   }
 
-  @Test
-  public fun pullToRepositoryWithoutCommits() {
+  @Test fun pullToRepositoryWithoutCommits() {
     doPullToRepositoryWithoutCommits(null)
   }
 
@@ -320,10 +319,10 @@ internal class GitTest : GitTestCase() {
 
   private fun testInitialCopy(addLocalFiles: Boolean, syncType: SyncType = SyncType.MERGE) {
     repositoryManager.createRepositoryIfNeed()
-    repositoryManager.setUpstream(remoteRepository.getWorkTree().absolutePath)
+    repositoryManager.setUpstream(remoteRepository.workTree.absolutePath)
 
     val store = ApplicationStoreImpl(ApplicationManager.getApplication()!!)
-    val localConfigPath = tempDirManager.newPath("local_config")
+    val localConfigPath = tempDirManager.newPath("local_config", refreshVfs = true)
 
     val lafData = """<application>
       <component name="UISettings">
@@ -353,7 +352,7 @@ internal class GitTest : GitTestCase() {
 
   private fun doSyncWithUninitializedUpstream(syncType: SyncType) {
     createRemoteRepository(initialCommit = false)
-    repositoryManager.setUpstream(remoteRepository.getWorkTree().absolutePath)
+    repositoryManager.setUpstream(remoteRepository.workTree.absolutePath)
 
     val path = "local.xml"
     val data = "<application />"

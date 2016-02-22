@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.devkit.projectRoots;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -29,8 +28,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
@@ -112,7 +113,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     mySandboxHome.setHistorySize(5);
     JPanel wholePanel = new JPanel(new GridBagLayout());
     wholePanel.add(mySandboxHomeLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST,
-                                                              GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+                                                              GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
     wholePanel.add(GuiUtils.constructFieldWithBrowseButton(mySandboxHome, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
@@ -125,12 +126,12 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
         myModified = true;
       }
     }), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.EAST,
-                               GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
+                               GridBagConstraints.HORIZONTAL, JBUI.insets(0, 30, 0, 0), 0, 0));
 
     wholePanel.add(myInternalJreLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 1, GridBagConstraints.WEST,
-                                                              GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+                                                              GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
     wholePanel.add(myInternalJres, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.EAST,
-                                                          GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
+                                                          GridBagConstraints.HORIZONTAL, JBUI.insets(0, 30, 0, 0), 0, 0));
     myInternalJres.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {

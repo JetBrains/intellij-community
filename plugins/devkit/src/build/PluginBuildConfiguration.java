@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.module.ModuleType;
@@ -50,7 +48,7 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.io.File;
 
-@State(name = "DevKit.ModuleBuildProperties", storages = @Storage(file = StoragePathMacros.MODULE_FILE))
+@State(name = "DevKit.ModuleBuildProperties")
 public class PluginBuildConfiguration implements PersistentStateComponent<PluginBuildConfiguration.State> {
   private final Module myModule;
   private final ConfigFileContainer myPluginXmlContainer;

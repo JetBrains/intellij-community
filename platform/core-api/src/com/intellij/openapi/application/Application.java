@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -352,7 +352,12 @@ public interface Application extends ComponentManager {
   boolean isDisposed();
 
   /**
-   * Requests pooled thread to execute the action
+   * Requests pooled thread to execute the action.
+   * This pool is<ul>
+   * <li>Unbounded.</li>
+   * <li>Application-wide, always active, non-shutdownable singleton.</li>
+   * </ul>
+   * You can use this pool for long-running and/or IO-bound tasks.
    * @param action to be executed
    * @return future result
    */
@@ -360,7 +365,12 @@ public interface Application extends ComponentManager {
   Future<?> executeOnPooledThread(@NotNull Runnable action);
 
   /**
-   * Requests pooled thread to execute the action
+   * Requests pooled thread to execute the action.
+   * This pool is<ul>
+   * <li>Unbounded.</li>
+   * <li>Application-wide, always active, non-shutdownable singleton.</li>
+   * </ul>
+   * You can use this pool for long-running and/or IO-bound tasks.
    * @param action to be executed
    * @return future result
    */

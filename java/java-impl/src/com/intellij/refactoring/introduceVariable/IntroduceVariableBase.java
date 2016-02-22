@@ -158,10 +158,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
   
   public static boolean selectLineAtCaret(int offset, PsiElement[] statementsInRange) {
-    return !PsiUtil.isStatement(statementsInRange[0]) ||
-            statementsInRange[0].getTextRange().getStartOffset() > offset ||
-            statementsInRange[0].getTextRange().getEndOffset() < offset ||
-            isPreferStatements();
+    TextRange range = statementsInRange[0].getTextRange();
+    if (statementsInRange[0] instanceof PsiExpressionStatement) {
+      range = ((PsiExpressionStatement)statementsInRange[0]).getExpression().getTextRange();
+    }
+
+    return range.getStartOffset() > offset ||
+           range.getEndOffset() <= offset ||
+           isPreferStatements();
   }
 
   public static int preferredSelection(PsiElement[] statementsInRange, List<PsiExpression> expressions) {
@@ -302,7 +306,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     PsiElement elementAtStart = file.findElementAt(startOffset);
     if (elementAtStart == null || elementAtStart instanceof PsiWhiteSpace || elementAtStart instanceof PsiComment) {
-      elementAtStart = PsiTreeUtil.skipSiblingsForward(elementAtStart, PsiWhiteSpace.class, PsiComment.class);
+      final PsiElement element = PsiTreeUtil.skipSiblingsForward(elementAtStart, PsiWhiteSpace.class, PsiComment.class);
+      if (element != null) {
+        startOffset = element.getTextOffset();
+        elementAtStart = file.findElementAt(startOffset);
+      }
       if (elementAtStart == null) {
         if (injectedLanguageManager.isInjectedFragment(file)) {
           return getSelectionFromInjectedHost(project, file, injectedLanguageManager, startOffset, endOffset);
@@ -323,6 +331,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     PsiElement elementAt = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
     final PsiExpression containingExpression = PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class, false);
+
+    if (containingExpression != null && containingExpression == elementAtEnd && startOffset == containingExpression.getTextOffset()) {
+      return containingExpression;
+    }
+    
     if (containingExpression == null || containingExpression instanceof PsiLambdaExpression) {
       if (injectedLanguageManager.isInjectedFragment(file)) {
         return getSelectionFromInjectedHost(project, file, injectedLanguageManager, startOffset, endOffset);

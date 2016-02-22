@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -85,7 +86,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     if ((! myProject.isOpen()) || myProject.isDisposed() || myVcsManager.getAllActiveVcss().length == 0) return;
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("everything dirty: " + ReflectionUtil.findCallerClass(2));
+      LOG.debug("everything dirty: " + findFirstInterestingCallerClass());
     }
 
     synchronized (LOCK) {
@@ -139,7 +140,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       if (filesConverted.isEmpty() && dirsConverted.isEmpty()) return;
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug("paths dirty: " + filesConverted + "; " + dirsConverted + "; " + ReflectionUtil.findCallerClass(3));
+        LOG.debug("dirty files: " + toString(filesConverted) + "; dirty dirs: " + toString(dirsConverted) + "; " + findFirstInterestingCallerClass());
       }
 
       boolean hasSomethingDirty;
@@ -289,5 +290,29 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
     }
     return result;
+  }
+
+  @NotNull
+  private static String toString(@NotNull final MultiMap<AbstractVcs, FilePath> filesByVcs) {
+    return StringUtil.join(filesByVcs.keySet(), new Function<AbstractVcs, String>() {
+      @Override
+      public String fun(@NotNull AbstractVcs vcs) {
+        return vcs.getName() + ": " + StringUtil.join(filesByVcs.get(vcs), new Function<FilePath, String>() {
+          @Override
+          public String fun(@NotNull FilePath path) {
+            return path.getPath();
+          }
+        }, "\n");
+      }
+    }, "\n");
+  }
+
+  @Nullable
+  private static Class findFirstInterestingCallerClass() {
+    for (int i = 1; i <= 5; i++) {
+      Class clazz = ReflectionUtil.findCallerClass(i);
+      if (clazz == null || !clazz.getName().contains(VcsDirtyScopeManagerImpl.class.getName())) return clazz;
+    }
+    return null;
   }
 }

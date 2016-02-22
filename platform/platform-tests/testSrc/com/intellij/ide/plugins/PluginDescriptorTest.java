@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,18 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.util.lang.UrlClassLoader;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Enumeration;
+import java.util.NoSuchElementException;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Dmitry Avdeev
@@ -36,7 +41,7 @@ public class PluginDescriptorTest {
   public void testDescriptorLoading() {
     File file = new File(getTestDataPath(), "asp.jar");
     assertTrue(file + " not exist", file.exists());
-    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptorFromJar(file);
+    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptor(file, PluginManagerCore.PLUGIN_XML);
     assertNotNull(descriptor);
   }
 
@@ -44,7 +49,70 @@ public class PluginDescriptorTest {
   public void testInvalidFileDescriptor() {
     File file = new File(getTestDataPath(), "malformed");
     assertTrue(file + " not exist", file.exists());
-    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptorFromDir(file, PluginManagerCore.PLUGIN_XML);
+    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptor(file, PluginManagerCore.PLUGIN_XML);
     assertNull(descriptor);
+  }
+
+  @Test
+  public void testFilteringDuplicates() throws MalformedURLException {
+    URL[] urls = {
+      new File(getTestDataPath(), "duplicate1.jar").toURI().toURL(),
+      new File(getTestDataPath(), "duplicate2.jar").toURI().toURL()};
+    assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(new URLClassLoader(urls, null)).size());
+  }
+
+  @Test
+  public void testUrlTolerance() throws MalformedURLException {
+    class SingleUrlEnumeration implements Enumeration<URL> {
+      private final URL myUrl;
+      private boolean hasMoreElements = true;
+
+      public SingleUrlEnumeration(URL url) {
+        myUrl = url;
+      }
+
+      @Override
+      public boolean hasMoreElements() {
+        return hasMoreElements;
+      }
+
+      @Override
+      public URL nextElement() {
+        if (!hasMoreElements) throw new NoSuchElementException();
+        hasMoreElements = false;
+        return myUrl;
+      }
+    }
+
+    class TestLoader extends UrlClassLoader {
+      private final URL myUrl;
+
+      public TestLoader(String prefix, String suffix) throws MalformedURLException {
+        super(build());
+        myUrl = new URL(prefix + new File(getTestDataPath()).toURI().toURL().toString() + suffix + "META-INF/plugin.xml");
+      }
+
+      @Override
+      public URL getResource(String name) {
+        return null;
+      }
+
+      @Override
+      public Enumeration<URL> getResources(String name) throws IOException {
+        return new SingleUrlEnumeration(myUrl);
+      }
+    }
+
+    ClassLoader loader1 = new TestLoader("", "/spaces%20spaces/");
+    assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader1).size());
+
+    ClassLoader loader2 = new TestLoader("", "/spaces spaces/");
+    assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader2).size());
+
+    ClassLoader loader3 = new TestLoader("jar:", "/jar%20spaces.jar!/");
+    assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader3).size());
+
+    ClassLoader loader4 = new TestLoader("jar:", "/jar spaces.jar!/");
+    assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader4).size());
   }
 }

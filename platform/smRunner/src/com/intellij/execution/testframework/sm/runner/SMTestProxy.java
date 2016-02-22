@@ -31,6 +31,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
@@ -263,10 +264,16 @@ public class SMTestProxy extends AbstractTestProxy {
       String protocolId = VirtualFileManager.extractProtocol(locationUrl);
       if (protocolId != null) {
         String path = VirtualFileManager.extractPath(locationUrl);
-        if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
-          List<Location> locations = myLocator.getLocation(protocolId, path, project, searchScope);
-          if (!locations.isEmpty()) {
-            return locations.get(0);
+        if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator) || Registry.is("dumb.aware.run.configurations")) {
+          try {
+            DumbService.getInstance(project).setAlternativeResolveEnabled(true);
+            List<Location> locations = myLocator.getLocation(protocolId, path, project, searchScope);
+            if (!locations.isEmpty()) {
+              return locations.get(0);
+            }
+          }
+          finally {
+            DumbService.getInstance(project).setAlternativeResolveEnabled(false);
           }
         }
       }

@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
@@ -70,7 +71,7 @@ public class PyTypeParser {
       myImports = imports;
     }
 
-    ParseResult(@Nullable PsiElement element, @NotNull PyType type, @NotNull TextRange range) {
+    ParseResult(@Nullable PsiElement element, @NotNull PyType type, @NotNull TextRange range) { 
       this(element, type, ImmutableMap.of(range, type), ImmutableMap.of(type, range), ImmutableMap.<PyType, PyImportElement>of());
     }
 
@@ -335,6 +336,136 @@ public class PyTypeParser {
     }
   }
 
+  @NotNull
+  public static ParseResult parsePep484FunctionTypeComment(@NotNull final PsiElement anchor, @NotNull String text) {
+    final ForwardDeclaration<ParseResult, PyElementType> typeExpr = ForwardDeclaration.create();
+
+    final FunctionalParser<ParseResult, PyElementType> classType =
+      token(IDENTIFIER).then(many(op(".").skipThen(token(IDENTIFIER))))
+                       .map(new MakeSimpleType(anchor))
+                       .cached()
+                       .named("class-type");
+
+    final FunctionalParser<ParseResult, PyElementType> paramExpr =
+      classType.thenSkip(op("[")).then(typeExpr).then(many(op(",").skipThen(typeExpr))).thenSkip(op("]"))
+               .map(new Function<Pair<Pair<ParseResult, ParseResult>, List<ParseResult>>, ParseResult>() {
+                 @Override
+                 public ParseResult fun(Pair<Pair<ParseResult, ParseResult>, List<ParseResult>> value) {
+                   final Pair<ParseResult, ParseResult> firstPair = value.getFirst();
+                   final ParseResult first = firstPair.getFirst();
+                   final ParseResult second = firstPair.getSecond();
+                   final List<ParseResult> third = value.getSecond();
+                   final List<PyType> typesInBrackets = new ArrayList<PyType>();
+                   typesInBrackets.add(second.getType());
+                   ParseResult result = first;
+                   result = result.merge(second);
+                   for (ParseResult r : third) {
+                     typesInBrackets.add(r.getType());
+                     result = result.merge(r);
+                   }
+                   final List<PyType> elementTypes = third.isEmpty() ? Collections.singletonList(second.getType()) : typesInBrackets;
+                   final PsiElement resolved = first.getElement();
+                   if (resolved != null) {
+                     final PyType typingType = PyTypingTypeProvider.getType(resolved, elementTypes);
+                     if (typingType != null) {
+                       return result.withType(typingType);
+                     }
+                   }
+                   return EMPTY_RESULT;
+                 }
+               })
+               .named("param-expr");
+
+    final FunctionalParser<ParseResult, PyElementType> singleExpr =
+      paramExpr
+        .or(classType)
+        .named("single-expr");
+
+    typeExpr
+      .define(singleExpr)
+      .named("type-expr");
+
+    final FunctionalParser<ParseResult, PyElementType> argExpr =
+      maybe(op("*")).then(maybe(op("*"))).then(typeExpr)
+        .map(new Function<Pair<Pair<Token<PyElementType>, Token<PyElementType>>, ParseResult>, ParseResult>() {
+          @Override
+          public ParseResult fun(Pair<Pair<Token<PyElementType>, Token<PyElementType>>, ParseResult> pair) {
+            final ParseResult paramResult = pair.getSecond();
+            final PyType paramType = paramResult.getType();
+            int starCount = 0;
+            if (pair.getFirst().getFirst() != null) {
+              starCount++;
+            }
+            if (pair.getFirst().getSecond() != null) {
+              starCount++;
+            }
+            if (starCount == 0) {
+              return paramResult;
+            }
+            else if (starCount == 1) {
+              final PyClassType tupleType = PyBuiltinCache.getInstance(anchor).getTupleType();;
+              // TODO How to represent unbound homogeneous tuple?
+              if (tupleType != null) {
+                return paramResult.withType(tupleType);
+              }
+              return EMPTY_RESULT;
+            }
+            else if (starCount == 2) {
+              final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
+              final PyClassType type = builtinCache.getDictType();
+              if (type != null) {
+                final PyClass pyClass = type.getPyClass();
+                return paramResult.withType(new PyCollectionTypeImpl(pyClass, false,
+                                                                     Arrays.asList(builtinCache.getStrType(), paramType)));
+              }
+              return EMPTY_RESULT;
+            }
+            return EMPTY_RESULT;
+          }
+        })
+        .named("param-expr");
+
+    final FunctionalParser<ParseResult, PyElementType> funcExpr =
+      op("(").skipThen(maybe(argExpr.then(many(op(",").skipThen(argExpr))))).thenSkip(op(")")).thenSkip(op("->")).then(typeExpr)
+             .map(new Function<Pair<Pair<ParseResult, List<ParseResult>>, ParseResult>, ParseResult>() {
+               @Override
+               public ParseResult fun(Pair<Pair<ParseResult, List<ParseResult>>, ParseResult> value) {
+                 final List<PyCallableParameter> parameters = new ArrayList<PyCallableParameter>();
+                 final ParseResult returnResult = value.getSecond();
+                 ParseResult result;
+                 final Pair<ParseResult, List<ParseResult>> firstPair = value.getFirst();
+                 if (firstPair != null) {
+                   final ParseResult first = firstPair.getFirst();
+                   final List<ParseResult> second = firstPair.getSecond();
+                   result = first;
+                   parameters.add(new PyCallableParameterImpl(null, first.getType()));
+                   for (ParseResult r : second) {
+                     result = result.merge(r);
+                     parameters.add(new PyCallableParameterImpl(null, r.getType()));
+                   }
+                   result = result.merge(returnResult);
+                 }
+                 else {
+                   result = returnResult;
+                 }
+                 return result.withType(new PyCallableTypeImpl(parameters, returnResult.getType()));
+               }
+             })
+             .named("func-expr");
+
+    final FunctionalParser<ParseResult, PyElementType> typeFile =
+      funcExpr
+        .endOfInput()
+        .named("type-file");
+
+    try {
+      return typeFile.parse(tokenize(text));
+    }
+    catch (ParserException e) {
+      return EMPTY_RESULT;
+    }
+  }
+
   private static class MakeSimpleType implements Function<Pair<Token<PyElementType>, List<Token<PyElementType>>>, ParseResult> {
     @NotNull private final PsiElement myAnchor;
 
@@ -438,10 +569,14 @@ public class PyTypeParser {
       final Token<PyElementType> firstToken = tokens.get(0);
       final String firstText = firstToken.getText().toString();
       final TextRange firstRange = firstToken.getRange();
-      PyType type = null;
-      PsiElement resolved = file.getElementNamed(firstText);
-      if (resolved != null) {
-        // Local or imported name
+      final List<RatedResolveResult> resolveResults = file.multiResolveName(firstText);
+      if (resolveResults.isEmpty()) {
+        return getImplicitlyResolvedType(tokens, context, types, fullRanges, firstRange);
+      }
+      final List<PyType> members = Lists.newArrayList();
+      for (RatedResolveResult result : resolveResults) {
+        final PsiElement resolved = result.getElement();
+        PyType type = null;
         if (resolved instanceof PyTargetExpression) {
           type = PyTypingTypeProvider.getTypeFromTargetExpression((PyTargetExpression)resolved, context);
         }
@@ -449,9 +584,8 @@ public class PyTypeParser {
           type = context.getType((PyTypedElement)resolved);
         }
         if (type != null) {
-          tokens.remove(0);
           if (!allowResolveToType(type)) {
-            return null;
+            continue;
           }
           if (type instanceof PyClassLikeType) {
             type = ((PyClassLikeType)type).toInstance();
@@ -471,31 +605,42 @@ public class PyTypeParser {
             }
           }
         }
+        members.add(type);
       }
-      else {
-        // Implicitly available in the type string
-        QualifiedName qName = null;
-        while (!tokens.isEmpty()) {
-          final Token<PyElementType> token = tokens.get(0);
-          final String name = token.getText().toString();
-          qName = qName != null ? qName.append(name) : QualifiedName.fromComponents(name);
-          PsiElement module = new QualifiedNameResolverImpl(qName).fromElement(myAnchor).firstResult();
-          if (module == null) {
-            break;
-          }
-          if (module instanceof PsiDirectory) {
-            module = PyUtil.getPackageElement((PsiDirectory)module, myAnchor);
-          }
-          if (module instanceof PyTypedElement) {
-            final PyType moduleType = context.getType((PyTypedElement)module);
-            if (moduleType != null) {
-              type = moduleType;
-              types.put(token.getRange(), type);
-              fullRanges.put(type, TextRange.create(firstRange.getStartOffset(), token.getRange().getEndOffset()));
-            }
-          }
-          tokens.remove(0);
+      if (!members.isEmpty()) {
+        tokens.remove(0);
+      }
+      return PyUnionType.union(members);
+    }
+
+    @Nullable
+    private PyType getImplicitlyResolvedType(@NotNull List<Token<PyElementType>> tokens,
+                                             @NotNull TypeEvalContext context,
+                                             @NotNull Map<TextRange, PyType> types,
+                                             @NotNull Map<PyType, TextRange> fullRanges,
+                                             TextRange firstRange) {
+      PyType type = null;
+      QualifiedName qName = null;
+      while (!tokens.isEmpty()) {
+        final Token<PyElementType> token = tokens.get(0);
+        final String name = token.getText().toString();
+        qName = qName != null ? qName.append(name) : QualifiedName.fromComponents(name);
+        PsiElement module = new QualifiedNameResolverImpl(qName).fromElement(myAnchor).firstResult();
+        if (module == null) {
+          break;
         }
+        if (module instanceof PsiDirectory) {
+          module = PyUtil.getPackageElement((PsiDirectory)module, myAnchor);
+        }
+        if (module instanceof PyTypedElement) {
+          final PyType moduleType = context.getType((PyTypedElement)module);
+          if (moduleType != null) {
+            type = moduleType;
+            types.put(token.getRange(), type);
+            fullRanges.put(type, TextRange.create(firstRange.getStartOffset(), token.getRange().getEndOffset()));
+          }
+        }
+        tokens.remove(0);
       }
       return type;
     }

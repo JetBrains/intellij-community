@@ -100,9 +100,6 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 
 public class PyUtil {
-
-  public static final String PY_EXTENSION = ".py";
-
   private PyUtil() {
   }
 
@@ -124,24 +121,24 @@ public class PyUtil {
   /**
    * @see PyUtil#flattenedParensAndTuples
    */
-  protected static List<PyExpression> _unfoldParenExprs(PyExpression[] targets, List<PyExpression> receiver,
+  protected static List<PyExpression> unfoldParentheses(PyExpression[] targets, List<PyExpression> receiver,
                                                         boolean unfoldListLiterals, boolean unfoldStarExpressions) {
     // NOTE: this proliferation of instanceofs is not very beautiful. Maybe rewrite using a visitor.
     for (PyExpression exp : targets) {
       if (exp instanceof PyParenthesizedExpression) {
-        final PyParenthesizedExpression parex = (PyParenthesizedExpression)exp;
-        _unfoldParenExprs(new PyExpression[]{parex.getContainedExpression()}, receiver, unfoldListLiterals, unfoldStarExpressions);
+        final PyParenthesizedExpression parenExpr = (PyParenthesizedExpression)exp;
+        unfoldParentheses(new PyExpression[]{parenExpr.getContainedExpression()}, receiver, unfoldListLiterals, unfoldStarExpressions);
       }
       else if (exp instanceof PyTupleExpression) {
-        final PyTupleExpression tupex = (PyTupleExpression)exp;
-        _unfoldParenExprs(tupex.getElements(), receiver, unfoldListLiterals, unfoldStarExpressions);
+        final PyTupleExpression tupleExpr = (PyTupleExpression)exp;
+        unfoldParentheses(tupleExpr.getElements(), receiver, unfoldListLiterals, unfoldStarExpressions);
       }
       else if (exp instanceof PyListLiteralExpression && unfoldListLiterals) {
         final PyListLiteralExpression listLiteral = (PyListLiteralExpression)exp;
-        _unfoldParenExprs(listLiteral.getElements(), receiver, unfoldListLiterals, unfoldStarExpressions);
+        unfoldParentheses(listLiteral.getElements(), receiver, true, unfoldStarExpressions);
       }
       else if (exp instanceof PyStarExpression && unfoldStarExpressions) {
-        _unfoldParenExprs(new PyExpression[]{((PyStarExpression)exp).getExpression()}, receiver, unfoldListLiterals, unfoldStarExpressions);
+        unfoldParentheses(new PyExpression[]{((PyStarExpression)exp).getExpression()}, receiver, unfoldListLiterals, true);
       }
       else if (exp != null) {
         receiver.add(exp);
@@ -149,8 +146,6 @@ public class PyUtil {
     }
     return receiver;
   }
-
-  // Poor man's catamorhpism :)
 
   /**
    * Flattens the representation of every element in targets, and puts all results together.
@@ -162,17 +157,17 @@ public class PyUtil {
    */
   @NotNull
   public static List<PyExpression> flattenedParensAndTuples(PyExpression... targets) {
-    return _unfoldParenExprs(targets, new ArrayList<PyExpression>(targets.length), false, false);
+    return unfoldParentheses(targets, new ArrayList<PyExpression>(targets.length), false, false);
   }
 
   @NotNull
   public static List<PyExpression> flattenedParensAndLists(PyExpression... targets) {
-    return _unfoldParenExprs(targets, new ArrayList<PyExpression>(targets.length), true, true);
+    return unfoldParentheses(targets, new ArrayList<PyExpression>(targets.length), true, true);
   }
 
   @NotNull
   public static List<PyExpression> flattenedParensAndStars(PyExpression... targets) {
-    return _unfoldParenExprs(targets, new ArrayList<PyExpression>(targets.length), false, true);
+    return unfoldParentheses(targets, new ArrayList<PyExpression>(targets.length), false, true);
   }
 
   // Poor man's filter
@@ -417,7 +412,7 @@ public class PyUtil {
   }
 
   /**
-   * Searhes for a method wrapping given element.
+   * Searches for a method wrapping given element.
    *
    * @param start element presumably inside a method
    * @param deep  if true, allow 'start' to be inside functions nested in a method; else, 'start' must be directly inside a method.
@@ -484,7 +479,7 @@ public class PyUtil {
   }
 
   public static void deletePycFiles(String pyFilePath) {
-    if (pyFilePath.endsWith(PY_EXTENSION)) {
+    if (pyFilePath.endsWith(PyNames.DOT_PY)) {
       List<File> filesToDelete = new ArrayList<File>();
       File pyc = new File(pyFilePath + "c");
       if (pyc.exists()) {
@@ -611,9 +606,9 @@ public class PyUtil {
   }
 
   /**
-   * Finds element declaration by resolving its references top the top but not further than file (to prevent unstubing)
+   * Finds element declaration by resolving its references top the top but not further than file (to prevent un-stubbing)
    *
-   * @param element element to resolve
+   * @param elementToResolve element to resolve
    * @return its declaration
    */
   @NotNull
@@ -655,7 +650,7 @@ public class PyUtil {
   }
 
   @NotNull
-  private static List<PsiElement> filterTopPriorityResults(@NotNull ResolveResult[] resolveResults) {
+  public static List<PsiElement> filterTopPriorityResults(@NotNull ResolveResult[] resolveResults) {
     if (resolveResults.length == 0) {
       return Collections.emptyList();
     }
@@ -709,9 +704,14 @@ public class PyUtil {
     // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
     final VirtualFile folder = virtualFile.getParent();
     if (folder != null) {
-      LanguageLevel level = folder.getUserData(LanguageLevel.KEY);
-      if (level == null) level = PythonLanguageLevelPusher.getFileLanguageLevel(project, virtualFile);
-      return level;
+      final LanguageLevel folderLevel = folder.getUserData(LanguageLevel.KEY);
+      if (folderLevel != null) {
+        return folderLevel;
+      }
+      final LanguageLevel fileLevel = PythonLanguageLevelPusher.getFileLanguageLevel(project, virtualFile);
+      if (fileLevel != null) {
+        return fileLevel;
+      }
     }
     else {
       // However this allows us to setup language level per file manually
@@ -725,8 +725,8 @@ public class PyUtil {
           return languageLevel;
         }
       }
-      return guessLanguageLevelWithCaching(project);
     }
+    return guessLanguageLevelWithCaching(project);
   }
 
   public static void invalidateLanguageLevelCache(@NotNull Project project) {
@@ -982,43 +982,6 @@ public class PyUtil {
     }
     else if (name.startsWith("_")) underscores = 1;
     return underscores;
-  }
-
-  /**
-   * Tries to find nearest parent that conceals names defined inside it. Such elements are 'class' and 'def':
-   * anything defined within it does not seep to the namespace below them, but is concealed within.
-   *
-   * @param elt starting point of search.
-   * @return 'class' or 'def' element, or null if not found.
-   * @deprecated Use {@link ScopeUtil#getScopeOwner} instead.
-   */
-  @Deprecated
-  @Nullable
-  public static PsiElement getConcealingParent(PsiElement elt) {
-    if (elt == null || elt instanceof PsiFile) {
-      return null;
-    }
-    PsiElement parent = PsiTreeUtil.getStubOrPsiParent(elt);
-    boolean jump_over = false;
-    while (parent != null) {
-      if (parent instanceof PyClass || parent instanceof PyCallable) {
-        if (jump_over) {
-          jump_over = false;
-        }
-        else {
-          return parent;
-        }
-      }
-      else if (parent instanceof PyDecoratorList) {
-        // decorators PSI is inside decorated things but their namespace is outside
-        jump_over = true;
-      }
-      else if (parent instanceof PsiFileSystemItem) {
-        break;
-      }
-      parent = PsiTreeUtil.getStubOrPsiParent(parent);
-    }
-    return null;
   }
 
   /**
@@ -1310,7 +1273,7 @@ public class PyUtil {
         );
       }
       catch (IOException e) {
-        throw new IncorrectOperationException(String.format("Cannot create file '%s'", path));
+        throw new IncorrectOperationException(String.format("Cannot create file '%s'", path), (Throwable)e);
       }
     }
     else {
@@ -1689,7 +1652,7 @@ public class PyUtil {
   }
 
   /**
-   * Filters only pyclass object (new class)
+   * Filters only PyClass object (new class)
    */
   public static class ObjectPredicate extends NotNullPredicate<PyMemberInfo<PyElement>> {
     private final boolean myAllowObjects;
@@ -1734,8 +1697,8 @@ public class PyUtil {
     if (!(expectedPackage.equals(aPackage))) {
       return false;
     }
-    final String symboldName = qualifiedName.getLastComponent();
-    return expectedName.equals(symboldName);
+    final String symbolName = qualifiedName.getLastComponent();
+    return expectedName.equals(symbolName);
   }
 
   /**
@@ -1749,20 +1712,6 @@ public class PyUtil {
   public static boolean isObjectClass(@NotNull PyClass cls) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(cls);
     return cls == builtinCache.getClass(PyNames.OBJECT) || cls == builtinCache.getClass(PyNames.FAKE_OLD_BASE);
-  }
-
-  /**
-   * Checks that given type is the root of type hierarchy, i.e. it's type of either {@code object} or special
-   * {@link PyNames#FAKE_OLD_BASE} class for old-style classes.
-   *
-   * @param type   Python class to check
-   * @param anchor arbitrary PSI element to find appropriate SDK
-   * @see PyBuiltinCache
-   * @see PyNames#FAKE_OLD_BASE
-   */
-  public static boolean isObjectType(@NotNull PyType type, @NotNull PsiElement anchor) {
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
-    return type == builtinCache.getObjectType() || type == builtinCache.getOldstyleClassobjType();
   }
 
   public static boolean isInScratchFile(@NotNull PsiElement element) {
@@ -1891,6 +1840,25 @@ public class PyUtil {
              isRaw() == info.isRaw() &&
              isUnicode() == info.isUnicode() &&
              isBytes() == info.isBytes();
+    }
+  }
+
+  public static class IterHelper {  // TODO: rename sanely
+    private IterHelper() {}
+    @Nullable
+    public static PsiNamedElement findName(Iterable<PsiNamedElement> it, String name) {
+      PsiNamedElement ret = null;
+      for (PsiNamedElement elt : it) {
+        if (elt != null) {
+          // qualified refs don't match by last name, and we're not checking FQNs here
+          if (elt instanceof PyQualifiedExpression && ((PyQualifiedExpression)elt).isQualified()) continue;
+          if (name.equals(elt.getName())) { // plain name matches
+            ret = elt;
+            break;
+          }
+        }
+      }
+      return ret;
     }
   }
 }

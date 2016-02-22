@@ -370,8 +370,9 @@ public class RedundantCastUtil {
               }
             } else {
               final JavaResolveResult newResult = newCall.resolveMethodGenerics();
-              if (oldMethod.equals(newResult.getElement()) && newResult.isValidResult() &&
-                  Comparing.equal(((PsiCallExpression)newCall).getType(), ((PsiCallExpression)expression).getType())) {
+              if (oldMethod.equals(newResult.getElement()) &&
+                  Comparing.equal(((PsiCallExpression)newCall).getType(), ((PsiCallExpression)expression).getType()) &&
+                  newResult.isValidResult()) {
                 final PsiMethod newFunctionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(newArgs[i]);
                 if (oldFunctionalInterfaceMethod == null ||
                     newFunctionalInterfaceMethod != null && (newFunctionalInterfaceMethod == oldFunctionalInterfaceMethod || 

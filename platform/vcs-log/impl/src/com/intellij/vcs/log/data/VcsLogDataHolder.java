@@ -126,13 +126,13 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
 
   @Override
   @NotNull
-  public Hash getHash(int commitIndex) {
-    return myHashMap.getHash(commitIndex);
+  public CommitId getCommitId(int commitIndex) {
+    return myHashMap.getCommitId(commitIndex);
   }
 
   @Override
-  public int getCommitIndex(@NotNull Hash hash) {
-    return myHashMap.getCommitIndex(hash);
+  public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
+    return myHashMap.getCommitIndex(hash, root);
   }
 
   @NotNull

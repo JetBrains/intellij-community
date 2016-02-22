@@ -56,9 +56,12 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private final boolean myInJavaDoc;
   private boolean myStatic = false;
   private PsiElement myDeclarationHolder = null;
-  private final Map<CompletionElement, CompletionElement> myResults = new LinkedHashMap<CompletionElement, CompletionElement>();
+  private final Map<CompletionElement, CompletionElement> myResults = new LinkedHashMap<>();
   private final Set<CompletionElement> mySecondRateResults = ContainerUtil.newIdentityTroveSet();
   private final Set<String> myShadowedNames = ContainerUtil.newHashSet();
+  private final Set<String> myCurrentScopeMethodNames = ContainerUtil.newHashSet();
+  private final Set<String> myFinishedScopesMethodNames = ContainerUtil.newHashSet();
+  private final Set<PsiMethod> myMethodsToQualify = ContainerUtil.newHashSet();
   private final PsiElement myElement;
   private final PsiElement myScope;
   private final ElementFilter myFilter;
@@ -68,7 +71,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private PsiClass myQualifierClass = null;
   private final Condition<String> myMatcher;
   private final Options myOptions;
-  private final Set<PsiField> myNonInitializedFields = new HashSet<PsiField>();
+  private final Set<PsiField> myNonInitializedFields = new HashSet<>();
   private final boolean myAllowStaticWithInstanceQualifier;
 
   public JavaCompletionProcessor(@NotNull PsiElement element, ElementFilter filter, Options options, @NotNull Condition<String> nameCondition) {
@@ -135,6 +138,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
 
   public static Set<PsiField> getNonInitializedFields(PsiElement element) {
     final PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+    //noinspection SSBasedInspection
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, true, PsiClass.class);
     if (statement == null || method == null || !method.isConstructor()) {
       return Collections.emptySet();
@@ -152,7 +156,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       parent = next;
     }
 
-    final Set<PsiField> fields = new HashSet<PsiField>();
+    final Set<PsiField> fields = new HashSet<>();
     final PsiClass containingClass = method.getContainingClass();
     assert containingClass != null;
     for (PsiField field : containingClass.getFields()) {
@@ -195,6 +199,8 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     }
     if(event == JavaScopeProcessorEvent.CHANGE_LEVEL){
       myMembersFlag = true;
+      myFinishedScopesMethodNames.addAll(myCurrentScopeMethodNames);
+      myCurrentScopeMethodNames.clear();
     }
     if (event == JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT) {
       myDeclarationHolder = (PsiElement)associated;
@@ -251,9 +257,21 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       if (sp == StaticProblem.staticAfterInstance) {
         mySecondRateResults.add(completion);
       }
+
+      if (element instanceof PsiMethod) {
+        String name = ((PsiMethod)element).getName();
+        myCurrentScopeMethodNames.add(name);
+        if (myFinishedScopesMethodNames.contains(name)) {
+          myMethodsToQualify.add((PsiMethod)element);
+        }
+      }
     }
 
     return true;
+  }
+
+  public boolean shouldQualifyMethodCall(@NotNull PsiMethod method) {
+    return myMethodsToQualify.contains(method);
   }
 
   private boolean isQualifiedContext() {
@@ -331,12 +349,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     if (mySecondRateResults.size() == myResults.size()) {
       return mySecondRateResults;
     }
-    return ContainerUtil.filter(myResults.values(), new Condition<CompletionElement>() {
-      @Override
-      public boolean value(CompletionElement element) {
-        return !mySecondRateResults.contains(element);
-      }
-    });
+    return ContainerUtil.filter(myResults.values(), element -> !mySecondRateResults.contains(element));
   }
 
   public void clear() {

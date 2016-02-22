@@ -103,12 +103,7 @@ public class TabAction extends EditorAction {
 
     doc.startGuardedBlockChecking();
     try {
-      if(useTab) {
-        EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, "\t", false);
-      }
-      else {
-        EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, StringUtil.repeatSymbol(' ', spacesToAddCount), false);
-      }
+      EditorModificationUtil.insertStringAtCaret(editor, useTab ? "\t" : StringUtil.repeatSymbol(' ', spacesToAddCount), false, true);
     }
     catch (ReadOnlyFragmentModificationException e) {
       EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);

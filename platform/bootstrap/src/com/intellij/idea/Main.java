@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Restarter;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -81,9 +80,7 @@ public class Main {
       System.exit(NO_GRAPHICS);
     }
 
-    //this property is temporary and will be removed when IntelliJ platform really migrates to Java 8
-    boolean checkVersion = !SystemProperties.getBooleanProperty("idea.no.java.version.check", false);
-    if (checkVersion && !SystemInfo.isJavaVersionAtLeast("1.8")) {
+    if (!SystemInfo.isJavaVersionAtLeast("1.8")) {
       showMessage("Unsupported Java Version",
                   "Cannot start under Java " + SystemInfo.JAVA_RUNTIME_VERSION + ": Java 1.8 or later is required.", true);
       System.exit(UNSUPPORTED_JAVA_VERSION);
@@ -134,6 +131,7 @@ public class Main {
     return Comparing.strEqual(firstArg, "ant") ||
            Comparing.strEqual(firstArg, "duplocate") ||
            Comparing.strEqual(firstArg, "traverseUI") ||
+           Comparing.strEqual(firstArg, "buildAppcodeCache") ||
            (firstArg.length() < 20 && firstArg.endsWith("inspect"));
   }
 
@@ -349,7 +347,7 @@ public class Main {
           scrollPane.setPreferredSize(new Dimension(Math.min(maxWidth, component.width), Math.min(maxHeight, component.height)));
         }
 
-        int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE;
+        int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.WARNING_MESSAGE;
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
       }
       catch (Throwable t) {

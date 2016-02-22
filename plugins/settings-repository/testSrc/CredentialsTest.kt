@@ -18,20 +18,19 @@ class CredentialsTest {
   private var storeFile: File? = null
 
   private fun createProvider(credentialsStore: CredentialsStore): JGitCredentialsProvider {
-    return JGitCredentialsProvider(NotNullLazyValue.createConstantValue<CredentialsStore>(credentialsStore), FileRepositoryBuilder().setBare().setGitDir(File("/tmp/fake")).build())
+    return JGitCredentialsProvider(NotNullLazyValue.createConstantValue(credentialsStore), FileRepositoryBuilder().setBare().setGitDir(File("/tmp/fake")).build())
   }
 
   private fun createFileStore(): FileCredentialsStore {
-    storeFile = FileUtil.generateRandomTemporaryPath()
-    return FileCredentialsStore(storeFile!!)
+    return FileCredentialsStore(FileUtil.generateRandomTemporaryPath().toPath())
   }
 
-  public @After fun tearDown() {
+  @After fun tearDown() {
     storeFile?.delete()
     storeFile = null
   }
 
-  public @Test fun explicitSpecifiedInURL() {
+  @Test fun explicitSpecifiedInURL() {
     val credentialsStore = createFileStore()
     val username = CredentialItem.Username()
     val password = CredentialItem.Password()
@@ -44,7 +43,7 @@ class CredentialsTest {
     assertThat(storeFile?.exists()).isFalse()
   }
 
-  public @Test fun gitCredentialHelper() {
+  @Test fun gitCredentialHelper() {
     // we don't yet setup test environment for this test and use host environment
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       return

@@ -55,6 +55,8 @@ interface SuspendContext<CALL_FRAME : CallFrame> {
     get() = false
 
   val valueManager: ValueManager
+
+  val workerId: String?
 }
 
 abstract class ContextDependentAsyncResultConsumer<T>(private val context: SuspendContext<*>) : Consumer<T> {
@@ -69,7 +71,7 @@ abstract class ContextDependentAsyncResultConsumer<T>(private val context: Suspe
 }
 
 
-inline fun <T> Promise<T>.done(context: SuspendContext<*>, crossinline handler: (result: T) -> Unit) = done(object : ContextDependentAsyncResultConsumer<T>(context) {
+inline fun <T> Promise<out T>.done(context: SuspendContext<*>, crossinline handler: (result: T) -> Unit) = (this as Promise<T>).done(object : ContextDependentAsyncResultConsumer<T>(context) {
   override fun consume(result: T, vm: Vm) = handler(result)
 })
 

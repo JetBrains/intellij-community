@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public final class EnumerationChildrenRenderer extends ReferenceRenderer impleme
   public static final @NonNls String CHILD_NAME = "Name";
 
   public EnumerationChildrenRenderer() {
-    this(new ArrayList<Pair<String, TextWithImports>>());
+    this(new ArrayList<>());
   }
 
   public EnumerationChildrenRenderer(List<Pair<String, TextWithImports>> children) {
@@ -93,7 +93,7 @@ public final class EnumerationChildrenRenderer extends ReferenceRenderer impleme
     NodeManager nodeManager = builder.getNodeManager();
     NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
-    List<DebuggerTreeNode> children = new ArrayList<DebuggerTreeNode>();
+    List<DebuggerTreeNode> children = new ArrayList<>();
     for (Pair<String, TextWithImports> pair : myChildren) {
       children.add(nodeManager.createNode(descriptorFactory.getUserExpressionDescriptor(
         builder.getParentDescriptor(),

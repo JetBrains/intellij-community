@@ -1,9 +1,25 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
@@ -13,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +97,7 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
 
         final JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(true);
-        panel.setBorder(new EmptyBorder(0, 0, 0, 5));
+        panel.setBorder(JBUI.Borders.emptyRight(5));
 
         final Color bg = isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground();
         panel.setBackground(bg);
@@ -96,7 +111,7 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
           actionLabel.setBackground(bg);
           actionLabel.setForeground(fg);
           actionLabel.setFont(actionLabel.getFont().deriveFont(Font.BOLD));
-          actionLabel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+          actionLabel.setBorder(JBUI.Borders.emptyLeft(4));
 
           panel.add(actionLabel, BorderLayout.WEST);
 
@@ -113,7 +128,7 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
             final JLabel descriptionLabel = new JLabel(normalizedDesc);
             descriptionLabel.setBackground(bg);
             descriptionLabel.setForeground(fg);
-            descriptionLabel.setBorder(new EmptyBorder(0, 15, 0, 0));
+            descriptionLabel.setBorder(JBUI.Borders.emptyLeft(15));
 
             panel.add(descriptionLabel, BorderLayout.EAST);
           }
@@ -124,7 +139,7 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
           actionLabel.setBackground(bg);
           actionLabel.setForeground(UIUtil.getListForeground());
           actionLabel.setFont(actionLabel.getFont().deriveFont(Font.PLAIN));
-          actionLabel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+          actionLabel.setBorder(JBUI.Borders.emptyLeft(4));
           panel.add(actionLabel, BorderLayout.WEST);
         }
         return panel;

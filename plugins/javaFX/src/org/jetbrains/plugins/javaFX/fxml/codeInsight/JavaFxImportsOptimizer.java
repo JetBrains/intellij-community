@@ -39,9 +39,9 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultAttributeDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyAttributeDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticPropertyAttributeDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticSetterAttributeDescriptor;
 
 import java.util.*;
 
@@ -139,13 +139,13 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     @Override
     public void visitXmlAttribute(XmlAttribute attribute) {
       final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
-      if (descriptor instanceof JavaFxStaticPropertyAttributeDescriptor) {
+      if (descriptor instanceof JavaFxStaticSetterAttributeDescriptor) {
         final PsiElement declaration = descriptor.getDeclaration();
         if (declaration instanceof PsiMember) {
           appendClassName(((PsiMember)declaration).getContainingClass());
         }
       }
-      else if (descriptor instanceof JavaFxDefaultAttributeDescriptor && FxmlConstants.TYPE.equals(descriptor.getName())) {
+      else if (descriptor instanceof JavaFxDefaultPropertyAttributeDescriptor && FxmlConstants.TYPE.equals(descriptor.getName())) {
         appendClassName(JavaFxPsiUtil.findPsiClass(attribute.getValue(), attribute));
       }
     }

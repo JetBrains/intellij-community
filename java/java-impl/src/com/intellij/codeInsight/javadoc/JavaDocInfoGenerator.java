@@ -1265,7 +1265,7 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private void generatePrologue(StringBuilder buffer) {
+  protected void generatePrologue(StringBuilder buffer) {
     URL baseUrl = getBaseUrl();
     buffer.append("<html><head>");
     if (baseUrl != null) {
@@ -1295,7 +1295,7 @@ public class JavaDocInfoGenerator {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void generateEpilogue(StringBuilder buffer) {
+  protected void generateEpilogue(StringBuilder buffer) {
     while (true) {
       if (buffer.length() < BR_TAG.length()) break;
       char c = buffer.charAt(buffer.length() - 1);

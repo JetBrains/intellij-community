@@ -273,11 +273,8 @@ public class ChunkExtractor {
   public static boolean isHighlightedAsComment(TextAttributesKey... keys) {
     for (TextAttributesKey key : keys) {
       if (key == DefaultLanguageHighlighterColors.DOC_COMMENT ||
-          key == SyntaxHighlighterColors.DOC_COMMENT ||
           key == DefaultLanguageHighlighterColors.LINE_COMMENT ||
-          key == SyntaxHighlighterColors.LINE_COMMENT ||
-          key == DefaultLanguageHighlighterColors.BLOCK_COMMENT ||
-          key == SyntaxHighlighterColors.JAVA_BLOCK_COMMENT
+          key == DefaultLanguageHighlighterColors.BLOCK_COMMENT
         ) {
         return true;
       }
@@ -292,7 +289,7 @@ public class ChunkExtractor {
 
   public static boolean isHighlightedAsString(TextAttributesKey... keys) {
     for (TextAttributesKey key : keys) {
-      if (key == DefaultLanguageHighlighterColors.STRING || key == SyntaxHighlighterColors.STRING) {
+      if (key == DefaultLanguageHighlighterColors.STRING) {
         return true;
       }
       if (key == null) continue;

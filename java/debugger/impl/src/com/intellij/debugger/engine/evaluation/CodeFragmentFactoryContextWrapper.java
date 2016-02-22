@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,6 +65,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
     return myDelegate.isContextAccepted(contextElement);
   }
 
+  @NotNull
   public LanguageFileType getFileType() {
     return myDelegate.getFileType();
   }
@@ -106,7 +108,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
   }
   
   private static Pair<String, Map<String, ObjectReference>> createMarkupVariablesText(Map<?, ValueMarkup> markupMap) {
-    final Map<String, ObjectReference> reverseMap = new HashMap<String, ObjectReference>();
+    final Map<String, ObjectReference> reverseMap = new HashMap<>();
     final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
     try {
       for (Map.Entry<?, ValueMarkup> entry : markupMap.entrySet()) {

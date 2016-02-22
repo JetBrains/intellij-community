@@ -73,7 +73,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
             }
             return descriptor;
           }
-          return GuavaSupplierConversionRule.GUAVA_SUPPLIER.equals(qName)
+          return GuavaLambda.SUPPLIER.getClassQName().equals(qName)
                  ? new GuavaTypeConversionDescriptor("$val$.or($other$)", "$val$.orElseGet($other$)")
                  : new TypeConversionDescriptor("$val$.or($other$)", "$val$.orElse($other$)");
         }

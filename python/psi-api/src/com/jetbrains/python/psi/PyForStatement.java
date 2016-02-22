@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * The 'for/else' statement.
  */
-public interface PyForStatement extends PyLoopStatement, PyStatementWithElse, NameDefiner {
+public interface PyForStatement extends PyLoopStatement, PyStatementWithElse, PyNamedElementContainer {
   @NotNull PyForPart getForPart();
 
   boolean isAsync();

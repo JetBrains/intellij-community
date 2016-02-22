@@ -17,7 +17,6 @@ package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
@@ -319,13 +318,6 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   }
 
   private void decodeRefs(final PsiMember member, final PsiClass targetClass) {
-    try {
-      ChangeContextUtil.decodeContextInfo(member, null, null);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-
     final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     member.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {

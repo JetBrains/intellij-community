@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ val isOSXCredentialsStoreSupported: Boolean
 
 // http://developer.apple.com/mac/library/DOCUMENTATION/Security/Reference/keychainservices/Reference/reference.html
 // It is very, very important to use CFRelease/SecKeychainItemFreeContent You must do it, otherwise you can get "An invalid record was encountered."
-public interface OSXKeychainLibrary : com.sun.jna.Library {
+interface OSXKeychainLibrary : com.sun.jna.Library {
   companion object {
     private val LIBRARY = com.sun.jna.Native.loadLibrary("Security", OSXKeychainLibrary::class.java) as OSXKeychainLibrary
 
@@ -96,7 +96,7 @@ public interface OSXKeychainLibrary : com.sun.jna.Library {
         }
         else {
           val buf = CharArray(LIBRARY.CFStringGetLength(translated).toInt())
-          for (i in 0..buf.size() - 1) {
+          for (i in 0..buf.size - 1) {
             buf[i] = LIBRARY.CFStringGetCharacterAtIndex(translated, i.toLong())
           }
           LIBRARY.CFRelease(translated)
@@ -107,11 +107,11 @@ public interface OSXKeychainLibrary : com.sun.jna.Library {
     }
   }
 
-  public fun SecKeychainAddGenericPassword(keychain: Pointer?, serviceNameLength: Int, serviceName: ByteArray, accountNameLength: Int, accountName: ByteArray, passwordLength: Int, passwordData: ByteArray, itemRef: Pointer? = null): Int
+  fun SecKeychainAddGenericPassword(keychain: Pointer?, serviceNameLength: Int, serviceName: ByteArray, accountNameLength: Int, accountName: ByteArray, passwordLength: Int, passwordData: ByteArray, itemRef: Pointer? = null): Int
 
-  public fun SecKeychainItemModifyContent(/*SecKeychainItemRef*/ itemRef: Pointer, /*SecKeychainAttributeList**/ attrList: Pointer?, length: Int, data: ByteArray): Int
+  fun SecKeychainItemModifyContent(/*SecKeychainItemRef*/ itemRef: Pointer, /*SecKeychainAttributeList**/ attrList: Pointer?, length: Int, data: ByteArray): Int
 
-  public fun SecKeychainFindGenericPassword(keychainOrArray: Pointer?,
+  fun SecKeychainFindGenericPassword(keychainOrArray: Pointer?,
                                             serviceNameLength: Int,
                                             serviceName: ByteArray,
                                             accountNameLength: Int,
@@ -120,17 +120,17 @@ public interface OSXKeychainLibrary : com.sun.jna.Library {
                                             passwordData: Array<Pointer?>? = null,
                                             itemRef: Array<Pointer?/*SecKeychainItemRef*/>? = null): Int
 
-  public fun SecKeychainItemDelete(itemRef: Pointer): Int
+  fun SecKeychainItemDelete(itemRef: Pointer): Int
 
-  public fun /*CFString*/ SecCopyErrorMessageString(status: Int, reserved: Pointer?): Pointer?
+  fun /*CFString*/ SecCopyErrorMessageString(status: Int, reserved: Pointer?): Pointer?
 
   // http://developer.apple.com/library/mac/#documentation/CoreFoundation/Reference/CFStringRef/Reference/reference.html
 
-  public fun /*CFIndex*/ CFStringGetLength(/*CFStringRef*/ theString: Pointer): Long
+  fun /*CFIndex*/ CFStringGetLength(/*CFStringRef*/ theString: Pointer): Long
 
-  public fun /*UniChar*/ CFStringGetCharacterAtIndex(/*CFStringRef*/ theString: Pointer, /*CFIndex*/ idx: Long): Char
+  fun /*UniChar*/ CFStringGetCharacterAtIndex(/*CFStringRef*/ theString: Pointer, /*CFIndex*/ idx: Long): Char
 
-  public fun CFRelease(/*CFTypeRef*/ cf: Pointer)
+  fun CFRelease(/*CFTypeRef*/ cf: Pointer)
 
-  public fun SecKeychainItemFreeContent(/*SecKeychainAttributeList*/attrList: Pointer?, data: Pointer?)
+  fun SecKeychainItemFreeContent(/*SecKeychainAttributeList*/attrList: Pointer?, data: Pointer?)
 }

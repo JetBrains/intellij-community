@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -33,7 +34,7 @@ import java.util.Collections;
  * Requests for conversion can be made from under read action, document changes and cache invalidation should be done in EDT.
  */
 @SuppressWarnings("SynchronizeOnThis")
-class LogicalPositionCache implements PrioritizedDocumentListener, Disposable {
+class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, Dumpable {
   private final Document myDocument;
   private final EditorView myView;
   private ArrayList<LineData> myLines = new ArrayList<LineData>();
@@ -68,7 +69,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable {
     int oldTabSize = myTabSize;
     myTabSize = myView.getTabSize();
     if (force || oldTabSize != myTabSize) {
-      invalidateLines(0, myLines.size() - 1, myDocument.getLineCount() - 1, true);
+      invalidateLines(0, myLines.size() - 1, myDocument.getLineCount() - 1, !force && myLines.size() == myDocument.getLineCount());
     }
   }
 
@@ -103,13 +104,23 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable {
 
   private synchronized void invalidateLines(int startLine, int oldEndLine, int newEndLine, boolean preserveTrivialLines) {
     checkDisposed();
-    int endLine = Math.min(oldEndLine, newEndLine);
-    for (int line = startLine; line <= endLine; line++) {
-      LineData data = myLines.get(line);
-      if (data != null && (!preserveTrivialLines || data.columnCache != null)) myLines.set(line, null);
+    if (preserveTrivialLines) {
+      for (int line = startLine; line <= oldEndLine; line++) {
+        LineData data = myLines.get(line);
+        if (data == null || data.columnCache != null) {
+          preserveTrivialLines = false;
+          break;
+        }
+      }
+    }
+    if (!preserveTrivialLines) {
+      int endLine = Math.min(oldEndLine, newEndLine);
+      for (int line = startLine; line <= endLine; line++) {
+        myLines.set(line, null);
+      }
     }
     if (oldEndLine < newEndLine) {
-      myLines.addAll(oldEndLine + 1, Collections.nCopies(newEndLine - oldEndLine, (LineData)null));
+      myLines.addAll(oldEndLine + 1, Collections.nCopies(newEndLine - oldEndLine, preserveTrivialLines ? LineData.TRIVIAL : null));
     } else if (oldEndLine > newEndLine) {
       myLines.subList(newEndLine + 1, oldEndLine + 1).clear();
     }
@@ -134,11 +145,42 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable {
   private void checkDisposed() {
     if (myLines == null) myView.getEditor().throwDisposalError("Editor is already disposed");
   }
+  
+  void validate() {
+    int lineCount = myDocument.getLineCount();
+    int cacheSize = myLines.size();
+    if (cacheSize != lineCount) throw new IllegalStateException("Line count: " + lineCount + ", cache size: " + cacheSize);
+    int tabSize = myView.getTabSize();
+    for (int i = 0; i < cacheSize; i++) {
+      LineData data = myLines.get(i);
+      if (data != null) {
+        LineData actual = new LineData(myDocument, i, tabSize);
+        if (!Arrays.equals(data.columnCache, actual.columnCache)) throw new IllegalStateException("Wrong cache state at line " + i);
+      }
+    }
+  }
+
+  @NotNull
+  @Override
+  public String dumpState() {
+    try {
+      validate();
+      return "valid";
+    }
+    catch (Exception e) {
+      return "invalid (" + e.getMessage() + ")";
+    }
+  }
 
   private static class LineData {    
+    private static final LineData TRIVIAL = new LineData();
     private static final int CACHE_FREQUENCY = 1024; // logical column will be cached for each CACHE_FREQUENCY-th character on the line
     
     private final int[] columnCache;
+    
+    private LineData() {
+      columnCache = null;
+    }
     
     private LineData(@NotNull Document document, int line, int tabSize) {
       int start = document.getLineStartOffset(line);

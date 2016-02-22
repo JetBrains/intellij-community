@@ -8,13 +8,13 @@
 message()
 {
   TITLE="Cannot start @@product_full@@"
-  if [ -n `which zenity` ]; then
+  if [ -n "`which zenity`" ]; then
     zenity --error --title="$TITLE" --text="$1"
-  elif [ -n `which kdialog` ]; then
+  elif [ -n "`which kdialog`" ]; then
     kdialog --error --title "$TITLE" "$1"
-  elif [ -n `which xmessage` ]; then
+  elif [ -n "`which xmessage`" ]; then
     xmessage -center "ERROR: $TITLE: $1"
-  elif [ -n `which notify-send` ]; then
+  elif [ -n "`which notify-send`" ]; then
     notify-send "ERROR: $TITLE: $1"
   else
     echo "ERROR: $TITLE\n$1"
@@ -169,11 +169,6 @@ fi
 @@class_path@@
 if [ -n "$@@product_uc@@_CLASSPATH" ]; then
   CLASSPATH="$CLASSPATH:$@@product_uc@@_CLASSPATH"
-fi
-
-if [ -n "$JAVA_TOOL_OPTIONS" -a "$JAVA_TOOL_OPTIONS" != "${JAVA_TOOL_OPTIONS%-javaagent*jayatanaag.jar*}" ] ; then
-  export _ORIGINAL_JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS"
-  JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS%-javaagent*jayatanaag.jar*}${JAVA_TOOL_OPTIONS#*jayatanaag.jar}"
 fi
 
 # ---------------------------------------------------------------------

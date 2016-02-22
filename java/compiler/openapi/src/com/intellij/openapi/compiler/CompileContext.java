@@ -115,13 +115,6 @@ public interface CompileContext extends UserDataHolder {
   Module getModuleByFile(VirtualFile file);
 
   /**
-   * Returns the source roots for the specified module.
-   *
-   * @return module's source roots as well as source roots for generated sources that are attributed to the module
-   */
-  VirtualFile[] getSourceRoots(Module module);
-
-  /**
    * Returns the output directory for the specified module.
    *
    * @param module the module to check.
@@ -146,6 +139,8 @@ public interface CompileContext extends UserDataHolder {
    * @return true if compilation is incremental. 
    */
   boolean isMake();
+
+  boolean isAutomake();
 
   boolean isRebuild();
 

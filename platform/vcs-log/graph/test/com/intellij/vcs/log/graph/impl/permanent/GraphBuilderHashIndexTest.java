@@ -38,7 +38,7 @@ public abstract class GraphBuilderHashIndexTest<CommitId> extends AbstractTestWi
   @Override
   protected void runTest(String in, String out) {
     final List<GraphCommit<CommitId>> commits = getCommitIdManager().parseCommitList(in);
-    PermanentCommitsInfo<CommitId> commitsInfo = PermanentCommitsInfoIml.newInstance(commits, Collections.<Integer, CommitId>emptyMap());
+    PermanentCommitsInfo<CommitId> commitsInfo = PermanentCommitsInfoImpl.newInstance(commits, Collections.<Integer, CommitId>emptyMap());
 
     assertEquals(out, commitsInfoToStr(commitsInfo, commits.size(), getCommitIdManager().getToStrFunction()));
   }

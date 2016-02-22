@@ -3,7 +3,7 @@
 from _pydev_imps._pydev_time import time as _time
 from _pydev_imps import _pydev_thread
 try:
-    import _pydev_threading as _threading
+    from _pydev_imps import _pydev_threading as _threading
 except ImportError:
     import dummy_threading as _threading
 from collections import deque
@@ -34,13 +34,13 @@ class Queue:
         self.mutex = _pydev_thread.allocate_lock()
         # Notify not_empty whenever an item is added to the queue; a
         # thread waiting to get is notified then.
-        self.not_empty = _threading.Condition(self.mutex)
+        self.not_empty = _threading.Condition(self.mutex)  # @UndefinedVariable
         # Notify not_full whenever an item is removed from the queue;
         # a thread waiting to put is notified then.
-        self.not_full = _threading.Condition(self.mutex)
+        self.not_full = _threading.Condition(self.mutex)  # @UndefinedVariable
         # Notify all_tasks_done whenever the number of unfinished tasks
         # drops to zero; thread waiting to join() is notified to resume
-        self.all_tasks_done = _threading.Condition(self.mutex)
+        self.all_tasks_done = _threading.Condition(self.mutex)  # @UndefinedVariable
         self.unfinished_tasks = 0
 
     def task_done(self):

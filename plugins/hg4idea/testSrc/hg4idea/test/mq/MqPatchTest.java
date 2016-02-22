@@ -15,7 +15,6 @@
  */
 package hg4idea.test.mq;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -56,9 +55,11 @@ public class MqPatchTest extends HgPlatformTest {
   protected void setUp() throws Exception {
     super.setUp();
     cd(myRepository);
-    File hgrc = new File(new File(myRepository.getPath(), ".hg"), "hgrc");
-    FileUtil.appendToFile(hgrc, "[extensions]\n" +
+    appendToHgrc(myRepository, "[extensions]\n" +
                                 "mq=\n");
+    HgTestUtil.updateDirectoryMappings(myProject, myRepository);
+    updateRepoConfig(myProject, myRepository);
+
     hg("qinit");
     touch(FILENAME, "f1");
     hg("branch " + BRANCH);

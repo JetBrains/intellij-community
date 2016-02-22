@@ -29,7 +29,9 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
@@ -41,7 +43,9 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class RenameWrongRefFix implements IntentionAction {
   private final PsiReferenceExpression myRefExpr;
@@ -83,53 +87,6 @@ public class RenameWrongRefFix implements IntentionAction {
     }
 
     return !CreateFromUsageUtils.isValidReference(myRefExpr, myUnresolvedOnly);
-  }
-
-  private class ReferenceNameExpression extends Expression {
-    class HammingComparator implements Comparator<LookupElement> {
-      @Override
-      public int compare(LookupElement lookupItem1, LookupElement lookupItem2) {
-        String s1 = lookupItem1.getLookupString();
-        String s2 = lookupItem2.getLookupString();
-        int diff1 = 0;
-        for (int i = 0; i < Math.min(s1.length(), myOldReferenceName.length()); i++) {
-          if (s1.charAt(i) != myOldReferenceName.charAt(i)) diff1++;
-        }
-        int diff2 = 0;
-        for (int i = 0; i < Math.min(s2.length(), myOldReferenceName.length()); i++) {
-          if (s2.charAt(i) != myOldReferenceName.charAt(i)) diff2++;
-        }
-        return diff1 - diff2;
-      }
-    }
-
-    ReferenceNameExpression(LookupElement[] items, String oldReferenceName) {
-      myItems = items;
-      myOldReferenceName = oldReferenceName;
-      Arrays.sort(myItems, new HammingComparator ());
-    }
-
-    LookupElement[] myItems;
-    private final String myOldReferenceName;
-
-    @Override
-    public Result calculateResult(ExpressionContext context) {
-      if (myItems == null || myItems.length == 0) {
-        return new TextResult(myOldReferenceName);
-      }
-      return new TextResult(myItems[0].getLookupString());
-    }
-
-    @Override
-    public Result calculateQuickResult(ExpressionContext context) {
-      return null;
-    }
-
-    @Override
-    public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      if (myItems == null || myItems.length == 1) return null;
-      return myItems;
-    }
   }
 
   private LookupElement[] collectItems() {

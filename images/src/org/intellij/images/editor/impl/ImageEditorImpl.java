@@ -26,7 +26,6 @@ import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
-import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,13 +36,13 @@ import javax.swing.*;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageEditorImpl implements ImageEditor {
+public final class ImageEditorImpl implements ImageEditor {
   private final Project project;
   private final VirtualFile file;
   private final ImageEditorUI editorUI;
   private boolean disposed;
 
-  ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file) {
+  public ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file) {
     this.project = project;
     this.file = file;
 

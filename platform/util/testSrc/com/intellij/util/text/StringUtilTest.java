@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,24 @@ import static org.junit.Assert.*;
  * @since Dec 22, 2006
  */
 public class StringUtilTest {
+  @Test
+  public void testTrimLeadingChar() throws Exception {
+    assertEquals("", StringUtil.trimLeading("", ' '));
+    assertEquals("", StringUtil.trimLeading(" ", ' '));
+    assertEquals("", StringUtil.trimLeading("    ", ' '));
+    assertEquals("a  ", StringUtil.trimLeading("a  ", ' '));
+    assertEquals("a  ", StringUtil.trimLeading("  a  ", ' '));
+  }
+
+  @Test
+  public void testTrimTrailingChar() throws Exception {
+    assertEquals("", StringUtil.trimTrailing("", ' '));
+    assertEquals("", StringUtil.trimTrailing(" ", ' '));
+    assertEquals("", StringUtil.trimTrailing("    ", ' '));
+    assertEquals("  a", StringUtil.trimTrailing("  a", ' '));
+    assertEquals("  a", StringUtil.trimTrailing("  a  ", ' '));
+  }
+
   @Test
   public void testToUpperCase() {
     assertEquals('/', StringUtil.toUpperCase('/'));
@@ -153,11 +171,13 @@ public class StringUtilTest {
   @Test
   public void testTitleCase() {
     assertEquals("Couldn't Connect to Debugger", StringUtil.wordsToBeginFromUpperCase("Couldn't connect to debugger"));
+    assertEquals("Let's Make Abbreviations Like I18n, SQL and CSS", StringUtil.wordsToBeginFromUpperCase("Let's make abbreviations like I18n, SQL and CSS"));
   }
 
   @Test
   public void testSentenceCapitalization() {
     assertEquals("couldn't connect to debugger", StringUtil.wordsToBeginFromLowerCase("Couldn't Connect to Debugger"));
+    assertEquals("let's make abbreviations like I18n, SQL and CSS s SQ sq", StringUtil.wordsToBeginFromLowerCase("Let's Make Abbreviations Like I18n, SQL and CSS S SQ Sq"));
   }
 
   @Test

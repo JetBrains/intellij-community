@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.model.project;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +32,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Nullable private String[] myIdeModuleGroup;
   @Nullable  private String mySourceCompatibility;
   @Nullable private String myTargetCompatibility;
+  @Nullable private String myProductionModuleId;
 
   private boolean myInheritProjectCompileOutputPath = true;
 
@@ -57,7 +57,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
                        @NotNull String internalName,
                        @NotNull String moduleFileDirectoryPath,
                        @NotNull String externalConfigPath) {
-    super(owner, externalName, FileUtil.sanitizeFileName(internalName));
+    super(owner, externalName, internalName);
     myId = id;
     myModuleTypeId = typeId;
     myExternalConfigPath = externalConfigPath;
@@ -95,6 +95,19 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   public void setModuleFileDirectoryPath(@NotNull String path) {
     myModuleFileDirectoryPath = path;
+  }
+
+  /**
+   * @return an internal id of production module corresponding to a test-only module, this information is used to populate
+   * {@link com.intellij.openapi.roots.TestModuleProperties}
+   */
+  @Nullable
+  public String getProductionModuleId() {
+    return myProductionModuleId;
+  }
+
+  public void setProductionModuleId(@Nullable String productionModuleId) {
+    myProductionModuleId = productionModuleId;
   }
 
   public boolean isInheritProjectCompileOutputPath() {

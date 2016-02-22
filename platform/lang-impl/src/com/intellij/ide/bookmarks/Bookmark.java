@@ -357,7 +357,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   private static class MyCheckedIcon implements Icon, RetrievableIcon {
     @Nullable
     @Override
-    public Icon retrieve() {
+    public Icon retrieveIcon() {
       return PlatformIcons.CHECK_ICON;
     }
 

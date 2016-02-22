@@ -38,6 +38,7 @@ public class ActivateApplicationHttpService extends RestService {
     if (frame instanceof Window) {
       sendOk(request, context);
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           Window window = (Window)frame;
           window.toFront();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private final FileType ourStyleFileType;// = FileTypeManager.getInstance().getStdFileType("CSS");
   protected Lexer elLexer;
   private Lexer embeddedLexer;
-  private Lexer styleLexer;
   private final Map<String, Lexer> scriptLexers = new HashMap<String, Lexer>();
+  private final Map<String, Lexer> styleLexers = new HashMap<String, Lexer>();
   private boolean hasNoEmbeddments;
 
   public HtmlHighlightingLexer() {
@@ -82,23 +82,42 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     else {
       embeddedLexer = null;
       scriptLexers.clear();
+      styleLexers.clear();
     }
   }
 
   private void setEmbeddedLexer() {
     Lexer newLexer = null;
     if (hasSeenStyle()) {
+      Lexer styleLexer = styleLexers.get(styleType);
       if (styleLexer == null) {
-        if (ourStyleFileType == null) {
-          styleLexer = null;
+        if (hasSeenTag()) {
+          IElementType currentStylesheetElementType = getCurrentStylesheetElementType();
+          if (currentStylesheetElementType != null) {
+            Language language = currentStylesheetElementType.getLanguage();
+            styleLexer = SyntaxHighlighterFactory.getSyntaxHighlighter(language, null, null).getHighlightingLexer();
+          }
+          else if (ourStyleFileType != null) {
+            SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(ourStyleFileType, null, null);
+            LOG.assertTrue(highlighter != null, ourStyleFileType);
+            styleLexer = highlighter.getHighlightingLexer();
+          }
+          else {
+            styleLexer = null;
+          }
+          styleLexers.put(styleType, styleLexer);
         }
-        else {
-          SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(ourStyleFileType, null, null);
-          LOG.assertTrue(highlighter != null, ourStyleFileType);
-          styleLexer = highlighter.getHighlightingLexer();
+        else if (hasSeenAttribute()) {
+          if (ourStyleFileType == null) {
+            styleLexer = null;
+          }
+          else {
+            SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(ourStyleFileType, null, null);
+            LOG.assertTrue(highlighter != null, ourStyleFileType);
+            styleLexer = highlighter.getHighlightingLexer();
+          }
         }
       }
-
       newLexer = styleLexer;
     }
     else if (hasSeenScript()) {
@@ -159,7 +178,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
       IElementType tokenType = super.getTokenType();
 
       // TODO: fix no DOCTYPE highlighting
-      if (tokenType == null) return tokenType;
+      if (tokenType == null) return null;
 
       if (tokenType == XmlTokenType.XML_NAME) {
         // we need to convert single xml_name for tag name and attribute name into to separate

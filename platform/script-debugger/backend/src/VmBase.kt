@@ -25,4 +25,6 @@ abstract class VmBase(override val debugListener: DebugEventListener) : Vm, Atta
   override var captureAsyncStackTraces: Boolean
     get() = false
     set(value) { }
+
+  override val workerManager: WorkerManager = object : WorkerManagerBase() {}
 }

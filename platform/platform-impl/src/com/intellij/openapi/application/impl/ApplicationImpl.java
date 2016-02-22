@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -64,6 +63,8 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.Splash;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -104,7 +105,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final boolean myTestModeFlag;
   private final boolean myHeadlessMode;
   private final boolean myCommandLineMode;
-  private final boolean myIsRunningFromSources;
+  private static volatile Boolean ourIsRunningFromSources;
 
   private final boolean myIsInternal;
   private final String myName;
@@ -164,12 +165,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
   };
 
-  @NotNull
-  @Deprecated
-  public IComponentStore getStateStore() {
-    return ServiceKt.getStateStore(this);
-  }
-
   public ApplicationImpl(boolean isInternal,
                          boolean isUnitTestMode,
                          boolean isHeadless,
@@ -198,8 +193,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myHeadlessMode = isHeadless;
     myCommandLineMode = isCommandLine;
     
-    myIsRunningFromSources = new File(PathManager.getHomePath(), ".idea").isDirectory();
-
     myDoNotSave = isUnitTestMode || isHeadless;
 
     if (myTestModeFlag) {
@@ -358,8 +351,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myCommandLineMode;
   }
 
-  public boolean isRunningFromSources() {
-    return myIsRunningFromSources;
+  public static boolean isRunningFromSources() {
+    if (ourIsRunningFromSources == null) {
+      ourIsRunningFromSources = new File(PathManager.getHomePath(), ".idea").isDirectory();
+    }
+    return ourIsRunningFromSources;
   }
 
   @NotNull
@@ -505,6 +501,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
     };
 
+
     if (indicator == null) {
       // no splash, no need to to use progress manager
       task.run();
@@ -553,13 +550,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     disposeComponents();
 
-    ourThreadExecutorsService.shutdownNow();
+    AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
+    service.shutdownAppScheduledExecutorService();
+
     super.dispose();
     Disposer.dispose(myLastDisposable); // dispose it last
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(writeActionStatistics());
-      LOG.debug(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
+    if (gatherWriteActionStatistics) {
+      LOG.info(writeActionStatistics());
+      LOG.info(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
     }
   }
 
@@ -1217,13 +1216,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myWriteActionPending;
   }
 
-  private final PausesStat writePauses = new PausesStat("Write action");
+  private final boolean gatherWriteActionStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
+  private final PausesStat writePauses = gatherWriteActionStatistics ? new PausesStat("Write action") : null;
 
   private void startWrite(/*@NotNull*/ Class clazz) {
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     boolean writeActionPending = myWriteActionPending;
     myWriteActionPending = true;
-    if ((LOG.isDebugEnabled() || isUnitTestMode()) && myWriteActionsStack.isEmpty()) {
+    if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty()) {
       writePauses.started();
     }
     try {
@@ -1268,7 +1268,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private void endWrite(/*@NotNull*/ Class clazz) {
     try {
       myWriteActionsStack.pop();
-      if ((LOG.isDebugEnabled() || isUnitTestMode()) && myWriteActionsStack.isEmpty()) {
+      if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty()) {
         writePauses.finished("write action ("+clazz+")");
       }
       fireWriteActionFinished(clazz);

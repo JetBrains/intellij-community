@@ -18,7 +18,7 @@ import java.util.Queue;
  * Date: 8/10/12
  */
 public class CucumberJvmSMFormatter implements Formatter, Reporter {
-  public static final String TEAMCITY_PREFIX = "##teamcity";
+  public static final String TEAMCITY_PREFIX = "#teamcity";
   public static final int MILLION = 1000000;
   private int scenarioCount;
   private int passedScenarioCount;
@@ -101,9 +101,9 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   @Override
   public void scenario(Scenario scenario) {
     closeScenario();
+    outCommand(String.format(TEMPLATE_SCENARIO_STARTED, getCurrentTime()));
     if (isRealScenario(scenario)) {
       scenarioCount++;
-      outCommand(String.format(TEMPLATE_SCENARIO_STARTED, getCurrentTime()));
       closeScenarioOutline();
       currentSteps.clear();
     }
@@ -120,7 +120,6 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   @Override
   public void scenarioOutline(ScenarioOutline outline) {
     scenarioCount++;
-    outCommand(String.format(TEMPLATE_SCENARIO_STARTED, getCurrentTime()));
     queue.clear();
     currentSteps.clear();
 

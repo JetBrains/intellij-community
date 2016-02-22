@@ -37,16 +37,16 @@ import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 
-class InOutAnalysis extends Analysis<Result<Key, Value>> {
+class InOutAnalysis extends Analysis<Result> {
 
-  static final ResultUtil<Key, Value> resultUtil =
-    new ResultUtil<Key, Value>(new ELattice<Value>(Value.Bot, Value.Top));
+  static final ResultUtil resultUtil =
+    new ResultUtil(new ELattice<Value>(Value.Bot, Value.Top));
 
   final private State[] pending;
   private final InOutInterpreter interpreter;
   private final Value inValue;
   private final int generalizeShift;
-  private Result<Key, Value> internalResult;
+  private Result internalResult;
   private int id = 0;
   private int pendingTop = 0;
 
@@ -56,16 +56,16 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     interpreter = new InOutInterpreter(direction, richControlFlow.controlFlow.methodNode.instructions, resultOrigins);
     inValue = direction instanceof InOut ? ((InOut)direction).inValue : null;
     generalizeShift = (methodNode.access & ACC_STATIC) == 0 ? 1 : 0;
-    internalResult = new Final<Key, Value>(Value.Bot);
+    internalResult = new Final(Value.Bot);
   }
 
   @NotNull
-  Equation<Key, Value> mkEquation(Result<Key, Value> res) {
-    return new Equation<Key, Value>(aKey, res);
+  Equation mkEquation(Result res) {
+    return new Equation(aKey, res);
   }
 
   @NotNull
-  protected Equation<Key, Value> analyze() throws AnalyzerException {
+  protected Equation analyze() throws AnalyzerException {
     pendingPush(createStartState());
     int steps = 0;
     while (pendingTop > 0 && earlyResult == null) {
@@ -84,7 +84,7 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
       boolean fold = false;
       if (dfsTree.loopEnters[insnIndex]) {
         for (Conf prev : history) {
-          if (AbstractValues.isInstance(conf, prev)) {
+          if (isInstance(conf, prev)) {
             fold = true;
             break;
           }
@@ -143,32 +143,32 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
       case DRETURN:
       case RETURN:
         BasicValue stackTop = popValue(frame);
-        Result<Key, Value> subResult;
+        Result subResult;
         if (FalseValue == stackTop) {
-          subResult = new Final<Key, Value>(Value.False);
+          subResult = new Final(Value.False);
         }
         else if (TrueValue == stackTop) {
-          subResult = new Final<Key, Value>(Value.True);
+          subResult = new Final(Value.True);
         }
         else if (NullValue == stackTop) {
-          subResult = new Final<Key, Value>(Value.Null);
+          subResult = new Final(Value.Null);
         }
         else if (stackTop instanceof NotNullValue) {
-          subResult = new Final<Key, Value>(Value.NotNull);
+          subResult = new Final(Value.NotNull);
         }
         else if (stackTop instanceof ParamValue) {
-          subResult = new Final<Key, Value>(inValue);
+          subResult = new Final(inValue);
         }
         else if (stackTop instanceof CallResultValue) {
           Set<Key> keys = ((CallResultValue) stackTop).inters;
-          subResult = new Pending<Key, Value>(Collections.singleton(new Product<Key, Value>(Value.Top, keys)));
+          subResult = new Pending(Collections.singleton(new Product(Value.Top, keys)));
         }
         else {
-          earlyResult = new Final<Key, Value>(Value.Top);
+          earlyResult = new Final(Value.Top);
           return;
         }
         internalResult = resultUtil.join(internalResult, subResult);
-        if (internalResult instanceof Final && ((Final<?, Value>)internalResult).value == Value.Top) {
+        if (internalResult instanceof Final && ((Final)internalResult).value == Value.Top) {
           earlyResult = internalResult;
         }
         return;

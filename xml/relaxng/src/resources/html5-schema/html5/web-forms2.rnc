@@ -83,6 +83,11 @@ datatypes w = "http://whattf.org/datatype-draft"
 			string
 		}
 
+	shared-form.attrs.minlength =
+		attribute minlength {
+			common.data.integer.non-negative
+		}
+
 ## Shared attributes for <input>
 		
 	shared-input.attrs =
@@ -90,6 +95,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.autofocus?
 		&	input.attrs.list?
 		&	shared-form.attrs.maxlength?
+		&	shared-form.attrs.minlength?
 		&	shared-form.attrs.pattern?
 		&	shared-form.attrs.placeholder?
 		&	shared-form.attrs.readonly?
@@ -133,6 +139,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.required?
 		&	shared-form.attrs.placeholder?
 		&	shared-form.attrs.inputmode?
+		&	shared-form.attrs.minlength?
 		)
 
 ## Password Field: <input type='password'>, Extensions
@@ -144,6 +151,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.pattern?
 		&	shared-form.attrs.placeholder?
 		&	shared-form.attrs.required?
+		&	shared-form.attrs.minlength?
 		)
 
 ## Checkbox <input type='checkbox'>, Extensions
@@ -651,6 +659,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		empty
 	textarea.attrs &=
 		(	shared-form.attrs.maxlength?
+		&	shared-form.attrs.minlength?
 		&	shared-form.attrs.autofocus? 
 		&	shared-form.attrs.required? 
 		&	shared-form.attrs.placeholder?

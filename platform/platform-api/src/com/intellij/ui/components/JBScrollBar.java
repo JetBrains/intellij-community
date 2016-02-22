@@ -52,30 +52,4 @@ public class JBScrollBar extends JScrollBar {
   public void updateUI() {
     setUI(ButtonlessScrollBarUI.createNormal());
   }
-
-  /**
-   * Positions of a ScrollBar on a ScrollPane.
-   */
-  enum Alignment {
-    TOP, LEFT, RIGHT, BOTTOM;
-
-    static Alignment get(JComponent component) {
-      if (component instanceof JScrollBar) {
-        Object property = component.getClientProperty(Alignment.class);
-        if (property instanceof Alignment) return (Alignment)property;
-
-        if (component.getParent() instanceof JScrollPane) {
-          switch (((JScrollBar)component).getOrientation()) {
-            case Adjustable.HORIZONTAL:
-              return BOTTOM;
-            case Adjustable.VERTICAL:
-              return component.getParent().getComponentOrientation().isLeftToRight()
-                     ? RIGHT
-                     : LEFT;
-          }
-        }
-      }
-      return null;
-    }
-  }
 }

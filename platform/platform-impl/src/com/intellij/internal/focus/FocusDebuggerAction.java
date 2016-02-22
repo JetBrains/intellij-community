@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
@@ -91,29 +92,41 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
 
     private void paintFocusBorders(boolean clean) {
       if (myCurrent != null) {
-        Graphics currentFocusGraphics = myCurrent.getGraphics();
-        if (currentFocusGraphics != null) {
-          if (clean) {
-            if (myCurrent.isDisplayable()) {
-              myCurrent.repaint();
+        Graphics2D currentFocusGraphics = (Graphics2D)(myCurrent.getGraphics() != null ? myCurrent.getGraphics().create() : null);
+        try {
+          if (currentFocusGraphics != null) {
+            if (clean) {
+              if (myCurrent.isDisplayable()) {
+                myCurrent.repaint();
+              }
             }
-          } else {
-            currentFocusGraphics.setColor(myTemporary ? JBColor.ORANGE : JBColor.GREEN);
-            UIUtil.drawDottedRectangle(currentFocusGraphics, 1, 1, myCurrent.getSize().width - 2, myCurrent.getSize().height - 2);
+            else {
+              currentFocusGraphics.setStroke(new BasicStroke(JBUI.scale(1)));
+              currentFocusGraphics.setColor(myTemporary ? JBColor.ORANGE : JBColor.GREEN);
+              UIUtil.drawDottedRectangle(currentFocusGraphics, 1, 1, myCurrent.getSize().width - 2, myCurrent.getSize().height - 2);
+            }
           }
+        } finally {
+          if (currentFocusGraphics != null) currentFocusGraphics.dispose();
         }
-      }
-
-      if (myPrevious != null) {
-        Graphics previousFocusGraphics = myPrevious.getGraphics();
-        if (previousFocusGraphics != null) {
-          if (clean) {
-            if (myPrevious.isDisplayable()) {
-              myPrevious.repaint();
+        if (myPrevious != null) {
+          Graphics2D previousFocusGraphics = (Graphics2D)(myPrevious.getGraphics() != null ? myPrevious.getGraphics().create() : null);
+          try {
+            if (previousFocusGraphics != null) {
+              if (clean) {
+                if (myPrevious.isDisplayable()) {
+                  myPrevious.repaint();
+                }
+              }
+              else {
+                previousFocusGraphics.setStroke(new BasicStroke(JBUI.scale(1)));
+                previousFocusGraphics.setColor(JBColor.RED);
+                UIUtil.drawDottedRectangle(previousFocusGraphics, 1, 1, myPrevious.getSize().width - 2, myPrevious.getSize().height - 2);
+              }
             }
-          } else {
-            previousFocusGraphics.setColor(JBColor.RED);
-            UIUtil.drawDottedRectangle(previousFocusGraphics, 1, 1, myPrevious.getSize().width - 2, myPrevious.getSize().height - 2);
+          }
+          finally {
+            if (previousFocusGraphics != null) previousFocusGraphics.dispose();
           }
         }
       }

@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog;
@@ -46,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -109,7 +109,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
     final List<ShelvedBinaryFile> finalBinaryFiles = binaryFiles == null || binaryFiles.isEmpty() ? null : binaryFiles;
     final List<ShelvedChange> finalChanges = changes == null || changes.isEmpty() ? null : changes;
     final ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(project);
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Unshelve Changes", true, BackgroundFromStartOption.getInstance()) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Unshelve Changes", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (ShelvedChangeList changeList : changeLists) {
@@ -154,6 +154,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
   @NotNull
   private static JCheckBox createRemoveFilesStrategyCheckbox(@NotNull Project project) {
     final JCheckBox removeOptionCheckBox = new JCheckBox("Remove successfully applied files from the shelf");
+    removeOptionCheckBox.setMnemonic(KeyEvent.VK_R);
     final ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(project);
     removeOptionCheckBox.setSelected(shelveChangesManager.isRemoveFilesFromShelf());
     removeOptionCheckBox.addActionListener(new ActionListener() {

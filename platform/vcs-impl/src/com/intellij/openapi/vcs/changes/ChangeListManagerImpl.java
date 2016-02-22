@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.*;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -64,6 +65,8 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -80,14 +83,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final FileStatusManager myFileStatusManager;
   private final UpdateRequestsQueue myUpdater;
 
-  private static final AtomicReference<ScheduledExecutorService> ourUpdateAlarm = new AtomicReference<ScheduledExecutorService>();
-  static {
-    ourUpdateAlarm.set(createChangeListExecutor());
-  }
-
-  private static ScheduledExecutorService createChangeListExecutor() {
-    return VcsUtil.createExecutor("Change List Updater");
-  }
+  private static final AtomicReference<Future> ourUpdateAlarm = new AtomicReference<Future>();
+  private final ScheduledExecutorService myScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService(1);
 
   private final Modifier myModifier;
 
@@ -153,10 +150,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
     myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject, true);
-    myUpdater = new UpdateRequestsQueue(myProject, ourUpdateAlarm, new ActualUpdater());
+    myUpdater = new UpdateRequestsQueue(myProject, ourUpdateAlarm, myScheduledExecutorService, new ActualUpdater());
 
-    myWorker = new ChangeListWorker(myProject, new MyChangesDeltaForwarder(myProject, ourUpdateAlarm));
-    myDelayedNotificator = new DelayedNotificator(myListeners, ourUpdateAlarm);
+    myWorker = new ChangeListWorker(myProject, new MyChangesDeltaForwarder(myProject, ourUpdateAlarm, myScheduledExecutorService));
+    myDelayedNotificator = new DelayedNotificator(myListeners, ourUpdateAlarm, myScheduledExecutorService);
     myModifier = new Modifier(myWorker, myDelayedNotificator);
 
     myConflictTracker = new ChangelistConflictTracker(project, this, myFileStatusManager, EditorNotifications.getInstance(project));
@@ -234,7 +231,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                                }, "<br/>"));
     }
 
-    VcsConfirmationDialog dialog = new VcsConfirmationDialog(myProject, new VcsShowConfirmationOption() {
+    VcsConfirmationDialog dialog = new VcsConfirmationDialog(myProject, "Remove Empty Changelist", "Remove", "Cancel", new VcsShowConfirmationOption() {
       @Override
       public Value getValue() {
         return config.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
@@ -531,13 +528,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
         myUpdateChangesProgressIndicator = indicator;
       }
-      final String scopeInString = !LOG.isDebugEnabled() ? "" : StringUtil.join(scopes, new Function<VcsDirtyScope, String>() {
-        @Override
-        public String fun(VcsDirtyScope scope) {
-          return scope.toString();
-        }
-      }, "->\n");
-      LOG.debug("refresh procedure started, everything = " + wasEverythingDirty + " dirty scope: " + scopeInString);
+      if (LOG.isDebugEnabled()) {
+        String scopeInString = StringUtil.join(scopes, new Function<VcsDirtyScope, String>() {
+          @Override
+          public String fun(VcsDirtyScope scope) {
+            return scope.toString();
+          }
+        }, "->\n");
+        LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
+                  "\ncurrent changes: " + myWorker);
+      }
       dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
 
@@ -574,8 +574,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
               myWorker = dataHolder.getChangeListWorker();
               myWorker.onAfterWorkerSwitch(oldWorker);
               myModifier.setWorker(myWorker);
-              LOG.debug("refresh procedure finished, unversioned size: " +
-                        dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize() + "\n changes: " + myWorker);
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("refresh procedure finished, unversioned size: " +
+                          dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize() + "\nchanges: " + myWorker);
+              }
               final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
               myComposite = dataHolder.getComposite();
               if (statusChanged) {
@@ -1628,10 +1630,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   // this is for perforce tests to ensure that LastSuccessfulUpdateTracker receives the event it needs
-  private static void waitUpdateAlarm() {
+  private void waitUpdateAlarm() {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    ourUpdateAlarm.get().execute(new Runnable() {
+    myScheduledExecutorService.execute(new Runnable() {
       @Override
       public void run() {
         semaphore.up();
@@ -1640,19 +1642,23 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     semaphore.waitFor();
   }
 
+  @TestOnly
   public void stopEveryThingIfInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    ourUpdateAlarm.get().shutdownNow();
-    ourUpdateAlarm.set(createChangeListExecutor());
+    Future future = ourUpdateAlarm.get();
+    if (future != null) {
+      future.cancel(true);
+    }
   }
 
+  @TestOnly
   public void forceGoInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myUpdater.forceGo();
   }
 
   public void executeOnUpdaterThread(Runnable r) {
-    ourUpdateAlarm.get().execute(r);
+    ourUpdateAlarm.set(myScheduledExecutorService.submit(r));
   }
 
   @Override
@@ -1694,10 +1700,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     private final RemoteRevisionsCache myRevisionsCache;
     private final ProjectLevelVcsManager myVcsManager;
     private final Project myProject;
-    private final AtomicReference<ScheduledExecutorService> myService;
+    private final AtomicReference<Future> myFuture;
+    private final ExecutorService myService;
 
-    public MyChangesDeltaForwarder(final Project project, final AtomicReference<ScheduledExecutorService> service) {
+    public MyChangesDeltaForwarder(final Project project, final AtomicReference<Future> future, @NotNull ExecutorService service) {
       myProject = project;
+      myFuture = future;
       myService = service;
       myRevisionsCache = RemoteRevisionsCache.getInstance(project);
       myVcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -1705,7 +1713,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     @Override
     public void modify(final BaseRevision was, final BaseRevision become) {
-      myService.get().submit(new Runnable() {
+      myFuture.set(myService.submit(new Runnable() {
         @Override
         public void run() {
           final AbstractVcs vcs = getVcs(was);
@@ -1715,12 +1723,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           // maybe define modify method?
           myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
         }
-      });
+      }));
     }
 
     @Override
     public void plus(final BaseRevision baseRevision) {
-      myService.get().submit(new Runnable() {
+      myFuture.set(myService.submit(new Runnable() {
         @Override
         public void run() {
           final AbstractVcs vcs = getVcs(baseRevision);
@@ -1729,12 +1737,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           }
           myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision);
         }
-      });
+      }));
     }
 
     @Override
     public void minus(final BaseRevision baseRevision) {
-      myService.get().submit(new Runnable() {
+      myFuture.set(myService.submit(new Runnable() {
         @Override
         public void run() {
           final AbstractVcs vcs = getVcs(baseRevision);
@@ -1743,7 +1751,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           }
           myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath().getPath());
         }
-      });
+      }));
     }
 
     @Nullable

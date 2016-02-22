@@ -18,13 +18,13 @@ package com.intellij.diff.util;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.markup.LineMarkerRenderer;
+import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class DiffLineMarkerRenderer implements LineMarkerRenderer {
+public class DiffLineMarkerRenderer implements LineMarkerRendererEx {
   @NotNull private final RangeHighlighter myHighlighter;
   @NotNull private final TextDiffType myDiffType;
   private final boolean myIgnoredFoldingOutline;
@@ -103,5 +103,10 @@ public class DiffLineMarkerRenderer implements LineMarkerRenderer {
       // Draw 2 pixel line in that case
       DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y - 1, color, true, myResolved);
     }
+  }
+
+  @Override
+  public Position getPosition() {
+    return Position.CUSTOM;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.psi.PsiDocumentManager;
@@ -80,11 +81,24 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
                    "}");
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     checkFoldingState("[FoldRegion +(25:33), placeholder='{...}']");
-    
-    myEditor.getDocument().insertString(0, "/*");
+
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        myEditor.getDocument().insertString(0, "/*");
+      }
+    }.execute().throwException();
+
     checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{...}']");
-    
-    myEditor.getDocument().deleteString(0, 2);
+
+    WriteCommandAction.runWriteCommandAction(getProject(),
+                                             new Runnable() {
+      @Override
+      public void run() {
+        myEditor.getDocument().deleteString(0, 2);
+      }
+    });
+
     checkFoldingState("[FoldRegion +(25:33), placeholder='{...}']");
   }
   
@@ -97,7 +111,13 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     checkFoldingState("[FoldRegion +(25:33), placeholder='{...}']");
 
-    myEditor.getDocument().insertString(0, "/*");
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        myEditor.getDocument().insertString(0, "/*");
+      }
+    }.execute().throwException();
+
     checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{...}']");
 
     executeAction(IdeActions.ACTION_EXPAND_ALL_REGIONS);

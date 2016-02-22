@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
-
 
 @State(
   name = "CodeStyleSettingsManager",
-    storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+  storages = {
+    @Storage("code.style.schemes"),
+    @Storage(value = "other.xml", deprecated = true)
+  }
 )
-public class AppCodeStyleSettingsManager extends CodeStyleSettingsManager{
+public class AppCodeStyleSettingsManager extends CodeStyleSettingsManager {
 }

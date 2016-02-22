@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,15 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -64,7 +67,10 @@ public abstract class IdeFrameDecorator implements Disposable {
   protected void notifyFrameComponents(boolean state) {
     if (myFrame != null) {
       myFrame.getRootPane().putClientProperty(WindowManagerImpl.FULL_SCREEN, state);
-      myFrame.getJMenuBar().putClientProperty(WindowManagerImpl.FULL_SCREEN, state);
+      final JMenuBar menuBar = myFrame.getJMenuBar();
+      if (menuBar != null) {
+        menuBar.putClientProperty(WindowManagerImpl.FULL_SCREEN, state);
+      }
     }
   }
 
@@ -96,7 +102,9 @@ public abstract class IdeFrameDecorator implements Disposable {
           myFrame.getRootPane().putClientProperty("oldBounds", myFrame.getBounds());
         }
         myFrame.dispose();
-        myFrame.setUndecorated(state);
+        if (! (Registry.is("ide.win.frame.decoration") && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()))) {
+          myFrame.setUndecorated(state);
+        }
       }
       finally {
         if (state) {

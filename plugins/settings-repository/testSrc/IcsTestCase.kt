@@ -16,7 +16,7 @@
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.writeChild
+import com.intellij.util.writeChild
 import org.eclipse.jgit.lib.Repository
 import org.jetbrains.jgit.dirCache.AddLoadedFile
 import org.jetbrains.jgit.dirCache.edit
@@ -35,7 +35,7 @@ fun Repository.add(path: String, data: ByteArray): Repository {
 }
 
 val Repository.workTreePath: Path
-  get() = getWorkTree().toPath()
+  get() = workTree.toPath()
 
 val SAMPLE_FILE_NAME = "file.xml"
 val SAMPLE_FILE_CONTENT = """<application>
@@ -53,7 +53,7 @@ abstract class IcsTestCase {
     get() = fsRule.fs
 
   val icsManager by lazy(LazyThreadSafetyMode.NONE) {
-    val icsManager = IcsManager(tempDirManager.newDirectory())
+    val icsManager = IcsManager(tempDirManager.newPath())
     icsManager.repositoryManager.createRepositoryIfNeed()
     icsManager.repositoryActive = true
     icsManager
@@ -62,4 +62,4 @@ abstract class IcsTestCase {
   val provider by lazy(LazyThreadSafetyMode.NONE) { icsManager.ApplicationLevelProvider() }
 }
 
-fun TemporaryDirectory.createRepository(directoryName: String? = null) = createGitRepository(newDirectory(directoryName))
+fun TemporaryDirectory.createRepository(directoryName: String? = null) = createGitRepository(newPath(directoryName))

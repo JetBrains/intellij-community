@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,45 +21,17 @@ import org.jetbrains.annotations.Nullable;
 
 public class CastConflictsWithInstanceofInspectionTest extends LightInspectionTestCase {
 
-  public void testElseElse() {
-    doTest();
-  }
-
-  public void testSimple() {
-    doTest();
-  }
-
-  public void testElseElseOrOr() {
-    doTest();
-  }
-
-  public void testAndAnd() {
-    doTest();
-  }
-
-  public void testPolyadic() {
-    doTest();
-  }
-  
-  public void testNotOr() {
-    doTest();
-  }
-
-  public void testOrInstanceofOrInstanceof() {
-    doTest();
-  }
-
-  public void testIfCheckBefore() {
-    doTest();
-  }
-
-  public void testIfElseCheckBefore() {
-    doTest();
-  }
-
-  public void testAssertCheckBefore() {
-    doTest();
-  }
+  public void testElseElse() { doTest(); }
+  public void testSimple() { doTest(); }
+  public void testElseElseOrOr() { doTest(); }
+  public void testAndAnd() { doTest(); }
+  public void testPolyadic() { doTest(); }
+  public void testNotOr() { doTest(); }
+  public void testOrInstanceofOrInstanceof() { doTest(); }
+  public void testIfCheckBefore() { doTest(); }
+  public void testIfElseCheckBefore() { doTest(); }
+  public void testAssertCheckBefore() { doTest(); }
+  public void testCastMethod() { doTest(); }
 
   @Nullable
   @Override

@@ -15,19 +15,34 @@
  */
 package org.jetbrains.java.decompiler;
 
+import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.*;
 
-public class SingleClassesTest extends SingleClassesTestBase {
-  @Override
-  protected Map<String, Object> getDecompilerOptions() {
-    return new HashMap<String, Object>() {{
-      put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1");
-      put(IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1");
-    }};
+import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
+import static org.junit.Assert.assertTrue;
+
+public class SingleClassesTest {
+  private DecompilerTestFixture fixture;
+
+  @Before
+  public void setUp() throws IOException {
+    fixture = new DecompilerTestFixture();
+    fixture.setUp(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
+                  IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1");
+  }
+
+  @After
+  public void tearDown() {
+    fixture.tearDown();
+    fixture = null;
   }
 
   @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
@@ -62,4 +77,50 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testInnerSignature() { doTest("pkg/TestInnerSignature"); }
   @Test public void testParameterizedTypes() { doTest("pkg/TestParameterizedTypes"); }
   @Test public void testShadowing() { doTest("pkg/TestShadowing", "pkg/Shadow", "ext/Shadow"); }
+
+  protected void doTest(String testFile, String... companionFiles) {
+    ConsoleDecompiler decompiler = fixture.getDecompiler();
+
+    File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
+    assertTrue(classFile.isFile());
+    for (File file : collectClasses(classFile)) {
+      decompiler.addSpace(file, true);
+    }
+
+    for (String companionFile : companionFiles) {
+      File companionClassFile = new File(fixture.getTestDataDir(), "/classes/" + companionFile + ".class");
+      assertTrue(companionClassFile.isFile());
+      for (File file : collectClasses(companionClassFile)) {
+        decompiler.addSpace(file, true);
+      }
+    }
+
+    decompiler.decompileContext();
+
+    String testName = classFile.getName().substring(0, classFile.getName().length() - 6);
+    File decompiledFile = new File(fixture.getTargetDir(), testName + ".java");
+    assertTrue(decompiledFile.isFile());
+    File referenceFile = new File(fixture.getTestDataDir(), "results/" + testName + ".dec");
+    assertTrue(referenceFile.isFile());
+    assertFilesEqual(referenceFile, decompiledFile);
+  }
+
+  private static List<File> collectClasses(File classFile) {
+    List<File> files = new ArrayList<File>();
+    files.add(classFile);
+
+    File parent = classFile.getParentFile();
+    if (parent != null) {
+      final String pattern = classFile.getName().replace(".class", "") + "\\$.+\\.class";
+      File[] inner = parent.listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          return name.matches(pattern);
+        }
+      });
+      if (inner != null) Collections.addAll(files, inner);
+    }
+
+    return files;
+  }
 }

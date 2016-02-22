@@ -31,6 +31,7 @@ internal class StorageManagerTest {
   companion object {
     val MACRO = "\$MACRO1$"
 
+    @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 
@@ -62,7 +63,7 @@ internal class StorageManagerTest {
       TestCase.fail("Exception expected")
     }
     catch (e: IllegalArgumentException) {
-      assertThat(e.getMessage()).isEqualTo("Unknown macro: \$UNKNOWN_MACRO$ in storage file spec: \$UNKNOWN_MACRO$/test.xml")
+      assertThat(e.message).isEqualTo("Unknown macro: \$UNKNOWN_MACRO$ in storage file spec: \$UNKNOWN_MACRO$/test.xml")
     }
   }
 

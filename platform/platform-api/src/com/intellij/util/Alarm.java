@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.Patches;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
@@ -26,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -34,16 +33,18 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Allows to schedule Runnable instances (requests) to be executed after a specific time interval on a specific thread.
- * Use "addRequest" methods to schedule the requests.
+ * Use {@link #addRequest} methods to schedule the requests.
+ * Two requests scheduled with the same delay are executed sequentially, one after the other.
  * {@link #cancelAllRequests()} and {@link #cancelRequest(Runnable)} allow to cancel already scheduled requests.
  */
 public class Alarm implements Disposable {
@@ -51,12 +52,10 @@ public class Alarm implements Disposable {
 
   private volatile boolean myDisposed;
 
-  private final List<Request> myRequests = new SmartList<Request>();
-  private final List<Request> myPendingRequests = new SmartList<Request>();
+  private final List<Request> myRequests = new SmartList<Request>(); // guarded by LOCK
+  private final List<Request> myPendingRequests = new SmartList<Request>(); // guarded by LOCK
 
-  private final ExecutorService myExecutorService;
-
-  private static final ThreadPoolExecutor ourSharedExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Alarm pool(shared)", Thread.NORM_PRIORITY - 2);
+  private final ScheduledExecutorService myExecutorService;
 
   private final Object LOCK = new Object();
   final ThreadToUse myThreadToUse;
@@ -65,15 +64,11 @@ public class Alarm implements Disposable {
 
   @Override
   public void dispose() {
-    myDisposed = true;
-    cancelAllRequests();
+    if (!myDisposed) {
+      myDisposed = true;
+      cancelAllRequests();
 
-    if (myThreadToUse == ThreadToUse.POOLED_THREAD) {
-      myExecutorService.shutdown();
-    }
-    else if (myThreadToUse == ThreadToUse.OWN_THREAD) {
-      myExecutorService.shutdown();
-      ((ThreadPoolExecutor)myExecutorService).getQueue().clear();
+      myExecutorService.shutdownNow();
     }
   }
 
@@ -83,27 +78,28 @@ public class Alarm implements Disposable {
 
   public enum ThreadToUse {
     /**
-     * Run the action on Swing EventDispatchThread. This is the default. But the actions shouldn't take long to avoid UI freezes.
+     * Run request in Swing EventDispatchThread. This is the default.
+     * NB: <i>Requests shouldn't take long to avoid UI freezes.</i>
      */
     SWING_THREAD,
 
     /**
-     * The action will be executed on a dedicated single shared thread, one per IDEA instance.
-     * The actions should be very fast to avoid blocking other Alarm instances that need the same thread. 
+     * @deprecated Use {@link #POOLED_THREAD} instead
      */
+    @Deprecated
     SHARED_THREAD,
 
     /**
-     * Alarm requests are run on one of application pooled threads. 
-     * 
+     * Run requests in one of application pooled threads.
+     *
      * @see Application#executeOnPooledThread(Callable)
      */
     POOLED_THREAD,
 
     /**
-     * A dedicated new thread is created for this Alarm instance to run the requests. No time limits are placed on the request execution time.
-     * In general it's advised to avoid this option because it may lead to too many OS resources being used.
+     * @deprecated Use {@link #POOLED_THREAD} instead
      */
+    @Deprecated
     OWN_THREAD
   }
 
@@ -114,7 +110,7 @@ public class Alarm implements Disposable {
     this(ThreadToUse.SWING_THREAD);
   }
 
-  public Alarm(Disposable parentDisposable) {
+  public Alarm(@NotNull Disposable parentDisposable) {
     this(ThreadToUse.SWING_THREAD, parentDisposable);
   }
 
@@ -127,16 +123,9 @@ public class Alarm implements Disposable {
   public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
     myThreadToUse = threadToUse;
 
-    if (threadToUse == ThreadToUse.POOLED_THREAD) {
-      myExecutorService = new MyExecutor();
-    }
-    else if(threadToUse == ThreadToUse.OWN_THREAD) {
-      myExecutorService = ConcurrencyUtil.newSingleThreadExecutor(
-        "Alarm pool(own)", Thread.NORM_PRIORITY - 2);
-    }
-    else {
-      myExecutorService = ourSharedExecutorService;
-    }
+    myExecutorService = // have to restrict the number of running tasks because otherwise the (implicit) contract of
+                        // "addRequests with the same delay are executed in order" will be broken
+                        AppExecutorUtil.createBoundedScheduledExecutorService(1);
 
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, this);
@@ -154,17 +143,25 @@ public class Alarm implements Disposable {
           addRequest(request, delay);
         }
       });
-    } else {
+    }
+    else {
       addRequest(request, delay);
     }
   }
 
+  private ModalityState getModalityState() {
+    if (myThreadToUse != ThreadToUse.SWING_THREAD) return null;
+    Application application = ApplicationManager.getApplication();
+    if (application == null) return null;
+    return application.getCurrentModalityState();
+  }
+
   public void addRequest(@NotNull Runnable request, long delayMillis) {
-    _addRequest(request, delayMillis, myThreadToUse == ThreadToUse.SWING_THREAD ? ModalityState.current() : null);
+    _addRequest(request, delayMillis, getModalityState());
   }
 
   public void addRequest(@NotNull Runnable request, int delayMillis) {
-    _addRequest(request, delayMillis, myThreadToUse == ThreadToUse.SWING_THREAD ? ModalityState.current() : null);
+    _addRequest(request, delayMillis, getModalityState());
   }
 
   public void addComponentRequest(@NotNull Runnable request, int delay) {
@@ -187,7 +184,7 @@ public class Alarm implements Disposable {
     _addRequest(request, delayMillis, modalityState);
   }
 
-  void _addRequest(@NotNull Runnable request, long delayMillis, ModalityState modalityState) {
+  void _addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
     synchronized (LOCK) {
       checkDisposed();
       final Request requestToSchedule = new Request(request, modalityState, delayMillis);
@@ -195,26 +192,26 @@ public class Alarm implements Disposable {
       if (myActivationComponent == null || myActivationComponent.isShowing()) {
         _add(requestToSchedule);
       }
-      else {
-        if (!myPendingRequests.contains(requestToSchedule)) {
-          myPendingRequests.add(requestToSchedule);
-        }
+      else if (!myPendingRequests.contains(requestToSchedule)) {
+        myPendingRequests.add(requestToSchedule);
       }
     }
   }
 
+  // must be called under LOCK
   private void _add(@NotNull Request requestToSchedule) {
-    final ScheduledFuture<?> future = JobScheduler.getScheduler().schedule(requestToSchedule, requestToSchedule.myDelay, TimeUnit.MILLISECONDS);
-    requestToSchedule.setFuture(future);
+    requestToSchedule.schedule();
     myRequests.add(requestToSchedule);
   }
 
   private void flushPending() {
-    for (Request each : myPendingRequests) {
-      _add(each);
-    }
+    synchronized (LOCK) {
+      for (Request each : myPendingRequests) {
+        _add(each);
+      }
 
-    myPendingRequests.clear();
+      myPendingRequests.clear();
+    }
   }
 
   public boolean cancelRequest(@NotNull Runnable request) {
@@ -228,7 +225,7 @@ public class Alarm implements Disposable {
   private void cancelRequest(@NotNull Runnable request, @NotNull List<Request> list) {
     for (int i = list.size()-1; i>=0; i--) {
       Request r = list.get(i);
-      if (r.getTask() == request) {
+      if (r.myTask == request) {
         r.cancel();
         list.remove(i);
       }
@@ -253,6 +250,7 @@ public class Alarm implements Disposable {
     return count;
   }
 
+  @TestOnly
   public void flush() {
     List<Pair<Request, Runnable>> requests;
     synchronized (LOCK) {
@@ -275,6 +273,24 @@ public class Alarm implements Disposable {
         request.first.myTask = request.second;
       }
       request.first.run();
+    }
+  }
+
+  @TestOnly
+  void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    List<Request> requests;
+    synchronized (LOCK) {
+      requests = new ArrayList<Request>(myRequests);
+    }
+
+    for (Request request : requests) {
+      Future<?> future;
+      synchronized (LOCK) {
+        future = request.myFuture;
+      }
+      if (future != null) {
+        future.get(timeout, unit);
+      }
     }
   }
 
@@ -308,6 +324,7 @@ public class Alarm implements Disposable {
     private Request(@NotNull final Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
       synchronized (LOCK) {
         myTask = task;
+
         myModalityState = modalityState;
         myDelay = delayMillis;
       }
@@ -331,12 +348,12 @@ public class Alarm implements Disposable {
             final Runnable task;
             synchronized (LOCK) {
               task = myTask;
-              if (task == null) return;
               myTask = null;
 
               myRequests.remove(Request.this);
               myFuture = null;
             }
+            if (task == null) return;
 
             if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
               //noinspection SSBasedInspection
@@ -361,10 +378,7 @@ public class Alarm implements Disposable {
         };
 
         if (myModalityState == null) {
-          Future<?> future = myExecutorService.submit(scheduledTask);
-          synchronized (LOCK) {
-            myFuture = future;
-          }
+          scheduledTask.run();
         }
         else {
           final Application app = ApplicationManager.getApplication();
@@ -385,16 +399,9 @@ public class Alarm implements Disposable {
       }
     }
 
-    private Runnable getTask() {
-      synchronized (LOCK) {
-        return myTask;
-      }
-    }
-
-    private void setFuture(@NotNull ScheduledFuture<?> future) {
-      synchronized (LOCK) {
-        myFuture = future;
-      }
+    // must be called under LOCK
+    private void schedule() {
+      myFuture = myExecutorService.schedule(this, myDelay, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -406,9 +413,6 @@ public class Alarm implements Disposable {
         Future<?> future = myFuture;
         if (future != null) {
           future.cancel(false);
-          assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
-          // TODO Use java.util.concurrent.ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true) when on jdk 1.7
-          ((ThreadPoolExecutor)JobScheduler.getScheduler()).remove((Runnable)future);
           myFuture = null;
         }
         Runnable task = myTask;
@@ -419,8 +423,10 @@ public class Alarm implements Disposable {
 
     @Override
     public String toString() {
-      Runnable task = getTask();
-      return super.toString() + (task != null ? ": "+task : "");
+      synchronized (LOCK) {
+        Runnable task = myTask;
+        return super.toString() + (task != null ? ": "+task : "");
+      }
     }
   }
 
@@ -445,42 +451,5 @@ public class Alarm implements Disposable {
 
   public boolean isDisposed() {
     return myDisposed;
-  }
-
-  private class MyExecutor extends AbstractExecutorService {
-    private final AtomicBoolean isShuttingDown = new AtomicBoolean();
-    private final QueueProcessor<Runnable> myProcessor = QueueProcessor.createRunnableQueueProcessor();
-
-    @Override
-    public void shutdown() {
-      myProcessor.clear();
-      isShuttingDown.set(myDisposed);
-    }
-
-    @NotNull
-    @Override
-    public List<Runnable> shutdownNow() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isShutdown() {
-      return isShuttingDown.get();
-    }
-
-    @Override
-    public boolean isTerminated() {
-      return isShutdown() && myProcessor.isEmpty();
-    }
-
-    @Override
-    public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void execute(@NotNull Runnable command) {
-      myProcessor.add(command);
-    }
   }
 }

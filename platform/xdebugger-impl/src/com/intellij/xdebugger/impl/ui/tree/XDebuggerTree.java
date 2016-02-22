@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,18 +84,15 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     }
   }, 100, this);
 
-  private static final Convertor<TreePath, String> SPEED_SEARCH_CONVERTER = new Convertor<TreePath, String>() {
-    @Override
-    public String convert(TreePath o) {
-      String text = null;
-      if (o != null) {
-        final Object node = o.getLastPathComponent();
-        if (node instanceof XDebuggerTreeNode) {
-          text = ((XDebuggerTreeNode)node).getText().toString();
-        }
+  private static final Convertor<TreePath, String> SPEED_SEARCH_CONVERTER = o -> {
+    String text = null;
+    if (o != null) {
+      final Object node = o.getLastPathComponent();
+      if (node instanceof XDebuggerTreeNode) {
+        text = ((XDebuggerTreeNode)node).getText().toString();
       }
-      return StringUtil.notNullize(text);
     }
+    return StringUtil.notNullize(text);
   };
 
   private static final TransferHandler DEFAULT_TRANSFER_HANDLER = new TransferHandler() {

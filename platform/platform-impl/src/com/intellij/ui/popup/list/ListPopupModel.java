@@ -135,9 +135,7 @@ public class ListPopupModel extends AbstractListModel {
     if (myFilteredList.isEmpty() && !myOriginalList.isEmpty()) {
       mySpeedSearch.noHits();
     }
-    else {
-      fireContentsChanged(this, 0, myFilteredList.size());
-    }
+    fireContentsChanged(this, 0, myFilteredList.size());
   }
 
   public boolean isVisible(Object object) {

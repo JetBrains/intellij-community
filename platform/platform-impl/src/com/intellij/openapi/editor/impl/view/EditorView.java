@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -61,7 +60,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   
   private int myPlainSpaceWidth; // accessed only in EDT
   private int myLineHeight; // guarded by myLock
-  private int myDescent; // guarded by myLock
+  private int myAscent; // guarded by myLock
   private int myCharHeight; // guarded by myLock
   private int myMaxCharWidth; // guarded by myLock
   private int myTabSize; // guarded by myLock
@@ -175,12 +174,6 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     return myMapper.visualLineToOffset(visualLine);
   }
   
-  public int visualLineStartOffset(int visualLine) {
-    assertIsDispatchThread();
-    myEditor.getSoftWrapModel().prepareToMapping();
-    return myMapper.visualLineToOffset(visualLine);
-  }
-
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull Point p) {
     assertIsDispatchThread();
@@ -247,6 +240,13 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     return mySizeManager.getPreferredSize();
   }
 
+  public int getPreferredHeight() {
+    assertIsDispatchThread();
+    assert !myEditor.isPurePaintingMode();
+    myEditor.getSoftWrapModel().prepareToMapping();
+    return mySizeManager.getPreferredHeight();
+  }
+
   public int getMaxWidthInRange(int startOffset, int endOffset) {
     assertIsDispatchThread();
     return getMaxWidthInLineRange(offsetToVisualLine(startOffset, false), offsetToVisualLine(endOffset, true));
@@ -273,7 +273,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     myPlainSpaceWidth = -1;
     synchronized (myLock) {
       myLineHeight = -1;
-      myDescent = -1;
+      myAscent = -1;
       myCharHeight = -1;
       myMaxCharWidth = -1;
       myTabSize = -1;
@@ -365,24 +365,23 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   public int getLineHeight() {
     synchronized (myLock) {
       if (myLineHeight < 0) {
-        EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
-        FontMetrics fm = myEditor.getContentComponent().getFontMetrics(colorsScheme.getFont(EditorFontType.PLAIN));
+        FontMetrics fm = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
         int fontMetricsHeight = FontLayoutService.getInstance().getHeight(fm);
-        myLineHeight = (int)(fontMetricsHeight * (myEditor.isOneLineMode() ? 1 : colorsScheme.getLineSpacing()));
-        if (myLineHeight <= 0) {
-          myLineHeight = fontMetricsHeight;
-          if (myLineHeight <= 0) {
-            myLineHeight = 12;
-          }
-        }
+        myLineHeight = (int)Math.ceil(fontMetricsHeight * getVerticalScalingFactor());
       }
       return myLineHeight;
     }
   }
 
-  public int getAscent() {
+  private float getVerticalScalingFactor() {
+    if (myEditor.isOneLineMode()) return 1;
+    float lineSpacing = myEditor.getColorsScheme().getLineSpacing();
+    return lineSpacing > 0 ? lineSpacing : 1;
+  }
+
+  public int getDescent() {
     synchronized (myLock) {
-      return getLineHeight() - getDescent();
+      return getLineHeight() - getAscent();
     }
   }
 
@@ -407,13 +406,14 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     }
   }
 
-  public int getDescent() {
+  public int getAscent() {
     synchronized (myLock) {
-      if (myDescent < 0) {
+      if (myAscent < 0) {
         FontMetrics fm = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
-        myDescent = FontLayoutService.getInstance().getDescent(fm);
+        int ascent = FontLayoutService.getInstance().getAscent(fm);
+        myAscent = (int)Math.ceil(ascent * getVerticalScalingFactor());
       }
-      return myDescent;
+      return myAscent;
     }
   }
   
@@ -453,6 +453,10 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     }
   }
   
+  Insets getInsets() {
+    return myEditor.getContentComponent().getInsets();
+  }
+  
   private static void assertIsDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
@@ -473,10 +477,12 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
            ", prefix attributes: " + myPrefixAttributes + 
            ", space width: " + myPlainSpaceWidth +
            ", line height: " + myLineHeight +
-           ", descent: " + myDescent +
+           ", ascent: " + myAscent +
            ", char height: " + myCharHeight +
            ", max char width: " + myMaxCharWidth +
            ", tab size: " + myTabSize + 
-           " ,size manager: " + mySizeManager.dumpState() + "]";
+           " ,size manager: " + mySizeManager.dumpState() + 
+           " ,logical position cache: " + myLogicalPositionCache.dumpState() +
+           "]";
   }
 }

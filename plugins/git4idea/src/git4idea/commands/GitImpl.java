@@ -15,6 +15,7 @@
  */
 package git4idea.commands;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -34,6 +35,9 @@ import git4idea.GitVcs;
 import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
+import git4idea.rebase.GitInteractiveRebaseEditorHandler;
+import git4idea.rebase.GitRebaseEditorService;
+import git4idea.rebase.GitRebaseResumeMode;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
@@ -359,6 +363,18 @@ public class GitImpl implements Git {
     return run(h);
   }
 
+  @NotNull
+  @Override
+  public GitCommandResult renameBranch(@NotNull GitRepository repository,
+                                       @NotNull String currentName,
+                                       @NotNull String newName,
+                                       @NotNull GitLineHandlerListener... listeners) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.setStdoutSuppressed(false);
+    h.addParameters("-m", currentName, newName);
+    return run(h);
+  }
+
   @Override
   @NotNull
   public GitCommandResult reset(@NotNull GitRepository repository, @NotNull GitResetMode mode, @NotNull String target,
@@ -562,12 +578,88 @@ public class GitImpl implements Git {
   @NotNull
   @Override
   public GitCommandResult rebase(@NotNull GitRepository repository,
-                                 @NotNull GitRebaseParams params,
+                                 @NotNull GitRebaseParams parameters,
                                  @NotNull GitLineHandlerListener... listeners) {
+    Project project = repository.getProject();
+    VirtualFile root = repository.getRoot();
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE);
+    handler.addParameters(parameters.asCommandLineArguments());
+    addListeners(handler, listeners);
+    return parameters.isInteractive() ? runWithEditor(project, root, handler, true) : run(handler);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult rebaseAbort(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners) {
     GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REBASE);
-    handler.addParameters(params.getCommandLineArguments());
+    handler.addParameters("--abort");
     addListeners(handler, listeners);
     return run(handler);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult rebaseContinue(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners) {
+    return rebaseResume(repository, GitRebaseResumeMode.CONTINUE, listeners);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult rebaseSkip(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners) {
+    return rebaseResume(repository, GitRebaseResumeMode.SKIP, listeners);
+  }
+
+  @NotNull
+  private GitCommandResult rebaseResume(@NotNull GitRepository repository,
+                                        @NotNull GitRebaseResumeMode rebaseMode,
+                                        @NotNull GitLineHandlerListener[] listeners) {
+    Project project = repository.getProject();
+    VirtualFile root = repository.getRoot();
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE);
+    handler.addParameters(rebaseMode.asCommandLineArgument());
+    addListeners(handler, listeners);
+    return runWithEditor(project, root, handler, false);
+  }
+
+  @NotNull
+  private GitCommandResult runWithEditor(@NotNull Project project,
+                                         @NotNull VirtualFile root,
+                                         @NotNull GitLineHandler handler,
+                                         boolean commitListAware) {
+    GitInteractiveRebaseEditorHandler editor = configureEditor(project, root, handler, commitListAware);
+    try {
+      GitCommandResult result = run(handler);
+      return editor.wasEditorCancelled() ? toCancelledResult(result) : result;
+    }
+    finally {
+      editor.close();
+    }
+  }
+
+  @NotNull
+  private static GitCommandResult toCancelledResult(@NotNull GitCommandResult result) {
+    int exitCode = result.getExitCode() == 0 ? 1 : result.getExitCode();
+    return new GitCommandResult(false, exitCode, result.getErrorOutput(), result.getOutput(), result.getException()) {
+      @Override
+      public boolean cancelled() {
+        return true;
+      }
+    };
+  }
+
+  @VisibleForTesting
+  @NotNull
+  protected GitInteractiveRebaseEditorHandler configureEditor(@NotNull Project project,
+                                                              @NotNull VirtualFile root,
+                                                              @NotNull GitLineHandler handler,
+                                                              boolean commitListAware) {
+    GitRebaseEditorService service = GitRebaseEditorService.getInstance();
+    GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(service, project, root, handler);
+    if (!commitListAware) {
+      editor.setRebaseEditorShown();
+    }
+    service.configureHandler(handler, editor.getHandlerNo());
+    return editor;
   }
 
   @NotNull

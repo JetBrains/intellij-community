@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.TreeCellRenderer;
@@ -1033,7 +1034,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private class MyAccessibleContext extends JComponent.AccessibleJComponent {
     @Override
     public String getAccessibleName() {
-      return SimpleColoredComponent.this.toString();
+      return getCharSequence(false).toString();
+    }
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.LABEL;
     }
   }
 

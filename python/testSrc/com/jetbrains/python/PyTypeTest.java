@@ -960,6 +960,94 @@ public class PyTypeTest extends PyTestCase {
            "expr = f\n");
   }
 
+  // PY-16267
+  public void testGenericField() {
+    doTest("str",
+           "class D(object):\n" +
+           "    def __init__(self, foo):\n" +
+           "        '''\n" +
+           "        :type foo: T\n" +
+           "        :rtype: D[T]\n" +
+           "        '''\n" +
+           "        self.foo = foo\n" +
+           "\n" +
+           "\n" +
+           "def g():\n" +
+           "    '''\n" +
+           "    :rtype: D[str]\n" +
+           "    '''\n" +
+           "    return D('test')\n" +
+           "\n" +
+           "\n" +
+           "y = g()\n" +
+           "expr = y.foo\n");
+  }
+
+  public void testConditionInnerScope() {
+    doTest("Union[str, int]",
+           "if something:\n" +
+           "    foo = 'foo'\n" +
+           "else:\n" +
+           "    foo = 0\n" +
+           "\n" +
+           "expr = foo\n");
+  }
+
+  public void testConditionOuterScope() {
+    doTest("Union[str, int]",
+           "if something:\n" +
+           "    foo = 'foo'\n" +
+           "else:\n" +
+           "    foo = 0\n" +
+           "\n" +
+           "def f():\n" +
+           "    expr = foo\n");
+  }
+
+  // PY-18217
+  public void testConditionImportOuterScope() {
+    doMultiFileTest("Union[str, int]",
+                    "if something:\n" +
+                    "    from m1 import foo\n" +
+                    "else:\n" +
+                    "    from m2 import foo\n" +
+                    "\n" +
+                    "def f():\n" +
+                    "    expr = foo\n");
+  }
+
+  // PY-18402
+  public void testConditionInImportedModule() {
+    doMultiFileTest("Union[int, str]",
+                    "from m1 import foo\n" +
+                    "\n" +
+                    "def f():\n" +
+                    "    expr = foo\n");
+  }
+
+  // PY-18427
+  public void testConditionalTypeInDocstring() {
+    doTest("Union[str, int]",
+           "if something:\n" +
+           "    Type = int\n" +
+           "else:\n" +
+           "    Type = str\n" +
+           "\n" +
+           "def f(expr):\n" +
+           "    '''\n" +
+           "    :type expr: Type\n" +
+           "    '''\n" +
+           "    pass\n");
+  }
+
+  // PY-18254
+  public void testFunctionTypeCommentInStubs() {
+    doMultiFileTest("MyClass",
+                    "from module import func\n" +
+                    "\n" +
+                    "expr = func()");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

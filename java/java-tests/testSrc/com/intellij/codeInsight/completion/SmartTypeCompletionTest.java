@@ -1159,7 +1159,11 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testSuggestCastReturnTypeByCalledMethod() { doTest(); }
 
+  public void testOnlyInterfacesInImplements() { doTest(); }
+
   public void testNonStaticField() throws Exception { doAntiTest(); }
+
+  public void testLocalClassInExpectedTypeArguments() { doTest(); }
 
   private void doActionTest() throws Exception {
     configureByTestName();

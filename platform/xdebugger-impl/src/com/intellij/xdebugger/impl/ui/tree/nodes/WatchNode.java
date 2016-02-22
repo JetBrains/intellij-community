@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XExpression;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +24,9 @@ import javax.swing.tree.TreeNode;
 /**
  * @author nik
  */
-public interface WatchNode extends TreeNode {
+public interface WatchNode extends TreeNode, Obsolescent {
   @NotNull
   XExpression getExpression();
+
+  void setObsolete();
 }

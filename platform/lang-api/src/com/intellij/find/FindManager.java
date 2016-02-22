@@ -144,11 +144,6 @@ public abstract class FindManager {
   }
 
   /**
-   * @deprecated Use {@link #getStringToReplace(String, FindModel, int, CharSequence)} instead. To be removed in IDEA 16.
-   */
-  public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model) throws MalformedReplacementStringException;
-
-  /**
    * Gets the string to replace with, given the specified found string and find/replace
    * settings. Supports case-preserving and regular expression replaces.
    *

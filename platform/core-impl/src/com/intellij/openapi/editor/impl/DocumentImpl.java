@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
@@ -63,13 +64,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private final List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
   private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
 
-  private final Object myLineSetLock = new String("line set lock");
+  @SuppressWarnings("RedundantStringConstructorCall") private final Object myLineSetLock = new String("line set lock");
   private volatile LineSet myLineSet;
   private volatile ImmutableText myText;
   private volatile SoftReference<String> myTextString;
   private volatile FrozenDocument myFrozen;
 
-  private boolean myIsReadOnly = false;
+  private boolean myIsReadOnly;
   private volatile boolean isStripTrailingSpacesEnabled = true;
   private volatile long myModificationStamp;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
@@ -77,15 +78,15 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private final List<EditReadOnlyListener> myReadOnlyListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private volatile boolean myMightContainTabs = true; // optimisation flag: when document contains no tabs it is dramatically easier to calculate positions in editor
-  private int myTabTrackingRequestors = 0;
+  private int myTabTrackingRequestors;
 
-  private int myCheckGuardedBlocks = 0;
-  private boolean myGuardsSuppressed = false;
-  private boolean myEventsHandling = false;
+  private int myCheckGuardedBlocks;
+  private boolean myGuardsSuppressed;
+  private boolean myEventsHandling;
   private final boolean myAssertThreading;
-  private volatile boolean myDoingBulkUpdate = false;
+  private volatile boolean myDoingBulkUpdate;
   private boolean myUpdatingBulkModeStatus;
-  private volatile boolean myAcceptSlashR = false;
+  private volatile boolean myAcceptSlashR;
   private boolean myChangeInProgress;
   private volatile int myBufferSize;
   private final CharSequence myMutableCharSequence = new CharSequence() {
@@ -110,6 +111,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       return doGetText();
     }
   };
+  private final AtomicInteger sequence = new AtomicInteger();
 
   public DocumentImpl(@NotNull String text) {
     this(text, false);
@@ -121,7 +123,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   /**
    * NOTE: if client sets forUseInNonAWTThread to true it's supposed that client will completely control document and its listeners.
-   * The noticable peculiarity of DocumentImpl behavior in this mode is that DocumentImpl won't suppress ProcessCancelledException 
+   * The noticeable peculiarity of DocumentImpl behavior in this mode is that DocumentImpl won't suppress ProcessCancelledException
    * thrown from listeners during changedUpdate event, so the exception will be rethrown and rest of the listeners WON'T be notified.
    */
   public DocumentImpl(@NotNull CharSequence chars, boolean forUseInNonAWTThread) {
@@ -196,6 +198,19 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (!isStripTrailingSpacesEnabled) {
       return true;
     }
+    List<StripTrailingSpacesFilter> filters = new ArrayList<StripTrailingSpacesFilter>();
+    for (StripTrailingSpacesFilterFactory filterFactory : StripTrailingSpacesFilterFactory.EXTENSION_POINT.getExtensions()) {
+      StripTrailingSpacesFilter filter = filterFactory.createFilter(project, this);
+      if (filter == StripTrailingSpacesFilter.NOT_ALLOWED) {
+        return true;
+      }
+      else if (filter == StripTrailingSpacesFilter.POSTPONED) {
+        return false;
+      }
+      else {
+        filters.add(filter);
+      }
+    }
 
     boolean markAsNeedsStrippingLater = false;
     CharSequence text = myText;
@@ -219,7 +234,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       lineLoop:
       for (int line = 0; line < getLineCount(); line++) {
         LineSet lineSet = getLineSet();
-        if (inChangedLinesOnly && !lineSet.isModified(line)) continue;
+        if (inChangedLinesOnly && !lineSet.isModified(line) || !canStripSpacesFrom(line, filters)) continue;
         int whiteSpaceStart = -1;
         final int lineEnd = lineSet.getLineEnd(line) - lineSet.getSeparatorLength(line);
         int lineStart = lineSet.getLineStart(line);
@@ -275,6 +290,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       });
     }
     return markAsNeedsStrippingLater;
+  }
+
+  private static boolean canStripSpacesFrom(int line, @NotNull List<StripTrailingSpacesFilter> filters) {
+    for (StripTrailingSpacesFilter filter :  filters) {
+      if (!filter.isStripSpacesAllowedForLine(line)) return false;
+    }
+    return true;
   }
 
   @Override
@@ -347,7 +369,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   @Override
-  @SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way too many garbage is produced otherwise in AbstractList.iterator()
+  @SuppressWarnings("ForLoopReplaceableByForEach") // Way too many garbage is produced otherwise in AbstractList.iterator()
   public RangeMarker getOffsetGuard(int offset) {
     for (int i = 0; i < myGuardedBlocks.size(); i++) {
       RangeMarker block = myGuardedBlocks.get(i);
@@ -389,7 +411,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
                                          int end0, boolean rightInclusive0,
                                          int end1, boolean rightInclusive1) {
     if (start0 > start1 || start0 == start1 && !leftInclusive0) {
-      return rangesIntersect(start1, leftInclusive1, start0, leftInclusive0, end1, rightInclusive1, end0, rightInclusive0);
+      if (end1 == start0) return leftInclusive0 && rightInclusive1;
+      return end1 > start0;
     }
     if (end0 == start1) return leftInclusive1 && rightInclusive0;
     return end0 > start1;
@@ -684,28 +707,24 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
                           int initialStartOffset,
                           int initialOldLength) {
     assertNotNestedModification();
-    boolean enableRecursiveModifications = Registry.is("enable.recursive.document.changes"); // temporary property, to remove in IDEA 16
     myChangeInProgress = true;
     try {
       DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced, initialStartOffset, initialOldLength);
-      try {
-        doBeforeChangedUpdate(event);
-      }
-      finally {
-        if (enableRecursiveModifications) {
-          myChangeInProgress = false;
-        }
-      }
+      doBeforeChangedUpdate(event);
       myTextString = null;
       ImmutableText prevText = myText;
       myText = newText;
       changedUpdate(event, newModificationStamp, prevText);
+      sequence.incrementAndGet();
     }
     finally {
-      if (!enableRecursiveModifications) {
-        myChangeInProgress = false;
-      }
+      myChangeInProgress = false;
     }
+  }
+
+  @Override
+  public int getModificationSequence() {
+    return sequence.get();
   }
 
   private void doBeforeChangedUpdate(DocumentEvent event) {
@@ -1047,7 +1066,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
     TextRangeInterval interval = new TextRangeInterval(start, end);
-    IntervalTreeImpl.PeekableIterator<RangeMarkerEx> iterator = IntervalTreeImpl
+    MarkupIterator<RangeMarkerEx> iterator = IntervalTreeImpl
       .mergingOverlappingIterator(myRangeMarkers, interval, myPersistentRangeMarkers, interval, RangeMarker.BY_START_OFFSET);
     try {
       return ContainerUtil.process(iterator, processor);
@@ -1118,5 +1137,4 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
     return frozen;
   }
-
 }

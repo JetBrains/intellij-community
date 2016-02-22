@@ -68,4 +68,7 @@ public class FooImpl extends Foo {
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
+  public void testCastInstanceofedQualifierInLambda() { doTest() }
+  public void testCastInstanceofedQualifierInLambda2() { doTest() }
+
 }

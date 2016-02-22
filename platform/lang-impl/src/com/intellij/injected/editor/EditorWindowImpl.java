@@ -73,6 +73,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   private static final List<EditorWindowImpl> allEditors = new WeakList<EditorWindowImpl>();
   private boolean myDisposed;
   private final MarkupModelWindow myMarkupModelDelegate;
+  private final MarkupModelWindow myDocumentMarkupModelDelegate;
   private final FoldingModelWindow myFoldingModelWindow;
   private final SoftWrapModelWindow mySoftWrapModel;
 
@@ -110,6 +111,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     myCaretModelDelegate = new CaretModelWindow(myDelegate.getCaretModel(), this);
     mySelectionModelDelegate = new SelectionModelWindow(myDelegate, myDocumentWindow,this);
     myMarkupModelDelegate = new MarkupModelWindow(myDelegate.getMarkupModel(), myDocumentWindow);
+    myDocumentMarkupModelDelegate = new MarkupModelWindow(myDelegate.getFilteredDocumentMarkupModel(), myDocumentWindow);
     myFoldingModelWindow = new FoldingModelWindow(delegate.getFoldingModel(), documentWindow, this);
     mySoftWrapModel = new SoftWrapModelWindow(this);
   }
@@ -254,6 +256,12 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     return myMarkupModelDelegate;
   }
 
+  @NotNull
+  @Override
+  public MarkupModelEx getFilteredDocumentMarkupModel() {
+    return myDocumentMarkupModelDelegate;
+  }
+
   @Override
   @NotNull
   public FoldingModelEx getFoldingModel() {
@@ -387,12 +395,6 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   @Override
   @NotNull
   public LogicalPosition offsetToLogicalPosition(final int offset) {
-    return offsetToLogicalPosition(offset, true);
-  }
-
-  @Override
-  @NotNull
-  public LogicalPosition offsetToLogicalPosition(final int offset, boolean softWrapAware) {
     checkValid();
     int lineNumber = myDocumentWindow.getLineNumber(offset);
     int lineStartOffset = myDocumentWindow.getLineStartOffset(lineNumber);
@@ -566,11 +568,6 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
 
   @Override
   public int logicalPositionToOffset(@NotNull final LogicalPosition pos) {
-    return logicalPositionToOffset(pos, true);
-  }
-
-  @Override
-  public int logicalPositionToOffset(@NotNull LogicalPosition pos, boolean softWrapAware) {
     int lineStartOffset = myDocumentWindow.getLineStartOffset(pos.line);
     return calcOffset(pos.column, pos.line, lineStartOffset);
   }
@@ -606,39 +603,17 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     return end;
   }
 
-  @Override
-  public void setLastColumnNumber(final int val) {
-    myDelegate.setLastColumnNumber(val);
-  }
-
-  @Override
-  public int getLastColumnNumber() {
-    return myDelegate.getLastColumnNumber();
-  }
-
-  @NotNull
-  @Override
-  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
-    checkValid();
-    return new VisualPosition(logicalPos.line, logicalPos.column);
-  }
-
   // assuming there is no folding in injected documents
   @Override
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull final LogicalPosition pos) {
-    return logicalToVisualPosition(pos, false);
+    checkValid();
+    return new VisualPosition(pos.line, pos.column);
   }
 
   @Override
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition pos) {
-    return visualToLogicalPosition(pos, true);
-  }
-
-  @Override
-  @NotNull
-  public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition pos, boolean softWrapAware) {
     checkValid();
     return new LogicalPosition(pos.line, pos.column);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.debugger
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.Navigatable
@@ -178,9 +177,7 @@ class VariableView(name: String, private val variable: Variable, private val con
     }
 
     if (hasIndexedProperties == hasNamedProperties || additionalProperties != null) {
-      Promise.all(promises).processed(object : ObsolescentConsumer<Any?>(node) {
-        override fun consume(aVoid: Any?) = node.addChildren(XValueChildrenList.EMPTY, true)
-      })
+      Promise.all(promises).processed(node) { node.addChildren(XValueChildrenList.EMPTY, true) }
     }
   }
 
@@ -303,7 +300,7 @@ class VariableView(name: String, private val variable: Variable, private val con
 
       override fun setValue(expression: String, callback: XValueModifier.XModificationCallback) {
         variable.valueModifier!!.setValue(variable, expression, evaluateContext)
-          .done {
+          .doneRun {
             value = null
             callback.valueModified()
           }
@@ -330,12 +327,21 @@ class VariableView(name: String, private val variable: Variable, private val con
               else
                 object : XSourcePositionWrapper(position) {
                   override fun createNavigatable(project: Project): Navigatable {
-                    val result = PsiVisitors.visit(myPosition, project, object : PsiVisitors.Visitor<Navigatable>() {
-                      override fun visit(element: PsiElement, positionOffset: Int, document: Document): Navigatable? {
-                        // element will be "open paren", but we should navigate to function name,
-                        // we cannot use specific PSI type here (like JSFunction), so, we try to find reference expression (i.e. name expression)
-                        var referenceCandidate: PsiElement? = element
-                        var psiReference: PsiElement? = null
+                    return PsiVisitors.visit(myPosition, project) { position, element, positionOffset, document ->
+                      // element will be "open paren", but we should navigate to function name,
+                      // we cannot use specific PSI type here (like JSFunction), so, we try to find reference expression (i.e. name expression)
+                      var referenceCandidate: PsiElement? = element
+                      var psiReference: PsiElement? = null
+                      while (true) {
+                        referenceCandidate = referenceCandidate?.prevSibling ?: break
+                        if (referenceCandidate is PsiReference) {
+                          psiReference = referenceCandidate
+                          break
+                        }
+                      }
+
+                      if (psiReference == null) {
+                        referenceCandidate = element.parent
                         while (true) {
                           referenceCandidate = referenceCandidate?.prevSibling ?: break
                           if (referenceCandidate is PsiReference) {
@@ -343,22 +349,10 @@ class VariableView(name: String, private val variable: Variable, private val con
                             break
                           }
                         }
-
-                        if (psiReference == null) {
-                          referenceCandidate = element.parent
-                          while (true) {
-                            referenceCandidate = referenceCandidate?.prevSibling ?: break
-                            if (referenceCandidate is PsiReference) {
-                              psiReference = referenceCandidate
-                              break
-                            }
-                          }
-                        }
-
-                        return (if (psiReference == null) element.navigationElement else psiReference.navigationElement) as? Navigatable
                       }
-                    }, null)
-                    return result ?: super.createNavigatable(project)
+
+                      (if (psiReference == null) element.navigationElement else psiReference.navigationElement) as? Navigatable
+                    } ?: super.createNavigatable(project)
                   }
                 })
             }

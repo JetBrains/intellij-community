@@ -746,18 +746,6 @@ public class FindManagerImpl extends FindManager {
   }
 
   @Override
-  public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model) throws MalformedReplacementStringException {
-    String toReplace = model.getStringToReplace();
-    if (model.isRegularExpressions()) {
-      return getStringToReplaceByRegexp0(foundString, model);
-    }
-    if (model.isPreserveCase()) {
-      return replaceWithCaseRespect (toReplace, foundString);
-    }
-    return toReplace;
-  }
-
-  @Override
   public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model,
                                    int startOffset, @NotNull CharSequence documentText) throws MalformedReplacementStringException{
     String toReplace = model.getStringToReplace();
@@ -864,23 +852,29 @@ public class FindManagerImpl extends FindManager {
     }
 
     boolean isReplacementLowercase = true;
+    boolean isReplacementUppercase = true;
     for (int i = 1; i < toReplace.length(); i++) {
-      isReplacementLowercase = Character.isLowerCase(toReplace.charAt(i));
-      if (!isReplacementLowercase) break;
+      char replacementChar = toReplace.charAt(i);
+      if (!Character.isLetter(replacementChar)) continue;
+      isReplacementLowercase &= Character.isLowerCase(replacementChar);
+      isReplacementUppercase &= Character.isUpperCase(replacementChar);
+      if (!isReplacementLowercase && !isReplacementUppercase) break;
     }
 
     boolean isTailUpper = true;
     boolean isTailLower = true;
     for (int i = 1; i < foundString.length(); i++) {
-      isTailUpper &= Character.isUpperCase(foundString.charAt(i));
-      isTailLower &= Character.isLowerCase(foundString.charAt(i));
+      char foundChar = foundString.charAt(i);
+      if (!Character.isLetter(foundChar)) continue;
+      isTailUpper &= Character.isUpperCase(foundChar);
+      isTailLower &= Character.isLowerCase(foundChar);
       if (!isTailUpper && !isTailLower) break;
     }
 
-    if (isTailUpper && isReplacementLowercase) {
+    if (isTailUpper && (isReplacementLowercase || isReplacementUppercase)) {
       buffer.append(StringUtil.toUpperCase(toReplace.substring(1)));
     }
-    else if (isTailLower && isReplacementLowercase) {
+    else if (isTailLower && (isReplacementLowercase || isReplacementUppercase)) {
       buffer.append(toReplace.substring(1).toLowerCase());
     }
     else {

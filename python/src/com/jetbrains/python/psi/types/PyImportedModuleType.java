@@ -60,8 +60,10 @@ public class PyImportedModuleType implements PyType {
       final PsiFile containingFile = location != null ? location.getContainingFile() : null;
       List<PsiElement> elements = Collections.singletonList(ResolveImportUtil.resolveChild(resolved, name, containingFile, false, true));
       final PyImportElement importElement = myImportedModule.getImportElement();
+      final PyFile resolvedFile = PyUtil.as(resolved, PyFile.class);
       if (location != null && importElement != null && PyUtil.inSameFile(location, importElement) &&
-          ResolveImportUtil.getPointInImport(location) == PointInImport.NONE && resolved instanceof PsiFileSystemItem) {
+          ResolveImportUtil.getPointInImport(location) == PointInImport.NONE && resolved instanceof PsiFileSystemItem &&
+          (resolvedFile == null || !PyUtil.isPackage(resolvedFile) || resolvedFile.getElementNamed(name) == null)) {
         final List<PsiElement> importedSubmodules = PyModuleType.collectImportedSubmodules((PsiFileSystemItem)resolved, location);
         if (importedSubmodules != null) {
           final Set<PsiElement> imported = Sets.newHashSet(importedSubmodules);

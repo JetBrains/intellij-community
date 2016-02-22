@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -30,6 +31,7 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
+import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +69,7 @@ class VisiblePackBuilder {
 
     Set<Integer> matchingHeads = getMatchingHeads(dataPack.getRefs(), dataPack.getLogProviders().keySet(), filters);
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
-    Collection<Hash> matchingCommits = null;
+    Collection<CommitId> matchingCommits = null;
     boolean canRequestMore = false;
     if (!detailsFilters.isEmpty()) {
       if (commitCount == CommitCountStage.INITIAL) {
@@ -99,7 +101,7 @@ class VisiblePackBuilder {
     else {
       visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, matchingHeads, getMatchedCommitIndex(matchingCommits));
     }
-    return Pair.create(new VisiblePack(dataPack, visibleGraph, canRequestMore), commitCount);
+    return Pair.create(new VisiblePack(dataPack, visibleGraph, canRequestMore, filters), commitCount);
   }
 
   private static <T> boolean matchesNothing(@Nullable Collection<T> matchingSet) {
@@ -112,12 +114,12 @@ class VisiblePackBuilder {
     final Set<Integer> indices = ContainerUtil.map2SetNotNull(hashes, new Function<String, Integer>() {
       @Override
       public Integer fun(String partOfHash) {
-        Hash hash = myHashMap.findHashByString(partOfHash);
-        return hash != null ? myHashMap.getCommitIndex(hash) : null;
+        CommitId commitId = myHashMap.findCommitId(new CommitIdByStringCondition(partOfHash));
+        return commitId != null ? myHashMap.getCommitIndex(commitId.getHash(), commitId.getRoot()) : null;
       }
     });
     VisibleGraph<Integer> visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, null, indices);
-    return new VisiblePack(dataPack, visibleGraph, false);
+    return new VisiblePack(dataPack, visibleGraph, false, new VcsLogFilterCollectionImpl(null, null, new VcsLogHashFilterImpl(hashes), null, null, null, null));
   }
 
   @Nullable
@@ -148,7 +150,7 @@ class VisiblePackBuilder {
       @Override
       public Integer fun(@NotNull VcsRef ref) {
         boolean acceptRef = filter.matches(ref.getName());
-        return acceptRef ? myHashMap.getCommitIndex(ref.getCommitHash()) : null;
+        return acceptRef ? myHashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot()) : null;
       }
     }));
   }
@@ -157,17 +159,17 @@ class VisiblePackBuilder {
     Set<Integer> result = new HashSet<Integer>();
     for (VcsRef branch : refs.getBranches()) {
       if (roots.contains(branch.getRoot())) {
-        result.add(myHashMap.getCommitIndex(branch.getCommitHash()));
+        result.add(myHashMap.getCommitIndex(branch.getCommitHash(), branch.getRoot()));
       }
     }
     return result;
   }
 
   @NotNull
-  private Collection<Hash> filterInMemory(@NotNull PermanentGraph<Integer> permanentGraph,
+  private Collection<CommitId> filterInMemory(@NotNull PermanentGraph<Integer> permanentGraph,
                                           @NotNull List<VcsLogDetailsFilter> detailsFilters,
                                           @Nullable Set<Integer> matchingHeads) {
-    Collection<Hash> result = ContainerUtil.newArrayList();
+    Collection<CommitId> result = ContainerUtil.newArrayList();
     for (GraphCommit<Integer> commit : permanentGraph.getAllCommits()) {
       VcsCommitMetadata data = getDetailsFromCache(commit.getId());
       if (data == null) {
@@ -175,7 +177,7 @@ class VisiblePackBuilder {
         break;
       }
       if (matchesAllFilters(data, permanentGraph, detailsFilters, matchingHeads)) {
-        result.add(data.getId());
+        result.add(new CommitId(data.getId(), data.getRoot()));
       }
     }
     return result;
@@ -201,7 +203,7 @@ class VisiblePackBuilder {
       return true;
     }
     // TODO O(n^2)
-    int commitIndex = myHashMap.getCommitIndex(commit.getId());
+    int commitIndex = myHashMap.getCommitIndex(commit.getId(), commit.getRoot());
     return ContainerUtil.intersects(permanentGraph.getContainingBranches(commitIndex), matchingHeads);
   }
 
@@ -220,15 +222,15 @@ class VisiblePackBuilder {
   }
 
   @NotNull
-  private static Collection<Hash> getFilteredDetailsFromTheVcs(@NotNull Map<VirtualFile, VcsLogProvider> providers,
+  private static Collection<CommitId> getFilteredDetailsFromTheVcs(@NotNull Map<VirtualFile, VcsLogProvider> providers,
                                                                @NotNull VcsLogFilterCollection filterCollection,
                                                                int maxCount) throws VcsException {
     Set<VirtualFile> visibleRoots =
       VcsLogUtil.getAllVisibleRoots(providers.keySet(), filterCollection.getRootFilter(), filterCollection.getStructureFilter());
 
-    Collection<Hash> logs = ContainerUtil.newArrayList();
+    Collection<CommitId> logs = ContainerUtil.newArrayList();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
-      VirtualFile root = entry.getKey();
+      final VirtualFile root = entry.getKey();
 
       if (!visibleRoots.contains(root) ||
           (filterCollection.getUserFilter() != null && filterCollection.getUserFilter().getUserNames(root).isEmpty())) {
@@ -242,10 +244,10 @@ class VisiblePackBuilder {
       }
 
       List<TimedVcsCommit> matchingCommits = entry.getValue().getCommitsMatchingFilter(root, rootSpecificCollection, maxCount);
-      logs.addAll(ContainerUtil.map(matchingCommits, new Function<TimedVcsCommit, Hash>() {
+      logs.addAll(ContainerUtil.map(matchingCommits, new Function<TimedVcsCommit, CommitId>() {
         @Override
-        public Hash fun(TimedVcsCommit commit) {
-          return commit.getId();
+        public CommitId fun(TimedVcsCommit commit) {
+          return new CommitId(commit.getId(), root);
         }
       }));
     }
@@ -255,7 +257,7 @@ class VisiblePackBuilder {
 
   @NotNull
   private static VcsLogFilterCollection replaceStructureFilter(@NotNull VcsLogFilterCollection filterCollection,
-                                                               @NotNull Set<VirtualFile> files) {
+                                                               @NotNull Set<FilePath> files) {
     return new VcsLogFilterCollectionImpl(filterCollection.getBranchFilter(), filterCollection.getUserFilter(),
                                           filterCollection.getHashFilter(), filterCollection.getDateFilter(),
                                           filterCollection.getTextFilter(), new VcsLogStructureFilterImpl(files),
@@ -263,15 +265,15 @@ class VisiblePackBuilder {
   }
 
   @Nullable
-  private Set<Integer> getMatchedCommitIndex(@Nullable Collection<Hash> commits) {
+  private Set<Integer> getMatchedCommitIndex(@Nullable Collection<CommitId> commits) {
     if (commits == null) {
       return null;
     }
 
-    return ContainerUtil.map2Set(commits, new Function<Hash, Integer>() {
+    return ContainerUtil.map2Set(commits, new Function<CommitId, Integer>() {
       @Override
-      public Integer fun(Hash hash) {
-        return myHashMap.getCommitIndex(hash);
+      public Integer fun(CommitId commitId) {
+        return myHashMap.getCommitIndex(commitId.getHash(), commitId.getRoot());
       }
     });
   }

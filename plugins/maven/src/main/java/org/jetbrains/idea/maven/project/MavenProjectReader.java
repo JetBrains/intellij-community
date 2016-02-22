@@ -18,6 +18,8 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -453,45 +455,61 @@ public class MavenProjectReader {
     }
   }
 
-  public MavenProjectReaderResult resolveProject(MavenGeneralSettings generalSettings,
-                                                 MavenEmbedderWrapper embedder,
-                                                 VirtualFile file,
-                                                 MavenExplicitProfiles explicitProfiles,
-                                                 MavenProjectReaderProjectLocator locator) throws MavenProcessCanceledException {
+  public Collection<MavenProjectReaderResult> resolveProject(final MavenGeneralSettings generalSettings,
+                                                             MavenEmbedderWrapper embedder,
+                                                             Collection<VirtualFile> files,
+                                                             final MavenExplicitProfiles explicitProfiles,
+                                                             final MavenProjectReaderProjectLocator locator) throws MavenProcessCanceledException {
     try {
-      MavenServerExecutionResult result =
-        embedder.resolveProject(file, explicitProfiles.getEnabledProfiles(), explicitProfiles.getDisabledProfiles());
-      MavenServerExecutionResult.ProjectData projectData = result.projectData;
-      if (projectData == null) {
-        MavenProjectReaderResult temp = readProject(generalSettings, file, explicitProfiles, locator);
-        temp.readingProblems.addAll(result.problems);
-        temp.unresolvedArtifactIds.addAll(result.unresolvedArtifacts);
-        return temp;
+      Collection<MavenServerExecutionResult> executionResults =
+        embedder.resolveProject(files, explicitProfiles.getEnabledProfiles(), explicitProfiles.getDisabledProfiles());
+
+      Collection<MavenProjectReaderResult> readerResults = ContainerUtil.newArrayList();
+      for (MavenServerExecutionResult result : executionResults) {
+        MavenServerExecutionResult.ProjectData projectData = result.projectData;
+        if (projectData == null) {
+          if(files.size() == 1) {
+            final VirtualFile file = files.iterator().next();
+            MavenProjectReaderResult temp = readProject(generalSettings, file, explicitProfiles, locator);
+            temp.readingProblems.addAll(result.problems);
+            temp.unresolvedArtifactIds.addAll(result.unresolvedArtifacts);
+            readerResults.add(temp);
+          }
+        }
+        else {
+          readerResults.add(new MavenProjectReaderResult(projectData.mavenModel,
+                                                    projectData.mavenModelMap,
+                                                    new MavenExplicitProfiles(projectData.activatedProfiles,
+                                                                              explicitProfiles.getDisabledProfiles()),
+                                                    projectData.nativeMavenProject,
+                                                    result.problems,
+                                                    result.unresolvedArtifacts));
+        }
       }
 
-      return new MavenProjectReaderResult(projectData.mavenModel,
-                                          projectData.mavenModelMap,
-                                          new MavenExplicitProfiles(projectData.activatedProfiles, explicitProfiles.getDisabledProfiles()),
-                                          projectData.nativeMavenProject,
-                                          result.problems,
-                                          result.unresolvedArtifacts);
+      return readerResults;
     }
     catch (MavenProcessCanceledException e) {
       throw e;
     }
-    catch (Throwable e) {
+    catch (final Throwable e) {
       MavenLog.LOG.info(e);
       MavenLog.printInTests(e); // print exception since we need to know if something wrong with our logic
 
-      MavenProjectReaderResult result = readProject(generalSettings, file, explicitProfiles, locator);
-      String message = e.getMessage();
-      if (message != null) {
-        result.readingProblems.add(MavenProjectProblem.createStructureProblem(file.getPath(), message));
-      }
-      else {
-        result.readingProblems.add(MavenProjectProblem.createSyntaxProblem(file.getPath(), MavenProjectProblem.ProblemType.SYNTAX));
-      }
-      return result;
+      return ContainerUtil.mapNotNull(files, new Function<VirtualFile, MavenProjectReaderResult>() {
+        @Override
+        public MavenProjectReaderResult fun(VirtualFile file) {
+          MavenProjectReaderResult result = readProject(generalSettings, file, explicitProfiles, locator);
+          String message = e.getMessage();
+          if (message != null) {
+            result.readingProblems.add(MavenProjectProblem.createStructureProblem(file.getPath(), message));
+          }
+          else {
+            result.readingProblems.add(MavenProjectProblem.createSyntaxProblem(file.getPath(), MavenProjectProblem.ProblemType.SYNTAX));
+          }
+          return result;
+        }
+      });
     }
   }
 

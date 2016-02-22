@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.util.Function;
@@ -40,12 +41,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Dmitry Avdeev
  */
-public class GutterIconsConfigurable implements Configurable {
+public class GutterIconsConfigurable implements Configurable, Configurable.NoScroll {
   private JPanel myPanel;
   private CheckBoxList<GutterIconDescriptor> myList;
   private List<GutterIconDescriptor> myDescriptors;
@@ -60,7 +60,7 @@ public class GutterIconsConfigurable implements Configurable {
   @Nullable
   @Override
   public String getHelpTopic() {
-    return null;
+    return "reference.settings.editor.gutter.icons";
   }
 
   @Nullable
@@ -79,25 +79,21 @@ public class GutterIconsConfigurable implements Configurable {
         }
       };
     MultiMap<PluginDescriptor, LanguageExtensionPoint<LineMarkerProvider>> map = ContainerUtil.groupBy(Arrays.asList(extensions), function);
+    Map<GutterIconDescriptor, PluginDescriptor> pluginDescriptorMap = ContainerUtil.newHashMap();
     myDescriptors = new ArrayList<GutterIconDescriptor>();
     for (final PluginDescriptor descriptor : map.keySet()) {
       Collection<LanguageExtensionPoint<LineMarkerProvider>> points = map.get(descriptor);
-      final AtomicBoolean first = new AtomicBoolean(true);
       for (LanguageExtensionPoint<LineMarkerProvider> extensionPoint : points) {
         GutterIconDescriptor instance = (GutterIconDescriptor)extensionPoint.getInstance();
         if (instance.getOptions().length > 0) {
           for (GutterIconDescriptor option : instance.getOptions()) {
-            if (first.getAndSet(false)) {
-              myFirstDescriptors.put(instance, descriptor);
-            }
             myDescriptors.add(option);
+            pluginDescriptorMap.put(option, descriptor);
           }
         }
         else {
-          if (first.getAndSet(false)) {
-            myFirstDescriptors.put(instance, descriptor);
-          }
           myDescriptors.add(instance);
+          pluginDescriptorMap.put(instance, descriptor);
         }
       }
     }
@@ -110,6 +106,22 @@ public class GutterIconsConfigurable implements Configurable {
       }
     }
     myDescriptors.addAll(options);
+    myDescriptors.sort(new Comparator<GutterIconDescriptor>() {
+      @Override
+      public int compare(GutterIconDescriptor o1, GutterIconDescriptor o2) {
+        if (pluginDescriptorMap.get(o1) != pluginDescriptorMap.get(o2)) return 0;
+        return Comparing.compare(o1.getName(), o2.getName());
+      }
+    });
+    PluginDescriptor current = null;
+    for (GutterIconDescriptor descriptor : myDescriptors) {
+      PluginDescriptor pluginDescriptor = pluginDescriptorMap.get(descriptor);
+      if (pluginDescriptor != current) {
+        myFirstDescriptors.put(descriptor, pluginDescriptor);
+        current = pluginDescriptor;
+      }
+    }
+
     myList.setItems(myDescriptors, new Function<GutterIconDescriptor, String>() {
       @Override
       public String fun(GutterIconDescriptor descriptor) {
@@ -167,13 +179,16 @@ public class GutterIconsConfigurable implements Configurable {
         panel.add(checkBox, BorderLayout.CENTER);
         panel.setBackground(getBackground(false));
         label.setBackground(getBackground(selected));
+        if (!checkBox.isOpaque()) {
+          checkBox.setOpaque(true);
+        }
         checkBox.setBorder(null);
 
         PluginDescriptor pluginDescriptor = myFirstDescriptors.get(descriptor);
         if (pluginDescriptor instanceof IdeaPluginDescriptor) {
           SeparatorWithText separator = new SeparatorWithText();
           String name = ((IdeaPluginDescriptor)pluginDescriptor).getName();
-          separator.setCaption("IDEA CORE".equals(name) ? "Platform" : name);
+          separator.setCaption("IDEA CORE".equals(name) ? "Common" : name);
           panel.add(separator, BorderLayout.NORTH);
         }
 

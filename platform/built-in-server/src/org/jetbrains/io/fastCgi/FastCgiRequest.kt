@@ -70,7 +70,7 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     ByteBufUtilEx.writeUtf8(buffer, value)
   }
 
-  public fun writeHeaders(request: FullHttpRequest, clientChannel: Channel) {
+  fun writeHeaders(request: FullHttpRequest, clientChannel: Channel) {
     addHeader("REQUEST_URI", request.uri())
     addHeader("REQUEST_METHOD", request.method().name())
 

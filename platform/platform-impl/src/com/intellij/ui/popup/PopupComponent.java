@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,6 +118,7 @@ public interface PopupComponent {
       myDialog.getContentPane().setLayout(new BorderLayout());
       myDialog.getContentPane().add(content, BorderLayout.CENTER);
       myDialog.getRootPane().putClientProperty(JBPopup.KEY, jbPopup);
+      myDialog.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
       myDialog.setUndecorated(true);
       myDialog.setBackground(UIUtil.getPanelBackground());
       myDialog.pack();

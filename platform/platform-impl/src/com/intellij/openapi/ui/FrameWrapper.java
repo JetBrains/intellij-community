@@ -142,7 +142,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     final WindowAdapter focusListener = new WindowAdapter() {
       public void windowOpened(WindowEvent e) {
         IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
-        JComponent toFocus = myPreferedFocus;
+        JComponent toFocus = getPreferredFocusedComponent();
         if (toFocus == null) {
           toFocus = fm.getFocusTargetFor(myComponent);
         }
@@ -290,6 +290,10 @@ public class FrameWrapper implements Disposable, DataProvider {
     myPreferedFocus = preferedFocus;
   }
 
+  public JComponent getPreferredFocusedComponent() {
+    return myPreferedFocus;
+  }
+
   public void closeOnEsc() {
     myCloseOnEsc = true;
   }
@@ -339,7 +343,19 @@ public class FrameWrapper implements Disposable, DataProvider {
       myParent = parent;
       setGlassPane(new IdeGlassPaneImpl(getRootPane()));
 
-      if (SystemInfo.isMac) {
+      boolean setMenuOnFrame = SystemInfo.isMac;
+
+      if (SystemInfo.isLinux && "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"))) {
+        try {
+          Class.forName("com.jarego.jayatana.Agent");
+          setMenuOnFrame = true;
+        }
+        catch (ClassNotFoundException e) {
+          // ignore
+        }
+      }
+
+      if (setMenuOnFrame) {
         setJMenuBar(new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()));
       }
 

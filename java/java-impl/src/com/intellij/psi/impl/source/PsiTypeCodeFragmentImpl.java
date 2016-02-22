@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -29,8 +30,11 @@ import static com.intellij.util.BitUtil.isSet;
  * @author dsl
  */
 public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiTypeCodeFragment {
+  private final static Logger LOG = Logger.getInstance(PsiTypeCodeFragmentImpl.class);
+
   private final boolean myAllowEllipsis;
   private final boolean myAllowDisjunction;
+  private final boolean myAllowConjunction;
 
   public PsiTypeCodeFragmentImpl(final Project project,
                                  final boolean isPhysical,
@@ -38,10 +42,17 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
                                  final CharSequence text,
                                  final int flags,
                                  PsiElement context) {
-    super(project, JavaElementType.TYPE_TEXT, isPhysical, name, text, context);
+    super(project,
+          isSet(flags, JavaCodeFragmentFactory.ALLOW_INTERSECTION) ? JavaElementType.TYPE_WITH_CONJUNCTIONS_TEXT : JavaElementType.TYPE_WITH_DISJUNCTIONS_TEXT,
+          isPhysical,
+          name,
+          text,
+          context);
 
     myAllowEllipsis = isSet(flags, JavaCodeFragmentFactory.ALLOW_ELLIPSIS);
     myAllowDisjunction = isSet(flags, JavaCodeFragmentFactory.ALLOW_DISJUNCTION);
+    myAllowConjunction = isSet(flags, JavaCodeFragmentFactory.ALLOW_INTERSECTION);
+    LOG.assertTrue(!myAllowConjunction || !myAllowDisjunction);
 
     if (isSet(flags, JavaCodeFragmentFactory.ALLOW_VOID)) {
       putUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT, Boolean.TRUE);
@@ -78,6 +89,9 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
     }
     else if (type instanceof PsiDisjunctionType && !myAllowDisjunction) {
       throw new TypeSyntaxException("Disjunction not allowed: " + type);
+    }
+    else if (type instanceof PsiDisjunctionType && !myAllowConjunction) {
+      throw new TypeSyntaxException("Conjunction not allowed: " + type);
     }
     return type;
   }

@@ -57,6 +57,22 @@ public class PyAbstractClassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  public void testConditionalRaiseReturnInIfPart() {
+    doTest();
+  }
+
+  public void testConditionalRaiseReturnInElsePart() {
+    doTest();
+  }
+
+  public void testConditionalRaiseNestedIfs() {
+    doTest();
+  }
+
+  public void testConditionalRaiseReturnInElifPart() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

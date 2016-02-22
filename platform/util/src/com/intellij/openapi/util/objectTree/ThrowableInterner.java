@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
@@ -72,19 +73,24 @@ public class ThrowableInterner {
 
   private static final long BACKTRACE_FIELD_OFFSET;
   static {
-    Field firstField = Throwable.class.getDeclaredFields()[1];
-    long firstFieldOffset = AtomicFieldUpdater.getUnsafe().objectFieldOffset(firstField);
-    BACKTRACE_FIELD_OFFSET = firstFieldOffset == 12 ? 8 : firstFieldOffset == 16 ? 12 : firstFieldOffset == 24 ? 16 : -1;
-    if (BACKTRACE_FIELD_OFFSET == -1
-        || !firstField.getName().equals("detailMessage")
-        || !(AtomicFieldUpdater.getUnsafe().getObject(new Throwable(), BACKTRACE_FIELD_OFFSET) instanceof Object[])) {
-      throw new RuntimeException("Unknown layout: "+firstField+";"+firstFieldOffset+". Please specify -Didea.disposer.debug=off in idea.properties to suppress");
+    if ((SystemInfo.isOracleJvm || SystemInfo.isJetbrainsJvm) && SystemInfo.isJavaVersionAtLeast("1.7")) {
+      Field firstField = Throwable.class.getDeclaredFields()[1];
+      long firstFieldOffset = AtomicFieldUpdater.getUnsafe().objectFieldOffset(firstField);
+      BACKTRACE_FIELD_OFFSET = firstFieldOffset == 12 ? 8 : firstFieldOffset == 16 ? 12 : firstFieldOffset == 24 ? 16 : -1;
+      if (BACKTRACE_FIELD_OFFSET == -1
+          || !firstField.getName().equals("detailMessage")
+          || !(AtomicFieldUpdater.getUnsafe().getObject(new Throwable(), BACKTRACE_FIELD_OFFSET) instanceof Object[])) {
+        throw new RuntimeException("Unknown layout: "+firstField+";"+firstFieldOffset+". Please specify -Didea.disposer.debug=off in idea.properties to suppress");
+      }
+    }
+    else {
+      BACKTRACE_FIELD_OFFSET = -1;
     }
   }
 
   private static Object[] getBacktrace(@NotNull Throwable throwable) {
     // the JVM blocks access to Throwable.backtrace via reflection
-    Object backtrace = AtomicFieldUpdater.getUnsafe().getObject(throwable, BACKTRACE_FIELD_OFFSET);
+    Object backtrace = BACKTRACE_FIELD_OFFSET == -1 ? null : AtomicFieldUpdater.getUnsafe().getObject(throwable, BACKTRACE_FIELD_OFFSET);
     // obsolete jdk
     return backtrace instanceof Object[] && ((Object[])backtrace).length == 5 ? (Object[])backtrace : null;
   }

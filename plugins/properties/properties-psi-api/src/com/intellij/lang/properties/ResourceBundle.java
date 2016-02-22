@@ -37,26 +37,8 @@ public abstract class ResourceBundle {
   @NotNull
   public abstract List<PropertiesFile> getPropertiesFiles();
 
-  /**
-   * @deprecated use getPropertiesFiles() instead this method
-   */
-  @Deprecated
-  @NotNull
-  public List<PropertiesFile> getPropertiesFiles(final Project project) {
-    return getPropertiesFiles();
-  }
-
   @NotNull
   public abstract PropertiesFile getDefaultPropertiesFile();
-
-  /**
-   * @deprecated use getDefaultPropertiesFile() instead this method
-   */
-  @Deprecated
-  @NotNull
-  public PropertiesFile getDefaultPropertiesFile(final Project project) {
-    return getDefaultPropertiesFile();
-  }
 
   @NotNull
   public abstract String getBaseName();

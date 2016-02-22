@@ -280,8 +280,7 @@ public class FSRecords implements Forceable {
           @NotNull
           @Override
           protected ExecutorService createExecutor() {
-            final ExecutorService backendExecutor = PooledThreadExecutor.INSTANCE;
-            return new BoundedTaskExecutor(backendExecutor, 1);
+            return new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
           }
         }; // sources usually zipped with 4x ratio
         myContentHashesEnumerator = weHaveContentHashes ? new ContentHashesUtil.HashEnumerator(contentsHashesFile, storageLockContext): null;

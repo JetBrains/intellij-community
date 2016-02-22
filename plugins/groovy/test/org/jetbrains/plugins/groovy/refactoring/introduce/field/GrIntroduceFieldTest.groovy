@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.introduce.field;
-
+package org.jetbrains.plugins.groovy.refactoring.introduce.field
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.refactoring.introduce.inplace.OccurrencesChooser.ReplaceChoice
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.refactoring.introduce.IntroduceConstantTest
+import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldSettings.Init
 import org.jetbrains.plugins.groovy.util.TestUtils
 
+import static com.intellij.refactoring.introduce.inplace.OccurrencesChooser.ReplaceChoice.ALL
 import static org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldSettings.Init.*
 
 /**
@@ -540,6 +544,58 @@ class TestClass {
 ''', false, false, false, CONSTRUCTOR
   }
 
+  void 'test cannot initialize in current method when introducing from field initializer'() {
+    doTestInitInTarget '''
+class A {
+  def object = <selection>new Object()</selection>
+}
+''', EnumSet.of(CONSTRUCTOR, FIELD_DECLARATION)
+
+    doTestInitInTarget '''
+class A {
+  def object = <selection>new Object()</selection>
+  def object2 = new Object()
+}
+''', EnumSet.of(CONSTRUCTOR, FIELD_DECLARATION)
+
+    doTestInitInTarget '''
+class A {
+  def object = <selection>new Object()</selection>
+  def object2 = new Object()
+}
+''', EnumSet.of(CONSTRUCTOR, FIELD_DECLARATION), ReplaceChoice.NO
+  }
+
+  void 'test can not initialize in current method with some occurence outside'() {
+    doTestInitInTarget '''
+class A {
+  def field = new Object()
+  def foo() {
+    def a = <selection>new Object()</selection>
+  }
+}
+''', EnumSet.of(CONSTRUCTOR, FIELD_DECLARATION)
+  }
+
+  void 'test can initialize in current method from within method'() {
+    doTestInitInTarget '''
+class A {
+  def foo() {
+    def a = <selection>new Object()</selection>
+  }
+}
+''', EnumSet.of(CONSTRUCTOR, FIELD_DECLARATION, CUR_METHOD)
+
+    doTestInitInTarget '''
+class A {
+  def field = new Object()
+  def foo() {
+    def a = <selection>new Object()</selection>
+  }
+}
+''', EnumSet.of(CONSTRUCTOR, FIELD_DECLARATION, CUR_METHOD), ReplaceChoice.NO
+  }
+
   private void doTest(final boolean isStatic,
                       final boolean removeLocal,
                       final boolean declareFinal,
@@ -576,5 +632,21 @@ class TestClass {
     finally {
       accessToken.finish()
     }
+  }
+
+  private void doTestInitInTarget(String text, EnumSet<Init> expected = EnumSet.noneOf(Init), ReplaceChoice replaceChoice = ALL) {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, text)
+    def handler = new GrIntroduceFieldHandler()
+
+    def expression = IntroduceConstantTest.findExpression(myFixture)
+    def variable = IntroduceConstantTest.findVariable(myFixture)
+    def stringPart = IntroduceConstantTest.findStringPart(myFixture)
+    def scopes = handler.findPossibleScopes(expression, variable, stringPart, editor)
+    assert scopes.length == 1
+    def scope = scopes[0]
+
+    def context = handler.getContext(getProject(), myFixture.editor, expression, variable, stringPart, scope)
+    def initPlaces = GrInplaceFieldIntroducer.getApplicableInitPlaces(context, replaceChoice == ALL)
+    assert initPlaces == expected
   }
 }

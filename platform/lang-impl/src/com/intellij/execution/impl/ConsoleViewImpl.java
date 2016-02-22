@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
@@ -515,7 +516,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myJLayeredPane.add(component, 0);
   }
 
-  protected void initConsoleEditor() {
+  private void initConsoleEditor() {
     myEditor = createConsoleEditor();
     registerConsoleEditorActions();
     myEditor.getScrollPane().setBorder(null);
@@ -935,6 +936,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       @Override
       public EditorEx compute() {
         EditorEx editor = doCreateConsoleEditor();
+        LOG.assertTrue(UndoUtil.isUndoDisabledFor(editor.getDocument()));
         editor.setContextMenuGroupId(null); // disabling default context menu
         editor.addEditorMouseListener(new EditorPopupHandler() {
           @Override
@@ -1413,6 +1415,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
       String s = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
       if (s == null) return;
+      s = StringUtil.convertLineSeparators(s);
       ApplicationManager.getApplication().assertIsDispatchThread();
       Editor editor = consoleView.myEditor;
       SelectionModel selectionModel = editor.getSelectionModel();

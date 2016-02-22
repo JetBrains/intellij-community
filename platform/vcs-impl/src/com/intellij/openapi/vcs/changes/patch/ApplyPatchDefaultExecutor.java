@@ -64,12 +64,15 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     executeAndApplyAdditionalInfo(localList, additionalInfo, commitContext, appliers);
   }
 
-  protected void executeAndApplyAdditionalInfo(@Nullable LocalChangeList localList,
-                                               @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
-                                               @NotNull CommitContext commitContext, @NotNull Collection<PatchApplier> appliers) {
-    if (PatchApplier.executePatchGroup(appliers, localList) != ApplyPatchStatus.ABORT) {
+  protected ApplyPatchStatus executeAndApplyAdditionalInfo(@Nullable LocalChangeList localList,
+                                                           @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
+                                                           @NotNull CommitContext commitContext,
+                                                           @NotNull Collection<PatchApplier> appliers) {
+    final ApplyPatchStatus applyPatchStatus = PatchApplier.executePatchGroup(appliers, localList);
+    if (applyPatchStatus != ApplyPatchStatus.ABORT) {
       applyAdditionalInfo(myProject, additionalInfo, commitContext);
     }
+    return applyPatchStatus;
   }
 
   @NotNull

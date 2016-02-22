@@ -16,36 +16,29 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.Page;
 import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogHashMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.VcsRootsRegistry;
+import com.intellij.vcs.log.util.PersistentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.File;
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -55,87 +48,49 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
 
   public static final VcsLogHashMap EMPTY = new VcsLogHashMap() {
     @Override
-    public int getCommitIndex(@NotNull Hash hash) {
+    public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
       return 0;
     }
 
     @NotNull
     @Override
-    public Hash getHash(int commitIndex) {
-      return HashImpl.build("");
+    public CommitId getCommitId(int commitIndex) {
+      throw new UnsupportedOperationException("Illegal access to empty hash map by index " + commitIndex);
     }
 
     @Nullable
     @Override
-    public Hash findHashByString(@NotNull String string) {
+    public CommitId findCommitId(@NotNull Condition<CommitId> string) {
       return null;
     }
   };
 
-  private static final File LOG_CACHE_APP_DIR = new File(new File(PathManager.getSystemPath(), "vcs-log"), "hashes");
-  private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
-  private static final int VERSION = 1;
+  @NotNull private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
+  @NotNull private static final String LOG_KIND = "hashes";
+  private static final int VERSION = 2;
 
-  private final PersistentEnumerator<Hash> myPersistentEnumerator;
+  @NotNull private final PersistentEnumerator<CommitId> myPersistentEnumerator;
 
-  public VcsLogHashMapImpl(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) throws IOException {
-    cleanupOldNaming(project, logProviders);
-    String logId = calcLogId(project, logProviders);
-    final File mapFile = new File(LOG_CACHE_APP_DIR, logId + "." + VERSION);
-    if (!mapFile.exists()) {
-      IOUtil.deleteAllFilesStartingWith(new File(LOG_CACHE_APP_DIR, logId));
-    }
-
+  public VcsLogHashMapImpl(@NotNull final Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) throws IOException {
+    myPersistentEnumerator =
+      PersistentUtil.createPersistentEnumerator(new MyCommitIdKeyDescriptor(project), LOG_KIND,
+                                                PersistentUtil.calcLogId(project, logProviders), VERSION);
     Disposer.register(project, this);
-    myPersistentEnumerator = IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentEnumerator<Hash>, IOException>() {
-      @Override
-      public PersistentEnumerator<Hash> compute() throws IOException {
-        return new PersistentEnumerator<Hash>(mapFile, new MyHashKeyDescriptor(), Page.PAGE_SIZE);
-      }
-    }, mapFile);
-  }
-
-  @NotNull
-  private static String calcLogId(@NotNull Project project, @NotNull final Map<VirtualFile, VcsLogProvider> logProviders) {
-    int hashcode = calcLogProvidersHash(logProviders);
-    return project.getLocationHash() + "." + Integer.toHexString(hashcode);
-  }
-
-  // TODO remove in IDEA 15
-  private static void cleanupOldNaming(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    int hashcode = calcLogProvidersHash(providers);
-    String oldLogId = project.getName() + "." + hashcode;
-    FileUtil.delete(new File(new File(PathManager.getSystemPath(), "vcs-log"), oldLogId));
-  }
-
-  private static int calcLogProvidersHash(@NotNull final Map<VirtualFile, VcsLogProvider> logProviders) {
-    List<VirtualFile> sortedRoots = ContainerUtil.sorted(logProviders.keySet(), new Comparator<VirtualFile>() {
-      @Override
-      public int compare(@NotNull VirtualFile o1, @NotNull VirtualFile o2) {
-        return o1.getPath().compareTo(o2.getPath());
-      }
-    });
-    return StringUtil.join(sortedRoots, new Function<VirtualFile, String>() {
-      @Override
-      public String fun(VirtualFile root) {
-        return root.getPath() + "." + logProviders.get(root).getSupportedVcs().getName();
-      }
-    }, ".").hashCode();
   }
 
   @Nullable
-  private Hash doGetHash(int index) throws IOException {
+  private CommitId doGetCommitId(int index) throws IOException {
     return myPersistentEnumerator.valueOf(index);
   }
 
-  private int getOrPut(@NotNull Hash hash) throws IOException {
-    return myPersistentEnumerator.enumerate(hash);
+  private int getOrPut(@NotNull Hash hash, @NotNull VirtualFile root) throws IOException {
+    return myPersistentEnumerator.enumerate(new CommitId(hash, root));
   }
 
   @Override
-  public int getCommitIndex(@NotNull Hash hash) {
+  public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
     try {
-      return getOrPut(hash);
+      return getOrPut(hash, root);
     }
     catch (IOException e) {
       throw new RuntimeException(e); // TODO the map is corrupted => need to rebuild
@@ -144,13 +99,13 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
 
   @Override
   @NotNull
-  public Hash getHash(int commitIndex) {
+  public CommitId getCommitId(int commitIndex) {
     try {
-      Hash hash = doGetHash(commitIndex);
-      if (hash == null) {
+      CommitId commitId = doGetCommitId(commitIndex);
+      if (commitId == null) {
         throw new RuntimeException("Unknown commit index: " + commitIndex); // TODO this shouldn't happen => need to recreate the map
       }
-      return hash;
+      return commitId;
     }
     catch (IOException e) {
       throw new RuntimeException(e); // TODO map is corrupted => need to recreate it
@@ -159,15 +114,20 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
 
   @Override
   @Nullable
-  public Hash findHashByString(@NotNull String string) {
-    final String pHash = string.toLowerCase();
+  public CommitId findCommitId(@NotNull final Condition<CommitId> condition) {
     try {
-      return findHash(new Condition<Hash>() {
+      final Ref<CommitId> hashRef = Ref.create();
+      myPersistentEnumerator.iterateData(new CommonProcessors.FindProcessor<CommitId>() {
         @Override
-        public boolean value(@NotNull Hash hash) {
-          return hash.toString().toLowerCase().startsWith(pHash);
+        protected boolean accept(CommitId commitId) {
+          boolean matches = condition.value(commitId);
+          if (matches) {
+            hashRef.set(commitId);
+          }
+          return matches;
         }
       });
+      return hashRef.get();
     }
     catch (IOException e) {
       LOG.error(e);
@@ -189,40 +149,34 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
     }
   }
 
-  @Nullable
-  Hash findHash(@NotNull final Condition<Hash> condition) throws IOException {
-    final Ref<Hash> hashRef = Ref.create();
-    myPersistentEnumerator.iterateData(new CommonProcessors.FindProcessor<Hash>() {
-      @Override
-      protected boolean accept(Hash hash) {
-        boolean matches = condition.value(hash);
-        if (matches) {
-          hashRef.set(hash);
-        }
-        return matches;
-      }
-    });
-    return hashRef.get();
-  }
+  private static class MyCommitIdKeyDescriptor implements KeyDescriptor<CommitId> {
+    @NotNull private final VcsRootsRegistry myRootsRegistry;
 
-  private static class MyHashKeyDescriptor implements KeyDescriptor<Hash> {
-    @Override
-    public void save(@NotNull DataOutput out, Hash value) throws IOException {
-      ((HashImpl)value).write(out);
+    public MyCommitIdKeyDescriptor(@NotNull Project project) {
+      myRootsRegistry = ServiceManager.getService(project, VcsRootsRegistry.class);
     }
 
     @Override
-    public Hash read(@NotNull DataInput in) throws IOException {
-      return HashImpl.read(in);
+    public void save(@NotNull DataOutput out, CommitId value) throws IOException {
+      ((HashImpl)value.getHash()).write(out);
+      out.writeInt(myRootsRegistry.getId(value.getRoot()));
     }
 
     @Override
-    public int getHashCode(Hash value) {
+    public CommitId read(@NotNull DataInput in) throws IOException {
+      Hash hash = HashImpl.read(in);
+      VirtualFile root = myRootsRegistry.getRootById(in.readInt());
+      if (root == null) return null;
+      return new CommitId(hash, root);
+    }
+
+    @Override
+    public int getHashCode(CommitId value) {
       return value.hashCode();
     }
 
     @Override
-    public boolean isEqual(Hash val1, Hash val2) {
+    public boolean isEqual(CommitId val1, CommitId val2) {
       return val1.equals(val2);
     }
   }

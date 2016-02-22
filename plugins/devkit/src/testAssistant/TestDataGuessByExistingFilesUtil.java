@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,14 +84,14 @@ public class TestDataGuessByExistingFilesUtil {
     while (prev != null && count-- > 0) {
       String s = getFilePath(prev, testName);
       if (s != null) return s;
-      prev = PsiTreeUtil.getPrevSiblingOfType(method, PsiMethod.class);
+      prev = PsiTreeUtil.getPrevSiblingOfType(prev, PsiMethod.class);
     }
     count = 5;
     PsiMethod next = PsiTreeUtil.getNextSiblingOfType(method, PsiMethod.class);
     while (next != null && count-- > 0) {
       String s = getFilePath(next, testName);
       if (s != null) return s;
-      next = PsiTreeUtil.getPrevSiblingOfType(method, PsiMethod.class);
+      next = PsiTreeUtil.getNextSiblingOfType(next, PsiMethod.class);
     }
     return null;
   }
@@ -175,7 +176,12 @@ public class TestDataGuessByExistingFilesUtil {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
     GotoFileModel gotoModel = new GotoFileModel(psiClass.getProject());
     Set<TestLocationDescriptor> descriptors = new HashSet<TestLocationDescriptor>();
-    Collection<String> fileNames = getAllFileNames(test, gotoModel);
+    // PhpStorm has tests that use '$' symbol as a file path separator, e.g. 'test$while_stmt$declaration' test 
+    // stands for '/while_smt/declaration.php' file somewhere in a test data.
+    final String possibleFileName = ContainerUtil.getLastItem(StringUtil.split(test, "$"), test);
+    assert possibleFileName != null;
+    final String possibleFilePath = test.replace('$', '/');
+    final Collection<String> fileNames = getAllFileNames(possibleFileName, gotoModel);
     for (String name : fileNames) {
       ProgressManager.checkCanceled();
       boolean currentNameProcessed = false;
@@ -189,19 +195,23 @@ public class TestDataGuessByExistingFilesUtil {
             continue;
           }
 
-          final String filePath = PathUtil.getFileName(file.getPath()).toLowerCase();
-          int i = filePath.indexOf(test.toLowerCase());
+          final String filePath = file.getPath();
+          if (!filePath.contains(possibleFilePath) && !filePath.contains(test)) {
+            continue;
+          }
+          final String fileName = PathUtil.getFileName(filePath).toLowerCase();
+          int i = fileName.indexOf(possibleFileName.toLowerCase());
           // Skip files that doesn't contain target test name and files that contain digit after target test name fragment.
           // Example: there are tests with names 'testEnter()' and 'testEnter2()' and we don't want test data file 'testEnter2'
           // to be matched to the test 'testEnter()'.
-          if (i < 0 || (i + test.length() < filePath.length())
-                       && Character.isDigit(filePath.charAt(i + test.length())))
+          if (i < 0 || (i + possibleFileName.length() < fileName.length())
+                       && Character.isDigit(fileName.charAt(i + possibleFileName.length())))
           {
             continue;
           }
 
           TestLocationDescriptor current = new TestLocationDescriptor();
-          current.populate(test, file);
+          current.populate(possibleFileName, file);
           if (!current.isComplete()) {
             continue;
           }
@@ -220,7 +230,7 @@ public class TestDataGuessByExistingFilesUtil {
           break;
         }
     }
-    return new TestDataDescriptor(descriptors, test);
+    return new TestDataDescriptor(descriptors, possibleFileName);
   }
 
   private static Collection<String> getAllFileNames(final String testName, final GotoFileModel model) {

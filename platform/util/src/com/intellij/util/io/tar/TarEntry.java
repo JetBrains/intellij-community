@@ -1,59 +1,25 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.io.tar;
 
 import java.io.File;
 import java.util.Date;
 import java.util.Locale;
 
-/**
- * This class represents an entry in a Tar archive. It consists
- * of the entry's header, as well as the entry's File. Entries
- * can be instantiated in one of three ways, depending on how
- * they are to be used.
- * <p>
- * TarEntries that are created from the header bytes read from
- * an archive are instantiated with the TarEntry( byte[] )
- * constructor. These entries will be used when extracting from
- * or listing the contents of an archive. These entries have their
- * header filled in using the header bytes. They also set the File
- * to null, since they reference an archive entry not a file.
- * <p>
- * TarEntries that are created from Files that are to be written
- * into an archive are instantiated with the TarEntry( File )
- * constructor. These entries have their header filled in using
- * the File's information. They also keep a reference to the File
- * for convenience when writing entries.
- * <p>
- * Finally, TarEntries can be constructed from nothing but a name.
- * This allows the programmer to construct the entry by hand, for
- * instance when only an InputStream is available for writing to
- * the archive, and the header information is constructed from
- * other information. In this case the header fields are set to
- * defaults and the File is set to null.
- *
- * <p>
- * The C structure for a Tar Entry's header is:
- * <pre>
- * struct header {
- * char name[NAMSIZ];
- * char mode[8];
- * char uid[8];
- * char gid[8];
- * char size[12];
- * char mtime[12];
- * char chksum[8];
- * char linkflag;
- * char linkname[NAMSIZ];
- * char magic[8];
- * char uname[TUNMLEN];
- * char gname[TGNMLEN];
- * char devmajor[8];
- * char devminor[8];
- * } header;
- * </pre>
- *
- */
-// Copy-pasted from org.apache.tools.tar.TarEntry
-
+/** @deprecated use bundled commons-compress library (to be removed in IDEA 17) */
 public class TarEntry implements TarConstants {
   /** The entry's name. */
   private StringBuffer name;

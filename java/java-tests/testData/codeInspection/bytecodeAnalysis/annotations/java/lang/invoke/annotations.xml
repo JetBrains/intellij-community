@@ -316,7 +316,8 @@
     </item>
     <item name='java.lang.invoke.CallSite java.lang.Object maybeReBox(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='java.lang.invoke.CallSite java.lang.invoke.CallSite makeSite(java.lang.invoke.MethodHandle, java.lang.String, java.lang.invoke.MethodType, java.lang.Object, java.lang.invoke.MemberName, int) 0'>
@@ -1112,6 +1113,11 @@
     <item name='java.lang.invoke.MemberName.Factory java.lang.invoke.MemberName resolveOrNull(java.lang.invoke.MemberName, boolean, java.lang.Class&lt;?&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.MemberName.Factory java.lang.invoke.MemberName[] newMemberBuffer(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.MemberName.Factory java.util.List&lt;java.lang.invoke.MemberName&gt; getMembers(java.lang.Class&lt;?&gt;, java.lang.String, java.lang.Object, int, java.lang.Class&lt;?&gt;) 2'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -1426,6 +1432,9 @@
         </annotation>
     </item>
     <item name='java.lang.invoke.MethodHandleNatives java.lang.Object[] makeTarget(java.lang.Class&lt;?&gt;, java.lang.String, java.lang.String, int, java.lang.Class&lt;?&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.invoke.MethodHandleNatives java.lang.invoke.CallSite makeDynamicCallSite(java.lang.invoke.MethodHandle, java.lang.String, java.lang.invoke.MethodType, java.lang.Object, java.lang.invoke.MemberName, int) 0'>

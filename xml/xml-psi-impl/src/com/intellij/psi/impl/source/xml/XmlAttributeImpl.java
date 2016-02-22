@@ -104,6 +104,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
         }
         else {
           if (newValue != null) {
+            att.addChild(newValue.getTreePrev().copyElement());
             att.addChild(newValue.copyElement());
           }
         }

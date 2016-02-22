@@ -9,7 +9,9 @@ def bar(y):
     z = 100 + y
     print("Z=%d"%z)
 
+t = None
 def foo(x):
+    global t
     y = x + 1
     print("Y=%d"%y)
 

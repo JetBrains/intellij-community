@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,27 +18,36 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
+import com.intellij.psi.impl.java.stubs.PsiMethodStub;
+import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import static com.intellij.psi.PsiModifier.ABSTRACT;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.IMPLEMENTED_FQN;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRAIT;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRAIT_IMPLEMENTED;
+import static org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex.HELPER_SUFFIX;
+import static org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex.INDEX_ID;
 
 /**
- * Created by Max Medvedev on 16/05/14
+ * @author Max Medvedev
+ * @since 16.05.2014
  */
 public class GrTraitUtil {
   private static final Logger LOG = Logger.getInstance(GrTraitUtil.class);
@@ -54,11 +63,8 @@ public class GrTraitUtil {
     return aClass != null && aClass.isInterface() && !isTrait(aClass);
   }
 
-  public static boolean isMethodAbstract(PsiMethod method) {
-    if (method.getModifierList().hasExplicitModifier(ABSTRACT)) return true;
-
-    PsiClass aClass = method.getContainingClass();
-    return isInterface(aClass);
+  public static boolean isMethodAbstract(@NotNull PsiMethod method) {
+    return method.getModifierList().hasExplicitModifier(ABSTRACT) || isInterface(method.getContainingClass());
   }
 
   @NotNull
@@ -66,31 +72,63 @@ public class GrTraitUtil {
     String qname = aClass.getQualifiedName();
     LOG.assertTrue(qname != null, aClass.getClass());
 
-    String[] idents = qname.split("\\.");
+    String[] identifiers = qname.split("\\.");
 
     StringBuilder buffer = new StringBuilder();
-    for (String ident : idents) {
-      buffer.append(ident).append("_");
+    for (String identifier : identifiers) {
+      buffer.append(identifier).append('_');
     }
 
-    buffer.append("_");
+    buffer.append('_');
     return buffer.toString();
   }
 
   @Contract("null -> false")
-  public static boolean isTrait(@Nullable PsiClass containingClass) {
-    return containingClass instanceof GrTypeDefinition && ((GrTypeDefinition)containingClass).isTrait()
-           || containingClass instanceof ClsClassImpl
-              && containingClass.isInterface()
-              && AnnotationUtil.isAnnotated(containingClass, "groovy.transform.Trait", false);
+  public static boolean isTrait(@Nullable PsiClass aClass) {
+    return aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait() ||
+           aClass instanceof ClsClassImpl && aClass.isInterface() && AnnotationUtil.isAnnotated(aClass, GROOVY_TRAIT, false);
   }
 
-  public static PsiMethod createTraitMethodFromCompiledHelperMethod(final PsiMethod compiledMethod, final ClsClassImpl trait) {
-    assert compiledMethod.getParameterList().getParametersCount() > 0;
+  public static Collection<PsiMethod> getCompiledTraitConcreteMethods(@NotNull final ClsClassImpl trait) {
+    return CachedValuesManager.getCachedValue(trait, () -> {
+      final Collection<PsiMethod> result = ContainerUtil.newArrayList();
+      doCollectCompiledTraitMethods(trait, result);
+      return CachedValueProvider.Result.create(result, trait);
+    });
+  }
 
-    final GrLightMethodBuilder result = new GrLightMethodBuilder(compiledMethod.getManager(), compiledMethod.getName());
+  private static void doCollectCompiledTraitMethods(final ClsClassImpl trait, final Collection<PsiMethod> result) {
+    for (PsiMethod method : trait.getMethods()) {
+      if (AnnotationUtil.isAnnotated(method, GROOVY_TRAIT_IMPLEMENTED, false)) {
+        result.add(method);
+      }
+    }
+
+    VirtualFile traitFile = trait.getContainingFile().getVirtualFile();
+    if (traitFile != null) {
+      VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + HELPER_SUFFIX);
+      if (helperFile != null) {
+        int key = FileBasedIndex.getFileId(helperFile);
+        List<PsiJavaFileStub> values = FileBasedIndex.getInstance().getValues(INDEX_ID, key, trait.getResolveScope());
+        values.forEach(root -> ((PsiJavaFileStubImpl)root).setPsi((PsiJavaFile)trait.getContainingFile()));
+        values.stream().map(
+          root -> root.getChildrenStubs().get(0).getChildrenStubs()
+        ).<StubElement>flatMap(
+          Collection::stream
+        ).filter(
+          stub -> stub instanceof PsiMethodStub
+        ).forEach(
+          stub -> result.add(createTraitMethodFromCompiledHelperMethod(((PsiMethodStub)stub).getPsi(), trait))
+        );
+      }
+    }
+  }
+
+  private static PsiMethod createTraitMethodFromCompiledHelperMethod(PsiMethod compiledMethod, ClsClassImpl trait) {
+    final GrLightMethodBuilder result = new GrLightMethodBuilder(trait.getManager(), compiledMethod.getName());
     result.setOriginInfo("via @Trait");
     result.addModifier(PsiModifier.STATIC);
+
     for (PsiTypeParameter parameter : compiledMethod.getTypeParameters()) {
       result.getTypeParameterList().addParameter(parameter);
     }
@@ -101,7 +139,9 @@ public class GrTraitUtil {
     for (int i = 1; i < methodParameters.length; i++) {
       final PsiParameter originalParameter = methodParameters[i];
       final PsiType correctedType = originalParameter.getType().accept(corrector);
-      result.addParameter(originalParameter.getName(), correctedType, false);
+      final String name = originalParameter.getName();
+      assert name != null : compiledMethod;
+      result.addParameter(name, correctedType, false);
     }
 
     for (PsiClassType type : compiledMethod.getThrowsList().getReferencedTypes()) {
@@ -109,10 +149,8 @@ public class GrTraitUtil {
       result.getThrowsList().addReference(correctedType instanceof PsiClassType ? (PsiClassType)correctedType : type);
     }
 
-    {
-      final PsiType originalType = compiledMethod.getReturnType();
-      result.setReturnType(originalType == null ? null : originalType.accept(corrector));
-    }
+    final PsiType originalType = compiledMethod.getReturnType();
+    result.setReturnType(originalType == null ? null : originalType.accept(corrector));
 
     final PsiClass traitSource = trait.getSourceMirrorClass();
     final PsiMethod sourceMethod = traitSource == null ? null : traitSource.findMethodBySignature(result, false);
@@ -133,8 +171,6 @@ public class GrTraitUtil {
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(trait.getProject()).getElementFactory();
     return new PsiTypeMapper() {
-
-      @Nullable
       @Override
       public PsiType visitClassType(PsiClassType originalType) {
         final PsiClass resolved = originalType.resolve();
@@ -151,52 +187,13 @@ public class GrTraitUtil {
 
         final Ref<Boolean> hasChanges = Ref.create(false);
         final PsiTypeVisitor<PsiType> $this = this;
-        final PsiType[] substitutes = ContainerUtil.map2Array(typeParameters, PsiType.class, new Function<PsiType, PsiType>() {
-          @Override
-          public PsiType fun(PsiType type) {
-            final PsiType mapped = type.accept($this);
-            hasChanges.set(mapped != type);
-            return mapped;
-          }
+        final PsiType[] substitutes = ContainerUtil.map2Array(typeParameters, PsiType.class, type -> {
+          final PsiType mapped = type.accept($this);
+          hasChanges.set(mapped != type);
+          return mapped;
         });
         return hasChanges.get() ? elementFactory.createType(resolved, substitutes) : originalType;
       }
     };
-  }
-
-  public static Collection<PsiMethod> getCompiledTraitConcreteMethods(@NotNull final ClsClassImpl trait) {
-    return CachedValuesManager.getCachedValue(trait, new CachedValueProvider<Collection<PsiMethod>>() {
-      @Nullable
-      @Override
-      public Result<Collection<PsiMethod>> compute() {
-        final Collection<PsiMethod> result = ContainerUtil.newArrayList();
-        doCollectCompiledTraitMethods(trait, result);
-        return Result.create(result, trait);
-      }
-    });
-  }
-
-  private static void doCollectCompiledTraitMethods(ClsClassImpl trait, Collection<PsiMethod> result) {
-    for (PsiMethod method : trait.getMethods()) {
-      if (AnnotationUtil.isAnnotated(method, IMPLEMENTED_FQN, false)) {
-        result.add(method);
-      }
-    }
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(trait.getProject());
-    final String helperFQN = trait.getQualifiedName();
-    final PsiClass traitHelper = psiFacade.findClass(helperFQN + "$Trait$Helper", trait.getResolveScope());
-    if (traitHelper == null) return;
-    final PsiType classType = TypesUtil.createJavaLangClassType(
-      psiFacade.getElementFactory().createType(trait), trait.getProject(), trait.getResolveScope()
-    );
-    for (PsiMethod method : traitHelper.getMethods()) {
-      if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (parameters.length <= 0) continue;
-      final PsiParameter self = parameters[0];
-      if (self.getType().equals(classType)) {
-        result.add(createTraitMethodFromCompiledHelperMethod(method, trait));
-      }
-    }
   }
 }

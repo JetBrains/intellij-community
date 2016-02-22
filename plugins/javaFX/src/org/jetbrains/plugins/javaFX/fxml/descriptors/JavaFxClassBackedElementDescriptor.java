@@ -217,7 +217,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         collectInstanceProperties(simpleAttrs);
         collectStaticAttributesDescriptors(context, simpleAttrs);
         for (String defaultProperty : FxmlConstants.FX_DEFAULT_PROPERTIES) {
-          simpleAttrs.add(new JavaFxDefaultAttributeDescriptor(defaultProperty, myPsiClass));
+          simpleAttrs.add(new JavaFxDefaultPropertyAttributeDescriptor(defaultProperty, myPsiClass));
         }
         return simpleAttrs.isEmpty() ? XmlAttributeDescriptor.EMPTY : simpleAttrs.toArray(new XmlAttributeDescriptor[simpleAttrs.size()]);
       }
@@ -290,18 +290,17 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     if (myPsiClass == null) return null;
     if (myPsiClass.findFieldByName(attributeName, true) == null) {
       if (FxmlConstants.FX_DEFAULT_PROPERTIES.contains(attributeName)){
-        return new JavaFxDefaultAttributeDescriptor(attributeName, myPsiClass);
-      } else {
-        final PsiMethod propertySetter = JavaFxPsiUtil.findPropertySetter(attributeName, context);
-        if (propertySetter != null) {
-          return new JavaFxStaticPropertyAttributeDescriptor(propertySetter, attributeName);
-        }
-        final PsiMethod getter = JavaFxPsiUtil.findPropertyGetter(attributeName, myPsiClass);
-        if (getter != null) {
-          return new JavaFxPropertyAttributeDescriptor(attributeName, myPsiClass);
-        }
-        return null;
+        return new JavaFxDefaultPropertyAttributeDescriptor(attributeName, myPsiClass);
       }
+      final PsiMethod propertySetter = JavaFxPsiUtil.findPropertySetter(attributeName, context);
+      if (propertySetter != null) {
+        return new JavaFxStaticSetterAttributeDescriptor(propertySetter, attributeName);
+      }
+      final PsiMethod getter = JavaFxPsiUtil.findPropertyGetter(attributeName, myPsiClass);
+      if (getter != null) {
+        return new JavaFxPropertyAttributeDescriptor(attributeName, myPsiClass);
+      }
+      return null;
     }
     return new JavaFxPropertyAttributeDescriptor(attributeName, myPsiClass);
   }

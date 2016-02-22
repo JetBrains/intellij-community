@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
@@ -68,7 +67,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
     }
     if (myExpression instanceof PsiLambdaExpression || myExpression instanceof PsiMethodReferenceExpression) {
       if (!LambdaUtil.isFunctionalType(myT)) {
-        session.registerIncompatibleErrorMessage(myT.getPresentableText() + " is not a functional interface");
+        session.registerIncompatibleErrorMessage(session.getPresentableText(myT) + " is not a functional interface");
         return false;
       }
 
@@ -76,7 +75,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
                                                                                    : FunctionalInterfaceParameterizationUtil.getGroundTargetType(myT);
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(groundTargetType);
       if (interfaceMethod == null) {
-        session.registerIncompatibleErrorMessage("No valid function type can be found for " + myT.getPresentableText());
+        session.registerIncompatibleErrorMessage("No valid function type can be found for " + session.getPresentableText(myT));
         return false;
       }
 
@@ -86,7 +85,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
         for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
           final PsiType type = session.substituteWithInferenceVariables(substitutor.substitute(parameter.getType()));
           if (!session.isProperType(type)) {
-            session.registerIncompatibleErrorMessage("Parameter type is not yet inferred: " + type.getPresentableText());
+            session.registerIncompatibleErrorMessage("Parameter type is not yet inferred: " + session.getPresentableText(type));
             return false;
           }
         }
@@ -96,7 +95,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       if (myExpression instanceof PsiLambdaExpression || !((PsiMethodReferenceExpression)myExpression).isExact()) {
         final PsiType type = session.substituteWithInferenceVariables(substitutor.substitute(returnType));
         if (!session.isProperType(type)) {
-          session.registerIncompatibleErrorMessage("Return type is not yet inferred: " + type.getPresentableText());
+          session.registerIncompatibleErrorMessage("Return type is not yet inferred: " + session.getPresentableText(type));
           return false;
         }
       }
@@ -118,12 +117,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       final List<PsiType> thrownTypes = new ArrayList<PsiType>();
       final PsiElement body = myExpression instanceof PsiLambdaExpression ? ((PsiLambdaExpression)myExpression).getBody() : myExpression;
       if (body != null) {
-        final List<PsiClassType> exceptions = ExceptionUtil.ourThrowsGuard.doPreventingRecursion(myExpression, false, new Computable<List<PsiClassType>>() {
-          @Override
-          public List<PsiClassType> compute() {
-            return ExceptionUtil.getUnhandledExceptions(new PsiElement[] {body});
-          }
-        });
+        final List<PsiClassType> exceptions =  ExceptionUtil.getUnhandledExceptions(new PsiElement[] {body});
         if (exceptions != null) {
           thrownTypes.addAll(ContainerUtil.filter(exceptions, new Condition<PsiClassType>() {
             @Override
@@ -137,7 +131,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       if (expectedNonProperThrownTypes.isEmpty()) {
         for (PsiType thrownType : thrownTypes) {
           if (!isAddressed(expectedThrownTypes, thrownType)) {
-            session.registerIncompatibleErrorMessage("Unhandled exception: " + thrownType.getPresentableText());
+            session.registerIncompatibleErrorMessage("Unhandled exception: " + session.getPresentableText(thrownType));
             return false;
           }
         }

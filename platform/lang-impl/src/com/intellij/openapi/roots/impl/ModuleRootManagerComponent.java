@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import org.jetbrains.annotations.NotNull;
 @State(
   name = "NewModuleRootManager",
   storages = {
-    @Storage(file = StoragePathMacros.MODULE_FILE),
-    @Storage(id = ClasspathStorage.SPECIAL_STORAGE, storageClass = ClasspathStorage.class)
+    @Storage(StoragePathMacros.MODULE_FILE),
+    @Storage(storageClass = ClasspathStorage.class)
   }
 )
 public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
@@ -44,13 +44,14 @@ public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
   @NotNull
   @Override
   public Resolution getResolution(@NotNull Storage storage, @NotNull StateStorageOperation operation) {
-    boolean isEffectiveStorage = storage.id().equals(ClassPathStorageUtil.isDefaultStorage(getModule()) ? ClassPathStorageUtil.DEFAULT_STORAGE : ClasspathStorage.SPECIAL_STORAGE);
+    boolean isDefault = storage.storageClass() == StateStorage.class;
+    boolean isEffectiveStorage = ClassPathStorageUtil.isDefaultStorage(getModule()) == isDefault;
     if (operation == StateStorageOperation.READ) {
       return isEffectiveStorage ? Resolution.DO : Resolution.SKIP;
     }
     else {
       // IDEA-133480 Eclipse integration: .iml content is not reduced on setting Dependencies Storage Format = Eclipse
-      return isEffectiveStorage ? Resolution.DO : (storage.id().equals(ClassPathStorageUtil.DEFAULT_STORAGE) ? Resolution.CLEAR : Resolution.SKIP);
+      return isEffectiveStorage ? Resolution.DO : (isDefault ? Resolution.CLEAR : Resolution.SKIP);
     }
   }
 }

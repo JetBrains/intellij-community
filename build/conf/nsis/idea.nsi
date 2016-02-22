@@ -12,7 +12,6 @@
 ; thus ${PRODUCT_WITH_VER} is used for uninstall registry information
 !define PRODUCT_REG_VER "${MUI_PRODUCT}\${VER_BUILD}"
 
-!define INSTALL_OPTION_ELEMENTS 4
 Name "${MUI_PRODUCT}"
 SetCompressor lzma
 ; http://nsis.sourceforge.net/Shortcuts_removal_fails_on_Windows_Vista
@@ -32,6 +31,8 @@ ${UnStrStr}
 ${UnStrLoc}
 ${UnStrRep}
 ${StrRep}
+
+!include "customInstallActions.nsi"
 
 ReserveFile "desktop.ini"
 ReserveFile "DeleteSettings.ini"
@@ -54,8 +55,8 @@ ReserveFile '${NSISDIR}\Plugins\InstallOptions.dll'
 Var baseRegKey
 Var IS_UPGRADE_60
 
-!define MUI_LANGDLL_REGISTRY_ROOT "HKCU" 
-!define MUI_LANGDLL_REGISTRY_KEY "Software\JetBrains\${MUI_PRODUCT}\${VER_BUILD}\" 
+!define MUI_LANGDLL_REGISTRY_ROOT "HKCU"
+!define MUI_LANGDLL_REGISTRY_KEY "Software\JetBrains\${MUI_PRODUCT}\${VER_BUILD}\"
 !define MUI_LANGDLL_REGISTRY_VALUENAME "Installer Language"
 
 
@@ -418,7 +419,7 @@ UAC_Admin:
     StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
     SetShellVarContext all
     StrCpy $baseRegKey "HKLM"
-UAC_Done:	
+UAC_Done:
 ;  !insertmacro MUI_LANGDLL_DISPLAY
 FunctionEnd
 
@@ -461,7 +462,7 @@ Function searchCurrentVersion
   StrCmp $0 "complete" Done
   StrCpy $0 "HKLM"
   Call checkVersion
-Done:  
+Done:
 FunctionEnd
 
 
@@ -596,7 +597,7 @@ getPath:
   StrCpy $1 "$1\$3"
   Call OMReadRegStr
   Pop $1
-  IfFileExists $3$5 done 0 
+  IfFileExists $3$5 done 0
   IntOp $4 $4 + 1
   goto loop
 done:
@@ -648,12 +649,12 @@ enum_versions_hkcu:
   IntCmp $1 $3 continue_enum_versions_hkcu continue_enum_versions_hkcu
   StrCpy $3 $1
   ReadRegStr $INSTDIR "HKCU" "Software\${MANUFACTURER}\${MUI_PRODUCT}\$3" ""
-  
+
 continue_enum_versions_hkcu:
   IntOp $0 $0 + 1
   Goto enum_versions_hkcu
-  
-end_enum_versions_hkcu:  
+
+end_enum_versions_hkcu:
 
   StrCpy $0 "0"        # registry key index
 
@@ -663,11 +664,11 @@ enum_versions_hklm:
   IntCmp $1 $3 continue_enum_versions_hklm continue_enum_versions_hklm
   StrCpy $3 $1
   ReadRegStr $INSTDIR "HKLM" "Software\${MANUFACTURER}\${MUI_PRODUCT}\$3" ""
-  
+
 continue_enum_versions_hklm:
   IntOp $0 $0 + 1
   Goto enum_versions_hklm
-  
+
 end_enum_versions_hklm:
 
   StrCmp $INSTDIR "" 0 skip_default_instdir
@@ -686,9 +687,9 @@ FunctionEnd
 
 Function ProductRegistration
   StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" eapInfo releaseInfo
-eapInfo:  
+eapInfo:
   StrCpy $3 "${PRODUCT_WITH_VER}(EAP)"
-  goto createRegistration  
+  goto createRegistration
 releaseInfo:
   StrCpy $3 "${PRODUCT_WITH_VER}"
 createRegistration:
@@ -725,48 +726,40 @@ FunctionEnd
 ; Installer sections
 ;------------------------------------------------------------------------------
 Section "IDEA Files" CopyIdeaFiles
-;  StrCpy $baseRegKey "HKCU"
-;  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 3" "State"
-;  StrCmp $R2 1 continue_for_current_user
-;  SetShellVarContext all
-;  StrCpy $baseRegKey "HKLM"
-;  continue_for_current_user:
 
 ; create shortcuts
-
-  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 1" "State"
-  StrCmp $R2 1 "" skip_desktop_shortcut
+  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 2" "State"
+  StrCmp $R2 1 "" exe_64
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
+exe_64:
+  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 3" "State"
+  StrCmp $R2 1 "" skip_desktop_shortcut
+  CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}(64).lnk" \
+                 "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
 
 skip_desktop_shortcut:
-  ; OS is not win7
-  Call winVersion
-  ${If} $0 == "0" 
-    !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 2" "State"
-    StrCmp $R2 1 "" skip_quicklaunch_shortcut
-    CreateShortCut "$QUICKLAUNCH\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
-                   "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
-  ${EndIf}	
-skip_quicklaunch_shortcut:
   !insertmacro INSTALLOPTIONS_READ $R1 "Desktop.ini" "Settings" "NumFields"
   IntCmp $R1 ${INSTALL_OPTION_ELEMENTS} do_association done do_association
 do_association:
-  StrCpy $R2 ${INSTALL_OPTION_ELEMENTS}  
+  StrCpy $R2 ${INSTALL_OPTION_ELEMENTS}
 get_user_choice:
   !insertmacro INSTALLOPTIONS_READ $R3 "Desktop.ini" "Field $R2" "State"
   StrCmp $R3 1 "" next_association
   !insertmacro INSTALLOPTIONS_READ $R4 "Desktop.ini" "Field $R2" "Text"
   call ProductAssociation
-next_association:  
+next_association:
   IntOp $R2 $R2 + 1
   IntCmp $R1 $R2 get_user_choice done get_user_choice
 
 done:
+
+  Call customInstallActions
+
   ;registration application to be presented in Open With list
   call ProductRegistration
   ;reset icon cache
-  System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'	
+  System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
 !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 ; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
 ; save it name in the "MenuFolder" RegValue
@@ -865,47 +858,6 @@ skip_properties:
 SectionEnd
 
 ;------------------------------------------------------------------------------
-; Descriptions of sections
-;------------------------------------------------------------------------------
-; LangString DESC_CopyRuntime ${LANG_ENGLISH} "${MUI_PRODUCT} files"
-
-;------------------------------------------------------------------------------
-; custom install pages
-;------------------------------------------------------------------------------
-
-Function ConfirmDesktopShortcut
-  !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 1" "Text" "$(create_desktop_shortcut)"
-  call winVersion
-  ${If} $0 == "1"
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Type" "Label"
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" ""
-  ${Else}
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" "$(create_quick_launch_shortcut)"
-  ${EndIf}
-  StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
-  StrCpy $R0 3
-  push "${ASSOCIATION}"
-loop:
-  call SplitStr
-  Pop $0
-  StrCmp $0 "" done
-  IntOp $R0 $R0 + 1
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
-  goto loop
-skip_association:
-  StrCpy $R0 2
-  call winVersion
-  ${If} $0 == "1"
-  IntOp $R0 $R0 - 1
-  ${EndIf}
-done:
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
-  !insertmacro INSTALLOPTIONS_DISPLAY "Desktop.ini"
-FunctionEnd
-
-
-;------------------------------------------------------------------------------
 ; custom uninstall functions
 ;------------------------------------------------------------------------------
 
@@ -984,7 +936,7 @@ Function un.ReturnBackupRegValue
   StrCmp $0 "" "noBackup"
     WriteRegStr HKCR $1 "" $0
     DeleteRegValue HKCR $1 $2
-noBackup:  
+noBackup:
   Pop $0
 FunctionEnd
 
@@ -1148,14 +1100,14 @@ shortcuts:
   SetShellVarContext all
 keep_current_user:
   DetailPrint "Start Menu: $SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}"
- 
+
   Delete "$SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
 ;  Delete "$SMPROGRAMS\$R9\Uninstall ${PRODUCT_FULL_NAME_WITH_VER}.lnk"
 ; Delete only if empty (last IDEA version is uninstalled)
   RMDir  "$SMPROGRAMS\$R9"
 
   Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
-  Delete "$QUICKLAUNCH\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
+  Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}(64).lnk"
 
 registry:
   StrCpy $5 "Software\${MANUFACTURER}"

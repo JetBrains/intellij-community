@@ -120,6 +120,10 @@ public class ReplaceMethodReferenceWithLambdaIntentionTest extends IPPTestCase {
     doTest();
   }
 
+  public void testCollapseToExpressionLambdaWhenCast() throws Exception {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

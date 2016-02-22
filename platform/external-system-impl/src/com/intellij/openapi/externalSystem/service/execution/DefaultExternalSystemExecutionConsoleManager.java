@@ -70,7 +70,7 @@ public class DefaultExternalSystemExecutionConsoleManager
   }
 
   @Override
-  public AnAction[] getRestartActions() {
+  public AnAction[] getRestartActions(@NotNull ExecutionConsole consoleView) {
     return new AnAction[0];
   }
 }

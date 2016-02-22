@@ -82,6 +82,7 @@ import gnu.trove.*;
 import jsr166e.extra.SequenceLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.lang.ref.SoftReference;
@@ -702,12 +703,22 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private void removeDataFromIndicesForFile(final int fileId) {
-    final List<ID<?, ?>> states = IndexingStamp.getNontrivialFileIndexedStates(fileId);
+    // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+    final List<ID<?, ?>> currentFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
+    Collection<ID<?, ?>> states = currentFileIndexedStates;
+    for(ID<?,?> currentFileIndexedState: currentFileIndexedStates) {
+      if (!myIndices.containsKey(currentFileIndexedState)) {
+        states = ContainerUtil.intersection(currentFileIndexedStates, myIndices.keySet());
+        break;
+      }
+    }
+
     if (!states.isEmpty()) {
+      final Collection<ID<?, ?>> finalStates = states;
       ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
         @Override
         public void run() {
-          removeFileDataFromIndices(states, fileId);
+          removeFileDataFromIndices(finalStates, fileId);
         }
       });
     }
@@ -1087,6 +1098,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   public void filesUpdateEnumerationFinished() {
     myContentlessIndicesUpdateQueue.ensureUpToDate();
     myContentlessIndicesUpdateQueue.signalUpdateEnd();
+  }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    myTransactionMap = SmartFMap.emptyMap();
   }
 
   public static final class ProjectIndexableFilesFilter extends IdFilter {
@@ -1914,14 +1930,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     return null;
   }
 
-  private void doInvalidateIndicesForFile(@NotNull final VirtualFile file, boolean markForReindex) {
+  private void doInvalidateIndicesForFile(@NotNull final VirtualFile file, boolean contentChanged) {
     cleanProcessedFlag(file);
 
     final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
     IndexingStamp.flushCache(fileId);
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
-    if (!markForReindex) {  // markForReindex really means content changed
+    if (!contentChanged) {
       for (ID<?, ?> indexId : nontrivialFileIndexedStates) {
         if (myNotRequiringContentIndices.contains(indexId)) {
           try {
@@ -1938,7 +1954,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     Collection<ID<?, ?>> fileIndexedStatesToUpdate = ContainerUtil.intersection(nontrivialFileIndexedStates, myRequiringContentIndices);
 
-    if (markForReindex) {
+    if (contentChanged) {
       // only mark the file as outdated, reindex will be done lazily
       if (!fileIndexedStatesToUpdate.isEmpty()) {
 
@@ -2066,18 +2082,18 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     @Override
-    protected boolean invalidateIndicesForFile(VirtualFile file, boolean markForReindex) {
+    protected boolean invalidateIndicesForFile(VirtualFile file, boolean contentChange) {
       if (isUnderConfigOrSystem(file)) {
         return false;
       }
       if (file.isDirectory()) {
-        doInvalidateIndicesForFile(file, markForReindex);
+        doInvalidateIndicesForFile(file, contentChange);
         if (!isMock(file) && !myManagingFS.wereChildrenAccessed(file)) {
           return false;
         }
       }
       else {
-        doInvalidateIndicesForFile(file, markForReindex);
+        doInvalidateIndicesForFile(file, contentChange);
       }
       return true;
     }

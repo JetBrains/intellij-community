@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   private String myName;
   private int                       myFrameCount = -1;
   // stack frames, 0 - bottom
-  private final LinkedList<StackFrameProxyImpl> myFramesFromBottom = new LinkedList<StackFrameProxyImpl>();
+  private final LinkedList<StackFrameProxyImpl> myFramesFromBottom = new LinkedList<>();
   //cache build on the base of myFramesFromBottom 0 - top, initially nothing is cached
   private List<StackFrameProxyImpl> myFrames = null;
 
@@ -223,7 +223,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       if (myFrames == null) {
         checkFrames(threadRef);
 
-        myFrames = ContainerUtil.reverse(new ArrayList<StackFrameProxyImpl>(myFramesFromBottom.subList(0, frameCount())));
+        myFrames = ContainerUtil.reverse(new ArrayList<>(myFramesFromBottom.subList(0, frameCount())));
       }
     }
     catch (ObjectCollectedException ignored) {

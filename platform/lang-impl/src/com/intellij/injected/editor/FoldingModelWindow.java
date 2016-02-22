@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,12 +145,6 @@ class FoldingModelWindow implements FoldingModelEx{
   }
 
   @Override
-  public FoldRegion fetchOutermost(int offset) {
-    FoldRegion host = myDelegate.fetchOutermost(myDocumentWindow.injectedToHost(offset));
-    return host; //todo convert to window?
-  }
-
-  @Override
   public int getLastCollapsedRegionBefore(int offset) {
     return -1; //todo implement
   }
@@ -198,6 +192,14 @@ class FoldingModelWindow implements FoldingModelEx{
       if (window != null) result.add(window);
     }
     return result;
+  }
+
+  @Override
+  public void clearDocumentRangesModificationStatus() {}
+
+  @Override
+  public boolean hasDocumentRegionChangedFor(@NotNull FoldRegion region) {
+    return false;
   }
 
   @Override

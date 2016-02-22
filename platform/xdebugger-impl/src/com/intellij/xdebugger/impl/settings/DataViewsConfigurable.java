@@ -20,6 +20,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class DataViewsConfigurable extends SubCompositeConfigurable implements Configurable.NoScroll {
   @NotNull
@@ -43,6 +44,12 @@ class DataViewsConfigurable extends SubCompositeConfigurable implements Configur
   @Override
   protected DebuggerSettingsCategory getCategory() {
     return DebuggerSettingsCategory.DATA_VIEWS;
+  }
+
+  @Nullable
+  @Override
+  public String getHelpTopic() {
+    return "reference.idesettings.debugger.dataviews";
   }
 
   @NotNull

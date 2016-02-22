@@ -31,6 +31,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -279,6 +280,8 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               panel.add(projectIcon, BorderLayout.WEST);
               add(panel);
             }
+            AccessibleContextUtil.setCombinedName(this, name, " - ", path);
+            AccessibleContextUtil.setCombinedDescription(this, name, " - ", path);
           }
 
           @Override

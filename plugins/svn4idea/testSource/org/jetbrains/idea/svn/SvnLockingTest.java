@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,7 +188,8 @@ public class SvnLockingTest extends TestCase {
     }
   }*/
 
-  @Bombed(year=2020, month = 1,day = 1,description = "not clear. by specification, read should not get access if write lock is taken; sometimes it is not the case.")
+  @Bombed(user="irengrig", year = 2020, month = 1, day = 1,
+    description = "not clear. by specification, read should not get access if write lock is taken; sometimes it is not the case.")
   public void testReadInBetweenWrites() throws Exception {
     final HangInWrite operation1 = new HangInWrite("one1");
     final HangInWrite operation2 = new HangInWrite("two1");

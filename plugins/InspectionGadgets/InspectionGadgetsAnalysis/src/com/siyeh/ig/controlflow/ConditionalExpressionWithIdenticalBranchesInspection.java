@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,10 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("conditional.expression.with.identical.branches.problem.descriptor");
+    final EquivalenceChecker.Decision decision = (EquivalenceChecker.Decision)infos[1];
+    return InspectionGadgetsBundle.message(decision.isExact()
+                                           ? "conditional.expression.with.identical.branches.problem.descriptor"
+                                           : "conditional.expression.with.similar.branches.problem.descriptor");
   }
 
   @Override
@@ -68,9 +71,9 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(getEquivalenceDecision().getExactlyMatches() ?
-                                             "conditional.expression.with.identical.branches.collapse.quickfix" :
-                                             "conditional.expression.with.identical.branches.collapse.quickfix.family") ;
+      return InspectionGadgetsBundle.message(getEquivalenceDecision().getExactlyMatches()
+                                             ? "conditional.expression.with.identical.branches.collapse.quickfix"
+                                             : "conditional.expression.with.identical.branches.push.inside.quickfix");
     }
 
     @Override
@@ -126,7 +129,7 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
       final PsiExpression elseExpression = expression.getElseExpression();
       final EquivalenceChecker.Decision decision = EquivalenceChecker.expressionsAreEquivalentDecision(thenExpression, elseExpression);
       if (thenExpression != null && (myReportOnlyExactlyIdentical ? decision.getExactlyMatches() : !decision.isExactUnMatches())) {
-        registerError(expression, expression);
+        registerError(expression, expression, decision);
       }
     }
   }

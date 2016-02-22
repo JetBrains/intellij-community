@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,13 +59,10 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     return ourInstance;
   }
 
-  public static ExpressionEvaluator build(final TextWithImports text, @Nullable PsiElement contextElement, final SourcePosition position) throws EvaluateException {
-    if (contextElement == null) {
-      throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
-    }
-
-    final Project project = contextElement.getProject();
-
+  public static ExpressionEvaluator build(final TextWithImports text,
+                                          @Nullable PsiElement contextElement,
+                                          @Nullable final SourcePosition position,
+                                          @NotNull Project project) throws EvaluateException {
     CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, contextElement);
     PsiCodeFragment codeFragment = factory.createCodeFragment(text, contextElement, project);
     if (codeFragment == null) {
@@ -87,7 +84,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     private Evaluator myResult = null;
     private PsiClass myContextPsiClass;
     private CodeFragmentEvaluator myCurrentFragmentEvaluator;
-    private final Set<JavaCodeFragment> myVisitedFragments = new HashSet<JavaCodeFragment>();
+    private final Set<JavaCodeFragment> myVisitedFragments = new HashSet<>();
     @Nullable
     private final SourcePosition myPosition;
 
@@ -98,7 +95,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     @Override
     public void visitCodeFragment(JavaCodeFragment codeFragment) {
       myVisitedFragments.add(codeFragment);
-      ArrayList<Evaluator> evaluators = new ArrayList<Evaluator>();
+      ArrayList<Evaluator> evaluators = new ArrayList<>();
 
       CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
 
@@ -522,7 +519,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitDeclarationStatement(PsiDeclarationStatement statement) {
-      List<Evaluator> evaluators = new ArrayList<Evaluator>();
+      List<Evaluator> evaluators = new ArrayList<>();
 
       PsiElement[] declaredElements = statement.getDeclaredElements();
       for (PsiElement declaredElement : declaredElements) {
@@ -674,7 +671,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           //noinspection HardCodedStringLiteral
           final PsiClass classAt = myPosition != null? JVMNameUtil.getClassAt(myPosition) : null;
           FieldEvaluator.TargetClassFilter filter = FieldEvaluator.createClassFilter(classAt != null? classAt : getContextPsiClass());
-          myResult = new FieldEvaluator(objectEvaluator, filter, "val$" + localName);
+          myResult = createFallbackEvaluator(new FieldEvaluator(objectEvaluator, filter, "val$" + localName),
+                                             new LocalVariableEvaluator(localName, true));
           return;
         }
         throwEvaluateException(DebuggerBundle.message("evaluation.error.local.variable.missing.from.class.closure", localName));
@@ -687,7 +685,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
         Evaluator objectEvaluator;
         if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
-          objectEvaluator = new TypeEvaluator(JVMNameUtil.getContextClassJVMQualifiedName(SourcePosition.createFromElement(psiField)));
+          JVMName className = JVMNameUtil.getContextClassJVMQualifiedName(SourcePosition.createFromElement(psiField));
+          if (className == null) {
+            className = JVMNameUtil.getJVMQualifiedName(fieldClass);
+          }
+          objectEvaluator = new TypeEvaluator(className);
         }
         else if(qualifier != null) {
           qualifier.accept(this);
@@ -747,6 +749,30 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           myResult = new LocalVariableEvaluator(name, false);
         }
       }
+    }
+
+    private static Evaluator createFallbackEvaluator(final Evaluator primary, final Evaluator fallback) {
+      return new Evaluator() {
+        @Override
+        public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
+          try {
+            return primary.evaluate(context);
+          }
+          catch (EvaluateException e) {
+            try {
+              return fallback.evaluate(context);
+            }
+            catch (EvaluateException e1) {
+              throw e;
+            }
+          }
+        }
+
+        @Override
+        public Modifier getModifier() {
+          return primary.getModifier();
+        }
+      };
     }
 
     private static void throwExpressionInvalid(PsiElement expression) {

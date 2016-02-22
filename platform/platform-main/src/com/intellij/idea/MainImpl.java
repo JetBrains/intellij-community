@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class MainImpl {
           public void run() {
             PluginManager.installExceptionHandler();
 
-            if (newConfigFolder && !Boolean.getBoolean(ConfigImportHelper.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY)) {
+            if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
               StartupUtil.runStartupWizard();
             }
 

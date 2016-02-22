@@ -34,7 +34,7 @@ interface i2 {
 class weak {
   void f1() {}
 }
-<error descr="'f1()' in 'weak' clashes with 'f1()' in 'i'; attempting to assign weaker access privileges ('packageLocal'); was 'public'">class a2 extends weak implements i</error> {
+<error descr="'f1()' in 'weak' clashes with 'f1()' in 'i'; attempting to assign weaker access privileges ('package-private'); was 'public'">class a2 extends weak implements i</error> {
 }
 
 class a3 {

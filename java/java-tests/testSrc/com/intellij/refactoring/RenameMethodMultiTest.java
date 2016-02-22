@@ -19,7 +19,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -71,9 +70,9 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
       doTest("p.B", "void method()", "finalMethod");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      Assert.assertEquals("Renaming method will override final \"method <b><code>A.finalMethod()</code></b>\"\n" +
-                          "Method finalMethod() will override \n" +
-                          "a method of the base class <b><code>p.A</code></b>", e.getMessage());
+      Assert.assertEquals("Method finalMethod() will override \n" +
+                          "a method of the base class <b><code>p.A</code></b>\n" +
+                          "Renaming method will override final \"method <b><code>A.finalMethod()</code></b>\"", e.getMessage());
       return;
     }
     fail("Conflicts were not found");

@@ -154,12 +154,26 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     final Set<PsiClass> occurrenceClasses = new HashSet<PsiClass>();
     for (final PsiExpression occurrence : myOccurrences) {
       final PsiType occurrenceType = occurrence.getType();
+      collectOccurrenceClasses(occurrenceClasses, occurrenceType);
+    }
+    return new ExpectedTypeUtil.ExpectedClassesFromSetProvider(occurrenceClasses);
+  }
+
+  private static void collectOccurrenceClasses(Set<PsiClass> occurrenceClasses, PsiType occurrenceType) {
+    if (occurrenceType instanceof PsiIntersectionType) {
+      for (PsiType type : ((PsiIntersectionType)occurrenceType).getConjuncts()) {
+        collectOccurrenceClasses(occurrenceClasses, type);
+      }
+    }
+    else if (occurrenceType instanceof PsiCapturedWildcardType) {
+      collectOccurrenceClasses(occurrenceClasses, ((PsiCapturedWildcardType)occurrenceType).getUpperBound());
+    }
+    else {
       final PsiClass aClass = PsiUtil.resolveClassInType(occurrenceType);
       if (aClass != null) {
         occurrenceClasses.add(aClass);
       }
     }
-    return new ExpectedTypeUtil.ExpectedClassesFromSetProvider(occurrenceClasses);
   }
 
   private PsiType[] getTypesForMain() {

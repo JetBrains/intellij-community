@@ -18,12 +18,12 @@ package com.intellij.openapi.application;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.idea.Main;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.*;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,47 +38,63 @@ import java.util.PropertyResourceBundle;
  * @author max
  */
 public class ConfigImportHelper {
-  /**
-   * Holds name of the system property that is supposed to hold <code>'true'</code> value when IDE settings have been
-   * imported on the current startup
-   */
-  @NonNls public static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
-  
-  @NonNls private static final String BUILD_NUMBER_FILE = SystemInfo.isMac ? "/Resources/build.txt" : "build.txt";
-  @NonNls private static final String PLUGINS_PATH = "plugins";
-  @NonNls private static final String BIN_FOLDER = "bin";
-  @NonNls private static final String CONFIG_RELATED_PATH = SystemInfo.isMac ? "" : "config/";
-  @NonNls private static final String OPTIONS_XML = "options/options.xml";
+  private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
+  private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
 
-  private ConfigImportHelper() {
-  }
+  private static final String BUILD_NUMBER_FILE = SystemInfo.isMac ? "/Resources/build.txt" : "build.txt";
+  private static final String PLUGINS_PATH = "plugins";
+  private static final String BIN_FOLDER = "bin";
+  private static final String CONFIG_RELATED_PATH = SystemInfo.isMac ? "" : "config/";
+  private static final String OPTIONS_XML = "options/options.xml";
+
+  private ConfigImportHelper() { }
 
   public static void importConfigsTo(@NotNull String newConfigPath) {
+    System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
+
     ConfigImportSettings settings = getConfigImportSettings();
 
     File newConfigDir = new File(newConfigPath);
     File oldConfigDir = findOldConfigDir(newConfigDir, settings.getCustomPathsSelector());
-    do {
+
+    try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
+    catch (Throwable ignore) { }
+
+    while (true) {
       ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(oldConfigDir, settings);
       dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
       AppUIUtil.updateWindowIcon(dialog);
       dialog.setVisible(true);
-      if (dialog.isImportEnabled()) {
-        File installationHome = dialog.getSelectedFile();
-        oldConfigDir = getOldConfigDir(installationHome, settings);
-        if (!validateOldConfigDir(installationHome, oldConfigDir, settings)) {
-          continue;
-        }
-
-        assert oldConfigDir != null;
-        doImport(newConfigDir, oldConfigDir, settings, installationHome);
-        settings.importFinished(newConfigPath);
-        System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
+      if (!dialog.isImportEnabled()) {
+        break;
       }
 
+      File installationHome = dialog.getSelectedFile();
+      oldConfigDir = getOldConfigDir(installationHome, settings);
+      if (!validateOldConfigDir(installationHome, oldConfigDir, settings)) {
+        continue;
+      }
+
+      assert oldConfigDir != null;
+      doImport(newConfigDir, oldConfigDir, settings, installationHome);
+      settings.importFinished(newConfigPath);
+      System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
       break;
     }
-    while (true);
+  }
+
+  /**
+   * Returns {@code true} when the IDE is launched for the first time (i.e. there was no config directory).
+   */
+  public static boolean isFirstSession() {
+    return Boolean.getBoolean(FIRST_SESSION_KEY);
+  }
+
+  /**
+   * Returns {@code true} when the IDE is launched for the first time, and configs were imported from another installation.
+   */
+  public static boolean isConfigImported() {
+    return Boolean.getBoolean(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
   }
 
   @NotNull
@@ -91,10 +107,8 @@ public class ConfigImportHelper {
         return ReflectionUtil.newInstance(customProviderClass);
       }
     }
-    catch (ClassNotFoundException ignored) {
-    }
-    catch (RuntimeException ignored) {
-    }
+    catch (ClassNotFoundException ignored) { }
+    catch (RuntimeException ignored) { }
     return new ConfigImportSettings();
   }
 
@@ -141,28 +155,26 @@ public class ConfigImportHelper {
       copy(oldConfigDir, newConfigDir, settings, installationHome);
     }
     catch (IOException e) {
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                    ApplicationBundle.message("error.unable.to.import.settings", e.getMessage()),
-                                    ApplicationBundle.message("title.settings.import.failed"), JOptionPane.WARNING_MESSAGE);
+      String message = ApplicationBundle.message("error.unable.to.import.settings", e.getMessage());
+      Main.showMessage(ApplicationBundle.message("title.settings.import.failed"), message, false);
     }
   }
 
   private static boolean validateOldConfigDir(@Nullable File installationHome, @Nullable File oldConfigDir, @NotNull ConfigImportSettings settings) {
     if (oldConfigDir == null) {
       if (installationHome != null) {
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                      ApplicationBundle.message("error.invalid.installation.home", installationHome.getAbsolutePath(), settings.getProductName(ThreeState.YES)));
+        String message = ApplicationBundle.message("error.invalid.installation.home", installationHome.getAbsolutePath(), settings.getProductName(ThreeState.YES));
+        Main.showMessage(ApplicationBundle.message("title.settings.import.failed"), message, false);
       }
       return false;
     }
 
     if (!oldConfigDir.exists()) {
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                    ApplicationBundle.message("error.no.settings.path",
-                                                              oldConfigDir.getAbsolutePath()),
-                                    ApplicationBundle.message("title.settings.import.failed"), JOptionPane.WARNING_MESSAGE);
+      String message = ApplicationBundle.message("error.no.settings.path", oldConfigDir.getAbsolutePath());
+      Main.showMessage(ApplicationBundle.message("title.settings.import.failed"), message, false);
       return false;
     }
+
     return true;
   }
 
@@ -224,7 +236,7 @@ public class ConfigImportHelper {
   }
 
   @Nullable
-  public static File getOldConfigDir(@Nullable File oldInstallHome, ConfigImportSettings settings) {
+  private static File getOldConfigDir(@Nullable File oldInstallHome, ConfigImportSettings settings) {
     if (oldInstallHome == null) {
       return null;
     }
@@ -240,7 +252,6 @@ public class ConfigImportHelper {
     int oldBuildNumber = getBuildNumber(oldInstallHome);
 
     if (oldBuildNumber != -1 && oldBuildNumber <= 600) { // Pandora
-      //noinspection HardCodedStringLiteral
       return new File(oldInstallHome, "config");
     }
 
@@ -252,11 +263,8 @@ public class ConfigImportHelper {
     });
   }
 
-  private static File getSettingsPath(final File installHome,
-                                      final ConfigImportSettings settings,
-                                      final String propertyName,
-                                      final Function<String, String> fromPathSelector) {
-    final File[] launchFileCandidates = getLaunchFilesCandidates(installHome, settings);
+  private static File getSettingsPath(File installHome, ConfigImportSettings settings, String propertyName, Function<String, String> fromPathSelector) {
+    final List<File> launchFileCandidates = getLaunchFilesCandidates(installHome, settings);
 
     // custom config folder
     for (File candidate : launchFileCandidates) {
@@ -275,10 +283,9 @@ public class ConfigImportHelper {
       if (candidate.exists()) {
         final String pathsSelector = getPropertyFromLaxFile(candidate, PathManager.PROPERTY_PATHS_SELECTOR);
         if (pathsSelector != null) {
-          final String configDir = fromPathSelector.fun(pathsSelector);
-          final File probableConfig = new File(configDir);
-          if (probableConfig.exists()) {
-            return probableConfig;
+          File candidateDir = new File(fromPathSelector.fun(pathsSelector));
+          if (candidateDir.exists()) {
+            return candidateDir;
           }
         }
       }
@@ -287,21 +294,18 @@ public class ConfigImportHelper {
     return null;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static File[] getLaunchFilesCandidates(@NotNull final File instHome, @NotNull final ConfigImportSettings settings) {
+  private static List<File> getLaunchFilesCandidates(@NotNull File instHome, @NotNull ConfigImportSettings settings) {
     final File bin = new File(instHome, BIN_FOLDER);
     final List<File> files = new ArrayList<File>();
     if (SystemInfo.isMac) {
       // Info.plist
       files.add(new File(new File(instHome, "Contents"), "Info.plist"));
-
       files.add(new File(new File(new File(bin, "idea.app"), "Contents"), "Info.plist"));
       files.add(new File(new File(new File(instHome, "idea.app"), "Contents"), "Info.plist"));
     }
     // idea.properties
     files.add(new File(bin, PathManager.PROPERTIES_FILE_NAME));
 
-    
     // other binary scripts
     final String executableName = StringUtil.toLowerCase(settings.getExecutableName());
     // * defaults:
@@ -313,21 +317,17 @@ public class ConfigImportHelper {
       // for compatibility with some platform-base IDEs with wrong executable names
       addLaunchExecutableScriptsCandidates(files, "idea", bin);
     }
-    return files.toArray(new File[files.size()]);
+    return files;
   }
 
-  private static void addLaunchExecutableScriptsCandidates(final List<File> files,
-                                                           final String executableName,
-                                                           final File binFolder) {
+  private static void addLaunchExecutableScriptsCandidates(List<File> files, String executableName, File binFolder) {
     files.add(new File(binFolder, executableName + ".lax"));
     files.add(new File(binFolder, executableName + ".bat"));
     files.add(new File(binFolder, executableName + ".sh"));
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
-  public static String getPropertyFromLaxFile(@NotNull final File file,
-                                              @NotNull final String propertyName) {
+  private static String getPropertyFromLaxFile(@NotNull File file, @NotNull String propertyName) {
     if (file.getName().endsWith(".properties")) {
       try {
         PropertyResourceBundle bundle;
@@ -360,8 +360,7 @@ public class ConfigImportHelper {
   }
 
   @Nullable
-  private static String findProperty(final String propertyName, 
-                                     final String fileContent) {
+  private static String findProperty(String propertyName, String fileContent) {
     String param = propertyName + "=";
     int idx = fileContent.indexOf(param);
     if (idx == -1) {
@@ -405,29 +404,14 @@ public class ConfigImportHelper {
   @Nullable
   private static String getContent(File file) {
     try {
-      StringBuilder content = new StringBuilder();
-      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-      try {
-        do {
-          String line = reader.readLine();
-          if (line == null) break;
-          content.append(line);
-          content.append('\n');
-        }
-        while (true);
-      }
-      finally {
-        reader.close();
-      }
-
-      return content.toString();
+      return FileUtil.loadFile(file);
     }
-    catch (Exception e) {
+    catch (IOException e) {
       return null;
     }
   }
 
-  public static String fixDirName(String dir, boolean replaceUserHome) {
+  private static String fixDirName(String dir, boolean replaceUserHome) {
     if (StringUtil.startsWithChar(dir, '\"') && StringUtil.endsWithChar(dir, '\"')) {
       dir = dir.substring(1, dir.length() - 1);
     }
@@ -437,7 +421,7 @@ public class ConfigImportHelper {
     return dir;
   }
 
-  public static boolean isInstallationHomeOrConfig(@NotNull final String installationHome, @NotNull final ConfigImportSettings settings) {
+  public static boolean isInstallationHomeOrConfig(@NotNull String installationHome, @NotNull ConfigImportSettings settings) {
     if (new File(installationHome, OPTIONS_XML).exists()) return true;
     if (new File(installationHome, CONFIG_RELATED_PATH + OPTIONS_XML).exists()) return true;
 
@@ -450,7 +434,6 @@ public class ConfigImportHelper {
     String[] mainJarNames = settings.getMainJarNames();
     for (String name : mainJarNames) {
       String mainJarName = StringUtil.toLowerCase(name) + ".jar";
-      //noinspection HardCodedStringLiteral
       if (new File(libFolder, mainJarName).exists()) {
         quickTest = true;
         break;
@@ -458,7 +441,7 @@ public class ConfigImportHelper {
     }
     if (!quickTest) return false;
 
-    File[] files = getLaunchFilesCandidates(new File(installationHome), settings);
+    List<File> files = getLaunchFilesCandidates(new File(installationHome), settings);
     for (File file : files) {
       if (file.exists()) return true;
     }

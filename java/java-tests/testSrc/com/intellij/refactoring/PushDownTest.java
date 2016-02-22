@@ -63,6 +63,8 @@ public class PushDownTest extends LightRefactoringTestCase {
 
   public void testInterfaceConstants() { doTest();}
 
+  public void testReferenceForMovedInnerClass() { doTest();}
+  
   public void testInsertOverrideWhenKeepAbstract() throws Exception {
     doTestImplements(true);
   }
@@ -88,6 +90,13 @@ public class PushDownTest extends LightRefactoringTestCase {
     final PsiField fieldByName = currentClass.findFieldByName("fieldToMove", false);
     if (fieldByName != null) {
       final MemberInfo memberInfo = new MemberInfo(fieldByName);
+      memberInfo.setChecked(true);
+      membersToMove.add(memberInfo);
+    }
+
+    final PsiClass classByName = currentClass.findInnerClassByName("ClassToMove", false);
+    if (classByName != null) {
+      final MemberInfo memberInfo = new MemberInfo(classByName);
       memberInfo.setChecked(true);
       membersToMove.add(memberInfo);
     }

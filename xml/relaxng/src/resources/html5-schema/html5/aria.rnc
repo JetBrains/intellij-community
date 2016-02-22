@@ -53,6 +53,9 @@ common.attrs.aria.implicit.dialog |=
 common.attrs.aria.implicit.document |=
 	(	aria.state.expanded? )
 
+common.attrs.aria.implicit.form |=
+	(	aria.state.expanded? )
+
 common.attrs.aria.implicit.group |=
 	(	aria.state.expanded?
 	&	aria.prop.activedescendant?
@@ -1107,6 +1110,17 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	
 	common.attrs.aria |= aria.status
 	common.attrs.aria.role.status |= aria.status
+
+## switch
+	aria.switch =
+		(	aria.role.switch
+		&	aria.state.checked #required!
+		)
+		aria.role.switch =
+			attribute role { string "switch" }
+
+	common.attrs.aria |= aria.switch
+	common.attrs.aria.role.switch |= aria.switch
 
 ## tab
 	aria.tab =

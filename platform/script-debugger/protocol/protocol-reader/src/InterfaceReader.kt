@@ -78,12 +78,13 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
       hasUnresolved = false
       // refs can be modified - new items can be added
       for (i in 0..refs.size - 1) {
-        val ref = refs.get(i)
-        ref.type = typeToTypeHandler.get(ref.typeClass)
+        val ref: TypeRef<out Any?> = refs.get(i)
+        val typeClass: Class<out Any?> = ref.typeClass
+        (ref as TypeRef<Any?>).type = typeToTypeHandler.get(typeClass) as TypeWriter<Any?>?
         if (ref.type == null) {
-          createIfNotExists(ref.typeClass)
+          createIfNotExists(typeClass)
           hasUnresolved = true
-          ref.type = typeToTypeHandler.get(ref.typeClass) ?: throw IllegalStateException()
+          (ref as TypeRef<Any?>).type = typeToTypeHandler.get(typeClass) as TypeWriter<Any?>? ?: throw IllegalStateException()
         }
       }
     }
@@ -126,7 +127,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
     for (ref in refs) {
       if (ref.typeClass == typeClass) {
         assert(ref.type == null)
-        ref.type = typeWriter
+        (ref as TypeRef<Any?>).type = typeWriter as TypeWriter<Any?>
         break
       }
     }
@@ -149,7 +150,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
             if (jsonField != null && jsonField.allowAnyPrimitiveValue) {
               return RAW_STRING_PARSER
             }
-            else if (method.getAnnotation<Optional>(Optional::class.java) != null) {
+            else if ((member?.returnType?.isMarkedNullable ?: false) || method.getAnnotation<Optional>(Optional::class.java) != null) {
               return NULLABLE_STRING_PARSER
             }
           }

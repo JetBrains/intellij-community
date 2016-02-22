@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.codeInspection.*;
@@ -35,8 +36,8 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.CheckBox;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
@@ -52,6 +53,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -65,6 +67,17 @@ public class PyPep8NamingInspection extends PyInspection {
   private static final Pattern UPPERCASE_REGEX = Pattern.compile("[_\\p{javaUpperCase}][_\\p{javaUpperCase}0-9]*");
   private static final Pattern MIXEDCASE_REGEX = Pattern.compile("_?_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
   private static final String INSPECTION_SHORT_NAME = "PyPep8NamingInspection";
+  // See error codes of the tool "pep8-naming"
+  private static final Map<String, String> ERROR_CODES_DESCRIPTION = ImmutableMap.<String, String>builder()
+    .put("N801", "Class names should use CamelCase convention")
+    .put("N802", "Function name should be lowercase")
+    .put("N803", "Argument name should be lowercase")
+    .put("N806", "Variable in function should be lowercase")
+    .put("N811", "Constant variable imported as non constant")
+    .put("N812", "Lowercase variable imported as non lowercase")
+    .put("N813", "CamelCase variable imported as lowercase")
+    .put("N814", "CamelCase variable imported as constant")
+    .build();
 
   public final List<String> ignoredErrors = new ArrayList<String>();
 
@@ -94,19 +107,6 @@ public class PyPep8NamingInspection extends PyInspection {
   }
 
   public class Visitor extends PyInspectionVisitor {
-    @SuppressWarnings("Duplicates") private final HashMap<String, String> errorCodesDescription = new HashMap<String, String>() {
-      {
-        put("N801", "Class names should use CamelCase convention");
-        put("N802", "Function name should be lowercase");
-        put("N803", "Argument name should be lowercase");
-        put("N806", "Variable in function should be lowercase");
-        put("N811", "Constant variable imported as non constant");
-        put("N812", "Lowercase variable imported as non lowercase");
-        put("N813", "CamelCase variable imported as lowercase");
-        put("N814", "CamelCase variable imported as constant");
-      }
-    };
-
     public Visitor(ProblemsHolder holder, LocalInspectionToolSession session) {
       super(holder, session);
     }
@@ -145,9 +145,9 @@ public class PyPep8NamingInspection extends PyInspection {
 
     private void registerAndAddRenameAndIgnoreErrorQuickFixes(@Nullable final PsiElement node, @NotNull final String errorCode) {
       if (getHolder() != null && getHolder().isOnTheFly())
-        registerProblem(node, errorCodesDescription.get(errorCode), new PyRenameElementQuickFix(), new IgnoreErrorFix(errorCode));
+        registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode), new PyRenameElementQuickFix(), new IgnoreErrorFix(errorCode));
       else
-        registerProblem(node, errorCodesDescription.get(errorCode), new IgnoreErrorFix(errorCode));
+        registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode), new IgnoreErrorFix(errorCode));
     }
 
     @Override
@@ -172,7 +172,7 @@ public class PyPep8NamingInspection extends PyInspection {
           final String errorCode = "N802";
           if (!ignoredErrors.contains(errorCode)) {
             quickFixes.add(new IgnoreErrorFix(errorCode));
-            registerProblem(nameNode.getPsi(), errorCodesDescription.get(errorCode),
+            registerProblem(nameNode.getPsi(), ERROR_CODES_DESCRIPTION.get(errorCode),
                             quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
           }
         }
@@ -218,7 +218,7 @@ public class PyPep8NamingInspection extends PyInspection {
     }
 
     private boolean isContextManager(PyClass node) {
-      final String[] contextManagerFunctionNames = new String[] {"__enter__", "__exit__"};
+      final String[] contextManagerFunctionNames = {PyNames.ENTER, PyNames.EXIT};
       for (String name: contextManagerFunctionNames) {
         if (node.findMethodByName(name, false, myTypeEvalContext) == null) {
           return false;

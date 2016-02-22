@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   private String mySchemeName;
 
   private float myConsoleLineSpacing = -1;
+  
+  private boolean myIsSaveNeeded;
 
   // version influences XML format and triggers migration
   private int myVersion = CURR_VERSION;
@@ -98,6 +100,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   @NonNls private static final String CONSOLE_LINE_SPACING           = "CONSOLE_LINE_SPACING";
   @NonNls private static final String EDITOR_FONT_SIZE               = "EDITOR_FONT_SIZE";
   @NonNls private static final String CONSOLE_FONT_SIZE              = "CONSOLE_FONT_SIZE";
+  @NonNls private static final String EDITOR_LIGATURES               = "EDITOR_LIGATURES";
+  @NonNls private static final String CONSOLE_LIGATURES              = "CONSOLE_LIGATURES";
   @NonNls private static final String EDITOR_QUICK_JAVADOC_FONT_SIZE = "EDITOR_QUICK_DOC_FONT_SIZE";
 
   protected AbstractColorsScheme(EditorColorsScheme parentScheme) {
@@ -303,7 +307,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     String isDefaultScheme = node.getAttributeValue(DEFAULT_SCHEME_ATTR);
     boolean isDefault = isDefaultScheme != null && Boolean.parseBoolean(isDefaultScheme);
     if (!isDefault) {
-      myParentScheme = DefaultColorSchemesManager.getInstance().getScheme(node.getAttributeValue(PARENT_SCHEME_ATTR, DEFAULT_SCHEME_NAME));
+      myParentScheme = getDefaultScheme(node.getAttributeValue(PARENT_SCHEME_ATTR, DEFAULT_SCHEME_NAME));
     }
 
     for (final Object o : node.getChildren()) {
@@ -342,6 +346,17 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
 
     initFonts();
+  }
+
+  @NotNull
+  private static EditorColorsScheme getDefaultScheme(@NotNull String name) {
+    DefaultColorSchemesManager manager = DefaultColorSchemesManager.getInstance();
+    EditorColorsScheme defaultScheme = manager.getScheme(name);
+    if (defaultScheme == null) {
+      defaultScheme = manager.getScheme(DEFAULT_SCHEME_NAME);
+      assert defaultScheme != null : "Fatal error: built-in 'Default' color scheme not found";
+    }
+    return defaultScheme;
   }
 
   public void readAttributes(@NotNull Element childNode) {
@@ -430,6 +445,14 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       FontSize value = myValueReader.read(FontSize.class, childNode);
       if (value != null) myQuickDocFontSize = value;
     }
+    else if (EDITOR_LIGATURES.equals(name)) {
+      Boolean value = myValueReader.read(Boolean.class, childNode);
+      if (value != null) myFontPreferences.setUseLigatures(value);
+    }
+    else if (CONSOLE_LIGATURES.equals(name)) {
+      Boolean value = myValueReader.read(Boolean.class, childNode);
+      if (value != null) myConsoleFontPreferences.setUseLigatures(value);
+    }
   }
 
   private int readFontSize(Element element, boolean isDefault) {
@@ -484,7 +507,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     else {
       writeFontPreferences(EDITOR_FONT, parentNode, myFontPreferences);
     }
-
+    writeLigaturesPreferences(parentNode, myFontPreferences, EDITOR_LIGATURES);
+    
     if (!myFontPreferences.equals(myConsoleFontPreferences)) {
       if (myConsoleFontPreferences.getEffectiveFontFamilies().size() <= 1) {
         element = new Element(OPTION_ELEMENT);
@@ -502,6 +526,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       else {
         writeFontPreferences(CONSOLE_FONT, parentNode, myConsoleFontPreferences);
       }
+      writeLigaturesPreferences(parentNode, myConsoleFontPreferences, CONSOLE_LIGATURES);
     }
 
     if (getConsoleLineSpacing() != getLineSpacing()) {
@@ -536,6 +561,17 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
     if (attrElements.getChildren().size() > 0) {
       parentNode.addContent(attrElements);
+    }
+    
+    myIsSaveNeeded = false;
+  }
+
+  private static void writeLigaturesPreferences(Element parentNode, FontPreferences preferences, String optionName) {
+    if (preferences.useLigatures()) {
+      Element element = new Element(OPTION_ELEMENT);
+      element.setAttribute(NAME_ATTR, optionName);
+      element.setAttribute(VALUE_ELEMENT, String.valueOf(true));
+      parentNode.addContent(element);
     }
   }
 
@@ -707,5 +743,13 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   protected static boolean containsValue(@Nullable TextAttributes attributes) {
     return attributes != null && attributes.containsValue();
+  }
+
+  public boolean isSaveNeeded() {
+    return myIsSaveNeeded;
+  }
+
+  public void setSaveNeeded(boolean isSaveNeeded) {
+    myIsSaveNeeded = isSaveNeeded;
   }
 }

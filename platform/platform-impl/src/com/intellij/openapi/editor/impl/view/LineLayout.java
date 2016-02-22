@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -214,7 +214,7 @@ abstract class LineLayout {
           }
         }
         FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(codePoint, fontStyle, fontPreferences);
-        if (currentFontInfo == null || !fontInfo.getFont().equals(currentFontInfo.getFont())) {
+        if (!fontInfo.equals(currentFontInfo)) {
           addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFontInfo, fontRenderContext, run.isRtl());
           currentFontInfo = fontInfo;
           currentIndex = i;
@@ -523,7 +523,7 @@ abstract class LineLayout {
       int lineStartOffset = view.getEditor().getDocument().getLineStartOffset(line);
       int start = lineStartOffset + startOffset;
       int end = lineStartOffset + endOffset;
-      IterationState it = new IterationState(view.getEditor(), start, end, false, false, false, false);
+      IterationState it = new IterationState(view.getEditor(), start, end, false, false, true, false, false);
       FontPreferences fontPreferences = view.getEditor().getColorsScheme().getFontPreferences();
       char[] chars = CharArrayUtil.fromSequence(view.getEditor().getDocument().getImmutableCharSequence(), start, end);
       while (!it.atEnd()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,11 +38,6 @@ public interface FoldingModelEx extends FoldingModel {
   boolean intersectsRegion(int startOffset, int endOffset);
 
   /**
-   * @deprecated Use an equivalent method {@link FoldingModel#getCollapsedRegionAtOffset(int)} instead. To be removed in IDEA 16.
-   */
-  FoldRegion fetchOutermost(int offset);
-
-  /**
    * Returns an index in an array returned by {@link #fetchTopLevel()} method, for the last folding region lying entirely before given
    * offset (region can touch given offset at its right edge).
    */
@@ -64,4 +59,8 @@ public interface FoldingModelEx extends FoldingModel {
   
   @NotNull
   List<FoldRegion> getGroupedRegions(FoldingGroup group);
+  
+  void clearDocumentRangesModificationStatus();
+  
+  boolean hasDocumentRegionChangedFor(@NotNull FoldRegion region);
 }

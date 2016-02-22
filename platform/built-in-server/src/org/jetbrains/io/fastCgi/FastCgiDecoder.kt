@@ -2,7 +2,6 @@ package org.jetbrains.io.fastCgi
 
 import com.intellij.util.Consumer
 import gnu.trove.TIntObjectHashMap
-import gnu.trove.TIntObjectProcedure
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.CompositeByteBuf
 import io.netty.channel.ChannelHandlerContext
@@ -77,17 +76,15 @@ internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>,
   override fun channelInactive(context: ChannelHandlerContext) {
     try {
       if (!dataBuffers.isEmpty) {
-        dataBuffers.forEachEntry(object : TIntObjectProcedure<ByteBuf> {
-          override fun execute(a: Int, buffer: ByteBuf): Boolean {
-            try {
-              buffer.release()
-            }
-            catch (e: Throwable) {
-              LOG.error(e)
-            }
-            return true
+        dataBuffers.forEachEntry { a, buffer ->
+          try {
+            buffer.release()
           }
-        })
+          catch (e: Throwable) {
+            LOG.error(e)
+          }
+          true
+        }
         dataBuffers.clear()
       }
     }

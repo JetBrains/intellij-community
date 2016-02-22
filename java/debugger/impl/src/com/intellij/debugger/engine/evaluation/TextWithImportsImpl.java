@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.engine.evaluation;
 
-import com.intellij.debugger.ui.DebuggerEditorImpl;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -23,7 +22,10 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionCodeFragment;
+import com.intellij.psi.PsiFile;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
@@ -36,6 +38,8 @@ public final class TextWithImportsImpl implements TextWithImports{
   private String myText;
   private final FileType myFileType;
   private final String myImports;
+
+  private static final char SEPARATOR = 13;
 
   public TextWithImportsImpl(@NotNull PsiElement expression) {
     myKind = CodeFragmentKind.EXPRESSION;
@@ -70,7 +74,7 @@ public final class TextWithImportsImpl implements TextWithImports{
   }
 
   private static Trinity<String, String, FileType> parseExternalForm(String s) {
-    String[] split = s.split(String.valueOf(DebuggerEditorImpl.SEPARATOR));
+    String[] split = s.split(String.valueOf(SEPARATOR));
     return Trinity.create(split[0], split.length > 1 ? split[1] : "", split.length > 2 ? FileTypeManager.getInstance().getStdFileType(split[2]) : null);
   }
 
@@ -105,10 +109,10 @@ public final class TextWithImportsImpl implements TextWithImports{
   public String toExternalForm() {
     String result = myText;
     if (StringUtil.isNotEmpty(myImports) || myFileType != null) {
-      result += DebuggerEditorImpl.SEPARATOR + myImports;
+      result += SEPARATOR + myImports;
     }
     if (myFileType != null) {
-      result += DebuggerEditorImpl.SEPARATOR + myFileType.getName();
+      result += SEPARATOR + myFileType.getName();
     }
     return result;
   }

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight;
 
+import com.google.common.base.Preconditions;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Key;
@@ -27,6 +28,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
+ * Note: if you use {@link #myTypeName} to override real field, be sure to use
+ * {@link com.jetbrains.python.psi.types.PyOverridingClassMembersProvider}
+ *
  * @author Dennis.Ushakov
  */
 public class PyCustomMember extends UserDataHolderBase {
@@ -55,6 +60,8 @@ public class PyCustomMember extends UserDataHolderBase {
    * Force resolving to {@link MyInstanceElement} even if element is function
    */
   private boolean myAlwaysResolveToCustomElement;
+  private Icon myIcon = AllIcons.Nodes.Method;
+  private PyCustomMemberTypeInfo<?> myCustomTypeInfo;
 
   public PyCustomMember(@NotNull final String name, @Nullable final String type, final boolean resolveToInstance) {
     myName = name;
@@ -166,7 +173,7 @@ public class PyCustomMember extends UserDataHolderBase {
     if (myTarget != null) {
       return myTarget.getIcon(0);
     }
-    return AllIcons.Nodes.Method;
+    return myIcon;
   }
 
   @Nullable
@@ -241,6 +248,26 @@ public class PyCustomMember extends UserDataHolderBase {
     return ((MyInstanceElement)element).getThis().equals(this);
   }
 
+  /**
+   * @param icon icon to use (will be used method icon otherwise)
+   */
+  public PyCustomMember withIcon(@NotNull final Icon icon) {
+    myIcon = icon;
+    return this;
+  }
+
+  /**
+   * Adds custom info to type if class has {@link #myTypeName} set.
+   * Info could be later obtained by key.
+   *
+   * @param customInfo custom info to add
+   */
+  public PyCustomMember withCustomTypeInfo(@NotNull final PyCustomMemberTypeInfo<?> customInfo) {
+    Preconditions.checkState(myTypeName != null, "Cant add custom type info if no type provided");
+    myCustomTypeInfo = customInfo;
+    return this;
+  }
+
   private class MyInstanceElement extends ASTWrapperPsiElement implements PyTypedElement {
     private final PyClass myClass;
     private final PsiElement myContext;
@@ -260,7 +287,11 @@ public class PyCustomMember extends UserDataHolderBase {
         return myTypeCallback.fun(myContext);
       }
       else if (myClass != null) {
-        return PyPsiFacade.getInstance(getProject()).createClassType(myClass, !myResolveToInstance);
+        final PyClassType type = PyPsiFacade.getInstance(getProject()).createClassType(myClass, !myResolveToInstance);
+        if (myCustomTypeInfo != null) {
+          myCustomTypeInfo.fill(type);
+        }
+        return type;
       }
       return null;
     }

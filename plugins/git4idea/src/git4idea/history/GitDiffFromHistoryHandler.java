@@ -22,18 +22,22 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.BaseDiffFromHistoryHandler;
 import com.intellij.openapi.vcs.history.DiffFromHistoryHandler;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
@@ -66,7 +70,7 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFileRevision> {
-  
+
   private static final Logger LOG = Logger.getInstance(GitDiffFromHistoryHandler.class);
 
   @NotNull private final Git myGit;
@@ -88,7 +92,7 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
     if (parents.size() < 2) {
       super.showDiffForOne(e, project, filePath, previousRevision, revision);
     }
-    else { // merge 
+    else { // merge
       showDiffForMergeCommit(e, filePath, rev, parents);
     }
   }
@@ -129,8 +133,9 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
 
   private void showDiffForMergeCommit(@NotNull final AnActionEvent event, @NotNull final FilePath filePath,
                                       @NotNull final GitFileRevision rev, @NotNull final Collection<String> parents) {
-
-    checkIfFileWasTouchedAndFindParentsInBackground(filePath, rev, parents, new Consumer<MergeCommitPreCheckInfo>() {
+    VcsHistorySession session = event.getData(VcsDataKeys.HISTORY_SESSION);
+    List<VcsFileRevision> revisions = session != null ? session.getRevisionList() : null;
+    checkIfFileWasTouchedAndFindParentsInBackground(filePath, rev, parents, revisions, new Consumer<MergeCommitPreCheckInfo>() {
       @Override
       public void consume(MergeCommitPreCheckInfo info) {
         if (!info.wasFileTouched()) {
@@ -161,8 +166,10 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
     }
   }
 
-  private void checkIfFileWasTouchedAndFindParentsInBackground(@NotNull final FilePath filePath, @NotNull final GitFileRevision rev,
+  private void checkIfFileWasTouchedAndFindParentsInBackground(@NotNull final FilePath filePath,
+                                                               @NotNull final GitFileRevision rev,
                                                                @NotNull final Collection<String> parentHashes,
+                                                               @Nullable final List<VcsFileRevision> revisions,
                                                                @NotNull final Consumer<MergeCommitPreCheckInfo> resultHandler) {
     new Task.Backgroundable(myProject, "Loading changes...", true) {
       private MergeCommitPreCheckInfo myInfo;
@@ -171,7 +178,7 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
         try {
           GitRepository repository = getRepository(filePath);
           boolean fileTouched = wasFileTouched(repository, rev);
-          Collection<GitFileRevision> parents = findParentRevisions(repository, rev, parentHashes);
+          Collection<GitFileRevision> parents = findParentRevisions(repository, rev, parentHashes, revisions);
           myInfo = new MergeCommitPreCheckInfo(fileTouched, parents);
         }
         catch (VcsException e) {
@@ -190,22 +197,34 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
   }
 
   @NotNull
-  private Collection<GitFileRevision> findParentRevisions(@NotNull GitRepository repository, @NotNull GitFileRevision currentRevision,
-                                                          @NotNull Collection<String> parentHashes) throws VcsException {
+  private Collection<GitFileRevision> findParentRevisions(@NotNull GitRepository repository,
+                                                          @NotNull GitFileRevision currentRevision,
+                                                          @NotNull Collection<String> parentHashes,
+                                                          @Nullable List<VcsFileRevision> revisions) throws VcsException {
     // currentRevision is a merge revision.
     // the file could be renamed in one of the branches, i.e. the name in one of the parent revisions may be different from the name
     // in currentRevision. It can be different even in both parents, but it would a rename-rename conflict, and we don't handle such anyway.
 
     Collection<GitFileRevision> parents = new ArrayList<GitFileRevision>(parentHashes.size());
     for (String parentHash : parentHashes) {
-      parents.add(createParentRevision(repository, currentRevision, parentHash));
+      parents.add(createParentRevision(repository, currentRevision, parentHash, revisions));
     }
     return parents;
   }
 
   @NotNull
-  private GitFileRevision createParentRevision(@NotNull GitRepository repository, @NotNull GitFileRevision currentRevision,
-                                               @NotNull String parentHash) throws VcsException {
+  private GitFileRevision createParentRevision(@NotNull GitRepository repository,
+                                               @NotNull GitFileRevision currentRevision,
+                                               @NotNull String parentHash,
+                                               @Nullable List<VcsFileRevision> revisions) throws VcsException {
+    if (revisions != null) {
+      for (VcsFileRevision revision : revisions) {
+        if (((GitFileRevision)revision).getHash().equals(parentHash)) {
+          return (GitFileRevision)revision;
+        }
+      }
+    }
+
     FilePath currentRevisionPath = currentRevision.getPath();
     if (currentRevisionPath.isDirectory()) {
       // for directories the history doesn't follow renames
@@ -220,7 +239,7 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
       if (afterRevision != null && afterRevision.getFile().equals(currentRevisionPath)) {
         // if the file was renamed, taking the path how it was in the parent; otherwise the path didn't change
         FilePath path = (beforeRevision != null ? beforeRevision.getFile() : afterRevision.getFile());
-        return new GitFileRevision(myProject, path, new GitRevisionNumber(parentHash));
+        return makeRevisionFromHash(path, parentHash);
       }
     }
     LOG.error(String.format("Could not find parent revision. Will use the path from parent revision. Current revision: %s, parent hash: %s",
@@ -295,14 +314,27 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
     return FileUtil.getRelativePath(repository.getRoot().getPath(), path.getPath(), '/');
   }
 
-  private class ShowDiffWithParentAction extends AnAction {
+  @NotNull
+  private static String getRevisionDescription(@NotNull GitFileRevision parent) {
+    String hash = DvcsUtil.getShortHash(parent.getHash());
+    String message = parent.getCommitMessage();
+    if (message != null) {
+      int index = StringUtil.indexOfAny(message, "\n\r");
+      if (index != -1) message = message.substring(0, index) + "...";
+      if (message.length() > 40) message = message.substring(0, 35) + "...";
+      return hash + " - " + message;
+    }
+    return hash;
+  }
+
+  private class ShowDiffWithParentAction extends DumbAwareAction {
 
     @NotNull private final FilePath myFilePath;
     @NotNull private final GitFileRevision myRevision;
     @NotNull private final GitFileRevision myParentRevision;
 
     public ShowDiffWithParentAction(@NotNull FilePath filePath, @NotNull GitFileRevision rev, @NotNull GitFileRevision parent) {
-      super(DvcsUtil.getShortHash(parent.getHash()));
+      super(getRevisionDescription(parent), parent.getCommitMessage(), null);
       myFilePath = filePath;
       myRevision = rev;
       myParentRevision = parent;

@@ -416,12 +416,18 @@
         </annotation>
     </item>
     <item name='java.lang.Character java.lang.Character valueOf(char)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Character java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Character java.lang.String toString(char)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Character void toSurrogates(int, char[], int) 1'>
@@ -641,6 +647,9 @@
         </annotation>
     </item>
     <item name='java.lang.Double java.lang.Double valueOf(double)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Double java.lang.Double valueOf(java.lang.String)'>
@@ -737,6 +746,9 @@
         </annotation>
     </item>
     <item name='java.lang.Float java.lang.Float valueOf(float)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Float java.lang.Float valueOf(java.lang.String)'>
@@ -870,6 +882,9 @@
         </annotation>
     </item>
     <item name='java.lang.Integer java.lang.Integer valueOf(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Integer java.lang.Integer valueOf(java.lang.String)'>
@@ -897,6 +912,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Integer java.lang.String toString(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Integer java.lang.String toString(int, int)'>
@@ -1011,6 +1029,11 @@
     <item name='java.lang.Long java.lang.Long valueOf(java.lang.String, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.Long java.lang.Long valueOf(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.Long java.lang.String toBinaryString(long)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1024,6 +1047,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Long java.lang.String toString(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Long java.lang.String toString(long, int)'>
@@ -1232,6 +1258,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Short java.lang.Short valueOf(short)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Short java.lang.String toString()'>
@@ -1441,6 +1470,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.String java.lang.String replace(char, char)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.String java.lang.String replace(java.lang.CharSequence, java.lang.CharSequence) 0'>
@@ -1489,6 +1521,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.String java.lang.String valueOf(char)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.String java.lang.String valueOf(char[])'>

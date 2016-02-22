@@ -333,7 +333,7 @@ print ba<caret>r
     def ref = findReference()
     def resolved = ref.resolve();
     assertNotNull resolved
-    assert ((PsiMethod)resolved).name == "isFoo"
+    assert ((PsiMethod)resolved).name == "getFoo"
   }
 
   public void testExplicitBooleanProperty() throws Exception {
@@ -343,7 +343,7 @@ print ba<caret>r
  print new A().f<caret>oo""");
     def ref = findReference()
     def resolved = ref.resolve();
-    assert ((PsiMethod)resolved).name == "isFoo"
+    assert ((PsiMethod)resolved).name == "getFoo"
   }
 
   public void testStaticFieldAndNonStaticGetter() {
@@ -1142,7 +1142,7 @@ print ab<caret>c
 ''', GrBindingVariable)
   }
 
-  void testResolveBinding2() {
+  void ignoreTestResolveBinding2() {
     resolveByText('''\
 print ab<caret>c
 
@@ -1168,7 +1168,7 @@ a<caret>bc = 4
 
 
   void testResolveBinding5() {
-    resolveByText('''\
+    assert resolveByText('''\
 def foo() {
   abc = 4
 }
@@ -1176,11 +1176,11 @@ def foo() {
 def bar() {
   print ab<caret>c
 }
-''', GrBindingVariable)
+''') == null
   }
 
   void testResolveBinding6() {
-    resolveByText('''\
+    assert resolveByText('''\
 def foo() {
   print ab<caret>c
 }
@@ -1188,11 +1188,11 @@ def foo() {
 def bar() {
   abc = 4
 }
-''', GrBindingVariable)
+''') == null
   }
 
   void testResolveBinding7() {
-    resolveByText('''\
+    assert resolveByText('''\
 def foo() {
   a<caret>bc = 4
 }
@@ -1200,11 +1200,11 @@ def foo() {
 def bar() {
   print abc
 }
-''', GrBindingVariable)
+''') == null
   }
 
   void testResolveBinding8() {
-    resolveByText('''\
+    assert resolveByText('''\
 def foo() {
   print abc
 }
@@ -1212,7 +1212,7 @@ def foo() {
 def bar() {
   a<caret>bc = 4
 }
-''', GrBindingVariable)
+''') == null
   }
 
   void testBinding9() {
@@ -1249,6 +1249,26 @@ print aa
 aa = 6
 print a<caret>a
 ''', GrBindingVariable)
+  }
+
+  void testBinding13() {
+    resolveByText '''\
+aaa = 1
+
+def foo() {
+  aa<caret>a
+}
+''', GrBindingVariable
+  }
+
+  void testBinding14() {
+    assert resolveByText('''\
+def foo() {
+  aa<caret>a
+}
+
+aaa = 1
+''') == null
   }
 
   void testVarVsPackage1() {

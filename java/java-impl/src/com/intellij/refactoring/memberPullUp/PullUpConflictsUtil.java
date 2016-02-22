@@ -85,7 +85,7 @@ public class PullUpConflictsUtil {
     for (MemberInfoBase<? extends PsiMember> info : infos) {
       PsiMember member = info.getMember();
       if (member instanceof PsiMethod) {
-        if (!info.isToAbstract() && !isInterfaceTarget) {
+        if (!info.isToAbstract()) {
           movedMembers.add(member);
         }
         else {

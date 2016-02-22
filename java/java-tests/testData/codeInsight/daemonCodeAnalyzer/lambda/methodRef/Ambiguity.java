@@ -54,7 +54,7 @@ class MyTest1 {
     }
 
     {
-        Bar1 b1 = MyTest2 :: <error descr="Cannot resolve method 'foo'">foo</error>;
+        Bar1 b1 = MyTest2 :: <error descr="Invalid method reference: String cannot be converted to int">foo</error>;
         bar(MyTest1 :: foo);
     }
 }
@@ -80,7 +80,7 @@ class MyTest2 {
     }*/
 
     {
-        Bar1 b1 = MyTest2 :: <error descr="Cannot resolve method 'foo'">foo</error>;
+        Bar1 b1 = MyTest2 :: <error descr="Invalid method reference: String cannot be converted to int">foo</error>;
         bar(MyTest2 :: foo);
     }
 }
@@ -106,8 +106,8 @@ class MyTest3 {
     }
 
     {
-        Bar1 b1 = MyTest2 :: <error descr="Cannot resolve method 'foo'">foo</error>;
-        bar(MyTest3 :: <error descr="Cannot resolve method 'foo'">foo</error>);
+        Bar1 b1 = MyTest2 :: <error descr="Invalid method reference: String cannot be converted to int">foo</error>;
+        bar(MyTest3 :: <error descr="Invalid method reference: int cannot be converted to String">foo</error>);
     }
 }
 

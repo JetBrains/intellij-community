@@ -23,6 +23,7 @@ import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,6 +104,40 @@ public abstract class Promise<T> {
     return totalPromise;
   }
 
+  public static <T> Promise<T> any(@NotNull final Collection<Promise<T>> promises, @NotNull final String totalError) {
+    if (promises.isEmpty()) {
+      //noinspection unchecked
+      return (Promise<T>)DONE;
+    }
+    else if (promises.size() == 1) {
+      return ContainerUtil.getFirstItem(promises);
+    }
+
+    final AsyncPromise<T> totalPromise = new AsyncPromise<T>();
+    Consumer<T> done = new Consumer<T>() {
+      @Override
+      public void consume(T result) {
+        totalPromise.setResult(result);
+      }
+    };
+    Consumer<Throwable> rejected = new Consumer<Throwable>() {
+      private volatile int toConsume = promises.size();
+
+      @Override
+      public void consume(Throwable throwable) {
+        if (--toConsume <= 0) {
+          totalPromise.setError(totalError);
+        }
+      }
+    };
+
+    for (Promise<? extends T> promise : promises) {
+      promise.done(done);
+      promise.rejected(rejected);
+    }
+    return totalPromise;
+  }
+
   @NotNull
   public static Promise<Void> wrapAsVoid(@NotNull ActionCallback asyncResult) {
     final AsyncPromise<Void> promise = new AsyncPromise<Void>();
@@ -138,21 +173,21 @@ public abstract class Promise<T> {
   }
 
   @NotNull
-  public abstract Promise<T> done(@NotNull Consumer<T> done);
+  public abstract Promise<T> done(@NotNull Consumer<? super T> done);
 
   @NotNull
-  public abstract Promise<T> processed(@NotNull AsyncPromise<T> fulfilled);
+  public abstract Promise<T> processed(@NotNull AsyncPromise<? super T> fulfilled);
 
   @NotNull
   public abstract Promise<T> rejected(@NotNull Consumer<Throwable> rejected);
 
-  public abstract Promise<T> processed(@NotNull Consumer<T> processed);
+  public abstract Promise<T> processed(@NotNull Consumer<? super T> processed);
 
   @NotNull
-  public abstract <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<T, SUB_RESULT> done);
+  public abstract <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<? super T, ? extends SUB_RESULT> done);
 
   @NotNull
-  public abstract <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull AsyncFunction<T, SUB_RESULT> done);
+  public abstract <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull AsyncFunction<? super T, SUB_RESULT> done);
 
   @NotNull
   public abstract State getState();
@@ -195,5 +230,5 @@ public abstract class Promise<T> {
     }
   }
 
-  public abstract void notify(@NotNull AsyncPromise<T> child);
+  public abstract void notify(@NotNull AsyncPromise<? super T> child);
 }

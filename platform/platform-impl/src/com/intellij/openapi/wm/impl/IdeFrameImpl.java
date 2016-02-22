@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.impl.ShadowBorderPainter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -60,9 +61,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+
+import static com.intellij.openapi.ui.impl.ShadowBorderPainter.*;
 
 /**
  * @author Anton Katilin
@@ -531,6 +535,23 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     UISettings.setupAntialiasing(g);
     //noinspection Since15
     super.paint(g);
+    if (IdeRootPane.isFrameDecorated() && !isInFullScreen()) {
+      final BufferedImage shadow = ShadowBorderPainter.createShadow(getRootPane(), getWidth(), getHeight());
+      g.drawImage(shadow, 0, 0, null);
+    }
+  }
+
+  @Override
+  public Color getBackground() {
+    return IdeRootPane.isFrameDecorated() ? Gray.x00.withAlpha(0) : super.getBackground();
+  }
+
+  @Override
+  public void doLayout() {
+    super.doLayout();
+    if (!isInFullScreen() && IdeRootPane.isFrameDecorated()) {
+      getRootPane().setBounds(SIDE_SIZE, TOP_SIZE, getWidth() - 2 * SIDE_SIZE, getHeight() - TOP_SIZE - BOTTOM_SIZE);
+    }
   }
 
   public Rectangle suggestChildFrameBounds() {
@@ -562,16 +583,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     for (IdeFrame frame : frames) {
       ((IdeFrameImpl)frame).updateBorder();
     }
+
     return ActionCallback.DONE;
-  }
-
-  @Override
-  public void toFront() {
-    super.toFront();
-  }
-
-  @Override
-  public void toBack() {
-    super.toBack();
   }
 }

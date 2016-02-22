@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ public class EventQueue<E> {
 
   @NotNull
   public List<E> clearQueue() {
-    final List<E> allEvents = new ArrayList<E>();
+    final List<E> allEvents = new ArrayList<>();
     for (int i = 0; i < myEvents.length; i++) {
       final LinkedList<E> eventList = getEventsList(i);
       for (E event = eventList.poll(); event != null; event = eventList.poll()) {

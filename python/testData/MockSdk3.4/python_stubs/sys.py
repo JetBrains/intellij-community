@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module sys
 # from (built-in)
-# by generator 1.135
+# by generator 1.138
 """
 This module provides access to some objects used or maintained by the
 interpreter and to functions that interact strongly with the interpreter.
@@ -48,8 +48,6 @@ prefix -- prefix used to find the Python library
 thread_info -- a struct sequence with information about the thread implementation.
 version -- the version of this interpreter as a string
 version_info -- version information as a named tuple
-dllhandle -- [Windows only] integer handle of the Python DLL
-winver -- [Windows only] version number of the Python DLL
 __stdin__ -- the original stdin; don't touch!
 __stdout__ -- the original stdout; don't touch!
 __stderr__ -- the original stderr; don't touch!
@@ -78,42 +76,40 @@ settrace() -- set the global debug tracing function
 
 # Variables with simple values
 
+abiflags = 'm'
+
 api_version = 1013
 
-base_exec_prefix = 'C:\\Python34'
+base_exec_prefix = '/Library/Frameworks/Python.framework/Versions/3.4'
 
-base_prefix = 'C:\\Python34'
+base_prefix = '/Library/Frameworks/Python.framework/Versions/3.4'
 
 byteorder = 'little'
 
 copyright = 'Copyright (c) 2001-2014 Python Software Foundation.\nAll Rights Reserved.\n\nCopyright (c) 2000 BeOpen.com.\nAll Rights Reserved.\n\nCopyright (c) 1995-2001 Corporation for National Research Initiatives.\nAll Rights Reserved.\n\nCopyright (c) 1991-1995 Stichting Mathematisch Centrum, Amsterdam.\nAll Rights Reserved.'
 
-dllhandle = 1705771008
+dont_write_bytecode = True
 
-dont_write_bytecode = False
+executable = '/Users/vlan/.virtualenvs/obraz-py3.4/bin/python'
 
-executable = 'C:\\Python34\\python.exe'
-
-exec_prefix = 'C:\\Python34'
+exec_prefix = '/Users/vlan/.virtualenvs/obraz-py3.4'
 
 float_repr_style = 'short'
 
-hexversion = 50594288
+hexversion = 50594544
 
-maxsize = 2147483647
+maxsize = 9223372036854775807
 maxunicode = 1114111
 
-platform = 'win32'
+platform = 'darwin'
 
-prefix = 'C:\\Python34'
+prefix = '/Users/vlan/.virtualenvs/obraz-py3.4'
 
-version = '3.4.1 (v3.4.1:c0e311e010fc, May 18 2014, 10:38:22) [MSC v.1600 32 bit (Intel)]'
+version = '3.4.2 (v3.4.2:ab2c023a9432, Oct  5 2014, 20:42:22) \n[GCC 4.2.1 (Apple Inc. build 5666) (dot 3)]'
 
-winver = '3.4'
+_home = '/Library/Frameworks/Python.framework/Versions/3.4/bin'
 
-_home = None
-
-__egginsert = 1
+__egginsert = 0
 __plen = 5
 
 # functions
@@ -212,6 +208,15 @@ def getdefaultencoding(): # real signature unknown; restored from __doc__
     """
     return ""
 
+def getdlopenflags(): # real signature unknown; restored from __doc__
+    """
+    getdlopenflags() -> int
+    
+    Return the current value of the flags that are used for dlopen calls.
+    The flag constants are defined in the os module.
+    """
+    return 0
+
 def getfilesystemencoding(): # real signature unknown; restored from __doc__
     """
     getfilesystemencoding() -> string
@@ -271,21 +276,6 @@ def gettrace(): # real signature unknown; restored from __doc__
     """
     pass
 
-def getwindowsversion(): # real signature unknown; restored from __doc__
-    """
-    getwindowsversion()
-    
-    Return information about the running version of Windows as a named tuple.
-    The members are named: major, minor, build, platform, service_pack,
-    service_pack_major, service_pack_minor, suite_mask, and product_type. For
-    backward compatibility, only the first 5 items are available by indexing.
-    All elements are numbers, except service_pack which is a string. Platform
-    may be 0 for win32s, 1 for Windows 9x/ME, 2 for Windows NT/2000/XP/Vista/7,
-    3 for Windows CE. Product_type may be 1 for a workstation, 2 for a domain
-    controller, 3 for a server.
-    """
-    pass
-
 def intern(string): # real signature unknown; restored from __doc__
     """
     intern(string) -> string
@@ -303,6 +293,19 @@ def setcheckinterval(n): # real signature unknown; restored from __doc__
     
     Tell the Python interpreter to check for asynchronous events every
     n instructions.  This also affects how often thread switches occur.
+    """
+    pass
+
+def setdlopenflags(n): # real signature unknown; restored from __doc__
+    """
+    setdlopenflags(n) -> None
+    
+    Set the flags used by the interpreter for dlopen calls, such as when the
+    interpreter loads extension modules.  Among other things, this will enable
+    a lazy resolving of symbols when importing a module, if called as
+    sys.setdlopenflags(0).  To share symbols across extension modules, call as
+    sys.setdlopenflags(os.RTLD_GLOBAL).  Symbolic names for the flag modules
+    can be found in the os module (RTLD_xxx constants, e.g. os.RTLD_LAZY).
     """
     pass
 
@@ -415,8 +418,6 @@ def __interactivehook__(): # reliably restored by inspect
 
 # classes
 
-from .object import object
-
 class __loader__(object):
     """
     Meta path import for built-in modules.
@@ -488,7 +489,7 @@ flags = (
     0,
     0,
     0,
-    0,
+    1,
     0,
     0,
     0,
@@ -514,8 +515,8 @@ float_info = (
 )
 
 hash_info = (
-    32,
-    2147483647,
+    64,
+    2305843009213693951,
     314159,
     0,
     1000003,
@@ -528,13 +529,12 @@ hash_info = (
 implementation = None # (!) real value is ''
 
 int_info = (
-    15,
-    2,
+    30,
+    4,
 )
 
 meta_path = [
     __loader__,
-    None, # (!) real value is ''
     None, # (!) real value is ''
     None, # (!) real value is ''
 ]
@@ -542,13 +542,12 @@ meta_path = [
 modules = {} # real value of type <class 'dict'> skipped
 
 path = [
-    'C:\\work\\ultimate\\out\\classes\\production\\python-helpers',
-    'C:\\Python34\\lib\\site-packages\\setuptools-4.0.1-py3.4.egg',
-    'C:\\Windows\\system32\\python34.zip',
-    'C:\\Python34\\DLLs',
-    'C:\\Python34\\lib',
-    'C:\\Python34',
-    'C:\\Python34\\lib\\site-packages',
+    '/Users/vlan/src/idea/out/classes/production/python-helpers',
+    '/Library/Frameworks/Python.framework/Versions/3.4/lib/python34.zip',
+    '/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4',
+    '/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/plat-darwin',
+    '/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/lib-dynload',
+    '/Users/vlan/.virtualenvs/obraz-py3.4/lib/python3.4/site-packages',
 ]
 
 path_hooks = [
@@ -558,22 +557,22 @@ path_hooks = [
 
 path_importer_cache = {} # real value of type <class 'dict'> skipped
 
-stderr = None # (!) real value is ''
+stderr = None # (!) forward: __stderr__, real value is ''
 
-stdin = None # (!) real value is ''
+stdin = None # (!) forward: __stdin__, real value is ''
 
-stdout = None # (!) real value is ''
+stdout = None # (!) forward: __stdout__, real value is ''
 
 thread_info = (
-    'nt',
-    None,
+    'pthread',
+    'mutex+cond',
     None,
 )
 
 version_info = (
     3,
     4,
-    1,
+    2,
     'final',
     0,
 )
@@ -582,19 +581,19 @@ warnoptions = []
 
 _mercurial = (
     'CPython',
-    'v3.4.1',
-    'c0e311e010fc',
+    'v3.4.2',
+    'ab2c023a9432',
 )
 
 _xoptions = {}
 
 __spec__ = None # (!) real value is ''
 
-__stderr__ = stderr
+__stderr__ = None # (!) real value is ''
 
-__stdin__ = stdin
+__stdin__ = None # (!) real value is ''
 
-__stdout__ = stdout
+__stdout__ = None # (!) real value is ''
 
 # intermittent names
 exc_value = Exception()

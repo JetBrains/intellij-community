@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -44,7 +47,7 @@ import static com.intellij.util.ui.UIUtil.isValidFont;
 
 @State(
   name = "UISettings",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/ui.lnf.xml")
+  storages = @Storage("ui.lnf.xml")
 )
 public class UISettings extends SimpleModificationTracker implements PersistentStateComponent<UISettings> {
   /** Not tabbed pane. */
@@ -301,18 +304,5 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     }
 
       setupFractionalMetrics(g2d);
-  }
-
-  /**
-   * @return true when Remote Desktop (i.e. Windows RDP) is connected
-   * @deprecated Use RemoteDesktopDetector class - it should work in more cases. To be removed in IDEA 16.
-   */
-  @SuppressWarnings("unused")
-  public static boolean isRemoteDesktopConnected() {
-    if (System.getProperty("os.name").contains("Windows")) {
-      final Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
-      return map != null && RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT.equals(map.get(RenderingHints.KEY_TEXT_ANTIALIASING));
-    }
-    return false;
   }
 }

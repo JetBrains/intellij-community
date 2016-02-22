@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
@@ -41,6 +40,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.annotations.Property;
@@ -59,16 +59,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author nik
  */
-@State(
-  name = XDebuggerManagerImpl.COMPONENT_NAME,
-  storages = {@Storage(
-    file = StoragePathMacros.WORKSPACE_FILE)})
+@State(name = XDebuggerManagerImpl.COMPONENT_NAME, storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class XDebuggerManagerImpl extends XDebuggerManager
   implements NamedComponent, PersistentStateComponent<XDebuggerManagerImpl.XDebuggerState> {
   @NonNls public static final String COMPONENT_NAME = "XDebuggerManager";
@@ -226,17 +226,16 @@ public class XDebuggerManagerImpl extends XDebuggerManager
         oldSessionData = XDebugSessionData.DATA_KEY.getData(DataManager.getInstance().getDataContext(component));
       }
     }
-    if (oldSessionData == null) {
-      oldSessionData = new XDebugSessionData(session.getWatchExpressions());
-    }
+
+    session.initSessionData(oldSessionData);
 
     // Perform custom configuration of session data for XDebugProcessConfiguratorStarter classes
     if (processStarter instanceof XDebugProcessConfiguratorStarter) {
       session.activateSession();
-      ((XDebugProcessConfiguratorStarter)processStarter).configure(oldSessionData);
+      ((XDebugProcessConfiguratorStarter)processStarter).configure(session.getSessionData());
     }
 
-    session.init(process, oldSessionData, contentToReuse);
+    session.init(process, contentToReuse);
 
     mySessions.put(session.getDebugProcess().getProcessHandler(), session);
 
@@ -251,12 +250,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
       if (descriptor != null) {
         // in test-mode RunContentWithExecutorListener.contentRemoved events are not sent (see RunContentManagerImpl.showRunContent)
         // so we make sure the mySessions and mySessionData are cleared correctly when session is disposed
-        Disposer.register(descriptor, new Disposable() {
-          @Override
-          public void dispose() {
-            mySessions.remove(session.getDebugProcess().getProcessHandler());
-          }
-        });
+        Disposer.register(descriptor, () -> mySessions.remove(session.getDebugProcess().getProcessHandler()));
       }
 
       if (!myProject.isDisposed() && !ApplicationManager.getApplication().isUnitTestMode() && XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isHideDebuggerOnProcessTermination()) {
@@ -316,7 +310,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
         list.add(processClass.cast(process));
       }
     }
-    return list == null ? Collections.<T>emptyList() : list;
+    return ContainerUtil.notNullize(list);
   }
 
   @Override

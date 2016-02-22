@@ -21,6 +21,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +41,7 @@ public class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    final String message = (String)infos[0];
-    return message;
+    return (String)infos[0];
   }
 
   @Override
@@ -70,7 +70,7 @@ public class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
         return;
       }
       final String fieldName = (String)value;
-      final PsiExpression firstArgument = arguments[0];
+      final PsiExpression firstArgument = ParenthesesUtils.stripParentheses(arguments[0]);
       if (!(firstArgument instanceof PsiClassObjectAccessExpression)) {
         return;
       }

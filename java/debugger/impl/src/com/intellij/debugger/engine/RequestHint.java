@@ -281,7 +281,7 @@ public class RequestHint {
         }
       }
       // smart step feature
-      if (myMethodFilter != null) {
+      if (myMethodFilter != null && !mySteppedOut) {
         return StepRequest.STEP_OUT;
       }
     }

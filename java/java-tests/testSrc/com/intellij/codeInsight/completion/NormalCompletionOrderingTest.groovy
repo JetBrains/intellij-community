@@ -15,6 +15,7 @@
  */
 
 package com.intellij.codeInsight.completion
+
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
@@ -270,6 +271,9 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testPreferInterfacesInImplements() {
     checkPreferredItems(0, "XFooIntf", "XFoo", "XFooClass");
+    assert LookupElementPresentation.renderElement(lookup.items[0]).itemTextForeground == JBColor.foreground()
+    assert LookupElementPresentation.renderElement(lookup.items[1]).itemTextForeground == JBColor.RED
+    assert LookupElementPresentation.renderElement(lookup.items[2]).itemTextForeground == JBColor.RED
   }
 
   public void testPreferClassesInExtends() {
@@ -715,6 +719,20 @@ interface TxANotAnno {}
 
   public void testPreferCollectionsStaticOfExpectedType() {
     checkPreferredItems 0, 'unmodifiableList', 'unmodifiableCollection'
+  }
+
+  public void testDispreferDeprecatedMethodWithUnresolvedQualifier() {
+    myFixture.addClass("package foo; public class Assert { public static void assertTrue() {} }")
+    myFixture.addClass("package bar; @Deprecated public class Assert { public static void assertTrue() {}; public static void assertTrue2() {} }")
+    checkPreferredItems 0, 'Assert.assertTrue', 'Assert.assertTrue', 'Assert.assertTrue2'
+
+    def p = LookupElementPresentation.renderElement(myFixture.lookup.items[0])
+    assert p.tailText.contains('foo')
+    assert !p.strikeout
+
+    p = LookupElementPresentation.renderElement(myFixture.lookup.items[1])
+    assert p.tailText.contains('bar')
+    assert p.strikeout
   }
 
 }

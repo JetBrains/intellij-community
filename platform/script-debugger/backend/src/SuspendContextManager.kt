@@ -27,7 +27,7 @@ interface SuspendContextManager<CALL_FRAME : CallFrame> {
 
   val contextOrFail: SuspendContext<CALL_FRAME>
 
-  fun isContextObsolete(context: SuspendContext<CALL_FRAME>): Boolean
+  fun isContextObsolete(context: SuspendContext<*>): Boolean
 
   fun setOverlayMessage(message: String?)
 

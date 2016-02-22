@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.intellij.uiDesigner;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiModifier;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -24,13 +27,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-@State(
-  name = "uidesigner-configuration",
-  storages = {
-    @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
-  }
-)
+@State(name = "uidesigner-configuration", storages = @Storage("uiDesigner.xml"))
 public final class GuiDesignerConfiguration implements PersistentStateComponent<GuiDesignerConfiguration> {
   public static GuiDesignerConfiguration getInstance(final Project project){
     return ServiceManager.getService(project, GuiDesignerConfiguration.class);
@@ -49,10 +46,12 @@ public final class GuiDesignerConfiguration implements PersistentStateComponent<
 
   public boolean RESIZE_HEADERS = true;
 
+  @Override
   public GuiDesignerConfiguration getState() {
     return this;
   }
 
+  @Override
   public void loadState(GuiDesignerConfiguration object) {
     XmlSerializerUtil.copyBean(object, this);
   }

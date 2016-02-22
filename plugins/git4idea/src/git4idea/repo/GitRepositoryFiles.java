@@ -19,10 +19,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static com.intellij.psi.impl.SyntheticFileSystemItem.LOG;
 import static git4idea.GitUtil.DOT_GIT;
 
 /**
@@ -45,18 +48,16 @@ public class GitRepositoryFiles {
   public static final String REBASE_APPLY = "rebase-apply";
   public static final String REBASE_MERGE = "rebase-merge";
   public static final String PACKED_REFS = "packed-refs";
-  public static final String REFS_HEADS = "refs/heads";
-  public static final String REFS_REMOTES = "refs/remotes";
-  public static final String REFS_TAGS = "refs/tags";
+  public static final String REFS = "refs";
+  public static final String HEADS = "heads";
+  public static final String TAGS = "tags";
+  public static final String REMOTES = "remotes";
   public static final String SQUASH_MSG = "SQUASH_MSG";
 
   public static final String GIT_HEAD  = DOT_GIT + slash(HEAD);
-  public static final String GIT_REFS_REMOTES = DOT_GIT + slash(REFS_REMOTES);
-  public static final String GIT_PACKED_REFS = DOT_GIT + slash(PACKED_REFS);
   public static final String GIT_MERGE_HEAD = DOT_GIT + slash(MERGE_HEAD);
   public static final String GIT_MERGE_MSG = DOT_GIT + slash(MERGE_MSG);
   public static final String GIT_SQUASH_MSG = DOT_GIT + slash(SQUASH_MSG);
-  public static final String GIT_COMMIT_EDITMSG = DOT_GIT + slash(COMMIT_EDITMSG);
 
   private final String myGitDirPath;
   private final String myConfigFilePath;
@@ -71,30 +72,69 @@ public class GitRepositoryFiles {
   private final String myRefsRemotesDirPath;
   private final String myRefsTagsPath;
   private final String myCommitMessagePath;
+  private final String myInfoDirPath;
   private final String myExcludePath;
 
-  public static GitRepositoryFiles getInstance(@NotNull VirtualFile gitDir) {
-    // maybe will be cached later to store a single GitRepositoryFiles for a root. 
-    return new GitRepositoryFiles(gitDir);
-  }
-
-  private GitRepositoryFiles(@NotNull VirtualFile gitDir) {
-    // add .git/ and .git/refs/heads to the VFS
-    // save paths of the files, that we will watch
+  private GitRepositoryFiles(@NotNull VirtualFile gitDir,
+                             @NotNull File configFile,
+                             @NotNull File headFile,
+                             @NotNull File refsDir,
+                             @NotNull File packedRefsFile) {
     myGitDirPath = GitFileUtils.stripFileProtocolPrefix(gitDir.getPath());
-    myConfigFilePath = myGitDirPath + slash(CONFIG);
-    myHeadFilePath = myGitDirPath + slash(HEAD);
+    myConfigFilePath = FileUtil.toSystemIndependentName(configFile.getPath());
+    myHeadFilePath = FileUtil.toSystemIndependentName(headFile.getPath());
     myIndexFilePath = myGitDirPath + slash(INDEX);
     myMergeHeadPath = myGitDirPath + slash(MERGE_HEAD);
     myOrigHeadPath = myGitDirPath + slash(ORIG_HEAD);
     myCommitMessagePath = myGitDirPath + slash(COMMIT_EDITMSG);
     myRebaseApplyPath = myGitDirPath + slash(REBASE_APPLY);
     myRebaseMergePath = myGitDirPath + slash(REBASE_MERGE);
-    myPackedRefsPath = myGitDirPath + slash(PACKED_REFS);
-    myRefsHeadsDirPath = myGitDirPath + slash(REFS_HEADS);
-    myRefsTagsPath = myGitDirPath + slash(REFS_TAGS);
-    myRefsRemotesDirPath = myGitDirPath + slash(REFS_REMOTES);
+    myPackedRefsPath = FileUtil.toSystemIndependentName(packedRefsFile.getPath());
+    String refsPath = FileUtil.toSystemIndependentName(refsDir.getPath());
+    myRefsHeadsDirPath = refsPath + slash(HEADS);
+    myRefsTagsPath = refsPath + slash(TAGS);
+    myRefsRemotesDirPath = refsPath + slash(REMOTES);
+    myInfoDirPath = myGitDirPath + slash(INFO);
     myExcludePath = myGitDirPath + slash(INFO_EXCLUDE);
+  }
+
+  @NotNull
+  public static GitRepositoryFiles getInstance(@NotNull VirtualFile gitDir) {
+    VirtualFile gitDirForWorktree = getMainGitDirForWorktree(gitDir);
+    File headFile = new File(gitDir.getPath(), HEAD);
+    File refsDir;
+    File packedRefsFile;
+    File configFile;
+    if (gitDirForWorktree == null) {
+      refsDir = new File(gitDir.getPath(), REFS);
+      packedRefsFile = new File(gitDir.getPath(), PACKED_REFS);
+      configFile = new File(gitDir.getPath(), CONFIG);
+    }
+    else {
+      refsDir = new File(gitDirForWorktree.getPath(), REFS);
+      packedRefsFile = new File(gitDirForWorktree.getPath(), PACKED_REFS);
+      configFile = new File(gitDirForWorktree.getPath(), CONFIG);
+    }
+    return new GitRepositoryFiles(gitDir, configFile, headFile, refsDir, packedRefsFile);
+  }
+
+  /**
+   * Checks if the given .git directory is actually a worktree's git directory, and returns the main .git directory if it is true.
+   * If it is not a worktree, returns null.
+   * <p/>
+   * Worktree's ".git" file references {@code <main-project>/.git/worktrees/<worktree-name>}
+   */
+  @Nullable
+  private static VirtualFile getMainGitDirForWorktree(@NotNull VirtualFile gitDir) {
+    VirtualFile parent = gitDir.getParent();
+    if (parent == null) return null;
+    VirtualFile grandParent = parent.getParent();
+    if (grandParent == null) return null;
+    if (!gitDir.getName().equals(DOT_GIT) && parent.getName().equals("worktrees") && grandParent.getName().equals(DOT_GIT)) {
+      LOG.info("git dir " + gitDir.getPath() + " is a worktree");
+      return grandParent;
+    }
+    return null;
   }
 
   @NotNull
@@ -106,10 +146,15 @@ public class GitRepositoryFiles {
    * Returns subdirectories of .git which we are interested in - they should be watched by VFS.
    */
   @NotNull
-  static Collection<String> getSubDirRelativePaths() {
-    return Arrays.asList(slash(REFS_HEADS), slash(REFS_REMOTES), slash(REFS_TAGS), slash(INFO));
+  Collection<String> getDirsToWatch() {
+    return Arrays.asList(myRefsHeadsDirPath, myRefsRemotesDirPath, myRefsTagsPath, myInfoDirPath);
   }
-  
+
+  @NotNull
+  String getGitDirPath() {
+    return myGitDirPath;
+  }
+
   @NotNull
   String getRefsHeadsPath() {
     return myRefsHeadsDirPath;
@@ -123,6 +168,21 @@ public class GitRepositoryFiles {
   @NotNull
   String getRefsTagsPath() {
     return myRefsTagsPath;
+  }
+
+  @NotNull
+  public String getPackedRefsPath() {
+    return myPackedRefsPath;
+  }
+
+  @NotNull
+  public String getHeadPath() {
+    return myHeadFilePath;
+  }
+
+  @NotNull
+  public String getConfigPath() {
+    return myConfigFilePath;
   }
 
   /**

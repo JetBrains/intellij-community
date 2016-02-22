@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,11 +58,9 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
   protected abstract T evaluate(EvaluationContextImpl evaluationContext) throws EvaluateException;
 
   public T evaluate() throws EvaluateException {
-    myProgressIndicator.setText(DebuggerBundle.message("progress.evaluating", ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-            public String compute() {
-              return myElement.getText();
-            }
-          })));
+    myProgressIndicator.setText(
+      DebuggerBundle.message("progress.evaluating",
+                             ApplicationManager.getApplication().runReadAction((Computable<String>)myElement::getText)));
 
     try {
       T result = evaluate(myDebuggerContext.createEvaluationContext());

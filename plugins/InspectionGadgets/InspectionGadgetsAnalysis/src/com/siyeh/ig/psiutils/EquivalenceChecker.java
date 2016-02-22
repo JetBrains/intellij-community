@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,7 +30,7 @@ public class EquivalenceChecker {
   private EquivalenceChecker() {}
 
   private static final Decision EXACTLY_MATCHES = new Decision(true);
-  private static final Decision EXACTLY_UN_MATCHES = new Decision(false);
+  public static final Decision EXACTLY_UN_MATCHES = new Decision(false);
 
   public static class Decision {
     private final PsiElement myLeftDiff;
@@ -539,7 +540,11 @@ public class EquivalenceChecker {
     @NotNull PsiReturnStatement statement2) {
     final PsiExpression returnValue1 = statement1.getReturnValue();
     final PsiExpression returnValue2 = statement2.getReturnValue();
-    return expressionsAreEquivalentDecision(returnValue1, returnValue2);
+    final Decision decision = expressionsAreEquivalentDecision(returnValue1, returnValue2);
+    if (decision.isExactUnMatches()) {
+      return new Decision(returnValue1, returnValue2);
+    }
+    return decision;
   }
 
   private static Decision throwstatementsAreEquivalentDecision(
@@ -740,7 +745,24 @@ public class EquivalenceChecker {
     final PsiExpressionList argumentList2 =
       methodCallExpression2.getArgumentList();
     final PsiExpression[] args2 = argumentList2.getExpressions();
-    return expressionListsAreEquivalent(args1, args2);
+    final Decision decision = expressionListsAreEquivalent(args1, args2);
+
+    if (args1.length != 0 && (!decision.isExact() || !decision.isExactUnMatches())) {
+      final PsiElement leftDiff = decision.getLeftDiff();
+      PsiExpression lastArg = args1[args1.length - 1];
+      if (Comparing.equal(leftDiff, lastArg)) {
+        final PsiType type1 = lastArg.getType();
+        final PsiType type2 = args2[args2.length - 1].getType();
+        if (type2 instanceof PsiArrayType && !(type1 instanceof PsiArrayType)) {
+          return EXACTLY_UN_MATCHES;
+        }
+        if (type1 instanceof PsiArrayType && !(type2 instanceof PsiArrayType)) {
+          return EXACTLY_UN_MATCHES;
+        }
+      }
+    }
+
+    return decision;
   }
 
   private static Decision newexpressionsAreEquivalentDecision(
@@ -773,6 +795,11 @@ public class EquivalenceChecker {
     final PsiArrayInitializerExpression arrayInitializer2 =
       newExpression2.getArrayInitializer();
     if (!expressionsAreEquivalentDecision(arrayInitializer1, arrayInitializer2).getExactlyMatches()) {
+      return EXACTLY_UN_MATCHES;
+    }
+    final PsiMethod constructor1 = newExpression1.resolveConstructor();
+    final PsiMethod constructor2 = newExpression2.resolveConstructor();
+    if (!Comparing.equal(constructor1, constructor2)) {
       return EXACTLY_UN_MATCHES;
     }
     final PsiExpression qualifier1 = newExpression1.getQualifier();

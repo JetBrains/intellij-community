@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
   private val breakpointResolvedListenerAdded = AtomicBoolean()
 
   fun setBreakpoint(breakpoint: XLineBreakpoint<*>) {
-    var target = synchronized (lock) { ideToVmBreakpoints[breakpoint] }
+    val target = synchronized (lock) { ideToVmBreakpoints[breakpoint] }
     if (target == null) {
       setBreakpoint(breakpoint, debugProcess.getLocationsForBreakpoint(breakpoint))
     }
@@ -186,7 +186,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
       promiseRef?.set(resolvedPromise(it))
       return it
     }
-    return breakpointManager.setBreakpoint(target, location.line, location.column, breakpoint?.conditionExpression?.expression, promiseRef = promiseRef)
+    return breakpointManager.setBreakpoint(target, location.line, location.column, location.url, breakpoint?.conditionExpression?.expression, promiseRef = promiseRef)
   }
 
   protected abstract fun createTarget(breakpoint: XLineBreakpoint<*>?, breakpointManager: BreakpointManager, location: Location, isTemporary: Boolean): BreakpointTarget

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XNavigatable;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -36,21 +34,15 @@ public abstract class XJumpToSourceActionBase extends XDebuggerTreeActionBase {
   protected void perform(final XValueNodeImpl node, @NotNull final String nodeName, final AnActionEvent e) {
     XValue value = node.getValueContainer();
     final XDebuggerEvaluationDialog dialog = e.getData(XDebuggerEvaluationDialog.KEY);
-    XNavigatable navigatable = new XNavigatable() {
-      @Override
-      public void setSourcePosition(@Nullable final XSourcePosition sourcePosition) {
-        if (sourcePosition != null) {
-          final Project project = node.getTree().getProject();
-          AppUIUtil.invokeOnEdt(new Runnable() {
-            @Override
-            public void run() {
-              sourcePosition.createNavigatable(project).navigate(true);
-              if (dialog != null && Registry.is("debugger.close.dialog.on.navigate")) {
-                dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-              }
-            }
-          }, project.getDisposed());
-        }
+    XNavigatable navigatable = sourcePosition -> {
+      if (sourcePosition != null) {
+        final Project project = node.getTree().getProject();
+        AppUIUtil.invokeOnEdt(() -> {
+          sourcePosition.createNavigatable(project).navigate(true);
+          if (dialog != null && Registry.is("debugger.close.dialog.on.navigate")) {
+            dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+          }
+        }, project.getDisposed());
       }
     };
     startComputingSourcePosition(value, navigatable);

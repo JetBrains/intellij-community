@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,12 +212,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   public void rebuildViews() {
-    AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
-      @Override
-      public void run() {
-        for (XDebugView view : myViews) {
-          view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED);
-        }
+    AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
+      for (XDebugView view : myViews) {
+        view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED);
       }
     });
   }

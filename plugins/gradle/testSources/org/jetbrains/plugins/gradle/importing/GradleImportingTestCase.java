@@ -178,6 +178,13 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @Override
   protected void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+    config = "allprojects {\n" +
+              "  repositories {\n" +
+              "    maven {\n" +
+              "        url 'http://maven.labs.intellij.net/repo1'\n" +
+              "    }\n" +
+              "  }" +
+              "}\n" + config;
     super.importProject(config);
   }
 

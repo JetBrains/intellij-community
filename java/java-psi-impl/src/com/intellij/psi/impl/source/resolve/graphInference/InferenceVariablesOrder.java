@@ -27,8 +27,11 @@ import java.util.*;
  */
 
 public class InferenceVariablesOrder {
-
   public static List<InferenceVariable> resolveOrder(Collection<InferenceVariable> vars, InferenceSession session) {
+    return resolveOrderIterator(vars, session).next();
+  }
+  
+  public static Iterator<List<InferenceVariable>> resolveOrderIterator(Collection<InferenceVariable> vars, InferenceSession session) {
     Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> nodes =
       new LinkedHashMap<InferenceVariable, InferenceGraphNode<InferenceVariable>>();
     for (InferenceVariable var : vars) {
@@ -52,7 +55,7 @@ public class InferenceVariablesOrder {
       public List<InferenceVariable> fun(InferenceGraphNode<InferenceVariable> node) {
         return node.getValue();
       }
-    }).iterator().next();
+    }).iterator();
   }
 
   public static <T> List<List<InferenceGraphNode<T>>> tarjan(Collection<InferenceGraphNode<T>> nodes) {

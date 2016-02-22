@@ -6,7 +6,6 @@
     The plugin extends standard IDEA .class file viewer with powerful Fernflower decompiler -
     no more dull "{ /* compiled code */ }" in method bodies!
   </description>
-  <version>0.2</version>
   <vendor email="support@jetbrains.com" url="https://www.jetbrains.com">JetBrains</vendor>
 
   <idea-version since-build="143.381"/>
@@ -16,7 +15,6 @@
   <resource-bundle>messages.Decompiler</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-
     <psi.classFileDecompiler implementation="org.jetbrains.java.decompiler.IdeaDecompiler" order="last"/>
   </extensions>
 

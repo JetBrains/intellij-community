@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
@@ -35,7 +36,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
@@ -46,7 +46,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
-public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon {
+public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon, ScalableIcon {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.DeferredIconImpl");
   private static final int MIN_AUTO_UPDATE_MILLIS = 950;
   private static final RepaintScheduler ourRepaintScheduler = new RepaintScheduler();
@@ -61,11 +61,33 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon {
   private final boolean myAutoUpdatable;
   private long myLastCalcTime;
   private long myLastTimeSpent;
+  private float myScale = 1f;
+  private Icon myOriginalDeferredIcon = null;
 
   private static final Executor ourIconsCalculatingExecutor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
 
   private final IconListener<T> myEvalListener;
   private static final TransferToEDTQueue<Runnable> ourLaterInvocator = TransferToEDTQueue.createRunnableMerger("Deferred icon later invocator", 200);
+
+  @Override
+  public Icon scale(final float scaleFactor) {
+    if (scaleFactor != myScale) {
+      DeferredIconImpl icon = new DeferredIconImpl(null, myParam, myNeedReadAction, myEvaluator, myEvalListener, myAutoUpdatable) {
+        @Override
+        void setDone(@NotNull Icon result) {
+          super.setDone(result);
+          if (result instanceof ScalableIcon) {
+            myDelegateIcon = ((ScalableIcon)result).scale(scaleFactor);
+          }
+        }
+      };
+      icon.myScale = scaleFactor;
+      icon.myOriginalDeferredIcon = myOriginalDeferredIcon == null ? this : myOriginalDeferredIcon;
+      return icon;
+    }
+    return this;
+  }
+
   private static class Holder {
     private static final boolean CHECK_CONSISTENCY = ApplicationManager.getApplication().isUnitTestMode();
   }
@@ -134,6 +156,9 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon {
                 @Override
                 public void run() {
                   evaluated[0] = evaluate();
+                  if (myScale != 1f && evaluated[0] instanceof ScalableIcon) {
+                    evaluated[0] = ((ScalableIcon)evaluated[0]).scale(myScale);
+                  }
                 }
               });
               if (myAutoUpdatable) {
@@ -236,7 +261,7 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon {
     return target;
   }
 
-  private void setDone(@NotNull Icon result) {
+  void setDone(@NotNull Icon result) {
     if (myEvalListener != null) {
       myEvalListener.evalDone(this, myParam, result);
     }
@@ -250,8 +275,8 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon {
 
   @Nullable
   @Override
-  public Icon retrieve() {
-    return evaluate();
+  public Icon retrieveIcon() {
+    return isDone() ? myDelegateIcon : evaluate();
   }
 
   @NotNull
@@ -376,12 +401,6 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon {
     return icon instanceof DeferredIconImpl &&
            Comparing.equal(myParam, ((DeferredIconImpl)icon).myParam) &&
            equalIcons(myDelegateIcon, ((DeferredIconImpl)icon).myDelegateIcon);
-  }
-
-  @TestOnly
-  @NotNull
-  Icon getDelegateIcon() {
-    return myDelegateIcon;
   }
 
   @Override

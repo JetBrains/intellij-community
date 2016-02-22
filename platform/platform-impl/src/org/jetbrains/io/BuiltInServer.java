@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.oio.OioEventLoopGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Random;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,6 +43,15 @@ public class BuiltInServer implements Disposable {
   private final int port;
   private final ChannelRegistrar channelRegistrar;
   private final boolean isOwnerOfEventLoopGroup;
+
+  static {
+    // IDEA-120811
+    if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
+      System.setProperty("io.netty.machineId", "9e43d860");
+      System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
+      System.setProperty("io.netty.serviceThreadPrefix", "Netty ");
+    }
+  }
 
   private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup,
                         int port,
@@ -77,6 +89,24 @@ public class BuiltInServer implements Disposable {
                                     boolean tryAnyPort,
                                     @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
     return start(new NioEventLoopGroup(workerCount, new BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler);
+  }
+
+  @NotNull
+  public static BuiltInServer startNioOrOio(int workerCount,
+                                            int firstPort,
+                                            int portsCount,
+                                            boolean tryAnyPort,
+                                            @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
+    BuiltInServerThreadFactory threadFactory = new BuiltInServerThreadFactory();
+    NioEventLoopGroup nioEventLoopGroup;
+    try {
+      nioEventLoopGroup = new NioEventLoopGroup(workerCount, threadFactory);
+    }
+    catch (IllegalStateException e) {
+      Logger.getInstance(BuiltInServer.class).warn(e);
+      return start(new OioEventLoopGroup(1, threadFactory), true, 6942, 50, false, handler);
+    }
+    return start(nioEventLoopGroup, true, firstPort, portsCount, tryAnyPort, handler);
   }
 
   @NotNull
@@ -144,7 +174,7 @@ public class BuiltInServer implements Disposable {
     context.pipeline().replace(DelegatingHttpRequestHandler.class, "replacedDefaultHandler", channelHandler);
   }
 
-  public static class BuiltInServerThreadFactory implements ThreadFactory {
+  private static class BuiltInServerThreadFactory implements ThreadFactory {
     private final AtomicInteger counter = new AtomicInteger();
 
     @Override

@@ -257,7 +257,7 @@ public class SMTestRunnerConnectionUtil {
       if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
         return FileUrlProvider.INSTANCE.getLocation(protocol, path, project, scope);
       }
-      else if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
+      else if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator) || Registry.is("dumb.aware.run.configurations")) {
         return myLocator.getLocation(protocol, path, project, scope);
       }
       else {

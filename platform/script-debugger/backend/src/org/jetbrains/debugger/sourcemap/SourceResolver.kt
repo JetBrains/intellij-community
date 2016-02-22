@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,7 @@ class SourceResolver(private val rawSources: List<String>, internal val canonica
     return null
   }
 
-  fun getLocalFilePath(entry: MappingEntry) = canonicalizedUrls.getOrNull(entry.source)?.let { if (it.isInLocalFileSystem) it.path else null }
+  fun getUrlIfLocalFile(entry: MappingEntry) = canonicalizedUrls.getOrNull(entry.source)?.let { if (it.isInLocalFileSystem) it else null }
 
   companion object {
     fun isAbsolute(path: String) = path.firstOrNull() == '/' || (SystemInfo.isWindows && (path.length > 2 && path[1] == ':'))

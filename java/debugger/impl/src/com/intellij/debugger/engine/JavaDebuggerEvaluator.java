@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,6 +75,10 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
 
       @Override
       public void threadAction() {
+        if (DebuggerUIUtil.isObsolete(callback)) {
+          return;
+        }
+
         JavaDebugProcess process = myDebugProcess.getXdebugProcess();
         if (process == null) {
           callback.errorOccurred("No debug process");
@@ -82,7 +87,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
         TextWithImports text = TextWithImportsImpl.fromXExpression(expression);
         NodeManagerImpl nodeManager = process.getNodeManager();
         WatchItemDescriptor descriptor = nodeManager.getWatchItemDescriptor(null, text, null);
-        EvaluationContextImpl evalContext = myStackFrame.getFrameDebuggerContext().createEvaluationContext();
+        EvaluationContextImpl evalContext = myStackFrame.getFrameDebuggerContext(getDebuggerContext()).createEvaluationContext();
         if (evalContext == null) {
           callback.errorOccurred("Context is not available");
           return;

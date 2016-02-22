@@ -35,30 +35,27 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker
-import com.intellij.util.PathUtil
-import com.intellij.util.PathUtilRt
-import com.intellij.util.SmartList
-import com.intellij.util.ThrowableConvertor
+import com.intellij.util.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import gnu.trove.TObjectObjectProcedure
-import gnu.trove.TObjectProcedure
 import org.jdom.Document
 import org.jdom.Element
-import java.io.File
 import java.io.IOException
 import java.io.InputStream
+import java.nio.file.Path
 import java.util.*
 
-public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val fileSpec: String,
-                                                                     private val processor: SchemeProcessor<E>,
-                                                                     private val provider: StreamProvider?,
-                                                                     private val ioDirectory: File,
-                                                                     private val roamingType: RoamingType = RoamingType.DEFAULT,
-                                                                     virtualFileTrackerDisposable: Disposable? = null) : SchemesManager<T, E>(), SafeWriteRequestor {
+class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: String,
+                                                              private val processor: SchemeProcessor<E>,
+                                                              private val provider: StreamProvider?,
+                                                              private val ioDirectory: Path,
+                                                              val roamingType: RoamingType = RoamingType.DEFAULT,
+                                                              virtualFileTrackerDisposable: Disposable? = null,
+                                                              val presentableName: String? = null) : SchemesManager<T, E>(), SafeWriteRequestor {
   private val schemes = ArrayList<T>()
   private val readOnlyExternalizableSchemes = THashMap<String, E>()
 
@@ -103,7 +100,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
   private fun refreshVirtualDirectoryAndAddListener(virtualFileTrackerDisposable: Disposable?) {
     // store refreshes root directory, so, we don't need to use refreshAndFindFile
-    val directory = LocalFileSystem.getInstance().findFileByIoFile(ioDirectory) ?: return
+    val directory = LocalFileSystem.getInstance().findFileByPath(ioDirectory.systemIndependentPath) ?: return
 
     this.directory = directory
     directory.children
@@ -117,7 +114,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   }
 
   private fun addVfsListener(virtualFileTrackerDisposable: Disposable?) {
-    service<VirtualFileTracker>().addTracker("${LocalFileSystem.PROTOCOL_PREFIX}${ioDirectory.absolutePath.replace(File.separatorChar, '/')}", object : VirtualFileAdapter() {
+    service<VirtualFileTracker>().addTracker("${LocalFileSystem.PROTOCOL_PREFIX}${ioDirectory.toAbsolutePath().systemIndependentPath}", object : VirtualFileAdapter() {
       override fun contentsChanged(event: VirtualFileEvent) {
         if (event.requestor != null || !isMy(event)) {
           return
@@ -267,17 +264,17 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       }
     }
     else {
-      ioDirectory.listFiles({ parent, name -> canRead(name) })?.let {
+      ioDirectory.directoryStreamIfExists({ canRead(it.fileName.toString()) }) {
         for (file in it) {
-          if (file.isDirectory) {
+          if (file.isDirectory()) {
             continue
           }
 
           try {
-            loadScheme(file.name, file.inputStream(), true)
+            loadScheme(file.fileName.toString(), file.inputStream(), true)
           }
           catch (e: Throwable) {
-            LOG.error("Cannot read scheme ${file.path}", e)
+            LOG.error("Cannot read scheme $file", e)
           }
         }
       }
@@ -297,7 +294,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     return list
   }
 
-  public fun reload() {
+  fun reload() {
     // we must not remove non-persistent (e.g. predefined) schemes, because we cannot load it (obviously)
     removeExternalizableSchemes()
 
@@ -314,7 +311,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
           currentScheme = null
         }
 
-        processor.onSchemeDeleted(scheme as E)
+        processor.onSchemeDeleted(scheme)
       }
     }
     retainExternalInfo(schemes)
@@ -331,12 +328,12 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   }
 
   private fun isOverwriteOnLoad(existingScheme: E): Boolean {
-    if (readOnlyExternalizableSchemes.get(existingScheme.name) === existingScheme) {
+    if (readOnlyExternalizableSchemes[existingScheme.name] === existingScheme) {
       // so, bundled scheme is shadowed
       return true
     }
 
-    val info = schemeToInfo.get(existingScheme)
+    val info = schemeToInfo[existingScheme]
     // scheme from file with old extension, so, we must ignore it
     return info != null && schemeExtension != info.fileExtension
   }
@@ -362,7 +359,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
             removeScheme(existingScheme)
           }
           else {
-            if (schemeExtension != extension && schemeToInfo.get(existingScheme)?.fileNameWithoutExtension == fileNameWithoutExtension) {
+            if (schemeExtension != extension && schemeToInfo[existingScheme as Scheme]?.fileNameWithoutExtension == fileNameWithoutExtension) {
               // 1.oldExt is loading after 1.newExt - we should delete 1.oldExt
               filesToDelete.add(fileName.toString())
             }
@@ -376,7 +373,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         }
       }
 
-      var info: ExternalInfo? = schemeToInfo.get(scheme)
+      var info: ExternalInfo? = schemeToInfo[scheme]
       if (info == null) {
         info = ExternalInfo(fileNameWithoutExtension, extension)
         schemeToInfo.put(scheme, info)
@@ -403,7 +400,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   }
 
   private val ExternalizableScheme.fileName: String?
-    get() = schemeToInfo.get(this)?.fileNameWithoutExtension
+    get() = schemeToInfo[this]?.fileNameWithoutExtension
 
   private fun canRead(name: CharSequence) = updateExtension && StringUtilRt.endsWithIgnoreCase(name, DEFAULT_EXT) || StringUtilRt.endsWithIgnoreCase(name, schemeExtension)
 
@@ -466,16 +463,16 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   }
 
   private fun removeDirectoryIfEmpty(errors: MutableList<Throwable>) {
-    ioDirectory.listFiles()?.let {
+    ioDirectory.directoryStreamIfExists {
       for (file in it) {
-        if (!file.isHidden) {
-          LOG.info("Directory ${ioDirectory.name} is not deleted: at least one file ${file.name} exists")
-          return
+        if (!file.isHidden()) {
+          LOG.info("Directory ${ioDirectory.fileName} is not deleted: at least one file ${file.fileName} exists")
+          return@removeDirectoryIfEmpty
         }
       }
     }
 
-    LOG.info("Remove schemes directory ${ioDirectory.name}")
+    LOG.info("Remove schemes directory ${ioDirectory.fileName}")
     directory = null
 
     var deleteUsingIo = !useVfs
@@ -495,14 +492,14 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     }
 
     if (deleteUsingIo) {
-      errors.catch { FileUtil.delete(ioDirectory) }
+      errors.catch { ioDirectory.deleteRecursively() }
     }
   }
 
   private fun getState(scheme: E) = processor.getState(scheme)
 
   private fun saveScheme(scheme: E, nameGenerator: UniqueNameGenerator) {
-    var externalInfo: ExternalInfo? = schemeToInfo.get(scheme)
+    var externalInfo: ExternalInfo? = schemeToInfo[scheme]
     val currentFileNameWithoutExtension = if (externalInfo == null) null else externalInfo.fileNameWithoutExtension
     val parent = processor.writeScheme(scheme)
     val element = if (parent == null || parent is Element) parent as Element? else (parent as Document).detachRootElement()
@@ -522,8 +519,8 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     }
 
     // save only if scheme differs from bundled
-    val bundledScheme = readOnlyExternalizableSchemes.get(scheme.name)
-    if (bundledScheme != null && schemeToInfo.get(bundledScheme)?.hash == newHash) {
+    val bundledScheme = readOnlyExternalizableSchemes[scheme.name]
+    if (bundledScheme != null && schemeToInfo[bundledScheme]?.hash == newHash) {
       externalInfo?.scheduleDelete()
       return
     }
@@ -580,7 +577,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         if (renamed) {
           externalInfo!!.scheduleDelete()
         }
-        FileUtil.writeToFile(File(ioDirectory, fileName), byteOut.internalBuffer, 0, byteOut.size())
+        ioDirectory.resolve(fileName).write(byteOut.internalBuffer, 0, byteOut.size())
       }
     }
     else {
@@ -606,7 +603,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   }
 
   private fun isRenamed(scheme: ExternalizableScheme): Boolean {
-    val info = schemeToInfo.get(scheme)
+    val info = schemeToInfo[scheme]
     return info != null && scheme.name != info.schemeName
   }
 
@@ -654,7 +651,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
     if (deleteUsingIo) {
       for (name in filesToDelete) {
-        errors.catch { FileUtil.delete(File(ioDirectory, name)) }
+        errors.catch { ioDirectory.resolve(name).delete() }
       }
     }
 
@@ -664,13 +661,13 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   private fun getDirectory(): VirtualFile? {
     var result = directory
     if (result == null) {
-      result = LocalFileSystem.getInstance().findFileByIoFile(ioDirectory)
+      result = LocalFileSystem.getInstance().findFileByPath(ioDirectory.systemIndependentPath)
       directory = result
     }
     return result
   }
 
-  override fun getRootDirectory() = ioDirectory
+  override fun getRootDirectory() = ioDirectory.toFile()
 
   override fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: Condition<T>?) {
     val oldCurrentScheme = currentScheme
@@ -678,11 +675,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       schemes.clear()
     }
     else {
-      for (i in schemes.indices.reversed()) {
-        if (removeCondition.value(schemes.get(i))) {
-          schemes.remove(i)
-        }
-      }
+      schemes.removeAll { removeCondition.value(it) }
     }
 
     retainExternalInfo(newSchemes)
@@ -708,25 +701,23 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       return
     }
 
-    schemeToInfo.retainEntries(object : TObjectObjectProcedure<E, ExternalInfo> {
-      override fun execute(scheme: E, info: ExternalInfo): Boolean {
-        if (readOnlyExternalizableSchemes.get(scheme.name) == scheme) {
-          return true
-        }
-
-        for (t in newSchemes) {
-          // by identity
-          if (t === scheme) {
-            if (filesToDelete.isNotEmpty()) {
-              filesToDelete.remove("${info.fileName}")
-            }
-            return true
-          }
-        }
-
-        info.scheduleDelete()
-        return false
+    schemeToInfo.retainEntries(TObjectObjectProcedure<E, ExternalInfo> { scheme, info ->
+      if (readOnlyExternalizableSchemes[scheme.name] == scheme) {
+        return@TObjectObjectProcedure true
       }
+
+      for (t in newSchemes) {
+        // by identity
+        if (t === scheme) {
+          if (filesToDelete.isNotEmpty()) {
+            filesToDelete.remove("${info.fileName}")
+          }
+          return@TObjectObjectProcedure true
+        }
+      }
+
+      info.scheduleDelete()
+      false
     })
   }
 
@@ -742,7 +733,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         toReplace = i
         if (replaceExisting && existing is ExternalizableScheme) {
           val oldInfo = schemeToInfo.remove(existing as E)
-          if (oldInfo != null && scheme is ExternalizableScheme && !schemeToInfo.containsKey(scheme)) {
+          if (oldInfo != null && scheme is ExternalizableScheme && !schemeToInfo.containsKey(scheme as E)) {
             @Suppress("UNCHECKED_CAST")
             schemeToInfo.put(scheme as E, oldInfo)
           }
@@ -754,7 +745,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       schemes.add(scheme)
     }
     else if (replaceExisting || scheme !is ExternalizableScheme) {
-      schemes.set(toReplace, scheme)
+      schemes[toReplace] = scheme
     }
     else {
       scheme.renameScheme(UniqueNameGenerator.generateUniqueName(scheme.name, collectExistingNames(schemes)))
@@ -762,7 +753,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     }
 
     if (scheme is ExternalizableScheme && filesToDelete.isNotEmpty()) {
-      val info = schemeToInfo.get(scheme)
+      val info = schemeToInfo[scheme as E]
       if (info != null) {
         filesToDelete.remove("${info.fileName}")
       }
@@ -780,12 +771,10 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   }
 
   override fun clearAllSchemes() {
-    schemeToInfo.forEachValue(object : TObjectProcedure<ExternalInfo> {
-      override fun execute(info: ExternalInfo): Boolean {
-        info.scheduleDelete()
-        return true
-      }
-    })
+    schemeToInfo.forEachValue {
+      it.scheduleDelete()
+      true
+    }
 
     currentScheme = null
     schemes.clear()
@@ -834,7 +823,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
   override fun removeScheme(scheme: T) {
     for (i in schemes.size - 1 downTo 0) {
-      val s = schemes.get(i)
+      val s = schemes[i]
       if (scheme.name == s.name) {
         if (currentScheme == s) {
           currentScheme = null
@@ -843,23 +832,13 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         if (s is ExternalizableScheme) {
           schemeToInfo.remove(s as E)?.scheduleDelete()
         }
-        schemes.remove(i)
+        schemes.removeAt(i)
         break
       }
     }
   }
 
-  override fun getAllSchemeNames(): Collection<String> {
-    if (schemes.isEmpty()) {
-      return emptyList()
-    }
-
-    val names = ArrayList<String>(schemes.size)
-    for (scheme in schemes) {
-      names.add(scheme.name)
-    }
-    return names
-  }
+  override fun getAllSchemeNames() = if (schemes.isEmpty()) emptyList() else schemes.map { it.name }
 
   override fun isMetadataEditable(scheme: E) = !readOnlyExternalizableSchemes.containsKey(scheme.name)
 
@@ -898,11 +877,11 @@ private inline fun MutableList<Throwable>.catch(runnable: () -> Unit) {
   }
 }
 
-fun createDir(ioDir: File, requestor: Any): VirtualFile {
-  ioDir.mkdirs()
-  val parentFile = ioDir.getParent()
-  val parentVirtualFile = (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile)) ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
-  return getFile(ioDir.name, parentVirtualFile, requestor)
+fun createDir(ioDir: Path, requestor: Any): VirtualFile {
+  ioDir.createDirectories()
+  val parentFile = ioDir.parent
+  val parentVirtualFile = (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile.systemIndependentPath)) ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
+  return getFile(ioDir.fileName.toString(), parentVirtualFile, requestor)
 }
 
 fun getFile(fileName: String, parent: VirtualFile, requestor: Any): VirtualFile {

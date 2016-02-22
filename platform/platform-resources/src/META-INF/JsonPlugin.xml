@@ -32,7 +32,7 @@
     <!-- Codeinsight -->
     <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>
     <qualifiedNameProvider implementation="com.intellij.json.navigation.JsonQualifiedNameProvider"/>
-    <completion.contributor language="JSON" implementationClass="com.intellij.json.codeinsight.JsonCompletionContributor"/>
+    <completion.contributor language="JSON" id="JsonSchemaCompletionContributor" order="last" implementationClass="com.intellij.json.codeinsight.JsonCompletionContributor"/>
     <lang.psiStructureViewFactory language="JSON" implementationClass="com.intellij.json.structureView.JsonStructureViewBuilderFactory"/>
     <lang.foldingBuilder language="JSON" implementationClass="com.intellij.json.editor.folding.JsonFoldingBuilder"/>
     <lang.smartEnterProcessor language="JSON" implementationClass="com.intellij.json.editor.smartEnter.JsonSmartEnterProcessor"/>
@@ -61,12 +61,27 @@
 
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
+    <projectService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration"/>
+    <projectConfigurable groupId="language" id="settings.json.schema" displayName="JSON Schema"
+                         instance="com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurable" nonDefaultProject="true"/>
+    <projectService serviceInterface="com.jetbrains.jsonSchema.ide.JsonSchemaService"
+                    serviceImplementation="com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl"/>
+    <annotator language="JSON" implementationClass="com.jetbrains.jsonSchema.ide.JsonSchemaAnnotator"/>
+    <completion.contributor order="last, before JsonSchemaCompletionContributor" language="JSON" implementationClass="com.jetbrains.jsonSchema.ide.JsonSchemaCompletionContributor"/>
+    <lang.documentationProvider language="JSON"
+                                implementationClass="com.jetbrains.jsonSchema.ide.JsonSchemaDocumentationProvider"/>
+    <refactoring.elementListenerProvider implementation="com.jetbrains.jsonSchema.JsonSchemaRefactoringListenerProvider"/>
+    <editorNotificationProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaConflictNotificationProvider"/>
   </extensions>
-
+  <extensions defaultExtensionNs="JavaScript">
+    <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderFactory"/>
+    <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaSelfProviderFactory"/>
+  </extensions>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.json.jsonStandardComplianceProvider"
                     interface="com.intellij.json.codeinsight.JsonStandardComplianceProvider"/>
+    <extensionPoint qualifiedName="JavaScript.JsonSchema.ProviderFactory" interface="com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory"/>
   </extensionPoints>
 
 </idea-plugin>

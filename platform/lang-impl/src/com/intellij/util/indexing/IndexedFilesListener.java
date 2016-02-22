@@ -100,13 +100,13 @@ abstract class IndexedFilesListener extends VirtualFileAdapter implements BulkFi
 
   protected abstract void iterateIndexableFiles(VirtualFile file, ContentIterator iterator);
   protected abstract void buildIndicesForFile(VirtualFile file, boolean contentChange);
-  protected abstract boolean invalidateIndicesForFile(VirtualFile file, boolean markForReindex);
+  protected abstract boolean invalidateIndicesForFile(VirtualFile file, boolean contentChange);
 
-  protected void invalidateIndicesRecursively(@NotNull final VirtualFile file, final boolean markForReindex) {
+  protected void invalidateIndicesRecursively(@NotNull final VirtualFile file, final boolean contentChange) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        return invalidateIndicesForFile(file, markForReindex);
+        return invalidateIndicesForFile(file, contentChange);
       }
 
       @Override

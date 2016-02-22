@@ -178,7 +178,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       for (ExternalSourceSet sourceSet : externalProject.getSourceSets().values()) {
         final String moduleId = getModuleId(externalProject, sourceSet);
         final String moduleExternalName = gradleModule.getName() + ":" + sourceSet.getName();
-        final String moduleInternalName = gradleModule.getName() + "_" + sourceSet.getName();
+        final String moduleInternalName = getInternalModuleName(gradleModule, sourceSet.getName());
 
         GradleSourceSetData sourceSetData = new GradleSourceSetData(
           moduleId, moduleExternalName, moduleInternalName, mainModuleFileDirectoryPath, mainModuleConfigPath);
@@ -196,14 +196,22 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           if (defaultArtifacts != null) {
             artifacts.addAll(defaultArtifacts);
           }
-          final Set<File> archivesArtifacts = externalProject.getArtifactsByConfiguration().get("archives");
-          if (archivesArtifacts != null) {
+          if (externalProject.getArtifactsByConfiguration().get("archives") != null) {
+            final Set<File> archivesArtifacts = ContainerUtil.newHashSet(externalProject.getArtifactsByConfiguration().get("archives"));
+            final Set<File> testsArtifacts = externalProject.getArtifactsByConfiguration().get("tests");
+            if (testsArtifacts != null) {
+              archivesArtifacts.removeAll(testsArtifacts);
+            }
             artifacts.addAll(archivesArtifacts);
           }
-        } else if("test".equals(sourceSet.getName())) {
-          final Set<File> testsArtifacts = externalProject.getArtifactsByConfiguration().get("tests");
-          if (testsArtifacts != null) {
-            artifacts.addAll(testsArtifacts);
+        }
+        else {
+          sourceSetData.setProductionModuleId(getInternalModuleName(gradleModule, "main"));
+          if ("test".equals(sourceSet.getName())) {
+            final Set<File> testsArtifacts = externalProject.getArtifactsByConfiguration().get("tests");
+            if (testsArtifacts != null) {
+              artifacts.addAll(testsArtifacts);
+            }
           }
         }
         sourceSetData.setArtifacts(ContainerUtil.newArrayList(artifacts));
@@ -223,6 +231,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
 
     return mainModuleNode;
+  }
+
+  @NotNull
+  private static String getInternalModuleName(@NotNull IdeaModule gradleModule, @NotNull String sourceSetName) {
+    return PathUtilRt.suggestFileName(gradleModule.getName() + "_" + sourceSetName, true, false);
   }
 
   @Override
@@ -436,15 +449,17 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final String moduleConfigPath = ideModule.getData().getLinkedExternalProjectPath();
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
-
+    final String rootProjectPath = ideProject.getData().getLinkedExternalProjectPath();
+    final boolean isFlatProject = !FileUtil.isAncestor(rootProjectPath, moduleConfigPath, false);
     if (externalProject != null) {
       for (ExternalTask task : externalProject.getTasks().values()) {
-        String taskName = task.getName();
+        String taskName = isFlatProject ? task.getQName() : task.getName();
         String taskGroup = task.getGroup();
         if (taskName.trim().isEmpty() || isIdeaTask(taskName, taskGroup)) {
           continue;
         }
-        TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, taskName, moduleConfigPath, task.getDescription());
+        final String taskPath = isFlatProject ? rootProjectPath : moduleConfigPath;
+        TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, taskName, taskPath, task.getDescription());
         taskData.setGroup(taskGroup);
         taskData.setType(task.getType());
         ideModule.createChild(ProjectKeys.TASK, taskData);

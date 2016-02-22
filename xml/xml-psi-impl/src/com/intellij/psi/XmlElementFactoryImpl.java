@@ -18,7 +18,6 @@ package com.intellij.psi;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
@@ -27,6 +26,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlTagUtil;
@@ -72,8 +73,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
   @NotNull
   @Override
   public XmlAttribute createAttribute(@NotNull @NonNls String name, @NotNull String value, @Nullable PsiElement context) throws IncorrectOperationException {
-    final FileType type = context != null ? context.getContainingFile().getFileType() : null;
-    return createAttribute(name, value, type instanceof XmlLikeFileType ? type : XmlFileType.INSTANCE);
+    return createAttribute(name, value, PsiTreeUtil.getParentOfType(context, XmlTag.class, false) instanceof HtmlTag ? HtmlFileType.INSTANCE : XmlFileType.INSTANCE);
   }
 
   @NotNull

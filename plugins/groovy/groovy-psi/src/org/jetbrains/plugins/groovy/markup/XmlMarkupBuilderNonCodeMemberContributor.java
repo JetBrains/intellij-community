@@ -42,7 +42,6 @@ public class XmlMarkupBuilderNonCodeMemberContributor extends NonCodeMembersCont
                                      @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
     String nameHint = ResolveUtil.getNameHint(processor);
-
     if (nameHint == null) return;
 
     if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return;

@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PausesStat {
   private static final int N_MAX = 200000;
+  // stores pairs of (timestamp of the event start), (timestamp of the event end). Timestamps are stored as diffs between System.currentTimeMillis() and epochStart.
   private final TIntArrayList pauses = new TIntArrayList();
   private final long epochStart;
   @NotNull private final String myName;
@@ -27,6 +28,7 @@ public class PausesStat {
   private int maxDuration;
   private Object maxDurationDescription;
   private int totalNumberRecorded;
+  private int indexToOverwrite; // used when pauses.size() == N_MAX and we have to overflow cyclically
 
   public PausesStat(@NotNull String name) {
     myName = name;
@@ -35,26 +37,25 @@ public class PausesStat {
 
   private int register() {
     int stamp = (int)(System.currentTimeMillis() - epochStart);
-    pauses.add(stamp);
+    if (pauses.size()/2 == N_MAX) {
+      pauses.set(indexToOverwrite, stamp);
+      indexToOverwrite = (indexToOverwrite + 1) % N_MAX;
+    }
+    else {
+      pauses.add(stamp);
+    }
     return stamp;
   }
 
   public void started() {
     assert !started;
-    if (pauses.size() > N_MAX) {
-      // guard against OOME
-      int toDelete = N_MAX / 4;
-      assert toDelete % 2 == 0 : toDelete;
-      pauses.remove(0, toDelete);
-      maxDuration = 0;
-    }
     register();
     started = true;
   }
 
   public void finished(@NotNull String description) {
     assert started;
-    int startStamp = pauses.get(pauses.size() - 1);
+    int startStamp = pauses.get(pauses.size()/2 == N_MAX ? indexToOverwrite-1 : pauses.size() - 1);
     int finishStamp = register();
     int duration = finishStamp - startStamp;
     started = false;
@@ -77,8 +78,8 @@ public class PausesStat {
       duration[i / 2] = thisDuration;
     }
 
-    return myName + " Statistics:" +
-           "\nTotal number:     " + number + (totalNumberRecorded == number ? "" : " (Total number recorded: "+totalNumberRecorded+")") +
+    return myName + " Statistics" + (totalNumberRecorded == number ? "" : " ("+totalNumberRecorded+" events was recorded in total, but only last "+number+" are reported here)")+":"+
+           "\nEvent number:     " + number +
            "\nTotal time spent: " + total + "ms" +
            "\nAverage duration: " + (number == 0 ? 0 : total / number) + "ms" +
            "\nMedian  duration: " + ArrayUtil.averageAmongMedians(duration, 3) + "ms" +

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
@@ -85,7 +84,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
@@ -101,7 +100,7 @@ import java.util.List;
 public class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
 
-  @NotNull public static final String DIFF_CONFIG = StoragePathMacros.APP_CONFIG + "/diff.xml";
+  @NotNull public static final String DIFF_CONFIG = "diff.xml";
   public static final int TITLE_GAP = JBUI.scale(2);
 
   //
@@ -285,24 +284,21 @@ public class DiffUtil {
 
   @NotNull
   public static JPanel createMessagePanel(@NotNull String message) {
-    Pair<JPanel, JLabel> pair = createMessagePanel();
-    pair.getSecond().setText(message);
-    return pair.getFirst();
-  }
-
-  @NotNull
-  public static Pair<JPanel, JLabel> createMessagePanel() {
-    JLabel label = new JLabel();
+    String text = StringUtil.replace(message, "\n", "<br>");
+    JLabel label = new JBLabel(text) {
+      @Override
+      public Dimension getMinimumSize() {
+        Dimension size = super.getMinimumSize();
+        size.width = Math.min(size.width, 200);
+        size.height = Math.min(size.height, 100);
+        return size;
+      }
+    }.setCopyable(true);
     label.setForeground(UIUtil.getInactiveTextColor());
-    JPanel wrapper = createMessagePanel(label);
-    return Pair.create(wrapper, label);
-  }
 
-  @NotNull
-  public static JPanel createMessagePanel(@NotNull JComponent comp) {
-    JPanel wrapper = new JPanel(new GridBagLayout());
-    wrapper.add(comp, new GridBag().insets(JBUI.insets(1)));
-    return wrapper;
+    JPanel panel = new CenteredPanel(label);
+    panel.setBorder(JBUI.Borders.empty(5));
+    return panel;
   }
 
   public static void addActionBlock(@NotNull DefaultActionGroup group, AnAction... actions) {
@@ -569,18 +565,26 @@ public class DiffUtil {
   //
 
   @NotNull
-  public static List<LineFragment> compare(@NotNull CharSequence text1,
+  public static List<LineFragment> compare(@NotNull DiffRequest request,
+                                           @NotNull CharSequence text1,
                                            @NotNull CharSequence text2,
                                            @NotNull DiffConfig config,
                                            @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
 
+    DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
+
     List<LineFragment> fragments;
-    if (config.innerFragments) {
-      fragments = ComparisonManager.getInstance().compareLinesInner(text1, text2, config.policy, indicator);
+    if (diffComputer != null) {
+      fragments = diffComputer.compute(text1, text2, config.policy, config.innerFragments, indicator);
     }
     else {
-      fragments = ComparisonManager.getInstance().compareLines(text1, text2, config.policy, indicator);
+      if (config.innerFragments) {
+        fragments = ComparisonManager.getInstance().compareLinesInner(text1, text2, config.policy, indicator);
+      }
+      else {
+        fragments = ComparisonManager.getInstance().compareLines(text1, text2, config.policy, indicator);
+      }
     }
 
     indicator.checkCanceled();
@@ -779,6 +783,27 @@ public class DiffUtil {
 
   public static int getLineCount(@NotNull Document document) {
     return Math.max(document.getLineCount(), 1);
+  }
+
+  @NotNull
+  public static List<String> getLines(@NotNull Document document) {
+    return getLines(document, 0, getLineCount(document));
+  }
+
+  @NotNull
+  public static List<String> getLines(@NotNull Document document, int startLine, int endLine) {
+    if (startLine < 0 || startLine > endLine || endLine > getLineCount(document)) {
+      throw new IndexOutOfBoundsException(String.format("Wrong line range: [%d, %d); lineCount: '%d'",
+                                                        startLine, endLine, document.getLineCount()));
+    }
+
+    List<String> result = new ArrayList<String>();
+    for (int i = startLine; i < endLine; i++) {
+      int start = document.getLineStartOffset(i);
+      int end = document.getLineEndOffset(i);
+      result.add(document.getText(new TextRange(start, end)));
+    }
+    return result;
   }
 
   //
@@ -1259,6 +1284,51 @@ public class DiffUtil {
         height = Math.max(height, component.getPreferredSize().height);
       }
       return height;
+    }
+  }
+
+  private static class CenteredPanel extends JPanel {
+    private final JComponent myComponent;
+
+    public CenteredPanel(@NotNull JComponent component) {
+      myComponent = component;
+      add(component);
+    }
+
+    @Override
+    public void doLayout() {
+      final Dimension size = getSize();
+      final Dimension preferredSize = myComponent.getPreferredSize();
+
+      Insets insets = getInsets();
+      JBInsets.removeFrom(size, insets);
+
+      int width = Math.min(size.width, preferredSize.width);
+      int height = Math.min(size.height, preferredSize.height);
+      int x = Math.max(0, (size.width - preferredSize.width) / 2);
+      int y = Math.max(0, (size.height - preferredSize.height) / 2);
+
+      myComponent.setBounds(insets.left + x, insets.top + y, width, height);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return addInsets(myComponent.getPreferredSize());
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return addInsets(myComponent.getMinimumSize());
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+      return addInsets(myComponent.getMaximumSize());
+    }
+
+    private Dimension addInsets(Dimension dimension) {
+      JBInsets.addTo(dimension, getInsets());
+      return dimension;
     }
   }
 }

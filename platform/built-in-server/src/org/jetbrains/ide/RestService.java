@@ -44,6 +44,7 @@ import org.jetbrains.io.Responses;
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.List;
 
@@ -103,10 +104,6 @@ public abstract class RestService extends HttpRequestHandler {
     return false;
   }
 
-  protected boolean activateToolBeforeExecution() {
-    return true;
-  }
-
   @NotNull
   /**
    * Use human-readable name or UUID if it is an internal service.
@@ -118,13 +115,6 @@ public abstract class RestService extends HttpRequestHandler {
   @Override
   public final boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
     try {
-      if (activateToolBeforeExecution()) {
-        IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-        if (frame instanceof Window) {
-          ((Window)frame).toFront();
-        }
-      }
-
       String error = execute(urlDecoder, request, context);
       if (error != null) {
         Responses.sendStatus(HttpResponseStatus.BAD_REQUEST, context.channel(), error, request);
@@ -147,6 +137,13 @@ public abstract class RestService extends HttpRequestHandler {
     return true;
   }
 
+  protected final void activateLastFocusedFrame() {
+    IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+    if (frame instanceof Window) {
+      ((Window)frame).toFront();
+    }
+  }
+
   @Nullable("error text or null if successful")
   /**
    * Return error or send response using {@link #sendOk(FullHttpRequest, ChannelHandlerContext)}, {@link #send(BufferExposingByteArrayOutputStream, FullHttpRequest, ChannelHandlerContext)}
@@ -161,7 +158,7 @@ public abstract class RestService extends HttpRequestHandler {
   }
 
   @NotNull
-  protected static JsonWriter createJsonWriter(@NotNull BufferExposingByteArrayOutputStream out) {
+  protected static JsonWriter createJsonWriter(@NotNull OutputStream out) {
     JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, CharsetToolkit.UTF8_CHARSET));
     writer.setIndent("  ");
     return writer;

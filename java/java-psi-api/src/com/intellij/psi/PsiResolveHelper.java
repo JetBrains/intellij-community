@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
@@ -169,4 +170,8 @@ public interface PsiResolveHelper {
                                           PsiType arg,
                                           boolean isContraVariantPosition,
                                           LanguageLevel languageLevel);
+
+  @NotNull
+  LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile);
+
 }

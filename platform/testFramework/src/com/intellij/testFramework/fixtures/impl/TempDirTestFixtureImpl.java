@@ -31,13 +31,11 @@ import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 
 /**
  * @author Dmitry Avdeev
  */
 public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
-  private final ArrayList<File> myFilesToDelete = new ArrayList<File>();
   private File myTempDir;
 
   @NotNull
@@ -108,12 +106,9 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   @NotNull
   public VirtualFile createFile(@NotNull final String name) {
     final File file = new File(createTempDirectory(), name);
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        FileUtil.createIfDoesntExist(file);
-        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-      }
+    return ApplicationManager.getApplication().runWriteAction((Computable<VirtualFile>)() -> {
+      FileUtil.createIfDoesntExist(file);
+      return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     });
   }
 
@@ -145,12 +140,17 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   @Override
   public void tearDown() throws Exception {
     try {
-      for (final File fileToDelete : myFilesToDelete) {
-        boolean deleted = FileUtil.delete(fileToDelete);
-        Assert.assertTrue("Can't delete " + fileToDelete, deleted);
+      if (myTempDir != null) {
+        new WriteAction() {
+          @Override
+          protected void run(@NotNull Result result) throws IOException {
+            findOrCreateDir("").delete(this);
+          }
+        }.execute();
       }
     }
     finally {
+      //noinspection ThrowFromFinallyBlock
       super.tearDown();
     }
   }
@@ -166,7 +166,6 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
         File tempHome = getTempHome();
         myTempDir = tempHome == null ? FileUtil.createTempDirectory("unitTest", null, false) :
                     FileUtil.createTempDirectory(tempHome, "unitTest", null, false);
-        myFilesToDelete.add(myTempDir);
       }
       return myTempDir;
     }

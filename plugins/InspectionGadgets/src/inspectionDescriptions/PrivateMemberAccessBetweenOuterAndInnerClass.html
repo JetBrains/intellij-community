@@ -3,12 +3,15 @@
 This inspection is intended for J2ME and other highly resource constrained environments.
 Applying the results of this inspection without consideration might have negative effects on code clarity and design.
 <p>
+Reports references to non-constant <b>private</b> members of an outer class from inside an inner class or
+to members of an inner class from a containing class.
+<p>
 An inner class and its containing class are compiled to separate
 class files. The virtual machine normally prohibits access from a class to private fields and methods of
 another class. To enable access from an inner class to private members of a
 containing class or the other way around javac and other compilers create package private
 synthetic accessor methods. Less use of memory and greater performance may be achieved by making the
-member package local, thus allowing direct access without the creation of synthetic accessor methods.
+member package-private, thus allowing direct access without the creation of synthetic accessor methods.
 <!-- tooltip end -->
 <p>
 

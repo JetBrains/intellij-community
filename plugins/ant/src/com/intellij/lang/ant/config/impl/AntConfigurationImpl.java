@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,9 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -67,11 +69,8 @@ import javax.swing.*;
 import java.util.*;
 
 @State(
-    name = "AntConfiguration",
-    storages = {
-      @Storage(file = StoragePathMacros.PROJECT_FILE),
-      @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/ant.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+  name = "AntConfiguration",
+  storages = @Storage("ant.xml")
 )
 public class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element> {
 
@@ -118,7 +117,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private final EventDispatcher<AntConfigurationListener> myEventDispatcher = EventDispatcher.create(AntConfigurationListener.class);
   private final AntWorkspaceConfiguration myAntWorkspaceConfiguration;
   private final StartupManager myStartupManager;
-  private boolean myInitializing;
 
   public AntConfigurationImpl(final Project project, final AntWorkspaceConfiguration antWorkspaceConfiguration, final DaemonCodeAnalyzer daemon) {
     super(project);
@@ -198,6 +196,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private volatile Boolean myIsInitialized = null;
+  private volatile Thread myInitThread = null;
   
   public boolean isInitialized() {
     final Boolean initialized = myIsInitialized;
@@ -668,7 +667,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private List<ExecutionEvent> getEventsByClass(Class eventClass) {
-    if (!myInitializing) ensureInitialized();
+    final Thread initThread = myInitThread;
+    if (initThread == null || initThread != Thread.currentThread()) {
+      ensureInitialized();
+    }
     final List<ExecutionEvent> list = new ArrayList<ExecutionEvent>();
     synchronized (myEventToTargetMap) {
       for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
@@ -717,7 +719,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               try {
-                myInitializing = true;
+                myInitThread = Thread.currentThread();
                 // first, remove existing files
                 final AntBuildFile[] currentFiles = getBuildFiles();
                 for (AntBuildFile file : currentFiles) {
@@ -798,14 +800,18 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                 LOG.error(e);
               }
               finally {
-                updateRegisteredActions();
-                myInitializing = false;
-                myIsInitialized = Boolean.TRUE;
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  public void run() {
-                    myEventDispatcher.getMulticaster().configurationLoaded();
-                  }
-                }, ModalityState.any());
+                try {
+                  updateRegisteredActions();
+                }
+                finally {
+                  myInitThread = null;
+                  myIsInitialized = Boolean.TRUE;
+                  ApplicationManager.getApplication().invokeLater(new Runnable() {
+                    public void run() {
+                      myEventDispatcher.getMulticaster().configurationLoaded();
+                    }
+                  }, ModalityState.any());
+                }
               }
             }
           });

@@ -105,6 +105,12 @@ public class LocalHistoryFacade {
   private LabelImpl putLabel(@NotNull final PutLabelChange c) {
     addChange(c);
     return new LabelImpl() {
+
+      @Override
+      public long getLabelChangeId() {
+        return c.getId();
+      }
+
       @Override
       public ByteContent getByteContent(RootEntry root, String path) {
         return getByteContentBefore(root, path, c);

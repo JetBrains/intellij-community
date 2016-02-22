@@ -31,7 +31,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
@@ -94,8 +93,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
       final List<Change> changes = new LinkedList<Change>();
       final FilePath[] targetPath = new FilePath[1];
       ProgressManager.getInstance().run(new Task.Backgroundable(myVcs.getProject(),
-                                                                "Loading revision " + revisionNumber.asString() + " contents", true,
-                                                                BackgroundFromStartOption.getInstance()) {
+                                                                "Loading revision " + revisionNumber.asString() + " contents", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           final CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();

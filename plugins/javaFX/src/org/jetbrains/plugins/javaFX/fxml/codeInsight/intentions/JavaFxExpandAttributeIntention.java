@@ -31,9 +31,9 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultAttributeDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyAttributeDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticPropertyAttributeDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticSetterAttributeDescriptor;
 
 /**
  * User: anna
@@ -77,7 +77,7 @@ public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionActio
       final PsiElement parent = element.getParent();
       if (parent instanceof XmlAttribute) {
         final XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
-        if (descriptor instanceof JavaFxPropertyAttributeDescriptor && !(descriptor instanceof JavaFxDefaultAttributeDescriptor)) {
+        if (descriptor instanceof JavaFxPropertyAttributeDescriptor && !(descriptor instanceof JavaFxDefaultPropertyAttributeDescriptor)) {
 
           PsiType tagType = null;
           final PsiElement declaration = descriptor.getDeclaration();
@@ -90,7 +90,7 @@ public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionActio
             }
           }
           PsiClass tagClass = PsiUtil.resolveClassInType(tagType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)tagType).getBoxedType(parent) : tagType);
-          if ((tagClass != null && JavaFxPsiUtil.isAbleToInstantiate(tagClass) == null) || descriptor instanceof JavaFxStaticPropertyAttributeDescriptor) {
+          if ((tagClass != null && JavaFxPsiUtil.isAbleToInstantiate(tagClass) == null) || descriptor instanceof JavaFxStaticSetterAttributeDescriptor) {
             setText("Expand '" + ((XmlAttribute)parent).getName() + "' to tag");
             return true;
           }

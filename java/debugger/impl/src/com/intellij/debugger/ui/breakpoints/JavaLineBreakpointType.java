@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     return new JavaLineBreakpointProperties();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public JavaLineBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
     return new JavaLineBreakpointProperties();
@@ -87,7 +87,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   @NotNull
   @Override
   public Breakpoint<JavaLineBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
-    return new LineBreakpoint<JavaLineBreakpointProperties>(project, breakpoint);
+    return new LineBreakpoint<>(project, breakpoint);
   }
 
   @Override
@@ -120,17 +120,20 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       return Collections.emptyList();
     }
 
-    List<JavaBreakpointVariant> res = new SmartList<JavaBreakpointVariant>();
+    List<JavaBreakpointVariant> res = new SmartList<>();
     res.add(new JavaBreakpointVariant(position)); //all
 
-    if (startMethod instanceof PsiMethod) {
+    if (!(startMethod instanceof PsiLambdaExpression)) {
       res.add(new ExactJavaBreakpointVariant(position, startMethod, -1)); // base method
     }
 
     int ordinal = 0;
     for (PsiLambdaExpression lambda : lambdas) { //lambdas
       PsiElement firstElem = DebuggerUtilsEx.getFirstElementOnTheLine(lambda, document, position.getLine());
-      res.add(new ExactJavaBreakpointVariant(XSourcePositionImpl.createByElement(firstElem), lambda, ordinal++));
+      XSourcePositionImpl elementPosition = XSourcePositionImpl.createByElement(firstElem);
+      if (elementPosition != null) {
+        res.add(new ExactJavaBreakpointVariant(elementPosition, lambda, ordinal++));
+      }
     }
 
     return res;
@@ -165,32 +168,9 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     return DebuggerUtilsEx.getContainingMethod(position);
   }
 
-  public class JavaBreakpointVariant extends XLineBreakpointVariant {
-    protected final XSourcePosition mySourcePosition;
-
-    public JavaBreakpointVariant(XSourcePosition position) {
-      mySourcePosition = position;
-    }
-
-    @Override
-    public String getText() {
-      return "All";
-    }
-
-    @Override
-    public Icon getIcon() {
-      return null;
-    }
-
-    @Override
-    public TextRange getHighlightRange() {
-      return null;
-    }
-
-    @Override
-    public JavaLineBreakpointProperties createProperties() {
-      return createBreakpointProperties(mySourcePosition.getFile(),
-                                        mySourcePosition.getLine());
+  public class JavaBreakpointVariant extends XLineBreakpointAllVariant {
+    public JavaBreakpointVariant(@NotNull XSourcePosition position) {
+      super(position);
     }
   }
 
@@ -198,7 +178,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     private final PsiElement myElement;
     private final Integer myLambdaOrdinal;
 
-    public ExactJavaBreakpointVariant(XSourcePosition position, PsiElement element, Integer lambdaOrdinal) {
+    public ExactJavaBreakpointVariant(@NotNull XSourcePosition position, PsiElement element, Integer lambdaOrdinal) {
       super(position);
       myElement = element;
       myLambdaOrdinal = lambdaOrdinal;
@@ -219,9 +199,11 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       return myElement.getTextRange();
     }
 
+    @NotNull
     @Override
     public JavaLineBreakpointProperties createProperties() {
       JavaLineBreakpointProperties properties = super.createProperties();
+      assert properties != null;
       properties.setLambdaOrdinal(myLambdaOrdinal);
       return properties;
     }

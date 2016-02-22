@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,12 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.PairFunction;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -72,7 +74,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
     }
     fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     //noinspection HardCodedStringLiteral
-    fragment.putUserData(DebuggerExpressionComboBox.KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
+    fragment.putUserData(KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
     fragment.putCopyableUserData(JavaCompletionUtil.DYNAMIC_TYPE_EVALUATOR, new PairFunction<PsiExpression, CompletionParameters, PsiType>() {
       public PsiType fun(PsiExpression expression, CompletionParameters parameters) {
         if (!RuntimeTypeEvaluator.isSubtypeable(expression)) {
@@ -89,10 +91,10 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
 
         final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(project).getContext();
         DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
-        if (debuggerSession != null) {
+        if (debuggerSession != null && debuggerContext.getSuspendContext() != null) {
           final Semaphore semaphore = new Semaphore();
           semaphore.down();
-          final AtomicReference<PsiType> nameRef = new AtomicReference<PsiType>();
+          final AtomicReference<PsiType> nameRef = new AtomicReference<>();
           final RuntimeTypeEvaluator worker =
             new RuntimeTypeEvaluator(null, expression, debuggerContext, ProgressManager.getInstance().getProgressIndicator()) {
               @Override
@@ -119,6 +121,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
     return true; // default factory works everywhere debugger can stop
   }
 
+  @NotNull
   public LanguageFileType getFileType() {
     return StdFileTypes.JAVA;
   }
@@ -126,5 +129,11 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
   @Override
   public EvaluatorBuilder getEvaluatorBuilder() {
     return EvaluatorBuilderImpl.getInstance();
+  }
+
+  public static final Key<String> KEY = Key.create("DefaultCodeFragmentFactory.KEY");
+
+  public static boolean isDebuggerFile(PsiFile file) {
+    return file.getUserData(KEY) != null || file.getUserData(DebuggerExpressionComboBox.KEY) != null;
   }
 }

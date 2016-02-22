@@ -221,12 +221,12 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     TextAttributes abstractMethodAttrs = new TextAttributes();
     assertTrue(abstractMethodAttrs.isFallbackEnabled());
     Pair<EditorColorsScheme, TextAttributes> result =
-      doTestWriteRead(CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES, abstractMethodAttrs);
+      doTestWriteRead(DefaultLanguageHighlighterColors.INSTANCE_FIELD, abstractMethodAttrs);
     TextAttributes fallbackAttrs = result.first.getAttributes(
-      CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES.getFallbackAttributeKey()
+      DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey()
     );
     TextAttributes directlyDefined =
-      ((AbstractColorsScheme)result.first).getDirectlyDefinedAttributes(CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES);
+      ((AbstractColorsScheme)result.first).getDirectlyDefinedAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD);
     assertTrue(directlyDefined != null && directlyDefined.isFallbackEnabled());
     assertSame(fallbackAttrs, result.second);
   }

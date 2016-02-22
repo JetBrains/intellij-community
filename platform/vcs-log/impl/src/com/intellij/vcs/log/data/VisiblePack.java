@@ -17,26 +17,30 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLogDataPack;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 public class VisiblePack implements VcsLogDataPack {
-
-  public static final VisiblePack EMPTY = new VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false);
+  @NotNull
+  public static final VisiblePack EMPTY = new VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false, VcsLogFilterCollectionImpl.EMPTY);
 
   @NotNull private final DataPack myDataPack;
   @NotNull private final VisibleGraph<Integer> myVisibleGraph;
   private final boolean myCanRequestMore;
+  @NotNull private final VcsLogFilterCollection myFilters;
 
-  VisiblePack(@NotNull DataPack dataPack, @NotNull VisibleGraph<Integer> graph, boolean canRequestMore) {
+  VisiblePack(@NotNull DataPack dataPack, @NotNull VisibleGraph<Integer> graph, boolean canRequestMore, @NotNull VcsLogFilterCollection filters) {
     myDataPack = dataPack;
     myVisibleGraph = graph;
     myCanRequestMore = canRequestMore;
+    myFilters = filters;
   }
 
   @NotNull
@@ -72,5 +76,11 @@ public class VisiblePack implements VcsLogDataPack {
 
   public boolean isFull() {
     return myDataPack.isFull();
+  }
+
+  @Override
+  @NotNull
+  public VcsLogFilterCollection getFilters() {
+    return myFilters;
   }
 }

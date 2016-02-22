@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1107,15 +1107,20 @@ public class SoftWrapApplianceManager implements Dumpable {
 
   private static class DefaultVisibleAreaWidthProvider implements VisibleAreaWidthProvider {
 
-    private final Editor myEditor;
+    private final EditorImpl myEditor;
 
-    DefaultVisibleAreaWidthProvider(Editor editor) {
+    DefaultVisibleAreaWidthProvider(EditorImpl editor) {
       myEditor = editor;
     }
 
     @Override
     public int getVisibleAreaWidth() {
-      return myEditor.getScrollingModel().getVisibleArea().width;
+      if (myEditor.isInDistractionFreeMode()) {
+        int rightMargin = myEditor.getSettings().getRightMargin(myEditor.getProject());
+        if (rightMargin > 0) return rightMargin * EditorUtil.getPlainSpaceWidth(myEditor);
+      }
+      Insets insets = myEditor.getContentComponent().getInsets();
+      return Math.max(0, myEditor.getScrollingModel().getVisibleArea().width - insets.left - insets.right);
     }
   }
 

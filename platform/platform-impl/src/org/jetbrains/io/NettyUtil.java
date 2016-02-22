@@ -17,7 +17,6 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.SystemProperties;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.BootstrapUtil;
 import io.netty.bootstrap.ServerBootstrap;
@@ -46,7 +45,6 @@ import java.net.BindException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public final class NettyUtil {
@@ -54,15 +52,6 @@ public final class NettyUtil {
 
   public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 20;
   public static final int MIN_START_TIME = 100;
-
-  static {
-    // IDEA-120811
-    if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
-      System.setProperty("io.netty.machineId", "9e43d860");
-      System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
-      System.setProperty("io.netty.serviceThreadPrefix", "Netty ");
-    }
-  }
 
   public static void logAndClose(@NotNull Throwable error, @NotNull Logger log, @NotNull Channel channel) {
     // don't report about errors while connecting

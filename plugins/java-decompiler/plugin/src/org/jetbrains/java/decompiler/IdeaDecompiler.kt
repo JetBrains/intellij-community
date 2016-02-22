@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import java.util.jar.Manifest
 
 class IdeaDecompiler : ClassFileDecompilers.Light() {
   companion object {
-    val BANNER = "//\n// Source code recreated from a .class file by IntelliJ IDEA\n// (powered by Fernflower decompiler)\n//\n\n"
+    const val BANNER = "//\n// Source code recreated from a .class file by IntelliJ IDEA\n// (powered by Fernflower decompiler)\n//\n\n"
 
     private val LEGAL_NOTICE_KEY = "decompiler.legal.notice.accepted"
 
@@ -171,10 +171,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     }
     catch (e: Exception) {
       if (ApplicationManager.getApplication().isUnitTestMode) {
-        val error = AssertionError(file.url)
-        @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-        (error as java.lang.Throwable).initCause(e)
-        throw error
+        throw AssertionError(file.url, e)
       }
       else {
         throw ClassFileDecompilers.Light.CannotDecompileException(e)
@@ -191,9 +188,8 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
   private class MyBytecodeProvider(private val files: Map<String, VirtualFile>) : IBytecodeProvider {
     override fun getBytecode(externalPath: String, internalPath: String?): ByteArray {
       val path = FileUtil.toSystemIndependentName(externalPath)
-      val file = files[path]
-      assert(file != null) { path + " not in " + files.keys }
-      return file!!.contentsToByteArray(false)
+      val file = files[path] ?: throw AssertionError(path + " not in " + files.keys)
+      return file.contentsToByteArray(false)
     }
   }
 

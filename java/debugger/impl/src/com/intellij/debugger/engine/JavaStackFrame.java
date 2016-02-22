@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,18 +139,20 @@ public class JavaStackFrame extends XStackFrame {
       public void threadAction() {
         if (node.isObsolete()) return;
         XValueChildrenList children = new XValueChildrenList();
-        buildVariablesThreadAction(getFrameDebuggerContext(), children, node);
+        buildVariablesThreadAction(getFrameDebuggerContext(getDebuggerContext()), children, node);
         node.addChildren(children, true);
       }
     });
   }
 
-  DebuggerContextImpl getFrameDebuggerContext() {
+  DebuggerContextImpl getFrameDebuggerContext(@Nullable DebuggerContextImpl context) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    DebuggerContextImpl context = myDebugProcess.getDebuggerContext();
+    if (context == null) {
+      context = myDebugProcess.getDebuggerContext();
+    }
     if (context.getFrameProxy() != getStackFrameProxy()) {
-      SuspendContextImpl threadSuspendContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(),
-                                                                                              getStackFrameProxy().threadProxy());
+      SuspendContextImpl threadSuspendContext =
+        SuspendManagerUtil.findContextByThread(myDebugProcess.getSuspendManager(), getStackFrameProxy().threadProxy());
       context = DebuggerContextImpl.createDebuggerContext(
         myDebugProcess.mySession,
         threadSuspendContext,
@@ -195,7 +197,7 @@ public class JavaStackFrame extends XStackFrame {
 
       // add last method return value if any
       final Pair<Method, Value> methodValuePair = debugProcess.getLastExecutedMethod();
-      if (methodValuePair != null) {
+      if (methodValuePair != null && myDescriptor.getUiIndex() == 0) {
         ValueDescriptorImpl returnValueDescriptor = myNodeManager.getMethodReturnValueDescriptor(myDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
         children.add(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
       }
@@ -249,7 +251,7 @@ public class JavaStackFrame extends XStackFrame {
                               XValueChildrenList children,
                               ObjectReference thisObjectReference,
                               Location location) throws EvaluateException {
-    final Set<String> visibleLocals = new HashSet<String>();
+    final Set<String> visibleLocals = new HashSet<>();
     if (NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
       if (thisObjectReference != null && debugProcess.getVirtualMachineProxy().canGetSyntheticAttribute()) {
         final ReferenceType thisRefType = thisObjectReference.referenceType();
@@ -344,11 +346,11 @@ public class JavaStackFrame extends XStackFrame {
   private static Set<TextWithImports> computeExtraVars(Pair<Set<String>, Set<TextWithImports>> usedVars,
                                                        @NotNull SourcePosition sourcePosition,
                                                        @NotNull EvaluationContextImpl evalContext) {
-    Set<String> alreadyCollected = new HashSet<String>(usedVars.first);
+    Set<String> alreadyCollected = new HashSet<>(usedVars.first);
     for (TextWithImports text : usedVars.second) {
       alreadyCollected.add(text.getText());
     }
-    Set<TextWithImports> extra = new HashSet<TextWithImports>();
+    Set<TextWithImports> extra = new HashSet<>();
     for (FrameExtraVariablesProvider provider : FrameExtraVariablesProvider.EP_NAME.getExtensions()) {
       if (provider.isAvailable(sourcePosition, evalContext)) {
         extra.addAll(provider.collectVariables(sourcePosition, evalContext, alreadyCollected));
@@ -421,8 +423,8 @@ public class JavaStackFrame extends XStackFrame {
   private static class VariablesCollector extends JavaRecursiveElementVisitor {
     private final Set<String> myVisibleLocals;
     private final TextRange myLineRange;
-    private final Set<TextWithImports> myExpressions = new HashSet<TextWithImports>();
-    private final Set<String> myVars = new HashSet<String>();
+    private final Set<TextWithImports> myExpressions = new HashSet<>();
+    private final Set<String> myVars = new HashSet<>();
     private final boolean myCollectExpressions = XDebuggerSettingsManager.getInstance().getDataViewSettings().isAutoExpressions();
 
     public VariablesCollector(Set<String> visibleLocals, TextRange lineRange) {
@@ -654,7 +656,7 @@ public class JavaStackFrame extends XStackFrame {
   }
 
   private static TextRange adjustRange(final PsiElement element, final TextRange originalRange) {
-    final Ref<TextRange> rangeRef = new Ref<TextRange>(originalRange);
+    final Ref<TextRange> rangeRef = new Ref<>(originalRange);
     element.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitExpressionStatement(final PsiExpressionStatement statement) {
         final TextRange stRange = statement.getTextRange();

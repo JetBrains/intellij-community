@@ -89,6 +89,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   public void refresh() {
+    LOG.debug("Refreshing SDK roots and packages cache");
     final Application application = ApplicationManager.getApplication();
     application.invokeLater(new Runnable() {
       @Override
@@ -231,6 +232,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       throw new PyExecutionException(e.getMessage(), "pip", simplifiedArgs, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
     }
     finally {
+      LOG.debug("Packages cache is about to be cleared because these requirements were installed: " + requirements);
       clearCaches();
       FileUtil.delete(buildDir);
     }
@@ -256,6 +258,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       throw new PyExecutionException(e.getMessage(), "pip", args, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
     }
     finally {
+      LOG.debug("Packages cache is about to be cleared because these packages were uninstalled: " + packages);
       clearCaches();
     }
   }
@@ -275,6 +278,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
     try {
       final List<PyPackage> packages = getPackages();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Packages installed in " + mySdk.getName() + ": " + packages);
+      }
       synchronized (myCacheLock) {
         myPackagesCache = packages;
         return new ArrayList<PyPackage>(myPackagesCache);
@@ -288,13 +294,30 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
   }
 
+  //@NotNull
+  //public String fetchLatestVersion(InstalledPackage pkg) throws ExecutionException {
+  //  final ArrayList<String> arguments = Lists.newArrayList("latestVersion", pkg.getName());
+  //  arguments.addAll(PyPackageService.getInstance().additionalRepositories);
+  //  return getHelperResult(PACKAGING_TOOL, arguments, false, false, null);
+  //}
+
   @NotNull
   protected List<PyPackage> getPackages() throws ExecutionException {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return Lists.newArrayList(new PyPackage(PIP, PIP_VERSION, null, Collections.<PyRequirement>emptyList()),
-                                new PyPackage(SETUPTOOLS, SETUPTOOLS_VERSION, null, Collections.<PyRequirement>emptyList()));
+    final String output;
+    try {
+      output = getHelperResult(PACKAGING_TOOL, Collections.singletonList("list"), false, false, null);
     }
-    final String output = getHelperResult(PACKAGING_TOOL, Collections.singletonList("list"), false, false, null);
+    catch (final ProcessNotCreatedException ex) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.info("Not-env unit test mode, will return mock packages");
+        return Lists.newArrayList(new PyPackage(PIP, PIP_VERSION, null, Collections.<PyRequirement>emptyList()),
+                                  new PyPackage(SETUPTOOLS, SETUPTOOLS_VERSION, null, Collections.<PyRequirement>emptyList()));
+      }
+      else {
+        throw ex;
+      }
+    }
+
     return parsePackagingToolOutput(output);
   }
 
@@ -414,6 +437,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     synchronized (myCacheLock) {
       myPackagesCache = null;
       myExceptionCache = null;
+      LOG.debug("Packages cache is cleared");
     }
   }
 
@@ -457,7 +481,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       throw new PyExecutionException("Timed out", path, args, output);
     }
     else if (exitCode != 0) {
-      throw new PyExecutionException("Non-zero exit code", path, args, output);
+      throw new PyExecutionException("Non-zero exit code (" + exitCode + ")", path, args, output);
     }
     return output.getStdout();
   }
@@ -493,7 +517,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
       else {
         process = commandLine.createProcess();
       }
-      final CapturingProcessHandler handler = new CapturingProcessHandler(process, commandLine.getCharset(), commandLine.getCommandLineString());
+      final CapturingProcessHandler handler =
+        new CapturingProcessHandler(process, commandLine.getCharset(), commandLine.getCommandLineString());
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       final ProcessOutput result;
       if (showProgress && indicator != null) {
@@ -525,7 +550,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       final int exitCode = result.getExitCode();
       if (exitCode != 0) {
         final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr()) ?
-                               "Permission denied" : "Non-zero exit code";
+                               "Permission denied" : "Non-zero exit code (" + exitCode + ")";
         throw new PyExecutionException(message, helperPath, args, result);
       }
       return result;
@@ -570,6 +595,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         if (file != null) {
           for (VirtualFile root : roots) {
             if (VfsUtilCore.isAncestor(root, file, false)) {
+              LOG.debug("Clearing packages cache on SDK change");
               clearCaches();
               return;
             }

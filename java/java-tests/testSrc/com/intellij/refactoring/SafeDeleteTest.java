@@ -280,9 +280,24 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testTypeParameterWithinMethodHierarchy() throws Exception {
     doSingleFileTest();
   }
+  
+  public void testTypeParameterNoMethodHierarchy() throws Exception {
+    doSingleFileTest();
+  }
 
   public void testClassWithInnerStaticImport() throws Exception {
     doTest("ClassWithInnerStaticImport");
+  }
+
+  public void testInnerClassUsedInTheSameFile() throws Exception {
+    try {
+      doSingleFileTest();
+      fail("Side effect was ignored");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      String message = e.getMessage();
+      assertEquals("class <b><code>Test.Foo</code></b> has 1 usage that is not safe to delete.", message);
+    }
   }
 
   private void doTest(@NonNls final String qClassName) throws Exception {
