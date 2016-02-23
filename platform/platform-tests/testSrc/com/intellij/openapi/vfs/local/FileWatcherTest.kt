@@ -544,6 +544,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     alarm.cancelAllRequests()
     action()
     watcherEvents.waitFor(timeout)
+    watcherEvents.up()
     LOG.debug("** done waiting")
 
     val allEvents = arrayListOf<VFileEvent>()
