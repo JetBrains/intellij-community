@@ -1582,6 +1582,7 @@
 
     <resolveScopeProvider implementation="com.intellij.psi.impl.file.impl.JavaOutOfSourcesResolveScopeProvider"/>
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
+    <resolveScopeEnlarger implementation="com.intellij.ide.scratch.ScratchResolveScopeEnlarger"/>
 
     <xdebugger.debuggerSupport implementation="com.intellij.debugger.ui.JavaDebuggerSupport"/>
     <xdebugger.settings implementation="com.intellij.debugger.settings.JavaDebuggerSettings"/>
