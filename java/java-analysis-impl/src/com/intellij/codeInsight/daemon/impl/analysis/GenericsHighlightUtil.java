@@ -27,9 +27,11 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -1407,6 +1409,15 @@ public class GenericsHighlightUtil {
                                               JavaPsiFacade factory) {
     final PsiClass aClass = PsiUtil.resolveClassInType(superType);
     if (aClass != null && classes.add(aClass)) {
+      VirtualFile vFile = PsiUtilCore.getVirtualFile(aClass);
+      if (vFile == null) {
+        return null;
+      }
+      FileIndexFacade index = FileIndexFacade.getInstance(aClass.getProject());
+      if (!index.isInSource(vFile) && !index.isInLibraryClasses(vFile)) {
+        return null;
+      }
+
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName != null && factory.findClass(qualifiedName, resolveScope) == null) {
         return "Cannot access " + HighlightUtil.formatClass(aClass);
