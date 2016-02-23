@@ -45,8 +45,8 @@ public class GitRepositoryFiles {
   private static final String INDEX = "index";
   private static final String INFO = "info";
   private static final String INFO_EXCLUDE = INFO + "/exclude";
-  public static final String MERGE_HEAD = "MERGE_HEAD";
-  public static final String MERGE_MSG = "MERGE_MSG";
+  private static final String MERGE_HEAD = "MERGE_HEAD";
+  private static final String MERGE_MSG = "MERGE_MSG";
   public static final String ORIG_HEAD = "ORIG_HEAD";
   public static final String REBASE_APPLY = "rebase-apply";
   public static final String REBASE_MERGE = "rebase-merge";
@@ -55,12 +55,9 @@ public class GitRepositoryFiles {
   public static final String HEADS = "heads";
   public static final String TAGS = "tags";
   public static final String REMOTES = "remotes";
-  public static final String SQUASH_MSG = "SQUASH_MSG";
+  private static final String SQUASH_MSG = "SQUASH_MSG";
 
   public static final String GIT_HEAD  = DOT_GIT + slash(HEAD);
-  public static final String GIT_MERGE_HEAD = DOT_GIT + slash(MERGE_HEAD);
-  public static final String GIT_MERGE_MSG = DOT_GIT + slash(MERGE_MSG);
-  public static final String GIT_SQUASH_MSG = DOT_GIT + slash(SQUASH_MSG);
 
   private final VirtualFile myMainDir;
   private final VirtualFile myWorktreeDir;
@@ -78,6 +75,8 @@ public class GitRepositoryFiles {
   private final String myRefsRemotesDirPath;
   private final String myRefsTagsPath;
   private final String myCommitMessagePath;
+  private final String myMergeMessagePath;
+  private final String myMergeSquashPath;
   private final String myInfoDirPath;
   private final String myExcludePath;
 
@@ -102,6 +101,8 @@ public class GitRepositoryFiles {
     myCherryPickHeadPath = worktreePath + slash(CHERRY_PICK_HEAD);
     myOrigHeadPath = worktreePath + slash(ORIG_HEAD);
     myCommitMessagePath = worktreePath + slash(COMMIT_EDITMSG);
+    myMergeMessagePath = worktreePath + slash(MERGE_MSG);
+    myMergeSquashPath = worktreePath + slash(SQUASH_MSG);
     myRebaseApplyPath = worktreePath + slash(REBASE_APPLY);
     myRebaseMergePath = worktreePath + slash(REBASE_MERGE);
   }
@@ -152,52 +153,67 @@ public class GitRepositoryFiles {
 
   @NotNull
   File getRefsHeadsFile() {
-    return new File(FileUtil.toSystemDependentName(myRefsHeadsDirPath));
+    return file(myRefsHeadsDirPath);
   }
 
   @NotNull
   File getRefsRemotesFile() {
-    return new File(FileUtil.toSystemDependentName(myRefsRemotesDirPath));
+    return file(myRefsRemotesDirPath);
   }
 
   @NotNull
   File getRefsTagsFile() {
-    return new File(FileUtil.toSystemDependentName(myRefsTagsPath));
+    return file(myRefsTagsPath);
   }
 
   @NotNull
   File getPackedRefsPath() {
-    return new File(FileUtil.toSystemDependentName(myPackedRefsPath));
+    return file(myPackedRefsPath);
   }
 
   @NotNull
   File getHeadFile() {
-    return new File(FileUtil.toSystemDependentName(myHeadFilePath));
+    return file(myHeadFilePath);
   }
 
   @NotNull
   File getConfigFile() {
-    return new File(FileUtil.toSystemDependentName(myConfigFilePath));
+    return file(myConfigFilePath);
   }
 
   @NotNull
   File getRebaseMergeDir() {
-    return new File(FileUtil.toSystemDependentName(myRebaseMergePath));
+    return file(myRebaseMergePath);
   }
 
   @NotNull
   File getRebaseApplyDir() {
-    return new File(FileUtil.toSystemDependentName(myRebaseApplyPath));
+    return file(myRebaseApplyPath);
   }
 
   @NotNull
-  File getMergeHeadFile() {
-    return new File(FileUtil.toSystemDependentName(myMergeHeadPath));
+  public File getMergeHeadFile() {
+    return file(myMergeHeadPath);
   }
 
   @NotNull
   public File getCherryPickHead() {
-    return new File(FileUtil.toSystemDependentName(myCherryPickHeadPath));
+    return file(myCherryPickHeadPath);
+  }
+
+  @NotNull
+  public File getMergeMessageFile() {
+    return file(myMergeMessagePath);
+  }
+
+  @NotNull
+  public File getSquashMessageFile() {
+    return file(myMergeSquashPath);
+  }
+
+  @NotNull
+  private static File file(@NotNull String filePath) {
+    return new File(FileUtil.toSystemDependentName(filePath));
   }
 
   /**
