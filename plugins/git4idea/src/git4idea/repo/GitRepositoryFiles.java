@@ -48,8 +48,8 @@ public class GitRepositoryFiles {
   private static final String MERGE_HEAD = "MERGE_HEAD";
   private static final String MERGE_MSG = "MERGE_MSG";
   private static final String ORIG_HEAD = "ORIG_HEAD";
-  public static final String REBASE_APPLY = "rebase-apply";
-  public static final String REBASE_MERGE = "rebase-merge";
+  private static final String REBASE_APPLY = "rebase-apply";
+  private static final String REBASE_MERGE = "rebase-merge";
   private static final String PACKED_REFS = "packed-refs";
   private static final String REFS = "refs";
   private static final String HEADS = "heads";
@@ -182,12 +182,12 @@ public class GitRepositoryFiles {
   }
 
   @NotNull
-  File getRebaseMergeDir() {
+  public File getRebaseMergeDir() {
     return file(myRebaseMergePath);
   }
 
   @NotNull
-  File getRebaseApplyDir() {
+  public File getRebaseApplyDir() {
     return file(myRebaseApplyPath);
   }
 
