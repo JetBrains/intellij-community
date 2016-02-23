@@ -47,14 +47,14 @@ public class GitRepositoryFiles {
   private static final String INFO_EXCLUDE = INFO + "/exclude";
   private static final String MERGE_HEAD = "MERGE_HEAD";
   private static final String MERGE_MSG = "MERGE_MSG";
-  public static final String ORIG_HEAD = "ORIG_HEAD";
+  private static final String ORIG_HEAD = "ORIG_HEAD";
   public static final String REBASE_APPLY = "rebase-apply";
   public static final String REBASE_MERGE = "rebase-merge";
   private static final String PACKED_REFS = "packed-refs";
-  public static final String REFS = "refs";
-  public static final String HEADS = "heads";
-  public static final String TAGS = "tags";
-  public static final String REMOTES = "remotes";
+  private static final String REFS = "refs";
+  private static final String HEADS = "heads";
+  private static final String TAGS = "tags";
+  private static final String REMOTES = "remotes";
   private static final String SQUASH_MSG = "SQUASH_MSG";
 
   public static final String GIT_HEAD  = DOT_GIT + slash(HEAD);
