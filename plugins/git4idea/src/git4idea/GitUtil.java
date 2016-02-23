@@ -83,6 +83,10 @@ public class GitUtil {
     }
   };
 
+  public static final String HEAD = "HEAD";
+  public static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
+  public static final String MERGE_HEAD = "MERGE_HEAD";
+
   private static final String SUBMODULE_REPO_PATH_PREFIX = "gitdir:";
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
 
