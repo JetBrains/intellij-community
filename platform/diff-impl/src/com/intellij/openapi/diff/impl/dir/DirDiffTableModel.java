@@ -149,7 +149,6 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     else {
       selectFirstRow();
     }
-    myPanel.focusTable();
     myPanel.update(true);
   }
 
@@ -913,7 +912,6 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         myUpdater.start();
       } else {
         myUpdater = null;
-        myPanel.focusTable();
       }
     }
   }
