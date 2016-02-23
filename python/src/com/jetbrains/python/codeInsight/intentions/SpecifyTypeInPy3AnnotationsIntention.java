@@ -91,16 +91,9 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
 
     final String defaultParamText = defaultParamValue == null ? null : defaultParamValue.getText();
 
-    String paramType = PyNames.OBJECT;
+    String paramType = parameterType(parameter);
 
-    PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
-    if (function != null) {
-      final PySignature signature = PySignatureCacheManager.getInstance(parameter.getProject()).findSignature(
-        function);
-      if (signature != null) {
-        paramType = ObjectUtils.chooseNotNull(signature.getArgTypeQualifiedName(paramName), paramType);
-      }
-    }
+   
 
     final PyNamedParameter namedParameter = elementGenerator.createParameter(paramName, defaultParamText, paramType,
                                                                              LanguageLevel.forElement(parameter));
@@ -124,18 +117,39 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
     return parameter;
   }
 
+  static String parameterType(PyParameter parameter) {
+    String paramType = PyNames.OBJECT;
+    
+    PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
+    if (function != null) {
+      final PySignature signature = PySignatureCacheManager.getInstance(parameter.getProject()).findSignature(
+        function);
+      String parameterName = parameter.getName();
+      if (signature != null && parameterName != null) {
+        paramType = ObjectUtils.chooseNotNull(signature.getArgTypeQualifiedName(parameterName), paramType);
+      }
+    }
+    return paramType;
+  }
+
+
+  static String returnType(@NotNull PyFunction function) {
+    String returnType = PyNames.OBJECT;
+    final PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(
+      function);
+    if (signature != null) {
+      returnType = ObjectUtils.chooseNotNull(signature.getReturnTypeQualifiedName(), returnType);
+    }
+    return returnType;
+  }
+
   public static PyExpression annotateReturnType(Project project, Document document, PsiElement resolved, boolean createTemplate) {
     PyCallable callable = getCallable(resolved);
 
-    String returnType = PyNames.OBJECT;
-
     if (callable instanceof PyFunction) {
       PyFunction function = (PyFunction)callable;
-      final PySignature signature = PySignatureCacheManager.getInstance(project).findSignature(
-        function);
-      if (signature != null) {
-        returnType = ObjectUtils.chooseNotNull(signature.getReturnTypeQualifiedName(), returnType);
-      }
+
+      String returnType = returnType(function);
 
       final String annotationText = " -> " + returnType;
 
@@ -143,19 +157,21 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
       assert prevElem != null;
 
       final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-      Document documentWithCollable = manager.getDocument(callable.getContainingFile());
-      try {
-        final TextRange range = prevElem.getTextRange();
-        manager.doPostponedOperationsAndUnblockDocument(documentWithCollable);
-        if (prevElem.getNode().getElementType() == PyTokenTypes.COLON) {
-          documentWithCollable.insertString(range.getStartOffset(), annotationText);
+      Document documentWithCallable = manager.getDocument(callable.getContainingFile());
+      if (documentWithCallable != null) {
+        try {
+          final TextRange range = prevElem.getTextRange();
+          manager.doPostponedOperationsAndUnblockDocument(documentWithCallable);
+          if (prevElem.getNode().getElementType() == PyTokenTypes.COLON) {
+            documentWithCallable.insertString(range.getStartOffset(), annotationText);
+          }
+          else {
+            documentWithCallable.insertString(range.getEndOffset(), annotationText + ":");
+          }
         }
-        else {
-          documentWithCollable.insertString(range.getEndOffset(), annotationText + ":");
+        finally {
+          manager.commitDocument(documentWithCallable);
         }
-      }
-      finally {
-        manager.commitDocument(documentWithCollable);
       }
 
 

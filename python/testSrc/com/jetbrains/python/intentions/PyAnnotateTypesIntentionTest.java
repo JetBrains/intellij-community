@@ -42,6 +42,11 @@ public class PyAnnotateTypesIntentionTest extends PyIntentionTestCase {
     }
   }
 
+  public void testTypeComment() {
+    doTest(PyBundle.message("INTN.annotate.types"), LanguageLevel.PYTHON27);
+  }
+  
+  
   private void doTest() {
     doTest(PyBundle.message("INTN.annotate.types"), LanguageLevel.PYTHON30);
   }
