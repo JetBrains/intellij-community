@@ -94,7 +94,7 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionPointBeanClassInspection"/>
     <localInspection language="JAVA"
                      groupKey="inspections.group.name"
-                     displayName="Default StubBasedPsiElement#getParent() implementation"
+                     displayName="Default StubBasedPsiElementBase.getParent() implementation"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StubBasedPsiElementBaseGetParentInspection"/>
