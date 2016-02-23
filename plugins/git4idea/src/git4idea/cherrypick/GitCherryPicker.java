@@ -73,12 +73,6 @@ import static git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERW
 
 public class GitCherryPicker extends VcsCherryPicker {
 
-  /**
-   * Name of the {@code .git/CHERRY_PICK_HEAD} file which is stored under {@code .git} when cherry-pick is in progress,
-   * and contains the hash of the commit being cherry-picked.
-   */
-  private static final String CHERRY_PICK_HEAD_FILE = "CHERRY_PICK_HEAD";
-
   private static final Logger LOG = Logger.getInstance(GitCherryPicker.class);
 
   @NotNull private final Project myProject;

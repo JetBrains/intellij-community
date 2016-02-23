@@ -38,19 +38,19 @@ import static git4idea.GitUtil.DOT_GIT;
  */
 public class GitRepositoryFiles {
 
-  public static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
-  public static final String COMMIT_EDITMSG = "COMMIT_EDITMSG";
-  public static final String CONFIG = "config";
+  private static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
+  private static final String COMMIT_EDITMSG = "COMMIT_EDITMSG";
+  private static final String CONFIG = "config";
   public static final String HEAD = "HEAD";
-  public static final String INDEX = "index";
-  public static final String INFO = "info";
-  public static final String INFO_EXCLUDE = INFO + "/exclude";
+  private static final String INDEX = "index";
+  private static final String INFO = "info";
+  private static final String INFO_EXCLUDE = INFO + "/exclude";
   public static final String MERGE_HEAD = "MERGE_HEAD";
   public static final String MERGE_MSG = "MERGE_MSG";
   public static final String ORIG_HEAD = "ORIG_HEAD";
   public static final String REBASE_APPLY = "rebase-apply";
   public static final String REBASE_MERGE = "rebase-merge";
-  public static final String PACKED_REFS = "packed-refs";
+  private static final String PACKED_REFS = "packed-refs";
   public static final String REFS = "refs";
   public static final String HEADS = "heads";
   public static final String TAGS = "tags";
