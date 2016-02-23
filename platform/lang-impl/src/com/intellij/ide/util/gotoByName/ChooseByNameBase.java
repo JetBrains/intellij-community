@@ -56,10 +56,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -166,6 +163,7 @@ public abstract class ChooseByNameBase {
   static final boolean ourLoadNamesEachTime = FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
   private boolean myFixLostTyping = true;
   private boolean myAlwaysHasMore = false;
+  private Point myFocusPoint;
 
   public boolean checkDisposed() {
     if (myDisposedFlag && myPostponedOkAction != null && !myPostponedOkAction.isProcessed()) {
@@ -509,6 +507,18 @@ public abstract class ChooseByNameBase {
       myTextField.addFocusListener(new FocusAdapter() {
         @Override
         public void focusLost(@NotNull final FocusEvent e) {
+          if (myFocusPoint != null) {
+            PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+            if (pointerInfo != null && myFocusPoint.equals(pointerInfo.getLocation())) {
+              // Ignore the loss of focus if the mouse hasn't moved between the last dropdown resize
+              // and the loss of focus event. This happens in focus follows mouse mode if the mouse is
+              // over the dropdown and it resizes to leave the mouse outside the dropdown.
+              IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
+              myFocusPoint = null;
+              return;
+            }
+          }
+          myFocusPoint = null;
           cancelListUpdater(); // cancel thread as early as possible
           myHideAlarm.addRequest(new Runnable() {
             @Override
@@ -1044,6 +1054,12 @@ public abstract class ChooseByNameBase {
   private void setElementsToList(int pos, @NotNull Collection<?> elements) {
     myListUpdater.cancelAll();
     if (checkDisposed()) return;
+    if (isCloseByFocusLost()) {
+      PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+      if (pointerInfo != null) {
+        myFocusPoint = pointerInfo.getLocation();
+      }
+    }
     if (elements.isEmpty()) {
       myListModel.clear();
       myTextField.setForeground(JBColor.red);
