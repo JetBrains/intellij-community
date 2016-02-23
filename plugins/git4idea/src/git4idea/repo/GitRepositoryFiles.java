@@ -40,7 +40,7 @@ public class GitRepositoryFiles {
   private static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
   private static final String COMMIT_EDITMSG = "COMMIT_EDITMSG";
   private static final String CONFIG = "config";
-  public static final String HEAD = "HEAD";
+  private static final String HEAD = "HEAD";
   private static final String INDEX = "index";
   private static final String INFO = "info";
   private static final String INFO_EXCLUDE = INFO + "/exclude";

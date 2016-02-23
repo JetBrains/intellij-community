@@ -89,6 +89,7 @@ public class GitUtil {
 
   private static final String SUBMODULE_REPO_PATH_PREFIX = "gitdir:";
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
+  private static final String HEAD_FILE = "HEAD";
 
   /**
    * A private constructor to suppress instance creation
@@ -107,7 +108,7 @@ public class GitUtil {
     File dotGit = new File(rootDir, DOT_GIT);
     if (!dotGit.exists()) return null;
     if (dotGit.isDirectory()) {
-      boolean headExists = new File(dotGit, GitRepositoryFiles.HEAD).exists();
+      boolean headExists = new File(dotGit, HEAD_FILE).exists();
       return headExists ? dotGit : null;
     }
 
@@ -132,7 +133,7 @@ public class GitUtil {
       return null;
     }
     if (dotGit.isDirectory()) {
-      boolean headExists = dotGit.findChild(GitRepositoryFiles.HEAD) != null;
+      boolean headExists = dotGit.findChild(HEAD_FILE) != null;
       return headExists ? dotGit : null;
     }
 
