@@ -30,7 +30,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static com.intellij.psi.impl.SyntheticFileSystemItem.LOG;
-import static git4idea.GitUtil.DOT_GIT;
 
 /**
  * Stores paths to Git service files (from .git/ directory) that are used by IDEA, and provides test-methods to check if a file
@@ -56,8 +55,6 @@ public class GitRepositoryFiles {
   private static final String TAGS = "tags";
   private static final String REMOTES = "remotes";
   private static final String SQUASH_MSG = "SQUASH_MSG";
-
-  public static final String GIT_HEAD  = DOT_GIT + slash(HEAD);
 
   private final VirtualFile myMainDir;
   private final VirtualFile myWorktreeDir;
@@ -172,7 +169,7 @@ public class GitRepositoryFiles {
   }
 
   @NotNull
-  File getHeadFile() {
+  public File getHeadFile() {
     return file(myHeadFilePath);
   }
 
