@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,17 @@ public class FileWatcher {
     public boolean isEmpty() {
       return dirtyPaths.isEmpty() && dirtyPathsRecursive.isEmpty() && dirtyDirectories.isEmpty();
     }
+
+    private void addDirtyPath(String path) {
+      if (!dirtyPathsRecursive.contains(path)) {
+        dirtyPaths.add(path);
+      }
+    }
+
+    private void addDirtyPathRecursive(String path) {
+      dirtyPaths.remove(path);
+      dirtyPathsRecursive.add(path);
+    }
   }
 
   private final MyFileWatcherNotificationSink myNotificationSink;
@@ -119,7 +130,7 @@ public class FileWatcher {
       }
     }
 
-    return result != null ? result : Collections.<String>emptyList();
+    return result != null ? result : Collections.emptyList();
   }
 
   /**
@@ -200,22 +211,11 @@ public class FileWatcher {
       if (!paths.isEmpty()) {
         synchronized (myLock) {
           for (String eachPath : paths) {
-            doAddDirtyPath(eachPath);
+            myDirtyPaths.addDirtyPath(eachPath);
           }
         }
       }
       notifyOnAnyEvent();
-    }
-
-    private void doAddDirtyPath(String path) {
-      if (!myDirtyPaths.dirtyPathsRecursive.contains(path)) {
-        myDirtyPaths.dirtyPaths.add(path);
-      }
-    }
-
-    private void doAddDirtyPathRecursive(String path) {
-      myDirtyPaths.dirtyPaths.remove(path);
-      myDirtyPaths.dirtyPathsRecursive.add(path);
     }
 
     @Override
@@ -224,10 +224,10 @@ public class FileWatcher {
       if (!paths.isEmpty()) {
         synchronized (myLock) {
           for (String p : paths) {
-            doAddDirtyPathRecursive(p);
+            myDirtyPaths.addDirtyPathRecursive(p);
             String parentPath = new File(p).getParent();
             if (parentPath != null) {
-              doAddDirtyPath(parentPath);
+              myDirtyPaths.addDirtyPath(parentPath);
             }
           }
         }
@@ -252,7 +252,7 @@ public class FileWatcher {
       if (!paths.isEmpty()) {
         synchronized (myLock) {
           for (String each : paths) {
-            doAddDirtyPathRecursive(each);
+            myDirtyPaths.addDirtyPathRecursive(each);
           }
         }
       }
