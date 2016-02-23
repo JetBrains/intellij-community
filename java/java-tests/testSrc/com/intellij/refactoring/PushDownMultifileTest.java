@@ -67,7 +67,7 @@ public class PushDownMultifileTest extends MultiFileTestCase {
         memberInfo.setChecked(true);
         membersToMove[0] = memberInfo;
 
-        new PushDownProcessor(getProject(), membersToMove, srcClass, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
+        new PushDownProcessor(srcClass, membersToMove, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
 
 
         //LocalFileSystem.getInstance().refresh(false);
@@ -120,7 +120,7 @@ public class PushDownMultifileTest extends MultiFileTestCase {
         memberInfo.setChecked(true);
         membersToMove[0] = memberInfo;
 
-        new PushDownProcessor(getProject(), membersToMove, srcClass, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
+        new PushDownProcessor(srcClass, membersToMove, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
 
 
         //LocalFileSystem.getInstance().refresh(false);

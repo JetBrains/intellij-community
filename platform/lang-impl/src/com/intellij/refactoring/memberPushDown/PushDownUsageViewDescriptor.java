@@ -25,7 +25,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class PushDownUsageViewDescriptor<M extends MemberInfoBase> implements UsageViewDescriptor {
+public class PushDownUsageViewDescriptor implements UsageViewDescriptor {
   private final PsiElement[] myMembers;
   private final String myProcessedElementsHeader;
 
@@ -33,10 +33,10 @@ public class PushDownUsageViewDescriptor<M extends MemberInfoBase> implements Us
     this(aClass, null);
   }
 
-  public PushDownUsageViewDescriptor(PsiElement aClass, M[] memberInfos) {
-    myMembers = memberInfos != null ? ContainerUtil.map(memberInfos, new Function<M, PsiElement>() {
+  public PushDownUsageViewDescriptor(PsiElement aClass, MemberInfoBase<? extends PsiElement>[] memberInfos) {
+    myMembers = memberInfos != null ? ContainerUtil.map(memberInfos, new Function<MemberInfoBase<? extends PsiElement>, PsiElement>() {
       @Override
-      public PsiElement fun(M info) {
+      public PsiElement fun(MemberInfoBase<? extends PsiElement> info) {
         return info.getMember();
       }
     }, PsiElement.EMPTY_ARRAY) : new PsiElement[] {aClass};

@@ -37,7 +37,7 @@ public class PushDownConflicts {
   private final MultiMap<PsiElement, String> myConflicts;
 
 
-  public PushDownConflicts(PsiClass aClass, MemberInfo[] memberInfos) {
+  public PushDownConflicts(PsiClass aClass, MemberInfo[] memberInfos, MultiMap<PsiElement, String> conflicts) {
     myClass = aClass;
 
     myMovedMembers = new HashSet<PsiMember>();
@@ -52,7 +52,7 @@ public class PushDownConflicts {
       }
     }
 
-    myConflicts = new MultiMap<PsiElement, String>();
+    myConflicts = conflicts;
   }
 
   public boolean isAnyConflicts() {
