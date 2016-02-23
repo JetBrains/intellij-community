@@ -46,7 +46,7 @@ public interface DebugEventListener extends EventListener {
   /**
    * Reports that a new script has been loaded.
    */
-  default void scriptAdded(@NotNull Script script, @Nullable String sourceMapUrl) {
+  default void scriptAdded(@NotNull Vm vm, @NotNull Script script, @Nullable String sourceMapUrl) {
   }
 
   /**

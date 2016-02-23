@@ -42,7 +42,7 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
   fun setBreakpoint(vm: Vm, breakpoint: XLineBreakpoint<*>) {
     val target = synchronized (lock) { ideToVmBreakpoints.get(breakpoint) }
     if (target == null) {
-      setBreakpoint(vm, breakpoint, debugProcess.getLocationsForBreakpoint(breakpoint))
+      setBreakpoint(vm, breakpoint, debugProcess.getLocationsForBreakpoint(vm, breakpoint))
     }
     else {
       val breakpointManager = vm.breakpointManager
@@ -171,7 +171,7 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
           }
             ?.let {
               for (ideBreakpoint in it) {
-                setBreakpoint(vm, ideBreakpoint, debugProcess.getLocationsForBreakpoint(ideBreakpoint))
+                setBreakpoint(vm, ideBreakpoint, debugProcess.getLocationsForBreakpoint(vm, ideBreakpoint))
               }
             }
         }

@@ -178,7 +178,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     urlToFileCache.putIfAbsent(url, file)
   }
 
-  open fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>): List<Location> = throw UnsupportedOperationException()
+  open fun getLocationsForBreakpoint(vm: Vm, breakpoint: XLineBreakpoint<*>): List<Location> = throw UnsupportedOperationException()
 
   override fun isLibraryFrameFilterSupported() = true
 
