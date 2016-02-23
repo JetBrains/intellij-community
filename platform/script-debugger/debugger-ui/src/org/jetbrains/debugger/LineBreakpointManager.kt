@@ -40,7 +40,7 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
   private val breakpointResolvedListenerAdded = AtomicBoolean()
 
   fun setBreakpoint(vm: Vm, breakpoint: XLineBreakpoint<*>) {
-    val target = synchronized (lock) { ideToVmBreakpoints[breakpoint] }
+    val target = synchronized (lock) { ideToVmBreakpoints.get(breakpoint) }
     if (target == null) {
       setBreakpoint(vm, breakpoint, debugProcess.getLocationsForBreakpoint(breakpoint))
     }
@@ -69,12 +69,12 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
     var vmBreakpoints: Collection<Breakpoint> = emptySet()
     synchronized (lock) {
       if (disable) {
-        val list = ideToVmBreakpoints[breakpoint] ?: return resolvedPromise()
+        val list = ideToVmBreakpoints.get(breakpoint) ?: return resolvedPromise()
         val iterator = list.iterator()
         vmBreakpoints = list
         while (iterator.hasNext()) {
           val vmBreakpoint = iterator.next()
-          if ((vmToIdeBreakpoints[vmBreakpoint]?.size ?: -1) > 1) {
+          if ((vmToIdeBreakpoints.get(vmBreakpoint)?.size ?: -1) > 1) {
             // we must not disable vm breakpoint - it is used for another ide breakpoints
             iterator.remove()
           }
