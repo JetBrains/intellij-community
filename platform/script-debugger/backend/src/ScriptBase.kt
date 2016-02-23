@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,11 @@ import org.jetbrains.debugger.sourcemap.SourceMap
 
 abstract class ScriptBase(override val type: Script.Type,
                           override val url: Url,
-                          override val line: Int,
+                          line: Int,
                           override val column: Int,
                           override val endLine: Int) : UserDataHolderBase(), Script {
+  override val line = Math.max(line, 0)
+
   @SuppressWarnings("UnusedDeclaration")
   private @Volatile var source: Promise<String>? = null
 
