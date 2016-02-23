@@ -55,6 +55,8 @@ public class PyAnnotateTypesIntention implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
 
+    if (!LanguageLevel.forElement(file).isPy3K()) return false;
+
     updateText();
 
     final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
@@ -102,24 +104,28 @@ public class PyAnnotateTypesIntention implements IntentionAction {
           PyAnnotation annotation = ((PyNamedParameter)params[i]).getAnnotation();
           if (annotation != null) {
             PyExpression annotationValue = annotation.getValue();
-            builder.replaceElement(annotationValue, annotationValue.getText());
+            if (annotationValue != null) {
+              builder.replaceElement(annotationValue, annotationValue.getText());
+            }
           }
         }
       }
     }
-    final Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
+    if (callable != null) {
+      final Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
 
-    int offset = callable.getTextRange().getStartOffset();
+      int offset = callable.getTextRange().getStartOffset();
 
-    final OpenFileDescriptor descriptor = new OpenFileDescriptor(
-      project,
-      callable.getContainingFile().getVirtualFile(),
-      offset
-    );
-    final Editor targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-    if (targetEditor != null) {
-      targetEditor.getCaretModel().moveToOffset(offset);
-      TemplateManager.getInstance(project).startTemplate(targetEditor, template);
+      final OpenFileDescriptor descriptor = new OpenFileDescriptor(
+        project,
+        callable.getContainingFile().getVirtualFile(),
+        offset
+      );
+      final Editor targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+      if (targetEditor != null) {
+        targetEditor.getCaretModel().moveToOffset(offset);
+        TemplateManager.getInstance(project).startTemplate(targetEditor, template);
+      }
     }
   }
 
