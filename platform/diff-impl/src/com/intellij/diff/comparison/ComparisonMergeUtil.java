@@ -21,6 +21,7 @@ import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -153,5 +154,12 @@ public class ComparisonMergeUtil {
     public void advance() {
       myValue = myIterator.hasNext() ? myIterator.next() : null;
     }
+  }
+
+  @Nullable
+  public static CharSequence tryResolveConflict(@NotNull CharSequence leftText,
+                                                @NotNull CharSequence baseText,
+                                                @NotNull CharSequence rightText) {
+    return MergeResolveUtil.tryResolveConflict(leftText, baseText, rightText);
   }
 }
