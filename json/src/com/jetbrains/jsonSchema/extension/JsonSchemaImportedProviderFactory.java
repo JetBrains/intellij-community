@@ -126,5 +126,25 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
         return null;
       }
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      MyProvider provider = (MyProvider)o;
+
+      if (!myName.equals(provider.myName)) return false;
+      if (!myFile.equals(provider.myFile)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myName.hashCode();
+      result = 31 * result + myFile.hashCode();
+      return result;
+    }
   }
 }

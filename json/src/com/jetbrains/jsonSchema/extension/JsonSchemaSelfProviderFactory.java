@@ -15,65 +15,15 @@
  */
 package com.jetbrains.jsonSchema.extension;
 
-import com.intellij.json.JsonFileType;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ResourceUtil;
-import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-import java.net.URL;
 
 /**
  * @author Irina.Chernushina on 2/16/2016.
  */
 public class JsonSchemaSelfProviderFactory implements JsonSchemaProviderFactory {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.extension.JsonSchemaSelfProviderFactory");
-
   @Override
   public JsonSchemaFileProvider[] getProviders(@Nullable Project project) {
-    return new JsonSchemaFileProvider[] {
-      new JsonSchemaFileProvider() {
-        @Override
-        public boolean isAvailable(@NotNull VirtualFile file) {
-          if (project == null || !JsonFileType.INSTANCE.equals(file.getFileType())) return false;
-          return JsonSchemaMappingsProjectConfiguration.getInstance(project).isRegisteredSchemaFile(file);
-        }
-
-        @Nullable
-        @Override
-        public Reader getSchemaReader() {
-          final String content = getContent();
-          return content == null ? null : new StringReader(content);
-        }
-
-        @NotNull
-        @Override
-        public String getName() {
-          return "schema.json";
-        }
-
-        @Nullable
-        private String getContent() {
-          ClassLoader loader = JsonSchemaSelfProviderFactory.class.getClassLoader();
-          try {
-            URL resource = loader.getResource("jsonSchema/schema.json");
-            assert resource != null;
-
-            return ResourceUtil.loadText(resource);
-          }
-          catch (IOException e) {
-            LOG.error(e.getMessage(), e);
-          }
-
-          return null;
-        }
-      }
-    };
+    return JsonSchemaProjectSelfProviderFactory.getInstance(project).getProviders();
   }
 }
