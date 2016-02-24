@@ -33,6 +33,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.Processor;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -373,7 +374,7 @@ public class JavaFxPsiUtil {
   }
 
   @Nullable
-  public static PsiType getPropertyType(final PsiType type, final Project project) {
+  public static PsiType getWritablePropertyType(final PsiType type, final Project project) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
     final PsiClass psiClass = resolveResult.getElement();
     if (psiClass != null) {
@@ -505,7 +506,7 @@ public class JavaFxPsiUtil {
   private static String canCoerce(PsiClass aClass, PsiType type) {
     PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(type, aClass.getResolveScope());
     if (collectionItemType == null && InheritanceUtil.isInheritor(type, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY)) {
-      collectionItemType = getPropertyType(type, aClass.getProject());
+      collectionItemType = getWritablePropertyType(type, aClass.getProject());
     }
     if (collectionItemType != null && PsiPrimitiveType.getUnboxedType(collectionItemType) == null) {
       final PsiClass baseClass = PsiUtil.resolveClassInType(collectionItemType);
@@ -568,6 +569,99 @@ public class JavaFxPsiUtil {
         return Result.create(substitute, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
     });
+  }
+
+  @Nullable
+  public static PsiType getWritablePropertyType(PsiElement declaration) {
+    if (declaration instanceof PsiField) {
+      return getWrappedPropertyType((PsiField)declaration, declaration.getProject(), JavaFxCommonClassNames.ourWritableMap);
+    }
+    if (declaration instanceof PsiMethod) {
+      final PsiParameter[] parameters = ((PsiMethod)declaration).getParameterList().getParameters();
+      final boolean isStatic = ((PsiMethod)declaration).hasModifierProperty(PsiModifier.STATIC);
+      if (isStatic && parameters.length == 2 || !isStatic && parameters.length == 1) {
+        return parameters[parameters.length - 1].getType();
+      }
+    }
+    return null;
+  }
+
+
+  @Nullable
+  public static PsiType getReadablePropertyType(PsiElement declaration) {
+    if (declaration instanceof PsiField) {
+      return getWrappedPropertyType((PsiField)declaration, declaration.getProject(), JavaFxCommonClassNames.ourReadOnlyMap);
+    }
+    if (declaration instanceof PsiMethod) {
+      PsiMethod psiMethod = (PsiMethod)declaration;
+      final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+      final boolean isStatic = psiMethod.hasModifierProperty(PsiModifier.STATIC);
+      if (!isStatic && parameters.length == 0) {
+        return psiMethod.getReturnType();
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static Map<String, XmlAttributeValue> collectFileIds(final XmlTag currentTag) {
+    final Map<String, XmlAttributeValue> fileIds = new HashMap<String, XmlAttributeValue>();
+    currentTag.getContainingFile().accept(new XmlRecursiveElementVisitor() {
+      @Override
+      public void visitXmlTag(XmlTag tag) {
+        super.visitXmlTag(tag);
+        if (currentTag != tag) {
+          final XmlAttribute attribute = tag.getAttribute(FxmlConstants.FX_ID);
+          if (attribute != null) {
+            fileIds.put(attribute.getValue(), attribute.getValueElement());
+          }
+        }
+      }
+    });
+    final PsiFile containingFile = currentTag.getContainingFile();
+    if (containingFile instanceof XmlFile) {
+      final XmlTag rootTag = ((XmlFile)containingFile).getRootTag();
+      if (rootTag != null) {
+        final XmlAttribute attribute = rootTag.getAttribute(FxmlConstants.FX_CONTROLLER);
+        if (attribute != null) {
+          fileIds.put(FxmlConstants.CONTROLLER, attribute.getValueElement());
+        }
+      }
+    }
+    return fileIds;
+  }
+
+  @Nullable
+  public static PsiClass getTagClassById(String id, PsiElement context, XmlAttributeValue xmlAttributeValue) {
+    return FxmlConstants.CONTROLLER.equals(id) ? getControllerClass(context.getContainingFile()) : getTagClass(xmlAttributeValue);
+  }
+
+  @Nullable
+  public static PsiClass getPropertyClass(XmlAttributeValue xmlAttributeValue) {
+    final PsiElement declaration = getPropertyDeclaration(xmlAttributeValue);
+    return getPropertyClass(getWritablePropertyType(declaration), xmlAttributeValue);
+  }
+
+  @Nullable
+  public static PsiClass getPropertyClass(PsiType propertyType, XmlAttributeValue context) {
+    if (propertyType instanceof PsiPrimitiveType) {
+      PsiClassType boxedType = ((PsiPrimitiveType)propertyType).getBoxedType(context);
+      return boxedType != null ? boxedType.resolve() : null;
+    }
+    return PsiUtil.resolveClassInType(propertyType);
+  }
+
+  @Nullable
+  private static PsiElement getPropertyDeclaration(XmlAttributeValue xmlAttributeValue) {
+    PsiClass tagClass = getTagClass(xmlAttributeValue);
+    if (tagClass != null) {
+      XmlAttribute xmlAttribute = (XmlAttribute)xmlAttributeValue.getParent();
+      final XmlAttributeDescriptor attributeDescriptor = xmlAttribute.getDescriptor();
+      if (attributeDescriptor != null) {
+        return attributeDescriptor.getDeclaration();
+      }
+    }
+    return null;
   }
 
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {

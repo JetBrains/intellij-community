@@ -88,7 +88,7 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
         descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));
       }
     } else if (InheritanceUtil.isInheritor(psiType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY)) {
-      final PsiType propertyType = JavaFxPsiUtil.getPropertyType(psiType, project);
+      final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(psiType, project);
       final PsiClass aClass = PsiUtil.resolveClassInType(propertyType);
       if (aClass != null) {
         descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));

@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
+import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
@@ -53,10 +54,13 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
 
     final PsiCodeBlock getterBody = getter.getBody();
     LOG.assertTrue(getterBody != null);
-    getterBody.getStatements()[0].replace(factory.createStatementFromText("return " + field.getName() + ".get();", field));
+    final String fieldName = field.getName();
+    getterBody.getStatements()[0].replace(factory.createStatementFromText("return " + fieldName + ".get();", field));
 
     final PsiMethod propertyGetter = PropertyUtil.generateGetterPrototype(field);
-    propertyGetter.setName(JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(field.getName(), VariableKind.FIELD) + "Property");
+    if (propertyGetter != null && fieldName != null) {
+      propertyGetter.setName(JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(fieldName, VariableKind.FIELD) + FxmlConstants.PROPERTY_FIELD_SUFFIX);
+    }
     return new PsiMethod[] {getter, GenerateMembersUtil.annotateOnOverrideImplement(field.getContainingClass(), propertyGetter)};
   }
 
@@ -96,7 +100,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
 
   @Override
   public String suggestGetterName(String propertyName) {
-    return propertyName + "Property";
+    return propertyName + FxmlConstants.PROPERTY_FIELD_SUFFIX;
   }
 
   @Override
