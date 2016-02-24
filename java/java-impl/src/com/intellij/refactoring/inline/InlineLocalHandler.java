@@ -99,11 +99,9 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
             if (innerClass instanceof PsiLambdaExpression) {
               if (PsiTreeUtil.isAncestor(innerClass, local, false)) {
                 innerClassesWithUsages.add(element);
-              } else {
-                innerClassesWithUsages.add(innerClass);
-              }
-              innerClass = parentPsiClass;
-              continue;
+                innerClass = parentPsiClass;
+                continue;
+              } 
             }
             innerClassesWithUsages.add(innerClass);
             innerClassUsages.add(element);
