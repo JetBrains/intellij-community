@@ -20,7 +20,7 @@ class Test {
   public static void main(String[] args) {
     List<String> strings = Arrays.asList("a", "b", "c");
     strings.forEach((IoFunction<String>) arg -> {throw new IOException();});
-    strings.forEach((<warning descr="Casting 'arg -> {}' to 'IFunction<String>' is redundant">IFunction<String></warning>) arg -> {});
-    strings.forEach((<warning descr="Casting 'arg -> {}' to 'IIFunction<String>' is redundant">IIFunction<String></warning>) arg -> {});
+    strings.forEach((IFunction<String>) arg -> {});
+    strings.forEach((IIFunction<String>) arg -> {});
   }
 }
