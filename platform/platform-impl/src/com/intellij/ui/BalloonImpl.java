@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -907,12 +907,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       myLayeredPane.removeComponentListener(myComponentListener);
       Disposer.register(ApplicationManager.getApplication(), this); // to be safe if Application suddenly exits and animation wouldn't have a chance to complete
 
-      runAnimation(false, myLayeredPane, new Runnable() {
-        @Override
-        public void run() {
-          disposeRunnable.run();
-        }
-      });
+      runAnimation(false, myLayeredPane, disposeRunnable);
     }
     else {
       disposeRunnable.run();
