@@ -15,38 +15,60 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.util.IconUtil;
+import com.intellij.ui.EnumComboBoxModel;
 import net.miginfocom.swing.MigLayout;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Arrays;
 import java.util.Calendar;
 
 public class CleanUnshelvedFilterDialog extends DialogWrapper {
   private final JRadioButton mySystemUnshelvedButton;
   private final JRadioButton myUnshelvedWithFilterButton;
+  private final JRadioButton myAllUnshelvedButton;
   private final ComboBox myTimePeriodComboBox;
-  private static Icon DISABLED_BIN_ICON = IconUtil.desaturate(AllIcons.Actions.GC);
 
-  enum TimePeriod {
-    Week, Month, Year
+  private enum TimePeriod {
+    Week {
+      @Override
+      protected void updateCalendar(@NotNull Calendar cal) {
+        cal.add(Calendar.DAY_OF_MONTH, -7);
+      }
+    }, Month {
+      @Override
+      protected void updateCalendar(@NotNull Calendar cal) {
+        cal.add(Calendar.MONTH, -1);
+      }
+    }, Year {
+      @Override
+      protected void updateCalendar(@NotNull Calendar cal) {
+        cal.add(Calendar.YEAR, -1);
+      }
+    };
+
+    public long getTimeLimitInMillis() {
+      Calendar cal = Calendar.getInstance();
+      updateCalendar(cal);
+      return cal.getTimeInMillis();
+    }
+
+    protected abstract void updateCalendar(@NotNull Calendar cal);
   }
 
   public CleanUnshelvedFilterDialog(@Nullable Project project) {
     super(project);
     setTitle("Clean Unshelved Changelists");
-    mySystemUnshelvedButton = new JRadioButton("System unshelved changelists marked to be deleted", true);
-    myUnshelvedWithFilterButton = new JRadioButton("All unshelved changelists older than one", false);
-    myTimePeriodComboBox = new ComboBox(new CollectionComboBoxModel<TimePeriod>(Arrays.asList(TimePeriod.values())));
+    mySystemUnshelvedButton = new JRadioButton("created automatically", true);
+    myUnshelvedWithFilterButton = new JRadioButton("older than one", false);
+    myAllUnshelvedButton = new JRadioButton("all", false);
+    myTimePeriodComboBox = new ComboBox(new EnumComboBoxModel<TimePeriod>(TimePeriod.class));
     myTimePeriodComboBox.setEnabled(myUnshelvedWithFilterButton.isSelected());
     myUnshelvedWithFilterButton.addItemListener(new ItemListener() {
       @Override
@@ -54,65 +76,49 @@ public class CleanUnshelvedFilterDialog extends DialogWrapper {
         myTimePeriodComboBox.setEnabled(myUnshelvedWithFilterButton.isSelected());
       }
     });
+    setOKButtonText("Delete");
     init();
     setResizable(false);
-  }
-
-  @Override
-  public boolean isOKActionEnabled() {
-    return isSystemUnshelvedMarked() || isUnshelvedWithFilterMarked();
   }
 
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    JLabel questLabel = new JLabel("Would you like to delete: \n");
+    JLabel questLabel = new JLabel("Delete already unshelved changelists: \n");
     final MigLayout migLayout = new MigLayout("flowx, ins 0");
     JPanel buttonsPanel = new JPanel(migLayout);
     ButtonGroup gr = new ButtonGroup();
     gr.add(mySystemUnshelvedButton);
     gr.add(myUnshelvedWithFilterButton);
+    gr.add(myAllUnshelvedButton);
 
     mySystemUnshelvedButton.setBorder(BorderFactory.createEmptyBorder());
     myUnshelvedWithFilterButton.setBorder(BorderFactory.createEmptyBorder());
+    myAllUnshelvedButton.setBorder(BorderFactory.createEmptyBorder());
 
-
-    buttonsPanel.add(mySystemUnshelvedButton);
-    final JLabel iconLabel = new JLabel(DISABLED_BIN_ICON);
-    iconLabel.setBorder(BorderFactory.createEmptyBorder());
-    buttonsPanel.add(iconLabel, "wrap");
+    buttonsPanel.add(mySystemUnshelvedButton,"wrap");
 
     JPanel filterPanel = new JPanel(migLayout);
     filterPanel.add(myUnshelvedWithFilterButton);
     filterPanel.add(myTimePeriodComboBox);
-    buttonsPanel.add(filterPanel, "span 1 2");
+    buttonsPanel.add(filterPanel, "wrap");
+    buttonsPanel.add(myAllUnshelvedButton);
     panel.add(questLabel, BorderLayout.NORTH);
     panel.add(buttonsPanel, BorderLayout.CENTER);
 
     return panel;
   }
 
-  public boolean isSystemUnshelvedMarked() {
-    return mySystemUnshelvedButton.isSelected();
+  public boolean isAllUnshelvedSelected() {
+    return myAllUnshelvedButton.isSelected();
   }
 
-  public boolean isUnshelvedWithFilterMarked() {
+  public boolean isUnshelvedWithFilterSelected() {
     return myUnshelvedWithFilterButton.isSelected();
   }
 
   public long getTimeLimitInMillis() {
-    TimePeriod tp = (TimePeriod)myTimePeriodComboBox.getSelectedItem();
-    Calendar cal = Calendar.getInstance();
-    if (tp == TimePeriod.Week) {
-      cal.add(Calendar.DAY_OF_MONTH, -7);
-    }
-    else if (tp == TimePeriod.Month) {
-      cal.add(Calendar.MONTH, -1);
-    }
-    else {
-      cal.add(Calendar.YEAR, -1);
-    }
-    return cal.getTimeInMillis();
+    return ((TimePeriod)myTimePeriodComboBox.getSelectedItem()).getTimeLimitInMillis();
   }
 }

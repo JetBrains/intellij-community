@@ -658,7 +658,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
         return (list.isRecycled()) && list.DATE.before(limitDate) && (!onlyMarkedToDelete || list.isMarkedToDelete());
       }
     });
-    clearShelveLists(toDelete);
+    clearShelvedLists(toDelete);
   }
 
   private class BinaryPatchApplier implements CustomBinaryPatchApplier<ShelvedBinaryFilePatch> {
@@ -799,12 +799,12 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   public void clearRecycled() {
-    clearShelveLists(getRecycledShelvedChangeLists());
+    clearShelvedLists(getRecycledShelvedChangeLists());
   }
 
-  private void clearShelveLists(@NotNull List<ShelvedChangeList> shelveLists) {
-    if (shelveLists.isEmpty()) return;
-    for (ShelvedChangeList list : shelveLists) {
+  private void clearShelvedLists(@NotNull List<ShelvedChangeList> shelvedLists) {
+    if (shelvedLists.isEmpty()) return;
+    for (ShelvedChangeList list : shelvedLists) {
       deleteListImpl(list);
       mySchemeManager.removeScheme(list);
     }

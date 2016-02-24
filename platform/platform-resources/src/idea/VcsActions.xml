@@ -153,8 +153,7 @@
       <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction"
               description="Show/Hide Already Unshelved"/>
       <action id="ShelvedChanges.CleanMarkedToDelete" class="com.intellij.openapi.vcs.changes.shelf.CleanUnshelvedAction"
-              description="Delete Unshelved Marked To Delete or By Date" text="Clean Already Unshelved..." icon="AllIcons.Actions.GC" />
-      <action id="ShelvedChanges.DeleteDeleted" class="com.intellij.openapi.vcs.changes.shelf.DeleteAlreadyUnshelvedAction"/>
+              description="Delete unshelved changelists" text="Clean Already Unshelved..." icon="AllIcons.Actions.GC"/>
     </group>
 
     <group id="ShelvedChangesToolbar">
@@ -172,7 +171,7 @@
       <reference ref="ShelvedChanges.Rename" />
       <reference ref="$Delete" />
       <separator/>
-      <reference ref="ShelvedChanges.DeleteDeleted" />
+      <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
     </group>
 
     <group id="VcsHistoryActionsGroup"/>
@@ -302,7 +301,6 @@
       <separator/>
       <reference ref="ShelvedChanges.ShowHideDeleted"/>
       <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
-      <reference ref="ShelvedChanges.DeleteDeleted"/>
       <separator/>
 
       <add-to-group group-id="Vcs.KeymapGroup" anchor="first"/>

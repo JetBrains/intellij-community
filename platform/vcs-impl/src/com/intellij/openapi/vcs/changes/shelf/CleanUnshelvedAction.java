@@ -15,15 +15,14 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class CleanUnshelvedAction extends AnAction implements DumbAware {
+public class CleanUnshelvedAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
@@ -44,8 +43,11 @@ public class CleanUnshelvedAction extends AnAction implements DumbAware {
     CleanUnshelvedFilterDialog dialog = new CleanUnshelvedFilterDialog(project);
     dialog.show();
     if (dialog.isOK()) {
-      if (dialog.isUnshelvedWithFilterMarked()) {
+      if (dialog.isUnshelvedWithFilterSelected()) {
         ShelveChangesManager.getInstance(project).cleanUnshelved(false, dialog.getTimeLimitInMillis());
+      }
+      else if (dialog.isAllUnshelvedSelected()) {
+        ShelveChangesManager.getInstance(project).clearRecycled();
       }
       else {
         ShelveChangesManager.getInstance(project).cleanUnshelved(true, System.currentTimeMillis());
