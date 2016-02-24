@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention;
 import com.jetbrains.python.inspections.quickfix.PyQuickFixUtil;
@@ -45,7 +46,7 @@ public class PyMissingTypeHintsInspection extends PyInspection{
         if (!(typeCommentExists(function) || typeAnnotationsExist(function))) {
           ASTNode nameNode = function.getNameNode();
           if (nameNode != null) {
-            holder.registerProblem(nameNode.getPsi(), "Type hinting is missing for function definition", new AddTypeHintsQuickFix(function));
+            holder.registerProblem(nameNode.getPsi(), "Type hinting is missing for function definition", new AddTypeHintsQuickFix(function.getName()));
           }
         }
       }
@@ -104,17 +105,17 @@ public class PyMissingTypeHintsInspection extends PyInspection{
   }
 
   private static class AddTypeHintsQuickFix implements LocalQuickFix {
-    private PyFunction myFunction;
+    private String myName;
 
-    public AddTypeHintsQuickFix(@NotNull  PyFunction function) {
-      myFunction = function;
+    public AddTypeHintsQuickFix(@NotNull String name) {
+      myName = name;
     }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return "Add type hinting for '" + myFunction.getName() + "'";
+      return "Add type hinting for '" + myName + "'";
     }
 
     @Nls
@@ -126,7 +127,11 @@ public class PyMissingTypeHintsInspection extends PyInspection{
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PyAnnotateTypesIntention.annotateTypes(PyQuickFixUtil.getEditor(myFunction), myFunction);
+      PyFunction function = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyFunction.class);
+      
+      if (function != null) {
+        PyAnnotateTypesIntention.annotateTypes(PyQuickFixUtil.getEditor(function), function);
+      }
     }
   }
 }
