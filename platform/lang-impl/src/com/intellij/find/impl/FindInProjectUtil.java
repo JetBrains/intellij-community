@@ -181,6 +181,7 @@ public class FindInProjectUtil {
       }
     }
 
+    if (pattern.isEmpty()) pattern = PatternUtil.convertToRegex("*");
     final String finalPattern = pattern;
     final String finalNegativePattern = negativePattern;
 
