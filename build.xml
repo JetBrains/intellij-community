@@ -42,6 +42,7 @@
   <target name="init">
     <mkdir dir="${out.dir}"/>
     <mkdir dir="${tmp.dir}"/>
+    <delete dir="${project.home}/build/kotlinc" />
     <java classname="org.apache.tools.ant.Main" fork="true" failonerror="true" dir="${project.home}">
       <sysproperty key="gant.script" value="${project.home}/build/scripts/download_kotlin.gant"/>
       <classpath>
