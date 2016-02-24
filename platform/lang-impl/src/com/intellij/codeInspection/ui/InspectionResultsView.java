@@ -45,6 +45,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -129,6 +130,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     myProvider = provider;
 
     myTreeBuilder = new InspectionTreeBuilder(project, globalInspectionContext);
+    Disposer.register(this, myTreeBuilder);
     initTreeListeners();
 
     myOccurenceNavigator = initOccurenceNavigator();
@@ -151,6 +153,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private void initTreeListeners() {
     final JTree tree = myTreeBuilder.getTree();
     tree.getSelectionModel().addTreeSelectionListener(e -> {
+      if (myDisposed) return;
       syncRightPanel();
       if (isAutoScrollMode()) {
         OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(InspectionResultsView.this), false);
@@ -162,6 +165,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     tree.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
+        if (myDisposed) return;
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(InspectionResultsView.this), false);
         }
@@ -171,6 +175,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     tree.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
+        if (myDisposed) return;
         popupInvoked(comp, x, y);
       }
     });
