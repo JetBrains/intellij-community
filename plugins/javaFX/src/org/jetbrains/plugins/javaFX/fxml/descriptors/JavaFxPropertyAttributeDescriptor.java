@@ -16,7 +16,7 @@ import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.lang.reflect.InvocationTargetException;
@@ -202,7 +202,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
             }
             else {
               final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)context);
-              if (tagClass != null && !InheritanceUtil.isInheritor(tagClass, false, JavaFxCommonClassNames.JAVAFX_SCENE_NODE)) {
+              if (tagClass != null && !InheritanceUtil.isInheritor(tagClass, false, JavaFxCommonNames.JAVAFX_SCENE_NODE)) {
                 boxedQName = tagClass.getQualifiedName();
               }
               else {
@@ -212,7 +212,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
             if (boxedQName != null) {
               try {
                 final Class<?> aClass = Class.forName(boxedQName);
-                final Method method = aClass.getMethod(JavaFxCommonClassNames.VALUE_OF, String.class);
+                final Method method = aClass.getMethod(JavaFxCommonNames.VALUE_OF, String.class);
                 method.invoke(aClass, ((XmlAttributeValue)context).getValue());
               }
               catch (InvocationTargetException e) {

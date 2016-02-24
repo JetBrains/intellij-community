@@ -141,7 +141,7 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
   }
 
   public void testNamedColor() throws Exception {
-    doTestNavigation(JavaFxCommonClassNames.JAVAFX_SCENE_COLOR, "ORANGE");
+    doTestNavigation(JavaFxCommonNames.JAVAFX_SCENE_COLOR, "ORANGE");
   }
 
   private void doTestNavigation(String resultClassName, String resultFieldName) throws Exception {

@@ -25,7 +25,7 @@ import java.util.Map;
  * User: anna
  * Date: 1/16/13
  */
-public class JavaFxCommonClassNames {
+public class JavaFxCommonNames {
   @NonNls public static final String JAVAFX_BEANS_PROPERTY = "javafx.beans.property.Property";
   @NonNls public static final String JAVAFX_OBSERVABLE_LIST_PROPERTY = "javafx.collections.ObservableList";
   @NonNls public static final String JAVAFX_ANCHOR_PANE = "javafx.scene.layout.AnchorPane";
@@ -45,7 +45,9 @@ public class JavaFxCommonClassNames {
   @NonNls public static final String JAVAFX_BEANS_VALUE_WRITABLE_VALUE = "javafx.beans.value.WritableValue";
   @NonNls public static final String JAVAFX_SCENE_LAYOUT_PANE = "javafx.scene.layout.Pane";
   @NonNls public static final String JAVAFX_BEANS_NAMED_ARG = "javafx.beans.NamedArg";
-  
+
+  @NonNls public static final String PROPERTY_FIELD_SUFFIX = "Property";
+
   public static final Map<String, PsiType> ourWritableMap = new HashMap<String, PsiType>();
   static {
     ourWritableMap.put("javafx.beans.value.WritableBooleanValue", PsiType.BOOLEAN);

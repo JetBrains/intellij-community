@@ -52,8 +52,6 @@ public class FxmlConstants {
 
   public static final Map<String, List<String>> FX_ELEMENT_ATTRIBUTES = new HashMap<String, List<String>>();
 
-  public static final String PROPERTY_FIELD_SUFFIX = "Property";
-
   static {
     FX_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Arrays.asList(FX_ELEMENT_SOURCE, FX_ID, RESOURCES, CHARSET));
     FX_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Collections.singletonList(FX_ELEMENT_SOURCE));

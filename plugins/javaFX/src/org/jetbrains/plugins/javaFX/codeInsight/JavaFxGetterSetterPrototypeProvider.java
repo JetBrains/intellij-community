@@ -24,8 +24,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
-import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 /**
@@ -37,7 +36,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
 
   @Override
   public boolean canGeneratePrototypeFor(PsiField field) {
-    return InheritanceUtil.isInheritor(field.getType(), JavaFxCommonClassNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE);
+    return InheritanceUtil.isInheritor(field.getType(), JavaFxCommonNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE);
   }
 
   @Override
@@ -46,7 +45,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiMethod getter = GenerateMembersUtil.generateSimpleGetterPrototype(field);
 
-    final PsiType wrappedType = JavaFxPsiUtil.getWrappedPropertyType(field, project, JavaFxCommonClassNames.ourReadOnlyMap);
+    final PsiType wrappedType = JavaFxPsiUtil.getWrappedPropertyType(field, project, JavaFxCommonNames.ourReadOnlyMap);
 
     final PsiTypeElement returnTypeElement = getter.getReturnTypeElement();
     LOG.assertTrue(returnTypeElement != null);
@@ -59,7 +58,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
 
     final PsiMethod propertyGetter = PropertyUtil.generateGetterPrototype(field);
     if (propertyGetter != null && fieldName != null) {
-      propertyGetter.setName(JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(fieldName, VariableKind.FIELD) + FxmlConstants.PROPERTY_FIELD_SUFFIX);
+      propertyGetter.setName(JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(fieldName, VariableKind.FIELD) + JavaFxCommonNames.PROPERTY_FIELD_SUFFIX);
     }
     return new PsiMethod[] {getter, GenerateMembersUtil.annotateOnOverrideImplement(field.getContainingClass(), propertyGetter)};
   }
@@ -69,7 +68,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
     final PsiMethod setter = GenerateMembersUtil.generateSimpleSetterPrototype(field);
     final Project project = field.getProject();
 
-    final PsiType wrappedType = JavaFxPsiUtil.getWrappedPropertyType(field, project, JavaFxCommonClassNames.ourWritableMap);
+    final PsiType wrappedType = JavaFxPsiUtil.getWrappedPropertyType(field, project, JavaFxCommonNames.ourWritableMap);
     
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final PsiTypeElement newTypeElement = elementFactory.createTypeElement(wrappedType);
@@ -100,7 +99,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
 
   @Override
   public String suggestGetterName(String propertyName) {
-    return propertyName + FxmlConstants.PROPERTY_FIELD_SUFFIX;
+    return propertyName + JavaFxCommonNames.PROPERTY_FIELD_SUFFIX;
   }
 
   @Override
@@ -110,6 +109,6 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
 
   @Override
   public boolean isReadOnly(PsiField field) {
-    return !InheritanceUtil.isInheritor(field.getType(), JavaFxCommonClassNames.JAVAFX_BEANS_VALUE_WRITABLE_VALUE);
+    return !InheritanceUtil.isInheritor(field.getType(), JavaFxCommonNames.JAVAFX_BEANS_VALUE_WRITABLE_VALUE);
   }
 }
