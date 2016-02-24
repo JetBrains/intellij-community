@@ -28,7 +28,8 @@ public class MavenServerUtil {
   private static final Properties mySystemPropertiesCache;
 
   static {
-    Properties res = new Properties((Properties)System.getProperties().clone());
+    Properties res = new Properties();
+    res.putAll((Properties)System.getProperties().clone());
     
     for (Iterator<Object> itr = res.keySet().iterator(); itr.hasNext(); ) {
       String propertyName = itr.next().toString();
