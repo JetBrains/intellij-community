@@ -128,7 +128,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     myCleaningFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
       @Override
       public void run() {
-        cleanSystemUnshelvedOlderOneDay();
+        cleanSystemUnshelvedOlderOneWeek();
       }
     }, 1, 1, TimeUnit.DAYS);
     Disposer.register(project, new Disposable() {
@@ -160,7 +160,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       mySchemeManager.loadSchemes();
       //workaround for ignoring not valid patches, because readScheme doesn't support nullable value as it should be
       filterNonValidShelvedChangeLists();
-      cleanSystemUnshelvedOlderOneDay();
+      cleanSystemUnshelvedOlderOneWeek();
     }
     catch (Exception e) {
       LOG.error("Couldn't read shelf information", e);
@@ -644,9 +644,9 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     return myRemoveFilesFromShelf;
   }
 
-  private void cleanSystemUnshelvedOlderOneDay() {
+  private void cleanSystemUnshelvedOlderOneWeek() {
     Calendar cal = Calendar.getInstance();
-    cal.add(Calendar.DAY_OF_MONTH, -1);
+    cal.add(Calendar.DAY_OF_MONTH, -7);
     cleanUnshelved(true, cal.getTimeInMillis());
   }
 
