@@ -136,6 +136,10 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTestNavigation("injected.MyController", "label", "injected/" + getTestName(true) + ".fxml");
   }
 
+  public void testControllerInExpression() throws Exception{
+    doTest(getTestName(true) + ".fxml", getTestName(false) + ".java", getTestName(false) + "Wrapper.java");
+  }
+
   public void testNamedColor() throws Exception {
     doTestNavigation(JavaFxCommonClassNames.JAVAFX_SCENE_COLOR, "ORANGE");
   }
