@@ -360,8 +360,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         final PsiClassType functionalType = createDefaultConsumerType(project, parameter);
         final PsiParameter[] parameters = {parameter};
         final PsiElement bodyBlock = body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : body;
-        final PsiCallExpression toConvertCall = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(bodyBlock, parameters, functionalType);
-        final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, functionalType, parameters);
+        final String methodReferenceText = LambdaCanBeMethodReferenceInspection.convertToMethodReference(bodyBlock, parameters, functionalType, null);
         if (methodReferenceText != null) {
           return methodReferenceText;
         }
@@ -530,8 +529,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
     final PsiClassType functionalInterfaceType = functionClass != null ? psiFacade.getElementFactory().createType(functionClass, samParamTypes) : null;
     final PsiParameter[] parameters = {parameter};
-    final PsiCallExpression toConvertCall = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(expression, parameters, functionalInterfaceType);
-    final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, functionalInterfaceType, parameters);
+    final String methodReferenceText = LambdaCanBeMethodReferenceInspection.convertToMethodReference(expression, parameters, functionalInterfaceType, null);
     if (methodReferenceText != null) {
       LOG.assertTrue(functionalInterfaceType != null);
       result += "(" + functionalInterfaceType.getCanonicalText() + ")" + methodReferenceText;
