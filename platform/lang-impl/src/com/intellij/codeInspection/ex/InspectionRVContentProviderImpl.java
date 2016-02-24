@@ -23,11 +23,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
-import com.intellij.codeInspection.ui.tree.*;
-import com.intellij.codeInspection.ui.tree.InspectionTreeNode;
-import com.intellij.codeInspection.ui.tree.ProblemDescriptionNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -47,8 +43,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class InspectionRVContentProviderImpl extends InspectionRVContentProvider {
-  private final static Logger LOG = Logger.getInstance(InspectionRVContentProviderImpl.class);
-
   public InspectionRVContentProviderImpl(final Project project) {
     super(project);
   }
@@ -75,7 +69,6 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
               }
             }
           }
-
           problemElements.remove(entity);
           iterator.remove();
         }
@@ -87,8 +80,8 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
 
   @Override
   @Nullable
-  public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTreeBuilder tree) {
-    final RefEntity[] refEntities = tree.getSelectedRefElements();
+  public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
+    final RefEntity[] refEntities = tree.getSelectedElements();
     InspectionToolPresentation presentation = tree.getContext().getPresentation(toolWrapper);
     return refEntities.length == 0 ? null : presentation.getQuickFixes(refEntities, tree.getSelectedDescriptors());
   }
@@ -102,8 +95,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
                                     @NotNull final Map<String, Set<RefEntity>> contents,
                                     @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems,
                                     DefaultTreeModel model) {
-    //ApplicationManager.getApplication().assertIsDispatchThread();
-    LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
 
     Function<RefEntity, UserObjectContainer<RefEntity>> computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
@@ -125,7 +117,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     List<InspectionTreeNode> list = buildTree(context, contents, false, toolWrapper, computeContainer, showStructure);
 
     for (InspectionTreeNode node : list) {
-      merge(node, toolNode, true);
+      merge(model, node, toolNode, true);
     }
 
     if (presentation.isOldProblemsIncluded()) {
@@ -140,10 +132,10 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       list = buildTree(context, presentation.getOldContent(), true, toolWrapper, computeContainer, showStructure);
 
       for (InspectionTreeNode node : list) {
-        merge(node, toolNode, true);
+        merge(model, node, toolNode, true);
       }
     }
-    merge(toolNode, parentNode, false);
+    merge(model, toolNode, parentNode, false);
   }
 
   @Override
@@ -164,7 +156,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
           if (context.getUIOptions().SHOW_ONLY_DIFF && presentation.getProblemStatus(problem) == FileStatus.NOT_CHANGED) {
             continue;
           }
-          elemNode.add(new ProblemDescriptionNode(refElement, problem, toolWrapper, presentation));
+          elemNode.add(new ProblemDescriptionNode(refElement, problem, toolWrapper,presentation));
           if (problems.length == 1) {
             elemNode.setProblem(problems[0]);
           }

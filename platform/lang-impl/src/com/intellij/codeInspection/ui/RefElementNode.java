@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection.ui.tree;
+
+package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.ComputableIcon;
@@ -27,17 +27,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.MutableTreeNode;
 
 /**
- * @author Dmitry Batkovich
+ * @author max
  */
 public class RefElementNode extends InspectionTreeNode {
+  private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
   protected final InspectionToolPresentation myToolPresentation;
   private final ComputableIcon myIcon = new ComputableIcon(new Computable<Icon>() {
     @Override
     public Icon compute() {
-      final RefEntity refEntity = getRefElement();
+      final RefEntity refEntity = getElement();
       if (refEntity == null) {
         return null;
       }
@@ -46,7 +48,7 @@ public class RefElementNode extends InspectionTreeNode {
   });
 
   public RefElementNode(@NotNull Object userObject, @NotNull InspectionToolPresentation presentation) {
-    super(presentation.getContext().getProject(), userObject);
+    super(userObject);
     myToolPresentation = presentation;
   }
 
@@ -55,14 +57,12 @@ public class RefElementNode extends InspectionTreeNode {
   }
 
   public boolean hasDescriptorsUnder() {
-    return !getChildren().isEmpty();
+    return myHasDescriptorsUnder;
   }
 
   @Nullable
-  public RefEntity getRefElement() {
-    RefEntity value = (RefEntity)getValue();
-    LOG.assertTrue(value != null);
-    return value;
+  public RefEntity getElement() {
+    return (RefEntity)getUserObject();
   }
 
   @Override
@@ -72,7 +72,7 @@ public class RefElementNode extends InspectionTreeNode {
   }
 
   public String toString() {
-    final RefEntity element = getRefElement();
+    final RefEntity element = getElement();
     if (element == null || !element.isValid()) {
       return InspectionsBundle.message("inspection.reference.invalid");
     }
@@ -81,31 +81,39 @@ public class RefElementNode extends InspectionTreeNode {
 
   @Override
   public boolean isValid() {
-    final RefEntity refEntity = getRefElement();
+    final RefEntity refEntity = getElement();
     return refEntity != null && refEntity.isValid();
   }
 
   @Override
   public boolean isResolved() {
-    return myToolPresentation.isElementIgnored(getRefElement());
+    return myToolPresentation.isElementIgnored(getElement());
   }
 
 
   @Override
   public void ignoreElement() {
-    myToolPresentation.ignoreCurrentElement(getRefElement());
+    myToolPresentation.ignoreCurrentElement(getElement());
     super.ignoreElement();
   }
 
   @Override
   public void amnesty() {
-    myToolPresentation.amnesty(getRefElement());
+    myToolPresentation.amnesty(getElement());
     super.amnesty();
   }
 
   @Override
   public FileStatus getNodeStatus() {
-    return  myToolPresentation.getElementStatus(getRefElement());
+    return  myToolPresentation.getElementStatus(getElement());
+  }
+
+  @Override
+  public void add(MutableTreeNode newChild) {
+    super.add(newChild);
+    if (newChild instanceof ProblemDescriptionNode) {
+      myHasDescriptorsUnder = true;
+    }
   }
 
   public void setProblem(@NotNull CommonProblemDescriptor descriptor) {
@@ -115,4 +123,5 @@ public class RefElementNode extends InspectionTreeNode {
   public CommonProblemDescriptor getProblem() {
     return mySingleDescriptor;
   }
+
 }

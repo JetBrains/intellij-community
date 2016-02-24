@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection.ui.tree;
+package com.intellij.codeInspection.ui;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -21,12 +21,13 @@ import com.intellij.openapi.module.ModuleType;
 import javax.swing.*;
 
 /**
- * @author Dmitry Batkovich
+ * User: anna
+ * Date: 09-Jan-2006
  */
-public class InspectionModuleNode extends InspectionTreeNode<Module> {
+public class InspectionModuleNode extends InspectionTreeNode{
   private final Module myModule;
   public InspectionModuleNode(final Module module) {
-    super(module.getProject(), module);
+    super(module);
     myModule = module;
   }
 

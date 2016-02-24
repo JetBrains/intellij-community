@@ -29,10 +29,10 @@ import com.intellij.codeInspection.export.HTMLExportUtil;
 import com.intellij.codeInspection.export.HTMLExporter;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
-import com.intellij.codeInspection.ui.tree.InspectionNode;
-import com.intellij.codeInspection.ui.tree.InspectionTreeNode;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
@@ -63,8 +63,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-
-import static com.intellij.codeInspection.ex.InspectionRVContentProvider.traverse;
 
 /**
  * User: anna
@@ -123,12 +121,15 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
                   final HTMLExportFrameMaker maker = new HTMLExportFrameMaker(outputDirectoryName, myView.getProject());
                   maker.start();
                   try {
-                    final InspectionTreeNode root = (InspectionTreeNode)myView.getTreeBuilder().getTreeStructure().getRootElement();
-                    traverse(root, (node) -> {
-                      if (node instanceof InspectionNode) {
-                        exportHTML(maker, (InspectionNode)node);
+                    final InspectionTreeNode root = myView.getTree().getRoot();
+                    TreeUtil.traverse(root, new TreeUtil.Traverse() {
+                      @Override
+                      public boolean accept(final Object node) {
+                        if (node instanceof InspectionNode) {
+                          exportHTML(maker, (InspectionNode)node);
+                        }
+                        return true;
                       }
-                      return true;
                     });
                   }
                   catch (ProcessCanceledException e) {
@@ -161,9 +162,11 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
   private void dupm2XML(final String outputDirectoryName) {
     try {
       new File(outputDirectoryName).mkdirs();
-      final InspectionTreeNode root = (InspectionTreeNode)myView.getTreeBuilder().getRootElement();
+      final InspectionTreeNode root = myView.getTree().getRoot();
       final IOException[] ex = new IOException[1];
-      traverse(root, (node) -> {
+      TreeUtil.traverse(root, new TreeUtil.Traverse() {
+        @Override
+        public boolean accept(final Object node) {
           if (node instanceof InspectionNode) {
             InspectionNode toolNode = (InspectionNode)node;
             Element problems = new Element(PROBLEMS);
@@ -185,6 +188,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
             }
           }
           return true;
+        }
       });
       if (ex[0] != null) {
         throw ex[0];

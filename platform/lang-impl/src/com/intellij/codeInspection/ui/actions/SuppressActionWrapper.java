@@ -23,13 +23,12 @@ package com.intellij.codeInspection.ui.actions;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionRVContentProvider;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.tree.InspectionTreeNode;
-import com.intellij.codeInspection.ui.tree.ProblemDescriptionNode;
-import com.intellij.codeInspection.ui.tree.RefElementNode;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
+import com.intellij.codeInspection.ui.ProblemDescriptionNode;
+import com.intellij.codeInspection.ui.RefElementNode;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -45,34 +44,41 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.Set;
 
 public class SuppressActionWrapper extends ActionGroup {
   private final Project myProject;
   private final InspectionManagerEx myManager;
-  private final Set<InspectionTreeNode> myNodesToSuppress = new HashSet<>();
+  private final Set<InspectionTreeNode> myNodesToSuppress = new HashSet<InspectionTreeNode>();
   private final InspectionToolWrapper myToolWrapper;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.SuppressActionWrapper");
 
   public SuppressActionWrapper(@NotNull final Project project,
                                @NotNull final InspectionToolWrapper toolWrapper,
-                               @NotNull final Collection<InspectionTreeNode> paths) {
+                               @NotNull final TreePath... paths) {
     super(InspectionsBundle.message("suppress.inspection.problem"), false);
     myProject = project;
     myManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
-
-    for (InspectionTreeNode path : paths) {
-      InspectionRVContentProvider.traverse(path, n -> {
-        if (n.getChildren().isEmpty()) {
-          myNodesToSuppress.add(n);
+    for (TreePath path : paths) {
+      final Object node = path.getLastPathComponent();
+      if (!(node instanceof TreeNode)) continue;
+      TreeUtil.traverse((TreeNode)node, new TreeUtil.Traverse() {
+        @Override
+        public boolean accept(final Object node) {    //fetch leaves
+          final InspectionTreeNode n = (InspectionTreeNode)node;
+          if (n.isLeaf()) {
+            myNodesToSuppress.add(n);
+          }
+          return true;
         }
-        return true;
       });
     }
     myToolWrapper = toolWrapper;
@@ -157,13 +163,13 @@ public class SuppressActionWrapper extends ActionGroup {
     CommonProblemDescriptor descriptor = null;
     if (node instanceof RefElementNode) {
       final RefElementNode elementNode = (RefElementNode)node;
-      final RefEntity element = elementNode.getRefElement();
+      final RefEntity element = elementNode.getElement();
       refElement = element instanceof RefElement ? (RefElement)element : null;
       descriptor = elementNode.getProblem();
     }
     else if (node instanceof ProblemDescriptionNode) {
       final ProblemDescriptionNode descriptionNode = (ProblemDescriptionNode)node;
-      final RefEntity element = descriptionNode.getRefElement();
+      final RefEntity element = descriptionNode.getElement();
       refElement = element instanceof RefElement ? (RefElement)element : null;
       descriptor = descriptionNode.getDescriptor();
     }
@@ -193,9 +199,9 @@ public class SuppressActionWrapper extends ActionGroup {
                 final PsiElement element = content.first;
                 RefEntity refEntity = null;
                 if (node instanceof RefElementNode) {
-                  refEntity = ((RefElementNode)node).getRefElement();
+                  refEntity = ((RefElementNode)node).getElement();
                 } else if (node instanceof ProblemDescriptionNode) {
-                  refEntity = ((ProblemDescriptionNode)node).getRefElement();
+                  refEntity = ((ProblemDescriptionNode)node).getElement();
                 }
                 if (!suppress(element, content.second, mySuppressAction, refEntity)) break;
               }

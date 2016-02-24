@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection.ui.tree;
+
+package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.icons.AllIcons;
@@ -21,12 +22,11 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.PlatformUtils;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
- * @author Dmitry Batkovich
+ * @author max
  */
 public class InspectionRootNode extends InspectionTreeNode {
   private static final Icon APP_ICON = PlatformUtils.isJetBrainsProduct()
@@ -35,10 +35,9 @@ public class InspectionRootNode extends InspectionTreeNode {
   private final Project myProject;
 
   public InspectionRootNode(Project project) {
-    super(project, project);
+    super(project);
     myProject = project;
   }
-
 
   public String toString() {
     return isEmpty() ? InspectionsBundle.message("inspection.empty.root.node.text") :
@@ -46,10 +45,9 @@ public class InspectionRootNode extends InspectionTreeNode {
   }
 
   private boolean isEmpty() {
-    return getChildren().isEmpty();
+    return getChildCount() == 0;
   }
 
-  @Nullable
   @Override
   public Icon getIcon(boolean expanded) {
     return APP_ICON;

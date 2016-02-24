@@ -20,9 +20,6 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.ui.actions.SuppressActionWrapper;
 import com.intellij.codeInspection.ui.actions.occurrences.GoToSubsequentOccurrenceAction;
-import com.intellij.codeInspection.ui.tree.InspectionTreeBuilder;
-import com.intellij.codeInspection.ui.tree.InspectionTreeNode;
-import com.intellij.codeInspection.ui.tree.RefElementNode;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
@@ -34,12 +31,12 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -52,16 +49,12 @@ import java.util.function.Supplier;
 public class QuickFixToolbar extends JPanel {
   private static final int MAX_FIX_COUNT = 2;
 
-  public QuickFixToolbar(@NotNull InspectionTreeBuilder tree1,
+  public QuickFixToolbar(@NotNull InspectionTree tree,
                          @NotNull Project project,
                          @Nullable Editor editor,
                          @Nullable QuickFixAction[] fixes) {
     final boolean hasFixes = fixes != null && fixes.length != 0;
-    //
-    //TODO
-    //
-    final JTree tree = tree1.getTree();
-    CommonProblemDescriptor[] descriptors = tree1.getSelectedDescriptors();
+    CommonProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
     int problemCount = descriptors.length;
     final boolean multipleDescriptors = problemCount > 1;
 
@@ -78,10 +71,10 @@ public class QuickFixToolbar extends JPanel {
 
     //fill(getBulbPlacement(hasFixes), QuickFixToolbar::createBulbIcon, panels);
     fill(getDescriptionLabelPlacement(multipleDescriptors),
-         () -> getLabel(fixes, tree.getSelectionCount() == 1 ? ContainerUtil.getFirstItem(tree1.getSelectedItems()) : null, problemCount), panels);
+         () -> getLabel(fixes, tree.getSelectionCount() == 1 ? (InspectionTreeNode)tree.getSelectionPath().getLastPathComponent() : null, problemCount), panels);
     fill(getFixesPlacement(hasFixes, multipleDescriptors), () -> createFixPanel(fixes), panels);
-    fill(getSuppressPlacement(multipleDescriptors), () -> createSuppressionCombo(tree1.getSelectedToolWrapper()
-      , ContainerUtil.getFirstItem(tree1.getSelectedItems()), project), panels);
+    fill(getSuppressPlacement(multipleDescriptors), () -> createSuppressionCombo(tree.getSelectedToolWrapper()
+      , tree.getSelectionPath(), project), panels);
     fill(multipleDescriptors && editor != null ? 1 : -1, () -> ActionManager.getInstance().createActionToolbar("", GoToSubsequentOccurrenceAction.createNextPreviousActions(
       editor, descriptors), true).getComponent(), panels);
   }
@@ -105,8 +98,15 @@ public class QuickFixToolbar extends JPanel {
     return label;
   }
 
+  @NotNull
+  private static JLabel createBulbIcon() {
+    final JLabel label = new JLabel(AllIcons.Actions.IntentionBulb);
+    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
+    return label;
+  }
+
   private static JComponent createSuppressionCombo(@NotNull final InspectionToolWrapper toolWrapper,
-                                                   @NotNull final InspectionTreeNode path,
+                                                   @NotNull final TreePath path,
                                                    @NotNull final Project project) {
     final ComboBoxAction action = new ComboBoxAction() {
       {
@@ -117,7 +117,7 @@ public class QuickFixToolbar extends JPanel {
       @Override
       protected DefaultActionGroup createPopupActionGroup(JComponent button) {
         DefaultActionGroup group = new DefaultActionGroup();
-        group.addAll(new SuppressActionWrapper(project, toolWrapper, Collections.singleton(path)).getChildren(null));
+        group.addAll(new SuppressActionWrapper(project, toolWrapper, path).getChildren(null));
         return group;
       }
     };

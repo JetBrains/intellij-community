@@ -20,8 +20,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
-import com.intellij.codeInspection.ui.tree.InspectionNode;
-import com.intellij.codeInspection.ui.tree.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -327,7 +325,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
                                        @NotNull InspectionTreeNode parentNode,
                                        boolean showStructure) {
     final EntryPointsNode entryPointsNode = new EntryPointsNode(context);
-    InspectionToolWrapper dummyToolWrapper = entryPointsNode.getValue();
+    InspectionToolWrapper dummyToolWrapper = entryPointsNode.getToolWrapper();
     InspectionToolPresentation presentation = context.getPresentation(dummyToolWrapper);
     presentation.updateContent();
     provider.appendToolNodeContent(context, entryPointsNode, node, showStructure);

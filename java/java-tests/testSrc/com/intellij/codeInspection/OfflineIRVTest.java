@@ -31,8 +31,8 @@ import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
 import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.codeInspection.ui.tree.InspectionTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.codeInspection.ui.InspectionTree;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -49,14 +49,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.codeInspection.ex.InspectionRVContentProvider.traverse;
-
 public class OfflineIRVTest extends TestSourceBasedTestCase {
   private InspectionResultsView myView;
   private LocalInspectionToolWrapper myToolWrapper;
 
   private static String varMessage(String name) {
-    return InspectionsBundle.message("inspection.unused.assignment.problem.descriptor1", "<code>" + name + "</code>") + ".";
+    return InspectionsBundle.message("inspection.unused.assignment.problem.descriptor1", "<code>"+name+"</code>") + ".";
   }
 
   @Override
@@ -133,69 +131,72 @@ public class OfflineIRVTest extends TestSourceBasedTestCase {
 
   public void testOfflineView() throws Exception {
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = true;
-    AbstractTreeStructure tree = updateTree();
-    PlatformTestUtil.assertTreeStructureEquals(tree, getProject() +
-                                                     "\n Probable bugs" +
-                                                     "\n  " + myToolWrapper +
-                                                     "\n   " + getModule().toString() +
-                                                     "\n    <default>" +
-                                                     "\n     Test" +
-                                                     "\n      foo" +
-                                                     "\n       " + varMessage("j") +
-                                                     "\n      main" +
-                                                     "\n       " + varMessage("test") +
-                                                     "\n      f" +
-                                                     "\n       D" +
-                                                     "\n        b" +
-                                                     "\n         " + InspectionsBundle
-                                                       .message("inspection.unused.assignment.problem.descriptor1", "'" + "r" + "'") +
-                                                     "\n         anonymous (java.lang.Runnable)" +
-                                                     "\n          run" +
-                                                     "\n           " +
-                                                     varMessage("i") +
-                                                     "\n      ff" +
-                                                     "\n       " + varMessage("d") +
-                                                     "\n       " + varMessage("a") +
-                                                     "\n");
+    InspectionTree tree = updateTree();
+    TreeUtil.expandAll(tree);
+    PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n"
+                                           + " -Probable bugs\n"
+                                           + "  -" + myToolWrapper + "\n"
+                                           + "   -" + getModule().toString() + "\n"
+                                           + "    -<default>\n"
+                                           + "     -Test\n"
+                                           + "      -foo()\n"
+                                           + "       " + varMessage("j") + "\n"
+                                           + "      -main(String[])\n"
+                                           + "       " + varMessage("test") + "\n"
+                                           + "      -f()\n"
+                                           + "       -D\n"
+                                           + "        -b()\n"
+                                           + "         " + InspectionsBundle.message("inspection.unused.assignment.problem.descriptor1", "'" + "r" + "'") + "\n"
+                                           + "         -anonymous (java.lang.Runnable)\n"
+                                           + "          -run()\n"
+                                           + "           " + varMessage("i") + "\n"
+                                           + "      -ff()\n"
+                                           + "       " + varMessage("d") + "\n"
+                                           + "       " + varMessage("a") + "\n");
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = false;
     tree = updateTree();
-    PlatformTestUtil.assertTreeStructureEquals(tree, getProject() +
-                                                     "\n Probable bugs\n  " + myToolWrapper +
-                                                     "\n   Test" +
-                                                     "\n    " + varMessage("j") +
-                                                     "\n    " + varMessage("test") +
-                                                     "\n    " + varMessage("i") +
-                                                     "\n    " + varMessage("d") +
-                                                     "\n    " + varMessage("a") +
-                                                     "\n    " + InspectionsBundle .message("inspection.unused.assignment.problem.descriptor1", "'" + "r" + "'") + "\n");
-    TreeUtil.selectFirstNode(myView.getTreeBuilder().getTree());
-    final InspectionTreeNode root = (InspectionTreeNode)myView.getTreeBuilder().getTreeStructure().getRootElement();
+    PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n"
+                                           + " -Probable bugs\n"
+                                           + "  -" + myToolWrapper + "\n"
+                                           + "   -Test\n"
+                                           + "    " + varMessage("j") + "\n"
+                                           + "    " + varMessage("test") + "\n"
+                                           + "    " + varMessage("r") + "\n"
+                                           + "    " + varMessage("i") + "\n"
+                                           + "    " + varMessage("d") + "\n"
+                                           + "    " + varMessage("a") + "\n");
+    TreeUtil.selectFirstNode(tree);
+    final InspectionTreeNode root = (InspectionTreeNode)tree.getLastSelectedPathComponent();
     root.ignoreElement();
-    traverse(root, (n) -> {
-      assertTrue(n.isResolved());
-      return true;
+    TreeUtil.traverse(root, new TreeUtil.Traverse() {
+      @Override
+      public boolean accept(final Object node) {
+        assertTrue(((InspectionTreeNode)node).isResolved());
+        return true;
+      }
     });
     myView.getGlobalInspectionContext().getUIOptions().FILTER_RESOLVED_ITEMS = true;
     tree = updateTree();
-    PlatformTestUtil.assertTreeStructureEquals(tree, getProject() + "\n");
+    PlatformTestUtil.assertTreeEqual(tree, getProject() + "\n");
     myView.getGlobalInspectionContext().getUIOptions().FILTER_RESOLVED_ITEMS = false;
     tree = updateTree();
-    PlatformTestUtil.assertTreeStructureEquals(tree, getProject() + "\n"
-                                           + " Probable bugs\n"
-                                           + "  " + myToolWrapper + "\n"
-                                           + "   Test\n"
+    PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n"
+                                           + " -Probable bugs\n"
+                                           + "  -" + myToolWrapper + "\n"
+                                           + "   -Test\n"
                                            + "    " + varMessage("j") + "\n"
                                            + "    " + varMessage("test") + "\n"
+                                           + "    " + varMessage("r") + "\n"
                                            + "    " + varMessage("i") + "\n"
                                            + "    " + varMessage("d") + "\n"
-                                           + "    " + varMessage("a") + "\n"
-                                           + "    " + InspectionsBundle
-                                                       .message("inspection.unused.assignment.problem.descriptor1", "'" + "r" + "'") + "\n");
+                                           + "    " + varMessage("a") + "\n");
   }
 
-  private AbstractTreeStructure updateTree() {
+  private InspectionTree updateTree() {
     myView.update();
-    return myView.getTreeBuilder().getTreeStructure();
+    final InspectionTree tree = myView.getTree();
+    TreeUtil.expandAll(tree);
+    return tree;
   }
 
   @Override

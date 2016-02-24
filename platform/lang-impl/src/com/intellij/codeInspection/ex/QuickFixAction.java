@@ -24,7 +24,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.codeInspection.ui.tree.InspectionTreeBuilder;
+import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -84,13 +84,13 @@ public class QuickFixAction extends AnAction {
     e.getPresentation().setVisible(false);
     e.getPresentation().setEnabled(false);
 
-    final InspectionTreeBuilder tree = view.getTreeBuilder();
+    final InspectionTree tree = view.getTree();
     final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper();
     if (!view.isSingleToolInSelection() || toolWrapper != myToolWrapper) {
       return;
     }
 
-    if (!isProblemDescriptorsAcceptable() && tree.getSelectedElements().size() > 0 ||
+    if (!isProblemDescriptorsAcceptable() && tree.getSelectedElements().length > 0 ||
         isProblemDescriptorsAcceptable() && tree.getSelectedDescriptors().length > 0) {
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(true);
@@ -108,7 +108,7 @@ public class QuickFixAction extends AnAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final InspectionResultsView view = getInvoker(e);
-    final InspectionTreeBuilder tree = view.getTreeBuilder();
+    final InspectionTree tree = view.getTree();
     final CommonProblemDescriptor[] descriptors;
     if (isProblemDescriptorsAcceptable() && (descriptors = tree.getSelectedDescriptors()).length > 0) {
       doApplyFix(view.getProject(), descriptors, tree.getContext());
@@ -231,7 +231,7 @@ public class QuickFixAction extends AnAction {
   private static RefEntity[] getSelectedElements(AnActionEvent e) {
     final InspectionResultsView invoker = getInvoker(e);
     if (invoker == null) return new RefElement[0];
-    List<RefEntity> selection = new ArrayList<RefEntity>(Arrays.asList(invoker.getTreeBuilder().getSelectedRefElements()));
+    List<RefEntity> selection = new ArrayList<RefEntity>(Arrays.asList(invoker.getTree().getSelectedElements()));
     PsiDocumentManager.getInstance(invoker.getProject()).commitAllDocuments();
     Collections.sort(selection, new Comparator<RefEntity>() {
       @Override

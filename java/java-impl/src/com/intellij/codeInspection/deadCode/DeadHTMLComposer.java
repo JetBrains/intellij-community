@@ -30,12 +30,15 @@ import com.intellij.codeInspection.ex.DescriptorComposer;
 import com.intellij.codeInspection.ex.HTMLComposerImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
-import com.intellij.codeInspection.ui.tree.InspectionTreeNode;
-import com.intellij.codeInspection.ui.tree.RefElementNode;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
+import com.intellij.codeInspection.ui.RefElementNode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import javax.swing.tree.TreeNode;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 public class DeadHTMLComposer extends HTMLComposerImpl {
   private final InspectionToolPresentation myToolPresentation;
@@ -360,12 +363,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   }
 
   public static Set<RefElement> getPossibleChildren(final RefElementNode refElementNode, RefElement refElement) {
-    final List<InspectionTreeNode> pathToRoot = new ArrayList<>();
-    InspectionTreeNode currentNode = refElementNode;
-    while (currentNode != null) {
-      pathToRoot.add(currentNode);
-      currentNode = (InspectionTreeNode)currentNode.getParent();
-    }
+    final TreeNode[] pathToRoot = refElementNode.getPath();
 
     final HashSet<RefElement> newChildren = new HashSet<RefElement>();
 
@@ -404,10 +402,12 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     return newChildren;
   }
 
-  private static boolean notInPath(List<InspectionTreeNode> pathToRoot, RefElement refChild) {
-    for (InspectionTreeNode node : pathToRoot) {
-      if (node instanceof RefElementNode && node.getElement() == refChild) return false;
+  private static boolean notInPath(TreeNode[] pathToRoot, RefElement refChild) {
+    for (TreeNode aPathToRoot : pathToRoot) {
+      InspectionTreeNode node = (InspectionTreeNode)aPathToRoot;
+      if (node instanceof RefElementNode && ((RefElementNode)node).getElement() == refChild) return false;
     }
+
     return true;
   }
 }

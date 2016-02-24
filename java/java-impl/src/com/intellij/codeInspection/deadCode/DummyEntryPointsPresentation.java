@@ -21,8 +21,8 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.tree.InspectionNode;
-import com.intellij.codeInspection.ui.tree.InspectionTreeNode;
+import com.intellij.codeInspection.ui.InspectionNode;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
 import org.jetbrains.annotations.NotNull;
 

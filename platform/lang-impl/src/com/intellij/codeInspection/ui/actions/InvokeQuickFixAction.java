@@ -44,16 +44,16 @@ public class InvokeQuickFixAction extends AnAction {
           AllIcons.Actions.CreateFromUsage);
     myView = view;
     registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcutSet(),
-                              myView.getTreeBuilder().getTree());
+                              myView.getTree());
   }
 
   @Override
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    InspectionToolWrapper toolWrapper = myView.getTreeBuilder().getSelectedToolWrapper();
+    InspectionToolWrapper toolWrapper = myView.getTree().getSelectedToolWrapper();
     final InspectionRVContentProvider provider = myView.getProvider();
     if (toolWrapper != null && provider.isContentLoaded()) {
-      presentation.setEnabled(provider.hasQuickFixes(myView.getTreeBuilder()));
+      presentation.setEnabled(provider.hasQuickFixes(myView.getTree()));
     }
     else {
       presentation.setEnabled(false);
@@ -78,9 +78,9 @@ public class InvokeQuickFixAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    InspectionToolWrapper toolWrapper = myView.getTreeBuilder().getSelectedToolWrapper();
+    InspectionToolWrapper toolWrapper = myView.getTree().getSelectedToolWrapper();
     assert toolWrapper != null;
-    final QuickFixAction[] quickFixes = myView.getProvider().getQuickFixes(toolWrapper, myView.getTreeBuilder());
+    final QuickFixAction[] quickFixes = myView.getProvider().getQuickFixes(toolWrapper, myView.getTree());
     if (quickFixes == null || quickFixes.length == 0) {
       Messages.showInfoMessage(myView, "There are no applicable quickfixes", "Nothing found to fix");
       return;

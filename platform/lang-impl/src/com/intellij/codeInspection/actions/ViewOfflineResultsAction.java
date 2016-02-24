@@ -47,6 +47,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -225,7 +226,7 @@ public class ViewOfflineResultsAction extends AnAction {
                                                                  new OfflineInspectionRVContentProvider(resMap, project));
     ((RefManagerImpl)context.getRefManager()).startOfflineView();
     view.update();
-    TreeUtil.selectFirstNode(view.getTreeBuilder().getTree());
+    TreeUtil.selectFirstNode(view.getTree());
     context.addView(view, title);
     return view;
   }
