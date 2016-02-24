@@ -1154,7 +1154,8 @@ public class ExpectedTypesProvider {
           }
         }
       }
-      if ("Logger".equals(containingClass.getName()) || "Log".equals(containingClass.getName())) {
+      String className = containingClass.getName();
+      if (className != null && className.startsWith("Log")) {
         if (parameterType instanceof PsiClassType) {
           PsiType typeArg = PsiUtil.substituteTypeParameter(parameterType, CommonClassNames.JAVA_LANG_CLASS, 0, true);
           if (typeArg != null && TypeConversionUtil.erasure(typeArg).equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
