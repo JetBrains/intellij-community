@@ -847,6 +847,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                        @NotNull final Project project,
                        @Nullable final Runnable postRunnable,
                        @Nullable final String commandName) {
+    setCurrentScope(scope);
     final int fileCount = scope.getFileCount();
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     final List<LocalInspectionToolWrapper> lTools = new ArrayList<LocalInspectionToolWrapper>();
