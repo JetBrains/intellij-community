@@ -1296,7 +1296,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       this.clazz = clazz;
       startWrite(clazz);
       markThreadNameInStackTrace();
-      acquired();
     }
 
     @Override
@@ -1306,7 +1305,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
       finally {
         unmarkThreadNameInStackTrace();
-        released();
       }
     }
 
@@ -1353,13 +1351,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     private ReadAccessToken(Status status) {
       myStatus = status;
       startRead(status);
-      acquired();
     }
 
     @Override
     public void finish() {
       endRead(myStatus);
-      released();
     }
   }
 
