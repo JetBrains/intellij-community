@@ -546,7 +546,7 @@ public class RefactoringUtil {
 
   @Nullable
   public static PsiExpressionList getArgumentListByMethodReference(PsiElement ref) {
-    if (ref instanceof PsiEnumConstant) return ((PsiEnumConstant)ref).getArgumentList();
+    if (ref instanceof PsiCall) return ((PsiCall)ref).getArgumentList();
     PsiElement parent = ref.getParent();
     if (parent instanceof PsiCall) {
       return ((PsiCall)parent).getArgumentList();

@@ -110,6 +110,17 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
         return true;
       }
+      else if (usage instanceof MethodReferenceUsageInfo) {
+        final PsiElement element = usage.getElement();
+        if (element instanceof PsiMethodReferenceExpression) {
+          final PsiLambdaExpression lambdaExpression = LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)element, false, true);
+          final PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody());
+          if (expression instanceof PsiCallExpression) {
+            ((MethodReferenceUsageInfo)usage).setCallExpression((PsiCallExpression)expression);
+            return true;
+          }
+        }
+      }
       else if (usage instanceof FunctionalInterfaceChangedUsageInfo) {
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(usage.getProject());
         final PsiElement element = usage.getElement();
@@ -151,6 +162,14 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       else if (usage instanceof NoConstructorClassUsageInfo) {
         addDefaultConstructor(((JavaChangeInfo)changeInfo), ((NoConstructorClassUsageInfo)usage).getPsiClass(), usages);
         return true;
+      }
+      else if (usage instanceof MethodReferenceUsageInfo) {
+        final MethodCallUsageInfo methodCallInfo = ((MethodReferenceUsageInfo)usage).createMethodCallInfo();
+        if (methodCallInfo != null) {
+          processMethodUsage(methodCallInfo.getElement(), (JavaChangeInfo)changeInfo, methodCallInfo.isToChangeArguments(),
+                             methodCallInfo.isToCatchExceptions(), methodCallInfo.getReferencedMethod(), methodCallInfo.getSubstitutor(), usages);
+          return true;
+        }
       }
       else if (usage instanceof MethodCallUsageInfo) {
         final MethodCallUsageInfo methodCallInfo = (MethodCallUsageInfo)usage;

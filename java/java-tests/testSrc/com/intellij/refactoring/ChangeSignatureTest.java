@@ -348,6 +348,11 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
   }
 
+  public void testExpandMethodReferenceToDeleteParameter() {
+    GenParams genParams = method -> new ParameterInfoImpl[0];
+    doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
+  }
+
   public void testMethodParametersAlignmentAfterMethodNameChange() {
     getJavaSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getJavaSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
