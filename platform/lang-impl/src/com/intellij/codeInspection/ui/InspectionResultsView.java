@@ -156,7 +156,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       if (myDisposed) return;
       syncRightPanel();
       if (isAutoScrollMode()) {
-        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(InspectionResultsView.this), false);
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), false);
       }
     });
 
@@ -209,9 +209,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
             return getOpenFileDescriptor((RefElement)element);
           }
         }
-        else if (node instanceof com.intellij.codeInspection.ui.tree.ProblemDescriptionNode) {
+        else if (node instanceof ProblemDescriptionNode) {
           if (!node.isValid()) return null;
-          return navigate(((com.intellij.codeInspection.ui.tree.ProblemDescriptionNode)node).getDescriptor());
+          return navigate(((ProblemDescriptionNode)node).getDescriptor());
         }
         return null;
       }
@@ -390,9 +390,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         final RefEntity refSelected = refElementNode.getRefElement();
         showInRightPanel(refSelected);
       }
-      else if (node instanceof com.intellij.codeInspection.ui.tree.ProblemDescriptionNode) {
-        final com.intellij.codeInspection.ui.tree.ProblemDescriptionNode
-          problemNode = (com.intellij.codeInspection.ui.tree.ProblemDescriptionNode)node;
+      else if (node instanceof ProblemDescriptionNode) {
+        final ProblemDescriptionNode
+          problemNode = (ProblemDescriptionNode)node;
         showInRightPanel(problemNode.getRefElement());
       }
       else if (node instanceof InspectionNode || node instanceof InspectionPackageNode || node instanceof InspectionModuleNode) {
