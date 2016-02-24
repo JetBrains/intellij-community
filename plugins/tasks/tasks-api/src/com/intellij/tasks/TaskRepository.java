@@ -19,6 +19,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.impl.CancellableRunnable;
+import com.intellij.tasks.impl.BaseCloseTaskControlPanelProvider;
+import com.intellij.tasks.impl.BaseOpenTaskControlPanelProvider;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -362,6 +364,16 @@ public abstract class TaskRepository {
 
   public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {
     throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  public TaskControlPanelProvider getOpenTaskControlPanelProvider(){
+    return new BaseOpenTaskControlPanelProvider();
+  }
+
+  @NotNull
+  public TaskControlPanelProvider getCloseTaskControlPanelProvider(){
+    return new BaseCloseTaskControlPanelProvider();
   }
 
   public abstract static class CancellableConnection implements Callable<Exception> {
