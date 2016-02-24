@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SLRUMap;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderMarker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
@@ -26,17 +27,17 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
 
 public class JsonSchemaServiceImpl implements JsonSchemaService {
   private static final Logger LOGGER = Logger.getInstance(JsonSchemaServiceImpl.class);
   private static final Logger RARE_LOGGER = RareLogger.wrap(LOGGER, false);
   @Nullable
   private final Project myProject;
-  private final ConcurrentMap<JsonSchemaFileProvider, JsonSchemaObjectCodeInsightWrapper> myWrappers = ContainerUtil.newConcurrentMap();
+  private final SLRUMap<JsonSchemaFileProvider, JsonSchemaObjectCodeInsightWrapper> myWrappers;
 
   public JsonSchemaServiceImpl(@Nullable Project project) {
     myProject = project;
+    myWrappers = new SLRUMap<JsonSchemaFileProvider, JsonSchemaObjectCodeInsightWrapper>(200, 500);
   }
 
   @NotNull
@@ -129,7 +130,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
           if (wrapper == null) {
             JsonSchemaObjectCodeInsightWrapper newWrapper = createWrapper(provider);
             if (newWrapper == null) return null;
-            myWrappers.putIfAbsent(provider, newWrapper);
+            myWrappers.put(provider, newWrapper);
             wrapper = myWrappers.get(provider);
           }
           if (wrapper != null) {
