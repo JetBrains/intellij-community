@@ -133,21 +133,13 @@ class CallSignatureCache(object):
 
     def add(self, signature):
         filename, name, args_type = get_signature_info(signature)
-
-        if not filename in self.cache:
-            self.cache[filename] = {}
-
-        calls_from_file = self.cache[filename]
-
-        if not name in calls_from_file:
-            calls_from_file[name] = {}
-
-        name_calls = calls_from_file[name]
+        calls_from_file = self.cache.setdefault(filename, {})
+        name_calls = calls_from_file.setdefault(name, {})
         name_calls[args_type] = None
 
     def is_in_cache(self, signature):
         filename, name, args_type = get_signature_info(signature)
-        if filename in self.cache and name in self.cache[filename] and args_type in self.cache[filename][name]:
+        if args_type in self.cache.get(filename, {}).get(name, {}):
             return True
         return False
 
