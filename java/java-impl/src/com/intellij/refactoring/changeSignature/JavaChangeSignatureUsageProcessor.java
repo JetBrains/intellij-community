@@ -110,9 +110,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
         return true;
       }
-      else if (usage instanceof MethodReferenceUsageInfo) {
+      else if (usage instanceof MethodReferenceUsageInfo && MethodReferenceUsageInfo.needToExpand((JavaChangeInfo)changeInfo)) {
         final PsiElement element = usage.getElement();
-        if (element instanceof PsiMethodReferenceExpression) {
+        if (element instanceof PsiMethodReferenceExpression ) {
           final PsiLambdaExpression lambdaExpression = LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)element, false, true);
           final PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody());
           if (expression instanceof PsiCallExpression) {
@@ -163,7 +163,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         addDefaultConstructor(((JavaChangeInfo)changeInfo), ((NoConstructorClassUsageInfo)usage).getPsiClass(), usages);
         return true;
       }
-      else if (usage instanceof MethodReferenceUsageInfo) {
+      else if (usage instanceof MethodReferenceUsageInfo && MethodReferenceUsageInfo.needToExpand((JavaChangeInfo)changeInfo)) {
         final MethodCallUsageInfo methodCallInfo = ((MethodReferenceUsageInfo)usage).createMethodCallInfo();
         if (methodCallInfo != null) {
           processMethodUsage(methodCallInfo.getElement(), (JavaChangeInfo)changeInfo, methodCallInfo.isToChangeArguments(),
@@ -1006,7 +1006,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
           checkContract(conflictDescriptions, method);
         }
-        else if (element instanceof PsiMethodReferenceExpression) {
+        else if (element instanceof PsiMethodReferenceExpression && MethodReferenceUsageInfo.needToExpand(myChangeInfo)) {
           conflictDescriptions.putValue(element, "Changed method is used in method reference. Proceeding would result in conversion to lambda expression");
         }
       }
