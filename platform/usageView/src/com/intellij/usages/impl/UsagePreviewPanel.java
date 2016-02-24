@@ -47,6 +47,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsagePreviewPanel");
   private Editor myEditor;
   private final boolean myIsEditor;
+  private int myLineHeight;
 
   public UsagePreviewPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
     this(project, presentation, false);
@@ -102,6 +103,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
       releaseEditor();
       removeAll();
       myEditor = createEditor(psiFile, document);
+      myLineHeight = myEditor.getLineHeight();
       if (myEditor == null) return;
       myEditor.setBorder(null);
       add(myEditor.getComponent(), BorderLayout.CENTER);
@@ -111,6 +113,11 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
 
     highlight(infos, myEditor, myProject);
   }
+
+  public int getLineHeight() {
+    return myLineHeight;
+  }
+
 
   private static final Key<Boolean> IN_PREVIEW_USAGE_FLAG = Key.create("IN_PREVIEW_USAGE_FLAG");
 
