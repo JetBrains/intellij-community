@@ -338,9 +338,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   private class MyOpenInEditorWithMouseAction extends OpenInEditorWithMouseAction {
     @Override
     protected OpenFileDescriptor getDescriptor(@NotNull Editor editor, int line) {
-      Side side = null;
-      if (editor == getEditor(Side.LEFT)) side = Side.LEFT;
-      if (editor == getEditor(Side.RIGHT)) side = Side.RIGHT;
+      Side side = Side.fromValue(getEditors(), editor);
       if (side == null) return null;
 
       int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));

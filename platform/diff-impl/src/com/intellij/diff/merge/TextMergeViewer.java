@@ -597,10 +597,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       enterBulkChangeUpdateBlock();
       if (myAllMergeChanges.isEmpty()) return;
 
-      ThreeSide side = null;
-      if (e.getDocument() == getEditor(ThreeSide.LEFT).getDocument()) side = ThreeSide.LEFT;
-      if (e.getDocument() == getEditor(ThreeSide.RIGHT).getDocument()) side = ThreeSide.RIGHT;
-      if (e.getDocument() == getEditor(ThreeSide.BASE).getDocument()) side = ThreeSide.BASE;
+      List<Document> documents = ContainerUtil.map(getEditors(), Editor::getDocument);
+      ThreeSide side = ThreeSide.fromValue(documents, e.getDocument());
       if (side == null) {
         LOG.warn("Unknown document changed");
         return;
