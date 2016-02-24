@@ -172,7 +172,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watch(top, false)
     watch(sub, true)
     assertEvents(
-        { listOf(watchedFile1, watchedFile2, unwatchedFile).forEach { it.writeText("new content") } },
+        { arrayOf(watchedFile1, watchedFile2, unwatchedFile).forEach { it.writeText("new content") } },
         mapOf(watchedFile1 to 'U', watchedFile2 to 'U'))
   }
 
@@ -199,25 +199,25 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watch(sub)
     watch(side)
     assertEvents(
-        { listOf(subFile, sideFile).forEach { it.writeText("first content") } },
+        { arrayOf(subFile, sideFile).forEach { it.writeText("first content") } },
         mapOf(subFile to 'U', sideFile to 'U'))
 
     assertEvents(
-        { listOf(topFile, subFile, sideFile).forEach { it.writeText("new content") } },
+        { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("new content") } },
         mapOf(subFile to 'U', sideFile to 'U'))
 
     val requestForTopDir = watch(top)
     assertEvents(
-        { listOf(topFile, subFile, sideFile).forEach { it.writeText("newer content") } },
+        { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newer content") } },
         mapOf(topFile to 'U', subFile to 'U', sideFile to 'U'))
     unwatch(requestForTopDir)
 
     assertEvents(
-        { listOf(topFile, subFile, sideFile).forEach { it.writeText("newest content") } },
+        { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newest content") } },
         mapOf(subFile to 'U', sideFile to 'U'))
 
     assertEvents(
-        { listOf(topFile, subFile, sideFile).forEach { it.delete() } },
+        { arrayOf(topFile, subFile, sideFile).forEach { it.delete() } },
         mapOf(topFile to 'D', subFile to 'D', sideFile to 'D'))
   }
 
@@ -361,7 +361,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
   @Test fun testWatchRootRenameRemove() {
     val top = tempDir.newFolder("top")
-    val root = tempDir.newFolder("top/root")
+    val root = tempDir.newFolder("top/d1/d2/d3/root")
     val root2 = File(top, "_root")
     refresh(top)
 
