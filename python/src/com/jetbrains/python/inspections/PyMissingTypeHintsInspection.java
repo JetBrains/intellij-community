@@ -79,14 +79,14 @@ public class PyMissingTypeHintsInspection extends PyInspection{
     @NotNull
     @Override
     public String getName() {
-      return "Add type hinting for '" + myName + "'";
+      return "Add type hints for '" + myName + "'";
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Add type hinting";
+      return "Add type hints";
     }
 
     @Override
