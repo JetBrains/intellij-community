@@ -37,13 +37,17 @@ class MethodReferenceUsageInfo extends UsageInfo {
   public void setCallExpression(PsiCallExpression callExpression) {
     myCallExpression = callExpression;
   }
-  
+
   @Nullable
   public MethodCallUsageInfo createMethodCallInfo() {
     if (myCallExpression == null) {
       return null;
     }
     return new MethodCallUsageInfo(myCallExpression, myIsToModifyArgs, myIsToCatchExceptions);
+  }
+
+  public static boolean needToExpand(JavaChangeInfo changeInfo) {
+    return !changeInfo.isGenerateDelegate() && (changeInfo.isParameterSetOrOrderChanged() || changeInfo.isExceptionSetOrOrderChanged());
   }
 
   @Nullable

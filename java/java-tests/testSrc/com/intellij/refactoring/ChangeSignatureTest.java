@@ -353,6 +353,11 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
   }
 
+  public void testRenameMethodUsedInMethodReference() {
+    GenParams genParams = method -> new ParameterInfoImpl[] {new ParameterInfoImpl(0, "a", PsiType.INT)};
+    doTest(PsiModifier.PRIVATE, "alwaysFalse", null, genParams, new SimpleExceptionsGen(), false, false);
+  }
+
   public void testMethodParametersAlignmentAfterMethodNameChange() {
     getJavaSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getJavaSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
