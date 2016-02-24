@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,28 +31,24 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
-import com.intellij.util.concurrency.Futures;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements ApplicationComponent {
   private static final String FS_ROOT = "/";
+  private static final int STATUS_UPDATE_PERIOD = 1000;
 
   private final Object myLock = new Object();
   private final Set<WatchRequestImpl> myRootsToWatch = new THashSet<WatchRequestImpl>();
@@ -110,20 +106,13 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     private final Map<String, TreeNode> nodes = new THashMap<String, TreeNode>(1, FileUtil.PATH_HASHING_STRATEGY);
   }
 
-  public LocalFileSystemImpl(@NotNull ManagingFS managingFS) {
+  public LocalFileSystemImpl(@NotNull Application app, @NotNull ManagingFS managingFS) {
     myManagingFS = managingFS;
     myWatcher = new FileWatcher(myManagingFS);
     if (myWatcher.isOperational()) {
-      final int PERIOD = 1000;
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          final Application application = ApplicationManager.getApplication();
-          if (application == null || application.isDisposed()) return;
-          storeRefreshStatusToFiles();
-        }
-      };
-      JobScheduler.getScheduler().scheduleWithFixedDelay(runnable, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
+      JobScheduler.getScheduler().scheduleWithFixedDelay(
+        () -> { if (!app.isDisposed()) storeRefreshStatusToFiles(); },
+        STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     }
   }
 
@@ -363,9 +352,9 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       return Collections.emptySet();
     }
     if (watchRecursively) {
-      return replaceWatchedRoots(Collections.<WatchRequest>emptySet(), rootPaths, null);
+      return replaceWatchedRoots(Collections.emptySet(), rootPaths, null);
     }
-    return replaceWatchedRoots(Collections.<WatchRequest>emptySet(), null, rootPaths);
+    return replaceWatchedRoots(Collections.emptySet(), null, rootPaths);
   }
 
   @Override
@@ -464,24 +453,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   private static Set<String> findDirectories(Collection<String> recursiveRoots, Collection<String> flatRoots) {
-    final Set<String> directories = ContainerUtil.newConcurrentSet();
-
-    final BoundedTaskExecutor executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, Runtime.getRuntime().availableProcessors());
-    Futures.invokeAll(JBIterable.from(recursiveRoots).append(flatRoots).transform(new Function<String, Future<?>>() {
-      @Override
-      public Future<?> fun(final String root) {
-        return executor.submit(new Runnable() {
-          @Override
-          public void run() {
-            if (!root.contains(JarFileSystem.JAR_SEPARATOR) && new File(root).isDirectory()) {
-              directories.add(root);
-            }
-          }
-        });
-      }
-    }).toList());
-
-    return directories;
+    return Stream.concat(recursiveRoots.stream(), flatRoots.stream())
+      .parallel()
+      .filter((root) -> !root.contains(JarFileSystem.JAR_SEPARATOR) && new File(root).isDirectory())
+      .collect(Collectors.toSet());
   }
 
   @Nullable
@@ -540,7 +515,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
-  @NonNls
+  @Override
   public String toString() {
     return "LocalFileSystem";
   }
