@@ -66,7 +66,7 @@ class CanonicalPathMap {
       .parallel()
       .map((root) -> pair(root, FileSystemUtil.resolveSymLink(root)))
       .filter((p) -> p.second != null)
-      .collect(Collectors.toConcurrentMap((p) -> p.first, (p) -> p.second));
+      .collect(Collectors.toMap((p) -> p.first, (p) -> p.second));
   }
 
   private static List<String> mapPaths(Map<String, String> resolvedPaths, List<String> paths, Collection<Pair<String, String>> mapping) {
