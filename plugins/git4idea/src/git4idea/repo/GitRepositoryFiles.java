@@ -18,7 +18,6 @@ package git4idea.repo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +28,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.psi.impl.SyntheticFileSystemItem.LOG;
 
 /**
@@ -119,19 +119,21 @@ public class GitRepositoryFiles {
    */
   @Nullable
   private static VirtualFile getMainGitDirForWorktree(@NotNull VirtualFile gitDir) {
-    LocalFileSystem lfs = LocalFileSystem.getInstance();
-    VirtualFile commonDir = lfs.refreshAndFindFileByPath(gitDir.getPath() + "/commondir");
-    if (commonDir == null) return null;
+    File gitDirFile = virtualToIoFile(gitDir);
+    File commonDir = new File(gitDirFile, "commondir");
+    if (!commonDir.exists()) return null;
     String pathToMain;
     try {
-      pathToMain = VfsUtilCore.loadText(commonDir).trim();
+      pathToMain = FileUtil.loadFile(commonDir).trim();
     }
     catch (IOException e) {
       LOG.error("Couldn't load " + commonDir, e);
       return null;
     }
-    VirtualFile mainDir = gitDir.findFileByRelativePath(pathToMain);
-    if (mainDir != null) return mainDir;
+    String mainDir = FileUtil.toCanonicalPath(gitDirFile.getPath() + File.separator + pathToMain, true);
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile mainDirVF = lfs.refreshAndFindFileByPath(mainDir);
+    if (mainDirVF != null) return mainDirVF;
     return lfs.refreshAndFindFileByPath(pathToMain); // absolute path is also possible
   }
 
