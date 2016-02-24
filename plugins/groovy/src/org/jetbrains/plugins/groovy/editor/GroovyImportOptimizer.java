@@ -85,53 +85,51 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     @Override
     public Runnable compute() {
       if (!(myFile instanceof GroovyFile)) return EmptyRunnable.getInstance();
+      final GroovyFile file = ((GroovyFile)myFile);
+      final Set<String> simplyImportedClasses = new LinkedHashSet<String>();
+      final Set<String> staticallyImportedMembers = new LinkedHashSet<String>();
+      final Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
+      final Set<GrImportStatement> unresolvedOnDemandImports = new HashSet<GrImportStatement>();
+      final Set<String> implicitlyImportedClasses = new LinkedHashSet<String>();
+      final Set<String> innerClasses = new HashSet<String>();
+      Map<String, String> aliasImported = ContainerUtil.newHashMap();
+      Map<String, String> annotatedImports = ContainerUtil.newHashMap();
+
+      GroovyImportUtil.processFile(myFile, simplyImportedClasses, staticallyImportedMembers, usedImports, unresolvedOnDemandImports,
+                                   implicitlyImportedClasses, innerClasses,
+                                   aliasImported, annotatedImports);
+      final List<GrImportStatement> oldImports = PsiUtil.getValidImportStatements(file);
+
+      // Add new import statements
+      GrImportStatement[] newImports =
+        prepare(usedImports, simplyImportedClasses, staticallyImportedMembers, implicitlyImportedClasses, innerClasses, aliasImported,
+                annotatedImports, unresolvedOnDemandImports);
+      if (oldImports.isEmpty() && newImports.length == 0 && aliasImported.isEmpty()) return EmptyRunnable.getInstance();
+
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(file.getProject());
+
+      final GroovyFile tempFile = factory.createGroovyFile("", false, null);
+
+      for (GrImportStatement newImport : newImports) {
+        tempFile.addImport(newImport);
+      }
+
+      if (!oldImports.isEmpty()) {
+        final int startOffset = oldImports.get(0).getTextRange().getStartOffset();
+        final int endOffset = oldImports.get(oldImports.size() - 1).getTextRange().getEndOffset();
+        String oldText = oldImports.isEmpty() ? "" : myFile.getText().substring(startOffset, endOffset);
+        if (tempFile.getText().trim().equals(oldText)) return EmptyRunnable.getInstance();
+      }
       return () -> {
-        final GroovyFile file = ((GroovyFile)myFile);
         final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
         final Document document = documentManager.getDocument(file);
-        if (document != null) {
-          documentManager.commitDocument(document);
-        }
-        final Set<String> simplyImportedClasses = new LinkedHashSet<String>();
-        final Set<String> staticallyImportedMembers = new LinkedHashSet<String>();
-        final Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
-        final Set<GrImportStatement> unresolvedOnDemandImports = new HashSet<GrImportStatement>();
-        final Set<String> implicitlyImportedClasses = new LinkedHashSet<String>();
-        final Set<String> innerClasses = new HashSet<String>();
-        Map<String, String> aliasImported = ContainerUtil.newHashMap();
-        Map<String, String> annotatedImports = ContainerUtil.newHashMap();
-
-        GroovyImportUtil.processFile(myFile, simplyImportedClasses, staticallyImportedMembers, usedImports, unresolvedOnDemandImports,
-                                     implicitlyImportedClasses, innerClasses,
-                                     aliasImported, annotatedImports);
-        final List<GrImportStatement> oldImports = PsiUtil.getValidImportStatements(file);
-
-        // Add new import statements
-        GrImportStatement[] newImports =
-          prepare(usedImports, simplyImportedClasses, staticallyImportedMembers, implicitlyImportedClasses, innerClasses, aliasImported,
-                  annotatedImports, unresolvedOnDemandImports);
-        if (oldImports.isEmpty() && newImports.length == 0 && aliasImported.isEmpty()) return;
-
-        GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(file.getProject());
-
-        final GroovyFile tempFile = factory.createGroovyFile("", false, null);
-
-        for (GrImportStatement newImport : newImports) {
-          tempFile.addImport(newImport);
-        }
-
-        if (!oldImports.isEmpty()) {
-          final int startOffset = oldImports.get(0).getTextRange().getStartOffset();
-          final int endOffset = oldImports.get(oldImports.size() - 1).getTextRange().getEndOffset();
-          String oldText = oldImports.isEmpty() ? "" : myFile.getText().substring(startOffset, endOffset);
-          if (tempFile.getText().trim().equals(oldText)) return;
-        }
+        if (document != null) documentManager.commitDocument(document);
 
         for (GrImportStatement statement : tempFile.getImportStatements()) {
           file.addImport(statement);
         }
 
-        for (GrImportStatement importStatement : oldImports) {
+        for (GrImportStatement importStatement : PsiUtil.getValidImportStatements(file)) {
           file.removeImport(importStatement);
         }
       };
