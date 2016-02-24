@@ -595,7 +595,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed() || isOfflineInspections, "Must not run under read action, too unresponsive");
     final List<InspectionToolWrapper> needRepeatSearchRequest = new ArrayList<InspectionToolWrapper>();
 
-    final boolean canBeExternalUsages = scope.getScopeType() != AnalysisScope.PROJECT;
+    final boolean canBeExternalUsages = !(scope.getScopeType() == AnalysisScope.PROJECT && scope.isIncludeTestSource());
     for (Tools tools : globalTools) {
       for (ScopeToolState state : tools.getTools()) {
         final InspectionToolWrapper toolWrapper = state.getTool();
@@ -615,8 +615,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             @Override
             public void run() {
               tool.runInspection(scope, inspectionManager, GlobalInspectionContextImpl.this, toolPresentation);
-              //skip phase when we are sure that scope already contains everything
-              if (canBeExternalUsages &&
+              //skip phase when we are sure that scope already contains everything, unused declaration though needs to proceed with its suspicious code
+              if ((canBeExternalUsages || tool.getAdditionalJobs() != null) &&
                   tool.queryExternalUsagesRequests(inspectionManager, GlobalInspectionContextImpl.this, toolPresentation)) {
                 needRepeatSearchRequest.add(toolWrapper);
               }
