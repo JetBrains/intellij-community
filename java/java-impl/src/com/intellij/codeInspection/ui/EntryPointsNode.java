@@ -19,6 +19,7 @@ import com.intellij.codeInspection.deadCode.DummyEntryPointsEP;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ui.tree.InspectionNode;
 import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +30,7 @@ import javax.swing.*;
  */
 public class EntryPointsNode extends InspectionNode {
   public EntryPointsNode(@NotNull GlobalInspectionContextImpl context) {
-    super(createDummyWrapper(context));
+    super(createDummyWrapper(context), context.getProject());
   }
 
   private static InspectionToolWrapper createDummyWrapper(@NotNull GlobalInspectionContextImpl context) {

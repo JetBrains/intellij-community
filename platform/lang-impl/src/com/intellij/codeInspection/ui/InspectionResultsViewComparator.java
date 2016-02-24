@@ -32,6 +32,9 @@ import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptorNode;
 import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.ui.tree.*;
+import com.intellij.codeInspection.ui.tree.InspectionTreeNode;
+import com.intellij.codeInspection.ui.tree.ProblemDescriptionNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
@@ -45,13 +48,11 @@ import com.intellij.psi.util.PsiUtilCore;
 
 import java.util.Comparator;
 
-public class InspectionResultsViewComparator implements Comparator {
+public class InspectionResultsViewComparator implements Comparator<InspectionTreeNode> {
   private static final Logger LOG = Logger.getInstance("#" + InspectionResultsViewComparator.class.getName());
 
   @Override
-  public int compare(Object o1, Object o2) {
-    InspectionTreeNode node1 = (InspectionTreeNode)o1;
-    InspectionTreeNode node2 = (InspectionTreeNode)o2;
+  public int compare(InspectionTreeNode node1, InspectionTreeNode node2) {
 
     if (node1 instanceof InspectionSeverityGroupNode && node2 instanceof InspectionSeverityGroupNode) {
       final InspectionSeverityGroupNode groupNode1 = (InspectionSeverityGroupNode)node1;
@@ -87,8 +88,8 @@ public class InspectionResultsViewComparator implements Comparator {
 
     if (node1 instanceof OfflineRefElementNode && node2 instanceof OfflineRefElementNode ||
         node1 instanceof OfflineProblemDescriptorNode && node2 instanceof OfflineProblemDescriptorNode) {
-      final Object userObject1 = node1.getUserObject();
-      final Object userObject2 = node2.getUserObject();
+      final Object userObject1 = node1.getValue();
+      final Object userObject2 = node2.getValue();
       if (userObject1 instanceof OfflineProblemDescriptor && userObject2 instanceof OfflineProblemDescriptor) {
         final OfflineProblemDescriptor descriptor1 = (OfflineProblemDescriptor)userObject1;
         final OfflineProblemDescriptor descriptor2 = (OfflineProblemDescriptor)userObject2;
@@ -104,7 +105,7 @@ public class InspectionResultsViewComparator implements Comparator {
     }
 
     if (node1 instanceof RefElementNode && node2 instanceof RefElementNode){   //sort by filename and inside file by start offset
-      return compareEntities(((RefElementNode)node1).getElement(), ((RefElementNode)node2).getElement());
+      return compareEntities(((RefElementNode)node1).getRefElement(), ((RefElementNode)node2).getRefElement());
     }
     if (node1 instanceof ProblemDescriptionNode && node2 instanceof ProblemDescriptionNode) {
       final CommonProblemDescriptor descriptor1 = ((ProblemDescriptionNode)node1).getDescriptor();
@@ -123,17 +124,17 @@ public class InspectionResultsViewComparator implements Comparator {
     if (node1 instanceof RefElementNode && node2 instanceof ProblemDescriptionNode) {
       final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node2).getDescriptor();
       if (descriptor instanceof ProblemDescriptor) {
-        return compareEntity(((RefElementNode)node1).getElement(), ((ProblemDescriptor)descriptor).getPsiElement());
+        return compareEntity(((RefElementNode)node1).getRefElement(), ((ProblemDescriptor)descriptor).getPsiElement());
       }
-      return compareEntities(((RefElementNode)node1).getElement(), ((ProblemDescriptionNode)node2).getElement());
+      return compareEntities(((RefElementNode)node1).getRefElement(), ((ProblemDescriptionNode)node2).getRefElement());
     }
 
     if (node2 instanceof RefElementNode && node1 instanceof ProblemDescriptionNode) {
       final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node1).getDescriptor();
       if (descriptor instanceof ProblemDescriptor) {
-        return -compareEntity(((RefElementNode)node2).getElement(), ((ProblemDescriptor)descriptor).getPsiElement());
+        return -compareEntity(((RefElementNode)node2).getRefElement(), ((ProblemDescriptor)descriptor).getPsiElement());
       }
-      return -compareEntities(((RefElementNode)node2).getElement(), ((ProblemDescriptionNode)node1).getElement());
+      return -compareEntities(((RefElementNode)node2).getRefElement(), ((ProblemDescriptionNode)node1).getRefElement());
     }
 
     LOG.error("node1: " + node1 + ", node2: " + node2);

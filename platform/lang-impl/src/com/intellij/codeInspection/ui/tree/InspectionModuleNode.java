@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,36 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInspection.ui.tree;
 
-package com.intellij.codeInspection.ui;
-
-import com.intellij.util.IconUtil;
-import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 
 import javax.swing.*;
 
 /**
- * @author max
+ * @author Dmitry Batkovich
  */
-class InspectionGroupNode extends InspectionTreeNode {
-  private static final Icon EMPTY = new EmptyIcon(0, IconUtil.getEmptyIcon(false).getIconHeight());
-
-  InspectionGroupNode(@NotNull String groupTitle) {
-    super(groupTitle);
-  }
-
-  String getGroupTitle() {
-    return (String) getUserObject();
+public class InspectionModuleNode extends InspectionTreeNode<Module> {
+  private final Module myModule;
+  public InspectionModuleNode(final Module module) {
+    super(module.getProject(), module);
+    myModule = module;
   }
 
   @Override
   public Icon getIcon(boolean expanded) {
-    return EMPTY;
+    return myModule.isDisposed() ? null : ModuleType.get(myModule).getIcon();
   }
 
-  @Override
-  public boolean appearsBold() {
-    return true;
+  public String getName(){
+    return myModule.getName();
+  }
+
+  public String toString() {
+    return getName();
   }
 }

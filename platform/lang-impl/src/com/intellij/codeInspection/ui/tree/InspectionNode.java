@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.codeInspection.ui;
+package com.intellij.codeInspection.ui.tree;
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,14 +25,13 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 /**
- * @author max
+ * @author Dmitry Batkovich
  */
-public class InspectionNode extends InspectionTreeNode {
+public class InspectionNode extends InspectionTreeNode<InspectionToolWrapper> {
   public static final Icon TOOL = LayeredIcon.create(AllIcons.Toolwindows.ToolWindowInspection, IconUtil.getEmptyIcon(false));
-  private boolean myTooBigForOnlineRefresh = false;
 
-  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper) {
-    super(toolWrapper);
+  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper, Project project) {
+    super(project, toolWrapper);
   }
 
   public String toString() {
@@ -41,7 +40,9 @@ public class InspectionNode extends InspectionTreeNode {
 
   @NotNull
   public InspectionToolWrapper getToolWrapper() {
-    return (InspectionToolWrapper)getUserObject();
+    InspectionToolWrapper value = getValue();
+    LOG.assertTrue(value != null);
+    return value;
   }
 
   @Override
@@ -49,10 +50,4 @@ public class InspectionNode extends InspectionTreeNode {
     return TOOL;
   }
 
-  public boolean isTooBigForOnlineRefresh() {
-    if (!myTooBigForOnlineRefresh) {
-      myTooBigForOnlineRefresh = getProblemCount() > 1000;
-    }
-    return myTooBigForOnlineRefresh;
-  }
 }

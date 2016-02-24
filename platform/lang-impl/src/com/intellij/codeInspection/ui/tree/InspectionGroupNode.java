@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,34 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInspection.ui.tree;
 
-package com.intellij.codeInspection.ui;
-
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-
 /**
- * User: anna
- * Date: Mar 15, 2005
+ * @author Dmitry Batkovich
  */
-public class InspectionSeverityGroupNode extends InspectionTreeNode{
+public class InspectionGroupNode extends InspectionTreeNode<String> {
+  private static final Icon EMPTY = new EmptyIcon(0, IconUtil.getEmptyIcon(false).getIconHeight());
 
-  private final HighlightDisplayLevel myLevel;
-  private final Project myProject;
+  public InspectionGroupNode(@NotNull String groupTitle, @NotNull Project project) {
+    super(project, groupTitle);
+  }
 
-  public InspectionSeverityGroupNode(final Project project, final HighlightDisplayLevel level) {
-    super(level);
-    myLevel = level;
-    myProject = project;
+  public String getGroupTitle() {
+    String title = getValue();
+    LOG.assertTrue(title != null);
+    return title;
   }
 
   @Override
   public Icon getIcon(boolean expanded) {
-    return myLevel.getIcon();
+    return EMPTY;
   }
 
   @Override
@@ -48,15 +48,8 @@ public class InspectionSeverityGroupNode extends InspectionTreeNode{
     return true;
   }
 
+  @Override
   public String toString() {
-    return StringUtil.capitalize(myLevel.toString().toLowerCase());
-  }
-
-  public HighlightDisplayLevel getSeverityLevel() {
-    return myLevel;
-  }
-
-  public Project getProject() {
-    return myProject;
+    return getGroupTitle();
   }
 }

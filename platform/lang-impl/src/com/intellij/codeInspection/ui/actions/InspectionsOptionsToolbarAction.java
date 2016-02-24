@@ -12,7 +12,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.codeInspection.ui.InspectionTree;
+import com.intellij.codeInspection.ui.tree.InspectionTreeBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -61,7 +61,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
 
   @Nullable
   private InspectionToolWrapper getSelectedToolWrapper() {
-    return myView.getTree().getSelectedToolWrapper();
+    return myView.getTreeBuilder().getSelectedToolWrapper();
   }
 
   @Override
@@ -89,7 +89,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
 
   public List<AnAction> createActions() {
     final List<AnAction> result = new ArrayList<AnAction>();
-    final InspectionTree tree = myView.getTree();
+    final InspectionTreeBuilder tree = myView.getTreeBuilder();
     final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper();
     if (toolWrapper == null) return result;
     final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
@@ -111,8 +111,8 @@ public class InspectionsOptionsToolbarAction extends AnAction {
       }
 
       @Nullable
-      private PsiElement getPsiElement(InspectionTree tree) {
-        final RefEntity[] selectedElements = tree.getSelectedElements();
+      private PsiElement getPsiElement(InspectionTreeBuilder tree) {
+        final RefEntity[] selectedElements = tree.getSelectedRefElements();
 
         final PsiElement psiElement;
         if (selectedElements.length > 0 && selectedElements[0] instanceof RefElement) {
@@ -125,7 +125,8 @@ public class InspectionsOptionsToolbarAction extends AnAction {
       }
     });
 
-    result.add(new SuppressActionWrapper(myView.getProject(), toolWrapper, tree.getSelectionPaths()));
+    //TODO make it better
+    result.add(new SuppressActionWrapper(myView.getProject(), toolWrapper, tree.getSelectedItems()));
 
 
     return result;
@@ -148,7 +149,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
           model.commit();
           myView.updateCurrentProfile();
         } else {
-          final RefEntity[] selectedElements = myView.getTree().getSelectedElements();
+          final RefEntity[] selectedElements = myView.getTreeBuilder().getSelectedRefElements();
           final Set<PsiElement> files = new HashSet<PsiElement>();
           final Project project = myView.getProject();
           final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);

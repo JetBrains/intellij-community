@@ -52,7 +52,7 @@ public class InspectionNodeInfo extends JPanel {
     myProject = project;
     myTitle = new SimpleColoredComponent();
     myCurrentProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProjectProfileImpl();
-    myKey = HighlightDisplayKey.find(toolWrapper.getID());
+    myKey = HighlightDisplayKey.findById(toolWrapper.getID());
     myName = toolWrapper.getDisplayName();
     myButton = new JButton();
 

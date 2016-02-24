@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.codeInspection.ui;
+package com.intellij.codeInspection.ui.tree;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
@@ -33,7 +33,7 @@ import static com.intellij.codeInspection.ProblemDescriptorUtil.APPEND_LINE_NUMB
 import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END;
 
 /**
- * @author max
+ * @author Dmitry Batkovich
  */
 public class ProblemDescriptionNode extends InspectionTreeNode {
   protected RefEntity myElement;
@@ -56,11 +56,11 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   private ProblemDescriptionNode(@NotNull Object userObject,
-                                RefEntity element,
-                                CommonProblemDescriptor descriptor,
-                                @NotNull InspectionToolWrapper toolWrapper,
-                                @NotNull InspectionToolPresentation presentation) {
-    super(userObject);
+                                 RefEntity element,
+                                 CommonProblemDescriptor descriptor,
+                                 @NotNull InspectionToolWrapper toolWrapper,
+                                 @NotNull InspectionToolPresentation presentation) {
+    super(presentation.getContext().getProject(), userObject);
     myElement = element;
     myDescriptor = descriptor;
     myToolWrapper = toolWrapper;
@@ -68,7 +68,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   @Nullable
-  public RefEntity getElement() {
+  public RefEntity getRefElement() {
     return myElement;
   }
 
@@ -106,30 +106,30 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
 
   @Override
   public boolean isResolved() {
-    return myElement instanceof RefElement && getPresentation().isProblemResolved(myElement, getDescriptor());
+    return myElement instanceof RefElement && getToolPresentation().isProblemResolved(myElement, getDescriptor());
   }
 
   @Override
   public void ignoreElement() {
-    InspectionToolPresentation presentation = getPresentation();
-    presentation.ignoreCurrentElementProblem(getElement(), getDescriptor());
+    InspectionToolPresentation presentation = getToolPresentation();
+    presentation.ignoreCurrentElementProblem(getRefElement(), getDescriptor());
   }
 
   @Override
   public void amnesty() {
-    InspectionToolPresentation presentation = getPresentation();
-    presentation.amnesty(getElement());
+    InspectionToolPresentation presentation = getToolPresentation();
+    presentation.amnesty(getRefElement());
   }
 
   @NotNull
-  private InspectionToolPresentation getPresentation() {
+  private InspectionToolPresentation getToolPresentation() {
     return myPresentation;
   }
 
   @Override
   public FileStatus getNodeStatus() {
-    if (myElement instanceof RefElement){
-      return getPresentation().getProblemStatus(myDescriptor);
+    if (myElement instanceof RefElement) {
+      return getToolPresentation().getProblemStatus(myDescriptor);
     }
     return FileStatus.NOT_CHANGED;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInspection.ui.tree;
 
-package com.intellij.codeInspection.ui;
-
+import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 
-/**
- * @author max
- */
-public class InspectionPackageNode extends InspectionTreeNode {
 
-  public InspectionPackageNode(String packageName) {
-    super(packageName);
+/**
+ * @author Dmitry Batkovich
+ */
+public class InspectionPackageNode extends InspectionTreeNode<String> {
+  private String myPackageName;
+
+  public InspectionPackageNode(Project project, String name) {
+    super(project, name);
+    myPackageName = name;
   }
 
   public String getPackageName() {
-    return (String) getUserObject();
+    return myPackageName;
   }
 
   @Override
   public Icon getIcon(boolean expanded) {
     return PlatformIcons.PACKAGE_ICON;
+  }
+
+  @Override
+  public String toString() {
+    return getPackageName();
   }
 }

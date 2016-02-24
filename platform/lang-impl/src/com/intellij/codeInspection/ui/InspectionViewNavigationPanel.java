@@ -15,23 +15,22 @@
  */
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.ui.tree.InspectionRootNode;
+import com.intellij.codeInspection.ui.tree.InspectionTreeBuilder;
+import com.intellij.codeInspection.ui.tree.InspectionTreeNode;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
 import java.awt.*;
 
 /**
  * @author Dmitry Batkovich
  */
 public class InspectionViewNavigationPanel extends JPanel {
-  public InspectionViewNavigationPanel(InspectionTreeNode node, InspectionTree tree) {
+  public InspectionViewNavigationPanel(InspectionTreeNode node, InspectionTreeBuilder treeBuilder) {
     setLayout(new BorderLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(5, 7, 0, 0));
     final String titleLabelText = getTitleText(node instanceof InspectionRootNode, true);
@@ -40,17 +39,23 @@ public class InspectionViewNavigationPanel extends JPanel {
     links.setLayout(new BoxLayout(links, BoxLayout.Y_AXIS));
     links.add(Box.createVerticalStrut(JBUI.scale(10)));
     add(BorderLayout.CENTER, links);
-    for (int i = 0; i < node.getChildCount(); i++) {
-      final TreeNode child = node.getChildAt(i);
-      final LinkLabel link = new LinkLabel(child.toString(), null) {
-        @Override
-        public void doClick() {
-          TreeUtil.selectInTree((DefaultMutableTreeNode)child, true, tree);
-        }
-      };
-      link.setBorder(IdeBorderFactory.createEmptyBorder(1, 17, 3, 1));
-      links.add(link);
-    }
+
+    //TODO fix it!!
+    //
+    //
+    //treeBuilder.
+    //
+    //for (int i = 0; i < node.getChildCount(); i++) {
+    //  final TreeNode child = node.getChildAt(i);
+    //  final LinkLabel link = new LinkLabel(child.toString(), null) {
+    //    @Override
+    //    public void doClick() {
+    //      TreeUtil.selectInTree((DefaultMutableTreeNode)child, true, treeBuilder.getTree());
+    //    }
+    //  };
+    //  link.setBorder(IdeBorderFactory.createEmptyBorder(1, 17, 3, 1));
+    //  links.add(link);
+    //}
   }
 
   @NotNull

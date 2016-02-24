@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 05-Jan-2007
- */
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
-import com.intellij.codeInspection.ui.RefElementNode;
+import com.intellij.codeInspection.ui.tree.RefElementNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author Dmitry Batkovich
+ */
 public class OfflineRefElementNode extends RefElementNode {
   public OfflineRefElementNode(@NotNull OfflineProblemDescriptor descriptor, @NotNull InspectionToolPresentation presentation) {
     super(descriptor, presentation);
@@ -34,21 +32,29 @@ public class OfflineRefElementNode extends RefElementNode {
 
   @Override
   @Nullable
-  public RefEntity getElement() {
+  public RefEntity getRefElement() {
+    Object userObject = getValue();
     if (userObject instanceof RefEntity) {
       return (RefEntity)userObject;
     }
     if (userObject == null) return null;
     final RefEntity refElement = ((OfflineProblemDescriptor)userObject).getRefElement(myToolPresentation.getContext().getRefManager());
-    setUserObject(refElement);
+    setValue(refElement);
     return refElement;
   }
 
   @Nullable
   public OfflineProblemDescriptor getDescriptor() {
+    Object userObject = getValue();
     if (userObject instanceof OfflineProblemDescriptor) {
       return (OfflineProblemDescriptor)userObject;
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  public String getTestPresentation() {
+    return toString();
   }
 }

@@ -25,6 +25,8 @@ import com.intellij.codeInspection.ex.InspectionRVContentProvider;
 import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.ui.tree.InspectionNode;
+import com.intellij.codeInspection.ui.tree.InspectionTreeNode;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;

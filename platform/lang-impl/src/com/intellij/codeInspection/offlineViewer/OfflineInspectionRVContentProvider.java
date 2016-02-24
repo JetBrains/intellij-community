@@ -27,17 +27,16 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.SmartRefElementPointer;
 import com.intellij.codeInspection.ui.*;
+import com.intellij.codeInspection.ui.tree.*;
+import com.intellij.codeInspection.ui.tree.InspectionTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class OfflineInspectionRVContentProvider extends InspectionRVContentProvider {
@@ -57,39 +56,34 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   }
 
   @Override
-  public Iterable<? extends ScopeToolState> getTools(Tools tools) {
+  public Collection<ScopeToolState> getTools(Tools tools) {
     return Collections.singletonList(tools.getDefaultState());
   }
 
   @Override
   @Nullable
-  public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
-    final TreePath[] treePaths = tree.getSelectionPaths();
-    if (treePaths == null) return QuickFixAction.EMPTY; 
+  public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTreeBuilder tree) {
     final List<RefEntity> selectedElements = new ArrayList<RefEntity>();
     final Map<RefEntity, CommonProblemDescriptor[]> actions = new HashMap<>();
-    for (TreePath selectionPath : treePaths) {
-      TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), new TreeUtil.Traverse() {
-        @Override
-        public boolean accept(final Object node) {
-          if (!((InspectionTreeNode)node).isValid()) return true;
-          if (node instanceof OfflineProblemDescriptorNode) {
-            final OfflineProblemDescriptorNode descriptorNode = (OfflineProblemDescriptorNode)node;
-            final RefEntity element = descriptorNode.getElement();
-            selectedElements.add(element);
-            CommonProblemDescriptor[] descriptors = actions.get(element);
-            final CommonProblemDescriptor descriptor = descriptorNode.getDescriptor();
-            final CommonProblemDescriptor[] descriptorAsArray = descriptor == null ? CommonProblemDescriptor.EMPTY_ARRAY
-                                                                                   : new CommonProblemDescriptor[]{descriptor};
-            actions.put(element, descriptors == null ?
-                                 descriptorAsArray :
-                                 DefaultInspectionToolPresentation.mergeDescriptors(descriptors, descriptorAsArray));
-          }
-          else if (node instanceof RefElementNode) {
-            selectedElements.add(((RefElementNode)node).getElement());
-          }
-          return true;
+    for (InspectionTreeNode n :  tree.getSelectedItems()) {
+      traverseDepth(n, node -> {
+        if (!node.isValid()) return true;
+        if (node instanceof OfflineProblemDescriptorNode) {
+          final OfflineProblemDescriptorNode descriptorNode = (OfflineProblemDescriptorNode)node;
+          final RefEntity element = descriptorNode.getRefElement();
+          selectedElements.add(element);
+          CommonProblemDescriptor[] descriptors = actions.get(element);
+          final CommonProblemDescriptor descriptor = descriptorNode.getDescriptor();
+          final CommonProblemDescriptor[] descriptorAsArray = descriptor == null ? CommonProblemDescriptor.EMPTY_ARRAY
+                                                                                 : new CommonProblemDescriptor[]{descriptor};
+          actions.put(element, descriptors == null ?
+                               descriptorAsArray :
+                               DefaultInspectionToolPresentation.mergeDescriptors(descriptors, descriptorAsArray));
         }
+        else if (node instanceof RefElementNode) {
+          selectedElements.add(((RefElementNode)node).getRefElement());
+        }
+        return true;
       });
     }
 
@@ -115,7 +109,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
                                     @NotNull final Map<String, Set<RefEntity>> contents,
                                     @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems,
                                     final DefaultTreeModel model) {
-    InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
+    InspectionToolWrapper toolWrapper = toolNode.getValue();
     final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(context, toolWrapper);
     if (filteredContent != null && !filteredContent.values().isEmpty()) {
       final Function<OfflineProblemDescriptor, UserObjectContainer<OfflineProblemDescriptor>> computeContainer =
