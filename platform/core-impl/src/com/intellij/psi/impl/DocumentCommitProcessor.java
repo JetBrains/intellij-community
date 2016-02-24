@@ -272,9 +272,10 @@ public abstract class DocumentCommitProcessor {
     if (oldFileNode.getTextLength() != document.getTextLength()) {
       final String documentText = document.getText();
       String fileText = file.getText();
-      LOG.error("commitDocument left PSI inconsistent: " + DebugUtil.diagnosePsiDocumentInconsistency(file, document) +
-                "; node len=" + oldFileNode.getTextLength() +
-                "; doc.getText() == file.getText(): " + Comparing.equal(fileText, documentText),
+      boolean sameText = Comparing.equal(fileText, documentText);
+      LOG.error("commitDocument() left PSI inconsistent: " + DebugUtil.diagnosePsiDocumentInconsistency(file, document) +
+                "; node.length=" + oldFileNode.getTextLength() +
+                "; doc.text" + (sameText ? "==" : "!=") + "file.text",
                 new Attachment("file psi text", fileText),
                 new Attachment("old text", documentText));
 
