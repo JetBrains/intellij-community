@@ -110,7 +110,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   public synchronized void addView(@NotNull InspectionResultsView view, @NotNull String title) {
-    if (myContent != null) return;
+    LOG.assertTrue(myContent == null, "GlobalInspectionContext is busy under other view now");
     myContentManager.getValue().addContentManagerListener(new ContentManagerAdapter() {
       @Override
       public void contentRemoved(ContentManagerEvent event) {
@@ -314,8 +314,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @Override
   protected void launchInspections(@NotNull final AnalysisScope scope) {
-    myUIOptions = AnalysisUIOptions.getInstance(getProject()).copy();
-    myView = new InspectionResultsView(getProject(), getCurrentProfile(), scope, this, new InspectionRVContentProviderImpl(getProject()));
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      myUIOptions = AnalysisUIOptions.getInstance(getProject()).copy();
+    }
     super.launchInspections(scope);
   }
 
@@ -333,14 +334,22 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       public void run() {
         LOG.info("Code inspection finished");
 
-        if (myView != null) {
-          if (!myView.update() && !getUIOptions().SHOW_ONLY_DIFF) {
-            NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
-            close(true);
+        final InspectionResultsView view;
+        if (myView == null) {
+          view = new InspectionResultsView(GlobalInspectionContextImpl.this,
+                                           new InspectionRVContentProviderImpl(getProject()));
+        } else {
+          view = null;
+        }
+        if (!(myView == null ? view : myView).update() && !getUIOptions().SHOW_ONLY_DIFF) {
+          NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
+          close(true);
+          if (view != null) {
+            Disposer.dispose(view);
           }
-          else {
-            addView(myView);
-          }
+        }
+        else if (view != null) {
+          addView(view);
         }
       }
     });
