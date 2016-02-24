@@ -82,17 +82,21 @@ public class PyAnnotateTypesIntention implements IntentionAction {
     final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     final PyCallable callable = getCallable(elementAt);
 
-    if (isPy3k(file)) {
-      generatePy3kTypeAnnotations(project, editor, elementAt, callable);
+    annotateTypes(editor, callable);
+  }
+
+  public static void annotateTypes(Editor editor, PyCallable callable) {
+    if (isPy3k(callable.getContainingFile())) {
+      generatePy3kTypeAnnotations(callable.getProject(), editor, callable);
     }
     else {
       if (callable instanceof PyFunction) {
-        generateTypeCommentAnnotations(project, editor, elementAt, (PyFunction)callable);
+        generateTypeCommentAnnotations(callable.getProject(), (PyFunction)callable);
       }
     }
   }
 
-  private static void generateTypeCommentAnnotations(Project project, Editor editor, PsiElement at, PyFunction function) {
+  private static void generateTypeCommentAnnotations(Project project, PyFunction function) {
 
     StringBuilder replacementTextBuilder = new StringBuilder("# type: (");
 
@@ -181,13 +185,15 @@ public class PyAnnotateTypesIntention implements IntentionAction {
     return LanguageLevel.forElement(file).isPy3K();
   }
 
-  private static void generatePy3kTypeAnnotations(@NotNull Project project, Editor editor, PsiElement elementAt, PyCallable callable) {
+  private static void generatePy3kTypeAnnotations(@NotNull Project project, Editor editor, PyCallable callable) {
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(callable);
 
-    PyExpression returnType = annotateReturnType(project, editor.getDocument(), elementAt, false);
+    if (callable instanceof PyFunction) {
+      PyExpression returnType = annotateReturnType(project, (PyFunction) callable, false);
 
-    if (returnType != null) {
-      builder.replaceElement(returnType, returnType.getText());
+      if (returnType != null) {
+        builder.replaceElement(returnType, returnType.getText());
+      }
     }
 
     if (callable instanceof PyFunction) {
