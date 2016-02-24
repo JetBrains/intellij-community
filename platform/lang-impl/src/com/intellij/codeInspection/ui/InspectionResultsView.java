@@ -92,7 +92,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private static final Key<Boolean> PREVIEW_EDITOR_IS_REUSED_KEY = Key.create("inspection.tool.window.preview.editor.is.reused.");
 
   private final Project myProject;
-  private final InspectionTreeBuilder myTreeBuilder;
+  private InspectionTreeBuilder myTreeBuilder;
   private final ConcurrentMap<HighlightDisplayLevel, ConcurrentMap<String, InspectionGroupNode>> myGroups =
     ContainerUtil.newConcurrentMap();
   private final OccurenceNavigator myOccurenceNavigator;
@@ -342,6 +342,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     releaseEditor(myPreviewEditor);
     mySplitter.dispose();
     myInspectionProfile = null;
+    myTreeBuilder = null;
     myDisposed = true;
   }
 
