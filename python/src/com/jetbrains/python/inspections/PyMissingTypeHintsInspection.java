@@ -23,7 +23,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention;
 import com.jetbrains.python.inspections.quickfix.PyQuickFixUtil;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -43,7 +42,7 @@ public class PyMissingTypeHintsInspection extends PyInspection{
     return new PyElementVisitor() {
       @Override
       public void visitPyFunction(PyFunction function) {
-        if (!(typeCommentExists(function) || typeAnnotationsExist(function))) {
+        if (!(function.getTypeComment() != null || typeAnnotationsExist(function))) {
           ASTNode nameNode = function.getNameNode();
           if (nameNode != null) {
             holder.registerProblem(nameNode.getPsi(), "Type hinting is missing for function definition", new AddTypeHintsQuickFix(function.getName()));
@@ -51,41 +50,6 @@ public class PyMissingTypeHintsInspection extends PyInspection{
         }
       }
     };
-  }
-
-  private static boolean typeCommentExists(PyFunction function) {
-    ASTNode node = function.getStatementList().getNode().getFirstChildNode();
-    
-    while (node != null && node.getElementType() != PyTokenTypes.END_OF_LINE_COMMENT) {
-      node = node.getTreeNext();
-    }
-    if (node != null) {
-      return isTypeComment(node);
-    }
-    
-    node = function.getStatementList().getPrevSibling().getNode();
-    
-    while (node != null && node.getElementType() != PyTokenTypes.COLON && node.getElementType() != PyTokenTypes.END_OF_LINE_COMMENT) {
-      node = node.getTreePrev();
-    }
-    
-    if (node != null && node.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
-      return isTypeComment(node);
-    }
-    
-    return false;
-  }
-
-  private static boolean isTypeComment(ASTNode node) {
-    String commentText = node.getText();
-    int startInd = commentText.indexOf('#');
-    if (startInd != -1) {
-      commentText = commentText.substring(startInd+1).trim();
-      if (commentText.startsWith("type:")) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static boolean typeAnnotationsExist(PyFunction function) {
