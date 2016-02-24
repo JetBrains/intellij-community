@@ -30,16 +30,6 @@ import org.jetbrains.concurrency.Promise as OJCPromise
 open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: MessageProcessor, channel: Channel) : AttachStateManager {
   private @Volatile var channel: Channel? = channel
 
-  init {
-    channel.closeFuture().addChannelListener {
-      // don't report in case of explicit detach()
-      if (this.channel != null) {
-        messageProcessor.closed()
-        vm.debugListener.disconnected()
-      }
-    }
-  }
-
   fun getChannelIfActive(): Channel? {
     val currentChannel = channel
     return if (currentChannel == null || !currentChannel.isActive) null else currentChannel

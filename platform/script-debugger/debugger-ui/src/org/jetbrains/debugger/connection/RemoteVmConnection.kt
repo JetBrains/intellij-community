@@ -29,6 +29,7 @@ import org.jetbrains.concurrency.rejectedPromise
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
+import org.jetbrains.io.addChannelListener
 import org.jetbrains.io.connect
 import org.jetbrains.rpc.LOG
 import java.net.ConnectException
@@ -40,7 +41,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
 
   private val connectCancelHandler = AtomicReference<() -> Unit>()
 
-  abstract fun createBootstrap(address: InetSocketAddress, vmResult: org.jetbrains.concurrency.AsyncPromise<Vm>): Bootstrap
+  abstract fun createBootstrap(address: InetSocketAddress, vmResult: AsyncPromise<Vm>): Bootstrap
 
   @JvmOverloads
   fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null): Promise<Vm> {
@@ -71,7 +72,13 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
         }
         .processed { connectCancelHandler.set(null) }
 
-      createBootstrap(address, result).connect(address, connectionPromise, maxAttemptCount = if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition = stopCondition)
+      createBootstrap(address, result)
+          .connect(address, connectionPromise, maxAttemptCount = if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition = stopCondition)
+          ?.let {
+            it.closeFuture().addChannelListener {
+              close("Process disconnected unexpectedly", ConnectionStatus.DISCONNECTED)
+            }
+          }
     }
 
     connectCancelHandler.set {

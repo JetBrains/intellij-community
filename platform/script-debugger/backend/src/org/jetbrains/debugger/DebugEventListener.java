@@ -26,7 +26,7 @@ public interface DebugEventListener extends EventListener {
    * breakpoints or a step end). The {@code context} can be used to access the
    * current backtrace.
    */
-  default void suspended(@NotNull SuspendContext<?> context) {
+  default void suspended(@NotNull Vm vm, @NotNull SuspendContext<?> context) {
   }
 
   /**
@@ -34,13 +34,6 @@ public interface DebugEventListener extends EventListener {
    * asynchronously, due to a user action in the browser (without explicitly resuming the VM through
    */
   default void resumed() {
-  }
-
-  /**
-   * Reports the debug connection has terminated and {@link Vm} has stopped operating.
-   * This event is not reported if connection was closed explicitly on our side
-   */
-  default void disconnected() {
   }
 
   /**
