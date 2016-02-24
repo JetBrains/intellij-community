@@ -38,11 +38,9 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
         if (refElement != null) {
 
           if (refElement instanceof PsiClass) {
-            if (refElement.getContainingFile() != element.getContainingFile()) {
-              final String qName = ((PsiClass)refElement).getQualifiedName();
-              if (qName != null) {
-                addReferenceData(element, to, startOffset, qName, null);
-              }
+            final String qName = ((PsiClass)refElement).getQualifiedName();
+            if (qName != null) {
+              addReferenceData(element, to, startOffset, qName, null);
             }
           }
           else if (resolveResult.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) {
