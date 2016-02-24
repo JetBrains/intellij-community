@@ -459,4 +459,9 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     LOG.assertTrue(newDelimiter != null);
     getNode().replaceChild(oldDelimiter, newDelimiter);
   }
+
+  @Override
+  public PsiElement getParent() {
+    return getParentByStub();
+  }
 }
