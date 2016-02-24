@@ -544,6 +544,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void dispose() {
+    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
     fireApplicationExiting();
 
     ShutDownTracker.getInstance().ensureStopperThreadsFinished();
@@ -1221,6 +1222,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private void startWrite(/*@NotNull*/ Class clazz) {
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
+    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     boolean writeActionPending = myWriteActionPending;
     myWriteActionPending = true;
     if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty()) {
@@ -1435,6 +1437,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     if (myDoNotSave) return;
 
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
+      HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
       try {
         StoreUtil.save(ServiceKt.getStateStore(this), null);
       }

@@ -34,6 +34,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -52,6 +53,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.Alarm;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -260,6 +262,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
           final Application app = ApplicationManager.getApplication();
           app.invokeLater(new DumbAwareRunnable() {
             public void run() {
+              HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
+
               if (app.isDisposed()) {
                 ApplicationManagerEx.getApplicationEx().exit();
                 return;

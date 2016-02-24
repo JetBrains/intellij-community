@@ -47,6 +47,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -379,6 +380,9 @@ public class IdeEventQueue extends EventQueue {
 
     boolean wasInputEvent = myIsInInputEvent;
     myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
+    if (myIsInInputEvent) {
+      HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
+    }
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
 
