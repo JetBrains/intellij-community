@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -368,17 +368,17 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Nullable
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context) {
-    return getReturnType(context, null);
+    return getPossibleCallType(context, null);
   }
 
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
-    return getReturnType(context, callSite);
+    return getPossibleCallType(context, callSite);
   }
 
   @Nullable
-  private PyType getReturnType(@NotNull TypeEvalContext context, @Nullable PyCallSiteExpression callSite) {
+  private PyType getPossibleCallType(@NotNull TypeEvalContext context, @Nullable PyCallSiteExpression callSite) {
     if (!isDefinition()) {
       return PyUtil.getReturnTypeOfMember(this, PyNames.CALL, callSite, context);
     }
@@ -523,7 +523,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   public void visitMembers(@NotNull final Processor<PsiElement> processor,
                            final boolean inherited,
                            @NotNull final TypeEvalContext context) {
-
     myClass.visitMethods(new MyProcessorWrapper<PyFunction>(processor), false, context);
     myClass.visitClassAttributes(new MyProcessorWrapper<PyTargetExpression>(processor), false, context);
 
@@ -539,6 +538,42 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         type.visitMembers(processor, false, context);
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
+    final Set<String> result = new LinkedHashSet<>();
+
+    for (PyFunction function : myClass.getMethods()) {
+      result.add(function.getName());
+    }
+
+    for (PyTargetExpression expression : myClass.getClassAttributes()) {
+      result.add(expression.getName());
+    }
+
+    for (PyTargetExpression expression : myClass.getInstanceAttributes()) {
+      result.add(expression.getName());
+    }
+
+    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+      for (PyCustomMember member : provider.getMembers(this, null, context)) {
+        result.add(member.getName());
+      }
+    }
+
+    if (inherited) {
+      for (PyClassLikeType type : getAncestorTypes(context)) {
+        if (type != null) {
+          final PyClassLikeType ancestorType = isDefinition() ? type : type.toInstance();
+
+          result.addAll(ancestorType.getMemberNames(false, context));
+        }
+      }
+    }
+
+    return result;
   }
 
   private void addOwnClassMembers(PsiElement expressionHook,
