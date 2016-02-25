@@ -38,7 +38,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -78,8 +77,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.reference.SoftReference.dereference;
-
 public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
                          implements PsiJavaFile, PsiFileWithStubSupport, PsiFileEx, Queryable, PsiClassOwnerEx, PsiCompiledFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
@@ -100,8 +97,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private final boolean myIsForDecompiling;
   private volatile SoftReference<StubTree> myStub;
   private volatile TreeElement myMirrorFileElement;
-  private volatile ClsPackageStatementImpl myPackageStatement = null;
-  private volatile LanguageLevel myLanguageLevel = null;
+  private volatile ClsPackageStatementImpl myPackageStatement;
+  private volatile LanguageLevel myLanguageLevel;
   private boolean myIsPhysical = true;
   private boolean myInvalidated;
 
@@ -155,7 +152,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return !myInvalidated && (myIsForDecompiling || getVirtualFile().isValid());
   }
 
-  protected boolean isForDecompiling() {
+  boolean isForDecompiling() {
     return myIsForDecompiling;
   }
 
@@ -260,12 +257,12 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
+    throw cannotModifyException(this);
   }
 
   @Override
   public void checkSetName(String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
+    throw cannotModifyException(this);
   }
 
   @Override
@@ -348,6 +345,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
           try {
             final TreeElement finalMirrorTreeElement = mirrorTreeElement;
             ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
+              @Override
               public void run() {
                 setMirror(finalMirrorTreeElement);
                 putUserData(CLS_DOCUMENT_LINK_KEY, document);
@@ -479,7 +477,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   public StubTree getStubTree() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    StubTree stubTree = dereference(myStub);
+    StubTree stubTree = SoftReference.dereference(myStub);
     if (stubTree != null) return stubTree;
 
     // build newStub out of lock to avoid deadlock
@@ -492,7 +490,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
 
     synchronized (myStubLock) {
-      stubTree = dereference(myStub);
+      stubTree = SoftReference.dereference(myStub);
       if (stubTree != null) return stubTree;
 
       stubTree = newStubTree;
@@ -521,7 +519,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     synchronized (myStubLock) {
-      StubTree stubTree = dereference(myStub);
+      StubTree stubTree = SoftReference.dereference(myStub);
       myStub = null;
       if (stubTree != null) {
         //noinspection unchecked
@@ -613,7 +611,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   private static String getPackageName(String internalName) {
     int p = internalName.lastIndexOf('/');
-    return p > 0 ? internalName.substring(0, p).replace('/', '.') : StringUtilRt.EMPTY_STRING;
+    return p > 0 ? internalName.substring(0, p).replace('/', '.') : "";
   }
 
   private static final InnerClassSourceStrategy<VirtualFile> STRATEGY = new InnerClassSourceStrategy<VirtualFile>() {

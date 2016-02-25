@@ -390,6 +390,17 @@ foo()
       eval 'x', '5'
     }
   }
+  void "test non-identifier script name"() {
+    def file = myFixture.addFileToProject('foo-bar.groovy', '''\
+int x = 1
+println "hello"
+''')
+    addBreakpoint file.name, 1
+    runDebugger file, {
+      waitForBreakpoint()
+      eval 'x', '1'
+    }
+  }
 
   public void "test navigation outside source"() {
     def module1 = addModule("module1", false)
@@ -538,6 +549,29 @@ public class Main {
     runDebugger starterFile, {
       waitForBreakpoint()
       eval 'a.findAll {it.length() > 2}.size()', '1', GroovyFileType.GROOVY_FILE_TYPE
+    }
+  }
+
+  public void "test evaluation of params in java context"() {
+    def starterFile = myFixture.addFileToProject 'Gr.groovy', '''
+new Main().foo((String[])["a", "b", "c"])
+'''
+    def file = myFixture.addFileToProject 'Main.java', '''
+import java.util.Arrays;
+import java.util.List;
+
+public class Main {
+  void foo(String[] a) {
+     int x = 5; // 6
+  }
+}
+'''
+    make()
+
+    addBreakpoint file.virtualFile, 6
+    runDebugger starterFile, {
+      waitForBreakpoint()
+      eval 'a[1]', 'b', GroovyFileType.GROOVY_FILE_TYPE
     }
   }
 

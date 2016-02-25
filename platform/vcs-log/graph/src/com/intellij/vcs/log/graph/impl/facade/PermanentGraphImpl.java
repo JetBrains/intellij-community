@@ -69,7 +69,6 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @NotNull private final PermanentLinearGraphImpl myPermanentLinearGraph;
   @NotNull private final GraphLayoutImpl myPermanentGraphLayout;
   @NotNull private final GraphColorManager<CommitId> myGraphColorManager;
-  @NotNull private final Set<CommitId> myBranchesCommitId;
   @NotNull private final Set<Integer> myBranchNodeIds;
   @NotNull private final ReachableNodes myReachableNodes;
   @NotNull private final Supplier<BekIntMap> myBekIntMap;
@@ -83,7 +82,6 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     myPermanentCommitsInfo = permanentCommitsInfo;
     myPermanentLinearGraph = permanentLinearGraph;
     myGraphColorManager = graphColorManager;
-    myBranchesCommitId = branchesCommitId;
     myBranchNodeIds = permanentCommitsInfo.convertToNodeIds(branchesCommitId);
     myReachableNodes = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentLinearGraph));
     myBekIntMap = Suppliers.memoize(new Supplier<BekIntMap>() {
@@ -130,7 +128,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       controller = new CollapsedController(baseController, this, idOfVisibleBranches);
     }
 
-    return new VisibleGraphImpl<CommitId>(controller, this);
+    return new VisibleGraphImpl<CommitId>(controller, this, myGraphColorManager);
   }
 
   @NotNull
@@ -180,12 +178,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
           branchNodes.add((Integer)myPermanentCommitsInfo.getCommitId(node));
         }
       });
-      return new Condition<CommitId>() {
-        @Override
-        public boolean value(CommitId commitId) {
-          return branchNodes.contains((Integer)commitId);
-        }
-      };
+      return new IntContainedInBranchCondition<CommitId>(branchNodes);
     }
     else {
       final Set<CommitId> branchNodes = ContainerUtil.newHashSet();
@@ -195,12 +188,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
           branchNodes.add(myPermanentCommitsInfo.getCommitId(node));
         }
       });
-      return new Condition<CommitId>() {
-        @Override
-        public boolean value(CommitId commitId) {
-          return branchNodes.contains(commitId);
-        }
-      };
+      return new ContainedInBranchCondition<CommitId>(branchNodes);
     }
   }
 
@@ -210,7 +198,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   }
 
   @NotNull
-  public PermanentLinearGraphImpl getPermanentLinearGraph() {
+  public PermanentLinearGraphImpl getLinearGraph() {
     return myPermanentLinearGraph;
   }
 
@@ -222,11 +210,6 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @NotNull
   public GraphColorManager<CommitId> getGraphColorManager() {
     return myGraphColorManager;
-  }
-
-  @NotNull
-  public Set<CommitId> getBranchesCommitId() {
-    return myBranchesCommitId;
   }
 
   @NotNull
@@ -248,6 +231,32 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     @NotNull
     public Map<Integer, CommitId> getNotLoadedCommits() {
       return myNotLoadedCommits;
+    }
+  }
+
+  private static class IntContainedInBranchCondition<CommitId> implements Condition<CommitId> {
+    private final TIntHashSet myBranchNodes;
+
+    public IntContainedInBranchCondition(TIntHashSet branchNodes) {
+      myBranchNodes = branchNodes;
+    }
+
+    @Override
+    public boolean value(CommitId commitId) {
+      return myBranchNodes.contains((Integer)commitId);
+    }
+  }
+
+  private static class ContainedInBranchCondition<CommitId> implements Condition<CommitId> {
+    private final Set<CommitId> myBranchNodes;
+
+    public ContainedInBranchCondition(Set<CommitId> branchNodes) {
+      myBranchNodes = branchNodes;
+    }
+
+    @Override
+    public boolean value(CommitId commitId) {
+      return myBranchNodes.contains(commitId);
     }
   }
 }

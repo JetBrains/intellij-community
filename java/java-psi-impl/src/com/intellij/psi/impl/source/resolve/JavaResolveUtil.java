@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,7 +149,7 @@ public class JavaResolveUtil {
 
     if (!facade.arePackagesTheSame(member, place)) return false;
     //if (modifierList.hasModifierProperty(PsiModifier.STATIC)) return true;
-    // maybe inheritance lead through package local class in other package ?
+    // maybe inheritance lead through package-private class in other package ?
     final PsiClass placeClass = getContextClass(place);
     if (memberClass == null || placeClass == null) return true;
     // check only classes since interface members are public,  and if placeClass is interface,

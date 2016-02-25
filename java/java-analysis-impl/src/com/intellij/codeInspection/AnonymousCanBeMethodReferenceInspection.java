@@ -116,11 +116,8 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
           if (methods.length != 1) return;
 
           final PsiParameter[] parameters = methods[0].getParameterList().getParameters();
-          final PsiCallExpression callExpression = LambdaCanBeMethodReferenceInspection
-            .canBeMethodReferenceProblem(methods[0].getBody(), parameters, anonymousClass.getBaseClassType(), anonymousClass.getParent());
-          if (callExpression == null) return;
           final String methodRefText =
-            LambdaCanBeMethodReferenceInspection.createMethodReferenceText(callExpression, anonymousClass.getBaseClassType(), parameters);
+            LambdaCanBeMethodReferenceInspection.convertToMethodReference(methods[0].getBody(), parameters, anonymousClass.getBaseClassType(), anonymousClass.getParent());
 
           if (methodRefText != null) {
             final String canonicalText = anonymousClass.getBaseClassType().getCanonicalText();

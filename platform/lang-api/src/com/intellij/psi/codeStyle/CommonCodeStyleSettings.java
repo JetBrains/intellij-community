@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ public class CommonCodeStyleSettings {
     CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage, getFileType());
     copyPublicFields(this, commonSettings);
     commonSettings.setRootSettings(rootSettings);
-    commonSettings.myForceArrangeMenuAvailable = this.myForceArrangeMenuAvailable;
+    commonSettings.myForceArrangeMenuAvailable = myForceArrangeMenuAvailable;
     if (myIndentOptions != null) {
       IndentOptions targetIndentOptions = commonSettings.initIndentOptions();
       targetIndentOptions.copyFrom(myIndentOptions);
@@ -394,7 +394,7 @@ public class CommonCodeStyleSettings {
   public boolean INDENT_CASE_FROM_SWITCH = true;
 
   /**
-   * Controls "break" position realtive to "case".
+   * Controls "break" position relative to "case".
    * <pre>
    * case 0:
    * <--->break;
@@ -905,7 +905,7 @@ public class CommonCodeStyleSettings {
     public int intValue;
 
     WrapOnTyping(int i) {
-      this.intValue = i;
+      intValue = i;
     }
   }
 
@@ -916,7 +916,7 @@ public class CommonCodeStyleSettings {
   public int WRAP_ON_TYPING = WrapOnTyping.DEFAULT.intValue;
 
   //-------------------------Indent options-------------------------------------------------
-  public static class IndentOptions implements JDOMExternalizable, Cloneable {
+  public static class IndentOptions implements Cloneable, JDOMExternalizable {
     public int INDENT_SIZE = 4;
     public int CONTINUATION_INDENT_SIZE = 8;
     public int TAB_SIZE = 4;
@@ -938,14 +938,11 @@ public class CommonCodeStyleSettings {
 
     @Override
     public void writeExternal(Element element) throws WriteExternalException {
-      DefaultJDOMExternalizer.writeExternal(this, element, new DefaultJDOMExternalizer.JDOMFilter() {
-        @Override
-        public boolean isAccept(@NotNull Field field) {
-          if ("KEEP_INDENTS_ON_EMPTY_LINES".equals(field.getName())) {
-            return KEEP_INDENTS_ON_EMPTY_LINES;
-          }
-          return true;
+      DefaultJDOMExternalizer.writeExternal(this, element, field -> {
+        if ("KEEP_INDENTS_ON_EMPTY_LINES".equals(field.getName())) {
+          return KEEP_INDENTS_ON_EMPTY_LINES;
         }
+        return true;
       });
     }
 

@@ -1947,6 +1947,14 @@ public class UIUtil {
     });
   }
 
+  public static void addParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
+    component.addPropertyChangeListener("ancestor", listener);
+  }
+
+  public static void removeParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
+    component.removePropertyChangeListener("ancestor", listener);
+  }
+
   public static void drawVDottedLine(Graphics2D g, int lineX, int startY, int endY, @Nullable final Color bgColor, final Color fgColor) {
     if (bgColor != null) {
       g.setColor(bgColor);

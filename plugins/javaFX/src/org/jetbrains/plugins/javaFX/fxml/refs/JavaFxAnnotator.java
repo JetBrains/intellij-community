@@ -37,7 +37,7 @@ import com.intellij.util.ui.ColorIcon;
 import com.intellij.xml.util.ColorMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxInjectPageLanguageIntention;
@@ -67,7 +67,7 @@ public class JavaFxAnnotator implements Annotator {
               final Annotation annotation = holder.createErrorAnnotation(element,
                                                                          symbolPresentation + (resolve instanceof PsiClass ? " should be public" : " should be public or annotated with @FXML"));
               if (!(resolve instanceof PsiClass)) {
-                annotation.registerUniversalFix(new AddAnnotationFix(JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION, (PsiMember)resolve, ArrayUtil.EMPTY_STRING_ARRAY), null, null);
+                annotation.registerUniversalFix(new AddAnnotationFix(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, (PsiMember)resolve, ArrayUtil.EMPTY_STRING_ARRAY), null, null);
               }
             }
           }

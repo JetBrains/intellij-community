@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,7 +191,9 @@ public class GroovyTypeCheckVisitorHelper {
 
     final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
     for (Pair<Integer, PsiType> error : allErrors) {
-      fixes.add(new ParameterCastFix(error.first, error.second, args.get(error.first)));
+      if (args.size() > error.first && error.second != null) {
+        fixes.add(new ParameterCastFix(error.first, error.second, args.get(error.first)));
+      }
     }
     return fixes.toArray(new LocalQuickFix[fixes.size()]);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalizableSchemeAdapter;
+import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   private final boolean myIsDefault;
   private volatile CodeStyleSettings myCodeStyleSettings;
 
-  public CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, Element rootElement) {
+  CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, Element rootElement) {
     myName = name;
     myRootElement = rootElement;
     myIsDefault = false;
@@ -47,7 +47,7 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     init(parentScheme, null);
   }
 
-  public void init(@NotNull CodeStyleSchemes schemesManager) {
+  void init(@NotNull SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> schemesManager) {
     LOG.assertTrue(myCodeStyleSettings == null, "Already initialized");
     init(myParentSchemeName == null ? null : schemesManager.findSchemeByName(myParentSchemeName), myRootElement);
     myParentSchemeName = null;
@@ -68,7 +68,7 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     }
     if (root != null) {
       try {
-        readExternal(root);
+        myCodeStyleSettings.readExternal(root);
       }
       catch (InvalidDataException e) {
         LOG.error(e);
@@ -92,9 +92,5 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
 
   public void writeExternal(Element element) throws WriteExternalException{
     myCodeStyleSettings.writeExternal(element);
-  }
-
-  public void readExternal(Element element) throws InvalidDataException{
-    myCodeStyleSettings.readExternal(element);
   }
 }

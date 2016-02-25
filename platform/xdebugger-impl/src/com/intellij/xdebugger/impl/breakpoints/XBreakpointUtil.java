@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,17 +52,14 @@ public class XBreakpointUtil {
   private XBreakpointUtil() {
   }
 
-  public static <B extends XBreakpoint<?>> String getShortText(B breakpoint) {
-    return StringUtil.shortenTextWithEllipsis(StringUtil.notNullize(getType(breakpoint).getShortText(breakpoint)), 70, 5);
-  }
-
-  public static <B extends XBreakpoint<?>> String getDisplayText(@NotNull B breakpoint) {
-    return getType(breakpoint).getDisplayText(breakpoint);
-  }
-
-  public static <B extends XBreakpoint<?>> XBreakpointType<B, ?> getType(@NotNull B breakpoint) {
+  public static <B extends XBreakpoint> String getShortText(B breakpoint) {
     //noinspection unchecked
-    return (XBreakpointType<B, ?>)breakpoint.getType();
+    return StringUtil.shortenTextWithEllipsis(StringUtil.notNullize(breakpoint.getType().getShortText(breakpoint)), 70, 5);
+  }
+
+  public static <B extends XBreakpoint> String getDisplayText(@NotNull B breakpoint) {
+    //noinspection unchecked
+    return breakpoint.getType().getDisplayText(breakpoint);
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,14 +54,25 @@ public class FileWatcher {
   };
 
   public static class DirtyPaths {
-    public final List<String> dirtyPaths = ContainerUtil.newSmartList();
-    public final List<String> dirtyPathsRecursive = ContainerUtil.newSmartList();
-    public final List<String> dirtyDirectories = ContainerUtil.newSmartList();
+    public final Set<String> dirtyPaths = ContainerUtil.newTroveSet();
+    public final Set<String> dirtyPathsRecursive = ContainerUtil.newTroveSet();
+    public final Set<String> dirtyDirectories = ContainerUtil.newTroveSet();
 
     public static final DirtyPaths EMPTY = new DirtyPaths();
 
     public boolean isEmpty() {
       return dirtyPaths.isEmpty() && dirtyPathsRecursive.isEmpty() && dirtyDirectories.isEmpty();
+    }
+
+    private void addDirtyPath(String path) {
+      if (!dirtyPathsRecursive.contains(path)) {
+        dirtyPaths.add(path);
+      }
+    }
+
+    private void addDirtyPathRecursive(String path) {
+      dirtyPaths.remove(path);
+      dirtyPathsRecursive.add(path);
     }
   }
 
@@ -119,7 +130,7 @@ public class FileWatcher {
       }
     }
 
-    return result != null ? result : Collections.<String>emptyList();
+    return result != null ? result : Collections.emptyList();
   }
 
   /**
@@ -199,7 +210,9 @@ public class FileWatcher {
       Collection<String> paths = myPathMap.getWatchedPaths(path, true, false);
       if (!paths.isEmpty()) {
         synchronized (myLock) {
-          myDirtyPaths.dirtyPaths.addAll(paths);
+          for (String eachPath : paths) {
+            myDirtyPaths.addDirtyPath(eachPath);
+          }
         }
       }
       notifyOnAnyEvent();
@@ -211,10 +224,10 @@ public class FileWatcher {
       if (!paths.isEmpty()) {
         synchronized (myLock) {
           for (String p : paths) {
-            myDirtyPaths.dirtyPathsRecursive.add(p);
+            myDirtyPaths.addDirtyPathRecursive(p);
             String parentPath = new File(p).getParent();
             if (parentPath != null) {
-              myDirtyPaths.dirtyPaths.add(parentPath);
+              myDirtyPaths.addDirtyPath(parentPath);
             }
           }
         }
@@ -238,7 +251,9 @@ public class FileWatcher {
       Collection<String> paths = myPathMap.getWatchedPaths(path, false, false);
       if (!paths.isEmpty()) {
         synchronized (myLock) {
-          myDirtyPaths.dirtyPathsRecursive.addAll(paths);
+          for (String each : paths) {
+            myDirtyPaths.addDirtyPathRecursive(each);
+          }
         }
       }
       notifyOnAnyEvent();

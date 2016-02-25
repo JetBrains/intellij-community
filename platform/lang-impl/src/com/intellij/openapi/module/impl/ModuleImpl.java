@@ -359,7 +359,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     return Extensions.getArea(this).getPicoContainer();
   }
 
-  @State(name = "DeprecatedModuleOptionManager", storages = @Storage(StoragePathMacros.MODULE_FILE))
+  @State(name = "DeprecatedModuleOptionManager")
   static class DeprecatedModuleOptionManager implements PersistentStateComponent<DeprecatedModuleOptionManager.State> {
     static final class State {
       @Property(surroundWithTag = false)

@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.tools.util;
 
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -62,12 +61,6 @@ public class StatusPanel extends JPanel {
 
   @Nullable
   protected String getMessage() {
-    int count = getChangesCount();
-    if (count == -1) return null;
-    return DiffBundle.message("diff.count.differences.status.text", count);
-  }
-
-  protected int getChangesCount() {
-    return -1;
+    return null;
   }
 }

@@ -26,7 +26,7 @@ import com.intellij.xml.util.ColorSampleLookupValue;
 import com.intellij.xml.util.UserColorLookup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 
 /**
  * User: anna
@@ -42,7 +42,7 @@ public class JavaFxColorReference extends PsiReferenceBase<XmlAttributeValue> {
   public PsiElement resolve() {
     final Project project = getElement().getProject();
     final PsiClass psiClass =
-      JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_SCENE_COLOR, GlobalSearchScope.allScope(project));
+      JavaPsiFacade.getInstance(project).findClass(JavaFxCommonNames.JAVAFX_SCENE_COLOR, GlobalSearchScope.allScope(project));
     if (psiClass != null) {
       return psiClass.findFieldByName(getCanonicalText().toUpperCase(), false);
     }

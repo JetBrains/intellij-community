@@ -46,6 +46,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -519,7 +520,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
       @Override
       public void run() {
-        myConsoleEditor.getDocument().setText(query);
+        myConsoleEditor.getDocument().setText(StringUtil.convertLineSeparators(query));
       }
     });
   }

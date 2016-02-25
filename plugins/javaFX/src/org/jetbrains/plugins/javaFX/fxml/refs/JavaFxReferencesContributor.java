@@ -23,7 +23,7 @@ import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
@@ -40,7 +40,7 @@ public class JavaFxReferencesContributor extends PsiReferenceContributor {
           final PsiExpression psiExpression = getParentElement((PsiLiteralExpression)context);
           if (psiExpression != null) {
             final PsiType psiType = psiExpression.getType();
-            return psiType != null && psiType.equalsToText(JavaFxCommonClassNames.JAVA_FX_PARENT);
+            return psiType != null && psiType.equalsToText(JavaFxCommonNames.JAVA_FX_PARENT);
           }
           return false;
         }
@@ -102,7 +102,7 @@ public class JavaFxReferencesContributor extends PsiReferenceContributor {
             } else if (qualifierExpression != null) {
               psiClass = PsiUtil.resolveClassInType(qualifierExpression.getType());
             }
-            if (psiClass != null && JavaFxCommonClassNames.JAVAFX_FXML_FXMLLOADER.equals(psiClass.getQualifiedName())) {
+            if (psiClass != null && JavaFxCommonNames.JAVAFX_FXML_FXMLLOADER.equals(psiClass.getQualifiedName())) {
               return true;
             }
           }
@@ -110,7 +110,7 @@ public class JavaFxReferencesContributor extends PsiReferenceContributor {
           final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)superCall).getClassOrAnonymousClassReference();
           if (reference != null) {
             final PsiElement resolve = reference.resolve();
-            if (resolve instanceof PsiClass && JavaFxCommonClassNames.JAVAFX_FXML_FXMLLOADER.equals(((PsiClass)resolve).getQualifiedName())) {
+            if (resolve instanceof PsiClass && JavaFxCommonNames.JAVAFX_FXML_FXMLLOADER.equals(((PsiClass)resolve).getQualifiedName())) {
               return true;
             }
           }

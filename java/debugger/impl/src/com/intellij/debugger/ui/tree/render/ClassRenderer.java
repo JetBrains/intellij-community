@@ -162,14 +162,14 @@ public class ClassRenderer extends NodeRendererImpl{
     final NodeManager nodeManager = builder.getNodeManager();
     final NodeDescriptorFactory nodeDescriptorFactory = builder.getDescriptorManager();
 
-    List<DebuggerTreeNode> children = new ArrayList<DebuggerTreeNode>();
+    List<DebuggerTreeNode> children = new ArrayList<>();
     if (value instanceof ObjectReference) {
       final ObjectReference objRef = (ObjectReference)value;
       final ReferenceType refType = objRef.referenceType();
       // default ObjectReference processing
       List<Field> fields = refType.allFields();
       if (!fields.isEmpty()) {
-        Set<String> names = new HashSet<String>();
+        Set<String> names = new HashSet<>();
         for (Field field : fields) {
           if (shouldDisplay(evaluationContext, objRef, field)) {
             FieldDescriptor fieldDescriptor = createFieldDescriptor(parentDescriptor, nodeDescriptorFactory, objRef, field, evaluationContext);

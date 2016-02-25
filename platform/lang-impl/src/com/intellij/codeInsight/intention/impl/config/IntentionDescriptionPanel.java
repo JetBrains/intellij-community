@@ -80,7 +80,7 @@ public class IntentionDescriptionPanel {
     }
   }
 
-  // TODO 134099: see SingleInspectionProfilePanel#toHTML
+  // TODO 134099: see SingleInspectionProfilePanel#setHTML
   private String toHTML(String text) {
     final HintHint hintHint = new HintHint(myDescriptionBrowser, new Point(0, 0));
     hintHint.setFont(UIUtil.getLabelFont());

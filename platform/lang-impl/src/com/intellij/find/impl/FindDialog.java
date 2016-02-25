@@ -1022,6 +1022,37 @@ public class FindDialog extends DialogWrapper {
     return messageKey != null ? FindBundle.message(messageKey) : searchContext.toString();
   }
 
+  @NotNull
+  public static FindModel.SearchContext parseSearchContext(String presentableName) {
+    FindModel.SearchContext searchContext = FindModel.SearchContext.ANY;
+    if (FindBundle.message("find.context.in.literals.scope.label").equals(presentableName)) {
+      searchContext = FindModel.SearchContext.IN_STRING_LITERALS;
+    }
+    else if (FindBundle.message("find.context.in.comments.scope.label").equals(presentableName)) {
+      searchContext = FindModel.SearchContext.IN_COMMENTS;
+    }
+    else if (FindBundle.message("find.context.except.comments.scope.label").equals(presentableName)) {
+      searchContext = FindModel.SearchContext.EXCEPT_COMMENTS;
+    }
+    else if (FindBundle.message("find.context.except.literals.scope.label").equals(presentableName)) {
+      searchContext = FindModel.SearchContext.EXCEPT_STRING_LITERALS;
+    } else if (FindBundle.message("find.context.except.comments.and.literals.scope.label").equals(presentableName)) {
+      searchContext = FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS;
+    }
+    return searchContext;
+  }
+
+  @NotNull
+  public static String getSearchContextName(FindModel model) {
+    String searchContext = FindBundle.message("find.context.anywhere.scope.label");
+    if (model.isInCommentsOnly()) searchContext = FindBundle.message("find.context.in.comments.scope.label");
+    else if (model.isInStringLiteralsOnly()) searchContext = FindBundle.message("find.context.in.literals.scope.label");
+    else if (model.isExceptStringLiterals()) searchContext = FindBundle.message("find.context.except.literals.scope.label");
+    else if (model.isExceptComments()) searchContext = FindBundle.message("find.context.except.comments.scope.label");
+    else if (model.isExceptCommentsAndStringLiterals()) searchContext = FindBundle.message("find.context.except.comments.and.literals.scope.label");
+    return searchContext;
+  }
+
   private void setupRegExpSetting() {
     updateFileTypeForEditorComponent(myInputComboBox);
     if (myReplaceComboBox != null) updateFileTypeForEditorComponent(myReplaceComboBox);
@@ -1295,14 +1326,14 @@ public class FindDialog extends DialogWrapper {
   }
 
   @NotNull
-  private static StateRestoringCheckBox createCheckbox(@NotNull String message) {
+  static StateRestoringCheckBox createCheckbox(@NotNull String message) {
     final StateRestoringCheckBox cb = new StateRestoringCheckBox(message);
     cb.setFocusable(false);
     return cb;
   }
 
   @NotNull
-  private static StateRestoringCheckBox createCheckbox(boolean selected, @NotNull String message) {
+  static StateRestoringCheckBox createCheckbox(boolean selected, @NotNull String message) {
     final StateRestoringCheckBox cb = new StateRestoringCheckBox(message, selected);
     cb.setFocusable(false);
     return cb;
@@ -1423,21 +1454,7 @@ public class FindDialog extends DialogWrapper {
     model.setWholeWordsOnly(myCbWholeWordsOnly.isSelected());
 
     String selectedSearchContextInUi = (String)mySearchContext.getSelectedItem();
-    FindModel.SearchContext searchContext = FindModel.SearchContext.ANY;
-    if (FindBundle.message("find.context.in.literals.scope.label").equals(selectedSearchContextInUi)) {
-      searchContext = FindModel.SearchContext.IN_STRING_LITERALS;
-    }
-    else if (FindBundle.message("find.context.in.comments.scope.label").equals(selectedSearchContextInUi)) {
-      searchContext = FindModel.SearchContext.IN_COMMENTS;
-    }
-    else if (FindBundle.message("find.context.except.comments.scope.label").equals(selectedSearchContextInUi)) {
-      searchContext = FindModel.SearchContext.EXCEPT_COMMENTS;
-    }
-    else if (FindBundle.message("find.context.except.literals.scope.label").equals(selectedSearchContextInUi)) {
-      searchContext = FindModel.SearchContext.EXCEPT_STRING_LITERALS;
-    } else if (FindBundle.message("find.context.except.comments.and.literals.scope.label").equals(selectedSearchContextInUi)) {
-      searchContext = FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS;
-    }
+    FindModel.SearchContext searchContext = parseSearchContext(selectedSearchContextInUi);
 
     model.setSearchContext(searchContext);
 
@@ -1505,12 +1522,7 @@ public class FindDialog extends DialogWrapper {
   private void initByModel() {
     myCbCaseSensitive.setSelected(myModel.isCaseSensitive());
     myCbWholeWordsOnly.setSelected(myModel.isWholeWordsOnly());
-    String searchContext = FindBundle.message("find.context.anywhere.scope.label");
-    if (myModel.isInCommentsOnly()) searchContext = FindBundle.message("find.context.in.comments.scope.label");
-    else if (myModel.isInStringLiteralsOnly()) searchContext = FindBundle.message("find.context.in.literals.scope.label");
-    else if (myModel.isExceptStringLiterals()) searchContext = FindBundle.message("find.context.except.literals.scope.label");
-    else if (myModel.isExceptComments()) searchContext = FindBundle.message("find.context.except.comments.scope.label");
-    else if (myModel.isExceptCommentsAndStringLiterals()) searchContext = FindBundle.message("find.context.except.comments.and.literals.scope.label");
+    String searchContext = getSearchContextName(myModel);
     mySearchContext.setSelectedItem(searchContext);
 
     myCbRegularExpressions.setSelected(myModel.isRegularExpressions());
@@ -1632,7 +1644,7 @@ public class FindDialog extends DialogWrapper {
     }
   }
 
-  private static class UsageTableCellRenderer extends JPanel implements TableCellRenderer {
+  static class UsageTableCellRenderer extends JPanel implements TableCellRenderer {
     private final ColoredTableCellRenderer myUsageRenderer = new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -1663,7 +1675,7 @@ public class FindDialog extends DialogWrapper {
       }
     };
 
-    private UsageTableCellRenderer() {
+    UsageTableCellRenderer() {
       setLayout(new BorderLayout());
 
       add(myUsageRenderer, BorderLayout.WEST);

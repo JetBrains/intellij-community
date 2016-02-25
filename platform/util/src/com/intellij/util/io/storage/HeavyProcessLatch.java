@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,17 @@ import com.intellij.util.EventDispatcher;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.EventListener;
 import java.util.Set;
 
 public class HeavyProcessLatch {
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
+  private static final String UI_ACTIVITY = "UI Activity";
 
   private final Set<String> myHeavyProcesses = new THashSet<String>();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
+  private volatile Thread myUiActivityThread;
 
   private HeavyProcessLatch() {
   }
@@ -94,5 +97,46 @@ public class HeavyProcessLatch {
 
   public void addListener(@NotNull Disposable parentDisposable, @NotNull HeavyProcessListener listener) {
     myEventDispatcher.addListener(listener, parentDisposable);
+  }
+
+  /**
+   * Gives current event processed on Swing thread higher priority
+   * @see #stopThreadPrioritizing()
+   */
+  public void prioritizeUiActivity() {
+    myUiActivityThread = Thread.currentThread();
+    processStarted(UI_ACTIVITY);
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        stopThreadPrioritizing();
+      }
+    });
+  }
+
+  /**
+   * Removes priority from Swing thread, if present. Should be invoked before a thread starts waiting for other threads in idle mode,
+   * to ensure those other threads complete ASAP.
+   * @see #prioritizeUiActivity()
+   */
+  public void stopThreadPrioritizing() {
+    myUiActivityThread = null;
+    processFinished(UI_ACTIVITY);
+  }
+
+  /**
+   * @return whether there is a prioritized thread, but not the current one
+   */
+  public boolean isInsideLowPriorityThread() {
+    Thread thread = myUiActivityThread;
+    return thread != null && thread != Thread.currentThread();
+  }
+
+  /**
+   * @return whether there is a prioritized thread currently
+   */
+  public boolean hasPrioritizedThread() {
+    return myUiActivityThread != null;
   }
 }

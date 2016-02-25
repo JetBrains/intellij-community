@@ -13,8 +13,7 @@ Function searchJava64
   call OMReadRegStr
   SetRegView 32
   StrCpy $3 "$3\bin\java.exe"
-  IfFileExists $3 0 no_java_64
-    goto done
+  IfFileExists $3 done no_java_64
 no_java_64:
   StrCpy $3 ""
 done:
@@ -22,17 +21,26 @@ FunctionEnd
 
 Function ConfirmDesktopShortcut
   !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" "${PRODUCT_EXE_FILE}"
-  ${StrRep} $R0 ${PRODUCT_EXE_FILE_64} "64.exe" ".exe"
-  ${If} $R0 == ${PRODUCT_EXE_FILE}
-    call searchJava64
-    ${If} $3 != ""
-      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" "${PRODUCT_EXE_FILE_64}"
-    ${EndIf}
+  ${StrRep} $0 ${PRODUCT_EXE_FILE} "64.exe" ".exe"
+  ${If} $0 == ${PRODUCT_EXE_FILE}
+    StrCpy $R0 "32-bit launcher"
+    StrCpy $R1 "64-bit launcher"
   ${Else}
-    ;there is no java 64 or product launcher for 64 java
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "Label"
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" ""
+    ;there is only one launcher and it is 64-bit.
+    StrCpy $R0 "64-bit launcher"
+    StrCpy $R1 ""
+  ${EndIf}
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" $R0
+
+  ${If} $R1 != ""
+    ${StrRep} $R0 ${PRODUCT_EXE_FILE_64} "64.exe" ".exe"
+    ${If} $R0 == ${PRODUCT_EXE_FILE}
+      call searchJava64
+      ${If} $3 != ""
+        !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
+        !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" $R1
+      ${EndIf}
+    ${EndIf}
   ${EndIf}
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
   StrCpy $R0 ${INSTALL_OPTION_ELEMENTS}
@@ -45,11 +53,7 @@ loop:
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
   goto loop
 skip_association:
-  StrCpy $R0 2
-  call winVersion
-  ${If} $0 == "1"
-  IntOp $R0 $R0 - 1
-  ${EndIf}
+  IntOp $R0 ${INSTALL_OPTION_ELEMENTS} - 1
 done:
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
   !insertmacro INSTALLOPTIONS_DISPLAY "Desktop.ini"

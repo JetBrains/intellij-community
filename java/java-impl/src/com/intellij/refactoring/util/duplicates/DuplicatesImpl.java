@@ -113,28 +113,32 @@ public class DuplicatesImpl {
                                       final String confirmDuplicatePrompt,
                                       boolean skipPromptWhenOne) {
     final ArrayList<RangeHighlighter> highlighters = previewMatch(project, match, editor);
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      if ((!skipPromptWhenOne || size > 1) && (showAll.get() == null || !showAll.get())) {
-        final String prompt = provider.getConfirmDuplicatePrompt(match);
-        final ReplacePromptDialog promptDialog = new ReplacePromptDialog(false, provider.getReplaceDuplicatesTitle(idx, size), project) {
-          @Override
-          protected String getMessage() {
-            final String message = super.getMessage();
-            return prompt != null ? message + prompt : message;
+    try {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        if ((!skipPromptWhenOne || size > 1) && (showAll.get() == null || !showAll.get())) {
+          final String prompt = provider.getConfirmDuplicatePrompt(match);
+          final ReplacePromptDialog promptDialog = new ReplacePromptDialog(false, provider.getReplaceDuplicatesTitle(idx, size), project) {
+            @Override
+            protected String getMessage() {
+              final String message = super.getMessage();
+              return prompt != null ? message + " " + prompt : message;
+            }
+          };
+          promptDialog.show();
+          final boolean allChosen = promptDialog.getExitCode() == FindManager.PromptResult.ALL;
+          showAll.set(allChosen);
+          if (allChosen && confirmDuplicatePrompt != null && prompt == null) {
+            if (Messages.showOkCancelDialog(project, "In order to replace all occurrences method signature will be changed. Proceed?", CommonBundle.getWarningTitle(), Messages.getWarningIcon()) !=
+                Messages.OK) return true;
           }
-        };
-        promptDialog.show();
-        final boolean allChosen = promptDialog.getExitCode() == FindManager.PromptResult.ALL;
-        showAll.set(allChosen);
-        if (allChosen && confirmDuplicatePrompt != null && prompt == null) {
-          if (Messages.showOkCancelDialog(project, "In order to replace all occurrences method signature will be changed. Proceed?", CommonBundle.getWarningTitle(), Messages.getWarningIcon()) !=
-              Messages.OK) return true;
+          if (promptDialog.getExitCode() == FindManager.PromptResult.SKIP) return false;
+          if (promptDialog.getExitCode() == FindManager.PromptResult.CANCEL) return true;
         }
-        if (promptDialog.getExitCode() == FindManager.PromptResult.SKIP) return false;
-        if (promptDialog.getExitCode() == FindManager.PromptResult.CANCEL) return true;
       }
     }
-    HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
+    finally {
+      HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
+    }
 
     new WriteCommandAction(project, MethodDuplicatesHandler.REFACTORING_NAME, MethodDuplicatesHandler.REFACTORING_NAME) {
       @Override
@@ -194,8 +198,9 @@ public class DuplicatesImpl {
     Boolean hasDuplicates = provider.hasDuplicates();
     if (hasDuplicates == null || hasDuplicates.booleanValue()) {
       List<Match> duplicates = provider.getDuplicates();
+      ArrayList<RangeHighlighter> highlighters = null;
       if (duplicates.size() == 1) {
-        previewMatch(project, duplicates.get(0), editor);
+        highlighters = previewMatch(project, duplicates.get(0), editor);
       }
       final int answer = ApplicationManager.getApplication().isUnitTestMode() || hasDuplicates == null ? Messages.YES : Messages.showYesNoDialog(project,
         RefactoringBundle.message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
@@ -204,6 +209,12 @@ public class DuplicatesImpl {
       if (answer == Messages.YES) {
         PsiDocumentManager.getInstance(project).commitAllDocuments();
         invoke(project, editor, provider, hasDuplicates != null);
+      }
+      else if (highlighters != null) {
+        final HighlightManager highlightManager = HighlightManager.getInstance(project);
+        for (RangeHighlighter highlighter : highlighters) {
+          highlightManager.removeSegmentHighlighter(editor, highlighter);
+        }
       }
     }
   }

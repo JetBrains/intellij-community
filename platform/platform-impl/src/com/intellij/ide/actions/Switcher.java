@@ -218,6 +218,59 @@ public class Switcher extends AnAction implements DumbAware {
     final Alarm myAlarm;
     final SwitcherSpeedSearch mySpeedSearch;
     final String myTitle;
+
+
+    private class MyFocusTraversalPolicy extends FocusTraversalPolicy {
+
+      @Override
+      public Component getComponentAfter(Container aContainer, Component aComponent) {
+        return aComponent == toolWindows ? files : toolWindows;
+      }
+
+      @Override
+      public Component getComponentBefore(Container aContainer, Component aComponent) {
+        return aComponent == toolWindows ? files : toolWindows;
+      }
+
+      @Override
+      public Component getFirstComponent(Container aContainer) {
+        return toolWindows;
+      }
+
+      @Override
+      public Component getLastComponent(Container aContainer) {
+        return files;
+      }
+
+      @Override
+      public Component getDefaultComponent(Container aContainer) {
+        return files;
+      }
+    }
+
+    private static void exchangeSelectionState (JBList toClear, JBList toSelect) {
+      if (toSelect.getModel().getSize() > 0) {
+        int index = Math.min(toClear.getSelectedIndex(), toSelect.getModel().getSize() - 1);
+        toSelect.setSelectedIndex(index);
+        toSelect.ensureIndexIsVisible(index);
+        toClear.clearSelection();
+      }
+    }
+
+    private class MyToolWindowsListFocusListener extends FocusAdapter {
+      @Override
+      public void focusGained(FocusEvent e) {
+        exchangeSelectionState(files, toolWindows);
+      }
+    }
+
+    private class MyFilesListFocusListener extends FocusAdapter {
+      @Override
+      public void focusGained(FocusEvent e) {
+        exchangeSelectionState(toolWindows, files);
+      }
+    }
+
     final ClickListener myClickListener = new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -287,6 +340,7 @@ public class Switcher extends AnAction implements DumbAware {
       }
 
       toolWindows = new JBList(twModel);
+      toolWindows.addFocusListener(new MyToolWindowsListFocusListener());
       if (pinned) {
         new NameFilteringListModel<ToolWindow>(toolWindows, new Function<ToolWindow, String>() {
           @NotNull
@@ -526,6 +580,7 @@ public class Switcher extends AnAction implements DumbAware {
       ScrollingUtil.installActions(files);
       files.addMouseListener(this);
       files.addMouseMotionListener(this);
+      files.addFocusListener(new MyFilesListFocusListener());
       myClickListener.installOn(files);
       ScrollingUtil.ensureSelectionExists(files);
 
@@ -572,12 +627,6 @@ public class Switcher extends AnAction implements DumbAware {
         new AnAction(null, null, null) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            changeSelection();
-          }
-        }.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), this, myPopup);
-        new AnAction(null, null, null) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
             if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
               mySpeedSearch.hidePopup();
             }
@@ -600,6 +649,22 @@ public class Switcher extends AnAction implements DumbAware {
       }
       myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myPopup);
       myPopup.showInCenterOf(window);
+
+      Container popupFocusAncestor = myPopup.getContent().getFocusCycleRootAncestor();
+
+      popupFocusAncestor.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
+
+      addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, "RIGHT");
+      addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "LEFT");
+
+    }
+
+    private static void  addFocusTraversalKeys (Container focusCycleRoot, int focusTraversalType, String keyStroke) {
+      Set<AWTKeyStroke> focusTraversalKeySet = focusCycleRoot.getFocusTraversalKeys(focusTraversalType);
+
+      Set<AWTKeyStroke> set = new HashSet<AWTKeyStroke>(focusTraversalKeySet);
+      set.add(KeyStroke.getKeyStroke(keyStroke));
+      focusCycleRoot.setFocusTraversalKeys(focusTraversalType, set);
     }
 
     @NotNull
@@ -653,12 +718,6 @@ public class Switcher extends AnAction implements DumbAware {
       if (ctrl && isAutoHide() || enter) {
         navigate(e);
       }
-      else if (e.getKeyCode() == VK_LEFT) {
-        goLeft();
-      }
-      else if (e.getKeyCode() == VK_RIGHT) {
-        goRight();
-      }
     }
 
     KeyEvent lastEvent;
@@ -672,18 +731,6 @@ public class Switcher extends AnAction implements DumbAware {
         case VK_Q:
           closeTabOrToolWindow();
           break;
-      }
-      if (e.getKeyCode() == ALT_KEY) {
-        changeSelection();
-      }
-    }
-
-    private void changeSelection() {
-      if (isFilesSelected()) {
-        goLeft();
-      }
-      else {
-        goRight();
       }
     }
 
@@ -721,7 +768,6 @@ public class Switcher extends AnAction implements DumbAware {
             }
           }, 300);
           if (jList.getModel().getSize() == 1) {
-            goLeft();
             removeElementAt(jList, selectedIndex);
             this.remove(jList);
             this.remove(separator);
@@ -793,36 +839,8 @@ public class Switcher extends AnAction implements DumbAware {
       return getSelectedList() == toolWindows;
     }
 
-    private void goRight() {
-      if ((isFilesSelected() || !isFilesVisible()) && isAutoHide()) {
-        cancel();
-      }
-      else {
-        if (files.getModel().getSize() > 0) {
-          final int index = Math.min(toolWindows.getSelectedIndex(), files.getModel().getSize() - 1);
-          files.setSelectedIndex(index);
-          files.ensureIndexIsVisible(index);
-          toolWindows.getSelectionModel().clearSelection();
-          IdeFocusManager.findInstanceByComponent(files).requestFocus(files, true);
-        }
-      }
-    }
-
     private void cancel() {
       myPopup.cancel();
-    }
-
-    private void goLeft() {
-      if (isToolWindowsSelected() && isAutoHide()) {
-        cancel();
-      }
-      else {
-        if (toolWindows.getModel().getSize() > 0) {
-          toolWindows.setSelectedIndex(Math.min(files.getSelectedIndex(), toolWindows.getModel().getSize() - 1));
-          files.getSelectionModel().clearSelection();
-          IdeFocusManager.findInstanceByComponent(toolWindows).requestFocus(toolWindows, true);
-        }
-      }
     }
 
     public void go(boolean forward) {

@@ -17,7 +17,7 @@ package com.intellij.diff.chains;
 
 public class DiffRequestProducerException extends Exception {
   public DiffRequestProducerException(Throwable cause) {
-    super(cause);
+    super(cause.getMessage(), cause);
   }
 
   public DiffRequestProducerException(String message, Throwable cause) {

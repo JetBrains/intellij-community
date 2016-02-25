@@ -105,7 +105,7 @@ public class PushDownTest extends LightRefactoringTestCase {
     memberInfo.setChecked(true);
     membersToMove.add(memberInfo);
 
-    new PushDownProcessor(getProject(), membersToMove.toArray(new MemberInfo[membersToMove.size()]), currentClass,
+    new PushDownProcessor(currentClass, membersToMove.toArray(new MemberInfo[membersToMove.size()]),
                           new DocCommentPolicy(DocCommentPolicy.ASIS)) {
       @Override
       protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
@@ -136,7 +136,7 @@ public class PushDownTest extends LightRefactoringTestCase {
       }
     }
 
-    new PushDownProcessor(getProject(), members.toArray(new MemberInfo[members.size()]), currentClass,
+    new PushDownProcessor(currentClass, members.toArray(new MemberInfo[members.size()]),
                           new DocCommentPolicy(DocCommentPolicy.ASIS)) {
       @Override
       protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {

@@ -38,6 +38,7 @@ import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.MessageDecoder;
 
 import java.io.*;
+import java.lang.management.ManagementFactory;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.util.Collection;
@@ -45,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
 /**
  * @author mike
@@ -55,6 +57,7 @@ public final class SocketLock {
   private static final String PORT_FILE = "port";
   private static final String PORT_LOCK_FILE = "port.lock";
   private static final String ACTIVATE_COMMAND = "activate ";
+  private static final String PID_COMMAND = "pid";
   private static final String PATHS_EOT_RESPONSE = "---";
   private static final String OK_RESPONSE = "ok";
 
@@ -130,6 +133,9 @@ public final class SocketLock {
           }
         }
 
+        if (isShutdownCommand()) {
+          System.exit(0);
+        }
         final String[] lockedPaths = {myConfigPath, mySystemPath};
         int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr() ? 1 : 2;
         myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false, new NotNullProducer<ChannelHandler>() {
@@ -214,6 +220,9 @@ public final class SocketLock {
             String response = in.readUTF();
             log("read: response=%s", response);
             if (response.equals(OK_RESPONSE)) {
+              if (isShutdownCommand()) {
+                printPID(portNumber);
+              }
               return ActivateStatus.ACTIVATED;
             }
           }
@@ -236,6 +245,34 @@ public final class SocketLock {
     }
 
     return ActivateStatus.NO_INSTANCE;
+  }
+
+  private static void printPID(int port) {
+    try {
+      Socket socket = new Socket(NetUtils.getLoopbackAddress(), port);
+      socket.setSoTimeout(1000);
+      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+      out.writeUTF(PID_COMMAND);
+      DataInputStream in = new DataInputStream(socket.getInputStream());
+      int pid = 0;
+      while (true) {
+        try {
+          String s = in.readUTF();
+          if (Pattern.matches("[0-9]+@.*", s)) {
+            pid = Integer.parseInt(s.substring(0, s.indexOf('@')));
+            System.err.println(pid);
+          }
+        }catch (IOException e) {
+          break;
+        }
+      }
+    }
+    catch (Exception ignore) {
+    }
+  }
+
+  private static boolean isShutdownCommand() {
+    return "shutdown".equals(JetBrainsProtocolHandler.getCommand());
   }
 
   private static String[] checkForJetBrainsProtocolCommand(String[] args) {
@@ -296,6 +333,15 @@ public final class SocketLock {
             CharSequence command = readChars(input);
             if (command == null) {
               return;
+            }
+
+            if (StringUtil.startsWith(command, PID_COMMAND)) {
+              ByteBuf buffer = context.alloc().ioBuffer();
+              ByteBufOutputStream out = new ByteBufOutputStream(buffer);
+              String name = ManagementFactory.getRuntimeMXBean().getName();
+              out.writeUTF(name);
+              out.close();
+              context.writeAndFlush(buffer);
             }
 
             if (StringUtil.startsWith(command, ACTIVATE_COMMAND)) {

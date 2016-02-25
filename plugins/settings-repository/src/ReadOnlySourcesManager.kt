@@ -16,12 +16,13 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.util.SmartList
+import com.intellij.util.exists
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.jetbrains.annotations.TestOnly
-import java.io.File
+import java.nio.file.Path
 
-class ReadOnlySourcesManager(private val settings: IcsSettings, val rootDir: File) {
+class ReadOnlySourcesManager(private val settings: IcsSettings, val rootDir: Path) {
   private var _repositories: List<Repository>? = null
 
   val repositories: List<Repository>
@@ -36,9 +37,9 @@ class ReadOnlySourcesManager(private val settings: IcsSettings, val rootDir: Fil
           for (source in settings.readOnlySources) {
             try {
               val path = source.path ?: continue
-              val dir = File(rootDir, path)
+              val dir = rootDir.resolve(path)
               if (dir.exists()) {
-                r.add(FileRepositoryBuilder().setBare().setGitDir(dir).build())
+                r.add(FileRepositoryBuilder().setBare().setGitDir(dir.toFile()).build())
               }
               else {
                 LOG.warn("Skip read-only source ${source.url} because dir doesn't exists")
@@ -59,5 +60,5 @@ class ReadOnlySourcesManager(private val settings: IcsSettings, val rootDir: Fil
     _repositories = null
   }
 
-  @TestOnly fun sourceToDir(source: ReadonlySource) = File(rootDir, source.path!!)
+  @TestOnly fun sourceToDir(source: ReadonlySource) = rootDir.resolve(source.path!!)
 }

@@ -37,6 +37,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * @author vlan
  */
@@ -87,6 +89,26 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         }
       }
     }
+    final String comment = func.getTypeCommentAnnotation();
+    if (comment != null) {
+      final PyTypeParser.ParseResult result = PyTypeParser.parsePep484FunctionTypeComment(param, comment);
+      final PyCallableType functionType = as(result.getType(), PyCallableType.class);
+      if (functionType != null) {
+        final List<PyCallableParameter> paramTypes = functionType.getParameters(context);
+        assert paramTypes != null;
+        final PyParameter[] funcParams = func.getParameterList().getParameters();
+        final int startOffset = func.getContainingClass() != null ? 1 : 0;
+        for (int paramIndex = 0; paramIndex < funcParams.length; paramIndex++) {
+          if (funcParams[paramIndex] == param) {
+            final int typeIndex = paramIndex - startOffset;
+            if (typeIndex >= 0 && typeIndex < paramTypes.size()) {
+              return Ref.create(paramTypes.get(typeIndex).getType(context));
+            }
+            break;
+          }
+        }
+      }
+    }
     return null;
   }
 
@@ -107,6 +129,14 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyType constructorType = getGenericConstructorType(function, context);
       if (constructorType != null) {
         return Ref.create(constructorType);
+      }
+      final String comment = function.getTypeCommentAnnotation();
+      if (comment != null) {
+        final PyTypeParser.ParseResult result = PyTypeParser.parsePep484FunctionTypeComment(callable, comment);
+        final PyCallableType funcType = as(result.getType(), PyCallableType.class);
+        if (funcType != null) {
+          return Ref.create(funcType.getReturnType(context));
+        }
       }
     }
     return null;
@@ -153,11 +183,22 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PsiComment comment = getSameLineTrailingCommentChild(commentContainer);
       if (comment != null) {
         final String text = comment.getText();
-        final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
-        if (m.matches()) {
-          return m.group(1);
-        }
+        return getTypeCommentValue(text);
       }
+    }
+    return null;
+  }
+
+  /**
+   * Checks that text of a comment starts with the "type:" prefix and returns trimmed part afterwards. This trailing part is supposed to 
+   * contain type annotation in PEP 484 compatible format, that can be parsed with either {@link PyTypeParser#parse(PsiElement, String)}
+   * or {@link PyTypeParser#parsePep484FunctionTypeComment(PsiElement, String)}.
+   */
+  @Nullable
+  public static String getTypeCommentValue(@NotNull String text) {
+    final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
+    if (m.matches()) {
+      return m.group(1);
     }
     return null;
   }

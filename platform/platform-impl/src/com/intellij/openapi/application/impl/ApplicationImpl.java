@@ -243,6 +243,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       assert Main.isCommandLine();
       new IdeaApplication(args);
     }
+    gatherWriteActionStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
+    writePauses = gatherWriteActionStatistics ? new PausesStat("Write action") : null;
   }
 
   private void registerShutdownHook() {
@@ -544,6 +546,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void dispose() {
+    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
     fireApplicationExiting();
 
     ShutDownTracker.getInstance().ensureStopperThreadsFinished();
@@ -556,9 +559,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     super.dispose();
     Disposer.dispose(myLastDisposable); // dispose it last
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(writeActionStatistics());
-      LOG.debug(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
+    if (gatherWriteActionStatistics) {
+      LOG.info(writeActionStatistics());
+      LOG.info(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
     }
   }
 
@@ -1216,13 +1219,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myWriteActionPending;
   }
 
-  private final PausesStat writePauses = new PausesStat("Write action");
+  private final boolean gatherWriteActionStatistics;
+  private final PausesStat writePauses;
 
   private void startWrite(/*@NotNull*/ Class clazz) {
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
+    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     boolean writeActionPending = myWriteActionPending;
     myWriteActionPending = true;
-    if ((LOG.isDebugEnabled() || isUnitTestMode()) && myWriteActionsStack.isEmpty()) {
+    if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty()) {
       writePauses.started();
     }
     try {
@@ -1267,7 +1272,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private void endWrite(/*@NotNull*/ Class clazz) {
     try {
       myWriteActionsStack.pop();
-      if ((LOG.isDebugEnabled() || isUnitTestMode()) && myWriteActionsStack.isEmpty()) {
+      if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty()) {
         writePauses.finished("write action ("+clazz+")");
       }
       fireWriteActionFinished(clazz);
@@ -1293,7 +1298,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       this.clazz = clazz;
       startWrite(clazz);
       markThreadNameInStackTrace();
-      acquired();
     }
 
     @Override
@@ -1303,7 +1307,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
       finally {
         unmarkThreadNameInStackTrace();
-        released();
       }
     }
 
@@ -1350,13 +1353,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     private ReadAccessToken(Status status) {
       myStatus = status;
       startRead(status);
-      acquired();
     }
 
     @Override
     public void finish() {
       endRead(myStatus);
-      released();
     }
   }
 
@@ -1434,6 +1435,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     if (myDoNotSave) return;
 
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
+      HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
       try {
         StoreUtil.save(ServiceKt.getStateStore(this), null);
       }

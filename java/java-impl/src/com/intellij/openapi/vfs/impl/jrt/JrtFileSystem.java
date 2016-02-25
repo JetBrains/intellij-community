@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -84,6 +85,13 @@ public class JrtFileSystem extends ArchiveFileSystem {
   @Override
   public String getProtocol() {
     return PROTOCOL;
+  }
+
+  @Nullable
+  @Override
+  protected String normalize(@NotNull String path) {
+    int p = path.indexOf(SEPARATOR);
+    return p > 0 ? FileUtil.normalize(path.substring(0, p)) + path.substring(p) : super.normalize(path);
   }
 
   @NotNull
@@ -178,6 +186,11 @@ public class JrtFileSystem extends ArchiveFileSystem {
   @Override
   public void refresh(boolean asynchronous) {
     VfsImplUtil.refresh(this, asynchronous);
+  }
+
+  @Override
+  protected boolean isCorrectFileType(@NotNull VirtualFile local) {
+    return isModularJdk(FileUtil.toSystemDependentName(local.getPath()));
   }
 
   public static boolean isSupported() {

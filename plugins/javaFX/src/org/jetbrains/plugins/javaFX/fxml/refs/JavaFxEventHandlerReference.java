@@ -29,7 +29,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
@@ -75,7 +75,7 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
       final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
       if (parameters.length == 1) {
         final PsiType parameterType = parameters[0].getType();
-        if (InheritanceUtil.isInheritor(parameterType, JavaFxCommonClassNames.JAVAFX_EVENT)) {
+        if (InheritanceUtil.isInheritor(parameterType, JavaFxCommonNames.JAVAFX_EVENT)) {
           return true;
         }
       }
@@ -104,7 +104,7 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
 
     private static String getHandlerSignature(JavaFxEventHandlerReference ref) {
       final XmlAttributeValue element = ref.getElement();
-      String canonicalText = JavaFxCommonClassNames.JAVAFX_EVENT;
+      String canonicalText = JavaFxCommonNames.JAVAFX_EVENT;
       final PsiElement parent = element.getParent();
       if (parent instanceof XmlAttribute) {
         final XmlAttribute xmlAttribute = (XmlAttribute)parent;
@@ -113,7 +113,7 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
         if (handlerField != null) {
           final PsiClassType classType = JavaFxPsiUtil.getPropertyClassType(handlerField);
           if (classType != null) {
-            final PsiClass eventHandlerClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_EVENT_EVENT_HANDLER, GlobalSearchScope.allScope(project));
+            final PsiClass eventHandlerClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonNames.JAVAFX_EVENT_EVENT_HANDLER, GlobalSearchScope.allScope(project));
             final PsiTypeParameter[] typeParameters = eventHandlerClass != null ? eventHandlerClass.getTypeParameters() : null;
             if (typeParameters != null && typeParameters.length == 1) {
               final PsiTypeParameter typeParameter = typeParameters[0];

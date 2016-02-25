@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
@@ -25,9 +26,13 @@ import org.intellij.lang.annotations.MagicConstant;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
+import javax.swing.plaf.ComponentInputMapUIResource;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 public class ActionButtonWithText extends ActionButton {
   private static final int ICON_TEXT_SPACE = 2;
@@ -41,6 +46,44 @@ public class ActionButtonWithText extends ActionButton {
     super(action, presentation, place, minimumSize);
     setFont(UIUtil.getLabelFont());
     setForeground(UIUtil.getLabelForeground());
+    myPresentation.addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getPropertyName().equals(Presentation.PROP_MNEMONIC_KEY)) {
+          Integer oldValue = evt.getOldValue() instanceof Integer? (Integer)evt.getOldValue() : 0;
+          Integer newValue = evt.getOldValue() instanceof Integer? (Integer)evt.getOldValue() : 0;
+          updateMnemonic(oldValue, newValue);
+        }
+      }
+    });
+    getActionMap().put("doClick", new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        click();
+      }
+    });
+    updateMnemonic(0, myPresentation.getMnemonic());
+  }
+
+  private void updateMnemonic(int lastMnemonic, int mnemonic) {
+    if (mnemonic == lastMnemonic) {
+      return;
+    }
+    InputMap windowInputMap = SwingUtilities.getUIInputMap(
+      this, JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+    int mask = SystemInfo.isMac ? InputEvent.ALT_MASK | InputEvent.CTRL_MASK : InputEvent.ALT_MASK;
+    if (lastMnemonic != 0 && windowInputMap != null) {
+      windowInputMap.remove(KeyStroke.getKeyStroke(lastMnemonic, mask, false));
+    }
+    if (mnemonic != 0) {
+      if (windowInputMap == null) {
+        windowInputMap = new ComponentInputMapUIResource(this);
+        SwingUtilities.replaceUIInputMap(this, JComponent.
+          WHEN_IN_FOCUSED_WINDOW, windowInputMap);
+      }
+      windowInputMap.put(KeyStroke.getKeyStroke(mnemonic, mask, false), "doClick");
+    }
   }
 
   public Dimension getPreferredSize() {
@@ -70,6 +113,11 @@ public class ActionButtonWithText extends ActionButton {
     rv.width = Math.max(rv.width, basicSize.width);
     rv.height = Math.max(rv.height, basicSize.height);
     return rv;
+  }
+
+  @Override
+  void updateToolTipText() {
+    setToolTipText(myPresentation.getDescription());
   }
 
   public void paintComponent(Graphics g) {
@@ -118,7 +166,7 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   protected int iconTextSpace() {
-    return (getIcon() instanceof EmptyIcon || getIcon() == null ) ? 0 : ICON_TEXT_SPACE;
+    return (getIcon() instanceof EmptyIcon || getIcon() == null) ? 0 : ICON_TEXT_SPACE;
   }
 
   private int getMnemonicCharIndex(String text) {
@@ -147,7 +195,6 @@ public class ActionButtonWithText extends ActionButton {
 
   private String getText() {
     final String text = myPresentation.getText();
-    return text != null? text : "";
+    return text != null ? text : "";
   }
-
 }

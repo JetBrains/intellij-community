@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseInputStreamReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,11 +35,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import static com.intellij.util.io.BaseDataReader.AdaptiveSleepingPolicy;
 
 public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor {
   private static final Logger LOG = Logger.getInstance(BaseOSProcessHandler.class);
@@ -72,7 +67,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
    */
   @NotNull
   protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
-    return ExecutorServiceHolder.ourThreadExecutorsService.submit(task);
+    return AppExecutorUtil.getAppExecutorService().submit(task);
   }
 
   @Override
@@ -148,7 +143,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   @NotNull
   private BaseDataReader.SleepingPolicy getPolicy() {
     if (useNonBlockingRead()) {
-      return useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : BaseDataReader.SleepingPolicy.SIMPLE;
+      return useAdaptiveSleepingPolicyWhenReadingOutput() ? new BaseDataReader.AdaptiveSleepingPolicy() : BaseDataReader.SleepingPolicy.SIMPLE;
     }
     else {
       //use blocking read policy
@@ -255,26 +250,12 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   }
 
   public static class ExecutorServiceHolder {
-    private static final ThreadPoolExecutor ourThreadExecutorsService =
-      new ThreadPoolExecutor(0, Integer.MAX_VALUE, 1, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
-                             ConcurrencyUtil.newNamedThreadFactory("OSProcessHandler pooled thread"));
-
-    /** @deprecated use {@link BaseOSProcessHandler#submit(Runnable)} instead (to be removed in IDEA 16) */
+    /** @deprecated use {@link BaseOSProcessHandler#executeTask(Runnable)} instead (to be removed in IDEA 16) */
     @Deprecated
     public static Future<?> submit(@NotNull Runnable task) {
-      return BaseOSProcessHandler.submit(task);
+      LOG.warn("Deprecated method. Please use com.intellij.execution.process.BaseOSProcessHandler.executeTask() instead", new Throwable());
+      return AppExecutorUtil.getAppExecutorService().submit(task);
     }
-  }
-
-  @NotNull
-  public static Future<?> submit(@NotNull Runnable task) {
-    return ExecutorServiceHolder.ourThreadExecutorsService.submit(task);
-  }
-
-  @TestOnly
-  public static void awaitQuiescence(long timeout, @NotNull TimeUnit unit) {
-    ThreadPoolExecutor executor = ExecutorServiceHolder.ourThreadExecutorsService;
-    ConcurrencyUtil.awaitQuiescence(executor, timeout, unit);
   }
 
   private class SimpleOutputReader extends BaseOutputReader {
@@ -301,5 +282,29 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   @Override
   public String toString() {
     return myCommandLine;
+  }
+
+  @Override
+  public boolean waitFor() {
+    boolean result = super.waitFor();
+    try {
+      myWaitFor.waitFor();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    return result;
+  }
+
+  @Override
+  public boolean waitFor(long timeoutInMilliseconds) {
+    boolean result = super.waitFor(timeoutInMilliseconds);
+    try {
+      result &= myWaitFor.waitFor(timeoutInMilliseconds, TimeUnit.MILLISECONDS);
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    return result;
   }
 }

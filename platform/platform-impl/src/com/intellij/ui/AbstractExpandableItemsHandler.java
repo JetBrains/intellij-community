@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -27,6 +26,7 @@ import com.intellij.ui.popup.MovablePopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.MouseEventHandler;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,98 +72,48 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     myComponent.validate();
     myPopup = new MovablePopup(myComponent, myTipComponent);
 
-    myTipComponent.addMouseWheelListener(new MouseWheelListener() {
+    MouseEventHandler dispatcher = new MouseEventHandler() {
       @Override
-      public void mouseWheelMoved(MouseWheelEvent e) {
-        dispatchEvent(myComponent, e);
-      }
-    });
-
-    myTipComponent.addMouseListener(new MouseListener() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        dispatchEvent(myComponent, e);
+      protected void handle(MouseEvent event) {
+        myComponent.dispatchEvent(MouseEventAdapter.convert(event, myComponent));
       }
 
       @Override
-      public void mousePressed(MouseEvent e) {
-        dispatchEvent(myComponent, e);
+      public void mouseEntered(MouseEvent event) {
       }
 
       @Override
-      public void mouseReleased(MouseEvent e) {
-        dispatchEvent(myComponent, e);
-      }
-
-      @Override
-      public void mouseEntered(MouseEvent e) {
-      }
-
-      @Override
-      public void mouseExited(MouseEvent e) {
+      public void mouseExited(MouseEvent event) {
         // don't hide the hint if mouse exited to owner component
         if (myComponent.getMousePosition() == null) {
           hideHint();
         }
       }
-    });
+    };
+    myTipComponent.addMouseListener(dispatcher);
+    myTipComponent.addMouseMotionListener(dispatcher);
+    myTipComponent.addMouseWheelListener(dispatcher);
 
-    myTipComponent.addMouseMotionListener(new MouseMotionListener() {
+    MouseEventHandler handler = new MouseEventHandler() {
       @Override
-      public void mouseMoved(MouseEvent e) {
-        dispatchEvent(myComponent, e);
+      protected void handle(MouseEvent event) {
+        handleMouseEvent(event, MouseEvent.MOUSE_MOVED != event.getID());
       }
 
       @Override
-      public void mouseDragged(MouseEvent e) {
-        dispatchEvent(myComponent, e);
+      public void mouseClicked(MouseEvent event) {
       }
-    });
 
-    myComponent.addMouseListener(
-      new MouseListener() {
-        @Override
-        public void mouseEntered(MouseEvent e) {
-          handleMouseEvent(e);
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-          // don't hide the hint if mouse exited to it
-          if (myTipComponent.getMousePosition() == null) {
-            hideHint();
-          }
-        }
-
-        @Override
-        public void mouseClicked(MouseEvent e) {
-        }
-
-        @Override
-        public void mousePressed(MouseEvent e) {
-          handleMouseEvent(e);
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-          handleMouseEvent(e);
+      @Override
+      public void mouseExited(MouseEvent event) {
+        // don't hide the hint if mouse exited to it
+        if (myTipComponent.getMousePosition() == null) {
+          hideHint();
         }
       }
-    );
-
-    myComponent.addMouseMotionListener(
-      new MouseMotionListener() {
-        @Override
-        public void mouseDragged(MouseEvent e) {
-          handleMouseEvent(e);
-        }
-
-        @Override
-        public void mouseMoved(MouseEvent e) {
-          handleMouseEvent(e, false);
-        }
-      }
-    );
+    };
+    myComponent.addMouseListener(handler);
+    myComponent.addMouseMotionListener(handler);
 
     myComponent.addFocusListener(
       new FocusAdapter() {
@@ -245,10 +195,6 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     handleSelectionChange(myKey, true);
   }
 
-  private void handleMouseEvent(MouseEvent e) {
-    handleMouseEvent(e, true);
-  }
-
   protected void handleMouseEvent(MouseEvent e, boolean forceUpdate) {
     KeyType selected = getCellKeyForPoint(e.getPoint());
     if (forceUpdate || !Comparing.equal(myKey, selected)) {
@@ -266,7 +212,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   protected void handleSelectionChange(final KeyType selected, final boolean processIfUnfocused) {
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
+    if (!EventQueue.isDispatchThread()) {
       return;
     }
     myUpdateAlarm.cancelAllRequests();
@@ -470,12 +416,4 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   protected abstract Pair<Component, Rectangle> getCellRendererAndBounds(KeyType key);
 
   protected abstract KeyType getCellKeyForPoint(Point point);
-
-  private static void dispatchEvent(JComponent component, MouseEvent event) {
-    if (component != null && event != null) {
-      Point point = event.getLocationOnScreen();
-      SwingUtilities.convertPointFromScreen(point, component);
-      component.dispatchEvent(MouseEventAdapter.convert(event, component, point.x, point.y));
-    }
-  }
 }

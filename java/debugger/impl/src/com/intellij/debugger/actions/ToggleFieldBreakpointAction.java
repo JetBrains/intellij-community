@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,17 +150,18 @@ public class ToggleFieldBreakpointAction extends AnAction {
     if(selectedNode != null && selectedNode.getDescriptor() instanceof FieldDescriptorImpl) {
       final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(dataContext);
       final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-      if (debugProcess != null) { // if there is an active debugsession
-        final Ref<SourcePosition> positionRef = new Ref<SourcePosition>(null);
+      if (debugProcess != null) { // if there is an active debug session
+        final Ref<SourcePosition> positionRef = new Ref<>(null);
         debugProcess.getManagerThread().invokeAndWait(new DebuggerContextCommandImpl(debuggerContext) {
+          @Override
           public Priority getPriority() {
             return Priority.HIGH;
           }
+
+          @Override
           public void threadAction() {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              public void run() {
-                positionRef.set(SourcePositionProvider.getSourcePosition(selectedNode.getDescriptor(), project, debuggerContext));
-              }
+            ApplicationManager.getApplication().runReadAction(() -> {
+              positionRef.set(SourcePositionProvider.getSourcePosition(selectedNode.getDescriptor(), project, debuggerContext));
             });
           }
         });

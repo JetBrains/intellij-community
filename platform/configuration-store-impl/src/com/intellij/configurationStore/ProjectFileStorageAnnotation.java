@@ -6,10 +6,19 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.annotation.Annotation;
 
 @SuppressWarnings("ClassExplicitlyAnnotation")
-public class ProjectFileStorageAnnotation implements Storage {
+final class ProjectFileStorageAnnotation implements Storage {
+  private String path;
+
+  private boolean deprecated;
+
+  ProjectFileStorageAnnotation(String path, boolean deprecated) {
+    this.path = path;
+    this.deprecated = deprecated;
+  }
+
   @Override
   public String id() {
-    return "___Default___";
+    return "default";
   }
 
   @Override
@@ -19,7 +28,7 @@ public class ProjectFileStorageAnnotation implements Storage {
 
   @Override
   public String value() {
-    return ProjectStoreImplKt.PROJECT_FILE;
+    return path;
   }
 
   @Override
@@ -29,7 +38,7 @@ public class ProjectFileStorageAnnotation implements Storage {
 
   @Override
   public boolean deprecated() {
-    return false;
+    return deprecated;
   }
 
   @Override

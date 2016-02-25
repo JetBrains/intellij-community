@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.intention
+
+import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.CodeStyleSettings
@@ -99,6 +101,19 @@ public class Foo {
     Lo<caret>g l = bar.LogFactory.log();
 }
 '''
+  }
+
+  public void "test use initializer"() {
+    myFixture.addClass 'package foo; public class Map {}'
+    myFixture.configureByText 'a.java', '''\
+import java.util.HashMap;
+
+public class Foo {
+    Ma<caret>p l = new HashMap<>();
+}
+'''
+    ImportClassFix intention = myFixture.findSingleIntention("Import class") as ImportClassFix
+    assert intention.classesToImport.collect { it.qualifiedName } == ['java.util.Map']
   }
 
   public void testUseOverrideContext() {

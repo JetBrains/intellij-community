@@ -42,7 +42,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import com.intellij.xdebugger.frame.*;
@@ -278,7 +277,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                 //TODO [eu]: this is a quick fix for IDEA-136606, need to move this away from EDT!!!
                 final List<Value> values = value.getValues(0, max);
                 int i = 0;
-                final List<String> vals = new ArrayList<String>(max);
+                final List<String> vals = new ArrayList<>(max);
                 while (i < values.size()) {
                   vals.add(StringUtil.first(values.get(i).toString(), 15, true));
                   i++;
@@ -347,7 +346,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       public void contextAction() throws Exception {
         final XValueChildrenList children = new XValueChildrenList();
         final NodeRenderer renderer = myValueDescriptor.getRenderer(myEvaluationContext.getDebugProcess());
-        final Ref<Integer> remainingNum = new Ref<Integer>(0);
+        final Ref<Integer> remainingNum = new Ref<>(0);
         renderer.buildChildren(myValueDescriptor.getValue(), new ChildrenBuilder() {
           @Override
           public NodeDescriptorFactory getDescriptorManager() {
@@ -462,12 +461,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @NotNull
   @Override
   public ThreeState computeInlineDebuggerData(@NotNull final XInlineDebuggerDataCallback callback) {
-    computeSourcePosition(new XNavigatable() {
-      @Override
-      public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
-        callback.computed(sourcePosition);
-      }
-    }, true);
+    computeSourcePosition(callback::computed, true);
     return ThreeState.YES;
   }
 
@@ -523,7 +517,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       return Promise.resolve(evaluationExpression);
     }
     else {
-      final AsyncPromise<XExpression> res = new AsyncPromise<XExpression>();
+      final AsyncPromise<XExpression> res = new AsyncPromise<>();
       myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
         @Override
         public Priority getPriority() {

@@ -224,6 +224,8 @@ public class StartupManagerImpl extends StartupManagerEx {
           connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
             @Override
             public void afterProjectClosed(@NotNull Project project) {
+              if (project != myProject) return;
+
               RefreshQueue.getInstance().cancelSession(sessionId);
               connection.disconnect();
             }

@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
@@ -74,7 +73,7 @@ class JrtHandler extends ArchiveHandler {
   @Override
   protected Map<String, EntryInfo> createEntriesMap() throws IOException {
     Map<String, EntryInfo> map = ContainerUtil.newHashMap();
-    map.put(StringUtilRt.EMPTY_STRING, createRootEntry());
+    map.put("", createRootEntry());
 
     Path root = getFileSystem().getPath("/modules");
     if (!Files.exists(root)) throw new FileNotFoundException("JRT root missing");
@@ -100,7 +99,7 @@ class JrtHandler extends ArchiveHandler {
         String path = relativePath.toString(), shortName = entry.getFileName().toString();
         if (map.containsKey(path) || "module-info.class".equals(shortName)) return;
 
-        EntryInfo parent = map.get(pathLength > 3 ? relativePath.getParent().toString() : StringUtilRt.EMPTY_STRING);
+        EntryInfo parent = map.get(pathLength > 3 ? relativePath.getParent().toString() : "");
         if (parent == null) throw new IOException("Out of order: " + entry);
 
         long length = attrs.size();

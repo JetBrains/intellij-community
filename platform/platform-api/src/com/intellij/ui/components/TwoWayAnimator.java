@@ -28,8 +28,9 @@ abstract class TwoWayAnimator {
 
   private final int myMaxFrame;
   private int myFrame;
+  float myValue;
 
-  abstract void onFrame(int frame, int maxFrame);
+  abstract void onValueUpdate();
 
   TwoWayAnimator(String name, int totalFrames, int cycleDuration, int pauseForward, int pauseBackward) {
     myMaxFrame = totalFrames - 1;
@@ -37,20 +38,39 @@ abstract class TwoWayAnimator {
     myBackwardAnimator = new MyAnimator(name + "BackwardAnimator", totalFrames, cycleDuration, pauseBackward, false);
   }
 
-  void startForward() {
+  void start(boolean forward) {
     stop();
-    myForwardAnimator.start();
+    MyAnimator animator = forward ? myForwardAnimator : myBackwardAnimator;
+    if (!forward ? myFrame > 0 : myFrame < myMaxFrame) {
+      if (forward ? myFrame > 0 : myFrame < myMaxFrame) {
+        animator.run();
+      }
+      else {
+        myAlarm.addRequest(animator, animator.myPause);
+      }
+    }
   }
 
-  void startBackward() {
+  void rewind(boolean forward) {
     stop();
-    myBackwardAnimator.start();
+    if (forward) {
+      if (myFrame != myMaxFrame) setFrame(myMaxFrame);
+    }
+    else {
+      if (myFrame != 0) setFrame(0);
+    }
   }
 
-  private void stop() {
+  void stop() {
     myAlarm.cancelAllRequests();
     myForwardAnimator.suspend();
     myBackwardAnimator.suspend();
+  }
+
+  void setFrame(int frame) {
+    myFrame = frame;
+    myValue = frame == 0 ? 0 : frame == myMaxFrame ? 1 : (float)frame / myMaxFrame;
+    onValueUpdate();
   }
 
   private final class MyAnimator extends Animator implements Runnable {
@@ -59,15 +79,6 @@ abstract class TwoWayAnimator {
     private MyAnimator(String name, int totalFrames, int cycleDuration, int pause, boolean forward) {
       super(name, totalFrames, cycleDuration, false, forward);
       myPause = pause;
-    }
-
-    private void start() {
-      if (isForward() ? myFrame > 0 : myFrame < myMaxFrame) {
-        run();
-      }
-      else {
-        myAlarm.addRequest(this, myPause);
-      }
     }
 
     @Override
@@ -79,9 +90,13 @@ abstract class TwoWayAnimator {
     @Override
     public void paintNow(int frame, int totalFrames, int cycle) {
       if (isForward() ? (frame > myFrame) : (frame < myFrame)) {
-        myFrame = frame;
-        onFrame(myFrame, myMaxFrame);
+        setFrame(frame);
       }
+    }
+
+    @Override
+    protected void paintCycleEnd() {
+      setFrame(isForward() ? myMaxFrame : 0);
     }
   }
 }

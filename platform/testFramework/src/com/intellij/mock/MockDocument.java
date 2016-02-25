@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -327,5 +327,10 @@ public class MockDocument implements DocumentEx {
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
     return false;
+  }
+
+  @Override
+  public int getModificationSequence() {
+    return 0;
   }
 }

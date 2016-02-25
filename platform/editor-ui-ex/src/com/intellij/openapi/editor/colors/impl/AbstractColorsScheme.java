@@ -67,6 +67,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   private String mySchemeName;
 
   private float myConsoleLineSpacing = -1;
+  
+  private boolean myIsSaveNeeded;
 
   // version influences XML format and triggers migration
   private int myVersion = CURR_VERSION;
@@ -305,7 +307,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     String isDefaultScheme = node.getAttributeValue(DEFAULT_SCHEME_ATTR);
     boolean isDefault = isDefaultScheme != null && Boolean.parseBoolean(isDefaultScheme);
     if (!isDefault) {
-      myParentScheme = DefaultColorSchemesManager.getInstance().getScheme(node.getAttributeValue(PARENT_SCHEME_ATTR, DEFAULT_SCHEME_NAME));
+      myParentScheme = getDefaultScheme(node.getAttributeValue(PARENT_SCHEME_ATTR, DEFAULT_SCHEME_NAME));
     }
 
     for (final Object o : node.getChildren()) {
@@ -344,6 +346,17 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
 
     initFonts();
+  }
+
+  @NotNull
+  private static EditorColorsScheme getDefaultScheme(@NotNull String name) {
+    DefaultColorSchemesManager manager = DefaultColorSchemesManager.getInstance();
+    EditorColorsScheme defaultScheme = manager.getScheme(name);
+    if (defaultScheme == null) {
+      defaultScheme = manager.getScheme(DEFAULT_SCHEME_NAME);
+      assert defaultScheme != null : "Fatal error: built-in 'Default' color scheme not found";
+    }
+    return defaultScheme;
   }
 
   public void readAttributes(@NotNull Element childNode) {
@@ -549,6 +562,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     if (attrElements.getChildren().size() > 0) {
       parentNode.addContent(attrElements);
     }
+    
+    myIsSaveNeeded = false;
   }
 
   private static void writeLigaturesPreferences(Element parentNode, FontPreferences preferences, String optionName) {
@@ -728,5 +743,13 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   protected static boolean containsValue(@Nullable TextAttributes attributes) {
     return attributes != null && attributes.containsValue();
+  }
+
+  public boolean isSaveNeeded() {
+    return myIsSaveNeeded;
+  }
+
+  public void setSaveNeeded(boolean isSaveNeeded) {
+    myIsSaveNeeded = isSaveNeeded;
   }
 }

@@ -108,7 +108,8 @@ public class NotificationsUtil {
       result.append("<b").append(titleColor == null ? ">" : " color=\"" + titleColor + "\">").append(title).append("</b>");
     }
     if (!StringUtil.isEmpty(subtitle)) {
-      result.append("&nbsp;").append(subtitle);
+      result.append("&nbsp;").append(titleColor == null ? "" : "<span color=\"" + titleColor + "\">").append(subtitle)
+        .append(titleColor == null ? "" : "</span>");
     }
     if (!StringUtil.isEmpty(content)) {
       result.append("<p").append(contentStyle == null ? "" : " style=\"" + contentStyle + "\"")

@@ -1,6 +1,7 @@
 package com.jetbrains.python.sdkTools;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -15,7 +16,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.sdk.InvalidSdkException;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
 import org.hamcrest.Matchers;
@@ -59,7 +62,11 @@ public final class PyTestSdkTools {
 
       @Override
       public void run() {
-        final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), true, null, null);
+        final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, new PythonSdkType() {
+          @Override
+          public void setupSdkPaths(@NotNull Sdk sdk) {
+          }
+        }, true, null, null);
         Assert.assertNotNull("Failed to create SDK on " + sdkHome, sdk);
         ref.set(sdk);
       }
@@ -91,10 +98,12 @@ public final class PyTestSdkTools {
                                                       final boolean addSkeletons,
                                                       @Nullable final Module module)
     throws InvalidSdkException, IOException {
+    Project project = null;
 
     if (module != null) {
+      project = module.getProject();
+      final Project finalProject = project;
       // Associate with module
-      final Project project = module.getProject();
       ModuleRootModificationUtil.setModuleSdk(module, sdk);
 
       UsefulTestCase.edt(new Runnable() {
@@ -103,7 +112,7 @@ public final class PyTestSdkTools {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {
-              ProjectRootManager.getInstance(project).setProjectSdk(sdk);
+              ProjectRootManager.getInstance(finalProject).setProjectSdk(sdk);
             }
           });
         }
@@ -113,6 +122,8 @@ public final class PyTestSdkTools {
 
     final SdkModificator modificator = sdk.getSdkModificator();
     modificator.removeRoots(OrderRootType.CLASSES);
+
+    modificator.setSdkAdditionalData(new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk)));
 
     for (final String path : PythonSdkType.getSysPathsFromScript(sdk.getHomePath())) {
       addTestSdkRoot(modificator, path);
@@ -144,6 +155,10 @@ public final class PyTestSdkTools {
 
     final PySkeletonRefresher refresher = new PySkeletonRefresher(null, null, sdk, skeletonsPath, null, null);
     final List<String> errors = refresher.regenerateSkeletons(checker);
+
+    PySkeletonRefresher
+      .refreshSkeletonsOfSdk(project, null, PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath()), sdk);
+
     Assert.assertThat("Errors found", errors, Matchers.empty());
   }
 

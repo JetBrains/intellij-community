@@ -15,7 +15,6 @@
  */
 package com.intellij.util.lang;
 
-import com.intellij.Patches;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -44,32 +43,25 @@ import java.util.List;
  * Should be constructed using {@link #build()} method.
  */
 public class UrlClassLoader extends ClassLoader {
-  // Feature enabling flag for saving / restoring file system information for local class directories, see Builder#usePersistentClasspathIndexForLocalClassDirectories
-  private static final boolean INDEX_PERSISTENCE_ENABLED = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
-  static final String CLASS_EXTENSION = ".class";
-  private static boolean ourParallel = false;
+  public static final String CLASS_EXTENSION = ".class";
 
+  public static final boolean PARALLEL_CAPABLE;
   static {
-    // Since Java 7 classloading is parallel on parallel capable classloader (http://docs.oracle.com/javase/7/docs/technotes/guides/lang/cl-mt.html)
-    // Parallel classloading avoids deadlocks like https://youtrack.jetbrains.com/issue/IDEA-131621
-    // Unless explicitly disabled, request parallel loading capability via reflection due to current platform's Java 6 baseline
-    // todo[r.sh] drop condition in IDEA 15
-    // todo[r.sh] drop reflection after migrating to Java 7+
-    assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
-
-    // IBM's classloader breaks when overridden getClassLoadingLock() is called, see https://youtrack.jetbrains.com/issue/IDEA-149187
-    // so disallow parallel loading completely on JBM jdk
-    boolean parallelLoader = !SystemInfo.isIbmJvm && Boolean.parseBoolean(System.getProperty("idea.parallel.class.loader", "true"));
-    if (parallelLoader) {
+    boolean parallelCapable = false;
+    if (SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isIbmJvm) {
       try {
+        // todo Patches.USE_REFLECTION_TO_ACCESS_JDK7
         Method registerAsParallelCapable = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
         registerAsParallelCapable.setAccessible(true);
         registerAsParallelCapable.invoke(null);
-        ourParallel = true;
+        parallelCapable = true;
       }
       catch (Exception ignored) { }
     }
+    PARALLEL_CAPABLE = parallelCapable;
   }
+
+  private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
   @NotNull
   protected ClassPath getClassPath() {
@@ -111,9 +103,10 @@ public class UrlClassLoader extends ClassLoader {
     // FileLoader's root. Currently the flag is used for faster unit test / developed Idea running, because Idea's make (as of 14.1) ensures deletion of
     // such information upon appearing new file for output root.
     // N.b. Idea make does not ensure deletion of cached information upon deletion of some file under local root but false positives are not a
-    // logical error since code is prepared for that and disk access is performed upon class / resource loading
+    // logical error since code is prepared for that and disk access is performed upon class / resource loading.
+    // See also Builder#usePersistentClasspathIndexForLocalClassDirectories.
     public Builder usePersistentClasspathIndexForLocalClassDirectories() {
-      myUsePersistentClasspathIndex = INDEX_PERSISTENCE_ENABLED;
+      myUsePersistentClasspathIndex = ourClassPathIndexEnabled;
       return this;
     }
 
@@ -168,7 +161,7 @@ public class UrlClassLoader extends ClassLoader {
     });
     myClassPath = createClassPath(builder);
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
-    myClassNameInterner = ourParallel ? new WeakStringInterner() : null;
+    myClassNameInterner = PARALLEL_CAPABLE ? new WeakStringInterner() : null;
   }
 
   @NotNull

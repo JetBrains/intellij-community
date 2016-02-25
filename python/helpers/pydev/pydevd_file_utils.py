@@ -42,6 +42,7 @@
 
 
 from _pydevd_bundle.pydevd_constants import *  #@UnusedWildImport
+from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 import os.path
 import sys
 import traceback
@@ -73,13 +74,17 @@ PATHS_FROM_ECLIPSE_TO_PYTHON = []
 normcase = os_normcase # May be rebound on set_ide_os
 
 
-from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 def norm_case(filename):
+    # `normcase` doesn't lower case on Python 2 for non-English locale, but Java side does it,
+    # so we should do it manually
     filename = os_normcase(filename)
-    if IS_PY3K:
-        return filename
     enc = getfilesystemencoding()
-    return filename.decode(enc).lower().encode(enc)
+    if IS_PY3K or enc is None or enc.lower() == "utf-8":
+        return filename
+    try:
+        return filename.decode(enc).lower().encode(enc)
+    except:
+        return filename
 
 
 def set_ide_os(os):
@@ -92,7 +97,10 @@ def set_ide_os(os):
     if os == 'UNIX':
         normcase = lambda f:f #Change to no-op if the client side is on unix/mac.
     else:
-        normcase = norm_case
+        if sys.platform == 'win32':
+            normcase = norm_case
+        else:
+            normcase = os_normcase
 
     # After setting the ide OS, apply the normcase to the existing paths.
 

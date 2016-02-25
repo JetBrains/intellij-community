@@ -255,7 +255,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (myProject.isDisposed()) return;
+            if (myProject.isDisposed() || myEditor != null && myEditor.isDisposed()) return;
             if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
               DumbService.getInstance(myProject).showDumbModeNotification(cachedAction.getText() + " is not available during indexing");
               return;
@@ -368,17 +368,21 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     if (myCachedErrorFixes.contains(action)) {
       return 20;
     }
-    if (myCachedNotifications.contains(action)) {
-      return 15;
-    }
     if (myCachedInspectionFixes.contains(action)) {
       return 10;
+    }
+    if (myCachedNotifications.contains(action)) {
+      return 7;
     }
     if (myCachedGutters.contains(action)) {
       return 5;
     }
-    if (action.getAction() instanceof EmptyIntentionAction) {
+    final IntentionAction underlyingAction = action.getAction();
+    if (underlyingAction instanceof EmptyIntentionAction) {
       return -10;
+    }
+    if (underlyingAction instanceof SuppressIntentionActionFromFix && ((SuppressIntentionActionFromFix)underlyingAction).isSuppressAll()) {
+      return -15;
     }
     return 0;
   }

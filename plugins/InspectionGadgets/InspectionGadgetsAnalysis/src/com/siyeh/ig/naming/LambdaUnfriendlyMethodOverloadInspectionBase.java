@@ -16,6 +16,7 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -36,7 +37,10 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("lambda.unfriendly.method.overload.problem.descriptor");
+    final PsiMethod method = (PsiMethod)infos[0];
+    return InspectionGadgetsBundle.message(method.isConstructor()
+                                           ? "lambda.unfriendly.constructor.overload.problem.descriptor"
+                                           : "lambda.unfriendly.method.overload.problem.descriptor");
   }
 
   @Override
@@ -49,9 +53,6 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
-      if (method.isConstructor()) {
-        return;
-      }
       final PsiParameterList parameterList = method.getParameterList();
       final int parametersCount = parameterList.getParametersCount();
       if (parametersCount == 0) {
@@ -75,7 +76,7 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
       }
       final String name = method.getName();
       for (PsiMethod sameNameMethod : containingClass.findMethodsByName(name, true)) {
-        if (method.equals(sameNameMethod)) {
+        if (method.equals(sameNameMethod) || PsiSuperMethodUtil.isSuperMethod(method, sameNameMethod)) {
           continue;
         }
         final PsiParameterList otherParameterList = sameNameMethod.getParameterList();
@@ -90,7 +91,7 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
         }
         final PsiType functionalType = parameters[functionalIndex].getType();
         if (areSameShapeFunctionalTypes(functionalType, otherFunctionalType)) {
-          registerMethodError(method);
+          registerMethodError(method, method);
           return;
         }
       }

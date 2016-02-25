@@ -41,7 +41,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     String valueName = myValue.getName();
     StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(myProject);
     Course course = studyTaskManager.getCourse();
-    if (course == null || valueName == null) {
+    if (course == null) {
       return;
     }
     if (valueName.equals(myProject.getName())) {
@@ -50,18 +50,16 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       data.addText(course.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.BLACK));
     }
     else if (valueName.contains(EduNames.TASK)) {
-      TaskFile file = null;
-      for (PsiElement child : myValue.getChildren()) {
-        VirtualFile virtualFile = child instanceof PsiDirectory ? ((PsiDirectory)child).getVirtualFile() :
-                                  child.getContainingFile().getVirtualFile();
-        file = StudyUtils.getTaskFile(myProject, virtualFile);
-        if (file != null) {
-          break;
+      VirtualFile taskVirtualFile = myValue.getVirtualFile();
+      VirtualFile lessonVirtualFile = taskVirtualFile.getParent();
+      if (lessonVirtualFile != null) {
+        Lesson lesson = course.getLesson(lessonVirtualFile.getName());
+        if (lesson != null) {
+          Task task = lesson.getTask(taskVirtualFile.getName());
+          if (task != null) {
+            setStudyAttributes(task, data, task.getName());
+          }
         }
-      }
-      if (file != null) {
-        Task task = file.getTask();
-        setStudyAttributes(task, data, task.getName());
       }
     }
     else if (valueName.contains(EduNames.LESSON)) {
@@ -73,7 +71,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     else if (valueName.contains(EduNames.SANDBOX_DIR)) {
       if (myValue.getParent() != null) {
         final String parentName = myValue.getParent().getName();
-        if (parentName!= null && !parentName.contains(EduNames.SANDBOX_DIR)) {
+        if (!parentName.contains(EduNames.SANDBOX_DIR)) {
           data.setPresentableText(EduNames.SANDBOX_DIR);
           data.setIcon(InteractiveLearningIcons.Sandbox);
         }

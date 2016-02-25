@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -9,76 +24,91 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.util.StopWatch;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class DataPack {
-
+public class DataPack extends DataPackBase {
   public static final DataPack EMPTY = createEmptyInstance();
 
-  @NotNull private final RefsModel myRefsModel;
   @NotNull private final PermanentGraph<Integer> myPermanentGraph;
-  @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
-  private boolean myFull;
 
   DataPack(@NotNull RefsModel refsModel,
            @NotNull PermanentGraph<Integer> permanentGraph,
            @NotNull Map<VirtualFile, VcsLogProvider> providers,
            boolean full) {
-    myRefsModel = refsModel;
+    super(providers, refsModel, full);
     myPermanentGraph = permanentGraph;
-    myLogProviders = providers;
-    myFull = full;
   }
 
   @NotNull
   static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
                         @NotNull Map<VirtualFile, Set<VcsRef>> refs,
                         @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                        @NotNull VcsLogHashMap hashMap,
+                        @NotNull final VcsLogHashMap hashMap,
                         boolean full) {
-    RefsModel refsModel = new RefsModel(refs, hashMap);
-    PermanentGraph<Integer> graph = buildPermanentGraph(commits, refsModel, hashMap, providers);
-    return new DataPack(refsModel, graph, providers, full);
+    RefsModel refsModel;
+    PermanentGraph<Integer> permanentGraph;
+    if (commits.isEmpty()) {
+      refsModel = new RefsModel(refs, ContainerUtil.<Integer>newHashSet(), hashMap);
+      permanentGraph = EmptyPermanentGraph.getInstance();
+    }
+    else {
+      refsModel = new RefsModel(refs, getHeads(commits), hashMap);
+      NotNullFunction<Integer, Hash> hashGetter = createHashGetter(hashMap);
+      GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
+      Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), hashMap);
+
+      StopWatch sw = StopWatch.start("building graph");
+      permanentGraph = PermanentGraphImpl.newInstance(commits, colorManager, branches);
+      sw.report();
+
+    }
+
+    return new DataPack(refsModel, permanentGraph, providers, full);
   }
 
   @NotNull
-  private static PermanentGraph<Integer> buildPermanentGraph(@NotNull List<? extends GraphCommit<Integer>> commits,
-                                                             @NotNull RefsModel refsModel,
-                                                             @NotNull final VcsLogHashMap hashMap,
-                                                             @NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    if (commits.isEmpty()) {
-      return EmptyPermanentGraph.getInstance();
-    }
-    NotNullFunction<Integer, Hash> hashGetter = new NotNullFunction<Integer, Hash>() {
+  public static NotNullFunction<Integer, Hash> createHashGetter(@NotNull final VcsLogHashMap hashMap) {
+    return new NotNullFunction<Integer, Hash>() {
       @NotNull
       @Override
       public Hash fun(Integer commitIndex) {
         return hashMap.getCommitId(commitIndex).getHash();
       }
     };
-    GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
-    Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getAllRefs(), hashMap);
-    StopWatch sw = StopWatch.start("building graph");
-    PermanentGraphImpl<Integer> permanentGraph = PermanentGraphImpl.newInstance(commits, colorManager, branches);
-    sw.report();
-    return permanentGraph;
   }
 
   @NotNull
-  private static Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<VcsRef> allRefs,
-                                                         @NotNull VcsLogHashMap hashMap) {
+  private static Set<Integer> getHeads(@NotNull List<? extends GraphCommit<Integer>> commits) {
+    TIntHashSet parents = new TIntHashSet();
+    for (GraphCommit<Integer> commit : commits) {
+      for (int parent : commit.getParents()) {
+        parents.add(parent);
+      }
+    }
+
+    Set<Integer> heads = ContainerUtil.newHashSet();
+    for (GraphCommit<Integer> commit : commits) {
+      if (!parents.contains(commit.getId())) {
+        heads.add(commit.getId());
+      }
+    }
+    return heads;
+  }
+
+  @NotNull
+  private static Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<VcsRef> branches, @NotNull VcsLogHashMap hashMap) {
     Set<Integer> result = new HashSet<Integer>();
-    for (VcsRef vcsRef : allRefs) {
-      if (vcsRef.getType().isBranch())
-        result.add(hashMap.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()));
+    for (VcsRef vcsRef : branches) {
+      result.add(hashMap.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()));
     }
     return result;
   }
 
   @NotNull
-  private static Map<VirtualFile, VcsLogRefManager> getRefManagerMap(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+  public static Map<VirtualFile, VcsLogRefManager> getRefManagerMap(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
     Map<VirtualFile, VcsLogRefManager> map = ContainerUtil.newHashMap();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : logProviders.entrySet()) {
       map.put(entry.getKey(), entry.getValue().getReferenceManager());
@@ -88,32 +118,13 @@ public class DataPack {
 
   @NotNull
   private static DataPack createEmptyInstance() {
-    RefsModel emptyModel = new RefsModel(Collections.<VirtualFile, Set<VcsRef>>emptyMap(), VcsLogHashMapImpl.EMPTY);
+    RefsModel emptyModel = new RefsModel(Collections.<VirtualFile, Set<VcsRef>>emptyMap(), ContainerUtil.<Integer>newHashSet(), VcsLogHashMapImpl.EMPTY);
     return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), Collections.<VirtualFile, VcsLogProvider>emptyMap(), false);
-  }
-
-  @NotNull
-  public VcsLogRefs getRefs() {
-    return myRefsModel;
-  }
-
-  @NotNull
-  public RefsModel getRefsModel() {
-    return myRefsModel;
-  }
-
-  @NotNull
-  public Map<VirtualFile, VcsLogProvider> getLogProviders() {
-    return myLogProviders;
   }
 
   @NotNull
   public PermanentGraph<Integer> getPermanentGraph() {
     return myPermanentGraph;
-  }
-
-  public boolean isFull() {
-    return myFull;
   }
 
   @Override

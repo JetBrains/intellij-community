@@ -300,6 +300,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
+  public void testParameterInMethodUsedInMethodReference() throws Exception {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+    doSingleFileTest();
+  }
+
   private void doTest(@NonNls final String qClassName) throws Exception {
     doTest((rootDir, rootAfter) -> {
       SafeDeleteTest.this.performAction(qClassName);

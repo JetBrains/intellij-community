@@ -17,8 +17,10 @@ package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -40,12 +42,14 @@ import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecut
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction;
 import org.jetbrains.plugins.gradle.execution.test.runner.events.*;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
@@ -207,7 +211,15 @@ public class GradleTestsExecutionConsoleManager
   }
 
   @Override
-  public AnAction[] getRestartActions() {
-    return new AnAction[0];
+  public AnAction[] getRestartActions(@NotNull final GradleTestsExecutionConsole consoleView) {
+    JavaRerunFailedTestsAction rerunFailedTestsAction =
+      new GradleRerunFailedTestsAction(consoleView);
+    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
+      @Override
+      public TestFrameworkRunningModel get() {
+        return consoleView.getResultsViewer();
+      }
+    });
+    return new AnAction[]{rerunFailedTestsAction};
   }
 }

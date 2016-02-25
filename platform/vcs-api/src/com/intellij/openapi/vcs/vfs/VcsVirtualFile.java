@@ -122,6 +122,10 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
 
   }
 
+  public VcsFileRevision getFileRevision() {
+    return myFileRevision;
+  }
+
   @NotNull
   @Override
   public Charset getCharset() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import jsr166e.ForkJoinPool;
 import jsr166e.ForkJoinTask;
 import jsr166e.ForkJoinWorkerThread;
@@ -96,7 +97,9 @@ public class JobLauncherImpl extends JobLauncher {
     Boolean result = processImmediatelyIfTooFew(things, wrapper, runInReadAction, thingProcessor);
     if (result != null) return result.booleanValue();
 
-    ApplierCompleter<T> applier = new ApplierCompleter<T>(null, runInReadAction, wrapper, things, thingProcessor, 0, things.size(), null);
+    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
+
+    ApplierCompleter<T> applier = new ApplierCompleter<>(null, runInReadAction, wrapper, things, thingProcessor, 0, things.size(), null);
     try {
       pool.invoke(applier);
       if (applier.throwable != null) throw applier.throwable;
@@ -109,10 +112,7 @@ public class JobLauncherImpl extends JobLauncher {
       // then task2 calls checkCancel() and get here
       return false;
     }
-    catch (RuntimeException e) {
-      throw e;
-    }
-    catch (Error e) {
+    catch (RuntimeException | Error e) {
       throw e;
     }
     catch (Throwable e) {
@@ -125,7 +125,7 @@ public class JobLauncherImpl extends JobLauncher {
   // if {@code things} are too few to be processed in the real pool, returns TRUE if processed successfully, FALSE if not
   // returns null if things need to be processed in the real pool
   private static <T> Boolean processImmediatelyIfTooFew(@NotNull final List<T> things,
-                                                        final ProgressIndicator progress,
+                                                        @NotNull final ProgressIndicator progress,
                                                         boolean runInReadAction,
                                                         @NotNull final Processor<? super T> thingProcessor) {
     // commit can be invoked from within write action
@@ -136,24 +136,16 @@ public class JobLauncherImpl extends JobLauncher {
 
     if (things.size() <= 1 || JobSchedulerImpl.CORES_COUNT <= CORES_FORK_THRESHOLD) {
       final AtomicBoolean result = new AtomicBoolean(true);
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
-            @Override
-            public void run() {
-              //noinspection ForLoopReplaceableByForEach
-              for (int i = 0; i < things.size(); i++) {
-                T thing = things.get(i);
-                if (!thingProcessor.process(thing)) {
-                  result.set(false);
-                  break;
-                }
-              }
-            }
-          }, progress);
+      Runnable runnable = () -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        //noinspection ForLoopReplaceableByForEach
+        for (int i = 0; i < things.size(); i++) {
+          T thing = things.get(i);
+          if (!thingProcessor.process(thing)) {
+            result.set(false);
+            break;
+          }
         }
-      };
+      }, progress);
       if (runInReadAction) {
         if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable)) return false;
       }
@@ -280,6 +272,8 @@ public class JobLauncherImpl extends JobLauncher {
     // waits for the job to finish execution (when called on a canceled job in the middle of the execution, wait for finish)
     @Override
     public void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException {
+      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
+
       while (!isDone()) {
         try {
           myForkJoinTask.get(millis, TimeUnit.MILLISECONDS);
@@ -318,35 +312,32 @@ public class JobLauncherImpl extends JobLauncher {
 
       @Override
       public Boolean call() throws Exception {
-        ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              while (true) {
-                progress.checkCanceled();
-                T element = failedToProcess.poll();
-                if (element == null) element = things.take();
+        ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+          try {
+            while (true) {
+              progress.checkCanceled();
+              T element = failedToProcess.poll();
+              if (element == null) element = things.take();
 
-                if (element == tombStone) {
-                  things.offer(element);
-                  result = true;
+              if (element == tombStone) {
+                things.offer(element);
+                result = true;
+                break;
+              }
+              try {
+                if (!thingProcessor.process(element)) {
+                  result = false;
                   break;
                 }
-                try {
-                  if (!thingProcessor.process(element)) {
-                    result = false;
-                    break;
-                  }
-                }
-                catch (RuntimeException e) {
-                  failedToProcess.add(element);
-                  throw e;
-                }
+              }
+              catch (RuntimeException e) {
+                failedToProcess.add(element);
+                throw e;
               }
             }
-            catch (InterruptedException e) {
-              throw new RuntimeException(e);
-            }
+          }
+          catch (InterruptedException e) {
+            throw new RuntimeException(e);
           }
         }, progress);
         return result;
@@ -372,7 +363,7 @@ public class JobLauncherImpl extends JobLauncher {
       }
     }
 
-    List<ForkJoinTask<Boolean>> tasks = new ArrayList<ForkJoinTask<Boolean>>();
+    List<ForkJoinTask<Boolean>> tasks = new ArrayList<>();
     for (int i = 0; i < JobSchedulerImpl.CORES_COUNT; i++) {
       tasks.add(pool.submit(new MyTask(i)));
     }

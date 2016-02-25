@@ -1,0 +1,3 @@
+def f(a):
+  while a:
+    <spot></spot>

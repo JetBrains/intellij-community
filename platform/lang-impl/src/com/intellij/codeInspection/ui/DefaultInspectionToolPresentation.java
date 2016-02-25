@@ -223,14 +223,19 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     }
 
     final GlobalInspectionContextImpl context = getContext();
+    if (!context.useView() || !(refElement instanceof RefElement)) {
+      return;
+    }
     if (myToolWrapper instanceof LocalInspectionToolWrapper) {
-      final InspectionResultsView view = context.getView();
-      if (view == null || !(refElement instanceof RefElement)) {
-        return;
-      }
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
+          InspectionResultsView view = context.getView();
+          if (view == null) {
+            view = new InspectionResultsView(context,
+                                             new InspectionRVContentProviderImpl(context.getProject()));
+            context.addView(view);
+          }
           if (!isDisposed()) {
             final InspectionNode toolNode;
             synchronized (myToolLock) {
@@ -259,7 +264,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
             view.getProvider().appendToolNodeContent(context, toolNode,
                                                      (InspectionTreeNode)toolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
                                                      contents, problems, (DefaultTreeModel)view.getTree().getModel());
-            context.addView(view);
           }
         }
       });
@@ -267,7 +271,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   }
 
   @NotNull
-  private static CommonProblemDescriptor[] mergeDescriptors(@NotNull CommonProblemDescriptor[] problems1,
+  public static CommonProblemDescriptor[] mergeDescriptors(@NotNull CommonProblemDescriptor[] problems1,
                                                             @NotNull CommonProblemDescriptor[] problems2) {
     CommonProblemDescriptor[] out = new CommonProblemDescriptor[problems1.length + problems2.length];
     int o = problems1.length;
@@ -641,39 +645,75 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
   @Override
   @Nullable
-  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements) {
-    return extractActiveFixes(refElements, getQuickFixActions());
+  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, CommonProblemDescriptor[] allowedDescriptors) {
+    return extractActiveFixes(refElements, getProblemElements(), allowedDescriptors);
   }
 
   @Override
   @Nullable
-  public QuickFixAction[] extractActiveFixes(@NotNull RefEntity[] refElements, @NotNull Map<RefEntity, Set<QuickFix>> actions) {
-    Map<Class, QuickFixAction> result = new com.intellij.util.containers.HashMap<Class, QuickFixAction>();
+  public QuickFixAction[] extractActiveFixes(@NotNull RefEntity[] refElements,
+                                             @NotNull Map<RefEntity, CommonProblemDescriptor[]> descriptorMap,
+                                             @Nullable CommonProblemDescriptor[] allowedDescriptors) {
+    final Set<CommonProblemDescriptor> allowedDescriptorSet = allowedDescriptors == null ? null : ContainerUtil.newHashSet(allowedDescriptors);
+    Map<Class, QuickFixAction> result = new com.intellij.util.containers.HashMap<>();
+    boolean isFirst = true;
     for (RefEntity refElement : refElements) {
-      final Set<QuickFix> localQuickFixes = actions.get(refElement);
-      if (localQuickFixes == null) continue;
-      for (QuickFix fix : localQuickFixes) {
-        if (fix == null) continue;
-        final Class klass = fix instanceof ActionClassHolder ? ((ActionClassHolder ) fix).getActionClass() : fix.getClass();
-        final QuickFixAction quickFixAction = result.get(klass);
-        if (quickFixAction != null) {
-          try {
-            String familyName = fix.getFamilyName();
-            familyName = !familyName.isEmpty() ? "\'" + familyName + "\'" : familyName;
-            ((LocalQuickFixWrapper)quickFixAction).setText(InspectionsBundle.message("inspection.descriptor.provider.apply.fix", familyName));
-          }
-          catch (AbstractMethodError e) {
-            //for plugin compatibility
-            ((LocalQuickFixWrapper)quickFixAction).setText(InspectionsBundle.message("inspection.descriptor.provider.apply.fix", ""));
-          }
+      final CommonProblemDescriptor[] descriptors = descriptorMap.get(refElement);
+      if (descriptors == null) continue;
+      for (CommonProblemDescriptor d : descriptors) {
+        if (allowedDescriptorSet != null && !allowedDescriptorSet.contains(d)) {
+          continue;
         }
-        else {
-          LocalQuickFixWrapper quickFixWrapper = new LocalQuickFixWrapper(fix, myToolWrapper);
-          result.put(klass, quickFixWrapper);
+        QuickFix[] fixes = d.getFixes();
+        if (fixes != null) {
+          if (isFirst) {
+            for (QuickFix fix : fixes) {
+              if (fix == null) continue;
+              final Class klass = getFixClass(fix);
+              LocalQuickFixWrapper quickFixWrapper = new LocalQuickFixWrapper(fix, myToolWrapper);
+              result.put(klass, quickFixWrapper);
+            }
+            isFirst = false;
+          }
+          else {
+            for (Class clazz : new ArrayList<>(result.keySet())) {
+              boolean isFound = false;
+              for (QuickFix fix : fixes) {
+                if (fix == null) continue;
+                final Class klass = getFixClass(fix);
+                if (clazz.equals(klass)) {
+                  isFound = true;
+                  final QuickFixAction quickFixAction = result.get(clazz);
+                  try {
+                    String familyName = fix.getFamilyName();
+                    familyName = !familyName.isEmpty() ? "\'" + familyName + "\'" : familyName;
+                    ((LocalQuickFixWrapper)quickFixAction)
+                      .setText(InspectionsBundle.message("inspection.descriptor.provider.apply.fix", familyName));
+                  }
+                  catch (AbstractMethodError e) {
+                    //for plugin compatibility
+                    ((LocalQuickFixWrapper)quickFixAction)
+                      .setText(InspectionsBundle.message("inspection.descriptor.provider.apply.fix", ""));
+                  }
+                  break;
+                }
+              }
+              if (!isFound) {
+                result.remove(clazz);
+                if (result.isEmpty()) {
+                  return QuickFixAction.EMPTY;
+                }
+              }
+            }
+          }
         }
       }
     }
     return result.values().isEmpty() ? null : result.values().toArray(new QuickFixAction[result.size()]);
+  }
+
+  private static Class getFixClass(QuickFix fix) {
+    return fix instanceof ActionClassHolder ? ((ActionClassHolder)fix).getActionClass() : fix.getClass();
   }
 
   @Override

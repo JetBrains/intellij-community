@@ -269,11 +269,11 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       "}\n"
     );
 
-    assertModules("project", "project1", "project1_main", "project1_test", "project2", "project2_main", "project2_test", "project-tests", "project_tests_main", "project_tests_test");
+    assertModules("project", "project1", "project1_main", "project1_test", "project2", "project2_main", "project2_test", "project-tests", "project-tests_main", "project-tests_test");
 
-    assertModuleModuleDepScope("project_tests_main", "project1_main", DependencyScope.COMPILE);
-    assertModuleModuleDepScope("project_tests_main", "project2_main", DependencyScope.RUNTIME);
-    assertModuleLibDepScope("project_tests_main", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0", DependencyScope.COMPILE);
-    assertModuleLibDepScope("project_tests_main", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1", DependencyScope.RUNTIME);
+    assertModuleModuleDepScope("project-tests_main", "project1_main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project-tests_main", "project2_main", DependencyScope.RUNTIME);
+    assertModuleLibDepScope("project-tests_main", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project-tests_main", "Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1", DependencyScope.RUNTIME);
   }
 }

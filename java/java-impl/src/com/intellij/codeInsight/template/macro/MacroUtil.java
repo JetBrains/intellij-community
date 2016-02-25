@@ -102,33 +102,24 @@ public class MacroUtil {
       array.add(factory.createExpressionFromText("false", null));
 
       PsiElement scope = place;
-      boolean firstClass = true;
-      boolean static_flag = false;
+      boolean innermostClass = true;
       while (scope != null) {
-        if (scope instanceof PsiModifierListOwner && ((PsiModifierListOwner)scope).getModifierList() != null){
-          if(((PsiModifierListOwner)scope).hasModifierProperty(PsiModifier.STATIC)){
-            static_flag = true;
-          }
+        if (scope instanceof PsiMethod && ((PsiMethod)scope).hasModifierProperty(PsiModifier.STATIC)) {
+          // Method is static, we don't want to add its enclosing class to the list of returned expressions.
+          // Since this loop only can potentially add enclosing classes, just break out of it.
+          break;
         }
-        if (scope instanceof PsiClass) {
+        else if (scope instanceof PsiClass) {
           PsiClass aClass = (PsiClass)scope;
-
           String name = aClass.getName();
-          PsiExpression expr = null;
-          if(!static_flag){
-            if (firstClass) {
-              expr = factory.createExpressionFromText("this", place);
-            }
-            else {
-              if (name != null) {
-                expr = factory.createExpressionFromText(name + ".this", place);
-              }
-            }
-            if (expr != null) {
-              array.add(expr);
-            }
+          if (innermostClass) {
+            array.add(factory.createExpressionFromText("this", place));
           }
-          firstClass = false;
+          else if (name != null) {
+            array.add(factory.createExpressionFromText(name + ".this", place));
+          }
+
+          innermostClass = false;
           if (aClass.hasModifierProperty(PsiModifier.STATIC)) break;
         }
         else if (scope instanceof PsiMember) {

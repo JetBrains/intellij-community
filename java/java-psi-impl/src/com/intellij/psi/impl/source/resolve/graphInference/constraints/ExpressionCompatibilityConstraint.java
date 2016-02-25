@@ -99,7 +99,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       }
       if (callSession != session) {
         session.getInferenceSessionContainer().registerNestedSession(callSession);
-        session.propagateVariables(callSession.getInferenceVariables());
+        session.propagateVariables(callSession.getInferenceVariables(), callSession.getRestoreNameSubstitution());
         if (callSession.isErased()) {
           session.setErased();
         }
@@ -149,7 +149,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       if (typeParams != null) {
         PsiSubstitutor siteSubstitutor = InferenceSession.chooseSiteSubstitutor(candidateProperties, resolveResult, method);
         final InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, expression.getManager(), expression);
-        callSession.propagateVariables(session.getInferenceVariables());
+        callSession.propagateVariables(session.getInferenceVariables(), session.getRestoreNameSubstitution());
         if (method != null) {
           final PsiExpression[] args = argumentList.getExpressions();
           final PsiParameter[] parameters = method.getParameterList().getParameters();

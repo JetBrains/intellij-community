@@ -18,7 +18,6 @@ package com.intellij.openapi.editor.textarea;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -169,15 +168,6 @@ public class TextComponentSelectionModel implements SelectionModel {
   }
 
   @Override
-  public void removeBlockSelection() {
-  }
-
-  @Override
-  public boolean hasBlockSelection() {
-    return false;
-  }
-
-  @Override
   @NotNull
   public int[] getBlockSelectionStarts() {
     throw new UnsupportedOperationException("Not implemented");
@@ -187,29 +177,6 @@ public class TextComponentSelectionModel implements SelectionModel {
   @NotNull
   public int[] getBlockSelectionEnds() {
     throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  @Nullable
-  public LogicalPosition getBlockStart() {
-    return null;
-  }
-
-  @Override
-  @Nullable
-  public LogicalPosition getBlockEnd() {
-    return null;
-  }
-
-  @Override
-  public boolean isBlockSelectionGuarded() {
-    return false;
-  }
-
-  @Override
-  @Nullable
-  public RangeMarker getBlockSelectionGuard() {
-    return null;
   }
 
   @Override

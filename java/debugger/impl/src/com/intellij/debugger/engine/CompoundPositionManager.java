@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.sun.jdi.InternalException;
-import com.sun.jdi.Location;
-import com.sun.jdi.ReferenceType;
-import com.sun.jdi.VMDisconnectedException;
+import com.sun.jdi.*;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +42,7 @@ import java.util.List;
 public class CompoundPositionManager extends PositionManagerEx implements MultiRequestPositionManager{
   private static final Logger LOG = Logger.getInstance(CompoundPositionManager.class);
 
-  private final ArrayList<PositionManager> myPositionManagers = new ArrayList<PositionManager>();
+  private final ArrayList<PositionManager> myPositionManagers = new ArrayList<>();
 
   @SuppressWarnings("UnusedDeclaration")
   public CompoundPositionManager() {
@@ -60,7 +57,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     myPositionManagers.add(0, manager);
   }
 
-  private final Cache<Location, SourcePosition> mySourcePositionCache = new Cache<Location, SourcePosition>();
+  private final Cache<Location, SourcePosition> mySourcePositionCache = new Cache<>();
 
   private interface Processor<T> {
     T process(PositionManager positionManager) throws NoDataException;
@@ -71,12 +68,10 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
       try {
         return processor.process(positionManager);
       }
-      catch (NoDataException ignored) {}
-      catch (VMDisconnectedException e) {throw e;}
+      catch (NoDataException | ProcessCanceledException ignored) {}
+      catch (VMDisconnectedException | ObjectCollectedException e) {throw e;}
       catch (InternalException e) {LOG.info(e);}
-      catch (ProcessCanceledException ignored) {}
-      catch (Exception e) {LOG.error(e);}
-      catch (AssertionError e) {LOG.error(e);}
+      catch (Exception | AssertionError e) {LOG.error(e);}
     }
     return defaultValue;
   }
@@ -88,13 +83,10 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     SourcePosition res = mySourcePositionCache.get(location);
     if (checkCacheEntry(res, location)) return res;
 
-    return iterate(new Processor<SourcePosition>() {
-      @Override
-      public SourcePosition process(PositionManager positionManager) throws NoDataException {
-        SourcePosition res = positionManager.getSourcePosition(location);
-        mySourcePositionCache.put(location, res);
-        return res;
-      }
+    return iterate(positionManager -> {
+      SourcePosition res1 = positionManager.getSourcePosition(location);
+      mySourcePositionCache.put(location, res1);
+      return res1;
     }, null);
   }
 
@@ -111,12 +103,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   @Override
   @NotNull
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition classPosition) {
-    return iterate(new Processor<List<ReferenceType>>() {
-      @Override
-      public List<ReferenceType> process(PositionManager positionManager) throws NoDataException {
-        return positionManager.getAllClasses(classPosition);
-      }
-    }, Collections.<ReferenceType>emptyList());
+    return iterate(positionManager -> positionManager.getAllClasses(classPosition), Collections.<ReferenceType>emptyList());
   }
 
   @Override
@@ -134,40 +121,27 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     }
 
     final SourcePosition finalPosition = position;
-    return iterate(new Processor<List<Location>>() {
-      @Override
-      public List<Location> process(PositionManager positionManager) throws NoDataException {
-        return positionManager.locationsOfLine(type, finalPosition);
-      }
-    }, Collections.<Location>emptyList());
+    return iterate(positionManager -> positionManager.locationsOfLine(type, finalPosition), Collections.<Location>emptyList());
   }
 
   @Override
   public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position) {
-    return iterate(new Processor<ClassPrepareRequest>() {
-      @Override
-      public ClassPrepareRequest process(PositionManager positionManager) throws NoDataException {
-        return positionManager.createPrepareRequest(requestor, position);
-      }
-    }, null);
+    return iterate(positionManager -> positionManager.createPrepareRequest(requestor, position), null);
   }
 
   @NotNull
   @Override
   public List<ClassPrepareRequest> createPrepareRequests(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position) {
-    return iterate(new Processor<List<ClassPrepareRequest>>() {
-      @Override
-      public List<ClassPrepareRequest> process(PositionManager positionManager) throws NoDataException {
-        if (positionManager instanceof MultiRequestPositionManager) {
-          return ((MultiRequestPositionManager)positionManager).createPrepareRequests(requestor, position);
+    return iterate(positionManager -> {
+      if (positionManager instanceof MultiRequestPositionManager) {
+        return ((MultiRequestPositionManager)positionManager).createPrepareRequests(requestor, position);
+      }
+      else {
+        ClassPrepareRequest prepareRequest = positionManager.createPrepareRequest(requestor, position);
+        if (prepareRequest == null) {
+          return Collections.<ClassPrepareRequest>emptyList();
         }
-        else {
-          ClassPrepareRequest prepareRequest = positionManager.createPrepareRequest(requestor, position);
-          if (prepareRequest == null) {
-            return Collections.emptyList();
-          }
-          return Collections.singletonList(prepareRequest);
-        }
+        return Collections.singletonList(prepareRequest);
       }
     }, Collections.<ClassPrepareRequest>emptyList());
   }

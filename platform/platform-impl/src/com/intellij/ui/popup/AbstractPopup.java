@@ -1562,7 +1562,8 @@ public class AbstractPopup implements JBPopup {
   @Override
   public Point getLocationOnScreen() {
     Dimension headerCorrectionSize = myLocateByContent ? myHeaderPanel.getPreferredSize() : null;
-    Point screenPoint = myContent.getLocationOnScreen();
+    Point screenPoint = myContent.getLocation();
+    SwingUtilities.convertPointToScreen(screenPoint, myContent);
     if (headerCorrectionSize != null) {
       screenPoint.y -= headerCorrectionSize.height;
     }

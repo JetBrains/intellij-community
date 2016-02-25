@@ -21,8 +21,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.module.ModuleType;
@@ -50,7 +48,7 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.io.File;
 
-@State(name = "DevKit.ModuleBuildProperties", storages = @Storage(StoragePathMacros.MODULE_FILE))
+@State(name = "DevKit.ModuleBuildProperties")
 public class PluginBuildConfiguration implements PersistentStateComponent<PluginBuildConfiguration.State> {
   private final Module myModule;
   private final ConfigFileContainer myPluginXmlContainer;

@@ -28,6 +28,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
 import com.intellij.vcs.log.graph.impl.facade.GraphChangesUtil;
+import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAnswer;
 import com.intellij.vcs.log.graph.impl.visible.LinearFragmentGenerator;
@@ -37,7 +38,6 @@ import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -46,8 +46,7 @@ import java.util.Set;
 class CollapsedActionManager {
 
   @Nullable
-  public static LinearGraphAnswer performAction(@NotNull CollapsedController graphController,
-                                                @NotNull LinearGraphAction action) {
+  public static LinearGraphAnswer performAction(@NotNull CollapsedController graphController, @NotNull LinearGraphAction action) {
     ActionContext context = new ActionContext(graphController.getCollapsedGraph(), graphController.getPermanentGraphInfo(), action);
 
     for (ActionCase actionCase : FILTER_ACTION_CASES) {
@@ -230,7 +229,7 @@ class CollapsedActionManager {
       modification.createEdge(new GraphEdge(upNodeIndex, downNodeIndex, null, GraphEdgeType.DOTTED));
 
       modification.apply();
-      return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null);
+      return new LinearGraphController.LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES);
     }
 
     @NotNull
@@ -247,7 +246,7 @@ class CollapsedActionManager {
       CollapsedGraph.Modification modification = context.myCollapsedGraph.startModification();
       modification.removeAdditionalEdges();
       modification.resetNodesVisibility();
-      return new DeferredGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null, modification);
+      return new DeferredGraphAnswer(GraphChangesUtil.SOME_CHANGES, modification);
     }
 
     @NotNull
@@ -279,7 +278,7 @@ class CollapsedActionManager {
         }
       }
 
-      return new DeferredGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null, modification);
+      return new DeferredGraphAnswer(GraphChangesUtil.SOME_CHANGES, modification);
     }
 
     @NotNull
@@ -314,7 +313,7 @@ class CollapsedActionManager {
         modification.removeEdge(new GraphEdge(upNodeIndex, downNodeIndex, null, GraphEdgeType.DOTTED));
 
         modification.apply();
-        return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null);
+        return new LinearGraphController.LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES);
       }
 
       return null;
@@ -367,15 +366,11 @@ class CollapsedActionManager {
     return null;
   }
 
-  private static class DeferredGraphAnswer extends LinearGraphAnswer {
+  private static class DeferredGraphAnswer extends LinearGraphController.LinearGraphAnswer {
     @NotNull private final CollapsedGraph.Modification myModification;
 
-    public DeferredGraphAnswer(@Nullable GraphChanges<Integer> graphChanges,
-                               @Nullable Cursor cursorToSet,
-                               @Nullable Integer commitToJump,
-                               @Nullable Set<Integer> selectedNodeIds,
-                               @NotNull CollapsedGraph.Modification modification) {
-      super(graphChanges, cursorToSet, commitToJump, selectedNodeIds);
+    public DeferredGraphAnswer(@Nullable GraphChanges<Integer> graphChanges, @NotNull CollapsedGraph.Modification modification) {
+      super(graphChanges);
       myModification = modification;
     }
 

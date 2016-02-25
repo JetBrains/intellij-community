@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
   name = "NewModuleRootManager",
   storages = {
     @Storage(StoragePathMacros.MODULE_FILE),
-    @Storage(id = ClasspathStorage.SPECIAL_STORAGE, storageClass = ClasspathStorage.class)
+    @Storage(storageClass = ClasspathStorage.class)
   }
 )
 public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
@@ -44,13 +44,14 @@ public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
   @NotNull
   @Override
   public Resolution getResolution(@NotNull Storage storage, @NotNull StateStorageOperation operation) {
-    boolean isEffectiveStorage = storage.id().equals(ClassPathStorageUtil.isDefaultStorage(getModule()) ? ClassPathStorageUtil.DEFAULT_STORAGE : ClasspathStorage.SPECIAL_STORAGE);
+    boolean isDefault = storage.storageClass() == StateStorage.class;
+    boolean isEffectiveStorage = ClassPathStorageUtil.isDefaultStorage(getModule()) == isDefault;
     if (operation == StateStorageOperation.READ) {
       return isEffectiveStorage ? Resolution.DO : Resolution.SKIP;
     }
     else {
       // IDEA-133480 Eclipse integration: .iml content is not reduced on setting Dependencies Storage Format = Eclipse
-      return isEffectiveStorage ? Resolution.DO : (storage.id().equals(ClassPathStorageUtil.DEFAULT_STORAGE) ? Resolution.CLEAR : Resolution.SKIP);
+      return isEffectiveStorage ? Resolution.DO : (isDefault ? Resolution.CLEAR : Resolution.SKIP);
     }
   }
 }

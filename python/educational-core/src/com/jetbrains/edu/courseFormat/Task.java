@@ -24,6 +24,7 @@ public class Task implements StudyItem {
 
   // index is visible to user number of task from 1 to task number
   private int myIndex;
+  private StudyStatus myStatus = StudyStatus.Uninitialized;
 
   private int myStepicId;
 
@@ -49,6 +50,7 @@ public class Task implements StudyItem {
    */
   public void initTask(final Lesson lesson, boolean isRestarted) {
     setLesson(lesson);
+    if (!isRestarted) myStatus = StudyStatus.Unchecked;
     for (TaskFile taskFile : getTaskFiles().values()) {
       taskFile.initTaskFile(this, isRestarted);
     }
@@ -203,5 +205,13 @@ public class Task implements StudyItem {
 
   public int getStepicId() {
     return myStepicId;
+  }
+
+  public StudyStatus getStatus() {
+    return myStatus;
+  }
+  
+  public void setStatus(StudyStatus status) {
+    myStatus = status;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   private final DebuggerContextImpl SESSION_EMPTY_CONTEXT;
   //Thread, user is currently stepping through
-  private final AtomicReference<ThreadReferenceProxyImpl> mySteppingThroughThread = new AtomicReference<ThreadReferenceProxyImpl>();
+  private final AtomicReference<ThreadReferenceProxyImpl> mySteppingThroughThread = new AtomicReference<>();
   protected final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private boolean myModifiedClassesScanRequired = false;

@@ -25,7 +25,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Restarter;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -81,9 +80,7 @@ public class Main {
       System.exit(NO_GRAPHICS);
     }
 
-    //this property is temporary and will be removed when IntelliJ platform really migrates to Java 8
-    boolean checkVersion = !SystemProperties.getBooleanProperty("idea.no.java.version.check", false);
-    if (checkVersion && !SystemInfo.isJavaVersionAtLeast("1.8")) {
+    if (!SystemInfo.isJavaVersionAtLeast("1.8")) {
       showMessage("Unsupported Java Version",
                   "Cannot start under Java " + SystemInfo.JAVA_RUNTIME_VERSION + ": Java 1.8 or later is required.", true);
       System.exit(UNSUPPORTED_JAVA_VERSION);

@@ -471,10 +471,11 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FileNameMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FileNameWithoutExtensionMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro$ReplaceUnderscoresToCamelCaseMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro$ReplaceDashesToCamelCaseMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$CapitalizeAndUnderscoreMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$SnakeCaseMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$LowercaseAndDash"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$SpaceSeparated"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteSmartMacro"/>

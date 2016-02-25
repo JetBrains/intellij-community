@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -410,7 +410,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   public abstract class BuildNodeCommand extends DebuggerContextCommandImpl {
     private final DebuggerTreeNodeImpl myNode;
 
-    protected final List<DebuggerTreeNodeImpl> myChildren = new LinkedList<DebuggerTreeNodeImpl>();
+    protected final List<DebuggerTreeNodeImpl> myChildren = new LinkedList<>();
 
     protected BuildNodeCommand(DebuggerTreeNodeImpl node) {
       this(node, null);
@@ -679,7 +679,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
   private class BuildThreadGroupCommand extends DebuggerCommandImpl {
     private final DebuggerTreeNodeImpl myNode;
-    protected final List<DebuggerTreeNodeImpl> myChildren = new LinkedList<DebuggerTreeNodeImpl>();
+    protected final List<DebuggerTreeNodeImpl> myChildren = new LinkedList<>();
 
     public BuildThreadGroupCommand(DebuggerTreeNodeImpl node) {
       myNode = node;
@@ -690,7 +690,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       ThreadGroupDescriptorImpl groupDescriptor = (ThreadGroupDescriptorImpl)myNode.getDescriptor();
       ThreadGroupReferenceProxyImpl threadGroup = groupDescriptor.getThreadGroupReference();
 
-      List<ThreadReferenceProxyImpl> threads = new ArrayList<ThreadReferenceProxyImpl>(threadGroup.threads());
+      List<ThreadReferenceProxyImpl> threads = new ArrayList<>(threadGroup.threads());
       Collections.sort(threads, ThreadReferenceProxyImpl.ourComparator);
 
       final DebuggerContextImpl debuggerContext = getDebuggerContext();
@@ -713,7 +713,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         }
       }
 
-      ArrayList<DebuggerTreeNodeImpl> threadNodes = new ArrayList<DebuggerTreeNodeImpl>();
+      ArrayList<DebuggerTreeNodeImpl> threadNodes = new ArrayList<>();
 
       for (ThreadReferenceProxyImpl thread : threads) {
         if (thread != null) {

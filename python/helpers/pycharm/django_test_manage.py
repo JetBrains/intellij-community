@@ -88,7 +88,9 @@ class PycharmTestCommand(Command):
     TestRunner = self.get_runner()
 
     if not inspect.ismethod(TestRunner):
-      failures = TestRunner(test_labels, verbosity=verbosity, interactive=interactive, failfast=failfast, keepdb='--keepdb' in sys.argv)
+      our_options = {"verbosity" : int(verbosity), "interactive" : interactive, "failfast" : failfast}
+      options.update(our_options)
+      failures = TestRunner(test_labels, **options)
     else:
       test_runner = TestRunner(verbosity=verbosity, interactive=interactive, failfast=failfast)
       failures = test_runner.run_tests(test_labels)

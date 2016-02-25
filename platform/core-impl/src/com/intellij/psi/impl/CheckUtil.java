@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -33,15 +32,15 @@ public class CheckUtil {
   public static void checkWritable(@NotNull final PsiElement element) throws IncorrectOperationException {
     if (!element.isWritable()) {
       if (element instanceof PsiDirectory) {
-        throw new IncorrectOperationException(
-          PsiBundle.message("cannot.modify.a.read.only.directory", ((PsiDirectory)element).getVirtualFile().getPresentableUrl()));
+        String url = ((PsiDirectory)element).getVirtualFile().getPresentableUrl();
+        throw new IncorrectOperationException(PsiBundle.message("cannot.modify.a.read.only.directory", url));
       }
       else {
         PsiFile file = element.getContainingFile();
         if (file == null) {
           throw new IncorrectOperationException();
         }
-        final VirtualFile virtualFile = file.getVirtualFile();
+        VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile == null) {
           throw new IncorrectOperationException();
         }

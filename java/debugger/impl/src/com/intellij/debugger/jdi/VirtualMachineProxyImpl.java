@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,13 +47,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private int myPausePressedCount = 0;
 
   // cached data
-  private final Map<ObjectReference, ObjectReferenceProxyImpl>  myObjectReferenceProxies = new HashMap<ObjectReference, ObjectReferenceProxyImpl>();
+  private final Map<ObjectReference, ObjectReferenceProxyImpl>  myObjectReferenceProxies = new HashMap<>();
   @NotNull
-  private Map<ThreadReference, ThreadReferenceProxyImpl>  myAllThreads = new HashMap<ThreadReference, ThreadReferenceProxyImpl>();
-  private final Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<ThreadGroupReference, ThreadGroupReferenceProxyImpl>();
+  private Map<ThreadReference, ThreadReferenceProxyImpl>  myAllThreads = new HashMap<>();
+  private final Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<>();
   private boolean myAllThreadsDirty = true;
   private List<ReferenceType> myAllClasses;
-  private Map<ReferenceType, List<ReferenceType>> myNestedClassesCache = new HashMap<ReferenceType, List<ReferenceType>>();
+  private Map<ReferenceType, List<ReferenceType>> myNestedClassesCache = new HashMap<>();
 
   public final Throwable mySuspendLogger = new Throwable();
   private final boolean myVersionHigher_15;
@@ -84,10 +84,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       LOG.info(e);
     }
 
-    List<ThreadGroupReference> groups = virtualMachine.topLevelThreadGroups();
-    for (ThreadGroupReference threadGroupReference : groups) {
-      threadGroupCreated(threadGroupReference);
-    }
+    virtualMachine.topLevelThreadGroups().forEach(this::threadGroupCreated);
   }
 
   @NotNull
@@ -117,7 +114,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
         LOG.info(e);
       }
       if (!list.isEmpty()) {
-        final Set<ReferenceType> candidates = new HashSet<ReferenceType>();
+        final Set<ReferenceType> candidates = new HashSet<>();
         final ClassLoaderReference outerLoader = refType.classLoader();
         for (ReferenceType nested : list) {
           try {
@@ -131,14 +128,14 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
         if (!candidates.isEmpty()) {
           // keep only direct nested types
-          final Set<ReferenceType> nested2 = new HashSet<ReferenceType>();
+          final Set<ReferenceType> nested2 = new HashSet<>();
           for (final ReferenceType candidate : candidates) {
             nested2.addAll(nestedTypes(candidate));
           }
           candidates.removeAll(nested2);
         }
         
-        nestedTypes = candidates.isEmpty()? Collections.<ReferenceType>emptyList() : new ArrayList<ReferenceType>(candidates);
+        nestedTypes = candidates.isEmpty()? Collections.<ReferenceType>emptyList() : new ArrayList<>(candidates);
       }
       else {
         nestedTypes = Collections.emptyList();
@@ -179,7 +176,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       myAllThreadsDirty = false;
 
       final List<ThreadReference> currentThreads = myVirtualMachine.allThreads();
-      final Map<ThreadReference, ThreadReferenceProxyImpl> result = new HashMap<ThreadReference, ThreadReferenceProxyImpl>();
+      final Map<ThreadReference, ThreadReferenceProxyImpl> result = new HashMap<>();
 
       for (final ThreadReference threadReference : currentThreads) {
         ThreadReferenceProxyImpl proxy = myAllThreads.get(threadReference);
@@ -243,7 +240,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   public List<ThreadGroupReferenceProxyImpl> topLevelThreadGroups() {
     List<ThreadGroupReference> list = getVirtualMachine().topLevelThreadGroups();
 
-    List<ThreadGroupReferenceProxyImpl> result = new ArrayList<ThreadGroupReferenceProxyImpl>(list.size());
+    List<ThreadGroupReferenceProxyImpl> result = new ArrayList<>(list.size());
 
     for (ThreadGroupReference threadGroup : list) {
       result.add(getThreadGroupReferenceProxy(threadGroup));
@@ -646,7 +643,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
     myAllClasses = null;
     if (!myNestedClassesCache.isEmpty()) {
-      myNestedClassesCache = new HashMap<ReferenceType, List<ReferenceType>>(myNestedClassesCache.size());
+      myNestedClassesCache = new HashMap<>(myNestedClassesCache.size());
     }
     //myAllThreadsDirty = true;
     myTimeStamp++;
@@ -688,7 +685,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public void logThreads() {
-    if(LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled()) {
       for (ThreadReferenceProxyImpl thread : allThreads()) {
         if (!thread.isCollected()) {
           LOG.debug("suspends " + thread + " " + thread.getSuspendCount() + " " + thread.isSuspended());

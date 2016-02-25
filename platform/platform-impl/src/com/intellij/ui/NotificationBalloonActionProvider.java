@@ -29,7 +29,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,7 +60,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     }
     else {
       mySettingButton = myBalloon.new ActionButton(
-        icon(AllIcons.Ide.Notification.Gear), icon(AllIcons.Ide.Notification.GearHover),
+        AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover,
         new Consumer<MouseEvent>() {
           @Override
           public void consume(MouseEvent event) {
@@ -101,7 +100,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     }
 
     myCloseButton = myBalloon.new ActionButton(
-      icon(AllIcons.Ide.Notification.Close), icon(AllIcons.Ide.Notification.CloseHover),
+      AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover,
       new Consumer<MouseEvent>() {
         @Override
         public void consume(MouseEvent event) {
@@ -146,36 +145,6 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     if (mySettingButton != null) {
       Dimension size = mySettingButton.getPreferredSize();
       mySettingButton.setBounds(x - size.width - myLayoutData.configuration.gearCloseSpace, y, size.width, size.height);
-    }
-  }
-
-  private static final boolean showDebugBorder = false;
-
-  @NotNull
-  public static Icon icon(@NotNull final Icon icon) {
-    return !showDebugBorder ? icon : new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        icon.paintIcon(c, g, x, y);
-        g.setColor(Color.black);
-        drawRect(g, x, y, getIconWidth(), getIconHeight());
-      }
-
-      @Override
-      public int getIconWidth() {
-        return icon.getIconWidth();
-      }
-
-      @Override
-      public int getIconHeight() {
-        return icon.getIconHeight();
-      }
-    };
-  }
-
-  public static void drawRect(Graphics g, int x, int y, int w, int h) {
-    if (showDebugBorder) {
-      ((Graphics2D)g).draw(new Rectangle2D.Double(x + 0.5, y + 0.5, w - 1, h - 1));
     }
   }
 }

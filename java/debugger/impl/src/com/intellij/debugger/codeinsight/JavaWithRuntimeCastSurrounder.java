@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -52,7 +52,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
     if (!expr.isPhysical()) return false;
     PsiFile file = expr.getContainingFile();
     if (!(file instanceof PsiCodeFragment)) return false;
-    if (file.getUserData(DebuggerExpressionComboBox.KEY) == null) {
+    if (!DefaultCodeFragmentFactory.isDebuggerFile(file)) {
       return false;
     }
 

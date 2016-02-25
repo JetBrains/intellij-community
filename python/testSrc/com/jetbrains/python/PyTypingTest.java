@@ -448,6 +448,18 @@ public class PyTypingTest extends PyTestCase {
            "def f(expr: Type):\n" +
            "    pass\n");
   }
+  
+  // PY-18254
+  public void testFunctionTypeComment() {
+    doTest("(x: int, args: tuple, kwargs: Dict[str, str]) -> List[bool]",
+           "from typing import List\n" +
+           "\n" +
+           "def f(x, *args, **kwargs):\n" +
+           "    # type: (int, *float, **str) -> List[bool]\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = f");
+  }
 
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);

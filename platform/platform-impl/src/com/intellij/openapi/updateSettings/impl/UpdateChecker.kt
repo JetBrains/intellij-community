@@ -277,11 +277,10 @@ object UpdateChecker {
    * Returns a list of plugins which are currently installed or were installed in the previous installation from which
    * we're importing the settings.
    */
-  @Suppress("DEPRECATION_ERROR")
   private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor> {
     val updateable = ContainerUtil.newTroveMap<PluginId, IdeaPluginDescriptor>()
 
-    updateable += PluginManagerCore.getPlugins().filter { !it.isBundled }.toMapBy { it.pluginId }
+    updateable += PluginManagerCore.getPlugins().filter { !it.isBundled || it.allowBundledUpdate()}.associateBy { it.pluginId }
 
     val onceInstalled = PluginManager.getOnceInstalledIfExists()
     if (onceInstalled != null) {
@@ -437,22 +436,14 @@ object UpdateChecker {
     }
   }
 
-  private fun showNotification(project: Project?,
-                               message: String,
-                               runnable: (() -> Unit)?,
-                               notificationType: NotificationUniqueType?) {
-    if (notificationType != null) {
-      if (!ourShownNotificationTypes.add(notificationType)) {
-        return
-      }
+  private fun showNotification(project: Project?, message: String, action: (() -> Unit), notificationType: NotificationUniqueType) {
+    if (!ourShownNotificationTypes.add(notificationType)) {
+      return
     }
 
-    var listener: NotificationListener? = null
-    if (runnable != null) {
-      listener = NotificationListener { notification, event ->
-        notification.expire()
-        runnable.invoke()
-      }
+    var listener = NotificationListener { notification, event ->
+      notification.expire()
+      action.invoke()
     }
 
     val title = IdeBundle.message("update.notifications.title")

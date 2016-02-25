@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqual
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
 
@@ -49,14 +50,10 @@ public class InferenceIncorporationPhase {
 
   public void forgetCaptures(List<InferenceVariable> variables) {
     for (InferenceVariable variable : variables) {
-      final PsiTypeParameter parameter = variable.getParameter();
       for (Iterator<Pair<InferenceVariable[], PsiClassType>> iterator = myCaptures.iterator(); iterator.hasNext(); ) {
         Pair<InferenceVariable[], PsiClassType> capture = iterator.next();
-        for (PsiTypeParameter typeParameter : capture.first) {
-          if (parameter == typeParameter) {
-            iterator.remove();
-            break;
-          }
+        if (isCapturedVariable(variable, capture)) {
+          iterator.remove();
         }
       }
     }
@@ -64,16 +61,35 @@ public class InferenceIncorporationPhase {
 
   public boolean hasCaptureConstraints(Iterable<InferenceVariable> variables) {
     for (InferenceVariable variable : variables) {
-      final PsiTypeParameter parameter = variable.getParameter();
       for (Pair<InferenceVariable[], PsiClassType> capture : myCaptures) {
-        for (PsiTypeParameter typeParameter : capture.first) {
-          if (parameter == typeParameter){
-            return true;
-          }
+        if (isCapturedVariable(variable, capture)) {
+          return true;
         }
       }
     }
     return false;
+  }
+
+  private static boolean isCapturedVariable(InferenceVariable variable, Pair<InferenceVariable[], PsiClassType> capture) {
+    for (InferenceVariable capturedVariable : capture.first) {
+      if (variable == capturedVariable){
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public void collectCaptureDependencies(InferenceVariable variable, Set<InferenceVariable> dependencies) {
+    for (Pair<InferenceVariable[], PsiClassType> capture : myCaptures) {
+      if (isCapturedVariable(variable, capture)) {
+        mySession.collectDependencies(capture.second, dependencies);
+        ContainerUtil.addAll(dependencies, capture.first);
+      }
+    }
+  }
+
+  public List<Pair<InferenceVariable[], PsiClassType>> getCaptures() {
+    return myCaptures;
   }
 
   public boolean incorporate() {
@@ -108,13 +124,12 @@ public class InferenceIncorporationPhase {
       final PsiClassType right = capture.second;
       final PsiClass gClass = right.resolve();
       LOG.assertTrue(gClass != null);
-      final PsiTypeParameter[] parameters = capture.first;
+      final InferenceVariable[] parameters = capture.first;
       PsiType[] typeArgs = right.getParameters();
       if (parameters.length != typeArgs.length) continue;
       for (int i = 0; i < typeArgs.length; i++) {
         final PsiType aType = typeArgs[i];
-        final InferenceVariable inferenceVariable = mySession.getInferenceVariable(parameters[i]);
-        LOG.assertTrue(inferenceVariable != null);
+        final InferenceVariable inferenceVariable = parameters[i];
 
         final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
         final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
@@ -123,7 +138,9 @@ public class InferenceIncorporationPhase {
         if (aType instanceof PsiWildcardType) {
 
           for (PsiType eqBound : eqBounds) {
-            if (!isInferenceVariableOrFreshTypeParameter(eqBound)) return false;
+            if (!isInferenceVariableOrFreshTypeParameter(eqBound)) {
+              return false;
+            }
           }
 
           final PsiClassType[] paramBounds = inferenceVariable.getParameter().getExtendsListTypes();
@@ -147,7 +164,9 @@ public class InferenceIncorporationPhase {
             }
 
             for (PsiType lowerBound : lowerBounds) {
-              if (isInferenceVariableOrFreshTypeParameter(lowerBound)) return false;
+              if (isInferenceVariableOrFreshTypeParameter(lowerBound)) {
+                return false;
+              }
             }
 
           } else if (((PsiWildcardType)aType).isExtends()) {
@@ -166,7 +185,9 @@ public class InferenceIncorporationPhase {
             }
 
             for (PsiType lowerBound : lowerBounds) {
-              if (isInferenceVariableOrFreshTypeParameter(lowerBound)) return false;
+              if (isInferenceVariableOrFreshTypeParameter(lowerBound)) {
+                return false;
+              }
             }
 
           } else {
@@ -273,8 +294,17 @@ public class InferenceIncorporationPhase {
 
       for (PsiType eqBound : eqBounds) {
         if (eqBound == null || PsiType.NULL.equals(eqBound) || eqBound instanceof PsiWildcardType) continue;
-        if (Registry.is("javac.unchecked.subtyping.during.incorporation", true) && TypeCompatibilityConstraint.isUncheckedConversion(upperBound, eqBound)) {
-          continue;
+        if (Registry.is("javac.unchecked.subtyping.during.incorporation", true)) {
+          if (TypeCompatibilityConstraint.isUncheckedConversion(upperBound, eqBound)) {
+            continue;
+          }
+
+          if (!mySession.isProperType(upperBound) &&
+              eqBound instanceof PsiCapturedWildcardType && 
+              TypeCompatibilityConstraint.isUncheckedConversion(upperBound, ((PsiCapturedWildcardType)eqBound).getUpperBound())) {
+            mySession.setErased();
+            continue;
+          }
         }
 
         addConstraint(new StrictSubtypingConstraint(upperBound, eqBound));
@@ -320,32 +350,6 @@ public class InferenceIncorporationPhase {
 
   private void addConstraint(ConstraintFormula constraint) {
     mySession.addConstraint(constraint);
-  }
-
-  public void collectCaptureDependencies(InferenceVariable variable, Set<InferenceVariable> dependencies) {
-    final PsiTypeParameter parameter = variable.getParameter();
-    for (Pair<InferenceVariable[], PsiClassType> capture : myCaptures) {
-      for (PsiTypeParameter typeParameter : capture.first) {
-        if (typeParameter == parameter) {
-          collectAllVariablesOnBothSides(dependencies, capture);
-          break;
-        }
-      }
-    }
-  }
-
-  protected void collectAllVariablesOnBothSides(Set<InferenceVariable> dependencies, Pair<InferenceVariable[], PsiClassType> capture) {
-    mySession.collectDependencies(capture.second, dependencies);
-    for (PsiTypeParameter psiTypeParameter : capture.first) {
-      final InferenceVariable var = mySession.getInferenceVariable(psiTypeParameter);
-      if (var != null) {
-        dependencies.add(var);
-      }
-    }
-  }
-
-  public List<Pair<InferenceVariable[], PsiClassType>> getCaptures() {
-    return myCaptures;
   }
 
   public void addBound(InferenceVariable variable, PsiType type, InferenceBound bound) {

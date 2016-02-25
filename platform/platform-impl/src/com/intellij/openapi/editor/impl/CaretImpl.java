@@ -588,7 +588,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   private void setLastColumnNumber(int lastColumnNumber) {
     myLastColumnNumber = lastColumnNumber;
-    myEditor.setLastColumnNumber(lastColumnNumber);
   }
 
   private void requestRepaint(VerticalInfo oldCaretInfo) {

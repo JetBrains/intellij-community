@@ -180,7 +180,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
         suggestSimilarParameterDescriptions(result, position, param);
       }
 
-      suggestLinkWrappingVariants(parameters, result, position);
+      suggestLinkWrappingVariants(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), position);
 
       if (!result.getPrefixMatcher().getPrefix().isEmpty()) {
         for (String keyword : ContainerUtil.ar("null", "true", "false")) {

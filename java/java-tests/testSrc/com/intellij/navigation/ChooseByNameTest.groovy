@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.navigation
+
 import com.intellij.ide.util.gotoByName.*
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.Disposable
@@ -28,6 +29,7 @@ import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+
 /**
  * @author peter
  */
@@ -215,6 +217,15 @@ class Intf {
     assert getPopupElements(new GotoClassModel2(project), 'Bar:[2,3]') == [c]
   }
 
+  public void "test custom line suffixes"() {
+    def file = myFixture.addFileToProject("Bar.txt", "")
+    def model = new GotoFileModel(project)
+    assert getPopupElements(model, 'Bar:2') == [file]
+    assert getPopupElements(model, 'Bar(2)') == [file]
+    assert getPopupElements(model, 'Bar on line 2') == [file]
+    assert getPopupElements(model, 'Bar at line 2') == [file]
+  }
+
   public void "test dollar"() {
     def bar = myFixture.addClass("package foo; class Bar { class Foo {} }")
     def foo = ApplicationManager.application.runReadAction( { bar.innerClasses[0] } as Computable)
@@ -290,11 +301,10 @@ class Intf {
 
   public void "test groovy script class with non-identifier name"() {
     GroovyFile file1 = myFixture.addFileToProject('foo.groovy', '')
-    myFixture.addFileToProject('foo-bar.groovy', '')
+    GroovyFile file2 = myFixture.addFileToProject('foo-bar.groovy', '')
 
-    def clazz
-    edt { clazz = file1.scriptClass }
-    assert getPopupElements(new GotoSymbolModel2(project), 'foo', false) == [clazz]
+    def variants = getPopupElements(new GotoSymbolModel2(project), 'foo', false)
+    edt { assert variants == [file1.scriptClass, file2.scriptClass] }
   }
 
   private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {

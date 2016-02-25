@@ -47,7 +47,7 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
 
   @Override
   public void patchJavaParameters(@Nullable final Module module, JavaParameters javaParameters) {
-    if (module != null && PsiUtil.isIdeaProject(module.getProject()) && !javaParameters.getVMParametersList().hasParameter(SYSTEM_CL_PROPERTY)) {
+    if (module != null && PsiUtil.isIdeaProject(module.getProject()) && !javaParameters.getVMParametersList().hasProperty(SYSTEM_CL_PROPERTY)) {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(module.getProject());
       final String qualifiedName = UrlClassLoader.class.getName();
       final PsiClass urlLoaderClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {

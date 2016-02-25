@@ -82,6 +82,10 @@ class BaseStdIn:
         #in the interactive interpreter, a read and a readline are the same.
         return self.readline()
 
+    def close(self, *args, **kwargs):
+        pass #expected in StdIn
+
+
 #=======================================================================================================================
 # StdIn
 #=======================================================================================================================
@@ -106,9 +110,6 @@ class StdIn(BaseStdIn):
             return requested_input
         except:
             return '\n'
-
-    def close(self, *args, **kwargs):
-        pass #expected in StdIn
 
 
 class CodeFragment:

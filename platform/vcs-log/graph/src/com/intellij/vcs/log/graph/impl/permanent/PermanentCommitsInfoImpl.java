@@ -25,6 +25,7 @@ import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -34,18 +35,8 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
 
   @NotNull
   public static <CommitId> PermanentCommitsInfoImpl<CommitId> newInstance(@NotNull final List<? extends GraphCommit<CommitId>> graphCommits,
-                                                                          @NotNull Map<Integer, CommitId> notLoadedCommits) {
-    TimestampGetter timestampGetter = IntTimestampGetter.newInstance(new TimestampGetter() {
-      @Override
-      public int size() {
-        return graphCommits.size();
-      }
-
-      @Override
-      public long getTimestamp(int index) {
-        return graphCommits.get(index).getTimestamp();
-      }
-    });
+                                                                         @NotNull Map<Integer, CommitId> notLoadedCommits) {
+    TimestampGetter timestampGetter = createTimestampGetter(graphCommits);
 
     boolean isIntegerCase = !graphCommits.isEmpty() && graphCommits.get(0).getId().getClass() == Integer.class;
 
@@ -62,6 +53,21 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
       });
     }
     return new PermanentCommitsInfoImpl<CommitId>(timestampGetter, commitIdIndex, notLoadedCommits);
+  }
+
+  @NotNull
+  public static <CommitId> IntTimestampGetter createTimestampGetter(@NotNull final List<? extends GraphCommit<CommitId>> graphCommits) {
+    return IntTimestampGetter.newInstance(new TimestampGetter() {
+      @Override
+      public int size() {
+        return graphCommits.size();
+      }
+
+      @Override
+      public long getTimestamp(int index) {
+        return graphCommits.get(index).getTimestamp();
+      }
+    });
   }
 
   @NotNull

@@ -112,7 +112,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   @Override
   public void paint(@NotNull Graphics g) {
     if (!isEnabled()) {
-      g = new Grayer((Graphics2D)g, EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+      g = new Grayer((Graphics2D)g, getBackground());
     }
     super.paint(g);
   }
@@ -124,7 +124,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   public Object getData(String dataId) {
-    if (myEditor.isRendererMode()) return null;
+    if (myEditor.isDisposed() || myEditor.isRendererMode()) return null;
 
     if (CommonDataKeys.EDITOR.is(dataId)) {
       // for 'big' editors return null to allow injected editors (see com.intellij.openapi.fileEditor.impl.text.TextEditorComponent.getData())

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -263,14 +263,13 @@ public class DefaultJDOMExternalizer {
           field.set(data, color);
         }
         else if (ReflectionUtil.isAssignable(JDOMExternalizable.class, type)) {
-          final List children = e.getChildren("value");
+          final List<Element> children = e.getChildren("value");
           if (!children.isEmpty()) {
             // compatibility with Selena's serialization which writes an empty tag for a bean which has a default value
             JDOMExternalizable object = null;
-            for (final Object o1 : children) {
-              Element el = (Element)o1;
+            for (Element element : children) {
               object = (JDOMExternalizable)type.newInstance();
-              object.readExternal(el);
+              object.readExternal(element);
             }
 
             field.set(data, object);

@@ -1,6 +1,7 @@
 package com.intellij.vcs.log.data;
 
-import com.intellij.openapi.util.Condition;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -9,38 +10,62 @@ import com.intellij.vcs.log.*;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 public class RefsModel implements VcsLogRefs {
-
-  @NotNull private final Map<VirtualFile, Set<VcsRef>> myRefs;
-  @NotNull private final VcsLogHashMap myHashMap;
-
   @NotNull private final Collection<VcsRef> myBranches;
+  @NotNull private final Map<VirtualFile, Set<VcsRef>> myRefs;
   @NotNull private final MultiMap<CommitId, VcsRef> myRefsToHashes;
-  @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myRefsToIndices;
 
-  public RefsModel(@NotNull Map<VirtualFile, Set<VcsRef>> refsByRoot, @NotNull VcsLogHashMap hashMap) {
+  @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myBranchesToIndices;
+  @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myRefsToHeadIndices;
+  @NotNull private final TIntObjectHashMap<VirtualFile> myRootsToHeadIndices;
+
+  public RefsModel(@NotNull Map<VirtualFile, Set<VcsRef>> refsByRoot,
+                   @NotNull final Set<Integer> heads,
+                   @NotNull final VcsLogHashMap hashMap) {
     myRefs = refsByRoot;
-    myHashMap = hashMap;
 
-    List<VcsRef> allRefs = ContainerUtil.concat(refsByRoot.values());
-    myBranches = ContainerUtil.filter(allRefs, new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        return ref.getType().isBranch();
+    Iterable<VcsRef> allRefs = Iterables.concat(refsByRoot.values());
+
+    myBranches = ContainerUtil.newSmartList();
+    for (VcsRef ref : allRefs) {
+      if (ref.getType().isBranch()) {
+        myBranches.add(ref);
       }
-    });
+    }
 
     myRefsToHashes = prepareRefsMap(allRefs);
-    myRefsToIndices = prepareRefsToIndicesMap(allRefs);
+
+    myBranchesToIndices = prepareRefsToIndicesMap(myBranches, hashMap);
+    myRefsToHeadIndices = prepareRefsToIndicesMap(Iterables.filter(Iterables.concat(refsByRoot.values()), new Predicate<VcsRef>() {
+      @Override
+      public boolean apply(VcsRef vcsRef) {
+        return heads.contains(hashMap.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()));
+      }
+    }), hashMap);
+
+    myRootsToHeadIndices = prepareRootsMap(heads, hashMap);
+  }
+
+  private static TIntObjectHashMap<VirtualFile> prepareRootsMap(@NotNull Set<Integer> heads, @NotNull VcsLogHashMap hashMap) {
+    TIntObjectHashMap<VirtualFile> map = new TIntObjectHashMap<VirtualFile>();
+    for (Integer head : heads) {
+      CommitId commitId = hashMap.getCommitId(head);
+      map.put(head, commitId.getRoot());
+    }
+    return map;
   }
 
   @NotNull
-  private TIntObjectHashMap<SmartList<VcsRef>> prepareRefsToIndicesMap(@NotNull Collection<VcsRef> refs) {
+  private static TIntObjectHashMap<SmartList<VcsRef>> prepareRefsToIndicesMap(@NotNull Iterable<VcsRef> refs,
+                                                                              @NotNull VcsLogHashMap hashMap) {
     TIntObjectHashMap<SmartList<VcsRef>> map = new TIntObjectHashMap<SmartList<VcsRef>>();
     for (VcsRef ref : refs) {
-      int index = myHashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
+      int index = hashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
       SmartList<VcsRef> list = map.get(index);
       if (list == null) map.put(index, list = new SmartList<VcsRef>());
       list.add(ref);
@@ -49,7 +74,7 @@ public class RefsModel implements VcsLogRefs {
   }
 
   @NotNull
-  private static MultiMap<CommitId, VcsRef> prepareRefsMap(@NotNull Collection<VcsRef> refs) {
+  private static MultiMap<CommitId, VcsRef> prepareRefsMap(@NotNull Iterable<VcsRef> refs) {
     MultiMap<CommitId, VcsRef> map = MultiMap.createSmart();
     for (VcsRef ref : refs) {
       map.putValue(new CommitId(ref.getCommitHash(), ref.getRoot()), ref);
@@ -58,6 +83,27 @@ public class RefsModel implements VcsLogRefs {
   }
 
   @NotNull
+  public Collection<VcsRef> branchesToCommit(int index) {
+    return myBranchesToIndices.containsKey(index) ? myBranchesToIndices.get(index) : Collections.<VcsRef>emptyList();
+  }
+
+  @NotNull
+  public Collection<VcsRef> refsToHead(int headIndex) {
+    return myRefsToHeadIndices.containsKey(headIndex) ? myRefsToHeadIndices.get(headIndex) : Collections.<VcsRef>emptyList();
+  }
+
+  @NotNull
+  public VirtualFile rootAtHead(int headIndex) {
+    return myRootsToHeadIndices.get(headIndex);
+  }
+
+  @NotNull
+  public Map<VirtualFile, Set<VcsRef>> getAllRefsByRoot() {
+    return myRefs;
+  }
+
+  @NotNull
+  @Override
   public Collection<VcsRef> refsToCommit(@NotNull Hash hash, @NotNull VirtualFile root) {
     CommitId commitId = new CommitId(hash, root);
     if (myRefsToHashes.containsKey(commitId)) {
@@ -68,24 +114,13 @@ public class RefsModel implements VcsLogRefs {
 
   @Override
   @NotNull
-  public Collection<VcsRef> refsToCommit(int index) {
-    return myRefsToIndices.containsKey(index) ? myRefsToIndices.get(index) : Collections.<VcsRef>emptyList();
-  }
-
-  @Override
-  @NotNull
   public Collection<VcsRef> getBranches() {
     return myBranches;
   }
 
   @NotNull
+  @Override
   public Collection<VcsRef> getAllRefs() {
-    return new ArrayList<VcsRef>(myRefsToHashes.values());
+    return ContainerUtil.newHashSet(myRefsToHashes.values());
   }
-
-  @NotNull
-  public Map<VirtualFile, Set<VcsRef>> getAllRefsByRoot() {
-    return myRefs;
-  }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1841,7 +1841,7 @@ public class Mappings {
           }
 
           if (diff.packageLocalOn()) {
-            debug("Introduction of 'package local' access detected, adding class usage + package constraint to affected usages");
+            debug("Introduction of 'package-private' access detected, adding class usage + package constraint to affected usages");
             final UsageRepr.Usage usage = changedClass.createUsage();
 
             state.myAffectedUsages.add(usage);

@@ -3,6 +3,8 @@
   <depends optional="true" config-file="testng-integration.xml">TestNG-J</depends>
   <depends optional="true" config-file="junit-integration.xml">JUnit</depends>
   <depends>com.intellij.modules.java</depends>
+  <module value="com.intellij.modules.coverage"/>
+
   <description>
       <![CDATA[
      This plugin supports gathering coverage information and presenting it right in

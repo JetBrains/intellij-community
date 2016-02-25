@@ -25,9 +25,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -39,8 +37,6 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
-import com.intellij.lang.java.JavaLanguage;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -52,7 +48,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -64,12 +59,10 @@ import com.intellij.ui.content.Content;
 import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueNode;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.sun.jdi.*;
@@ -95,7 +88,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static List<CodeFragmentFactory> getCodeFragmentFactories(@Nullable PsiElement context) {
     final DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
     final CodeFragmentFactory[] providers = ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME);
-    final List<CodeFragmentFactory> suitableFactories = new ArrayList<CodeFragmentFactory>(providers.length);
+    final List<CodeFragmentFactory> suitableFactories = new ArrayList<>(providers.length);
     if (providers.length > 0) {
       for (CodeFragmentFactory factory : providers) {
         if (factory != defaultFactory && factory.isContextAccepted(context)) {
@@ -204,7 +197,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static boolean isCharOrIntegerArray(Value value) {
     if (value == null) return false;
     if (myCharOrIntegers == null) {
-      myCharOrIntegers = new HashSet<String>();
+      myCharOrIntegers = new HashSet<>();
       myCharOrIntegers.add("C");
       myCharOrIntegers.add("B");
       myCharOrIntegers.add("S");
@@ -292,8 +285,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (filters1.length != filters2.length) {
       return false;
     }
-    final Set<ClassFilter> f1 = new HashSet<ClassFilter>(Math.max((int) (filters1.length/.75f) + 1, 16));
-    final Set<ClassFilter> f2 = new HashSet<ClassFilter>(Math.max((int) (filters2.length/.75f) + 1, 16));
+    final Set<ClassFilter> f1 = new HashSet<>(Math.max((int)(filters1.length / .75f) + 1, 16));
+    final Set<ClassFilter> f2 = new HashSet<>(Math.max((int)(filters2.length / .75f) + 1, 16));
     Collections.addAll(f1, filters1);
     Collections.addAll(f2, filters2);
     return f2.equals(f1);
@@ -379,7 +372,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if(events == null) {
       return Collections.emptyList();
     }
-    final List<Pair<Breakpoint, Event>> eventDescriptors = new SmartList<Pair<Breakpoint, Event>>();
+    final List<Pair<Breakpoint, Event>> eventDescriptors = new SmartList<>();
 
     final RequestManagerImpl requestManager = suspendContext.getDebugProcess().getRequestsManager();
     for (final Event event : events) {
@@ -572,16 +565,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static String methodNameWithArguments(Method m) {
-    StringBuilder res = new StringBuilder();
-    res.append(m.name()).append("(");
-    res.append(StringUtil.join(m.argumentTypeNames(), new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return getSimpleName(s);
-      }
-    }, ", "));
-    res.append(")");
-    return res.toString();
+    return m.name() + "(" + StringUtil.join(m.argumentTypeNames(), DebuggerUtilsEx::getSimpleName, ", ") + ")";
   }
 
   public static String getSimpleName(String fqn) {
@@ -723,7 +707,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static void setAlternativeSourceUrl(String className, String source, Project project) {
     Map<String, String> map = project.getUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING);
     if (map == null) {
-      map = new ConcurrentHashMap<String, String>();
+      map = new ConcurrentHashMap<>();
       project.putUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING, map);
     }
     map.put(className, source);
@@ -986,74 +970,5 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
     }
     return -1;
-  }
-
-  public static void checkSource(DebuggerContextImpl debuggerContext) {
-    if (!Registry.is("debugger.check.source")) {
-      return;
-    }
-    SuspendContextImpl suspendContext = debuggerContext.getSuspendContext();
-    if (suspendContext == null) {
-      return;
-    }
-    suspendContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
-      @Override
-      public Priority getPriority() {
-        return Priority.LOW;
-      }
-
-      @Override
-      public void contextAction() throws Exception {
-        try {
-          StackFrameProxyImpl frameProxy = debuggerContext.getFrameProxy();
-          if (frameProxy == null) {
-            return;
-          }
-          Location location = frameProxy.location();
-          Method method = location.method();
-          if (method.isConstructor() || method.isBridge()) {
-            return; // skip constructors for now as they may have initializers outside of the method body
-          }
-          List<Location> locations = method.allLineLocations();
-          if (ContainerUtil.isEmpty(locations)) {
-            return;
-          }
-          SourcePosition position = debuggerContext.getSourcePosition();
-          if (position != null) {
-            ApplicationManager.getApplication().runReadAction(() -> {
-              Project project = suspendContext.getDebugProcess().getProject();
-              PsiFile psiFile = position.getFile();
-              if (!psiFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) { // only for java for now
-                return;
-              }
-              Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-              if (document == null) {
-                return;
-              }
-              boolean res = false;
-              PsiElement psiMethod = getContainingMethod(position);
-              if (psiMethod != null) {
-                TextRange range = psiMethod.getTextRange();
-                int startLine = document.getLineNumber(range.getStartOffset()) + 1;
-                int endLine = document.getLineNumber(range.getEndOffset()) + 1;
-                res = locations.stream()
-                  .mapToInt(loc -> bytecodeToSourceLine(psiFile, loc.lineNumber()))
-                  .filter(line -> line >= 0)
-                  .allMatch(line -> startLine <= line && line <= endLine);
-              }
-              if (!res) {
-                XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Source code does not match the bytecode", NotificationType.WARNING)
-                  .notify(project);
-              }
-            });
-          }
-        }
-        catch (EvaluateException e) {
-          LOG.info(e);
-        }
-        catch (AbsentInformationException ignore) {
-        }
-      }
-    });
   }
 }

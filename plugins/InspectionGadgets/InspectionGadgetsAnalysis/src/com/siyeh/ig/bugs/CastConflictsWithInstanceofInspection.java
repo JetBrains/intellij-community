@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class CastConflictsWithInstanceofInspection extends BaseInspection {
@@ -60,8 +61,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
     return new CastConflictsWithInstanceofVisitor();
   }
 
-  private static class CastConflictsWithInstanceofVisitor
-    extends BaseInspectionVisitor {
+  private static class CastConflictsWithInstanceofVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
@@ -71,7 +71,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
         return;
       }
       final PsiType type = castType.getType();
-      final PsiExpression operand = expression.getOperand();
+      final PsiExpression operand = ParenthesesUtils.stripParentheses(expression.getOperand());
       if (!(operand instanceof PsiReferenceExpression)) {
         return;
       }
@@ -108,7 +108,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
       if (!"java.lang.Class".equals(qualifiedName)) {
         return;
       }
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
       if (!(qualifier instanceof PsiClassObjectAccessExpression)) {
         return;
       }
@@ -123,7 +123,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
       if (arguments.length != 1) {
         return;
       }
-      final PsiExpression argument = arguments[0];
+      final PsiExpression argument = ParenthesesUtils.stripParentheses(arguments[0]);
       if (!(argument instanceof PsiReferenceExpression)) {
         return;
       }
@@ -138,7 +138,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
     }
   }
 
-  private static abstract class ReplaceFix extends InspectionGadgetsFix {
+  private abstract static class ReplaceFix extends InspectionGadgetsFix {
 
     protected ReplaceFix() {
     }

@@ -20,12 +20,19 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.awt.AWTUtilities;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 public interface PopupComponent {
   Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupComponent");
@@ -123,6 +130,13 @@ public interface PopupComponent {
       myDialog.setBackground(UIUtil.getPanelBackground());
       myDialog.pack();
       myDialog.setLocation(x, y);
+      myDialog.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosed(WindowEvent e) {
+          super.windowClosed(e);
+          A11YFix.invokeFocusGained(myDialog);
+        }
+      });
     }
 
     public Window getWindow() {
@@ -170,6 +184,7 @@ public interface PopupComponent {
         final Component c = ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
         c.setBackground(UIUtil.getPanelBackground());
       }
+      // TODO: should we call A11YFix.invokeFocusGained(getWindow()) on window closing?
     }
 
     @Override
@@ -223,3 +238,79 @@ public interface PopupComponent {
     }
   }
 }
+
+/**
+ * On Windows, AccessBridge loses a11y focus when a non-focusable popup window is closed.
+ * At the same time, IDEA focus remains in, for instance, the editor and doesn't change.
+ * As a workaround, {@link #invokeFocusGained} notifies AccessBridge that the current
+ * focus owner gains focus. This doesn't affect IDEA focus management. See IDEA-152169
+ */
+class A11YFix {
+  private static Class cAccessBridge;
+  private static Field fAccessBridge;
+  private static Method mFocusGained;
+  private static boolean initialized;
+
+  public static boolean isEnabled() {
+    return SystemInfo.isWindows && false; /*TODO: pending a11y check here*/
+  }
+
+  public static void invokeFocusGained(Window closingWindow) {
+    if (!isEnabled()) return;
+
+    IdeFocusManager manager = IdeFocusManager.findInstanceByComponent(closingWindow);
+    if (manager != null) {
+      Component focusOwner = manager.getFocusOwner();
+      if (focusOwner != null) {
+        Window focusedWindow = UIUtil.getWindow(focusOwner);
+        // Check if the focus owner is not in the closing window and notify AB it gains focus.
+        // In case focus owner changes, AB will catch up with it on its own.
+        if (focusedWindow != closingWindow) {
+          Object bridge = getAccessBridge();
+          if (bridge != null) {
+            FocusEvent fe = new FocusEvent(focusOwner, FocusEvent.FOCUS_GAINED);
+            try {
+              mFocusGained.invoke(bridge, fe, focusOwner.getAccessibleContext());
+            }
+            catch (Throwable ignore) {
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private static boolean checkInit() {
+    if (initialized) return fAccessBridge != null && mFocusGained != null;
+
+    try {
+      ClassLoader cl = ClassLoader.getSystemClassLoader();
+      cAccessBridge = cl.loadClass("com.sun.java.accessibility.AccessBridge");
+    }
+    catch (Throwable ignore) {
+    }
+    if (cAccessBridge != null) {
+      fAccessBridge = ReflectionUtil.getDeclaredField(cAccessBridge, "theAccessBridge");
+      if (fAccessBridge != null) {
+        fAccessBridge.setAccessible(true);
+        mFocusGained = ReflectionUtil.getDeclaredMethod(cAccessBridge, "focusGained", FocusEvent.class, AccessibleContext.class);
+        if (mFocusGained != null) {
+          mFocusGained.setAccessible(true);
+        }
+      }
+    }
+    initialized = true;
+    return fAccessBridge != null && mFocusGained != null;
+  }
+
+  private static Object getAccessBridge() {
+    if (!checkInit()) return null;
+    try {
+      return fAccessBridge.get(null);
+    }
+    catch (Throwable ignore) {
+    }
+    return null;
+  }
+}
+

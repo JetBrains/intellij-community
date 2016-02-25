@@ -218,6 +218,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testSwitchKeyword() throws Exception { doTest(); }
 
   public void testSwitchKeywordWithCondition() throws Exception { doTest(); }
+  public void testSwitchBraces() { doTest(); }
   public void testCaseColon() { doTest(); }
 
   public void testNewInParentheses() throws Exception { doTest(); }

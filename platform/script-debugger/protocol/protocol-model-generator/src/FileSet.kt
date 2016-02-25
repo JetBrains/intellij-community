@@ -37,18 +37,16 @@ class FileSet(private val rootDir: Path) {
   }
 
   fun deleteOtherFiles() {
-    unusedFiles.forEach(object : TObjectProcedure<Path> {
-      override fun execute(path: Path): Boolean {
-        if (Files.deleteIfExists(path)) {
-          val parent = path.parent
-          Files.newDirectoryStream(parent).use { stream ->
-            if (!stream.iterator().hasNext()) {
-              Files.delete(parent)
-            }
+    unusedFiles.forEach(TObjectProcedure<Path> { it ->
+      if (Files.deleteIfExists(it)) {
+        val parent = it.parent
+        Files.newDirectoryStream(parent).use { stream ->
+          if (!stream.iterator().hasNext()) {
+            Files.delete(parent)
           }
         }
-        return true
       }
+      true
     })
   }
 }

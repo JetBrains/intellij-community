@@ -39,8 +39,8 @@ import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.learning.editor.StudyEditor;
-import com.jetbrains.edu.learning.run.StudyExecutor;
-import com.jetbrains.edu.learning.run.StudyTestRunner;
+import com.jetbrains.edu.learning.checker.StudyExecutor;
+import com.jetbrains.edu.learning.checker.StudyTestRunner;
 import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
@@ -235,9 +235,16 @@ public class StudyUtils {
     if (course == null) {
       return null;
     }
-    final VirtualFile taskDir = file.getParent();
+    VirtualFile taskDir = file.getParent();
     if (taskDir == null) {
       return null;
+    }
+    //need this because of multi-module generation
+    if ("src".equals(taskDir.getName())) {
+      taskDir = taskDir.getParent();
+      if (taskDir == null) {
+        return null;
+      }
     }
     final String taskDirName = taskDir.getName();
     if (taskDirName.contains(EduNames.TASK)) {
@@ -392,6 +399,12 @@ public class StudyUtils {
     }
     if (taskDirectory != null) {
       VirtualFile taskTextFile = taskDirectory.findChild(EduNames.TASK_HTML);
+      if (taskTextFile == null) {
+        VirtualFile srcDir = taskDirectory.findChild("src");
+        if (srcDir != null) {
+           taskTextFile = srcDir.findChild(EduNames.TASK_HTML);
+        }
+      }
       if (taskTextFile != null) {
         try {
           return FileUtil.loadTextAndClose(taskTextFile.getInputStream());
