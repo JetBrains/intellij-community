@@ -73,14 +73,26 @@
       <reference id="Vcs.Log.CreatePatch"/>
     </group>
 
-    <group>
+    <group id="Log.KeymapGroup" text="Log">
       <reference ref="Vcs.Log.CreatePatch"/>
-      <reference ref="Vcs.Log.GoToRef"/>
-      <reference ref="Vcs.Log.QuickSettings"/>
-      <reference ref="Vcs.Log.IntelliSortChooser"/>
       <separator/>
+      <reference ref="Vcs.Log.GoToRef"/>
+      <separator/>
+      <reference ref="Vcs.Log.IntelliSortChooser"/>
+      <reference ref="Vcs.Log.CollapseAll"/>
+      <reference ref="Vcs.Log.ExpandAll"/>
+      <reference ref="Vcs.Log.ShowLongEdges"/>
+      <separator/>
+      <reference ref="Vcs.Log.QuickSettings"/>
+      <reference ref="Vcs.Log.ShowDetailsAction"/>
+      <reference ref="Vcs.Log.ShowRootsColumnAction"/>
+      <reference ref="Vcs.Log.ShowBranchesPanelAction"/>
+      <separator/>
+      <reference ref="Vcs.Log.Refresh"/>
+      <reference ref="Vcs.Log.OpenAnotherTab"/>
+      <reference ref="Vcs.Log.CloseLogTabAction"/>
 
-      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+      <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
   </actions>
 
