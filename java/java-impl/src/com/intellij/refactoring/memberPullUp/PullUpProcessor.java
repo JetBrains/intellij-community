@@ -281,6 +281,12 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     return false;
   }
 
+  @NotNull
+  @Override
+  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
+    return Collections.singletonList(mySourceClass);
+  }
+
   @Override
   public PsiClass getSourceClass() {
     return mySourceClass;
@@ -314,13 +320,18 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   private class PullUpUsageViewDescriptor implements UsageViewDescriptor {
     @Override
     public String getProcessedElementsHeader() {
-      return "Pull up members from";
+      return "Pull up members from class " + DescriptiveNameUtil.getDescriptiveName(mySourceClass);
     }
 
     @Override
     @NotNull
     public PsiElement[] getElements() {
-      return new PsiElement[]{mySourceClass};
+      return ContainerUtil.map(myMembersToMove, new Function<MemberInfo, PsiElement>() {
+        @Override
+        public PsiElement fun(MemberInfo info) {
+          return info.getMember();
+        }
+      }, PsiElement.EMPTY_ARRAY);
     }
 
     @Override

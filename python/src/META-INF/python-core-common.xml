@@ -186,6 +186,11 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.TypeAssertionIntention</className>
       <category>Python</category>
     </intentionAction>
@@ -374,6 +379,8 @@
     <localInspection language="Python" shortName="PyAbstractClassInspection" suppressId="PyAbstractClass" displayName="Class must implement all abstract methods" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyAbstractClassInspection"/>
     <localInspection language="Python" shortName="PyPep8NamingInspection" suppressId="PyPep8Naming" displayName="PEP 8 naming convention violation" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyPep8NamingInspection"/>
     <localInspection language="Python" shortName="PyAssignmentToLoopOrWithParameterInspection" suppressId="PyAssignmentToLoopOrWithParameter" displayName="Assignment to 'for' loop or 'with' statement parameter" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyAssignmentToLoopOrWithParameterInspection"/>
+
+    <localInspection language="Python" shortName="PyMissingTypeHintsInspection" suppressId="PyMissingTypeHints" displayName="Type hinting is missing for function definition" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMissingTypeHintsInspection"/>
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
@@ -612,6 +619,7 @@
     <extensionPoint qualifiedName="Pythonid.consoleOptionsProvider" interface="com.jetbrains.python.console.PyConsoleOptionsProvider"/>
     <extensionPoint qualifiedName="Pythonid.testLocator" interface="com.jetbrains.python.testing.PythonTestLocator"/>
     <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider"/>
+    <extensionPoint qualifiedName="Pythonid.runConfigurationEditorExtension" interface="com.jetbrains.python.run.PyRunConfigurationEditorExtension"/>
     <extensionPoint qualifiedName="Pythonid.pyCustomSdkUiProvider" interface="com.jetbrains.python.sdk.PyCustomSdkUiProvider"/>
   </extensionPoints>
 

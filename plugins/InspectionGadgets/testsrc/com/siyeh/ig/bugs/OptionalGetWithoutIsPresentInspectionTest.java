@@ -55,6 +55,10 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTe
            "}");
   }
 
+  public void testOptionalGetWithoutIsPresent() {
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

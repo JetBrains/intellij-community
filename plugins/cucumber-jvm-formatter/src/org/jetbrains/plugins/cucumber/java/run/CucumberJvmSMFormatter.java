@@ -18,7 +18,7 @@ import java.util.Queue;
  * Date: 8/10/12
  */
 public class CucumberJvmSMFormatter implements Formatter, Reporter {
-  public static final String TEAMCITY_PREFIX = "#teamcity";
+  public static final String TEAMCITY_PREFIX = "##teamcity";
   public static final int MILLION = 1000000;
   private int scenarioCount;
   private int passedScenarioCount;

@@ -223,14 +223,19 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     }
 
     final GlobalInspectionContextImpl context = getContext();
+    if (!context.useView() || !(refElement instanceof RefElement)) {
+      return;
+    }
     if (myToolWrapper instanceof LocalInspectionToolWrapper) {
-      final InspectionResultsView view = context.getView();
-      if (view == null || !(refElement instanceof RefElement)) {
-        return;
-      }
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
+          InspectionResultsView view = context.getView();
+          if (view == null) {
+            view = new InspectionResultsView(context,
+                                             new InspectionRVContentProviderImpl(context.getProject()));
+            context.addView(view);
+          }
           if (!isDisposed()) {
             final InspectionNode toolNode;
             synchronized (myToolLock) {
@@ -259,7 +264,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
             view.getProvider().appendToolNodeContent(context, toolNode,
                                                      (InspectionTreeNode)toolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
                                                      contents, problems, (DefaultTreeModel)view.getTree().getModel());
-            context.addView(view);
           }
         }
       });

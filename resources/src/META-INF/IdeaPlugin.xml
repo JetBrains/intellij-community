@@ -1582,6 +1582,7 @@
 
     <resolveScopeProvider implementation="com.intellij.psi.impl.file.impl.JavaOutOfSourcesResolveScopeProvider"/>
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
+    <resolveScopeEnlarger implementation="com.intellij.ide.scratch.ScratchResolveScopeEnlarger"/>
 
     <xdebugger.debuggerSupport implementation="com.intellij.debugger.ui.JavaDebuggerSupport"/>
     <xdebugger.settings implementation="com.intellij.debugger.settings.JavaDebuggerSettings"/>
@@ -1723,6 +1724,7 @@
     <refactoring.moveInnerClassUsagesHandler language="JAVA" implementationClass="com.intellij.refactoring.move.moveInner.MoveInnerClassJavaUsagesHandler" id="java"/>
     <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
     <refactoring.invertBoolean implementation="com.intellij.refactoring.invertBoolean.JavaInvertBooleanDelegate"/>
+    <refactoring.pushDown language="JAVA" implementationClass="com.intellij.refactoring.memberPushDown.JavaPushDownDelegate" id="java"/>
     <library.javaSourceRootDetector implementation="com.intellij.openapi.roots.ui.configuration.JavaSourceRootDetector"/>
   </extensions>
 

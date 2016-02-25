@@ -1,22 +1,22 @@
 package com.intellij.vcs.log.ui.tables;
 
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsShortCommitDetails;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VisiblePack;
-import com.intellij.vcs.log.graph.GraphCommit;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
@@ -24,12 +24,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 public class GraphTableModel extends AbstractTableModel {
-
-  private static final Logger LOG = Logger.getInstance(GraphTableModel.class);
-
   public static final int ROOT_COLUMN = 0;
   public static final int COMMIT_COLUMN = 1;
   public static final int AUTHOR_COLUMN = 2;
@@ -37,19 +36,20 @@ public class GraphTableModel extends AbstractTableModel {
   private static final int COLUMN_COUNT = DATE_COLUMN + 1;
   private static final String[] COLUMN_NAMES = {"", "Subject", "Author", "Date"};
 
+  private static final int UP_PRELOAD_COUNT = 20;
+  private static final int DOWN_PRELOAD_COUNT = 40;
+
+  @NotNull private final VcsLogDataManager myLogDataManager;
   @NotNull protected final VcsLogUiImpl myUi;
-  @NotNull private final VcsLogDataHolder myDataHolder;
-  @NotNull private final VcsLogDataHolder myLogDataHolder;
 
   @NotNull protected VisiblePack myDataPack;
 
   private boolean myMoreRequested;
 
-  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUiImpl ui) {
-    myLogDataHolder = dataHolder;
+  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogDataManager dataManager, @NotNull VcsLogUiImpl ui) {
+    myLogDataManager = dataManager;
     myUi = ui;
     myDataPack = dataPack;
-    myDataHolder = dataHolder;
   }
 
   @Override
@@ -59,51 +59,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   public VirtualFile getRoot(int rowIndex) {
-    int head = myDataPack.getVisibleGraph().getRowInfo(rowIndex).getOneOfHeads();
-    Collection<VcsRef> refs = myDataPack.getRefsModel().refsToCommit(head);
-    if (refs.isEmpty()) {
-      LOG.error("No references pointing to head " + myDataHolder.getCommitId(head) + " identified for commit at row " + rowIndex,
-                new Attachment("details.txt", getErrorDetails()));
-      // take the first root: it is the right choice in one-repo case, though it will likely fail in multi-repo case
-      return myDataPack.getLogProviders().keySet().iterator().next();
-    }
-    return refs.iterator().next().getRoot();
-  }
-
-  @NotNull
-  private String getErrorDetails() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("LAST 100 COMMITS:\n");
-    List<GraphCommit<Integer>> commits = myDataPack.getPermanentGraph().getAllCommits();
-    for (int i = 0; i < 100 && i < commits.size(); i++) {
-      GraphCommit<Integer> commit = commits.get(i);
-      sb.append(String.format("%s -> %s\n", myDataHolder.getCommitId(commit.getId()).getHash().toShortString(), getParents(commit)));
-    }
-    sb.append("\nALL REFS:\n");
-    printRefs(sb, myDataPack.getRefsModel().getAllRefsByRoot());
-    return sb.toString();
-  }
-
-  @NotNull
-  private String getParents(@NotNull GraphCommit<Integer> commit) {
-    return StringUtil.join(commit.getParents(), new Function<Integer, String>() {
-      @Override
-      public String fun(Integer integer) {
-        return myDataHolder.getCommitId(integer).getHash().toShortString();
-      }
-    }, ", ");
-  }
-
-  private static void printRefs(@NotNull StringBuilder sb, @NotNull Map<VirtualFile, Set<VcsRef>> refs) {
-    for (Map.Entry<VirtualFile, Set<VcsRef>> entry : refs.entrySet()) {
-      sb.append("\n\n" + entry.getKey().getName() + ":\n");
-      sb.append(StringUtil.join(entry.getValue(), new Function<VcsRef, String>() {
-        @Override
-        public String fun(@NotNull VcsRef ref) {
-          return ref.getName() + " : " + ref.getCommitHash().toShortString();
-        }
-      }, "\n"));
-    }
+    return myDataPack.getRoot(rowIndex);
   }
 
   @NotNull
@@ -112,7 +68,7 @@ public class GraphTableModel extends AbstractTableModel {
     List<VcsRef> refs = Collections.emptyList();
     if (details != null) {
       message = details.getSubject();
-      refs = (List<VcsRef>)myDataPack.getRefsModel().refsToCommit(details.getId(), details.getRoot());
+      refs = (List<VcsRef>)myDataPack.getRefs().refsToCommit(details.getId(), details.getRoot());
     }
     return new GraphCommitCell(message, refs);
   }
@@ -124,11 +80,11 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   public CommitId getCommitIdAtRow(int row) {
-    return myDataHolder.getCommitId(getIdAtRow(row));
+    return myLogDataManager.getCommitId(getIdAtRow(row));
   }
 
   public int getRowOfCommit(@NotNull final Hash hash, @NotNull VirtualFile root) {
-    final int commitIndex = myDataHolder.getCommitIndex(hash, root);
+    final int commitIndex = myLogDataManager.getCommitIndex(hash, root);
     return ContainerUtil.indexOf(VcsLogUtil.getVisibleCommits(myDataPack.getVisibleGraph()), new Condition<Integer>() {
       @Override
       public boolean value(Integer integer) {
@@ -139,7 +95,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   public int getRowOfCommitByPartOfHash(@NotNull String partialHash) {
     final CommitIdByStringCondition hashByString = new CommitIdByStringCondition(partialHash);
-    CommitId commitId = myDataHolder.getHashMap().findCommitId(new Condition<CommitId>() {
+    CommitId commitId = myLogDataManager.getHashMap().findCommitId(new Condition<CommitId>() {
       @Override
       public boolean value(CommitId commitId) {
         return hashByString.value(commitId) && getRowOfCommit(commitId.getHash(), commitId.getRoot()) != -1;
@@ -171,7 +127,7 @@ public class GraphTableModel extends AbstractTableModel {
       requestToLoadMore(EmptyRunnable.INSTANCE);
     }
 
-    VcsShortCommitDetails data = myLogDataHolder.getMiniDetailsGetter().getCommitData(rowIndex, this);
+    VcsShortCommitDetails data = getShortDetails(rowIndex);
     switch (columnIndex) {
       case ROOT_COLUMN:
         return getRoot(rowIndex);
@@ -229,5 +185,61 @@ public class GraphTableModel extends AbstractTableModel {
 
   public VisiblePack getVisiblePack() {
     return myDataPack;
+  }
+
+  @NotNull
+  public VcsFullCommitDetails getFullDetails(int row) {
+    return getDetails(row, myLogDataManager.getCommitDetailsGetter());
+  }
+
+  @NotNull
+  public VcsShortCommitDetails getShortDetails(int row) {
+    return getDetails(row, myLogDataManager.getMiniDetailsGetter());
+  }
+
+  @NotNull
+  private <T extends VcsShortCommitDetails> T getDetails(int row, DataGetter<T> dataGetter) {
+    Iterable<Integer> iterable = createRowsIterable(row, UP_PRELOAD_COUNT, DOWN_PRELOAD_COUNT, getRowCount());
+    return dataGetter.getCommitData(getIdAtRow(row), iterable);
+  }
+
+  private Iterable<Integer> createRowsIterable(final int row, final int above, final int below, final int maxRows) {
+    return new Iterable<Integer>() {
+      @NotNull
+      @Override
+      public Iterator<Integer> iterator() {
+        return new Iterator<Integer>() {
+          private int myRowIndex = Math.max(0, row - above);
+
+          @Override
+          public boolean hasNext() {
+            return myRowIndex < row + below && myRowIndex < maxRows;
+          }
+
+          @Override
+          public Integer next() {
+            int nextRow = myRowIndex;
+            myRowIndex++;
+            return getIdAtRow(nextRow);
+          }
+
+          @Override
+          public void remove() {
+            throw new UnsupportedOperationException("Removing elements is not supported.");
+          }
+        };
+      }
+    };
+  }
+
+  @NotNull
+  public List<Integer> convertToHashesAndRoots(@NotNull List<Integer> rows) {
+    return ContainerUtil.map(rows, new NotNullFunction<Integer, Integer>() {
+      @NotNull
+      @Override
+      public Integer fun(Integer row) {
+        return getIdAtRow(row);
+      }
+    });
   }
 }

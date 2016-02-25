@@ -64,6 +64,7 @@ purejavacomm.jar
 resolver.jar
 rhino-js-1_7R4.jar
 sanselan-0.98-snapshot.jar
+SceneBuilderKit-8.1.1.jar
 serviceMessages.jar
 snappy-in-java-0.3.1.jar
 swingx-core-1.6.2.jar

@@ -114,7 +114,7 @@ public class LinearBekController extends CascadeController {
 
   @NotNull
   private LinearGraphAnswer expandAll() {
-    return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null) {
+    return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES) {
       @Nullable
       @Override
       public Runnable getGraphUpdater() {
@@ -134,7 +134,7 @@ public class LinearBekController extends CascadeController {
     final LinearBekGraph.WorkingLinearBekGraph workingGraph = new LinearBekGraph.WorkingLinearBekGraph(myCompiledGraph);
     new LinearBekGraphBuilder(workingGraph, myBekGraphLayout).collapseAll();
     return new LinearGraphAnswer(
-      GraphChangesUtil.edgesReplaced(workingGraph.getRemovedEdges(), workingGraph.getAddedEdges(), getDelegateGraph()), null, null, null) {
+      GraphChangesUtil.edgesReplaced(workingGraph.getRemovedEdges(), workingGraph.getAddedEdges(), getDelegateGraph())) {
       @Nullable
       @Override
       public Runnable getGraphUpdater() {
@@ -178,7 +178,7 @@ public class LinearBekController extends CascadeController {
     for (Integer i : toCollapse) {
       myLinearBekGraphBuilder.collapseFragment(i);
     }
-    return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null);
+    return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES);
   }
 
   private SortedSet<Integer> collectNodesToCollapse(GraphNode node) {
@@ -223,8 +223,7 @@ public class LinearBekController extends CascadeController {
   private LinearGraphAnswer expandEdge(GraphEdge edge) {
     if (edge.getType() == GraphEdgeType.DOTTED) {
       return new LinearGraphAnswer(
-        GraphChangesUtil.edgesReplaced(Collections.singleton(edge), myCompiledGraph.expandEdge(edge), getDelegateGraph()), null, null,
-        null);
+        GraphChangesUtil.edgesReplaced(Collections.singleton(edge), myCompiledGraph.expandEdge(edge), getDelegateGraph()));
     }
     return null;
   }

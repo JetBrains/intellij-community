@@ -284,6 +284,7 @@ libraryLicense(name: "Rhino JavaScript Engine", libraryName: "rhino-js-1_7R4", v
 libraryLicense(name: "RMI Stubs", attachedTo: "xslt-debugger-engine", license: "Apache 2.0", url: "https://confluence.jetbrains.com/display/CONTEST/XSLT-Debugger", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Saxon-6.5.5", version: "6.5.5", license: "Mozilla Public License", url: "http://saxon.sourceforge.net/", licenseUrl: "http://www.mozilla.org/MPL/")
 libraryLicense(name: "Saxon-9HE", version: "9", license: "Mozilla Public License", url: "http://saxon.sourceforge.net/", licenseUrl: "http://www.mozilla.org/MPL/")
+libraryLicense(name: "SceneBuilderKit", version: "8.1.1", license: "BSD", url: "http://gluonhq.com/open-source/scene-builder/", licenseUrl: "http://www.oracle.com/technetwork/licenses/bsd-license-1835287.html")
 libraryLicense(name: "Sequence", libraryName: "sequence-library.jar", version: "bundled with SVNKit", license: "BSD (see LICENSE.txt in sequence-library.jar)", url:"http://www.syntevo.com")
 libraryLicense(name: "six.py", attachedTo: "python-helpers", version: "1.9.0", license: "MIT", url: "http://pythonhosted.org/six/")
 libraryLicense(name: "Slf4j", version: "1.7.10", license: "MIT License", url: "http://slf4j.org/", licenseUrl: "http://slf4j.org/license.html")

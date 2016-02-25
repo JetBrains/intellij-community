@@ -94,6 +94,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private final ConcurrentMap<HighlightDisplayLevel, ConcurrentMap<String, InspectionGroupNode>> myGroups = ContainerUtil.newConcurrentMap();
   private final OccurenceNavigator myOccurenceNavigator;
   private volatile InspectionProfile myInspectionProfile;
+  @NotNull
   private final AnalysisScope myScope;
   @NonNls
   private static final String HELP_ID = "reference.toolWindows.inspections";
@@ -111,20 +112,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private AnAction myExcludeAction;
   private Editor myPreviewEditor;
 
-  public InspectionResultsView(@NotNull final Project project,
-                               final InspectionProfile inspectionProfile,
-                               @NotNull AnalysisScope scope,
-                               @NotNull GlobalInspectionContextImpl globalInspectionContext,
+  public InspectionResultsView(@NotNull GlobalInspectionContextImpl globalInspectionContext,
                                @NotNull InspectionRVContentProvider provider) {
     setLayout(new BorderLayout());
-
-    myProject = project;
-    myInspectionProfile = inspectionProfile;
-    myScope = scope;
+    myProject = globalInspectionContext.getProject();
+    myInspectionProfile = globalInspectionContext.getCurrentProfile();
+    myScope = globalInspectionContext.getCurrentScope();
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
 
-    myTree = new InspectionTree(project, globalInspectionContext);
+    myTree = new InspectionTree(myProject, globalInspectionContext);
     initTreeListeners();
 
     myOccurenceNavigator = initOccurenceNavigator();
@@ -143,6 +140,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     createActionsToolbar();
     TreeUtil.selectFirstNode(myTree);
   }
+
+
 
   private void initTreeListeners() {
     myTree.getSelectionModel().addTreeSelectionListener(e -> {

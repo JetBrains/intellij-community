@@ -6,7 +6,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.RefsModel;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
@@ -21,10 +21,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Panel with branch labels, above the graph.
@@ -34,18 +32,18 @@ public class BranchesPanel extends JPanel {
   private static final int BIG_ROOTS_GAP = 7;
   private static final int TOP = 2;
   private static final int BOTTOM = 3;
-  @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsLogDataManager myDataManager;
   @NotNull private final VcsLogUiImpl myUi;
   @NotNull private final VcsRefPainter myReferencePainter;
 
   @NotNull private LinkedHashMap<VirtualFile, List<RefGroup>> myRefGroups;
   @Nullable private Collection<VirtualFile> myRoots = null;
 
-  public BranchesPanel(@NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUiImpl ui, @NotNull RefsModel initialRefsModel) {
+  public BranchesPanel(@NotNull VcsLogDataManager dataManager, @NotNull VcsLogUiImpl ui, @NotNull VcsLogRefs initialRefsModel) {
     super(new FlowLayout(FlowLayout.LEADING, BIG_ROOTS_GAP - 2 * SMALL_ROOTS_GAP, 0));
     setBorder(new EmptyBorder(TOP, SMALL_ROOTS_GAP, BOTTOM, SMALL_ROOTS_GAP));
 
-    myDataHolder = dataHolder;
+    myDataManager = dataManager;
     myUi = ui;
     myRefGroups = getRefsToDisplayOnPanel(initialRefsModel);
     myReferencePainter = new VcsRefPainter(myUi.getColorManager(), true);
@@ -73,9 +71,9 @@ public class BranchesPanel extends JPanel {
     Collection<VcsRef> allRefs = refsModel.getBranches();
 
     LinkedHashMap<VirtualFile, List<RefGroup>> groups = ContainerUtil.newLinkedHashMap();
-    for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
+    for (Map.Entry<VirtualFile, Set<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
       groups.put(entry.getKey(),
-                 expandExpandableGroups(myDataHolder.getLogProvider(entry.getKey()).getReferenceManager().group(entry.getValue())));
+                 expandExpandableGroups(myDataManager.getLogProvider(entry.getKey()).getReferenceManager().group(entry.getValue())));
     }
 
     return groups;
@@ -100,7 +98,7 @@ public class BranchesPanel extends JPanel {
   }
 
   public void onFiltersChange(@NotNull VcsLogFilterCollection filters) {
-    myRoots = VcsLogUtil.getAllVisibleRoots(myDataHolder.getRoots(), filters.getRootFilter(), filters.getStructureFilter());
+    myRoots = VcsLogUtil.getAllVisibleRoots(myDataManager.getRoots(), filters.getRootFilter(), filters.getStructureFilter());
     removeAll();
     recreateComponents();
     getParent().validate();

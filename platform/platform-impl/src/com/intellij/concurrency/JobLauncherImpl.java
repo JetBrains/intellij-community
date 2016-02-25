@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import jsr166e.ForkJoinPool;
 import jsr166e.ForkJoinTask;
 import jsr166e.ForkJoinWorkerThread;
@@ -95,6 +96,8 @@ public class JobLauncherImpl extends JobLauncher {
 
     Boolean result = processImmediatelyIfTooFew(things, wrapper, runInReadAction, thingProcessor);
     if (result != null) return result.booleanValue();
+
+    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
 
     ApplierCompleter<T> applier = new ApplierCompleter<>(null, runInReadAction, wrapper, things, thingProcessor, 0, things.size(), null);
     try {
@@ -269,6 +272,8 @@ public class JobLauncherImpl extends JobLauncher {
     // waits for the job to finish execution (when called on a canceled job in the middle of the execution, wait for finish)
     @Override
     public void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException {
+      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
+
       while (!isDone()) {
         try {
           myForkJoinTask.get(millis, TimeUnit.MILLISECONDS);

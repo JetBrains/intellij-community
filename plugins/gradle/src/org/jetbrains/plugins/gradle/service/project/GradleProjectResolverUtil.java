@@ -524,7 +524,8 @@ public class GradleProjectResolverUtil {
     return ExternalSystemApiUtil.find(moduleNode, ProjectKeys.TASK, new BooleanFunction<DataNode<TaskData>>() {
       @Override
       public boolean fun(DataNode<TaskData> node) {
-        return node.getData().getName().equals(taskName);
+        String name = node.getData().getName();
+        return name.equals(taskName) || name.equals(taskPath);
       }
     });
   }

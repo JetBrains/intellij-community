@@ -2,10 +2,13 @@ package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurationBase;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -30,12 +33,11 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
   public JsonSchemaFileProvider[] getProviders(@Nullable Project project) {
     final List<JsonSchemaFileProvider> list = new ArrayList<JsonSchemaFileProvider>();
 
-    //processConfiguration(project, JsonSchemaMappingsApplicationConfiguration.getInstance(), list);
     if (project != null) {
       processConfiguration(project, JsonSchemaMappingsProjectConfiguration.getInstance(project), list);
     }
 
-    return list.toArray(new JsonSchemaFileProvider[list.size()]);
+    return list.isEmpty() ? EMPTY : list.toArray(new JsonSchemaFileProvider[list.size()]);
   }
 
   private static void processConfiguration(@Nullable Project project, @NotNull final JsonSchemaMappingsConfigurationBase configuration,
@@ -49,6 +51,7 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
   }
 
   private static class MyProvider implements JsonSchemaFileProvider, JsonSchemaImportedProviderMarker {
+    @Nullable private final Project myProject;
     @NotNull private final String myName;
     @NotNull private final File myFile;
     @NotNull private final List<Processor<VirtualFile>> myPatterns;
@@ -57,6 +60,7 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
                       @NotNull String name,
                       @NotNull File file,
                       @NotNull List<JsonSchemaMappingsConfigurationBase.Item> patterns) {
+      myProject = project;
       myName = name;
       myFile = file;
       myPatterns = new ArrayList<Processor<VirtualFile>>();
@@ -77,9 +81,19 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
           }
 
           String path = pattern.getPath().replace('\\', '/');
-          final String[] parts = path.split("/");
-          final VirtualFile relativeFile = VfsUtil.findRelativeFile(project.getBaseDir(), parts);
-          if (relativeFile == null) continue;
+          final List<String> parts = ContainerUtil.filter(path.split("/"), new Condition<String>() {
+            @Override
+            public boolean value(String s) {
+              return !".".equals(s);
+            }
+          });
+          final VirtualFile relativeFile;
+          if (parts.isEmpty()) {
+            relativeFile = project.getBaseDir();
+          } else {
+            relativeFile = VfsUtil.findRelativeFile(project.getBaseDir(), ArrayUtil.toStringArray(parts));
+            if (relativeFile == null) continue;
+          }
 
           if (pattern.isDirectory()) {
             myPatterns.add(new Processor<VirtualFile>() {
@@ -108,7 +122,8 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
 
     @Override
     public boolean isAvailable(@NotNull VirtualFile file) {
-      if (file.isDirectory() || !file.isValid()) return false;
+      if (file.isDirectory() || !file.isValid() ||
+          myProject != null && JsonSchemaMappingsProjectConfiguration.getInstance(myProject).isRegisteredSchemaFile(file)) return false;
       for (Processor<VirtualFile> pattern : myPatterns) {
         if (pattern.process(file)) return true;
       }
@@ -125,6 +140,26 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
         LOG.info(e);
         return null;
       }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      MyProvider provider = (MyProvider)o;
+
+      if (!myName.equals(provider.myName)) return false;
+      if (!myFile.equals(provider.myFile)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myName.hashCode();
+      result = 31 * result + myFile.hashCode();
+      return result;
     }
   }
 }

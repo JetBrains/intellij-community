@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -27,7 +26,10 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.impl.*;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +51,7 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
     }
   };
   private TestVcsLogProvider myLogProvider;
-  private VcsLogDataHolder myDataHolder;
+  private VcsLogDataManager myDataManager;
   private Map<Integer, VcsCommitMetadata> myTopDetailsCache;
   private Map<VirtualFile, VcsLogProvider> myLogProviders;
 
@@ -93,10 +95,8 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
   @NotNull
   @Override
   protected Collection<String> getDebugLogCategories() {
-    return Arrays.asList("#" + SingleTaskController.class.getName(),
-                         "#" + VcsLogRefresherImpl.class.getName(),
-                         "#" + VcsLogRefresherTest.class.getName(),
-                         "#" + TestVcsLogProvider.class.getName());
+    return Arrays.asList("#" + SingleTaskController.class.getName(), "#" + VcsLogRefresherImpl.class.getName(),
+                         "#" + VcsLogRefresherTest.class.getName(), "#" + TestVcsLogProvider.class.getName());
   }
 
   public void test_initialize_shows_short_history() throws InterruptedException, ExecutionException, TimeoutException {
@@ -175,8 +175,8 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
     }
   }
 
-  public void test_two_immediately_consecutive_refreshes_causes_only_one_data_pack_update() throws InterruptedException,
-                                                                                                   ExecutionException, TimeoutException {
+  public void test_two_immediately_consecutive_refreshes_causes_only_one_data_pack_update()
+    throws InterruptedException, ExecutionException, TimeoutException {
     initAndWaitForFirstRefresh();
     myLogProvider.blockRefresh();
     myLoader.refresh(Collections.singletonList(myProjectRoot)); // this refresh hangs in VcsLogProvider.readFirstBlock()
@@ -187,9 +187,7 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
     assertTimeout("Second refresh shouldn't cause the data pack update"); // it may also fail in beforehand in set().
   }
 
-  private void initAndWaitForFirstRefresh()
-    throws InterruptedException, ExecutionException, TimeoutException
-  {
+  private void initAndWaitForFirstRefresh() throws InterruptedException, ExecutionException, TimeoutException {
     // wait for the first block and the whole log to complete
     myLoader.readFirstBlock();
     DataPack fullDataPack = myDataWaiter.get();
@@ -202,11 +200,9 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
   }
 
   private VcsLogRefresherImpl createLoader(Consumer<DataPack> dataPackConsumer) {
-    myDataHolder = new VcsLogDataHolder(myProject, myProject, myLogProviders,
-                                                       ServiceManager.getService(myProject, VcsLogSettings.class),
-                                                       ServiceManager.getService(myProject, VcsLogUiProperties.class), Consumer.EMPTY_CONSUMER);
-    return new VcsLogRefresherImpl(myProject, myDataHolder.getHashMap(), myLogProviders, myDataHolder.getUserRegistry(), myTopDetailsCache,
-                                   dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT) {
+    myDataManager = new VcsLogDataManager(myProject, myLogProviders);
+    return new VcsLogRefresherImpl(myProject, myDataManager.getHashMap(), myLogProviders, myDataManager.getUserRegistry(),
+                                   myTopDetailsCache, dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT) {
       @Override
       protected void startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -236,7 +232,7 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
           @NotNull
           @Override
           public Hash fun(Integer integer) {
-            return myDataHolder.getCommitId(integer).getHash();
+            return myDataManager.getCommitId(integer).getHash();
           }
         };
         return new TimedVcsCommitImpl(convertor.fun(commit.getId()), ContainerUtil.map(commit.getParents(), convertor),

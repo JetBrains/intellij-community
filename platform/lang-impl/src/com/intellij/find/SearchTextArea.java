@@ -45,11 +45,15 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-class SearchTextArea extends NonOpaquePanel implements PropertyChangeListener, FocusListener {
+public class SearchTextArea extends NonOpaquePanel implements PropertyChangeListener, FocusListener {
   private final JTextArea myTextArea;
 
   public SearchTextArea(boolean search) {
-    myTextArea = new JTextArea();
+    this(new JTextArea(), search);
+  }
+
+  public SearchTextArea(@NotNull JTextArea textArea,boolean search) {
+    myTextArea = textArea;
     setBorder(JBUI.Borders.empty(6, 6, 6, 8));
     setLayout(new BorderLayout(JBUI.scale(4), 0));
     myTextArea.addPropertyChangeListener("background", this);

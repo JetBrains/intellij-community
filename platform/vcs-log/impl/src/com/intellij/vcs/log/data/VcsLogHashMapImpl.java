@@ -63,6 +63,10 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
     public CommitId findCommitId(@NotNull Condition<CommitId> string) {
       return null;
     }
+
+    @Override
+    public void flush() {
+    }
   };
 
   @NotNull private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);

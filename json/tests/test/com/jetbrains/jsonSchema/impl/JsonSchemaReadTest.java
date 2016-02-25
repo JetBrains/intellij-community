@@ -1,12 +1,17 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.concurrency.Semaphore;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Irina.Chernushina on 8/29/2015.
@@ -59,5 +64,42 @@ public class JsonSchemaReadTest {
     final JsonSchemaReader reader = new JsonSchemaReader();
     final JsonSchemaObject read = reader.read(new FileReader(file));
     Assert.assertTrue(read.getDefinitions().get("common").getProperties().containsKey("id"));
+  }
+
+  @Test
+  public void testReadSchemaWithWrongRequired() throws Exception {
+    testSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/withWrongRequired.json"));
+  }
+
+  @Test
+  public void testReadSchemaWithWrongItems() throws Exception {
+    testSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/withWrongItems.json"));
+  }
+
+  private static void testSchemaReadNotHung(final File file) throws IOException {
+    Assert.assertTrue(file.exists());
+
+    final AtomicBoolean done = new AtomicBoolean();
+    final AtomicReference<IOException> error = new AtomicReference<>();
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        final JsonSchemaReader reader = new JsonSchemaReader();
+        try {
+          reader.read(new FileReader(file));
+          done.set(true);
+        }
+        catch (IOException e) {
+          error.set(e);
+        } finally {
+          semaphore.up();
+        }
+      }
+    }, "read test json schema " + file.getName()).start();
+    semaphore.waitFor(TimeUnit.SECONDS.toMillis(60));
+    if (error.get() != null) throw error.get();
+    Assert.assertTrue("Reading test schema hung!", done.get());
   }
 }

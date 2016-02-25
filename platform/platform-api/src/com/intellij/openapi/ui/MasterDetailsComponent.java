@@ -976,7 +976,8 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
     public void actionPerformed(AnActionEvent e) {
       final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-      final ListPopupStep step = popupFactory.createActionsStep(myActionGroup, e.getDataContext(), false, false,
+      final DataContext dataContext = e.getDataContext();
+      final ListPopupStep step = popupFactory.createActionsStep(myActionGroup, dataContext, false, false,
                                                                 myActionGroup.getTemplatePresentation().getText(), myTree, true,
                                                                 myPreselection != null ? myPreselection.getDefaultIndex() : 0, true);
       final ListPopup listPopup = popupFactory.createListPopup(step);
@@ -984,7 +985,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       if (e instanceof AnActionButton.AnActionEventWrapper) {
         ((AnActionButton.AnActionEventWrapper)e).showPopup(listPopup);
       } else {
-        listPopup.showUnderneathOf(myNorthPanel);
+        listPopup.showInBestPositionFor(dataContext);
       }
     }
   }

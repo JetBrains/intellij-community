@@ -791,10 +791,10 @@ public class JBScrollPane extends JScrollPane {
     }
   }
 
-  private static class AlphaPainter implements RegionPainter<Float> {
+  private static class AlphaPainter extends RegionPainter.Alpha {
     private final float myBase;
     private final float myDelta;
-    private final Color myFillColor;
+    final Color myFillColor;
 
     private AlphaPainter(float base, float delta, Color fill) {
       myBase = base;
@@ -802,28 +802,15 @@ public class JBScrollPane extends JScrollPane {
       myFillColor = fill;
     }
 
-    Composite newComposite(float alpha) {
-      return AlphaComposite.SrcOver.derive(alpha);
-    }
-
-    void paint(Graphics2D g, int x, int y, int width, int height) {
+    @Override
+    protected void paint(Graphics2D g, int x, int y, int width, int height) {
+      g.setColor(myFillColor);
       g.fillRect(x, y, width, height);
     }
 
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
-      if (value != null) {
-        float alpha = myBase + myDelta * value;
-        if (alpha > 0) {
-          Composite old = g.getComposite();
-          g.setComposite(alpha < 1
-                         ? newComposite(alpha)
-                         : AlphaComposite.SrcOver);
-          g.setColor(myFillColor);
-          paint(g, x, y, width, height);
-          g.setComposite(old);
-        }
-      }
+    protected float getAlpha(Float value) {
+      return value != null ? myBase + myDelta * value : 0;
     }
   }
 
@@ -836,7 +823,7 @@ public class JBScrollPane extends JScrollPane {
     }
 
     @Override
-    void paint(Graphics2D g, int x, int y, int width, int height) {
+    protected void paint(Graphics2D g, int x, int y, int width, int height) {
       Object old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -844,6 +831,7 @@ public class JBScrollPane extends JScrollPane {
       height -= myBorder + myBorder;
 
       int arc = Math.min(width, height);
+      g.setColor(myFillColor);
       g.fillRoundRect(x + myBorder, y + myBorder, width, height, arc, arc);
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
     }
@@ -858,7 +846,7 @@ public class JBScrollPane extends JScrollPane {
     }
 
     @Override
-    void paint(Graphics2D g, int x, int y, int width, int height) {
+    protected void paint(Graphics2D g, int x, int y, int width, int height) {
       super.paint(g, x + 1, y + 1, width - 2, height - 2);
       g.setColor(myDrawColor);
       if (Registry.is("ide.scroll.thumb.border.rounded")) {
@@ -879,8 +867,10 @@ public class JBScrollPane extends JScrollPane {
     }
 
     @Override
-    Composite newComposite(float alpha) {
-      return new SubtractComposite(alpha);
+    protected Composite getComposite(float alpha) {
+      return alpha < 1
+             ? new SubtractComposite(alpha)
+             : AlphaComposite.SrcOver;
     }
   }
 

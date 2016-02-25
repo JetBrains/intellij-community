@@ -26,9 +26,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
@@ -63,6 +61,7 @@ public abstract class DocumentCommitProcessor {
                                             @NotNull ModalityState currentModalityState);
 
   protected static class CommitTask {
+    static final Key<Object> CANCEL_REASON = Key.create("CANCEL_REASON");
     @NotNull final Document document;
     @NotNull final Project project;
     private final int modificationSequence; // store initial document modification sequence here to check if it changed later before commit in EDT
@@ -96,8 +95,8 @@ public abstract class DocumentCommitProcessor {
     @Override
     public String toString() {
       return "Doc: " + document + " (\"" + StringUtil.first(document.getImmutableCharSequence(), 40, true).toString().replaceAll("\n", " ") + "\")"
-             + (indicator.isCanceled() ? " (Canceled)" : "")
-             + " Reason: " + reason
+             + (indicator.isCanceled() ? " (Canceled: " + ((UserDataHolder)indicator).getUserData(CANCEL_REASON) + ")":"")
+             +" Reason: " + reason
              + (isStillValid() ? "" : "; changed: old seq="+modificationSequence+", new seq="+ ((DocumentEx)document).getModificationSequence())
         ;
     }
@@ -121,6 +120,15 @@ public abstract class DocumentCommitProcessor {
 
     public boolean isStillValid() {
       return ((DocumentEx)document).getModificationSequence() == modificationSequence;
+    }
+
+    public void cancel(@NotNull Object reason, @NotNull DocumentCommitProcessor commitProcessor) {
+      if (!indicator.isCanceled()) {
+        commitProcessor.log(project, "indicator cancel", this);
+
+        indicator.cancel();
+        ((UserDataHolder)indicator).putUserData(CANCEL_REASON, reason);
+      }
     }
   }
 
@@ -272,9 +280,10 @@ public abstract class DocumentCommitProcessor {
     if (oldFileNode.getTextLength() != document.getTextLength()) {
       final String documentText = document.getText();
       String fileText = file.getText();
-      LOG.error("commitDocument left PSI inconsistent: " + DebugUtil.diagnosePsiDocumentInconsistency(file, document) +
-                "; node len=" + oldFileNode.getTextLength() +
-                "; doc.getText() == file.getText(): " + Comparing.equal(fileText, documentText),
+      boolean sameText = Comparing.equal(fileText, documentText);
+      LOG.error("commitDocument() left PSI inconsistent: " + DebugUtil.diagnosePsiDocumentInconsistency(file, document) +
+                "; node.length=" + oldFileNode.getTextLength() +
+                "; doc.text" + (sameText ? "==" : "!=") + "file.text",
                 new Attachment("file psi text", fileText),
                 new Attachment("old text", documentText));
 

@@ -24,6 +24,7 @@ public class AnswerPlaceholder {
   private String myTaskText;
   private MyInitialState myInitialState;
   private StudyStatus myStatus = StudyStatus.Uninitialized;
+  private boolean mySelected = false;
 
   @Transient private TaskFile myTaskFile;
 
@@ -145,6 +146,14 @@ public class AnswerPlaceholder {
 
   public void setStatus(StudyStatus status) {
     myStatus = status;
+  }
+
+  public boolean getSelected() {
+    return mySelected;
+  }
+
+  public void setSelected(boolean selected) {
+    mySelected = selected;
   }
 
   public static class MyInitialState {

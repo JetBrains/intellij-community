@@ -32,6 +32,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -160,20 +161,7 @@ public class FindManagerImpl extends FindManager {
     final Consumer<FindModel> handler = new Consumer<FindModel>(){
       @Override
       public void consume(FindModel findModel) {
-        String stringToFind = findModel.getStringToFind();
-        if (!StringUtil.isEmpty(stringToFind)) {
-          FindSettings.getInstance().addStringToFind(stringToFind);
-        }
-        if (!findModel.isMultipleFiles()) {
-          setFindWasPerformed();
-        }
-        if (findModel.isReplaceState()) {
-          FindSettings.getInstance().addStringToReplace(findModel.getStringToReplace());
-        }
-        if (findModel.isMultipleFiles() && !findModel.isProjectScope() && findModel.getDirectoryName() != null) {
-          FindSettings.getInstance().addDirectory(findModel.getDirectoryName());
-          myFindInProjectModel.setWithSubdirectories(findModel.isWithSubdirectories());
-        }
+        changeGlobalSettings(findModel);
         okHandler.run();
       }
     };
@@ -193,6 +181,29 @@ public class FindManagerImpl extends FindManager {
       return;
     }
     myFindDialog.show();
+  }
+
+  void changeGlobalSettings(FindModel findModel) {
+    String stringToFind = findModel.getStringToFind();
+    if (!StringUtil.isEmpty(stringToFind)) {
+      FindSettings.getInstance().addStringToFind(stringToFind);
+    }
+    if (!findModel.isMultipleFiles()) {
+      setFindWasPerformed();
+    }
+    if (findModel.isReplaceState()) {
+      FindSettings.getInstance().addStringToReplace(findModel.getStringToReplace());
+    }
+    if (findModel.isMultipleFiles() && !findModel.isProjectScope() && findModel.getDirectoryName() != null) {
+      FindSettings.getInstance().addDirectory(findModel.getDirectoryName());
+      myFindInProjectModel.setWithSubdirectories(findModel.isWithSubdirectories());
+    }
+    FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
+  }
+
+  @Override
+  public void showFindPopup(@NotNull FindModel model, DataContext dataContext) {
+    FindPopupPanel.showBalloon(myProject, model, dataContext);
   }
 
   @Override

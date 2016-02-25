@@ -29,7 +29,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.MergeCommitsHighlighter;
@@ -166,8 +166,8 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
 
     @NotNull
     @Override
-    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUi logUi) {
-      return getInstance(logDataHolder.getProject(), logUi);
+    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataManager logDataManager, @NotNull VcsLogUi logUi) {
+      return getInstance(logDataManager.getProject(), logUi);
     }
 
     @NotNull

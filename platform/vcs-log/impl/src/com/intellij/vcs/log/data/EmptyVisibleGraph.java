@@ -100,6 +100,11 @@ class EmptyVisibleGraph implements VisibleGraph<Integer> {
       public Runnable getGraphUpdater() {
         return null;
       }
+
+      @Override
+      public boolean doJump() {
+        return false;
+      }
     }
   }
 

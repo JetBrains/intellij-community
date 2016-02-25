@@ -89,6 +89,16 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       }
     };
   }
+  
+  @Nullable
+  public static String convertToMethodReference(@Nullable final PsiElement body,
+                                                final PsiParameter[] parameters,
+                                                final PsiType functionalInterfaceType,
+                                                @Nullable PsiElement context) {
+    final PsiCallExpression toConvertCall = canBeMethodReferenceProblem(body, parameters, functionalInterfaceType, context);
+    return createMethodReferenceText(toConvertCall, functionalInterfaceType, parameters);
+
+  }  
 
   @Nullable
   public static PsiCallExpression canBeMethodReferenceProblem(@Nullable final PsiElement body,

@@ -16,7 +16,6 @@
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -28,9 +27,6 @@ public interface VcsLogDataPack {
 
   @NotNull
   VcsLogRefs getRefs();
-
-  @NotNull
-  PermanentGraph<Integer> getPermanentGraph();
 
   @NotNull
   VcsLogFilterCollection getFilters();

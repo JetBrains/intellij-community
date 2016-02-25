@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Map;
 
 public class GraphColorManagerImpl implements GraphColorManager<Integer> {
@@ -36,29 +37,23 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
   private static final Logger LOG = Logger.getInstance(GraphColorManagerImpl.class);
   static final int DEFAULT_COLOR = 0;
 
+  @NotNull private final HeadsComparator myHeadsComparator;
   @NotNull private final RefsModel myRefsModel;
-  @NotNull private final NotNullFunction<Integer, Hash> myHashGetter;
   @NotNull private final Map<VirtualFile, VcsLogRefManager> myRefManagers;
 
-  @NotNull private final LinkedHashMap<Integer, Integer> myErrorWasReported = new LinkedHashMap<Integer, Integer>(10) {
-
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<Integer, Integer> eldest) {
-      return size() > 100;
-    }
-  };
-
-  public GraphColorManagerImpl(@NotNull RefsModel refsModel, @NotNull NotNullFunction<Integer, Hash> hashGetter,
+  public GraphColorManagerImpl(@NotNull RefsModel refsModel,
+                               @NotNull NotNullFunction<Integer, Hash> hashGetter,
                                @NotNull Map<VirtualFile, VcsLogRefManager> refManagers) {
     myRefsModel = refsModel;
-    myHashGetter = hashGetter;
     myRefManagers = refManagers;
+
+    myHeadsComparator = new HeadsComparator(refsModel, refManagers, hashGetter);
   }
 
   @Override
   public int getColorOfBranch(Integer headCommit) {
-    Collection<VcsRef> refs = myRefsModel.refsToCommit(headCommit);
-    if (isEmptyRefs(refs, headCommit)) {
+    Collection<VcsRef> refs = myRefsModel.refsToHead(headCommit);
+    if (myHeadsComparator.isEmptyRefs(refs, headCommit)) {
       return DEFAULT_COLOR;
     }
     VcsRef firstRef = Collections.min(refs, myRefManagers.get(getFirstRoot(refs)).getBranchLayoutComparator());
@@ -67,19 +62,8 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
   }
 
   @NotNull
-  private VirtualFile getFirstRoot(@NotNull Collection<VcsRef> refs) {
+  private static VirtualFile getFirstRoot(@NotNull Collection<VcsRef> refs) {
     return refs.iterator().next().getRoot();
-  }
-
-  private boolean isEmptyRefs(@NotNull Collection<VcsRef> refs, int head) {
-    if (refs.isEmpty()) {
-      if (!myErrorWasReported.containsKey(head)) {
-        myErrorWasReported.put(head, head);
-        LOG.warn("No references found at head " + head + " which corresponds to hash " + myHashGetter.fun(head));
-      }
-      return true;
-    }
-    return false;
   }
 
   @Override
@@ -89,33 +73,70 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
 
   @Override
   public int compareHeads(Integer head1, Integer head2) {
-    if (head1.equals(head2)) {
-      return 0;
+    return myHeadsComparator.compare(head1, head2);
+  }
+
+  public static class HeadsComparator implements Comparator<Integer> {
+    @NotNull private final RefsModel myRefsModel;
+    @NotNull private final Map<VirtualFile, VcsLogRefManager> myRefManagers;
+    @NotNull private final NotNullFunction<Integer, Hash> myHashGetter;
+
+    @NotNull private final LinkedHashMap<Integer, Integer> myErrorWasReported = new LinkedHashMap<Integer, Integer>(10) {
+      @Override
+      protected boolean removeEldestEntry(Map.Entry<Integer, Integer> eldest) {
+        return size() > 100;
+      }
+    };
+
+    public HeadsComparator(@NotNull RefsModel refsModel,
+                           @NotNull Map<VirtualFile, VcsLogRefManager> refManagers,
+                           @NotNull NotNullFunction<Integer, Hash> hashGetter) {
+      myRefsModel = refsModel;
+      myRefManagers = refManagers;
+      myHashGetter = hashGetter;
     }
 
-    Collection<VcsRef> refs1 = myRefsModel.refsToCommit(head1);
-    Collection<VcsRef> refs2 = myRefsModel.refsToCommit(head2);
-    boolean firstEmpty = isEmptyRefs(refs1, head1);
-    boolean secondEmpty = isEmptyRefs(refs2, head2);
-    if (firstEmpty && secondEmpty) {
-      return head1 - head2;
-    }
-    if (firstEmpty) {
-      return 1;
-    }
-    if (secondEmpty) {
-      return -1;
+    public boolean isEmptyRefs(@NotNull Collection<VcsRef> refs, int head) {
+      if (refs.isEmpty()) {
+        if (!myErrorWasReported.containsKey(head)) {
+          myErrorWasReported.put(head, head);
+          LOG.warn("No references found at head " + head + " which corresponds to hash " + myHashGetter.fun(head));
+        }
+        return true;
+      }
+      return false;
     }
 
-    VirtualFile root1 = getFirstRoot(refs1);
-    VirtualFile root2 = getFirstRoot(refs2);
-    VcsLogRefManager refManager1 = myRefManagers.get(root1);
-    VcsLogRefManager refManager2 = myRefManagers.get(root2);
-    if (!refManager1.equals(refManager2)) {
-      return VcsLogUtil.compareRoots(root1, root2);
-    }
+    @Override
+    public int compare(Integer head1, Integer head2) {
+      if (head1.equals(head2)) {
+        return 0;
+      }
 
-    VcsRef bestRef = ContainerUtil.sorted(ContainerUtil.concat(refs1, refs2), refManager1.getBranchLayoutComparator()).get(0);
-    return refs1.contains(bestRef) ? -1 : 1;
+      Collection<VcsRef> refs1 = myRefsModel.refsToHead(head1);
+      Collection<VcsRef> refs2 = myRefsModel.refsToHead(head2);
+      boolean firstEmpty = isEmptyRefs(refs1, head1);
+      boolean secondEmpty = isEmptyRefs(refs2, head2);
+      if (firstEmpty && secondEmpty) {
+        return head1 - head2;
+      }
+      if (firstEmpty) {
+        return 1;
+      }
+      if (secondEmpty) {
+        return -1;
+      }
+
+      VirtualFile root1 = getFirstRoot(refs1);
+      VirtualFile root2 = getFirstRoot(refs2);
+      VcsLogRefManager refManager1 = myRefManagers.get(root1);
+      VcsLogRefManager refManager2 = myRefManagers.get(root2);
+      if (!refManager1.equals(refManager2)) {
+        return VcsLogUtil.compareRoots(root1, root2);
+      }
+
+      VcsRef bestRef = ContainerUtil.sorted(ContainerUtil.concat(refs1, refs2), refManager1.getBranchLayoutComparator()).get(0);
+      return refs1.contains(bestRef) ? -1 : 1;
+    }
   }
 }

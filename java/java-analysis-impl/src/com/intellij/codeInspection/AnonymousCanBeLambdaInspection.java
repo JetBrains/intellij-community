@@ -33,9 +33,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
-import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
@@ -478,7 +476,9 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         final PsiField field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
         if (field != null) {
           final PsiElement resolved = expression.resolve();
-          if (resolved instanceof PsiField && ((PsiField)resolved).getContainingClass() == field.getContainingClass()) {
+          if (resolved instanceof PsiField && 
+              ((PsiField)resolved).getContainingClass() == field.getContainingClass() && 
+              expression.getQualifierExpression() == null) {
             final PsiExpression initializer = ((PsiField)resolved).getInitializer();
             if (initializer == null ||
                 resolved == field ||

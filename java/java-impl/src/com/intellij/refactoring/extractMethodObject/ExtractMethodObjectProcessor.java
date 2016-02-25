@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -49,6 +50,7 @@ import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.duplicates.Match;
@@ -84,6 +86,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private PsiClass myInnerClass;
   private boolean myChangeReturnType;
   private Runnable myCopyMethodToInner;
+
+  private static final Key<Boolean> GENERATED_RETURN = new Key<Boolean>("GENERATED_RETURN");
 
   public ExtractMethodObjectProcessor(Project project, Editor editor, PsiElement[] elements, final String innerClassName) {
     super(project);
@@ -305,7 +309,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       public void visitReturnStatement(final PsiReturnStatement statement) {
         super.visitReturnStatement(statement);
         try {
-          replacementMap.put(statement, myElementFactory.createStatementFromText("return this;", statement));
+          PsiStatement returnThisStatement = myElementFactory.createStatementFromText("return this;", statement);
+          returnThisStatement.putCopyableUserData(GENERATED_RETURN, true);
+          replacementMap.put(statement, returnThisStatement);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -329,7 +335,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
               if (Comparing.strEqual(var.getName(), variable.getName())) {
                 final PsiExpression initializer = var.getInitializer();
                 if (initializer == null) {
-                  replacementMap.put(statement, null);
+                  replacementMap.put(declaredElement, null);
                 }
                 else {
                   replacementMap.put(var, var);
@@ -522,9 +528,44 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     LOG.assertTrue(replacedMethodBody != null);
     final PsiCodeBlock methodBody = getMethod().getBody();
     LOG.assertTrue(methodBody != null);
+    if (isCreateInnerClass()) {
+      adjustTargetClassReferences(methodBody);
+    }
     replacedMethodBody.replace(methodBody);
     PsiUtil.setModifierProperty(newMethod, PsiModifier.STATIC, myInnerClass.hasModifierProperty(PsiModifier.STATIC) && notHasGeneratedFields());
     myInnerMethod = (PsiMethod)myInnerClass.add(newMethod);
+  }
+
+  private void adjustTargetClassReferences(final PsiElement body) throws IncorrectOperationException {
+    PsiManager manager = PsiManager.getInstance(myProject);
+    PsiClass targetClass = getMethod().getContainingClass();
+    body.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitReturnStatement(PsiReturnStatement statement) {
+        if (statement.getCopyableUserData(GENERATED_RETURN) == null) { // do not modify our generated returns
+          super.visitReturnStatement(statement);
+        }
+      }
+
+      @Override
+      public void visitThisExpression(PsiThisExpression expression) {
+        if (expression.getQualifier() == null) {
+          expression.replace(RefactoringChangeUtil.createThisExpression(manager, targetClass));
+        }
+      }
+
+      @Override
+      public void visitSuperExpression(PsiSuperExpression expression) {
+        if (expression.getQualifier() == null) {
+          expression.replace(RefactoringChangeUtil.createSuperExpression(manager, targetClass));
+        }
+      }
+
+      @Override
+      public void visitClass(PsiClass aClass) {
+        // do not visit sub classes
+      }
+    });
   }
 
   private boolean notHasGeneratedFields() {

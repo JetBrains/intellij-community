@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.Disposable;
@@ -29,17 +28,15 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -66,7 +63,7 @@ import java.util.concurrent.TimeUnit;
 public class DocumentCommitThread extends DocumentCommitProcessor implements Runnable, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
 
-  private final ExecutorService executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, JobSchedulerImpl.CORES_COUNT, this);
+  private final ExecutorService executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1, this);
   private final Object lock = new Object();
   private final HashSetQueue<CommitTask> documentsToCommit = new HashSetQueue<CommitTask>();      // guarded by lock
   private final HashSetQueue<CommitTask> documentsToApplyInEDT = new HashSetQueue<CommitTask>();  // guarded by lock
@@ -135,6 +132,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       cancel(reason);
       myEnabled = false;
     }
+    log(null, "disabled", null, reason);
   }
 
   private void enable(@NonNls @NotNull Object reason) {
@@ -142,6 +140,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       myEnabled = true;
       wakeUpQueue();
     }
+    log(null, "enabled", null, reason);
   }
 
   private void wakeUpQueue() {
@@ -203,9 +202,9 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
         assert pair.first.getProject() == project;
       }
       CommitTask newTask = new CommitTask(project, document, oldFileNodes, createProgressIndicator(), reason, currentModalityState);
-      cancelAndRemoveFromDocsToCommit(newTask);
-      cancelAndRemoveCurrentTask(newTask);
-      cancelAndRemoveFromDocsToApplyInEDT(newTask);
+      cancelAndRemoveFromDocsToCommit(newTask, reason);
+      cancelAndRemoveCurrentTask(newTask, reason);
+      cancelAndRemoveFromDocsToApplyInEDT(newTask, reason);
 
       return newTask;
     }
@@ -213,15 +212,16 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
   final StringBuilder log = new StringBuilder();
 
+  @SuppressWarnings({"NonConstantStringShouldBeStringBuffer", "StringConcatenationInLoop"})
   @Override
   public void log(Project project, @NonNls String msg, @Nullable CommitTask task, @NonNls Object... args) {
     if (true) return;
 
     String indent = new SimpleDateFormat("hh:mm:ss:SSSS").format(new Date()) +
       (SwingUtilities.isEventDispatchThread() ?        "-(EDT) " :
-                                                       "-      ");
+                                                       "-(" + Thread.currentThread()+ " ");
     @NonNls
-    String s = indent + msg + (task == null ? " - " : "; task: " + task+" ("+System.identityHashCode(task)+")");
+    String s = indent + msg + (task == null ? " - " : "; task: " + task);
 
     for (Object arg : args) {
       if (!StringUtil.isEmpty(String.valueOf(arg))) {
@@ -279,20 +279,21 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   @TestOnly
   private void cancelAll() {
     synchronized (lock) {
-      cancel("cancel all in tests");
+      String reason = "Cancel all in tests";
+      cancel(reason);
       for (CommitTask commitTask : documentsToCommit) {
-        commitTask.indicator.cancel();
+        commitTask.cancel(reason, this);
         log(commitTask.project, "Removed from background queue", commitTask);
       }
       documentsToCommit.clear();
       for (CommitTask commitTask : documentsToApplyInEDT) {
-        commitTask.indicator.cancel();
+        commitTask.cancel(reason, this);
         log(commitTask.project, "Removed from EDT apply queue (sync commit called)", commitTask);
       }
       documentsToApplyInEDT.clear();
       CommitTask task = currentTask;
       if (task != null) {
-        cancelAndRemoveFromDocsToCommit(task);
+        cancelAndRemoveFromDocsToCommit(task, reason);
       }
       cancel("Sync commit intervened");
       ((BoundedTaskExecutor)executor).clearAndCancelAll();
@@ -312,33 +313,33 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     }
   }
 
-  private void cancelAndRemoveCurrentTask(@NotNull CommitTask newTask) {
+  private void cancelAndRemoveCurrentTask(@NotNull CommitTask newTask, @NotNull Object reason) {
     CommitTask currentTask = this.currentTask;
     if (currentTask != null && currentTask.equals(newTask)) {
-      cancelAndRemoveFromDocsToCommit(currentTask);
-      cancel("Sync commit intervened");
+      cancelAndRemoveFromDocsToCommit(currentTask, reason);
+      cancel(reason);
     }
   }
 
-  private void cancelAndRemoveFromDocsToApplyInEDT(@NotNull CommitTask newTask) {
-    boolean removed = cancelAndRemoveFromQueue(newTask, documentsToApplyInEDT);
+  private void cancelAndRemoveFromDocsToApplyInEDT(@NotNull CommitTask newTask, @NotNull Object reason) {
+    boolean removed = cancelAndRemoveFromQueue(newTask, documentsToApplyInEDT, reason);
     if (removed) {
       log(newTask.project, "Removed from EDT apply queue", newTask);
     }
   }
 
-  private void cancelAndRemoveFromDocsToCommit(@NotNull final CommitTask newTask) {
-    boolean removed = cancelAndRemoveFromQueue(newTask, documentsToCommit);
+  private void cancelAndRemoveFromDocsToCommit(@NotNull final CommitTask newTask, @NotNull Object reason) {
+    boolean removed = cancelAndRemoveFromQueue(newTask, documentsToCommit, reason);
     if (removed) {
       log(newTask.project, "Removed from background queue", newTask);
     }
   }
 
-  private static boolean cancelAndRemoveFromQueue(@NotNull CommitTask newTask, @NotNull HashSetQueue<CommitTask> queue) {
+  private static boolean cancelAndRemoveFromQueue(@NotNull CommitTask newTask, @NotNull HashSetQueue<CommitTask> queue, @NotNull Object reason) {
     CommitTask queuedTask = queue.find(newTask);
     if (queuedTask != null) {
       assert queuedTask != newTask;
-      queuedTask.indicator.cancel();
+      queuedTask.cancel(reason, getInstance());
     }
     return queue.remove(newTask);
   }
@@ -363,6 +364,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     Document document = null;
     Project project = null;
     CommitTask task = null;
+    Object failureReason = null;
     try {
       ProgressIndicator indicator;
       synchronized (lock) {
@@ -395,15 +397,16 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       }
       else {
         final CommitTask commitTask = task;
-        final Runnable[] result = new Runnable[1];
+        final Ref<Pair<Runnable, Object>> result = new Ref<Pair<Runnable, Object>>();
         ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
           @Override
           public void run() {
-            result[0] = commitUnderProgress(commitTask, false);
+            result.set(commitUnderProgress(commitTask, false));
           }
         }, commitTask.indicator);
-        finishRunnable = result[0];
+        finishRunnable = result.get().first;
         success = finishRunnable != null;
+        failureReason = result.get().second;
       }
 
       if (success) {
@@ -412,13 +415,14 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       }
     }
     catch (ProcessCanceledException e) {
-      cancel(e); // leave queue unchanged
-      log(project, "PCE", task, e);
+      cancel(e + " (cancel reason: "+((UserDataHolder)task.indicator).getUserData(CommitTask.CANCEL_REASON)+")"); // leave queue unchanged
       success = false;
+      failureReason = e;
     }
     catch (Throwable e) {
       LOG.error(log.toString(), e);
       cancel(e);
+      failureReason = ExceptionUtil.getThrowableText(e);
     }
 
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -433,7 +437,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
           }
         });
       if (oldFileNodes != null) {
-        doQueue(project, document, oldFileNodes, "re-added on failure", task.myCreationModalityState);
+        doQueue(project, document, oldFileNodes, "re-added on failure: "+failureReason, task.myCreationModalityState);
       }
     }
     synchronized (lock) {
@@ -467,7 +471,8 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     }
     CommitTask task = createNewTaskAndCancelSimilar(project, document, getAllFileNodes(psiFile), "Sync commit", ModalityState.current());
     assert !task.indicator.isCanceled();
-    Runnable finish = commitUnderProgress(task, true);
+    Pair<Runnable, Object> result = commitUnderProgress(task, true);
+    Runnable finish = result.first;
     log(project, "Committed sync", task, finish, task.indicator);
     assert finish != null;
 
@@ -489,28 +494,22 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
   @NotNull
   @Override
   protected ProgressIndicator createProgressIndicator() {
-    return ApplicationManager.getApplication().isUnitTestMode() ? new AbstractProgressIndicatorBase() {
-      @Override
-      public void cancel() {
-        super.cancel();
-        log(null, "indicator cancel", null, this);
-      }
-    } : new StandardProgressIndicatorBase();
+    return new StandardProgressIndicatorBase();
   }
 
   private void startNewTask(@Nullable CommitTask task, @NotNull Object reason) {
     synchronized (lock) { // sync to prevent overwriting
       CommitTask cur = currentTask;
       if (cur != null) {
-        cur.indicator.cancel();
+        cur.cancel(reason, this);
       }
       currentTask = task;
     }
   }
 
-  // returns finish commit Runnable (to be invoked later in EDT), or null on failure
-  @Nullable
-  private Runnable commitUnderProgress(@NotNull final CommitTask task, final boolean synchronously) {
+  // returns (finish commit Runnable (to be invoked later in EDT), null) on success or (null, failure reason) on failure
+  @NotNull
+  private Pair<Runnable, Object> commitUnderProgress(@NotNull final CommitTask task, final boolean synchronously) {
     if (synchronously) {
       assert !task.indicator.isCanceled();
     }
@@ -528,8 +527,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
         if (documentManager.isCommitted(document)) return;
 
         if (!task.isStillValid()) {
-          log(project, "Doc changed", task);
-          task.indicator.cancel();
+          task.cancel("Task invalidated", DocumentCommitThread.this);
           return;
         }
 
@@ -557,16 +555,16 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     }
     else if (!myApplication.tryRunReadAction(runnable)) {
       log(project, "Could not start read action", task, myApplication.isReadAccessAllowed(), Thread.currentThread());
-      return null;
+      return new Pair<Runnable, Object>(null, "Could not start read action");
     }
 
     boolean canceled = task.indicator.isCanceled();
     assert !synchronously || !canceled;
     if (canceled) {
-      return null;
+      return new Pair<Runnable, Object>(null, "Indicator was canceled");
     }
 
-    return new Runnable() {
+    Runnable result = new Runnable() {
       @Override
       public void run() {
         myApplication.assertIsDispatchThread();
@@ -593,17 +591,21 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
           if (synchronously || success) {
             assert !documentManager.isInUncommittedSet(document);
           }
-          if (!success) {
+          if (success) {
+            log(project, "Commit finished", task);
+          }
+          else {
             // add document back to the queue
             queueCommit(project, document, "Re-added back", task.myCreationModalityState);
           }
         }
         catch (Error e) {
-          System.err.println("Log:"+log);
+          System.err.println("Log:" + log);
           throw e;
         }
       }
     };
+    return Pair.create(result, null);
   }
 
   @NotNull

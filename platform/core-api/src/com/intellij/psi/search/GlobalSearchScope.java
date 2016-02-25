@@ -706,11 +706,14 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   private static class FileScope extends GlobalSearchScope implements Iterable<VirtualFile> {
     private final VirtualFile myVirtualFile; // files can be out of project roots
     private final Module myModule;
+    private final boolean mySearchOutsideContent;
 
     private FileScope(@NotNull Project project, VirtualFile virtualFile) {
       super(project);
       myVirtualFile = virtualFile;
-      myModule = virtualFile == null || project.isDefault() ? null : FileIndexFacade.getInstance(project).getModuleForFile(virtualFile);
+      final FileIndexFacade facade = FileIndexFacade.getInstance(project);
+      myModule = virtualFile == null || project.isDefault() ? null : facade.getModuleForFile(virtualFile);
+      mySearchOutsideContent = virtualFile != null && myModule == null && !facade.isInLibraryClasses(virtualFile) && !facade.isInLibrarySource(virtualFile);
     }
 
     @Override
@@ -741,6 +744,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public Iterator<VirtualFile> iterator() {
       return Collections.singletonList(myVirtualFile).iterator();
+    }
+
+    @Override
+    public boolean isSearchOutsideRootModel() {
+      return mySearchOutsideContent;
     }
   }
 

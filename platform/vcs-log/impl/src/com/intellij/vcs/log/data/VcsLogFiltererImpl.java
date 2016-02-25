@@ -23,54 +23,58 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogHashMap;
-import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 
 public class VcsLogFiltererImpl implements VcsLogFilterer {
   private static final Logger LOG = Logger.getInstance(VcsLogFiltererImpl.class);
 
   @NotNull private final SingleTaskController<Request, VisiblePack> myTaskController;
   @NotNull private final VisiblePackBuilder myVisiblePackBuilder;
+  @NotNull private final VcsLogDataManager myDataManager;
 
   @NotNull private VcsLogFilterCollection myFilters;
   @NotNull private PermanentGraph.SortType mySortType;
   @NotNull private CommitCountStage myCommitCount = CommitCountStage.INITIAL;
-  @Nullable private DataPack myDataPack;
   @NotNull private List<MoreCommitsRequest> myRequestsToRun = ContainerUtil.newArrayList();
+  @NotNull private List<VisiblePackChangeListener> myVisiblePackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  @NotNull private volatile VisiblePack myVisiblePack = VisiblePack.EMPTY;
+  private boolean myIsValid = true;
 
-  VcsLogFiltererImpl(@NotNull final Project project,
-                     @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                     @NotNull VcsLogHashMap hashMap,
-                     @NotNull Map<Integer, VcsCommitMetadata> topCommitsDetailsCache,
-                     @NotNull CommitDetailsGetter detailsGetter,
-                     @NotNull final PermanentGraph.SortType initialSortType,
-                     @NotNull final Consumer<VisiblePack> visiblePackConsumer) {
-    myVisiblePackBuilder = new VisiblePackBuilder(providers, hashMap, topCommitsDetailsCache, detailsGetter);
+  public VcsLogFiltererImpl(@NotNull final Project project,
+                            @NotNull VcsLogDataManager dataManager,
+                            @NotNull PermanentGraph.SortType initialSortType) {
+    myDataManager = dataManager;
+    myVisiblePackBuilder = myDataManager.createVisiblePackBuilder();
     myFilters = new VcsLogFilterCollectionImpl(null, null, null, null, null, null, null);
     mySortType = initialSortType;
 
-    myTaskController = new SingleTaskController<Request, VisiblePack>(visiblePackConsumer) {
+    myTaskController = new SingleTaskController<Request, VisiblePack>(new Consumer<VisiblePack>() {
+      @Override
+      public void consume(@NotNull VisiblePack visiblePack) {
+        myVisiblePack = visiblePack;
+        for (VisiblePackChangeListener listener : myVisiblePackChangeListeners) {
+          listener.onVisiblePackChange(visiblePack);
+        }
+      }
+    }) {
       @Override
       protected void startNewBackgroundTask() {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(
-              new MyTask(project, "Applying filters..."));
+            ((ProgressManagerImpl)ProgressManager.getInstance())
+              .runProcessWithProgressAsynchronously(new MyTask(project, "Applying filters..."));
           }
         });
       }
@@ -78,8 +82,23 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   }
 
   @Override
-  public void onRefresh(@NotNull DataPack dataPack) {
-    myTaskController.request(new RefreshRequest(dataPack));
+  public void addVisiblePackChangeListener(@NotNull VisiblePackChangeListener listener) {
+    myVisiblePackChangeListeners.add(listener);
+  }
+
+  @Override
+  public void removeVisiblePackChangeListener(@NotNull VisiblePackChangeListener listener) {
+    myVisiblePackChangeListeners.remove(listener);
+  }
+
+  @Override
+  public void onRefresh() {
+    myTaskController.request(new RefreshRequest());
+  }
+
+  @Override
+  public void invalidate() {
+    myTaskController.request(new InvalidateRequest());
   }
 
   @Override
@@ -97,6 +116,11 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     myTaskController.request(new MoreCommitsRequest(onLoaded));
   }
 
+  @Override
+  public boolean isValid() {
+    return myIsValid;
+  }
+
   private class MyTask extends Task.Backgroundable {
 
     public MyTask(@Nullable Project project, @NotNull String title) {
@@ -111,8 +135,8 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         try {
           visiblePack = getVisiblePack(visiblePack, requests);
         }
-        catch (ProcessCanceledException ignored) {
-          return;
+        catch (ProcessCanceledException reThrown) {
+          throw reThrown;
         }
         catch (Throwable t) {
           LOG.error("Error while filtering log", t);
@@ -122,7 +146,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
       // visible pack can be null (e.g. when filter is set during initialization) => we just remember filters set by user
       myTaskController.taskCompleted(visiblePack);
 
-      if (visiblePack != null) {
+      if (visiblePack != null && myIsValid) {
         final List<MoreCommitsRequest> requestsToRun = myRequestsToRun;
         myRequestsToRun = ContainerUtil.newArrayList();
 
@@ -139,15 +163,14 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
     @Nullable
     private VisiblePack getVisiblePack(@Nullable VisiblePack visiblePack, @NotNull List<Request> requests) {
-      RefreshRequest refreshRequest = ContainerUtil.findLastInstance(requests, RefreshRequest.class);
+      int invalidateRequest = ContainerUtil.lastIndexOfInstance(requests, InvalidateRequest.class);
+      int refreshRequest = ContainerUtil.lastIndexOfInstance(requests, RefreshRequest.class);
+
       FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
       SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
       List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
-      myRequestsToRun.addAll(moreCommitsRequests);
 
-      if (refreshRequest != null) {
-        myDataPack = refreshRequest.dataPack;
-      }
+      myRequestsToRun.addAll(moreCommitsRequests);
       if (filterRequest != null) {
         myFilters = filterRequest.filters;
       }
@@ -155,7 +178,38 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         mySortType = sortTypeRequest.sortType;
       }
 
-      if (myDataPack == null) { // when filter is set during initialization, just remember filters
+      if (!myIsValid) {
+        if (refreshRequest > invalidateRequest) {
+          myIsValid = true;
+          return refresh(visiblePack, filterRequest, moreCommitsRequests);
+        }
+        else {
+          // remember filters
+          return visiblePack;
+        }
+      }
+      else {
+        if (refreshRequest >= invalidateRequest) {
+          return refresh(visiblePack, filterRequest, moreCommitsRequests);
+        }
+        else {
+          myIsValid = false;
+          // invalidate
+          VisiblePack frozenVisiblePack = visiblePack == null ? myVisiblePack : visiblePack;
+          if (filterRequest != null) {
+            frozenVisiblePack = refresh(visiblePack, filterRequest, moreCommitsRequests);
+          }
+          return new FakeVisiblePackBuilder(myDataManager.getHashMap()).build(frozenVisiblePack);
+        }
+      }
+    }
+
+    private VisiblePack refresh(@Nullable VisiblePack visiblePack,
+                                @Nullable FilterRequest filterRequest,
+                                @NotNull List<MoreCommitsRequest> moreCommitsRequests) {
+      DataPack dataPack = myDataManager.getDataPack();
+
+      if (dataPack == DataPack.EMPTY) { // when filter is set during initialization, just remember filters
         return visiblePack;
       }
 
@@ -167,7 +221,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         myCommitCount = myCommitCount.next();
       }
 
-      Pair<VisiblePack, CommitCountStage> pair = myVisiblePackBuilder.build(myDataPack, mySortType, myFilters, myCommitCount);
+      Pair<VisiblePack, CommitCountStage> pair = myVisiblePackBuilder.build(dataPack, mySortType, myFilters, myCommitCount);
       visiblePack = pair.first;
       myCommitCount = pair.second;
       return visiblePack;
@@ -178,11 +232,9 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   }
 
   private static final class RefreshRequest implements Request {
-    private final DataPack dataPack;
+  }
 
-    RefreshRequest(DataPack dataPack) {
-      this.dataPack = dataPack;
-    }
+  private static final class InvalidateRequest implements Request {
   }
 
   private static final class FilterRequest implements Request {

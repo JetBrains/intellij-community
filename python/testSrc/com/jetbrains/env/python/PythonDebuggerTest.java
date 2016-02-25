@@ -263,25 +263,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         eval("x").hasValue("2");
         resume();
         waitForPause();
-        stepIntoMyCode();
-        waitForPause();
-        eval("stopped_in_user_file").hasValue("True");
-      }
-    });
-  }
-
-  public void testStepIntoMyCodeFromLib() throws Exception {
-    runPythonTest(new PyDebuggerTask("/debug", "test_my_code.py") {
-      @Override
-      public void before() throws Exception {
-        toggleBreakpoint(getScriptPath(), 7);
-      }
-
-      @Override
-      public void testing() throws Exception {
-        waitForPause();
-        stepInto();
-        waitForPause();
+        eval("x").hasValue("3");
         stepIntoMyCode();
         waitForPause();
         eval("stopped_in_user_file").hasValue("True");
@@ -441,7 +423,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  private static void createExceptionBreak(IdeaProjectTestFixture fixture,
+  public static void createExceptionBreak(IdeaProjectTestFixture fixture,
                                            boolean notifyOnTerminate,
                                            boolean notifyOnFirst,
                                            boolean ignoreLibraries) {

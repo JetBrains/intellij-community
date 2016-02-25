@@ -37,7 +37,7 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
@@ -155,7 +155,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
         if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) visibility = PsiModifier.PRIVATE;
         VisibilityUtil.setVisibility(modifierList, visibility);
         if (!PsiModifier.PUBLIC.equals(visibility)) {
-          modifierList.addAnnotation(JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION);
+          modifierList.addAnnotation(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION);
         }
       }
 

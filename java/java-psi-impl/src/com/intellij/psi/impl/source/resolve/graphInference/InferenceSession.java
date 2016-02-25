@@ -1175,6 +1175,13 @@ public class InferenceSession {
   }
 
   public void registerIncompatibleErrorMessage(Collection<InferenceVariable> variables, String incompatibleTypesMessage) {
+    variables = new ArrayList<InferenceVariable>(variables);
+    Collections.sort((ArrayList<InferenceVariable>)variables, new Comparator<InferenceVariable>() {
+      @Override
+      public int compare(InferenceVariable v1, InferenceVariable v2) {
+        return Comparing.compare(v1.getName(), v2.getName());
+      }
+    });
     final String variablesEnumeration = StringUtil.join(variables, new Function<InferenceVariable, String>() {
       @Override
       public String fun(InferenceVariable variable) {
@@ -1814,8 +1821,9 @@ public class InferenceSession {
     return myContext;
   }
 
-  public void propagateVariables(Collection<InferenceVariable> variables) {
+  public void propagateVariables(Collection<InferenceVariable> variables, PsiSubstitutor substitution) {
     myInferenceVariables.addAll(variables);
+    myRestoreNameSubstitution = myRestoreNameSubstitution.putAll(substitution);
   }
 
   public PsiType substituteWithInferenceVariables(PsiType type) {
@@ -1824,6 +1832,10 @@ public class InferenceSession {
 
   public PsiSubstitutor getInferenceSubstitution() {
     return myInferenceSubstitution;
+  }
+
+  public PsiSubstitutor getRestoreNameSubstitution() {
+    return myRestoreNameSubstitution;
   }
 
   public InferenceSessionContainer getInferenceSessionContainer() {

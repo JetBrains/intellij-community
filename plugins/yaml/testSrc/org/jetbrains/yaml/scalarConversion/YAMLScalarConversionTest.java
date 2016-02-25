@@ -60,7 +60,7 @@ public class YAMLScalarConversionTest extends LightPlatformCodeInsightFixtureTes
 
     final String text;
     try {
-      text = FileUtil.loadFile(new File(getTestDataPath() + getTestName(true) + ".txt"));
+      text = FileUtil.loadFile(new File(getTestDataPath() + getTestName(true) + ".txt"), true);
     }
     catch (IOException e) {
       fail(e.toString());

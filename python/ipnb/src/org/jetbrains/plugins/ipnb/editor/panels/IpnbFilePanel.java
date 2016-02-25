@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -35,7 +36,9 @@ import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -162,7 +165,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       myIpnbPanels.add(panel);
     }
     else if (cell instanceof IpnbMarkdownCell) {
-      panel = new IpnbMarkdownPanel((IpnbMarkdownCell)cell);
+      panel = new IpnbMarkdownPanel((IpnbMarkdownCell)cell, this);
       addComponent(panel);
     }
     else if (cell instanceof IpnbHeadingCell) {
@@ -369,7 +372,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
               panel = new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)cell);
             }
             else if (cell instanceof IpnbMarkdownCell) {
-              panel = new IpnbMarkdownPanel((IpnbMarkdownCell)cell);
+              panel = new IpnbMarkdownPanel((IpnbMarkdownCell)cell, myParent.getIpnbFilePanel());
             }
             else if (cell instanceof IpnbHeadingCell) {
               panel = new IpnbHeadingPanel((IpnbHeadingCell)cell);
@@ -574,10 +577,18 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   @Override
   public Object getData(String dataId) {
     final IpnbEditablePanel cell = getSelectedCell();
+    if (CommonDataKeys.EDITOR.is(dataId)) {
+      if (cell instanceof IpnbCodePanel) {
+        return ((IpnbCodePanel)cell).getEditor();
+      }
+    }
     if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
       if (cell instanceof IpnbCodePanel) {
         return ((IpnbCodePanel)cell).getEditor();
       }
+    }
+    if (IpnbFileEditor.DATA_KEY.is(dataId)) {
+      return myParent;
     }
     return null;
   }

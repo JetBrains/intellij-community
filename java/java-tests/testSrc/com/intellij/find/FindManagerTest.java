@@ -875,13 +875,19 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testCreateFileMaskCondition() {
-    final Condition<String> condition = createFileMaskCondition("*.java, *.js, !Foo.java, !*.min.js");
+    Condition<String> condition = createFileMaskCondition("*.java, *.js, !Foo.java, !*.min.js");
     assertTrue(condition.value("Bar.java"));
     assertTrue(!condition.value("Bar.javac"));
     assertTrue(!condition.value("Foo.java"));
     assertTrue(!condition.value("Foo.jav"));
     assertTrue(!condition.value("Foo.min.js"));
     assertTrue(condition.value("Foo.js"));
+
+    condition = createFileMaskCondition("!Foo.java");
+    assertTrue(condition.value("Bar.java"));
+    assertTrue(!condition.value("Foo.java"));
+    assertTrue(condition.value("Foo.js"));
+    assertTrue(condition.value("makefile"));
   }
 
   public void testRegExpSearchDoesCheckCancelled() throws InterruptedException {

@@ -45,7 +45,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   private static final Logger LOG = Logger.getInstance(VcsLogRefresherImpl.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final VcsLogHashMapImpl myHashMap;
+  @NotNull private final VcsLogHashMap myHashMap;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
   @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache;
@@ -54,10 +54,10 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
 
   @NotNull private final SingleTaskController<RefreshRequest, DataPack> mySingleTaskController;
 
-  @NotNull private DataPack myDataPack = DataPack.EMPTY;
+  @NotNull private volatile DataPack myDataPack = DataPack.EMPTY;
 
   public VcsLogRefresherImpl(@NotNull final Project project,
-                             @NotNull VcsLogHashMapImpl hashMap,
+                             @NotNull VcsLogHashMap hashMap,
                              @NotNull Map<VirtualFile, VcsLogProvider> providers,
                              @NotNull final VcsUserRegistryImpl userRegistry,
                              @NotNull Map<Integer, VcsCommitMetadata> topCommitsDetailsCache,
@@ -72,14 +72,13 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     myExceptionHandler = exceptionHandler;
     myRecentCommitCount = recentCommitsCount;
 
-    Consumer<DataPack> dataPackUpdater = new Consumer<DataPack>() {
+    mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(new Consumer<DataPack>() {
       @Override
       public void consume(@NotNull DataPack dataPack) {
         myDataPack = dataPack;
         dataPackUpdateHandler.consume(dataPack);
       }
-    };
-    mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(dataPackUpdater) {
+    }) {
       @Override
       protected void startNewBackgroundTask() {
         VcsLogRefresherImpl.this.startNewBackgroundTask(new MyRefreshTask(myDataPack));
@@ -98,6 +97,11 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   }
 
   @NotNull
+  public DataPack getCurrentDataPack() {
+    return myDataPack;
+  }
+
+  @NotNull
   @Override
   public DataPack readFirstBlock() {
     try {
@@ -106,9 +110,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       Map<VirtualFile, Set<VcsRef>> refs = data.getRefs();
       List<GraphCommit<Integer>> compoundList = multiRepoJoin(commits);
       compoundList = compoundList.subList(0, Math.min(myRecentCommitCount, compoundList.size()));
-      DataPack dataPack = DataPack.build(compoundList, refs, myProviders, myHashMap, false);
+      myDataPack = DataPack.build(compoundList, refs, myProviders, myHashMap, false);
       mySingleTaskController.request(RefreshRequest.RELOAD_ALL); // build/rebuild the full log in background
-      return dataPack;
+      return myDataPack;
     }
     catch (VcsException e) {
       myExceptionHandler.consume(e);

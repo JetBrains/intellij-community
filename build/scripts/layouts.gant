@@ -295,9 +295,8 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
           jar("common-javaFX-plugin.jar") {
             module("common-javaFX-plugin")
           }
+          fileset(dir: "${home}/plugins/javaFX/lib", includes: "SceneBuilderKit-8.1.1.jar");
         }
-
-        fileset(dir: "${home}/plugins/javaFX/FxBuilderEmbedder/lib", includes: "embedder.jar");
       }
     }
 

@@ -24,7 +24,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
@@ -128,12 +128,12 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
 
       String className = null;
       if (parentTag instanceof XmlDocument) {
-        className = JavaFxCommonClassNames.JAVAFX_SCENE_LAYOUT_PANE;
+        className = JavaFxCommonNames.JAVAFX_SCENE_LAYOUT_PANE;
       }
       else if (parentTag.getParent() instanceof XmlDocument) {
         final String name = xmlTag.getName();
         if (!FxmlConstants.FX_DEFAULT_ELEMENTS.contains(name)) {
-          className = JavaFxCommonClassNames.JAVAFX_SCENE_NODE;
+          className = JavaFxCommonNames.JAVAFX_SCENE_NODE;
         }
       }
       if (className == null) return null;
