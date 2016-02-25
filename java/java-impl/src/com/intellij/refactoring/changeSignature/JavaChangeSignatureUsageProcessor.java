@@ -1007,7 +1007,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           checkContract(conflictDescriptions, method);
         }
         else if (element instanceof PsiMethodReferenceExpression && MethodReferenceUsageInfo.needToExpand(myChangeInfo)) {
-          conflictDescriptions.putValue(element, "Changed method is used in method reference. Proceeding would result in conversion to lambda expression");
+          conflictDescriptions.putValue(element, RefactoringBundle.message("expand.method.reference.warning"));
         }
       }
 
