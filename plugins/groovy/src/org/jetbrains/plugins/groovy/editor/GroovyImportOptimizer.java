@@ -125,11 +125,13 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         final Document document = documentManager.getDocument(file);
         if (document != null) documentManager.commitDocument(document);
 
+        List<GrImportStatement> existingImports = PsiUtil.getValidImportStatements(file);
+
         for (GrImportStatement statement : tempFile.getImportStatements()) {
           file.addImport(statement);
         }
 
-        for (GrImportStatement importStatement : PsiUtil.getValidImportStatements(file)) {
+        for (GrImportStatement importStatement : existingImports) {
           file.removeImport(importStatement);
         }
       };
