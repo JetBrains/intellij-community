@@ -63,7 +63,6 @@ public class IpnbUtils {
                                           " </script></head><body><div id=\"mydiv\">";
 
   private static final String ourPostfix = "</div></body></html>";
-  private static final MarkdownProcessor ourMarkdownProcessor = new MarkdownProcessor();
   private static URL ourStyleUrl;
 
   public static JComponent createLatexPane(@NotNull final String source, int width) {
@@ -133,7 +132,6 @@ public class IpnbUtils {
     final StringBuilder result = new StringBuilder();
 
     source = replaceLinks(source);
-    source = ourMarkdownProcessor.markdown(source);
 
     boolean escaped = false;
     int start = 0;
