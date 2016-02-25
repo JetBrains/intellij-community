@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.debugger
 import com.intellij.util.Consumer
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.values.ValueManager
-import org.jetbrains.debugger.values.VmAwareValueManager
 
 /**
  * An object that matches the execution state of the VM while suspended
@@ -27,6 +26,7 @@ interface SuspendContext<CALL_FRAME : CallFrame> {
   val state: SuspendState
 
   val script: Script?
+    get() = topFrame?.let { vm.scriptManager.getScript(it) }
 
   /**
    * @return the current exception state, or `null` if current state is
@@ -56,12 +56,16 @@ interface SuspendContext<CALL_FRAME : CallFrame> {
 
   val valueManager: ValueManager
 
+  val vm: Vm
+    get() = throw UnsupportedOperationException()
+
   val workerId: String?
+    get() = null
 }
 
 abstract class ContextDependentAsyncResultConsumer<T>(private val context: SuspendContext<*>) : Consumer<T> {
   override final fun consume(result: T) {
-    val vm = (context.valueManager as VmAwareValueManager<*>).vm
+    val vm = context.vm
     if (vm.attachStateManager.isAttached && !vm.suspendContextManager.isContextObsolete(context)) {
       consume(result, vm)
     }
@@ -71,7 +75,7 @@ abstract class ContextDependentAsyncResultConsumer<T>(private val context: Suspe
 }
 
 
-inline fun <T> Promise<out T>.done(context: SuspendContext<*>, crossinline handler: (result: T) -> Unit) = (this as Promise<T>).done(object : ContextDependentAsyncResultConsumer<T>(context) {
+inline fun <T> Promise<T>.done(context: SuspendContext<*>, crossinline handler: (result: T) -> Unit) = (this).done(object : ContextDependentAsyncResultConsumer<T>(context) {
   override fun consume(result: T, vm: Vm) = handler(result)
 })
 

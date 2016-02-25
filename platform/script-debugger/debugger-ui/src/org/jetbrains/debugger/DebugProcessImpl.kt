@@ -162,7 +162,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   }
 
   protected fun setOverlay(context: SuspendContext<*>) {
-    if (context.workerId == null) {
+    if (context.vm == vm) {
       vm!!.suspendContextManager.setOverlayMessage("Paused in debugger")
     }
   }
