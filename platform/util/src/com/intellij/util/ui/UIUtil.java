@@ -3620,4 +3620,37 @@ public class UIUtil {
     }
     return ComponentStyle.REGULAR;
   }
+
+  /**
+   * KeyEvents for specified keystrokes would be redispatched to target component
+   */
+  public static void redirectKeystrokes(@NotNull Disposable disposable,
+                                        @NotNull final JComponent source,
+                                        @NotNull final JComponent target,
+                                        @NotNull final KeyStroke... keyStrokes) {
+    final KeyAdapter keyAdapter = new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        KeyStroke keyStrokeForEvent = KeyStroke.getKeyStrokeForEvent(e);
+        for (KeyStroke stroke : keyStrokes) {
+          if (!stroke.isOnKeyRelease() && stroke.equals(keyStrokeForEvent)) target.dispatchEvent(e);
+        }
+      }
+
+      @Override
+      public void keyReleased(KeyEvent e) {
+        KeyStroke keyStrokeForEvent = KeyStroke.getKeyStrokeForEvent(e);
+        for (KeyStroke stroke : keyStrokes) {
+          if (stroke.isOnKeyRelease() && stroke.equals(keyStrokeForEvent)) target.dispatchEvent(e);
+        }
+      }
+    };
+    source.addKeyListener(keyAdapter);
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        source.removeKeyListener(keyAdapter);
+      }
+    });
+  }
 }

@@ -35,6 +35,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -45,7 +46,6 @@ import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -102,6 +102,15 @@ import static com.intellij.find.impl.FindDialog.createCheckbox;
 public class FindPopupPanel extends JBPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindPopupPanel");
   private static final KeyStroke OK_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK);
+
+  private static final KeyStroke MOVE_CARET_DOWN = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0);
+  private static final KeyStroke MOVE_CARET_UP = KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0);
+  private static final KeyStroke NEW_LINE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+
+  private static final KeyStroke MOVE_CARET_DOWN_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK);
+  private static final KeyStroke MOVE_CARET_UP_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK);
+  private static final KeyStroke NEW_LINE_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK);
+
   private JComponent myCodePreviewComponent;
   private SearchTextArea mySearchTextArea;
   private SearchTextArea myReplaceTextArea;
@@ -489,27 +498,10 @@ public class FindPopupPanel extends JBPanel {
     new NavigateToSourceListener().installOn(myResultsPreviewTable);
     applyFont(JBUI.Fonts.smallFont(), myCbCaseSensitive, myCbPreserveCase, myCbWholeWordsOnly, myCbRegularExpressions,
               myResultsPreviewTable);
-
-    registerKeyboardAction(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        //if (IdeFocusManager.findInstance().getFocusOwner() == myResultsPreviewTable) return;
-        int row = myResultsPreviewTable.getSelectedRow();
-        if (row >= myResultsPreviewTable.getRowCount() - 1) return;
-        myResultsPreviewTable.getSelectionModel().setSelectionInterval(row + 1, row + 1);
-        TableUtil.scrollSelectionToVisible(myResultsPreviewTable);
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK), WHEN_IN_FOCUSED_WINDOW);
-    registerKeyboardAction(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        //if (IdeFocusManager.findInstance().getFocusOwner() == myResultsPreviewTable) return;
-        int row = myResultsPreviewTable.getSelectedRow();
-        if (row < 1) return;
-        myResultsPreviewTable.getSelectionModel().setSelectionInterval(row - 1, row - 1);
-        TableUtil.scrollSelectionToVisible(myResultsPreviewTable);
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK), WHEN_IN_FOCUSED_WINDOW);
+    KeymapUtil.reassignAction(mySearchComponent, MOVE_CARET_DOWN, MOVE_CARET_DOWN_ALTERNATIVE, WHEN_IN_FOCUSED_WINDOW);
+    KeymapUtil.reassignAction(mySearchComponent, MOVE_CARET_UP, MOVE_CARET_UP_ALTERNATIVE, WHEN_IN_FOCUSED_WINDOW);
+    KeymapUtil.reassignAction(mySearchComponent, NEW_LINE, NEW_LINE_ALTERNATIVE, WHEN_IN_FOCUSED_WINDOW);
+    UIUtil.redirectKeystrokes(myDisposable, mySearchComponent, myResultsPreviewTable, MOVE_CARET_UP, MOVE_CARET_DOWN, NEW_LINE);
 
 
     myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation()) {
@@ -574,7 +566,7 @@ public class FindPopupPanel extends JBPanel {
   private static final int POPUP_MAX_WIDTH = 600;
 
   private void scheduleUpdateResultsPopupBounds() {
-    if (myUpdateResultsPopupBoundsAlarm == null) return;
+    if (myUpdateResultsPopupBoundsAlarm == null || myUpdateResultsPopupBoundsAlarm.isDisposed()) return;
     boolean later = myUpdateResultsPopupBoundsAlarm.getActiveRequestCount() > 0;
 
     myUpdateResultsPopupBoundsAlarm.cancelAllRequests();
@@ -785,7 +777,7 @@ public class FindPopupPanel extends JBPanel {
 
   private void scheduleResultsUpdate() {
     if (myFindBalloon == null || !myFindBalloon.isVisible()) return;
-    if (mySearchRescheduleOnCancellationsAlarm == null) return;
+    if (mySearchRescheduleOnCancellationsAlarm == null || mySearchRescheduleOnCancellationsAlarm.isDisposed()) return;
     mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
     mySearchRescheduleOnCancellationsAlarm.addRequest(new Runnable() {
       @Override
@@ -1208,8 +1200,7 @@ public class FindPopupPanel extends JBPanel {
 
         String key = "navigate.to.usage";
         JComponent component = (JComponent)c;
-        component.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-                                                                                 key);
+        component.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(NEW_LINE, key);
         component.getActionMap().put(key, new AbstractAction() {
           @Override
           public void actionPerformed(ActionEvent e) {
@@ -1236,8 +1227,7 @@ public class FindPopupPanel extends JBPanel {
 
     if (navigations != null) {
       applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
-      Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(this);
-      if (balloon != null) balloon.hide();
+      myFindBalloon.cancel();
 
       navigations.get(0).navigate(true);
       for (int i = 1; i < navigations.size(); ++i) navigations.get(i).highlightInEditor();
