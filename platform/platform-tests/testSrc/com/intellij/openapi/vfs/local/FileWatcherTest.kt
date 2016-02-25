@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs.local
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
@@ -27,11 +26,10 @@ import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.impl.local.FileWatcher
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
-import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.runInEdtAndWait
@@ -75,6 +73,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     fs = LocalFileSystem.getInstance()
     root = refresh(tempDir.root)
 
+    runInEdtAndWait { VirtualFileManager.getInstance().syncRefresh() }
+
     watcher = (fs as LocalFileSystemImpl).fileWatcher
     assertFalse(watcher.isOperational)
     watcher.startup {
@@ -95,9 +95,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     wait { watcher.isOperational }
 
     runInEdtAndWait {
-      runWriteAction {
-        root.delete(this)
-      }
+      runWriteAction { root.delete(this) }
       (fs as LocalFileSystemImpl).cleanupForNextTest()
     }
 
@@ -547,26 +545,10 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watcherEvents.up()
     LOG.debug("** done waiting")
 
-    val allEvents = arrayListOf<VFileEvent>()
-    val connection = ApplicationManager.getApplication().messageBus.connect()
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener.Adapter() {
-      override fun after(events: List<VFileEvent>) {
-        allEvents.addAll(events)
-      }
-    })
-    fs.refresh(false)
-    connection.disconnect()
+    val events = VfsTestUtil.getEvents { fs.refresh(false) }
 
     val expected = expectedOps.entries.map { "${it.value} : ${FileUtil.toSystemIndependentName(it.key.path)}" }.sorted()
-    val actual = allEvents.map { "${eventType(it)} : ${it.file?.path}" }.sorted()
+    val actual = VfsTestUtil.print(events).sorted()
     assertEquals(expected, actual)
-  }
-
-  private fun eventType(e: VFileEvent): Char = when (e) {
-    is VFileCreateEvent -> 'C'
-    is VFileDeleteEvent -> 'D'
-    is VFileContentChangeEvent -> 'U'
-    is VFilePropertyChangeEvent -> 'P'
-    else -> '?'
   }
 }
