@@ -316,6 +316,8 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
       throw new RuntimeException(output(), e);
     }
     finally {
+      doFinally();
+      
       clearAllBreakpoints();
 
       setProcessCanTerminate(true);

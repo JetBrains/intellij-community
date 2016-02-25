@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
@@ -49,9 +50,22 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
         PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setSaveCallSignatures(true);
       }
 
-      @Override
-      public void after() throws Exception {
+      public void doFinally() {
+        try {
+          PySignatureCacheManagerImpl.CALL_SIGNATURES_ATTRIBUTE.writeAttributeBytes(getVirtualFile(), "".getBytes());
+        }
+        catch (IOException e) {
+          //pass
+        }
         PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setSaveCallSignatures(false);
+      }
+
+      private VirtualFile getVirtualFile() {
+        return LocalFileSystem.getInstance()
+          .refreshAndFindFileByPath(
+            getTestDataPath() +
+            "/dynamicTypes/" +
+            scriptName);
       }
 
       @Override
@@ -63,13 +77,10 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
 
           try {
             //copy signature attributes from real file to temporary test file
+            byte[] bytes = PySignatureCacheManagerImpl.CALL_SIGNATURES_ATTRIBUTE
+              .readAttributeBytes(getVirtualFile());
             PySignatureCacheManagerImpl.CALL_SIGNATURES_ATTRIBUTE.writeAttributeBytes(myFixture.getFile().getVirtualFile(),
-                                                                                      PySignatureCacheManagerImpl.CALL_SIGNATURES_ATTRIBUTE
-                                                                                        .readAttributeBytes(LocalFileSystem.getInstance()
-                                                                                                              .refreshAndFindFileByPath(
-                                                                                                                getTestDataPath() +
-                                                                                                                "/dynamicTypes/" +
-                                                                                                                scriptName)));
+                                                                                      bytes);
           }
           catch (IOException e) {
             throw new RuntimeException(e);
