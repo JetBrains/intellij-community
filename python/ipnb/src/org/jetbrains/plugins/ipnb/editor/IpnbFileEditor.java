@@ -183,7 +183,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
       public void actionPerformed(ActionEvent e) {
         IpnbReloadKernelAction.reloadKernel(IpnbFileEditor.this);
       }
-    }, AllIcons.Actions.Refresh, "Restart kernel");
+    }, AllIcons.Actions.Refresh, "Restart Kernel");
   }
 
   private void addSaveButton(@NotNull final JPanel controlPanel) {
