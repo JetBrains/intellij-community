@@ -18,7 +18,6 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -80,9 +79,7 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
       final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(element.getContainingFile());
 
       final PsiClass targetPropertyClass = JavaFxPsiUtil.getPropertyClass(xmlAttributeValue);
-      final boolean isConvertible = targetPropertyClass != null &&
-                                    (Comparing.strEqual(targetPropertyClass.getQualifiedName(), CommonClassNames.JAVA_LANG_STRING)
-                                     || JavaFxPsiUtil.findValueOfMethod(targetPropertyClass) != null);
+      final boolean isConvertible = targetPropertyClass != null && JavaFxPsiUtil.hasConversionFromAnyType(targetPropertyClass);
 
       final Map<String, TypeMatch> typeMatches = fileIds.entrySet().stream().collect(
         Collectors.toMap(Map.Entry::getKey, e -> {

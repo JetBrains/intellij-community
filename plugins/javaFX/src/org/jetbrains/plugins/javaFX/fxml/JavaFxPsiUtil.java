@@ -679,6 +679,11 @@ public class JavaFxPsiUtil {
     return null;
   }
 
+  public static boolean hasConversionFromAnyType(@NotNull PsiClass targetClass) {
+    return Comparing.strEqual(targetClass.getQualifiedName(), CommonClassNames.JAVA_LANG_STRING)
+           || findValueOfMethod(targetClass) != null;
+  }
+
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {
     private final Project myProject;
     private final PsiFile myContainingFile;
