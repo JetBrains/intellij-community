@@ -101,10 +101,13 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   public int getBackendPoolExecutorSize() {
-    return ((ThreadPoolExecutor)backendExecutorService).getPoolSize();
+    return ((BackendThreadPoolExecutor)backendExecutorService).getPoolSize();
   }
   void setBackendPoolCorePoolSize(int size) {
     ((BackendThreadPoolExecutor)backendExecutorService).doSetCorePoolSize(size);
+  }
+  int getBackendPoolCorePoolSize() {
+    return ((BackendThreadPoolExecutor)backendExecutorService).getCorePoolSize();
   }
 
   private static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
