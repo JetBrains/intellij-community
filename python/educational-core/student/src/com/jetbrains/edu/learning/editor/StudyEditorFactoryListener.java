@@ -30,11 +30,9 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
 
   private static class WindowSelectionListener extends EditorMouseAdapter {
     private final TaskFile myTaskFile;
-    private AnswerPlaceholder myAnswerPlaceholderWithSelection;
 
-    WindowSelectionListener(@NotNull final TaskFile taskFile, AnswerPlaceholder placeholder) {
+    WindowSelectionListener(@NotNull final TaskFile taskFile) {
       myTaskFile = taskFile;
-      myAnswerPlaceholderWithSelection = placeholder;
     }
 
     @Override
@@ -43,16 +41,12 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
       final Point point = e.getMouseEvent().getPoint();
       final LogicalPosition pos = editor.xyToLogicalPosition(point);
       final AnswerPlaceholder answerPlaceholder = myTaskFile.getAnswerPlaceholder(editor.getDocument(), pos);
-      if (answerPlaceholder != null) {
-       if (myAnswerPlaceholderWithSelection != null && myAnswerPlaceholderWithSelection == answerPlaceholder) {
-         editor.getSelectionModel().removeSelection();
-         myAnswerPlaceholderWithSelection = null;
-       } else {
-         int startOffset = answerPlaceholder.getRealStartOffset(editor.getDocument());
-         editor.getSelectionModel().setSelection(startOffset, startOffset + answerPlaceholder.getLength());
-         myAnswerPlaceholderWithSelection = answerPlaceholder;
-       }
+      if (answerPlaceholder == null || answerPlaceholder.getSelected()) {
+        return;
       }
+      int startOffset = answerPlaceholder.getRealStartOffset(editor.getDocument());
+      editor.getSelectionModel().setSelection(startOffset, startOffset + answerPlaceholder.getLength());
+      answerPlaceholder.setSelected(true);
     }
   }
 
@@ -86,10 +80,7 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
                     StudyNavigator.navigateToFirstAnswerPlaceholder(editor, taskFile);
                     StudyEditor.addDocumentListener(document, new EduDocumentListener(taskFile));
                     StudyUtils.drawAllWindows(editor, taskFile);
-                    AnswerPlaceholder first = StudyUtils.getFirst(taskFile.getAnswerPlaceholders());
-                    int offset = first.getRealStartOffset(document);
-                    editor.getSelectionModel().setSelection(offset, offset + first.getLength());
-                    editor.addEditorMouseListener(new WindowSelectionListener(taskFile, first));
+                    editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
                   }
                 }
               }

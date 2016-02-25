@@ -395,7 +395,35 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       }
     }
 
-    if (data == null) data = content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
+    if (data == null) {
+      data = content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
+      if (DebugAssertions.EXTRA_SANITY_CHECKS) {
+
+        for(Map.Entry<Key, Value> e: data.entrySet()) {
+          final Value value = e.getValue();
+          if (!(Comparing.equal(value, value) && (value == null || value.hashCode() == value.hashCode()))) {
+            LOG.error("Index %s violates equals / hashCode contract for Value parameter", myIndexId.toString());
+          }
+
+          if (myValueExternalizer != null) {
+            try {
+              final BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
+              DataOutputStream outputStream = new DataOutputStream(out);
+              myValueExternalizer.save(outputStream, value);
+              outputStream.close();
+              final Value deserializedValue =
+                myValueExternalizer.read(new DataInputStream(new UnsyncByteArrayInputStream(out.getInternalBuffer(), 0, out.size())));
+
+              if (!(Comparing.equal(value, deserializedValue) && (value == null || value.hashCode() == deserializedValue.hashCode()))) {
+                LOG.error("Index %s violates equals / hashCode contract for Value parameter", myIndexId.toString());
+              }
+            } catch (IOException ex) {
+              LOG.error(ex);
+            }
+          }
+        }
+      }
+    }
 
     if (hashId != null && !havePersistentData) {
       boolean saved = savePersistentData(data, hashId, skippedReadingPersistentDataButMayHaveIt);

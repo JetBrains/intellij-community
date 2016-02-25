@@ -243,6 +243,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       assert Main.isCommandLine();
       new IdeaApplication(args);
     }
+    gatherWriteActionStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
+    writePauses = gatherWriteActionStatistics ? new PausesStat("Write action") : null;
   }
 
   private void registerShutdownHook() {
@@ -1217,8 +1219,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myWriteActionPending;
   }
 
-  private final boolean gatherWriteActionStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
-  private final PausesStat writePauses = gatherWriteActionStatistics ? new PausesStat("Write action") : null;
+  private final boolean gatherWriteActionStatistics;
+  private final PausesStat writePauses;
 
   private void startWrite(/*@NotNull*/ Class clazz) {
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
