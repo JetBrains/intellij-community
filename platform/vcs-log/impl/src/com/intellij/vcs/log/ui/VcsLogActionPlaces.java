@@ -21,6 +21,5 @@ public class VcsLogActionPlaces {
   public static final String SETTINGS_ACTION_GROUP = "Vcs.Log.Settings";
   public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
   public static final String VCS_LOG_INTELLI_SORT_ACTION = "Vcs.Log.IntelliSortChooser";
-  public static final String VCS_LOG_REFRESH_ACTION = "Vcs.Log.Refresh";
   public static final String VCS_LOG_QUICK_SETTINGS_ACTION = "Vcs.Log.QuickSettings";
 }
