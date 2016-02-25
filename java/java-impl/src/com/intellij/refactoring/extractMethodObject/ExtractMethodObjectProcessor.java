@@ -335,7 +335,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
               if (Comparing.strEqual(var.getName(), variable.getName())) {
                 final PsiExpression initializer = var.getInitializer();
                 if (initializer == null) {
-                  replacementMap.put(statement, null);
+                  replacementMap.put(declaredElement, null);
                 }
                 else {
                   replacementMap.put(var, var);
