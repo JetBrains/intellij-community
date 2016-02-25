@@ -46,9 +46,9 @@ public class VcsNotifier {
   }
 
   @NotNull
-  private static Notification createNotification(@NotNull NotificationGroup notificationGroup,
-                                                 @NotNull String title, @NotNull String message, @NotNull NotificationType type,
-                                                 @Nullable NotificationListener listener) {
+  public static Notification createNotification(@NotNull NotificationGroup notificationGroup,
+                                                @NotNull String title, @NotNull String message, @NotNull NotificationType type,
+                                                @Nullable NotificationListener listener) {
     // title can be empty; message can't be neither null, nor empty
     if (StringUtil.isEmptyOrSpaces(message)) {
       message = title;
