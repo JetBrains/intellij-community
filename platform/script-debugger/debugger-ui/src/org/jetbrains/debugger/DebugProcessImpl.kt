@@ -116,7 +116,8 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
 
   override final fun startStepInto() {
     updateLastCallFrame()
-    continueVm(if (vm!!.captureAsyncStackTraces) StepAction.IN_ASYNC else StepAction.IN)
+    val vm = vm!!
+    continueVm(vm, if (vm.captureAsyncStackTraces) StepAction.IN_ASYNC else StepAction.IN)
   }
 
   override final fun startStepOut() {
@@ -136,11 +137,13 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     continueVm(StepAction.CONTINUE)
   }
 
+  protected open fun continueVm(stepAction: StepAction) = continueVm(vm!!, stepAction)
+
   /**
    * You can override this method to avoid SuspendContextManager implementation, but it is not recommended.
    */
-  protected open fun continueVm(stepAction: StepAction): Promise<*>? {
-    val suspendContextManager = vm!!.suspendContextManager
+  protected open fun continueVm(vm: Vm, stepAction: StepAction): Promise<*>? {
+    val suspendContextManager = vm.suspendContextManager
     if (stepAction === StepAction.CONTINUE) {
       if (suspendContextManager.context == null) {
         // on resumed we ask session to resume, and session then call our "resume", but we have already resumed, so, we don't need to send "continue" message
