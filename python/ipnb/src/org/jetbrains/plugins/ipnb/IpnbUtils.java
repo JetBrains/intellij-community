@@ -6,7 +6,10 @@ import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.MarkdownUtil;
 import com.intellij.util.ui.UIUtil;
+import com.petebevin.markdown.MarkdownProcessor;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
@@ -34,6 +37,7 @@ import java.awt.event.MouseWheelEvent;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,6 +63,7 @@ public class IpnbUtils {
                                           " </script></head><body><div id=\"mydiv\">";
 
   private static final String ourPostfix = "</div></body></html>";
+  private static final MarkdownProcessor ourMarkdownProcessor = new MarkdownProcessor();
   private static URL ourStyleUrl;
 
   public static JComponent createLatexPane(@NotNull final String source, int width) {
@@ -119,9 +124,17 @@ public class IpnbUtils {
   }
 
   private static String convertToHtml(@NotNull String source) {
+    source = StringUtil.replace(source, "class=\"alert alert-success\"", "class=\"alert-success\"");
+    source = StringUtil.replace(source, "class=\"alert alert-error\"", "class=\"alert-error\"");
+    ArrayList<String> lines = ContainerUtil.newArrayList(source.split("\n|\r|\r\n"));
+
+    MarkdownUtil.replaceHeaders(lines);
+    source = StringUtil.join(lines, "\n");
     final StringBuilder result = new StringBuilder();
 
     source = replaceLinks(source);
+    source = ourMarkdownProcessor.markdown(source);
+
     boolean escaped = false;
     int start = 0;
     int end = StringUtil.indexOf(source, "```");
@@ -133,7 +146,6 @@ public class IpnbUtils {
       end = StringUtil.indexOf(source, "```", end + 1);
     }
     result.append(source.substring(start));
-
 
     return result.toString();
   }
