@@ -57,6 +57,9 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
     if (PsiJavaPatterns.psiElement().afterLeaf("def").accepts(contextElement)) {
       return ThreeState.YES;
     }
+    if (contextElement.textMatches("..") || contextElement.textMatches("...")) {
+      return ThreeState.YES;
+    }
 
     return ThreeState.UNSURE;
   }
