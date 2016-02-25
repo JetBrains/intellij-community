@@ -91,9 +91,11 @@ import java.util.*;
 import java.util.List;
 
 /**
+ * Class should be final and singleton since some code checks its instance by ref.
+ *
  * @author yole
  */
-public class PythonSdkType extends SdkType {
+public final class PythonSdkType extends SdkType {
   public static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
@@ -110,13 +112,10 @@ public class PythonSdkType extends SdkType {
     return SdkType.findInstance(PythonSdkType.class);
   }
 
-  public PythonSdkType() {
+  private PythonSdkType() {
     super("Python SDK");
   }
 
-  protected PythonSdkType(@NonNls String name) {
-    super(name);
-  }
 
   public Icon getIcon() {
     return PythonIcons.Python.Python;
