@@ -18,7 +18,7 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.ide.IdeTooltip;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon.Position;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -43,6 +44,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.JRootPane;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -196,8 +198,8 @@ public class ParameterInfoController implements Disposable {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
         if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName())) {
-          final LookupImpl lookup = (LookupImpl)evt.getNewValue();
-          if (lookup != null && lookup.isShown()) {
+          Lookup lookup = (Lookup)evt.getNewValue();
+          if (lookup != null) {
             adjustPositionForLookup(lookup);
           }
         }
@@ -227,15 +229,27 @@ public class ParameterInfoController implements Disposable {
       return;
     }
 
-    HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    short constraint = lookup.isPositionedAboveCaret() ? HintManager.UNDER : HintManager.ABOVE;
-    Point p = hintManager.getHintPosition(myHint, myEditor, constraint);
-    //Dimension hintSize = myHint.getComponent().getPreferredSize();
-    //JLayeredPane layeredPane = myEditor.getComponent().getRootPane().getLayeredPane();
-    //p.x = Math.min(p.x, layeredPane.getWidth() - hintSize.width);
-    //p.x = Math.max(p.x, 0);
-    myHint.pack();
-    myHint.updateLocation(p.x, p.y);
+    IdeTooltip tooltip = myHint.getCurrentIdeTooltip();
+    if (tooltip != null) {
+      JRootPane root = myEditor.getComponent().getRootPane();
+      if (root != null) {
+        Point p = tooltip.getShowingPoint().getPoint(root.getLayeredPane());
+        if (lookup.isPositionedAboveCaret()) {
+          if (Position.above == tooltip.getPreferredPosition()) {
+            myHint.pack();
+            myHint.updatePosition(Position.below);
+            myHint.updateLocation(p.x, p.y + tooltip.getPositionChangeY());
+          }
+        }
+        else {
+          if (Position.below == tooltip.getPreferredPosition()) {
+            myHint.pack();
+            myHint.updatePosition(Position.above);
+            myHint.updateLocation(p.x, p.y - tooltip.getPositionChangeY());
+          }
+        }
+      }
+    }
   }
 
   private void addAlarmRequest(){
@@ -274,12 +288,30 @@ public class ParameterInfoController implements Disposable {
       myHandler.updateParameterInfo(elementForUpdating, context);
       if (!myDisposed && myHint.isVisible() && myEditor.getComponent().getRootPane() != null) {
         myComponent.update();
-        Pair<Point,Short> pos = myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating, offset, true, HintManager.UNDER);
+        IdeTooltip tooltip = myHint.getCurrentIdeTooltip();
+        short position = tooltip != null
+                         ? toShort(tooltip.getPreferredPosition())
+                         : HintManager.UNDER;
+        Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating, offset, true, position);
         HintManagerImpl.adjustEditorHintPosition(myHint, myEditor, pos.getFirst(), pos.getSecond());
       }
     }
     else {
       context.removeHint();
+    }
+  }
+
+  @HintManager.PositionFlags
+  private static short toShort(Position position) {
+    switch (position) {
+      case above:
+        return HintManager.ABOVE;
+      case atLeft:
+        return HintManager.LEFT;
+      case atRight:
+        return HintManager.RIGHT;
+      default:
+        return HintManager.UNDER;
     }
   }
 
