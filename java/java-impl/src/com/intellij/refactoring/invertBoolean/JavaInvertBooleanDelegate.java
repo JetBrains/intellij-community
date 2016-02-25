@@ -265,7 +265,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
     for (UsageInfo info : usageInfos) {
       final PsiElement element = info.getElement();
       if (element instanceof PsiMethodReferenceExpression) {
-        conflicts.putValue(element, "Method is used in method reference expression. Proceeding would result in conversion to lambda expression");
+        conflicts.putValue(element, RefactoringBundle.message("expand.method.reference.warning"));
       }
     }
   }
