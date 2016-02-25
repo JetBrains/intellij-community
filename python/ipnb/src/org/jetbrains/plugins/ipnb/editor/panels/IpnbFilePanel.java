@@ -162,7 +162,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       myIpnbPanels.add(panel);
     }
     else if (cell instanceof IpnbMarkdownCell) {
-      panel = new IpnbMarkdownPanel((IpnbMarkdownCell)cell);
+      panel = new IpnbMarkdownPanel((IpnbMarkdownCell)cell, this);
       addComponent(panel);
     }
     else if (cell instanceof IpnbHeadingCell) {
@@ -369,7 +369,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
               panel = new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)cell);
             }
             else if (cell instanceof IpnbMarkdownCell) {
-              panel = new IpnbMarkdownPanel((IpnbMarkdownCell)cell);
+              panel = new IpnbMarkdownPanel((IpnbMarkdownCell)cell, myParent.getIpnbFilePanel());
             }
             else if (cell instanceof IpnbHeadingCell) {
               panel = new IpnbHeadingPanel((IpnbHeadingCell)cell);
