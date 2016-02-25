@@ -5,12 +5,14 @@ import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.idea.RareLogger;
-import com.intellij.json.JsonFileType;
+import com.intellij.json.JsonLanguage;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -111,12 +113,16 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Nullable
   private CodeInsightProviders getWrapper(@Nullable VirtualFile file) {
-    if (file != null && !JsonFileType.INSTANCE.equals(file.getFileType())) return null;
-    final List<JsonSchemaObjectCodeInsightWrapper> wrappers = getWrappers(file);
-    if (wrappers == null || wrappers.isEmpty()) {
-      return null;
+    if (file == null) return null;
+    final FileType type = file.getFileType();
+    if (type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(JsonLanguage.INSTANCE)) {
+      final List<JsonSchemaObjectCodeInsightWrapper> wrappers = getWrappers(file);
+      if (wrappers == null || wrappers.isEmpty()) {
+        return null;
+      }
+      return (wrappers.size() == 1 ? wrappers.get(0) : new CompositeCodeInsightProviderWithWarning(wrappers));
     }
-    return (wrappers.size() == 1 ? wrappers.get(0) : new CompositeCodeInsightProviderWithWarning(wrappers));
+    return null;
   }
 
   @Nullable
