@@ -217,7 +217,7 @@ public abstract class LightToolWindowManager implements ProjectComponent {
 
   protected final Object getContent(@NotNull DesignerEditorPanelFacade designer) {
     LightToolWindow toolWindow = (LightToolWindow)designer.getClientProperty(getComponentName());
-    return toolWindow.getContent();
+    return toolWindow == null ? null : toolWindow.getContent();
   }
 
   protected abstract LightToolWindow createContent(@NotNull DesignerEditorPanelFacade designer);

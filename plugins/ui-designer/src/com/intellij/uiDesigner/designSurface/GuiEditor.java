@@ -485,8 +485,13 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   public void refreshAndSave(final boolean forceSync) {
+    DesignerToolWindow toolWindow = DesignerToolWindowManager.getInstance(this);
+    if (toolWindow == null) {
+      return;
+    }
+
     // Update property inspector
-    final PropertyInspector propertyInspector = DesignerToolWindowManager.getInstance(this).getPropertyInspector();
+    final PropertyInspector propertyInspector = toolWindow.getPropertyInspector();
     if (propertyInspector != null) {
       propertyInspector.synchWithTree(forceSync);
     }
@@ -535,7 +540,9 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     // Standard Swing cut/copy/paste actions should work if user is editing something inside property inspector
     Project project = getProject();
     if (project.isDisposed()) return null;
-    final PropertyInspector inspector = DesignerToolWindowManager.getInstance(this).getPropertyInspector();
+    DesignerToolWindow toolWindow = DesignerToolWindowManager.getInstance(this);
+    if (toolWindow == null) return null;
+    final PropertyInspector inspector = toolWindow.getPropertyInspector();
     if (inspector != null && inspector.isEditing()) {
       return null;
     }
