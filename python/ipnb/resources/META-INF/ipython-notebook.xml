@@ -52,6 +52,10 @@
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbCodeCellAction" id="IpnbCodeCellAction" text="Code Cell">
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift s"/>
     </action>
+    <action id="NewIPynbFile" class="org.jetbrains.plugins.ipnb.editor.actions.IpnbCreateFileAction">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewPythonFile"/>
+    </action>
+
   </actions>
 
 </idea-plugin>
