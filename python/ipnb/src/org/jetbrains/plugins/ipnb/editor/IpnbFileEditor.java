@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
@@ -56,7 +57,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     headingCellType + "2", headingCellType + "3", headingCellType + "4", headingCellType + "5", headingCellType + "6"};
   private JButton myRunCellButton;
   private final JScrollPane myScrollPane;
-
+  public static final DataKey<IpnbFileEditor> DATA_KEY = DataKey.create(IpnbFileEditor.class.getName());
 
   public IpnbFileEditor(Project project, final VirtualFile vFile) {
     myDocument = FileDocumentManager.getInstance().getDocument(vFile);

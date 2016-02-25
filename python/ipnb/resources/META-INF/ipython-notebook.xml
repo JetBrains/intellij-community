@@ -21,10 +21,14 @@
   </extensions>
   <actions>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellInplaceAction" id="IpnbRunCellInplaceAction"
-            text="Run cell in-place">
+            text="Run Cell Inplace">
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl ENTER"/>
     </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction" id="IpnbRunCellAction" text="Run cell">
+    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction" id="IpnbRunCellAction" text="Run Cell">
+      <keyboard-shortcut keymap="$default" first-keystroke="shift ENTER"/>
+    </action>
+    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunAllCellsAction" id="IpnbRunAllCellsAction" text="Run All Cells">
+      <add-to-group group-id="RunMenu" anchor="last"/>
     </action>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbSaveAction" id="IpnbSaveAction" text="Save and Checkpoint">
     </action>

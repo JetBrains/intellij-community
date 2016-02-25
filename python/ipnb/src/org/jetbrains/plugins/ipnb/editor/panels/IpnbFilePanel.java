@@ -587,6 +587,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         return ((IpnbCodePanel)cell).getEditor();
       }
     }
+    if (IpnbFileEditor.DATA_KEY.is(dataId)) {
+      return myParent;
+    }
     return null;
   }
 
