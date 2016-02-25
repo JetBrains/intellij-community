@@ -2,10 +2,13 @@ package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurationBase;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -77,9 +80,19 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
           }
 
           String path = pattern.getPath().replace('\\', '/');
-          final String[] parts = path.split("/");
-          final VirtualFile relativeFile = VfsUtil.findRelativeFile(project.getBaseDir(), parts);
-          if (relativeFile == null) continue;
+          final List<String> parts = ContainerUtil.filter(path.split("/"), new Condition<String>() {
+            @Override
+            public boolean value(String s) {
+              return !".".equals(s);
+            }
+          });
+          final VirtualFile relativeFile;
+          if (parts.isEmpty()) {
+            relativeFile = project.getBaseDir();
+          } else {
+            relativeFile = VfsUtil.findRelativeFile(project.getBaseDir(), ArrayUtil.toStringArray(parts));
+            if (relativeFile == null) continue;
+          }
 
           if (pattern.isDirectory()) {
             myPatterns.add(new Processor<VirtualFile>() {
