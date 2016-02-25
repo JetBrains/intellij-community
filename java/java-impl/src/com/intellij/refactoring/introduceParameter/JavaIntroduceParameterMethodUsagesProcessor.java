@@ -31,6 +31,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
+import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
@@ -60,8 +61,18 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
   }
 
   public boolean processChangeMethodUsage(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
-    if (!isMethodUsage(usage)) return true;
-    final PsiElement ref = usage.getElement();
+    PsiElement ref = usage.getElement();
+    if (ref instanceof PsiMethodReferenceExpression) {
+      final PsiLambdaExpression lambdaExpression = LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)ref, false, true);
+      final PsiExpression callExpression = LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody());
+      if (callExpression == null) {
+        return true;
+      }
+      ref = callExpression;
+    }
+    else if (!isMethodUsage(usage)) {
+      return true;
+    }
     PsiCall callExpression = RefactoringUtil.getCallExpressionByMethodReference(ref);
     PsiExpressionList argList = RefactoringUtil.getArgumentListByMethodReference(ref);
     if (argList == null) return true;
