@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.idea.RareLogger;
+import com.intellij.json.JsonFileType;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
@@ -110,6 +111,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Nullable
   private CodeInsightProviders getWrapper(@Nullable VirtualFile file) {
+    if (file != null && !JsonFileType.INSTANCE.equals(file.getFileType())) return null;
     final List<JsonSchemaObjectCodeInsightWrapper> wrappers = getWrappers(file);
     if (wrappers == null || wrappers.isEmpty()) {
       return null;
