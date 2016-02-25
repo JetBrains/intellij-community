@@ -58,29 +58,16 @@ public final class PyTestSdkTools {
   )
     throws InvalidSdkException, IOException {
     final Ref<Sdk> ref = Ref.create();
-    UsefulTestCase.edt(new Runnable() {
-
-      @Override
-      public void run() {
-        final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, new PythonSdkType() {
-          @Override
-          public void setupSdkPaths(@NotNull Sdk sdk) {
-          }
-        }, true, null, null);
-        Assert.assertNotNull("Failed to create SDK on " + sdkHome, sdk);
-        ref.set(sdk);
-      }
+    UsefulTestCase.edt(() -> {
+      final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), true, null, null);
+      Assert.assertNotNull("Failed to create SDK on " + sdkHome, sdk);
+      ref.set(sdk);
     });
     final Sdk sdk = ref.get();
     if (sdkCreationType != SdkCreationType.EMPTY_SDK) {
       generateTempSkeletonsOrPackages(sdk, sdkCreationType == SdkCreationType.SDK_PACKAGES_AND_SKELETONS, module);
     }
-    UsefulTestCase.edt(new Runnable() {
-      @Override
-      public void run() {
-        SdkConfigurationUtil.addSdk(sdk);
-      }
-    });
+    UsefulTestCase.edt(() -> SdkConfigurationUtil.addSdk(sdk));
     return sdk;
   }
 
@@ -129,12 +116,7 @@ public final class PyTestSdkTools {
       addTestSdkRoot(modificator, path);
     }
     if (!addSkeletons) {
-      UsefulTestCase.edt(new Runnable() {
-        @Override
-        public void run() {
-          modificator.commitChanges();
-        }
-      });
+      UsefulTestCase.edt(() -> modificator.commitChanges());
       return;
     }
 
@@ -144,12 +126,7 @@ public final class PyTestSdkTools {
     final String skeletonsPath = skeletonsDir.toString();
     addTestSdkRoot(modificator, skeletonsPath);
 
-    UsefulTestCase.edt(new Runnable() {
-      @Override
-      public void run() {
-        modificator.commitChanges();
-      }
-    });
+    UsefulTestCase.edt(() -> modificator.commitChanges());
 
     final SkeletonVersionChecker checker = new SkeletonVersionChecker(0);
 
