@@ -35,6 +35,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.Processor;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
@@ -603,30 +604,44 @@ public class JavaFxPsiUtil {
     return null;
   }
 
+  private static final Key<CachedValue<Map<String, XmlAttributeValue>>> FILE_IDS_KEY = Key.create("FILE_IDS_KEY");
+
   @NotNull
-  public static Map<String, XmlAttributeValue> collectFileIds(final XmlTag currentTag) {
-    final Map<String, XmlAttributeValue> fileIds = new HashMap<String, XmlAttributeValue>();
-    currentTag.getContainingFile().accept(new XmlRecursiveElementVisitor() {
-      @Override
-      public void visitXmlTag(XmlTag tag) {
-        super.visitXmlTag(tag);
-        if (currentTag != tag) {
-          final XmlAttribute attribute = tag.getAttribute(FxmlConstants.FX_ID);
-          if (attribute != null) {
-            fileIds.put(attribute.getValue(), attribute.getValueElement());
-          }
-        }
-      }
-    });
+  public static Map<String, XmlAttributeValue> collectFileIds(@Nullable final XmlTag currentTag) {
+    if (currentTag == null) return Collections.emptyMap();
     final PsiFile containingFile = currentTag.getContainingFile();
-    if (containingFile instanceof XmlFile) {
-      final XmlTag rootTag = ((XmlFile)containingFile).getRootTag();
-      if (rootTag != null) {
-        final XmlAttribute attribute = rootTag.getAttribute(FxmlConstants.FX_CONTROLLER);
-        if (attribute != null) {
-          fileIds.put(FxmlConstants.CONTROLLER, attribute.getValueElement());
-        }
+    if (!(containingFile instanceof XmlFile)) return Collections.emptyMap();
+    final XmlTag rootTag = ((XmlFile)containingFile).getRootTag();
+    if (rootTag == null) return Collections.emptyMap();
+
+    final Map<String, XmlAttributeValue> cachedIds = CachedValuesManager.getManager(containingFile.getProject())
+      .getCachedValue(rootTag, FILE_IDS_KEY,
+                      () -> new CachedValueProvider.Result<>(prepareFileIds(rootTag), PsiModificationTracker.MODIFICATION_COUNT), false);
+
+    final XmlAttribute currentIdAttribute = currentTag.getAttribute(FxmlConstants.FX_ID);
+    if (currentIdAttribute != null) {
+      final String currentId = currentIdAttribute.getValue();
+      if (cachedIds.containsKey(currentId)) {
+        final Map<String, XmlAttributeValue> filteredIds = new THashMap<>(cachedIds);
+        filteredIds.remove(currentId);
+        return filteredIds;
       }
+    }
+    return cachedIds;
+  }
+
+  @NotNull
+  private static Map<String, XmlAttributeValue> prepareFileIds(XmlTag rootTag) {
+    final Map<String, XmlAttributeValue> fileIds = new THashMap<>();
+    for (XmlTag tag : SyntaxTraverser.psiTraverser().withRoot(rootTag).filter(XmlTag.class)) {
+      final XmlAttribute idAttribute = tag.getAttribute(FxmlConstants.FX_ID);
+      if (idAttribute != null) {
+        fileIds.put(idAttribute.getValue(), idAttribute.getValueElement());
+      }
+    }
+    final XmlAttribute controllerAttribute = rootTag.getAttribute(FxmlConstants.FX_CONTROLLER);
+    if (controllerAttribute != null) {
+      fileIds.put(FxmlConstants.CONTROLLER, controllerAttribute.getValueElement());
     }
     return fileIds;
   }

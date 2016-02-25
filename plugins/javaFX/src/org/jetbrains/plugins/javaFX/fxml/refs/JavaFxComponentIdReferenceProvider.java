@@ -15,7 +15,9 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -185,12 +187,9 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     @NotNull
     @Override
     public Object[] getVariants() {
-      return myAcceptableIds.stream().map(
-        id -> {
-          LookupItem<String> item = new LookupItem<String>(id, id);
-          item.setPriority(TypeMatch.getPriority(myTypeMatches.get(id)));
-          return item;
-        }).toArray(LookupItem[]::new);
+      return myAcceptableIds.stream()
+        .map(id -> PrioritizedLookupElement.withPriority(LookupElementBuilder.create(id), TypeMatch.getPriority(myTypeMatches.get(id))))
+        .toArray(LookupElement[]::new);
     }
   }
 

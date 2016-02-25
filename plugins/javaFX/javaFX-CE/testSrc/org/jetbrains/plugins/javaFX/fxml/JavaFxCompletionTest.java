@@ -22,7 +22,10 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -240,6 +243,20 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     doOptionsTest(Arrays.asList("pane", "node", "box", "model", "text", "target"), "FxIdGuessedOptionsController");
   }
 
+  public void testVariableCompletionBooleanFirst() throws Exception {
+    doOrderTest("zAssignable", "dConvertible", "tConvertible", "controller", "mUnknown");
+  }
+
+  public void testVariableCompletionTooltipFirst() throws Exception {
+    doOrderTest("tAssignable", "controller", "mUnknown", "dIncompatible");
+  }
+
+  private void doOrderTest(String... expected) {
+    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    complete();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), expected);
+  }
+
   private void doOptionsTest(final List<String> expectedOptions, final String... javaClasses) {
     final List<String> files = new ArrayList<>();
     files.add(getTestName(true) + ".fxml");
@@ -248,7 +265,7 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     complete();
 
     final Set<String> actualOptions = Arrays.stream(myItems).map(LookupElement::getLookupString).collect(Collectors.toSet());
-    assertEquals(new HashSet<>(expectedOptions), actualOptions);
+    assertSameElements(expectedOptions, actualOptions);
   }
 
   public void testOnlyCssAsStylesheets() throws Exception {
