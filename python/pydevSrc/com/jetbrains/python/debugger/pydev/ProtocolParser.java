@@ -31,10 +31,15 @@ public class ProtocolParser {
 
     while (reader.hasMoreChildren()) {
       reader.moveDown();
-      if (!"arg".equals(reader.getNodeName())) {
-        throw new PyDebuggerException("Expected <arg>, found " + reader.getNodeName());
+      if ("arg".equals(reader.getNodeName())) {
+        signature.addArgument(readString(reader, "name", ""), readString(reader, "type", ""));
+      } else 
+      if ("return".equals(reader.getNodeName())) {
+        signature.addReturnType(readString(reader, "type", ""));
+      } else {
+        throw new PyDebuggerException("Expected <arg> or <return>, found " + reader.getNodeName());
       }
-      signature.addArgument(readString(reader, "name", ""), readString(reader, "type", ""));
+      
       reader.moveUp();
     }
 
