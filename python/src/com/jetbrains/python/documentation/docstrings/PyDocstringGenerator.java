@@ -56,7 +56,7 @@ import java.util.Set;
 public class PyDocstringGenerator {
   public static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
   public static final String TRIPLE_SINGLE_QUOTES = "'''";
-  
+
   private final List<DocstringParam> myAddedParams = Lists.newArrayList();
   private final List<DocstringParam> myRemovedParams = Lists.newArrayList();
   private final String myDocStringText;
@@ -94,30 +94,32 @@ public class PyDocstringGenerator {
     final String docStringText = owner.getDocStringExpression() == null ? null : owner.getDocStringExpression().getText();
     return new PyDocstringGenerator(owner, docStringText, DocStringUtil.getConfiguredDocStringFormat(owner), indentation, owner);
   }
-  
+
   /**
    * @param settingsAnchor any PSI element, presumably in the same file/module where generated function is going to be inserted.
-   *                       It's needed to detect configured docstring format and Python indentation size and, as result, 
-   *                       generate properly formatted docstring. 
+   *                       It's needed to detect configured docstring format and Python indentation size and, as result,
+   *                       generate properly formatted docstring.
    */
   @NotNull
-  public static PyDocstringGenerator create(@NotNull DocStringFormat format, @NotNull String indentation, @NotNull PsiElement settingsAnchor) {
+  public static PyDocstringGenerator create(@NotNull DocStringFormat format,
+                                            @NotNull String indentation,
+                                            @NotNull PsiElement settingsAnchor) {
     return new PyDocstringGenerator(null, null, format, indentation, settingsAnchor);
   }
 
   @NotNull
   public static PyDocstringGenerator update(@NotNull PyStringLiteralExpression docString) {
     return new PyDocstringGenerator(PsiTreeUtil.getParentOfType(docString, PyDocStringOwner.class),
-                                    docString.getText(), 
+                                    docString.getText(),
                                     DocStringUtil.getConfiguredDocStringFormat(docString),
-                                    PyIndentUtil.getElementIndent(docString), 
+                                    PyIndentUtil.getElementIndent(docString),
                                     docString);
   }
 
   /**
    * @param settingsAnchor any PSI element, presumably in the same file/module where generated function is going to be inserted.
-   *                       It's needed to detect configured docstring format and Python indentation size and, as result, 
-   *                       generate properly formatted docstring. 
+   *                       It's needed to detect configured docstring format and Python indentation size and, as result,
+   *                       generate properly formatted docstring.
    */
   @NotNull
   public static PyDocstringGenerator update(@NotNull DocStringFormat format,
@@ -271,14 +273,13 @@ public class PyDocstringGenerator {
         continue;
       }
       if (param.getType() == null) {
-        String type = paramTypes.get(paramCoordinates);
-        if (type == null && PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
-          if (signature != null) {
-            type = StringUtil.notNullize(signature.getArgTypeQualifiedName(param.getName()));
-          }
-          else {
-            type = "";
-          }
+        String type;
+        if (signature != null) {
+          type = StringUtil.notNullize(param.isReturnValue() ? signature.getReturnTypeQualifiedName() :
+                                       signature.getArgTypeQualifiedName(param.getName()));
+        }
+        else {
+          type = paramTypes.get(paramCoordinates);
         }
         if (type != null) {
           // Google and Numpy docstring formats combine type and description in single declaration, thus
@@ -424,7 +425,9 @@ public class PyDocstringGenerator {
       }
     }
     else if (myDocStringFormat == DocStringFormat.GOOGLE || myDocStringFormat == DocStringFormat.NUMPY) {
-      builder = myDocStringFormat == DocStringFormat.GOOGLE ? GoogleCodeStyleDocStringBuilder.forProject(mySettingsAnchor.getProject()) : new NumpyDocStringBuilder();
+      builder = myDocStringFormat == DocStringFormat.GOOGLE
+                ? GoogleCodeStyleDocStringBuilder.forProject(mySettingsAnchor.getProject())
+                : new NumpyDocStringBuilder();
       final SectionBasedDocStringBuilder sectionBuilder = (SectionBasedDocStringBuilder)builder;
       if (myAddFirstEmptyLine) {
         sectionBuilder.addEmptyLine();
@@ -479,8 +482,8 @@ public class PyDocstringGenerator {
     }
     else if (myDocStringFormat == DocStringFormat.GOOGLE) {
       //noinspection ConstantConditions
-      updater = GoogleCodeStyleDocStringUpdater.forProject((GoogleCodeStyleDocString)getStructuredDocString(), 
-                                                           myDocStringIndent, 
+      updater = GoogleCodeStyleDocStringUpdater.forProject((GoogleCodeStyleDocString)getStructuredDocString(),
+                                                           myDocStringIndent,
                                                            mySettingsAnchor.getProject());
     }
     else if (myDocStringFormat == DocStringFormat.NUMPY) {
@@ -488,7 +491,7 @@ public class PyDocstringGenerator {
       updater = new NumpyDocStringUpdater((SectionBasedDocString)getStructuredDocString(), myDocStringIndent);
     }
     // plain docstring - do nothing
-    else if (myDocStringText != null){
+    else if (myDocStringText != null) {
       return myDocStringText;
     }
     if (updater != null) {
@@ -587,6 +590,7 @@ public class PyDocstringGenerator {
     private final String myName;
     private final String myType;
     private final boolean myReturnValue;
+
     private DocstringParam(@NotNull String name, @Nullable String type, boolean isReturn) {
       myName = name;
       myType = type;
@@ -637,13 +641,14 @@ public class PyDocstringGenerator {
              ", myReturnValue=" + myReturnValue +
              '}';
     }
-
   }
+
   private static class RaiseVisitor extends PyRecursiveElementVisitor {
 
     private boolean myHasRaise = false;
     private boolean myHasReturn = false;
     @Nullable private PyExpression myRaiseTarget = null;
+
     @Override
     public void visitPyRaiseStatement(@NotNull PyRaiseStatement node) {
       myHasRaise = true;
@@ -672,7 +677,6 @@ public class PyDocstringGenerator {
       }
       return "";
     }
-
   }
 }
 

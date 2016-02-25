@@ -62,7 +62,11 @@ public final class PyTestSdkTools {
 
       @Override
       public void run() {
-        final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), true, null, null);
+        final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, new PythonSdkType() {
+          @Override
+          public void setupSdkPaths(@NotNull Sdk sdk) {
+          }
+        }, true, null, null);
         Assert.assertNotNull("Failed to create SDK on " + sdkHome, sdk);
         ref.set(sdk);
       }
