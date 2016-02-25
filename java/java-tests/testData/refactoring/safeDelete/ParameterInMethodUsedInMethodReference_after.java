@@ -4,7 +4,7 @@ interface I {
 
 class A {
   {
-    I predicate = (a) -> A.alwaysTrue();
+    I predicate = (a) -> alwaysTrue();
   }
 
   private static boolean alwaysTrue() {
