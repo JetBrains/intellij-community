@@ -411,6 +411,8 @@ public class JsonSchemaReader {
             while (in.peek() != JsonToken.END_ARRAY) {
               if (in.peek() == JsonToken.STRING) {
                 required.add(in.nextString());
+              } else {
+                in.skipValue();
               }
             }
             in.endArray();
@@ -479,7 +481,7 @@ public class JsonSchemaReader {
             while (in.peek() != JsonToken.END_ARRAY) {
               if (in.peek() == JsonToken.BEGIN_OBJECT) {
                 list.add(readInnerObject(in));
-              }
+              } else in.skipValue();
             }
             in.endArray();
             object.setItemsSchemaList(list);
