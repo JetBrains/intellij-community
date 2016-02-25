@@ -33,12 +33,11 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
   public JsonSchemaFileProvider[] getProviders(@Nullable Project project) {
     final List<JsonSchemaFileProvider> list = new ArrayList<JsonSchemaFileProvider>();
 
-    //processConfiguration(project, JsonSchemaMappingsApplicationConfiguration.getInstance(), list);
     if (project != null) {
       processConfiguration(project, JsonSchemaMappingsProjectConfiguration.getInstance(project), list);
     }
 
-    return list.toArray(new JsonSchemaFileProvider[list.size()]);
+    return list.isEmpty() ? EMPTY : list.toArray(new JsonSchemaFileProvider[list.size()]);
   }
 
   private static void processConfiguration(@Nullable Project project, @NotNull final JsonSchemaMappingsConfigurationBase configuration,
@@ -52,6 +51,7 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
   }
 
   private static class MyProvider implements JsonSchemaFileProvider, JsonSchemaImportedProviderMarker {
+    @Nullable private final Project myProject;
     @NotNull private final String myName;
     @NotNull private final File myFile;
     @NotNull private final List<Processor<VirtualFile>> myPatterns;
@@ -60,6 +60,7 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
                       @NotNull String name,
                       @NotNull File file,
                       @NotNull List<JsonSchemaMappingsConfigurationBase.Item> patterns) {
+      myProject = project;
       myName = name;
       myFile = file;
       myPatterns = new ArrayList<Processor<VirtualFile>>();
@@ -121,7 +122,8 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
 
     @Override
     public boolean isAvailable(@NotNull VirtualFile file) {
-      if (file.isDirectory() || !file.isValid()) return false;
+      if (file.isDirectory() || !file.isValid() ||
+          myProject != null && JsonSchemaMappingsProjectConfiguration.getInstance(myProject).isRegisteredSchemaFile(file)) return false;
       for (Processor<VirtualFile> pattern : myPatterns) {
         if (pattern.process(file)) return true;
       }
