@@ -223,7 +223,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     }
 
     final GlobalInspectionContextImpl context = getContext();
-    if (!(refElement instanceof RefElement)) {
+    if (!context.useView() || !(refElement instanceof RefElement)) {
       return;
     }
     if (myToolWrapper instanceof LocalInspectionToolWrapper) {

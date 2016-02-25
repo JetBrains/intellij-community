@@ -93,6 +93,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private final NotNullLazyValue<ContentManager> myContentManager;
   private InspectionResultsView myView;
   private Content myContent;
+  private volatile boolean myUseView;
 
   @NotNull
   private AnalysisUIOptions myUIOptions;
@@ -317,6 +318,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       myUIOptions = AnalysisUIOptions.getInstance(getProject()).copy();
     }
+    myUseView = true;
     super.launchInspections(scope);
   }
 
@@ -390,12 +392,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       tool.inspectionStarted(inspectionManager, this, getPresentation(toolWrapper));
     }
 
+    final boolean headlessEnvironment = ApplicationManager.getApplication().isHeadlessEnvironment();
     final Map<String, InspectionToolWrapper> map = getInspectionWrappersMap(localTools);
 
     final BlockingQueue<PsiFile> filesToInspect = new ArrayBlockingQueue<PsiFile>(1000);
     final Queue<PsiFile> filesFailedToInspect = new LinkedBlockingQueue<PsiFile>();
     // use original progress indicator here since we don't want it to cancel on write action start
-    Future<?> future = startIterateScopeInBackground(scope, localScopeFiles, filesToInspect, progressIndicator);
+    Future<?> future = startIterateScopeInBackground(scope, localScopeFiles, headlessEnvironment, filesToInspect, progressIndicator);
 
     Processor<PsiFile> processor = new Processor<PsiFile>() {
       @Override
@@ -521,6 +524,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   @NotNull
   private Future<?> startIterateScopeInBackground(@NotNull final AnalysisScope scope,
                                                   @Nullable final Collection<VirtualFile> localScopeFiles,
+                                                  final boolean headlessEnvironment,
                                                   @NotNull final BlockingQueue<PsiFile> outFilesToInspect,
                                                   @NotNull final ProgressIndicator progressIndicator) {
     return ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -540,7 +544,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                 public Document compute() {
                   if (getProject().isDisposed()) throw new ProcessCanceledException();
                   PsiFile psi = PsiManager.getInstance(getProject()).findFile(file);
-                  Document document = psi == null ? null : shouldProcess(psi, localScopeFiles);
+                  Document document = psi == null ? null : shouldProcess(psi, headlessEnvironment, localScopeFiles);
                   if (document != null) {
                     psiFile[0] = psi;
                   }
@@ -576,10 +580,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     });
   }
 
-  private Document shouldProcess(@NotNull PsiFile file, @Nullable Collection<VirtualFile> localScopeFiles) {
+  private Document shouldProcess(@NotNull PsiFile file, boolean headlessEnvironment, @Nullable Collection<VirtualFile> localScopeFiles) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
     if (isBinary(file)) return null; //do not inspect binary files
+
+    if (!myUseView && !headlessEnvironment) {
+      throw new ProcessCanceledException();
+    }
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Running local inspections on " + virtualFile.getPath());
@@ -773,6 +781,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       final ContentManager contentManager = getContentManager();
       contentManager.removeContent(myContent, true);
     }
+    myUseView = false;
     myView = null;
     super.close(noSuspisiousCodeFound);
   }
@@ -959,5 +968,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   private static boolean isBinary(@NotNull PsiFile file) {
     return file instanceof PsiBinaryFile || file.getFileType().isBinary();
+  }
+
+  public boolean useView() {
+    return myUseView;
   }
 }
