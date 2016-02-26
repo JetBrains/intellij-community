@@ -100,6 +100,39 @@ public class UIUtil {
     kit.setStyleSheet(null);
   }
 
+  public static final String A11Y_ATK_WRAPPER = "org.GNOME.Accessibility.AtkWrapper";
+  public static final String A11Y_ACCESS_BRIDGE = "com.sun.java.accessibility.AccessBridge";
+
+  public static boolean isA11YEnabled(String a11yClassName) {
+    String[] paths = new String[] {System.getProperty("user.home") + File.separator + ".accessibility.properties",
+                                   System.getProperty("java.home") + File.separator + "lib" + File.separator + "accessibility.properties"};
+    Properties properties = new Properties();
+    for (String path : paths) {
+      try {
+        File propsFile = new File(path);
+        FileInputStream in = new FileInputStream(propsFile);
+        properties.load(in);
+        in.close();
+      }
+      catch (Exception ignore) {
+        continue;
+      }
+      if (!properties.isEmpty()) break;
+    }
+    if (!properties.isEmpty()) {
+      // First, check the system property
+      String classNames = System.getProperty("javax.accessibility.assistive_technologies");
+      if (classNames == null) {
+        // If the system property is not set, Toolkit will try to use the properties file.
+        classNames = properties.getProperty("assistive_technologies", null);
+      }
+      if (classNames != null && classNames.contains(a11yClassName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static void blockATKWrapper() {
     /*
      * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
@@ -107,27 +140,10 @@ public class UIUtil {
      */
     if (!(SystemInfo.isLinux && Registry.is("linux.jdk.accessibility.atkwrapper.block"))) return;
 
-    String ATK_WRAPPER = "org.GNOME.Accessibility.AtkWrapper";
-
-    Properties properties = new Properties();
-    try {
-      File propsFile = new File(System.getProperty("java.home") + File.separator + "lib" + File.separator + "accessibility.properties");
-      FileInputStream in = new FileInputStream(propsFile);
-      properties.load(in);
-      in.close();
-    } catch (Exception ignore) {
-    }
-    if (!properties.isEmpty()) {
-      String classNames = System.getProperty("javax.accessibility.assistive_technologies");
-      if (classNames == null) {
-        // If the system property is not set, Toolkit will try to use the properties file.
-        classNames = properties.getProperty("assistive_technologies", null);
-        if (classNames != null && classNames.contains(ATK_WRAPPER)) {
-          // Replace AtkWrapper with a dummy Object. It'll be instantiated & GC'ed right away, a NOP.
-          System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
-          LOG.info(ATK_WRAPPER + " is blocked, see IDEA-149219");
-        }
-      }
+    if (isA11YEnabled(A11Y_ATK_WRAPPER)) {
+      // Replace AtkWrapper with a dummy Object. It'll be instantiated & GC'ed right away, a NOP.
+      System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
+      LOG.info(A11Y_ATK_WRAPPER + " is blocked, see IDEA-149219");
     }
   }
 

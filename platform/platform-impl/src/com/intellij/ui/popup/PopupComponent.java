@@ -250,13 +250,11 @@ class A11YFix {
   private static Field fAccessBridge;
   private static Method mFocusGained;
   private static boolean initialized;
-
-  public static boolean isEnabled() {
-    return SystemInfo.isWindows && false; /*TODO: pending a11y check here*/
-  }
+  // TODO: additionally check if a11y tool (like NVDA) is active
+  private static final boolean ENABLED = SystemInfo.isWindows && UIUtil.isA11YEnabled(UIUtil.A11Y_ACCESS_BRIDGE);
 
   public static void invokeFocusGained(Window closingWindow) {
-    if (!isEnabled()) return;
+    if (!ENABLED) return;
 
     IdeFocusManager manager = IdeFocusManager.findInstanceByComponent(closingWindow);
     if (manager != null) {
