@@ -19,7 +19,6 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.DelegatingProgressIndicator;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,8 +54,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-
-import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 
 public class CommitHelper {
   public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<Object>("DOCUMENT_BEING_COMMITTED");
@@ -187,21 +184,19 @@ public class CommitHelper {
     int errorsSize = errors.size();
     int warningsSize = processor.getVcsExceptions().size() - errorsSize;
 
-    String title;
-    NotificationType type;
+    VcsNotifier notifier = VcsNotifier.getInstance(myProject);
+    String message = getCommitSummary(processor);
     if (errorsSize > 0) {
-      title = StringUtil.pluralize(VcsBundle.message("message.text.commit.failed.with.error"), errorsSize);
-      type = NotificationType.ERROR;
+      String title = StringUtil.pluralize(VcsBundle.message("message.text.commit.failed.with.error"), errorsSize);
+      notifier.notifyError(title, message);
     }
     else if (warningsSize > 0) {
-      title = StringUtil.pluralize(VcsBundle.message("message.text.commit.finished.with.warning"), warningsSize);
-      type = NotificationType.WARNING;
+      String title = StringUtil.pluralize(VcsBundle.message("message.text.commit.finished.with.warning"), warningsSize);
+      notifier.notifyImportantWarning(title, message);
     }
     else {
-      title = "Committed Successfully";
-      type = NotificationType.INFORMATION;
+      notifier.notifySuccess(message);
     }
-    VcsNotifier.createNotification(STANDARD_NOTIFICATION, title, getCommitSummary(processor), type, null).notify(myProject);
   }
 
   @NotNull
