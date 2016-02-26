@@ -57,6 +57,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.WindowManager;
@@ -1225,6 +1226,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private void startWrite(/*@NotNull*/ Class clazz) {
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
+    if (!TransactionGuard.getInstance().isInsideTransaction() && Registry.is("ide.require.transaction.for.model.changes", false)) {
+      LOG.error("Write access is allowed from model transactions only, see TransactionGuard documentation for details");
+      //todo throw new IllegalStateException("Write access is allowed from model transactions only, see TransactionGuard documentation for details");
+    }
     boolean writeActionPending = myWriteActionPending;
     myWriteActionPending = true;
     if (gatherWriteActionStatistics && myWriteActionsStack.isEmpty()) {

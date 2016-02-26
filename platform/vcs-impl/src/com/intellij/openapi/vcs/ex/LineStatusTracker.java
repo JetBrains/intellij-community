@@ -19,6 +19,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -387,7 +388,7 @@ public class LineStatusTracker {
   }
 
   private void markFileUnchanged() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    TransactionGuard.submitTransaction(new Runnable() {
       @Override
       public void run() {
         FileDocumentManager.getInstance().saveDocument(myDocument);

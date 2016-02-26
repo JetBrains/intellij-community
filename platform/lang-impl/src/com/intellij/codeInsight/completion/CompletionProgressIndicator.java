@@ -33,6 +33,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -482,12 +483,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   void disposeIndicator() {
     // our offset map should be disposed under write action, so that duringCompletion (read action) won't access it after disposing
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        Disposer.dispose(CompletionProgressIndicator.this);
-      }
-    });
+    TransactionGuard.getInstance().submitMergeableTransaction(TransactionGuard.TransactionKind.TEXT_EDITING, () ->
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(this)));
   }
 
   @TestOnly
