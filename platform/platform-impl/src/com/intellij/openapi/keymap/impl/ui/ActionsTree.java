@@ -151,7 +151,7 @@ public class ActionsTree {
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     if (ApplicationManager.getApplication().isInternal()) {
-      new HeldDownKeyListener(KeyStroke.getKeyStroke("shift pressed SHIFT")) {
+      new HeldDownKeyListener() {
         @Override
         protected void heldKeyTriggered(JComponent component, boolean pressed) {
           myPaintInternalInfo = pressed;

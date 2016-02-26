@@ -25,6 +25,10 @@ public abstract class HeldDownKeyListener {
 
   private final KeyStroke myKeyStroke;
 
+  public HeldDownKeyListener() {
+    this(KeyStroke.getKeyStroke("shift pressed SHIFT"));
+  }
+
   public HeldDownKeyListener(KeyStroke keyStroke) {
     myKeyStroke = keyStroke;
   }
