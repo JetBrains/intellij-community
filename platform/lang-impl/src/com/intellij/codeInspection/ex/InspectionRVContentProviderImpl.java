@@ -95,7 +95,6 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
                                     @NotNull final Map<String, Set<RefEntity>> contents,
                                     @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems,
                                     DefaultTreeModel model) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     final InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
 
     Function<RefEntity, UserObjectContainer<RefEntity>> computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
@@ -114,11 +113,9 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       }
       entities.addAll(moduleProblems);
     }
-    List<InspectionTreeNode> list = buildTree(context, contents, false, toolWrapper, computeContainer, showStructure);
-
-    for (InspectionTreeNode node : list) {
+    buildTree(context, contents, false, toolWrapper, computeContainer, showStructure, node -> {
       merge(model, node, toolNode, true);
-    }
+    });
 
     if (presentation.isOldProblemsIncluded()) {
       final Map<RefEntity, CommonProblemDescriptor[]> oldProblems = presentation.getOldProblemElements();
@@ -129,11 +126,9 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
         }
       };
 
-      list = buildTree(context, presentation.getOldContent(), true, toolWrapper, computeContainer, showStructure);
-
-      for (InspectionTreeNode node : list) {
+      buildTree(context, presentation.getOldContent(), true, toolWrapper, computeContainer, showStructure, node -> {
         merge(model, node, toolNode, true);
-      }
+      });
     }
     merge(model, toolNode, parentNode, false);
   }
@@ -142,7 +137,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
   protected void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
                                   @NotNull final InspectionToolWrapper toolWrapper,
                                   @NotNull final UserObjectContainer container,
-                                  @NotNull final InspectionPackageNode pNode,
+                                  @NotNull final InspectionTreeNode pNode,
                                   final boolean canPackageRepeat) {
     final RefElementContainer refElementDescriptor = (RefElementContainer)container;
     final RefEntity refElement = refElementDescriptor.getUserObject();
@@ -163,8 +158,8 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
         }
     }
     else {
-      if (canPackageRepeat) {
-        final Set<RefEntity> currentElements = presentation.getContent().get(pNode.getPackageName());
+      if (canPackageRepeat && pNode instanceof InspectionPackageNode) {
+        final Set<RefEntity> currentElements = presentation.getContent().get(((InspectionPackageNode) pNode).getPackageName());
         if (currentElements != null) {
           final Set<RefEntity> currentEntities = new HashSet<RefEntity>(currentElements);
           if (RefUtil.contains(refElement, currentEntities)) return;

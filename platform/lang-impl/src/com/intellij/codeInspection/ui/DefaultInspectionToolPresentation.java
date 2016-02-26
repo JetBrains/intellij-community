@@ -24,6 +24,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -77,8 +78,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   private Map<RefEntity, CommonProblemDescriptor[]> myOldProblemElements = null;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
   private boolean isDisposed;
-
-  private final Object myToolLock = new Object();
 
   public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
     myToolWrapper = toolWrapper;
@@ -237,33 +236,33 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
             context.addView(view);
           }
           if (!isDisposed()) {
-            final InspectionNode toolNode;
-            synchronized (myToolLock) {
-              if (myToolNode == null) {
-                final HighlightSeverity currentSeverity = getSeverity((RefElement)refElement);
-                toolNode = view.addTool(myToolWrapper, HighlightDisplayLevel.find(currentSeverity), context.getUIOptions().GROUP_BY_SEVERITY);
-              }
-              else {
-                toolNode = myToolNode;
-                if (toolNode.isTooBigForOnlineRefresh()) {
-                  return;
-                }
-              }
-            }
-            final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
-            problems.put(refElement, descriptors);
-            final Map<String, Set<RefEntity>> contents = new HashMap<String, Set<RefEntity>>();
-            final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
-            Set<RefEntity> content = contents.get(groupName);
-            if (content == null) {
-              content = new HashSet<RefEntity>();
-              contents.put(groupName, content);
-            }
-            content.add(refElement);
+            final InspectionResultsView finalView = view;
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+              ApplicationManager.getApplication().runReadAction(() -> {
+                synchronized (finalView.getTreeWriteLock()) {
+                  final InspectionNode toolNode;
+                  toolNode = myToolNode == null ?
+                             finalView.addTool(myToolWrapper, HighlightDisplayLevel.find(getSeverity((RefElement)refElement)),
+                             context.getUIOptions().GROUP_BY_SEVERITY) : myToolNode;
 
-            view.getProvider().appendToolNodeContent(context, toolNode,
-                                                     (InspectionTreeNode)toolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
-                                                     contents, problems, (DefaultTreeModel)view.getTree().getModel());
+                  final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
+                  problems.put(refElement, descriptors);
+                  final Map<String, Set<RefEntity>> contents = new HashMap<String, Set<RefEntity>>();
+                  final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
+                  Set<RefEntity> content = contents.get(groupName);
+                  if (content == null) {
+                    content = new HashSet<RefEntity>();
+                    contents.put(groupName, content);
+                  }
+                  content.add(refElement);
+
+                  finalView.getProvider().appendToolNodeContent(context, toolNode,
+                                                                (InspectionTreeNode)toolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
+                                                                contents, problems, (DefaultTreeModel)finalView.getTree().getModel());
+
+                }
+              });
+            });
           }
         }
       });
@@ -303,11 +302,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     return Arrays.copyOfRange(out, 0, o);
   }
 
-
   public void setToolNode(InspectionNode toolNode) {
-    synchronized (myToolLock) {
-      myToolNode = toolNode;
-    }
+    myToolNode = toolNode;
   }
   
   protected boolean isDisposed() {

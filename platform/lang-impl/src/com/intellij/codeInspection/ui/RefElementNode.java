@@ -47,7 +47,7 @@ public class RefElementNode extends InspectionTreeNode {
     }
   });
 
-  public RefElementNode(@NotNull Object userObject, @NotNull InspectionToolPresentation presentation) {
+  public RefElementNode(@Nullable Object userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject);
     myToolPresentation = presentation;
   }
