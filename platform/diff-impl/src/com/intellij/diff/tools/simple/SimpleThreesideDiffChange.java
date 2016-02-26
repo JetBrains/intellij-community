@@ -47,17 +47,17 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
 
   @CalledInAwt
   public void destroy() {
-    destroyHighlighter();
-    destroyInnerHighlighter();
+    destroyHighlighters();
+    destroyInnerHighlighters();
   }
 
   @CalledInAwt
   public void reinstallHighlighters() {
-    destroyHighlighter();
-    installHighlighter();
+    destroyHighlighters();
+    installHighlighters();
 
-    destroyInnerHighlighter();
-    installInnerHighlighter();
+    destroyInnerHighlighters();
+    installInnerHighlighters();
   }
 
   //

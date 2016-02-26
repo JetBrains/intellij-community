@@ -70,20 +70,20 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     myStartLine = myFragment.getStartLine(ThreeSide.BASE);
     myEndLine = myFragment.getEndLine(ThreeSide.BASE);
 
-    doReinstallHighlighter();
+    reinstallHighlighters();
   }
 
   @CalledInAwt
   public void destroy() {
-    destroyHighlighter();
+    destroyHighlighters();
     destroyOperations();
-    destroyInnerHighlighter();
+    destroyInnerHighlighters();
   }
 
   @CalledInAwt
-  public void doReinstallHighlighter() {
-    destroyHighlighter();
-    installHighlighter();
+  public void reinstallHighlighters() {
+    destroyHighlighters();
+    installHighlighters();
 
     destroyOperations();
     installOperations();
@@ -104,7 +104,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     myResolved[side.getIndex()] = value;
 
     if (isResolved()) {
-      destroyInnerHighlighter();
+      destroyInnerHighlighters();
     }
     else {
       // Destroy only resolved side to reduce blinking
@@ -192,10 +192,10 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     if (myInnerFragments == null && innerFragments == null) return;
     myInnerFragments = innerFragments;
 
-    doReinstallHighlighter();
+    reinstallHighlighters();
 
-    destroyInnerHighlighter();
-    installInnerHighlighter();
+    destroyInnerHighlighters();
+    installInnerHighlighters();
   }
 
   //

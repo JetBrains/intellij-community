@@ -52,7 +52,7 @@ public abstract class ThreesideDiffChangeBase {
   }
 
   @CalledInAwt
-  protected void installHighlighter() {
+  protected void installHighlighters() {
     assert myHighlighters.isEmpty();
 
     createHighlighter(ThreeSide.BASE);
@@ -61,7 +61,7 @@ public abstract class ThreesideDiffChangeBase {
   }
 
   @CalledInAwt
-  protected void installInnerHighlighter() {
+  protected void installInnerHighlighters() {
     assert myInnerHighlighters.isEmpty();
 
     createInnerHighlighter(ThreeSide.BASE);
@@ -70,7 +70,7 @@ public abstract class ThreesideDiffChangeBase {
   }
 
   @CalledInAwt
-  protected void destroyHighlighter() {
+  protected void destroyHighlighters() {
     for (RangeHighlighter highlighter : myHighlighters) {
       highlighter.dispose();
     }
@@ -78,7 +78,7 @@ public abstract class ThreesideDiffChangeBase {
   }
 
   @CalledInAwt
-  protected void destroyInnerHighlighter() {
+  protected void destroyInnerHighlighters() {
     for (RangeHighlighter highlighter : myInnerHighlighters) {
       highlighter.dispose();
     }

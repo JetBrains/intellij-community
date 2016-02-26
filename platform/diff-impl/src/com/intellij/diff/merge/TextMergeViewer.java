@@ -649,7 +649,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         myChangesToUpdate.add(change);
       }
       else {
-        change.doReinstallHighlighter();
+        change.reinstallHighlighters();
         myInnerDiffWorker.scheduleRediff(change);
       }
     }
@@ -666,7 +666,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       if (myBulkChangeUpdateDepth == 0) {
         for (TextMergeChange change : myChangesToUpdate) {
-          change.doReinstallHighlighter();
+          change.reinstallHighlighters();
         }
         myInnerDiffWorker.scheduleRediff(myChangesToUpdate);
         myChangesToUpdate.clear();
