@@ -803,7 +803,8 @@ public class FindPopupPanel extends JBPanel {
     mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
     applyTo(myModel, false);
     FindManager.getInstance(myProject).getFindInProjectModel().copyFrom(myModel);
-    ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(/*findModel*/myModel);
+    ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myModel);
+    FindSettings.getInstance().setDefaultScopeName(myScopeCombo.getSelectedScopeName());
 
 
     ValidationInfo result = getValidationInfo(/*findModel*/myModel);
@@ -871,6 +872,15 @@ public class FindPopupPanel extends JBPanel {
                 int occurrences = resultsCount.get();
                 if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
                 myCodePreviewComponent.setVisible(occurrences > 0);
+                StringBuilder info = new StringBuilder();
+                if (occurrences > 0) {
+                  info.append(Math.min(ShowUsagesAction.USAGES_PAGE_SIZE, occurrences));
+                  if (occurrences >= ShowUsagesAction.USAGES_PAGE_SIZE) {
+                    info.append("+");
+                  }
+                  info.append(UIBundle.message("message.matches", occurrences));
+                }
+                mySearchTextArea.setInfoText(info.toString());
                 scheduleUpdateResultsPopupBounds();
               }
             }
