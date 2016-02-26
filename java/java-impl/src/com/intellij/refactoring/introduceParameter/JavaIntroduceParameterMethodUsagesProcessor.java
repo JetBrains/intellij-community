@@ -65,8 +65,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
   public boolean processChangeMethodUsage(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
     PsiElement ref = usage.getElement();
     if (ref instanceof PsiMethodReferenceExpression) {
-      final PsiLambdaExpression lambdaExpression = LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)ref, false, true);
-      final PsiExpression callExpression = LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody());
+      final PsiExpression callExpression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)ref);
       if (callExpression == null) {
         return true;
       }

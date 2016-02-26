@@ -169,7 +169,9 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
           else if (element instanceof PsiMethodReferenceExpression) {
             final PsiLambdaExpression lambdaExpression =
               LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)element, false, true);
-            replaceWithLambdaBody(callExpression, lambdaExpression);
+            if (lambdaExpression != null) {
+              replaceWithLambdaBody(callExpression, lambdaExpression);
+            }
           }
         }
         else if (qualifierExpression instanceof PsiNewExpression) {

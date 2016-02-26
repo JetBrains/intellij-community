@@ -510,6 +510,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private void inlineMethodReference(PsiMethodReferenceExpression reference) {
     final PsiLambdaExpression lambdaExpression = LambdaRefactoringUtil.convertMethodReferenceToLambda(reference, false, false);
+    if (lambdaExpression == null) return;
     final PsiExpression callExpression = LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody());
     if (callExpression instanceof PsiMethodCallExpression) {
       inlineMethodCall(((PsiMethodCallExpression)callExpression).getMethodExpression());
