@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Getter;
+import com.intellij.ui.Gray;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -37,7 +38,7 @@ import java.awt.*;
  * @author max
  */
 class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx, Getter<RangeHighlighterEx> {
-  private static final Color NULL_COLOR = new Color(0, 0, 0);
+  private static final Color NULL_COLOR = Gray._0;
 
   private final MarkupModel myModel;
   private TextAttributes myTextAttributes;
