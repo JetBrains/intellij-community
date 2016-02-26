@@ -25,7 +25,12 @@ abstract class FilePathProvider {
 }
 
 class InternalUrlProvider: UrlProvider() {
-    private val host = "http://unit-617.labs.intellij.net"
+    private val localhost = "http://localhost"
+    private val internalHost = "http://unit-617.labs.intellij.net"
+
+    private val host: String
+        get() = if (System.getProperty("stats.collector.internal") == null) internalHost else localhost
+    
     
     override val statsServerPostUrl = "$host:8080/stats/upload"
     override val experimentDataUrl = "$host:8090/experiment/info"
