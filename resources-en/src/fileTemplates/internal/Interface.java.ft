@@ -1,4 +1,8 @@
 #if (${PACKAGE_NAME} && ${PACKAGE_NAME} != "")package ${PACKAGE_NAME};#end
+
 #parse("File Header.java")
+
+#if (${IMPORT_BLOCK})${IMPORT_BLOCK}
+#end
 #if (${VISIBILITY} == "PUBLIC")public #end interface ${NAME} #if (${INTERFACES} != "")extends ${INTERFACES} #end {
 }

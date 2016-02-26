@@ -41,7 +41,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   private final JavaDirectoryService myJavaDirectoryService;
 
   public CreateClassAction() {
-    super("", IdeBundle.message("action.create.new.class.description"), PlatformIcons.CLASS_ICON, true);
+    super("Java Class", IdeBundle.message("action.create.new.class.description"), PlatformIcons.CLASS_ICON, true);
     myJavaDirectoryService = JavaDirectoryService.getInstance();
   }
 
@@ -65,17 +65,15 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       }
     }
 
-    if (builder instanceof CreateFileFromTemplateDialog.Builder) {
-      CreateFileFromTemplateDialog.Builder asBuilder = (CreateFileFromTemplateDialog.Builder)builder;
-      asBuilder
-        .setPackage(myJavaDirectoryService.getPackage(directory).getQualifiedName())
-        .setValidator(new CreateNewClassDialogValidatorExImpl(project));
-    }
+    builder.setValidator(new CreateNewClassDialogValidatorExImpl(project));
   }
 
+  //TODO: Undo any changes to com.intellij.ide.actions.CreateFromTemplateAction for API compatibility reasons.
   @Override
-  protected com.intellij.ide.actions.CreateFileFromTemplateDialog.Builder newBuilder(Project project) {
-    return CreateFileFromTemplateDialog.newBuilder(project);
+  @NotNull
+  protected com.intellij.ide.actions.CreateFileFromTemplateDialog.Builder newBuilder(@NotNull Project project,
+                                                                                     @NotNull PsiDirectory defaultDirectory) {
+    return CreateFileFromTemplateDialog.newBuilder(project, defaultDirectory);
   }
 
   @Override

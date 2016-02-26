@@ -31,48 +31,23 @@ public class CreateNewClassDialogValidatorExImplTest {
   }
 
   @Test
-  public void checkInterfacesSingleName() {
-    assertTrue(validator.checkInterfaces("_abc123_XYZ_"));
-  }
-
-  @Test
-  public void checkInterfacesMultipleNames() {
-    assertTrue(validator.checkInterfaces("_abc123, XYZ456_, abcdef"));
+  public void checkInterfacesGood() {
+    assertTrue(validator.checkInterface("_abc123_XYZ_"));
   }
 
   @Test
   public void checkInterfacesEmpty() {
-    assertTrue(validator.checkInterfaces(""));
-  }
-
-  @Test
-  public void checkInterfacesDuplicateNames() {
-    assertFalse(validator.checkInterfaces("abc, abc"));
+    assertTrue(validator.checkInterface(""));
   }
 
   @Test
   public void checkInterfacesLeadingNumber() {
-    assertFalse(validator.checkInterfaces("8a"));
+    assertFalse(validator.checkInterface("8a"));
   }
 
   @Test
   public void checkInterfacesDashInName() {
-    assertFalse(validator.checkInterfaces("a-b"));
-  }
-
-  @Test
-  public void checkInterfacesTrailingComma() {
-    assertFalse(validator.checkInterfaces("a, b,"));
-  }
-
-  @Test
-  public void checkInterfacesLeadingComma() {
-    assertFalse(validator.checkInterfaces(", a, b"));
-  }
-
-  @Test
-  public void checkInterfacesSpaceSeparated() {
-    assertFalse(validator.checkInterfaces("a b"));
+    assertFalse(validator.checkInterface("a-b"));
   }
 
   @Test
