@@ -505,7 +505,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, actions);
     }
     actions.add(action);
-    myDocumentCommitProcessor.log(myProject, "PDI: added performWhenAllCommitted", null, action);
+    myDocumentCommitProcessor.log("PDI: added performWhenAllCommitted", null, true, action);
 
     ModalityState current = ModalityState.current();
     if (current != ModalityState.NON_MODAL) {
