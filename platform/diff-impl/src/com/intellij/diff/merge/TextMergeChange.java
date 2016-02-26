@@ -73,11 +73,13 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     myEndLine = myFragment.getEndLine(ThreeSide.BASE);
 
     installHighlighter();
+    installOperations();
   }
 
   @CalledInAwt
   public void destroy() {
     destroyHighlighter();
+    destroyOperations();
     destroyInnerHighlighter();
   }
 
@@ -88,8 +90,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     createHighlighter(ThreeSide.BASE);
     if (getType().isLeftChange()) createHighlighter(ThreeSide.LEFT);
     if (getType().isRightChange()) createHighlighter(ThreeSide.RIGHT);
-
-    doInstallActionHighlighters();
   }
 
   @CalledInAwt
@@ -107,11 +107,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       highlighter.dispose();
     }
     myHighlighters.clear();
-
-    for (MyGutterOperation operation : myOperations) {
-      operation.dispose();
-    }
-    myOperations.clear();
   }
 
   @CalledInAwt
@@ -126,6 +121,9 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   public void doReinstallHighlighter() {
     destroyHighlighter();
     installHighlighter();
+
+    destroyOperations();
+    installOperations();
 
     myViewer.repaintDividers();
   }
@@ -281,11 +279,19 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   // Gutter actions
   //
 
-  private void doInstallActionHighlighters() {
+  private void installOperations() {
     ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.LEFT, OperationType.APPLY));
     ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.LEFT, OperationType.IGNORE));
     ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.RIGHT, OperationType.APPLY));
     ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.RIGHT, OperationType.IGNORE));
+  }
+
+  @CalledInAwt
+  private void destroyOperations() {
+    for (MyGutterOperation operation : myOperations) {
+      operation.dispose();
+    }
+    myOperations.clear();
   }
 
   @Nullable

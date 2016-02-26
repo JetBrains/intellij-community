@@ -52,6 +52,10 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
     createHighlighter(ThreeSide.BASE);
     if (getType().isLeftChange()) createHighlighter(ThreeSide.LEFT);
     if (getType().isRightChange()) createHighlighter(ThreeSide.RIGHT);
+
+    createInnerHighlighter(ThreeSide.BASE);
+    if (getType().isLeftChange()) createInnerHighlighter(ThreeSide.LEFT);
+    if (getType().isRightChange()) createInnerHighlighter(ThreeSide.RIGHT);
   }
 
   public void destroyHighlighter() {
@@ -69,22 +73,25 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
     Editor editor = side.select(myEditors);
 
     TextDiffType type = getDiffType();
-    int startLine = myFragment.getStartLine(side);
-    int endLine = myFragment.getEndLine(side);
-    boolean hasInner = myFragment.getInnerFragments() != null;
+    int startLine = getStartLine(side);
+    int endLine = getEndLine(side);
 
-    int start = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine).getStartOffset();
-
+    boolean ignored = myFragment.getInnerFragments() != null;
     boolean shouldHideWithoutLineNumbers = side == ThreeSide.BASE && !isChange(Side.LEFT) && isChange(Side.RIGHT);
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, hasInner, false, shouldHideWithoutLineNumbers));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, false, shouldHideWithoutLineNumbers));
     myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, false));
+  }
 
-    if (hasInner) {
-      for (MergeWordFragment innerFragment : myFragment.getInnerFragments()) {
-        int startOffset = innerFragment.getStartOffset(side);
-        int endOffset = innerFragment.getEndOffset(side);
-        myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, start + startOffset, start + endOffset, type));
-      }
+  private void createInnerHighlighter(@NotNull ThreeSide side) {
+    List<MergeWordFragment> innerFragments = myFragment.getInnerFragments();
+    if (innerFragments == null) return;
+
+    Editor editor = side.select(myEditors);
+    int start = DiffUtil.getLinesRange(editor.getDocument(), getStartLine(side), getEndLine(side)).getStartOffset();
+    for (MergeWordFragment fragment : innerFragments) {
+      int innerStart = start + fragment.getStartOffset(side);
+      int innerEnd = start + fragment.getEndOffset(side);
+      myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, getDiffType()));
     }
   }
 
