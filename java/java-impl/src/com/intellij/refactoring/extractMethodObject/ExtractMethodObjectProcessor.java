@@ -131,8 +131,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
 
       for (PsiMethod usedMethod : usedMethods) {
-        PsiModifierList modifiers = usedMethod.getModifierList();
-        if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) && !modifiers.hasModifierProperty(PsiModifier.STATIC)) {
+        if (usedMethod.hasModifierProperty(PsiModifier.PRIVATE) &&
+            (!usedMethod.hasModifierProperty(PsiModifier.STATIC) || myExtractProcessor.isStatic())) {
           PsiMethod toMove = usedMethod;
           for (PsiReference reference : ReferencesSearch.search(usedMethod)) {
             if (!PsiTreeUtil.isAncestor(getMethod(), reference.getElement(), false)) {

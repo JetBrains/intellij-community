@@ -137,6 +137,10 @@ public class ExtractMethodObjectTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testWithPrivateStaticMethodUsed2() throws Exception {
+    doTest();
+  }
+
   public void testWithPrivateMethodWhichCantBeMoved() throws Exception {
     doTest();
   }
