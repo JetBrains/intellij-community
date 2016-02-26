@@ -12,17 +12,18 @@ import com.intellij.openapi.components.AbstractProjectComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
+import com.intellij.stats.completion.experiment.ABTesterHelper
 import java.beans.PropertyChangeListener
 
 
-class CompletionTrackerInitializer(project: Project): AbstractProjectComponent(project) {
+class CompletionTrackerInitializer(project: Project, experimentHelper: ABTesterHelper): AbstractProjectComponent(project) {
     private val lookupActionsTracker = LookupActionsListener()
     
     private val lookupTrackerInitializer = PropertyChangeListener {
         val lookup = it.newValue
         if (lookup is LookupImpl) {
             val logger = CompletionLoggerProvider.Factory.getInstance().newCompletionLogger()
-            val tracker = CompletionActionsTracker(lookup, logger)
+            val tracker = CompletionActionsTracker(lookup, logger, experimentHelper)
             lookupActionsTracker.listener = tracker
             lookup.addLookupListener(tracker)
             lookup.setPrefixChangeListener(tracker)
@@ -146,7 +147,8 @@ fun LookupImpl.toRelevanceDataList(): List<LookupStringWithRelevance> {
 
 
 class CompletionActionsTracker(private val lookup: LookupImpl,
-                               private val logger: CompletionLogger) 
+                               private val logger: CompletionLogger, 
+                               private val experimentHelper: ABTesterHelper) 
       : CompletionPopupListener, 
         PrefixChangeListener, 
         LookupAdapter() {
@@ -181,7 +183,11 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     override fun currentItemChanged(event: LookupEvent) {
         if (!completionStarted) {
             completionStarted = true
-            logger.completionStarted(lookup.toRelevanceDataList())
+            //this is not robust -> since at the moment of completion here could be another values
+            //real approach would be to somehow detect if completion list is reordered 
+            val isPerformExperiment = experimentHelper.isPerformExperiment()
+            val experimentVersion = experimentHelper.getExperimentVersion()
+            logger.completionStarted(lookup.toRelevanceDataList(), isPerformExperiment, experimentVersion)
         }
     }
     

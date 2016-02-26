@@ -16,8 +16,10 @@ abstract class CompletionLoggerProvider {
 }
 
 abstract class CompletionLogger {
-    
-    abstract fun completionStarted(completionList: List<LookupStringWithRelevance>)
+
+    abstract fun completionStarted(completionList: List<LookupStringWithRelevance>, 
+                                   isExperimentPerformed: Boolean,
+                                   experimentVersion: Int)
     
     abstract fun beforeCharTyped(c: Char, completionList: List<LookupStringWithRelevance>)
     abstract fun afterCharTyped(c: Char, completionList: List<LookupStringWithRelevance>)
