@@ -526,7 +526,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     myClass.visitMethods(new MyProcessorWrapper<PyFunction>(processor), false, context);
     myClass.visitClassAttributes(new MyProcessorWrapper<PyTargetExpression>(processor), false, context);
 
-    // TODO: accept instance attributes as well
+    for (PyTargetExpression expression : myClass.getInstanceAttributes()) {
+      processor.process(expression);
+    }
 
     if (!inherited) {
       return;
