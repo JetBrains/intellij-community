@@ -151,7 +151,23 @@ public class PyJavaClassType implements PyClassLikeType {
 
   @Override
   public void visitMembers(@NotNull final Processor<PsiElement> processor, final boolean inherited, @NotNull TypeEvalContext context) {
-    // TODO: Implement
+    for (PsiMethod method : myClass.getAllMethods()) {
+      processor.process(method);
+    }
+
+    for (PsiField field : myClass.getAllFields()) {
+      processor.process(field);
+    }
+
+    if (!inherited) {
+      return;
+    }
+
+    for (PyClassLikeType type : getAncestorTypes(context)) {
+      if (type != null) {
+        type.visitMembers(processor, false, context);
+      }
+    }
   }
 
   @NotNull
@@ -181,8 +197,26 @@ public class PyJavaClassType implements PyClassLikeType {
   @NotNull
   @Override
   public List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
-    // TODO: Implement
-    return Collections.emptyList();
+    final List<PyClassLikeType> result = new ArrayList<>();
+
+    final Deque<PsiClass> deque = new LinkedList<>();
+    final Set<PsiClass> visited = new HashSet<>();
+
+    deque.addAll(Arrays.asList(myClass.getSupers()));
+
+    while (!deque.isEmpty()) {
+      final PsiClass current = deque.pollFirst();
+
+      if (current == null || !visited.add(current)) {
+        continue;
+      }
+
+      result.add(new PyJavaClassType(current, myDefinition));
+
+      deque.addAll(Arrays.asList(current.getSupers()));
+    }
+
+    return result;
   }
 
   @Override
