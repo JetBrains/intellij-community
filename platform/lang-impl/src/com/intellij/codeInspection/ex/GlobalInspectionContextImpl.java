@@ -799,6 +799,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         getPresentation(toolWrapper).finalCleanup();
       }
     }
+    if (myView != null) {
+      myView.getTree().setPaintBusy(false);
+    }
     super.cleanup();
   }
 
