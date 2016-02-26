@@ -428,11 +428,12 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     if (!success && task != null && documentManager.isUncommited(task.document)) { // sync commit has not intervened
       final Document finalDocument = document;
+      final Project finalProject = project;
       List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes =
         ApplicationManager.getApplication().runReadAction(new Computable<List<Pair<PsiFileImpl, FileASTNode>>>() {
           @Override
           public List<Pair<PsiFileImpl, FileASTNode>> compute() {
-            PsiFile file = documentManager.getPsiFile(finalDocument);
+            PsiFile file = finalProject.isDisposed() ? null : documentManager.getPsiFile(finalDocument);
             return file == null ? null : getAllFileNodes(file);
           }
         });
