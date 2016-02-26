@@ -14,6 +14,8 @@ class ABTesterHelper(private val requestSender: RequestService, private val urlP
 
     @Volatile private var lastUpdate = loadLastUpdated()
     @Volatile private var experimentInfo = loadInfo()
+    
+    private val delayInMinutes = 30
 
     fun isPerformExperiment(): Boolean {
         if (isOutdated(lastUpdate)) {
@@ -44,9 +46,9 @@ class ABTesterHelper(private val requestSender: RequestService, private val urlP
             saveLastUpdated(lastUpdate)
         }
     }
-
+    
     private fun isOutdated(lastUpdate: Date): Boolean {
-        return lastUpdate.time < System.currentTimeMillis() - 30 * Time.MINUTE
+        return lastUpdate.time < System.currentTimeMillis() - delayInMinutes * Time.MINUTE
     }
 
     private fun loadInfo(): ExperimentInfo {

@@ -35,11 +35,17 @@ class CompletionFileLogger(private val installationUID: String,
     
     private var logLastAction = LOG_NOTHING
     private var lastCompletionList: List<LookupStringWithRelevance> = emptyList()
-    
-    override fun completionStarted(completionList: List<LookupStringWithRelevance>) {
+
+    override fun completionStarted(completionList: List<LookupStringWithRelevance>,
+                                   isExperimentPerformed: Boolean,
+                                   experimentVersion: Int) {
         lastCompletionList = completionList
         logLastAction = { items ->
             val builder = logBuilder(Action.COMPLETION_STARTED)
+            builder.addPair("EXPERIMENT_PERFORMED", isExperimentPerformed)
+            if (isExperimentPerformed) {
+                builder.addPair("EXPERIMENT_VERSION", experimentVersion)
+            }
             builder.addPair("COMP_LIST_LEN", items.size)
             builder.addText(firstCompletionListText(items))
             log(builder)
