@@ -58,9 +58,6 @@ public class SceneBuilderImpl implements SceneBuilder {
     InspectorPanelController propertyTable = new InspectorPanelController(myEditorController);
     LibraryPanelController palette = new LibraryPanelController(myEditorController);
 
-    loadFile();
-    startChangeListener();
-
     SplitPane leftPane = new SplitPane();
     leftPane.setOrientation(Orientation.VERTICAL);
     leftPane.getItems().addAll(palette.getPanelRoot(), componentTree.getPanelRoot());
@@ -75,6 +72,9 @@ public class SceneBuilderImpl implements SceneBuilder {
     mainPane.setDividerPositions(0.11036789297658862, 0.8963210702341137);
 
     myPanel.setScene(new Scene(mainPane, -1, -1, true, SceneAntialiasing.BALANCED));
+
+    loadFile();
+    startChangeListener();
   }
 
   @Override
