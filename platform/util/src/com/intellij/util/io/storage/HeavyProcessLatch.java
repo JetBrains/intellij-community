@@ -32,10 +32,12 @@ import java.util.Set;
 public class HeavyProcessLatch {
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
   private static final String UI_ACTIVITY = "UI Activity";
+  private static final int MAX_PRIORITIZING_TIME_MILLISECONDS = 12 * 1000;
 
   private final Set<String> myHeavyProcesses = new THashSet<String>();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
   private volatile Thread myUiActivityThread;
+  private volatile long myPrioritizingDeadLine;
 
   private HeavyProcessLatch() {
   }
@@ -104,6 +106,10 @@ public class HeavyProcessLatch {
    * @see #stopThreadPrioritizing()
    */
   public void prioritizeUiActivity() {
+    // don't wait forever in case someone forgot to stop prioritizing before waiting for other threads to complete
+    // wait just for 12 seconds; this will be noticeable (and we'll get 2 thread dumps) but not fatal
+    myPrioritizingDeadLine = System.currentTimeMillis() + 12 * 1000;
+
     myUiActivityThread = Thread.currentThread();
     processStarted(UI_ACTIVITY);
     //noinspection SSBasedInspection
@@ -130,7 +136,14 @@ public class HeavyProcessLatch {
    */
   public boolean isInsideLowPriorityThread() {
     Thread thread = myUiActivityThread;
-    return thread != null && thread != Thread.currentThread();
+    if (thread != null && thread != Thread.currentThread()) {
+      if (System.currentTimeMillis() > myPrioritizingDeadLine) {
+        stopThreadPrioritizing();
+        return false;
+      }
+      return true;
+    }
+    return false;
   }
 
   /**
