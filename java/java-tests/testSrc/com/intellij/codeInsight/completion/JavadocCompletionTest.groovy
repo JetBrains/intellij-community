@@ -600,7 +600,7 @@ class Foo {
     myFixture.addClass('package zoo; public class Outer { public static class FooBarGoo{}}')
     myFixture.configureByText 'a.java', "/** FooBarGo<caret> */"
     myFixture.completeBasic()
-    myFixture.checkResult "/** {@link zoo.Outer#FooBarGoo<caret>} */"
+    myFixture.checkResult "/** {@link zoo.Outer.FooBarGoo<caret>} */"
   }
 
   public void "test insert link to imported class"() {
