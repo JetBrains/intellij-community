@@ -132,8 +132,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       @Nullable
       @Override
       public Result<PsiMember> compute() {
-        return Result.createSingleDependency(getPotentiallyApplicableMemberInternal(),
-                                             PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return Result.createSingleDependency(getPotentiallyApplicableMemberInternal(), PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
   }
