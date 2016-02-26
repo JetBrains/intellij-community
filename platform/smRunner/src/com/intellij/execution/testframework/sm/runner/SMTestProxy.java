@@ -90,6 +90,10 @@ public class SMTestProxy extends AbstractTestProxy {
     myPreservePresentableName = preservePresentableName;
   }
 
+  public boolean isPreservePresentableName() {
+    return myPreservePresentableName;
+  }
+
   public void setLocator(@NotNull SMTestLocator testLocator) {
     myLocator = testLocator;
   }
@@ -851,7 +855,11 @@ public class SMTestProxy extends AbstractTestProxy {
     private ProcessHandler myHandler;
 
     public SMRootTestProxy() {
-      super("[root]", true, null);
+      this(false);
+    }
+
+    public SMRootTestProxy(boolean preservePresentableName) {
+      super("[root]", true, null, preservePresentableName);
     }
 
     public void setTestsReporterAttached() {
