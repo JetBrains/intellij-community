@@ -73,7 +73,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Collection<ProgressIndicator> nonStandardIndicators = ConcurrentHashMultiset.create();
 
   public CoreProgressManager() {
-    HeavyProcessLatch.INSTANCE.addListener(this, new HeavyProcessLatch.HeavyProcessListener() {
+    HeavyProcessLatch.INSTANCE.addUIActivityListener(this, new HeavyProcessLatch.HeavyProcessListener() {
       @Override
       public void processStarted() {
         updateShouldCheckCanceled();
