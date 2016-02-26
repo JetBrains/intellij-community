@@ -120,23 +120,13 @@ public final class PyTestSdkTools {
       return;
     }
 
-    final File tempDir = FileUtil.createTempDirectory(PyTestSdkTools.class.getName(), null);
-    final File skeletonsDir = new File(tempDir, PythonSdkType.SKELETON_DIR_NAME);
-    FileUtil.createDirectory(skeletonsDir);
-    final String skeletonsPath = skeletonsDir.toString();
+    final String skeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
     addTestSdkRoot(modificator, skeletonsPath);
 
     UsefulTestCase.edt(() -> modificator.commitChanges());
 
-    final SkeletonVersionChecker checker = new SkeletonVersionChecker(0);
-
-    final PySkeletonRefresher refresher = new PySkeletonRefresher(null, null, sdk, skeletonsPath, null, null);
-    final List<String> errors = refresher.regenerateSkeletons(checker);
-
     PySkeletonRefresher
-      .refreshSkeletonsOfSdk(project, null, PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath()), sdk);
-
-    Assert.assertThat("Errors found", errors, Matchers.empty());
+      .refreshSkeletonsOfSdk(project, null, skeletonsPath, sdk);
   }
 
   public static void addTestSdkRoot(@NotNull SdkModificator sdkModificator, @NotNull String path) {
