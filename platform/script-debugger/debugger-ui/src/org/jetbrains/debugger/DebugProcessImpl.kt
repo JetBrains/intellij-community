@@ -181,6 +181,10 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     urlToFileCache.putIfAbsent(url, file)
   }
 
+  // go plugin compatibility
+  @Suppress("unused")
+  open fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>): List<Location> = getLocationsForBreakpoint(vm!!, breakpoint)
+
   open fun getLocationsForBreakpoint(vm: Vm, breakpoint: XLineBreakpoint<*>): List<Location> = throw UnsupportedOperationException()
 
   override fun isLibraryFrameFilterSupported() = true
