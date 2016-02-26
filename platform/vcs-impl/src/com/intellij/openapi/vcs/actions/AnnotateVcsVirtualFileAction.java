@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
@@ -156,7 +157,8 @@ public class AnnotateVcsVirtualFileAction {
     VcsRevisionNumber revisionNumber = null;
     if (file instanceof VcsVirtualFile) {
       filePath = VcsUtil.getFilePath(file.getPath());
-      revisionNumber = ((VcsVirtualFile)file).getFileRevision().getRevisionNumber();
+      VcsFileRevision revision = ((VcsVirtualFile)file).getFileRevision();
+      revisionNumber = revision != null ? revision.getRevisionNumber() : null;
     }
     else if (file instanceof ContentRevisionVirtualFile) {
       ContentRevision revision = ((ContentRevisionVirtualFile)file).getContentRevision();
