@@ -1314,7 +1314,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  void startTrackingValidation() {
+  protected void startTrackingValidation() {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -1960,6 +1960,7 @@ public abstract class DialogWrapper {
 
     private ErrorText() {
       setLayout(new BorderLayout());
+      myLabel.setName("error_text_label");
       myLabel.setIcon(AllIcons.General.Error);
       myLabel.setBorder(JBUI.Borders.empty(4, 10, 0, 2));
       JBScrollPane pane =
@@ -1995,10 +1996,6 @@ public abstract class DialogWrapper {
     public int getMinimumHeight() {
       return getMinimumSize().height;
     }
-  }
-
-  public boolean isShowingError() {
-    return myErrorText.shouldBeVisible();
   }
 
   @NotNull

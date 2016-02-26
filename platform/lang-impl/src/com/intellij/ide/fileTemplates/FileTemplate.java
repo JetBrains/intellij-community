@@ -54,6 +54,7 @@ public interface FileTemplate extends Cloneable {
   String ATTRIBUTE_SUPERCLASS = "SUPERCLASS";
   String ATTRIBUTE_FINAL = "FINAL";
   String ATTRIBUTE_ABSTRACT = "ABSTRACT";
+  String ATTRIBUTE_IMPORT_BLOCK = "IMPORT_BLOCK";
 
   /** Name without extension */
   @NotNull String getName();

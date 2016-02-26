@@ -59,7 +59,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null || project == null) return;
 
-    final CreateFileFromTemplateDialog.Builder builder = newBuilder(project);
+    final CreateFileFromTemplateDialog.Builder builder = newBuilder(project, dir);
     buildDialog(project, dir, builder);
 
     final Ref<String> selectedTemplateName = Ref.create(null);
@@ -185,7 +185,8 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
 
   protected abstract void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder);
 
-  protected CreateFileFromTemplateDialog.Builder newBuilder(Project project) {
+  @NotNull
+  protected CreateFileFromTemplateDialog.Builder newBuilder(@NotNull Project project, @NotNull PsiDirectory defaultDirectory) {
     return CreateFileFromTemplateDialog.newBuilder(project);
   }
 
