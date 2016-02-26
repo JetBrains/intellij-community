@@ -56,7 +56,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
+import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 
 public class CommitHelper {
   public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<Object>("DOCUMENT_BEING_COMMITTED");
@@ -201,7 +201,7 @@ public class CommitHelper {
       title = "Committed Successfully";
       type = NotificationType.INFORMATION;
     }
-    VcsNotifier.createNotification(IMPORTANT_ERROR_NOTIFICATION, title, getCommitSummary(processor), type, null).notify(myProject);
+    VcsNotifier.createNotification(STANDARD_NOTIFICATION, title, getCommitSummary(processor), type, null).notify(myProject);
   }
 
   @NotNull
