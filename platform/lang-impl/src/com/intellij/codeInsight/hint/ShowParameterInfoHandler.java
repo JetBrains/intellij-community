@@ -40,9 +40,15 @@ import java.awt.*;
 import java.util.Set;
 
 public class ShowParameterInfoHandler implements CodeInsightActionHandler {
+  private boolean myRequestFocus;
+
+  public ShowParameterInfoHandler(boolean requestFocus) {
+    myRequestFocus = requestFocus;
+  }
+
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    invoke(project, editor, file, -1, null);
+    invoke(project, editor, file, -1, null, myRequestFocus);
   }
 
   @Override
@@ -57,7 +63,12 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     return element;
   }
 
-  public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement) {
+  public static void invoke(final Project project,
+                            final Editor editor,
+                            PsiFile file,
+                            int lbraceOffset,
+                            PsiElement highlightedElement,
+                            boolean requestFocus) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -70,7 +81,8 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
       project,
       file,
       offset,
-      lbraceOffset
+      lbraceOffset,
+      requestFocus
     );
 
     context.setHighlightedElement(highlightedElement);
@@ -89,7 +101,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
           if (handler.couldShowInLookup()) {
             final Object[] items = handler.getParametersForLookup(item, context);
             if (items != null && items.length > 0) {
-              showLookupEditorHint(items, editor, project, handler);
+              showLookupEditorHint(items, editor, project, handler, requestFocus);
             }
             return;
           }
@@ -112,8 +124,12 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static void showLookupEditorHint(Object[] descriptors, final Editor editor, final Project project, ParameterInfoHandler handler) {
-    ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor, handler);
+  private static void showLookupEditorHint(Object[] descriptors,
+                                           final Editor editor,
+                                           final Project project,
+                                           ParameterInfoHandler handler,
+                                           boolean requestFocus) {
+    ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor, handler, requestFocus);
     component.update();
 
     final LightweightHint hint = new LightweightHint(component);
