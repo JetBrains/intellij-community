@@ -65,10 +65,12 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
 
     final Worker worker = new Worker();
     final String message = worker.createMessage(descriptors);
+    if (message == null) return null;
+
     final EditorNotificationPanel panel = new EditorNotificationPanel() {
       @Override
       public Color getBackground() {
-        return worker.myIsOverridingSystemSchemaCase ? LightColors.SLIGHTLY_GREEN : LightColors.RED;
+        return LightColors.RED;
       }
     };
     panel.setText(message);
@@ -83,21 +85,15 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
   }
 
   private static class Worker {
-    private boolean myIsOverridingSystemSchemaCase;
-
     public String createMessage(@NotNull final List<Pair<Boolean, String>> descriptors) {
       int numOfSystemSchemas = 0;
-      String systemSchemaName = "";
       for (Pair<Boolean, String> pair : descriptors) {
         if (!Boolean.TRUE.equals(pair.getFirst())) {
           ++ numOfSystemSchemas;
-          systemSchemaName = pair.getSecond();
         }
       }
-      String additionalInfo = "";
       if (numOfSystemSchemas == 1) {
-        myIsOverridingSystemSchemaCase = true;
-        additionalInfo = "<br><b>System schema '" + systemSchemaName + "' was not applied.</b>";
+        return null;
       }
       boolean withTypes = numOfSystemSchemas > 0;
       final List<String> names = new ArrayList<>();
@@ -108,7 +104,7 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
           names.add(pair.getSecond());
         }
       }
-      return "<html>There are several JSON Schemas mapped to this file: " + StringUtil.join(names, "; ") + additionalInfo + "</html>";
+      return "<html>There are several JSON Schemas mapped to this file: " + StringUtil.join(names, "; ") + "</html>";
     }
   }
 }
