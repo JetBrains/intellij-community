@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,8 +153,18 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
   public abstract boolean isPluginDescriptorAccepted(IdeaPluginDescriptor descriptor);
 
   public void sort() {
-    Collections.sort(view, columns[getNameColumn()].getComparator());
-    fireTableDataChanged();
+    try {
+      Collections.sort(view, columns[getNameColumn()].getComparator());
+      fireTableDataChanged();
+    }
+    catch (IllegalArgumentException e) {
+      String message = e.getMessage();
+      if (message != null && e.getMessage().contains("Comparison method violates its general contract")) {
+        ColumnInfo column = columns[getNameColumn()];
+        e = new IllegalArgumentException("model=" + this + " col=" + column + " cmp=" + column.getComparator(), e);
+      }
+      throw e;
+    }
   }
 
   public boolean isSortByStatus() {
